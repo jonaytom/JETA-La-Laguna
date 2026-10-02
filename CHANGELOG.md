@@ -3,6 +3,13 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.38.0 — 2026-10-02 — Coches en pendientes laterales, peleas más justas y coordenadas
+- Los coches se inclinan bien en calles con pendiente lateral (el alabeo estaba al revés: un lado flotaba).
+- Coches: aceleran un 15 % menos (misma velocidad punta) y la dirección es un poco más suave.
+- Peleas 2D: la CPU pega un 25 % menos, prepara los golpes 1,6× más despacio y ataca algo menos.
+- Círculo de inicio de las misiones de Boca Papa en un sitio despejado (no pegado a la torre ni al árbol).
+- Coordenadas X/Z encima del minimapa y del cursor/destino en el mapa grande.
+
 ## 0.37.0 — 2026-10-02 — Pasos sincronizados y con mejor sonido
 - Los pasos suenan justo cuando el pie toca el suelo: se detecta el apoyo real de cada pie en la animación (andar, trotar, esprintar).
 - Sonido nuevo: talón + punta, con resonancias de suela y suelo, arenilla y roce; 6 variantes por suelo para que no se repita.

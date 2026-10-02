@@ -27,6 +27,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
 @keyframes fl{50%{color:#555}}
 #minimapwrap{left:22px;bottom:22px;width:230px;height:230px}
 #minimap{width:230px;height:230px;border-radius:50%;border:3px solid rgba(0,0,0,.75);box-shadow:0 4px 18px rgba(0,0,0,.5);background:#1c2520}
+#coords{position:absolute;left:50%;top:-26px;transform:translateX(-50%);white-space:pre;padding:2px 10px;background:rgba(0,0,0,.6);border-radius:6px;color:#fff;font:600 13px Barlow,sans-serif;letter-spacing:.5px;pointer-events:none}
+#bmCoords{position:absolute;bottom:14px;left:14px;z-index:2;white-space:pre;padding:10px 14px;background:rgba(0,0,0,.75);border:2px solid #5ec8ff;border-radius:10px;color:#fff;font:600 16px Barlow,sans-serif;pointer-events:none}
+body.touchmode #coords{top:auto;bottom:-30px;font-size:11px}
 #healthbar{position:absolute;left:18px;right:18px;bottom:-12px;height:7px;background:rgba(0,0,0,.6);border-radius:4px;overflow:hidden}
 #healthbar div{height:100%;width:100%;background:linear-gradient(90deg,#3fb46a,#7fe08a)}
 #northN{position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px;font:700 12px Oswald;color:#fff;text-align:center;line-height:18px;background:#111;border-radius:50%;border:1px solid #fff}
@@ -131,7 +134,7 @@ body.touchmode #dlg button{font-size:13px;padding:7px 10px;margin:4px 0}
 <body>
 <div id="game"></div>
 <div class="hud" id="topright"><div id="clock">12:00</div><div id="money">$0</div><div id="stars"></div></div>
-<div class="hud" id="minimapwrap"><canvas id="minimap" width="460" height="460"></canvas><div id="healthbar"><div id="hb"></div></div></div>
+<div class="hud" id="minimapwrap"><canvas id="minimap" width="460" height="460"></canvas><div id="coords"></div><div id="healthbar"><div id="hb"></div></div></div>
 <div class="hud" id="loc"><div id="locStreet"></div><div id="locArea"></div></div>
 <div class="hud" id="veh"></div>
 <div class="hud" id="speed"><b id="kmh">0</b> km/h</div>
@@ -156,7 +159,7 @@ body.touchmode #dlg button{font-size:13px;padding:7px 10px;margin:4px 0}
  <div style="position:absolute;right:16px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px;pointer-events:auto">
   <div class="achb" id="achUp">SUBIR</div><div class="achb" id="achDown">BAJAR</div><div class="achb" id="achFast">RÁPIDO</div><div class="achb" id="achView">VISTA</div><div class="achb" id="achMap">MAPA</div><div class="achb" id="achExit" style="border-color:#ff5252">BAJAR A TIERRA</div>
  </div></div>
-<div id="bigmap"><canvas id="bmc"></canvas><div id="bmClose">✕ CERRAR</div><div id="bmTp">⚡ TELETRANSPORTE</div><div id="bmZ"><div id="bmZi">+</div><div id="bmZo">−</div></div><div id="bmhelp"><h3>MAPA — SAN CRISTÓBAL DE LA LAGUNA</h3>Arrastra para mover · Rueda para zoom · Clic: marcar destino (GPS) · Clic derecho: quitar · <kbd>T</kbd> o botón: teletransporte al destino<br><span class="dot" style="background:#fff"></span>Tú <span class="dot" style="background:#f5b72e;margin-left:10px"></span>Misión <span class="dot" style="background:#e040fb;margin-left:10px"></span>Destino <span class="dot" style="background:#e53935;border-radius:2px;margin-left:10px"></span>Comida <span class="dot" style="background:#5ec8ff;margin-left:10px"></span>Recados <span class="dot" style="background:#3d7bff;margin-left:10px"></span>Policía<br><kbd>M</kbd> cerrar</div></div>
+<div id="bigmap"><canvas id="bmc"></canvas><div id="bmClose">✕ CERRAR</div><div id="bmCoords">Mueve el ratón o toca el mapa para ver las coordenadas</div><div id="bmTp">⚡ TELETRANSPORTE</div><div id="bmZ"><div id="bmZi">+</div><div id="bmZo">−</div></div><div id="bmhelp"><h3>MAPA — SAN CRISTÓBAL DE LA LAGUNA</h3>Arrastra para mover · Rueda para zoom · Clic: marcar destino (GPS) · Clic derecho: quitar · <kbd>T</kbd> o botón: teletransporte al destino<br><span class="dot" style="background:#fff"></span>Tú <span class="dot" style="background:#f5b72e;margin-left:10px"></span>Misión <span class="dot" style="background:#e040fb;margin-left:10px"></span>Destino <span class="dot" style="background:#e53935;border-radius:2px;margin-left:10px"></span>Comida <span class="dot" style="background:#5ec8ff;margin-left:10px"></span>Recados <span class="dot" style="background:#3d7bff;margin-left:10px"></span>Policía<br><kbd>M</kbd> cerrar</div></div>
 <div id="touch"><div id="joy"><div id="joyk"></div></div>
 <div class="tb" id="tbA" style="left:104px;top:16%;display:none">APUNTAR</div><div class="tb" id="tbD" style="left:20px;top:16%;display:none;border-color:#ff5252">DISPARAR</div><div class="tb" id="tbF" style="right:24px;bottom:190px">ENTRAR</div>
 <div class="tb" id="tbJ" style="right:110px;bottom:40px">SALTO<br>FRENO</div>

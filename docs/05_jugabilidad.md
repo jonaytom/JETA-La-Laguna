@@ -36,6 +36,8 @@
   montículo binario, los caminos peatonales cuestan menos). **En coche**, con `GRAPH` (respeta sentidos).
 - Minimapa y mapa grande (`M`, zoom con rueda/pellizco, `T` teletransporte en modo Achamán). Las carreteras van en
   azules para no confundirse con el amarillo/rosa de las rutas.
+- **Coordenadas**: encima del minimapa se ven X y Z del jugador (metros del mapa); en el mapa grande, las del cursor
+  y las del destino marcado (abajo a la izquierda). Sirven para indicar posiciones exactas al corregir el mapa.
 
 ## Peleas 2D (`09d_fight2d.js`)
 
@@ -47,7 +49,8 @@
 - Especiales: **arriba, abajo + puñetazo** = Bola de gofio (proyectil); **arriba, abajo + patada** = Patada del Teide.
 - Las 3 primeras peleas muestran un cartel de controles y esperan a pulsar Espacio; luego «FIGHT!».
 - Rivales: vecina (recibe ×2, pega ×0,5), doña (pega ×1,1, recibe ×0,5), cachas (pega ×2, recibe ×0,9), vecino,
-  Canarión. Ganar: 5–25 $ (5 % de las veces 100 $). Perder: −10 de salud.
+  Canarión. **La CPU pega un 25 % menos** (`AI_DEAL`) y **prepara sus golpes 1,6 veces más despacio** (`AI_WINDUP`)
+  para que dé tiempo a verlos venir y cubrirse; también ataca algo menos a menudo. Ganar: 5–25 $ (5 % de las veces 100 $). Perder: −10 de salud.
 - Pegar a una mujer siempre trae a la policía (multa 100 $); a un hombre, si hay 5+ testigos (60 %).
 - Tutorial de Sastrón (`fightTutorial`): 9 pasos (andar, puñetazo, patada, salto, barrido, cubrirse, combo y los
   dos especiales); en el paso de cubrirse Sastrón ataca despacio y el paso se da por bueno a los 25 s.

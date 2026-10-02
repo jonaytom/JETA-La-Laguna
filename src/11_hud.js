@@ -128,6 +128,7 @@ const HUD = (() => {
   return {
     resize() { },
     update(dt) {
+      { const ce = $('coords'); if (ce) { const t = 'X ' + Math.round(PLAYER.x) + '   Z ' + Math.round(PLAYER.z); if (ce.textContent !== t) ce.textContent = t; } }
       tick++;
       drawMinimap();
       // clock & money
@@ -190,6 +191,7 @@ const BIGMAP = (() => {
   cv.addEventListener('pointerdown', (e) => { ptrs.set(e.pointerId, [e.clientX, e.clientY]); cv.setPointerCapture(e.pointerId); if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = Math.hypot(a[0] - b[0], a[1] - b[1]); drag = null; moved = true; return; } drag = [e.clientX, e.clientY, cx, cz]; moved = false; });
   cv.addEventListener('pointermove', (e) => { if (ptrs.has(e.pointerId)) ptrs.set(e.pointerId, [e.clientX, e.clientY]);
     if (pinch && ptrs.size === 2) { const [a, b] = [...ptrs.values()]; const d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (d > 10) { zoomAt(d / pinch, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2); pinch = d; } return; }
+    { const [wx, wz] = toWorld(e); $('bmCoords').textContent = 'Cursor: X ' + Math.round(wx) + '   Z ' + Math.round(wz) + (GPS.target ? '   ·   Destino: X ' + Math.round(GPS.target[0]) + '   Z ' + Math.round(GPS.target[1]) : ''); }
     if (!drag) return; const dx = e.clientX - drag[0], dy = e.clientY - drag[1]; if (Math.abs(dx) + Math.abs(dy) > 4) moved = true; cx = drag[2] - dx / zoom; cz = drag[3] - dy / zoom; draw(); });
   const up = (e) => { ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = null; };
   cv.addEventListener('pointercancel', (e) => { up(e); drag = null; });
@@ -198,7 +200,7 @@ const BIGMAP = (() => {
   tap('bmTp', () => BIGMAP.teleport());
   tap('bmZi', () => { const r = cv.getBoundingClientRect(); zoomAt(1.35, r.left + r.width / 2, r.top + r.height / 2); });
   tap('bmZo', () => { const r = cv.getBoundingClientRect(); zoomAt(1 / 1.35, r.left + r.width / 2, r.top + r.height / 2); });
-  cv.addEventListener('pointerup', (e) => { up(e); if (pinch) return; if (!moved && e.button === 0) { const [wx, wz] = toWorld(e); setWaypoint(wx, wz); AUDIO.cash(); draw(); } drag = null; });
+  cv.addEventListener('pointerup', (e) => { up(e); if (pinch) return; if (!moved && e.button === 0) { const [wx, wz] = toWorld(e); setWaypoint(wx, wz); AUDIO.cash(); draw(); $('bmCoords').textContent = 'Destino: X ' + Math.round(wx) + '   Z ' + Math.round(wz); } drag = null; });
   cv.addEventListener('contextmenu', (e) => { e.preventDefault(); setWaypoint(null); draw(); });
   cv.addEventListener('wheel', (e) => { const [wx, wz] = toWorld(e); zoom = clamp(zoom * (e.deltaY < 0 ? 1.2 : 1 / 1.2), 0.2, 4); const r = cv.getBoundingClientRect(); cx = wx - (e.clientX - r.left - r.width / 2) / zoom; cz = wz - (e.clientY - r.top - r.height / 2) / zoom; draw(); }, { passive: true });
   return {

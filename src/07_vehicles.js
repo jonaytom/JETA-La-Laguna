@@ -48,6 +48,7 @@ const GRAPH = (() => {
 
 // ---------- Car
 // top speeds (km/h): any car does 100+, the quickest ones about 200
+const CAR_ACCEL = 0.85; // global acceleration factor (15% softer than v0.37)
 const TOP_BY_CAT = { Urbano: 155, Utilitario: 175, Compacto: 200, Berlina: 190, Crossover: 180, SUV: 190, Todoterreno: 170, 'Pick-up': 165, Furgoneta: 160, 'Furgón': 145, 'Camión': 120, 'Grúa': 120, 'Camión de basura': 100, Emergencias: 145, 'Agrícola': 40, Taxi: 185, Patrulla: 200, Deportivo: 200, Scooter: 100, Maxiscooter: 150, Naked: 200, Ciclomotor: 60 };
 const TOP_BY_TYPE = { compact: 165, sedan: 190, suv: 180, van: 155, taxi: 185, police: 200, sport: 200, bus: 100, truck: 120, moto: 150 };
 function topSpeedKmh(model, type) { return (model && TOP_BY_CAT[model.cat]) || TOP_BY_TYPE[model ? model.phys : type] || 160; }
@@ -58,7 +59,7 @@ class Car {
     if (model === undefined && KGEO) model = modelForType(type);
     if (model) { type = model.phys; }
     this.type = type; this.model = model || null; this.color = color ?? pickColor();
-    this.T = model ? { ...VTYPES[model.phys], L: model.L, W: model.W, H: model.H, name: model.name } : { ...VTYPES[type] }; this.T.maxV = topSpeedKmh(model, type) / 3.6 * rnd(0.96, 1.04);
+    this.T = model ? { ...VTYPES[model.phys], L: model.L, W: model.W, H: model.H, name: model.name } : { ...VTYPES[type] }; this.T.maxV = topSpeedKmh(model, type) / 3.6 * rnd(0.96, 1.04); this.T.acc *= CAR_ACCEL; // same top speed (drag scales with acc), slower pick-up
     const m = !model ? makeCarMesh(type, this.color) : model.phys === 'moto' ? makeMotoMesh(model, this.color) : makeKenneyMesh(model, this.color);
     if (m.moto) { this.rider = makeHuman({ cap: null }); seatHuman(this.rider, model); const helm = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 10), M(pick([0x111111, 0xf2f2f2, 0xb3261e, 0x1f4e8c]), 0.3, 0.3)); helm.position.y = 0.06; this.rider.head.add(helm); m.g.add(this.rider.root); this.rider.root.visible = false; } Object.assign(this, { mesh: m.g, body: m.body, wheels: m.wheels, hl: m.hl, tl: m.tl, bar: m.bar, paint: m.paint });
     scene.add(this.mesh);
@@ -87,8 +88,8 @@ class Car {
     if (c.hb) vf -= Math.sign(vf) * Math.min(Math.abs(vf), 7 * dt);
     const grip = c.hb ? 1.4 : T.grip * (broken ? 0.6 : 1);
     vr *= Math.exp(-grip * dt);
-    const maxSteer = 0.6 / (1 + Math.abs(vf) / 14);
-    this.steer = lerp(this.steer, c.steer * maxSteer, clamp(dt * 8, 0, 1));
+    const maxSteer = 0.56 / (1 + Math.abs(vf) / 13);
+    this.steer = lerp(this.steer, c.steer * maxSteer, clamp(dt * 5.5, 0, 1)); // a bit smoother than before (8 / 0.6)
     const wb = T.L * 0.6;
     this.yawRate = vf * Math.tan(this.steer) / wb * (c.hb ? 1.35 : 1);
     this.h += this.yawRate * dt;
@@ -132,7 +133,7 @@ class Car {
     const fx = Math.sin(this.h), fz = Math.cos(this.h), L = this.T.L * 0.4, W = this.T.W * 0.45;
     const hf = G(this.x + fx * L, this.z + fz * L), hb = G(this.x - fx * L, this.z - fz * L), hr = G(this.x - fz * W, this.z + fx * W), hl = G(this.x + fz * W, this.z - fx * W);
     this.y = (hf + hb) / 2 + 0.17; this.onDeck = onDk;
-    const tp = -Math.atan2(hf - hb, 2 * L), tr = Math.atan2(hr - hl, 2 * W);
+    const tp = -Math.atan2(hf - hb, 2 * L), tr = Math.atan2(hl - hr, 2 * W); // rotateZ(+) lowers the right side (-X local)
     this.pitch = lerp(this.pitch, tp, 0.2); this.roll = lerp(this.roll, tr, 0.2);
     this.mesh.position.set(this.x, this.y, this.z);
     if (this.type === 'moto') { this.lean = lerp(this.lean || 0, clamp(-this.yawRate * Math.max(0, this.fwdV) * 0.06, -0.6, 0.6), 0.15); this.roll = this.lean; if (this.rider) this.rider.root.visible = this.driver === 'ai' || this.driver === 'police'; }

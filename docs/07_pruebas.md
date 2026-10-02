@@ -38,6 +38,8 @@ python tests/run_test_audit.py tests/audit_obstaculos.py  # arranca con window._
 | `prueba_guardar_cargar.py` | Guarda una partida con progreso, la estropea y la carga desde la ventana de partidas. |
 | `prueba_muerte_coche.py` | Morir en un coche tras un choque y volver a jugar en ≤ 4 s. |
 | `prueba_pasos.py` | Andar, trotar y esprintar: cuenta los pasos, comprueba que alternan pie izquierdo/derecho y mide el desfase entre el sonido y el apoyo del tobillo (objetivo: ±40 ms). |
+| `prueba_peralte.py` | Coloca un coche en los puntos de calle con más pendiente lateral y comprueba que las 4 ruedas quedan a la misma altura sobre el suelo. |
+| `prueba_coche_y_boca.py` | 0–100 km/h y punta de un coche, sitio del círculo de Boca Papa y texto de coordenadas del minimapa. |
 | `prueba_panel_controles.py` | Fases `ready` → `intro` → `fight` de las primeras peleas. |
 
 ## Cómo escribir una prueba

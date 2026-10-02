@@ -33,6 +33,13 @@ const DLG = (() => {
 const NPC = {};
 // never leave a character or a goal inside a (non-visitable) building: move it to the nearest open street/park spot
 function inAnyBuilding(x, z) { for (const b of DATA.B) { const c = b[6]; if (Math.abs(c[0] - x) > 150 || Math.abs(c[1] - z) > 150) continue; if (pip(x, z, c)) return true; } return false; }
+// a clearly reachable spot 1.8-4 m from an NPC (for mission start rings): outside buildings, walls, trees and the
+// tower, prefers the direction 'pref' (away from the wall the NPC leans on)
+function openSpotNear(x, z, pref = 0) {
+  for (const r of [2.0, 2.6, 3.2, 4.0]) for (let k = 0; k < 16; k++) { const a = pref + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * Math.PI / 8; const px = x + Math.sin(a) * r, pz = z + Math.cos(a) * r;
+    if (inAnyBuilding(px, pz) || COL.nearSeg(px, pz, 1.0) || lowAt(px, pz, heightAt(px, pz))) continue; const q = COL.resolve(px, pz, 1.0); if (Math.hypot(q.x - px, q.z - pz) > 0.02) continue; return [px, pz]; }
+  return [x + 1.4, z + 1.4];
+}
 function safeSpot(x, z, clear = 0.7) {
   const ok = (a, b, strict) => !inAnyBuilding(a, b) && !COL.nearSeg(a, b, clear) && (!strict || !onCarriageway(a, b, 0.3)) && !lowAt(a, b, heightAt(a, b));
   if (ok(x, z, false)) return [x, z];
@@ -211,7 +218,7 @@ const MISSIONS = (() => {
     {
       title: 'La firma de la banda', who: 'Boca Papa',
       hint() { return 'Vuelve con ' + bold('Boca Papa') + ' a la ' + bold('torre de La Concepción') + ' para firmar la banda'; },
-      startPos() { return [NPC.boca.x + 1.4, NPC.boca.z + 1.4]; },
+      startPos() { return NPC.boca.start || [NPC.boca.x + 1.4, NPC.boca.z + 1.4]; },
       start() {
         step = 0; const b = NPC.boca; const ring = [[NPC.blanco, 2.6, 0.4], [NPC.coco, 2.6, 1.9], [NPC.sastron, 2.6, 3.4]];
         for (const [n, r, a] of ring) moveNPC(n, b.x + Math.cos(a) * r, b.z + Math.sin(a) * r, [b.x, b.z]);
@@ -242,7 +249,7 @@ const MISSIONS = (() => {
     {
       title: 'Boca Papa te enseña a comer', who: 'Boca Papa',
       hint() { return 'Habla con ' + bold('Boca Papa') + ' en la ' + bold('torre de La Concepción'); },
-      startPos() { return [NPC.boca.x + 1.4, NPC.boca.z + 1.4]; },
+      startPos() { return NPC.boca.start || [NPC.boca.x + 1.4, NPC.boca.z + 1.4]; },
       start() {
         step = 0; const s = FOOD.nearest(PLAYER.x, PLAYER.z); data.shop = s;
         talk([['Boca Papa', 'A ver, jefe. Las peleas, los porrazos de la Local y los golpes con el coche te quitan salud. Y la salud no vuelve sola: ¡hay que comer! De esto sé un rato, mírame.'],
@@ -388,7 +395,7 @@ const MISSIONS = (() => {
         crate.position.set(0, -0.12, -0.12);
         const tw = CONC_TOWER.tw; let bx = CONC_TOWER.x, bz = CONC_TOWER.z, face = Math.random() * 6;
         if (tw) { const nx = CONC_TOWER.x - tw.x, nz = CONC_TOWER.z - tw.z, nl = Math.hypot(nx, nz) || 1; bx = tw.x + nx / nl * (tw.w / 2 + 1.0); bz = tw.z + nz / nl * (tw.w / 2 + 1.0); face = Math.atan2(nx, nz); }
-        const sp0 = safeSpot(bx, bz, 0.6); const r = COL.resolve(sp0[0], sp0[1], 0.6); NPC.boca = { x: r.x, z: r.z, H: h, home: [r.x, r.z] };
+        const sp0 = safeSpot(bx, bz, 0.6); const r = COL.resolve(sp0[0], sp0[1], 0.6); NPC.boca = { x: r.x, z: r.z, H: h, home: [r.x, r.z] }; NPC.boca.start = openSpotNear(r.x, r.z, tw ? Math.atan2(r.x - tw.x, r.z - tw.z) : 0);
         h.root.position.set(r.x, heightAt(r.x, r.z) + 0.17, r.z); h.root.add(box); h.root.add(crate); h.root.rotation.y = face; scene.add(h.root); COL.addCirc(r.x, r.z, 0.5); }
       // two random interesting spots of the historic centre for Coco and Sastrón
       const avail = SPOTS.map(([k, n]) => { const p = spotNear(k); return p ? { p, n } : null; }).filter(Boolean).sort(() => Math.random() - 0.5);

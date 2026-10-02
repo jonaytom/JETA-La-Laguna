@@ -88,6 +88,8 @@ const FIGHT2D = (() => {
     const key = JSON.stringify(look) + nose; if (SPR.has(key)) return SPR.get(key);
     const s = {}; for (const k in POSES) s[k] = drawFigure(look, POSES[k], nose); SPR.set(key, s); return s;
   }
+  // CPU rivals: hit 25% softer and wind up their attacks 1.6x slower (time to see it coming and block)
+  const AI_DEAL = 0.75, AI_WINDUP = 1.6;
   // ---------------- moves: [startup, active, recovery, dmg, hitstun, level, hitbox [x0,y0,x1,y1] from feet, pose frames]
   const MOVES = {
     jab: { su: 3, ac: 3, re: 7, dmg: 10, hs: 14, lv: 'high', box: [10, -62, 34, -50], p: ['jab0', 'jab1'] },
@@ -101,7 +103,7 @@ const FIGHT2D = (() => {
     teide: { su: 3, ac: 12, re: 22, dmg: 20, hs: 26, lv: 'high', box: [4, -96, 32, -40], p: ['kick0', 'teide'], kd: true, rise: true },
   };
   const CHAIN = { jab: ['jab', 'cross', 'kick', 'gofio', 'teide'], cross: ['kick', 'round', 'gofio', 'teide'], kick: ['round', 'gofio', 'teide'], cpunch: ['cpunch', 'sweep', 'gofio'] };
-  function mkFighter(o, x, dir) { return { name: o.name, spr: spritesFor(o.look, !!o.nose), x, y: GROUND, vx: 0, vy: 0, dir, hp: 100, shown: 100, st: 'idle', t: 0, mv: null, mt: 0, hitDone: false, stun: 0, crouch: false, block: false, wins: 0, ai: o.ai, buf: [], combo: 0, ko: false, inv: 0, chainOk: false, deal: o.deal ?? 1, recv: o.recv ?? 1 }; }
+  function mkFighter(o, x, dir) { return { name: o.name, spr: spritesFor(o.look, !!o.nose), x, y: GROUND, vx: 0, vy: 0, dir, hp: 100, shown: 100, st: 'idle', t: 0, mv: null, mt: 0, hitDone: false, stun: 0, crouch: false, block: false, wins: 0, ai: o.ai, buf: [], combo: 0, ko: false, inv: 0, chainOk: false, deal: (o.deal ?? 1) * (o.ai ? AI_DEAL : 1), recv: o.recv ?? 1 }; }
   // ---------------- input
   function onKey(e, down) { if (!running) return; const k = e.code; if (['KeyA', 'KeyD', 'KeyW', 'KeyS', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyJ', 'KeyK', 'KeyL', 'KeyU', 'KeyI', 'Space', 'ShiftRight', 'ControlRight'].includes(k)) { e.preventDefault(); e.stopPropagation(); } if (down) { if (!keys.has(k)) pressedK.add(k); keys.add(k); } else keys.delete(k); }
   window.addEventListener('keydown', (e) => onKey(e, true), true); window.addEventListener('keyup', (e) => onKey(e, false), true);
@@ -136,7 +138,7 @@ const FIGHT2D = (() => {
     if (a.passive) { if (dist > 90) inp.fwd = Math.random() < 0.5; return inp; }
     if (a.tutAttack) { a.tt = (a.tt || 0) + 1; if (dist > 46) inp.fwd = true; else if (!f.mv && a.tt % 45 === 0) inp.P = true; return inp; } // tutorial: walks up and throws slow jabs to practise blocking
     if (a.t > 0) { Object.assign(inp, a.hold); return inp; }
-    a.t = 8 + Math.random() * (24 - a.lv * 14); a.hold = {};
+    a.t = 11 + Math.random() * (30 - a.lv * 16); a.hold = {};
     const r = Math.random();
     if (dist > 120) { if (r < 0.65) a.hold.fwd = true; else if (r < 0.75 && a.lv > 0.4) { inp.seq = '236'; inp.P = true; } else if (r < 0.85) a.hold = { fwd: true, up: true }; }
     else if (dist > 46) { if (r < 0.5) a.hold.fwd = true; else if (r < 0.7) inp.K = true; else if (r < 0.8) { inp.down = true; inp.K = true; } else if (r < 0.88) a.hold = { fwd: true, up: true }; else a.hold.back = true; }
@@ -144,7 +146,7 @@ const FIGHT2D = (() => {
     Object.assign(inp, a.hold); return inp;
   }
   // ---------------- core
-  function startMove(f, m) { if (st.ev && f === st.a) st.ev[m] = true; f.mv = m; f.mt = 0; f.hitDone = false; AUDIO.swing && AUDIO.swing(); if (m === 'teide') { f.vy = -6.4; f.y -= 1; f.inv = 6; } if (m === 'jkick' && f.y >= GROUND) f.mv = 'kick'; }
+  function startMove(f, m) { if (st.ev && f === st.a) st.ev[m] = true; f.mv = m; f.mt = 0; f.wu = 0; f.hitDone = false; AUDIO.swing && AUDIO.swing(); if (m === 'teide') { f.vy = -6.4; f.y -= 1; f.inv = 6; } if (m === 'jkick' && f.y >= GROUND) f.mv = 'kick'; }
   function stepFighter(f, o, inp) {
     f.t++; if (f.inv > 0) f.inv--;
     if (f.ko) { f.vy += 0.35; f.y = Math.min(GROUND, f.y + f.vy); f.x += f.vx; f.vx *= 0.92; return; }
@@ -166,7 +168,8 @@ const FIGHT2D = (() => {
       if (!f.mv) startMove(f, m); else if (f.chainOk && CHAIN[f.mv] && CHAIN[f.mv].includes(m)) { f.chainOk = false; startMove(f, m); }
     }
     if (f.mv) {
-      const M = MOVES[f.mv]; f.mt++;
+      const M = MOVES[f.mv];
+      if (f.ai && f.mt < M.su) { f.wu = (f.wu || 0) + 1 / AI_WINDUP; if (f.wu >= 1) { f.wu -= 1; f.mt++; } } else f.mt++;
       if (M.proj && f.mt === M.su) { st.proj.push({ x: f.x + f.dir * 26, y: GROUND - 52, vx: f.dir * 3.6, owner: f, t: 0 }); voice('¡Gofio!'); }
       if (M.box && !f.hitDone && f.mt > M.su && f.mt <= M.su + M.ac) {
         const bx0 = f.x + f.dir * M.box[0], bx1 = f.x + f.dir * M.box[2]; const by0 = f.y + M.box[1], by1 = f.y + M.box[3];
