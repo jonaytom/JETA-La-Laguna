@@ -1,0 +1,129 @@
+1046|3250|G|Dice Gasolinera Las Chumbas
+-191|3510|G|Repesol
+1788|3630|G|Dice Gasolinera
+1858|1908|G|Estación La Higuerita Seca
+896|2553|V|C&Aquello
+2088|2004|S|Merca Mona
+1096|2764|R|Los Espejitos Rotos
+584|2542|F|Arepera 24
+636|2723|D|La Abuelita Cuca
+616|2676|S|La Ventita de Cristi y los Ángeles
+676|2882|S|Frutas y Verduritas
+-1219|2381|R|Como Decía Mi Madre
+-1215|2360|P|Farmacia Lcda. Laura
+-1144|2080|R|La Gran Paradita
+-1233|2558|C|Café San Gabrielito
+-1228|2820|M|Ferretería Los Baldíos Llenos
+-1332|3037|R|Mesón El Exquisitísimo
+-1008|1853|R|Tasca El Refugito
+-1454|3363|G|Tegases Los Baldíos
+-1548|3817|R|Restaurante Mocán Mocán
+1223|1595|C|Café La Habanita
+694|3147|M|Tenerife Bici Centro
+929|2695|R|La Perla Negrita
+924|2741|R|Wokcito
+1250|1467|S|Merca Mona
+679|3169|M|Ferretería San Bartolito
+1991|3633|M|Las Torres Torcidas
+1644|3473|M|Coches Jiundái
+1616|3459|M|Coches Mitsubichi
+1582|3442|M|Coches Asiento
+1555|3428|M|Coches Chevrolé
+1612|3334|M|Coches Mercedes del Barrio
+2053|3636|M|Rogape Recambios
+1466|3233|M|Coches Rove
+1420|3353|M|Santanita Motor
+1816|3599|M|Motos Susuki
+2087|3633|M|Toycasita
+2018|3633|M|Unión de Recambios Hernández y Primos
+1902|3980|M|Procalorcito
+946|3084|M|Confortable Muebles
+940|3108|V|Kiabichacho
+2181|2629|M|Cuatro Emoción
+2273|1996|K|Banco Bebeuvea
+1472|3885|C|Cafetería Filemón
+1177|3739|R|Restaurante La Recicladita
+834|2688|M|Multicines Tenerifito
+2159|3310|B|La Nasa Espacial
+2161|3305|F|Asador 4 de Abril
+2140|3302|M|M+C+Chacho
+812|1364|M|Sillones 8
+1527|2882|M|Bazar Amigo Chinito
+1452|1433|B|Tasca La Lloviznita
+1872|2000|R|Las Olivitas
+935|2671|F|Las Mil y Una Arepas
+1323|3176|M|Foto Mundo a Color
+2424|2626|M|Maderas Marrerito
+1356|3078|C|Café Verín Verano
+805|3020|F|Ikeña Restaurante
+926|2713|F|Mi Perrito Caliente
+1888|2808|F|Pancho's Bar & Grill
+2110|3961|R|Las Cancelitas
+2191|2912|C|Café El Tranvía Lento
+2126|2953|R|Los Pinitos
+798|3070|M|Ikeña
+1693|1182|E|Los Barberos del Pueblo
+1248|3323|S|Aldea
+1266|4006|M|Monto y Desmonto
+1366|1655|R|Finca Mac-Kaycito
+1395|3345|T|Saen Tecnología Canarionas
+1728|3787|S|Merca Mona
+831|2645|S|Alcampito
+1010|2884|M|Decatlón Chacho
+774|2891|M|Juguetes Somos
+978|2299|M|interMobilito
+1000|3456|S|Micro Mayorista
+879|2953|F|McGofio
+710|3281|M|Rey Merlón
+1137|3356|S|Lidlito
+986|2501|G|Repesol Las Chumbas
+1353|2766|R|Cantina Canteen
+2116|3317|M|Gobelino
+2106|3267|M|Top Carrera
+2079|3318|M|Electroauto Méndez y Méndez
+1890|2987|M|Ibonetito
+1860|2984|M|Taller Internacional de Tenerife
+1919|2990|M|Toldos Vistabellita
+2062|3051|S|Merca Mona
+2115|3094|G|Dice Gasolinera
+2064|3087|M|Butano Diacar Bombona
+2280|2938|S|Lidlito
+1711|1337|S|Súper Lagarto
+-1386|3424|S|La Huchita Los Baldíos
+1538|3995|P|Farmacia El Cardonalito
+1579|4013|M|Loterías El Gordo
+1558|3949|D|Panadería y Dulcería El Cardonalito
+1472|4003|B|Bar Azulito
+808|3046|M|Ikeña
+2441|388|G|Estación Océano Pacífico Tabares
+2098|1972|P|Quirófano Salud
+2290|3391|P|Hospital Universitario del Chacho (HUCH)
+2430|3357|P|Hospital de Ofrita
+1428|1629|P|Centro de Salud Finca Españita
+-189|269|P|Centro de Salud Lagunero
+-959|-113|P|Centro de Salud Geneto Neto
+124|-735|P|Centro de Salud Las Mercedillas
+-220|458|B|Club Diamante Tenerifeño
+49|344|M|Autoescuela Veloxísimo
+870|1369|Y|Centro de Escalada Tenerifito
+1123|2606|M|Pigmaleón Logopedia
+-1844|2774|B|Cerveza Chutnilla
+1666|1835|M|Arte en Todo y Nada
+1780|2184|M|AVS Chacho
+-1373|3926|M|Arrabio Metales Pesados
+2135|3151|M|Instituto Canario del Gofio de Calidad
+-1441|-673|P|NO+ CHOLAZOS Fisioterapia
+-825|982|L|Colegio Nuryanita
+-795|800|L|Instituto Nuryanita
+-30|503|B|Cervecería La Herradurita
+-404|-456|O|Centro Oftalmológico Veo Veo Perera
+-884|549|M|Lavadero Figueroa Brilla Brilla
+-522|-417|Y|Fisio Canarión
+166|-472|Y|Gimnasio Vianita
+359|-558|Y|Cinesis Gimnasio
+-463|-399|Y|Gimnasio Cuerpo Perfectito
+116|460|Y|Gimnasio Aguere Fuerte
+-605|-294|M|Clínica Veterinaria La Concepcioncita
+125|527|M|Veterinario La Manadita
+236|1050|M|Veterinaria Cruz de Pieda
+-196|-524|M|Veterinaria Morales Bellísimo

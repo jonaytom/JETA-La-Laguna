@@ -1,0 +1,551 @@
+147|670|G|Concha Gasolinera
+-889|152|G|BePe Gasolinera San Beni
+120|316|G|Tegases
+-348|660|G|Dice Gasolinera
+-927|-306|P|
+-1413|-175|S|Supercorre
+-1471|-192|S|Híper Lagartón
+-162|296|S|Súper Lagarto
+628|1259|S|Súper Lagarto
+-347|12|S|Merca Mona
+-846|-427|S|Merca Mona
+-544|-390|S|Su Majestad Súper
+-50|242|S|Su Majestad Súper
+-43|-596|S|Súper El Parquecito
+-654|-199|S|Covirao
+-132|-258|S|Díalprisa
+-71|212|S|Díalprisa Exprés
+-141|-206|S|Espárrago Market
+-1190|478|S|Espárrago Market
+-985|-367|S|La Acequia Seca
+282|873|S|Súper Cruz de Pieda
+55|-181|R|Bodegón Viejana
+65|-586|B|Cafetería Goyita
+-397|-368|P|
+29|-576|R|Salento XIV
+-35|-582|R|Delicias de Marrakechito
+-28|-581|D|Precocinados La Vaga
+-192|-695|C|Botánica Cafelito
+85|-569|M|El Burro Prensa
+-66|-583|Z|Aliancita Seguros
+-780|-77|B|Bar Mi Primo
+-172|453|F|Zumería Bachatita
+108|270|C|Café Válido Casi
+-157|-117|D|Granjero Pan
+-154|-116|D|Granjero Pan
+25|-576|M|Chimeneas Pa' Qué
+-120|-94|K|Banco Bebeuvea
+-149|-56|K|Banco Bebeuvea
+-1222|-288|K|Banco Bebeuvea
+-48|-48|R|Pizzería La Venecita
+-89|-75|K|Cajachacho
+-1017|-287|K|Cajachacho
+-212|-164|K|Cajachacho
+297|892|K|Cajachacho
+-419|-276|K|Cajachacho
+166|50|H|Hotel Laguna Nivariota
+278|-591|H|Patio Hostal Chiquito
+-148|-210|P|Farmacia Plaza de la Catedral
+-433|-68|T|STEP Informatiquería
+-146|-30|M|Ferretería Tornillo Loco
+-865|-45|P|
+-269|-203|P|
+-177|-142|K|Bancointerminable
+-1143|603|R|El Cortijo del Primo
+-1211|210|R|Il Capricho de Chano
+-1610|-118|R|La Granja de Pepito
+-1093|328|L|Librería La Villita
+1348|1114|E|Peluquería Diego o Nada
+-241|-171|R|Sibarita Gourmet
+-371|-266|K|Caja Mar de Nubes
+184|96|M|
+178|-42|P|
+-321|-220|H|Hotel Aguerito
+-358|-240|H|Hotel Aguerito
+-228|-161|L|Librería El Guirre
+-369|-200|R|Tasca El Obispillo
+-221|-170|V|Marcos y Espanto
+-304|-210|M|Ale-Guagua
+-326|-163|V|Ñaf Ñaf
+-297|-220|P|
+-281|173|P|
+94|-518|P|
+-1153|-325|P|
+-572|-286|P|
+449|784|P|
+409|839|R|Tasca Majamón Majamón
+-79|237|R|Tasca El Tónico
+-111|271|M|Bicicletas Güil
+-95|222|L|Carpetón
+-148|85|C|Café 8
+-469|-266|V|Almacenes Bececerra
+-259|-131|V|Almacenes Herradurillas
+-382|-195|V|Colores Unidos de Benitón
+-41|-56|V|Colores Unidos de Benitón
+-511|-273|C|Café Benidormido
+-577|-333|R|Bodegón Artillería Pesada
+-216|-84|V|Borrella Borrosa
+-520|-276|C|Caballo Blanco y Negro
+-244|-119|V|Tierra de Tablones
+-235|-98|D|Casa Ricardito
+-527|-276|R|Daikon Sushi
+-225|-107|V|Icono
+-98|-9|V|Confecciones Anisete
+-597|-307|C|La Crepería del Mencey
+-369|-189|V|Denú Denú
+-497|-349|E|Distinción Peluqueros Distinguidos
+-504|-271|R|Pizzería Da Cabina
+-568|-349|R|El Grill del Molinero
+-387|-257|R|El Rincón Tinerfeño-Extremeño
+-431|-283|V|El Rincón de Sashita
+-60|17|T|Electrónica El Faro Apagado
+-131|-20|F|Burbujas de Té
+-91|-5|M|Bañera y Cazuela
+-272|-140|V|Fausto Moda
+-295|-155|V|Adivina
+-54|22|Z|Inmobiliaria Ramitas
+-74|33|J|Joyita
+-567|-352|E|Peluquería Juanma
+-237|-114|V|Zapatos Juanillo
+-103|-94|V|Zapatos Juanillo
+-276|-129|C|La Cabaña del Tenique
+-211|-79|J|La Casa del Oro Parece
+-438|-287|F|Bocatas La Concepción
+-380|-252|D|Dulcería La Princesita
+-466|-303|R|La Venta de la Esquinita
+-90|78|R|Luna de Estambulito
+-116|-24|V|Mango Bajito
+-183|-106|V|Mango Bajito
+-150|-33|V|Lebis Vaqueros
+-75|6|M|Mercería La Trinidadita
+-68|12|T|Naranjita Móvil
+-541|-280|R|Océano Pacífico Atlántico
+-485|-342|C|Palmelita Dulce
+-77|42|V|Pecas y Zapatos
+-515|-274|M|Estanco Raquelita
+-157|-39|M|Juguetes Sabelotodo
+-158|-55|V|Muelle Campo
+-472|-255|J|Joyería Suárez de Oro
+-86|67|T|Trinidad Cacharros
+-357|-195|V|Troencito
+-392|-226|M|Variedades Jadeo
+-444|-290|Z|Viajes Mejor Viaje
+-571|-344|M|Vive Natura Pura
+-465|-321|C|Barraquito Stars
+-281|-145|V|Víctor Nuñecillo
+-128|-33|V|Calzados Güebe
+-48|27|M|Güebe Hogar
+-141|-43|V|Güebe Moda
+-111|-89|V|Güebe Moda
+-164|-122|E|Güebe Perfumes
+-92|84|P|
+-188|-92|P|
+-376|-192|C|
+-365|-199|C|
+-478|-258|R|La Reserva de la Herradura
+-497|-269|C|Café Bar Pedrito
+-267|-136|O|Óptica Herradores Ven Bien
+-401|-264|O|Óptica Rápida
+-722|-104|F|Aguacatito
+-402|-143|V|Almacenes Linaritos
+-512|-225|B|Bodegón Artillería Pesada
+-489|-210|D|Calderón de la Tarta
+-495|-202|M|Cuadros Torcidos
+-396|-206|V|Don Algodón de Azúcar
+-432|-228|D|El Aderno Dulce
+-404|-225|M|El Kilo y Medio
+-409|-214|V|El Ángel de la Moda
+-729|-108|B|Bar J.5
+-508|-233|M|Frutería Juan Papas
+-501|-246|R|La Cirila Cirilina
+-506|-236|M|Pescadería La Vieja
+-526|-235|M|La Tienda del Ángel Caído
+-693|-125|Z|Longitud Viajes
+-685|-124|F|Mi Perrito Caliente
+-743|-150|M|Señor Picoteo
+-197|73|M|Señor Picoteo
+-81|62|M|Señor Picoteo
+-199|-67|M|Señor Picoteo
+-384|-212|E|Perfumería Pracán
+-419|-167|R|Tasca Maquilita
+-520|-231|B|La Machina Bar
+-643|-136|M|Xiel Deco-cocina
+-602|-171|O|Óptica Candilejas
+-354|-276|M|Ortopedia Bambi Cojo
+-621|-310|M|Juguetes Baobabito
+-781|-360|B|Bar Quico y Paco
+-249|-248|C|Café Brasilito
+-673|-183|D|Panadería Claudita
+-414|-306|M|
+-427|-309|R|Restaurante Guerra y Paz
+-394|-299|M|Rebobinador Telas
+-278|-258|M|Estampitas del Cristo
+-641|-410|R|El Imperdible Perdido
+-180|-222|C|El Jardín de la Hada Madrina
+-618|-274|R|Tasca La Tertulia Eterna
+-689|-379|M|Estanco Julita y Punto
+-87|-186|M|Hombre Saltarín Discos
+-725|-139|M|Kiosko Libertad Condicional
+-630|-399|R|La Almazarita
+-74|-168|R|La Casita
+-629|-300|R|La Cueva del Perenquén
+-343|-281|M|La Tapicería Cómoda
+-318|-272|M|Los Calados Calados
+-645|-238|D|Dulces Luis López
+-376|-293|M|Mercería Nievecitas
+-711|-324|M|Muebles Claudio y Claudia
+-293|-264|V|Nantilla Moda
+-321|-273|L|Nymeria Cómics y Tebeos
+-312|-270|M|Música Paz Cerezo
+-276|-258|M|Penedo Música y Chándal
+-162|-214|L|Papelería Penedito
+-253|-238|E|Perfumería Irene Negro
+-163|-203|K|Banco Sancocho
+-911|-246|K|Banco Sancocho
+-757|-336|R|Estefanito's
+-676|-314|M|Taller de Bicis Moi Moi
+-658|-219|V|
+-616|-277|B|Tasca El Despachito
+-383|-296|M|La Molina Artesana
+-629|-314|R|
+-699|-333|E|
+143|67|M|Carnicería Bagerman
+174|-41|C|Churrería La Unión Hace la Fuerza
+39|-137|M|Floristería Campanilla
+141|78|C|Café Chinguarimillo
+141|85|C|La Churroteca Loca
+139|93|M|Frutería Paula y Pepa
+140|89|V|Pily's Moda
+142|73|V|Pily's Moda
+-24|-149|R|Rúcula & Granito
+159|-44|C|La Perla del Charco
+139|102|V|Uniformes Arttek
+127|170|R|El Rincón de Santo Dominguito
+130|150|M|Muebles Maherquita
+133|135|C|Café Toque
+124|184|R|Tasca Faracho y Fuerte
+-186|76|C|Canelita Fina
+-400|-9|B|Bar Bacalao
+-147|246|B|Bar Avenida Principal
+-152|261|B|Bar Los Menceyes
+-120|81|V|Calzados Danielita
+-346|31|O|Centro Óptico Aguere Ve
+-362|-47|E|Denahisa Peluquería
+-113|159|M|Deportes Delta Beta
+-220|458|B|Club Diamante Tenerifeño
+-228|478|C|El Carrito
+-206|417|D|El Horno de la Avenidita
+-775|-82|D|El Obrador Lagunerito
+-386|19|V|Espiralito
+-347|-89|M|Floristería Flor de Pascua
+-151|72|O|Oye Tú Audífonos
+-271|51|O|Oye Tú Audífonos
+-754|-155|Y|Gimnasio Laguna Sudor
+-210|433|F|Kebab Alí Babita
+-275|50|M|La Mercería de Elisita
+-132|93|V|La Zapatería del Zapato
+-282|32|V|Zapatos Las Palmeritas
+-168|312|M|Prensa Leire
+-766|-163|Z|MGS Seguros Seguros
+-368|24|V|Modas Rasita
+-359|-52|H|Pensión Padroncito
+-220|456|E|Peluquería Pa' Hombre
+-750|-153|F|Presto Pizza Presto
+-353|29|V|Punto Romita
+-327|35|V|Estradita
+-154|266|C|Café Tamadustito
+-213|440|F|Telepisa
+-394|17|V|Estilo Urbanita
+-761|-159|Z|Viajes Ramayito
+-209|429|C|Cómics y Café Caseza
+-167|67|O|
+12|408|B|Blues del Bar
+3|408|B|Pub Harina
+53|374|B|El Otro Bar
+331|944|K|Caja Guanche
+464|1170|P|
+-1328|1236|B|Bar Argelio y Amigos
+-523|-127|T|CanaryFono
+-39|-111|R|Restaurante El Huertito
+71|309|R|Tapaste y Te Fuiste
+-793|610|M|Taller Figueroíto
+-785|458|M|La Bodeguita
+-463|-399|Y|Gimnasio Cuerpo Perfectito
+-884|549|M|Lavadero Figueroa Brilla
+32|347|B|El Búho Trasnochador
+-126|-312|B|Tocuyo Bar
+-17|-91|Z|Abogados Fajardo y Leyes
+14|348|B|Limbo Pub
+26|347|R|Restaurante La Catedralita
+21|348|F|Hamburguesería Lili Lulú
+8|354|B|Pirata Brasileirito
+-475|-287|C|Venecita Café
+-458|123|D|La Molineta del Gofio
+-509|39|B|Tasca Los Molinillos
+-247|-174|O|Óptica Rieu Rieu
+-100|-197|C|Cafetería La Mundialita
+82|398|M|Vinilos La Fábrica
+-52|-69|T|Red Canaria Móvil
+-46|-137|E|Más Bellezón
+-31|-192|V|No Te Asustes
+-59|-51|C|La Venecita
+-36|-166|L|Librería El Pasito
+-44|-102|M|La Ocasión Perdida
+-65|-43|V|Maestrillo's
+-96|11|C|Café Hespérides Doradas
+-110|56|K|
+-509|-247|R|Arepera Punto Criollito
+-247|-253|R|Capricho Libanés de Chano
+-453|-296|M|Cactus Recuerdos
+-341|-342|B|La Toronja
+-300|-147|D|Dulce Pervertido
+-281|-133|E|La Tienda del Cuerpo
+-191|-297|R|Guachinchito
+-352|-337|B|Bulash Burguer Bar
+-253|-125|R|La Casa de Óscarcito
+-406|-302|R|Ca' Zonita
+-619|-338|R|La Cordera de Josué
+-78|-111|R|Guaydilito
+-244|-53|R|Taberna Osunilla
+-7|69|M|Videojuegos El Mando Roto
+-120|-384|H|B&B La Lagunita
+-81|2|V|
+-23|87|V|Berza
+37|355|C|Café Vórtice Vorágine
+-21|-44|D|Díaz Pastelería
+-522|-417|Y|Fisio Canarión
+-653|-129|T|Experto en Cacharros
+-169|-275|C|Café Molinillo
+-779|-169|E|
+71|-182|P|
+-834|-182|M|
+-839|-204|M|
+-532|-239|E|
+118|-111|R|L'Amuse Bouchito
+-16|-28|V|Zapatos Nene's
+-66|-74|K|Caja Ocho
+-141|-106|V|Di Palacete
+-201|-157|V|Vida Divertida
+-27|-35|B|Delicias de la Tierrita
+-135|-120|C|Café Plaza Catedral
+-128|-111|D|Cotufas y Cotufones
+-190|-139|K|Banco Sábado
+-191|-151|V|Fitenia Rebajas
+-203|-146|M|El Gato Volador
+-244|-185|L|Melbertito
+-295|-204|M|Uki Uki
+-357|-253|V|Zapatos Bambi Bambino
+-418|-313|R|Con Limón, Sal y Gofio
+-447|-311|M|Todo a 11 €
+-478|-271|R|Rincón Lagunerito
+-459|-249|J|Joyería Tú y Yo y Él
+-450|-243|J|Joyería J.M.J.J.
+-413|-231|T|Bocafón
+-94|-89|T|Bocafón
+-111|-198|B|Mite Matu Pub
+-63|-176|B|La Posadita
+-13|-37|D|Panadería Díaz y Noche
+-313|-215|E|Rickys Cosmética
+-411|-271|R|La Cencerra Sonora
+-447|-251|R|Mesón La Hijuelita
+-439|-236|C|Churrería Herradores 98
+-422|-225|O|Multigafas
+-431|-217|V|Secretillo
+-363|-185|V|Calcetonia
+-355|-180|V|Intimisísimo
+-304|-268|V|Modelitos
+-270|-246|B|Cervezas Beers
+-265|-234|R|Tasca La Carpintería Fina
+366|1057|Z|Seguros Realejos
+-4|-21|M|K'Lena III
+-150|-112|V|Desencuentro
+-215|-153|T|Plátano Móvil
+-285|-198|O|Óptica 3000
+-278|-207|J|Joyerías Adeley Joyas
+-222|-227|R|Rakaposhito
+-174|-209|V|Bellumi Moda
+-74|-181|B|La Tasca de los Patitos
+125|527|M|Veterinario La Manadita
+-119|-105|O|Óptica Cosmos Galaxia
+-330|-237|V|Carla G Moda
+-479|-280|V|Casa Canadiense
+-331|-276|E|La Coquetona
+-111|-100|V|Magentita
+-48|-161|Y|Fisioterapia 6
+-88|-85|E|Parfoyitos
+-260|-183|Z|Guirre Viajes
+-419|-212|E|Florimar Cosmética
+45|-153|M|La Cumbre Bicis
+-294|-263|V|Boutique Nerea Nereida
+-47|-169|C|Café AHUL
+251|1028|T|Inet Cacharros
+46|316|R|Pizza Manammè Mamma
+-223|-23|C|Café Makika
+-120|-268|C|Cafe Cafe Cafe
+-225|525|L|Librería Lemus Lemus
+-708|-77|M|Rastro Sión
+-574|-340|M|Rastro Solidario
+-369|-360|C|Café San Agustinillo
+-419|53|C|Casa del Cereal
+-568|-76|R|La Cocina de Ángeles y Demonios
+-214|-99|V|Borrella Borrosa
+-204|-94|L|Librería Nobelito
+-565|-284|C|La Despensita
+-266|-118|V|Estradi Variado
+-190|-83|M|Regalos Fernando
+-242|-103|J|Nui Mía Joyas
+-39|-155|R|El Jinete con Cabeza
+-19|-160|R|Los Olivitos
+-30|-181|E|
+-53|-161|L|Cómics Dagobito
+-1174|-228|M|Cerrajería Cercasa
+59|-308|R|La Hormiguita
+-356|-331|R|La Tederita
+88|-171|M|Tienda Picantona
+-265|-184|R|Bar Restaurante La Carrera
+-32|-583|R|Pingüino Vegetal
+-160|-214|C|La Cafeína Doble
+-173|-124|D|Dulcería La Lagunera
+-168|-182|C|Café Ateneo Lírico
+152|-45|C|Café Mi Consulta Médica
+-159|287|R|A Modo Tuyo
+49|-193|R|Génesis y Éxodo
+123|-359|R|Bejequito
+132|-379|R|Tasca 62
+359|-558|Y|Cinesis Gimnasio
+36|-127|D|Panadería Zulaycita
+145|434|D|Panadería Zulaycita
+185|-305|V|Molienda del Alma
+166|-472|Y|Gimnasio Vianita
+207|-338|M|Juguetería Lífer
+165|-175|H|La Laguna Gran Hotelazo
+85|-257|M|Discos Hey Chacho Hey Chacha
+200|-320|M|Copistería Misceláneo
+54|-146|D|Panadería Doradito
+161|-164|M|Vinoteca El Vinillo
+-257|-72|R|Patio Canarión
+36|271|M|Lavandería Lava Rapidito
+-126|318|M|La Colada de Heraclito
+48|332|R|Wasabi Wasabito
+74|344|Z|Viajes El Corte Canario
+65|330|E|Peluquería Torrianito
+9|349|D|Panadería Jonipán
+76|328|C|Mi Cafelito
+-28|349|F|Degusta y Disgusta
+147|449|H|Hostal Nido Aguere
+-8|346|B|Discoteca Sarao Sarao
+-399|-184|C|El Jardín Pub y Café
+-172|-167|M|Compra Compra
+-510|-358|C|Cafetería del Museo
+-38|122|D|Hermanos Díaz y Noche
+-199|506|R|Guachinche La Cueva de Casianito
+-327|-110|C|Somos del Norte Café
+-1199|-261|C|La Caseta de Madera Noble
+-1155|-206|M|Pinturas Juno
+-33|-52|M|Foto Mundo a Color
+-235|-281|F|Casa Peter Pan
+49|241|C|Café Sin Gluten Sin Nada
+-113|-266|R|Vegigante
+442|640|B|Bar Pedro Pedrito
+46|398|C|Café Zipi y Zapo
+116|460|Y|Gimnasio Aguere Fuerte
+21|284|R|Pizzería Mamamía
+72|403|E|L10 Peluquería
+-31|473|C|La Troya Café
+95|376|M|Cash Convenceres
+123|500|M|Nutrición Aguere
+-287|126|L|Librería Sothis
+-297|167|M|La Frutería de Luzmila
+60|515|R|Aladino Pizza Kebab
+-20|503|B|Granero Lagunero
+-49|503|C|Cafetería La Ezquinita
+-78|588|L|Librería Tinerfeña 3000
+-156|-225|M|Deportes Jomada
+83|-253|R|La Cocretería
+-876|-226|M|Maderas Santana
+-289|-263|M|Proyecto Queso de Flor
+-19|22|R|La Tasca de Arana
+-13|-708|M|Islas Bici Extrema
+-73|169|M|La Bohemia Gourmet
+72|-584|C|Café Goyita
+-48|-230|C|Casa Churro Churrete
+245|1037|R|El Lugar del Sultán
+-191|-152|M|Caos Regalos
+-238|-303|M|Costura San Agustín
+-56|-585|Z|Inmobiliaria Ochando
+-36|-635|R|Campo de Flores Pizzería
+-19|-693|C|El Tigre Café
+-321|-338|V|Dicky Morgancito
+-339|-356|C|Pan de Latita
+-317|-335|V|Carrera 56
+-283|-323|O|Óptica San Agustín Ve
+-39|-621|M|El Quiosco del Parque
+115|-1034|Y|Rocódromo La Vega
+-260|-197|M|Menaje Malbert
+-161|-272|M|Carnicería Fermín y Fermina
+-124|-367|C|Casa Micaelita
+-104|-445|H|Ratones de Biblioteca B&B
+-64|15|V|Planeta Vivito
+50|365|M|El Trastero Mágico de Chano
+-292|154|R|Umamita
+-1032|-25|F|Pollo Frito Kanario
+-182|-55|V|Zapatillas RKS
+-145|-131|M|DOCE Cupones
+-67|-36|M|Casa de las Especias
+-64|-49|J|Joyería Vanesita
+-184|-131|K|Banca Marcha
+-61|-92|M|Hammer Hoy
+-192|-63|M|Islita Complementos
+29|-72|E|Estudio 11
+-252|241|M|El Bosque Encontrado
+-216|44|R|Somos lo que Comemos Gofio
+-564|224|M|Teide Bici
+-137|218|F|McGofio
+80|362|F|Todo o Nada Burguer
+-155|-231|C|Ya Hala Café
+-129|-302|C|Bar Libertad
+158|-155|R|Malagueta
+-65|-236|C|La Pera Naranjera
+-118|-352|E|Barbería Calibre 23
+-203|-159|C|Locura Sana
+51|-140|M|Tinta Verde
+-205|774|C|Cafetería La Guagua Perdida
+-120|-41|R|La Bourmet Gourmet
+-296|103|M|Basalto Montaña
+-254|250|L|Entre Libritos
+-110|332|B|Bar La Tropicalita
+-120|353|L|Librería Lemus Lemus
+-130|328|D|Panadería Papá Modesto
+-313|24|M|Deportes Sprintercito
+69|211|R|Canela en Ramita
+-368|-304|D|La Heladería Fresquita
+-339|-183|V|Latitud 102
+-327|-159|R|Delhi Darbarcito
+-225|-91|M|Ikós
+73|-206|C|Café Soleado
+-30|57|M|Muy Mucho Mucho
+70|218|B|Bar El Tanquecito
+88|143|F|Mercadito de Comida
+-164|416|F|Hamburguesería Las Bombas
+7|-46|R|Mesón Mariluzita
+-136|337|M|Loterías El Gordo
+-274|-319|C|Café Urbano Requetetostado
+-300|-402|H|La Asomada del Perro
+193|-618|C|Churrería Miguelángel
+-81|-241|V|Crudito
+-115|-253|V|Bambalinas del Teatro
+-272|518|R|TuHamburguesa MiHamburguesa
+-348|-320|R|Lagunilla Fina
+-664|-311|R|La Tasca de Cristianito
+-87|-508|B|Hierbabuenita Bar
+1|375|D|aMordisquitos
+-723|-239|L|Librería El Refugito
+-1421|-963|Y|Shurite Karate
+-73|-23|D|Buen Paladar Chocolates
+-24|44|M|Bolsos Pelka
+-83|-83|V|Roquito Moda
+-38|34|V|Macequita
+-29|40|V|Cuerpos Moda
+-100|-93|F|Malvavisco
+1537|1197|R|Guachinche La Luchada
+-308|619|C|Bar El Cafelito
