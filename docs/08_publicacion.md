@@ -58,3 +58,9 @@ Claude), el **PARCHE** con arreglos pequeños sobre la misma entrega.
 - La sesión de GitHub la gestiona **Git Credential Manager** (viene con Git for Windows): la primera subida abre el
   navegador. Claude nunca maneja contraseñas ni tokens.
 - Si GitHub rechaza la subida («rejected»), el repositorio remoto no estaba vacío.
+
+## Documentación para leer en local
+
+`build.py` también genera `dist/Documentacion tecnica.html` (con `tools/docs2html.py`): el README, todos los
+`docs/*.md` y el historial de versiones en una sola página con índice, que funciona sin conexión. Se copia a
+`E:\Claude\GTA La Laguna\Documentación técnica.html` con cada versión.

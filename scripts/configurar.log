@@ -1,0 +1,55 @@
+﻿**********************
+Inicio de la transcripción de Windows PowerShell
+Hora de inicio: 20261002101520
+Nombre de usuario: JTMPC\Jonay
+Usuario RunAs: JTMPC\Jonay
+Nombre de la configuración: 
+Máquina: JTMPC (Microsoft Windows NT 10.0.26200.0)
+Aplicación host: powershell -NoProfile -ExecutionPolicy Bypass -File E:\Claude\GTA La Laguna\repo\scripts\configurar_github.ps1
+Id. de proceso: 15312
+PSVersion: 5.1.26100.9444
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.9444
+BuildVersion: 10.0.26100.9444
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Carpeta: E:\Claude\GTA La Laguna\repo
+Repositorio: https://github.com/jonaytom/JETA-La-Laguna.git
+Git: C:\Program Files\Git\cmd\git.exe (git version 2.56.0.windows.1)
+
+
+
+
+
+
+
+
+warning: in the working copy of 'docs/LICENSE_kenney.txt', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'scripts/github_url.txt', CRLF will be replaced by LF the next time Git touches it
+
+
+
+Subiendo a GitHub... Se abrirá una ventana o el navegador para que inicies sesión en GitHub:
+elige "Sign in with your browser" y autoriza "Git Credential Manager".
+info: please complete authentication in your browser...
+Enumerating objects: 103, done.
+Counting objects: 100% (103/103), done.
+Delta compression using up to 12 threads
+Compressing objects: 100% (99/99), done.
+Writing objects: 100% (103/103), 5.45 MiB | 2.21 MiB/s, done.
+Total 103 (delta 6), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (6/6), done.
+To https://github.com/jonaytom/JETA-La-Laguna.git
+ * [new branch]      main -> main
+ * [new tag]         v0.36.0 -> v0.36.0
+branch 'main' set up to track 'origin/main'.
+Tarea programada creada: publica automáticamente cada 10 minutos si hay versión nueva.
+
+Listo. Código subido a https://github.com/jonaytom/JETA-La-Laguna.git
+**********************
+Fin de la transcripción de Windows PowerShell
+Hora de finalización: 20261002101632
+**********************

@@ -45,3 +45,8 @@ os.makedirs('dist',exist_ok=True); shutil.copy('data/three.module.min.js','dist/
 open('dist/gta-la-laguna.html','w',encoding='utf-8').write(make('https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.min.js',True))
 open('dist/JETA La Laguna.html','w',encoding='utf-8').write(make('https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.min.js',False))
 print('ok', len(js))
+# documentación técnica en una sola página (dist/Documentacion tecnica.html)
+try:
+    import sys; sys.path.insert(0, 'tools'); import docs2html; docs2html.build()
+except Exception as e:
+    print('Aviso: no se pudo generar la documentación HTML:', e)
