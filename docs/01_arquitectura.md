@@ -52,8 +52,9 @@ entrada de todos los datos.
 | `09c_weapons.js` | Pistola: apuntado (IK del brazo), agarre en la mano, disparos, cambio puños/pistola. |
 | `09d_fight2d.js` | Motor de **pelea 2D pixel-art** (estilo arcade). |
 | `09e_cops.js` | Policías a pie que bajan del coche, persiguen y disparan. |
-| `10_audio.js` | `AUDIO`: efectos sintetizados (motor, derrapes, sirena, pasos, golpes…). |
+| `10_audio.js` | `AUDIO`: efectos sintetizados (motor, derrapes, sirena, golpes…). |
 | `10b_music.js` | `MUSIC`: radio hip hop procedural con letras y estribillo de misión. |
+| `10c_steps.js` | `STEPS`: muestras de pasos por suelo, reverberación y `footContacts` (sincronía con la animación). |
 | `11_hud.js` | HUD, minimapa, mapa grande, GPS (`GPS`, grafo peatonal `WALKG`), controles táctiles. |
 | `12_missions.js` | `DLG` (diálogos), `MISSIONS` (historia y secundarias), NPCs de la banda. |
 | `12b_food.js` | Tiendas de comida y salud. |

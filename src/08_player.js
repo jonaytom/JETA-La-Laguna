@@ -121,10 +121,14 @@ function updatePlayer(dt) {
   if (PLAYER.y <= gy) { PLAYER.y = gy; if (!PLAYER.onGround) { AUDIO.land(-PLAYER.vy); PLAYER.stepD = 0; } PLAYER.vy = 0; PLAYER.onGround = true; }
   const prevPhase = playerHuman.phase;
   animHuman(playerHuman, dt, PLAYER.speed, PLAYER.onGround ? 'ground' : 'air');
-  // footsteps by distance walked (one per stride half): walking ~0.75 m, running ~1.1 m
-  if (PLAYER.onGround && PLAYER.speed > 0.4 && !PLAYER.car) { PLAYER.stepD = (PLAYER.stepD || 0) + PLAYER.speed * dt; const run = PLAYER.speed > 4.2; const stride = run ? 1.15 : 0.75;
-    if (PLAYER.stepD >= stride) { PLAYER.stepD -= stride; const soft = !PLAYER.interior && !PLAYER.low && !onAnyPaved(PLAYER.x, PLAYER.z, 2.5) && !isHistoric(PLAYER.x, PLAYER.z); AUDIO.footstep(run, soft); } }
+  // ground surface + acoustic space (used by footsteps and landing)
+  PLAYER.surface = PLAYER.interior ? 'tile' : PLAYER.low ? 'hard' : !onAnyPaved(PLAYER.x, PLAYER.z, 2.5) ? 'soft' : isHistoric(PLAYER.x, PLAYER.z) ? 'stone' : 'hard';
+  STEPS.setSpace(PLAYER.interior ? 'room' : PLAYER.low && heightAt(PLAYER.x, PLAYER.z) - PLAYER.y > 3 ? 'tunnel' : '');
   playerHuman.root.position.set(PLAYER.x, PLAYER.y, PLAYER.z); playerHuman.root.rotation.y = PLAYER.h;
+  // footsteps synced to the real foot contacts of the animation (fallback: by distance walked)
+  const moving = PLAYER.onGround && PLAYER.speed > 0.4 && !PLAYER.car; const gait = PLAYER.speed > 4.2 ? 'run' : 'walk';
+  if (playerHuman.skinned) { footContacts(playerHuman, dt, (sd) => { AUDIO.footstep(gait === 'run', false, PLAYER.surface, PLAYER.speed > 6 ? 1.25 : PLAYER.speed < 2.5 ? 0.8 : 1); if (window.__STEPLOG) __STEPLOG.push([performance.now(), sd]); }, moving && PLAYER.down <= 0); }
+  else if (moving) { PLAYER.stepD = (PLAYER.stepD || 0) + PLAYER.speed * dt; const stride = gait === 'run' ? 1.15 : 0.75; if (PLAYER.stepD >= stride) { PLAYER.stepD -= stride; AUDIO.footstep(gait === 'run', false, PLAYER.surface); } }
 }
 function knockPlayer(c) {
   if (PLAYER.down > 0) return; PLAYER.down = 2.2; PLAYER.health -= clamp(c.speed * 2.2, 8, 60); AUDIO.crash(8); CAM.shake = 0.6;

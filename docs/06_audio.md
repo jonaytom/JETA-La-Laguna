@@ -11,8 +11,27 @@ Todo el sonido se **sintetiza en tiempo real** con Web Audio: no hay archivos de
   ambiente urbano y pájaros de día.
 - Utilidades: `burst(dur, frec, vol, tipo)` (ruido filtrado con envolvente) y `tone(frec, dur, vol, forma, retraso)`.
 - Efectos: `crash`, `thud`, `horn`, `door`, `shot`, `clink`, `cash`, `pickup`, `fail`, `wanted`, `bell`, `swing`,
-  `mumble` (murmullo de voz), **`footstep(correr, blando)`** (tacón + golpe sordo o crujido), **`jump`**
-  (barrido de aire + gruñido) y **`land(velocidad)`**.
+  `mumble` (murmullo de voz), **`footstep(correr, blando, suelo, volumen)`**, **`jump`** (barrido de aire +
+  gruñido) y **`land(velocidad)`** (golpe sordo + los dos pies).
+
+## Pasos (`10c_steps.js`, objeto `STEPS` y función `footContacts`)
+
+- **Muestras pre-generadas** al iniciar el audio (60 `AudioBuffer`): 5 suelos × 2 ritmos × 6 variantes.
+  - Cada paso son **dos impactos**: talón y, 75–105 ms después, la punta (al correr casi juntos y más fuertes).
+  - Cada impacto = **modos resonantes amortiguados** (suela + suelo), un **clic** de ruido filtrado y
+    **arenilla** (micro-clics); además un **roce** de suela.
+  - Suelos: `hard` (asfalto/acera), `stone` (adoquín y losa del casco histórico), `tile` (interiores),
+    `soft` (césped/tierra: golpe sordo + crujido largo), `metal` (chapa).
+- `STEPS.play(suelo, 'walk'|'run', volumen)`: elige una variante distinta a la anterior, varía tono (±6 %) y
+  volumen y alterna un poco izquierda/derecha.
+- **Acústica**: `STEPS.setSpace('' | 'tunnel' | 'room' | 'park')` manda parte del sonido a una reverberación
+  (respuesta al impulso generada): túnel/parking cubierto 1,6 s, interior 0,45 s.
+- **Sincronía con la animación** (`footContacts(H, dt, cb, activo)`): cada fotograma mide la altura de cada
+  tobillo (`foot_l`, `foot_r`) respecto al personaje, con mínimo y máximo adaptativos. El paso suena cuando el
+  pie que cae **frena en seco** en la mitad baja de su recorrido (apoyo); se rearma al levantarlo de nuevo, con
+  0,22 s de margen. Funciona con cualquier clip (andar, trotar, esprintar) y velocidad de reproducción.
+- El jugador elige el suelo en `08_player.js` (`PLAYER.surface`). Si el personaje no tiene esqueleto se usa la
+  distancia recorrida (0,75 m andando, 1,15 m corriendo).
 
 ## Radio (`10b_music.js`, objeto `MUSIC`)
 

@@ -33,4 +33,5 @@ que el cambio no obligue a tocar la lógica del juego.
 | **Interfaz** | HTML/CSS, fuentes Google | `template.html` | Libre; los IDs de los elementos los usa el código. |
 | **Logotipo / icono** | SVG provisional (atardecer, Teide y «J») | `assets/logo/`, incrustado en `template.html` | PNG 64 y 180 px. |
 | **Efectos de sonido** | Sintetizados | `10_audio.js` | Sustituir el cuerpo de cada método (`footstep`, `shot`, `crash`…) por la reproducción de un `AudioBuffer`; los puntos de llamada no cambian. |
+| **Pasos** | Muestras sintetizadas al iniciar (5 suelos × andar/correr × 6 variantes) | `10c_steps.js` (`bank`) | Sustituir el contenido de `bank[suelo][ritmo]` por grabaciones (varias por suelo, mono, ~0,25 s, el impacto al principio del archivo). La sincronía y la reverberación siguen igual. |
 | **Música y voces** | Hip hop procedural + voz del sistema | `10b_music.js` | `MUSIC` puede reproducir pistas grabadas por emisora manteniendo `update`, `next`, `jingle`. |

@@ -26,7 +26,8 @@
 - Andar 2,4 m/s aprox., correr con `Shift`, salto con velocidad inicial 5,3 m/s y gravedad 16 m/s².
 - Suelo: interior (planta del interior), bajo tierra (`lowAt`), tablero de puente (`deckAt`) o terreno.
   Bajo tierra no se puede atravesar la pared hacia la superficie y se respetan los obstáculos de parking.
-- **Pasos**: un sonido cada 0,75 m andando / 1,15 m corriendo; blando en césped y tierra, duro en calle y casco.
+- **Pasos**: suenan en el apoyo real de cada pie de la animación (`footContacts`), con el sonido del suelo que pisa
+  (asfalto, adoquín del casco, baldosa, césped/tierra) y eco en túneles e interiores. Ver `06_audio.md`.
 - `E` usa puertas y tiendas (prefiere la comida si está más cerca que la salida), `F` entra/sale de coches,
   `H` claxon, `R` endereza el coche.
 

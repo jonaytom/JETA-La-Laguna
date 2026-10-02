@@ -3,6 +3,13 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.37.0 — 2026-10-02 — Pasos sincronizados y con mejor sonido
+- Los pasos suenan justo cuando el pie toca el suelo: se detecta el apoyo real de cada pie en la animación (andar, trotar, esprintar).
+- Sonido nuevo: talón + punta, con resonancias de suela y suelo, arenilla y roce; 6 variantes por suelo para que no se repita.
+- Suelos distintos: asfalto, adoquín/losa del casco, baldosa en interiores, césped/tierra y chapa.
+- Eco en túneles y parkings, y algo de sala en interiores. El aterrizaje de un salto usa los dos pies.
+- Documentación técnica en una sola página para leer en local (`Documentación técnica.html`).
+
 ## 0.36.0 — 2026-10-02 — Guardar y cargar partida, repositorio y documentación
 - Guardado y carga de partida: 3 ranuras manuales + automática (al superar misión, cada 3 min y al cerrar), exportar/importar `.json`.
 - Repositorio git con el código fuente, los datos, las pruebas y la documentación técnica (`docs/`).
