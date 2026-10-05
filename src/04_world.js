@@ -152,7 +152,7 @@ const TCUT_U = { tex: { value: TCUT_TEX }, n: { value: 0 } };
 const CG = { s: 32, x0: WORLD.x0 - 64, z0: WORLD.z0 - 64 }; CG.nx = Math.ceil((WORLD.x1 - WORLD.x0 + 128) / CG.s); CG.nz = Math.ceil((WORLD.z1 - WORLD.z0 + 128) / CG.s);
 const CG_DATA = new Uint8Array(CG.nx * CG.nz);
 const CG_TEX = new THREE.DataTexture(CG_DATA, CG.nx, CG.nz, THREE.RedFormat, THREE.UnsignedByteType); CG_TEX.magFilter = CG_TEX.minFilter = THREE.NearestFilter; CG_TEX.needsUpdate = true;
-function finalizeCuts() {
+function finalizeCuts() { TCUTS_READY = true;
   const n = Math.min(NCUT, TCUTS.length); let g = -1, last = null; const D = TCUT_DATA, R = (row, i) => (row * NCUT + i) * 4;
   for (let i = 0; i < n; i++) { const c = TCUTS[i]; D.set([c[0], c[1], c[2], c[3]], R(0, i)); D[R(1, i)] = c[4];
     if (c[5] !== last) { if (g + 1 >= NGRP) break; g++; last = c[5]; D.set([1e9, 1e9, -1e9, -1e9], R(2, g)); D.set([i, i, 0, 0], R(3, g)); }
@@ -561,6 +561,7 @@ function trenchPush(x, z, rad) {
 }
 const sameLevel = (y1, y2) => Math.abs(y1 - y2) < 2.6;
 // ground below the terrain surface (tunnels/cuttings) for something currently at height py
+let TCUTS_READY = false;
 function lowAt(x, z, py) {
   let best = null;
   for (const d of TUNNEL_DECKS) {
@@ -569,6 +570,7 @@ function lowAt(x, z, py) {
     const p = d.pts; for (let i = 0; i < p.length - 1; i++) { const a = p[i], b = p[i + 1]; const dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz || 1; let t = ((x - a[0]) * dx + (z - a[1]) * dz) / L2; if (!d.capped && ((t < -0.05 && i === 0) || (t > 1.05 && i === p.length - 2))) continue; t = clamp(t, 0, 1); // interior joints: round, so the outside of bends is covered
       const px = a[0] + dx * t, pz = a[1] + dz * t, dd = Math.hypot(x - px, z - pz); if (dd > d.w / 2) continue; const y = lerp(a[2], b[2], t); const g = heightAt(x, z);
       if (y > g - 0.2 || py > y + 2.9 || py < y - 2.5) continue;
+      if (g - y < 1.6 && !d.ceil && TCUTS_READY && !inCut(x, z, 0.3)) continue; // shallow end with no hole in the terrain: walk/drive on the ground (no sinking)
       const k = Math.abs(py - y), kb = best ? Math.abs(py - best.y) : 1e9;
       if (!best || k < kb - 0.3 || (k < kb + 0.3 && dd < best.d)) best = { y, px, pz, d: dd, hw: d.hw, covered: g - y > 3.4 || !!d.ceil, ceil: d.ceil }; }
   }

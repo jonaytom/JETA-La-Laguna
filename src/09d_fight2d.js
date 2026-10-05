@@ -2,7 +2,7 @@
 // The 3D view of the place where you are is captured, pixelated and posterized as the stage background; both fighters are
 // pixel-art sprites generated from their real clothes. Best of 3 rounds, punches, kicks, block, jump, crouch, chains & specials.
 const FIGHT2D = (() => {
-  const W = 320, H = 180, GROUND = 166, FPS = 60;
+  const W = 320, H = 180, GROUND = 166, FPS = 60; const SZ = 0.8; // fighters drawn (and hit boxes) at 80%
   let cv, cx, bg = null, running = false, st = null, raf = 0, last = 0, acc = 0, onEnd = null;
   const keys = new Set(), pressedK = new Set(); let FIGHTS_DONE = 0;
   // ---------------- pixel sprites ----------------
@@ -105,7 +105,7 @@ const FIGHT2D = (() => {
   const CHAIN = { jab: ['jab', 'cross', 'kick', 'gofio', 'teide'], cross: ['kick', 'round', 'gofio', 'teide'], kick: ['round', 'gofio', 'teide'], cpunch: ['cpunch', 'sweep', 'gofio'] };
   function mkFighter(o, x, dir) { return { name: o.name, spr: spritesFor(o.look, !!o.nose), x, y: GROUND, vx: 0, vy: 0, dir, hp: 100, shown: 100, st: 'idle', t: 0, mv: null, mt: 0, hitDone: false, stun: 0, crouch: false, block: false, wins: 0, ai: o.ai, buf: [], combo: 0, ko: false, inv: 0, chainOk: false, deal: (o.deal ?? 1) * (o.ai ? AI_DEAL : 1), recv: o.recv ?? 1 }; }
   // ---------------- input
-  function onKey(e, down) { if (!running) return; const k = e.code; if (['KeyA', 'KeyD', 'KeyW', 'KeyS', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyJ', 'KeyK', 'KeyL', 'KeyU', 'KeyI', 'Space', 'ShiftRight', 'ControlRight'].includes(k)) { e.preventDefault(); e.stopPropagation(); } if (down) { if (!keys.has(k)) pressedK.add(k); keys.add(k); } else keys.delete(k); }
+  function onKey(e, down, nested) { if (!running) return; if (!nested) for (const c of CONTROLS.alias(e.code)) onKey({ code: c, preventDefault() { }, stopPropagation() { } }, down, true); const k = e.code; if (['KeyA', 'KeyD', 'KeyW', 'KeyS', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyJ', 'KeyK', 'KeyL', 'KeyU', 'KeyI', 'Space', 'ShiftRight', 'ControlRight'].includes(k)) { e.preventDefault(); e.stopPropagation(); } if (down) { if (!keys.has(k)) pressedK.add(k); keys.add(k); } else keys.delete(k); }
   window.addEventListener('keydown', (e) => onKey(e, true), true); window.addEventListener('keyup', (e) => onKey(e, false), true);
   // mouse: left = punch, right = kick (and no context menu while fighting)
   const vk = (k, down) => { if (down) { if (!keys.has(k)) pressedK.add(k); keys.add(k); } else keys.delete(k); };
@@ -123,14 +123,11 @@ const FIGHT2D = (() => {
     const fwd = f.dir > 0 ? r : l, back = f.dir > 0 ? l : r;
     // numpad notation relative to facing, for specials: 2 down, 3 down-forward, 6 forward, 4 back
     const n = d ? (fwd ? 3 : back ? 1 : 2) : upDir ? 8 : (fwd ? 6 : back ? 4 : 5); if (!f.buf.length || f.buf[f.buf.length - 1][0] !== n) f.buf.push([n, st.frame]); while (f.buf.length && st.frame - f.buf[0][1] > 30) f.buf.shift();
-    // block = a quick tap back (or block button) just before the enemy's hit: opens a short guard window; holding back just walks back
-    const bk = f.dir > 0 ? hit('KeyA', 'ArrowLeft', 'KeyL') : hit('KeyD', 'ArrowRight', 'KeyL'); if (f.parryCd > 0) f.parryCd--; if (f.parryT > 0) { f.parryT--; if (f.parryT === 0) f.parryCd = 10; }
-    if ((bk || hit('KeyL')) && f.parryCd <= 0 && f.parryT <= 0) f.parryT = 14;
-    return { fwd, back, guard: back || held('KeyL'), up: u, down: d, P: hit('KeyJ', 'KeyU', 'ShiftRight'), K: hit('KeyK', 'KeyI', 'ControlRight'), B: held('KeyL'), seq: f.buf.map((q) => q[0]).join('') };
+    return { fwd, back, guard: back, up: u, down: d, P: hit('KeyJ', 'KeyU', 'ShiftRight'), K: hit('KeyK', 'KeyI', 'ControlRight'), B: held('KeyL'), seq: f.buf.map((q) => q[0]).join('') };
   }
   // ---------------- AI
   function aiInput(f, o) {
-    const a = f.ai; const dist = Math.abs(o.x - f.x); const inp = { fwd: false, back: false, up: false, down: false, P: false, K: false, B: false, seq: '' };
+    const a = f.ai; const dist = Math.abs(o.x - f.x) / SZ; /* AI thinks in unscaled sprite distances */ const inp = { fwd: false, back: false, up: false, down: false, P: false, K: false, B: false, seq: '' };
     a.t -= 1; const threat = o.mv && o.mt < (MOVES[o.mv].su + MOVES[o.mv].ac + 2) && dist < 70;
     if (threat && Math.random() < a.lv * 0.12 + 0.02) a.blockT = 18 + Math.random() * 12;
     if (st.proj.some((p) => p.owner !== f && Math.abs(p.x - f.x) < 90) && Math.random() < a.lv * 0.1) { if (Math.random() < 0.5) a.blockT = 25; else inp.up = true; }
@@ -151,11 +148,14 @@ const FIGHT2D = (() => {
     f.t++; if (f.inv > 0) f.inv--;
     if (f.ko) { f.vy += 0.35; f.y = Math.min(GROUND, f.y + f.vy); f.x += f.vx; f.vx *= 0.92; return; }
     const air = f.y < GROUND;
-    if (f.stun > 0) { f.stun--; f.x += f.vx; f.vx *= 0.85; if (air) { f.vy += 0.32; f.y = Math.min(GROUND, f.y + f.vy); } if (f.stun <= 0) f.st = 'idle'; return; }
+    if (f.stun > 0) { f.stun--; f.x += f.vx; f.vx *= 0.85; if (air) { f.vy += 0.32; f.y = Math.min(GROUND, f.y + f.vy); } if (f.stun <= 0) { f.st = 'idle'; f.bstun = false; } return; }
     // facing
     if (!air && !f.mv) f.dir = o.x > f.x ? 1 : -1;
     f.crouch = !air && inp.down && !(f.mv && !MOVES[f.mv].crouch);
-    f.block = !air && !f.mv && (inp.guard !== undefined ? inp.guard : (inp.B || inp.back)) && Math.abs(o.x - f.x) < 110;
+    // Street Fighter style: holding back walks back, and only turns into a guard while the rival is actually attacking
+    // (a move in its startup/active frames, or a ball of gofio flying towards you). The block button always guards.
+    const threat = (o.mv && MOVES[o.mv].box && o.mt <= MOVES[o.mv].su * (o.ai ? AI_WINDUP : 1) + MOVES[o.mv].ac + 3 && Math.abs(o.x - f.x) < 120) || st.proj.some((p) => p.owner === o && Math.sign(f.x - p.x) === Math.sign(p.vx) && Math.abs(p.x - f.x) < 110);
+    f.block = !air && !f.mv && (inp.B || ((inp.guard !== undefined ? inp.guard : inp.back) && threat));
     // attacks (with chain cancels on hit)
     const want = inp.P ? 'P' : inp.K ? 'K' : null;
     if (want) {
@@ -170,10 +170,10 @@ const FIGHT2D = (() => {
     if (f.mv) {
       const M = MOVES[f.mv];
       if (f.ai && f.mt < M.su) { f.wu = (f.wu || 0) + 1 / AI_WINDUP; if (f.wu >= 1) { f.wu -= 1; f.mt++; } } else f.mt++;
-      if (M.proj && f.mt === M.su) { st.proj.push({ x: f.x + f.dir * 26, y: GROUND - 52, vx: f.dir * 3.6, owner: f, t: 0 }); voice('¡Gofio!'); }
+      if (M.proj && f.mt === M.su) { st.proj.push({ x: f.x + f.dir * 26 * SZ, y: GROUND - 52 * SZ, vx: f.dir * 3.6, owner: f, t: 0 }); voice('¡Gofio!'); }
       if (M.box && !f.hitDone && f.mt > M.su && f.mt <= M.su + M.ac) {
-        const bx0 = f.x + f.dir * M.box[0], bx1 = f.x + f.dir * M.box[2]; const by0 = f.y + M.box[1], by1 = f.y + M.box[3];
-        const hx0 = o.x - 11, hx1 = o.x + 11, hy0 = o.y - (o.crouch ? 50 : o.ko ? 20 : 74), hy1 = o.y;
+        const bx0 = f.x + f.dir * M.box[0] * SZ, bx1 = f.x + f.dir * M.box[2] * SZ; const by0 = f.y + M.box[1] * SZ, by1 = f.y + M.box[3] * SZ;
+        const hx0 = o.x - 11 * SZ, hx1 = o.x + 11 * SZ, hy0 = o.y - (o.crouch ? 50 : o.ko ? 20 : 74) * SZ, hy1 = o.y;
         if (Math.max(bx0, bx1) > hx0 && Math.min(bx0, bx1) < hx1 && by1 > hy0 && by0 < hy1 && !o.ko && o.inv <= 0) { f.hitDone = true; land(f, o, M); }
       }
       if (M.rise) { f.vy += 0.3; f.y += f.vy; f.x += f.dir * 0.8; if (f.y >= GROUND) { f.y = GROUND; f.vy = 0; } }
@@ -188,10 +188,10 @@ const FIGHT2D = (() => {
   }
   function land(f, o, M, proj) {
     const dir = proj ? Math.sign(proj.vx) : f.dir;
-    const blocked = o.block && !o.mv && o.stun <= 0 && (M.lv === 'low' ? o.crouch : M.lv === 'over' ? !o.crouch : true);
+    const blocked = o.block && !o.mv && (o.stun <= 0 || o.bstun) && (M.lv === 'low' ? o.crouch : M.lv === 'over' ? !o.crouch : true);
     if (blocked && st.ev && o === st.a) st.ev.blocked = true;
-    if (blocked) { if (o.parryT !== undefined) o.parryT = Math.max(o.parryT, 12); o.hp -= proj ? 1 : (MOVES.jab === M || MOVES.cross === M || MOVES.cpunch === M ? 1 : 2); o.stun = Math.round((M.hs || 16) * 0.5); o.vx = dir * 2.2; spark(o.x - dir * 8, o.y - 50, '#9fd7ff'); AUDIO.thud && AUDIO.thud(30); f.combo = 0; return; }
-    o.hp -= Math.round((M.dmg || 10) * f.deal * o.recv); o.stun = M.hs || 18; o.mv = null; o.vx = dir * (M.kd ? 3.2 : 2.0); if (M.kd) { o.vy = -3.5; o.y -= 1; }
+    if (blocked) { o.bstun = true; o.hp -= proj ? 1 : (MOVES.jab === M || MOVES.cross === M || MOVES.cpunch === M ? 1 : 2); o.stun = Math.round((M.hs || 16) * 0.5); o.vx = dir * 2.2; spark(o.x - dir * 8, o.y - 50, '#9fd7ff'); AUDIO.thud && AUDIO.thud(30); f.combo = 0; return; }
+    o.bstun = false; o.block = false; o.hp -= Math.round((M.dmg || 10) * f.deal * o.recv); o.stun = M.hs || 18; o.mv = null; o.vx = dir * (M.kd ? 3.2 : 2.0); if (M.kd) { o.vy = -3.5; o.y -= 1; }
     f.combo = (o.stunPrev > 0 ? f.combo : 0) + 1; if (st.ev && f === st.a && f.combo >= 3) st.ev.combo = true; o.stunPrev = o.stun; f.chainOk = true; st.comboT = 60; st.comboBy = f;
     spark(o.x - dir * 6, o.y - (M.lv === 'low' ? 12 : M.lv === 'mid' ? 40 : 58), '#ffe35a'); AUDIO.thud && AUDIO.thud(4); st.shake = 6;
     if (f.combo >= 3 && f.combo % 1 === 0) voice(f.combo >= 5 ? 'Combo brutal' : 'Combo');
@@ -220,8 +220,8 @@ const FIGHT2D = (() => {
     // fighters
     for (const f of [st.a, st.b]) {
       const s = f.spr[poseOf(f)]; const w = s.width, h = s.height;
-      cx.fillStyle = 'rgba(0,0,0,0.35)'; cx.fillRect(Math.round(f.x - 14), GROUND - 2, 28, 4);
-      cx.save(); cx.translate(Math.round(f.x), Math.round(f.y)); if (f.dir < 0) cx.scale(-1, 1);
+      cx.fillStyle = 'rgba(0,0,0,0.35)'; cx.fillRect(Math.round(f.x - 11), GROUND - 2, 22, 4);
+      cx.save(); cx.translate(Math.round(f.x), Math.round(f.y)); cx.scale(f.dir < 0 ? -SZ : SZ, SZ);
       if (f.stun > 0 && !f.block && (st.frame % 4 < 2)) cx.globalAlpha = 0.85;
       cx.drawImage(s, -Math.round(w / 2), -h + 2); cx.restore();
     }
@@ -239,17 +239,18 @@ const FIGHT2D = (() => {
     if (st.comboT > 0 && st.comboBy && st.comboBy.combo >= 2) txt(st.comboBy.combo + ' HITS', st.comboBy === st.a ? 60 : W - 60, 52, 10, '#ff8a3d');
     if (st.banner) txt(st.banner, W / 2, 68, st.bannerSize || 16, st.bannerCol || '#fff');
     if (st.phase === 'ready') { drawControls(); return; }
-    if (st.tip) { cx.fillStyle = 'rgba(0,0,0,0.6)'; cx.fillRect(20, H - 34, W - 40, 22); txt(st.tip, W / 2, H - 28, 7, '#fff', 'center', false); }
+    if (st.tip) { cx.font = '6px "Press Start 2P", monospace'; const words = st.tip.split(' '); const lines = ['']; for (const w of words) { const t = (lines[lines.length - 1] + ' ' + w).trim(); if (cx.measureText(t).width > W - 36 && lines[lines.length - 1]) lines.push(w); else lines[lines.length - 1] = t; }
+      const lh = 9, bh = lines.length * lh + 8; cx.fillStyle = 'rgba(0,0,0,0.65)'; cx.fillRect(10, H - 10 - bh, W - 20, bh); lines.forEach((l, i) => txt(l, W / 2, H - 6 - bh + i * lh, 6, '#fff', 'center', false)); }
   }
   // first fights: a plain controls card, waits until you press Space (or tap) to start
   function drawControls() {
     const touch = document.body.classList.contains('touchmode'); const bx = 22, by = 46, bw = W - 44, bh = 112;
     cx.fillStyle = 'rgba(0,0,0,0.78)'; cx.fillRect(bx, by, bw, bh); cx.fillStyle = '#ffd400'; cx.fillRect(bx, by, bw, 2); cx.fillRect(bx, by + bh - 2, bw, 2);
     txt('CONTROLES', W / 2, by + 8, 10, '#ffd400');
-    const rows = touch ? [['PUÑETAZO', 'botón P', '#ffd400'], ['PATADA', 'botón K', '#ff5252'], ['SALTAR', 'botón ▲', '#5ec8ff']]
-      : [['PUÑETAZO', 'Clic izq / J / Shift der', '#ffd400'], ['PATADA', 'Clic der / K / Ctrl der', '#ff5252'], ['SALTAR', 'Espacio', '#5ec8ff']];
-    rows.forEach(([a, b, c], i) => { const y = by + 28 + i * 15; txt(a, bx + 14, y, 7, c, 'left'); txt(b, bx + bw - 14, y, 7, '#fff', 'right'); });
-    if (!touch) txt('MANDO: X puño · A patada · Y salto', W / 2, by + 75, 6, '#bbb');
+    const rows = touch ? [['PUÑO', 'P', '#ffd400'], ['PATADA', 'K', '#ff5252'], ['SALTO', '▲', '#5ec8ff'], ['CUBRIRSE', 'atrás', '#9fd7ff']]
+      : [['PUÑO', 'J · clic izq.', '#ffd400'], ['PATADA', 'K · clic dcho.', '#ff5252'], ['SALTO', 'Espacio', '#5ec8ff'], ['CUBRIRSE', 'atrás', '#9fd7ff']];
+    rows.forEach(([a, b, c], i) => { const y = by + 26 + i * 13; txt(a, bx + 14, y, 7, c, 'left'); txt(b, bx + bw - 14, y, 7, '#fff', 'right'); });
+    txt(touch ? 'Más en Opciones' : 'Más en Opciones › Controles', W / 2, by + 80, 6, '#bbb');
     if (st.frame % 50 < 34) txt(touch ? 'TOCA LA PANTALLA PARA EMPEZAR' : 'PULSA ESPACIO PARA EMPEZAR', W / 2, by + 92, 7, '#7fe08a');
   }
   window.addEventListener('pointerdown', (e) => { if (running && st && st.phase === 'ready' && e.pointerType === 'touch') { st.readyTap = true; e.preventDefault(); } }, true);
@@ -268,10 +269,10 @@ const FIGHT2D = (() => {
     if (live || st.phase === 'ko') { stepFighter(st.a, st.b, ia); stepFighter(st.b, st.a, ib); }
     if (st.tut && st.phase !== 'ready') st.tut.check(st);
     // push apart, stage bounds
-    const dx = st.b.x - st.a.x; if (Math.abs(dx) < 24 && Math.abs(st.a.y - st.b.y) < 40) { const p = (24 - Math.abs(dx)) / 2 * Math.sign(dx || 1); st.a.x -= p; st.b.x += p; }
+    const dx = st.b.x - st.a.x; if (Math.abs(dx) < 24 * SZ && Math.abs(st.a.y - st.b.y) < 40) { const p = (24 * SZ - Math.abs(dx)) / 2 * Math.sign(dx || 1); st.a.x -= p; st.b.x += p; }
     for (const f of [st.a, st.b]) f.x = clamp(f.x, 18, W - 18);
     // projectiles
-    for (const p of st.proj) { p.x += p.vx; p.t++; const o = p.owner === st.a ? st.b : st.a; if (!o.ko && Math.abs(p.x - o.x) < 13 && p.y > o.y - (o.crouch ? 44 : 74) && o.inv <= 0) { p.dead = true; land(p.owner, o, { dmg: 15, hs: 22, lv: 'mid' }, p); } if (p.x < -10 || p.x > W + 10) p.dead = true; }
+    for (const p of st.proj) { p.x += p.vx; p.t++; const o = p.owner === st.a ? st.b : st.a; if (!o.ko && Math.abs(p.x - o.x) < 13 * SZ && p.y > o.y - (o.crouch ? 44 : 74) * SZ && o.inv <= 0) { p.dead = true; land(p.owner, o, { dmg: 15, hs: 22, lv: 'mid' }, p); } if (p.x < -10 || p.x > W + 10) p.dead = true; }
     st.proj = st.proj.filter((p) => !p.dead);
     // round end
     if (st.phase === 'fight' && (st.a.ko || st.b.ko)) { st.phase = 'ko'; st.pt = 0; const w = st.a.ko ? st.b : st.a; w.wins++; st.winner = w; st.banner = 'K.O.'; st.bannerCol = '#ff5252'; st.bannerSize = 24; }
@@ -281,7 +282,7 @@ const FIGHT2D = (() => {
     pressedK.clear();
   }
   function pressedFrame() { }
-  function resetRound() { for (const [f, x, d] of [[st.a, 95, 1], [st.b, W - 95, -1]]) Object.assign(f, { x, y: GROUND, vx: 0, vy: 0, dir: d, hp: 100, shown: 100, mv: null, stun: 0, ko: false, combo: 0, buf: [] }); st.proj = []; st.phase = 'intro'; st.pt = 0; st.bannerSize = 16; }
+  function resetRound() { for (const [f, x, d] of [[st.a, 62, 1], [st.b, W - 62, -1]]) Object.assign(f, { x, y: GROUND, vx: 0, vy: 0, dir: d, hp: 100, shown: 100, mv: null, stun: 0, ko: false, combo: 0, buf: [] }); st.proj = []; st.phase = 'intro'; st.pt = 0; st.bannerSize = 16; }
   function loop(now) {
     if (!running) return; raf = requestAnimationFrame(loop); now = performance.now(); const dt = clamp((now - last) / 1000, 0, 0.1); last = now;
     if (st.trans) { st.trans.t += dt; drawTransition(); return; }
@@ -329,7 +330,7 @@ const FIGHT2D = (() => {
     const from = grab3D();
     bg = captureStage(opt.ax, opt.az, opt.bx, opt.bz, opt.hide || []);
     let nf = 0; try { nf = +localStorage.getItem('gtall_fights') || 0; localStorage.setItem('gtall_fights', nf + 1); } catch (e) { nf = FIGHTS_DONE; } FIGHTS_DONE++;
-    st = { a: mkFighter(opt.a, 95, 1), b: mkFighter(opt.b, W - 95, -1), round: 1, phase: nf < 3 || opt.showControls ? 'ready' : 'intro', pt: 0, frame: 0, proj: [], fx: [], stake: opt.stake || 0, tut: opt.tutorial || null, single: opt.single !== false, ev: {}, comboT: 0, shake: 0, slow: 0, banner: '' };
+    st = { a: mkFighter(opt.a, 62, 1), b: mkFighter(opt.b, W - 62, -1), round: 1, phase: nf < 3 || opt.showControls ? 'ready' : 'intro', pt: 0, frame: 0, proj: [], fx: [], stake: opt.stake || 0, tut: opt.tutorial || null, single: opt.single !== false, ev: {}, comboT: 0, shake: 0, slow: 0, banner: '' };
     st.trans = { kind: 'in', t: 0, dur: 0.9, from, tmp: mkCanvas(8, 8), done: null };
     keys.clear(); pressedK.clear(); document.exitPointerLock?.();
     GAME.state = 'fight2d'; document.body.classList.add('fighting'); cv.style.display = 'block'; cv.style.opacity = 0; $('fightPad').style.display = document.body.classList.contains('touchmode') ? 'block' : 'none';

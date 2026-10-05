@@ -97,6 +97,8 @@ calzada debajo). **No pone barandilla** donde caería dentro de otra calzada al 
 - Plataformas transitables: `TUNNEL_DECKS` y `BRIDGE_DECKS`. `lowAt(x, z, y)` devuelve el suelo bajo tierra
   más próximo a la altura `y`; `deckAt` el tablero de puente. Coches y jugador los usan para saber dónde pisan.
   En los extremos poco profundos de una trinchera no hay sujeción lateral, para poder salir a la calle.
+  Si una plataforma queda a menos de 1,6 m bajo el terreno y allí no hay hueco (`inCut`), `lowAt` la ignora y se pisa
+  el terreno (evita hundirse). Auditoría: `tests/audit_hundimiento.py`.
 
 ## Edificios (`buildBuildings`)
 

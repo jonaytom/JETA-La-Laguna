@@ -1,8 +1,8 @@
 // ============ input, player, camera ============
 const KEYS = new Set(); const PRESSED = new Set();
 const INPUT = { mdx: 0, mdy: 0, wheel: 0, touch: { x: 0, y: 0, active: false, look: [0, 0] }, gp: null, lastMouse: 0 };
-window.addEventListener('keydown', (e) => { if (e.repeat) return; KEYS.add(e.code); PRESSED.add(e.code); if (['Space', 'ArrowUp', 'ArrowDown', 'Tab'].includes(e.code)) e.preventDefault(); });
-window.addEventListener('keyup', (e) => KEYS.delete(e.code));
+window.addEventListener('keydown', (e) => { if (e.repeat) return; KEYS.add(e.code); PRESSED.add(e.code); for (const c of CONTROLS.alias(e.code)) { KEYS.add(c); PRESSED.add(c); } if (['Space', 'ArrowUp', 'ArrowDown', 'Tab'].includes(e.code)) e.preventDefault(); });
+window.addEventListener('keyup', (e) => { KEYS.delete(e.code); for (const c of CONTROLS.alias(e.code)) KEYS.delete(c); });
 window.addEventListener('blur', () => KEYS.clear());
 document.addEventListener('mousemove', (e) => { if (document.pointerLockElement) { INPUT.mdx += e.movementX; INPUT.mdy += e.movementY; INPUT.lastMouse = performance.now(); } });
 window.addEventListener('wheel', (e) => { INPUT.wheel += Math.sign(e.deltaY); }, { passive: true });

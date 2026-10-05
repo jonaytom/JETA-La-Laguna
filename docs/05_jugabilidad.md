@@ -44,7 +44,9 @@
 - Al pegar a un peatón empieza una pelea en un canvas de 320×180 pixel-art: el fondo es una captura lateral de la
   escena 3D real posterizada con *dithering*; los luchadores se dibujan proceduralmente a partir de su `look`.
 - Controles: puñetazo = clic izq. / J / Shift dcho. (mando X); patada = clic dcho. / K / Ctrl dcho. (mando A);
-  saltar = Espacio (mando Y); W/↑ = «arriba» (no salta); agacharse = S/↓; **cubrirse = mantener atrás**.
+  saltar = Espacio (mando Y); W/↑ = «arriba» (no salta); agacharse = S/↓; **atrás = andar hacia atrás, y se cubre
+  solo mientras el rival ataca** (como Street Fighter); L = cubrirse siempre. Luchadores a escala 0,8 (`SZ`), salen a
+  62 px de cada borde.
 - Golpes: puñetazo 10 %, patada 20 %; bloqueados 1 % / 2 %. Combos encadenando golpes que conectan.
 - Especiales: **arriba, abajo + puñetazo** = Bola de gofio (proyectil); **arriba, abajo + patada** = Patada del Teide.
 - Las 3 primeras peleas muestran un cartel de controles y esperan a pulsar Espacio; luego «FIGHT!».
@@ -102,3 +104,9 @@ Desde el menú de inicio: vuelo libre (WASD, E/Q subir/bajar, Shift rápido), dr
 - `updateBorder()`: a menos de 50 m del borde aviso «Saliendo del mundo»; a menos de 12 m, teletransporte unos 100 m
   hacia dentro siguiendo el gradiente de `worldEdgeDist` y después a la calle a nivel más cercana que no esté en un
   edificio ni bajo tierra; en coche, orientado hacia dentro. Prueba: `tests/prueba_bordes.py`.
+
+## Controles configurables (`01b_controls.js`, `CONTROLS`)
+
+Lista de acciones con sus teclas de siempre y una tecla extra opcional (`localStorage` `jeta_controls`). Los
+manejadores de teclado (juego y pelea) traducen la tecla extra a la tecla original con `CONTROLS.alias()`, así el
+resto del código no cambia. Pantalla en menú principal y pausa (botón CONTROLES).

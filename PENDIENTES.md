@@ -27,10 +27,11 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       Ampliar el mapa OSM/relieve para incluirlo. Fotos en `docs/referencias/aeropuerto/`.
 - [ ] Repasar con las fotos del aeropuerto la zona ya hecha alrededor (San Benito, El Coromoto, autopista TF-5).
 
-- [ ] **Pelea 2D**: atrás debe **andar hacia atrás**; solo cubre si el rival está lanzando un golpe (como Street
-      Fighter). Luchadores un 20 % más pequeños y más separados al empezar (para especiales a distancia). Textos del
-      tutorial que se cortan: más cortos; los controles completos van a una pantalla de **configuración de controles**
-      nueva dentro del menú de ajustes.
+- [ ] **TF-13 / Cam. San Bartolomé de Geneto / Urbanización Guajara** (junto a la TF-5, Museo de la Ciencia y el
+      Cosmos): la zona está «fatal». Real: la TF-13 baja en trinchera con muros de piedra y pasa bajo la TF-5 por dos
+      túneles de bóveda que salen a una rotonda partida; vía de servicio «C. dos Autopista Parl.», Cam. San Bartolomé
+      de Geneto en curva, Urb. Guajara (chalets de tejado rojo), Plaza Drago de Antares, C. Lira / Hércules / Habaneras,
+      Cam. La Hornera con el Museo de la Ciencia y el IAC. Fotos en `docs/referencias/tf13_geneto/`.
 
 ## Pendientes anteriores
 
@@ -46,6 +47,8 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 
 ## Hecho
 
+- [x] v0.42.0 — Pelea tipo Street Fighter (atrás anda, cubre solo ante ataque), luchadores 20 % menores y más
+      separados, tutorial corto, pantalla de controles, menú al 75 %, terreno hundido arreglado en 42 zonas.
 - [x] v0.41.0 — Límites del mundo y zonas quitadas, ambiente sonoro, pasos suaves, pistola en el puño, entrada
       del Mercadona por Marqués de Celada, casas en Lucas Vega / Montaraz.
 - [x] v0.40.0 — Esquina de inicio (El Blanco) y C. Marqués de Celada: manzanas partidas en casas, edificio amarillo,

@@ -57,6 +57,7 @@ entrada de todos los datos.
 | `09e_cops.js` | Policías a pie que bajan del coche, persiguen y disparan. |
 | `10_audio.js` | `AUDIO`: efectos sintetizados (motor, derrapes, sirena, golpes…). |
 | `10b_music.js` | `MUSIC`: radio hip hop procedural con letras y estribillo de misión. |
+| `01b_controls.js` | `CONTROLS`: teclas configurables y su pantalla. |
 | `08b_border.js` | Límites del mundo: aviso y vuelta a la ciudad. |
 | `10d_ambience.js` | `AMBIENCE`: pájaros, coches, gente, campanas, perros, gaviotas. |
 | `10c_steps.js` | `STEPS`: muestras de pasos por suelo, reverberación y `footContacts` (sincronía con la animación). |

@@ -3,6 +3,18 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.42.0 — 2026-10-05 — Peleas tipo Street Fighter, controles configurables, menú ancho y terreno
+- **Pelea 2D**: mantener atrás anda hacia atrás; solo se cubre si el rival está atacando (golpe en preparación o
+  activo, o bola de gofio que viene). Luchadores un 20 % más pequeños (sprites e impactos) y más separados al
+  empezar (≈190 px) para poder lanzar especiales a distancia.
+- Tutorial de pelea con textos cortos que se reparten en dos líneas y cartel de controles reducido.
+- **Pantalla de CONTROLES** (menú principal y pausa): cada acción conserva sus teclas y se le puede añadir otra;
+  se guarda en el navegador.
+- **Menú principal** al 75 % del ancho en PC, botones en una fila y botón Achamán legible (texto oscuro sobre ámbar).
+- **Terreno**: en 42 zonas (306 puntos) el personaje y los coches se hundían unos centímetros porque el final poco
+  profundo de una trinchera quedaba por debajo del suelo sin hueco; ahora se pisa el terreno
+  (`tests/audit_hundimiento.py` da 0).
+
 ## 0.41.0 — 2026-10-05 — Límites del mundo, ambiente sonoro, pistola y Mercadona
 - **Límites del mundo**: a 50 m del borde aparece «Saliendo del mundo»; si sigues, vuelves 100 m hacia dentro, sobre una
   calle (nunca encima de un edificio), a pie o en coche y mirando hacia dentro.

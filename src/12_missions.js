@@ -54,15 +54,15 @@ function safeSpot(x, z, clear = 0.7) {
 function fightTutorial() {
   const T = document.body.classList.contains('touchmode');
   const steps = [
-    ['walk', T ? 'Muévete con ◀ ▶' : 'Muévete: A / D (o flechas ← →)', (e) => (e.walk || 0) > 50],
-    ['jab', T ? 'Puñetazo: botón P' : 'Puñetazo: clic izquierdo, J o Shift dcho. (mando: X)', (e) => e.jab],
-    ['kick', T ? 'Patada: botón K' : 'Patada: clic derecho, K o Ctrl dcho. (mando: A)', (e) => e.kick],
-    ['jump', T ? 'Salta: ▲' : 'Salta: Espacio (mando: Y)', (e) => e.jump],
-    ['sweep', T ? 'Agáchate (▼) y pulsa K: barrido' : 'Agáchate (S o ↓) y patada: barrido', (e) => e.sweep],
-    ['blocked', T ? 'Cúbrete: mantén B o atrás cuando Sastrón ataque' : 'Cúbrete: mantén atrás (A o ←) cuando Sastrón ataque', (e) => e.blocked],
-    ['combo', T ? 'Combo: P, P, K seguidos (3 golpes)' : 'Combo: puñetazo, puñetazo, patada seguidos', (e) => e.combo],
-    ['gofio', T ? 'Bola de gofio: ▲ ▼ + P' : 'Bola de gofio: arriba, abajo + puñetazo  (W, S, clic izq.)', (e) => e.gofio],
-    ['teide', T ? 'Patada del Teide: ▲ ▼ + K' : 'Patada del Teide: arriba, abajo + patada  (W, S, clic dcho.)', (e) => e.teide],
+    ['walk', T ? 'Muévete con ◀ ▶' : 'Muévete con A y D', (e) => (e.walk || 0) > 50],
+    ['jab', T ? 'Puñetazo: P' : 'Puñetazo: J o clic izquierdo', (e) => e.jab],
+    ['kick', T ? 'Patada: K' : 'Patada: K o clic derecho', (e) => e.kick],
+    ['jump', T ? 'Salta: ▲' : 'Salta: Espacio', (e) => e.jump],
+    ['sweep', T ? 'Barrido: ▼ + K' : 'Barrido: S + patada', (e) => e.sweep],
+    ['blocked', T ? 'Cúbrete: atrás cuando ataque' : 'Cúbrete: mantén atrás cuando Sastrón ataque', (e) => e.blocked],
+    ['combo', 'Combo: puño, puño, patada', (e) => e.combo],
+    ['gofio', T ? 'Bola de gofio: ▲ ▼ + P' : 'Bola de gofio: W, S + puñetazo', (e) => e.gofio],
+    ['teide', T ? 'Patada del Teide: ▲ ▼ + K' : 'Patada del Teide: W, S + patada', (e) => e.teide],
   ];
   let i = 0, wait = 0;
   return {
