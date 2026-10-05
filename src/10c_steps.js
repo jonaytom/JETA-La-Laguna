@@ -79,7 +79,7 @@ const STEPS = (() => {
     if (!ctx || !bank) return; const list = (bank[surface] || bank.hard)[gait] || bank.hard.walk;
     const key = surface + gait; let i = Math.floor(Math.random() * list.length); if (i === lastIdx[key]) i = (i + 1) % list.length; lastIdx[key] = i;
     const t = ctx.currentTime, s = ctx.createBufferSource(); s.buffer = list[i]; s.playbackRate.value = R(0.94, 1.06);
-    const g = ctx.createGain(); g.gain.value = vol * (gait === 'run' ? 0.3 : 0.2) * R(0.85, 1.1);
+    const g = ctx.createGain(); g.gain.value = vol * (gait === 'run' ? 0.11 : 0.07) * R(0.85, 1.1);
     side = -side; let node = g;
     if (ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = pan ?? side * 0.12; g.connect(p); node = p; }
     s.connect(g); node.connect(out); node.connect(verbSend); s.start(t);

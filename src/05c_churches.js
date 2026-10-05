@@ -122,21 +122,7 @@ function buildChurches() {
       dg.position.set(d[0], dy, d[1]); scene.add(dg);
       CHURCH_MARKS.push(['Catedral', ch.cx, ch.cz]);
     } else if (/Concepción/.test(nm)) {
-      // three naves, central one higher (Mudéjar roofs)
-      if (rect > 0.75) { const w3 = width / 3;
-        gableRoof(F, top, w3 * 0.45, F.u0, F.u1, F.v0, F.v0 + w3);
-        gableRoof(F, top + 1.2, w3 * 0.5, F.u0, F.u1, F.v0 + w3, F.v1 - w3);
-        gableRoof(F, top, w3 * 0.45, F.u0, F.u1, F.v1 - w3, F.v1); } else hipRoof(ch.pts, ch.cx, ch.cz, top, ch.area, tris, 4);
-      // the iconic stone tower at the foot of the church
-      // the tower stands at the foot of the church on its north flank (Plaza de la Concepción), half engaged in the corner
-      // the real tower is the square ~7 m block that juts out of the north flank (it shows in the OSM outline): put it right there
-      let tw = null; { const P = ch.pts; let bd = 1e9; for (let i = 0; i < P.length; i++) { const a = P[i], b = P[(i + 1) % P.length], c = P[(i + 2) % P.length];
-          const l1 = Math.hypot(b[0] - a[0], b[1] - a[1]), l2 = Math.hypot(c[0] - b[0], c[1] - b[1]); const dot = ((b[0] - a[0]) * (c[0] - b[0]) + (b[1] - a[1]) * (c[1] - b[1])) / (l1 * l2 || 1);
-          const d = Math.hypot(b[0] + 540.9, b[1] + 355.3); /* NW corner block at the foot of the church, where the real tower is */ if (l1 > 5.5 && l1 < 9.5 && l2 > 5.5 && l2 < 9.5 && Math.abs(dot) < 0.35 && d < 12 && d < bd) { bd = d;
-            const mx = (a[0] + c[0]) / 2, mz = (a[1] + c[1]) / 2; tw = { x: mx, z: mz, ang: Math.atan2(b[0] - a[0], b[1] - a[1]), w: (l1 + l2) / 2 }; } } }
-      if (!tw) { const zN0 = F.W(0, F.v0)[1], zN1 = F.W(0, F.v1)[1]; const vN = zN0 < zN1 ? F.v0 : F.v1; const t = F.W(fu + back * 3.2, vN); tw = { x: t[0], z: t[1], ang: F.ang, w: 7.4 }; }
-      bellTower(tw.x, tw.z, tw.ang, Math.min(8, tw.w + 0.3), 22, 'cupola');
-      { const o = 7.5, nx = tw.x - ch.cx, nz = tw.z - ch.cz, nl = Math.hypot(nx, nz) || 1; CONC_TOWER.x = tw.x + nx / nl * o; CONC_TOWER.z = tw.z + nz / nl * o; } CONC_TOWER.ok = true; CONC_TOWER.tw = tw; CONC_TOWER.pts = ch.pts;
+      try { buildConcepcion(ch); } catch (e) { console.error('Concepción', e); }
       CHURCH_MARKS.push(['La Concepción', ch.cx, ch.cz]);
     } else {
       roof(width * 0.32);

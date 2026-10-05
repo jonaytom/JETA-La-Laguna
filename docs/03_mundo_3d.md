@@ -106,6 +106,17 @@ calzada debajo). **No pone barandilla** donde caería dentro de otra calzada al 
   con el color del edificio y qué es cristal (que se ilumina de noche al azar).
 - Encima, **enlucido real** de Poly Haven (estuco liso, enlucido pintado, enlucido gastado; uno por edificio
   según su semilla) en escala de metros, con su mapa de normales (`PLASTER`).
+- **La Concepción** (`05o_concepcion.js`): el bloque de la torre se recorta del contorno OSM al cargar
+  (`carveConcTower` en `04_world.js`, junto a `CONC_TOWER_HINT`; `CONC_TOWER_FIX` permite forzar el centro). La iglesia
+  (muros, zócalo, aleros, nave central con óculos, vidrieras, portadas, cabecera) y la torre (4 cuerpos, reloj,
+  campanario, linterna) se generan en metros sobre el plano real y se fusionan por material. Fotos de referencia en
+  `docs/referencias/concepcion/`.
+- **Casas añadidas a mano** (`05p_casas.js`, lista `CUSTOM_HOUSES`): edificios que no están en OSM. Para pasar
+  coordenadas de Google Maps al juego: `x = (lon + 16.315) · cos(28.4875°) · 111320`, `z = −(lat − 28.4875) · 110574`.
+- **Esquina de inicio** (`05q_inicio.js`): `splitCoarseBlocks()` (antes de `buildBuildings`) sustituye las manzanas de
+  `BLOCK_SPLIT` por casas en hilera a lo largo de sus fachadas (fondo ≤ 11,5 m, ancho 5,5–11 m, 1–4 plantas, patio
+  interior), viste algunas según las fotos (`INICIO_SPOTS`, `INICIO_DRESS`) y añade locales en la subida
+  (`INICIO_SHOPS`). `brandInside()` da nombre de marca a edificios sin nombre que contienen su tienda.
 - Edificios singulares: iglesias (`05c`), Intercambiador (`05k`), pasarela de Anchieta (`05f`), pabellones (`05i`).
 
 ## Plazas y parques (`05n_plazas.js`)

@@ -95,6 +95,13 @@ function gripGun(H, mesh, aimDir) {
   const axis = pi.clone().sub(pp).normalize(); const qd = new THREE.Quaternion(), qw = new THREE.Quaternion(), qp = new THREE.Quaternion();
   for (const f of ['index', 'middle', 'ring', 'pinky']) for (const k of ['01', '02', '03']) { const b = B(f + '_' + k + '_r'); if (!b) continue; b.updateWorldMatrix(true, false);
     qd.setFromAxisAngle(axis, GRIP.sgn * GRIP.curl * (k === '01' ? 0.85 : 0.7)); b.getWorldQuaternion(qw); qw.premultiply(qd); b.parent.getWorldQuaternion(qp); b.quaternion.copy(qp.invert().multiply(qw)); b.updateWorldMatrix(false, true); }
+  // the handle goes exactly inside the closed fist: halfway between the knuckles and the middle phalanges
+  const fist = new THREE.Vector3(), tmp = new THREE.Vector3(); let nf = 0;
+  for (const f of ['index', 'middle', 'ring', 'pinky']) for (const k of ['01', '02']) { const b = B(f + '_' + k + '_r'); if (!b) continue; b.getWorldPosition(tmp); fist.add(tmp); nf++; }
+  if (nf) { fist.multiplyScalar(1 / nf); const hOff = new THREE.Vector3(0, -0.025, 0).multiplyScalar(mesh.scale.x).applyQuaternion(mesh.quaternion); mesh.position.copy(fist).sub(hOff); }
+  // thumb wraps over the other side of the grip
+  for (const k of ['01', '02']) { const b = B('thumb_' + k + '_r'); if (!b) continue; b.updateWorldMatrix(true, false); qd.setFromAxisAngle(fwd, GRIP.sgn * -0.45); b.getWorldQuaternion(qw); qw.premultiply(qd); b.parent.getWorldQuaternion(qp); b.quaternion.copy(qp.invert().multiply(qw)); b.updateWorldMatrix(false, true); }
+  mesh.updateMatrixWorld(true);
 }
 // switch between fists and the pistol: Tab toggles, 1 = fists, 2 = pistol, gamepad d-pad left/right, tap the weapon label on phones
 function setWeaponOut(v) { if (!WEAPON.has || WEAPON.out === v) return; WEAPON.out = v; WEAPON.aiming = false; if (WEAPON.mesh) WEAPON.mesh.visible = v; AUDIO.pickup && AUDIO.pickup(); updateWeaponHUD(); HUD.toast(v ? 'Pistola' : 'Puños', '#fff', 1.2); }

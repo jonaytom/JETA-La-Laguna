@@ -47,7 +47,7 @@ const AUDIO = (() => {
       let sd = 1e9; for (const c of CARS) if (c.siren) sd = Math.min(sd, Math.hypot(c.x - PLAYER.x, c.z - PLAYER.z));
       sirenG.gain.setTargetAtTime(sd < 400 ? clamp(0.09 * (1 - sd / 400), 0, 0.09) : 0, t, 0.1);
       ambG.gain.setTargetAtTime(0.035 + CARS.length * 0.0006, t, 0.5);
-      birdT -= dt; if (birdT < 0) { birdT = rnd(2, 7); if (U.uNight.value < 0.3 && !car) { const f = rnd(2500, 4200); for (let i = 0; i < 3 + Math.random() * 4; i++) tone(f + rnd(-300, 300), 0.08, 0.015, 'sine', i * 0.11); } }
+      // birds, traffic, voices, bells: see 10d_ambience.js
     },
     crash(v) { burst(0.35, 900, clamp(v / 20, 0.1, 0.7)); burst(0.8, 200, clamp(v / 25, 0.1, 0.6)); },
     thud(d) { burst(0.2, 300, clamp(0.4 - d / 100, 0.02, 0.4)); },

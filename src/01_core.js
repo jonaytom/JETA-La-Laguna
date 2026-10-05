@@ -3,6 +3,34 @@ import * as THREE from 'three';
 
 const DATA = JSON.parse(document.getElementById('mapdata').textContent);
 const STR = DATA.S;
+// ---------- play area: bounding box minus the zones that are not needed (Jonay's map, docs/referencias/mapa/zonas_a_quitar.png)
+const WORLD = { x0: -1900, x1: 2400, z0: -1250, z1: 3980 };
+const WORLD_EXCL = [
+  { x0: 781, x1: 1e9, z0: -1e9, z1: 896, name: 'monte NE (Valle Tabares, Valle Vinagre, Los Valles)' },
+  { x0: -1e9, x1: 158, z0: 1376, z1: 1e9, name: 'campo SO (Los Baldíos, La Vega, Geneto)' },
+];
+// distance from (x,z) to the edge of the play area (negative = outside)
+function worldEdgeDist(x, z) {
+  let d = Math.min(x - WORLD.x0, WORLD.x1 - x, z - WORLD.z0, WORLD.z1 - z);
+  for (const R of WORLD_EXCL) { const ix = x > R.x0 && x < R.x1, iz = z > R.z0 && z < R.z1;
+    if (ix && iz) d = Math.min(d, -Math.min(x - R.x0, R.x1 - x, z - R.z0, R.z1 - z));
+    else { const dx = Math.max(R.x0 - x, 0, x - R.x1), dz = Math.max(R.z0 - z, 0, z - R.z1); d = Math.min(d, Math.hypot(dx, dz)); } }
+  return d;
+}
+const inPlayArea = (x, z, m = 0) => worldEdgeDist(x, z) >= m;
+// drop everything outside the play area (not rendered, no traffic)
+(function pruneWorld() {
+  const M = 40; const cen = (c) => { let x = 0, z = 0; for (let i = 0; i < c.length; i += 2) { x += c[i]; z += c[i + 1]; } return [x / (c.length / 2), z / (c.length / 2)]; };
+  const n0 = [DATA.B.length, DATA.R.length, DATA.A.length, DATA.G.e.length];
+  DATA.B = DATA.B.filter((b) => { const [x, z] = cen(b[6]); return inPlayArea(x, z, -5); });
+  DATA.A = DATA.A.filter((a) => { const [x, z] = cen(a[2]); return inPlayArea(x, z, -20); });
+  DATA.R = DATA.R.filter((r) => { const c = r[4]; let i0 = 0, i1 = c.length - 2; while (i0 < i1 && !inPlayArea(c[i0], c[i0 + 1], -M)) i0 += 2; while (i1 > i0 && !inPlayArea(c[i1], c[i1 + 1], -M)) i1 -= 2; if (i1 - i0 < 2) return false; r[4] = c.slice(i0, i1 + 2); return true; });
+  const N = DATA.G.n; DATA.G.e = DATA.G.e.filter((e) => inPlayArea(N[e[0] * 2], N[e[0] * 2 + 1], -M) && inPlayArea(N[e[1] * 2], N[e[1] * 2 + 1], -M));
+  { const T = []; for (let i = 0; i < DATA.N.length; i += 2) if (inPlayArea(DATA.N[i], DATA.N[i + 1])) T.push(DATA.N[i], DATA.N[i + 1]); DATA.N = T; }
+  DATA.P = DATA.P.filter((p) => inPlayArea(p[2], p[3], -10));
+  if (DATA.SH) DATA.SH = DATA.SH.filter((p) => inPlayArea(p[0], p[1], -10));
+  console.log('play area: buildings', n0[0], '→', DATA.B.length, 'roads', n0[1], '→', DATA.R.length, 'areas', n0[2], '→', DATA.A.length, 'graph edges', n0[3], '→', DATA.G.e.length);
+})();
 // widen drivable streets a bit so cars fit through the old town
 // widen drivable streets (real-life feel: OSM default widths read too narrow at game scale)
 const WIDEN = (t, w, one) => { const f = t <= 2 ? 1.12 : t <= 8 ? 1.3 : t <= 10 ? 1.22 : 1.15; const mn = t === 12 ? 5 : t === 11 ? 5.5 : one ? 6 : t <= 8 ? 9 : 8; return Math.round(Math.max(w * f, mn) * 10) / 10; };
@@ -80,7 +108,6 @@ function heightAt(x, z) {
   // same triangulation as the terrain mesh (diagonal from (1,0) to (0,1)) so things sit exactly on the rendered ground
   return (fx + fz <= 1 ? h00 + (h10 - h00) * fx + (h01 - h00) * fz : h11 + (h01 - h11) * (1 - fx) + (h10 - h11) * (1 - fz)) / 10;
 }
-const WORLD = { x0: -1900, x1: 2400, z0: -1250, z1: 3980 };
 
 // ---------- quality
 const QUALITY = {

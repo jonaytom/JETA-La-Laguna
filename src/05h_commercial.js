@@ -26,18 +26,28 @@ function buildParkingLots() {
 }
 function buildBigStores() {
   for (const s of BIGSTORES) {
+    if (s.name === 'Mercadona' && Math.hypot(s.cx + 831, s.cz + 387) < 12) s.mainStreet = /Marqués de Celada/; // real main entrance on Marqués de Celada (n.º 55)
     const [bg, fg] = STORE_STYLE[s.name] || ['#333', '#fff'];
     // pick the facade facing the largest nearby lot (or the longest edge)
     let lot = null, bd = 260; for (const l of LOTS) { const d = Math.hypot(l.cx - s.cx, l.cz - s.cz); if (d < bd && l.area > 800) { bd = d; lot = l; } }
     const n = s.pts.length; let best = null, score = -1e9;
     for (let i = 0; i < n; i++) { const p = s.pts[i], q = s.pts[(i + 1) % n]; const L = Math.hypot(q[0] - p[0], q[1] - p[1]); if (L < 12) continue; const nx = (q[1] - p[1]) / L, nz = -(q[0] - p[0]) / L; const mx = (p[0] + q[0]) / 2, mz = (p[1] + q[1]) / 2;
-      let sc = L; if (lot) { const dx = lot.cx - mx, dz = lot.cz - mz, dl = Math.hypot(dx, dz) || 1; sc += 80 * ((dx * nx + dz * nz) / dl); } const rdn = ROADSEG.nearest(mx + nx * 6, mz + nz * 6); if (rdn && rdn.d < 25) sc += 15; if (COL.nearSeg(mx + nx * 2, mz + nz * 2, 1)) sc -= 200; (s.cands = s.cands || []).push({ p, q, L, nx, nz, mx, mz, sc }); if (sc > score) { score = sc; best = { p, q, L, nx, nz, mx, mz }; } }
+      let sc = L; if (s.mainStreet) for (const sd of [1, -1]) { const rr = ROADSEG.nearest(mx + nx * 8 * sd, mz + nz * 8 * sd); if (rr && rr.d < 10 && s.mainStreet.test(STR[DATA.R[rr.ri][1]] || '')) sc += 1000; } if (lot) { const dx = lot.cx - mx, dz = lot.cz - mz, dl = Math.hypot(dx, dz) || 1; sc += 80 * ((dx * nx + dz * nz) / dl); } const rdn = ROADSEG.nearest(mx + nx * 6, mz + nz * 6); if (rdn && rdn.d < 25) sc += 15; if (COL.nearSeg(mx + nx * 2, mz + nz * 2, 1)) sc -= 200; (s.cands = s.cands || []).push({ p, q, L, nx, nz, mx, mz, sc }); if (sc > score) { score = sc; best = { p, q, L, nx, nz, mx, mz }; } }
     if (!best) continue; s.face = best;
     const w = Math.min(best.L * 0.55, 34), h = Math.max(2.6, w / 5.5); const sg = bigSign(s.parody.toUpperCase(), w, h, bg, fg);
     sg.position.set(best.mx + best.nx * 0.25, s.top - h / 2 - 0.8, best.mz + best.nz * 0.25); sg.rotation.y = Math.atan2(best.nx, best.nz); scene.add(sg);
     // rooftop totem so it reads from the motorway
     const tw = Math.min(16, w * 0.6); const t2 = bigSign(s.parody.toUpperCase(), tw, tw / 5, bg, fg); t2.position.set(s.cx, s.top + tw / 10 + 1.2, s.cz); t2.rotation.y = Math.atan2(best.nx, best.nz); scene.add(t2);
     const t3 = t2.clone(); t3.rotation.y += Math.PI; scene.add(t3);
+    if (s.mainStreet) { // Mercadona n.º 55: grey rendered front, dark recessed entrance under a balcony with railing
+      const ang = Math.atan2(best.nx, best.nz), gy = heightAt(best.mx, best.mz); const g = new THREE.Group(); g.position.set(best.mx + best.nx * 0.15, gy, best.mz + best.nz * 0.15); g.rotation.y = ang;
+      const dark = new THREE.Mesh(new THREE.PlaneGeometry(7, 4.4), M(0x141414, 0.9)); dark.position.set(0, 2.2, 0.05); g.add(dark);
+      const band = bigSign(s.parody.toUpperCase(), 6.2, 0.8, '#3a3a3a', '#d8d8d8'); band.position.set(0, 3.7, 0.12); g.add(band);
+      const slab = new THREE.Mesh(new THREE.BoxGeometry(Math.min(best.L - 2, 16), 0.25, 1.3), M(0xb8b8b2, 0.85)); slab.position.set(0, 4.7, 0.65); g.add(slab);
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(Math.min(best.L - 2, 16), 0.06, 0.06), M(0x222222, 0.5, 0.5)); rail.position.set(0, 5.75, 1.28); g.add(rail);
+      for (let x = -Math.min(best.L - 2, 16) / 2; x <= Math.min(best.L - 2, 16) / 2; x += 0.15) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.03, 1.0, 0.03), M(0x222222, 0.5, 0.5)); b.position.set(x, 5.3, 1.28); g.add(b); }
+      const corner = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 7, 20, 1, false, 0, Math.PI), M(0xb8b8b2, 0.85)); corner.position.set(-Math.min(best.L / 2, 11) + 0.5, 3.5, -1.7); corner.rotation.y = -Math.PI / 2; g.add(corner);
+      scene.add(g); }
     // glass entrance
     const ent = new THREE.Mesh(new THREE.BoxGeometry(8, 4, 0.3), glassMat); ent.position.set(best.mx + best.nx * 0.2, heightAt(best.mx, best.mz) + 2.1, best.mz + best.nz * 0.2); ent.rotation.y = Math.atan2(best.nx, best.nz); scene.add(ent);
     LABELS.push([s.parody, s.cx, s.cz, 1]);

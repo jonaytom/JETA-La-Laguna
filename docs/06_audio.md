@@ -70,3 +70,19 @@ Se enciende al subir a un coche. `Q` (o tocar el velocímetro) cambia de emisora
 
 Al superar una misión: 2 compases a 96 BPM (bombo, caja, metales con la progresión i–VI–VII, gancho melódico,
 scratch final) y un grito («Mission complete!»…). Si la radio sonaba, se pausa y vuelve después con canción nueva.
+
+
+## Ambiente de la ciudad (`10d_ambience.js`, objeto `AMBIENCE`)
+
+Sonidos posicionales (panorama estéreo respecto a la cámara y atenuación con la distancia), sintetizados:
+
+- **Pájaros** en los árboles cercanos (`TREES`): gorrión (chips), canario (trino), mirlo (silbidos) y paloma
+  (arrullo). Cada 0,8–3,5 s de día, muy de vez en cuando de noche.
+- **Coches**: 3 voces de motor (sierra + triángulo + ruido de rodadura, pasa-bajos) asignadas a los 3 coches más
+  cercanos; tono según velocidad y marcha, volumen según distancia.
+- **Gente charlando**: si hay 2+ peatones a menos de 3,5 m entre sí y a menos de 22 m, sílabas con dos formantes,
+  voces graves y agudas por turnos y alguna risa.
+- **Campanas** de La Concepción y la Catedral (7:00–22:00): tantas campanadas como la hora (reloj de 12 h) y una
+  a la media.
+- **Perros** y **gaviotas** lejanos de vez en cuando. Dentro de edificios el ambiente baja al 25 % y en coche al 55 %.
+- Los pasos (`10c_steps.js`) suenan ahora a ~35 % del volumen anterior.

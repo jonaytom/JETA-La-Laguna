@@ -394,7 +394,7 @@ const MISSIONS = (() => {
         for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const po = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.42, 0.05), dark); po.position.set(sx * 0.255, 0.21, sz * 0.185); crate.add(po); }
         crate.position.set(0, -0.12, -0.12);
         const tw = CONC_TOWER.tw; let bx = CONC_TOWER.x, bz = CONC_TOWER.z, face = Math.random() * 6;
-        if (tw) { const nx = CONC_TOWER.x - tw.x, nz = CONC_TOWER.z - tw.z, nl = Math.hypot(nx, nz) || 1; bx = tw.x + nx / nl * (tw.w / 2 + 1.0); bz = tw.z + nz / nl * (tw.w / 2 + 1.0); face = Math.atan2(nx, nz); }
+        if (tw) { const nx = CONC_TOWER.x - tw.x, nz = CONC_TOWER.z - tw.z, nl = Math.hypot(nx, nz) || 1; bx = tw.x + nx / nl * (tw.w / 2 + 2.8); bz = tw.z + nz / nl * (tw.w / 2 + 2.8); /* outside the iron fence at the foot of the tower */ face = Math.atan2(nx, nz); }
         const sp0 = safeSpot(bx, bz, 0.6); const r = COL.resolve(sp0[0], sp0[1], 0.6); NPC.boca = { x: r.x, z: r.z, H: h, home: [r.x, r.z] }; NPC.boca.start = openSpotNear(r.x, r.z, tw ? Math.atan2(r.x - tw.x, r.z - tw.z) : 0);
         h.root.position.set(r.x, heightAt(r.x, r.z) + 0.17, r.z); h.root.add(box); h.root.add(crate); h.root.rotation.y = face; scene.add(h.root); COL.addCirc(r.x, r.z, 0.5); }
       // two random interesting spots of the historic centre for Coco and Sastrón

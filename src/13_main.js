@@ -143,7 +143,7 @@ function logic(dt, now) {
     }
     if (!BIGMAP.open) {
       GAME.tod = (GAME.tod + dt * dayRate(GAME.tod)) % 24; U.uTime.value += dt;
-      tt = performance.now(); if (GAME.state === 'play') { updatePlayer(dt); updateCombat(dt); } pm('player', tt);
+      tt = performance.now(); if (GAME.state === 'play') { updatePlayer(dt); updateCombat(dt); try { updateBorder(dt); } catch (e) { console.error('border', e); } } pm('player', tt);
       // physics at fixed substeps
       acc2 += dt; const h = 1 / 90; let n = 0;
       while (acc2 >= h && n < 6) { for (const c of CARS) if (c.mode === 'physics') { if (!c.driver || c.crashed) { c.ctl.thr = 0; c.ctl.brk = c.driver === 'player' ? c.ctl.brk : 1; } c.physics(h); } carCollisions(); tramCollisions(); acc2 -= h; n++; }
@@ -158,7 +158,7 @@ function logic(dt, now) {
     // player car headlights
     const pc = PLAYER.car; headSpot.intensity = pc && U.uNight.value > 0.3 ? 60 : 0;
     if (pc) { const fx = Math.sin(pc.h), fz = Math.cos(pc.h); headSpot.position.set(pc.x + fx * 2, pc.y + 0.8, pc.z + fz * 2); headSpot.target.position.set(pc.x + fx * 20, pc.y - 1, pc.z + fz * 20); }
-    tt = performance.now(); AUDIO.update(dt); HUD.update(dt); pm('hud', tt);
+    tt = performance.now(); AUDIO.update(dt); AMBIENCE.update(dt); HUD.update(dt); pm('hud', tt);
     if (BIGMAP.open && frame % 10 === 0) BIGMAP.redraw();
   } else if (GAME.state === 'achaman') {
     GAME.tod = (GAME.tod + dt * dayRate(GAME.tod)) % 24; U.uTime.value += dt;
@@ -224,7 +224,7 @@ async function boot() {
   window.__GAME_READY = true;
 }
 boot();
-window.__bg = [bgScene, bgCamera]; window.__dbg = { get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
+window.__bg = [bgScene, bgCamera]; window.__dbg = { worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
 window.__snap = () => { bgCamera.position.copy(camera.position); bgCamera.quaternion.copy(camera.quaternion); bgCamera.fov = camera.fov; bgCamera.updateProjectionMatrix(); renderer.clear(); renderer.render(bgScene, bgCamera); renderer.clearDepth(); renderer.render(scene, camera); return renderer.domElement.toDataURL('image/jpeg', 0.85); };
 window.__setYaw = (y) => { CAM.yaw = y; CAM.pitch = 0.1; INPUT.lastMouse = performance.now(); };
 window.__hit = (p) => hitPed(p);

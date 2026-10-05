@@ -609,24 +609,43 @@ function chooseAtlas(style, r, name, cx, cz, lv, area) {
 }
 const hex3 = (h) => { const c = new THREE.Color(h); return [c.r, c.g, c.b]; };
 const ATLAS = { 0: 0, 1: 1, 2: 2, 3: 3, 4: 6, 6: 4 };
-const CHURCHES = []; let INTER_B = null; const BIGSTORES = [];
+const CHURCHES = []; let INTER_B = null;
+// La Concepción tower: the OSM outline has the tower as a square block jutting out of the north flank. It is cut out
+// of the church outline here (the tower is modelled apart). CONC_TOWER_HINT = approximate centre given by Jonay.
+const CONC_TOWER_HINT = [-530, -342]; let CONC_TOWER_FIX = null; // FIX: [x, z] forces the centre if OSM is off
+const CONC_CARVE = { ok: false };
+function carveConcTower(pts) {
+  const n = pts.length; let best = null, bd = 1e9;
+  for (let i = 0; i < n; i++) { const a = pts[i], b = pts[(i + 1) % n], c = pts[(i + 2) % n];
+    const l1 = Math.hypot(b[0] - a[0], b[1] - a[1]), l2 = Math.hypot(c[0] - b[0], c[1] - b[1]); if (l1 < 5 || l1 > 10 || l2 < 5 || l2 > 10) continue;
+    if (Math.abs(((b[0] - a[0]) * (c[0] - b[0]) + (b[1] - a[1]) * (c[1] - b[1])) / (l1 * l2)) > 0.3) continue;
+    const mx = (a[0] + c[0]) / 2, mz = (a[1] + c[1]) / 2, d = Math.hypot(mx - CONC_TOWER_HINT[0], mz - CONC_TOWER_HINT[1]); if (d < 9 && d < bd) { bd = d; best = { i, a, b, c, mx, mz, l1, l2 }; } }
+  if (!best) { console.warn('Concepción: tower block not found in OSM outline'); return pts; }
+  const { i, a, b, c } = best; const e = [a[0] + c[0] - b[0], a[1] + c[1] - b[1]]; const out = [];
+  for (let k = 0; k < n; k++) { if (k === (i + 1) % n) { out.push(e); continue; } if (k === (i + 2) % n) continue; out.push(pts[k]); }
+  const fx = CONC_TOWER_FIX ? CONC_TOWER_FIX[0] : best.mx, fz = CONC_TOWER_FIX ? CONC_TOWER_FIX[1] : best.mz;
+  Object.assign(CONC_CARVE, { ok: true, x: fx, z: fz, ang: Math.atan2(b[0] - a[0], b[1] - a[1]), w: 7.3, corners: [a, b, c, e], pts: out });
+  return out;
+} const BIGSTORES = [];
 const STORECOL = { Alcampo: '#e8eef2', Makro: '#f3e9c8', 'Leroy Merlin': '#dfe9d8', Decathlon: '#dde8f3', IKEA: '#2a5aa8', 'Toys R Us': '#f0e6f2', Lidl: '#f2f0e6', Mercadona: '#eef2ea', "McDonald's": '#e9dccb' };
 const BUILD = []; // metadata for landmarks and minimap
 function polyArea(pts) { let a = 0; for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[(i + 1) % pts.length]; a += p[0] * q[1] - q[0] * p[1]; } return a / 2; }
 function hull(pts) { const p = pts.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]); const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]); const lo = [], up = []; for (const q of p) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q); } for (let i = p.length - 1; i >= 0; i--) { const q = p[i]; while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], q) <= 0) up.pop(); up.push(q); } up.pop(); lo.pop(); return lo.concat(up); }
 function buildBuildings() {
   indexRoads(); let bi = 0;
+  try { splitCoarseBlocks(); } catch (e) { console.error('inicio split', e); }
   for (const b of DATA.B) {
     bi++;
     const [h10, style, lv, roofT, nameIdx, seed, c] = b;
     let pts = []; for (let i = 0; i < c.length; i += 2) pts.push([c[i], c[i + 1]]);
-    const n = pts.length; if (n < 3) continue;
+    let n = pts.length; if (n < 3) continue;
     if (isTramStopBuilding(nameIdx, pts)) continue; // drawn as proper tram stops
     pts = insetPoly(pts, style === 4 ? 0.3 : 0.75);
+    if (style === 4 && nameIdx >= 0 && /Concepción/.test(STR[nameIdx])) { pts = carveConcTower(pts); n = pts.length; }
     let bmin = 1e9, bmax = -1e9, cx = 0, cz = 0;
     for (const p of pts) { const h = heightAt(p[0], p[1]); bmin = Math.min(bmin, h); bmax = Math.max(bmax, h); cx += p[0]; cz += p[1]; }
     cx /= n; cz /= n;
-    const name = nameIdx >= 0 ? STR[nameIdx] : null;
+    const name = nameIdx >= 0 ? STR[nameIdx] : (style === 2 || style === 3) && typeof brandInside === 'function' ? brandInside(pts) : null;
     const LM = (name ? landmarkFor(name) : null) || landmarkAt(cx, cz);
     const H = LM && LM.H ? LM.H : h10 / 10; const top = bmax + H; const bot = bmin - 0.6;
     if (name && /Intercambiador/.test(name) && Math.abs(polyArea(pts)) > 5000) { INTER_B = { pts, cx, cz, bmax, top, name }; for (let i = 0; i < n; i++) {} continue; }
@@ -634,6 +653,7 @@ function buildBuildings() {
     BUILD.push({ pts, cx, cz, top, bmax, style, name, H });
     // collisions
     for (let i = 0; i < n; i++) { const p = pts[i], q = pts[(i + 1) % n]; COL.addSeg(p[0], p[1], q[0], q[1]); }
+    if (CONC_CARVE.pts === pts) { CHURCHES.push({ pts, cx, cz, top, bmin, bmax, H, name, area: Math.abs(polyArea(pts)), custom: true }); continue; } // La Concepción: modelled in 05o_concepcion.js
     if (style === 5) { // greenhouse
       const A = acc(cx, cz, 'glassHouse');
       for (let i = 0; i < n; i++) { const p = pts[i], q = pts[(i + 1) % n]; A.quad([p[0], bot, p[1]], [q[0], bot, q[1]], [q[0], top, q[1]], [p[0], top, p[1]], [0, 0], [1, 0], [1, 1], [0, 1]); }

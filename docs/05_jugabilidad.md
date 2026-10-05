@@ -92,3 +92,13 @@
 
 Desde el menú de inicio: vuelo libre (WASD, E/Q subir/bajar, Shift rápido), dron en órbita y vista cenital
 (`V` cambia), `M` mapa con teletransporte. `Esc` vuelve al menú.
+
+## Zona de juego y límites (`01_core.js`, `08b_border.js`)
+
+- `WORLD` (caja) menos `WORLD_EXCL` (zonas quitadas: monte del NE y campo del SO). `worldEdgeDist(x, z)` da la
+  distancia al borde (negativa fuera) e `inPlayArea(x, z, margen)` si un punto está dentro.
+- Al cargar, `pruneWorld()` elimina edificios, áreas, árboles, POI, tiendas, tramos de calle y aristas de tráfico
+  fuera de la zona de juego (no se dibujan ni generan tráfico).
+- `updateBorder()`: a menos de 50 m del borde aviso «Saliendo del mundo»; a menos de 12 m, teletransporte unos 100 m
+  hacia dentro siguiendo el gradiente de `worldEdgeDist` y después a la calle a nivel más cercana que no esté en un
+  edificio ni bajo tierra; en coche, orientado hacia dentro. Prueba: `tests/prueba_bordes.py`.

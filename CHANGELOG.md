@@ -3,6 +3,46 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.41.0 — 2026-10-05 — Límites del mundo, ambiente sonoro, pistola y Mercadona
+- **Límites del mundo**: a 50 m del borde aparece «Saliendo del mundo»; si sigues, vuelves 100 m hacia dentro, sobre una
+  calle (nunca encima de un edificio), a pie o en coche y mirando hacia dentro.
+- **Zonas quitadas** (no se cargan ni se dibujan): el monte del noreste (Valle Tabares, Valle Vinagre, Los Valles) y el
+  campo del suroeste (Los Baldíos, La Vega, Geneto). ~950 edificios, 460 calles y 550 tramos de tráfico menos.
+- **Ambiente sonoro**: pájaros de varias especies en los árboles (más de día), motor de los coches cercanos con su
+  posición, gente charlando (y riendo) cuando hay grupos, campanas de La Concepción y la Catedral a las horas y a la
+  media, perros y gaviotas a lo lejos. Todo con estéreo según la cámara.
+- **Pasos** bastante más suaves.
+- **Pistola**: la empuñadura queda dentro del puño cerrado en cada fotograma (antes bailaba 4–7 cm al andar) y el
+  pulgar la abraza.
+- **Mercadona** (Merca Mona): la entrada principal da a Marqués de Celada (n.º 55), con el hueco oscuro, el rótulo,
+  el balcón corrido con barandilla y la esquina curva.
+- **Lucas Vega / Callejón Montaraz**: el solar vacío se llena de casas (45) como en la realidad.
+
+## 0.40.0 — 2026-10-05 — Esquina de inicio y Calle Marqués de Celada
+- Las manzanas que OSM dibuja como un único bloque de 4–5 plantas alrededor del inicio (Marqués de Celada, Adelantado,
+  Teobaldo Power, Carretas) se parten en casas de 1–4 plantas con colores canarios, tejados de teja y patio dentro.
+- Edificio amarillo de Teobaldo Power: amarillo ocre, zócalo de piedra, tejado a cuatro aguas y balcones con barandilla.
+- En la esquina: casa baja beige y medianera rosa, edificio crema con balcones de madera, casa roja canaria con
+  esquinas de basalto y casa blanca encalada con remate de teja; isleta con señales «Vía de Ronda / Punta del Hidalgo»,
+  prohibido, STOP y «20»; bolardos y contenedores.
+- Locales en la subida de Marqués de Celada (pizzería, ferretería, bares, panadería, frutería, farmacia, peluquería…).
+- El Mercadona de Teobaldo Power (sin nombre en OSM) aparece como «Merca Mona» con su rótulo: cualquier edificio sin
+  nombre que contenga una tienda de marca toma su nombre.
+
+## 0.39.0 — 2026-10-02 — La Concepción rehecha
+- Torre en su sitio real: el bloque cuadrado que sobresale del plano OSM en el flanco norte (~X −529, Z −346). Ya no
+  hay paredes de la iglesia donde está la torre.
+- Torre nueva (~31 m): cantería de basalto oscuro, 4 cuerpos con cornisas, pilastras en las esquinas, ventanas con
+  balconcitos de hierro, reloj en tres caras, campanario con dos arcos por lado y campanas, linterna octogonal con
+  arcos, cupulín y cruz; galería canaria de madera y verja con plantas al pie.
+- Iglesia nueva: muros encalados con zócalo de basalto, alero de dos hileras de teja, nave central elevada con
+  óculos, ventanales de medio punto con vidrieras y marco de piedra rojiza, portada barroca de piedra con frontón
+  partido y escudo + arco ciego junto a la torre, segunda portada lateral, y cabecera alta blanca con pilastras de
+  basalto y dos filas de ventanas.
+- Boca Papa y el círculo de sus misiones, fuera de la verja de la torre y alcanzables.
+- Casa del hermano en Av. San Miguel de Chimisay / Av. El Cardonal (no estaba en OSM): casa blanca de 2 plantas con
+  torreta en la azotea, puerta gris, ventanas con marco negro y muro blanco.
+
 ## 0.38.0 — 2026-10-02 — Coches en pendientes laterales, peleas más justas y coordenadas
 - Los coches se inclinan bien en calles con pendiente lateral (el alabeo estaba al revés: un lado flotaba).
 - Coches: aceleran un 15 % menos (misma velocidad punta) y la dirección es un poco más suave.

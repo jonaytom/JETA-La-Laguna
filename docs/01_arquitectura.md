@@ -43,6 +43,9 @@ entrada de todos los datos.
 | `05l_tramstops.js` | Paradas del tranvía. |
 | `05m_parking.js` | Parkings subterráneos (Plaza del Cristo, Trinidad): salas, rampas, escaleras con pasillo. |
 | `05n_plazas.js` | **Plazas y parques**: Plaza del Adelantado (fuente de mármol), Camino Largo (palmeras), Parque de la Constitución (estanque con patos, bustos), parques y plazas genéricos. |
+| `05o_concepcion.js` | La Concepción: iglesia y torre modeladas a partir de fotos sobre el plano OSM. |
+| `05p_casas.js` | Casas que faltan en OSM, colocadas a mano (`CUSTOM_HOUSES`). |
+| `05q_inicio.js` | Esquina de inicio y Marqués de Celada: manzanas partidas en casas, edificios vestidos, señales, locales. |
 | `06_actors.js` / `06a_humans.js` | Humanos: modelo con esqueleto (Quaternius) + animaciones, apariencia (`look`). |
 | `06b_vmodels.js` | Catálogo de coches (parodias) a partir del Kenney car kit; luces, matrícula, rotulación. |
 | `07_vehicles.js` | `GRAPH` (grafo viario), clase `Car` (física), tráfico IA, policía en coche, tranvía. |
@@ -54,6 +57,8 @@ entrada de todos los datos.
 | `09e_cops.js` | Policías a pie que bajan del coche, persiguen y disparan. |
 | `10_audio.js` | `AUDIO`: efectos sintetizados (motor, derrapes, sirena, golpes…). |
 | `10b_music.js` | `MUSIC`: radio hip hop procedural con letras y estribillo de misión. |
+| `08b_border.js` | Límites del mundo: aviso y vuelta a la ciudad. |
+| `10d_ambience.js` | `AMBIENCE`: pájaros, coches, gente, campanas, perros, gaviotas. |
 | `10c_steps.js` | `STEPS`: muestras de pasos por suelo, reverberación y `footContacts` (sincronía con la animación). |
 | `11_hud.js` | HUD, minimapa, mapa grande, GPS (`GPS`, grafo peatonal `WALKG`), controles táctiles. |
 | `12_missions.js` | `DLG` (diálogos), `MISSIONS` (historia y secundarias), NPCs de la banda. |

@@ -28,6 +28,8 @@ function tower(x, z, base, w, h, capStyle = 'pyramid') {
 function buildLandmarks() {
   buildChurches();
   try { buildLandmarkDeco(); } catch (e) { console.error('landmarks', e); }
+  try { buildCustomHouses(); } catch (e) { console.error('casas', e); }
+  try { buildInicioDetails(); } catch (e) { console.error('inicio', e); }
   try { buildPasarela(); } catch (e) { console.error('pasarela', e); }
   if (INTER_B) try { buildIntercambiador(INTER_B); } catch (e) { console.error('inter', e); }
   // (the Plaza del Adelantado and the other squares and parks are built in 05n_plazas.js)
@@ -83,7 +85,7 @@ function mergeGeos(list) {
 }
 function buildTrees() {
   const types = [[], [], [], []];
-  for (const t of TREES) { if (t[0] < WORLD.x0 || t[0] > WORLD.x1 || t[1] < WORLD.z0 || t[1] > WORLD.z1) continue; if (overTunnel(t[0], t[1]) || inCut(t[0], t[1], 2.2)) continue; if (onCarriageway(t[0], t[1], 0.9)) continue; if (!t[4] && onAnyPaved(t[0], t[1], -0.3) && !isGreen(t[0], t[1])) continue; types[t[2]].push(t); }
+  for (const t of TREES) { if (!inPlayArea(t[0], t[1], -5)) continue; if (overTunnel(t[0], t[1]) || inCut(t[0], t[1], 2.2)) continue; if (onCarriageway(t[0], t[1], 0.9)) continue; if (!t[4] && onAnyPaved(t[0], t[1], -0.3) && !isGreen(t[0], t[1])) continue; types[t[2]].push(t); }
   const barkMat = new THREE.MeshStandardMaterial({ color: 0x5a4636, roughness: 1 });
   const leafMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85, flatShading: true });
   const o = new THREE.Object3D(); const col = new THREE.Color();
