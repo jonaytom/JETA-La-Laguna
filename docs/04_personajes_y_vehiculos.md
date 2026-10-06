@@ -16,9 +16,12 @@
 - **Complexión (cuerpos propios)**: el cuerpo base es de «superhéroe». `tools/morphs.py` (después de
   `chars2json.py`) genera cuatro *morphs* propios sobre la malla, según el hueso de cada vértice y su normal:
   `normal` (menos músculo), `fat` (barriga, michelines, espalda, culo, brazos y muslos gruesos, papada), `teen`
-  (más delgado) y `old` (barriga blanda, pecho caído). Se guardan en `chars.json` (`bodies.*.morph`, int8/800) y en
+  (más delgado), `old` (barriga blanda, pecho caído), `xfat` / `sfat` (extra y súper gordo, se suman a `fat`) y
+  `slim` / `sslim` (extra y súper delgado). Tallas con nombre: `makeHuman({ build: { size: 'superSlim' | 'extraSlim' |
+  'normal' | 'athletic' | 'fat' | 'extraFat' | 'superFat' } })`. La pelea 2D ensancha o estrecha el sprite según la talla. Se guardan en `chars.json` (`bodies.*.morph`, int8/800) y en
   el juego son *morph targets* del `SkinnedMesh`, mezclables: `makeHuman({ build: { normal: 0.6, fat: 0.8 } })`.
-  Sin `build`, cada peatón sale con un reparto aleatorio (normal, relleno, atlético, mayor —pelo canoso—,
+  Sin `build`, los personajes son de talla media (`normal 0.7`); solo los de la calle (`random: true`: peatones,
+  motoristas) salen con un reparto aleatorio, casi siempre en el rango medio y con los extremos raros (normal, relleno, atlético, mayor —pelo canoso—,
   adolescente —más bajo y cabeza algo mayor—). `fat` / `thin` antiguos se traducen a `build`. Mismas animaciones.
 - `H.look` guarda la apariencia resuelta: el motor de pelea 2D la usa para dibujar el sprite pixel-art del mismo
   personaje.

@@ -15,7 +15,7 @@ function spawnPed(x, z, near = false) {
   if (PEDS.length > Q.peds + 8) return null;
   const long = Math.random() < 0.45;
   const can = Math.random() < 0.08;
-  const H = can ? makeHuman({ shirt: 0xffd400, pants: 0x1f4ea8, female: false, sleeve: false, cap: Math.random() < 0.5 ? 0xffd400 : undefined }) : makeHuman({ female: long, fat: Math.random() < 0.16, shirt: long && Math.random() < 0.5 ? pick([0xc2185b, 0x7b1fa2, 0xf06292, 0xffffff, 0x80cbc4]) : undefined });
+  const H = can ? makeHuman({ random: true, shirt: 0xffd400, pants: 0x1f4ea8, female: false, sleeve: false, cap: Math.random() < 0.5 ? 0xffd400 : undefined }) : makeHuman({ random: true, female: long, shirt: long && Math.random() < 0.5 ? pick([0xc2185b, 0x7b1fa2, 0xf06292, 0xffffff, 0x80cbc4]) : undefined });
   scene.add(H.root);
   const p = { canarion: can, H, x, z, h: Math.random() * 6.28, speed: rnd(1.1, 1.6), way: -1, seg: 0, dir: 1, off: 0, flee: 0, down: 0, fleeFrom: null, talk: 0 };
   if (!near) {

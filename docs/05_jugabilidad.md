@@ -41,7 +41,8 @@
 
 ## Peleas 2D (`09d_fight2d.js`)
 
-- Al pegar a un peatón empieza una pelea en un canvas de 320×180 pixel-art: el fondo es una captura lateral de la
+- Al pegar a un peatón empieza una pelea pixel-art (escenario lógico de 320×180, dibujado al doble, 640×360: sprites
+  con cara —ojo, ceja, boca, oreja—, pelo con mechones, pliegues, cinturón, suela; fondo con el doble de píxeles): el fondo es una captura lateral de la
   escena 3D real posterizada con *dithering*; los luchadores se dibujan proceduralmente a partir de su `look`.
 - Controles: puñetazo = clic izq. / J / Shift dcho. (mando X); patada = clic dcho. / K / Ctrl dcho. (mando A);
   saltar = Espacio (mando Y); W/↑ = «arriba» (no salta); agacharse = S/↓; **atrás = andar hacia atrás, y se cubre

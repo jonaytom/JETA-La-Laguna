@@ -21,6 +21,16 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 - [ ] Prueba de conducción de túneles/puentes: 10 de 111 sin terminar (2 se salen contra el muro de la trinchera en
       Z≈3100, X≈1800; el resto, tráfico o tiempo).
 
+- [ ] **Auditoría de código v0.46** (`docs/auditorias/INFORME_AUDITORIA_JETA_v0.46.0.md`) — por decidir con Jonay:
+      - P0.1 Geometría de la ciudad ≈1 GB en RAM: quitar normales (flatShading), color en Uint8, liberar arrays tras
+        subir a GPU, construir con Float32Array.
+      - P0.2 Fuga de peatones/coches/policías (makeHuman/Car sin dispose): pool precargado y geometrías compartidas.
+      - P0.3 Pistolas, balizas y latas creadas en caliente: crearlas una vez.
+      - P1.1–P1.4 HUD tocando el DOM cada fotograma, minimapa a 60 Hz, basura por fotograma, búsquedas lineales.
+      - P1.5 12.000 mallas sueltas / 5,4 M triángulos: fusionar e instanciar, LOD por trozo.
+      - P1.6 PMREM regenerado al cambiar la hora: precalcular 6–8.
+      - P2.1–P2.5 Precalcular geometría en build.py, datos binarios, juego offline (Three.js y fuentes incrustadas),
+        compileAsync, calidad de código (módulos, Prettier/ESLint), referencias PNG fuera del repo, prueba de rendimiento.
 - [ ] **Agente revisor — tandas pendientes** (`reportes/ULTIMO.md`, con capturas). Hecha la 1.ª tanda (aceras,
       terreno bajo el asfalto, pretiles, calles que suben a las rampas, edificios sobre calles). Quedan:
       - **Trincheras / túneles** (Vía de Ronda X 375–392 Z 1456–1536, terciaria X≈1800 Z≈3100): muros blancos y
@@ -34,7 +44,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       - Aeropuerto: 3 edificios aún sobre vías de servicio y caminos peatonales que se atascan (X −3150, Z 0…100).
 - [x] v0.47.0 (1.ª versión) **Cuerpos variados (nuestra versión)** — afinar con Jonay: morphs por código sobre el cuerpo Superhero:
       normal (menos músculo), relleno/barrigón (grados), adolescente, mayor; mezclables y con las mismas animaciones.
-- [ ] **Lucha 2D: más resolución en el pixel art** (lo pide Jonay): sprites de los luchadores y fondo con el doble de
+- [x] v0.48.0 **Lucha 2D: más resolución en el pixel art** (lo pide Jonay): sprites de los luchadores y fondo con el doble de
       píxeles (más detalle de cara, ropa y pelo; fondo con menos pixelado), manteniendo el estilo 90s.
 - [ ] **Mixamo** como fuente de animaciones extra (gratis para juegos; no subir los FBX originales al repo; hay que
       retargetear a nuestro esqueleto; la descarga la hace Jonay con su cuenta de Adobe).
@@ -57,6 +67,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 
 ## Hecho
 
+- [x] v0.48.0 — Pelea 2D al doble de resolución con más detalle; siete tallas de cuerpo (súper/extra delgado … extra/súper gordo).
 - [x] v0.47.0 — Agente revisor de jugabilidad, puente del aeropuerto bajado a nivel, aceras sin losa bajo la calzada.
 - [x] v0.45.0 — Pabellón de Finca España y colores de C. Tacoronte, barrio de Chimisay relleno, La Pirámide.
 - [x] v0.44.0 — Aeropuerto de Los Rodeos y corredor oeste con sus calles y relieve.

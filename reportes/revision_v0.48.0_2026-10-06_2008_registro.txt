@@ -1,0 +1,167 @@
+== Agente revisor v0.48.0 — 2026-10-06_2008 — zonas nuevas: 
+plan: surf 692 (0 zona nueva, 442 riesgo, 250 rotación), walk 83 (0 zona nueva, 0 riesgo, 83 rotación), drive 692 (0 zona nueva, 442 riesgo, 250 rotación)
+-- superficies: 692 vías
+[superficies · riesgo] Objetos flotando sobre la calzada en X 752 Z 1268 — primary_link (#19): Algo plano («asphaltLines») flota 1.0 m sobre la calzada
+[superficies · riesgo] Objetos flotando sobre la calzada en X -2225 Z -213 — motorway_link (#307): Algo plano («trim») flota 3.1 m sobre la calzada
+[superficies · riesgo] Texturas cruzadas (suelo sobre la carretera) en X -2189 Z -214 — motorway_link (#307): Superficie «trim» 0.18 m por encima del asfalto
+[superficies · riesgo] Objetos flotando sobre la calzada en X 753 Z 3484 — motorway_link (#399): Algo plano («asphaltLines») flota 1.2 m sobre la calzada
+[superficies · riesgo] Objetos flotando sobre la calzada en X 885 Z 3177 — tertiary_link (#400): Algo plano («trim») flota 0.7 m sobre la calzada
+   … superficies 50/692 (127 s)
+[superficies · riesgo] Texturas cruzadas (suelo sobre la carretera) en X 662 Z 3433 — Travesía Enlace Andenes Sobradillo (#650): Superficie «trim» 0.17 m por encima del asfalto
+[superficies · riesgo] Texturas cruzadas (suelo sobre la carretera) en X 674 Z 3446 — motorway_link (#651): Superficie «trim» 0.21 m por encima del asfalto
+[superficies · riesgo] Objetos flotando sobre la calzada en X 742 Z 838 — primary_link (#668): Algo plano («asphalt») flota 1.8 m sobre la calzada
+[superficies · riesgo] Texturas cruzadas (suelo sobre la carretera) en X 177 Z 1191 — secondary (#694): Superficie «trim» 0.24 m por encima del asfalto
+[superficies · riesgo] Objetos flotando sobre la calzada en X 464 Z 1421 — primary_link (#813): Algo plano («asphaltLines») flota 0.8 m sobre la calzada
+[superficies · riesgo] Objetos flotando sobre la calzada en X 714 Z 3392 — motorway_link (#824): Algo plano («trim») flota 0.7 m sobre la calzada
+[superficies · riesgo] Objetos flotando sobre la calzada en X 320 Z 238 — primary_link (#840): Algo plano («asphaltLines») flota 1.4 m sobre la calzada
+[superficies · riesgo] Texturas cruzadas (suelo sobre la carretera) en X 323 Z 242 — primary_link (#840): Superficie «trim» 0.26 m por encima del asfalto
+   … superficies 100/692 (186 s)
+[superficies · riesgo] Objetos flotando sobre la calzada en X -741 Z 334 — tertiary (#979): Algo plano («asphaltLines») flota 1.9 m sobre la calzada
+[superficies · riesgo] Objetos flotando sobre la calzada en X 1512 Z 1744 — Avenida de los Menceyes (#1052): Algo plano («trim») flota 0.7 m sobre la calzada
+   … superficies 150/692 (203 s)
+[superficies · riesgo] Objetos flotando sobre la calzada en X 701 Z 814 — residential (#1527): Algo plano («trim») flota 2.8 m sobre la calzada
+[superficies · riesgo] Objetos flotando sobre la calzada en X 410 Z -314 — primary_link (#1607): Algo plano («trim») flota 3.2 m sobre la calzada
+   … superficies 200/692 (223 s)
+[superficies · riesgo] Texturas cruzadas (suelo sobre la carretera) en X 2216 Z 3537 — motorway_link (#2333): Superficie «trim» 0.35 m por encima del asfalto
+   … superficies 250/692 (232 s)
+[superficies · riesgo] Objetos flotando sobre la calzada en X -731 Z 335 — Camino San Francisco (#2831): Algo plano («asphaltLines») flota 2.0 m sobre la calzada
+   … superficies 300/692 (244 s)
+[superficies · riesgo] Objetos flotando sobre la calzada en X 91 Z 1284 — secondary (#3532): Algo plano («trim») flota 1.9 m sobre la calzada
+[superficies · riesgo] Texturas cruzadas (suelo sobre la carretera) en X 95 Z 1279 — secondary (#3532): Superficie «trim» 0.28 m por encima del asfalto
+[superficies · riesgo] Texturas cruzadas (suelo sobre la carretera) en X 77 Z 1287 — secondary (#3537): Superficie «trim» 0.23 m por encima del asfalto
+   … superficies 350/692 (270 s)
+[superficies · riesgo] Texturas cruzadas (suelo sobre la carretera) en X -2273 Z -283 — Carretera General del Norte (#4728): Superficie «trim» 0.11 m por encima del asfalto
+   … superficies 400/692 (281 s)
+[superficies · riesgo] Texturas cruzadas (suelo sobre la carretera) en X -3274 Z -236 — secondary_link (#4772): Superficie «trim» 0.19 m por encima del asfalto
+[superficies · riesgo] Objetos flotando sobre la calzada en X -3273 Z -237 — secondary_link (#4772): Algo plano («trim») flota 0.7 m sobre la calzada
+[superficies · riesgo] Objetos flotando sobre la calzada en X -3282 Z -233 — secondary (#5016): Algo plano («trim») flota 0.8 m sobre la calzada
+   … superficies 450/692 (307 s)
+   … superficies 500/692 (311 s)
+   … superficies 550/692 (314 s)
+   … superficies 600/692 (317 s)
+[superficies · rotación] Texturas cruzadas (suelo sobre la carretera) en X 344 Z 1506 — Autopista del Norte (#1281): Superficie «grass» 0.18 m por encima del asfalto
+[superficies · rotación] Objetos flotando sobre la calzada en X 348 Z 1511 — Autopista del Norte (#1281): Algo plano («grass») flota 0.6 m sobre la calzada
+   … superficies 650/692 (338 s)
+[superficies · rotación] Objetos flotando sobre la calzada en X 1908 Z 3125 — Calle Zerolo (#1346): Algo plano («trim») flota 0.8 m sobre la calzada
+-- superficies hecho: 29 avisos acumulados, 347 s
+-- en coche: 692 vías
+[en coche · riesgo] Edificios sobre la vía en X 543 Z -909 — Camino La Rúa (#306): Un edificio tapa la vía: la calle entra en él (dato de OSM o edificio mal puesto)
+[en coche · riesgo] Vuela sobre la calzada en X -2221 Z -212 — motorway_link (#307): El coche va 1.8 m por encima de la calzada
+[en coche · riesgo] Saltos de altura en X -2221 Z -212 — motorway_link (#307): Salto brusco de altura (1.6 m en un fotograma)
+[en coche · riesgo] Atascos en X 2150 Z 3200 — unclassified (#364): El coche se queda atascado
+[en coche · riesgo] Vuela sobre la calzada en X 780 Z 3438 — tertiary (#398): El coche va 1.2 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 750 Z 3486 — motorway_link (#399): El coche va 1.1 m por encima de la calzada
+[en coche · riesgo] Se hunde en X 501 Z 1386 — Vía de Ronda de La Laguna (#443): El coche va 0.5 m por debajo de la calzada
+[en coche · riesgo] Atascos en X 375 Z 1456 — Vía de Ronda de La Laguna (#446): El coche se queda atascado
+   … en coche 50/692 (412 s)
+[en coche · riesgo] Vuela sobre la calzada en X 662 Z 3432 — Travesía Enlace Andenes Sobradillo (#650): El coche va 1.0 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 674 Z 3445 — motorway_link (#651): El coche va 1.0 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 159 Z 1198 — secondary (#660): El coche va 1.2 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 742 Z 840 — primary_link (#668): El coche va 2.5 m por encima de la calzada
+[en coche · riesgo] Atascos en X 741 Z 837 — primary_link (#668): El coche se queda atascado
+[en coche · riesgo] Vuela sobre la calzada en X 173 Z 1191 — secondary (#694): El coche va 1.0 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 2226 Z 3568 — motorway_link (#718): El coche va 1.4 m por encima de la calzada
+[en coche · riesgo] Se hunde en X 389 Z 1487 — Vía de Ronda de La Laguna (#724): El coche va 2.4 m por debajo de la calzada
+[en coche · riesgo] Atascos en X 392 Z 1475 — Vía de Ronda de La Laguna (#724): El coche se queda atascado
+[en coche · riesgo] Vuela sobre la calzada en X 1174 Z 2433 — motorway_link (#728): El coche va 1.2 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 721 Z 3389 — motorway_link (#824): El coche va 1.1 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 318 Z 231 — primary_link (#840): El coche va 2.3 m por encima de la calzada
+[en coche · riesgo] Saltos de altura en X 318 Z 231 — primary_link (#840): Salto brusco de altura (2.2 m en un fotograma)
+   … en coche 100/692 (501 s)
+[en coche · riesgo] Se hunde en X 1837 Z 3084 — tertiary (#913): El coche va 1.6 m por debajo de la calzada
+[en coche · riesgo] Atascos en X 1823 Z 3077 — tertiary (#913): El coche se queda atascado
+[en coche · riesgo] Se hunde en X 1846 Z 3102 — tertiary (#922): El coche va 0.5 m por debajo de la calzada
+[en coche · riesgo] Se hunde en X 1785 Z 3153 — tertiary (#932): El coche va 1.1 m por debajo de la calzada
+[en coche · riesgo] Se sale de la calzada en X 1801 Z 3160 — tertiary (#932): El coche se sale de la calzada (8.2 m del eje)
+[en coche · riesgo] Atascos en X 1802 Z 3160 — tertiary (#932): El coche se queda atascado
+[en coche · riesgo] Atascos en X 734 Z 1288 — Vía de Ronda de La Laguna (#1022): El coche se queda atascado
+[en coche · riesgo] Vuela sobre la calzada en X 800 Z 3474 — Avenida Ghandi (#1225): El coche va 1.0 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 801 Z 3484 — Avenida Ghandi (#1229): El coche va 1.0 m por encima de la calzada
+   … en coche 150/692 (566 s)
+[en coche · riesgo] Vuela sobre la calzada en X 2203 Z 3575 — motorway_link (#1304): El coche va 1.0 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 2199 Z 3565 — Autopista del Norte (#1306): El coche va 1.0 m por encima de la calzada
+[en coche · riesgo] Se hunde en X 1854 Z 3104 — tertiary (#1311): El coche va 1.4 m por debajo de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X -838 Z 1351 — Carretera de La Esperanza (#1369): El coche va 1.4 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 702 Z 813 — residential (#1527): El coche va 3.7 m por encima de la calzada
+[en coche · riesgo] Saltos de altura en X 702 Z 813 — residential (#1527): Salto brusco de altura (1.8 m en un fotograma)
+[en coche · riesgo] Se sale de la calzada en X 698 Z 833 — residential (#1527): El coche se sale de la calzada (7.0 m del eje)
+[en coche · riesgo] Atascos en X 697 Z 836 — residential (#1527): El coche se queda atascado
+[en coche · riesgo] Atascos en X 1987 Z 3980 — service (#1580): El coche se queda atascado
+[en coche · riesgo] Vuela sobre la calzada en X 408 Z -312 — primary_link (#1607): El coche va 1.6 m por encima de la calzada
+[en coche · riesgo] Saltos de altura en X 408 Z -312 — primary_link (#1607): Salto brusco de altura (1.4 m en un fotograma)
+[en coche · riesgo] Vuela sobre la calzada en X 401 Z -294 — primary_link (#1608): El coche va 1.0 m por encima de la calzada
+[en coche · riesgo] Atascos en X 429 Z -321 — primary_link (#1608): El coche se queda atascado
+[en coche · riesgo] Vuela sobre la calzada en X 416 Z -313 — Vía de Ronda de La Laguna (#1610): El coche va 1.0 m por encima de la calzada
+   … en coche 200/692 (661 s)
+[en coche · riesgo] Vuela sobre la calzada en X 328 Z 18 — Vía de Ronda de La Laguna (#1975): El coche va 1.0 m por encima de la calzada
+[en coche · riesgo] Atascos en X 1766 Z 3140 — tertiary (#2250): El coche se queda atascado
+[en coche · riesgo] Vuela sobre la calzada en X 2226 Z 3568 — Autopista del Norte (#2320): El coche va 1.3 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 2238 Z 3583 — Autopista del Norte (#2322): El coche va 1.0 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 2219 Z 3542 — motorway_link (#2333): El coche va 1.1 m por encima de la calzada
+   … en coche 250/692 (702 s)
+[en coche · riesgo] Se hunde en X 385 Z 1477 — primary (#2386): El coche va 0.5 m por debajo de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 742 Z 842 — unclassified (#2410): El coche va 1.4 m por encima de la calzada
+[en coche · riesgo] Se hunde en X 307 Z 1536 — primary (#2415): El coche va 0.5 m por debajo de la calzada
+[en coche · riesgo] Atascos en X 303 Z 1535 — primary (#2415): El coche se queda atascado
+[en coche · riesgo] Vuela sobre la calzada en X 686 Z 3385 — tertiary (#2421): El coche va 1.4 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 780 Z 3440 — tertiary (#2428): El coche va 1.2 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 778 Z 3463 — tertiary (#2430): El coche va 1.0 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 1179 Z 2326 — tertiary (#2547): El coche va 1.0 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 330 Z 95 — Vía de Ronda de La Laguna (#2566): El coche va 1.0 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X -495 Z 683 — service (#2696): El coche va 1.3 m por encima de la calzada
+[en coche · riesgo] Saltos de altura en X -495 Z 683 — service (#2696): Salto brusco de altura (-1.2 m en un fotograma)
+   … en coche 300/692 (793 s)
+[en coche · riesgo] Atascos en X 1943 Z 3057 — service (#3018): El coche se queda atascado
+[en coche · riesgo] Se hunde en X -975 Z 121 — tertiary (#3046): El coche va 0.7 m por debajo de la calzada
+[en coche · riesgo] Atascos en X 797 Z 3132 — Calle Aceviño (#3192): El coche se queda atascado
+[en coche · riesgo] Vuela sobre la calzada en X 86 Z 1292 — secondary (#3532): El coche va 1.4 m por encima de la calzada
+[en coche · riesgo] Se hunde en X -394 Z 834 — primary_link (#3612): El coche va 0.6 m por debajo de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X -371 Z 811 — primary_link (#3612): El coche va 1.0 m por encima de la calzada
+   … en coche 350/692 (839 s)
+[en coche · riesgo] Se hunde en X 1431 Z 1659 — secondary (#3688): El coche va 0.5 m por debajo de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 2161 Z 3524 — Autopista del Norte (#4545): El coche va 1.1 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X -2251 Z -267 — secondary (#4686): El coche va 1.1 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X -2274 Z -282 — Carretera General del Norte (#4728): El coche va 1.5 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X -2301 Z -235 — primary (#4732): El coche va 1.1 m por encima de la calzada
+   … en coche 400/692 (875 s)
+[en coche · riesgo] Vuela sobre la calzada en X -2270 Z -257 — primary (#4857): El coche va 1.0 m por encima de la calzada
+[en coche · riesgo] Se hunde en X -3872 Z -358 — service (#5126): El coche va 0.5 m por debajo de la calzada
+   … en coche 450/692 (888 s)
+[en coche · rotación] Atascos en X 2400 Z 2721 — Carretera General La Cuesta - Taco (#1074): El coche se queda atascado
+[en coche · rotación] Atascos en X 2400 Z 1285 — Calle Bentejuí (#1098): El coche se queda atascado
+[en coche · rotación] Atascos en X 2400 Z 1216 — Calle las Casas (#1108): El coche se queda atascado
+[en coche · rotación] Atascos en X 1462 Z 1177 — Calle Albacete (#1110): El coche se queda atascado contra un obstáculo/muro
+[en coche · rotación] Se sale de la calzada en X 2356 Z 1164 — residential (#1113): El coche se sale de la calzada (7.1 m del eje)
+   … en coche 500/692 (914 s)
+[en coche · rotación] Atascos en X 1433 Z 1154 — Calle Cartagena (#1124): El coche se queda atascado contra un obstáculo/muro
+[en coche · rotación] Atascos en X 533 Z 3980 — Autovía Interconexión Norte-Sur (#1164): El coche se queda atascado
+   … en coche 550/692 (927 s)
+[en coche · rotación] Se sale de la calzada en X -307 Z 852 — Rambla Las Clavellinas (#1186): El coche se sale de la calzada (7.2 m del eje)
+[en coche · rotación] Se sale de la calzada en X -695 Z 994 — service (#1188): El coche se sale de la calzada (5.6 m del eje)
+[en coche · rotación] Edificios sobre la vía en X -631 Z 997 — service (#1188): Un edificio tapa la vía: la calle entra en él (dato de OSM o edificio mal puesto)
+[en coche · rotación] Vuela sobre la calzada en X 802 Z 3487 — Travesía Enlace Andenes Sobradillo (#1228): El coche va 1.1 m por encima de la calzada
+   … en coche 600/692 (959 s)
+[en coche · rotación] Atascos en X 319 Z 1479 — Autopista del Norte (#1281): El coche se queda atascado contra un obstáculo/muro
+[en coche · rotación] Se sale de la calzada en X 2400 Z 1136 — residential (#1307): El coche se sale de la calzada (7.0 m del eje)
+[en coche · rotación] Atascos en X 2400 Z 1143 — residential (#1307): El coche se queda atascado
+[en coche · rotación] Se sale de la calzada en X 2358 Z 944 — service (#1308): El coche se sale de la calzada (5.8 m del eje)
+[en coche · rotación] Atascos en X 2400 Z 1582 — Calle Embudo (#1309): El coche se queda atascado
+[en coche · rotación] Atascos en X 2400 Z 3124 — Madagascar (#1315): El coche se queda atascado
+[en coche · rotación] Atascos en X 2400 Z 2386 — service (#1317): El coche se queda atascado
+[en coche · rotación] Atascos en X 2400 Z 2371 — Avenida Ingenieros (#1318): El coche se queda atascado
+   … en coche 650/692 (998 s)
+[en coche · rotación] Atascos en X 1950 Z 3132 — Calle Zerolo (#1346): El coche se queda atascado
+[en coche · rotación] Atascos en X 2400 Z 1694 — Calle la Calma (#1374): El coche se queda atascado
+-- en coche hecho: 123 avisos acumulados, 1009 s
+-- a pie: 83 vías
+[a pie · rotación] Se hunde en X -987 Z -235 — footway (#2244): El personaje se hunde 0.59 m bajo la superficie visible (suelo)
+[a pie · rotación] Se hunde en X 1674 Z 3777 — footway (#2389): El personaje se hunde 0.28 m bajo la superficie visible (grass)
+[a pie · rotación] Se hunde en X 1680 Z 3782 — footway (#2390): El personaje se hunde 0.59 m bajo la superficie visible (grass)
+[a pie · rotación] Se hunde en X 1686 Z 3778 — footway (#2391): El personaje se hunde 0.27 m bajo la superficie visible (grass)
+[a pie · rotación] Se hunde en X 1656 Z 3777 — footway (#2392): El personaje se hunde 0.38 m bajo la superficie visible (grass)
+[a pie · rotación] Se hunde en X 684 Z 3459 — path (#2554): El personaje se hunde 0.94 m bajo la superficie visible (trim)
+   … a pie 50/83 (1068 s)
+[a pie · rotación] Se hunde en X 1713 Z 2215 — path (#2613): El personaje se hunde 0.83 m bajo la superficie visible (suelo)
+-- a pie hecho: 130 avisos acumulados, 1087 s
+cobertura acumulada del mapa (vías revisadas alguna vez): {'surf': 1771, 'drive': 1771, 'walk': 463}
+== INFORME /home/claude/jeta-repo/reportes/revision_v0.48.0_2026-10-06_2008.md — 130 avisos

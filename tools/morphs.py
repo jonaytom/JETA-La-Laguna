@@ -4,6 +4,10 @@
 #   fat     - belly, love handles, back, bum, thicker arms/thighs/neck, double chin
 #   teen    - slimmer everywhere (height/head size come from bone scales at runtime)
 #   old     - soft belly, sagging chest, flatter bum
+#   xfat    - extra fat (on top of fat): bigger belly, thighs, arms, neck
+#   sfat    - super fat (on top of fat + xfat)
+#   slim    - extra slim: thin limbs, narrow waist, flat chest/bum (used without 'normal')
+#   sslim   - super slim (on top of slim)
 # The game mixes them per person (morphTargetInfluences), same skeleton and animations.
 # Offsets stored as int8 / 800 (1.25 mm steps, max ±0.16 m). Run after tools/chars2json.py:  python tools/morphs.py
 import json, base64, os
@@ -60,6 +64,25 @@ for key in ('m', 'f'):
     t = 0.05 * g((y - navel) / 0.15) * front * torsoL + 0.012 * torsoL - 0.012 * back * g((y - hip) / 0.1) * torsoL - 0.008 * (uarm + thigh)
     D = N * t[:, None]; D[:, 1] -= 0.03 * g((y - chestY) / 0.07) * front * chest; D[:, 2] -= 0.008 * g((y - chestY) / 0.07) * front * chest
     M['old'] = D
+    # ---- extra fat / super fat (stack on 'fat')
+    def fatter(a):
+        t = (a * 0.012 * (torsoL + chest)
+             + a * 0.10 * g((y - navel - 0.04 * k) / 0.19) * front ** 1.1 * torsoL
+             + a * 0.034 * g((y - waist - 0.06 * k) / 0.16) * side * (torsoL + chest)
+             + a * 0.03 * g((y - 1.12 * k) / 0.22) * back * (torsoL + chest)
+             + a * 0.035 * g((y - hip) / 0.12) * back * torsoL
+             + a * 0.03 * g((y - chestY) / 0.09) * (front + 0.5 * side) * chest
+             + a * 0.018 * uarm + a * 0.009 * larm + a * 0.035 * thigh * g((y - 0.8 * k) / 0.24) + a * 0.012 * calf
+             + a * 0.02 * neck + a * 0.016 * head * (y < chin + 0.035) * (front + side))
+        D = N * t[:, None]; D[:, 1] -= a * 0.03 * g((y - navel) / 0.16) * front * torsoL; return D
+    M['xfat'] = fatter(1.0); M['sfat'] = fatter(1.25)
+    # ---- extra slim / super slim
+    def thinner(a):
+        t = (-a * 0.011 * uarm - a * 0.008 * larm - a * 0.015 * thigh - a * 0.009 * calf
+             - a * 0.014 * (torsoL + chest) * side - a * 0.01 * chest * front * g((y - chestY) / 0.1) - a * 0.012 * front * torsoL * g((y - navel) / 0.15)
+             - a * 0.012 * back * torsoL * g((y - hip) / 0.1) - a * 0.006 * neck)
+        return N * t[:, None]
+    M['slim'] = thinner(1.0); M['sslim'] = thinner(0.85)
     B['morph'] = {n: base64.b64encode(np.clip(np.round(v * 800), -127, 127).astype(np.int8).tobytes()).decode() for n, v in M.items()}
     print(key, {n: round(float(np.abs(v).max()), 3) for n, v in M.items()})
 

@@ -61,7 +61,7 @@ class Car {
     this.type = type; this.model = model || null; this.color = color ?? pickColor();
     this.T = model ? { ...VTYPES[model.phys], L: model.L, W: model.W, H: model.H, name: model.name } : { ...VTYPES[type] }; this.T.maxV = topSpeedKmh(model, type) / 3.6 * rnd(0.96, 1.04); this.T.acc *= CAR_ACCEL; // same top speed (drag scales with acc), slower pick-up
     const m = !model ? makeCarMesh(type, this.color) : model.phys === 'moto' ? makeMotoMesh(model, this.color) : makeKenneyMesh(model, this.color);
-    if (m.moto) { this.rider = makeHuman({ cap: null }); seatHuman(this.rider, model); const helm = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 10), M(pick([0x111111, 0xf2f2f2, 0xb3261e, 0x1f4e8c]), 0.3, 0.3)); helm.position.y = 0.06; this.rider.head.add(helm); m.g.add(this.rider.root); this.rider.root.visible = false; } Object.assign(this, { mesh: m.g, body: m.body, wheels: m.wheels, hl: m.hl, tl: m.tl, bar: m.bar, paint: m.paint });
+    if (m.moto) { this.rider = makeHuman({ cap: null, random: true }); seatHuman(this.rider, model); const helm = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 10), M(pick([0x111111, 0xf2f2f2, 0xb3261e, 0x1f4e8c]), 0.3, 0.3)); helm.position.y = 0.06; this.rider.head.add(helm); m.g.add(this.rider.root); this.rider.root.visible = false; } Object.assign(this, { mesh: m.g, body: m.body, wheels: m.wheels, hl: m.hl, tl: m.tl, bar: m.bar, paint: m.paint });
     scene.add(this.mesh);
     this.x = x; this.z = z; this.y = heightAt(x, z); this.h = h; this.vx = 0; this.vz = 0; this.yawRate = 0; this.steer = 0;
     this.ctl = { thr: 0, brk: 0, steer: 0, hb: 0 }; this.mode = 'physics'; this.driver = null; this.health = 100; this.wheelRot = 0; this.pitch = 0; this.roll = 0; this.fwdV = 0;

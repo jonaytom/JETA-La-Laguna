@@ -3,6 +3,20 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.48.1 — 2026-10-07 — Tallas: el protagonista vuelve a talla media
+- El Chopa, los personajes de misión, los de las tiendas y los policías son siempre de talla media (antes podían salir
+  con una talla aleatoria, incluso súper gordo).
+- Reparto de tallas de los peatones más realista: la mayoría en el rango medio; atléticos, delgados y gordos menos
+  frecuentes, y los extremos (súper delgado / extra y súper gordo) raros (2–4 %).
+
+## 0.48.0 — 2026-10-07 — Pelea 2D en alta resolución y siete tallas de cuerpo
+- **Pelea 2D con el doble de resolución** (640×360 en vez de 320×180, misma jugabilidad): los luchadores tienen cara
+  (ojo, ceja, boca, oreja), mechones y brillo en el pelo, pliegues y borde iluminado en la ropa, cinturón con hebilla,
+  manga corta, rodilleras de luz y suela de las zapatillas; el fondo de la calle se pixela con el doble de detalle.
+  El sprite se ensancha o estrecha según la talla del personaje (barriga en los gordos).
+- **Siete tallas de cuerpo**: súper delgado, extra delgado, normal, atlético, gordo, extra gordo y súper gordo (más
+  mayores y adolescentes). Los peatones salen con un reparto de todas ellas.
+
 ## 0.47.0 — 2026-10-06 — Agente revisor de jugabilidad y cuerpos variados
 - **Cuerpos variados (versión propia)**: sobre el cuerpo «superhéroe» de Quaternius, cuatro formas propias mezclables
   —normal (menos músculo), relleno/barrigón, adolescente y mayor—; los peatones salen con un reparto de cuerpos

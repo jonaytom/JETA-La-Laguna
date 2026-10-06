@@ -39,49 +39,85 @@ const FIGHT2D = (() => {
     win: { tl: 0, sF: 172, eF: -10, sB: 20, eB: -30, hF: 10, kF: -6, hB: -12, kB: -6, dy: 0 },
     ko: { tl: -10, sF: 120, eF: 0, sB: 100, eB: -20, hF: 20, kF: -10, hB: -10, kB: -20, dy: 0, lying: true },
   };
+  // sprites are drawn at R× the stage resolution (logical units stay the same: 72×88 per sprite, 320×180 stage)
+  const R = 2;
+  function bodyK(look) { /* body width factor from the body type (morph sizes) */
+    const b = look.build || {}; let k = 1 + 0.32 * (b.fat || 0) + 0.55 * (b.xfat || 0) + 0.85 * (b.sfat || 0) - 0.14 * (b.slim || 0) - 0.24 * (b.sslim || 0) - 0.08 * (b.teen || 0);
+    if (look.fat) k = Math.max(k, 1.25); if (look.strong) k = Math.max(k, 1.18); if (look.thin) k = Math.min(k, 0.8); return clamp(k, 0.7, 1.9); }
   function drawFigure(look, P, nose) {
-    const c = mkCanvas(72, 88), x = c.getContext('2d'); x.imageSmoothingEnabled = false;
-    const sk = hexs(look.skin ?? 0xd9a47c), skD = shade(look.skin ?? 0xd9a47c, 0.72);
-    const top = hexs(look.jacket ?? look.shirt ?? 0x777777), topD = shade(look.jacket ?? look.shirt ?? 0x777777, 0.7), inner = hexs(look.shirt ?? 0xeeeeee);
-    const pa = hexs(look.pants ?? 0x333344), paD = shade(look.pants ?? 0x333344, 0.7), sh = hexs(look.shoes ?? 0x222222), hair = hexs(look.hair ?? 0x222222);
+    const c = mkCanvas(72 * R, 88 * R), x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.scale(R, R);
+    const sk = hexs(look.skin ?? 0xd9a47c), skD = shade(look.skin ?? 0xd9a47c, 0.72), skL = shade(look.skin ?? 0xd9a47c, 1.12), skDD = shade(look.skin ?? 0xd9a47c, 0.55);
+    const topC = look.jacket ?? look.shirt ?? 0x777777; const top = hexs(topC), topD = shade(topC, 0.7), topL = shade(topC, 1.15), inner = hexs(look.shirt ?? 0xeeeeee);
+    const pa = hexs(look.pants ?? 0x333344), paD = shade(look.pants ?? 0x333344, 0.7), paL = shade(look.pants ?? 0x333344, 1.2), sh = hexs(look.shoes ?? 0x222222), shD = shade(look.shoes ?? 0x222222, 0.7);
+    const hairC = look.hair ?? 0x222222, hair = hexs(hairC), hairL = shade(hairC, 1.45), hairD = shade(hairC, 0.65), sole = hexs(look.sole ?? 0xdddddd);
     const sleeve = look.sleeve || look.jacket !== undefined, longP = look.longP !== false;
-    const fat = look.fat ? 1.25 : look.strong ? 1.18 : look.thin ? 0.8 : 1;
+    const fat = bodyK(look); const belly = Math.max(0, fat - 1.05);
     const hx = 36, hy = 50 + (P.dy || 0); const rad = (a) => a * Math.PI / 180;
     const lean = rad(P.tl || 0); const neck = [hx + Math.sin(lean) * 22, hy - Math.cos(lean) * 22];
     const seg = (o, a, L) => [o[0] + Math.sin(rad(a)) * L, o[1] + Math.cos(rad(a)) * L];
     const line = (a, b, w, col) => { x.strokeStyle = col; x.lineWidth = w; x.lineCap = 'round'; x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.stroke(); };
+    const dot = (p, r, col) => { x.fillStyle = col; x.beginPath(); x.arc(p[0], p[1], r, 0, 7); x.fill(); };
     const shF = [neck[0] + 2, neck[1] + 3], shB = [neck[0] - 2, neck[1] + 3];
-    const limbArm = (s, aS, aE, back) => { const e = seg(s, aS, 11), h = seg(e, aS + aE, 10); line(s, e, 6 * Math.min(fat, 1.15), back ? (sleeve ? topD : skD) : (sleeve ? top : sk)); line(e, h, 5, back ? (sleeve && false ? topD : skD) : sk); x.fillStyle = back ? skD : sk; x.beginPath(); x.arc(h[0], h[1], 3.2, 0, 7); x.fill(); return h; };
-    const limbLeg = (o, aH, aK, back) => { const k = seg(o, aH, 15), f = seg(k, aH + aK, 15); line(o, k, 8 * Math.min(fat, 1.15), back ? paD : pa); line(k, f, 7, longP ? (back ? paD : pa) : (back ? skD : sk)); x.fillStyle = back ? shade(look.shoes ?? 0x222222, 0.7) : sh; x.fillRect(Math.round(f[0] - 3), Math.round(f[1] - 2), 9, 4); return f; };
+    const limbArm = (s, aS, aE, back) => { const e = seg(s, aS, 11), h = seg(e, aS + aE, 10); const aw = 6 * Math.min(fat, 1.3);
+      const up = back ? (sleeve ? topD : skD) : (sleeve ? top : sk); line(s, e, aw, up);
+      if (!back) line([s[0] + 0.8, s[1]], [e[0] + 0.8, e[1]], aw * 0.3, sleeve ? topL : skL); /* light on the upper arm */
+      if (!sleeve) { const m = [(s[0] + e[0]) / 2, (s[1] + e[1]) / 2]; line(s, m, aw + 0.4, back ? topD : top); } /* short sleeve */
+      line(e, h, 5 * Math.min(fat, 1.2), back ? skD : sk); if (sleeve && !back) dot(e, 0.1, top);
+      dot(h, 3.2, back ? skD : sk); x.fillStyle = back ? skDD : skD; x.fillRect(h[0] - 1.5, h[1] - 0.3, 3, 0.6); /* knuckles */ return h; };
+    const limbLeg = (o, aH, aK, back) => { const k = seg(o, aH, 15), f = seg(k, aH + aK, 15); const lw = 8 * Math.min(fat, 1.35);
+      line(o, k, lw, back ? paD : pa); line(k, f, 7 * Math.min(fat, 1.2), longP ? (back ? paD : pa) : (back ? skD : sk));
+      if (!back) { line([o[0] + 1.5, o[1]], [k[0] + 1.5, k[1]], 0.6, paL); if (longP) line([k[0] + 1.2, k[1]], [f[0] + 1.2, f[1] - 1], 0.6, paL); }
+      if (!longP) line(o, [(o[0] + k[0]) / 2 + (k[0] - o[0]) * 0.3, (o[1] + k[1]) / 2 + (k[1] - o[1]) * 0.3], lw + 0.3, back ? paD : pa);
+      x.fillStyle = back ? shD : sh; x.fillRect(f[0] - 3, f[1] - 2.5, 9, 4); x.fillStyle = back ? shade(look.sole ?? 0xdddddd, 0.7) : sole; x.fillRect(f[0] - 3, f[1] + 1, 9, 1); /* sole */
+      if (!back) { x.fillStyle = shade(look.shoes ?? 0x222222, 1.4); x.fillRect(f[0] + 2, f[1] - 2, 3, 0.6); } return f; };
     // back limbs first
     limbLeg([hx - 2, hy], P.hB, P.kB, true); limbArm(shB, P.sB, P.eB, true);
-    // torso
-    const tw = 9 * fat; x.fillStyle = top; x.beginPath(); x.moveTo(neck[0] - tw + 1, neck[1] + 2); x.lineTo(neck[0] + tw, neck[1] + 2); x.lineTo(hx + 7 * fat, hy + 2); x.lineTo(hx - 7 * fat, hy + 2); x.closePath(); x.fill();
-    if (look.jacket !== undefined) { x.fillStyle = inner; x.beginPath(); x.moveTo(neck[0] - 1, neck[1] + 2); x.lineTo(neck[0] + 3, neck[1] + 2); x.lineTo(hx + 2, hy); x.lineTo(hx, hy); x.closePath(); x.fill(); }
+    // torso (+ belly for big bodies)
+    const tw = 9 * fat;
+    x.fillStyle = top; x.beginPath(); x.moveTo(neck[0] - tw + 1, neck[1] + 2); x.lineTo(neck[0] + tw, neck[1] + 2); x.lineTo(hx + 7 * fat, hy + 2); x.lineTo(hx - 7 * fat, hy + 2); x.closePath(); x.fill();
+    if (belly > 0) { x.fillStyle = top; x.beginPath(); x.ellipse(hx + 3 + 4 * belly, hy - 7, 6 + 4 * belly, 7 + 2 * belly, 0, 0, 7); x.fill(); x.fillStyle = topL; x.beginPath(); x.ellipse(hx + 5 + 5 * belly, hy - 9, 2 + belly, 3, 0, 0, 7); x.fill(); }
+    if (look.jacket !== undefined) { x.fillStyle = inner; x.beginPath(); x.moveTo(neck[0] - 1, neck[1] + 2); x.lineTo(neck[0] + 3, neck[1] + 2); x.lineTo(hx + 2, hy); x.lineTo(hx, hy); x.closePath(); x.fill();
+      line([neck[0] + 3, neck[1] + 2], [hx + 3, hy], 0.6, topD); line([neck[0] - 1, neck[1] + 2], [hx - 0.5, hy - 6], 0.6, topD); } /* lapels */
+    else { x.fillStyle = sk; x.beginPath(); x.arc(neck[0] + 1, neck[1] + 2, 2.4, 0, Math.PI); x.fill(); } /* collar */
     x.fillStyle = topD; x.beginPath(); x.moveTo(neck[0] - tw + 1, neck[1] + 2); x.lineTo(neck[0] - tw + 4, neck[1] + 2); x.lineTo(hx - 4 * fat, hy + 2); x.lineTo(hx - 7 * fat, hy + 2); x.closePath(); x.fill();
-    x.fillStyle = pa; x.fillRect(Math.round(hx - 7 * fat), hy - 1, Math.round(14 * fat), 5); // belt / hips
+    line([neck[0] + tw - 2, neck[1] + 4], [hx + 5 * fat, hy - 2], 0.7, topL); /* lit edge */
+    line([neck[0] + 1, neck[1] + 9], [hx + 2, hy - 4], 0.5, topD); line([neck[0] - 2, neck[1] + 12], [hx - 1, hy - 2], 0.5, topD); /* folds */
+    x.fillStyle = pa; x.fillRect(hx - 7 * fat, hy - 1, 14 * fat, 5); x.fillStyle = '#2a1d14'; x.fillRect(hx - 7 * fat, hy - 1, 14 * fat, 1.2); x.fillStyle = '#d9b44a'; x.fillRect(hx + 1, hy - 1.2, 1.6, 1.6); /* belt + buckle */
     limbLeg([hx + 2, hy], P.hF, P.kF, false);
     // head
     const hd = seg(neck, 180 + (P.tl || 0) + (P.head || 0), 7); const hc = [hd[0], hd[1] - 1];
-    x.fillStyle = sk; x.beginPath(); x.arc(hc[0], hc[1], 6.5, 0, 7); x.fill(); x.fillRect(Math.round(neck[0] - 2), Math.round(neck[1] - 3), 4, 5);
-    x.fillStyle = skD; x.fillRect(Math.round(hc[0] - 6), Math.round(hc[1]), 3, 4);
+    x.fillStyle = sk; x.fillRect(neck[0] - 2 * Math.min(fat, 1.3), neck[1] - 3, 4 * Math.min(fat, 1.3), 5);
+    dot(hc, 6.5, sk); if (fat > 1.3) dot([hc[0] + 1, hc[1] + 4], 4, sk); /* double chin */
+    x.fillStyle = skD; x.beginPath(); x.arc(hc[0], hc[1], 6.5, Math.PI * 0.55, Math.PI * 1.15); x.lineTo(hc[0] - 2, hc[1] + 2); x.fill(); /* shadow on the back of the head */
+    dot([hc[0] + 2.5, hc[1] - 3.5], 1.6, skL); /* forehead light */
+    dot([hc[0] - 1.2, hc[1] + 0.6], 1.5, skD); dot([hc[0] - 1.2, hc[1] + 0.6], 0.6, skDD); /* ear */
     // nose (El Chopa's is legendary)
-    x.fillStyle = sk; if (nose) { x.beginPath(); x.moveTo(hc[0] + 5, hc[1] - 2); x.lineTo(hc[0] + 11, hc[1] + 3); x.lineTo(hc[0] + 5, hc[1] + 3); x.fill(); } else x.fillRect(Math.round(hc[0] + 5), Math.round(hc[1]), 2, 2);
-    x.fillStyle = '#111'; x.fillRect(Math.round(hc[0] + 2), Math.round(hc[1] - 2), 2, 2); // eye
-    if (look.beard) { x.fillStyle = hair; x.beginPath(); x.arc(hc[0] + 1, hc[1] + 3, 5, 0, Math.PI); x.fill(); }
-    if (look.glasses) { x.fillStyle = look.glasses === 'sun' ? '#111' : '#cfd8dc'; x.fillRect(Math.round(hc[0]), Math.round(hc[1] - 3), 6, 2); }
+    x.fillStyle = sk; if (nose) { x.beginPath(); x.moveTo(hc[0] + 5, hc[1] - 2); x.lineTo(hc[0] + 11, hc[1] + 3); x.lineTo(hc[0] + 5, hc[1] + 3); x.fill(); x.fillStyle = skD; x.fillRect(hc[0] + 6, hc[1] + 2.4, 4, 0.6); }
+    else { x.beginPath(); x.moveTo(hc[0] + 5.5, hc[1] - 1.5); x.lineTo(hc[0] + 7.6, hc[1] + 1.4); x.lineTo(hc[0] + 5.5, hc[1] + 1.6); x.fill(); x.fillStyle = skD; x.fillRect(hc[0] + 5.5, hc[1] + 1.2, 1.6, 0.5); }
     // hair / cap / beanie
     const capCol = look.cap ?? look.beanie;
-    if (capCol !== undefined && capCol !== null) { x.fillStyle = hexs(capCol); x.beginPath(); x.arc(hc[0], hc[1] - 1, 7, Math.PI, 0); x.fill(); if (look.cap) x.fillRect(Math.round(hc[0]), Math.round(hc[1] - 3), 10, 2); }
-    else if (look.hairStyle) { x.fillStyle = hair; x.beginPath(); x.arc(hc[0] - 1, hc[1] - 2, 7, Math.PI * 0.95, Math.PI * 2.05); x.fill(); if (/Long|Buns/.test(look.hairStyle)) x.fillRect(Math.round(hc[0] - 8), Math.round(hc[1] - 3), 5, look.female ? 14 : 10); }
+    if (capCol !== undefined && capCol !== null) { x.fillStyle = hexs(capCol); x.beginPath(); x.arc(hc[0], hc[1] - 1, 7, Math.PI, 0); x.fill(); x.fillStyle = shade(capCol, 1.3); x.fillRect(hc[0] - 3, hc[1] - 6.5, 4, 0.8); if (look.cap) { x.fillStyle = shade(capCol, 0.75); x.fillRect(hc[0], hc[1] - 3, 10, 2); } }
+    else if (look.hairStyle) {
+      x.fillStyle = hair; x.beginPath(); x.arc(hc[0] - 1, hc[1] - 2.6, 7, Math.PI * 0.95, Math.PI * 2.0); x.fill();
+      if (/Buzz/.test(look.hairStyle)) { x.fillStyle = shade(hairC, 0.9); x.beginPath(); x.arc(hc[0] - 1, hc[1] - 2, 7, Math.PI * 1.1, Math.PI * 1.9); x.fill(); }
+      if (/Long|Buns/.test(look.hairStyle)) { x.fillStyle = hair; x.fillRect(hc[0] - 8, hc[1] - 3, 5, look.female ? 14 : 10); x.fillStyle = hairD; x.fillRect(hc[0] - 7, hc[1] + 1, 1, look.female ? 9 : 5); }
+      if (/Buns/.test(look.hairStyle)) dot([hc[0] - 6, hc[1] - 7], 3, hair);
+      line([hc[0] - 4, hc[1] - 6], [hc[0] + 2, hc[1] - 8], 0.6, hairL); line([hc[0] - 6, hc[1] - 3], [hc[0] - 3, hc[1] - 7], 0.5, hairD); /* strands */ }
+    // face details over the hair line
+    x.fillStyle = '#f4f1ea'; x.fillRect(hc[0] + 2, hc[1] - 2.6, 2.6, 1.6); x.fillStyle = '#1a120c'; x.fillRect(hc[0] + 3.4, hc[1] - 2.6, 1.1, 1.6); /* eye */
+    x.fillStyle = hairD; x.fillRect(hc[0] + 1.8, hc[1] - 3.6, 3.2, 0.7); /* eyebrow */
+    x.fillStyle = skDD; x.fillRect(hc[0] + 3, hc[1] + 3.1, 2.4, 0.6); /* mouth */
+    if (look.beard) { x.fillStyle = hair; x.beginPath(); x.arc(hc[0] + 1, hc[1] + 3, 5, 0, Math.PI); x.fill(); x.fillStyle = skDD; x.fillRect(hc[0] + 3, hc[1] + 3.1, 2.4, 0.6); x.fillStyle = hairL; x.fillRect(hc[0] + 2, hc[1] + 5, 2, 0.6); }
+    if (look.glasses) { x.fillStyle = look.glasses === 'sun' ? '#111' : 'rgba(200,220,230,0.9)'; x.fillRect(hc[0] + 1.5, hc[1] - 3.2, 5, 2.2); x.fillStyle = '#222'; x.fillRect(hc[0] - 1, hc[1] - 2.6, 3, 0.5); if (look.glasses !== 'sun') { x.fillStyle = '#1a120c'; x.fillRect(hc[0] + 3.4, hc[1] - 2.6, 1.1, 1.6); } }
     // front arm last (guard in front of the body)
     limbArm(shF, P.sF, P.eF, false);
-    // --- pixelate: hard alpha + 1px dark outline
-    const id = x.getImageData(0, 0, 72, 88), d = id.data; const opa = new Uint8Array(72 * 88);
-    for (let i = 0; i < 72 * 88; i++) { if (d[i * 4 + 3] > 110) { d[i * 4 + 3] = 255; opa[i] = 1; } else d[i * 4 + 3] = 0; }
-    for (let yy = 0; yy < 88; yy++) for (let xx = 0; xx < 72; xx++) { const i = yy * 72 + xx; if (opa[i]) continue; if ((xx > 0 && opa[i - 1]) || (xx < 71 && opa[i + 1]) || (yy > 0 && opa[i - 72]) || (yy < 87 && opa[i + 72])) { d[i * 4] = 20; d[i * 4 + 1] = 14; d[i * 4 + 2] = 24; d[i * 4 + 3] = 255; } }
+    // --- pixelate: hard alpha + 1px dark outline (at the higher resolution)
+    const CW = 72 * R, CH = 88 * R; x.setTransform(1, 0, 0, 1, 0, 0);
+    const id = x.getImageData(0, 0, CW, CH), d = id.data; const opa = new Uint8Array(CW * CH);
+    for (let i = 0; i < CW * CH; i++) { if (d[i * 4 + 3] > 110) { d[i * 4 + 3] = 255; opa[i] = 1; } else d[i * 4 + 3] = 0; }
+    for (let yy = 0; yy < CH; yy++) for (let xx = 0; xx < CW; xx++) { const i = yy * CW + xx; if (opa[i]) continue; if ((xx > 0 && opa[i - 1]) || (xx < CW - 1 && opa[i + 1]) || (yy > 0 && opa[i - CW]) || (yy < CH - 1 && opa[i + CW])) { d[i * 4] = 20; d[i * 4 + 1] = 14; d[i * 4 + 2] = 24; d[i * 4 + 3] = 255; } }
     x.putImageData(id, 0, 0);
-    if (P.lying) { const r = mkCanvas(88, 88), rx = r.getContext('2d'); rx.imageSmoothingEnabled = false; rx.translate(44, 84); rx.rotate(-Math.PI / 2); rx.drawImage(c, -36, -86); return r; }
+    if (P.lying) { const r = mkCanvas(88 * R, 88 * R), rx = r.getContext('2d'); rx.imageSmoothingEnabled = false; rx.translate(44 * R, 84 * R); rx.rotate(-Math.PI / 2); rx.drawImage(c, -36 * R, -86 * R); return r; }
     return c;
   }
   function spritesFor(look, nose) {
@@ -214,6 +250,7 @@ const FIGHT2D = (() => {
     return 'idle' + (Math.floor(f.t / 28) % 2);
   }
   function draw() {
+    cx.setTransform(R, 0, 0, R, 0, 0); cx.imageSmoothingEnabled = false;
     const sx = st.shake > 0 ? (Math.random() - 0.5) * st.shake : 0; st.shake = Math.max(0, st.shake - 0.8);
     cx.save(); cx.translate(Math.round(sx), 0);
     if (bg) cx.drawImage(bg, 0, 0, W, H); else { cx.fillStyle = '#334'; cx.fillRect(0, 0, W, H); }
@@ -221,9 +258,9 @@ const FIGHT2D = (() => {
     for (const f of [st.a, st.b]) {
       const s = f.spr[poseOf(f)]; const w = s.width, h = s.height;
       cx.fillStyle = 'rgba(0,0,0,0.35)'; cx.fillRect(Math.round(f.x - 11), GROUND - 2, 22, 4);
-      cx.save(); cx.translate(Math.round(f.x), Math.round(f.y)); cx.scale(f.dir < 0 ? -SZ : SZ, SZ);
+      cx.save(); cx.translate(Math.round(f.x), Math.round(f.y)); cx.scale((f.dir < 0 ? -SZ : SZ) / R, SZ / R);
       if (f.stun > 0 && !f.block && (st.frame % 4 < 2)) cx.globalAlpha = 0.85;
-      cx.drawImage(s, -Math.round(w / 2), -h + 2); cx.restore();
+      cx.drawImage(s, -Math.round(w / 2), -h + 2 * R); cx.restore();
     }
     // projectiles: balls of gofio
     for (const p of st.proj) { const r = 6 + Math.sin(p.t * 0.6); cx.fillStyle = '#e8d8a8'; cx.beginPath(); cx.arc(Math.round(p.x), Math.round(p.y), r, 0, 7); cx.fill(); cx.fillStyle = '#c9b27a'; cx.fillRect(Math.round(p.x - 3), Math.round(p.y - 1), 3, 3); for (let i = 0; i < 4; i++) { cx.fillStyle = 'rgba(240,230,200,0.7)'; cx.fillRect(Math.round(p.x - Math.sign(p.vx) * (8 + i * 5)), Math.round(p.y + Math.sin(p.t + i) * 3), 2, 2); } }
@@ -291,6 +328,7 @@ const FIGHT2D = (() => {
   // ---------------- transitions (mosaic in/out)
   function drawTransition() {
     const T = st.trans; const k = clamp(T.t / T.dur, 0, 1);
+    cx.setTransform(R, 0, 0, R, 0, 0);
     if (T.kind === 'in') {
       // 3D frame → mosaic → stage
       const tmp = T.tmp; const blocks = Math.max(2, Math.round(lerp(1, 48, Math.min(1, k * 1.4)))); const sw = Math.max(8, Math.round(W / blocks * 2)), sh = Math.max(5, Math.round(sw * H / W));
@@ -313,11 +351,11 @@ const FIGHT2D = (() => {
     renderer.setRenderTarget(rt); renderer.clear(); bgCamera.position.copy(cam.position); bgCamera.quaternion.copy(cam.quaternion); renderer.render(bgScene, bgCamera); renderer.clearDepth(); renderer.render(scene, cam); renderer.setRenderTarget(prevT);
     hide.forEach((o, i) => { if (o) o.visible = vis[i]; });
     const px = new Uint8Array(W * 2 * H * 2 * 4); renderer.readRenderTargetPixels(rt, 0, 0, W * 2, H * 2, px); rt.dispose();
-    // downsample 2x, flip, posterize with ordered dithering → pixel art
-    const c = mkCanvas(W, H), x = c.getContext('2d'); const id = x.createImageData(W, H); const D = id.data; const bay = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
-    for (let y = 0; y < H; y++) for (let xx = 0; xx < W; xx++) { let r = 0, g = 0, b = 0; for (const [ox, oy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const i = ((H * 2 - 1 - (y * 2 + oy)) * W * 2 + xx * 2 + ox) * 4; r += px[i]; g += px[i + 1]; b += px[i + 2]; }
-      const th = (bay[(y & 3) * 4 + (xx & 3)] / 16 - 0.5) * 34; const q = (v) => clamp(Math.round((v / 4 + th) / 42) * 42, 0, 255); const o = (y * W + xx) * 4; D[o] = q(r); D[o + 1] = q(g); D[o + 2] = q(b) ; D[o + 3] = 255; }
-    x.putImageData(id, 0, 0);
+    // flip and posterize with ordered dithering at the full 2× resolution → finer pixel art
+    const BW = W * 2, BH = H * 2; const c = mkCanvas(BW, BH), x = c.getContext('2d'); const id = x.createImageData(BW, BH); const D = id.data; const bay = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+    for (let y = 0; y < BH; y++) for (let xx = 0; xx < BW; xx++) { const i = ((BH - 1 - y) * BW + xx) * 4;
+      const th = (bay[(y & 3) * 4 + (xx & 3)] / 16 - 0.5) * 26; const q = (v) => clamp(Math.round((v + th) / 32) * 32, 0, 255); const o = (y * BW + xx) * 4; D[o] = q(px[i]); D[o + 1] = q(px[i + 1]); D[o + 2] = q(px[i + 2]); D[o + 3] = 255; }
+    x.putImageData(id, 0, 0); x.scale(2, 2);
     // darken a little so the fighters pop, and draw the floor line
     x.fillStyle = 'rgba(10,10,30,0.18)'; x.fillRect(0, 0, W, H); x.fillStyle = 'rgba(0,0,0,0.25)'; x.fillRect(0, GROUND + 2, W, H - GROUND - 2);
     return c;
@@ -326,7 +364,7 @@ const FIGHT2D = (() => {
   // ---------------- public
   function start(opt) {
     if (running) return; running = true; onEnd = opt.onEnd || null;
-    if (!cv) { cv = $('fight2d'); cx = cv.getContext('2d'); cx.imageSmoothingEnabled = false; }
+    if (!cv) { cv = $('fight2d'); cv.width = W * R; cv.height = H * R; cx = cv.getContext('2d'); cx.imageSmoothingEnabled = false; }
     const from = grab3D();
     bg = captureStage(opt.ax, opt.az, opt.bx, opt.bz, opt.hide || []);
     let nf = 0; try { nf = +localStorage.getItem('gtall_fights') || 0; localStorage.setItem('gtall_fights', nf + 1); } catch (e) { nf = FIGHTS_DONE; } FIGHTS_DONE++;
@@ -353,7 +391,8 @@ const FIGHT2D = (() => {
 function startStreetFight(p) {
   if (FIGHT2D.running || PLAYER.car) return false;
   const lk = { ...(p.H.look || {}) }; const fem = !!lk.female;
-  if (p.kind === undefined) p.kind = fem ? (lk.fat || Math.random() < 0.22 ? 'gorda' : 'mujer') : (p.canarion ? 'canarion' : (lk.fat || Math.random() < 0.2 ? 'fuerte' : 'hombre'));
+  const big = lk.fat || (lk.build && ((lk.build.fat || 0) > 0.7 || lk.build.xfat || lk.build.sfat));
+  if (p.kind === undefined) p.kind = fem ? (big || Math.random() < 0.22 ? 'gorda' : 'mujer') : (p.canarion ? 'canarion' : (big || Math.random() < 0.2 ? 'fuerte' : 'hombre'));
   const K = { mujer: { deal: 0.5, recv: 2, name: 'VECINA' }, gorda: { deal: 1.1, recv: 0.5, name: 'DOÑA' }, fuerte: { deal: 2, recv: 0.9, name: 'CACHAS' }, hombre: { deal: 1, recv: 1, name: 'VECINO' }, canarion: { deal: 1, recv: 1, name: 'CANARIÓN' } }[p.kind];
   if (p.kind === 'gorda') lk.fat = true; if (p.kind === 'fuerte') lk.strong = true;
   const crowd = PEDS.filter((q) => q !== p && q.down <= 0 && Math.hypot(q.x - PLAYER.x, q.z - PLAYER.z) < 25).length;
