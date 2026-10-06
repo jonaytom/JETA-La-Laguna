@@ -174,18 +174,10 @@ const MISSIONS = (() => {
           talk([['Coco', '¡Aaaay, mi alma! Esto sí es un amigo. *glu glu glu*'],
             ['Coco', 'Te voy a decir una cosa, Chopa: el día que entres en tu banda te enseño a pelear como Dios manda. Un jab, un crochet... y a correr, que ya no tengo edad.'],
             ['Coco', 'El que os falta es Sastrón. Era sastre, el mejor de La Laguna: le hizo a El Blanco el traje de la comunión. Un día las tijeras le empezaron a hablar... y les hizo caso. Ahora lo verás por ' + NPC.sastron.place + '.'],
-            ['Coco', `Pero ese no se mueve por menos de ${SASTRON_FEE} pavos. Y dinero de verdad en esta isla solo lo suelta uno: el Canarión. Está en la Avenida de La Trinidad. Gánale y tendrás pasta.`],
+            ['Coco', 'Ve a verle. Pero ojo: antes de hablar de nada te va a tomar las medidas... a guantazos. Le enseñé yo, así que no te confíes.'],
             ['Coco', 'Toma, que me sobraron de un cajero que estaba abierto. No preguntes. Tú, que estás reformado, mejor ni preguntes.']], () => pass('Una botella para Coco', 200));
         }
       },
-    },
-    {
-      title: 'El Canarión', who: 'el Canarión',
-      hint() { return 'Busca al ' + bold('Canarión') + ' en la ' + bold('Avenida de La Trinidad'); },
-      startPos() { return [NPC.canarion.x + 1.4, NPC.canarion.z + 1.4]; },
-      start() { startRace(this, true); },
-      update(dt) { raceUpdate(this, dt); },
-      nextCP() { raceCP(); },
     },
     {
       title: 'Sastrón', who: 'Sastrón',
@@ -194,19 +186,19 @@ const MISSIONS = (() => {
       start() {
         step = 0;
         if (GANG.sastronTut) { talk([['Sastrón', '¿Ya traes las perras, Chopa? Las tijeras están impacientes.']], () => this.pay()); return; }
-        GANG.sastronTut = true;
         talk([['Sastrón', '¡Quieto ahí! No te muevas... ochenta y dos de pecho, cuarenta de cuello y una nariz... una nariz de talla especial. ¡Tú eres el Chopa!'],
           ['Sastrón', 'Yo vestí a media Laguna. Trajes de boda, de comunión, de entierro... El de la comunión de Ruymán, con su pajarita. Luego las tijeras empezaron a hablarme. Y tenían razón en todo.'],
           ['Sastrón', 'Pero antes de coserte nada te tomo las medidas... ¡a guantazos! Coco me enseñó todo lo que sé. Ponte en guardia, Chopa.']], () => {
           if (active !== this) return;
           FIGHT2D.start({ a: { name: 'EL CHOPA', look: { ...(playerHuman.look || {}) }, nose: true }, b: { name: 'SASTRÓN', look: NPC.sastron.H.look || {}, deal: 0.4, recv: 1.3, ai: { lv: 0, t: 0, blockT: 0, passive: true } },
             ax: PLAYER.x, az: PLAYER.z, bx: NPC.sastron.x, bz: NPC.sastron.z, hide: [playerHuman.root, NPC.sastron.H.root, WEAPON.mesh], tutorial: fightTutorial(), single: true,
-            onEnd: (r) => { if (active !== this) return; talk([['Sastrón', r.won ? '¡Ay, mis costillas! Vale, vale... tienes buenas medidas. Y mejor puño.' : 'Jejeje, todavía te falta, Chopa. Pero tienes madera... de percha.'], ['Sastrón', `¿Una banda? ¿Con El Blanco y el calvo? Puedo haceros ropa que ni en Milán... Pero mi talento vale ${SASTRON_FEE} pavos. Al contado. Las tijeras no aceptan Bizum.`]], () => this.pay()); } });
+            onEnd: (r) => { if (active !== this) return; if (!r.won) { talk([['Sastrón', 'Jejeje, todavía te falta, Chopa. Pero tienes madera... de percha. Vuelve cuando quieras la revancha.']], () => abort('Sastrón te espera para la revancha')); return; }
+              GANG.sastronTut = true; talk([['Sastrón', '¡Ay, mis costillas! Vale, vale... tienes buenas medidas. Y mejor puño. Estás a mi altura.'], ['Sastrón', `¿Una banda? ¿Con El Blanco y el calvo? Puedo haceros ropa que ni en Milán... Pero mi talento vale ${SASTRON_FEE} pavos. Al contado. Las tijeras no aceptan Bizum.`]], () => this.pay()); } });
         });
       },
       pay() {
         if (active !== this) return;
-          if (PLAYER.money < SASTRON_FEE) { DLG.show('Sastrón', 'No tienes suficiente', `Tienes <b>$${PLAYER.money}</b> y Sastrón pide <b>$${SASTRON_FEE}</b>. El <b>Canarión</b> te da la <b>revancha</b> en la Avenida de La Trinidad (círculo azul): gánale otra vez para sacar más dinero.`, '', ['Ya volveré'], () => { DLG.hide(); TRACKS.side.open = true; abort('Vuelve a ver a Sastrón cuando tengas $' + SASTRON_FEE); }); return; }
+          if (PLAYER.money < SASTRON_FEE) { DLG.show('Sastrón', 'No tienes suficiente', `Tienes <b>$${PLAYER.money}</b> y Sastrón pide <b>$${SASTRON_FEE}</b>.<br>Lo más rápido: el <b>Canarión</b> paga bien si le ganas una carrera en la Avenida de La Trinidad (círculo azul, opcional). También puedes reunirlo <b>peleando por la calle</b>, pero tardarás bastante más.`, '', ['Carrera con el Canarión (recomendado)', 'Lo reuniré peleando'], (i) => { DLG.hide(); TRACKS.side.open = true; if (i === 0) setWaypoint(NPC.canarion.x, NPC.canarion.z, true); abort(i === 0 ? 'El Canarión te espera en la Avenida de La Trinidad (círculo azul)' : 'Vuelve a ver a Sastrón cuando tengas $' + SASTRON_FEE); }); return; }
           DLG.show('Sastrón', '¿Pagas?', `Sastrón extiende la mano. Con la otra sujeta unas tijeras enormes y una cinta métrica que le cuelga del cuello.<br>Tienes <b>$${PLAYER.money}</b>.`, '', [`Pagar $${SASTRON_FEE} y meterle en la banda`, 'Todavía no'], (i) => {
             DLG.hide(); if (i !== 0) { abort('Sastrón seguirá ahí, hablando con sus tijeras'); return; }
             PLAYER.money -= SASTRON_FEE; AUDIO.cash(); TRACKS.side.open = false;
@@ -362,7 +354,16 @@ const MISSIONS = (() => {
     const ex = x + 10, ez = z; const y0 = heightAt(ex, ez); return { stand: [x, z], cans: [0, 1, 2, 3, 4, 5].map((i) => [ex, y0 + 1, ez - 2 + i * 0.8]), side: [0, 1] };
   }
   // ===== repeatable side job: the Canarión's rematch, only while you're short of money for Sastrón
-  const SIDE = [{ title: 'Revancha con el Canarión', who: 'el Canarión', startPos() { return [NPC.canarion.x + 1.4, NPC.canarion.z + 1.4]; }, start() { startRace(this, false); }, update(dt) { raceUpdate(this, dt); } }];
+  // side track: the Canarión's race is optional (the recommended way to get Sastrón's money), then rematches
+  const SIDE = [{
+      title: 'Carrera con el Canarión', who: 'el Canarión',
+      hint() { return 'Busca al ' + bold('Canarión') + ' en la ' + bold('Avenida de La Trinidad'); },
+      startPos() { return [NPC.canarion.x + 1.4, NPC.canarion.z + 1.4]; },
+      start() { startRace(this, true); },
+      update(dt) { raceUpdate(this, dt); },
+      nextCP() { raceCP(); },
+    },
+    { title: 'Revancha con el Canarión', who: 'el Canarión', startPos() { return [NPC.canarion.x + 1.4, NPC.canarion.z + 1.4]; }, start() { startRace(this, false); }, update(dt) { raceUpdate(this, dt); } }];
   const TRACKS = { story: { list: STORY, idx: 0, beacon: null, color: 0xf5b72e, css: '#f5b72e' }, side: { list: SIDE, idx: 0, beacon: null, color: 0x5ec8ff, css: '#5ec8ff', open: false } };
   function placeStarts() {
     for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon) { scene.remove(tr.beacon); tr.beacon = null; } if (active || tr.idx >= tr.list.length) continue; if (k === 'side' && (!tr.open || PLAYER.money >= SASTRON_FEE)) continue; const sp = tr.list[tr.idx].startPos(); tr.beacon = BEACON.make(sp[0], sp[1], 1.4, 3, tr.color); if (k === 'story' && !active) { const h = tr.list[tr.idx].hint; if (h) setObjective('Siguiente: ' + h()); setWaypoint(sp[0], sp[1], true); } }
@@ -443,9 +444,9 @@ const MISSIONS = (() => {
     fail(r) { if (active) { if (WEAPON.training) takeWeapon(); fail(r); } },
     _setIdx(i, track = 'story') { TRACKS[track].idx = i; placeStarts(); },
     // save / load: which missions are done, the gang, tutorial flags (a mission in progress restarts from its beginning)
-    getState() { return { story: TRACKS.story.idx, storyDone: !!TRACKS.story.done, side: TRACKS.side.idx, sideOpen: !!TRACKS.side.open, gang: { formed: GANG.formed, name: GANG.name, members: GANG.members.slice(), sastronTut: !!GANG.sastronTut }, active: active ? active.title : null }; },
+    getState() { return { v: 2, story: TRACKS.story.idx, storyDone: !!TRACKS.story.done, side: TRACKS.side.idx, sideOpen: !!TRACKS.side.open, gang: { formed: GANG.formed, name: GANG.name, members: GANG.members.slice(), sastronTut: !!GANG.sastronTut }, active: active ? active.title : null }; },
     setState(st) { if (active) { try { if (WEAPON.training) takeWeapon(); } catch (e) { } finish(); }
-      TRACKS.story.idx = st.story | 0; TRACKS.story.done = !!st.storyDone; TRACKS.side.idx = st.side | 0; TRACKS.side.open = !!st.sideOpen;
+      TRACKS.story.idx = (st.story | 0) - (!st.v && (st.story | 0) >= 3 ? 1 : 0); /* v1 saves had the Canarión race inside the story */ TRACKS.story.done = !!st.storyDone; TRACKS.side.idx = !st.v && (st.story | 0) >= 3 ? 1 : st.side | 0; TRACKS.side.open = !!st.sideOpen;
       Object.assign(GANG, { formed: !!(st.gang && st.gang.formed), name: (st.gang && st.gang.name) || '', members: (st.gang && st.gang.members) || [], sastronTut: !!(st.gang && st.gang.sastronTut) });
       setObjective(null); placeStarts(); },
     currentTitle() { const tr = TRACKS.story; return tr.idx < tr.list.length ? (tr.list[tr.idx].title || '') : 'Historia completada'; },

@@ -44,6 +44,8 @@ python tests/run_test_audit.py tests/audit_obstaculos.py  # arranca con window._
 | `prueba_ambiente.py` | Inicia el audio y deja sonar el ambiente con cambio de hora (campanas) sin errores. |
 | `prueba_pelea_atras.py` | Atrás sin ataque = retrocede; con ataque = se cubre. |
 | `audit_hundimiento.py` | Puntos de túnel/trinchera bajo el suelo sin hueco (debe dar 0). |
+| `prueba_parking_cristo.py` | Sube andando por las dos escaleras del parking del Cristo y baja en coche por las rampas midiendo el hueco con el techo. |
+| `prueba_aeropuerto.py` | El aeropuerto se construye y hay ruta en coche desde el inicio hasta la terminal. |
 | `prueba_panel_controles.py` | Fases `ready` → `intro` → `fight` de las primeras peleas. |
 
 ## Cómo escribir una prueba

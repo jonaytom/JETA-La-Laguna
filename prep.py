@@ -2,7 +2,8 @@ import json, math, base64, hashlib
 import numpy as np
 from scipy.interpolate import RectBivariateSpline
 
-d = json.load(open('data/laguna_osm2.json'))
+import os
+d = json.load(open('data/laguna_osm3.json' if os.path.exists('data/laguna_osm3.json') else 'data/laguna_osm2.json'))
 lat0, lon0 = 28.4875, -16.3150
 kx = math.cos(math.radians(lat0)) * 111320
 kz = 110574
@@ -19,12 +20,22 @@ gz = -(lats - lat0) * kz  # decreasing
 spl = RectBivariateSpline(gz[::-1], gx, g[::-1, :], kx=3, ky=3, s=0)
 base = float(spl(0, 0)[0, 0])
 DX = 16.0
-X0, X1, Z0, Z1 = -2600, 2800, -1800, 4400
+X0, X1, Z0, Z1 = (-4808 if 'ELEV2' in d else -2600), 2800, -1800, 4400  # -4808 keeps the 16 m grid aligned with the old -2600
 nx = int((X1 - X0) / DX) + 1
 nz = int((Z1 - Z0) / DX) + 1
 xs = X0 + np.arange(nx) * DX
 zs = Z0 + np.arange(nz) * DX
 H = spl(np.clip(zs, gz.min(), gz.max()), np.clip(xs, gx.min(), gx.max())) - base  # [nz, nx]
+if 'ELEV2' in d:  # western extension (airport): 32 m Copernicus grid, blended into the old one between x = -2446 and -2300
+    E2 = d['ELEV2']; g2 = np.array([v if v is not None else np.nan for v in E2['e']], dtype=float).reshape(E2['nz'], E2['nx'])
+    if np.isnan(g2).any():  # fill gaps with neighbours
+        m = np.isnan(g2); idx = np.where(~m); from scipy.interpolate import griddata
+        g2[m] = griddata(np.array(idx).T, g2[~m], np.array(np.where(m)).T, method='nearest')
+    x2 = E2['x0'] + np.arange(E2['nx']) * E2['d']; z2 = E2['z0'] + np.arange(E2['nz']) * E2['d']
+    spl2 = RectBivariateSpline(z2, x2, g2, kx=1, ky=1, s=0)
+    H2 = spl2(np.clip(zs, z2.min(), z2.max()), np.clip(xs, x2.min(), x2.max())) - base
+    wx = np.clip((xs - (-2446)) / 146.0, 0, 1)[None, :]  # 0 → only new grid, 1 → old grid
+    H = H * wx + H2 * (1 - wx)
 Hq = np.round(H * 10).astype(np.int16)
 hb64 = base64.b64encode(Hq.tobytes()).decode()
 print('base elev', base, 'H range', H.min(), H.max(), nx, nz)
@@ -316,7 +327,7 @@ Nt = warp_flat([v for p in d['N'] for v in p])
 P = [[sidx(p[0]), p[1], *warp_pt(p[2][0], p[2][1])] for p in d['P']]
 
 out = dict(H=dict(x0=X0, z0=Z0, dx=DX, nx=nx, nz=nz, base=round(base, 1), d=hb64), S=S, RT=RT, AT=AT,
-           B=B, R=R, G=dict(n=NL, e=EDG), T=T, A=A, N=Nt, P=P, W=WARPS, RB=RBS)
+           B=B, R=R, G=dict(n=NL, e=EDG), T=T, A=A, N=Nt, P=P, W=WARPS, RB=RBS, AW=d.get('AW', []))
 s = json.dumps(out, separators=(',', ':'), ensure_ascii=False)
 open('data/data.json', 'w').write(s)
 print('size', len(s))

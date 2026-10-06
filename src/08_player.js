@@ -97,23 +97,26 @@ function updatePlayer(dt) {
   if (m > 0.1) { const th = Math.atan2(mx, mz); PLAYER.h += angDiff(PLAYER.h, th) * clamp(dt * 10, 0, 1); }
   const vdx = Math.sin(PLAYER.h) * PLAYER.speed, vdz = Math.cos(PLAYER.h) * PLAYER.speed;
   let nx = PLAYER.x + (m > 0.1 ? mx / m * PLAYER.speed : vdx) * dt, nz = PLAYER.z + (m > 0.1 ? mz / m * PLAYER.speed : vdz) * dt;
+  const _dbg = window.__PDBG ? (window.__PDBG = [['start', nx, nz]]) : null; const DB = (k) => { if (_dbg) _dbg.push([k, +nx.toFixed(3), +nz.toFixed(3)]); };
   // collisions: static
   const pUnder = PLAYER.low && underground(PLAYER.x, PLAYER.z, PLAYER.y);
   if (!pUnder) { COL.qy = PLAYER.y; const r = COL.resolve(nx, nz, 0.33); COL.qy = null; nx = r.x; nz = r.z; }
+  DB('col');
   // cars & parked
   for (const c of CARS) { if (Math.abs(c.x - nx) > 8 || Math.abs(c.z - nz) > 8 || !sameLevel(c.y, PLAYER.y)) continue; for (const [cx, cz, cr] of c.circles()) { const d = Math.hypot(nx - cx, nz - cz); if (d < cr + 0.33) { if (c.speed > 5.5 && c.driver) { knockPlayer(c); } const k = (cr + 0.33 - d) / (d || 1); nx += (nx - cx) * k; nz += (nz - cz) * k; } } }
   if (!pUnder) for (const s of parkedNear(nx, nz, 4)) { const fxx = Math.sin(s.h), fzz = Math.cos(s.h); for (const k of [-1.3, 0, 1.3]) { const cx = s.x + fxx * k, cz = s.z + fzz * k; const d = Math.hypot(nx - cx, nz - cz); if (d < 1.2) { const q = (1.2 - d) / (d || 1); nx += (nx - cx) * q; nz += (nz - cz) * q; } } }
   if (TRAM.circ && !pUnder) for (const [cx, cz, cr] of TRAM.circ) { const d = Math.hypot(nx - cx, nz - cz); if (d < cr + 0.35) { if (TRAM.wait <= 0) knockPlayer({ vx: 0, vz: 0, speed: 10 }); const q = (cr + 0.35 - d) / (d || 1); nx += (nx - cx) * q; nz += (nz - cz) * q; } }
   if (!PLAYER.interior) { nx = clamp(nx, WORLD.x0, WORLD.x1); nz = clamp(nz, WORLD.z0, WORLD.z1); }
+  DB('cars');
   // elevated walkways (Pasarela de Padre Anchieta): stay on deck, handrails stop you falling
   const dNew = deckAt(nx, nz, PLAYER.y); const tNew = heightAt(nx, nz) + 0.17;
   if (PLAYER.onDeck && dNew < -1e8 && PLAYER.y > tNew + 1.5) { nx = PLAYER.x; nz = PLAYER.z; }
-  let lw = PLAYER.interior ? null : lowAt(nx, nz, PLAYER.y);
+  DB('deck'); let lw = PLAYER.interior ? null : lowAt(nx, nz, PLAYER.y);
   // underground (tunnels, car parks): you can't walk through the walls up to the surface
   if (!lw && PLAYER.low && !PLAYER.interior && heightAt(nx, nz) - PLAYER.y > 0.8) { nx = PLAYER.x; nz = PLAYER.z; lw = lowAt(nx, nz, PLAYER.y); }
-  if (lw && !PLAYER.interior && typeof ugcPush === 'function') { const q = ugcPush(nx, nz, 0.35); nx = q[0]; nz = q[1]; } if (!lw && !PLAYER.interior && TCUTS.length) { const tp = trenchPush(nx, nz, 0.35); if (tp) { nx += tp[0]; nz += tp[1]; } } PLAYER.low = lw;
-  if (lw) { const lim = Math.max(0.3, lw.hw - 0.35); if (lw.d > lim && lw.d > 0.01) { const k = lim / lw.d; nx = lw.px + (nx - lw.px) * k; nz = lw.pz + (nz - lw.pz) * k; } }
-  PLAYER.x = nx; PLAYER.z = nz;
+  if (lw && !PLAYER.interior && typeof ugcPush === 'function') { const q = ugcPush(nx, nz, 0.35, lw.y); nx = q[0]; nz = q[1]; } if (!lw && !PLAYER.interior && TCUTS.length) { const tp = trenchPush(nx, nz, 0.35); if (tp) { nx += tp[0]; nz += tp[1]; } } PLAYER.low = lw;
+  DB('low+trench'); if (lw) { const lim = Math.max(0.3, lw.hw - 0.35); if (lw.d > lim && lw.d > 0.01) { const k = lim / lw.d; nx = lw.px + (nx - lw.px) * k; nz = lw.pz + (nz - lw.pz) * k; } }
+  DB('clamp'); PLAYER.x = nx; PLAYER.z = nz;
   const dk = deckAt(nx, nz, PLAYER.y); PLAYER.onDeck = dk > -1e8 && dk > heightAt(nx, nz) + 0.5;
   const gy = PLAYER.interior ? PLAYER.interior.floor + 0.02 : lw ? lw.y : Math.max(heightAt(nx, nz) + 0.17, dk);
   if ((pressed('Space') || (gp && gp.down(1)) || INPUT.touch.jump) && PLAYER.onGround) { PLAYER.vy = 5.3; PLAYER.onGround = false; INPUT.touch.jump = false; AUDIO.jump(); }

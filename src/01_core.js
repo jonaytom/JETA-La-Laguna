@@ -4,10 +4,17 @@ import * as THREE from 'three';
 const DATA = JSON.parse(document.getElementById('mapdata').textContent);
 const STR = DATA.S;
 // ---------- play area: bounding box minus the zones that are not needed (Jonay's map, docs/referencias/mapa/zonas_a_quitar.png)
-const WORLD = { x0: -1900, x1: 2400, z0: -1250, z1: 3980 };
+const WORLD = { x0: -4750, x1: 2400, z0: -1250, z1: 3980 }; // west part only as a band for the airport (see WORLD_EXCL)
 const WORLD_EXCL = [
-  { x0: 781, x1: 1e9, z0: -1e9, z1: 896, name: 'monte NE (Valle Tabares, Valle Vinagre, Los Valles)' },
-  { x0: -1e9, x1: 158, z0: 1376, z1: 1e9, name: 'campo SO (Los Baldíos, La Vega, Geneto)' },
+  { x0: -1e9, x1: -1900, z0: -1e9, z1: -450, name: 'oeste norte (fuera del corredor del aeropuerto)' },
+  { x0: -1e9, x1: -1900, z0: 1400, z1: 1e9, name: 'oeste sur (fuera del corredor del aeropuerto)' },
+  // monte NE (Valle Tabares, Valle Vinagre, Los Valles): the strip east of San Roque / La Verdellada is back (v0.46)
+  { x0: 781, x1: 1e9, z0: -1e9, z1: -220, name: 'monte NE norte' },
+  { x0: 1300, x1: 1e9, z0: -1e9, z1: 250, name: 'monte NE centro' },
+  { x0: 1805, x1: 1e9, z0: -1e9, z1: 896, name: 'monte NE sur' },
+  // campo SO: Guajara / San Felipe / Geneto west to El Coromoto is back (v0.46); only far Los Baldíos and La Vega stay out
+  { x0: -1e9, x1: -1200, z0: 1376, z1: 1e9, name: 'campo SO (Los Baldíos)' },
+  { x0: -1e9, x1: 158, z0: 2810, z1: 1e9, name: 'campo SO (La Vega, sur de Geneto)' },
 ];
 // distance from (x,z) to the edge of the play area (negative = outside)
 function worldEdgeDist(x, z) {

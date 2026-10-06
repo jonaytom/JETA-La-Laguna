@@ -94,3 +94,14 @@ pip install numpy scipy
 python prep.py      # data/laguna_osm2.json → data/data.json
 python build.py
 ```
+
+## Ampliación del aeropuerto (v0.44)
+
+- `data/aeropuerto_osm.json`: descarga de Overpass (vías, edificios, usos del suelo, `aeroway`) de la caja
+  28.462–28.500 N, 16.375–16.325 O, ya en coordenadas de juego (`[tags, coords en deltas]`).
+- `data/aeropuerto_elev.json`: relieve Open-Meteo/Copernicus en rejilla de 32 m (X −4400…−2512, Z −500…1484).
+- `tools/merge_aeropuerto.py` une todo con `laguna_osm2.json` (sin duplicados) → `laguna_osm3.json`, con `AW`
+  (elementos aeroportuarios) y `ELEV2`. `prep.py` usa `laguna_osm3.json` si existe; el mapa de alturas empieza en
+  X = −4808 (alineado con la rejilla de 16 m) y funde ambos relieves entre X −2446 y −2300.
+- Regenerar: `python tools/merge_aeropuerto.py && python prep.py && python build.py`.
+- Zona de juego: `WORLD.x0 = −4750` y dos exclusiones al oeste de X −1900 dejan solo el corredor Z −450…1400.

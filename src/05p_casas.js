@@ -39,3 +39,32 @@ function buildCustomHouses() {
   }
   B.finish(root); scene.add(root);
 }
+
+// ============ Finca España: pabellón del Complejo Deportivo Islas Canarias (vacío en OSM) ============
+// Grey concrete hall next to the football pitch (C. Tacoronte / C. Tinguaro): mono-pitch white roof that overhangs
+// the corner, a band of sea-green glass and dark louvres under it, purple pillars on the ground floor and the sign
+// over the entrance. Reference photos: docs/referencias/finca_espana/
+const PABELLON = { x0: 1905, x1: 1943, z0: 1291, z1: 1349, H: 13 };
+function buildPabellon() {
+  const M = concMaterials(); const B = concBuckets(); const root = new THREE.Group(); root.name = 'pabellon';
+  const mt = (c, r = 0.85, m = 0) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m, side: THREE.DoubleSide });
+  const conc = mt(0x9b9c98, 0.95), roof = mt(0xf0f0ec, 0.6), sea = new THREE.MeshStandardMaterial({ color: 0x7fc2b4, roughness: 0.15, metalness: 0.4 }), louv = mt(0x2b2e31, 0.6, 0.3), purple = mt(0x7a3e8e, 0.6), glass = new THREE.MeshStandardMaterial({ color: 0x24323c, roughness: 0.1, metalness: 0.5 });
+  const { x0, x1, z0, z1, H } = PABELLON; const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, W = x1 - x0, D = z1 - z0;
+  let g0 = 1e9; for (const [x, z] of [[x0, z0], [x1, z0], [x1, z1], [x0, z1]]) g0 = Math.min(g0, heightAt(x, z)); g0 -= 0.3;
+  const fr = cFrame(cx, g0, cz, 0);
+  B.geo(cBox(W, H - 2.6, D, 3), conc, fr(0, (H - 2.6) / 2, 0));
+  // upper band: sea-green glass + dark louvres all round
+  B.geo(cBox(W + 0.1, 1.4, D + 0.1), sea, fr(0, H - 2.6 + 0.7, 0)); B.geo(cBox(W + 0.12, 1.2, D + 0.12), louv, fr(0, H - 2.6 + 2.0, 0));
+  for (let x = -W / 2; x <= W / 2; x += 0.6) for (const sd of [-1, 1]) B.geo(cBox(0.08, 1.2, 0.25), louv, fr(x, H - 0.6, sd * (D / 2 + 0.12)));
+  // mono-pitch roof rising to the north-west corner, overhanging it
+  B.geo(cBox(W + 7, 0.5, D + 6), roof, fr(-1.5, H + 0.6, -1.5, 0, 0.05, -0.04));
+  for (const [px, pz] of [[-W / 2 - 3, -D / 2 - 2.5], [-W / 2 - 3, 0], [0, -D / 2 - 2.5]]) { B.geo(new THREE.CylinderGeometry(0.25, 0.25, H, 10), M.iron, fr(px, H / 2, pz)); COL.addCirc(cx + px, cz + pz, 0.35); }
+  // ground floor on C. Tacoronte (north): glazed entrance between purple pillars + sign
+  B.geo(cBox(W - 6, 3.2, 0.12), glass, fr(0, 1.8, -D / 2 - 0.05));
+  for (let x = -W / 2 + 3; x <= W / 2 - 3; x += 4) B.geo(cBox(0.6, 3.6, 0.6), purple, fr(x, 1.8, -D / 2 - 0.4));
+  const sg = bigSign('COMPLEJO DEPORTIVO ISLAS CANARIAS', 18, 1.3, '#ffffff', '#1f4e8c'); sg.position.set(cx, g0 + 4.6, z0 - 0.7); sg.rotation.y = Math.PI; root.add(sg);
+  for (const [ax, az, bx, bz] of [[x0, z0, x1, z0], [x1, z0, x1, z1], [x1, z1, x0, z1], [x0, z1, x0, z0]]) COL.addSeg(ax, az, bx, bz);
+  BUILD.push({ pts: [[x0, z0], [x1, z0], [x1, z1], [x0, z1]], cx, cz, top: g0 + H, bmax: g0, style: 3, name: 'Pabellón Islas Canarias', H });
+  LABELS.push(['Complejo Deportivo Islas Canarias', cx, cz, 2]);
+  B.finish(root); scene.add(root);
+}

@@ -5,26 +5,9 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 
 ## Por revisar con Jonay
 
-- [ ] **Barrio de San Miguel de Chimisay / El Cardonal**: en OSM falta casi todo (de Z≈3350 a 3850 no hay edificios).
-      Rellenar las manzanas con bloques de 4–5 plantas salmón/rosa con balcones y casas canarias de colores, avenida
-      en cuesta con paso de cebra, bolardos rojos, barandilla y aparcamiento (`docs/referencias/chimisay/`).
-      La casa del hermano ya está (v0.39.0); afinarla cuando se rellene el barrio.
-- [ ] **Finca España — Complejo Deportivo Islas Canarias** (C. Tacoronte / C. Fasnia / C. Tinguaro / C. Tindaya):
-      junto al campo de fútbol falta el pabellón: gran nave de hormigón gris con cubierta blanca a un agua que vuela
-      sobre la esquina, franja de cristal verde agua y lamas oscuras arriba, pilares morados en la planta baja,
-      entrada con rótulo «COMPLEJO DEPORTIVO ISLAS CANARIAS» y aparcamiento en batería. Además: campo de césped
-      oscuro con grada, muro de bloque, valla alta y torres de focos; cancha polideportiva verde con cipreses; bloque
-      blanco curvo grande enfrente; solar con coches en C. Fasnia/Tinguaro; bloques de 3–4 plantas arena/salmón con
-      balcones de balaustres blancos y garajes en C. Tacoronte. Casa del colega de Jonay: aprox. **X 1997, Z 1268**
-      (en la misma zona del complejo): zona para visitar. Fotos en `docs/referencias/finca_espana/`.
 - [ ] **Música «real»** para la radio (hip hop / rap de finales de los 90 y principios de los 2000) con alguna
       herramienta externa y las letras del juego. Solo consulta por ahora: ver opciones antes de hacer nada.
 
-- [ ] **Aeropuerto de Los Rodeos (Tenerife Norte)** al noroeste: terminal con cubierta volada, fachada de piedra
-      clara y franja verde de Binter, rotonda-cúpula, torre de control, pista y plataforma con aviones, hangares,
-      aparcamientos (P), Cam. de San Lázaro con sus rotondas (Rotonda Sempiterno), TF-5 y enlaces hasta el mapa
-      actual (San Benito / El Coromoto). Naves (SEUR, ITV, Binter, depósitos de combustible), fincas de cultivo.
-      Ampliar el mapa OSM/relieve para incluirlo. Fotos en `docs/referencias/aeropuerto/`.
 - [ ] Repasar con las fotos del aeropuerto la zona ya hecha alrededor (San Benito, El Coromoto, autopista TF-5).
 
 - [ ] **TF-13 / Cam. San Bartolomé de Geneto / Urbanización Guajara** (junto a la TF-5, Museo de la Ciencia y el
@@ -33,20 +16,23 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       de Geneto en curva, Urb. Guajara (chalets de tejado rojo), Plaza Drago de Antares, C. Lira / Hércules / Habaneras,
       Cam. La Hornera con el Museo de la Ciencia y el IAC. Fotos en `docs/referencias/tf13_geneto/`.
 
+- [ ] Aeropuerto: afinar con las fotos (rotonda-cúpula, depósitos de combustible, naves SEUR/ITV/Binter, P de
+      parking con rótulos, valla perimetral) y aviones despegando/aterrizando de vez en cuando.
+- [ ] Prueba de conducción de túneles/puentes: 10 de 111 sin terminar (2 se salen contra el muro de la trinchera en
+      Z≈3100, X≈1800; el resto, tráfico o tiempo).
+
 ## Pendientes anteriores
 
-- [ ] Edificio La Pirámide (campus, hacia (950, 1928)).
 - [ ] Algunos túneles se ven raros por dentro; muro en el túnel gemelo de la vía 1009.
-- [ ] **Parking bajo la Plaza del Cristo** (≈X 172, Z −591): más profundo para que la rampa de entrada tenga más
-      gálibo (los coches chocan con el techo al entrar); la escalera de salida está taponada por arriba
-      (`docs/referencias/parking_cristo_escalera.png`); los coches atraviesan las paredes.
-- [ ] **Repaso a conciencia de túneles y pasos inferiores**: bajar más la rasante antes de pasar por debajo, bocas y
-      huecos más amplios en general, y prueba automática de que ningún coche choca con techos ni atraviesa muros.
 - [ ] Auditoría de obstáculos: 122 avisos; prueba de conducción: 10 de 111 túneles/puentes fallan.
 - [ ] Fusionar geometría de fuentes para rendimiento.
 
 ## Hecho
 
+- [x] v0.45.0 — Pabellón de Finca España y colores de C. Tacoronte, barrio de Chimisay relleno, La Pirámide.
+- [x] v0.44.0 — Aeropuerto de Los Rodeos y corredor oeste con sus calles y relieve.
+- [x] v0.43.0 — Sastrón primero / Canarión opcional, túneles más hondos y anchos sin losas, sin hundirse en
+      rampas, parking del Cristo, estación de guaguas, pistola (mano y primer disparo).
 - [x] v0.42.0 — Pelea tipo Street Fighter (atrás anda, cubre solo ante ataque), luchadores 20 % menores y más
       separados, tutorial corto, pantalla de controles, menú al 75 %, terreno hundido arreglado en 42 zonas.
 - [x] v0.41.0 — Límites del mundo y zonas quitadas, ambiente sonoro, pasos suaves, pistola en el puño, entrada

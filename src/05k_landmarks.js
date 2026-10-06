@@ -15,14 +15,18 @@ const LANDMARKS = [
   { re: /Antigua Iglesia de San Agustín/, atlas: 5, col: '#cfc8bb', H: 12, noRoof: true, deco: ['ruins'], label: 'Ruinas de San Agustín' },
   { re: /Dolores/, atlas: 6, col: '#f4f1e8', H: 8.5, deco: ['espadana'] },
   { re: /Casa Peraza de Ayala|Casa Bigot|Casa Casabuena|Casa Franco de Castilla|Casa de los Marqueses/, hip: true, atlas: 9, quoin: BASALT, deco: ['portal:grey'] },
+  { re: /Ciencias Políticas y Sociales/, atlas: 15, col: '#d8d2c6', H: 4.2, noRoof: true, deco: ['pyramid'], label: 'Edificio La Pirámide' },
   { re: /Facultad|Biblioteca General|Pabellón de Gobierno|Instituto de Tecnolog|Instituto Nacional|Instituto de Medicina|Área de Hospitalización/, atlas: 15 },
   { re: /Colegio Mayor|Vicerectorado/, atlas: 7, col: '#efe3c4' },
   { re: /Torre Profesor/, atlas: 13 },
 ];
 // buildings identified by position (unnamed in OSM): Santa Catalina's wooden mirador on the plaza
 const LANDMARK_AT = [{ x: 150, z: -75, r: 12, o: { atlas: 6, col: '#f4f1e8', H: 10, deco: ['celosia'], label: 'Convento de Santa Catalina' } }];
+// Finca España, C. Tacoronte (zona del colega de Jonay): bloques de 3-4 plantas color arena / salmón
+const FINCA_COLS = ['#e8c9a0', '#e6b08f', '#dcc29a', '#eab7a0', '#e9d3b0'];
+function fincaEspanaLook(cx, cz) { if (cx < 1840 || cx > 2080 || cz < 1180 || cz > 1285) return null; return { col: FINCA_COLS[Math.abs(Math.round(cx * 7 + cz * 3)) % FINCA_COLS.length], atlas: 2 }; }
 function landmarkFor(name) { for (const L of LANDMARKS) if (L.re.test(name)) return L; return null; }
-function landmarkAt(cx, cz) { for (const L of LANDMARK_AT) if (Math.hypot(cx - L.x, cz - L.z) < L.r) return L.o; return null; }
+function landmarkAt(cx, cz) { for (const L of LANDMARK_AT) if (Math.hypot(cx - L.x, cz - L.z) < L.r) return L.o; return fincaEspanaLook(cx, cz); }
 const LMQ = [];
 // edge of the footprint that faces the street (long and close to a road)
 function frontEdge(pts) {
@@ -51,6 +55,12 @@ function buildLandmarkDeco() {
         const tri = new THREE.Shape(); tri.moveTo(-pw / 2 - 0.4, 0); tri.lineTo(pw / 2 + 0.4, 0); tri.lineTo(0, 1.1); tri.closePath(); const tg = new THREE.ExtrudeGeometry(tri, { depth: 0.35, bevelEnabled: false }); addMesh(g, tg, m, 0, ph + 0.6, 0);
         box(0.8, 0.8, 0.2, m, 0, ph + 1.05, 0.38); // coat of arms
         const door = new THREE.Mesh(new THREE.PlaneGeometry(pw - 0.55, ph - 0.2), LMMAT.door); door.position.set(0, (ph - 0.2) / 2, 0.06); g.add(door); }
+      if (kind === 'pyramid') { // 'La Pirámide' (Campus de Guajara): stepped glass-and-concrete pyramid over the low base
+        let a = 1e9, b = -1e9, c = 1e9, d = -1e9; for (const p of pts) { a = Math.min(a, p[0]); b = Math.max(b, p[0]); c = Math.min(c, p[1]); d = Math.max(d, p[1]); }
+        const pg = new THREE.Group(); pg.position.set(cx, top - 0.1, cz); scene.add(pg); let rIn = 1e9; for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[(i + 1) % pts.length]; const L2 = (q[0] - p[0]) ** 2 + (q[1] - p[1]) ** 2 || 1; const t = Math.max(0, Math.min(1, ((cx - p[0]) * (q[0] - p[0]) + (cz - p[1]) * (q[1] - p[1])) / L2)); rIn = Math.min(rIn, Math.hypot(cx - p[0] - (q[0] - p[0]) * t, cz - p[1] - (q[1] - p[1]) * t)); } const W0 = Math.max(14, Math.min(rIn * 2 * 0.95, (Math.min(b - a, d - c)) * 0.6)); const steps = 6, sh = 3.4;
+        const conc = new THREE.MeshStandardMaterial({ color: 0xd8d2c6, roughness: 0.85 }), gl = new THREE.MeshStandardMaterial({ color: 0x2f4656, roughness: 0.12, metalness: 0.55 });
+        for (let k = 0; k < steps; k++) { const w = W0 * (1 - k / steps); const m1 = new THREE.Mesh(new THREE.BoxGeometry(w, sh * 0.62, w), gl); m1.position.y = k * sh + sh * 0.31; pg.add(m1); const m2 = new THREE.Mesh(new THREE.BoxGeometry(w + 0.6, sh * 0.38, w + 0.6), conc); m2.position.y = k * sh + sh * 0.81; pg.add(m2); }
+        const cap = new THREE.Mesh(new THREE.ConeGeometry(W0 / steps * 0.75, sh * 1.4, 4), gl); cap.rotation.y = Math.PI / 4; cap.position.y = steps * sh + sh * 0.7; pg.add(cap); pg.rotation.y = 0; }
       if (kind === 'cornice') box(E.L + 0.6, 0.45, 0.6, LMMAT.grey, 0, H - 0.2, 0.2);
       if (kind === 'balustrade') { box(E.L, 0.15, 0.4, LMMAT.white, 0, H + 0.95, 0.05); for (let x = -E.L / 2 + 0.3; x < E.L / 2; x += 0.45) addMesh(g, new THREE.CylinderGeometry(0.07, 0.1, 0.8, 6), LMMAT.white, x, H + 0.45, 0.05); }
       if (kind === 'pediment') { const tri = new THREE.Shape(); const w = Math.min(E.L * 0.5, 12); tri.moveTo(-w / 2, 0); tri.lineTo(w / 2, 0); tri.lineTo(0, w * 0.22); tri.closePath(); addMesh(g, new THREE.ExtrudeGeometry(tri, { depth: 0.5, bevelEnabled: false }), LMMAT.white, 0, H, -0.1);

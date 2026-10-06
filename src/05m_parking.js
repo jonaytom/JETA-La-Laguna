@@ -2,8 +2,8 @@
 // Each one: a hall (floor, ceiling, columns, bays, lights, parked cars) at about -4 m, vehicle ramps that you can drive
 // down from the street (open cutting + short covered mouth), and pedestrian stairwells with glass pavilions on the surface.
 const UGC = []; // underground obstacles [x, z, r] (columns, parked cars): only apply below ground
-function ugcPush(x, z, r) {
-  for (const c of UGC) { const dx = x - c[0], dz = z - c[1]; if (Math.abs(dx) > 4 || Math.abs(dz) > 4) continue; const d = Math.hypot(dx, dz), m = c[2] + r; if (d < m && d > 1e-4) { x = c[0] + dx / d * m; z = c[1] + dz / d * m; } }
+function ugcPush(x, z, r, y) {
+  for (const c of UGC) { if (y !== undefined && c[3] !== undefined && Math.abs(y - c[3]) > 0.6) continue; /* only at the hall floor (not on the stairs above) */ const dx = x - c[0], dz = z - c[1]; if (Math.abs(dx) > 4 || Math.abs(dz) > 4) continue; const d = Math.hypot(dx, dz), m = c[2] + r; if (d < m && d > 1e-4) { x = c[0] + dx / d * m; z = c[1] + dz / d * m; } }
   return [x, z];
 }
 function inCut(x, z, m = 1.5) { for (const c of TCUTS) { const dx = c[2] - c[0], dz = c[3] - c[1], L2 = dx * dx + dz * dz || 1; const t = clamp(((x - c[0]) * dx + (z - c[1]) * dz) / L2, -0.15, 1.15); if (Math.hypot(x - c[0] - dx * t, z - c[1] - dz * t) < c[4] + m) return true; } return false; }
@@ -41,7 +41,7 @@ function pkMats() {
 function pkSignTex(text, bg = '#1d4f9c', fg = '#fff', w = 512, h = 128) { const c = mkCanvas(w, h), x = c.getContext('2d'); x.fillStyle = bg; x.fillRect(0, 0, w, h); x.fillStyle = fg; x.font = `700 ${Math.round(h * 0.55)}px Oswald, sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(text, w / 2, h / 2 + 2); return canvasTex(c, { repeat: false }); }
 // hall: centre, axis u (length L) and v (width W = 31: bays | lane | double bays | lane | bays), floor height yF
 function buildHall(F, uc, L, yF, name, gaps) {
-  const M_ = pkMats(); const g = new THREE.Group(); const W = 31, H = 2.9, hl = L / 2, hw = W / 2;
+  const M_ = pkMats(); const g = new THREE.Group(); const W = 31, H = 3.4, hl = L / 2, hw = W / 2;
   const P = (u, v) => F.W(uc + u, v); const ang = Math.atan2(F.ux, F.uz); // rotation.y so that local z = u
   const place = (mesh, u, y, v, rotY = 0) => { const [x, z] = P(u, v); mesh.position.set(x, y, z); mesh.rotation.y = ang + rotY; g.add(mesh); return mesh; };
   // floor + ceiling
@@ -58,14 +58,14 @@ function buildHall(F, uc, L, yF, name, gaps) {
   for (const [vc, face] of rows) for (let u = uStart; u <= uEnd + 0.01; u += bayW) {
     lines.push([u, vc]); if (u + bayW > uEnd + 0.01) continue;
     if (Math.random() < 0.45) { const m = makeCarMesh(pick(['compact', 'sedan', 'suv', 'compact']), pickColor()); const gg = m.g || m; const [x, z] = P(u + bayW / 2, vc); gg.position.set(x, yF + 0.12, z); gg.rotation.y = ang + (face > 0 ? Math.PI / 2 : -Math.PI / 2); gg.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = false; } }); g.add(gg); nCars++;
-      for (const k of [-1.3, 0, 1.3]) { const [px, pz] = P(u + bayW / 2, vc + k); UGC.push([px, pz, 0.95]); } }
+      for (const k of [-1.3, 0, 1.3]) { const [px, pz] = P(u + bayW / 2, vc + k); UGC.push([px, pz, 0.95, yF, gg]); } }
   }
   for (const [u, vc] of lines) { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 5), M_.line); m.rotation.x = -Math.PI / 2; const q = new THREE.Group(); q.add(m); place(q, u, yF + 0.135, vc); q.rotation.y = ang + Math.PI / 2; }
   // lane arrows and centre dashes
   for (const vl of [-7.25, 7.25]) for (let u = -hl + 4; u < hl - 4; u += 6) { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 2.6), M_.line); m.rotation.x = -Math.PI / 2; const q = new THREE.Group(); q.add(m); place(q, u, yF + 0.135, vl); }
   // columns (between back-to-back bays) and light strips over the lanes
-  for (let u = uStart; u <= uEnd; u += bayW * 3) { const c = new THREE.Mesh(new THREE.BoxGeometry(0.55, H, 0.55), M_.col); place(c, u, yF + 0.12 + H / 2, 0); const [x, z] = P(u, 0); UGC.push([x, z, 0.4]);
-    for (const vc of [-10.4, 10.4]) { const c2 = new THREE.Mesh(new THREE.BoxGeometry(0.5, H, 0.5), M_.col); place(c2, u, yF + 0.12 + H / 2, vc); const [x2, z2] = P(u, vc); UGC.push([x2, z2, 0.35]); } }
+  for (let u = uStart; u <= uEnd; u += bayW * 3) { const c = new THREE.Mesh(new THREE.BoxGeometry(0.55, H, 0.55), M_.col); place(c, u, yF + 0.12 + H / 2, 0); const [x, z] = P(u, 0); UGC.push([x, z, 0.4, yF]);
+    for (const vc of [-10.4, 10.4]) { const c2 = new THREE.Mesh(new THREE.BoxGeometry(0.5, H, 0.5), M_.col); place(c2, u, yF + 0.12 + H / 2, vc); const [x2, z2] = P(u, vc); UGC.push([x2, z2, 0.35, yF]); } }
   for (const vl of [-7.25, 7.25]) for (let u = -hl + 3; u < hl - 3; u += 5) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.06, 1.6), M_.light); place(l, u, yF + 0.12 + H - 0.05, vl); }
   // signs
   const sP = new THREE.MeshBasicMaterial({ map: pkSignTex('P  -1   ' + name.toUpperCase(), '#1d4f9c', '#fff', 1024, 128) });
@@ -81,7 +81,7 @@ function buildHall(F, uc, L, yF, name, gaps) {
 function rampProfile(Lr, yF) { return (s, x, z) => lerp(heightAt(x, z), yF, smooth(0, 1, (s - 2) / Math.max(4, Lr - 8))); }
 // ramp from (x0,z0) on the surface to (x1,z1) inside the hall, built with the tunnel/cutting machinery
 function buildRamp(x0, z0, x1, z1, yF, label) {
-  const Lr = Math.hypot(x1 - x0, z1 - z0); const c = [x0, z0, x1, z1]; tunnelRoad(c, 6.2, 'asphalt', 8, rampProfile(Lr, yF), { H: 3.0, cover: 3.3 });
+  const Lr = Math.hypot(x1 - x0, z1 - z0); const c = [x0, z0, x1, z1]; tunnelRoad(c, 6.8, 'asphalt', 8, rampProfile(Lr, yF), { H: 3.9, cover: 4.3 });
   // entrance sign on a post at the top
   const M_ = pkMats(); const dx = (x1 - x0) / Lr, dz = (z1 - z0) / Lr; const px = x0 - dz * 4.2, pz = z0 + dx * 4.2; const y = heightAt(px, pz);
   const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.2, 8), M_.steel); post.position.set(px, y + 1.6, pz); scene.add(post);
@@ -102,6 +102,10 @@ function buildStairwell(x0, z0, ux, uz, yF, corr) {
     const lt = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.05, cl * 0.8), M_.light); lt.position.y = yF + 2.68; cg.add(lt); scene.add(cg);
   }
   TUNNEL_DECKS.push({ type: 'path', pts: dpts, w: 2.4, hw: 1.0, tunnel: true, ceil: 2.6 });
+  // keep the foot of the stairs clear: no parked cars under / in front of the stairwell
+  { const sx = x0 - ux, sz = z0 - uz, ex = x1 + ux * 4, ez = z1 + uz * 4, L2 = (ex - sx) ** 2 + (ez - sz) ** 2;
+    for (let i = UGC.length - 1; i >= 0; i--) { const c = UGC[i]; if (c[3] === undefined || Math.abs(c[3] - yF) > 0.6 || !c[4]) continue; const t = clamp(((c[0] - sx) * (ex - sx) + (c[1] - sz) * (ez - sz)) / L2, 0, 1);
+      if (Math.hypot(c[0] - sx - (ex - sx) * t, c[1] - sz - (ez - sz) * t) < 2.6) { c[4].visible = false; const m = c[4]; for (let j = UGC.length - 1; j >= 0; j--) if (UGC[j][4] === m) UGC.splice(j, 1); i = Math.min(i, UGC.length); } } }
   TCUTS.push([x0 - ux * 0.3, z0 - uz * 0.3, x1 - ux * 2.5, z1 - uz * 2.5, 1.35, 9000 + TCUTS.length]);
   const g = new THREE.Group(); g.position.set((x0 + x1) / 2, 0, (z0 + z1) / 2); g.rotation.y = ang;
   const n = Math.ceil((g0 - yF) / 0.18); for (let i = 0; i < n; i++) { const t = (i + 0.5) / n; const st = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.18, L / n + 0.03), M_.col); st.position.set(0, lerp(g0, yF + 0.12, t) - 0.09, -L / 2 + t * L); g.add(st); }
@@ -121,11 +125,11 @@ function buildCarParks() {
     const F = pcaFrame(c); const uLen = F.u1 - F.u0; const uc = (F.u0 + F.u1) / 2 - 0; const vc = (F.v0 + F.v1) / 2;
     const F2 = { ...F, cx: F.W(0, vc)[0], cz: F.W(0, vc)[1] }; F2.W = (u, v) => [F2.cx + F.ux * u - F.uz * v, F2.cz + F.uz * u + F.ux * v];
     const L = clamp(uLen - 2 * 34, 36, 80); let gmin = 1e9; for (let u = -L / 2; u <= L / 2; u += 6) for (let v = -15; v <= 15; v += 5) { const [x, z] = F2.W(uc + u, v); gmin = Math.min(gmin, heightAt(x, z)); }
-    const yF = gmin - 4.3;
-    const gaps = [['u+', 7.25, 7.2], ['u-', -7.25, 7.2], ['v+', -L / 4, 2.6], ['v-', L / 4, 2.6]];
+    const yF = gmin - 5.4; // deep enough for a tall ramp mouth (cars used to scrape the lintel)
+    const gaps = [['u+', 7.25, 8.6], ['u-', -7.25, 8.6], ['v+', -L / 4, 2.6], ['v-', L / 4, 2.6]];
     const r = buildHall(F2, uc, L, yF, 'Plaza del Cristo', gaps);
     // vehicle ramps from both ends of the plaza (one each way, both usable)
-    for (const [s, v] of [[1, 7.25], [-1, -7.25]]) { const top = F2.W(uc + s * (L / 2 + 31), v), bot = F2.W(uc + s * (L / 2 - 3.5), v); buildRamp(top[0], top[1], bot[0], bot[1], yF, s > 0 ? 'ENTRADA · SALIDA' : 'PARKING DEL CRISTO'); }
+    for (const [s, v] of [[1, 7.25], [-1, -7.25]]) { const top = F2.W(uc + s * (L / 2 + 42), v), bot = F2.W(uc + s * (L / 2 - 3.5), v); buildRamp(top[0], top[1], bot[0], bot[1], yF, s > 0 ? 'ENTRADA · SALIDA' : 'PARKING DEL CRISTO'); }
     // stairwells: pavilions over the plaza, stairs going down to the side aisles
     for (const [u, v, d] of [[-L / 4, 13.8, 1], [L / 4, -13.8, -1]]) { const p = F2.W(uc + u - d * 5, v); buildStairwell(p[0], p[1], F.ux * d, F.uz * d, yF); }
     CARPARKS.push({ name: 'Parking del Cristo', x: F2.cx, z: F2.cz, F: F2, uc, L, yF });
@@ -148,7 +152,7 @@ function buildCarParks() {
     const m = along(75); const w = best.r[2]; const L = 64;
     const F = { cx: m.x, cz: m.z, ux: m.ux, uz: m.uz }; F.W = (u, v) => [F.cx + F.ux * u - F.uz * v, F.cz + F.uz * u + F.ux * v];
     let gmin = 1e9; for (let u = -L / 2; u <= L / 2; u += 6) for (let v = -15; v <= 15; v += 5) { const [x, z] = F.W(u, v); gmin = Math.min(gmin, heightAt(x, z)); }
-    const yF = gmin - 4.4;
+    const yF = gmin - 5.4;
     // look for a free strip on either side of the avenue for the ramp (beside the carriageway, not on it, not in buildings)
     let ramp = null;
     for (const side of [1, -1]) for (const vr of [w / 2 + 3.6, w / 2 + 2.6, w / 2 + 4.6, w / 2 + 1.8]) for (const dirS of [1, -1]) {

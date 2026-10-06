@@ -27,6 +27,7 @@ const INICIO = { parcels: [], spots: [] };
 // empty lots in OSM that are really full of houses (Street View / 3D): row houses along every street front
 const FILL_ZONES = [
   { x0: -1060, x1: -900, z0: -470, z1: -398, name: 'Lucas Vega / Montaraz' },
+  { x0: 1330, x1: 1620, z0: 3340, z1: 3870, name: 'San Miguel de Chimisay' }, // empty in OSM (Street View: blocks and houses)
 ];
 
 function inicioPip(P, x, z) { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const a = P[i], b = P[j]; if ((a[1] > z) !== (b[1] > z) && x < (b[0] - a[0]) * (z - a[1]) / (b[1] - a[1]) + a[0]) c = !c; } return c; }
@@ -146,7 +147,7 @@ function fillEmptyZones(out, R) {
     const mark = (P) => { let a = 1e9, b = -1e9, c = 1e9, d = -1e9; for (const p of P) { a = Math.min(a, p[0]); b = Math.max(b, p[0]); c = Math.min(c, p[1]); d = Math.max(d, p[1]); } if (b < Z.x0 || a > Z.x1 || d < Z.z0 || c > Z.z1) return;
       for (let x = Math.max(a, Z.x0); x <= Math.min(b, Z.x1); x += G * 0.5) for (let z = Math.max(c, Z.z0); z <= Math.min(d, Z.z1); z += G * 0.5) if (inicioPip(P, x, z)) { const k = cell(x, z); if (k >= 0) occ[k] = 1; } };
     for (const b of DATA.B) { const c = b[6]; if (c[0] < Z.x0 - 200 || c[0] > Z.x1 + 200) continue; const P = []; for (let i = 0; i < c.length; i += 2) P.push([c[i], c[i + 1]]); mark(P); }
-    for (const a of DATA.A) { const c = a[2]; const P = []; for (let i = 0; i < c.length; i += 2) P.push([c[i], c[i + 1]]); mark(P); }
+    for (const a of DATA.A) { if (/residential|grass|meadow|scrub/.test(DATA.AT[a[0]])) continue; const c = a[2]; const P = []; for (let i = 0; i < c.length; i += 2) P.push([c[i], c[i + 1]]); mark(P); }
     const free = (P) => { for (let u = 0.1; u <= 0.9; u += 0.2) for (let v = 0.1; v <= 0.9; v += 0.2) { const x = P[0][0] + (P[1][0] - P[0][0]) * u + (P[3][0] - P[0][0]) * v, z = P[0][1] + (P[1][1] - P[0][1]) * u + (P[3][1] - P[0][1]) * v;
         const k = cell(x, z); if (k < 0 || occ[k]) return false; const rd = ROADSEG.nearest(x, z); if (rd && rd.d < DATA.R[rd.ri][2] / 2 + 1.6) return false; } return true; };
     let made = 0;

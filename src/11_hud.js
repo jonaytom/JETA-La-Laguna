@@ -3,7 +3,7 @@ const SETTINGS = { sens: 1, invertY: false, weather: 0 };
 try { const s = JSON.parse(localStorage.getItem('gtall_set') || '{}'); Object.assign(SETTINGS, s); } catch (e) { }
 function saveSettings() { try { localStorage.setItem('gtall_set', JSON.stringify(SETTINGS)); } catch (e) { } }
 
-const MAP = { scale: 0.55, x0: WORLD.x0 - 30, z0: WORLD.z0 - 30 }; // px per meter
+const MAP = { scale: 0.45, x0: WORLD.x0 - 30, z0: WORLD.z0 - 30 }; // px per meter
 let MAPC = null;
 function buildMapCanvas() {
   const W = Math.ceil((WORLD.x1 - WORLD.x0 + 60) * MAP.scale), H = Math.ceil((WORLD.z1 - WORLD.z0 + 60) * MAP.scale);

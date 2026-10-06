@@ -30,6 +30,8 @@ function buildLandmarks() {
   try { buildLandmarkDeco(); } catch (e) { console.error('landmarks', e); }
   try { buildCustomHouses(); } catch (e) { console.error('casas', e); }
   try { buildInicioDetails(); } catch (e) { console.error('inicio', e); }
+  try { buildAirport(); } catch (e) { console.error('aeropuerto', e); }
+  try { buildPabellon(); } catch (e) { console.error('pabellon', e); }
   try { buildPasarela(); } catch (e) { console.error('pasarela', e); }
   if (INTER_B) try { buildIntercambiador(INTER_B); } catch (e) { console.error('inter', e); }
   // (the Plaza del Adelantado and the other squares and parks are built in 05n_plazas.js)

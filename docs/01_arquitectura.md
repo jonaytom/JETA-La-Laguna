@@ -45,6 +45,7 @@ entrada de todos los datos.
 | `05n_plazas.js` | **Plazas y parques**: Plaza del Adelantado (fuente de mármol), Camino Largo (palmeras), Parque de la Constitución (estanque con patos, bustos), parques y plazas genéricos. |
 | `05o_concepcion.js` | La Concepción: iglesia y torre modeladas a partir de fotos sobre el plano OSM. |
 | `05p_casas.js` | Casas que faltan en OSM, colocadas a mano (`CUSTOM_HOUSES`). |
+| `05r_aeropuerto.js` | Aeropuerto de Los Rodeos (pista, rodaje, plataformas, terminal, torre, aviones). |
 | `05q_inicio.js` | Esquina de inicio y Marqués de Celada: manzanas partidas en casas, edificios vestidos, señales, locales. |
 | `06_actors.js` / `06a_humans.js` | Humanos: modelo con esqueleto (Quaternius) + animaciones, apariencia (`look`). |
 | `06b_vmodels.js` | Catálogo de coches (parodias) a partir del Kenney car kit; luces, matrícula, rotulación. |

@@ -368,7 +368,7 @@ function computeDepressions() {
         let best = -1, bd = Math.cos(0.9), bStart = true; for (const cj of pedEnds.get(K(px, pz)) || []) { if (cj === ri) continue; const r2 = DATA.R[cj]; if (r2[3] & 6 || r2[0] <= 12) continue; const c2 = r2[4], m = c2.length; const st = c2[0] === px && c2[1] === pz; let dx = st ? c2[2] - c2[0] : c2[m - 4] - c2[m - 2], dz = st ? c2[3] - c2[1] : c2[m - 3] - c2[m - 1]; const dl = Math.hypot(dx, dz) || 1; const dot = (dx * ox + dz * oz) / dl; if (dot > bd) { bd = dot; best = cj; bStart = st; } }
         if (best >= 0) { const Lc = polyLen(DATA.R[best][4]); push(best, bStart ? (s) => D * smooth(0, 1, (rOut - s) / R) : (s) => D * smooth(0, 1, (rOut - (Lc - s)) / R)); PED_TUN.add(best); } }
       return; }
-    const D = rd[0] <= 2 ? 7.2 : 6.6, rIn = clamp(L * 0.3, 8, 40), rOut = rd[0] <= 2 ? 75 : 55, R = rIn + rOut;
+    const D = rd[0] <= 2 ? 7.8 : 7.2, rIn = clamp(L * 0.3, 8, 40), rOut = rd[0] <= 2 ? 75 : 55, R = rIn + rOut;
     push(ri, (s) => D * smooth(0, 1, (Math.min(s, L - s) + rOut) / R));
     for (const atStart of [true, false]) {
       let n = c.length; let px = atStart ? c[0] : c[n - 2], pz = atStart ? c[1] : c[n - 1];
@@ -504,7 +504,7 @@ function computeRaises() {
   }
   console.log('raised overpasses', nb);
 }
-const depthOf = (ri, s) => { const a = DEP.get(ri); if (!a) return 0; let d = 0; for (const f of a) d = Math.max(d, f(s)); return d; };
+const depthOf = (ri, s) => { const a = DEP.get(ri); if (!a) return 0; let d = 0; for (const f of a) d = Math.max(d, f(s)); return Math.max(0, d - 0.5) * 1.12; }; // the first 0.5 m of every ramp is flattened: shallow ends stay exactly at grade (no sinking under junctions)
 function depressedHF(ri) {
   const rd = DATA.R[ri], c = rd[4], L = polyLen(c), tun = !!(rd[3] & 4); const g0 = heightAt(c[0], c[1]), g1 = heightAt(c[c.length - 2], c[c.length - 1]);
   return (s, x, z) => (tun ? Math.min(lerp(g0, g1, clamp(s / L, 0, 1)), heightAt(x, z)) : heightAt(x, z)) - depthOf(ri, s);
@@ -520,11 +520,11 @@ function twinWall(x, z, y0, y1) {
 function tunnelRoad(c, w, cls, tile, hf, opt = {}) {
   ribbon(c, w, cls, YOFF[cls], tile, cls === 'asphaltLines' ? 1 : w / 8, hf);
   // covered stretch -> tube with walls, ceiling and lights; open stretch -> cutting with retaining walls
-  const T = acc(c[0], c[1], 'tunnel'); const L2 = acc(c[0], c[1], 'tunnelLight'); const W = acc(c[0], c[1], 'trim'); const hw = w / 2 + 0.6, H = opt.H || 5.6;
+  const T = acc(c[0], c[1], 'tunnel'); const L2 = acc(c[0], c[1], 'tunnelLight'); const W = acc(c[0], c[1], 'trim'); const hw = w / 2 + (opt.H ? 0.6 : 1.0), H = opt.H || 6.0; // roomier tubes and mouths
   const pts = []; let dist = 0;
   for (let i = 0; i < c.length - 2; i += 2) { const x1 = c[i], z1 = c[i + 1], x2 = c[i + 2], z2 = c[i + 3], Ls = Math.hypot(x2 - x1, z2 - z1) || 1; const n = Math.max(1, Math.ceil(Ls / 4)); for (let k = 0; k < n; k++) { const x = x1 + (x2 - x1) * k / n, z = z1 + (z2 - z1) * k / n; pts.push([x, z, hf(dist + Ls * k / n, x, z), (x2 - x1) / Ls, (z2 - z1) / Ls]); } dist += Ls; }
   pts.push([c[c.length - 2], c[c.length - 1], hf(dist, c[c.length - 2], c[c.length - 1]), pts[pts.length - 1][3], pts[pts.length - 1][4]]);
-  const dep = (p) => heightAt(p[0], p[1]) - p[2]; const covered = (p) => dep(p) > (opt.cover || 3.4); const wc = [0.66, 0.64, 0.6];
+  const dep = (p) => heightAt(p[0], p[1]) - p[2]; const covered = (p) => dep(p) > Math.max(opt.cover || 3.4, H + 0.35); /* the roof must stay under the ground (it used to stick out as a white slab across the road) */ const wc = [0.66, 0.64, 0.6];
   const Pt = (p, sg, y, e = hw) => [p[0] - p[4] * e * sg, p[2] + y, p[1] + p[3] * e * sg];
   for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1];
     if (covered(a) || covered(b)) {
@@ -561,7 +561,8 @@ function trenchPush(x, z, rad) {
 }
 const sameLevel = (y1, y2) => Math.abs(y1 - y2) < 2.6;
 // ground below the terrain surface (tunnels/cuttings) for something currently at height py
-let TCUTS_READY = false;
+let TCUTS_READY = false; let DEP_ROWS = null;
+function onSurfaceRoad(x, z) { if (!DEP_ROWS) DEP_ROWS = new Set([...DEP.keys()].map((i) => DATA.R[i])); const rd = ROADSEG.nearest(x, z, (r) => !DEP_ROWS.has(r) && !(r[3] & 6) && r[0] <= 15); return !!rd && !RAISE.has(rd.ri) && rd.d < DATA.R[rd.ri][2] / 2 + 0.3; }
 function lowAt(x, z, py) {
   let best = null;
   for (const d of TUNNEL_DECKS) {
@@ -570,9 +571,10 @@ function lowAt(x, z, py) {
     const p = d.pts; for (let i = 0; i < p.length - 1; i++) { const a = p[i], b = p[i + 1]; const dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz || 1; let t = ((x - a[0]) * dx + (z - a[1]) * dz) / L2; if (!d.capped && ((t < -0.05 && i === 0) || (t > 1.05 && i === p.length - 2))) continue; t = clamp(t, 0, 1); // interior joints: round, so the outside of bends is covered
       const px = a[0] + dx * t, pz = a[1] + dz * t, dd = Math.hypot(x - px, z - pz); if (dd > d.w / 2) continue; const y = lerp(a[2], b[2], t); const g = heightAt(x, z);
       if (y > g - 0.2 || py > y + 2.9 || py < y - 2.5) continue;
-      if (g - y < 1.6 && !d.ceil && TCUTS_READY && !inCut(x, z, 0.3)) continue; // shallow end with no hole in the terrain: walk/drive on the ground (no sinking)
+      if (g - y < 1.6 && !d.ceil && TCUTS_READY && !inCut(x, z, 0.3)) continue;
+      if (g - y < 1.0 && !d.ceil && ROADS_INDEXED && onSurfaceRoad(x, z)) continue; // a street at ground level covers the shallow trench here: stand on it // shallow end with no hole in the terrain: walk/drive on the ground (no sinking)
       const k = Math.abs(py - y), kb = best ? Math.abs(py - best.y) : 1e9;
-      if (!best || k < kb - 0.3 || (k < kb + 0.3 && dd < best.d)) best = { y, px, pz, d: dd, hw: d.hw, covered: g - y > 3.4 || !!d.ceil, ceil: d.ceil }; }
+      if (!best || k < kb - 0.3 || (k < kb + 0.3 && dd < best.d)) best = { y, px, pz, d: dd, hw: d.hw, covered: g - y > 6.3 || !!d.ceil, ceil: d.ceil, cap: d.capped && d.hall ? { s: t * Math.sqrt(L2), len: Math.sqrt(L2), ux: dx / Math.sqrt(L2), uz: dz / Math.sqrt(L2) } : null }; }
   }
   return best;
 }

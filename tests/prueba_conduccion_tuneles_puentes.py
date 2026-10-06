@@ -2,7 +2,7 @@ import asyncio, json
 import os
 exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '_helpers.py')).read().split('async def run')[0])
 JS = r"""
-(ri)=>{ const d=__dbg; const DATA=JSON.parse(document.getElementById('mapdata').textContent); const rd=DATA.R[ri]; let c=rd[4].slice();
+(ri)=>{ const d=__dbg; const DATA=__dbg.DATA; const rd=DATA.R[ri]; let c=rd[4].slice();
   if (rd[3]&1) {} // oneway: drive in given direction
   // extend with neighbours a bit? just this way
   const pts=[]; for(let i=0;i<c.length;i+=2) pts.push([c[i],c[i+1]]); let L=0; for(let i=1;i<pts.length;i++) L+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);
@@ -25,7 +25,7 @@ JS = r"""
 """
 async def run(pg):
     await pg.evaluate("(()=>{document.getElementById('menu').style.display='none'; window.__manual=true; window.__dbg.GAME.state='play'; __dbg.GAME.tod=12; __step(3);})()")
-    ids = json.loads(await pg.evaluate("""(()=>{const d=__dbg; const DATA=JSON.parse(document.getElementById('mapdata').textContent); const out=[]; DATA.R.forEach((rd,ri)=>{ if(rd[0]>10) return; if (d.DEP.has(ri) || (rd[3]&2)) out.push(ri); }); return JSON.stringify(out)})()"""))
+    ids = json.loads(await pg.evaluate("""(()=>{const d=__dbg; const DATA=__dbg.DATA; const out=[]; DATA.R.forEach((rd,ri)=>{ if(rd[0]>10) return; if (d.DEP.has(ri) || (rd[3]&2)) out.push(ri); }); return JSON.stringify(out)})()"""))
     print('roads', len(ids)); bad=[]
     for ri in ids:
         r = await pg.evaluate(JS, ri)

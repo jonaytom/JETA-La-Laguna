@@ -3,6 +3,48 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.46.0 — 2026-10-06 — Vuelven dos zonas del mapa
+- Se recuperan las zonas marcadas por Jonay que se habían quitado: al suroeste, de Guajara / San Felipe / San
+  Bartolomé de Geneto hasta El Coromoto (X −1200…158, Z 1376…2810); al noreste, la franja al este de San Roque y La
+  Verdellada (hasta una línea escalonada X 781/1300/1805). Siguen fuera Los Baldíos, La Vega y el monte de Valle
+  Tabares / Las Mercedes.
+
+## 0.45.0 — 2026-10-05 — Finca España, Chimisay y La Pirámide
+- **Finca España**: pabellón del Complejo Deportivo Islas Canarias junto al campo (hormigón gris, cubierta blanca
+  a un agua que vuela sobre la esquina, franja de cristal verde agua y lamas oscuras, pilares morados y rótulo).
+  Los bloques de C. Tacoronte (zona del colega) en tonos arena y salmón.
+- **San Miguel de Chimisay / El Cardonal**: el barrio, vacío en OSM, se llena con unas 600 casas y bloques a lo
+  largo de sus calles (alrededor de la casa del hermano).
+- **Edificio La Pirámide** (Campus de Guajara): pirámide escalonada de cristal y hormigón.
+- Los rellenos de barrios ignoran los usos «residencial/césped/matorral» de OSM (antes bloqueaban el relleno).
+
+## 0.44.0 — 2026-10-05 — Aeropuerto de Los Rodeos
+- **Aeropuerto Tenerife Norte** al oeste, con datos reales de OpenStreetMap: pista 12/30 de 3,4 km × 45 m con
+  marcas (eje, bordes, «piano» de umbral, zona de toma y números 12 y 30), calles de rodaje con su línea amarilla,
+  plataformas de hormigón, terminal (piedra clara, doble banda acristalada, marquesina volada sobre pilares con
+  banda verde y rótulo «TENERIFE NORTE · CIUDAD DE LA LAGUNA»), torre de control, hangares y 17 turbohélices de la
+  aerolínea parodia «Guanchavía» en sus puestos, con el morro hacia la terminal.
+- **Mapa ampliado** hacia el oeste en un corredor (Z −450 a 1400) con relieve real (Copernicus DEM, rejilla de 32 m
+  fundida con la anterior) y las calles, casas y fincas de la zona: Camino San Lázaro, Calle Aviación, TF-5,
+  Carretera General del Norte, Guamasa / El Portezuelo… (+1275 edificios, +815 vías). Hay ruta en coche desde el
+  inicio hasta la terminal (≈2,8 km).
+- Minimapa a escala 0,45 para que el mapa grande siga siendo ligero.
+
+## 0.43.0 — 2026-10-05 — Túneles, parking del Cristo, Sastrón primero y arreglos
+- **Historia**: Sastrón te pone a prueba con la pelea en cuanto le conoces; al ganarle pide la pasta y te ofrece la
+  carrera del Canarión (opcional y recomendada) o reunirla peleando por la calle. Las partidas guardadas antiguas se
+  adaptan solas.
+- **Túneles y pasos inferiores**: más hondos (7,2–8,4 m), tubos y bocas más anchos y altos (6 m); el techo solo se
+  construye donde queda bajo tierra (antes asomaba como una losa blanca cruzando la carretera, p. ej. en la
+  estación de guaguas). Los primeros 0,5 m de cada rampa quedan a nivel: ya no te hundes en el asfalto al llegar a un
+  cruce (Alcampito, TF-5 y 42 sitios más; auditoría a 0).
+- **Estación de guaguas**: andenes, guaguas y rótulos ya no se colocan sobre la autopista hundida.
+- **Parking de la Plaza del Cristo**: 1,1 m más hondo, sala de 3,4 m de alto, rampas más largas y anchas con boca de
+  3,9 m (los coches ya no rozan el techo), paredes del fondo que los coches no atraviesan, y las escaleras de salida
+  sin coches aparcados que las taponaban (columnas y coches solo cuentan a la altura del suelo del parking).
+- **Pistola**: los dedos parten cada fotograma de su postura de reposo (al apuntar la mano ya no gira sin parar) y el
+  primer disparo no congela el juego (la luz del fogonazo existe desde el principio y no obliga a recompilar).
+
 ## 0.42.0 — 2026-10-05 — Peleas tipo Street Fighter, controles configurables, menú ancho y terreno
 - **Pelea 2D**: mantener atrás anda hacia atrás; solo se cubre si el rival está atacando (golpe en preparación o
   activo, o bola de gofio que viene). Luchadores un 20 % más pequeños (sprites e impactos) y más separados al

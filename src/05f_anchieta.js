@@ -142,12 +142,15 @@ function buildIntercambiador(b) {
   const len = F.u1 - F.u0, wid = F.v1 - F.v0;
   for (let k = 0; k < 3; k++) {
     const v = F.v0 + wid * (0.22 + k * 0.28); const [cx, cz] = F.W((F.u0 + F.u1) / 2, v);
-    const pl = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.25, len * 0.7), platM); pl.position.set(cx, heightAt(cx, cz) + 0.22, cz); pl.rotation.y = F.ang; pl.receiveShadow = true; scene.add(pl);
+    // the platform is laid in 2 m pieces and skips any carriageway / sunken road it would cross (it used to float over the motorway)
+    { const Lp = len * 0.7, n = Math.ceil(Lp / 2); for (let i = 0; i < n; i++) { const u = (F.u0 + F.u1) / 2 - Lp / 2 + (i + 0.5) * Lp / n; const [px, pz] = F.W(u, v); const g = heightAt(px, pz);
+      if (onCarriageway(px, pz, 2.2) || lowAt(px, pz, g) || !pip(px, pz, pts.flat())) continue; const pl = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.25, Lp / n + 0.02), platM); pl.position.set(px, g + 0.22, pz); pl.rotation.y = F.ang; pl.receiveShadow = true; scene.add(pl); } }
     // benches + shelter signs on the platform
-    for (let s = -2; s <= 2; s++) { const [bx, bz] = F.W((F.u0 + F.u1) / 2 + s * len * 0.13, v); const sign = textPlane('Dársena ' + (k * 5 + s + 3), 1.4, 0.35, '#1f8a4c', '#ffffff', 'bold 40px Arial'); sign.position.set(bx, heightAt(bx, bz) + 2.6, bz); sign.rotation.y = F.ang + Math.PI / 2; scene.add(sign); }
+    for (let s = -2; s <= 2; s++) { const [bx, bz] = F.W((F.u0 + F.u1) / 2 + s * len * 0.13, v); if (onCarriageway(bx, bz, 2) || lowAt(bx, bz, heightAt(bx, bz))) continue; const sign = textPlane('Dársena ' + (k * 5 + s + 3), 1.4, 0.35, '#1f8a4c', '#ffffff', 'bold 40px Arial'); sign.position.set(bx, heightAt(bx, bz) + 2.6, bz); sign.rotation.y = F.ang + Math.PI / 2; scene.add(sign); }
     for (const side of [-1, 1]) for (let s = -1; s <= 1; s += 1) {
       if (Math.random() < 0.25) continue;
       const [bx, bz] = F.W((F.u0 + F.u1) / 2 + s * len * 0.22, v + side * 3.6);
+      { const fx = Math.cos(F.ang) * 0, ok = [-6, 0, 6].every((k) => { const q = F.W((F.u0 + F.u1) / 2 + s * len * 0.22 + k, v + side * 3.6); return !onCarriageway(q[0], q[1], 1.5) && !lowAt(q[0], q[1], heightAt(q[0], q[1])); }); if (!ok) continue; }
       const bus = new Car('bus', 0x1f8a4c, bx, bz, F.ang + (side > 0 ? 0 : Math.PI)); bus.persist = true; bus.driver = null; bus.ctl.brk = 1; bus.mode = 'physics'; INTER.buses.push(bus);
     }
   }

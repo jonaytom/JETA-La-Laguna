@@ -48,7 +48,9 @@ function fireWeapon() {
     if (witness) { WANTED.armed = true; WANTED.crime(Math.max(3, Math.ceil(WANTED.level) + 1) - Math.ceil(WANTED.level), 'Disparos en la vía pública'); for (const p of PEDS) if (p.down <= 0 && Math.hypot(p.x - PLAYER.x, p.z - PLAYER.z) < 40) { p.flee = 10; p.fleeFrom = [PLAYER.x, PLAYER.z]; } }
   }
 }
-let flashLight = null;
+// muzzle flash light exists from the start (intensity 0): adding a light on the first shot forced every material to
+// recompile its shaders and froze the game for ~1 s
+let flashLight = new THREE.PointLight(0xffc870, 0, 9, 2); scene.add(flashLight);
 function muzzleFlash() {
   if (!flashLight) { flashLight = new THREE.PointLight(0xffc870, 0, 9, 2); scene.add(flashLight); }
   const m = WEAPON.mesh; const p = new THREE.Vector3(); if (m) m.getWorldPosition(p); else p.set(PLAYER.x, PLAYER.y + 1.4, PLAYER.z);
@@ -81,6 +83,8 @@ function updateWeapons(dt) {
 const GRIP = { curl: 1.25, sgn: 1 };
 function gripGun(H, mesh, aimDir) {
   const sk = H.skeleton, B = (n) => sk.getBoneByName(n); const hand = B('hand_r'), mid = B('middle_01_r'), ind = B('index_01_r'), pin = B('pinky_01_r'); if (!hand || !mid) return;
+  // start every frame from the rest pose of the fingers/thumb (not every clip keys them: rotations would pile up and spin the hand)
+  for (const f of ['index', 'middle', 'ring', 'pinky', 'thumb']) for (const k of ['01', '02', '03']) { const b = B(f + '_' + k + '_r'); if (!b) continue; if (!b.userData.q0) b.userData.q0 = b.quaternion.clone(); b.quaternion.copy(b.userData.q0); }
   hand.updateWorldMatrix(true, true);
   const ph = new THREE.Vector3(), pm = new THREE.Vector3(), pi = new THREE.Vector3(), pp = new THREE.Vector3();
   hand.getWorldPosition(ph); mid.getWorldPosition(pm); ind.getWorldPosition(pi); pin.getWorldPosition(pp);

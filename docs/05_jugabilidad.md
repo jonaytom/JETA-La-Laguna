@@ -97,7 +97,8 @@ Desde el menú de inicio: vuelo libre (WASD, E/Q subir/bajar, Shift rápido), dr
 
 ## Zona de juego y límites (`01_core.js`, `08b_border.js`)
 
-- `WORLD` (caja) menos `WORLD_EXCL` (zonas quitadas: monte del NE y campo del SO). `worldEdgeDist(x, z)` da la
+- `WORLD` (caja) menos `WORLD_EXCL` (rectángulos: el monte del NE en escalera, Los Baldíos/La Vega al SO y, al oeste
+  de X −1900, todo salvo el corredor del aeropuerto). `worldEdgeDist(x, z)` da la
   distancia al borde (negativa fuera) e `inPlayArea(x, z, margen)` si un punto está dentro.
 - Al cargar, `pruneWorld()` elimina edificios, áreas, árboles, POI, tiendas, tramos de calle y aristas de tráfico
   fuera de la zona de juego (no se dibujan ni generan tráfico).
@@ -110,3 +111,10 @@ Desde el menú de inicio: vuelo libre (WASD, E/Q subir/bajar, Shift rápido), dr
 Lista de acciones con sus teclas de siempre y una tecla extra opcional (`localStorage` `jeta_controls`). Los
 manejadores de teclado (juego y pelea) traducen la tecla extra a la tecla original con `CONTROLS.alias()`, así el
 resto del código no cambia. Pantalla en menú principal y pausa (botón CONTROLES).
+
+## Orden de la historia (v0.43)
+
+Vuelta al barrio → Una botella para Coco → **Sastrón** (pelea de prueba con tutorial; si ganas pide $2500) →
+La firma de la banda → … La **carrera con el Canarión** es una misión secundaria (círculo azul) que se abre al hablar
+del dinero con Sastrón; después quedan las revanchas. También se puede reunir el dinero peleando por la calle.
+Las partidas v1 (con el Canarión dentro de la historia) se convierten al cargar (`getState().v = 2`).

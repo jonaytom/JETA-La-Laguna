@@ -85,12 +85,13 @@ calzada debajo). **No pone barandilla** donde caería dentro de otra calzada al 
 
 ## Túneles y pasos inferiores (`computeDepressions`, `tunnelRoad`)
 
-- Vías con `flag 4` y aptas para coches: profundidad 7,2 m (autovías) o 6,6 m, con transición a lo largo de la
+- Vías con `flag 4` y aptas para coches: profundidad 7,8 m (autovías) o 7,2 m (efectiva ×1,12 − 0,5: `depthOf` deja a
+  nivel el primer medio metro de cada rampa), con transición a lo largo de la
   propia vía y de hasta 4 tramos de las vías que la continúan (rampas de 55–75 m).
 - **Pasos peatonales bajo calzada**: un camino con `flag 4` solo se hunde si de verdad cruza una calzada
   (3,6 m, rampas de 22 m, tubo de 2,9 m de alto). Los pasajes bajo edificios se quedan a nivel de calle.
 - `tunnelRoad` recorre la vía cada ≤ 4 m:
-  - **Cubierto** (más de 3,4 m bajo el suelo): paredes, techo, losa superior, luces, y **boca** con dintel y
+  - **Cubierto** (solo donde el techo, a `H` = 6 m, queda bajo tierra; ancho calzada + 2 m): paredes, techo, losa superior, luces, y **boca** con dintel y
     pilastras. El dintel nunca asoma por encima del terreno (por si pasa una calle por encima).
   - **Abierto**: muros de contención hasta el suelo + pretil, y un recorte en el terreno (`TCUTS`).
   - `twinWall`: no se ponen muros entre dos tubos gemelos que van pegados.
@@ -113,12 +114,16 @@ calzada debajo). **No pone barandilla** donde caería dentro de otra calzada al 
   (muros, zócalo, aleros, nave central con óculos, vidrieras, portadas, cabecera) y la torre (4 cuerpos, reloj,
   campanario, linterna) se generan en metros sobre el plano real y se fusionan por material. Fotos de referencia en
   `docs/referencias/concepcion/`.
+- **Pabellón de Finca España** (`05p_casas.js`, `buildPabellon`) y colores de C. Tacoronte (`fincaEspanaLook` en `05k`).
+- **Relleno de barrios vacíos en OSM** (`05q_inicio.js`, `FILL_ZONES`): Lucas Vega / Montaraz y San Miguel de Chimisay.
 - **Casas añadidas a mano** (`05p_casas.js`, lista `CUSTOM_HOUSES`): edificios que no están en OSM. Para pasar
   coordenadas de Google Maps al juego: `x = (lon + 16.315) · cos(28.4875°) · 111320`, `z = −(lat − 28.4875) · 110574`.
 - **Esquina de inicio** (`05q_inicio.js`): `splitCoarseBlocks()` (antes de `buildBuildings`) sustituye las manzanas de
   `BLOCK_SPLIT` por casas en hilera a lo largo de sus fachadas (fondo ≤ 11,5 m, ancho 5,5–11 m, 1–4 plantas, patio
   interior), viste algunas según las fotos (`INICIO_SPOTS`, `INICIO_DRESS`) y añade locales en la subida
   (`INICIO_SHOPS`). `brandInside()` da nombre de marca a edificios sin nombre que contienen su tienda.
+- **Aeropuerto** (`05r_aeropuerto.js`, `buildAirport`): plataformas en celdas de 8 m sobre el terreno, pista y rodaje en
+  tiras de 10 m con marcas, terminal sobre su planta OSM, torre, hangares y aviones (`makePlane`, geometría compartida).
 - Edificios singulares: iglesias (`05c`), Intercambiador (`05k`), pasarela de Anchieta (`05f`), pabellones (`05i`).
 
 ## Plazas y parques (`05n_plazas.js`)
