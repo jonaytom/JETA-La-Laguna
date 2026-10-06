@@ -13,8 +13,13 @@
   `female, skin, shirt, pants, shoes, sole, hair, hairStyle ('Hair_SimpleParted', 'Hair_Buzzed', 'Hair_Long',
   'Hair_Buns', 'Hair_BuzzedFemale', null), beard, cap, beanie, glasses ('sun' | 'round'), jacket, chain, watch,
   bag, cane, belt, sleeve, longPants, fat, thin, scale, hd`.
-- Complexión: los cuerpos base son atléticos; se estrechan escalando el hueso raíz (ancho y fondo). `thin`
-  estrecha hombros pero conserva el fondo del cuerpo; `fat` ensancha pelvis y columna.
+- **Complexión (cuerpos propios)**: el cuerpo base es de «superhéroe». `tools/morphs.py` (después de
+  `chars2json.py`) genera cuatro *morphs* propios sobre la malla, según el hueso de cada vértice y su normal:
+  `normal` (menos músculo), `fat` (barriga, michelines, espalda, culo, brazos y muslos gruesos, papada), `teen`
+  (más delgado) y `old` (barriga blanda, pecho caído). Se guardan en `chars.json` (`bodies.*.morph`, int8/800) y en
+  el juego son *morph targets* del `SkinnedMesh`, mezclables: `makeHuman({ build: { normal: 0.6, fat: 0.8 } })`.
+  Sin `build`, cada peatón sale con un reparto aleatorio (normal, relleno, atlético, mayor —pelo canoso—,
+  adolescente —más bajo y cabeza algo mayor—). `fat` / `thin` antiguos se traducen a `build`. Mismas animaciones.
 - `H.look` guarda la apariencia resuelta: el motor de pelea 2D la usa para dibujar el sprite pixel-art del mismo
   personaje.
 - `animHuman(H, dt, velocidad, estado)` elige el clip (parado / andar / correr / aire / caído / sentado).

@@ -1,0 +1,5 @@
+[
+ {"nombre": "Aeropuerto (puente y accesos)", "x0": -3420, "x1": -2480, "z0": -320, "z1": 420},
+ {"nombre": "Zona SO recuperada", "x0": -1200, "x1": 158, "z0": 1376, "z1": 2810},
+ {"nombre": "Franja NE recuperada", "x0": 668, "x1": 1805, "z0": -220, "z1": 1068}
+]

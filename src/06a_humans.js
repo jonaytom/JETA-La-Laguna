@@ -1,5 +1,6 @@
 // ============ personajes con esqueleto (Quaternius Universal Base Characters + Universal Animation Library, CC0) ============
 // Random clothes (painted on body regions), skin tone, hairstyle, hair colour, beard, height and build per person.
+const MORPHS = ['normal', 'fat', 'teen', 'old']; // body shapes made by tools/morphs.py (our versions of the other body types)
 const HUM = (() => {
   const d = DATA.HUM; if (!d) return null;
   const bin = (s) => { const b = atob(s); const u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u.buffer; };
@@ -14,7 +15,7 @@ const HUM = (() => {
       const R = new Uint8Array(bin(p.rg)); const r = new Float32Array(R.length); for (let i = 0; i < R.length; i++) r[i] = R[i]; g.setAttribute('aReg', new THREE.BufferAttribute(r, 1)); }
     g.setIndex(new THREE.BufferAttribute(new Uint16Array(bin(p.i)), 1)); g.computeBoundingSphere(); g.boundingSphere.radius = 1.4; return g;
   };
-  const bodies = {}; for (const k in d.bodies) { const B = d.bodies[k]; const ibm = new Float32Array(bin(B.ibm)); bodies[k] = { parts: B.parts.map((p) => ({ k: p.k, geo: geoOf(p, true) })), inv: d.skel.map((_, i) => new THREE.Matrix4().fromArray(ibm, i * 16)), tex: B.tex }; }
+  const bodies = {}; for (const k in d.bodies) { const B = d.bodies[k]; const ibm = new Float32Array(bin(B.ibm)); bodies[k] = { parts: B.parts.map((p) => { const geo = geoOf(p, true); if (p.k === 'body' && B.morph) { geo.morphAttributes.position = MORPHS.map((n) => { const q = new Int8Array(bin(B.morph[n])); const v = new Float32Array(q.length); for (let i = 0; i < q.length; i++) v[i] = q[i] / 800; return new THREE.BufferAttribute(v, 3); }); geo.morphTargetsRelative = true; } return { k: p.k, geo }; }), inv: d.skel.map((_, i) => new THREE.Matrix4().fromArray(ibm, i * 16)), tex: B.tex }; }
   const hairs = {}; for (const k in d.hairs) hairs[k] = { geo: geoOf(d.hairs[k], false), t: d.hairs[k].t };
   // animation clips (bone names = skeleton names)
   const clips = {};
@@ -70,9 +71,10 @@ function makeHumanSkinned(o = {}) {
   if (longP && (o.belt ?? !fem)) mat.userData.u.uBelt.value.w = fem ? 1.045 : 1.062;
   if (o.sole !== undefined) mat.userData.u.uSole.value.set(o.sole);
   const hairCol = o.hair ?? pick(HCOL.hair);
+  let bodyMesh = null;
   for (const p of B.parts) {
     let m; if (p.k === 'body') m = mat; else if (p.k === 'eyes') m = new THREE.MeshStandardMaterial({ map: HUM.tex.eye, roughness: 0.3 }); else m = new THREE.MeshStandardMaterial({ map: HUM.tex[fem ? 'h2' : 'h1'], color: hairCol, alphaTest: 0.4, roughness: 0.9, side: THREE.DoubleSide });
-    const sm = new THREE.SkinnedMesh(p.geo, m); sm.bind(skeleton, new THREE.Matrix4()); sm.castShadow = p.k === 'body'; sm.frustumCulled = false; body.add(sm);
+    const sm = new THREE.SkinnedMesh(p.geo, m); if (p.k === 'body') bodyMesh = sm; sm.bind(skeleton, new THREE.Matrix4()); sm.castShadow = p.k === 'body'; sm.frustumCulled = false; body.add(sm);
   }
   const head = bones.find((b) => b.name === 'Head'); const spine = bones.find((b) => b.name === 'spine_02');
   // hairstyle(s) rigidly on the head bone
@@ -96,12 +98,21 @@ function makeHumanSkinned(o = {}) {
   if (o.bag) { const bg = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.38, 0.14), M(o.bag, 0.85)); bg.position.set(0, 1.32, -0.22); attachTo('spine_03', bg); }
   if (o.chain) { const ch = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.006, 6, 20), M(0xd9b44a, 0.25, 0.95)); ch.rotation.x = Math.PI / 2 - 0.35; ch.position.set(0, 1.47, 0.045); attachTo('spine_03', ch); }
   // build: the base bodies are superheroes, so narrow them and vary height
-  const s = o.scale ?? rnd(0.93, 1.05); const w = o.fat ? 1.0 : o.thin ? 0.74 : rnd(0.84, 0.92); bones[0].scale.set(w, o.thin ? 0.88 : w, 1); // thin = narrow shoulders, but keep body depth (no 'flat' look) body.scale.setScalar(s * (fem ? 0.97 : 1));
-  if (o.fat) for (const n of ['spine_01', 'spine_02', 'pelvis']) { const b = bones.find((x) => x.name === n); b.scale.set(1.16, 1, 1.24); }
+  // body type: mix of our morphs (normal / fat / teen / old) on the "superhero" base; old call sites pass fat / thin
+  let bt = o.build;
+  if (!bt) { if (o.fat) bt = { fat: rnd(0.6, 1), normal: 0.6 }; else if (o.thin) bt = { normal: 1, teen: 0.5 };
+    else { const r = Math.random(); bt = r < 0.45 ? { normal: rnd(0.6, 1) } : r < 0.67 ? { normal: 0.6, fat: rnd(0.3, 1) } : r < 0.77 ? { normal: rnd(0, 0.3) } : r < 0.88 ? { old: rnd(0.6, 1), normal: 0.6, fat: rnd(0, 0.4) } : { teen: 1, normal: 0.4 }; } }
+  if (bodyMesh && bodyMesh.morphTargetInfluences) MORPHS.forEach((n, i) => { bodyMesh.morphTargetInfluences[i] = bt[n] || 0; });
+  const teen = bt.teen || 0, fatK = bt.fat || 0, oldK = bt.old || 0;
+  const s = o.scale ?? (rnd(0.93, 1.05) * (1 - 0.1 * teen)); const w = o.thin ? 0.8 : rnd(0.84, 0.92) + 0.08 * fatK; bones[0].scale.set(w, o.thin ? 0.9 : w, 1); /* narrower shoulders than the superhero */
+  body.scale.setScalar(s * (fem ? 0.97 : 1));
+  if (fatK > 0.5) for (const n of ['spine_01', 'spine_02', 'pelvis']) { const b = bones.find((x) => x.name === n); b.scale.set(1 + 0.08 * fatK, 1, 1 + 0.1 * fatK); }
+  if (teen) head.scale.setScalar(1 + 0.06 * teen);
+  if (oldK > 0.5 && o.hair === undefined) for (const c of root.children) c.traverse((m) => { if (m.isMesh && m.material && m.material.alphaTest > 0) m.material.color.set(pick([0x8c8c8c, 0xd9d4cc, 0xb0aca5])); });
   const mixer = new THREE.AnimationMixer(body); const actions = {};
   const act = (n) => { if (!actions[n]) { const a = mixer.clipAction(HUM.clips[n]); if (/Death|Punch|Hit|Jump_Start|Jump_Land|Interact/.test(n)) { a.setLoop(THREE.LoopOnce); a.clampWhenFinished = true; } actions[n] = a; } return actions[n]; };
   const dummy = () => ({ p: new THREE.Object3D(), j: new THREE.Object3D() });
-  const look = { female: fem, skin: skinCol, shirt, pants, shoes, sleeve, longP, hair: hairCol, hairStyle: hs, cap: o.cap, jacket: o.jacket, beard: !!o.beard, glasses: o.glasses, beanie: o.beanie, sole: o.sole, fat: o.fat, thin: o.thin };
+  const look = { female: fem, skin: skinCol, shirt, pants, shoes, sleeve, longP, hair: hairCol, hairStyle: hs, cap: o.cap, jacket: o.jacket, beard: !!o.beard, glasses: o.glasses, beanie: o.beanie, sole: o.sole, fat: o.fat, thin: o.thin, build: bt };
   const H = { look, root, body, skinned: true, skeleton, mixer, act, cur: null, head, torso: spine, hips: new THREE.Object3D(), armL: dummy(), armR: dummy(), legL: dummy(), legR: dummy(), phase: Math.random() * 6, pose: 'walk', female: fem, oneShot: 0 };
   play(H, 'Idle_Loop', 0); mixer.update(Math.random() * 2);
   return H;

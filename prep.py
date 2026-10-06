@@ -231,6 +231,70 @@ def warp_flat(c):
 for rr in R: rr[4] = warp_flat(rr[4])
 for b in B: b[6] = warp_flat(b[6])
 
+# ---------------- dead-end ways that run into a building (loading bays, garages, entrances): stop them at the wall
+def _pip(x, z, P):
+    c = False; n = len(P) // 2
+    for i in range(n):
+        ax, az = P[2 * i], P[2 * i + 1]; bx, bz = P[2 * ((i - 1) % n)], P[2 * ((i - 1) % n) + 1]
+        if (az > z) != (bz > z) and x < (bx - ax) * (z - az) / ((bz - az) or 1e-9) + ax: c = not c
+    return c
+_BG = {}
+for bi, b in enumerate(B):
+    c = b[6]; xs = c[0::2]; zs = c[1::2]
+    for gx in range(int(min(xs) // 50), int(max(xs) // 50) + 1):
+        for gz in range(int(min(zs) // 50), int(max(zs) // 50) + 1): _BG.setdefault((gx, gz), []).append(bi)
+def _inb(x, z):
+    for bi in _BG.get((int(x // 50), int(z // 50)), []):
+        if _pip(x, z, B[bi][6]): return True
+    return False
+_deg = {}
+for rr in R:
+    c = rr[4]
+    for j in (0, len(c) - 2): _deg[(c[j], c[j + 1])] = _deg.get((c[j], c[j + 1]), 0) + 1
+    for j in range(2, len(c) - 2, 2): _deg[(c[j], c[j + 1])] = _deg.get((c[j], c[j + 1]), 0) + 2
+ntrim = 0
+for rr in R:
+    for end in (0, 1):
+        c = rr[4]
+        if len(c) < 4: break
+        if end: c = c[::-1]; c = [v for k in range(0, len(c), 2) for v in (c[k + 1], c[k])]
+        if _deg.get((c[0], c[1]), 0) != 1 or not _inb(c[0], c[1]): continue
+        # walk inwards in 0.5 m steps until outside the building, keep 1 m of clearance
+        pts = [(c[k], c[k + 1]) for k in range(0, len(c), 2)]; cut = None; acc = 0.0
+        for k in range(len(pts) - 1):
+            (x1, z1), (x2, z2) = pts[k], pts[k + 1]; L = _m.hypot(x2 - x1, z2 - z1); st = max(1, int(L / 0.5))
+            for qq in range(1, st + 1):
+                t = qq / st; x, z = x1 + (x2 - x1) * t, z1 + (z2 - z1) * t
+                if not _inb(x, z):
+                    t2 = min(1.0, t + 1.0 / max(L, 1e-6)); cut = (k, x1 + (x2 - x1) * t2, z1 + (z2 - z1) * t2); break
+            if cut: break
+        if not cut: continue
+        k, x, z = cut; rest = pts[k + 1:]
+        if len(rest) < 1: continue
+        newc = [round(x * 2) / 2, round(z * 2) / 2] + [v for p in rest for v in p]
+        if len(newc) < 4 or _m.hypot(newc[0] - newc[2], newc[1] - newc[3]) < 0.1 and len(newc) < 6: continue
+        if end: newc = [v for k2 in range(len(newc) - 2, -1, -2) for v in (newc[k2], newc[k2 + 1])]
+        rr[4] = newc; ntrim += 1
+print('ways cut at a building wall', ntrim)
+# buildings that a drivable way runs straight through (canopies / roofs over service roads mapped as buildings,
+# mostly at the airport): drop them, the road wins
+_drop = set()
+for rr in R:
+    if rr[0] > 12: continue
+    c = rr[4]
+    for k in range(0, len(c) - 2, 2):
+        x1, z1, x2, z2 = c[k], c[k + 1], c[k + 2], c[k + 3]; L = _m.hypot(x2 - x1, z2 - z1); st = max(1, int(L / 2))
+        for qq in range(st + 1):
+            x, z = x1 + (x2 - x1) * qq / st, z1 + (z2 - z1) * qq / st
+            for bi in _BG.get((int(x // 50), int(z // 50)), []):
+                if bi in _drop: continue
+                b = B[bi]
+                if b[2] <= 2 and _pip(x, z, b[6]):
+                    xs = b[6][0::2]; zs = b[6][1::2]
+                    if (max(xs) - min(xs)) * (max(zs) - min(zs)) < 3000: _drop.add(bi)
+B = [b for bi, b in enumerate(B) if bi not in _drop]
+print('buildings dropped (a road runs through them)', len(_drop))
+
 # ---------------- road graph for AI traffic
 AI = {'motorway', 'motorway_link', 'trunk', 'primary', 'primary_link', 'secondary', 'secondary_link', 'tertiary', 'tertiary_link', 'unclassified', 'residential'}
 cnt = {}

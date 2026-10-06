@@ -21,6 +21,34 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 - [ ] Prueba de conducción de túneles/puentes: 10 de 111 sin terminar (2 se salen contra el muro de la trinchera en
       Z≈3100, X≈1800; el resto, tráfico o tiempo).
 
+- [ ] **Agente revisor — tandas pendientes** (`reportes/ULTIMO.md`, con capturas). Hecha la 1.ª tanda (aceras,
+      terreno bajo el asfalto, pretiles, calles que suben a las rampas, edificios sobre calles). Quedan:
+      - **Trincheras / túneles** (Vía de Ronda X 375–392 Z 1456–1536, terciaria X≈1800 Z≈3100): muros blancos y
+        bordes de trinchera dentro de la calzada; el coche se hunde o se atasca.
+      - **Medianas tipo New Jersey** que cruzan carriles en glorietas y enlaces (X 1823 Z 3077, X 5 Z 2330).
+      - **Enlaces de autopista**: zonas donde el enlace y la vía principal se solapan a distinta altura (X 674 Z 3445,
+        X 2084 Z 3448, X 401 Z −294): el coche va 1 m por encima.
+      - Valla de cancha en C. Castellón / Valencia (X 1440, Z 1135), Calle La Papa (X −948, Z 1484), Calle Timanfaya
+        (X −1251, Z −3, el coche cae 2,6 m bajo un tablero estrecho), marquesina de la parada de tranvía sobre la
+        calzada en Av. de los Menceyes (X 577, Z 1231).
+      - Aeropuerto: 3 edificios aún sobre vías de servicio y caminos peatonales que se atascan (X −3150, Z 0…100).
+- [x] v0.47.0 (1.ª versión) **Cuerpos variados (nuestra versión)** — afinar con Jonay: morphs por código sobre el cuerpo Superhero:
+      normal (menos músculo), relleno/barrigón (grados), adolescente, mayor; mezclables y con las mismas animaciones.
+- [ ] **Lucha 2D: más resolución en el pixel art** (lo pide Jonay): sprites de los luchadores y fondo con el doble de
+      píxeles (más detalle de cara, ropa y pelo; fondo con menos pixelado), manteniendo el estilo 90s.
+- [ ] **Mixamo** como fuente de animaciones extra (gratis para juegos; no subir los FBX originales al repo; hay que
+      retargetear a nuestro esqueleto; la descarga la hace Jonay con su cuenta de Adobe).
+- [ ] **Personajes y animaciones de Quaternius** (lo propone Jonay): [Universal Base Characters](https://quaternius.com/packs/universalbasecharacters.html)
+      (CC0; 6 cuerpos —normal, superhéroe, adolescente, hombre/mujer—, 20 peinados, ~13k tris, glTF) +
+      [Universal Animation Library](https://quaternius.com/packs/universalanimationlibrary.html) (CC0; 120+
+      animaciones: andar en 8 direcciones, trotar, correr, sentarse, morir, pelea, pistola, gestos; glTF). Mismo
+      esqueleto humanoide universal. La versión gratis trae el 60-70 % del pack. Plan propuesto: jugador y peatones
+      cercanos con estos modelos (ropa por color/material para variar), peatones lejanos con LOD simple; pasar las
+      animaciones a un solo GLB con meshopt; comprobar el peso del HTML. Descarga desde el navegador del PC.
+
+- [ ] **Assets de coches y motos** (consulta hecha, falta decidir): opciones CC0/CC-BY en
+      `docs/referencias/assets_vehiculos.md`.
+
 ## Pendientes anteriores
 
 - [ ] Algunos túneles se ven raros por dentro; muro en el túnel gemelo de la vía 1009.
@@ -29,6 +57,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 
 ## Hecho
 
+- [x] v0.47.0 — Agente revisor de jugabilidad, puente del aeropuerto bajado a nivel, aceras sin losa bajo la calzada.
 - [x] v0.45.0 — Pabellón de Finca España y colores de C. Tacoronte, barrio de Chimisay relleno, La Pirámide.
 - [x] v0.44.0 — Aeropuerto de Los Rodeos y corredor oeste con sus calles y relieve.
 - [x] v0.43.0 — Sastrón primero / Canarión opcional, túneles más hondos y anchos sin losas, sin hundirse en

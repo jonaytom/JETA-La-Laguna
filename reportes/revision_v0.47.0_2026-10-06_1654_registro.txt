@@ -1,0 +1,209 @@
+== Agente revisor v0.47.0 — 2026-10-06_1654 — zonas nuevas: Aeropuerto (puente y accesos), Zona SO recuperada, Franja NE recuperada
+plan: surf 995 (386 zona nueva, 359 riesgo, 250 rotación), walk 214 (131 zona nueva, 0 riesgo, 83 rotación), drive 995 (386 zona nueva, 359 riesgo, 250 rotación)
+-- superficies: 995 vías
+[superficies · zona nueva] Texturas cruzadas (suelo sobre la carretera) en X 952 Z 911 — residential (#655): Superficie «sidewalk» 0.07 m por encima del asfalto
+[superficies · zona nueva] Texturas cruzadas (suelo sobre la carretera) en X 951 Z 818 — residential (#710): Superficie «sidewalk» 0.09 m por encima del asfalto
+[superficies · zona nueva] Texturas cruzadas (suelo sobre la carretera) en X 932 Z 634 — Calle Miguel Hernández (#1935): Suelo/objeto plano 0.15 m por encima del asfalto
+[superficies · zona nueva] Objetos flotando sobre la calzada en X 773 Z 842 — Camino Real de La Verdellada (#2400): Algo plano flota 1.1 m sobre la calzada (losa, andén, tablero…)
+[superficies · zona nueva] Texturas cruzadas (suelo sobre la carretera) en X -3114 Z -297 — service (#4721): Superficie «sidewalk» 0.08 m por encima del asfalto
+[superficies · zona nueva] Objetos flotando sobre la calzada en X -3451 Z -438 — Camino el Yugo (#4752): Algo plano flota 0.8 m sobre la calzada (losa, andén, tablero…)
+[superficies · zona nueva] Objetos flotando sobre la calzada en X -3276 Z -232 — secondary_link (#4772): Algo plano flota 2.6 m sobre la calzada (losa, andén, tablero…)
+[superficies · zona nueva] Texturas cruzadas (suelo sobre la carretera) en X -3277 Z -279 — secondary_link (#4818): Superficie «sidewalk» 0.09 m por encima del asfalto
+[superficies · zona nueva] Texturas cruzadas (suelo sobre la carretera) en X -3273 Z -260 — secondary_link (#4849): Superficie «sidewalk» 0.12 m por encima del asfalto
+[superficies · zona nueva] Objetos flotando sobre la calzada en X -2927 Z -25 — primary (#4863): Algo plano flota 0.7 m sobre la calzada (losa, andén, tablero…)
+[superficies · zona nueva] Texturas cruzadas (suelo sobre la carretera) en X -3352 Z -267 — Carretera General del Norte (#4889): Superficie «sidewalk» 0.16 m por encima del asfalto
+[superficies · zona nueva] Texturas cruzadas (suelo sobre la carretera) en X -3309 Z -277 — Carretera General del Norte (#4891): Superficie «sidewalk» 0.06 m por encima del asfalto
+[superficies · zona nueva] Objetos flotando sobre la calzada en X -3417 Z -248 — Carretera General del Norte (#4897): Algo plano flota 0.9 m sobre la calzada (losa, andén, tablero…)
+[superficies · zona nueva] Objetos flotando sobre la calzada en X -4063 Z -361 — Autopista del Norte (#4911): Algo plano flota 0.7 m sobre la calzada (losa, andén, tablero…)
+[superficies · zona nueva] Objetos flotando sobre la calzada en X -4152 Z -372 — Autopista del Norte (#4911): Algo plano flota 0.6 m sobre la calzada (losa, andén, tablero…)
+[superficies · zona nueva] Texturas cruzadas (suelo sobre la carretera) en X -3325 Z 8 — service (#4924): Suelo/objeto plano 0.15 m por encima del asfalto
+[superficies · zona nueva] Texturas cruzadas (suelo sobre la carretera) en X -3455 Z 235 — service (#4940): Suelo/objeto plano 0.14 m por encima del asfalto
+[superficies · zona nueva] Texturas cruzadas (suelo sobre la carretera) en X -2827 Z 425 — service (#4943): Suelo/objeto plano 0.14 m por encima del asfalto
+[superficies · zona nueva] Objetos flotando sobre la calzada en X -3282 Z -233 — secondary (#5016): Algo plano flota 2.5 m sobre la calzada (losa, andén, tablero…)
+[superficies · zona nueva] Texturas cruzadas (suelo sobre la carretera) en X -2696 Z -237 — service (#5059): Superficie «sidewalk» 0.09 m por encima del asfalto
+[superficies · zona nueva] Texturas cruzadas (suelo sobre la carretera) en X -3126 Z -140 — primary (#5069): Superficie «sidewalk» 0.09 m por encima del asfalto
+[superficies · zona nueva] Texturas cruzadas (suelo sobre la carretera) en X -3327 Z 89 — service (#5121): Suelo/objeto plano 0.14 m por encima del asfalto
+[superficies · zona nueva] Objetos flotando sobre la calzada en X -3298 Z 100 — service (#5121): Algo plano flota 1.9 m sobre la calzada (losa, andén, tablero…)
+[superficies · zona nueva] Objetos flotando sobre la calzada en X -3241 Z 122 — service (#5121): Algo plano flota 2.7 m sobre la calzada (losa, andén, tablero…)
+[superficies · zona nueva] Texturas cruzadas (suelo sobre la carretera) en X -3162 Z 152 — service (#5121): Suelo/objeto plano 0.14 m por encima del asfalto
+[superficies · zona nueva] Texturas cruzadas (suelo sobre la carretera) en X -3099 Z 128 — service (#5136): Suelo/objeto plano 0.14 m por encima del asfalto
+[superficies · zona nueva] Texturas cruzadas (suelo sobre la carretera) en X -3152 Z 71 — service (#5139): Suelo/objeto plano 0.10 m por encima del asfalto
+[superficies · zona nueva] Objetos flotando sobre la calzada en X -3390 Z -246 — Carretera General del Norte (#5170): Algo plano flota 0.8 m sobre la calzada (losa, andén, tablero…)
+[superficies · riesgo] Objetos flotando sobre la calzada en X 752 Z 1268 — primary_link (#19): Algo plano flota 1.2 m sobre la calzada (losa, andén, tablero…)
+[superficies · riesgo] Objetos flotando sobre la calzada en X 757 Z 3480 — motorway_link (#399): Algo plano flota 2.9 m sobre la calzada (losa, andén, tablero…)
+[superficies · riesgo] Objetos flotando sobre la calzada en X 885 Z 3177 — tertiary_link (#400): Algo plano flota 0.9 m sobre la calzada (losa, andén, tablero…)
+[superficies · riesgo] Objetos flotando sobre la calzada en X 673 Z 3440 — motorway_link (#651): Algo plano flota 2.7 m sobre la calzada (losa, andén, tablero…)
+[superficies · riesgo] Objetos flotando sobre la calzada en X 2084 Z 3448 — motorway_link (#717): Algo plano flota 3.0 m sobre la calzada (losa, andén, tablero…)
+[superficies · riesgo] Objetos flotando sobre la calzada en X 464 Z 1421 — primary_link (#813): Algo plano flota 0.9 m sobre la calzada (losa, andén, tablero…)
+[superficies · riesgo] Objetos flotando sobre la calzada en X 714 Z 3392 — motorway_link (#824): Algo plano flota 3.2 m sobre la calzada (losa, andén, tablero…)
+[superficies · riesgo] Objetos flotando sobre la calzada en X 320 Z 238 — primary_link (#840): Algo plano flota 1.9 m sobre la calzada (losa, andén, tablero…)
+[superficies · riesgo] Objetos flotando sobre la calzada en X 1512 Z 1744 — Avenida de los Menceyes (#1052): Algo plano flota 0.9 m sobre la calzada (losa, andén, tablero…)
+[superficies · riesgo] Objetos flotando sobre la calzada en X 817 Z 2899 — service (#1209): Algo plano flota 3.1 m sobre la calzada (losa, andén, tablero…)
+[superficies · riesgo] Objetos flotando sobre la calzada en X 2199 Z 3567 — motorway_link (#1304): Algo plano flota 2.6 m sobre la calzada (losa, andén, tablero…)
+[superficies · riesgo] Objetos flotando sobre la calzada en X -872 Z 1355 — primary_link (#1348): Algo plano flota 3.0 m sobre la calzada (losa, andén, tablero…)
+[superficies · riesgo] Objetos flotando sobre la calzada en X -907 Z 1356 — primary_link (#1349): Algo plano flota 1.0 m sobre la calzada (losa, andén, tablero…)
+[superficies · riesgo] Objetos flotando sobre la calzada en X 406 Z -309 — primary_link (#1607): Algo plano flota 2.7 m sobre la calzada (losa, andén, tablero…)
+[superficies · riesgo] Objetos flotando sobre la calzada en X 401 Z -294 — primary_link (#1608): Algo plano flota 1.0 m sobre la calzada (losa, andén, tablero…)
+[superficies · riesgo] Objetos flotando sobre la calzada en X 2096 Z 3503 — Calle San Camilo (#1666): Algo plano flota 2.7 m sobre la calzada (losa, andén, tablero…)
+[superficies · riesgo] Objetos flotando sobre la calzada en X 2102 Z 3413 — secondary_link (#2325): Algo plano flota 2.4 m sobre la calzada (losa, andén, tablero…)
+[superficies · riesgo] Objetos flotando sobre la calzada en X 2091 Z 3401 — motorway_link (#2328): Algo plano flota 0.9 m sobre la calzada (losa, andén, tablero…)
+[superficies · riesgo] Objetos flotando sobre la calzada en X -2278 Z -257 — primary (#4857): Algo plano flota 2.0 m sobre la calzada (losa, andén, tablero…)
+[superficies · rotación] Objetos flotando sobre la calzada en X 946 Z 1575 — Calle Profesor José Luis Moreno Becerra (#359): Algo plano flota 0.8 m sobre la calzada (losa, andén, tablero…)
+[superficies · rotación] Objetos flotando sobre la calzada en X 941 Z 1545 — Calle Profesor José Luis Moreno Becerra (#359): Algo plano flota 1.2 m sobre la calzada (losa, andén, tablero…)
+[superficies · rotación] Objetos flotando sobre la calzada en X -306 Z 710 — Avenida de La Trinidad (#371): Algo plano flota 1.7 m sobre la calzada (losa, andén, tablero…)
+[superficies · rotación] Objetos flotando sobre la calzada en X 1785 Z 2651 — Calle El Radioaficionado (#382): Algo plano flota 1.2 m sobre la calzada (losa, andén, tablero…)
+[superficies · rotación] Texturas cruzadas (suelo sobre la carretera) en X 1769 Z 2633 — Calle El Radioaficionado (#382): Suelo/objeto plano 0.21 m por encima del asfalto
+[superficies · rotación] Objetos flotando sobre la calzada en X 780 Z 3438 — tertiary (#398): Algo plano flota 2.7 m sobre la calzada (losa, andén, tablero…)
+[superficies · rotación] Texturas cruzadas (suelo sobre la carretera) en X 211 Z 1112 — tertiary (#407): Suelo/objeto plano 0.16 m por encima del asfalto
+[superficies · rotación] Objetos flotando sobre la calzada en X 582 Z 1235 — Avenida de los Menceyes (#437): Algo plano flota 0.9 m sobre la calzada (losa, andén, tablero…)
+[superficies · rotación] Objetos flotando sobre la calzada en X 945 Z 2857 — tertiary (#465): Algo plano flota 1.2 m sobre la calzada (losa, andén, tablero…)
+[superficies · rotación] Texturas cruzadas (suelo sobre la carretera) en X 1435 Z 1139 — Calle Valencia (#536): Suelo/objeto plano 0.16 m por encima del asfalto
+[superficies · rotación] Objetos flotando sobre la calzada en X 331 Z -156 — Camino de San Roque (#560): Algo plano flota 2.9 m sobre la calzada (losa, andén, tablero…)
+[superficies · rotación] Texturas cruzadas (suelo sobre la carretera) en X 265 Z 61 — service (#571): Suelo/objeto plano 0.14 m por encima del asfalto
+[superficies · rotación] Texturas cruzadas (suelo sobre la carretera) en X 285 Z 101 — service (#571): Suelo/objeto plano 0.12 m por encima del asfalto
+[superficies · rotación] Texturas cruzadas (suelo sobre la carretera) en X 1480 Z 2791 — tertiary (#585): Superficie «tunnel» 0.52 m por encima del asfalto
+-- superficies hecho: 61 avisos acumulados, 590 s
+-- en coche: 995 vías
+[en coche · zona nueva] Atascos en X 1447 Z 1131 — Calle Castellón (#533): El coche se queda atascado contra un obstáculo/muro
+[en coche · zona nueva] Se sale de la calzada en X -214 Z 1961 — Calle Fresón (#624): El coche se sale de la calzada (7.2 m del eje)
+[en coche · zona nueva] Atascos en X 933 Z 639 — Calle Miguel Hernández (#1935): El coche se queda atascado contra un obstáculo/muro
+[en coche · zona nueva] Vuela sobre la calzada en X 773 Z 840 — Camino Real de La Verdellada (#2400): El coche va 1.4 m por encima de la calzada
+[en coche · zona nueva] Atascos en X 773 Z 841 — Camino Real de La Verdellada (#2400): El coche se queda atascado
+[en coche · zona nueva] Vuela sobre la calzada en X 751 Z 845 — unclassified (#2410): El coche va 3.2 m por encima de la calzada
+[en coche · zona nueva] Atascos en X 748 Z 845 — unclassified (#2410): El coche se queda atascado
+[en coche · zona nueva] Se sale de la calzada en X -2237 Z 490 — service (#2857): El coche se sale de la calzada (6.0 m del eje)
+[en coche · zona nueva] Atascos en X -948 Z 1484 — Calle La Papa (#3109): El coche se queda atascado contra un obstáculo/muro
+[en coche · zona nueva] Atascos en X 5 Z 2330 — service (#3522): El coche se queda atascado
+[en coche · zona nueva] Atascos en X -3086 Z -142 — service (#4757): El coche se queda atascado
+[en coche · zona nueva] Atascos en X -3002 Z -154 — service (#4759): El coche se queda atascado contra un obstáculo/muro
+[en coche · zona nueva] Atascos en X -2921 Z -59 — service (#4901): El coche se queda atascado
+[en coche · zona nueva] Atascos en X -2926 Z -66 — service (#4904): El coche se queda atascado contra un obstáculo/muro
+[en coche · zona nueva] Atascos en X -3212 Z -17 — service (#4918): El coche se queda atascado contra un obstáculo/muro
+[en coche · zona nueva] Atascos en X -3113 Z 18 — service (#4919): El coche se queda atascado contra un obstáculo/muro
+[en coche · zona nueva] Atascos en X -2985 Z 68 — service (#4920): El coche se queda atascado contra un obstáculo/muro
+[en coche · zona nueva] Atascos en X -3029 Z 62 — service (#4921): El coche se queda atascado contra un obstáculo/muro
+[en coche · zona nueva] Atascos en X -2948 Z 84 — service (#4922): El coche se queda atascado contra un obstáculo/muro
+[en coche · zona nueva] Atascos en X -3435 Z -154 — service (#4950): El coche se queda atascado contra un obstáculo/muro
+[en coche · zona nueva] Se sale de la calzada en X -2749 Z 53 — residential (#4957): El coche se sale de la calzada (7.0 m del eje)
+[en coche · zona nueva] Se sale de la calzada en X -2601 Z 67 — service (#4960): El coche se sale de la calzada (5.6 m del eje)
+[en coche · zona nueva] Se sale de la calzada en X -2604 Z 97 — service (#4963): El coche se sale de la calzada (5.7 m del eje)
+[en coche · zona nueva] Se sale de la calzada en X -2982 Z -241 — service (#4981): El coche se sale de la calzada (6.0 m del eje)
+[en coche · zona nueva] Atascos en X -3072 Z -67 — service (#5020): El coche se queda atascado contra un obstáculo/muro
+[en coche · zona nueva] Vuela sobre la calzada en X -3247 Z -359 — service (#5051): El coche va 1.6 m por encima de la calzada
+[en coche · zona nueva] Saltos de altura en X -3247 Z -359 — service (#5051): Salto brusco de altura (1.7 m en un fotograma)
+[en coche · zona nueva] Atascos en X -2923 Z -68 — service (#5066): El coche se queda atascado contra un obstáculo/muro
+[en coche · zona nueva] Atascos en X -3172 Z -93 — service (#5075): El coche se queda atascado contra un obstáculo/muro
+[en coche · zona nueva] Atascos en X -3181 Z -93 — service (#5076): El coche se queda atascado contra un obstáculo/muro
+[en coche · zona nueva] Atascos en X -3146 Z 12 — service (#5139): El coche se queda atascado contra un obstáculo/muro
+[en coche · riesgo] Atascos en X 543 Z -909 — Camino La Rúa (#306): El coche se queda atascado contra un obstáculo/muro
+[en coche · riesgo] Atascos en X 2150 Z 3200 — unclassified (#364): El coche se queda atascado
+[en coche · riesgo] Se hunde en X 501 Z 1386 — Vía de Ronda de La Laguna (#443): El coche va 0.5 m por debajo de la calzada
+[en coche · riesgo] Atascos en X 375 Z 1456 — Vía de Ronda de La Laguna (#446): El coche se queda atascado
+[en coche · riesgo] Vuela sobre la calzada en X 672 Z 3438 — motorway_link (#651): El coche va 2.6 m por encima de la calzada
+[en coche · riesgo] Atascos en X 680 Z 3448 — motorway_link (#651): El coche se queda atascado
+[en coche · riesgo] Vuela sobre la calzada en X 2084 Z 3446 — motorway_link (#717): El coche va 3.6 m por encima de la calzada
+[en coche · riesgo] Saltos de altura en X 2084 Z 3446 — motorway_link (#717): Salto brusco de altura (1.8 m en un fotograma)
+[en coche · riesgo] Atascos en X 2093 Z 3458 — motorway_link (#717): El coche se queda atascado
+[en coche · riesgo] Vuela sobre la calzada en X 2226 Z 3569 — motorway_link (#718): El coche va 1.3 m por encima de la calzada
+[en coche · riesgo] Se hunde en X 389 Z 1487 — Vía de Ronda de La Laguna (#724): El coche va 2.4 m por debajo de la calzada
+[en coche · riesgo] Atascos en X 392 Z 1475 — Vía de Ronda de La Laguna (#724): El coche se queda atascado
+[en coche · riesgo] Vuela sobre la calzada en X 1174 Z 2433 — motorway_link (#728): El coche va 1.2 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 318 Z 231 — primary_link (#840): El coche va 2.3 m por encima de la calzada
+[en coche · riesgo] Saltos de altura en X 318 Z 231 — primary_link (#840): Salto brusco de altura (2.2 m en un fotograma)
+[en coche · riesgo] Se hunde en X 1837 Z 3084 — tertiary (#913): El coche va 1.6 m por debajo de la calzada
+[en coche · riesgo] Atascos en X 1823 Z 3077 — tertiary (#913): El coche se queda atascado
+[en coche · riesgo] Se hunde en X 1846 Z 3102 — tertiary (#922): El coche va 0.5 m por debajo de la calzada
+[en coche · riesgo] Se hunde en X 1785 Z 3153 — tertiary (#932): El coche va 1.1 m por debajo de la calzada
+[en coche · riesgo] Se sale de la calzada en X 1801 Z 3160 — tertiary (#932): El coche se sale de la calzada (8.2 m del eje)
+[en coche · riesgo] Atascos en X 1802 Z 3160 — tertiary (#932): El coche se queda atascado
+[en coche · riesgo] Atascos en X 734 Z 1288 — Vía de Ronda de La Laguna (#1022): El coche se queda atascado
+[en coche · riesgo] Vuela sobre la calzada en X 818 Z 2900 — service (#1209): El coche va 1.8 m por encima de la calzada
+[en coche · riesgo] Saltos de altura en X 818 Z 2900 — service (#1209): Salto brusco de altura (1.6 m en un fotograma)
+[en coche · riesgo] Atascos en X 821 Z 2899 — service (#1209): El coche se queda atascado
+[en coche · riesgo] Vuela sobre la calzada en X 2199 Z 3565 — motorway_link (#1304): El coche va 4.3 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 2199 Z 3565 — Autopista del Norte (#1306): El coche va 1.0 m por encima de la calzada
+[en coche · riesgo] Se hunde en X 1854 Z 3104 — tertiary (#1311): El coche va 1.4 m por debajo de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X -874 Z 1354 — primary_link (#1348): El coche va 1.7 m por encima de la calzada
+[en coche · riesgo] Saltos de altura en X -874 Z 1354 — primary_link (#1348): Salto brusco de altura (1.6 m en un fotograma)
+[en coche · riesgo] Atascos en X -882 Z 1352 — primary_link (#1348): El coche se queda atascado
+[en coche · riesgo] Vuela sobre la calzada en X -908 Z 1357 — primary_link (#1349): El coche va 1.4 m por encima de la calzada
+[en coche · riesgo] Atascos en X -895 Z 1352 — primary_link (#1349): El coche se queda atascado
+[en coche · riesgo] Vuela sobre la calzada en X -838 Z 1351 — Carretera de La Esperanza (#1369): El coche va 1.4 m por encima de la calzada
+[en coche · riesgo] Atascos en X 1987 Z 3980 — service (#1580): El coche se queda atascado
+[en coche · riesgo] Vuela sobre la calzada en X 408 Z -312 — primary_link (#1607): El coche va 1.6 m por encima de la calzada
+[en coche · riesgo] Saltos de altura en X 408 Z -312 — primary_link (#1607): Salto brusco de altura (1.4 m en un fotograma)
+[en coche · riesgo] Vuela sobre la calzada en X 400 Z -293 — primary_link (#1608): El coche va 1.7 m por encima de la calzada
+[en coche · riesgo] Atascos en X 429 Z -321 — primary_link (#1608): El coche se queda atascado
+[en coche · riesgo] Vuela sobre la calzada en X 441 Z -343 — Vía de Ronda de La Laguna (#1609): El coche va 1.0 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 420 Z -316 — Vía de Ronda de La Laguna (#1610): El coche va 1.0 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 2096 Z 3502 — Calle San Camilo (#1666): El coche va 2.7 m por encima de la calzada
+[en coche · riesgo] Atascos en X 2098 Z 3511 — Calle San Camilo (#1666): El coche se queda atascado
+[en coche · riesgo] Vuela sobre la calzada en X 328 Z 18 — Vía de Ronda de La Laguna (#1975): El coche va 1.1 m por encima de la calzada
+[en coche · riesgo] Atascos en X 1766 Z 3140 — tertiary (#2250): El coche se queda atascado
+[en coche · riesgo] Vuela sobre la calzada en X 2226 Z 3568 — Autopista del Norte (#2320): El coche va 1.3 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 2238 Z 3582 — Autopista del Norte (#2322): El coche va 1.0 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 2103 Z 3415 — secondary_link (#2325): El coche va 2.7 m por encima de la calzada
+[en coche · riesgo] Atascos en X 2094 Z 3403 — secondary_link (#2325): El coche se queda atascado
+[en coche · riesgo] Vuela sobre la calzada en X 2092 Z 3403 — motorway_link (#2328): El coche va 1.2 m por encima de la calzada
+[en coche · riesgo] Se hunde en X 385 Z 1477 — primary (#2386): El coche va 0.5 m por debajo de la calzada
+[en coche · riesgo] Se hunde en X 307 Z 1536 — primary (#2415): El coche va 0.5 m por debajo de la calzada
+[en coche · riesgo] Atascos en X 302 Z 1536 — primary (#2415): El coche se queda atascado
+[en coche · riesgo] Vuela sobre la calzada en X 780 Z 3440 — tertiary (#2428): El coche va 1.2 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 778 Z 3463 — tertiary (#2430): El coche va 1.0 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 330 Z 95 — Vía de Ronda de La Laguna (#2566): El coche va 1.0 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X -495 Z 683 — service (#2696): El coche va 1.3 m por encima de la calzada
+[en coche · riesgo] Saltos de altura en X -495 Z 683 — service (#2696): Salto brusco de altura (-1.2 m en un fotograma)
+[en coche · riesgo] Atascos en X 1943 Z 3057 — service (#3018): El coche se queda atascado
+[en coche · riesgo] Se hunde en X -975 Z 121 — tertiary (#3046): El coche va 0.7 m por debajo de la calzada
+[en coche · riesgo] Atascos en X 2219 Z 3350 — Entrada a Urgencias (#3064): El coche se queda atascado
+[en coche · riesgo] Atascos en X 797 Z 3132 — Calle Aceviño (#3192): El coche se queda atascado
+[en coche · riesgo] Se hunde en X -394 Z 834 — primary_link (#3612): El coche va 0.6 m por debajo de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X -367 Z 810 — primary_link (#3612): El coche va 1.0 m por encima de la calzada
+[en coche · riesgo] Se hunde en X 1434 Z 1661 — secondary (#3688): El coche va 0.6 m por debajo de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X 2161 Z 3524 — Autopista del Norte (#4545): El coche va 1.1 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X -2301 Z -235 — primary (#4732): El coche va 1.1 m por encima de la calzada
+[en coche · riesgo] Vuela sobre la calzada en X -2275 Z -257 — primary (#4857): El coche va 1.1 m por encima de la calzada
+[en coche · riesgo] Se hunde en X -3872 Z -358 — service (#5126): El coche va 0.5 m por debajo de la calzada
+[en coche · rotación] Atascos en X 1474 Z 3980 — service (#300): El coche se queda atascado contra un obstáculo/muro
+[en coche · rotación] Se hunde en X -1254 Z 3 — Calle Timanfaya (#311): El coche va 2.6 m por debajo de la calzada
+[en coche · rotación] Atascos en X -1251 Z -3 — Calle Timanfaya (#311): El coche se queda atascado
+[en coche · rotación] Atascos en X 944 Z 1568 — Calle Profesor José Luis Moreno Becerra (#359): El coche se queda atascado
+[en coche · rotación] Vuela sobre la calzada en X 780 Z 3440 — tertiary (#398): El coche va 4.1 m por encima de la calzada
+[en coche · rotación] Atascos en X 777 Z 3429 — tertiary (#398): El coche se queda atascado
+[en coche · rotación] Atascos en X 569 Z 1224 — Avenida de los Menceyes (#437): El coche se queda atascado
+[en coche · rotación] Vuela sobre la calzada en X 945 Z 2854 — tertiary (#465): El coche va 1.2 m por encima de la calzada
+[en coche · rotación] Atascos en X 930 Z 2887 — tertiary (#465): El coche se queda atascado
+[en coche · rotación] Atascos en X -52 Z -1250 — Camino Pozo Cabildo (#514): El coche se queda atascado
+[en coche · rotación] Atascos en X 1432 Z 1138 — Calle Valencia (#536): El coche se queda atascado contra un obstáculo/muro
+[en coche · rotación] Se sale de la calzada en X 660 Z -372 — Calle Pista Militar San Roque (#558): El coche se sale de la calzada (7.2 m del eje)
+[en coche · rotación] Vuela sobre la calzada en X 330 Z -150 — Camino de San Roque (#560): El coche va 1.4 m por encima de la calzada
+[en coche · rotación] Saltos de altura en X 330 Z -150 — Camino de San Roque (#560): Salto brusco de altura (1.2 m en un fotograma)
+[en coche · rotación] Se sale de la calzada en X 297 Z 75 — service (#571): El coche se sale de la calzada (5.8 m del eje)
+-- en coche hecho: 176 avisos acumulados, 1426 s
+-- a pie: 214 vías
+[a pie · zona nueva] Atascos en X -534 Z 2532 — Calle Amazonas (#862): El personaje se queda atascado andando por el camino
+[a pie · zona nueva] Se hunde en X -291 Z 2699 — footway (#876): El personaje se hunde 0.68 m bajo la superficie visible (suelo)
+[a pie · zona nueva] Atascos en X 804 Z 904 — footway (#1990): El personaje se queda atascado andando por el camino
+[a pie · zona nueva] Se hunde en X 685 Z 440 — footway (#2270): El personaje se hunde 0.40 m bajo la superficie visible (suelo)
+[a pie · zona nueva] Se hunde en X 755 Z 1263 — footway (#4136): El personaje se hunde 1.09 m bajo la superficie visible (asphaltLines)
+[a pie · zona nueva] Atascos en X -3126 Z 36 — footway (#4935): El personaje se queda atascado andando por el camino
+[a pie · zona nueva] Atascos en X -3028 Z 72 — footway (#4936): El personaje se queda atascado andando por el camino
+[a pie · zona nueva] Atascos en X -2933 Z 100 — footway (#5086): El personaje se queda atascado andando por el camino
+[a pie · zona nueva] Atascos en X -2995 Z 78 — footway (#5088): El personaje se queda atascado andando por el camino
+[a pie · zona nueva] Se hunde en X -3079 Z 15 — footway (#5089): El personaje se hunde 0.27 m bajo la superficie visible (suelo)
+[a pie · zona nueva] Atascos en X -3144 Z -10 — footway (#5089): El personaje se queda atascado andando por el camino
+[a pie · zona nueva] Atascos en X -3052 Z 39 — footway (#5095): El personaje se queda atascado andando por el camino
+[a pie · zona nueva] Se hunde en X -3087 Z 16 — footway (#5099): El personaje se hunde 0.83 m bajo la superficie visible (suelo)
+[a pie · zona nueva] Se hunde en X -3062 Z 15 — footway (#5103): El personaje se hunde 0.25 m bajo la superficie visible (suelo)
+[a pie · zona nueva] Atascos en X -3146 Z 84 — footway (#5155): El personaje se queda atascado andando por el camino
+[a pie · zona nueva] Atascos en X -3150 Z 101 — footway (#5157): El personaje se queda atascado andando por el camino
+[a pie · zona nueva] Atascos en X -3162 Z -3 — footway (#5162): El personaje se queda atascado andando por el camino
+[a pie · zona nueva] Se hunde en X -2983 Z 104 — footway (#5164): El personaje se hunde 0.27 m bajo la superficie visible (footway)
+[a pie · rotación] Se hunde en X 1172 Z 2263 — footway (#1357): El personaje se hunde 0.37 m bajo la superficie visible (suelo)
+[a pie · rotación] Se hunde en X 1896 Z 1788 — footway (#1422): El personaje se hunde 0.56 m bajo la superficie visible (suelo)
+[a pie · rotación] Atascos en X 999 Z 2715 — footway (#1630): El personaje se queda atascado andando por el camino
+[a pie · rotación] Se hunde en X 353 Z -1022 — pedestrian (#1677): El personaje se hunde 1.12 m bajo la superficie visible (suelo)
+[a pie · rotación] Se hunde en X 618 Z -777 — path (#1778): El personaje se hunde 1.09 m bajo la superficie visible (suelo)
+-- a pie hecho: 199 avisos acumulados, 1746 s
+cobertura acumulada del mapa (vías revisadas alguna vez): {'surf': 1245, 'drive': 1245, 'walk': 297}
+== INFORME /home/claude/jeta-repo/reportes/revision_v0.47.0_2026-10-06_1654.md — 199 avisos

@@ -26,6 +26,32 @@ python tests/run_test_audit.py tests/audit_obstaculos.py  # arranca con window._
 `run(pg)` del script de prueba y muestra los últimos mensajes de consola. `tests/_helpers.py` aporta `snap()`
 (guarda capturas en `shots/`) y `st()` (estado resumido).
 
+## Agente revisor de jugabilidad (cada versión)
+
+`python tests/agente_revisor.py` recorre el mapa como un probador y escribe un informe de bugs en `reportes/`.
+Se ejecuta **después de cada versión** (rutina de `CLAUDE.md`). Hace tres pasadas:
+
+1. **Zonas nuevas**: todas las vías dentro de los rectángulos de `tests/zonas_revision.json`, que se actualiza en
+   cada versión con lo que ha cambiado (`{"nombre","x0","x1","z0","z1"}`).
+2. **Riesgo**: todas las vías de riesgo del mapa en todas las versiones: enlaces de autopista, puentes, túneles,
+   pasos inferiores y rampas elevadas.
+3. **Rotación**: un lote (250 por defecto, `--lote N`) de vías normales, las que hace más que no se revisan según
+   `reportes/cobertura.json`. En pocas versiones se recorre el mapa entero sin dejar de ver lo antiguo.
+
+Comprobaciones:
+- **Superficies** (cada 6 m de calzada, con un índice propio de triángulos en casillas de 8 m, mucho más rápido que
+  el Raycaster): textura de acera/suelo por encima del asfalto (texturas cruzadas), algo plano flotando sobre la
+  calzada (losa, andén, tablero) o calzada por debajo del terreno.
+- **En coche**: un coche sigue la vía con solo su física (sin tráfico): se sale, vuela, se hunde, salto brusco de
+  altura, roza el techo de un túnel, se atasca (y si es contra un muro) o no termina la vía.
+- **A pie**: el personaje anda por aceras y caminos: se hunde bajo la superficie visible o se atasca.
+
+Salida, escrita **mientras recorre**: `reportes/revision_v<versión>_<fecha>.md` (+ `.json`), el registro en vivo
+`_registro.txt`, capturas en `reportes/img/` y `reportes/ULTIMO.md` (copia del último). Cada aviso lleva X/Z, vía,
+pasada y captura, y se compara con el informe anterior: 🆕 nuevo, ↻ sigue, y la lista de **arreglados**.
+Opciones: `--solo-zonas` (rápido, solo la pasada 1) y `--todo` (todo el mapa de una vez). Una pasada normal tarda
+unos 30 min.
+
 ## Pruebas incluidas
 
 | Script | Qué comprueba |
@@ -46,6 +72,7 @@ python tests/run_test_audit.py tests/audit_obstaculos.py  # arranca con window._
 | `audit_hundimiento.py` | Puntos de túnel/trinchera bajo el suelo sin hueco (debe dar 0). |
 | `prueba_parking_cristo.py` | Sube andando por las dos escaleras del parking del Cristo y baja en coche por las rampas midiendo el hueco con el techo. |
 | `prueba_aeropuerto.py` | El aeropuerto se construye y hay ruta en coche desde el inicio hasta la terminal. |
+| `agente_revisor.py` | Agente revisor (ver arriba): informe de bugs de las zonas nuevas, vías de riesgo y rotación. |
 | `prueba_panel_controles.py` | Fases `ready` → `intro` → `fight` de las primeras peleas. |
 
 ## Cómo escribir una prueba

@@ -3,6 +3,31 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.47.0 — 2026-10-06 — Agente revisor de jugabilidad y cuerpos variados
+- **Cuerpos variados (versión propia)**: sobre el cuerpo «superhéroe» de Quaternius, cuatro formas propias mezclables
+  —normal (menos músculo), relleno/barrigón, adolescente y mayor—; los peatones salen con un reparto de cuerpos
+  y alturas (había un fallo que anulaba la variación de altura). Mismas animaciones.
+- **Agente revisor** (`tests/agente_revisor.py`): tras cada versión recorre en coche, a pie y con rayos de
+  superficie las zonas nuevas, todas las vías de riesgo (enlaces de autopista, puentes, túneles, rampas) y un lote
+  rotatorio del resto del mapa. Escribe el informe mientras avanza (`reportes/`, con capturas y coordenadas) y lo
+  compara con el anterior: avisos nuevos, que siguen y arreglados.
+- **Aeropuerto**: el puente que se quedaba en el aire (X −3303, Z −143) ahora baja a nivel: la rampa se ajusta al
+  largo de vía disponible y sigue por la esquina si hace falta.
+- **Aceras**: ya no son una losa entera bajo la calzada sino dos franjas a los lados; se acaba el «suelo» de acera
+  que asomaba sobre el asfalto (p. ej. X −2933, Z −43).
+- Arreglos de la primera tanda del agente:
+  - Las franjas de acera se cortan donde entran en otra calzada (bocas de cruce, enlaces): no más acera cruzando
+    la carretera.
+  - El asfalto ya no deja asomar el terreno por dentro en zonas de relieve irregular (aeropuerto): la cinta se
+    levanta lo justo sobre los «bultos» del terreno entre sus bordes.
+  - Pretiles de puentes y rampas: no se ponen dentro de la calzada de un enlace que se une a ellos.
+  - Las calles que se unen a una rampa o puente elevado en uno de sus nudos suben a su encuentro (antes se quedaban
+    a nivel bajo el tablero: «coche que vuela» y «tablero flotando»).
+  - 27 edificios pequeños atravesados por una calle (marquesinas mapeadas como edificio, sobre todo en el
+    aeropuerto) se quitan, y 28 caminos sin salida que entraban en un edificio se cortan en la pared.
+- El agente distingue ahora «edificio sobre la vía», mide la superficie respecto al asfalto realmente dibujado (menos
+  falsos avisos), da más tiempo a las vías largas y permite recomprobar solo unas vías (`--vias`, `--pruebas`).
+
 ## 0.46.0 — 2026-10-06 — Vuelven dos zonas del mapa
 - Se recuperan las zonas marcadas por Jonay que se habían quitado: al suroeste, de Guajara / San Felipe / San
   Bartolomé de Geneto hasta El Coromoto (X −1200…158, Z 1376…2810); al noreste, la franja al este de San Roque y La

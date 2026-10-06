@@ -231,10 +231,24 @@ function ribbon(pts, w, mk, yoff, tileLen, uSpan = 1, hf = null) {
     const nx = -tz, nz = tx; const miter = 1 / Math.max(0.5, nx * -d2z + nz * d2x);
     if (i > 0) dist += Math.hypot(p[0] - P[i - 1][0], p[1] - P[i - 1][1]);
     const lx = p[0] + nx * hw * miter, lz = p[1] + nz * hw * miter, rx = p[0] - nx * hw * miter, rz = p[1] - nz * hw * miter;
-    if (hf) { const hy = hf(dist, p[0], p[1]) + yoff; L.push([lx, hy, lz]); R.push([rx, hy, rz]); } else { L.push([lx, heightAt(lx, lz) + yoff, lz]); R.push([rx, heightAt(rx, rz) + yoff, rz]); } V.push(dist / tileLen);
+    if (hf) { const hy = hf(dist, p[0], p[1]) + yoff; L.push([lx, hy, lz]); R.push([rx, hy, rz]); } else { const hl = heightAt(lx, lz), hr = heightAt(rx, rz); let lift = 0; /* the ribbon is a straight chord across the width: lift it where the 16 m terrain bulges inside (grass poking through the asphalt) */
+      if (w > 3) for (const f of [0.25, 0.5, 0.75]) lift = Math.max(lift, heightAt(lx + (rx - lx) * f, lz + (rz - lz) * f) - (hl + (hr - hl) * f));
+      L.push([lx, hl + yoff + lift, lz]); R.push([rx, hr + yoff + lift, rz]); } V.push(dist / tileLen);
   }
   const A = acc(P[0][0], P[0][1], mk);
   for (let i = 0; i < P.length - 1; i++) A.quad(L[i], R[i], R[i + 1], L[i + 1], [0, V[i]], [uSpan, V[i]], [uSpan, V[i + 1]], [0, V[i + 1]], null, undefined, [0, 1, 0]);
+}
+// strip between two lateral offsets of a centre line, each edge on the terrain
+function ribbonBand(pts, o0, o1, mk, yoff, tileLen, own = -1) { /* own >= 0: skip the pieces that fall inside another carriageway (junction mouths, slip roads) */
+  const P = []; for (let i = 0; i < pts.length - 2; i += 2) { const x1 = pts[i], z1 = pts[i + 1], x2 = pts[i + 2], z2 = pts[i + 3]; const L = Math.hypot(x2 - x1, z2 - z1), n = Math.max(1, Math.ceil(L / 5)); for (let k = 0; k < n; k++) P.push([x1 + (x2 - x1) * k / n, z1 + (z2 - z1) * k / n]); }
+  P.push([pts[pts.length - 2], pts[pts.length - 1]]); if (P.length < 2) return;
+  const A = acc(P[0][0], P[0][1], mk); let dist = 0; const E = [];
+  for (let i = 0; i < P.length; i++) { const p = P[i], a = P[Math.max(0, i - 1)], b = P[Math.min(P.length - 1, i + 1)]; let tx = b[0] - a[0], tz = b[1] - a[1]; const tl = Math.hypot(tx, tz) || 1; tx /= tl; tz /= tl; const nx = -tz, nz = tx;
+    if (i > 0) dist += Math.hypot(p[0] - P[i - 1][0], p[1] - P[i - 1][1]); const q0 = [p[0] + nx * o0, p[1] + nz * o0], q1 = [p[0] + nx * o1, p[1] + nz * o1];
+    E.push([[q0[0], heightAt(q0[0], q0[1]) + yoff, q0[1]], [q1[0], heightAt(q1[0], q1[1]) + yoff, q1[1]], dist / tileLen]); }
+  const u = Math.abs(o1 - o0) / tileLen; for (let i = 0; i < E.length - 1; i++) { const a = E[i], b = E[i + 1];
+    if (own >= 0) { const mx = (a[0][0] + a[1][0] + b[0][0] + b[1][0]) / 4, mz = (a[0][2] + a[1][2] + b[0][2] + b[1][2]) / 4, my = (a[0][1] + b[0][1]) / 2; if (inOtherRoad(mx, mz, my - 1.5, my + 1.5, own, 0.3, true) || inOtherRoad(a[0][0], a[0][2], my - 1.5, my + 1.5, own, 0.2, true) || inOtherRoad(b[0][0], b[0][2], my - 1.5, my + 1.5, own, 0.2, true)) continue; }
+    if (o1 > o0) A.quad(a[1], a[0], b[0], b[1], [u, a[2]], [0, a[2]], [0, b[2]], [u, b[2]], null, undefined, [0, 1, 0]); else A.quad(a[0], a[1], b[1], b[0], [0, a[2]], [u, a[2]], [u, b[2]], [0, b[2]], null, undefined, [0, 1, 0]); }
 }
 function disc(x, z, r, mk, yoff) {
   const A = acc(x, z, mk); const n = 12; const c = [x, heightAt(x, z) + yoff, z];
@@ -285,7 +299,7 @@ function buildRoads() {
     }
     ribbon(c, w, cls, YOFF[cls], tile, cls === 'asphaltLines' ? 1 : w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8));
     if (['primary', 'secondary', 'tertiary', 'residential', 'unclassified', 'primary_link', 'secondary_link', 'tertiary_link', 'living_street'].includes(t) && cls !== 'paving')
-      ribbon(c, w + 4.2, 'sidewalk', YOFF.sidewalk, 2.4, (w + 4.2) / 2.4);
+      for (const sd of [1, -1]) ribbonBand(c, sd * (w / 2 - 0.3), sd * (w / 2 + 2.1), 'sidewalk', YOFF.sidewalk, 2.4, ri); // two kerb-side strips (a full-width slab under the road poked through it on curved slopes)
     // junction discs
     if (cls === 'asphalt' || cls === 'asphaltLines' || cls === 'paving') for (let i = 0; i < c.length; i += 2) {
       const n = nodeCount.get(K(c[i], c[i + 1])); const end = i === 0 || i === c.length - 2;
@@ -311,7 +325,7 @@ function bridgeDressing(c, w, hf, road) {
   pts.push([c[c.length - 2], c[c.length - 1], hf(dist, c[c.length - 2], c[c.length - 1]), pts.length ? pts[pts.length - 1][3] : 1, pts.length ? pts[pts.length - 1][4] : 0]);
   for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1]; for (const sg of [1, -1]) { const ax = a[0] - a[4] * hw * sg, az = a[1] + a[3] * hw * sg, bx = b[0] - b[4] * hw * sg, bz = b[1] + b[3] * hw * sg;
       // no parapet where it would stand in another carriageway at this level (twin decks, merging slip roads)
-      if (DRESS_RI >= 0 && (inOtherRoad((ax + bx) / 2, (az + bz) / 2, Math.min(a[2], b[2]) - 4.2, Math.max(a[2], b[2]) + 1.0, DRESS_RI) || inOtherRoad(ax, az, a[2] - 4.2, a[2] + 1.0, DRESS_RI) || inOtherRoad(bx, bz, b[2] - 4.2, b[2] + 1.0, DRESS_RI))) continue;
+      if (DRESS_RI >= 0 && (inOtherRoad((ax + bx) / 2, (az + bz) / 2, Math.min(a[2], b[2]) - 4.2, Math.max(a[2], b[2]) + 1.0, DRESS_RI, 0.15, true) || inOtherRoad(ax, az, a[2] - 4.2, a[2] + 1.0, DRESS_RI, 0.15, true) || inOtherRoad(bx, bz, b[2] - 4.2, b[2] + 1.0, DRESS_RI, 0.15, true))) continue;
       // concrete kerb-parapet...
       T.quad([ax, a[2] - 0.6, az], [bx, b[2] - 0.6, bz], [bx, b[2] + 0.5, bz], [ax, a[2] + 0.5, az], [0, 0], [0, 0], [0, 0], [0, 0], col, undefined, [-a[4] * sg, 0, a[3] * sg]);
       T.quad([bx, b[2] - 0.6, bz], [ax, a[2] - 0.6, az], [ax, a[2] + 0.5, az], [bx, b[2] + 0.5, bz], [0, 0], [0, 0], [0, 0], [0, 0], col, undefined, [a[4] * sg, 0, -a[3] * sg]);
@@ -409,9 +423,9 @@ function xsegGrid() { if (!XSEG) crossingsOf(0); return XSEG; }
 // is (x,z) inside the carriageway of another drivable road whose surface lies within [ylo, yhi]? (walls/parapets/slabs must not go there)
 const RNODES = new Map(); const rnodes = (ri) => { let st = RNODES.get(ri); if (!st) { st = new Set(); const c = DATA.R[ri][4]; for (let i = 0; i < c.length; i += 2) st.add(K(c[i], c[i + 1])); RNODES.set(ri, st); } return st; };
 const joined = (a, b) => { const A = rnodes(a); for (const k of rnodes(b)) if (A.has(k)) return true; return false; };
-function inOtherRoad(x, z, ylo, yhi, own, margin = 0.15) {
+function inOtherRoad(x, z, ylo, yhi, own, margin = 0.15, strict = false) { /* strict: also roads joined to own (slip roads at the merge) */
   const X = xsegGrid(); const l = X.G.get(Math.floor(x / 40) * 10000 + Math.floor(z / 40)); if (!l) return false;
-  for (const k of l) { const g = X.segs[k]; const rj = g[0]; if (rj === own) continue; const rd = DATA.R[rj]; if (rd[0] > 12) continue; if (own >= 0 && (joined(own, rj) || (DEP.has(own) && DEP.has(rj)))) continue; // its own continuation / twin tube (handled apart)
+  for (const k of l) { const g = X.segs[k]; const rj = g[0]; if (rj === own) continue; const rd = DATA.R[rj]; if (rd[0] > 12) continue; if (own >= 0 && ((!strict && joined(own, rj)) || (DEP.has(own) && DEP.has(rj)))) continue; // its own continuation / twin tube (handled apart)
     const dx = g[3] - g[1], dz = g[4] - g[2], L2 = dx * dx + dz * dz || 1; const t = clamp(((x - g[1]) * dx + (z - g[2]) * dz) / L2, 0, 1); const d = Math.hypot(x - g[1] - dx * t, z - g[2] - dz * t);
     if (d > rd[2] / 2 - margin) continue; const ys = ROADY[rj] ? ROADY[rj](g[5] + g[6] * t, x, z) : heightAt(x, z); if (ys >= ylo && ys <= yhi) return true; }
   return false; }
@@ -459,6 +473,9 @@ function computeRaisesOnce() {
         let best = -1, bd = Math.cos(0.6), bStart = true;
         for (const cj of ends.get(K(px, pz)) || []) { if (cj === prev || cj === ri) continue; const r2 = DATA.R[cj]; if (r2[3] & 6 || DEP.has(cj) || (!ped && r2[0] > 12) || (ped && r2[0] <= 12)) continue; const c2 = r2[4], m = c2.length; const st = c2[0] === px && c2[1] === pz;
           let dx = st ? c2[2] - c2[0] : c2[m - 4] - c2[m - 2], dz = st ? c2[3] - c2[1] : c2[m - 3] - c2[m - 1]; const dl = Math.hypot(dx, dz) || 1; const dot = (dx * ox + dz * oz) / dl + (r2[1] === rd[1] ? 0.15 : 0); if (dot > bd) { bd = dot; best = cj; bStart = st; } }
+        if (best < 0 && uOff < 60) { // no straight continuation yet but the ramp is still high: follow the straightest road (even round a corner)
+          let bd2 = 0.15; for (const cj of ends.get(K(px, pz)) || []) { if (cj === prev || cj === ri) continue; const r2 = DATA.R[cj]; if (r2[3] & 6 || DEP.has(cj) || (!ped && r2[0] > 12) || (ped && r2[0] <= 12)) continue; const c2 = r2[4], m = c2.length; const st = c2[0] === px && c2[1] === pz;
+            let dx = st ? c2[2] - c2[0] : c2[m - 4] - c2[m - 2], dz = st ? c2[3] - c2[1] : c2[m - 3] - c2[m - 1]; const dl = Math.hypot(dx, dz) || 1; const dot = (dx * ox + dz * oz) / dl; if (dot > bd2) { bd2 = dot; best = cj; bStart = st; } } }
         if (best < 0) break; const c2 = DATA.R[best][4], m = c2.length, Lc = polyLen(c2);
         hops.push({ ri: best, bStart, u0: uOff, Lc });
         // crossings below this hop (ignore the junction mouths at its ends)
@@ -476,13 +493,26 @@ function computeRaisesOnce() {
     if (H < 0.25) return; nb++; BRIDGE_H.set(ri, H);
     push(ri, () => H);
     for (const ch of chains) {
-      const P = ch.plateau, Rr = ped ? clamp(H * 7, 10, 30) : clamp(H * 18, 30, 80), f = (u) => H * smooth(0, 1, (Rr + P - u) / Rr);
+      const avail = ch.hops.reduce((a, h) => a + h.Lc, 0); // approach length really available (the chain may stop at a junction)
+      const P = Math.min(ch.plateau, Math.max(0, avail - 12)), Rr = Math.max(8, Math.min(ped ? clamp(H * 7, 10, 30) : clamp(H * 18, 30, 80), avail - P)), f = (u) => H * smooth(0, 1, (Rr + P - u) / Rr);
       for (const hp of ch.hops) { if (hp.u0 > P + Rr) break; const { u0, Lc, bStart } = hp;
         push(hp.ri, bStart ? (q) => f(u0 + q) : (q) => f(u0 + Lc - q));
         const span = Math.min(Lc, P + Rr - u0); let a = RAISE_SPAN.get(hp.ri) || [Lc, 0]; a = bStart ? [Math.min(a[0], 0), Math.max(a[1], span)] : [Math.min(a[0], Lc - span), Math.max(a[1], Lc)]; RAISE_SPAN.set(hp.ri, a); }
     }
   });
   }
+  // side roads that meet a raised approach / deck at one of its nodes (slip roads, junctions on the ramp) climb to meet it
+  // instead of staying at grade under it (agent: "deck floating over the road", "parapet in the carriageway")
+  const raisedNow = [...RAISE.keys()]; const node2 = new Map();
+  DATA.R.forEach((rd, rj) => { if (rd[0] > 12) return; const c = rd[4]; let s = 0; for (let i = 0; i < c.length; i += 2) { if (i) s += Math.hypot(c[i] - c[i - 2], c[i + 1] - c[i - 1]); const k = K(c[i], c[i + 1]); let a = node2.get(k); if (!a) node2.set(k, a = []); a.push([rj, s]); } });
+  const extra = [];
+  for (const ri of raisedNow) { const rd = DATA.R[ri]; if (rd[0] > 12) continue; const c = rd[4]; const isBr = (rd[3] & 2) && !AT_GRADE.has(ri); const sp = RAISE_SPAN.get(ri); const pf = isBr ? bridgeProfile(c) : null; let s = 0;
+    for (let i = 0; i < c.length; i += 2) { if (i) s += Math.hypot(c[i] - c[i - 2], c[i + 1] - c[i - 1]); const x = c[i], z = c[i + 1];
+      const h = isBr ? pf(s, x, z) + raiseOf(ri, s) - heightAt(x, z) : (sp && s >= sp[0] - 0.5 && s <= sp[1] + 0.5 ? raiseOf(ri, s) : 0); if (h < 0.3) continue;
+      for (const [rj, s0] of node2.get(K(x, z)) || []) { if (rj === ri || DEP.has(rj) || ((DATA.R[rj][3] & 2) && !AT_GRADE.has(rj))) continue; const have = RAISE.has(rj) ? raiseOf(rj, s0) : 0; if (have >= h - 0.2) continue; extra.push([rj, s0, h]); } } }
+  for (const [rj, s0, h] of extra) { const Lj = polyLen(DATA.R[rj][4]); const avail = s0 < 1 || s0 > Lj - 1 ? Lj : Math.min(s0, Lj - s0); const Rr = clamp(Math.min(h * 18, 80), 6, Math.max(6, avail - 3));
+    push(rj, (q) => h * smooth(0, 1, (Rr - Math.abs(q - s0)) / Rr));
+    let a = RAISE_SPAN.get(rj) || [Lj, 0]; a = [Math.min(a[0], Math.max(0, s0 - Rr)), Math.max(a[1], Math.min(Lj, s0 + Rr))]; RAISE_SPAN.set(rj, a); }
   return nb;
 }
 // height of a road's surface as it will be built (same rules as buildRoads)
