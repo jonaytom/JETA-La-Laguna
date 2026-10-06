@@ -15,14 +15,21 @@ class Acc {
     if (ex !== undefined) this.e.push(...ex, ...ex, ...ex);
   }
   quad(a, b, c, d, ua, ub, uc, ud, col, ex, want) { if (OBST_RI >= 0) OBST.push([OBST_RI, (a[0] + b[0] + c[0] + d[0]) / 4, (a[2] + b[2] + c[2] + d[2]) / 4, Math.min(a[1], b[1], c[1], d[1]), Math.max(a[1], b[1], c[1], d[1]), a[0], a[2], c[0], c[2]]); this.tri(a, b, c, ua, ub, uc, col, ex, want); this.tri(a, c, d, ua, uc, ud, col, ex, want); }
-  geo(exSize = 0) {
-    const g = new THREE.BufferGeometry();
+  geo(exSize = 0, mat = null) {
+    // memory (audit P0.1): normals as int8, colours as uint8 (only the attribute the material reads), and the CPU copy
+    // of everything but the positions is dropped once it is on the GPU (the positions stay for audits / the agent)
+    const g = new THREE.BufferGeometry(); const free = function () { this.array = null; };
     g.setAttribute('position', new THREE.Float32BufferAttribute(this.p, 3));
-    g.setAttribute('normal', new THREE.Float32BufferAttribute(this.n, 3));
-    g.setAttribute('uv', new THREE.Float32BufferAttribute(this.uv, 2));
-    if (this.c.length) g.setAttribute('aCol', new THREE.Float32BufferAttribute(this.c, 3));
-    if (this.c.length) g.setAttribute('color', new THREE.Float32BufferAttribute(this.c, 3));
-    if (exSize) g.setAttribute('aEx', new THREE.Float32BufferAttribute(this.e, exSize));
+    const N = new Int8Array(this.n.length); for (let i = 0; i < N.length; i++) N[i] = Math.round(this.n[i] * 127);
+    g.setAttribute('normal', new THREE.BufferAttribute(N, 3, true).onUpload(free));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(this.uv, 2).onUpload(free));
+    if (this.c.length) {
+      let mx = 0; for (let i = 0; i < this.c.length; i++) if (this.c[i] > mx) mx = this.c[i];
+      const col = () => { if (mx <= 1.001) { const C = new Uint8Array(this.c.length); for (let i = 0; i < C.length; i++) C[i] = Math.round(Math.max(0, this.c[i]) * 255); return new THREE.BufferAttribute(C, 3, true); } return new THREE.Float32BufferAttribute(this.c, 3); };
+      const wantA = !mat || mat.userData.aCol, wantC = !mat || mat.vertexColors;
+      if (wantA) g.setAttribute('aCol', col().onUpload(free)); if (wantC) g.setAttribute('color', col().onUpload(free));
+    }
+    if (exSize) g.setAttribute('aEx', new THREE.Float32BufferAttribute(this.e, exSize).onUpload(free));
     g.computeBoundingSphere(); g.computeBoundingBox();
     return g;
   }
@@ -38,7 +45,7 @@ function acc(x, z, mk) {
 const MAT = {};
 (function makeMaterials() {
   // facade material with atlas logic
-  const fm = new THREE.MeshStandardMaterial({ map: TEX.facade, roughness: 0.88, metalness: 0.0 });
+  const fm = new THREE.MeshStandardMaterial({ map: TEX.facade, roughness: 0.88, metalness: 0.0 }); fm.userData.aCol = true;
   fm.onBeforeCompile = (sh) => {
     sh.uniforms.maskMap = { value: TEX.facadeMask }; sh.uniforms.uNight = U.uNight; sh.uniforms.plOn = PLASTER.on; sh.uniforms.plDet = { value: PLASTER.det }; sh.uniforms.plN1 = { value: PLASTER.n1 }; sh.uniforms.plN2 = { value: PLASTER.n2 }; sh.uniforms.uSty = { value: FSTY.map((d) => new THREE.Vector2(d[0], d[1])) };
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec3 aCol; attribute vec2 aEx; varying vec3 vCol; varying vec2 vEx; varying vec2 vF;')
@@ -875,7 +882,7 @@ function finalizeChunks() {
   let meshes = 0;
   for (const [k, c] of CHUNKS) for (const mk in c) {
     const a = c[mk]; if (!a.p.length) continue;
-    const g = a.geo(mk === 'facade' ? 2 : 0);
+    const g = a.geo(mk === 'facade' ? 2 : 0, MAT[mk]); a.p = a.n = a.uv = a.c = a.e = null;
     const m = new THREE.Mesh(g, MAT[mk]);
     const isRoad = ['asphalt', 'asphaltLines', 'paving', 'sidewalk', 'footway', 'dirt', 'tram', 'disc', 'discPave', 'tunnelLight', 'grass'].includes(mk);
     m.receiveShadow = true; m.castShadow = !isRoad && mk !== 'glassHouse';

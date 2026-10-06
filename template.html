@@ -132,9 +132,13 @@ body.touchmode #dlg button{font-size:13px;padding:7px 10px;margin:4px 0}
 
 /* wide start menu on PC (75% of the screen), buttons in one row, readable Achamán button */
 .btn.ach{background:linear-gradient(180deg,#ffd45c,#f0a01a);color:#2a1300;box-shadow:0 4px 0 #8a5a06,0 0 18px rgba(255,190,60,.45);text-shadow:none}
-#menubtns{display:flex;flex-wrap:wrap;justify-content:center;gap:4px}
-#menubtns>div{flex-basis:100%}
-@media (min-width:900px){ #menu .panel{width:75vw;max-width:1500px;padding:30px 48px} #menu .grid{grid-template-columns:repeat(4,1fr)} #menu .btn{padding:14px 30px} }
+#menubtns{display:flex;flex-direction:column;align-items:center;gap:6px;margin:4px auto 2px}
+#menubtns>.btn{width:min(320px,80vw);margin:0;text-align:center;padding:9px 20px!important;font-size:17px}
+#menubtns>#bContinue,#menubtns>#bPlay{font-size:20px;padding:11px 20px!important}
+#menu .panel{max-height:96vh;overflow-y:auto}
+#menubtns>.achhint{flex-basis:auto;font:500 12px Barlow,sans-serif;opacity:.6;margin-top:-2px}
+.verlbl{position:fixed;right:16px;bottom:12px;font:600 13px Oswald,sans-serif;letter-spacing:1px;color:rgba(244,241,234,.55);pointer-events:none;z-index:2}
+@media (min-width:900px){ #menu .panel{width:75vw;max-width:1500px;padding:30px 48px} #menu .grid{grid-template-columns:repeat(4,1fr)} #menu .btn{padding:13px 30px} }
 .ctlt{width:100%;border-collapse:collapse;font:500 15px Barlow,sans-serif;color:#eee}
 .ctlt th{text-align:left;color:#ffd45c;font:400 16px Audiowide,sans-serif;letter-spacing:2px;padding:14px 6px 6px}
 .ctlt td{padding:5px 6px;border-bottom:1px solid rgba(255,255,255,.08)} .ctlt td.ctln{opacity:.7;font-size:13px;border:0}
@@ -176,14 +180,14 @@ body.touchmode #dlg button{font-size:13px;padding:7px 10px;margin:4px 0}
 <div class="tb" id="tbS" style="right:24px;bottom:100px">CORRER</div>
 <div class="tb" id="tbM" style="left:20px;top:38%;width:60px;height:60px">MAPA</div></div>
 
-<div class="screen" id="menu"><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">v__VERSION__</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
- <p class="tag" style="text-align:center">Demo jugable · Mapa real del casco histórico (Patrimonio de la Humanidad), la Vega, el Campus Central, San Honorato, La Verdellada… con el relieve real y el tranvía.</p>
+ <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
  <div id="menubtns" style="display:none;text-align:center">
-  <button class="btn" id="bPlay">JUGAR</button><button class="btn sec" id="bOpts">OPCIONES</button><button class="btn sec" id="bCtl">CONTROLES</button><button class="btn ach" id="bAch">MODO ACHAMÁN</button><div style="font:500 13px Barlow,sans-serif;opacity:.7;margin-top:6px">Achamán: vuela sobre La Laguna sin jugar, con vistas de dron</div>
+  <button class="btn" id="bPlay">NUEVA PARTIDA</button><button class="btn sec" id="bOpts">OPCIONES</button><button class="btn sec" id="bCtl">CONTROLES</button><button class="btn ach" id="bAch" title="Vuela sobre La Laguna sin jugar, con vistas de dron">MODO ACHAMÁN</button><div class="achhint">Achamán: vuela sobre La Laguna sin jugar, con vistas de dron</div>
  </div>
- <div class="grid">
+ <div class="grid" id="menuGrid" style="display:none">
   <div><span>Moverse / Conducir</span><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span></div>
   <div><span>Cámara</span><span>Ratón · rueda = zoom</span></div>
   <div><span>Correr / Saltar</span><span><kbd>Shift</kbd> / <kbd>Espacio</kbd></span></div>

@@ -35,15 +35,24 @@ D['HUM']=json.load(open('data/chars.json',encoding='utf-8'))
 import base64
 D['PLASTER']=['data:image/jpeg;base64,'+base64.b64encode(open(f,'rb').read()).decode() for f in ['assets/textures/plaster_det.jpg','assets/textures/plaster_n1.jpg','assets/textures/plaster_n2.jpg']]
 data=json.dumps(D,separators=(',',':'),ensure_ascii=False).replace('</','<\\/')
+# fonts inside the HTML (audit P2.3: the game works offline) — latin subsets in data/fonts.json
+FONTS=''
+if os.path.exists('data/fonts.json'):
+    FONTS='<style>'+''.join("@font-face{font-family:'%s';font-style:normal;font-weight:%s;font-display:swap;src:url(data:font/woff2;base64,%s) format('woff2');unicode-range:%s}"%(f['fam'],f['w'],f['b64'],f['ur']) for f in json.load(open('data/fonts.json')))+'</style>'
+GF_RE=re.compile(r'<link rel="preconnect" href="https://fonts.googleapis.com">\n<link href="https://fonts.googleapis.com/css2[^>]*>\n')
 def make(three, artifact):
-    s=tpl.replace('__DATA__',data).replace('__THREE__','<script type="importmap">{"imports":{"three":"%s"}}</script>'%three).replace('__GAME__',js)
+    s=tpl.replace('__VERSION__',open('VERSION').read().strip())
+    if FONTS: s=GF_RE.sub(lambda m: FONTS+'\n', s, count=1)
+    s=s.replace('__DATA__',data).replace('__THREE__','<script type="importmap">{"imports":{"three":"%s"}}</script>'%three).replace('__GAME__',js)
     if artifact:
         s=s.replace('<!doctype html>\n','').replace('<html lang="es">\n','').replace('<head>\n','',1).replace('</head>\n<body>\n','').replace('</body>\n</html>\n','')
         s=s.replace('<meta charset="utf-8">\n','').replace('<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">\n','')
     return s
 os.makedirs('dist',exist_ok=True); shutil.copy('data/three.module.min.js','dist/three.module.min.js'); open('dist/test.html','w',encoding='utf-8').write(make('./three.module.min.js',False))
 open('dist/gta-la-laguna.html','w',encoding='utf-8').write(make('https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.min.js',True))
-open('dist/JETA La Laguna.html','w',encoding='utf-8').write(make('https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.min.js',False))
+# the copy for the PC carries Three.js inside (data: URL in the import map) so it runs without internet
+THREE_DATA='data:text/javascript;base64,'+base64.b64encode(open('data/three.module.min.js','rb').read()).decode()
+open('dist/JETA La Laguna.html','w',encoding='utf-8').write(make(THREE_DATA,False))
 print('ok', len(js))
 # documentación técnica en una sola página (dist/Documentacion tecnica.html)
 try:

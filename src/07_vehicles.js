@@ -52,7 +52,7 @@ const CAR_ACCEL = 0.85; // global acceleration factor (15% softer than v0.37)
 const TOP_BY_CAT = { Urbano: 155, Utilitario: 175, Compacto: 200, Berlina: 190, Crossover: 180, SUV: 190, Todoterreno: 170, 'Pick-up': 165, Furgoneta: 160, 'Furgón': 145, 'Camión': 120, 'Grúa': 120, 'Camión de basura': 100, Emergencias: 145, 'Agrícola': 40, Taxi: 185, Patrulla: 200, Deportivo: 200, Scooter: 100, Maxiscooter: 150, Naked: 200, Ciclomotor: 60 };
 const TOP_BY_TYPE = { compact: 165, sedan: 190, suv: 180, van: 155, taxi: 185, police: 200, sport: 200, bus: 100, truck: 120, moto: 150 };
 function topSpeedKmh(model, type) { return (model && TOP_BY_CAT[model.cat]) || TOP_BY_TYPE[model ? model.phys : type] || 160; }
-const CARS = []; const tmpS = { x: 0, z: 0, dx: 0, dz: 0 };
+const CARS = []; const CARPOOL = {}; const tmpS = { x: 0, z: 0, dx: 0, dz: 0 };
 class Car {
   static seq = 0;
   constructor(type, color, x, z, h, model) {
@@ -60,8 +60,11 @@ class Car {
     if (model) { type = model.phys; }
     this.type = type; this.model = model || null; this.color = color ?? pickColor();
     this.T = model ? { ...VTYPES[model.phys], L: model.L, W: model.W, H: model.H, name: model.name } : { ...VTYPES[type] }; this.T.maxV = topSpeedKmh(model, type) / 3.6 * rnd(0.96, 1.04); this.T.acc *= CAR_ACCEL; // same top speed (drag scales with acc), slower pick-up
-    const m = !model ? makeCarMesh(type, this.color) : model.phys === 'moto' ? makeMotoMesh(model, this.color) : makeKenneyMesh(model, this.color);
-    if (m.moto) { this.rider = makeHuman({ cap: null, random: true }); seatHuman(this.rider, model); const helm = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 10), M(pick([0x111111, 0xf2f2f2, 0xb3261e, 0x1f4e8c]), 0.3, 0.3)); helm.position.y = 0.06; this.rider.head.add(helm); m.g.add(this.rider.root); this.rider.root.visible = false; } Object.assign(this, { mesh: m.g, body: m.body, wheels: m.wheels, hl: m.hl, tl: m.tl, bar: m.bar, paint: m.paint });
+    // pool (audit P0.2): traffic cars that leave are kept and reused instead of building a new model every time
+    const pk = model ? model.id + (model.phys === 'moto' ? ':m' : '') : null; const pooled = pk && CARPOOL[pk] && CARPOOL[pk].length ? CARPOOL[pk].pop() : null; this.poolKey = pk;
+    const m = pooled ? pooled.m : !model ? makeCarMesh(type, this.color) : model.phys === 'moto' ? makeMotoMesh(model, this.color) : makeKenneyMesh(model, this.color);
+    if (pooled) { if (m.paint && !['taxi', 'policia', 'ambulancia'].includes(model.id)) m.paint.color.set(this.color); m.g.visible = true; this.rider = pooled.rider || null; if (this.rider) this.rider.root.visible = false; }
+    if (m.moto && !pooled) { this.rider = makeHuman({ cap: null, random: true }); seatHuman(this.rider, model); const helm = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 10), M(pick([0x111111, 0xf2f2f2, 0xb3261e, 0x1f4e8c]), 0.3, 0.3)); helm.position.y = 0.06; this.rider.head.add(helm); m.g.add(this.rider.root); this.rider.root.visible = false; } Object.assign(this, { mesh: m.g, body: m.body, wheels: m.wheels, hl: m.hl, tl: m.tl, bar: m.bar, paint: m.paint }); this._m = m;
     scene.add(this.mesh);
     this.x = x; this.z = z; this.y = heightAt(x, z); this.h = h; this.vx = 0; this.vz = 0; this.yawRate = 0; this.steer = 0;
     this.ctl = { thr: 0, brk: 0, steer: 0, hb: 0 }; this.mode = 'physics'; this.driver = null; this.health = 100; this.wheelRot = 0; this.pitch = 0; this.roll = 0; this.fwdV = 0;
@@ -69,7 +72,7 @@ class Car {
     CARS.push(this); this.sync();
   }
   get speed() { return Math.hypot(this.vx, this.vz); }
-  circles() { const fx = Math.sin(this.h), fz = Math.cos(this.h); const r = this.T.W / 2; const o = this.T.L / 2 - r; const n = this.type === 'bus' ? 4 : 3; const res = []; for (let i = 0; i < n; i++) { const k = -o + (2 * o) * i / (n - 1); res.push([this.x + fx * k, this.z + fz * k, r]); } return res; }
+  circles() { const fx = Math.sin(this.h), fz = Math.cos(this.h); const r = this.T.W / 2; const o = this.T.L / 2 - r; const n = this.type === 'bus' ? 4 : 3; const res = this._circ || (this._circ = Array.from({ length: n }, () => [0, 0, 0])); /* reused buffer (audit P1.3) */ for (let i = 0; i < n; i++) { const k = -o + (2 * o) * i / (n - 1); const q = res[i]; q[0] = this.x + fx * k; q[1] = this.z + fz * k; q[2] = r; } return res; }
   physics(dt) {
     const T = this.T, c = this.ctl; const fx = Math.sin(this.h), fz = Math.cos(this.h), rx = -fz, rz = fx;
     let vf = this.vx * fx + this.vz * fz, vr = this.vx * rx + this.vz * rz;
@@ -150,7 +153,8 @@ class Car {
     const braking = this.ctl.brk > 0 && this.fwdV > 0.5; for (const t of this.tl) t.material = braking ? tailBrakeMat : tailMat;
     if (this.bar) { const on = this.siren && Math.floor(performance.now() / 180) % 2; this.bar.children[0].material.emissiveIntensity = on ? 4 : 0; this.bar.children[1].material.emissiveIntensity = this.siren && !on ? 4 : 0; }
   }
-  remove() { scene.remove(this.mesh); const i = CARS.indexOf(this); if (i >= 0) CARS.splice(i, 1); this.dead = true; }
+  remove() { scene.remove(this.mesh); const i = CARS.indexOf(this); if (i >= 0) CARS.splice(i, 1); this.dead = true;
+    if (this.poolKey && this._m && this.health > 0) { const l = CARPOOL[this.poolKey] || (CARPOOL[this.poolKey] = []); if (l.length < 6) l.push({ m: this._m, rider: this.rider }); } }
 }
 
 // ---------- traffic (kinematic along graph)
@@ -274,37 +278,46 @@ function buildParked() {
   PARKED.slots.forEach((s) => { const key = Math.floor(s.x / 200) + ',' + Math.floor(s.z / 200); let c = chunks.get(key); if (!c) chunks.set(key, c = []); c.push(s); });
   const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.4, metalness: 0.35 });
   PARKED.chunks = [];
-  for (const [key, list] of chunks) {
-    let n = 0; for (const s of list) n += template(VMODELS[s.type]).F.length;
-    const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), col = new Float32Array(n * 3); let o = 0;
-    const ob = new THREE.Object3D(), v = new THREE.Vector3(), nn = new THREE.Vector3(); let cx = 0, cz = 0;
-    for (const s of list) {
-      const T = template(VMODELS[s.type]); cc.set(s.color); const ch = Math.cos(s.h), sh = Math.sin(s.h), y0 = heightAt(s.x, s.z) + 0.17; s.v0 = o; s.v1 = o + T.F.length; cx += s.x; cz += s.z;
+  // a chunk's geometry is built from its slots (skipping cars that have been taken); every buffer is released from RAM
+  // once on the GPU (audit P0.1) and the chunk is simply rebuilt when one of its cars drives off
+  function geoOf(list) {
+    let n = 0; for (const s of list) if (s.alive !== false) n += template(VMODELS[s.type]).F.length;
+    const pos = new Float32Array(n * 3), nor = new Int8Array(n * 3), col = new Uint8Array(n * 3); let o = 0;
+    const k8 = (v) => Math.round(Math.min(1, Math.max(0, v)) * 255);
+    for (const s of list) { if (s.alive === false) continue;
+      const T = template(VMODELS[s.type]); cc.set(s.color); const ch = Math.cos(s.h), sh = Math.sin(s.h), y0 = heightAt(s.x, s.z) + 0.17;
       for (let i = 0; i < T.F.length; i++) { const x = T.P[i * 3], y = T.P[i * 3 + 1], z = T.P[i * 3 + 2]; pos[o * 3] = s.x + x * ch + z * sh; pos[o * 3 + 1] = y0 + y; pos[o * 3 + 2] = s.z - x * sh + z * ch;
-        const nx = T.N[i * 3], nz = T.N[i * 3 + 2]; nor[o * 3] = nx * ch + nz * sh; nor[o * 3 + 1] = T.N[i * 3 + 1]; nor[o * 3 + 2] = -nx * sh + nz * ch;
-        if (T.F[i]) { col[o * 3] = T.C[i * 3] * cc.r; col[o * 3 + 1] = T.C[i * 3 + 1] * cc.g; col[o * 3 + 2] = T.C[i * 3 + 2] * cc.b; } else { col[o * 3] = T.C[i * 3]; col[o * 3 + 1] = T.C[i * 3 + 1]; col[o * 3 + 2] = T.C[i * 3 + 2]; }
-        o++; }
-    }
-    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); geo.computeBoundingSphere();
-    const m = new THREE.Mesh(geo, mat); m.castShadow = true; m.receiveShadow = true; scene.add(m); const ent = { mesh: m, x: cx / list.length, z: cz / list.length }; PARKED.chunks.push(ent); for (const s of list) s.chunk = ent;
+        const nx = T.N[i * 3], nz = T.N[i * 3 + 2]; nor[o * 3] = Math.round((nx * ch + nz * sh) * 127); nor[o * 3 + 1] = Math.round(T.N[i * 3 + 1] * 127); nor[o * 3 + 2] = Math.round((-nx * sh + nz * ch) * 127);
+        if (T.F[i]) { col[o * 3] = k8(T.C[i * 3] * cc.r); col[o * 3 + 1] = k8(T.C[i * 3 + 1] * cc.g); col[o * 3 + 2] = k8(T.C[i * 3 + 2] * cc.b); } else { col[o * 3] = k8(T.C[i * 3]); col[o * 3 + 1] = k8(T.C[i * 3 + 1]); col[o * 3 + 2] = k8(T.C[i * 3 + 2]); }
+        o++; } }
+    const free = function () { this.array = null; }; const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.computeBoundingSphere(); geo.attributes.position.onUpload(free);
+    geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3, true).onUpload(free)); geo.setAttribute('color', new THREE.BufferAttribute(col, 3, true).onUpload(free)); return geo;
+  }
+  PARKED.geoOf = geoOf;
+  for (const [key, list] of chunks) {
+    let cx = 0, cz = 0; for (const s of list) { cx += s.x; cz += s.z; }
+    const m = new THREE.Mesh(geoOf(list), mat); m.castShadow = true; m.receiveShadow = true; scene.add(m); const ent = { mesh: m, x: cx / list.length, z: cz / list.length, list }; PARKED.chunks.push(ent); for (const s of list) s.chunk = ent;
   }
 }
 function updateParkedLOD() { if (!PARKED.chunks) return; const far = Q.far * 0.55 + 120; for (const c of PARKED.chunks) c.mesh.visible = Math.hypot(c.x - camera.position.x, c.z - camera.position.z) < far; }
 function parkedNear(x, z, r) { const res = []; const a0 = Math.floor((x - r) / 30), a1 = Math.floor((x + r) / 30), b0 = Math.floor((z - r) / 30), b1 = Math.floor((z + r) / 30); for (let a = a0; a <= a1; a++) for (let b = b0; b <= b1; b++) { const l = PARKED.grid.get(a * 1000 + b); if (l) for (const i of l) { const s = PARKED.slots[i]; if (s.alive && Math.hypot(s.x - x, s.z - z) < r) res.push(s); } } return res; }
 const HIDE = new THREE.Matrix4().makeScale(0, 0, 0);
-function activateParked(s) { s.alive = false; if (s.chunk) { const a = s.chunk.mesh.geometry.attributes.position; for (let i = s.v0; i < s.v1; i++) a.setXYZ(i, s.x, -1000, s.z); a.needsUpdate = true; } const c = new Car(null, s.color, s.x, s.z, s.h, VMODELS[s.type]); c.mode = 'physics'; c.driver = null; c.fromParked = true; return c; }
+function activateParked(s) { s.alive = false; if (s.chunk) { const m = s.chunk.mesh; m.geometry.dispose(); m.geometry = PARKED.geoOf(s.chunk.list); } const c = new Car(null, s.color, s.x, s.z, s.h, VMODELS[s.type]); c.mode = 'physics'; c.driver = null; c.fromParked = true; return c; }
 
 // ---------- dynamic collisions between cars (and parked cars)
+const CC_ACT = { f: -1, l: [] };
 function carCollisions() {
-  const active = CARS.filter((c) => !c.dead && Math.hypot(c.x - PLAYER.x, c.z - PLAYER.z) < 200);
+  if (CC_ACT.f !== frame) { CC_ACT.f = frame; CC_ACT.l.length = 0; for (const c of CARS) { const dx = c.x - PLAYER.x, dz = c.z - PLAYER.z; if (!c.dead && dx * dx + dz * dz < 40000) CC_ACT.l.push(c); } } /* once per frame, not per substep (audit P1.3) */
+  const active = CC_ACT.l;
   for (let i = 0; i < active.length; i++) {
-    const A = active[i]; const ca = A.circles();
+    const A = active[i]; if (A.dead) continue; const ca = A.circles();
     // parked
     if (A.mode === 'physics' && !underground(A.x, A.z, A.y)) for (const s of parkedNear(A.x, A.z, 8)) { for (const [x, z, r] of ca) { const d = Math.hypot(s.x - x, s.z - z); if (d < r + 1.2) { if (A.speed > 4) { const c = activateParked(s); c.vx = A.vx * 0.6; c.vz = A.vz * 0.6; A.vx *= 0.55; A.vz *= 0.55; if (A.driver === 'player') { AUDIO.crash(A.speed); CAM.shake = 0.4; } } else { const nx = (x - s.x) / (d || 1), nz = (z - s.z) / (d || 1); const pen = r + 1.2 - d; A.x += nx * pen; A.z += nz * pen; const vn = A.vx * nx + A.vz * nz; if (vn < 0) { A.vx -= vn * nx * 1.3; A.vz -= vn * nz * 1.3; } } break; } } }
     for (let j = i + 1; j < active.length; j++) {
       const B = active[j]; if (Math.abs(A.x - B.x) > 14 || Math.abs(A.z - B.z) > 14) continue;
       if (A.mode === 'traffic' && B.mode === 'traffic') continue; if (!sameLevel(A.y, B.y)) continue;
-      const cb = B.circles(); let done = false;
+      if (B.dead) continue; const cb = B.circles(); let done = false;
       for (const [ax, az, ar] of ca) { if (done) break; for (const [bx, bz, br] of cb) {
         const dx = bx - ax, dz = bz - az, d = Math.hypot(dx, dz); if (d >= ar + br || d < 1e-4) continue;
         const nx = dx / d, nz = dz / d, pen = ar + br - d;

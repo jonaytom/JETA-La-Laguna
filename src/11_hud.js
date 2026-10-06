@@ -68,6 +68,11 @@ function updateGPS(force) {
   if (GPS.target && Math.hypot(GPS.target[0] - PLAYER.x, GPS.target[1] - PLAYER.z) < 25) { if (!GPS.story) HUD.toast('Has llegado al destino', '#e040fb'); GPS.target = null; GPS.story = false; }
 }
 
+// cached DOM writes for the HUD (audit P1.1)
+const HUD_EL = {}, HUD_V = {}; const hudEl = (id) => HUD_EL[id] || (HUD_EL[id] = $(id));
+function setT(id, v) { if (HUD_V[id] !== v) { HUD_V[id] = v; const e = hudEl(id); if (e) e.textContent = v; } }
+function setS(id, p, v) { const k = id + '.' + p; if (HUD_V[k] !== v) { HUD_V[k] = v; const e = hudEl(id); if (e) e.style[p] = v; } }
+let lastStars = -1, lastFlash = null, lastPrompt = null;
 const HUD = (() => {
   const mm = $('minimap'), mx = mm.getContext('2d');
   let locPend = '', locPendN = 0, locLast = '', locT = 0, vehT = 0, toastT = 0, subT = 0, bigT = 0;
@@ -128,33 +133,35 @@ const HUD = (() => {
   return {
     resize() { },
     update(dt) {
-      { const ce = $('coords'); if (ce) { const t = 'X ' + Math.round(PLAYER.x) + '   Z ' + Math.round(PLAYER.z); if (ce.textContent !== t) ce.textContent = t; } }
+      // (audit P1.1) DOM is touched only when a value changes; elements cached; minimap at 30 Hz; prompts every 6 frames
       tick++;
-      drawMinimap();
-      // clock & money
+      setT('coords', 'X ' + Math.round(PLAYER.x) + '   Z ' + Math.round(PLAYER.z));
+      if (tick % 2 === 0) drawMinimap();
       const h = GAME.tod, hh = Math.floor(h), mm2 = Math.floor((h - hh) * 60);
-      $('clock').textContent = String(hh).padStart(2, '0') + ':' + String(mm2).padStart(2, '0');
-      $('money').textContent = '$' + String(Math.floor(PLAYER.money)).padStart(8, '0');
-      const st = Math.ceil(WANTED.level); [...starsEl.children].forEach((s, i) => s.classList.toggle('on', i < st)); starsEl.classList.toggle('flash', WANTED.flash > 2);
-      $('hb').style.width = clamp(PLAYER.health, 0, 100) + '%';
+      setT('clock', String(hh).padStart(2, '0') + ':' + String(mm2).padStart(2, '0'));
+      setT('money', '$' + String(Math.floor(PLAYER.money)).padStart(8, '0'));
+      const st = Math.ceil(WANTED.level), fl = WANTED.flash > 2; if (st !== lastStars) { lastStars = st; [...starsEl.children].forEach((s, i) => s.classList.toggle('on', i < st)); } if (fl !== lastFlash) { lastFlash = fl; starsEl.classList.toggle('flash', fl); }
+      setS('hb', 'width', clamp(Math.round(PLAYER.health), 0, 100) + '%');
       if (tick % 20 === 0) { let [s, a] = locationName(); if (!s && locLast) s = locLast.split('|')[0]; const key = s + '|' + a;
         // hysteresis: a new street must hold for ~1 s so junctions don't flicker; shown 10 s, and again every 10 s of silence on long streets
-        if (key !== locLast) { if (key === locPend) locPendN++; else { locPend = key; locPendN = 1; } if (locPendN >= 3 || !locLast) { locLast = key; locPend = ''; $('locStreet').textContent = s; $('locArea').textContent = a; locT = 10; } } else locPend = ''; }
+        if (key !== locLast) { if (key === locPend) locPendN++; else { locPend = key; locPendN = 1; } if (locPendN >= 3 || !locLast) { locLast = key; locPend = ''; setT('locStreet', s); setT('locArea', a); locT = 10; } } else locPend = ''; }
       if (locT < -10 && (PLAYER.speed > 1 || (PLAYER.car && PLAYER.car.speed > 1))) locT = 10;
-      locT -= dt; $('loc').style.opacity = locT > 0 ? 1 : 0;
-      vehT -= dt; $('veh').style.opacity = vehT > 0 ? 1 : 0;
-      toastT -= dt; $('toast').style.opacity = toastT > 0 ? 1 : 0;
-      subT -= dt; $('sub').style.opacity = subT > 0 ? 1 : 0;
-      bigT -= dt; $('big').style.opacity = bigT > 0 ? 1 : 0;
-      const sp = $('speed'); if (PLAYER.car) { sp.style.display = 'block'; $('kmh').textContent = Math.round(PLAYER.car.speed * 3.6); } else sp.style.display = 'none';
-      // prompt
-      let pr = '';
-      if (!PLAYER.car) { const t = nearestEnterable(); if (t) pr = t instanceof Car && t.driver ? '<kbd>F</kbd> Robar vehículo' : '<kbd>F</kbd> Entrar en el vehículo'; }
-      else if (PLAYER.car.speed < 2 && tick % 1 === 0 && PLAYER.car.health <= 0) pr = 'Motor averiado · <kbd>F</kbd> para salir';
-      const dr = nearestDoor(); if (dr) pr = dr.exit ? '<kbd>E</kbd> Salir a la calle' : `<kbd>E</kbd> Entrar: ${dr.it.name}`;
-      { const f = FOOD.near(); if (f && (!dr || (f.counter && dr.exit && Math.hypot(PLAYER.x - f.x, PLAYER.z - f.z) < Math.hypot(PLAYER.x - dr.it.exit.x, PLAYER.z - dr.it.exit.z)))) pr = `<kbd>E</kbd> ${f.counter ? 'Pedir en la barra' : 'Comprar comida'}: ${f.name}`; }
-      const mp = MISSIONS.prompt(); if (mp) pr = mp;
-      const pe = $('prompt'); if (pr) { pe.innerHTML = pr; pe.style.display = 'block'; } else pe.style.display = 'none';
+      locT -= dt; setS('loc', 'opacity', locT > 0 ? 1 : 0);
+      vehT -= dt; setS('veh', 'opacity', vehT > 0 ? 1 : 0);
+      toastT -= dt; setS('toast', 'opacity', toastT > 0 ? 1 : 0);
+      subT -= dt; setS('sub', 'opacity', subT > 0 ? 1 : 0);
+      bigT -= dt; setS('big', 'opacity', bigT > 0 ? 1 : 0);
+      if (PLAYER.car) { setS('speed', 'display', 'block'); setT('kmh', String(Math.round(PLAYER.car.speed * 3.6))); } else setS('speed', 'display', 'none');
+      // prompt (nearest car / door / food stall: linear searches, so not every frame — audit P1.4)
+      if (tick % 6 === 0) {
+        let pr = '';
+        if (!PLAYER.car) { const t = nearestEnterable(); if (t) pr = t instanceof Car && t.driver ? '<kbd>F</kbd> Robar vehículo' : '<kbd>F</kbd> Entrar en el vehículo'; }
+        else if (PLAYER.car.speed < 2 && PLAYER.car.health <= 0) pr = 'Motor averiado · <kbd>F</kbd> para salir';
+        const dr = nearestDoor(); if (dr) pr = dr.exit ? '<kbd>E</kbd> Salir a la calle' : `<kbd>E</kbd> Entrar: ${dr.it.name}`;
+        { const f = FOOD.near(); if (f && (!dr || (f.counter && dr.exit && Math.hypot(PLAYER.x - f.x, PLAYER.z - f.z) < Math.hypot(PLAYER.x - dr.it.exit.x, PLAYER.z - dr.it.exit.z)))) pr = `<kbd>E</kbd> ${f.counter ? 'Pedir en la barra' : 'Comprar comida'}: ${f.name}`; }
+        const mp = MISSIONS.prompt(); if (mp) pr = mp;
+        if (pr !== lastPrompt) { lastPrompt = pr; const pe = hudEl("prompt"); if (pr) { pe.innerHTML = pr; pe.style.display = 'block'; } else pe.style.display = 'none'; }
+      }
     },
     vehicle(n, cat) { $('veh').innerHTML = `<small>${cat || ''}</small>${n}`; vehT = 5; },
     toast(t, color = '#fff', dur = 3) { const e = $('toast'); e.textContent = t; e.style.color = color; toastT = dur; },

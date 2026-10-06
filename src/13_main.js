@@ -37,31 +37,40 @@ const PAL_SKY = [ // [sinElev, zenith, horizon, sunColor]
   [0.35, 0x4a82c4, 0xc8d8e4, 0xfff0d8],
   [1.0, 0x3a78c0, 0xbfd2e2, 0xfff6ea],
 ];
-let envRT = null, pmrem = null, envT = 0, lastEnvTod = -99;
+let pmrem = null, envT = 0, lastEnvKey = ''; const ENVC = new Map();
+// environment maps: one per 1.5 h of day (and weather), made once and reused instead of regenerating the PMREM in the
+// middle of play every time the hour changes (audit P1.6); precomputeEnv() fills the day while the game loads
+const envKey = (t) => SETTINGS.weather + '|' + (Math.round(t / 1.5) % 16);
 function updateEnvironment(force) {
   if (!pmrem) { pmrem = new THREE.PMREMGenerator(renderer); }
-  if (!force && Math.abs(GAME.tod - lastEnvTod) < 0.4) return; lastEnvTod = GAME.tod;
-  const old = envRT; envRT = pmrem.fromScene(bgScene, 0, 50, 90000); scene.environment = envRT.texture; if (old) old.dispose();
+  const k = envKey(GAME.tod); if (!force && k === lastEnvKey) return; lastEnvKey = k;
+  let rt = ENVC.get(k); if (!rt) { rt = pmrem.fromScene(bgScene, 0, 50, 90000); ENVC.set(k, rt); } scene.environment = rt.texture;
 }
+function precomputeEnv() {
+  if (!pmrem) pmrem = new THREE.PMREMGenerator(renderer); const t0 = GAME.tod;
+  for (let b = 0; b < 16; b++) { GAME.tod = b * 1.5; updateSun(); const k = envKey(GAME.tod); if (!ENVC.has(k)) ENVC.set(k, pmrem.fromScene(bgScene, 0, 50, 90000)); }
+  GAME.tod = t0; updateSun(); updateEnvironment(true);
+}
+const _sunDir = new THREE.Vector3(), _sunCol = new THREE.Color(), _grey = new THREE.Color(), _grey2 = new THREE.Color(), _ldir = new THREE.Vector3(), _moonDir = new THREE.Vector3(-0.3, 0.8, 0.4).normalize();
 function updateSun() {
   const t = GAME.tod; const el = Math.sin(Math.PI * (t - 7.9) / (20.1 - 7.9)) * (62 * Math.PI / 180);
   const az = (90 + 180 * (t - 7.9) / (20.1 - 7.9)) * Math.PI / 180;
   const se = Math.sin(el);
-  const dir = new THREE.Vector3(Math.sin(az) * Math.cos(el), se, -Math.cos(az) * Math.cos(el)).normalize();
+  const dir = _sunDir.set(Math.sin(az) * Math.cos(el), se, -Math.cos(az) * Math.cos(el)).normalize(); /* temporaries, no garbage (audit P1.3) */
   // palette interpolation
   let i = 0; while (i < PAL_SKY.length - 2 && se > PAL_SKY[i + 1][0]) i++;
   const a = PAL_SKY[i], b = PAL_SKY[i + 1]; const k = clamp((se - a[0]) / (b[0] - a[0]), 0, 1);
-  cZen.set(a[1]).lerp(tmpC.set(b[1]), k); cHor.set(a[2]).lerp(tmpC.set(b[2]), k); const sunCol = new THREE.Color(a[3]).lerp(tmpC.set(b[3]), k);
+  cZen.set(a[1]).lerp(tmpC.set(b[1]), k); cHor.set(a[2]).lerp(tmpC.set(b[2]), k); const sunCol = _sunCol.set(a[3]).lerp(tmpC.set(b[3]), k);
   const w = SETTINGS.weather; const overcast = w === 1 ? 0.75 : w === 2 ? 0.9 : 0;
-  const grey = new THREE.Color(0x9aa3aa).multiplyScalar(clamp(se * 3 + 0.25, 0.08, 1));
-  cZen.lerp(grey, overcast * 0.8); cHor.lerp(grey.clone().multiplyScalar(1.1), overcast * 0.7);
+  const grey = _grey.set(0x9aa3aa).multiplyScalar(clamp(se * 3 + 0.25, 0.08, 1));
+  cZen.lerp(grey, overcast * 0.8); cHor.lerp(_grey2.copy(grey).multiplyScalar(1.1), overcast * 0.7);
   const night = smooth(0.06, -0.12, se); U.uNight.value = night;
   SKY.mat.uniforms.sunDir.value.copy(dir); SKY.mat.uniforms.zen.value.copy(cZen); SKY.mat.uniforms.hor.value.copy(cHor);
   SKY.mat.uniforms.uCloud.value = w === 0 ? 0.42 : w === 1 ? 0.97 : 1.0;
   // lights
   const dayI = smooth(-0.04, 0.25, se);
   const moon = night > 0.5;
-  const ldir = moon ? new THREE.Vector3(-0.3, 0.8, 0.4).normalize() : dir.clone();
+  const ldir = _ldir.copy(moon ? _moonDir : dir);
   sun.color.copy(moon ? tmpC.set(0x8fa6d8) : sunCol);
   sun.intensity = moon ? 0.35 : 2.9 * dayI * (1 - overcast * 0.75) + 0.05;
   hemi.color.copy(cZen).lerp(tmpC.set(0xffffff), 0.35); hemi.groundColor.set(0x5b5140).multiplyScalar(0.3 + dayI * 0.7);
@@ -217,15 +226,16 @@ async function boot() {
     ['Dibujando el mapa…', () => { buildMapCanvas(); buildLabels(); }],
     ['Llegando a la Plaza del Adelantado…', () => { initPlayer(); MISSIONS.init(); setupTouch(); FIGHT2D.setupPad(); setupAchaman(); SAVE.setup(); }],
     ['Arrancando el tráfico…', () => { for (let i = 0; i < Q.traffic; i++) { const sp = trafficSpawnPoint(20, Q.far * 0.3 + 40, false); if (sp) { const E = GRAPH.edges[sp[0]]; const busOK = ['primary', 'secondary', 'tertiary'].includes(E.type) && Math.random() < 0.05; const c = busOK ? new Car('bus', null, 0, 0, 0) : new Car(null, null, 0, 0, 0, trafficModel(E.type)); c.personality = rnd(0.85, 1.15); spawnTraffic(c, sp[0], sp[1], sp[2]); } } }],
-    ['Compilando sombreadores…', () => { updateSun(); updateEnvironment(true); updateCamera(0.016); renderer.compile(scene, camera); renderer.compile(bgScene, bgCamera); }],
+    ['Preparando a la gente de la calle…', () => { try { for (const f of ['8px "Press Start 2P"', '16px Oswald', '16px Barlow', '16px "Russo One"', '16px Audiowide', '16px Yellowtail']) document.fonts.load(f); } catch (e) { } preloadHumans(Q.peds + 8, 3, 6, { ped: () => newPedHuman(false), can: () => newPedHuman(true), cop: newCopHuman }); }],
+    ['Compilando sombreadores…', async () => { precomputeEnv(); updateCamera(0.016); if (renderer.compileAsync) await renderer.compileAsync(scene, camera); else renderer.compile(scene, camera); renderer.compile(bgScene, bgCamera); preloadDone(); }], /* async compile: the page doesn't freeze (audit P2.4) */
   ];
-  for (let i = 0; i < steps.length; i++) { setLoad(steps[i][0], i / steps.length); await nextFrame(); await nextFrame(); try { steps[i][1](); } catch (e) { console.error(steps[i][0], e); setLoad('Error: ' + e.message, i / steps.length); throw e; } }
-  setLoad('¡Listo!', 1); $('loadblock').style.display = 'none'; $('menubtns').style.display = 'block';
+  for (let i = 0; i < steps.length; i++) { setLoad(steps[i][0], i / steps.length); await nextFrame(); await nextFrame(); try { await steps[i][1](); } catch (e) { console.error(steps[i][0], e); setLoad('Error: ' + e.message, i / steps.length); throw e; } }
+  setLoad('¡Listo!', 1); $('loadblock').style.display = 'none'; $('menubtns').style.display = 'flex';
   GAME.state = 'menu'; last = performance.now(); loop();
   window.__GAME_READY = true;
 }
 boot();
-window.__bg = [bgScene, bgCamera]; window.__dbg = { MATS: MAT, AIRPORT, BUILD, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
+window.__bg = [bgScene, bgCamera]; window.__dbg = { MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
 window.__snap = () => { bgCamera.position.copy(camera.position); bgCamera.quaternion.copy(camera.quaternion); bgCamera.fov = camera.fov; bgCamera.updateProjectionMatrix(); renderer.clear(); renderer.render(bgScene, bgCamera); renderer.clearDepth(); renderer.render(scene, camera); return renderer.domElement.toDataURL('image/jpeg', 0.85); };
 window.__setYaw = (y) => { CAM.yaw = y; CAM.pitch = 0.1; INPUT.lastMouse = performance.now(); };
 window.__hit = (p) => hitPed(p);

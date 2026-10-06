@@ -1,0 +1,10 @@
+{
+  "nombre": "jeta-la-laguna",
+  "repo": "https://github.com/jonaytom/JETA-La-Laguna.git",
+  "build": "python build.py",
+  "src": "src",
+  "archivo_version": "VERSION",
+  "pendientes": "PENDIENTES.md",
+  "perfil": { "calidades": ["media"] },
+  "contexto": "Juego 3D mundo abierto en un solo HTML (Three.js r160, JS sin módulos concatenado por build.py). Objetivos: PC con RX 6600 y móviles. El programador es Claude en el proyecto 'JETA La Laguna game demo': no toca código por feedback suelto, lo anota en PENDIENTES.md."
+}

@@ -1,0 +1,52 @@
+[
+ {
+  "fecha": "2026-10-06 19:49",
+  "version": "0.46.0",
+  "commit": "a14cc17",
+  "build_ok": true,
+  "estatica": {
+   "archivos_js": 43,
+   "bytes_js": 768172,
+   "lineas_js": 7311,
+   "lineas_mas_de_300_car": 305,
+   "new MeshStandardMaterial": 174,
+   "new MeshBasicMaterial": 14,
+   "new MeshLambertMaterial": 0,
+   "new ShaderMaterial": 1,
+   "new InstancedMesh": 14,
+   "new BufferGeometry": 17,
+   "new CanvasTexture": 4,
+   "new PointLight": 2,
+   "new SpotLight": 1,
+   "dispose()": 3,
+   "mergeGeometries": 0,
+   "funciones": 717,
+   "funciones_calientes": 376
+  },
+  "avisos": {
+   "crítica": 56,
+   "alta": 40,
+   "media": 175
+  },
+  "perfil_media": {
+   "arranque_ms": 78383,
+   "llamadas": 5432,
+   "triangulos": 5630588,
+   "heapMB": 1167.6,
+   "programas": 55,
+   "logic_ms": 4.66,
+   "fuga_geometrias_vuelta": [
+    218,
+    193
+   ],
+   "fuga_texturas_vuelta": [
+    239,
+    236
+   ],
+   "MB_geometria_RAM": 1018.4,
+   "vertices": 28576416,
+   "errores": []
+  },
+  "nota": "Línea base con semilla fija y hora 12:00"
+ }
+]

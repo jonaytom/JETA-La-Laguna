@@ -5,20 +5,18 @@
 - **Feedback de pruebas**: cuando Jonay comente fallos o mejoras sueltas, NO hacerlos directamente: anotarlos en
   `PENDIENTES.md` y revisarlos juntos después (así no se toca lo mismo dos veces). Solo se hace al momento lo que pida
   expresamente.
-- **Auditorías de código externas** (proyecto «Corrector de código»): los informes están en `docs/auditorias/`.
-  Al empezar una sesión, si hay un informe que aún no figura en `PENDIENTES.md`, pasar sus tareas a una sección
-  «Auditoría vX» de `PENDIENTES.md` (con su prioridad P0/P1/P2) y avisar a Jonay. No aplicar los cambios hasta que
-  él lo pida; al hacer uno, tacharlo y apuntar la versión, como el resto de pendientes.
 - El objetivo principal del juego es recrear bien el mapa real de La Laguna (OpenStreetMap). Comercios: siempre parodias.
 
 ## Rutina al publicar una versión nueva
 
 1. Cambios en `src/` (y datos si hace falta). Subir `VERSION` y añadir la entrada arriba del todo en `CHANGELOG.md`.
 2. `python build.py` y pruebas relevantes (`docs/07_pruebas.md`).
-   **Agente revisor**: poner en `tests/zonas_revision.json` las zonas cambiadas en esta versión y ejecutar
-   `python tests/agente_revisor.py` (zonas nuevas + vías de riesgo + lote de rotación del resto del mapa). Leer el
-   informe (`reportes/ULTIMO.md`, con capturas): arreglar lo claro si toca esta versión y anotar el resto en
-   `PENDIENTES.md`; contarle a Jonay lo nuevo, lo que sigue y lo arreglado. Copiar `reportes/` al repo del PC.
+   **Agente revisor** (`tests/agente_revisor.py`): **solo cuando Jonay lo pida** (no en cada versión). Antes, poner
+   en `tests/zonas_revision.json` las zonas cambiadas; leer `reportes/ULTIMO.md` y anotar en `PENDIENTES.md`.
+   **Auditor de código**: lanzar la skill `auditar-codigo` (herramientas en `C:\Users\Jonay\RevisordeCodigo\herramientas`,
+   `python herramientas/auditar.py --repo <repo>`); su informe va a `docs/auditorias/` y a `RevisordeCodigo`.
+   **Las mejoras de los dos auditores NO se aplican hasta que Jonay lo diga**: se anotan en `PENDIENTES.md` y se le
+   resumen.
 3. Publicar el Artifact con `dist/gta-la-laguna.html` (URL https://claude.ai/artifact/TwcMQexTqQsGJWLpUYvcXJ).
 4. Copiar `dist/JETA La Laguna.html` a `E:\Claude\GTA La Laguna\JETA La Laguna.html` y
    `dist/Documentacion tecnica.html` a `E:\Claude\GTA La Laguna\Documentación técnica.html`.

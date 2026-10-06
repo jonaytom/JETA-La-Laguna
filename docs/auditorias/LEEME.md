@@ -6,6 +6,7 @@ ejecutando el juego. Cada informe tiene tareas P0 (críticas), P1 (rendimiento) 
 
 | Informe | Versión auditada | Fecha | Estado |
 |---|---|---|---|
+| [INFORME_AUDITORIA_JETA_v0.49.0.md](INFORME_AUDITORIA_JETA_v0.49.0.md) | 0.49.0 | 2026-10-07 | APTO CON AVISOS · en PENDIENTES.md, por decidir |
 | [INFORME_AUDITORIA_JETA_v0.46.0.md](INFORME_AUDITORIA_JETA_v0.46.0.md) | 0.46.0 (a14cc17) | 2026-10-06 | En PENDIENTES.md (v0.48), por decidir |
 
 Nota: el informe se hizo sobre la 0.46.0; si algo ya cambió en la 0.47.0, comprobar antes de aplicarlo.

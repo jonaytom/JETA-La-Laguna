@@ -48,7 +48,7 @@ SETUP = r"""
   const TS=128, CS=8, tiles=new Map(); const skip=new Set();
   d.scene.traverse(o=>{ if(o.isSkinnedMesh||o.isSprite||o.isPoints||o.isLine) skip.add(o); });
   for (const c of d.CARS||[]) if (c.mesh) c.mesh.traverse(o=>skip.add(o));
-  const meshes=[]; d.scene.traverse(o=>{ if(!o.isMesh||skip.has(o)||!o.visible) return; const m=Array.isArray(o.material)?o.material[0]:o.material; if(!m||m.transparent||m.side===T.BackSide||m.depthWrite===false) return;
+  const meshes=[]; d.scene.traverse(o=>{ if(!o.isMesh||skip.has(o)||!o.visible) return; const m=Array.isArray(o.material)?o.material[0]:o.material; if(!m||m.transparent||m.side===T.BackSide||m.depthWrite===false) return; if(!o.geometry||!o.geometry.attributes.position||!o.geometry.attributes.position.array) return; /* buffers already released from RAM (parked cars) */
     let vis=true; for(let p=o.parent;p;p=p.parent) if(p.visible===false) vis=false; if(!vis) return;
     o.updateWorldMatrix(true,false); const b=new T.Box3().setFromObject(o); if(!isFinite(b.min.x)||b.max.x-b.min.x>20000) return; meshes.push({o,b}); });
   const v=[new T.Vector3(),new T.Vector3(),new T.Vector3()], M=new T.Matrix4();

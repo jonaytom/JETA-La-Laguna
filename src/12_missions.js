@@ -9,6 +9,7 @@ const BEACON = (() => {
       const rg = new THREE.Mesh(ring, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.8, depthWrite: false })); rg.scale.setScalar(r); rg.position.y = 0.25; grp.add(rg);
       grp.position.set(x, heightAt(x, z) + 0.1, z); scene.add(grp); grp.userData.t = Math.random() * 6; return grp;
     },
+    free(b) { if (!b) return; if (b.parent) b.parent.remove(b); b.traverse((o) => { if (o.material) o.material.dispose(); }); }, /* shared geometry, own materials (audit P0.3) */
     anim(b, dt) { if (!b) return; b.userData.t += dt; b.children[0].material.opacity = 0.25 + Math.sin(b.userData.t * 3) * 0.1; b.rotation.y += dt; },
   };
 })();
@@ -95,7 +96,7 @@ const MISSIONS = (() => {
       SUB.show(`${who ? bold(who + ':') + ' ' : ''}${t} <span class="subnext">▶ ${document.body.classList.contains('touchmode') ? 'toca para seguir' : 'clic / Espacio'}</span>`, 99999); $('sub').classList.add('talking'); }; // lines only move on with a click / tap / Space / Enter
     my.next = next; next(); };
   const setObjective = (t) => { const o = $('objective'); if (!t) { o.style.display = 'none'; return; } o.style.display = 'block'; o.innerHTML = t + (timer > 0 ? `<span class="t" id="mtimer"></span>` : ''); };
-  function clearBeacon() { if (beacon) { scene.remove(beacon); beacon = null; } }
+  function clearBeacon() { if (beacon) { BEACON.free(beacon); beacon = null; } }
   function goto(x, z, r, color) { [x, z] = safeSpot(x, z, 0.3); clearBeacon(); beacon = BEACON.make(x, z, r, 7, color); data.goal = [x, z, r]; updateGPS(true); }
   function finish() { if (data.rival && data.rival.mode === 'race') { data.rival.mode = 'physics'; data.rival.driver = null; data.rival.ctl.brk = 1; } clearBeacon(); setObjective(null); const tr = TRACKS[activeTrack]; active = null; activeTrack = null; timer = 0; data = {}; GPS.path = null; return tr; }
   function pass(title, money, keepIdx) { const tr = finish(); if (!keepIdx) tr.idx++; PLAYER.money += money; setTimeout(() => { try { SAVE.auto('Misión superada: ' + title); } catch (e) { } }, 1500); MUSIC.jingle(); HUD.big('¡MISIÓN SUPERADA!', '#f5b72e', 4); HUD.toast(title + (money ? '  +$' + money : ''), '#7fe08a', 4); setTimeout(placeStarts, 2500); }
@@ -366,7 +367,7 @@ const MISSIONS = (() => {
     { title: 'Revancha con el Canarión', who: 'el Canarión', startPos() { return [NPC.canarion.x + 1.4, NPC.canarion.z + 1.4]; }, start() { startRace(this, false); }, update(dt) { raceUpdate(this, dt); } }];
   const TRACKS = { story: { list: STORY, idx: 0, beacon: null, color: 0xf5b72e, css: '#f5b72e' }, side: { list: SIDE, idx: 0, beacon: null, color: 0x5ec8ff, css: '#5ec8ff', open: false } };
   function placeStarts() {
-    for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon) { scene.remove(tr.beacon); tr.beacon = null; } if (active || tr.idx >= tr.list.length) continue; if (k === 'side' && (!tr.open || PLAYER.money >= SASTRON_FEE)) continue; const sp = tr.list[tr.idx].startPos(); tr.beacon = BEACON.make(sp[0], sp[1], 1.4, 3, tr.color); if (k === 'story' && !active) { const h = tr.list[tr.idx].hint; if (h) setObjective('Siguiente: ' + h()); setWaypoint(sp[0], sp[1], true); } }
+    for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon) { BEACON.free(tr.beacon); tr.beacon = null; } if (active || tr.idx >= tr.list.length) continue; if (k === 'side' && (!tr.open || PLAYER.money >= SASTRON_FEE)) continue; const sp = tr.list[tr.idx].startPos(); tr.beacon = BEACON.make(sp[0], sp[1], 1.4, 3, tr.color); if (k === 'story' && !active) { const h = tr.list[tr.idx].hint; if (h) setObjective('Siguiente: ' + h()); setWaypoint(sp[0], sp[1], true); } }
     if (TRACKS.story.idx >= STORY.length && !TRACKS.story.done) { TRACKS.story.done = true; setObjective(null); HUD.big((GANG.name || 'TU BANDA').toUpperCase(), '#f5b72e', 5); HUD.toast('Ya puedes moverte libremente por La Laguna. La historia continuará…', '#f5b72e', 8); }
   }
   // interesting spots of the historic centre: Coco and Sastrón show up near two of them (random every game)
@@ -430,7 +431,7 @@ const MISSIONS = (() => {
       FOOD.update(dt);
       BEACON.anim(beacon, dt); for (const k in TRACKS) BEACON.anim(TRACKS[k].beacon, dt);
       if (!active) for (const k in TRACKS) { const tr = TRACKS[k]; if (!tr.beacon || tr.idx >= tr.list.length) continue;
-        if (Math.hypot(PLAYER.x - tr.beacon.position.x, PLAYER.z - tr.beacon.position.z) < 2 && !PLAYER.car) { for (const kk in TRACKS) if (TRACKS[kk].beacon) { scene.remove(TRACKS[kk].beacon); TRACKS[kk].beacon = null; } active = tr.list[tr.idx]; activeTrack = k; data = {}; setWaypoint(null); setObjective(null); HUD.big(active.title.toUpperCase(), '#fff', 3); active.start(); break; } }
+        if (Math.hypot(PLAYER.x - tr.beacon.position.x, PLAYER.z - tr.beacon.position.z) < 2 && !PLAYER.car) { for (const kk in TRACKS) if (TRACKS[kk].beacon) { BEACON.free(TRACKS[kk].beacon); TRACKS[kk].beacon = null; } active = tr.list[tr.idx]; activeTrack = k; data = {}; setWaypoint(null); setObjective(null); HUD.big(active.title.toUpperCase(), '#fff', 3); active.start(); break; } }
       if (active) {
         if (timer > 0) { timer -= dt; const t = $('mtimer'); if (t) t.textContent = Math.floor(timer / 60) + ':' + String(Math.floor(timer % 60)).padStart(2, '0'); if (timer <= 0) { fail(/Canarión/.test(active.title) ? '¡El Canarión sigue siendo el más rápido! Vuelve a intentarlo.' : 'Se acabó el tiempo.'); return; } }
         if (active) active.update(dt);

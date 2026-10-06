@@ -3,19 +3,22 @@
 const COPS = [];
 const COP_LOOK = { skin: 0xd9a47c, shirt: 0x1d2b4f, pants: 0x1a2236, shoes: 0x111111, sole: 0x111111, cap: 0x1d2b4f, female: false, beard: false, sleeve: true, longPants: true, hairStyle: 'Hair_Buzzed', belt: true };
 function copGunMesh() {
+  if (GUNPOOL.length) { const g = GUNPOOL.pop(); g.visible = true; return g; } /* reuse (audit P0.3) */
   const g = new THREE.Group(); const dark = M(0x1e1f22, 0.35, 0.7);
   const slide = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.04, 0.19), dark); slide.position.set(0, 0.03, 0.06);
   const handle = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.1, 0.045), dark); handle.position.set(0, -0.025, 0); handle.rotation.x = -0.25;
   g.add(slide, handle); g.scale.setScalar(1.35); scene.add(g); return g;
 }
+function newCopHuman() { return makeHuman({ ...COP_LOOK, skin: pick([0xd9a47c, 0xc68a64, 0xe8bf9c, 0xa8744e]) }); }
+const GUNPOOL = [];
 function spawnCop(car, side) {
   if (COPS.length >= 6) return null;
-  const H = makeHuman({ ...COP_LOOK, skin: pick([0xd9a47c, 0xc68a64, 0xe8bf9c, 0xa8744e]) });
+  const H = takeHuman('cop', newCopHuman);
   const fx = Math.sin(car.h), fz = Math.cos(car.h); const x = car.x + fz * side * 1.6, z = car.z - fx * side * 1.6; const r = COL.resolve(x, z, 0.35);
   scene.add(H.root); const c = { H, x: r.x, z: r.z, h: car.h, car, batonT: rnd(0.4, 0.9), shootT: rnd(1.0, 2.0), aimT: 0, stuck: 0, side: 0, sideT: 0, gun: null, t: 0, path: null, pathT: 0, wp: 0 };
   COPS.push(c); return c;
 }
-function removeCop(c) { scene.remove(c.H.root); if (c.gun) scene.remove(c.gun); const i = COPS.indexOf(c); if (i >= 0) COPS.splice(i, 1); }
+function removeCop(c) { releaseHuman('cop', c.H); if (c.gun) { c.gun.visible = false; GUNPOOL.push(c.gun); c.gun = null; } const i = COPS.indexOf(c); if (i >= 0) COPS.splice(i, 1); }
 function copLineOfSight(c) { return COL.raycast(c.x, c.z, PLAYER.x, PLAYER.z) >= 1; }
 function copShoot(c, dist, stars) {
   // aim, flash, bang; chance to hit drops with distance and when you run

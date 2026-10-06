@@ -3,6 +3,23 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.49.0 — 2026-10-07 — Rendimiento (auditoría) y menú principal nuevo
+- **Menú principal**: botones en columna como en los juegos (continuar / nueva partida / cargar / opciones / controles
+  / modo Achamán), número de versión en la esquina y una descripción del juego a la altura de lo que ya es.
+- **Memoria** (auditoría P0.1): la geometría de la ciudad y de los coches aparcados guarda normales en 8 bits y colores en
+  8 bits, y suelta de la RAM las copias que ya están en la tarjeta gráfica; los aparcados se rehacen por zona cuando
+  te llevas uno. Memoria al arrancar: de ~1.200 MB a ~620 MB (y baja más según se va viendo la ciudad).
+- **Sin fugas ni tirones** (P0.2–P0.3): peatones, Canariones y policías salen de un grupo preparado durante la carga y
+  se reutilizan; los coches del tráfico que se van se guardan para reutilizarlos; las pistolas de los policías y las
+  balizas de misión se reutilizan o se liberan.
+- **Por fotograma** (P1): el HUD solo toca la página cuando cambia algo, el minimapa se dibuja a 30 Hz, los avisos
+  («F Entrar…», puertas, comida) se buscan cada 6 fotogramas, colisiones y sol sin crear basura, y los mapas de
+  reflejos del cielo se preparan durante la carga (uno por hora y media) en vez de recalcularse jugando.
+- **Funciona sin internet** (P2): la copia del PC lleva Three.js y las fuentes dentro del HTML; los sombreadores se
+  compilan sin congelar la carga.
+- Rutina: en cada versión se lanza el auditor de código (el agente revisor, solo cuando Jonay lo pida); sus mejoras
+  solo se aplican cuando Jonay lo dice. El agente revisor ignora las mallas cuyos datos ya se liberaron de la RAM.
+
 ## 0.48.1 — 2026-10-07 — Tallas: el protagonista vuelve a talla media
 - El Chopa, los personajes de misión, los de las tiendas y los policías son siempre de talla media (antes podían salir
   con una talla aleatoria, incluso súper gordo).

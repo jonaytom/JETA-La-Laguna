@@ -152,5 +152,22 @@ function animHumanSkinned(H, dt, speed, state) {
 }
 function punchSkinned(H) { const n = H.lastPunch === 'Punch_Jab' ? 'Punch_Cross' : 'Punch_Jab'; H.lastPunch = n; const a = play(H, n, 0.08, 1.5); a.reset(); a.play(); H.oneShot = HUM.clips[n].duration / 1.5 * 0.8; }
 function hitSkinned(H) { const n = Math.random() < 0.5 ? 'Hit_Chest' : 'Hit_Head'; const a = play(H, n, 0.05, 1.2); a.reset(); a.play(); H.oneShot = HUM.clips[n].duration / 1.2; }
+// ---- pools (audit P0.2): street people are built while the game loads and reused, never created or thrown away
+// during play (no stutter when they appear, no memory growing while you walk around)
+const HPOOL = { ped: [], can: [], cop: [] };
+function takeHuman(kind, make) { const l = HPOOL[kind]; const H = l && l.length ? l.splice(Math.floor(Math.random() * l.length), 1)[0] : make(); H.root.visible = true; return H; }
+function releaseHuman(kind, H) {
+  if (H.root.parent) H.root.parent.remove(H.root); const l = HPOOL[kind]; if (!l || l.length > 60) return;
+  H.oneShot = 0; H.pose = 'walk'; H.root.rotation.set(0, 0, 0); if (H.skinned) { H.mixer.stopAllAction(); H.cur = null; play(H, 'Idle_Loop', 0); H.mixer.update(0.01); } l.push(H);
+}
+function preloadHumans(nPed, nCan, nCop, makers) {
+  if (HUM) for (const k in HUM.tex) renderer.initTexture(HUM.tex[k]);
+  for (let i = 0; i < nPed; i++) HPOOL.ped.push(makers.ped()); for (let i = 0; i < nCan; i++) HPOOL.can.push(makers.can()); for (let i = 0; i < nCop; i++) HPOOL.cop.push(makers.cop());
+  // a few of them in the scene (out of sight, under the map) for the shader-compile step, with every clip bound once
+  const warm = [HPOOL.ped[0], HPOOL.ped[1], HPOOL.can[0], HPOOL.cop[0]].filter(Boolean);
+  for (const H of warm) { if (H.skinned) { for (const n in HUM.clips) { const a = H.act(n); a.play(); a.setEffectiveWeight(0); } H.mixer.update(0.016); H.mixer.stopAllAction(); H.cur = null; play(H, 'Idle_Loop', 0); } H.root.position.set(0, -800, 0); scene.add(H.root); }
+  HPOOL._warm = warm;
+}
+function preloadDone() { for (const H of HPOOL._warm || []) if (H.root.parent) H.root.parent.remove(H.root); HPOOL._warm = null; }
 function makeHuman(o = {}) { return HUM && !o.legacy ? makeHumanSkinned(o) : makeHumanLegacy(o); }
 function animHuman(H, dt, speed, state = 'ground') { if (H.skinned) animHumanSkinned(H, dt, speed, state); else animHumanLegacy(H, dt, speed, state); }

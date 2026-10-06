@@ -10,18 +10,20 @@ const PEDWAYS = []; const PEDKEY = new Map(); const RI2PW = new Map();
   });
 })();
 const PEDS = [];
+function newPedHuman(can, long = Math.random() < 0.45) { return can ? makeHuman({ random: true, shirt: 0xffd400, pants: 0x1f4ea8, female: false, sleeve: false, cap: Math.random() < 0.5 ? 0xffd400 : undefined }) : makeHuman({ random: true, female: long, shirt: long && Math.random() < 0.5 ? pick([0xc2185b, 0x7b1fa2, 0xf06292, 0xffffff, 0x80cbc4]) : undefined }); }
+
 const PEDLINES = ['¡Guas, mira por dónde vas, chacho!', '¡Guas, mi niño!', '¡Mira por dónde vas, chacho!', '¡Ay mi madre!', '¿Qué pasó, mi niño?', '¡Fuerte empujón, eh!', 'Muchacho, ten cuidado…', '¡Chacho, qué fuerte!', '¡Estás tolete o qué!'];
 function spawnPed(x, z, near = false) {
   if (PEDS.length > Q.peds + 8) return null;
   const long = Math.random() < 0.45;
   const can = Math.random() < 0.08;
-  const H = can ? makeHuman({ random: true, shirt: 0xffd400, pants: 0x1f4ea8, female: false, sleeve: false, cap: Math.random() < 0.5 ? 0xffd400 : undefined }) : makeHuman({ random: true, female: long, shirt: long && Math.random() < 0.5 ? pick([0xc2185b, 0x7b1fa2, 0xf06292, 0xffffff, 0x80cbc4]) : undefined });
+  const H = can ? takeHuman('can', () => newPedHuman(true)) : takeHuman('ped', () => newPedHuman(false, long));
   scene.add(H.root);
   const p = { canarion: can, H, x, z, h: Math.random() * 6.28, speed: rnd(1.1, 1.6), way: -1, seg: 0, dir: 1, off: 0, flee: 0, down: 0, fleeFrom: null, talk: 0 };
   if (!near) {
     const rd = ROADSEG.nearest(x, z, (r) => ['pedestrian', 'footway', 'residential', 'living_street', 'tertiary', 'secondary', 'primary', 'unclassified'].includes(RTN[r[0]]));
-    if (!rd) { scene.remove(H.root); return null; }
-    const way = RI2PW.has(rd.ri) ? RI2PW.get(rd.ri) : -1; if (way < 0) { scene.remove(H.root); return null; }
+    if (!rd) { releaseHuman(can ? 'can' : 'ped', H); return null; }
+    const way = RI2PW.has(rd.ri) ? RI2PW.get(rd.ri) : -1; if (way < 0) { releaseHuman(can ? 'can' : 'ped', H); return null; }
     const W = PEDWAYS[way]; p.way = way; p.seg = rd.i / 2; p.dir = Math.random() < 0.5 ? 1 : -1; if (p.dir < 0) p.seg += 1;
     p.off = W.road ? (W.w / 2 + 1.1) * (Math.random() < 0.5 ? 1 : -1) : rnd(-W.w / 3, W.w / 3);
     const L = Math.hypot(rd.dx, rd.dz) || 1; p.x = rd.x - rd.dz / L * p.off; p.z = rd.z + rd.dx / L * p.off;
@@ -48,7 +50,7 @@ function advancePed(p) {
 function updatePeds(dt) {
   if (PLAYER.interior) { for (const h of INT_NPCS) animHuman(h, dt, 0); return; }
   // spawn/despawn
-  for (let i = PEDS.length - 1; i >= 0; i--) { const p = PEDS[i]; if (p.gone || Math.hypot(p.x - PLAYER.x, p.z - PLAYER.z) > 150) { scene.remove(p.H.root); PEDS.splice(i, 1); } }
+  for (let i = PEDS.length - 1; i >= 0; i--) { const p = PEDS[i]; if (p.gone || Math.hypot(p.x - PLAYER.x, p.z - PLAYER.z) > 150) { releaseHuman(p.canarion ? 'can' : 'ped', p.H); PEDS.splice(i, 1); } }
   if (PEDS.length < Q.peds) { const a = Math.random() * 6.28, d = rnd(35, 120); const x = PLAYER.x + Math.sin(a) * d, z = PLAYER.z + Math.cos(a) * d; spawnPed(x, z); }
   for (const p of PEDS) {
     const dp = Math.hypot(p.x - PLAYER.x, p.z - PLAYER.z);
