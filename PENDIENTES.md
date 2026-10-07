@@ -18,7 +18,10 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       Corregidor (fachada amarilla) y detrás la Casa de la Alhóndiga; enfrente Iglesia de Las Catalinas.
 - [x] v0.56.0 **Morph «gordo»: labios y boca demasiado gruesos** (Jonay): la deformación de los cuerpos gordos (tallas
       gordo / extra / súper) hincha también la boca. Limitar el morph en la cara (cabeza: solo papada y mejillas).
-- [ ] **Centros de salud y hospital** (Jonay): recrearlos; al morir apareces en el centro de salud más cercano. Buscar
+- [~] v0.58.0 **Centros de salud y hospital** (hecho: HUC con torre y helipuerto, EAA verde, Urgencias; centros de salud
+      La Laguna y San Benito; reaparecer en el más cercano). **Falta: coordenadas de los demás centros de salud** (La
+      Cuesta, Finca España, Taco, Tejina, Geneto…: OSM no los trae y no encontré direcciones fiables; Jonay puede
+      pasarlas desde el juego, X/Z del minimapa delante de la puerta). Original (Jonay): recrearlos; al morir apareces en el centro de salud más cercano. Buscar
       su situación (OSM `amenity=clinic/hospital`, `healthcare=*`: HUC, Hospiten, centros de salud de La Laguna-
       Mercedes, Finca España, San Benito, La Cuesta, Taco, Tejina…) y fotos.
       **HUC** (fotos de Jonay en `docs/referencias/hospital_huc/`): bloque largo de ~12 plantas con bandas horizontales,
@@ -26,6 +29,16 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       Ambulatorias / Hospital de Ofra) al otro, jardín con palmeras y escultura de acero, junto a la TF-5 y la Ctra.
       Gral. La Cuesta, parking HUC y la Montaña de Taco detrás.
 
+- [x] v0.57.0 **Canarión: el círculo azul no arrancaba a la primera** (Jonay): el círculo amarillo de «El rally de La
+      Esperanza» estaba en el mismo punto; ahora va al otro lado del Canarión y empieza el círculo más cercano.
+- [x] v0.57.0 **Farmacia: la persecución no se veía** (Jonay, coordenadas): el ladrón corre y roba un coche negro
+      aparcado junto a un Corola; círculo amarillo y ruta al coche; va a X −1548 Z −693, se baja y huye por el camino
+      (X −1571 Z −764) hasta X −1696 Z −883 (si llega, se escapa); dos tiros de bolas y llora; lo agarras.
+- [x] v0.57.0 **Pepe no se ve** (Jonay, «Los bancos del Adelantado») y revisión de todas las huidas a pie y en coche:
+      salían desde un cruce lejano; ahora desde donde están, alejándose y por la red peatonal (`prueba_persecuciones.py`).
+- [x] v0.57.0 **Destacar a quién perseguir** (Jonay): flecha roja 6–12 s y punto rojo en los mapas.
+- [x] v0.57.0 **Rutas del minimapa raras** (Jonay): salen de tu calle y sentido, y no se recalculan mientras las sigues.
+- [x] v0.57.0 **Camión de los baches marcha atrás solo** (Jonay): el freno de un coche parado sin conductor era marcha atrás.
 - [~] v0.56.0 **Historia: nueva tanda de misiones** (programadas las 12; **Jonay las prueba**: anotar aquí lo que no
       guste). Alcalde: «Don Yovoy Gofiérrez», bigote y traje negro. Se pueden reintentar al fallar y, si se guarda a
       mitad, al cargar empiezan de nuevo en su círculo (pruebas `prueba_misiones.py` y `prueba_misiones_guardado.py`).
@@ -57,10 +70,10 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
            furgoneta por las vías de servicio y detenerla. Cierre de la tanda: el alcalde os da el coche patrulla de la
            banda (rotulado con el nombre que elegisteis).
 
-- [ ] **Mapa grande: menos textos y más legibles** (Jonay, 7-oct): de lejos solo lo importante y más rótulos según
+- [x] v0.57.0 **Mapa grande: menos textos y más legibles** (Jonay, 7-oct): de lejos solo lo importante y más rótulos según
       te acercas (niveles de zoom); repasar colores del texto para que se lea bien y no se confunda con las rutas de
       misiones (amarillo de la historia, azul de las secundarias, rojo de objetivos).
-- [ ] **Mapa grande: zoom inicial** (Jonay, 7-oct): al abrirlo, más cerca y centrado en el jugador (ahora se ve casi
+- [x] v0.57.0 **Mapa grande: zoom inicial** (Jonay, 7-oct): al abrirlo, más cerca y centrado en el jugador (ahora se ve casi
       todo el mapa).
 
 - [ ] **Móvil: acceso a todo** (Jonay): desde el móvil no se llega a las opciones (y revisar que todo lo que se hace con
@@ -84,7 +97,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       cerrado, como en la realidad. Revisar cómo hacerlo y proponerlo.
 - [ ] **Marcas viales** (apunte de Jonay): con los puentes y cruces hay líneas que se cruzan por todas partes; también
       en salidas e incorporaciones (autopista, Vía de Ronda) y en las glorietas.
-- [ ] **Árboles y farolas sobre la vía del tranvía** (Jonay, captura en una glorieta junto al tranvía).
+- [x] v0.57.0 **Árboles y farolas sobre la vía del tranvía** (115 árboles y las farolas a menos de 4–5 m del eje) (Jonay, captura en una glorieta junto al tranvía).
 
 
 - [ ] Repasar con las fotos del aeropuerto la zona ya hecha alrededor (San Benito, El Coromoto, autopista TF-5).
@@ -99,20 +112,25 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       parking con rótulos, valla perimetral) y aviones despegando/aterrizando de vez en cuando.
 - [~] Prueba de conducción de túneles/puentes: 3 de 97 sin terminar (v0.50; antes 10 de 111).
 
-- [ ] **Auditoría v0.56.0** (APTO CON AVISOS; memoria y fugas igual que la 0.55, llamadas 658 → 696, triángulos
+- [ ] **Auditoría v0.58.0** (APTO CON AVISOS; métricas iguales que la 0.57): 1 aviso nuevo `05t_hospital.js:44` `mk()`:
+      material del HUC creado al construir la ciudad, una sola vez (falso aviso).
+- [ ] **Auditoría v0.57.0** (APTO CON AVISOS; memoria JS 544 → 503 MB, geometría 382 → 342 MB, llamadas 696 → 680,
+      sin fugas): 3 avisos nuevos en `s2Mark()` (`12f_story2.js:54-56`): es la flecha de persecución; su geometría se
+      crea una sola vez y se reutiliza (falso aviso, se puede marcar como «bajo demanda»).
+- [x] v0.57.0 (bancos liberados al limpiar la misión) **Auditoría v0.56.0** (APTO CON AVISOS; memoria y fugas igual que la 0.55, llamadas 658 → 696, triángulos
       5,50 → 5,62 M por el Ayuntamiento; no tocar hasta que Jonay lo diga): 3 avisos nuevos de geometría creada en
       `12f_story2.js`: el bigote del alcalde (l. 68-69, se crea una vez al arrancar: sin importancia) y los **bancos
       robados** de «Los bancos del Adelantado» (l. 187): se crean geometrías nuevas cada vez que se juega la misión y
       `s2Clear` las quita de la escena sin `dispose()` → compartir una geometría o liberarla al limpiar.
 - [ ] **Auditoría v0.55.0** (`docs/auditorias/INFORME_AUDITORIA_JETA_v0.55.0.md`, APTO; no tocar hasta que Jonay lo diga):
-  - [ ] **P1.8** Al cambiar el tiempo, liberar los mapas de entorno de los otros tipos (`ENVC` en `13_main.js` crece
+  - [x] v0.57.0 **P1.8** Al cambiar el tiempo, liberar los mapas de entorno de los otros tipos (`ENVC` en `13_main.js` crece
         sin límite, hasta 48). Pocas líneas.
-  - [ ] **P1.7** Liberar también las posiciones de la ciudad tras subirlas a la GPU (~250 MB), conservándolas solo
+  - [x] v0.57.0 (medido: −41 MB de memoria JS, −40 MB de geometría; no los 250 MB estimados) **P1.7** Liberar también las posiciones de la ciudad tras subirlas a la GPU (~250 MB), conservándolas solo
         cuando se ejecuta el agente revisor (p. ej. `?revisor=1`).
   - [ ] **P1.5** (sigue) Mallas sueltas (11.314) → `Acc`/`InstancedMesh`, y menos detalle en la ciudad lejana.
   - [ ] **P2.1 / P2.2 / P2.5** (siguen) Precalcular la ciudad en el build, modelos en binario, módulos + lint.
 - [ ] **Auditoría de código v0.49** (`docs/auditorias/INFORME_AUDITORIA_JETA_v0.49.0.md`, APTO CON AVISOS) — por decidir con Jonay:
-      ~~P0.a coches de tráfico fuera del pool sin liberar + luces/cascos por coche~~ (hecha en v0.52); P0.b rótulos canvas sin caché;
+      ~~P0.a coches de tráfico fuera del pool sin liberar + luces/cascos por coche~~ (hecha en v0.52); ~~P0.b rótulos canvas sin caché~~ (ya cacheados con `sharedText`, comprobado en v0.57);
       aparcados en InstancedMesh; P1.5 mallas sueltas/LOD; mapas de reflejos en segundo plano; P2.1/P2.2/P2.5.
 - [x] v0.53.0 Auditor: **APTO** (comparado con la 0.51 re-medida). Fuga 477 → 0; memoria y geometría ya no suben
       (546 → 547 MB y 387 → 386 MB): los avisos de la 0.52 eran de la forma de medir.

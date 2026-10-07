@@ -17,7 +17,9 @@ AUTO = r"""() => {
   const ride = (c) => { if (P.car === c) return false; P.x = c.x + 2.5; P.z = c.z; d.enterCar(c); return true; };
   const need = (S.truck && S.step === 1 && S.truck) || (S.van && S.van.keep && S.step === 4 && S.van) || null;
   if (need) { ride(need); return 'enter'; }
-  for (const c of [S.car, S.van]) if (c && c.mode === 'race' && c.driver === 'race' && c.health > 44) { c.health = 40; return 'damage'; }
+  if (S.car && S.car.mode === 'race' && S.car.driver === 'race') { const h = S.car.h; if (!P.car && S.mine) ride(S.mine); put(S.car.x - Math.sin(h) * 12, S.car.z - Math.cos(h) * 12); return 'follow'; }
+  for (const c of [S.van]) if (c && c.mode === 'race' && c.driver === 'race' && c.health > 44) { c.health = 40; return 'damage'; }
+  if (S.t2 && S.step === 6) { if (P.car) d.exitCar(); put(S.t2.x + 1, S.t2.z); return 'grab'; }
   if (/rally|guagua|Romero/i.test(m.title) && !P.car) { const c = new d.Car('sedan', 0xd03030, P.x + 3, P.z, 0); c.persist = true; ride(c); return 'car'; }
   if (S.bus && S.bus.mode === 'race') { const h = S.bus.h; put(S.bus.x - Math.sin(h) * 9, S.bus.z - Math.cos(h) * 9); return 'escort'; }
   if (/rally/i.test(m.title) && S.step === 2) return 'countdown';

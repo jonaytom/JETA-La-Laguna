@@ -43,7 +43,32 @@ const GRAPH = (() => {
     for (const o of segs) { const E = edges[o.e]; const p = E.pts; const n2 = p.length / 2; for (let k = 1; k < n2; k++) { const idx = o.dir > 0 ? k : n2 - 1 - k; pts.push(p[idx * 2], p[idx * 2 + 1]); } }
     return pts;
   }
-  return { nodes, edges, nearestNode, sample, route };
+  // edge grid (every edge in the cells its points touch) and the edge nearest to a point, with the projection on it
+  const EG = new Map(); edges.forEach((E) => { if (E.len < 0.5) return; const seen = new Set(); for (let k = 0; k < E.pts.length; k += 2) { const key = Math.floor(E.pts[k] / CS) * 1000 + Math.floor(E.pts[k + 1] / CS); if (seen.has(key)) continue; seen.add(key); let l = EG.get(key); if (!l) EG.set(key, l = []); l.push(E.i); } });
+  function nearestEdge(x, z, maxD = 30) {
+    let best = null, bd = maxD; const a0 = Math.floor(x / CS), b0 = Math.floor(z / CS);
+    for (let a = a0 - 1; a <= a0 + 1; a++) for (let b = b0 - 1; b <= b0 + 1; b++) { const l = EG.get(a * 1000 + b); if (!l) continue;
+      for (const ei of l) { const E = edges[ei], p = E.pts; for (let k = 2; k < p.length; k += 2) { const ax = p[k - 2], az = p[k - 1], dx = p[k] - ax, dz = p[k + 1] - az, L2 = dx * dx + dz * dz || 1; const t = clamp(((x - ax) * dx + (z - az) * dz) / L2, 0, 1); const qx = ax + dx * t, qz = az + dz * t, d = Math.hypot(x - qx, z - qz);
+        if (d < bd) { bd = d; best = { e: ei, k: k / 2, x: qx, z: qz, d, s: E.cum[k / 2 - 1] + (E.cum[k / 2] - E.cum[k / 2 - 1]) * t, dx, dz }; } } } }
+    return best;
+  }
+  // driving route from where the car is, in the way it is heading: it starts on the car's own street (its next
+  // junction ahead, or behind only if that way is one-way against you), never on a parallel street or a bridge
+  // above, and ends on the target's street
+  function routeFrom(x, z, h, tx, tz) {
+    const ne = nearestEdge(x, z, 25); let pre = null, from = -1;
+    if (ne) { const E = edges[ne.e]; const fwd = Math.sin(h) * ne.dx + Math.cos(h) * ne.dz >= 0; let dir = fwd ? 1 : -1; if (dir < 0 && E.oneway) dir = 1;
+      from = dir > 0 ? E.b : E.a; pre = [x, z, ne.x, ne.z]; const p = E.pts, n2 = p.length / 2;
+      if (dir > 0) for (let k = ne.k; k < n2; k++) pre.push(p[k * 2], p[k * 2 + 1]); else for (let k = ne.k - 1; k >= 0; k--) pre.push(p[k * 2], p[k * 2 + 1]); }
+    else from = nearestNode(x, z);
+    const te = nearestEdge(tx, tz, 40); let to = nearestNode(tx, tz), post = [tx, tz];
+    if (te) { const E = edges[te.e]; const cands = [E.a, E.b]; let bestL = 1e12, best = null;
+      for (const c of cands) { const r = route(from, c); if (!r) continue; let L = 0; for (let i = 2; i < r.length; i += 2) L += Math.hypot(r[i] - r[i - 2], r[i + 1] - r[i - 1]); L += c === E.a ? te.s : E.len - te.s; if (L < bestL) { bestL = L; best = [c, r]; } }
+      if (best) { to = best[0]; const p = E.pts, n2 = p.length / 2; const tail = []; if (to === E.a) for (let k = 1; k < te.k; k++) tail.push(p[k * 2], p[k * 2 + 1]); else for (let k = n2 - 2; k >= te.k; k--) tail.push(p[k * 2], p[k * 2 + 1]);
+        return [...(pre || [x, z]), ...best[1], ...tail, te.x, te.z, tx, tz]; } }
+    const r = route(from, to); return r ? [...(pre || [x, z]), ...r, ...post] : null;
+  }
+  return { nodes, edges, nearestNode, nearestEdge, sample, route, routeFrom };
 })();
 
 // ---------- Car
@@ -87,7 +112,7 @@ class Car {
     const thr = broken ? 0 : c.thr, brk = c.brk;
     const vk = T.maxV * 0.22; // grip-limited launch, then power-limited (a ~ P / v)
     if (thr > 0) { if (vf < -0.5) vf += 18 * thr * dt; else vf += Math.min(T.acc, T.acc * vk / Math.max(vf, 0.1)) * thr * (1 - clamp(vf / T.maxV, 0, 1) ** 2) * dt; }
-    if (brk > 0) { if (vf > 0.5) vf -= 20 * brk * dt; else if (!broken) vf -= T.acc * 0.6 * brk * dt * (vf > -9 ? 1 : 0); }
+    if (brk > 0) { if (vf > 0.5) vf -= 20 * brk * dt; else if (!broken && this.driver) vf -= T.acc * 0.6 * brk * dt * (vf > -9 ? 1 : 0); } /* braking at a standstill means reverse, but only with someone at the wheel */
     if (thr === 0 && brk === 0) vf -= Math.sign(vf) * Math.min(Math.abs(vf), 2.2 * dt);
     // aerodynamic drag tuned so the flat-road terminal speed is ~97% of the model's top speed; downhill can go a bit over
     vf -= vf * Math.abs(vf) * (0.05 * T.acc * 0.22 / (T.maxV * T.maxV)) * dt;
@@ -95,6 +120,7 @@ class Car {
     // slope
     const HG = this.Gf || heightAt; const hf = HG(this.x + fx * 1.5, this.z + fz * 1.5), hb = HG(this.x - fx * 1.5, this.z - fz * 1.5);
     vf -= 9.8 * ((hf - hb) / 3) * dt * 0.8;
+    if (!this.driver && brk > 0 && Math.abs(vf) < 1) { vf = 0; vr *= 0.5; } // a parked car with the brake on stays put, even on a slope
     // handbrake: the rear wheels lock. They brake (rear only, ~0.5 g), lose their side grip (the tail slides out) and the
     // car turns tighter; the car keeps part of its momentum in the old direction (drift). Grip comes back gradually.
     const hbT = c.hb ? 1 : 0; this.hbA = (this.hbA || 0) + (hbT - (this.hbA || 0)) * clamp(dt * (hbT ? 12 : 2.5), 0, 1); const hbA = this.hbA;

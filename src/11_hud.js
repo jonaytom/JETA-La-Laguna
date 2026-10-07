@@ -60,11 +60,19 @@ function setWaypoint(x, z, story) {
 }
 function updateGPS(force) {
   const tgt = MISSIONS.target() || GPS.target; if (!tgt) { GPS.path = null; return; }
-  GPS.t -= 1; if (!force && GPS.t > 0) return; GPS.t = 45;
-  // on foot: shortest walk (squares, pedestrian streets, footways, stairs); driving: the road graph
-  let p = null; if (!PLAYER.car) p = WALKG.route(PLAYER.x, PLAYER.z, tgt[0], tgt[1]);
-  if (!p) { const a = GRAPH.nearestNode(PLAYER.x, PLAYER.z), b = GRAPH.nearestNode(tgt[0], tgt[1]); p = GRAPH.route(a, b); }
-  GPS.path = p ? [PLAYER.x, PLAYER.z, ...p, tgt[0], tgt[1]] : null;
+  GPS.t -= 1; if (!force && GPS.t > 0) return; GPS.t = 30;
+  // keep the current route while you follow it and the target hasn't moved much: only cut off the part already done
+  // (recomputing every time from the nearest junction made the line jump about, go backwards or onto other streets)
+  const mode = PLAYER.car ? 'car' : 'foot', P = GPS.path;
+  if (P && GPS.mode === mode && GPS.tgt && Math.hypot(GPS.tgt[0] - tgt[0], GPS.tgt[1] - tgt[1]) < 12) {
+    let bi = -1, bd = 14, bx = 0, bz = 0; for (let i = 2; i < Math.min(P.length, 400); i += 2) { const ax = P[i - 2], az = P[i - 1], dx = P[i] - ax, dz = P[i + 1] - az, L2 = dx * dx + dz * dz || 1; const t = clamp(((PLAYER.x - ax) * dx + (PLAYER.z - az) * dz) / L2, 0, 1); const qx = ax + dx * t, qz = az + dz * t, d = Math.hypot(PLAYER.x - qx, PLAYER.z - qz); if (d < bd) { bd = d; bi = i; bx = qx; bz = qz; } }
+    if (bi > 0) { const q = [PLAYER.x, PLAYER.z, bx, bz, ...P.slice(bi)]; q[q.length - 2] = tgt[0]; q[q.length - 1] = tgt[1]; /* a moving target drags the end along */ GPS.path = q; return; }
+  }
+  // on foot: shortest walk (squares, pedestrian streets, footways, stairs); driving: the road graph from your own street,
+  // in the direction you are going
+  let p = null; if (!PLAYER.car) { p = WALKG.route(PLAYER.x, PLAYER.z, tgt[0], tgt[1]); if (p) p = [PLAYER.x, PLAYER.z, ...p, tgt[0], tgt[1]]; }
+  if (!p) p = GRAPH.routeFrom(PLAYER.x, PLAYER.z, PLAYER.car ? PLAYER.car.h : PLAYER.h, tgt[0], tgt[1]);
+  GPS.path = p; GPS.mode = mode; GPS.tgt = [tgt[0], tgt[1]];
   if (GPS.target && Math.hypot(GPS.target[0] - PLAYER.x, GPS.target[1] - PLAYER.z) < 25) { if (!GPS.story) HUD.toast('Has llegado al destino', '#e040fb'); GPS.target = null; GPS.story = false; }
 }
 
@@ -182,17 +190,38 @@ const BIGMAP = (() => {
     x.save(); x.translate(MAP.x0, MAP.z0); x.scale(1 / MAP.scale, 1 / MAP.scale); x.drawImage(MAPC, 0, 0); x.restore();
     if (GPS.path) { x.strokeStyle = MISSIONS.target() || GPS.story ? '#f5b72e' : '#e040fb'; x.lineWidth = 6 / k * devicePixelRatio; x.beginPath(); const p = GPS.path; for (let i = 0; i < p.length; i += 2) i ? x.lineTo(p[i], p[i + 1]) : x.moveTo(p[i], p[i + 1]); x.stroke(); }
     const dot = (px, pz, c, r) => { x.fillStyle = c; x.strokeStyle = '#000'; x.lineWidth = 2 / k * devicePixelRatio; x.beginPath(); x.arc(px, pz, r / k * devicePixelRatio, 0, 7); x.fill(); x.stroke(); };
-    x.textAlign = 'center'; x.textBaseline = 'middle';
-    for (const [n, lx, lz, t, col] of LABELS) { if (t === 2 && zoom > 1.5) continue; if (t === 4) { x.fillStyle = '#3ddc97'; x.strokeStyle = '#000'; x.lineWidth = 2 * devicePixelRatio / k; const sz = 5 * devicePixelRatio / k; x.fillRect(lx - sz, lz - sz, sz * 2, sz * 2); x.strokeRect(lx - sz, lz - sz, sz * 2, sz * 2); if (zoom > 0.9) { x.font = `600 ${11 * devicePixelRatio / k}px Barlow, sans-serif`; x.fillStyle = '#3ddc97'; x.fillText(n, lx, lz - 12 * devicePixelRatio / k); } continue; }
-      if (t === 3) { if (zoom < 1.4) continue; x.font = `600 ${11 * devicePixelRatio / k}px Barlow, sans-serif`; x.fillStyle = col || '#fff'; x.beginPath(); x.arc(lx, lz, 3 * devicePixelRatio / k, 0, 7); x.fill(); x.fillStyle = '#e8e8e8'; x.fillText(n, lx, lz - 9 * devicePixelRatio / k); continue; } x.font = `${t === 2 ? 700 : 600} ${(t === 2 ? 15 : 13) * devicePixelRatio / k}px ${t === 2 ? 'Oswald' : 'Barlow'}, sans-serif`; x.lineWidth = 3 * devicePixelRatio / k; x.strokeStyle = 'rgba(0,0,0,.8)'; x.strokeText(n, lx, lz); x.fillStyle = t === 2 ? '#9fd7ff' : '#fff'; x.fillText(n, lx, lz); }
     for (const c of CARS) if (c.driver === 'police') dot(c.x, c.z, '#3d7bff', 5);
     for (const f of FOOD.shops) { x.fillStyle = '#e53935'; x.strokeStyle = '#fff'; x.lineWidth = 1.5 / k * devicePixelRatio; const sz = 5 * devicePixelRatio / k; x.fillRect(f.x - sz, f.z - sz, sz * 2, sz * 2); x.strokeRect(f.x - sz, f.z - sz, sz * 2, sz * 2); }
     for (const m of MISSIONS.blips()) dot(m[0], m[1], m[2] || '#f5b72e', 8);
     if (GPS.target) dot(GPS.target[0], GPS.target[1], '#e040fb', 8);
     x.save(); x.translate(PLAYER.x, PLAYER.z); x.rotate(-(PLAYER.car ? PLAYER.car.h : PLAYER.h) + Math.PI); const a = 12 / k * devicePixelRatio; x.fillStyle = '#fff'; x.strokeStyle = '#000'; x.lineWidth = 2 / k * devicePixelRatio; x.beginPath(); x.moveTo(0, -a); x.lineTo(a * 0.7, a * 0.7); x.lineTo(0, a * 0.35); x.lineTo(-a * 0.7, a * 0.7); x.closePath(); x.fill(); x.stroke(); x.restore();
     x.restore();
+    drawLabels(W, H, k);
   }
-  const toWorld = (ev) => { const r = cv.getBoundingClientRect(); return [cx + (ev.clientX - r.left - r.width / 2) / zoom, cz + (ev.clientY - r.top - r.height / 2) / zoom]; };
+  // labels: drawn in screen space, by priority, skipping any that would overlap one already drawn (and repeated names).
+  // Far away only the neighbourhoods and the main landmarks; zooming in adds big stores, entrances and then the shops.
+  // Text colours avoid the route / blip colours (yellow story, blue side jobs, magenta waypoint, red goals).
+  const LBL = { hood: '#e6dcc8', main: '#ffffff', store: '#dcdcdc', door: '#3ddc97', shop: '#c9c9c9' };
+  function drawLabels(W, H, k) {
+    const d = devicePixelRatio, boxes = [], seen = [];
+    const tiers = zoom < 0.9 ? [2, 1, 5, 4, 3] : [1, 2, 5, 4, 3];
+    const show = { 2: zoom < 1.6, 1: true, 5: zoom >= 0.9, 4: zoom >= 1.2, 3: zoom >= 2.2 };
+    x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineJoin = 'round';
+    for (const tier of tiers) { if (!show[tier]) continue;
+      for (const [n, lx, lz, t, col] of LABELS) { if (t !== tier) continue;
+        const sx = W / 2 + (lx - cx) * k, sy = H / 2 + (lz - cz) * k; if (sx < -200 || sx > W + 200 || sy < -40 || sy > H + 40) continue;
+        if (seen.some((q) => q[0] === n && Math.abs(q[1] - lx) + Math.abs(q[2] - lz) < 400)) continue;
+        const size = (t === 2 ? 15 : t === 1 ? 14 : t === 5 ? 13 : 12) * d; x.font = t === 2 ? `600 ${size}px Oswald, sans-serif` : `${t === 3 ? 500 : 600} ${size}px Barlow, sans-serif`;
+        const w = x.measureText(n).width, ty = sy - (t === 3 || t === 4 ? 10 * d : 0);
+        const bx = [sx - w / 2 - 3 * d, ty - size * 0.6, sx + w / 2 + 3 * d, ty + size * 0.6]; if (boxes.some((o) => bx[0] < o[2] && bx[2] > o[0] && bx[1] < o[3] && bx[3] > o[1])) continue;
+        boxes.push(bx); seen.push([n, lx, lz]);
+        if (t === 3) { x.fillStyle = col || '#bbb'; x.strokeStyle = '#000'; x.lineWidth = 1.5 * d; x.beginPath(); x.arc(sx, sy, 3 * d, 0, 7); x.fill(); x.stroke(); }
+        if (t === 4) { const z2 = 5 * d; x.fillStyle = LBL.door; x.strokeStyle = '#000'; x.lineWidth = 2 * d; x.fillRect(sx - z2, sy - z2, z2 * 2, z2 * 2); x.strokeRect(sx - z2, sy - z2, z2 * 2, z2 * 2); }
+        x.lineWidth = 4 * d; x.strokeStyle = 'rgba(10,14,16,.92)'; x.strokeText(n, sx, ty);
+        x.fillStyle = t === 2 ? LBL.hood : t === 1 ? LBL.main : t === 5 ? LBL.store : t === 4 ? LBL.door : LBL.shop; x.fillText(n, sx, ty); } }
+  }
+  const toWorld
+ = (ev) => { const r = cv.getBoundingClientRect(); return [cx + (ev.clientX - r.left - r.width / 2) / zoom, cz + (ev.clientY - r.top - r.height / 2) / zoom]; };
   const ptrs = new Map(); let pinch = null;
   const zoomAt = (f, sx, sy) => { const r = cv.getBoundingClientRect(); const wx = cx + (sx - r.left - r.width / 2) / zoom, wz = cz + (sy - r.top - r.height / 2) / zoom; zoom = clamp(zoom * f, 0.2, 4); cx = wx - (sx - r.left - r.width / 2) / zoom; cz = wz - (sy - r.top - r.height / 2) / zoom; draw(); };
   cv.addEventListener('pointerdown', (e) => { ptrs.set(e.pointerId, [e.clientX, e.clientY]); cv.setPointerCapture(e.pointerId); if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = Math.hypot(a[0] - b[0], a[1] - b[1]); drag = null; moved = true; return; } drag = [e.clientX, e.clientY, cx, cz]; moved = false; });
@@ -211,8 +240,8 @@ const BIGMAP = (() => {
   cv.addEventListener('contextmenu', (e) => { e.preventDefault(); setWaypoint(null); draw(); });
   cv.addEventListener('wheel', (e) => { const [wx, wz] = toWorld(e); zoom = clamp(zoom * (e.deltaY < 0 ? 1.2 : 1 / 1.2), 0.2, 4); const r = cv.getBoundingClientRect(); cx = wx - (e.clientX - r.left - r.width / 2) / zoom; cz = wz - (e.clientY - r.top - r.height / 2) / zoom; draw(); }, { passive: true });
   return {
-    get open() { return open; },
-    toggle() { open = !open; el.style.display = open ? 'block' : 'none'; if (open) { cx = PLAYER.x; cz = PLAYER.z; zoom = 0.45; document.exitPointerLock?.(); draw(); } else if (GAME.state === 'achaman') achLock(); else GAME.lock(); },
+    get open() { return open; }, get zoom() { return zoom; }, set zoom(v) { zoom = v; if (open) draw(); },
+    toggle() { open = !open; el.style.display = open ? 'block' : 'none'; if (open) { cx = PLAYER.x; cz = PLAYER.z; zoom = 1.2; /* close to the player: about 1 km across */ document.exitPointerLock?.(); draw(); } else if (GAME.state === 'achaman') achLock(); else GAME.lock(); },
     redraw() { if (open) draw(); },
     teleport() {
       if (!GPS.target) { HUD.toast('Toca un punto del mapa para marcar el destino', '#f5b72e', 3); return; }

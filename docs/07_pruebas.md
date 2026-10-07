@@ -29,6 +29,8 @@ python tests/run_test_audit.py tests/audit_obstaculos.py  # arranca con window._
 ## Agente revisor de jugabilidad (cada versión)
 
 `python tests/agente_revisor.py` recorre el mapa como un probador y escribe un informe de bugs en `reportes/`.
+Abre el juego con `?revisor=1`: solo así se conservan en memoria las posiciones de los triángulos de la ciudad, que el
+agente lee (en el juego normal se liberan al subirlas a la tarjeta gráfica: ~250 MB menos, auditoría P1.7).
 Se ejecuta **después de cada versión** (rutina de `CLAUDE.md`). Hace tres pasadas:
 
 1. **Zonas nuevas**: todas las vías dentro de los rectángulos de `tests/zonas_revision.json`, que se actualiza en
@@ -61,6 +63,8 @@ unos 30 min.
 | `prueba_conduccion_tuneles_puentes.py` | Un coche automático recorre los ~111 túneles, pasos inferiores y puentes; informa de los que no llegan al final (con captura `shots/df_<vía>.jpg`). Algunos fallos son tráfico que se cruza. |
 | `prueba_pelea_especiales.py` | Empieza una pelea, pulsa Espacio (cartel de controles) y comprueba las cuatro técnicas especiales. |
 | `prueba_misiones.py [desde] [hasta]` | Piloto automático que juega las misiones de la historia (salta diálogos, gana las peleas, acierta los blancos, se sube al vehículo pedido) y comprueba que todas se terminan sin errores. |
+| `prueba_hospital.py` | Muere junto a cada centro de salud / urgencias y comprueba que reapareces allí. |
+| `prueba_persecuciones.py [índices]` | En cada persecución: el perseguido aparece cerca y a la vista, no da saltos y se aleja (a pie y en coche). |
 | `prueba_misiones_guardado.py` | Guardar a mitad de misión y cargar, «¿Reintentar?» tras fallar y partidas antiguas con la historia ya terminada. |
 | `herramientas/` | Scripts de fotos y sondas reutilizables (ver `tests/herramientas/LEEME.md`): se guardan para no rehacerlos. |
 | `prueba_bloqueo.py` | Mantener atrás bloquea los golpes del rival. |

@@ -3,6 +3,36 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.58.0 — 2026-10-07 — Hospital Universitario de Canarias y centros de salud
+- **HUC** según las fotos: bloque de 12 plantas con bandas de ventanas, torre cilíndrica blanca con remate de cristal y
+  helipuerto en voladizo, el edificio verde de cristal de Actividades Ambulatorias, Urgencias rotulada y jardín con
+  palmeras y la escultura de acero.
+- **Centros de salud** de La Laguna y de San Benito: fachada blanca con el rótulo y la cruz verde.
+- **Al morir te despiertas en el centro de salud o las urgencias más cercanas** (antes, en casa de El Blanco).
+
+## 0.57.0 — 2026-10-07 — Persecuciones visibles, mapa legible, GPS estable y menos memoria
+- **Mapa grande**: se abre más cerca y centrado en ti. Los rótulos ya no se pisan: de lejos solo barrios y lugares
+  importantes; al acercarte salen grandes superficies, entradas y, muy cerca, las tiendas. Texto con borde oscuro y
+  colores que no se confunden con las rutas de misión.
+- **Atraco en la farmacia**: el segundo ladrón corre y roba un coche negro aparcado junto a un Tollota Corola (para
+  ti); el coche sale en el mapa como círculo amarillo con la ruta para seguirlo; sube hacia Las Gavias, se baja y huye
+  a pie por el camino de tierra hacia el Camino Tornero: dale dos tiros de bolas antes de que llegue, se pone a
+  llorar y lo agarras.
+- **Canarión**: el círculo azul de las carreras ya arranca a la primera (el de «El rally de La Esperanza» estaba
+  encima; ahora están separados y empieza el más cercano).
+- **Persecuciones**: una flecha roja encima de quien hay que perseguir (persona, coche o guagua) los primeros segundos,
+  y un punto rojo en el minimapa y el mapa grande mientras dura. Los que huyen a pie salen desde donde están (Pepe
+  ya no desaparecía de golpe), siempre alejándose de ti, por aceras, plazas y caminos y sin saltos.
+- **Rutas del GPS**: en coche la ruta sale de la calle por la que vas y en tu sentido de marcha (antes salía del cruce
+  más cercano, que podía estar detrás, en una calle paralela o en un puente) y no se recalcula mientras la sigues:
+  solo se recorta lo ya hecho. Ya no da saltos ni va marcha atrás.
+- **Coches aparcados de misión** (el camión de los baches, la furgoneta del gofio…): ya no se van solos marcha atrás;
+  un coche sin conductor con el freno puesto se queda quieto aunque haya cuesta.
+- **Tranvía**: sin árboles ni farolas encima de la vía.
+- **Memoria** (auditorías; medido: memoria JS 544 → 503 MB, geometría en RAM 382 → 342 MB): las posiciones de la ciudad se liberan al subirlas a la tarjeta gráfica (solo el agente
+  revisor las conserva, con `?revisor=1`); al cambiar el tiempo se liberan los mapas de entorno del tiempo anterior;
+  los bancos de la misión «Los bancos del Adelantado» se liberan al terminar.
+
 ## 0.56.1 — 2026-10-07 — Alcalde gordito
 - **Don Yovoy Gofiérrez** pasa a talla «gordito» (cuerpo y cara más llenos), sin llegar a las tallas gordas extremas.
 

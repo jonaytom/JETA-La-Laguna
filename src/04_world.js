@@ -1,3 +1,4 @@
+const KEEP_POS = typeof location !== 'undefined' && /[?&]revisor=1\b/.test(location.search);
 // ============ world building ============
 const CHUNK = 250;
 let OBST_RI = -1; const OBST = []; let DRESS_RI = -1;
@@ -16,10 +17,11 @@ class Acc {
   }
   quad(a, b, c, d, ua, ub, uc, ud, col, ex, want) { if (OBST_RI >= 0) OBST.push([OBST_RI, (a[0] + b[0] + c[0] + d[0]) / 4, (a[2] + b[2] + c[2] + d[2]) / 4, Math.min(a[1], b[1], c[1], d[1]), Math.max(a[1], b[1], c[1], d[1]), a[0], a[2], c[0], c[2]]); this.tri(a, b, c, ua, ub, uc, col, ex, want); this.tri(a, c, d, ua, uc, ud, col, ex, want); }
   geo(exSize = 0, mat = null) {
-    // memory (audit P0.1): normals as int8, colours as uint8 (only the attribute the material reads), and the CPU copy
-    // of everything but the positions is dropped once it is on the GPU (the positions stay for audits / the agent)
+    // memory (audit P0.1 / P1.7): normals as int8, colours as uint8 (only the attribute the material reads), and the CPU
+    // copy of every attribute is dropped once it is on the GPU. The positions are kept only for the review agent
+    // (URL ?revisor=1), which reads the city's triangles; nothing in the game does (~250 MB less)
     const g = new THREE.BufferGeometry(); const free = function () { this.array = null; };
-    g.setAttribute('position', new THREE.Float32BufferAttribute(this.p, 3));
+    g.setAttribute('position', KEEP_POS ? new THREE.Float32BufferAttribute(this.p, 3) : new THREE.Float32BufferAttribute(this.p, 3).onUpload(free));
     const N = new Int8Array(this.n.length); for (let i = 0; i < N.length; i++) N[i] = Math.round(this.n[i] * 127);
     g.setAttribute('normal', new THREE.BufferAttribute(N, 3, true).onUpload(free));
     g.setAttribute('uv', new THREE.Float32BufferAttribute(this.uv, 2).onUpload(free));

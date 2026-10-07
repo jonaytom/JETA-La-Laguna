@@ -92,9 +92,20 @@ function fuseGroup(g, keep) {
   for (const [mat, list] of by) { const geo = mergeGeos(list); for (const q of list) q.dispose(); const m = new THREE.Mesh(geo, mat); m.castShadow = true; m.receiveShadow = true; g.add(m); }
   return g;
 }
+// is (x,z) within r metres of the tram track axis? (grid of 32 m cells built on first use)
+let TRAMGRID = null;
+function nearTram(x, z, r) {
+  const T = DATA.T; if (T.length < 4) return false; const C = 32, key = (i, j) => i * 100003 + j;
+  if (!TRAMGRID) { TRAMGRID = new Map(); for (let i = 0; i < T.length - 2; i += 2) { const i0 = Math.floor((Math.min(T[i], T[i + 2]) - 12) / C), i1 = Math.floor((Math.max(T[i], T[i + 2]) + 12) / C), j0 = Math.floor((Math.min(T[i + 1], T[i + 3]) - 12) / C), j1 = Math.floor((Math.max(T[i + 1], T[i + 3]) + 12) / C);
+    for (let a = i0; a <= i1; a++) for (let b = j0; b <= j1; b++) { const k = key(a, b); let l = TRAMGRID.get(k); if (!l) TRAMGRID.set(k, l = []); l.push(i); } } }
+  const l = TRAMGRID.get(key(Math.floor(x / C), Math.floor(z / C))); if (!l) return false;
+  for (const i of l) { const ax = T[i], az = T[i + 1], dx = T[i + 2] - ax, dz = T[i + 3] - az, L2 = dx * dx + dz * dz || 1; const t = clamp(((x - ax) * dx + (z - az) * dz) / L2, 0, 1); if (Math.hypot(x - ax - dx * t, z - az - dz * t) < r) return true; }
+  return false;
+}
 function buildTrees() {
-  const types = [[], [], [], []];
-  for (const t of TREES) { if (!inPlayArea(t[0], t[1], -5)) continue; if (overTunnel(t[0], t[1]) || inCut(t[0], t[1], 2.2)) continue; if (onCarriageway(t[0], t[1], 0.9)) continue; if (!t[4] && onAnyPaved(t[0], t[1], -0.3) && !isGreen(t[0], t[1])) continue; types[t[2]].push(t); }
+  const types = [[], [], [], []]; let offTram = 0;
+  for (const t of TREES) { if (!inPlayArea(t[0], t[1], -5)) continue; if (overTunnel(t[0], t[1]) || inCut(t[0], t[1], 2.2)) continue; if (onCarriageway(t[0], t[1], 0.9)) continue; if (nearTram(t[0], t[1], 4.4 + (t[2] === 1 ? 0 : 0.8) * t[3])) { offTram++; continue; } /* no trunk or crown over the tram */ if (!t[4] && onAnyPaved(t[0], t[1], -0.3) && !isGreen(t[0], t[1])) continue; types[t[2]].push(t); }
+  console.log('trees kept off the tram track', offTram);
   const barkMat = new THREE.MeshStandardMaterial({ color: 0x5a4636, roughness: 1 });
   const leafMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85, flatShading: true });
   const o = new THREE.Object3D(); const col = new THREE.Color();
@@ -158,7 +169,7 @@ function buildLamps() {
   const modernHead = (() => { const g = new THREE.BoxGeometry(0.35, 0.12, 0.7); g.translate(0, 6.95, 1.5); return g; })();
   const hist = mergeGeos([(() => { const g = new THREE.CylinderGeometry(0.06, 0.13, 3.6, 8); g.translate(0, 1.8, 0); return g; })(), (() => { const g = new THREE.ConeGeometry(0.32, 0.35, 6); g.translate(0, 4.45, 0); return g; })()]);
   const histHead = (() => { const g = new THREE.CylinderGeometry(0.22, 0.14, 0.6, 6); g.translate(0, 3.95, 0); return g; })();
-  for (let i = LAMPS.length - 1; i >= 0; i--) if (inCut(LAMPS[i][0], LAMPS[i][1], 1.0)) LAMPS.splice(i, 1);
+  for (let i = LAMPS.length - 1; i >= 0; i--) if (inCut(LAMPS[i][0], LAMPS[i][1], 1.0) || nearTram(LAMPS[i][0], LAMPS[i][1], LAMPS[i][3] ? 4.0 : 5.2)) LAMPS.splice(i, 1); /* modern lamps reach 1.5 m out */ console.log('lamps after cuts and tram', LAMPS.length);
   const groups = [LAMPS.filter((l) => !l[3]), LAMPS.filter((l) => l[3])];
   [[modern, modernHead, poleMat], [hist, histHead, histMat]].forEach(([pg, hg, pm], gi) => {
     const L = groups[gi]; if (!L.length) return;

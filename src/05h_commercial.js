@@ -50,7 +50,7 @@ function buildBigStores() {
       scene.add(g); }
     // glass entrance
     const ent = new THREE.Mesh(new THREE.BoxGeometry(8, 4, 0.3), glassMat); ent.position.set(best.mx + best.nx * 0.2, heightAt(best.mx, best.mz) + 2.1, best.mz + best.nz * 0.2); ent.rotation.y = Math.atan2(best.nx, best.nz); scene.add(ent);
-    LABELS.push([s.parody, s.cx, s.cz, 1]);
+    LABELS.push([s.parody, s.cx, s.cz, 5]); /* big store: shown from mid zoom */
     // blue P sign for the store's car park (with its internal/underground parking entrance)
     const px = best.mx + best.nx * 9 + (best.q[0] - best.p[0]) / best.L * (best.L * 0.35), pz = best.mz + best.nz * 9 + (best.q[1] - best.p[1]) / best.L * (best.L * 0.35);
     if (!onCarriageway(px, pz, 0.5)) { const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 4, 8), M(0x555a5e, 0.5, 0.6)); pole.position.set(px, heightAt(px, pz) + 2, pz); scene.add(pole); const ps = bigSign('P', 1.4, 1.4, '#1f4ea8', '#ffffff'); ps.position.set(px, heightAt(px, pz) + 4.3, pz); ps.rotation.y = Math.atan2(best.nx, best.nz); scene.add(ps); const ps2 = ps.clone(); ps2.rotation.y += Math.PI; scene.add(ps2); COL.addCirc(px, pz, 0.12); }

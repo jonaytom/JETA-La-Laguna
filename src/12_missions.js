@@ -392,7 +392,7 @@ const MISSIONS = (() => {
     if (parkedNear(a, b, 4.5).length) for (let r = 3; r < 60; r += 2) { let ok = false; for (let k = 0; k < 16; k++) { const q = safeSpot(x + Math.cos(k / 16 * 6.283) * r, z + Math.sin(k / 16 * 6.283) * r, 0.8); if (!parkedNear(q[0], q[1], 4.5).length && !onCarriageway(q[0], q[1], 0.5)) { [a, b] = q; ok = true; break; } } if (ok) break; }
     const r = COL.resolve(a, b, 0.6); h.root.position.set(r.x, heightAt(r.x, r.z) + 0.17, r.z); h.root.rotation.y = Math.random() * 6; scene.add(h.root); if (extra) extra(h); return { x: r.x, z: r.z, H: h, home: [r.x, r.z] }; }
   // toolkit for the missions defined in other files (12f_story2.js): they are appended to STORY
-  const KIT = { talk, chat, goto, clearBeacon, setObjective, pass, fail, abort, moveNPC, mkNPC, bold, CH, GANG, findRange, isActive: (m) => active === m, get data() { return data; }, setTimer(t) { timer = t; }, get timer() { return timer; } };
+  const KIT = { talk, chat, goto, clearBeacon, track(x, z, r = 6) { clearBeacon(); data.goal = [x, z, r]; updateGPS(true); } /* a moving goal (a car to follow): yellow blip + GPS route, no light column */, setObjective, pass, fail, abort, moveNPC, mkNPC, bold, CH, GANG, findRange, isActive: (m) => active === m, get data() { return data; }, setTimer(t) { timer = t; }, get timer() { return timer; } };
   return {
     kit: KIT, addStory(list) { STORY.push(...list); },
     init() {
@@ -444,8 +444,9 @@ const MISSIONS = (() => {
       if (NPC.blanco) NPC.blanco.H.head.rotation.y = Math.sin(performance.now() / 1300) * 0.3;
       FOOD.update(dt); if (typeof story2Tick === 'function') story2Tick(dt);
       BEACON.anim(beacon, dt); for (const k in TRACKS) BEACON.anim(TRACKS[k].beacon, dt);
-      if (!active) for (const k in TRACKS) { const tr = TRACKS[k]; if (!tr.beacon || tr.idx >= tr.list.length) continue;
-        if (Math.hypot(PLAYER.x - tr.beacon.position.x, PLAYER.z - tr.beacon.position.z) < 2 && !PLAYER.car && !DLG.open) { begin(tr.list[tr.idx], k); break; } }
+      if (!active && !PLAYER.car && !DLG.open) { let bk = null, bd = 2; /* the nearest circle wins when two are close */
+        for (const k in TRACKS) { const tr = TRACKS[k]; if (!tr.beacon || tr.idx >= tr.list.length) continue; const d = Math.hypot(PLAYER.x - tr.beacon.position.x, PLAYER.z - tr.beacon.position.z); if (d < bd) { bd = d; bk = k; } }
+        if (bk) begin(TRACKS[bk].list[TRACKS[bk].idx], bk); }
       if (active) {
         if (timer > 0) { timer -= dt; const t = $('mtimer'); if (t) t.textContent = Math.floor(timer / 60) + ':' + String(Math.floor(timer % 60)).padStart(2, '0'); if (timer <= 0) { fail(/Canarión/.test(active.title) ? '¡El Canarión sigue siendo el más rápido! Vuelve a intentarlo.' : 'Se acabó el tiempo.'); return; } }
         if (active) active.update(dt);
@@ -454,7 +455,7 @@ const MISSIONS = (() => {
     onEvent(t, d) { if (!active) return; if (t === 'enter' && active.gotCar) active.gotCar(); if (active.onEvent) active.onEvent(t, d); },
     wantsBottle() { return !!(active && active.wantsBottle && active.wantsBottle()); },
     target() { return active && data.goal ? data.goal : null; },
-    blips() { const b = []; for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon) b.push([tr.beacon.position.x, tr.beacon.position.z, tr.css]); } if (active && data.goal) b.push([data.goal[0], data.goal[1], '#f5b72e']); return b; },
+    blips() { const b = []; for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon) b.push([tr.beacon.position.x, tr.beacon.position.z, tr.css]); } if (active && data.goal) b.push([data.goal[0], data.goal[1], '#f5b72e']); if (active && typeof s2Blips === 'function') b.push(...s2Blips()); return b; },
     prompt() { if (active || PLAYER.car) return ''; for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon && Math.hypot(PLAYER.x - tr.beacon.position.x, PLAYER.z - tr.beacon.position.z) < 6) return 'Acércate al círculo para hablar con ' + bold(tr.list[tr.idx].who); } return ''; },
     fail(r, noRetry) { if (active) { if (WEAPON.training) takeWeapon(); fail(r, noRetry); } },
     _story: STORY,
@@ -465,7 +466,7 @@ const MISSIONS = (() => {
       TRACKS.story.idx = (st.story | 0) - (!st.v && (st.story | 0) >= 3 ? 1 : 0); /* v1 saves had the Canarión race inside the story */ TRACKS.story.done = !!st.storyDone && TRACKS.story.idx >= STORY.length; /* older saves finished a shorter story: carry on with the new missions */ TRACKS.side.idx = !st.v && (st.story | 0) >= 3 ? 1 : st.side | 0; TRACKS.side.open = !!st.sideOpen;
       Object.assign(GANG, { formed: !!(st.gang && st.gang.formed), name: (st.gang && st.gang.name) || '', members: (st.gang && st.gang.members) || [], sastronTut: !!(st.gang && st.gang.sastronTut), defenders: !!(st.gang && st.gang.defenders), patrol: !!(st.gang && st.gang.patrol) });
       setObjective(null); placeStarts();
-      if (st.active) setTimeout(() => HUD.toast('La misión «' + st.active + '» se guardó a medias: empieza de nuevo en su círculo', '#f5b72e', 6), 1200); },
+      window.__missionResumed = st.active || null; if (st.active) setTimeout(() => HUD.toast('La misión «' + st.active + '» se guardó a medias: empieza de nuevo en su círculo', '#f5b72e', 6), 3500); /* after the radio hint of the car you load in */ },
     currentTitle() { const tr = TRACKS.story; return tr.idx < tr.list.length ? (tr.list[tr.idx].title || '') : 'Historia completada'; },
     get active() { return active; },
     get gang() { return GANG; },

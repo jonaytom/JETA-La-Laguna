@@ -91,7 +91,7 @@ DRIVE = r"""
   const h=Math.atan2(pts[1][0]-pts[0][0],pts[1][1]-pts[0][1]); const RY=d.ROADY[ri]||((s,x,z)=>d.heightAt(x,z));
   const car=new d.Car('compact',0xff2020,pts[0][0],pts[0][1],h); car.mode='physics'; car.driver='test'; car.y=RY(0,pts[0][0],pts[0][1])+0.3; car.sync(1/30); if(!d.CARS.includes(car)) d.CARS.push(car);
   const near=(x,z)=>{ let bs=0,bd=1e9,acc=0; for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i]; const dx=b[0]-a[0],dz=b[1]-a[1],L2=dx*dx+dz*dz||1; const t=Math.max(0,Math.min(1,((x-a[0])*dx+(z-a[1])*dz)/L2)); const dd=Math.hypot(x-a[0]-dx*t,z-a[1]-dz*t); if(dd<bd){bd=dd;bs=acc+Math.sqrt(L2)*t;} acc+=Math.sqrt(L2);} return [bs,bd]; };
-  let wp=1, stuck=0, t=0, issues=[], prevY=car.y; const name=rd[1]>=0?D.S[rd[1]]:'';
+  let wp=1, stuck=0, t=0, issues=[], prevY=car.y, edge=false; const name=rd[1]>=0?D.S[rd[1]]:'';
   const add=(kind,msg)=>{ if(!issues.some(q=>q.kind===kind)) issues.push({kind,msg,x:Math.round(car.x),z:Math.round(car.z),y:+car.y.toFixed(1),ri,name,type:D.RT[rd[0]]}); };
   const TL=Math.round(Math.max(30,L/7+15)); for (let k=0;k<30*TL;k++){ while(wp<pts.length-1 && Math.hypot(pts[wp][0]-car.x,pts[wp][1]-car.z)<8) wp++; const g=pts[wp]; let da=Math.atan2(g[0]-car.x,g[1]-car.z)-car.h; while(da>Math.PI)da-=2*Math.PI; while(da<-Math.PI)da+=2*Math.PI;
     car.ctl={thr: car.speed<12?0.8:0.15, brk:0, steer:Math.max(-1,Math.min(1,da*2)), hb:0}; for(let q=0;q<3;q++) car.physics(1/90); car.sync(1/30); t+=1/30; /* solo la física de este coche: rápido y sin tráfico que lo moleste */
@@ -102,9 +102,10 @@ DRIVE = r"""
     if (Math.abs(car.y-prevY)>1.2) add('salto','Salto brusco de altura ('+(car.y-prevY).toFixed(1)+' m en un fotograma)'); prevY=car.y;
     const lw=d.lowAt(car.x,car.z,car.y); if (lw && lw.ceil && (car.y-lw.y)+(car.T.H||1.5)>lw.ceil+0.05) add('techo','El techo del túnel/parking roza el coche');
     if (car.speed<1) stuck+=1/30; else stuck=0;
+    if (stuck>3 && d.worldEdgeDist(car.x,car.z)<6) { edge=true; break; } /* borde del mundo: la vía sigue fuera del mapa, no es un atasco */
     if (stuck>3) { const ax=car.x+Math.sin(car.h)*3, az=car.z+Math.cos(car.h)*3; const B=window.__REV.bldAt(ax,az)||window.__REV.bldAt(pts[Math.min(wp,pts.length-1)][0],pts[Math.min(wp,pts.length-1)][1]); if (B) { add('edificio','Un edificio tapa la vía'+(B.name?' ('+B.name+')':'')+': la calle entra en él (dato de OSM o edificio mal puesto)'); break; } d.COL.qy=car.y; const r2=d.COL.resolve(ax,az,1.2); d.COL.qy=null; add('atasco','El coche se queda atascado'+(r2.hit?' contra un obstáculo/muro':'')); break; }
     if (Math.hypot(pts[pts.length-1][0]-car.x,pts[pts.length-1][1]-car.z)<6) break; }
-  const left=Math.hypot(pts[pts.length-1][0]-car.x,pts[pts.length-1][1]-car.z); if (left>=6 && !issues.length) add('no_llega','No termina la vía en '+TL+' s ('+Math.round(left)+' m sin recorrer)');
+  const left=Math.hypot(pts[pts.length-1][0]-car.x,pts[pts.length-1][1]-car.z); if (left>=6 && !issues.length && !edge) add('no_llega','No termina la vía en '+TL+' s ('+Math.round(left)+' m sin recorrer)');
   const i0=d.CARS.indexOf(car); if(i0>=0) d.CARS.splice(i0,1); d.scene.remove(car.mesh);
   if (issues.length) { const q=issues[0]; const fx=Math.sin(car.h),fz=Math.cos(car.h); d.camera.position.set(car.x-fx*10,car.y+4,car.z-fz*10); d.camera.lookAt(car.x,car.y+0.5,car.z); }
   return {issues, L:Math.round(L)}; }
@@ -258,7 +259,7 @@ async def main():
             pg = await b.new_page(viewport={'width': 960, 'height': 540})
             errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
             async def load():
-                await pg.goto('http://localhost:8766/test.html?q=baja'); await pg.wait_for_function('window.__GAME_READY', timeout=240000)
+                await pg.goto('http://localhost:8766/test.html?q=baja&revisor=1'); await pg.wait_for_function('window.__GAME_READY', timeout=240000)
                 await pg.evaluate(SETUP)
             await load()
             roads = json.loads(await pg.evaluate(SELECT, {'zones': ZONES}))

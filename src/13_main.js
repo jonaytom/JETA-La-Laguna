@@ -23,7 +23,7 @@ const GAME = {
     }; GAME._respawnFinish = finish; setTimeout(finish, 3200);
   },
   // dying: back where the story starts (El Blanco's street), $100 less; finished missions stay finished
-  wasted() { if (GAME.state !== 'play') return; PLAYER.dead = true; const st = (typeof NPC !== 'undefined' && NPC.blanco && NPC.blanco.home) || [PLAZA.x - 8, PLAZA.z + 20]; GAME.respawn(st[0] + 6, st[1] + 4, 'HAS MUERTO', '#e04848', Math.min(100, PLAYER.money)); },
+  wasted() { if (GAME.state !== 'play') return; PLAYER.dead = true; const hc = nearestHealth(PLAYER.x, PLAYER.z); /* you wake up at the nearest health centre / A&E */ if (hc) { GAME.respawn(hc.x, hc.z, 'HAS MUERTO', '#e04848', Math.min(100, PLAYER.money)); setTimeout(() => HUD.toast('Te despiertas en ' + hc.name.charAt(0) + hc.name.slice(1).toLowerCase().replace(/la laguna/, 'La Laguna').replace(/san benito/, 'San Benito'), '#7fe08a', 4), 2500); return; } const st = (typeof NPC !== 'undefined' && NPC.blanco && NPC.blanco.home) || [PLAZA.x - 8, PLAZA.z + 20]; GAME.respawn(st[0] + 6, st[1] + 4, 'HAS MUERTO', '#e04848', Math.min(100, PLAYER.money)); },
   busted() { if (GAME.state !== 'play') return; PLAYER.dead = true; const p = DATA.P.find((p) => STR[p[0]] === 'Policia Municipal'); GAME.respawn(p ? p[2] : 85, p ? p[3] + 6 : 90, '¡TE PILLARON!', '#6fa8ff', WANTED.fine || 250); },
 };
 
@@ -44,6 +44,8 @@ const envKey = (t) => SETTINGS.weather + '|' + (Math.round(t / 1.5) % 16);
 function updateEnvironment(force) {
   if (!pmrem) { pmrem = new THREE.PMREMGenerator(renderer); }
   const k = envKey(GAME.tod); if (!force && k === lastEnvKey) return; lastEnvKey = k;
+  // only the current weather's maps are kept (audit P1.8): changing the weather frees the other ones (at most 16)
+  const w = SETTINGS.weather + '|'; for (const [kk, r] of ENVC) if (!kk.startsWith(w)) { r.dispose(); ENVC.delete(kk); }
   let rt = ENVC.get(k); if (!rt) { rt = pmrem.fromScene(bgScene, 0, 50, 90000); ENVC.set(k, rt); } scene.environment = rt.texture;
 }
 function precomputeEnv() {
@@ -239,7 +241,7 @@ async function boot() {
   window.__GAME_READY = true;
 }
 boot();
-window.__bg = [bgScene, bgCamera]; window.__dbg = { AYTO, exitCar, DLG, POOLS: { CARPOOL, HPOOL, SHARED_GEO, VGEO }, SHARED_GEO, MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
+window.__bg = [bgScene, bgCamera]; window.__dbg = { AYTO, HUC, HEALTH, nearestHealth, exitCar, DLG, S2, POOLS: { CARPOOL, HPOOL, SHARED_GEO, VGEO }, SHARED_GEO, MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
 window.__snap = () => { updateUnderground(); bgCamera.position.copy(camera.position); bgCamera.quaternion.copy(camera.quaternion); bgCamera.fov = camera.fov; bgCamera.updateProjectionMatrix(); renderer.clear(); renderer.render(bgScene, bgCamera); renderer.clearDepth(); renderer.render(scene, camera); return renderer.domElement.toDataURL('image/jpeg', 0.85); };
 window.__setYaw = (y) => { CAM.yaw = y; CAM.pitch = 0.1; INPUT.lastMouse = performance.now(); };
 window.__hit = (p) => hitPed(p);

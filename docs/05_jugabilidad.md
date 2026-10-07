@@ -19,6 +19,7 @@
 ```
 
 - `pass(título, dinero)` cierra la misión, suma dinero, suena el estribillo y **guarda automáticamente**.
+  Dos círculos de inicio nunca coinciden; si hay dos a menos de 2 m, empieza el más cercano.
   `fail(motivo)` la cancela y, cuando vuelves a estar jugando (tras reaparecer, una pelea…), pregunta
   **«¿Reintentar?»**: te lleva al inicio de la misión y la empieza otra vez (`fail(motivo, true)` no lo pregunta).
 - **Guardar a mitad**: la partida guarda qué misión estaba en curso, pero al cargar empieza de nuevo en su círculo
@@ -33,7 +34,7 @@
   Secundaria: Revancha con el Canarión.
 - **Defensores de La Laguna** (`12f_story2.js`, se añaden con `MISSIONS.addStory()` usando las herramientas de
   `MISSIONS.kit`): la pistola es de **bolas de plástico de aire comprimido** (`WEAPON.lawful`: disparar no es delito
-  durante estas misiones). Atraco en la farmacia (pelea 2D, persecución en coche y bolas al que huye a pie) →
+  durante estas misiones). Atraco en la farmacia (pelea 2D; el segundo ladrón roba un coche negro aparcado junto a un Tollota Corola que coges tú; persecución hasta X −1548 Z −693, luego huye a pie por el camino de tierra hasta el Camino Tornero, X −1696 Z −883: dos tiros de bolas y se pone a llorar, lo agarras) →
   Defensores de La Laguna (ceremonia en el Ayuntamiento: el alcalde **Don Yovoy Gofiérrez**, bigote y traje negro,
   nombra a la banda grupo especial de la Policía Local; `GANG.defenders`) → El carterista del Cristo (Coco) →
   Baches en la Vía de Ronda (alcalde; camión, 5 puntos, 4 min) → El rally de La Esperanza (Canarión; carrera contra
@@ -42,7 +43,9 @@
   (alcalde; no alejarse más de 70 m) → El gofio robado (Boca Papa; pistas, pelea y furgoneta) → Carrera solidaria del
   casco (alcalde; a pie) → Noche en el aeropuerto (El Blanco; de noche, persecución de la furgoneta del queso; el
   alcalde os da **coche patrulla**, `GANG.patrol`). Los coches que huyen y las guaguas siguen una ruta del grafo
-  (`s2Path`/`s2DriveCar`, cinemáticos como el del Canarión); los que huyen a pie, `s2Runner`.
+  (`s2Path`/`s2DriveCar`, cinemáticos como el del Canarión); los que huyen a pie, `s2Runner` con `s2RunPath` (sale de
+  donde está, lejos del jugador, por `WALKG`; nunca se mueve más de 1,8 × su velocidad por paso). `s2Mark(o, s)`: flecha
+  roja sobre el perseguido unos segundos y punto rojo en los mapas (`s2Blips`) mientras dura la persecución.
 - NPCs de la banda (`NPC.blanco`, `boca`, `coco`, `sastron`, `canarion`): Coco y Sastrón aparecen en dos sitios
   emblemáticos del casco elegidos al azar en cada partida.
 
@@ -50,11 +53,19 @@
 
 - `setWaypoint(x, z, historia)`: rosa = destino puesto por el jugador; amarillo = misión o siguiente paso.
 - **A pie** se calcula la ruta con `WALKG`, un grafo con todas las calles, plazas, caminos y escaleras (A* con
-  montículo binario, los caminos peatonales cuestan menos). **En coche**, con `GRAPH` (respeta sentidos).
+  montículo binario, los caminos peatonales cuestan menos). **En coche**, con `GRAPH.routeFrom` (respeta sentidos):
+  empieza en la calle por la que vas (`nearestEdge`) y en tu sentido de marcha, y acaba en la calle del destino. La ruta
+  se mantiene y solo se recorta mientras la sigues (a menos de 14 m) y el destino no se mueve más de 12 m.
 - Minimapa y mapa grande (`M`, zoom con rueda/pellizco, `T` teletransporte en modo Achamán). Las carreteras van en
   azules para no confundirse con el amarillo/rosa de las rutas.
 - **Coordenadas**: encima del minimapa se ven X y Z del jugador (metros del mapa); en el mapa grande, las del cursor
   y las del destino marcado (abajo a la izquierda). Sirven para indicar posiciones exactas al corregir el mapa.
+- **Mapa grande** (v0.57): se abre centrado en el jugador con zoom 1,2 (~1 km de ancho). Los rótulos se dibujan en
+  pantalla por prioridad y sin pisarse (`drawLabels`): de lejos barrios y lugares importantes; desde zoom 0,9 las
+  grandes superficies (tipo 5), desde 1,2 las entradas visitables y desde 2,2 las tiendas. Colores de texto (blanco,
+  crema, gris, verde de las entradas) distintos de los de rutas y marcas (amarillo, azul, rosa, rojo).
+- `MISSIONS.kit.track(x, z)`: objetivo que se mueve (un coche que perseguir): círculo amarillo y ruta GPS sin columna
+  de luz; se actualiza cada 0,8 s.
 
 ## Peleas 2D (`09d_fight2d.js`)
 
@@ -87,6 +98,8 @@
 - Disparar donde alguien te ve es delito grave (más policía y más rápida, cuesta más perderla).
 
 ## Salud, comida y muerte
+
+- Al morir reapareces en el centro de salud o las urgencias más cercanas (`nearestHealth`, lista `HEALTH`).
 
 - La salud baja con golpes, porrazos, disparos y choques fuertes. Se recupera comiendo en tiendas
   (`12b_food.js`, icono rojo) o en la barra de la cafetería.

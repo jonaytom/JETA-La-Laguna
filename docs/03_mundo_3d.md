@@ -143,7 +143,13 @@ calzada debajo). **No pone barandilla** donde caería dentro de otra calzada al 
   (`INICIO_SHOPS`). `brandInside()` da nombre de marca a edificios sin nombre que contienen su tienda.
 - **Aeropuerto** (`05r_aeropuerto.js`, `buildAirport`): plataformas en celdas de 8 m sobre el terreno, pista y rodaje en
   tiras de 10 m con marcas, terminal sobre su planta OSM, torre, hangares y aviones (`makePlane`, geometría compartida).
+- Árboles y farolas no se plantan a menos de ~4,5 m del eje del tranvía (`nearTram`, rejilla de 32 m).
 - Edificios singulares: iglesias (`05c`), Intercambiador (`05k`), pasarela de Anchieta (`05f`), pabellones (`05i`).
+- **HUC y centros de salud** (`05t_hospital.js`, v0.58): sobre el bloque OSM «Área de Hospitalización» (zócalo de 10 m)
+  `buildHUC` levanta el bloque de 12 plantas (rectángulo mínimo del contorno), la torre cilíndrica con el helipuerto en
+  el extremo opuesto al edificio verde (EAA, piel de cristal `buildGlassSkin`), palmeras y escultura. Los centros de
+  salud (`LANDMARK_AT` en `05k`) y Urgencias llevan `saludDeco`: rótulo con cruz verde y un punto de reaparición en
+  `HEALTH`. Fotos en `docs/referencias/hospital_huc/`.
 - **Ayuntamiento** (`05s_ayuntamiento.js`, `buildAyuntamiento`, v0.56): fachada de cantería sobre el borde este de la
   Casa del Corregidor (deco `ayto` en `05k_landmarks.js`): 5 arcos con escalones, planta alta con ventanales de
   cuarterones y balcones de madera, pilastras, cornisa con bolas, frontón curvo con escudo, rótulo «AYUNTAMIENTO» y 5
