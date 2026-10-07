@@ -295,6 +295,132 @@ for rr in R:
 B = [b for bi, b in enumerate(B) if bi not in _drop]
 print('buildings dropped (a road runs through them)', len(_drop))
 
+# ---------------- tram polyline (chain)
+tw = [q(c) for t, c in d['T']]
+segs = [[(c[i], c[i + 1]) for i in range(0, len(c), 2)] for c in tw]
+# start at La Trinidad terminus
+start = min((p for s in segs for p in (s[0], s[-1])), key=lambda p: (p[0] + 117) ** 2 + (p[1] - 113) ** 2)
+line = [start]; used = set()
+cur = start
+while True:
+    best = None
+    for i, s in enumerate(segs):
+        if i in used: continue
+        for rev in (False, True):
+            ss = s[::-1] if rev else s
+            dd = (ss[0][0] - cur[0]) ** 2 + (ss[0][1] - cur[1]) ** 2
+            if dd < 16 and (best is None or dd < best[0]):
+                # prefer continuing forward direction: avoid going back
+                best = (dd, i, ss)
+    if not best: break
+    used.add(best[1])
+    # ignore tiny crossover segments (<4 pts) if they reverse direction
+    line.extend(best[2][1:]); cur = line[-1]
+# clip to area
+T = []
+for p in line:
+    if p[0] < -2000 or p[0] > 2500 or p[1] < -1300 or p[1] > 4100: break
+    T.extend(p)
+print('tram pts', len(T) // 2)
+
+# ---------------- streets moved apart at the tram stops: the game's carriageways (wider than OSM) ran over the
+# tracks and the platforms (agent: car stuck on the platform at Av. de los Menceyes and 8 more stops). Near each stop
+# every way on each side of the line is pushed outwards with a smooth curve, just enough to leave the platform
+# (the game uses 24 x 1.85 m platforms, 80 % of the real ones) plus a kerb gap, and never into a building.
+def _tram_stop_shift():
+    TRAM_HW, PLAT_W, PLAT_L = 3.6, 1.85, 24.0
+    NEED = TRAM_HW + PLAT_W + 0.6          # nearest carriageway edge, metres from the tram axis
+    CORE = PLAT_L / 2 + 2.4 + 2.0           # platform + ramps + margin, half length along the line
+    FADE = 30.0                             # back to the original line over this distance
+    _BG2 = {}
+    for bi, b in enumerate(B):
+        c = b[6]; xs = c[0::2]; zs = c[1::2]
+        for gx in range(int(min(xs) // 50), int(max(xs) // 50) + 1):
+            for gz in range(int(min(zs) // 50), int(max(zs) // 50) + 1): _BG2.setdefault((gx, gz), []).append(bi)
+    def _inb2(x, z):
+        for bi in _BG2.get((int(x // 50), int(z // 50)), []):
+            if _pip(x, z, B[bi][6]): return True
+        return False
+    def _tram_near(x, z):
+        best = None
+        for i in range(0, len(T) - 2, 2):
+            ax, az, bx, bz = T[i], T[i + 1], T[i + 2], T[i + 3]; dx, dz = bx - ax, bz - az; L2 = dx * dx + dz * dz or 1
+            t = max(0, min(1, ((x - ax) * dx + (z - az) * dz) / L2)); px, pz = ax + dx * t, az + dz * t; dd = _m.hypot(x - px, z - pz)
+            if best is None or dd < best[0]: L = _m.sqrt(L2); best = (dd, px, pz, dx / L, dz / L)
+        return best
+    _stops = {}
+    for pp in d['P']:
+        if pp[1] != 'tram_stop': continue
+        x, z = warp_pt(pp[2][0], pp[2][1]); _stops.setdefault(pp[0], []).append((x, z))
+    STOPS = []
+    for nm, l in _stops.items():
+        cx = sum(p[0] for p in l) / len(l); cz = sum(p[1] for p in l) / len(l); tn = _tram_near(cx, cz)
+        if tn and tn[0] < 30: STOPS.append((nm, tn[1], tn[2], tn[3], tn[4]))
+    def _sm(t): t = max(0.0, min(1.0, t)); return t * t * (3 - 2 * t)
+    def _frame(st, x, z): _, px, pz, ux, uz = st; vx, vz = x - px, z - pz; return vx * ux + vz * uz, vx * -uz + vz * ux   # along, lateral (+ = left)
+    def _densify(c, keep):
+        out = [c[0], c[1]]
+        for k in range(0, len(c) - 2, 2):
+            x1, z1, x2, z2 = c[k], c[k + 1], c[k + 2], c[k + 3]; L = _m.hypot(x2 - x1, z2 - z1)
+            if keep(x1, z1) or keep(x2, z2) or keep((x1 + x2) / 2, (z1 + z2) / 2):
+                n = max(1, int(L / 4))
+                for j in range(1, n): out += [round((x1 + (x2 - x1) * j / n) * 2) / 2, round((z1 + (z2 - z1) * j / n) * 2) / 2]
+            out += [x2, z2]
+        return out
+    nmoved = 0; report = []
+    for st in STOPS:
+        inzone = lambda x, z, st=st: (lambda a, l: abs(a) < CORE + FADE and 0.5 < abs(l) < 30)(*_frame(st, x, z))
+        for rr in R:
+            if any(inzone(rr[4][k], rr[4][k + 1]) for k in range(0, len(rr[4]), 2)) or any(inzone((rr[4][k] + rr[4][k + 2]) / 2, (rr[4][k + 1] + rr[4][k + 3]) / 2) for k in range(0, len(rr[4]) - 2, 2)):
+                rr[4] = _densify(rr[4], inzone)
+        for side in (1, -1):
+            # how far the nearest parallel carriageway on this side must move
+            need = 0.0; drv = []
+            for ri, rr in enumerate(R):
+                if rr[0] > 12 or (rr[3] & 6): continue
+                c = rr[4]
+                for k in range(0, len(c), 2):
+                    a, l = _frame(st, c[k], c[k + 1])
+                    if abs(a) > CORE or l * side < 0.5 or l * side > 25: continue
+                    j = k if k + 2 < len(c) else k - 2; dx, dz = c[j + 2] - c[j], c[j + 3] - c[j + 1]; dl = _m.hypot(dx, dz) or 1
+                    if abs((dx * st[3] + dz * st[4]) / dl) < 0.7: continue      # cross streets keep their place
+                    need = max(need, NEED - (abs(l) - rr[2] / 2)); drv.append((ri, k))
+            if need <= 0.05: continue
+            def shift(a, l, D):
+                if l * side < 0.5: return 0.0
+                return D * (1 - _sm((abs(a) - CORE) / FADE)) * (1 - _sm((abs(l) - 22) / 8))
+            # never push a carriageway or its pavement into a building
+            D = need
+            while D > 0:
+                ok = True
+                for ri, k in drv:
+                    rr = R[ri]; x, z = rr[4][k], rr[4][k + 1]; a, l = _frame(st, x, z); s_ = shift(a, l, D)
+                    _nx, _nz = -st[4] * side, st[3] * side; e = rr[2] / 2 + 2.6
+                    if _inb2(x + _nx * (s_ + e), z + _nz * (s_ + e)) and not _inb2(x + _nx * e, z + _nz * e): ok = False; break
+                if ok: break
+                D = round(D - 0.25, 2)
+            if D <= 0: report.append((st[0], side, round(need, 1), 0)); continue
+            moved = {}
+            for rr in R:
+                c = rr[4]
+                for k in range(0, len(c), 2):
+                    a, l = _frame(st, c[k], c[k + 1]); s_ = shift(a, l, D)
+                    if s_ > 0.05: moved[(c[k], c[k + 1])] = (c[k] - st[4] * side * s_, c[k + 1] + st[3] * side * s_)
+            for rr in R:
+                c = rr[4]
+                for k in range(0, len(c), 2):
+                    m = moved.get((c[k], c[k + 1]))
+                    if m: c[k], c[k + 1] = round(m[0] * 2) / 2, round(m[1] * 2) / 2
+            nmoved += len(moved); report.append((st[0], side, round(need, 1), D))
+    print('tram stops: streets moved apart', nmoved, 'points;', report)
+    for _rr in R:   # rounding can leave two equal points in a row (zero-length segments -> NaN normals in the game)
+        _c = _rr[4]; _o = [_c[0], _c[1]]
+        for _k in range(2, len(_c), 2):
+            if _c[_k] != _o[-2] or _c[_k + 1] != _o[-1]: _o += [_c[_k], _c[_k + 1]]
+        _rr[4] = _o
+    R[:] = [rr for rr in R if len(rr[4]) >= 4]
+_tram_stop_shift()
+
 # ---------------- road graph for AI traffic
 AI = {'motorway', 'motorway_link', 'trunk', 'primary', 'primary_link', 'secondary', 'secondary_link', 'tertiary', 'tertiary_link', 'unclassified', 'residential'}
 cnt = {}
@@ -323,33 +449,6 @@ for rr, pts in ways:
             seg = [p]
 print('graph nodes', len(NL) // 2, 'edges', len(EDG))
 
-# ---------------- tram polyline (chain)
-tw = [q(c) for t, c in d['T']]
-segs = [[(c[i], c[i + 1]) for i in range(0, len(c), 2)] for c in tw]
-# start at La Trinidad terminus
-start = min((p for s in segs for p in (s[0], s[-1])), key=lambda p: (p[0] + 117) ** 2 + (p[1] - 113) ** 2)
-line = [start]; used = set()
-cur = start
-while True:
-    best = None
-    for i, s in enumerate(segs):
-        if i in used: continue
-        for rev in (False, True):
-            ss = s[::-1] if rev else s
-            dd = (ss[0][0] - cur[0]) ** 2 + (ss[0][1] - cur[1]) ** 2
-            if dd < 16 and (best is None or dd < best[0]):
-                # prefer continuing forward direction: avoid going back
-                best = (dd, i, ss)
-    if not best: break
-    used.add(best[1])
-    # ignore tiny crossover segments (<4 pts) if they reverse direction
-    line.extend(best[2][1:]); cur = line[-1]
-# clip to area
-T = []
-for p in line:
-    if p[0] < -2000 or p[0] > 2500 or p[1] < -1300 or p[1] > 4100: break
-    T.extend(p)
-print('tram pts', len(T) // 2)
 
 # ---------------- areas
 AT = ['park', 'garden', 'grass', 'farmland', 'meadow', 'pitch', 'forest', 'scrub', 'water', 'cemetery', 'playground', 'parking', 'residential', 'industrial', 'square', 'sports', 'orchard']

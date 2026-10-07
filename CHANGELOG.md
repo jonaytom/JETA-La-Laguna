@@ -3,6 +3,15 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.53.0 — 2026-10-07 — Paradas del tranvía, escalera de la pasarela y paredes de túnel
+- **Paradas del tranvía**: en 9 paradas la calzada pisaba las vías y el andén y el coche se atascaba. Ahora, junto a
+  cada parada, la calle se aparta hacia fuera con una curva suave lo justo para dejar sitio al andén, sin meterse en
+  edificios ni aceras (se calcula en `prep.py`). Los andenes son un 20 % más pequeños que los reales (24 × 1,85 m).
+- **Pasarela de La Trinidad**: la escalera sureste ya no baja a la carretera; sale un tramo llano hacia el campus y la
+  escalera llega a la acera en X −272, Z 709.
+- **Túneles**: entre dos trincheras pegadas solo se quita la pared si las dos van a la misma altura; si la de al lado
+  va a otra profundidad o aún a ras, la pared se mantiene (antes se veía el exterior a través del túnel).
+
 ## 0.52.0 — 2026-10-07 — Sin fuga de los coches del tráfico (auditoría P0.a)
 - Las piezas de los vehículos se crean una sola vez y las comparten todos: pilotos, barra de luces y franjas de la
   policía, franja y luz del taxi, ruedas, cubos, carenados y piloto de las motos, y el casco del motorista. Los rótulos

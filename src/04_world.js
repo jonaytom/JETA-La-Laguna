@@ -584,11 +584,17 @@ function depressedHF(ri) {
   return (s, x, z) => (tun ? Math.min(lerp(g0, g1, clamp(s / L, 0, 1)), heightAt(x, z)) : heightAt(x, z)) - depthOf(ri, s);
 }
 // twin tubes: when the other carriageway of a dual road runs right beside this one, don't build the wall between them
-let TUN_RI = -1, DEP_SEGS = null;
+let TUN_RI = -1, DEP_SEGS = null, DEP_YF = null;
 function twinWall(x, z, y0, y1) {
   if (TUN_RI < 0) return false;
-  if (!DEP_SEGS) { DEP_SEGS = []; for (const ri of DEP.keys()) { const c = DATA.R[ri][4], w = DATA.R[ri][2]; for (let i = 0; i < c.length - 2; i += 2) DEP_SEGS.push([c[i], c[i + 1], c[i + 2], c[i + 3], w / 2, ri]); } }
-  for (const g of DEP_SEGS) { if (g[5] === TUN_RI) continue; if (Math.abs(x - g[0]) > 60 && Math.abs(x - g[2]) > 60) continue; const dx = g[2] - g[0], dz = g[3] - g[1], L2 = dx * dx + dz * dz || 1; const t = clamp(((x - g[0]) * dx + (z - g[1]) * dz) / L2, 0, 1); if (Math.hypot(x - g[0] - dx * t, z - g[1] - dz * t) < g[4] + 1.9) return true; }
+  if (!DEP_SEGS) { DEP_SEGS = []; DEP_YF = new Map(); for (const ri of DEP.keys()) { const c = DATA.R[ri][4], w = DATA.R[ri][2]; let s0 = 0; for (let i = 0; i < c.length - 2; i += 2) { const L = Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]); DEP_SEGS.push([c[i], c[i + 1], c[i + 2], c[i + 3], w / 2, ri, s0]); s0 += L; } } }
+  // only between twin tubes/cuttings at about the same level: a sunk road beside at another depth (or still at grade)
+  // needs the wall, otherwise you saw out through the side of the tunnel (Camino el Vallado)
+  const yAt = (g, t, L) => { let f = DEP_YF.get(g[5]); if (!f) DEP_YF.set(g[5], f = roadYFn(g[5])); return f(g[6] + t * L, x, z); };
+  let own = null, od = 1e9; for (const g of DEP_SEGS) { if (g[5] !== TUN_RI) continue; const dx = g[2] - g[0], dz = g[3] - g[1], L2 = dx * dx + dz * dz || 1; const t = clamp(((x - g[0]) * dx + (z - g[1]) * dz) / L2, 0, 1); const dd = Math.hypot(x - g[0] - dx * t, z - g[1] - dz * t); if (dd < od) { od = dd; own = [g, t, Math.sqrt(L2)]; } }
+  const yOwn = own ? yAt(own[0], own[1], own[2]) : y0;
+  for (const g of DEP_SEGS) { if (g[5] === TUN_RI) continue; if (Math.abs(x - g[0]) > 60 && Math.abs(x - g[2]) > 60) continue; const dx = g[2] - g[0], dz = g[3] - g[1], L2 = dx * dx + dz * dz || 1; const t = clamp(((x - g[0]) * dx + (z - g[1]) * dz) / L2, 0, 1); if (Math.hypot(x - g[0] - dx * t, z - g[1] - dz * t) < g[4] + 1.9) {
+      if (Math.abs(yAt(g, t, Math.sqrt(L2)) - yOwn) < 1.6) return true; } }
   return false;
 }
 function tunnelRoad(c, w, cls, tile, hf, opt = {}) {

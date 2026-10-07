@@ -40,7 +40,8 @@ function buildPasarela() {
   const P = (a, r, yy) => [RING.cx + Math.cos(a) * r, yy, RING.cz + Math.sin(a) * r];
   const quad = (arr, a, b, c, d) => { arr.push(...a, ...b, ...c, ...a, ...c, ...d); };
   // openings in the outer wall where the stairs and the helical ramp leave the ring
-  const GAPS = [[Math.PI * 0.98, 0.045], [Math.PI * 1.72, 0.045], [Math.atan2(792 - RING.cz, -326 - RING.cx), 0.05]];
+  const SE_STAIR = [-272, 709]; /* where the south-east stairs reach the ground (Jonay: they used to land on the road) */ const SE_ANG = Math.atan2(SE_STAIR[1] - RING.cz, SE_STAIR[0] - RING.cx);
+  const GAPS = [[Math.PI * 0.98, 0.045], [SE_ANG, 0.045], [Math.atan2(792 - RING.cz, -326 - RING.cx), 0.05]];
   const inGap = (a) => GAPS.some(([g, hwA]) => Math.abs(angDiff(a, g)) < hwA);
   for (let i = 0; i < N; i++) {
     const a0 = i / N * Math.PI * 2, a1 = (i + 1) / N * Math.PI * 2; const fold = (i % 2 ? 0.28 : -0.05);
@@ -88,11 +89,19 @@ function buildPasarela() {
   DECKS.push({ type: 'path', pts: ramp.slice(0, half + 1), w: 3.2 }); DECKS.push({ type: 'path', pts: ramp.slice(half), w: 3.2 });
   buildRampMesh(ramp, 3.2, white, floorM, concrete);
   // straight stairs on the west side (towards Avenida de La Trinidad) and south-east (towards the tram stop)
-  for (const ang of [Math.PI * 0.98, Math.PI * 1.72]) {
+  { const ang = Math.PI * 0.98;
     const sx = RING.cx + Math.cos(ang) * (R + hw), sz = RING.cz + Math.sin(ang) * (R + hw); const dx = Math.cos(ang), dz = Math.sin(ang);
     const g = heightAt(sx + dx * 12, sz + dz * 12) + 0.15; const len = (y - g) * 1.7;
     const st = [[sx - dx * 0.5, sz - dz * 0.5, y], [sx + dx * len, sz + dz * len, g]]; DECKS.push({ type: 'path', pts: st, w: 2.8 });
     buildStairs(st, 2.8, white, floorM);
+  }
+  // south-east: a level walkway leaves the ring towards the campus pavement and the stairs come down onto it
+  { const ang = SE_ANG; const dx = Math.cos(ang), dz = Math.sin(ang);
+    const sx = RING.cx + dx * (R + hw), sz = RING.cz + dz * (R + hw); const [ex, ez] = SE_STAIR; const g = heightAt(ex, ez) + 0.15;
+    const len = (y - g) * 1.7, D = Math.hypot(ex - sx, ez - sz); const ux = (ex - sx) / D, uz = (ez - sz) / D;
+    const tx = ex - ux * len, tz = ez - uz * len; // top of the stairs
+    if (D - len > 1) { const walk = [[sx - ux * 0.5, sz - uz * 0.5, y], [tx, tz, y]]; DECKS.push({ type: 'path', pts: walk, w: 2.8 }); buildRampMesh(walk, 2.8, white, floorM, concrete); }
+    const st = [[tx, tz, y], [ex, ez, g]]; DECKS.push({ type: 'path', pts: st, w: 2.8 }); buildStairs(st, 2.8, white, floorM);
   }
   // glass lift tower on the north side, next to the ring
   { const ang = Math.PI * 0.42; const x = RING.cx + Math.cos(ang) * (R + hw + 2.2), z = RING.cz + Math.sin(ang) * (R + hw + 2.2); const g = heightAt(x, z);

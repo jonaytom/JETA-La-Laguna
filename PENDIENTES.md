@@ -5,8 +5,22 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 
 ## Por revisar con Jonay
 
-- [ ] **Música «real»** para la radio (hip hop / rap de finales de los 90 y principios de los 2000) con alguna
-      herramienta externa y las letras del juego. Solo consulta por ahora: ver opciones antes de hacer nada.
+- [ ] **Modo móvil** (Jonay, captura): el minimapa se mezcla con las estrellas y tapa los botones ENTRAR / CORRER y
+      las coordenadas. Reubicar y dimensionar HUD, minimapa, textos y botones para que sea jugable en el móvil.
+
+- [ ] **Uniones de túneles y puentes con la vía normal** (Jonay, 7-oct): salida del túnel de Camino el Vallado
+      (X −942 Z 86 / X −928 Z 64): la losa de arriba se superpone a la salida y no deja salir, y por las paredes
+      laterales se ve a través (no debería verse el exterior a través de las paredes del túnel). Vía de Ronda
+      (X 388 Z 1499): en la boca confluyen calles y los coches se hunden/chocan. Revisar todas las uniones.
+- [x] v0.53.0 Escalera SE de la pasarela de La Trinidad: ahora baja en X −272 Z 709.
+- [ ] **Pasarela de La Trinidad intransitable en algunas zonas** (Jonay, captura en X −313 Z 820, rampa hacia
+      Carretera de San Miguel de Geneto): revisar dónde se queda parado el personaje.
+- [ ] **Freno de mano** (Jonay): al accionarlo debe bloquear las ruedas traseras: frena, derrapa un poco y gira más
+      cerrado, como en la realidad. Revisar cómo hacerlo y proponerlo.
+- [ ] **Marcas viales** (apunte de Jonay): con los puentes y cruces hay líneas que se cruzan por todas partes; también
+      en salidas e incorporaciones (autopista, Vía de Ronda) y en las glorietas.
+- [ ] **Árboles y farolas sobre la vía del tranvía** (Jonay, captura en una glorieta junto al tranvía).
+
 
 - [ ] Repasar con las fotos del aeropuerto la zona ya hecha alrededor (San Benito, El Coromoto, autopista TF-5).
 
@@ -23,9 +37,8 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 - [ ] **Auditoría de código v0.49** (`docs/auditorias/INFORME_AUDITORIA_JETA_v0.49.0.md`, APTO CON AVISOS) — por decidir con Jonay:
       P0.a coches de tráfico fuera del pool sin liberar + luces/cascos por coche; P0.b rótulos canvas sin caché;
       aparcados en InstancedMesh; P1.5 mallas sueltas/LOD; mapas de reflejos en segundo plano; P2.1/P2.2/P2.5.
-- [ ] **Auditor v0.52 (APTO CON AVISOS, comparado con v0.51 re-medida)**: fuga trazada 477 → 0 (P0.a hecha). Avisos nuevos:
-      memoria JS 569 → 629 MB (+11 %) y geometría en RAM 416 → 476 MB (+14 %). Por mirar: puede ser que ahora se
-      guarden las piezas compartidas de todos los modelos vistos y los motoristas en el grupo de peatones.
+- [x] v0.53.0 Auditor: **APTO** (comparado con la 0.51 re-medida). Fuga 477 → 0; memoria y geometría ya no suben
+      (546 → 547 MB y 387 → 386 MB): los avisos de la 0.52 eran de la forma de medir.
 - [x] v0.52.0 **Auditor nuevo (v0.51, APTO CON AVISOS, comparado con v0.49)**: fuga trazada de 477 geometrías tras pasear (GPU +20
       geometrías y +5 texturas en 2 vueltas). Origen: `Car ← manageTraffic` (×304), `makeKenneyMesh ← Car` (×91),
       `pod ← makeMotoMesh ← Car` (×23): confirma la P0.a/P0.4 de los coches del tráfico. Por decidir con Jonay.
@@ -45,9 +58,9 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       autopista y trincheras (conducción: de 94 a 25 avisos). Quedan:
       - **Aeropuerto** (X −3270, Z −260 y X −2330, Z −240): enlaces que se cruzan a distinta altura; el coche aún va
         ~1,4 m por encima en 3 enlaces, y la auditoría de obstáculos sube de 169 a 200 por pretiles en esa zona.
-      - **Andenes del tranvía sobre la calzada** (Av. de los Menceyes X 577 Z 1231 y otras 12 paradas): la calle de
-        OSM pasa por encima de la mediana del tranvía; el andén queda en la calzada y el coche se atasca. Opciones:
-        mover la calle, estrechar el andén o quitarlo de ese lado (por decidir).
+      - [x] v0.53.0 Andenes del tranvía sobre la calzada: la calle se aparta junto a la parada y los andenes son un
+        20 % más pequeños (agente: 0 avisos en las 18 calles de las paradas). Quedan 3 andenes que aún tocan la
+        calzada por un extremo (X −147 Z 183, X 281 Z 884, X 2081 Z 3965).
       - Rampa de parking de servicio (X −495, Z 683): empieza 1,1 m hundida sin hueco en el terreno (salto).
       - **Medianas tipo New Jersey** que cruzan carriles en glorietas y enlaces (X 1823 Z 3077, X 5 Z 2330).
       - Calle La Papa (X −948, Z 1484) pegada a una fachada; Calle Timanfaya (X −1251, Z −3) bajo un tablero estrecho.
@@ -72,6 +85,11 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       retargetear a nuestro esqueleto; la descarga la hace Jonay con su cuenta de Adobe).
 - [ ] **Assets de coches y motos** (consulta hecha, falta decidir): opciones CC0/CC-BY en
       `docs/referencias/assets_vehiculos.md`.
+
+## Extras para el final
+
+- [ ] **Música «real»** para la radio (hip hop / rap de finales de los 90 y principios de los 2000). Jonay: «ni lo
+      consideres, es un extra final».
 
 ## Pendientes anteriores
 
