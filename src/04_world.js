@@ -218,7 +218,7 @@ const ROADCLASS = (rd) => {
   return 'asphalt';
 };
 const YOFF = { sidewalk: 0.09, dirt: 0.08, footway: 0.1, asphalt: 0.13, paving: 0.13, asphaltLines: 0.15, disc: 0.155, discPave: 0.135, tram: 0.17 };
-function ribbon(pts, w, mk, yoff, tileLen, uSpan = 1, hf = null) {
+function ribbon(pts, w, mk, yoff, tileLen, uSpan = 1, hf = null, blend = false) { /* blend: a sunk road near grade follows the ground across its width (flat on a cross slope it floated ~1 m over the road beside it) */
   // pts: flat [x,z,...]; subdivide to max 5m
   const P = [];
   for (let i = 0; i < pts.length - 2; i += 2) {
@@ -238,7 +238,7 @@ function ribbon(pts, w, mk, yoff, tileLen, uSpan = 1, hf = null) {
     const nx = -tz, nz = tx; const miter = 1 / Math.max(0.5, nx * -d2z + nz * d2x);
     if (i > 0) dist += Math.hypot(p[0] - P[i - 1][0], p[1] - P[i - 1][1]);
     const lx = p[0] + nx * hw * miter, lz = p[1] + nz * hw * miter, rx = p[0] - nx * hw * miter, rz = p[1] - nz * hw * miter;
-    if (hf) { const hy = hf(dist, p[0], p[1]) + yoff; L.push([lx, hy, lz]); R.push([rx, hy, rz]); } else { const hl = heightAt(lx, lz), hr = heightAt(rx, rz); let lift = 0; /* the ribbon is a straight chord across the width: lift it where the 16 m terrain bulges inside (grass poking through the asphalt) */
+    if (hf) { const hy = hf(dist, p[0], p[1]) + yoff; let kl = 0, kr = 0; if (blend) { const g = heightAt(p[0], p[1]), k = smooth(0, 1, 1 - (g - hy + yoff) / 1.2); kl = k * Math.min(0, heightAt(lx, lz) - g); kr = k * Math.min(0, heightAt(rx, rz) - g); } L.push([lx, hy + kl, lz]); R.push([rx, hy + kr, rz]); } else { const hl = heightAt(lx, lz), hr = heightAt(rx, rz); let lift = 0; /* the ribbon is a straight chord across the width: lift it where the 16 m terrain bulges inside (grass poking through the asphalt) */
       if (w > 3) for (const f of [0.25, 0.5, 0.75]) lift = Math.max(lift, heightAt(lx + (rx - lx) * f, lz + (rz - lz) * f) - (hl + (hr - hl) * f));
       L.push([lx, hl + yoff + lift, lz]); R.push([rx, hr + yoff + lift, rz]); } V.push(dist / tileLen);
   }
@@ -362,12 +362,19 @@ function bridgeDressing(c, w, hf, road) {
 }
 const BRIDGE_DECKS = [];
 function roundaboutIsland(cx, cz, R, w) {
-  const Ri = R - w / 2 - 0.4; if (Ri < 1.5) return;
+  let Ri = R - w / 2 - 0.4; // shrink it until no other carriageway (a slip road passing tangent) runs over its edge
+  const hit = (r) => { for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; if (onCarriagewayEarly(cx + Math.cos(a) * r, cz + Math.sin(a) * r, -0.6)) return true; } return false; };
+  while (Ri >= 1.5 && hit(Ri)) Ri -= 0.5; if (Ri < 1.5) return;
   const G = acc(cx, cz, 'grass'), T = acc(cx, cz, 'trim'); const N = 28, y0 = heightAt(cx, cz) + 0.35; const kc = [0.85, 0.84, 0.8];
   for (let i = 0; i < N; i++) { const a0 = i / N * Math.PI * 2, a1 = (i + 1) / N * Math.PI * 2; const p0 = [cx + Math.cos(a0) * Ri, cz + Math.sin(a0) * Ri], p1 = [cx + Math.cos(a1) * Ri, cz + Math.sin(a1) * Ri];
-    G.tri([cx, y0, cz], [p0[0], y0, p0[1]], [p1[0], y0, p1[1]], [cx / 4, cz / 4], [p0[0] / 4, p0[1] / 4], [p1[0] / 4, p1[1] / 4], null, undefined, [0, 1, 0]);
+    // the island follows the ground (it used to be a flat disc at the centre's height: on a slope it stood 1-1.5 m over
+    // the carriageway on the low side — agent: "grass floating over the road")
+    const RG = Math.max(1, Math.ceil(Ri / 6)), P = (a, r) => { const x = cx + Math.cos(a) * r, z = cz + Math.sin(a) * r; return [x, heightAt(x, z) + 0.35, z]; };
+    for (let k = 0; k < RG; k++) { const r0 = Ri * k / RG, r1 = Ri * (k + 1) / RG; const A = P(a0, r0), B = P(a0, r1), C = P(a1, r1), D2 = P(a1, r0);
+      if (k === 0) G.tri([cx, heightAt(cx, cz) + 0.35, cz], B, C, [cx / 4, cz / 4], [B[0] / 4, B[2] / 4], [C[0] / 4, C[2] / 4], null, undefined, [0, 1, 0]);
+      else G.quad(A, B, C, D2, [A[0] / 4, A[2] / 4], [B[0] / 4, B[2] / 4], [C[0] / 4, C[2] / 4], [D2[0] / 4, D2[2] / 4], null, undefined, [0, 1, 0]); }
     const g0 = heightAt(p0[0], p0[1]) + 0.05, g1 = heightAt(p1[0], p1[1]) + 0.05;
-    T.quad([p0[0], g0, p0[1]], [p1[0], g1, p1[1]], [p1[0], y0, p1[1]], [p0[0], y0, p0[1]], [0, 0], [0, 0], [0, 0], [0, 0], kc, undefined, [Math.cos(a0), 0, Math.sin(a0)]); }
+    T.quad([p0[0], g0, p0[1]], [p1[0], g1, p1[1]], [p1[0], g1 + 0.3, p1[1]], [p0[0], g0 + 0.3, p0[1]], [0, 0], [0, 0], [0, 0], [0, 0], kc, undefined, [Math.cos(a0), 0, Math.sin(a0)]); }
   COL.addCirc(cx, cz, Math.max(0.8, Ri - 0.2));
   if (Ri > 6) TREES.push([cx, cz, 1, 1.1, 1]); if (Ri > 14) { for (let k = 0; k < 4; k++) { const a = k / 4 * Math.PI * 2 + 0.4; TREES.push([cx + Math.cos(a) * Ri * 0.55, cz + Math.sin(a) * Ri * 0.55, 1, 0.9, 1]); } }
 }
@@ -529,7 +536,7 @@ function computeRaisesOnce() {
           for (const o of RB) { if (o.ri === rj || x < o.b[0] - o.w || x > o.b[1] + o.w || z < o.b[2] - o.w || z > o.b[3] + o.w) continue; const c2 = o.c; let acc = 0;
             for (let j = 0; j + 3 < c2.length; j += 2) { const dx = c2[j + 2] - c2[j], dz = c2[j + 3] - c2[j + 1], L2 = Math.hypot(dx, dz) || 1; const tr = ((x - c2[j]) * dx + (z - c2[j + 1]) * dz) / (L2 * L2);
               if (tr >= 0 && tr <= 1) { const d = Math.hypot(x - c2[j] - dx * tr, z - c2[j + 1] - dz * tr); if (d < o.w / 2 + 1.2 && (d < o.w / 2 - 0.5 || Math.abs((dx * tx + dz * tz) / L2) > 0.6)) { const ss = acc + L2 * tr; const px = c2[j] + dx * tr, pz = c2[j + 1] + dz * tr;
-                const yT = yOf(o, ss, px, pz); if (yT - heightAt(px, pz) < 3.2) best = Math.max(best, yT); } } acc += L2; } }
+                const yT = yOf(o, ss, px, pz); if (yT - heightAt(px, pz) < 3.2 || (!o.isBr && d < o.w / 2 - 0.5 && Math.abs((dx * tx + dz * tz) / L2) > 0.6)) best = Math.max(best, yT); /* any embankment (not a deck) running along it: follow it too */ } } acc += L2; } }
           if (best < -1e8) continue; const have = brJ ? raiseOf(rj, sj) : (RAISE.has(rj) && spj && sj >= spj[0] - 0.5 && sj <= spj[1] + 0.5 ? raiseOf(rj, sj) : 0); const yJ = brJ ? pfJ(sj, x, z) + have : heightAt(x, z) + have; const need = best - yJ;
           if (need < 0.3 || (brJ && need > 2.5)) continue; let a = ovl.get(rj); if (!a) ovl.set(rj, a = []); a.push([sj, have + need]); } s += L; } });
     for (const [rj, a] of ovl) { const Lj = polyLen(DATA.R[rj][4]); let lo = Lj, hi = 0; const k = a.map(([s0, h]) => { const Rr = clamp(h * 14, 6, 60); lo = Math.min(lo, s0 - Rr); hi = Math.max(hi, s0 + Rr); return [s0, h, Rr]; });
@@ -585,7 +592,7 @@ function twinWall(x, z, y0, y1) {
   return false;
 }
 function tunnelRoad(c, w, cls, tile, hf, opt = {}) {
-  ribbon(c, w, cls, YOFF[cls], tile, cls === 'asphaltLines' ? 1 : w / 8, hf);
+  ribbon(c, w, cls, YOFF[cls], tile, cls === 'asphaltLines' ? 1 : w / 8, hf, true);
   // covered stretch -> tube with walls, ceiling and lights; open stretch -> cutting with retaining walls
   const T = acc(c[0], c[1], 'tunnel'); const L2 = acc(c[0], c[1], 'tunnelLight'); const W = acc(c[0], c[1], 'trim'); const hw = w / 2 + (opt.H ? 0.6 : 1.0), H = opt.H || 6.0; // roomier tubes and mouths
   const pts = []; let dist = 0;
@@ -633,7 +640,7 @@ function trenchPush(x, z, rad) {
 const sameLevel = (y1, y2) => Math.abs(y1 - y2) < 2.6;
 // ground below the terrain surface (tunnels/cuttings) for something currently at height py
 let TCUTS_READY = false; let DEP_ROWS = null;
-function onSurfaceRoad(x, z) { if (!DEP_ROWS) DEP_ROWS = new Set([...DEP.keys()].map((i) => DATA.R[i])); const rd = ROADSEG.nearest(x, z, (r) => !DEP_ROWS.has(r) && !(r[3] & 6) && r[0] <= 15); return !!rd && !RAISE.has(rd.ri) && rd.d < DATA.R[rd.ri][2] / 2 + 0.3; }
+function onSurfaceRoad(x, z) { if (!DEP_ROWS) DEP_ROWS = new Set([...DEP.keys()].map((i) => DATA.R[i])); const rd = ROADSEG.nearest(x, z, (r) => !DEP_ROWS.has(r) && !(r[3] & 6) && r[0] <= 12); return !!rd && !RAISE.has(rd.ri) && rd.d < DATA.R[rd.ri][2] / 2 + 0.3; }
 function lowAt(x, z, py) {
   let best = null;
   for (const d of TUNNEL_DECKS) {
@@ -651,7 +658,7 @@ function lowAt(x, z, py) {
   }
   return best;
 }
-function onCarriagewayEarly(x, z) { const rd = ROADSEG.nearest(x, z, (r) => r[0] <= 12 && !(r[3] & 2)); return !!rd && rd.d < DATA.R[rd.ri][2] / 2 + 1; }
+function onCarriagewayEarly(x, z, m = 1) { const rd = ROADSEG.nearest(x, z, (r) => r[0] <= 12 && !(r[3] & 2)); return !!rd && rd.d < DATA.R[rd.ri][2] / 2 + m; }
 // ---------- buildings
 const PAL = {
   0: ['#e0b04e', '#a8513a', '#f3eee2', '#9fc4d6', '#a7c092', '#e7a47c', '#ecd276', '#d88d63', '#f1e7c8', '#b8cbd8', '#c56b4b', '#efe5d2'],

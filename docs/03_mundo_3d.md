@@ -82,6 +82,10 @@ Recorre las vías cada 3 m buscando una vía paralela al mismo nivel con un huec
    pegada) pisa la calzada de una rampa elevada o del extremo bajo de un puente (< 3,2 m sobre el terreno), sube con
    ella en ese tramo (rampas suaves de `h·14` m). Se hace antes y después de que las calles que tocan una rampa por un
    nodo suban a su encuentro, y en dos pasadas para que lo elevado arrastre a sus vecinas.
+   Desde v0.51 también sigue a terraplenes más altos cuando su eje cae dentro de esa calzada y van en paralelo (no a
+   tableros de puente, que pueden cruzar por encima).
+8. **Isletas de rotonda** (`roundaboutIsland`): siguen el terreno en anillos de ~6 m y se encogen hasta que ninguna
+   otra calzada pisa su borde.
 
 `bridgeProfile(c)` da al tablero una ligera comba y nunca lo deja por debajo del terreno. `bridgeDressing`
 añade bordillo-parapeto, barandilla de acero, cara inferior y pilas (solo donde el tablero está alto y no hay
@@ -108,6 +112,9 @@ calzada debajo). **No pone barandilla** donde caería dentro de otra calzada al 
   curvas con pendiente, el máximo de varios tramos daba alturas de más adelante y el coche «volaba» o pegaba saltos).
   `trenchPush` solo empuja de lado (entrar de frente por la boca de una trinchera es entrar por la calle) y no actúa
   sobre una calle a ras de suelo.
+  El asfalto de una calle hundida casi a ras (< 1,2 m) baja hasta el terreno por el lado bajo (`ribbon(..., blend)`).
+  Solo las calles con coches «tapan» el extremo poco profundo de una trinchera (`onSurfaceRoad`); una acera o plaza no
+  (así se baja a las rampas de garaje que pasan bajo ellas).
 
 ## Edificios (`buildBuildings`)
 

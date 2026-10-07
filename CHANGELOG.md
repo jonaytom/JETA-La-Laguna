@@ -3,6 +3,18 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.51.0 — 2026-10-07 — Calles superpuestas a distinta altura, isletas y rampas de garaje
+- **Calles que se solapan con un terraplén** de cualquier altura (no solo los bajos) suben con él donde de verdad lo
+  pisan: se acaban el asfalto «flotando» 2–3 m sobre otra calle (X 91 Z 1284, X 701 Z 814, X −741 Z 334) y los dos
+  últimos «vuela» de los enlaces de la TF-5 (X 750 Z 3486, X 717 Z 3390).
+- **Isletas de rotonda** que siguen el terreno (antes eran un disco plano a la altura del centro y en cuesta quedaban
+  1–1,5 m por encima de la calzada) y que se encogen si una calle de entrada les pasa por encima.
+- **Inicio de las trincheras**: donde la calle hundida aún va casi a ras, su asfalto baja hasta el suelo por el lado
+  bajo (en cuesta flotaba ~1 m sobre la calle de al lado, X 752 Z 1268).
+- **Rampas de garaje** bajo plazas y aceras: el coche ya baja por ellas (antes la acera «tapaba» la rampa y el coche
+  se quedaba arriba, X 2212 Z 3366).
+- Agente revisor: no da «atasco» ni «no termina» en calles que siguen fuera del borde del mundo.
+
 ## 0.50.0 — 2026-10-07 — Enlaces de autopista, trincheras y fuentes
 - **Enlaces de autopista sin «volar»**: el coche ya no salta a una rampa vecina más alta que se solapa con su calzada.
   Las vías que comparten terraplén con una rampa elevada suben con ella en ese tramo; el coche solo sube a un tablero
