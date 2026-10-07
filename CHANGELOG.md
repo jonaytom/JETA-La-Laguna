@@ -3,6 +3,18 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.55.0 — 2026-10-07 — Uniones de túneles y trincheras, pasarela y aviso de la radio
+- **Bocas de trinchera**: donde otra calle se incorpora a una calle hundida (Vía de Ronda, X 388 Z 1499), la trinchera
+  no empieza a bajar hasta dejar atrás la incorporación (rampa del 15 %), salvo bajo los puentes que cruza; si allí
+  tiene que ser honda, es la calle que se incorpora la que baja con ella. Ya no se cae el coche 1,7 m en la boca.
+- **Túneles por dentro**: la pared entre dos trincheras pegadas solo se quita cuando de verdad van juntas (a menos de
+  0,6 m y a la misma altura): en el Camino el Vallado ya no se ve el exterior por los lados. El fondo de tierra solo se
+  pone en los tramos cubiertos (en la trinchera abierta tapaba el cielo).
+- **Pasarela de La Trinidad**: unos trozos de puente peatonal de OSM se montaban sobre la rampa hacia San Miguel de
+  Geneto a otra altura y no dejaban pasar; ahora la rampa es continua.
+- **Radio**: al subir a un coche se avisa de cómo cambiar de emisora (Q / tocar el velocímetro) hasta que la hayas
+  cambiado dos veces; se guarda con la partida.
+
 ## 0.54.0 — 2026-10-07 — Freno de mano de verdad y modo móvil ordenado
 - **Freno de mano**: bloquea las ruedas traseras. El coche frena, la trasera se va y gira más cerrado; un toque a
   60 km/h da un derrape de ~30° que se recoge solo al soltar; mantenido, el coche cruza y se para. Las ruedas traseras

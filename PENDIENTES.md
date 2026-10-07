@@ -5,15 +5,70 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 
 ## Por revisar con Jonay
 
+- [ ] **Radio: más canciones y voces** (Jonay): cada emisora con una voz distinta (no siempre la misma), letras más
+      largas y menos repetitivas, canciones de 1:30–2 min y luego otra; al menos 20 canciones en total combinando voces,
+      estilo rap / hip hop de los 90, funk y R&B, con la misma técnica de ahora (síntesis en el navegador + voz).
+
+- [ ] **Ayuntamiento bien hecho** (Jonay, fotos en `docs/referencias/ayuntamiento/`): recrear el edificio para la
+      ceremonia. Fachada de cantería gris oscura (piedra volcánica) a la Plaza del Adelantado / C. Consistorio: planta
+      baja con 5 arcos de medio punto y escalones, planta alta con 5 ventanales de cuarterones y balcón de madera,
+      pilastras, cornisa con pináculos (bolas), frontón curvo central con escudo y rótulo «AYUNTAMIENTO», 5 banderas
+      (morada, Canarias, España, Tenerife/La Laguna, UE). Esquina con C. Obispo Rey Redondo; al lado la Casa del
+      Corregidor (fachada amarilla) y detrás la Casa de la Alhóndiga; enfrente Iglesia de Las Catalinas.
+- [ ] **Morph «gordo»: labios y boca demasiado gruesos** (Jonay): la deformación de los cuerpos gordos (tallas
+      gordo / extra / súper) hincha también la boca. Limitar el morph en la cara (cabeza: solo papada y mejillas).
+- [ ] **Centros de salud y hospital** (Jonay): recrearlos; al morir apareces en el centro de salud más cercano. Buscar
+      su situación (OSM `amenity=clinic/hospital`, `healthcare=*`: HUC, Hospiten, centros de salud de La Laguna-
+      Mercedes, Finca España, San Benito, La Cuesta, Taco, Tejina…) y fotos.
+      **HUC** (fotos de Jonay en `docs/referencias/hospital_huc/`): bloque largo de ~12 plantas con bandas horizontales,
+      torre cilíndrica blanca con helipuerto en voladizo (platillo) en un extremo, edificio de cristal verde (Actividades
+      Ambulatorias / Hospital de Ofra) al otro, jardín con palmeras y escultura de acero, junto a la TF-5 y la Ctra.
+      Gral. La Cuesta, parking HUC y la Montaña de Taco detrás.
+
+- [ ] **Historia: nueva tanda de misiones** (apuntes de Jonay, 7-oct) — por diseñar con él antes de programar:
+      - Aclarar en la historia que la **pistola es de bolas de plástico de aire comprimido** (sirve en la misión siguiente).
+      - **Atraco a una farmacia** (parodia): el primer ladrón se pelea contigo en la pelea 2D; el segundo huye y se sube a
+        un coche: persecución hasta donde vaya y al final darle con la pistola de bolas para detenerlo. No es delito:
+        recompensa y el alcalde nombra a la banda **defensora de la ciudad**.
+      - **Ceremonia en el Ayuntamiento**: toda la banda y el alcalde; os nombra grupo especial de la Policía Local que
+        se encarga de los problemas de la ciudad (a partir de aquí detener malhechores es legal).
+      - Después, varias misiones con los miembros de la banda (detener malhechores, peleas, carreras, persecuciones)
+        con las mecánicas que ya hay. Propuestas de Claude (para comentar):
+        1. **«El carterista del Cristo»** (fiestas del Cristo, Plaza del Cristo): un carterista entre la gente; seguirlo
+           a pie sin perderlo de vista y pelea 2D al acorralarlo. Con el miembro más rápido de la banda.
+        2. **«Rally de La Esperanza»**: unos pijos hacen carreras ilegales por la Vía de Ronda; ganarles en una carrera
+           por puntos de control y que se rindan. Al volante el «piloto» de la banda.
+        3. **«Las ruedas del tranvía»**: unos gamberros pintan el tranvía en Las Mantecas; llegar antes de que se
+           escapen (contrarreloj en coche) y atrapar a dos (persecución a pie + pistola de bolas).
+        4. **«Guagua secuestrada»** (broma): un bromista se lleva una guagua vacía por la autopista; seguirla, ponerse
+           delante y frenarla (con el freno de mano nuevo) sin destrozarla.
+        5. **«El gofio robado»**: desaparece la reserva del molino (parodia); buscar pistas por el casco (diálogos con
+           vecinos), pelea en un almacén del polígono y vuelta con la carga en furgoneta sin volcarla.
+        - **Alcalde** (Jonay): personaje propio del juego, no una caricatura de una persona real (Claude no hace
+          parodias reconocibles de personas reales). Propuesta: **Don Yerai Gofiérrez**, alcalde ficticio de traje
+          oscuro, barba recortada, banda y bastón de mando; encarga misiones para «mejorar la ciudad»:
+          a) baches de la Vía de Ronda: llevar al equipo de asfaltado contrarreloj; b) recuperar los bancos robados
+          de la Plaza del Adelantado; c) escoltar en coche la guagua del Romero; d) carrera solidaria por el casco.
+        6. **«Noche en el aeropuerto»**: contrabandistas de queso en Los Rodeos; colarse por la valla, perseguir una
+           furgoneta por las vías de servicio y detenerla. Cierre de la tanda: el alcalde os da el coche patrulla de la
+           banda (rotulado con el nombre que elegisteis).
+
+- [ ] **Móvil: acceso a todo** (Jonay): desde el móvil no se llega a las opciones (y revisar que todo lo que se hace con
+      teclado —pausa, opciones, guardar, radio, armas, mapa…— tenga un botón o gesto táctil).
+- [ ] **Postura en la moto** (Jonay, captura en scooter): el personaje va «tieso como un palo», de pie entre el
+      asiento y el manillar; necesita una postura sentada que encaje (piernas al reposapiés, brazos al manillar).
+- [x] v0.55.0 **Aviso de la radio** (Jonay): al entrar en un coche, mostrar «cambia de emisora con Q» las primeras veces;
+      cuando haya cambiado de emisora dos veces, guardarlo en la partida y no volver a mostrarlo (v0.55).
+
 - [x] v0.54.0 **Modo móvil** (Jonay, captura): el minimapa se mezcla con las estrellas y tapa los botones ENTRAR / CORRER y
       las coordenadas. Reubicar y dimensionar HUD, minimapa, textos y botones para que sea jugable en el móvil.
 
-- [ ] **Uniones de túneles y puentes con la vía normal** (Jonay, 7-oct): salida del túnel de Camino el Vallado
+- [~] v0.55.0 **Uniones de túneles y puentes con la vía normal** (hecho: Vallado y boca de la Vía de Ronda; quedan rampas de servicio X −495 Z 683 y X 2210 Z 3312, finales de tablero X 377 Z −268 y X 820 Z 3494) (Jonay, 7-oct): salida del túnel de Camino el Vallado
       (X −942 Z 86 / X −928 Z 64): la losa de arriba se superpone a la salida y no deja salir, y por las paredes
       laterales se ve a través (no debería verse el exterior a través de las paredes del túnel). Vía de Ronda
       (X 388 Z 1499): en la boca confluyen calles y los coches se hunden/chocan. Revisar todas las uniones.
 - [x] v0.53.0 Escalera SE de la pasarela de La Trinidad: ahora baja en X −272 Z 709.
-- [ ] **Pasarela de La Trinidad intransitable en algunas zonas** (Jonay, captura en X −313 Z 820, rampa hacia
+- [x] v0.55.0 **Pasarela de La Trinidad intransitable en algunas zonas** (Jonay, captura en X −313 Z 820, rampa hacia
       Carretera de San Miguel de Geneto): revisar dónde se queda parado el personaje.
 - [x] v0.54.0 **Freno de mano** (Jonay): al accionarlo debe bloquear las ruedas traseras: frena, derrapa un poco y gira más
       cerrado, como en la realidad. Revisar cómo hacerlo y proponerlo.

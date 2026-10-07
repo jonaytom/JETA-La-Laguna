@@ -115,6 +115,10 @@ calzada debajo). **No pone barandilla** donde caería dentro de otra calzada al 
   El asfalto de una calle hundida casi a ras (< 1,2 m) baja hasta el terreno por el lado bajo (`ribbon(..., blend)`).
   Solo las calles con coches «tapan» el extremo poco profundo de una trinchera (`onSurfaceRoad`); una acera o plaza no
   (así se baja a las rampas de garaje que pasan bajo ellas).
+  **Bocas de trinchera** (v0.55, final de `computeDepressions`): en cada cadena hundida se buscan las calles a ras que
+  se incorporan (comparten nodo y se solapan ≥ 8 m); la profundidad se limita a 0,5 m + 15 % de la distancia a ellas,
+  salvo bajo los cruces a distinto nivel; si la trinchera debe ser honda (≤ 4 m) allí, la calle que se incorpora baja.
+  `twinWall` solo quita la pared si la otra trinchera va a < 0,6 m y a la misma altura que el suelo propio.
 
 ## Edificios (`buildBuildings`)
 

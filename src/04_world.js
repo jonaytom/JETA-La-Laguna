@@ -300,7 +300,7 @@ function buildRoads() {
       for (const pc of parts) ribbon(pc, w, cls, YOFF[cls], tile, cls === 'asphaltLines' ? 1 : w / 8);
       continue; }
     if ((rd[3] & 2) && !AT_GRADE.has(ri)) { // bridges / overpasses: raised deck with parapets and piers
-      if (Math.hypot(c[0] + 347.5, c[1] - 745.4) < 75 && rd[0] >= 13) continue; // the Padre Anchieta ring is modelled separately
+      if (rd[0] >= 13 && polyMinDist(c, -347.5, 745.4) < 75) continue; // the Padre Anchieta ring and its ramps are modelled separately (OSM footbridge pieces of the ramp blocked it)
       const hf0 = bridgeProfile(c), hf = RAISE.has(ri) ? (s, x, z) => hf0(s, x, z) + raiseOf(ri, s) : hf0; ribbon(c, w, cls, YOFF[cls], tile, cls === 'asphaltLines' ? 1 : w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8), hf);
       bridgeDressing(c, w, hf, rd[0] <= 12); continue;
     }
@@ -421,6 +421,35 @@ function computeDepressions() {
     for (const ch of chains) { const lim = ch.lim, R = rIn + lim;
       for (const { ri: best, bStart, u0, Lc } of ch.hops) { if (u0 > lim) break; push(best, bStart ? (s) => D * smooth(0, 1, (lim - (u0 + s)) / R) : (s) => D * smooth(0, 1, (lim - (u0 + Lc - s)) / R)); } }
   });
+  // trench mouths where another street at grade overlaps the carriageway (merges, side streets that run into the ramp,
+  // a twin carriageway that stays up): the trench only starts sinking once it is clear of them (Vía de Ronda X 388
+  // Z 1499: cars at the merge fell 1.7 m into the cutting). Ramps at ~15 % from the last overlapping point.
+  // caps are by position and shared by every road of the same sunk chain (main road + approach hops), so the
+  // depth stays continuous where they meet
+  const depRows = new Set([...DEP.keys()].map((i) => DATA.R[i])); const comp = new Map(); const par = (i) => { while (comp.get(i) !== i) { comp.set(i, comp.get(comp.get(i))); i = comp.get(i); } return i; };
+  const nodeOf = new Map(); for (const ri of DEP.keys()) { comp.set(ri, ri); const c = DATA.R[ri][4]; for (let i = 0; i < c.length; i += 2) { const k = K(c[i], c[i + 1]); const o = nodeOf.get(k); if (o !== undefined) comp.set(par(ri), par(o)); else nodeOf.set(k, ri); } }
+  const OV = new Map(); // component -> [[x, z], ...]
+  const joined = (rj, k) => { const c = DATA.R[rj][4]; for (let i = 0; i < c.length; i += 2) { const o = nodeOf.get(K(c[i], c[i + 1])); if (o !== undefined && par(o) === k) return true; } return false; }; // only streets that merge into the trench (its mouth), not ones that just run beside it
+  for (const [ri, fs0] of DEP.entries()) { const rd = DATA.R[ri]; if (rd[0] > 12 || PED_TUN.has(ri)) continue; const c = rd[4]; let s = 0;
+    for (let i = 0; i + 3 < c.length; i += 2) { const L = Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]); if (L < 0.01) continue; const tx = (c[i + 2] - c[i]) / L, tz = (c[i + 3] - c[i + 1]) / L;
+      for (let u = 0; u <= L; u += 2) { const ss = s + u; let d0 = 0; for (const f of fs0) d0 = Math.max(d0, f(ss)); if (d0 < 0.6 || d0 > 5.5) continue; const x = c[i] + tx * u, z = c[i + 1] + tz * u;
+        const rn = ROADSEG.nearest(x, z, (r) => r !== rd && r[0] <= 12 && !(r[3] & 6) && !depRows.has(r)); if (!rn) continue; const w2 = DATA.R[rn.ri][2];
+        const Ln = Math.hypot(rn.dx, rn.dz) || 1; if (rn.d < w2 / 2 + 0.5 && Math.abs((rn.dx * tx + rn.dz * tz) / Ln) > 0.5 && joined(rn.ri, par(ri))) { const k = par(ri); let a = OV.get(k); if (!a) OV.set(k, a = []); const c2 = DATA.R[rn.ri][4]; let sj = 0; for (let j = 0; j < rn.i; j += 2) sj += Math.hypot(c2[j + 2] - c2[j], c2[j + 3] - c2[j + 1]); sj += Math.hypot(c2[rn.i + 2] - c2[rn.i], c2[rn.i + 3] - c2[rn.i + 1]) * rn.t; a.push([x, z, rn.ri, sj, ri, ss]); } } s += L; } }
+  const KEEPS = new Map(); // component -> [[x, z, depth], ...] where something passes over the sunk road
+  for (const [ri, fs0] of DEP.entries()) { if (!OV.has(par(ri))) continue; for (const X of crossingsOf(ri)) { let d = 0; for (const f of fs0) d = Math.max(d, f(X.s)); const k = par(ri); let a = KEEPS.get(k); if (!a) KEEPS.set(k, a = []); a.push([X.x, X.z, d]); } }
+  let ncap = 0;
+  for (const [ri, fs0] of [...DEP.entries()]) { const rd = DATA.R[ri]; if (PED_TUN.has(ri)) continue; const pts = OV.get(par(ri)); if (!pts || pts.length < 4) continue; ncap++; /* a real merge overlaps for a while (>= 8 m); a corner just touching the mouth does not count */
+    const c = rd[4], cum = [0]; for (let i = 2; i < c.length; i += 2) cum.push(cum[cum.length - 1] + Math.hypot(c[i] - c[i - 2], c[i + 1] - c[i - 1]));
+    const at = (q) => { let j = 1; while (j < cum.length - 1 && cum[j] < q) j++; const t = clamp((q - cum[j - 1]) / ((cum[j] - cum[j - 1]) || 1), 0, 1); return [lerp(c[(j - 1) * 2], c[j * 2], t), lerp(c[(j - 1) * 2 + 1], c[j * 2 + 1], t)]; };
+    const fs = fs0.slice(); const KEEP = KEEPS.get(par(ri)) || [];
+    DEP.set(ri, [(q) => { let d = 0; for (const f of fs) d = Math.max(d, f(q)); if (d <= 0.5) return d; const [x, z] = at(q); let cap = Infinity; for (const p of pts) cap = Math.min(cap, 0.5 + Math.hypot(x - p[0], z - p[1]) * 0.15);
+      for (const k of KEEP) cap = Math.max(cap, k[2] - Math.hypot(x - k[0], z - k[1]) * 0.15); return Math.min(d, cap); }]); } // ...but never shallower where it passes under a bridge or another road
+  // where the trench still has to be deep there (it passes under something just after the mouth), the street that
+  // merges into it goes down with it instead (a slip road into the underpass)
+  const sink = new Map();
+  for (const pts of OV.values()) { if (pts.length < 4) continue; for (const [x, z, rj, sj, ri, ss] of pts) { const dT = depthOf(ri, ss) / 1.12 + 0.5; if (dT < 1.1) continue; let a = sink.get(rj); if (!a) sink.set(rj, a = []); a.push([sj, dT]); } }
+  for (const [rj, a0] of sink) { const a = a0.filter((q) => q[1] <= 4.0); if (a.length < 4 || a.length < a0.length / 2) { sink.delete(rj); continue; } /* only a clear merge into a moderately deep trench; deeper ones keep the street at grade (the cap above) */ const Lj = polyLen(DATA.R[rj][4]); push(rj, (q) => { let m = 0; for (const [s0, d] of a) { const R = Math.max(8, d / 0.12); const t = Math.abs(q - s0); if (t < R) m = Math.max(m, d * smooth(0, 1, (R - t) / R)); } return m; }); }
+  console.log('trench mouths kept at grade under overlapping streets', ncap, 'streets sinking with a trench', JSON.stringify([...sink].map(([k, a]) => [k, a.length, Math.max(...a.map((q) => q[1])).toFixed(1)])));
 }
 // segment-intersection crossings of road ri with any other road (no shared node near the crossing = different levels)
 let XSEG = null;
@@ -472,7 +501,7 @@ function computeRaisesOnce() {
   }
   DATA.R.forEach((rd, ri) => {
     if (!(rd[3] & 2) || DEP.has(ri)) return; const c = rd[4]; const L = polyLen(c); if (L < 8) return;
-    if (Math.hypot(c[0] + 347.5, c[1] - 745.4) < 75) return;
+    if (polyMinDist(c, -347.5, 745.4) < 75 && rd[0] >= 13) return;
     const pf = bridgeProfile(c); let need = 0, overDep = false, overRoad = false; const ped = rd[0] > 12;
     for (const X of crossingsOf(ri)) { const r2 = DATA.R[X.rj]; if (X.s < 1 || X.s > L - 1) continue;
       if ((r2[3] & 2) && !DEP.has(X.rj)) continue; // another bridge: handled by its own lift
@@ -560,10 +589,11 @@ function computeRaisesOnce() {
   return nb;
 }
 // height of a road's surface as it will be built (same rules as buildRoads)
+function polyMinDist(c, x, z) { let m = 1e9; for (let i = 0; i < c.length; i += 2) m = Math.min(m, Math.hypot(c[i] - x, c[i + 1] - z)); return m; }
 function roadYFn(ri) { const rd = DATA.R[ri], c0 = rd[4];
   if (DEP.has(ri)) return depressedHF(ri);
   if (RAISE.has(ri) && !(rd[3] & 2)) { const sp = RAISE_SPAN.get(ri); return (s, x, z) => heightAt(x, z) + (s >= sp[0] && s <= sp[1] ? raiseOf(ri, s) : 0); }
-  if ((rd[3] & 2) && !AT_GRADE.has(ri) && !(Math.hypot(c0[0] + 347.5, c0[1] - 745.4) < 75 && rd[0] >= 13)) { const hf0 = bridgeProfile(c0); return RAISE.has(ri) ? (s, x, z) => hf0(s, x, z) + raiseOf(ri, s) : hf0; }
+  if ((rd[3] & 2) && !AT_GRADE.has(ri) && !(rd[0] >= 13 && polyMinDist(c0, -347.5, 745.4) < 75)) { const hf0 = bridgeProfile(c0); return RAISE.has(ri) ? (s, x, z) => hf0(s, x, z) + raiseOf(ri, s) : hf0; }
   return (s, x, z) => heightAt(x, z); }
 // iterate: a bridge whose road below got lifted (it is the approach ramp of another bridge) must go higher still
 function computeRaises() {
@@ -593,7 +623,7 @@ function twinWall(x, z, y0, y1) {
   const yAt = (g, t, L) => { let f = DEP_YF.get(g[5]); if (!f) DEP_YF.set(g[5], f = roadYFn(g[5])); return f(g[6] + t * L, x, z); };
   let own = null, od = 1e9; for (const g of DEP_SEGS) { if (g[5] !== TUN_RI) continue; const dx = g[2] - g[0], dz = g[3] - g[1], L2 = dx * dx + dz * dz || 1; const t = clamp(((x - g[0]) * dx + (z - g[1]) * dz) / L2, 0, 1); const dd = Math.hypot(x - g[0] - dx * t, z - g[1] - dz * t); if (dd < od) { od = dd; own = [g, t, Math.sqrt(L2)]; } }
   const yOwn = own ? yAt(own[0], own[1], own[2]) : y0;
-  for (const g of DEP_SEGS) { if (g[5] === TUN_RI) continue; if (Math.abs(x - g[0]) > 60 && Math.abs(x - g[2]) > 60) continue; const dx = g[2] - g[0], dz = g[3] - g[1], L2 = dx * dx + dz * dz || 1; const t = clamp(((x - g[0]) * dx + (z - g[1]) * dz) / L2, 0, 1); if (Math.hypot(x - g[0] - dx * t, z - g[1] - dz * t) < g[4] + 1.9) {
+  for (const g of DEP_SEGS) { if (g[5] === TUN_RI) continue; if (Math.abs(x - g[0]) > 60 && Math.abs(x - g[2]) > 60) continue; const dx = g[2] - g[0], dz = g[3] - g[1], L2 = dx * dx + dz * dz || 1; const t = clamp(((x - g[0]) * dx + (z - g[1]) * dz) / L2, 0, 1); if (Math.hypot(x - g[0] - dx * t, z - g[1] - dz * t) < g[4] + 0.6) {
       if (Math.abs(yAt(g, t, Math.sqrt(L2)) - yOwn) < 1.6) return true; } }
   return false;
 }

@@ -10,7 +10,7 @@ const SAVE = (() => {
     const car = P.car ? { type: P.car.type, model: P.car.model ? P.car.model.id : null, color: P.car.color, h: P.car.h, x: P.car.x, z: P.car.z } : null;
     return { v: VER, t: Date.now(), label: label || '', player: { x, z, h, health: Math.max(1, Math.round(P.health)), money: P.money }, car,
       weapon: { has: WEAPON.has && !WEAPON.training, ammo: WEAPON.ammo, out: !!WEAPON.out }, tod: GAME.tod, weather: GAME.weather ?? null,
-      missions: MISSIONS.getState(), mission: MISSIONS.currentTitle(), radio: MUSIC.station ? MUSIC.station.name : null,
+      missions: MISSIONS.getState(), mission: MISSIONS.currentTitle(), radio: MUSIC.station ? MUSIC.station.name : null, radioChanges: MUSIC.changes | 0,
       fights: (() => { try { return +localStorage.getItem('gtall_fights') || 0; } catch (e) { return 0; } })() };
   }
   function apply(s) {
@@ -25,6 +25,7 @@ const SAVE = (() => {
     T(() => { const r = COL.resolve(s.player.x, s.player.z, 0.4); P.x = r.x; P.z = r.z; P.h = s.player.h || 0; CAM.yaw = P.h + Math.PI; const lw = lowAt(P.x, P.z, heightAt(P.x, P.z) - 3); P.y = heightAt(P.x, P.z) + 0.2; });
     T(() => { if (s.weapon && s.weapon.has) { giveWeapon(s.weapon.ammo ?? 6, false); WEAPON.out = !!s.weapon.out; if (WEAPON.mesh) WEAPON.mesh.visible = WEAPON.out; updateWeaponHUD(); } else takeWeapon(); });
     T(() => { if (typeof s.tod === 'number') { GAME.tod = s.tod; updateSun(); updateEnvironment(true); } });
+    T(() => { MUSIC.changes = s.radioChanges | 0; });
     T(() => { if (typeof s.fights === 'number') localStorage.setItem('gtall_fights', String(s.fights)); });
     // the car you were driving is waiting for you, engine running
     T(() => { if (!s.car) return; const m = s.car.model && VMODELS[s.car.model]; const c = new Car(m ? null : (s.car.type || 'compact'), s.car.color, s.car.x, s.car.z, s.car.h || 0, m || undefined); c.mode = 'physics'; c.persist = true; if (!CARS.includes(c)) CARS.push(c); enterCar(c); });

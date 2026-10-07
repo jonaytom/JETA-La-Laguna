@@ -123,8 +123,8 @@ const MUSIC = (() => {
   return {
     STATIONS, get station() { return STATIONS[st]; },
     // radio on/off follows the player getting in/out of a car
-    update() { const inCar = !!PLAYER.car && GAME.state === 'play'; if (inCar && !wantOn) { wantOn = true; if (!STATIONS[st].off) { start(); HUD.toast(`RADIO: ${STATIONS[st].name} · ${STATIONS[st].tag}  (${document.body.classList.contains('touchmode') ? 'toca el velocímetro' : 'Q'}: cambiar)`, '#f5b72e', 3); } } else if (!inCar && wantOn) { wantOn = false; stop(); } if (inCar && pressed('KeyQ')) this.next(); },
-    next() { setStation(st + 1); },
+    update() { const inCar = !!PLAYER.car && GAME.state === 'play'; if (inCar && !wantOn) { wantOn = true; const tip = this.changes < 2 ? `  (${document.body.classList.contains('touchmode') ? 'toca el velocímetro' : 'Q'}: cambiar de emisora)` : ''; /* the tip stops once the player has changed station twice (saved with the game) */ if (!STATIONS[st].off) { start(); HUD.toast(`RADIO: ${STATIONS[st].name} · ${STATIONS[st].tag}${tip}`, '#f5b72e', 3); } else if (tip) HUD.toast(`RADIO APAGADA${tip}`, '#ccc', 3); } else if (!inCar && wantOn) { wantOn = false; stop(); } if (inCar && pressed('KeyQ')) this.next(); },
+    changes: 0, next() { this.changes++; setStation(st + 1); },
     // 5-second chorus when a mission is passed (radio ducks under it)
     jingle() { if (!ensure()) return; const resume = playing; stop(); const t0 = ctx.currentTime + 0.2;
       const jb = ctx.createGain(); jb.gain.value = 0.85 * (SETTINGS.music ?? 1); jb.connect(AUDIO.master); const prev = bus; bus = jb;
