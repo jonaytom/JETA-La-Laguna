@@ -75,5 +75,5 @@ const COL = (() => {
   }
   function nearSeg(x, z, r) { return resolve(x, z, r, false).hit; }
   function segsNear(x, z, r) { const out = new Set(); for (let i = Math.floor((x - r - gx0) / CS); i <= Math.floor((x + r - gx0) / CS); i++) for (let j = Math.floor((z - r - gz0) / CS); j <= Math.floor((z + r - gz0) / CS); j++) { const a = segCells.get(key(i, j)); if (a) for (const id of a) out.add(id); } return [...out]; }
-  return { addSeg, addCirc, resolve, raycast, nearSeg, segs, segsNear, set qy(v) { Q.y = v; }, get qy() { return Q.y; } };
+  return { addSeg, addCirc, resolve, raycast, nearSeg, segs, segsNear, circs, circY, segY, set qy(v) { Q.y = v; }, get qy() { return Q.y; } };
 })();

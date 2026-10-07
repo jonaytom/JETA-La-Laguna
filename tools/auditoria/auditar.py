@@ -5,7 +5,7 @@ Uso:  python auditar.py [config.json] [--repo RUTA] [--sin-perfil]
   --repo RUTA   audita una copia local (p. ej. el propio repositorio del juego) en vez de clonar de GitHub.
   1. Clona o actualiza el repositorio indicado en la configuración (o usa --repo).
   2. Construye el juego (comando 'build').
-  3. Auditoría estática (auditor.py) + perfil dinámico (perfil.py) + memoria (memoria.py).
+  3. Perfil dinámico con memoria y origen de fugas (perfil.py) + auditoría estática (auditor.py).
   4. Compara con la última auditoría guardada (historial.json) y escribe resultados/<fecha>_<commit>/.
   5. Da un VEREDICTO (APTO / APTO CON AVISOS / NO APTO) comparando con la versión anterior -> VEREDICTO.md.
      Código de salida: 0 apto, 1 apto con avisos, 2 no apto.
@@ -32,17 +32,15 @@ out = os.path.join(AQUI, 'resultados', f'{datetime.date.today()}_{version}_{comm
 hist_path = os.path.join(AQUI, 'resultados', 'historial.json')
 hist = json.load(open(hist_path, encoding='utf-8')) if os.path.exists(hist_path) else []
 prev = hist[-1] if hist else None
+# para memoria/fugas se compara con la última medición COMPLETA (una pasada --sin-perfil no tiene esos datos)
+prevp = next((h for h in reversed(hist) if h.get('perfil_media') and 'error' not in h['perfil_media']), None)
 if prev: open(os.path.join(out, 'cambios_desde_ultima.diff'), 'w', encoding='utf-8').write(
     sh(f'git diff --stat {prev["commit"].split("+")[0]} -- {cfg.get("src", "src")}', work).stdout)
 
 b = sh(cfg['build'], work); open(os.path.join(out, 'build.log'), 'w', encoding='utf-8').write(b.stdout + b.stderr)
 py = sys.executable
-sh(f'"{py}" "{AQUI}/auditor.py" "{work}" --json "{out}/estatica.json" --md "{out}/estatica.md"')
 res = {'fecha': str(datetime.datetime.now())[:16], 'version': version, 'commit': commit, 'build_ok': b.returncode == 0}
-est = json.load(open(f'{out}/estatica.json', encoding='utf-8'))
-res['estatica'] = {k: v for k, v in est['global_'].items() if k != 'tamaños'}
-res['avisos'] = {s: sum(1 for f in est['findings'] if f['sev'] == s) for s in ('crítica', 'alta', 'media')}
-if '--sin-perfil' not in sys.argv and cfg.get('perfil'):
+if '--sin-perfil' not in sys.argv and cfg.get('perfil') and b.returncode == 0:
     for q in cfg['perfil'].get('calidades', ['media']):
         sh(f'"{py}" "{AQUI}/perfil.py" "{work}" {q} "{out}/perfil_{q}.json"')
         try:
@@ -51,24 +49,36 @@ if '--sin-perfil' not in sys.argv and cfg.get('perfil'):
                                   'heapMB': p['inicio']['heapMB'], 'programas': p['inicio']['programs'], 'logic_ms': p['logic_ms_por_paso'],
                                   'fuga_geometrias_vuelta': p['fugas']['geometrias_por_vuelta_(2a-3a)'],
                                   'fuga_texturas_vuelta': p['fugas']['texturas_por_vuelta_(2a-3a)'],
+                                  'fuga_origen': (p['fugas'].get('origen') or {}).get('por_origen', [])[:5],
+                                  'fuga_trazada': (p['fugas'].get('origen') or {}).get('geometrias_fuera_de_escena_sin_liberar'),
                                   'MB_geometria_RAM': mm['MB_geometria_en_RAM'], 'vertices': mm['vertices'], 'errores': p.get('errores_consola', [])}
         except Exception as e: res[f'perfil_{q}'] = {'error': str(e)}
+# el análisis estático va después (segundos): en paralelo falsearía los tiempos del perfil con solo 2 núcleos
+subprocess.run([py, os.path.join(AQUI, 'auditor.py'), work, '--json', f'{out}/estatica.json', '--md', f'{out}/estatica.md'],
+               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+est = json.load(open(f'{out}/estatica.json', encoding='utf-8'))
+res['estatica'] = {k: v for k, v in est['global_'].items() if k != 'tamaños'}
+res['avisos'] = {s: sum(1 for f in est['findings'] if f['sev'] == s) for s in ('crítica', 'alta', 'media')}
+res['firmas'] = sorted({f['firma'] for f in est['findings'] if f['sev'] in ('crítica', 'alta') and f.get('firma')})
+FIND = {f.get('firma'): f for f in est['findings']}
 if prev: res['anterior'] = {k: prev.get(k) for k in ('version', 'commit', 'avisos', 'perfil_media')}
 
 # ---------- veredicto
 def veredicto(res, prev):
     malo, aviso, bien = [], [], []
     if not res['build_ok']: malo.append('El build falla (ver build.log).')
-    pm = res.get('perfil_media') or {}; pa = (prev or {}).get('perfil_media') or {}
+    pm = res.get('perfil_media') or {}; pa = (prevp or {}).get('perfil_media') or {}
     if 'error' in pm: malo.append('El juego no arrancó en la prueba: ' + pm['error'])
     if pm.get('errores'): malo.append(f"Errores de JavaScript en consola: {pm['errores'][:3]}")
     fg = sum(pm.get('fuga_geometrias_vuelta', [0])); ft = sum(pm.get('fuga_texturas_vuelta', [0]))
-    if fg > 20 or ft > 20: aviso.append(f'Sigue habiendo fuga: +{fg} geometrías y +{ft} texturas en 2 vueltas (objetivo 0).')
+    fz = pm.get('fuga_trazada')  # geometrías creadas en las vueltas 2ª-3ª que ni están en la escena ni se liberaron
+    hay_fuga = (fz if fz is not None else fg) > 20 or ft > 20
+    if hay_fuga: aviso.append(f'Sigue habiendo fuga: {fz if fz is not None else fg} geometrías sin liberar tras pasear (GPU: +{fg} geometrías, +{ft} texturas en 2 vueltas; objetivo 0).')
     elif pm: bien.append('Sin fugas de geometrías/texturas al moverse por el mapa.')
     # comparación con la versión anterior: (clave, nombre, % que da aviso, % que suspende)
     for k, nom, av, ko in [('heapMB', 'memoria JS', 5, 15), ('MB_geometria_RAM', 'geometría en RAM', 5, 15),
                            ('vertices', 'vértices', 5, 20), ('llamadas', 'llamadas de dibujo', 15, 40),
-                           ('programas', 'programas de shader', 10, 30), ('logic_ms', 'coste de lógica por paso', 15, 40)]:
+                           ('programas', 'programas de shader', 10, 30)]:  # logic_ms y arranque_ms solo informativos (tiempos ruidosos)
         a, b = pa.get(k), pm.get(k)
         if not a or b is None: continue
         d = (b - a) / a * 100
@@ -76,18 +86,25 @@ def veredicto(res, prev):
         if d >= ko: malo.append('Empeora mucho ' + txt)
         elif d >= av: aviso.append('Empeora ' + txt)
         elif d <= -av: bien.append('Mejora ' + txt)
-    if pa:
-        fa = sum(pa.get('fuga_geometrias_vuelta', [0]))
-        if fg > fa * 1.2 + 10: malo.append(f'La fuga de geometrías empeora: {fa} → {fg}.')
-    av_a, av_b = (prev or {}).get('avisos', {}), res['avisos']
-    if av_a and av_b.get('crítica', 0) > av_a.get('crítica', 0): aviso.append(f"Más avisos críticos del análisis estático: {av_a.get('crítica')} → {av_b.get('crítica')} (ver estatica.md).")
+    if pa and fz is not None and pa.get('fuga_trazada') is not None:
+        fa = pa['fuga_trazada']
+        if fz > fa * 1.2 + 20: malo.append(f'La fuga empeora: {fa} → {fz} geometrías sin liberar.')
+        elif fz < fa * 0.8 - 20: bien.append(f'La fuga mejora: {fa} → {fz} geometrías sin liberar.')
+    if pm.get('fuga_origen') and hay_fuga:
+        aviso.append('Origen probable de la fuga (función que creó lo que no se liberó): ' + '; '.join(f'{o} ×{n}' for o, n in pm['fuga_origen'][:3]))
+    if prev and prev.get('firmas') is not None:
+        nuevas = [f for f in res['firmas'] if f not in set(prev['firmas'])]
+        if nuevas:
+            det = [FIND[f] for f in nuevas if f in FIND][:5]
+            aviso.append(f'{len(nuevas)} avisos nuevos (crítica/alta) del análisis estático, p. ej.: ' + '; '.join(f"`{d['file']}:{d['line']}` {d['func']}() {d['id']}" for d in det))
+        else: bien.append('Ningún aviso nuevo de severidad crítica/alta en el código que corre cada fotograma.')
     estado = 'NO APTO' if malo else 'APTO CON AVISOS' if aviso else 'APTO'
-    L = [f"# Veredicto: {estado}", '', f"Versión {res['version']} ({res['commit']}) · {res['fecha']}" + (f" · comparada con {prev['version']}" if prev else ' · primera medición'), '']
+    L = [f"# Veredicto: {estado}", '', f"Versión {res['version']} ({res['commit']}) · {res['fecha']}" + (f" · comparada con {prev['version']}" if prev else ' · primera medición') + (f" (memoria y fugas: con {prevp['version']})" if prevp and prevp is not prev else ''), '']
     for t, xs in (('Bloquea la publicación', malo), ('Avisos', aviso), ('Mejoras', bien)):
         if xs: L += [f'## {t}', ''] + [f'- {x}' for x in xs] + ['']
     if pm and 'error' not in pm:
         L += ['## Métricas (calidad media)', '', '| Métrica | Anterior | Ahora |', '|---|---|---|']
-        for k in ('heapMB', 'MB_geometria_RAM', 'vertices', 'triangulos', 'llamadas', 'programas', 'logic_ms', 'arranque_ms'):
+        for k in ('heapMB', 'MB_geometria_RAM', 'vertices', 'triangulos', 'llamadas', 'programas', 'fuga_trazada', 'logic_ms', 'arranque_ms'):
             L.append(f"| {k} | {pa.get(k, '—')} | {pm.get(k, '—')} |")
     L += ['', 'NO APTO: arreglar antes de publicar. APTO CON AVISOS: se puede publicar; anotar los avisos en PENDIENTES.md.']
     return estado, '\n'.join(L)

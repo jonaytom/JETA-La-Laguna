@@ -78,6 +78,10 @@ Recorre las vías cada 3 m buscando una vía paralela al mismo nivel con un huec
    puente, ese otro puente se sube más (`EXTRA_NEED`) y se recalcula todo.
 6. Un «puente» que solo salva un paso inferior (p. ej. una rotonda sobre una avenida hundida) se construye a ras
    de suelo (`AT_GRADE`).
+7. **Vías que comparten terraplén** (v0.50, `followOverlaps`): si una vía (enlace, carril de incorporación, calle
+   pegada) pisa la calzada de una rampa elevada o del extremo bajo de un puente (< 3,2 m sobre el terreno), sube con
+   ella en ese tramo (rampas suaves de `h·14` m). Se hace antes y después de que las calles que tocan una rampa por un
+   nodo suban a su encuentro, y en dos pasadas para que lo elevado arrastre a sus vecinas.
 
 `bridgeProfile(c)` da al tablero una ligera comba y nunca lo deja por debajo del terreno. `bridgeDressing`
 añade bordillo-parapeto, barandilla de acero, cara inferior y pilas (solo donde el tablero está alto y no hay
@@ -100,6 +104,10 @@ calzada debajo). **No pone barandilla** donde caería dentro de otra calzada al 
   En los extremos poco profundos de una trinchera no hay sujeción lateral, para poder salir a la calle.
   Si una plataforma queda a menos de 1,6 m bajo el terreno y allí no hay hueco (`inCut`), `lowAt` la ignora y se pisa
   el terreno (evita hundirse). Auditoría: `tests/audit_hundimiento.py`.
+  En los tableros de puente y las trincheras de calle, la altura sale del **tramo más cercano** del eje (antes, en
+  curvas con pendiente, el máximo de varios tramos daba alturas de más adelante y el coche «volaba» o pegaba saltos).
+  `trenchPush` solo empuja de lado (entrar de frente por la boca de una trinchera es entrar por la calle) y no actúa
+  sobre una calle a ras de suelo.
 
 ## Edificios (`buildBuildings`)
 

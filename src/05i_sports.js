@@ -67,7 +67,10 @@ function buildSports() {
     // chain-link fence around small courts (with a gap to walk in)
     if (area < 1700) {
       const e = 1.2; const cor = [[F.u0 - e, F.v0 - e], [F.u1 + e, F.v0 - e], [F.u1 + e, F.v1 + e], [F.u0 - e, F.v1 + e]];
-      for (let i = 0; i < 4; i++) { const [ua, va] = cor[i], [ub, vb] = cor[(i + 1) % 4]; const segs = i === 0 ? [[0, 0.42], [0.58, 1]] : [[0, 1]];
+      for (let i = 0; i < 4; i++) { const [ua, va] = cor[i], [ub, vb] = cor[(i + 1) % 4]; const segs0 = i === 0 ? [[0, 0.42], [0.58, 1]] : [[0, 1]];
+        // no fence on a carriageway (agent: court fence across C. Castellón / Valencia): split the side into runs off the road
+        const Ls = Math.hypot(ub - ua, vb - va) || 1, st = Math.min(0.5, 1 / Ls), segs = [];
+        for (const [a0, a1] of segs0) { let r0 = null; for (let t = a0; t <= a1 + 1e-6; t += st) { const tt = Math.min(t, a1), q = F.W(ua + (ub - ua) * tt, va + (vb - va) * tt), ok = !onCarriageway(q[0], q[1], 0.3); if (ok && r0 === null) r0 = tt; if ((!ok || tt >= a1) && r0 !== null) { if (tt - r0 > 0) segs.push([r0, ok ? tt : Math.max(r0, tt - st)]); r0 = null; } } }
         for (const [t0, t1] of segs) { const pa = F.W(ua + (ub - ua) * t0, va + (vb - va) * t0), pb = F.W(ua + (ub - ua) * t1, va + (vb - va) * t1); const L = Math.hypot(pb[0] - pa[0], pb[1] - pa[1]); if (L < 0.5) continue;
           const fg = new THREE.PlaneGeometry(L, 3.5); { const uvA = fg.attributes.uv; for (let q = 0; q < uvA.count; q++) uvA.setXY(q, uvA.getX(q) * L / 1.5, uvA.getY(q) * 3.5 / 1.5); } const f = new THREE.Mesh(fg, fenceMat); const mx = (pa[0] + pb[0]) / 2, mz = (pa[1] + pb[1]) / 2; f.position.set(mx, heightAt(mx, mz) + 1.9, mz); f.rotation.y = Math.atan2(pb[0] - pa[0], pb[1] - pa[1]) + Math.PI / 2; scene.add(f); COL.addSeg(pa[0], pa[1], pb[0], pb[1]); } }
     }

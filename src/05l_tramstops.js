@@ -40,7 +40,10 @@ function buildTramStops() {
       const off = 4.75; const px = t.x - t.dz * off * sg, pz = t.z + t.dx * off * sg;
       const g = new THREE.Group(); g.position.set(px, Math.max(heightAt(px, pz), heightAt(t.x, t.z)), pz); g.rotation.y = h + (sg > 0 ? Math.PI : 0);
       // local frame: z along the track, -x towards the rails... (after the flip both sides face the track at -x)
-      const L = 30, W = 2.3;
+      const W = 2.3; const ry = g.rotation.y, cr = Math.cos(ry), sr = Math.sin(ry);
+      // platform length: as long as it fits (30 m) without its ramps or its outer edge reaching a carriageway (agent: platform in Av. Menceyes)
+      const clear = (Lt) => { for (let lz = -Lt / 2 - 2.8; lz <= Lt / 2 + 2.8; lz += 1.5) for (const lx of [-W / 2, 0, W / 2]) { const wx = px + lx * cr + lz * sr, wz = pz - lx * sr + lz * cr; if (onCarriageway(wx, wz, -0.6)) return false; } return true; };
+      const L = [30, 24, 18, 14].find(clear) || 30; if (L < 30) console.log("tram stop platform shortened", L, Math.round(px), Math.round(pz)); // a platform whose centre is already on a road (the OSM road is drawn over the tram median) keeps its length
       box(g, mPlat, W, 0.32, L, 0, 0.16, 0);
       box(g, mKerb, 0.12, 0.34, L, -W / 2 + 0.06, 0.17, 0);
       box(g, mEdge, 0.45, 0.012, L, -W / 2 + 0.38, 0.326, 0);

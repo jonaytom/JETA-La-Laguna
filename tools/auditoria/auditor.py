@@ -17,6 +17,10 @@ from collections import defaultdict
 
 ROOTS = ['loop', 'logic', 'render']
 HOT_NAME = re.compile(r'^(update\w*|tick|step|physics|sync|animate\w*|loop|logic|render|adaptRes)$')
+# funciones de creación/carga: aunque el bucle llegue a ellas (p. ej. cuando falta un objeto en el pool), no corren
+# cada fotograma. Sus avisos se marcan «bajo demanda» y bajan un nivel de severidad.
+COLD_NAME = re.compile(r'^(make|build|create|preload|precompute|init|setup|ensure|prep|load|new[A-Z_]|geoOf|warm)\w*$')
+DOWN = {'crítica': 'alta', 'alta': 'media', 'media': 'baja', 'baja': 'baja'}
 
 PATTERNS = [  # (id, regex, severidad, explicación)
     ('alloc-three', r'new THREE\.(Vector[234]|Color|Quaternion|Matrix[34]|Euler|Box3|Sphere|Ray|Raycaster)\b', 'alta',
@@ -116,22 +120,27 @@ def hot_set(funcs):
         ids = set(re.findall(r'([A-Za-z_$][\w$]*)\s*\(', fn['body'])) & names
         ids |= set(re.findall(r'\.([A-Za-z_$][\w$]*)\s*\(', fn['body'])) & names
         calls[id(fn)] = ids
-    hot, stack = set(), [n for n in ROOTS if n in names]
-    while stack:
-        n = stack.pop()
-        if n in hot: continue
-        hot.add(n)
-        for fn in by_name[n]: stack.extend(calls[id(fn)] - hot)
-    # nombres típicos de actualización aunque no los alcance el grafo (métodos de objetos: AUDIO.update...)
-    hot |= {n for n in names if HOT_NAME.match(n)}
-    return hot
+    def bfs(start, stop):
+        seen, st = set(), list(start)
+        while st:
+            n = st.pop()
+            if n in seen: continue
+            seen.add(n)
+            if stop and COLD_NAME.match(n): continue
+            for fn in by_name[n]: st.extend(calls[id(fn)] - seen)
+        return seen
+    reach = bfs([n for n in ROOTS if n in names], True)
+    reach |= {n for n in names if HOT_NAME.match(n)}
+    hot = {n for n in reach if not COLD_NAME.match(n)}
+    demand = bfs([n for n in reach if COLD_NAME.match(n)], False) - hot
+    return hot, demand
 
 
 def scan(repo):
     files, funcs = collect(repo)
-    hot = hot_set(funcs)
+    hot, demand = hot_set(funcs)
     findings = []
-    hot_funcs = [fn for fn in funcs if fn['name'] in hot]
+    hot_funcs = [fn for fn in funcs if fn['name'] in hot or fn['name'] in demand]
     # evitar contar dos veces funciones anidadas: quedarse con el cuerpo más interno por posición
     for fn in hot_funcs:
         body = fn['body']; base = fn['start']; raw = fn['raw']
@@ -142,7 +151,10 @@ def scan(repo):
                 snippet = raw.splitlines()[line - 1].strip()
                 col = pos - (raw.rfind('\n', 0, pos) + 1)
                 snippet = snippet[max(0, col - 60): col + 80] if len(snippet) > 160 else snippet
-                findings.append(dict(id=pid, sev=sev, file=fn['file'], line=line, func=fn['name'], why=why, code=snippet))
+                dem = fn['name'] in demand
+                findings.append(dict(id=pid, sev=DOWN[sev] if dem else sev, file=fn['file'], line=line, func=fn['name'],
+                                     why=('[bajo demanda] ' if dem else '') + why, code=snippet, demanda=dem,
+                                     firma=f"{fn['file']}|{fn['name']}|{pid}|" + re.sub(r'[\s\d.]+', '', snippet)[:80]))
     # dedup (misma línea+patrón)
     uniq = {}
     for f in findings: uniq.setdefault((f['file'], f['line'], f['id']), f)
@@ -160,7 +172,7 @@ def scan(repo):
         g['new ' + k] = len(re.findall(r'new THREE\.' + k + r'\b', allsrc))
     g['dispose()'] = allsrc.count('.dispose(')
     g['mergeGeometries'] = len(re.findall(r'merge\w*Geometr', allsrc))
-    g['funciones'] = len(funcs); g['funciones_calientes'] = len(hot_funcs)
+    g['funciones'] = len(funcs); g['funciones_cada_fotograma'] = len(hot); g['funciones_bajo_demanda'] = len(demand)
     sizes = {}
     for pat in ['data/*.json', 'data/*.js', 'assets/**/*', 'dist/*.html', 'template.html']:
         for p in glob.glob(os.path.join(repo, pat), recursive=True):
@@ -168,7 +180,7 @@ def scan(repo):
     g['tamaños'] = dict(sorted(sizes.items(), key=lambda x: -x[1]))
     per_file = defaultdict(lambda: defaultdict(int))
     for f in findings: per_file[f['file']][f['sev']] += 1
-    return dict(global_=g, findings=findings, hot=sorted(hot), per_file={k: dict(v) for k, v in per_file.items()})
+    return dict(global_=g, findings=findings, hot=sorted(hot), demand=sorted(demand), per_file={k: dict(v) for k, v in per_file.items()})
 
 
 def to_md(res, limit=400):

@@ -53,7 +53,7 @@ SETUP = r"""
     o.updateWorldMatrix(true,false); const b=new T.Box3().setFromObject(o); if(!isFinite(b.min.x)||b.max.x-b.min.x>20000) return; meshes.push({o,b}); });
   const v=[new T.Vector3(),new T.Vector3(),new T.Vector3()], M=new T.Matrix4();
   function buildTile(tx,tz){ const x0=tx*TS,z0=tz*TS,x1=x0+TS,z1=z0+TS, N=TS/CS, cells=Array.from({length:N*N},()=>[]);
-    for (const {o,b} of meshes){ if(b.max.x<x0||b.min.x>x1||b.max.z<z0||b.min.z>z1) continue; const g=o.geometry, P=g.attributes.position, I=g.index; const nt=(I?I.count:P.count)/3; const nm=matName(Array.isArray(o.material)?o.material[0]:o.material);
+    for (const {o,b} of meshes){ if(b.max.x<x0||b.min.x>x1||b.max.z<z0||b.min.z>z1) continue; const g=o.geometry, P=g.attributes.position, I=g.index; if(!P||!P.array||(I&&!I.array)) continue; /* released after the list was made (parked cars rebuilt) */ const nt=(I?I.count:P.count)/3; const nm=matName(Array.isArray(o.material)?o.material[0]:o.material);
       const inst=o.isInstancedMesh?o.count:1; const ib=o.isInstancedMesh&&g.boundingSphere?g.boundingSphere:null;
       for (let k=0;k<inst;k++){ M.copy(o.matrixWorld); if(o.isInstancedMesh){ const mi=new T.Matrix4(); o.getMatrixAt(k,mi); M.multiply(mi); if(ib){ const c=ib.center.clone().applyMatrix4(M); const r=ib.radius*4; if(c.x+r<x0||c.x-r>x1||c.z+r<z0||c.z-r>z1) continue; } }
         for (let t=0;t<nt;t++){ for(let j=0;j<3;j++){ const ix=I?I.getX(t*3+j):t*3+j; v[j].fromBufferAttribute(P,ix).applyMatrix4(M); }

@@ -29,24 +29,191 @@
    "media": 175
   },
   "perfil_media": {
-   "arranque_ms": 78383,
-   "llamadas": 5432,
-   "triangulos": 5630588,
-   "heapMB": 1167.6,
+   "arranque_ms": 45160,
+   "llamadas": 672,
+   "triangulos": 5551938,
+   "heapMB": 1187,
    "programas": 55,
-   "logic_ms": 4.66,
+   "logic_ms": 2.98,
    "fuga_geometrias_vuelta": [
-    218,
-    193
+    225,
+    209
    ],
    "fuga_texturas_vuelta": [
-    239,
-    236
+    236,
+    231
    ],
    "MB_geometria_RAM": 1018.4,
    "vertices": 28576416,
    "errores": []
   },
-  "nota": "Línea base con semilla fija y hora 12:00"
+  "nota": "Línea base con semilla fija, hora 12:00 y cámara fija (yaw 0). Repetible: 2 mediciones idénticas."
+ },
+ {
+  "fecha": "2026-10-06 22:18",
+  "version": "0.49.0",
+  "commit": "93ef496",
+  "build_ok": true,
+  "estatica": {
+   "archivos_js": 43,
+   "bytes_js": 787890,
+   "lineas_js": 7461,
+   "lineas_mas_de_300_car": 309,
+   "new MeshStandardMaterial": 174,
+   "new MeshBasicMaterial": 14,
+   "new MeshLambertMaterial": 0,
+   "new ShaderMaterial": 1,
+   "new InstancedMesh": 14,
+   "new BufferGeometry": 17,
+   "new CanvasTexture": 4,
+   "new PointLight": 2,
+   "new SpotLight": 1,
+   "dispose()": 4,
+   "mergeGeometries": 0,
+   "funciones": 731,
+   "funciones_cada_fotograma": 272,
+   "funciones_bajo_demanda": 45
+  },
+  "avisos": {
+   "crítica": 10,
+   "alta": 80,
+   "media": 137
+  },
+  "perfil_media": {
+   "arranque_ms": 47009,
+   "llamadas": 688,
+   "triangulos": 5648770,
+   "heapMB": 572.3,
+   "programas": 55,
+   "logic_ms": 1.42,
+   "fuga_geometrias_vuelta": [
+    9,
+    39
+   ],
+   "fuga_texturas_vuelta": [
+    1,
+    3
+   ],
+   "fuga_origen": [
+    [
+     "Car ← manageTraffic ← logic",
+     281
+    ],
+    [
+     "makeKenneyMesh ← Car ← manageTraffic",
+     124
+    ],
+    [
+     "makeCarMesh ← Car ← manageTraffic",
+     20
+    ],
+    [
+     "pod ← makeMotoMesh ← Car",
+     11
+    ],
+    [
+     "box ← makeMotoMesh ← Car",
+     11
+    ]
+   ],
+   "fuga_trazada": 459,
+   "MB_geometria_RAM": 412.2,
+   "vertices": 28773130,
+   "errores": []
+  },
+  "veredicto": "APTO CON AVISOS",
+  "firmas": [
+   "01b_controls.js|save|json|t)o[aid]=aalt;localStoragesetItem('jeta_controls',JSONstringify(o));}catch(e){}}",
+   "01b_controls.js|save|storage|o={};for(constaoflist)if(aalt)o[aid]=aalt;localStoragesetItem('jeta_controls',JS",
+   "02_textures.js|canvasTex|alloc-geo|constt=newTHREECanvasTexture(c);",
+   "02_textures.js|mk|alloc-geo|constmk=(src)=>{constt=newTHREETexture();constim=newImage();imonload=()=>{timage",
+   "05e_street.js|mk|alloc-geo|colFn,scale=)=>{if(!arrlength)return;constm=newTHREEInstancedMesh(geo,mat,arrlen",
+   "05f_anchieta.js|mk|alloc-geo|constmk=(arr,mat)=>{constg=newTHREEBufferGeometry();gsetAttribute('position',new",
+   "05i_sports.js|add|alloc-geo|constadd=(geo,m,u,v,y,rot=)=>{consto=newTHREEMesh(geo,m);constp=at(u,v,y);oposit",
+   "05o_concepcion.js|finish|alloc-geo|constm=newTHREEMesh(g,mat);mcastShadow=true;mreceiveShadow=true;groupadd(m);}},",
+   "05o_concepcion.js|finish|alloc-geo|finish(group){for(const[mat,b]ofmap){constg=newTHREEBufferGeometry();gsetAttribu",
+   "05q_inicio.js|sign|alloc-geo|constm=newTHREEMesh(newTHREEPlaneGeometry(w,h),newTHREEMeshStandardMaterial({map",
+   "05q_inicio.js|sign|alloc-geo|etContext('d');draw(cx,cwidth,cheight);constt=newTHREECanvasTexture(c);tcolorSpa",
+   "06_actors.js|M|alloc-geo|ingify(extra):'');letm=matCacheget(k);if(!m){m=newTHREEMeshStandardMaterial({col",
+   "06_actors.js|M|json|a){constk=color+':'+rough+':'+metal+(extra?JSONstringify(extra):'');letm=matCach",
+   "06_actors.js|makeHumanLegacy|alloc-geo|(x,);[-,]forEach((x)=>{conste=newTHREEMesh(newTHREESphereGeometry(,,),eyeM);epos",
+   "06_actors.js|makeHumanLegacy|alloc-geo|constarmL=limb(torso,-,,,,,,oshortSleeve===false?mShirt:mShirt,mSkin,newTHREESph",
+   "06_actors.js|makeHumanLegacy|alloc-geo|constarmR=limb(torso,,,,,,,mShirt,mSkin,newTHREESphereGeometry(,,),mSkin);",
+   "06_actors.js|makeHumanLegacy|alloc-geo|constchest=newTHREEMesh(GEOcapsule(,),mShirt);chestpositiony=;chestscaleset(,,);",
+   "06_actors.js|makeHumanLegacy|alloc-geo|conste=newTHREEMesh(endGeo,endMat);epositiony=-l-r*;jadd(e);if(endGeotype==='Box",
+   "06_actors.js|makeHumanLegacy|alloc-geo|consthairM=newTHREEMesh(newTHREESphereGeometry(,,,,MathPI*,,olongHa",
+   "06_actors.js|makeHumanLegacy|alloc-geo|constlegL=limb(hips,-,-,,,,,mPants,mPants,newTHREEBoxGeometry(,,),mShoe);",
+   "06_actors.js|makeHumanLegacy|alloc-geo|constlegR=limb(hips,,-,,,,,mPants,mPants,newTHREEBoxGeometry(,,),mShoe);",
+   "06_actors.js|makeHumanLegacy|alloc-geo|constlo=newTHREEMesh(GEOcapsule(r,l),m);lopositiony=-l/-r*;jadd(lo);",
+   "06_actors.js|makeHumanLegacy|alloc-geo|constneck=newTHREEMesh(newTHREECylinderGeometry(,,,),mSkin);neckpositiony=;torso",
+   "06_actors.js|makeHumanLegacy|alloc-geo|constnose=newTHREEMesh(newTHREEBoxGeometry(,,),mSkin);nosepositionset(,-,);heada",
+   "06_actors.js|makeHumanLegacy|alloc-geo|constpelvis=newTHREEMesh(newTHREEBoxGeometry(,,),mPants);hipsadd(pelvis);",
+   "06_actors.js|makeHumanLegacy|alloc-geo|constskull=newTHREEMesh(newTHREESphereGeometry(,,),mSkin);skullscaleset(,,);head",
+   "06_actors.js|makeHumanLegacy|alloc-geo|constu=newTHREEMesh(GEOcapsule(r,l),m);upositiony=-l/-r*;padd(u);",
+   "06_actors.js|makeHumanLegacy|alloc-geo|if(ocap){constc=newTHREEMesh(newTHREECylinderGeometry(,,,),M(ocap,));c",
+   "06_actors.js|makeHumanLegacy|alloc-geo|if(olongHair){consth=newTHREEMesh(newTHREEBoxGeometry(,,),mHair);hpositionset(,-",
+   "06a_humans.js|geoOf|alloc-geo|constg=newTHREEBufferGeometry();constP=newIntArray(bin(pp)),N=newIntArray(bin(pn",
+   "06a_humans.js|makeHumanSkinned|alloc-geo|(pk==='body')m=mat;elseif(pk==='eyes')m=newTHREEMeshStandardMaterial({map:HUMtex",
+   "06a_humans.js|makeHumanSkinned|alloc-geo|==='sun'?x:xaaa,,);constlens=newTHREEMeshStandardMaterial({color:oglasses==='sun",
+   "06a_humans.js|makeHumanSkinned|alloc-geo|constbr=newTHREEMesh(newTHREEBoxGeometry(,,),fm);gadd(br);gpositionset(,eyeY,eye",
+   "06a_humans.js|makeHumanSkinned|alloc-geo|consthairMat=(k)=>newTHREEMeshStandardMaterial({map:HUMtex[HUMhairs[k]t],color:h",
+   "06a_humans.js|makeHumanSkinned|alloc-geo|constsm=newTHREESkinnedMesh(pgeo,m);if(pk==='body')bodyMesh=sm;smbind(skeleton",
+   "06a_humans.js|makeHumanSkinned|alloc-geo|for(constsxof[-,]){constring=newTHREEMesh(newTHREETorusGeometry(,,,),fm);ringpos",
+   "06a_humans.js|makeHumanSkinned|alloc-geo|if(!fem&&(obeard??Mathrandom()<)){consth=newTHREEMesh(HUMhairsHair_Beardgeo,hair",
+   "06a_humans.js|makeHumanSkinned|alloc-geo|if(hs&&HUMhairs[hs]&&!ocap){consth=newTHREEMesh(HUMhairs[hs]geo,hairMat(hs));hca",
+   "06a_humans.js|makeHumanSkinned|alloc-geo|if(obag){constbg=newTHREEMesh(newTHREEBoxGeometry(,,),M(obag,));bgpositionset(,,",
+   "06a_humans.js|makeHumanSkinned|alloc-geo|if(obeanie){constb=newTHREEMesh(newTHREESphereGeometry(,,,,MathPI*,,MathPI",
+   "06a_humans.js|makeHumanSkinned|alloc-geo|if(ocane){constc=newTHREEMesh(newTHREECylinderGeometry(,,,),M(xac,))",
+   "06a_humans.js|makeHumanSkinned|alloc-geo|if(ocap){constcap=newTHREEMesh(newTHREESphereGeometry(,,,,MathPI*,,MathPI/",
+   "06a_humans.js|makeHumanSkinned|alloc-geo|if(ochain){constch=newTHREEMesh(newTHREETorusGeometry(,,,),M(xdba,,",
+   "06a_humans.js|makeHumanSkinned|alloc-geo|if(owatch){constw=newTHREEMesh(newTHREECylinderGeometry(,,,),M(x,",
+   "06a_humans.js|skinMaterial|alloc-geo|constm=newTHREEMeshStandardMaterial({map:HUMtex[texKey],roughness:,metalness:});",
+   "06b_vmodels.js|modelGeometry|alloc-geo|constg=newTHREEBufferGeometry();gsetAttribute('position',newTHREEBufferAttribute",
+   "06b_vmodels.js|modelGeometry|alloc-geo|l,v[]/l],i*);colset(v[],i*);});constg=newTHREEBufferGeometry();gsetAttribute('po",
+   "07_vehicles.js|geoOf|alloc-geo|constfree=function(){thisarray=null;};constgeo=newTHREEBufferGeometry();",
+   "07_vehicles.js|trafficSpawnPoint|alloc-three|apositionx,vz=ndz-camerapositionz;constcd=newTHREEVector();cameragetWorldDirecti",
+   "09c_weapons.js|aimArm|alloc-three|tWorldQuaternion(_qb);_qbpremultiply(_qa);constpq=newTHREEQuaternion();bparentge",
+   "09c_weapons.js|ensureGunMesh|alloc-geo|consthandle=newTHREEMesh(newTHREEBoxGeometry(,,),grip);handlepositionset(,-,);ha",
+   "09c_weapons.js|ensureGunMesh|alloc-geo|constslide=newTHREEMesh(newTHREEBoxGeometry(,,),dark);slidepositionset(,,);",
+   "09c_weapons.js|gripGun|alloc-three|constaxis=piclone()sub(pp)normalize();constqd=newTHREEQuaternion(),qw=newTHREEQu",
+   "09c_weapons.js|gripGun|alloc-three|constfist=newTHREEVector(),tmp=newTHREEVector();letnf=;",
+   "09c_weapons.js|gripGun|alloc-three|constm=newTHREEMatrix()makeBasis(x,up,fwd);meshquaternionsetFromRotationMatrix(m",
+   "09c_weapons.js|gripGun|alloc-three|constph=newTHREEVector(),pm=newTHREEVector(),pi=newTHREEVector(),pp=newTHREEVect",
+   "09c_weapons.js|gripGun|alloc-three|constx=newTHREEVector()crossVectors(up,fwd)normalize();",
+   "09c_weapons.js|gripGun|alloc-three|if(nf){fistmultiplyScalar(/nf);consthOff=newTHREEVector(,-,)multiplyScalar(meshs",
+   "09c_weapons.js|muzzleFlash|alloc-three|constm=WEAPONmesh;constp=newTHREEVector();if(m)mgetWorldPosition(p);elsepset(PLA",
+   "09c_weapons.js|shootRay|alloc-three|consto=camerapositionclone();constdir=newTHREEVector();cameragetWorldDirection(d",
+   "09c_weapons.js|updateWeapons|alloc-three|&&WEAPONout){letd=null;if(WEAPONaiming){d=newTHREEVector();cameragetWorldDirecti",
+   "09c_weapons.js|updateWeapons|alloc-three|yaw;playerHumanrootrotationy=PLAYERh;constd=newTHREEVector();cameragetWorldDirec",
+   "09d_fight2d.js|drawFigure|canvas-read|constid=xgetImageData(,,CW,CH),d=iddata;constopa=newUintArray(CW*CH);",
+   "09d_fight2d.js|shade|alloc-three|constshade=(hex,k)=>{constc=newTHREEColor(hex);cmultiplyScalar(k);return'#'+cget",
+   "09d_fight2d.js|spritesFor|json|constkey=JSONstringify(look)+nose;if(SPRhas(key))returnSPRget(key);",
+   "09d_fight2d.js|start|storage|letnf=;try{nf=+localStoragegetItem('gtall_fights')||;localStoragesetItem('gtall_",
+   "09e_cops.js|copGunMesh|alloc-geo|consthandle=newTHREEMesh(newTHREEBoxGeometry(,,),dark);handlepositionset(,-,);ha",
+   "09e_cops.js|copGunMesh|alloc-geo|constslide=newTHREEMesh(newTHREEBoxGeometry(,,),dark);slidepositionset(,,);",
+   "09e_cops.js|copShoot|alloc-three|AUDIOshot&&AUDIOshot();constd=newTHREEVector(PLAYERx-cx,,PLAYERz-cz)normalize();",
+   "09e_cops.js|updateCops|alloc-three|if(caimT>&&cHskinned){constd=newTHREEVector(dx,(PLAYERy+)-(gy+),dz)normalize();a",
+   "10d_ambience.js|spatial|alloc-three|constright=newTHREEVector();cameragetWorldDirection(right);constrx=-rightz,rz=ri",
+   "12_missions.js|findRange|alloc-geo|for(constsof[-,,]){constp=newTHREEMesh(newTHREEBoxGeometry(,,),wood);ppositionse",
+   "12_missions.js|init|alloc-geo|constcb=newTHREEMesh(newTHREEBoxGeometry(,,),M(xbda,));cbpositionset(,,);hrootad",
+   "12_missions.js|init|alloc-geo|constdummy=newTHREEGroup();consttor=newTHREEMesh(newTHREECylinderGeometry(,,,),M",
+   "12_missions.js|init|alloc-geo|constgl=newTHREEMesh(newTHREESphereGeometry(,,),M(xbe,));glpositionset",
+   "12_missions.js|init|alloc-geo|constpile=newTHREEMesh(newTHREEBoxGeometry(,,),M(xcea,));pilepositionset(-,,);hr",
+   "12_missions.js|init|alloc-geo|constsb=newTHREEMesh(newTHREECylinderGeometry(,,,),M(xffa,));sbro",
+   "12_missions.js|init|alloc-geo|consttape=newTHREEMesh(newTHREEBoxGeometry(,,),M(xfce,));tapepositi",
+   "12_missions.js|init|alloc-geo|for(leti=;i<;i++){constsl=newTHREEMesh(newTHREEBoxGeometry(,,),wood);slpositiony",
+   "12_missions.js|init|alloc-geo|hpose='sit';constbox=newTHREEMesh(newTHREEBoxGeometry(,,),M(xaaa,));boxpositions",
+   "12_missions.js|init|alloc-geo|of[-,])for(constszof[-,]){constpo=newTHREEMesh(newTHREEBoxGeometry(,,),dark);pop",
+   "12_missions.js|make|alloc-geo|constgrp=newTHREEGroup();constm=newTHREEMesh(g,matclone());mmaterialcolorset(col",
+   "12_missions.js|make|alloc-geo|constrg=newTHREEMesh(ring,newTHREEMeshBasicMaterial({color,transparent:true,opac",
+   "12_missions.js|setCans|alloc-geo|angecans){constg=newTHREEGroup();constb=newTHREEMesh(newTHREECylinderGeometry(,,",
+   "12b_food.js|init|alloc-geo|constmat=newTHREESpriteMaterial({map:(icon=iconTex()),depthTest:true,transparent",
+   "12c_achaman.js|achSetMode|alloc-three|constd=newTHREEVector();cameragetWorldDirection(d);lett=;if(dy<-)t=clamp((ACHy-h",
+   "12c_achaman.js|updateAchaman|alloc-three|y,ACHz);cameralookAt(ocx,gc+,ocz);constd=newTHREEVector();cameragetWorldDirectio",
+   "12e_save.js|get|json|try{consts=localStoragegetItem(KEY+k);returns?JSONparse(s):null;}catch(e){return",
+   "12e_save.js|get|storage|conststore={get(k){try{consts=localStoragegetItem(KEY+k);returns?JSONparse(s):nu",
+   "12e_save.js|snapshot|storage|fights:(()=>{try{return+localStoragegetItem('gtall_fights')||;}catch(e){return;}"
+  ],
+  "nota": "Línea base re-medida con el método v2 (640x360, vueltas de fugas con 8 puntos y rastreo de origen)."
  }
 ]

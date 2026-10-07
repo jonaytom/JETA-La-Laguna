@@ -182,6 +182,7 @@ function marbleFountain(x, z) {
   // four little lion-head spouts on the pedestal pouring into the basin
   for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2; const sp = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 6), vein); sp.position.set(Math.sin(a) * 0.68, 1.6, Math.cos(a) * 0.68); g.add(sp);
     const arc = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 1.0, 6), sheet); arc.position.set(Math.sin(a) * 1.05, 1.15, Math.cos(a) * 1.05); arc.rotation.set(Math.cos(a) * 0.7, 0, -Math.sin(a) * 0.7); g.add(arc); }
+  fuseGroup(g, (m) => m.material === sheet || m.material === water);
   g.position.set(x, y, z); g.traverse((m) => { if (m.isMesh && m.material !== sheet) { m.castShadow = true; m.receiveShadow = true; } }); scene.add(g); COL.addCirc(x, z, 5.4);
   // the falling water shimmers
   const t0 = performance.now(); f1.onBeforeRender = () => { const t = (performance.now() - t0) / 1000; sheet.opacity = 0.3 + Math.sin(t * 7) * 0.05; f1.scale.set(1 + Math.sin(t * 9) * 0.01, 1, 1 + Math.cos(t * 8) * 0.01); };
@@ -197,6 +198,7 @@ function stoneFountain(x, z, r = 2.4) {
   addMesh(g, new THREE.CylinderGeometry(0.28, 0.4, 1.5, 10), st, 0, 1.1, 0);
   const b = new THREE.Mesh(new THREE.LatheGeometry([[0, 0], [0.2, 0], [r * 0.3, 0.12], [r * 0.38, 0.22], [r * 0.36, 0.26], [0, 0.22]].map((p) => new THREE.Vector2(p[0], p[1])), 14), st); b.position.y = 1.8; g.add(b);
   addMesh(g, new THREE.SphereGeometry(0.16, 10, 8), st, 0, 2.15, 0);
+  fuseGroup(g);
   g.position.set(x, y, z); g.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); scene.add(g); COL.addCirc(x, z, r + 0.1); PK2.fountains.push([x, z]); return g;
 }
 // raised oval pond with a stone kerb, a little island and ducks paddling about

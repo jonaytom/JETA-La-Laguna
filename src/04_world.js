@@ -389,22 +389,30 @@ function computeDepressions() {
         let best = -1, bd = Math.cos(0.9), bStart = true; for (const cj of pedEnds.get(K(px, pz)) || []) { if (cj === ri) continue; const r2 = DATA.R[cj]; if (r2[3] & 6 || r2[0] <= 12) continue; const c2 = r2[4], m = c2.length; const st = c2[0] === px && c2[1] === pz; let dx = st ? c2[2] - c2[0] : c2[m - 4] - c2[m - 2], dz = st ? c2[3] - c2[1] : c2[m - 3] - c2[m - 1]; const dl = Math.hypot(dx, dz) || 1; const dot = (dx * ox + dz * oz) / dl; if (dot > bd) { bd = dot; best = cj; bStart = st; } }
         if (best >= 0) { const Lc = polyLen(DATA.R[best][4]); push(best, bStart ? (s) => D * smooth(0, 1, (rOut - s) / R) : (s) => D * smooth(0, 1, (rOut - (Lc - s)) / R)); PED_TUN.add(best); } }
       return; }
-    const D = rd[0] <= 2 ? 7.8 : 7.2, rIn = clamp(L * 0.3, 8, 40), rOut = rd[0] <= 2 ? 75 : 55, R = rIn + rOut;
-    push(ri, (s) => D * smooth(0, 1, (Math.min(s, L - s) + rOut) / R));
+    const D = rd[0] <= 2 ? 7.8 : 7.2, rIn = clamp(L * 0.3, 8, 40), rOut0 = rd[0] <= 2 ? 75 : 55;
+    // walk the continuation chain at each end; the ramp must be back at grade before the first junction on it (a side
+    // street joining the ramp used to stay at grade against the trench wall — agent: "atasco / hundido" in trenches)
+    const chains = [];
     for (const atStart of [true, false]) {
       let n = c.length; let px = atStart ? c[0] : c[n - 2], pz = atStart ? c[1] : c[n - 1];
       let ox = atStart ? c[0] - c[2] : c[n - 2] - c[n - 4], oz = atStart ? c[1] - c[3] : c[n - 1] - c[n - 3]; let ol = Math.hypot(ox, oz) || 1; ox /= ol; oz /= ol;
-      let uOff = 0, prev = ri;
-      for (let hop = 0; hop < 4 && uOff < rOut; hop++) {
+      let uOff = 0, prev = ri; const hops = []; let jd = Infinity;
+      for (let hop = 0; hop < 4 && uOff < rOut0; hop++) {
         let best = -1, bd = Math.cos(0.75), bStart = true;
         for (const cj of ends.get(K(px, pz)) || []) { if (cj === prev || cj === ri) continue; const r2 = DATA.R[cj]; if (r2[3] & 6) continue; const c2 = r2[4], m = c2.length; const st = c2[0] === px && c2[1] === pz;
           let dx = st ? c2[2] - c2[0] : c2[m - 4] - c2[m - 2], dz = st ? c2[3] - c2[1] : c2[m - 3] - c2[m - 1]; const dl = Math.hypot(dx, dz) || 1; const dot = (dx * ox + dz * oz) / dl; if (dot > bd) { bd = dot; best = cj; bStart = st; } }
-        if (best < 0) break; const c2 = DATA.R[best][4], m = c2.length, Lc = polyLen(c2), u0 = uOff;
-        push(best, bStart ? (s) => D * smooth(0, 1, (rOut - (u0 + s)) / R) : (s) => D * smooth(0, 1, (rOut - (u0 + Lc - s)) / R));
+        if (best < 0) break; const c2 = DATA.R[best][4], m = c2.length, Lc = polyLen(c2);
+        if (jd === Infinity) { let u = 0; for (let q = 1; q < m / 2; q++) { const i0 = bStart ? (q - 1) * 2 : m - q * 2, i1 = bStart ? q * 2 : m - (q + 1) * 2; u += Math.hypot(c2[i1] - c2[i0], c2[i1 + 1] - c2[i0 + 1]); if ((nodeCount.get(K(c2[i1], c2[i1 + 1])) || 0) >= 3) { jd = uOff + u; break; } } }
+        hops.push({ ri: best, bStart, u0: uOff, Lc });
         uOff += Lc; prev = best; px = bStart ? c2[m - 2] : c2[0]; pz = bStart ? c2[m - 1] : c2[1];
         ox = bStart ? c2[m - 2] - c2[m - 4] : c2[0] - c2[2]; oz = bStart ? c2[m - 1] - c2[m - 3] : c2[1] - c2[3]; ol = Math.hypot(ox, oz) || 1; ox /= ol; oz /= ol;
       }
+      chains.push({ hops, lim: clamp(jd - 4, 20, rOut0) });
     }
+    const limS = chains[0].lim, limE = chains[1].lim;
+    push(ri, (s) => D * Math.min(smooth(0, 1, (s + limS) / (rIn + limS)), smooth(0, 1, (L - s + limE) / (rIn + limE))));
+    for (const ch of chains) { const lim = ch.lim, R = rIn + lim;
+      for (const { ri: best, bStart, u0, Lc } of ch.hops) { if (u0 > lim) break; push(best, bStart ? (s) => D * smooth(0, 1, (lim - (u0 + s)) / R) : (s) => D * smooth(0, 1, (lim - (u0 + Lc - s)) / R)); } }
   });
 }
 // segment-intersection crossings of road ri with any other road (no shared node near the crossing = different levels)
@@ -508,6 +516,27 @@ function computeRaisesOnce() {
     }
   });
   }
+  // roads running alongside a raised approach / low deck end and overlapping its carriageway (merges, diverges, slip
+  // roads that share the embankment) follow it up where they overlap: the low embankment is solid, so the car used to
+  // jump onto it and "fly" over its own road (agent: "vuela" / "salto" on links)
+  const followOverlaps = (passes) => { for (let pass = 0; pass < passes; pass++) { const RB = []; for (const ri of RAISE.keys()) { const rd = DATA.R[ri]; if (rd[0] > 12 || DEP.has(ri)) continue; const c = rd[4]; const isBr = (rd[3] & 2) && !AT_GRADE.has(ri); const sp = RAISE_SPAN.get(ri); if (!isBr && !sp) continue;
+      let b = [1e9, -1e9, 1e9, -1e9]; for (let i = 0; i < c.length; i += 2) b = [Math.min(b[0], c[i]), Math.max(b[1], c[i]), Math.min(b[2], c[i + 1]), Math.max(b[3], c[i + 1])]; RB.push({ ri, c, w: rd[2], isBr, sp, pf: isBr ? bridgeProfile(c) : null, b }); }
+    const yOf = (o, ss, x, z) => o.isBr ? o.pf(ss, x, z) + raiseOf(o.ri, ss) : heightAt(x, z) + (ss >= o.sp[0] - 0.5 && ss <= o.sp[1] + 0.5 ? raiseOf(o.ri, ss) : 0);
+    const ovl = new Map();
+    DATA.R.forEach((rd, rj) => { if (rd[0] > 12 || DEP.has(rj)) return; const c = rd[4]; const spj = RAISE_SPAN.get(rj); const brJ = (rd[3] & 2) && !AT_GRADE.has(rj); const pfJ = brJ ? bridgeProfile(c) : null; let s = 0;
+      for (let i = 0; i + 3 < c.length; i += 2) { const L = Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]); if (L < 0.01) continue; const tx = (c[i + 2] - c[i]) / L, tz = (c[i + 3] - c[i + 1]) / L;
+        for (let u = 0; u <= L; u += 2) { const x = c[i] + tx * u, z = c[i + 1] + tz * u, sj = s + u; let best = -1e9;
+          for (const o of RB) { if (o.ri === rj || x < o.b[0] - o.w || x > o.b[1] + o.w || z < o.b[2] - o.w || z > o.b[3] + o.w) continue; const c2 = o.c; let acc = 0;
+            for (let j = 0; j + 3 < c2.length; j += 2) { const dx = c2[j + 2] - c2[j], dz = c2[j + 3] - c2[j + 1], L2 = Math.hypot(dx, dz) || 1; const tr = ((x - c2[j]) * dx + (z - c2[j + 1]) * dz) / (L2 * L2);
+              if (tr >= 0 && tr <= 1) { const d = Math.hypot(x - c2[j] - dx * tr, z - c2[j + 1] - dz * tr); if (d < o.w / 2 + 1.2 && (d < o.w / 2 - 0.5 || Math.abs((dx * tx + dz * tz) / L2) > 0.6)) { const ss = acc + L2 * tr; const px = c2[j] + dx * tr, pz = c2[j + 1] + dz * tr;
+                const yT = yOf(o, ss, px, pz); if (yT - heightAt(px, pz) < 3.2) best = Math.max(best, yT); } } acc += L2; } }
+          if (best < -1e8) continue; const have = brJ ? raiseOf(rj, sj) : (RAISE.has(rj) && spj && sj >= spj[0] - 0.5 && sj <= spj[1] + 0.5 ? raiseOf(rj, sj) : 0); const yJ = brJ ? pfJ(sj, x, z) + have : heightAt(x, z) + have; const need = best - yJ;
+          if (need < 0.3 || (brJ && need > 2.5)) continue; let a = ovl.get(rj); if (!a) ovl.set(rj, a = []); a.push([sj, have + need]); } s += L; } });
+    for (const [rj, a] of ovl) { const Lj = polyLen(DATA.R[rj][4]); let lo = Lj, hi = 0; const k = a.map(([s0, h]) => { const Rr = clamp(h * 14, 6, 60); lo = Math.min(lo, s0 - Rr); hi = Math.max(hi, s0 + Rr); return [s0, h, Rr]; });
+      push(rj, (q) => { let m = 0; for (const [s0, h, Rr] of k) { const d = Math.abs(q - s0); if (d < Rr) m = Math.max(m, h * smooth(0, 1, (Rr - d) / Rr)); } return m; });
+      let sp = RAISE_SPAN.get(rj) || [Lj, 0]; sp = [Math.min(sp[0], Math.max(0, lo)), Math.max(sp[1], Math.min(Lj, hi))]; RAISE_SPAN.set(rj, sp); }
+    if (ovl.size) console.log('roads following an overlapping embankment', pass, ovl.size); if (!ovl.size) break; } };
+  followOverlaps(2);
   // side roads that meet a raised approach / deck at one of its nodes (slip roads, junctions on the ramp) climb to meet it
   // instead of staying at grade under it (agent: "deck floating over the road", "parapet in the carriageway")
   const raisedNow = [...RAISE.keys()]; const node2 = new Map();
@@ -520,6 +549,7 @@ function computeRaisesOnce() {
   for (const [rj, s0, h] of extra) { const Lj = polyLen(DATA.R[rj][4]); const avail = s0 < 1 || s0 > Lj - 1 ? Lj : Math.min(s0, Lj - s0); const Rr = clamp(Math.min(h * 18, 80), 6, Math.max(6, avail - 3));
     push(rj, (q) => h * smooth(0, 1, (Rr - Math.abs(q - s0)) / Rr));
     let a = RAISE_SPAN.get(rj) || [Lj, 0]; a = [Math.min(a[0], Math.max(0, s0 - Rr)), Math.max(a[1], Math.min(Lj, s0 + Rr))]; RAISE_SPAN.set(rj, a); }
+  if (extra.length) followOverlaps(1);
   return nb;
 }
 // height of a road's surface as it will be built (same rules as buildRoads)
@@ -569,7 +599,7 @@ function tunnelRoad(c, w, cls, tile, hf, opt = {}) {
       const roofOk = !inOtherRoad((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2 + H - 4.4, (a[2] + b[2]) / 2 + H + 0.3, TUN_RI, -hw + 0.2) || !TUN_RI;
       if (roofOk) T.quad(Pt(a, 1, H), Pt(b, 1, H), Pt(b, -1, H), Pt(a, -1, H), [0, 0], [1, 0], [1, 1], [0, 1], null, undefined, [0, -1, 0]);
       // lid slab so the tube reads from outside where the ground dips
-      for (const sg of [1, -1]) if (!twinWall((Pt(a, sg, 0)[0] + Pt(b, sg, 0)[0]) / 2, (Pt(a, sg, 0)[2] + Pt(b, sg, 0)[2]) / 2, Math.min(a[2], b[2]) + H, Math.max(a[2], b[2]) + H + 1.2)) W.quad(Pt(a, sg, H), Pt(b, sg, H), Pt(b, sg, H + 1.2, hw + 0.8), Pt(a, sg, H + 1.2, hw + 0.8), [0, 0], [0, 0], [0, 0], [0, 0], wc, undefined, [-a[4] * sg, 0.3, a[3] * sg]);
+      for (const sg of [1, -1]) if (!twinWall((Pt(a, sg, 0)[0] + Pt(b, sg, 0)[0]) / 2, (Pt(a, sg, 0)[2] + Pt(b, sg, 0)[2]) / 2, Math.min(a[2], b[2]) + H, Math.max(a[2], b[2]) + H + 1.2) && !inOtherRoad((Pt(a, sg, 0, hw + 0.4)[0] + Pt(b, sg, 0, hw + 0.4)[0]) / 2, (Pt(a, sg, 0, hw + 0.4)[2] + Pt(b, sg, 0, hw + 0.4)[2]) / 2, Math.min(a[2], b[2]) + H - 1.5, Math.max(a[2], b[2]) + H + 2.0, TUN_RI, 0.2, true)) W.quad(Pt(a, sg, H), Pt(b, sg, H), Pt(b, sg, H + 1.2, hw + 0.8), Pt(a, sg, H + 1.2, hw + 0.8), [0, 0], [0, 0], [0, 0], [0, 0], wc, undefined, [-a[4] * sg, 0.3, a[3] * sg]);
       if (i % 3 === 0) L2.quad(Pt(a, 1, H - 0.05, 0.4), Pt(a, -1, H - 0.05, 0.4), Pt(b, -1, H - 0.05, 0.4), Pt(b, 1, H - 0.05, 0.4), [0, 0], [0, 0], [0, 0], [0, 0], null, undefined, [0, -1, 0]);
       if (covered(b) !== covered(a)) { const p = covered(a) ? a : b; const P = acc(p[0], p[1], 'trim'); const col = [0.58, 0.56, 0.53]; const top = Math.max(H + 1.6, dep(p) + 0.6);
         const fr = (s0, s1, y0, y1) => { for (const d of [-0.25, 0.25]) P.quad([p[0] - p[4] * hw * s0 + p[3] * d, p[2] + y0, p[1] + p[3] * hw * s0 + p[4] * d], [p[0] - p[4] * hw * s1 + p[3] * d, p[2] + y0, p[1] + p[3] * hw * s1 + p[4] * d], [p[0] - p[4] * hw * s1 + p[3] * d, p[2] + y1, p[1] + p[3] * hw * s1 + p[4] * d], [p[0] - p[4] * hw * s0 + p[3] * d, p[2] + y1, p[1] + p[3] * hw * s0 + p[4] * d], [0, 0], [0, 0], [0, 0], [0, 0], col, undefined, [p[3] * Math.sign(d), 0, p[4] * Math.sign(d)]); };
@@ -578,10 +608,13 @@ function tunnelRoad(c, w, cls, tile, hf, opt = {}) {
         const sL = side(1), sR = side(-1); const htop = Math.min(top, dep(p) - 0.12); if (htop > H + 0.15) fr(sL ? ex : 1.0, sR ? -ex : -1.0, H, htop); /* never sticks out of the ground (roads may run over the portal) */ const pt = Math.min(H, dep(p) - 0.12); if (sL && pt > 0.5) fr(ex, 1.0, -0.3, pt); if (sR && pt > 0.5) fr(-1.0, -ex, -0.3, pt); }
     } else if (dep(a) > 0.3 || dep(b) > 0.3) {
       // open cutting: retaining walls up to the ground, with a small parapet, and a hole in the terrain above
-      for (const sg of [1, -1]) { if (twinWall((Pt(a, sg, 0)[0] + Pt(b, sg, 0)[0]) / 2, (Pt(a, sg, 0)[2] + Pt(b, sg, 0)[2]) / 2, Math.min(a[2], b[2]) - 0.3, Math.max(heightAt(Pt(a, sg, 0)[0], Pt(a, sg, 0)[2]), heightAt(Pt(b, sg, 0)[0], Pt(b, sg, 0)[2])) + 0.9)) continue; const ga = heightAt(...[Pt(a, sg, 0)[0], Pt(a, sg, 0)[2]]) - a[2] + 0.9, gb = heightAt(...[Pt(b, sg, 0)[0], Pt(b, sg, 0)[2]]) - b[2] + 0.9;
-        W.quad(Pt(a, sg, -0.3), Pt(b, sg, -0.3), Pt(b, sg, Math.max(0.9, gb)), Pt(a, sg, Math.max(0.9, ga)), [0, 0], [0, 0], [0, 0], [0, 0], wc, undefined, [a[4] * sg, 0, -a[3] * sg]);
-        W.quad(Pt(b, sg, -0.3, hw + 0.3), Pt(a, sg, -0.3, hw + 0.3), Pt(a, sg, Math.max(0.9, ga), hw + 0.3), Pt(b, sg, Math.max(0.9, gb), hw + 0.3), [0, 0], [0, 0], [0, 0], [0, 0], wc, undefined, [-a[4] * sg, 0, a[3] * sg]);
-        W.quad(Pt(a, sg, Math.max(0.9, ga)), Pt(b, sg, Math.max(0.9, gb)), Pt(b, sg, Math.max(0.9, gb), hw + 0.3), Pt(a, sg, Math.max(0.9, ga), hw + 0.3), [0, 0], [0, 0], [0, 0], [0, 0], wc, undefined, [0, 1, 0]); }
+      for (const sg of [1, -1]) { if (twinWall((Pt(a, sg, 0)[0] + Pt(b, sg, 0)[0]) / 2, (Pt(a, sg, 0)[2] + Pt(b, sg, 0)[2]) / 2, Math.min(a[2], b[2]) - 0.3, Math.max(heightAt(Pt(a, sg, 0)[0], Pt(a, sg, 0)[2]), heightAt(Pt(b, sg, 0)[0], Pt(b, sg, 0)[2])) + 0.9)) continue; const pa = Pt(a, sg, 0), pb = Pt(b, sg, 0), mx = (pa[0] + pb[0]) / 2, mz = (pa[2] + pb[2]) / 2, gm = heightAt(mx, mz);
+        /* a street at ground level runs along the edge of the cutting: the wall stops just under the ground (no parapet standing in its carriageway) */
+        const flush = inOtherRoad(mx, mz, gm - 0.8, gm + 0.8, TUN_RI, 0.2, true) || inOtherRoad(pa[0], pa[2], gm - 0.8, gm + 0.8, TUN_RI, 0.2, true) || inOtherRoad(pb[0], pb[2], gm - 0.8, gm + 0.8, TUN_RI, 0.2, true); const cap = flush ? -0.05 : 0.9;
+        const ga = heightAt(pa[0], pa[2]) - a[2] + cap, gb = heightAt(pb[0], pb[2]) - b[2] + cap;
+        W.quad(Pt(a, sg, -0.3), Pt(b, sg, -0.3), Pt(b, sg, Math.max(flush ? 0.3 : 0.9, gb)), Pt(a, sg, Math.max(flush ? 0.3 : 0.9, ga)), [0, 0], [0, 0], [0, 0], [0, 0], wc, undefined, [a[4] * sg, 0, -a[3] * sg]);
+        W.quad(Pt(b, sg, -0.3, hw + 0.3), Pt(a, sg, -0.3, hw + 0.3), Pt(a, sg, Math.max(flush ? 0.3 : 0.9, ga), hw + 0.3), Pt(b, sg, Math.max(flush ? 0.3 : 0.9, gb), hw + 0.3), [0, 0], [0, 0], [0, 0], [0, 0], wc, undefined, [-a[4] * sg, 0, a[3] * sg]);
+        W.quad(Pt(a, sg, Math.max(flush ? 0.3 : 0.9, ga)), Pt(b, sg, Math.max(flush ? 0.3 : 0.9, gb)), Pt(b, sg, Math.max(flush ? 0.3 : 0.9, gb), hw + 0.3), Pt(a, sg, Math.max(flush ? 0.3 : 0.9, ga), hw + 0.3), [0, 0], [0, 0], [0, 0], [0, 0], wc, undefined, [0, 1, 0]); }
       const lc = TCUTS[TCUTS.length - 1]; const gid = TUNNEL_DECKS.length;
       if (lc && lc[5] === gid && lc[2] === a[0] && lc[3] === a[1] && Math.abs((lc[2] - lc[0]) * a[4] - (lc[3] - lc[1]) * a[3]) < 0.02 * Math.hypot(lc[2] - lc[0], lc[3] - lc[1]) + 1e-6) { lc[2] = b[0]; lc[3] = b[1]; }
       else TCUTS.push([a[0], a[1], b[0], b[1], hw + 0.15, gid]);
@@ -592,7 +625,8 @@ function tunnelRoad(c, w, cls, tile, hf, opt = {}) {
 const underground = (x, z, y) => y < heightAt(x, z) - 1.6; // deep in a tunnel/cutting: surface obstacles don't apply
 // open cutting edge for things on the surface: returns push-out vector or null
 function trenchPush(x, z, rad) {
-  for (const c of TCUTS) { const dx = c[2] - c[0], dz = c[3] - c[1], L2 = dx * dx + dz * dz || 1; const t = clamp(((x - c[0]) * dx + (z - c[1]) * dz) / L2, 0, 1); const px = c[0] + dx * t, pz = c[1] + dz * t; const d = Math.hypot(x - px, z - pz); const lim = c[4] + rad;
+  if (ROADS_INDEXED && onSurfaceRoad(x, z)) return null; // on a street at grade (twin roads: one at grade beside the other's cutting): the street covers the ground, nothing to fall into
+  for (const c of TCUTS) { const dx = c[2] - c[0], dz = c[3] - c[1], L2 = dx * dx + dz * dz || 1; const tr = ((x - c[0]) * dx + (z - c[1]) * dz) / L2; if (tr < -0.02 || tr > 1.02) continue; const t = clamp(tr, 0, 1); /* only sideways: end-on is the way in along the road (the car used to bounce off the mouth of its own trench) */ const px = c[0] + dx * t, pz = c[1] + dz * t; const d = Math.hypot(x - px, z - pz); const lim = c[4] + rad;
     if (d < lim && d > 0.05) { const g = heightAt(px, pz), l = lowAt(px, pz, g - 1.5); if (!l || g - l.y < 0.8) continue; const k = (lim - d) / d; return [(x - px) * k, (z - pz) * k, (x - px) / d, (z - pz) / d]; } }
   return null;
 }
@@ -605,7 +639,9 @@ function lowAt(x, z, py) {
   for (const d of TUNNEL_DECKS) {
     if (!d.bb) { let a = 1e9, b = -1e9, c2 = 1e9, e = -1e9; for (const p of d.pts) { a = Math.min(a, p[0]); b = Math.max(b, p[0]); c2 = Math.min(c2, p[1]); e = Math.max(e, p[1]); } d.bb = [a - d.w, b + d.w, c2 - d.w, e + d.w]; }
     if (x < d.bb[0] || x > d.bb[1] || z < d.bb[2] || z > d.bb[3]) continue;
-    const p = d.pts; for (let i = 0; i < p.length - 1; i++) { const a = p[i], b = p[i + 1]; const dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz || 1; let t = ((x - a[0]) * dx + (z - a[1]) * dz) / L2; if (!d.capped && ((t < -0.05 && i === 0) || (t > 1.05 && i === p.length - 2))) continue; t = clamp(t, 0, 1); // interior joints: round, so the outside of bends is covered
+    const p = d.pts; let i0 = 0, i1 = p.length - 1;
+    if (d.tunnel) { let nd = 1e9; for (let i = 0; i < p.length - 1; i++) { const a = p[i], b = p[i + 1]; const dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz || 1; const t = clamp(((x - a[0]) * dx + (z - a[1]) * dz) / L2, 0, 1); const dd = Math.hypot(x - a[0] - dx * t, z - a[1] - dz * t); if (dd < nd - 0.01) { nd = dd; i0 = i; } } i1 = i0 + 1; } // road trenches: only the nearest segment (on curved steep ramps the ends of other segments gave other heights: car jumping)
+    for (let i = i0; i < i1; i++) { const a = p[i], b = p[i + 1]; const dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz || 1; let t = ((x - a[0]) * dx + (z - a[1]) * dz) / L2; if (!d.capped && ((t < -0.05 && i === 0) || (t > 1.05 && i === p.length - 2))) continue; t = clamp(t, 0, 1); // interior joints: round, so the outside of bends is covered
       const px = a[0] + dx * t, pz = a[1] + dz * t, dd = Math.hypot(x - px, z - pz); if (dd > d.w / 2) continue; const y = lerp(a[2], b[2], t); const g = heightAt(x, z);
       if (y > g - 0.2 || py > y + 2.9 || py < y - 2.5) continue;
       if (g - y < 1.6 && !d.ceil && TCUTS_READY && !inCut(x, z, 0.3)) continue;

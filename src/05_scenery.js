@@ -85,6 +85,13 @@ function mergeGeos(list) {
   for (const g of gs) { p.set(g.attributes.position.array, o * 3); no.set(g.attributes.normal.array, o * 3); o += g.attributes.position.count; }
   const r = new THREE.BufferGeometry(); r.setAttribute('position', new THREE.BufferAttribute(p, 3)); r.setAttribute('normal', new THREE.BufferAttribute(no, 3)); return r;
 }
+// fuse the direct mesh children of a prop group into one mesh per material (fountains: ~10 draw calls -> 2-4).
+// keep(m) -> true leaves that child alone (animated or transparent parts)
+function fuseGroup(g, keep) {
+  const by = new Map(); g.updateMatrix(); for (const m of [...g.children]) { if (!m.isMesh || (keep && keep(m))) continue; m.updateMatrix(); const geo = m.geometry.clone().applyMatrix4(m.matrix); if (!geo.attributes.normal) geo.computeVertexNormals(); let a = by.get(m.material); if (!a) by.set(m.material, a = []); a.push(geo); m.geometry.dispose(); g.remove(m); }
+  for (const [mat, list] of by) { const geo = mergeGeos(list); for (const q of list) q.dispose(); const m = new THREE.Mesh(geo, mat); m.castShadow = true; m.receiveShadow = true; g.add(m); }
+  return g;
+}
 function buildTrees() {
   const types = [[], [], [], []];
   for (const t of TREES) { if (!inPlayArea(t[0], t[1], -5)) continue; if (overTunnel(t[0], t[1]) || inCut(t[0], t[1], 2.2)) continue; if (onCarriageway(t[0], t[1], 0.9)) continue; if (!t[4] && onAnyPaved(t[0], t[1], -0.3) && !isGreen(t[0], t[1])) continue; types[t[2]].push(t); }

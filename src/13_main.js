@@ -138,7 +138,11 @@ function adaptRes(now) {
   let p = DYN.pr; if (DYN.ms > 38) p = Math.max(DYN.min, p - 0.1); else if (DYN.ms < 22) p = Math.min(DYN.max, p + 0.05);
   if (Math.abs(p - DYN.pr) > 0.01) { DYN.pr = p; renderer.setPixelRatio(p); renderer.setSize(window.innerWidth, window.innerHeight); }
 }
-function render() { const tt = performance.now(); renderer.clear(); renderer.render(bgScene, bgCamera); renderer.clearDepth(); renderer.render(scene, camera); pm('render', tt); }
+// underground backdrop: from inside a tunnel or a cutting, any gap between walls used to show the sky and the far city
+// "below" the ground; a dark earth cylinder around the camera (top just under the ground level) fills those views
+const UGSKIRT = (() => { const g = new THREE.CylinderGeometry(1, 1, 1, 40, 1, true); g.translate(0, -0.5, 0); const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: 0x2b2219, side: THREE.BackSide, fog: false })); m.frustumCulled = false; m.visible = false; m.renderOrder = -1; scene.add(m); return m; })();
+function updateUnderground() { const g = heightAt(camera.position.x, camera.position.z); const under = camera.position.y < g - 1.2; UGSKIRT.visible = under; if (under) { const open = inCut(camera.position.x, camera.position.z, 1.0); /* open cutting: sky above stays; covered tube: all earth */ UGSKIRT.position.set(camera.position.x, open ? g - 0.6 : g + 60, camera.position.z); UGSKIRT.scale.set(240, 460, 240); } }
+function render() { const tt = performance.now(); updateUnderground(); renderer.clear(); renderer.render(bgScene, bgCamera); renderer.clearDepth(); renderer.render(scene, camera); pm('render', tt); }
 window.__step = (n, dt = 1 / 30, keys = []) => { keys.forEach((k) => KEYS.add(k)); for (let i = 0; i < n; i++) logic(dt, performance.now()); keys.forEach((k) => KEYS.delete(k)); };
 window.__press = (k) => PRESSED.add(k);
 function logic(dt, now) {
@@ -236,6 +240,6 @@ async function boot() {
 }
 boot();
 window.__bg = [bgScene, bgCamera]; window.__dbg = { MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
-window.__snap = () => { bgCamera.position.copy(camera.position); bgCamera.quaternion.copy(camera.quaternion); bgCamera.fov = camera.fov; bgCamera.updateProjectionMatrix(); renderer.clear(); renderer.render(bgScene, bgCamera); renderer.clearDepth(); renderer.render(scene, camera); return renderer.domElement.toDataURL('image/jpeg', 0.85); };
+window.__snap = () => { updateUnderground(); bgCamera.position.copy(camera.position); bgCamera.quaternion.copy(camera.quaternion); bgCamera.fov = camera.fov; bgCamera.updateProjectionMatrix(); renderer.clear(); renderer.render(bgScene, bgCamera); renderer.clearDepth(); renderer.render(scene, camera); return renderer.domElement.toDataURL('image/jpeg', 0.85); };
 window.__setYaw = (y) => { CAM.yaw = y; CAM.pitch = 0.1; INPUT.lastMouse = performance.now(); };
 window.__hit = (p) => hitPed(p);

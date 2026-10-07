@@ -53,6 +53,8 @@
 - **Inclinación**: altura del suelo en 4 puntos (delante, detrás, izquierda, derecha) → cabeceo y alabeo; así las 4
   ruedas apoyan en calles con mucha pendiente lateral (`tests/prueba_peralte.py`).
 - Altura: terreno, tablero de puente (con contención lateral), o suelo bajo tierra (`lowAt`) sin atravesar techos.
+  Escalón máximo al subir a un tablero: ~0,35 m más lo que sube el propio tablero en el trozo que mira el coche
+  (`deckAt(..., slack)`); así no se sube a una rampa vecina más alta que solo se solapa por el borde (v0.50).
 - Coches aparcados: instanciados a baja resolución y convertidos en `Car` real al interactuar.
 
 ## Tráfico

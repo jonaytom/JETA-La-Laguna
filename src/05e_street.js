@@ -73,6 +73,7 @@ function buildStreetProps() {
     addMesh(g, new THREE.CylinderGeometry(0.3, 0.45, 1.8, 8), greyStone, 0, 1.2, 0);
     addMesh(g, new THREE.CylinderGeometry(0.8, 0.25, 0.3, 12), greyStone, 0, 2.1, 0);
     addMesh(g, new THREE.SphereGeometry(0.22, 10, 8), greyStone, 0, 2.4, 0);
+    fuseGroup(g);
     g.position.set(x, y, z); scene.add(g); COL.addCirc(x, z, 2.3);
   }
   return Object.fromEntries(Object.entries(lists).map(([k, v]) => [k, v.length]));

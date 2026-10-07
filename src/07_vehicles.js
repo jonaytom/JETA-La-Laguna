@@ -136,7 +136,7 @@ class Car {
   onImpact(v) { this.lastImpact = v; this.lastImpactT = performance.now(); this.health -= v * 0.9 * (this.type === 'police' ? 0.4 : 1); if (this.driver === 'player') { AUDIO.crash(v); CAM.shake = Math.min(1, v / 15); playerCrashDamage(v); } }
   sync(dt = 0.016) {
     const py = this.y; const low = lowAt(this.x, this.z, py); this.low = low;
-    const G = low ? (x, z) => { const l = lowAt(x, z, py); return l ? l.y - 0.12 : low.y - 0.12; } : (x, z) => { const g = heightAt(x, z), d = deckAt(x, z, py + (this.onDeck ? 1.6 : 0.7), true) - 0.12; if (d > g) { onDk = true; return d; } return g; }; this.Gf = G; let onDk = false;
+    const G = low ? (x, z) => { const l = lowAt(x, z, py); return l ? l.y - 0.12 : low.y - 0.12; } : (x, z) => { const g = heightAt(x, z), d = deckAt(x, z, py - 1.3, true, 2.2) - 0.12; if (d > g) { onDk = true; return d; } return g; }; this.Gf = G; let onDk = false;
     const fx = Math.sin(this.h), fz = Math.cos(this.h), L = this.T.L * 0.4, W = this.T.W * 0.45;
     const hf = G(this.x + fx * L, this.z + fz * L), hb = G(this.x - fx * L, this.z - fz * L), hr = G(this.x - fz * W, this.z + fx * W), hl = G(this.x + fz * W, this.z - fx * W);
     this.y = (hf + hb) / 2 + 0.17; this.onDeck = onDk;

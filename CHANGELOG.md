@@ -3,6 +3,21 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.50.0 — 2026-10-07 — Enlaces de autopista, trincheras y fuentes
+- **Enlaces de autopista sin «volar»**: el coche ya no salta a una rampa vecina más alta que se solapa con su calzada.
+  Las vías que comparten terraplén con una rampa elevada suben con ella en ese tramo; el coche solo sube a un tablero
+  si el escalón es pequeño (o si es el propio tablero que sube); y en curvas con pendiente la altura del puente o la
+  trinchera sale del tramo más cercano. Prueba de conducción del agente: de 94 a 25 avisos (de 40 «vuela» a 3–6).
+- **Trincheras**: las rampas de bajada terminan antes de los cruces; el coche ya no rebota en la boca de su propia
+  trinchera ni se atasca en una calle a ras pegada a la trinchera gemela (X 1800, Z 3160); muros a ras donde otra
+  calle toca la trinchera; sin losas de techo dentro de otra calzada. Túneles y puentes: fallan 3 de 97 (antes 10 de 111).
+- **Túneles por dentro**: si la cámara queda bajo tierra se ve un fondo de tierra en vez del cielo o el subsuelo
+  transparente.
+- **Fuentes** de plazas y parques fusionadas en pocas mallas (menos llamadas de dibujo).
+- **Vallas de canchas** que ya no cruzan la calle (C. Castellón / Valencia); los andenes del tranvía se acortan si sus
+  rampas llegan a la calzada.
+- Agente revisor: ya no da error al leer coches aparcados que se rehacen durante la prueba.
+
 ## 0.49.0 — 2026-10-07 — Rendimiento (auditoría) y menú principal nuevo
 - **Menú principal**: botones en columna como en los juegos (continuar / nueva partida / cargar / opciones / controles
   / modo Achamán), número de versión en la esquina y una descripción del juego a la altura de lo que ya es.

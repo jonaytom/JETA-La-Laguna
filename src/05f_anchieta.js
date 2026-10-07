@@ -1,15 +1,18 @@
 // ============ Pasarela de Padre Anchieta (Gran Anillo Peatonal) & Intercambiador ============
 // Walkable elevated decks: ring + ramps/stairs. Player ground = max(terrain, deck) when standing on one.
 const DECKS = [];
-function deckAt(x, z, py, roadOnly = false) {
+function deckAt(x, z, py, roadOnly = false, slack = 0) { // slack: extra step allowed per unit of the deck's own slope (cars reaching ahead on steep ramps)
   let best = -1e9;
   if (!DECKS.bridgesAdded) { DECKS.push(...BRIDGE_DECKS); DECKS.bridgesAdded = true; for (const d of DECKS) if (d.type === 'path') { let a = 1e9, b = -1e9, c2 = 1e9, e = -1e9; for (const p of d.pts) { a = Math.min(a, p[0]); b = Math.max(b, p[0]); c2 = Math.min(c2, p[1]); e = Math.max(e, p[1]); } d.bb = [a - d.w, b + d.w, c2 - d.w, e + d.w]; } }
   for (const d of DECKS) {
     if (roadOnly && !d.road) continue; if (d.bb && (x < d.bb[0] || x > d.bb[1] || z < d.bb[2] || z > d.bb[3])) continue;
     if (d.type === 'ring') { const r = Math.hypot(x - d.cx, z - d.cz); if (Math.abs(r - d.R) < d.w / 2 && py > d.y - 2.2) best = Math.max(best, d.y); }
     else if (d.type === 'path') {
-      const p = d.pts; for (let i = 0; i < p.length - 1; i++) { const a = p[i], b = p[i + 1]; const dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz || 1; let t = ((x - a[0]) * dx + (z - a[1]) * dz) / L2; if ((t < -0.02 && i === 0) || (t > 1.02 && i === p.length - 2)) continue; t = clamp(t, 0, 1);
-        const px = a[0] + dx * t, pz = a[1] + dz * t; if (Math.hypot(x - px, z - pz) > d.w / 2) continue; const y = lerp(a[2], b[2], t); if (py > y - 1.6 || (d.bridge && y - heightAt(x, z) < 3.2)) best = Math.max(best, y); } // low decks/embankments are solid: nobody fits below them
+      const p = d.pts; let nd = 1e9, ny = 0, nk = 0; for (let i = 0; i < p.length - 1; i++) { const a = p[i], b = p[i + 1]; const dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz || 1; let t = ((x - a[0]) * dx + (z - a[1]) * dz) / L2; if ((t < -0.02 && i === 0) || (t > 1.02 && i === p.length - 2)) continue; t = clamp(t, 0, 1);
+        const px = a[0] + dx * t, pz = a[1] + dz * t; if (Math.hypot(x - px, z - pz) > d.w / 2) continue; const y = lerp(a[2], b[2], t);
+        if (d.bridge) { const dd = Math.hypot(x - px, z - pz); if (dd < nd - 0.01) { nd = dd; ny = y; nk = Math.abs(b[2] - a[2]) / Math.sqrt(L2); } continue; } // road decks: height of the nearest segment (on tight curves of steep ramps the max over segments picked a point further up the ramp: car "flying")
+        if (py > y - 1.6) best = Math.max(best, y); }
+      if (nd < 1e9 && (py > ny - 1.6 - slack * nk || ny - heightAt(x, z) < 3.2)) best = Math.max(best, ny); // low decks/embankments are solid: nobody fits below them
     } else if (d.type === 'box') { if (Math.abs(x - d.x) < d.hw && Math.abs(z - d.z) < d.hd && py > d.y - 1.5) best = Math.max(best, d.y); }
   }
   return best;
