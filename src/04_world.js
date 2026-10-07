@@ -89,7 +89,7 @@ const MAT = {};
   MAT.grass = new THREE.MeshStandardMaterial({ map: (() => { const c = mkCanvas(128, 128), x = c.getContext('2d'); noiseFill(x, 128, 128, [86, 128, 60], 34, 77, 2); return canvasTex(c); })(), roughness: 0.95 });
   MAT.tunnel = new THREE.MeshStandardMaterial({ color: 0xb9b4a8, roughness: 0.9, side: THREE.DoubleSide, emissive: 0x2a2620, emissiveIntensity: 0.6 });
   MAT.tunnelLight = new THREE.MeshBasicMaterial({ color: 0xffe2a8, side: THREE.DoubleSide });
-  MAT.glassHouse = new THREE.MeshStandardMaterial({ color: 0xe8f0ee, roughness: 0.2, transparent: true, opacity: 0.55, side: THREE.DoubleSide });
+  MAT.glassHouse = new THREE.MeshStandardMaterial({ color: 0xf1f4f1, roughness: 0.6, transparent: true, opacity: 0.9, side: THREE.DoubleSide }); // milky plastic: reads as a greenhouse, not as an invisible building
   const road = (map, off, extra = {}) => new THREE.MeshStandardMaterial({ map, roughness: 0.92, polygonOffset: true, polygonOffsetFactor: -off, polygonOffsetUnits: -off * 2, ...extra });
   MAT.asphalt = road(TEX.asphalt, 3);
   MAT.asphaltLines = road(TEX.asphaltLines, 4);
@@ -746,9 +746,16 @@ function buildBuildings() {
     if (CONC_CARVE.pts === pts) { CHURCHES.push({ pts, cx, cz, top, bmin, bmax, H, name, area: Math.abs(polyArea(pts)), custom: true }); continue; } // La Concepción: modelled in 05o_concepcion.js
     if (style === 5) { // greenhouse
       const A = acc(cx, cz, 'glassHouse');
-      for (let i = 0; i < n; i++) { const p = pts[i], q = pts[(i + 1) % n]; A.quad([p[0], bot, p[1]], [q[0], bot, q[1]], [q[0], top, q[1]], [p[0], top, p[1]], [0, 0], [1, 0], [1, 1], [0, 1]); }
+      // greenhouses follow the slope (a flat top over a 13 m slope made a huge glass box)
+      const gy = pts.map((p) => heightAt(p[0], p[1])), Hh = H, ty = gy.map((g) => g + Hh);
+      for (let i = 0; i < n; i++) { const j = (i + 1) % n, p = pts[i], q = pts[j]; A.quad([p[0], gy[i] - 0.6, p[1]], [q[0], gy[j] - 0.6, q[1]], [q[0], ty[j], q[1]], [p[0], ty[i], p[1]], [0, 0], [1, 0], [1, 1], [0, 1]); }
       const tris = THREE.ShapeUtils.triangulateShape(pts.map((p) => new THREE.Vector2(p[0], p[1])), []);
-      for (const t of tris) A.tri([pts[t[0]][0], top, pts[t[0]][1]], [pts[t[1]][0], top, pts[t[1]][1]], [pts[t[2]][0], top, pts[t[2]][1]], [0, 0], [0, 0], [0, 0], null, undefined, [0, 1, 0]);
+      for (const t of tris) A.tri([pts[t[0]][0], ty[t[0]], pts[t[0]][1]], [pts[t[1]][0], ty[t[1]], pts[t[1]][1]], [pts[t[2]][0], ty[t[2]], pts[t[2]][1]], [0, 0], [0, 0], [0, 0], null, undefined, [0, 1, 0]);
+      // white steel frame: posts every ~4 m and a ridge band along the top edge
+      const F = acc(cx, cz, 'trim'); const fc = [0.93, 0.94, 0.93];
+      for (let i = 0; i < n; i++) { const p = pts[i], q = pts[(i + 1) % n]; const L = Math.hypot(q[0] - p[0], q[1] - p[1]); const ux = (q[0] - p[0]) / (L || 1), uz = (q[1] - p[1]) / (L || 1), nx = -uz * 0.06, nz = ux * 0.06;
+        for (let k = 0; k <= Math.floor(L / 4); k++) { const x = p[0] + ux * Math.min(L, k * 4), z = p[1] + uz * Math.min(L, k * 4); const g = heightAt(x, z) - 0.1, tp = g + 0.1 + Hh; F.quad([x - ux * 0.07 + nx, g, z - uz * 0.07 + nz], [x + ux * 0.07 + nx, g, z + uz * 0.07 + nz], [x + ux * 0.07 + nx, tp, z + uz * 0.07 + nz], [x - ux * 0.07 + nx, tp, z - uz * 0.07 + nz], [0, 0], [0, 0], [0, 0], [0, 0], fc, undefined, [nx * 16, 0, nz * 16]); }
+        F.quad([p[0] + nx, ty[i] - 0.18, p[1] + nz], [q[0] + nx, ty[(i + 1) % n] - 0.18, q[1] + nz], [q[0] + nx, ty[(i + 1) % n] + 0.02, q[1] + nz], [p[0] + nx, ty[i] + 0.02, p[1] + nz], [0, 0], [0, 0], [0, 0], [0, 0], fc, undefined, [nx * 16, 0, nz * 16]); }
       continue;
     }
     const store = name && DATA.BRAND[name] ? DATA.BRAND[name] : null;

@@ -95,16 +95,22 @@ class Car {
     // slope
     const HG = this.Gf || heightAt; const hf = HG(this.x + fx * 1.5, this.z + fz * 1.5), hb = HG(this.x - fx * 1.5, this.z - fz * 1.5);
     vf -= 9.8 * ((hf - hb) / 3) * dt * 0.8;
-    if (c.hb) vf -= Math.sign(vf) * Math.min(Math.abs(vf), 7 * dt);
-    const grip = c.hb ? 1.4 : T.grip * (broken ? 0.6 : 1);
+    // handbrake: the rear wheels lock. They brake (rear only, ~0.5 g), lose their side grip (the tail slides out) and the
+    // car turns tighter; the car keeps part of its momentum in the old direction (drift). Grip comes back gradually.
+    const hbT = c.hb ? 1 : 0; this.hbA = (this.hbA || 0) + (hbT - (this.hbA || 0)) * clamp(dt * (hbT ? 12 : 2.5), 0, 1); const hbA = this.hbA;
+    if (c.hb) { if (Math.abs(vf) < 1.5) vf -= Math.sign(vf) * Math.min(Math.abs(vf), 9 * dt); else vf -= Math.sign(vf) * Math.min(Math.abs(vf), 5 * dt); }
+    const grip = lerp(T.grip * (broken ? 0.6 : 1), 1.5, hbA);
     vr *= Math.exp(-grip * dt);
     const maxSteer = 0.56 / (1 + Math.abs(vf) / 13);
     this.steer = lerp(this.steer, c.steer * maxSteer, clamp(dt * 5.5, 0, 1)); // a bit smoother than before (8 / 0.6)
     const wb = T.L * 0.6;
-    this.yawRate = vf * Math.tan(this.steer) / wb * (c.hb ? 1.35 : 1);
+    this.yawRate = vf * Math.tan(this.steer) / wb * (1 + 0.7 * hbA);
+    if (hbA > 0.05 && Math.abs(vf) > 3) this.yawRate += Math.sign(vf) * c.steer * hbA * Math.min(0.75, Math.abs(vf) / 16); // the unloaded tail swings out
     this.h += this.yawRate * dt;
     const nfx = Math.sin(this.h), nfz = Math.cos(this.h), nrx = -nfz, nrz = nfx;
-    this.vx = nfx * vf + nrx * vr; this.vz = nfz * vf + nrz * vr; this.fwdV = vf; this.slip = Math.abs(vr);
+    const ovx = this.vx, ovz = this.vz;
+    this.vx = nfx * vf + nrx * vr; this.vz = nfz * vf + nrz * vr;
+    if (hbA > 0.01) { const k = 0.45 * hbA; this.vx = lerp(this.vx, ovx, k); this.vz = lerp(this.vz, ovz, k); vf = this.vx * nfx + this.vz * nfz; vr = this.vx * nrx + this.vz * nrz; } /* momentum keeps the old direction: sideways slip */ this.fwdV = vf; this.slip = Math.abs(vr);
     this.x += this.vx * dt; this.z += this.vz * dt;
     this.collideStatic(dt);
     // tunnels / cuttings: the walls keep you in the tube
@@ -155,8 +161,8 @@ class Car {
     // body lean
     const lat = clamp(-this.yawRate * this.fwdV * 0.012, -0.08, 0.08); this.body.rotation.z = lerp(this.body.rotation.z, lat, 0.15);
     const acc = (this.fwdV - (this.prevV ?? this.fwdV)) / Math.max(dt, 1e-3); this.prevV = this.fwdV; this.body.rotation.x = lerp(this.body.rotation.x, clamp(-acc * 0.004, -0.05, 0.05), 0.1);
-    this.wheelRot += this.fwdV * dt / 0.33;
-    for (const w of this.wheels) { w.w.rotation.x = this.wheelRot; if (w.front) w.piv.rotation.y = this.steer; }
+    this.wheelRot += this.fwdV * dt / 0.33; if (!(this.ctl && this.ctl.hb)) this.rearRot = this.wheelRot; // locked rear wheels stop turning
+    for (const w of this.wheels) { w.w.rotation.x = w.front ? this.wheelRot : (this.rearRot ?? this.wheelRot); if (w.front) w.piv.rotation.y = this.steer; }
     const braking = this.ctl.brk > 0 && this.fwdV > 0.5; for (const t of this.tl) t.material = braking ? tailBrakeMat : tailMat;
     if (this.bar) { const on = this.siren && Math.floor(performance.now() / 180) % 2; this.bar.children[0].material.emissiveIntensity = on ? 4 : 0; this.bar.children[1].material.emissiveIntensity = this.siren && !on ? 4 : 0; }
   }

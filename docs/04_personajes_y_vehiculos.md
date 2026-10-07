@@ -31,6 +31,10 @@
 
 - Entrada unificada: teclado (`KEYS`, `PRESSED`), ratón (bloqueo de puntero), mando (`INPUT.gp`) y táctil
   (`INPUT.touch`, joystick y botones del HUD).
+- **Móvil** (`body.touchmode`, v0.54): tamaños en función del alto de pantalla (`--b`, `--mm`). Minimapa arriba a la
+  izquierda (tocarlo abre el mapa) con MAPA debajo y el joystick abajo; reloj, dinero y estrellas arriba a la derecha y
+  los botones al alcance del pulgar abajo a la derecha. Los botones cambian según se va a pie o en coche
+  (ENTRAR/SALIR, SALTO/FRENO MANO, CORRER/CLAXON).
 - Andar 2,4 m/s aprox., correr con `Shift`, salto con velocidad inicial 5,3 m/s y gravedad 16 m/s².
 - Suelo: interior (planta del interior), bajo tierra (`lowAt`), tablero de puente (`deckAt`) o terreno.
   Bajo tierra no se puede atravesar la pared hacia la superficie y se respetan los obstáculos de parking.
@@ -52,6 +56,10 @@
   giro máximo `0,56 / (1 + v/13)` rad, alcanzado con un suavizado de `dt·5,5`.
 - **Inclinación**: altura del suelo en 4 puntos (delante, detrás, izquierda, derecha) → cabeceo y alabeo; así las 4
   ruedas apoyan en calles con mucha pendiente lateral (`tests/prueba_peralte.py`).
+- **Freno de mano** (v0.54, Espacio / botón FRENO MANO): bloquea las ruedas traseras: frena (~0,5 g, y sujeta el coche
+  parado), el eje trasero pierde agarre lateral, el coche gira más cerrado y conserva parte de la inercia en la dirección
+  anterior, así que derrapa; al soltar recupera el agarre poco a poco. Las ruedas traseras dejan de girar.
+  Prueba: `tests/prueba_freno_mano.py` (a 60 km/h: un toque de 0,5 s da ~28° de derrape y se recupera).
 - Altura: terreno, tablero de puente (con contención lateral), o suelo bajo tierra (`lowAt`) sin atravesar techos.
   Escalón máximo al subir a un tablero: ~0,35 m más lo que sube el propio tablero en el trozo que mira el coche
   (`deckAt(..., slack)`); así no se sube a una rampa vecina más alta que solo se solapa por el borde (v0.50).

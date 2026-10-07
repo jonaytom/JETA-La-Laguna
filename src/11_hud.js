@@ -248,8 +248,11 @@ function setupTouch() {
   const btn = (id, down, up) => { const b = $(id); b.addEventListener('pointerdown', (e) => { e.stopPropagation(); down(); }); if (up) { b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); } };
   btn('tbF', () => PRESSED.add(!PLAYER.car && (nearestDoor() || FOOD.near()) && !nearestEnterable() ? 'KeyE' : 'KeyF'));
   btn('tbJ', () => { INPUT.touch.jump = true; INPUT.touch.hb = true; }, () => { INPUT.touch.hb = false; });
-  btn('tbS', () => (INPUT.touch.sprint = true), () => (INPUT.touch.sprint = false));
+  btn('tbS', () => { if (PLAYER.car) PRESSED.add('KeyH'); else INPUT.touch.sprint = true; }, () => (INPUT.touch.sprint = false));
   btn('tbM', () => BIGMAP.toggle());
+  // labels follow what the button does (on foot / in a car)
+  let lastCar = null; setInterval(() => { const c = !!PLAYER.car; if (c === lastCar) return; lastCar = c; $('tbF').textContent = c ? 'SALIR' : 'ENTRAR'; $('tbJ').innerHTML = c ? 'FRENO<br>MANO' : 'SALTO'; $('tbS').textContent = c ? 'CLAXON' : 'CORRER'; }, 250);
+  $('minimapwrap').addEventListener('pointerdown', (e) => { e.stopPropagation(); BIGMAP.toggle(); }); // the minimap itself also opens the big map
   btn('tbA', () => { WEAPON.touchAim = !WEAPON.touchAim; if (!WEAPON.touchAim) WEAPON.aiming = false; $('tbA').style.borderColor = WEAPON.touchAim ? '#3ddc97' : ''; });
   btn('tbD', () => { if (canUse()) WEAPON.want = true; });
 }

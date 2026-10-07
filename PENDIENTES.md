@@ -5,7 +5,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 
 ## Por revisar con Jonay
 
-- [ ] **Modo móvil** (Jonay, captura): el minimapa se mezcla con las estrellas y tapa los botones ENTRAR / CORRER y
+- [x] v0.54.0 **Modo móvil** (Jonay, captura): el minimapa se mezcla con las estrellas y tapa los botones ENTRAR / CORRER y
       las coordenadas. Reubicar y dimensionar HUD, minimapa, textos y botones para que sea jugable en el móvil.
 
 - [ ] **Uniones de túneles y puentes con la vía normal** (Jonay, 7-oct): salida del túnel de Camino el Vallado
@@ -15,7 +15,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 - [x] v0.53.0 Escalera SE de la pasarela de La Trinidad: ahora baja en X −272 Z 709.
 - [ ] **Pasarela de La Trinidad intransitable en algunas zonas** (Jonay, captura en X −313 Z 820, rampa hacia
       Carretera de San Miguel de Geneto): revisar dónde se queda parado el personaje.
-- [ ] **Freno de mano** (Jonay): al accionarlo debe bloquear las ruedas traseras: frena, derrapa un poco y gira más
+- [x] v0.54.0 **Freno de mano** (Jonay): al accionarlo debe bloquear las ruedas traseras: frena, derrapa un poco y gira más
       cerrado, como en la realidad. Revisar cómo hacerlo y proponerlo.
 - [ ] **Marcas viales** (apunte de Jonay): con los puentes y cruces hay líneas que se cruzan por todas partes; también
       en salidas e incorporaciones (autopista, Vía de Ronda) y en las glorietas.

@@ -3,6 +3,17 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.54.0 — 2026-10-07 — Freno de mano de verdad y modo móvil ordenado
+- **Freno de mano**: bloquea las ruedas traseras. El coche frena, la trasera se va y gira más cerrado; un toque a
+  60 km/h da un derrape de ~30° que se recoge solo al soltar; mantenido, el coche cruza y se para. Las ruedas traseras
+  dejan de girar mientras está echado.
+- **Modo móvil**: el minimapa ya no tapa las estrellas ni los botones. Minimapa arriba a la izquierda (tocarlo abre el
+  mapa), reloj, dinero y estrellas arriba a la derecha, botones abajo a la derecha al alcance del pulgar, todo escalado
+  al alto de la pantalla. Los botones cambian en el coche: SALIR, FRENO MANO y CLAXON.
+- **Invernaderos** (el «edificio transparente» junto a la pasarela de Padre Anchieta es un invernadero de OSM): ahora
+  siguen la pendiente (antes eran una caja de cristal plana de hasta 13 m de alto en cuesta), son de plástico lechoso y
+  llevan estructura blanca.
+
 ## 0.53.0 — 2026-10-07 — Paradas del tranvía, escalera de la pasarela y paredes de túnel
 - **Paradas del tranvía**: en 9 paradas la calzada pisaba las vías y el andén y el coche se atascaba. Ahora, junto a
   cada parada, la calle se aparta hacia fuera con una curva suave lo justo para dejar sitio al andén, sin meterse en
