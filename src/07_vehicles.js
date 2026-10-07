@@ -52,7 +52,14 @@ const CAR_ACCEL = 0.85; // global acceleration factor (15% softer than v0.37)
 const TOP_BY_CAT = { Urbano: 155, Utilitario: 175, Compacto: 200, Berlina: 190, Crossover: 180, SUV: 190, Todoterreno: 170, 'Pick-up': 165, Furgoneta: 160, 'Furgón': 145, 'Camión': 120, 'Grúa': 120, 'Camión de basura': 100, Emergencias: 145, 'Agrícola': 40, Taxi: 185, Patrulla: 200, Deportivo: 200, Scooter: 100, Maxiscooter: 150, Naked: 200, Ciclomotor: 60 };
 const TOP_BY_TYPE = { compact: 165, sedan: 190, suv: 180, van: 155, taxi: 185, police: 200, sport: 200, bus: 100, truck: 120, moto: 150 };
 function topSpeedKmh(model, type) { return (model && TOP_BY_CAT[model.cat]) || TOP_BY_TYPE[model ? model.phys : type] || 160; }
-const CARS = []; const CARPOOL = {}; const tmpS = { x: 0, z: 0, dx: 0, dz: 0 };
+const CARS = []; const CARPOOL = {};
+// audit P0.a: a car that does not go back to the pool (wrecked, or the pool for its model is full) frees what is its own:
+// the paint material and any geometry not marked userData.shared; the moto rider goes back to the people pool.
+function disposeCarMesh(m, rider) {
+  if (rider) { if (rider.helm) { rider.helm.parent && rider.helm.parent.remove(rider.helm); rider.helm = null; } unseatHuman(rider); releaseHuman('ped', rider); }
+  if (!m) return; m.g.traverse((o) => { if (o.isMesh && o.geometry && !o.geometry.userData.shared) o.geometry.dispose(); });
+  if (m.paint && !m.paint.userData.shared) m.paint.dispose(); if (m.g.parent) m.g.parent.remove(m.g);
+} const tmpS = { x: 0, z: 0, dx: 0, dz: 0 };
 class Car {
   static seq = 0;
   constructor(type, color, x, z, h, model) {
@@ -64,7 +71,7 @@ class Car {
     const pk = model ? model.id + (model.phys === 'moto' ? ':m' : '') : null; const pooled = pk && CARPOOL[pk] && CARPOOL[pk].length ? CARPOOL[pk].pop() : null; this.poolKey = pk;
     const m = pooled ? pooled.m : !model ? makeCarMesh(type, this.color) : model.phys === 'moto' ? makeMotoMesh(model, this.color) : makeKenneyMesh(model, this.color);
     if (pooled) { if (m.paint && !['taxi', 'policia', 'ambulancia'].includes(model.id)) m.paint.color.set(this.color); m.g.visible = true; this.rider = pooled.rider || null; if (this.rider) this.rider.root.visible = false; }
-    if (m.moto && !pooled) { this.rider = makeHuman({ cap: null, random: true }); seatHuman(this.rider, model); const helm = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 10), M(pick([0x111111, 0xf2f2f2, 0xb3261e, 0x1f4e8c]), 0.3, 0.3)); helm.position.y = 0.06; this.rider.head.add(helm); m.g.add(this.rider.root); this.rider.root.visible = false; } Object.assign(this, { mesh: m.g, body: m.body, wheels: m.wheels, hl: m.hl, tl: m.tl, bar: m.bar, paint: m.paint }); this._m = m;
+    if (m.moto && !pooled) { this.rider = takeHuman('ped', () => makeHuman({ cap: null, random: true })); seatHuman(this.rider, model); const helm = new THREE.Mesh(shGeo('helmet', () => new THREE.SphereGeometry(0.15, 12, 10)), M(pick([0x111111, 0xf2f2f2, 0xb3261e, 0x1f4e8c]), 0.3, 0.3)); helm.position.y = 0.06; this.rider.head.add(helm); this.rider.helm = helm; m.g.add(this.rider.root); this.rider.root.visible = false; } Object.assign(this, { mesh: m.g, body: m.body, wheels: m.wheels, hl: m.hl, tl: m.tl, bar: m.bar, paint: m.paint }); this._m = m;
     scene.add(this.mesh);
     this.x = x; this.z = z; this.y = heightAt(x, z); this.h = h; this.vx = 0; this.vz = 0; this.yawRate = 0; this.steer = 0;
     this.ctl = { thr: 0, brk: 0, steer: 0, hb: 0 }; this.mode = 'physics'; this.driver = null; this.health = 100; this.wheelRot = 0; this.pitch = 0; this.roll = 0; this.fwdV = 0;
@@ -154,7 +161,8 @@ class Car {
     if (this.bar) { const on = this.siren && Math.floor(performance.now() / 180) % 2; this.bar.children[0].material.emissiveIntensity = on ? 4 : 0; this.bar.children[1].material.emissiveIntensity = this.siren && !on ? 4 : 0; }
   }
   remove() { scene.remove(this.mesh); const i = CARS.indexOf(this); if (i >= 0) CARS.splice(i, 1); this.dead = true;
-    if (this.poolKey && this._m && this.health > 0) { const l = CARPOOL[this.poolKey] || (CARPOOL[this.poolKey] = []); if (l.length < 6) l.push({ m: this._m, rider: this.rider }); } }
+    if (this.poolKey && this._m && this.health > 0) { const l = CARPOOL[this.poolKey] || (CARPOOL[this.poolKey] = []); if (l.length < 6) { l.push({ m: this._m, rider: this.rider }); return; } }
+    disposeCarMesh(this._m, this.rider); this._m = null; this.rider = null; }
 }
 
 // ---------- traffic (kinematic along graph)

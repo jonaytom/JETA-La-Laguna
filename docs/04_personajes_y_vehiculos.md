@@ -56,6 +56,10 @@
   Escalón máximo al subir a un tablero: ~0,35 m más lo que sube el propio tablero en el trozo que mira el coche
   (`deckAt(..., slack)`); así no se sube a una rampa vecina más alta que solo se solapa por el borde (v0.50).
 - Coches aparcados: instanciados a baja resolución y convertidos en `Car` real al interactuar.
+- **Memoria (v0.52, auditoría P0.a)**: las piezas de los vehículos se crean una vez y se comparten (`shGeo`, `shBox`,
+  `shMat`, `sharedText`, geometría por modelo en `VGEO`; marcadas con `userData.shared`). Un coche que deja la escena
+  vuelve a `CARPOOL` (hasta 6 por modelo); si está destrozado o el grupo está lleno, `disposeCarMesh` libera su pintura
+  y lo no compartido, y su motorista vuelve a `HPOOL.ped`. `__dbg.POOLS` expone los grupos para el auditor.
 
 ## Tráfico
 

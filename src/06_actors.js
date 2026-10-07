@@ -103,7 +103,7 @@ function makeCarMesh(type, color) {
   if (type === 'taxi') color = 0xf4f4f4; if (type === 'police') color = 0xf5f7fa; if (type === 'bus') color = 0x1f8a4c;
   const paint = new THREE.MeshStandardMaterial({ color, roughness: 0.28, metalness: 0.55 });
   const P = profile(T.prof, T.L, T.H);
-  const GC = CARGEO[type] || (CARGEO[type] = { low: extrudeProfile(P.low, T.W, 0.08), cab: extrudeProfile(P.cab, T.W * 0.84, 0.05) });
+  const GC = CARGEO[type] || (CARGEO[type] = { low: extrudeProfile(P.low, T.W, 0.08), cab: extrudeProfile(P.cab, T.W * 0.84, 0.05) }); GC.low.userData.shared = GC.cab.userData.shared = true;
   const low = new THREE.Mesh(GC.low, paint); body.add(low);
   const cab = new THREE.Mesh(GC.cab, glassMat); body.add(cab);
   // roof slab
@@ -112,7 +112,7 @@ function makeCarMesh(type, color) {
   roof.position.set(0, ry, (roofPts[2][0] + roofPts[1][0]) / 2); body.add(roof);
   // pillars
   const pil = (i) => { const a = roofPts[i], b = roofPts[i === 0 ? 1 : 2]; const len = Math.hypot(b[0] - a[0], b[1] - a[1]); const m = new THREE.Mesh(new THREE.BoxGeometry(T.W * 0.855, 0.08, len), paint); m.position.set(0, (a[1] + b[1]) / 2, (a[0] + b[0]) / 2); m.rotation.x = -Math.atan2(b[1] - a[1], b[0] - a[0]); return m; };
-  if (type === 'bus') { const band = new THREE.Mesh(new THREE.BoxGeometry(T.W + 0.02, 0.35, T.L - 0.1), M(0xf2f2f2, 0.4, 0.2)); band.position.y = 1.25; body.add(band); const sign = textPlane('014  LA LAGUNA', 1.9, 0.3, '#111', '#ffb000', 'bold 30px monospace'); sign.position.set(0, T.H - 0.35, T.L / 2 + 0.02); body.add(sign); }
+  if (type === 'bus') { const band = new THREE.Mesh(new THREE.BoxGeometry(T.W + 0.02, 0.35, T.L - 0.1), M(0xf2f2f2, 0.4, 0.2)); band.position.y = 1.25; body.add(band); const sign = sharedText('014  LA LAGUNA', 1.9, 0.3, '#111', '#ffb000', 'bold 30px monospace'); sign.position.set(0, T.H - 0.35, T.L / 2 + 0.02); body.add(sign); }
   // wheels
   const wr = type === 'bus' ? 0.5 : type === 'suv' ? 0.38 : 0.33; const wheels = [];
   const wg = new THREE.CylinderGeometry(wr, wr, 0.24, 16); wg.rotateZ(Math.PI / 2);
@@ -129,7 +129,7 @@ function makeCarMesh(type, color) {
     const t = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.12, 0.05), tailMat); t.position.set(x * (T.W / 2 - 0.25), 0.78 + (type === 'bus' ? 0.2 : 0), -lz + 0.03); body.add(t); tl.push(t);
   }
   // plates
-  if (PLATES.length < 10) PLATES.push(textPlane(Math.floor(1000 + Math.random() * 8999) + ' ' + pick(['KHT', 'LBC', 'MFZ', 'JRW', 'GPD', 'NCX']), 0.52, 0.12, '#f4f4f4', '#111', 'bold 40px Arial'));
+  if (PLATES.length < 10) { const pl = textPlane(Math.floor(1000 + Math.random() * 8999) + ' ' + pick(['KHT', 'LBC', 'MFZ', 'JRW', 'GPD', 'NCX']), 0.52, 0.12, '#f4f4f4', '#111', 'bold 40px Arial'); pl.geometry.userData.shared = true; pl.material.userData.shared = true; PLATES.push(pl); }
   const plate = pick(PLATES).clone();
   plate.position.set(0, 0.5, -lz - 0.005); plate.rotation.y = Math.PI; body.add(plate);
   const bumperM = M(0x222222, 0.7);
@@ -140,9 +140,9 @@ function makeCarMesh(type, color) {
     const stripe = new THREE.Mesh(new THREE.BoxGeometry(T.W + 0.01, 0.16, T.L * 0.8), M(0x1c3fa8, 0.4)); stripe.position.y = 0.66; body.add(stripe);
     const st2 = new THREE.Mesh(new THREE.BoxGeometry(T.W + 0.012, 0.05, T.L * 0.8), M(0xf2c200, 0.4)); st2.position.y = 0.77; body.add(st2);
     bar = new THREE.Group(); const b1 = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.12, 0.25), policeBlue); b1.position.x = -0.28; const b2 = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.12, 0.25), policeRed); b2.position.x = 0.28; bar.add(b1, b2); bar.position.set(0, ry + 0.1, (roofPts[2][0] + roofPts[1][0]) / 2); body.add(bar);
-    for (const side of [-1, 1]) { const t = textPlane('POLICÍA LOCAL', 1.8, 0.28, 'rgba(0,0,0,0)', '#1c3fa8', 'bold 34px Arial'); t.position.set(side * (T.W / 2 + 0.015), 0.95, -0.2); t.rotation.y = side * Math.PI / 2; body.add(t); }
+    for (const side of [-1, 1]) { const t = sharedText('POLICÍA LOCAL', 1.8, 0.28, 'rgba(0,0,0,0)', '#1c3fa8', 'bold 34px Arial'); t.position.set(side * (T.W / 2 + 0.015), 0.95, -0.2); t.rotation.y = side * Math.PI / 2; body.add(t); }
   }
-  if (type === 'taxi') { const s2 = textPlane('TAXI', 0.5, 0.16, '#f4f4f4', '#1a8a3a', 'bold 56px Arial'); s2.position.set(0, ry + 0.14, (roofPts[2][0] + roofPts[1][0]) / 2 + 0.05); const bx = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.18, 0.12), M(0xf4f4f4, 0.5)); bx.position.copy(s2.position); bx.position.z -= 0.07; body.add(bx, s2); const st = new THREE.Mesh(new THREE.BoxGeometry(T.W + 0.01, 0.07, T.L * 0.7), M(0x1a8a3a, 0.4)); st.position.y = 0.75; body.add(st); }
+  if (type === 'taxi') { const s2 = sharedText('TAXI', 0.5, 0.16, '#f4f4f4', '#1a8a3a', 'bold 56px Arial'); s2.position.set(0, ry + 0.14, (roofPts[2][0] + roofPts[1][0]) / 2 + 0.05); const bx = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.18, 0.12), M(0xf4f4f4, 0.5)); bx.position.copy(s2.position); bx.position.z -= 0.07; body.add(bx, s2); const st = new THREE.Mesh(new THREE.BoxGeometry(T.W + 0.01, 0.07, T.L * 0.7), M(0x1a8a3a, 0.4)); st.position.y = 0.75; body.add(st); }
   if (type === 'sport') { const sp = new THREE.Mesh(new THREE.BoxGeometry(T.W * 0.9, 0.05, 0.3), M(0x111111, 0.5)); sp.position.set(0, 0.98, -T.L / 2 + 0.2); body.add(sp); const st = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.01, T.L), M(0xffffff, 0.3)); st.position.set(-0.2, 0.81, 0); body.add(st); const st2 = st.clone(); st2.position.x = 0.2; body.add(st2); }
   body.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = false; } });
   return { g, body, wheels, hl, tl, bar, paint };

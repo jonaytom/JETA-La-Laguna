@@ -137,6 +137,14 @@ function classify0(base, k) {
   return ['rest', c];
 }
 // geometry for a model: { paint, glass, rest, wheel: {geo, x, y, z, front, left}[] , dims }
+// ---- pieces shared by every vehicle (audit P0.a): built once, never disposed (userData.shared). Car.remove() only
+// frees what is the car's own (paint material and any unshared geometry) when the car does not go back to the pool.
+const SHARED_GEO = new Map();
+function shGeo(key, make) { let g = SHARED_GEO.get(key); if (!g) { g = make(); g.userData.shared = true; SHARED_GEO.set(key, g); } return g; }
+const shBox = (w, h, d) => shGeo('box' + w + ',' + h + ',' + d, () => new THREE.BoxGeometry(w, h, d));
+const SH_MAT = new Map(); function shMat(key, make) { let m = SH_MAT.get(key); if (!m) { m = make(); m.userData.shared = true; SH_MAT.set(key, m); } return m; }
+// lettering / signs: one canvas texture per text, the meshes share geometry and material
+const SH_TXT = new Map(); function sharedText(txt, w, h, bg, fg, font) { const k = [txt, w, h, bg, fg, font].join('|'); let t = SH_TXT.get(k); if (!t) { t = textPlane(txt, w, h, bg, fg, font); t.geometry.userData.shared = true; t.material.userData.shared = true; SH_TXT.set(k, t); } return t.clone(); }
 const VGEO = {};
 function modelGeometry(model) {
   if (VGEO[model.id]) return VGEO[model.id];
@@ -163,7 +171,9 @@ function modelGeometry(model) {
   const mk = (arr) => { if (!arr.length) return null; const pos = new Float32Array(arr.length * 3), nor = new Float32Array(arr.length * 3), col = new Float32Array(arr.length * 3); arr.forEach((v, i) => { pos.set([v[0], v[1], v[2]], i * 3); const l = Math.hypot(v[3], v[4], v[5]) || 1; nor.set([v[3] / l, v[4] / l, v[5] / l], i * 3); col.set(v[6], i * 3); }); const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); return g; };
   // rear face / roof heights for lights and roof props
   let zmin = 1e9, ymax = 0; for (const grp of Object.values(groups)) for (const v of grp) { zmin = Math.min(zmin, v[2]); ymax = Math.max(ymax, v[1]); }
-  return (VGEO[model.id] = { paint: mk(groups.paint), glass: mk(groups.glass), rest: mk(groups.rest), wheels, zmin, ymax });
+  const out = { paint: mk(groups.paint), glass: mk(groups.glass), rest: mk(groups.rest), wheels, zmin, ymax };
+  for (const g of [out.paint, out.glass, out.rest, ...wheels.map((w) => w.geo)]) if (g) g.userData.shared = true;
+  return (VGEO[model.id] = out);
 }
 const restMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0.15 });
 const kGlassMat = new THREE.MeshStandardMaterial({ color: 0x1e2830, roughness: 0.12, metalness: 0.35 });
@@ -185,24 +195,24 @@ function makeKenneyMesh(model, color) {
   const tly = ry1 > ry0 ? Math.min(ry0 + (ry1 - ry0) * 0.72, ry1 - 0.08) : Math.min(1.05, model.H * 0.55);
   let rz = G.zmin; { const P = G.probe; let zz = 1e9; for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 1] - tly) < 0.06) zz = Math.min(zz, P[i + 2]); if (zz < 1e8) rz = zz; }
   const rhw = halfW(tly, rz, 0.08, 0.12) || W / 2;
-  for (const x of [-1, 1]) { const t = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.1, 0.04), tailMat); t.position.set(x * Math.max(0.2, rhw - 0.2), tly, rz + 0.012); body.add(t); tl.push(t); }
-  if (PLATES.length < 10) PLATES.push(textPlane(Math.floor(1000 + Math.random() * 8999) + ' ' + pick(['KHT', 'LBC', 'MFZ', 'JRW', 'GPD', 'NCX']), 0.52, 0.12, '#f4f4f4', '#111', 'bold 40px Arial'));
+  for (const x of [-1, 1]) { const t = new THREE.Mesh(shBox(0.26, 0.1, 0.04), tailMat); t.position.set(x * Math.max(0.2, rhw - 0.2), tly, rz + 0.012); body.add(t); tl.push(t); }
+  if (PLATES.length < 10) { const pl = textPlane(Math.floor(1000 + Math.random() * 8999) + ' ' + pick(['KHT', 'LBC', 'MFZ', 'JRW', 'GPD', 'NCX']), 0.52, 0.12, '#f4f4f4', '#111', 'bold 40px Arial'); pl.geometry.userData.shared = true; pl.material.userData.shared = true; PLATES.push(pl); }
   const plate = pick(PLATES).clone(); const ply = Math.min(0.7, model.H * 0.36); let pz = G.zmin; { const P = G.probe; let zz = 1e9; for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 1] - ply) < 0.08 && Math.abs(P[i]) < 0.4) zz = Math.min(zz, P[i + 2]); if (zz < 1e8) pz = zz; } plate.position.set(0, ply, pz - 0.012); plate.rotation.y = Math.PI; body.add(plate);
   let bar = null;
   if (model.id === 'policia') {
     // livery stripes as ribbons that follow the side of the body
     const ribbon = (y0, y1, mat) => { const zs = []; for (let z = -L * 0.39; z <= L * 0.39 + 1e-3; z += L * 0.78 / 16) zs.push(z);
-      for (const side of [-1, 1]) { const pos = [], idx = []; zs.forEach((z, i) => { const hw = halfW((y0 + y1) / 2, z, 0.14, L * 0.78 / 32 + 0.05) + 0.012; pos.push(side * hw, y0, z, side * hw, y1, z); if (i) { const a = (i - 1) * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } });
-        const gg = new THREE.BufferGeometry(); gg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); gg.setIndex(idx); gg.computeVertexNormals(); const m = new THREE.Mesh(gg, mat); body.add(m); } };
-    const sy = model.H * 0.45; ribbon(sy - 0.08, sy + 0.08, new THREE.MeshStandardMaterial({ color: 0x1c3fa8, roughness: 0.4, side: THREE.DoubleSide })); ribbon(sy + 0.09, sy + 0.14, new THREE.MeshStandardMaterial({ color: 0xf2c200, roughness: 0.4, side: THREE.DoubleSide }));
-    bar = new THREE.Group(); const b1 = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.12, 0.25), policeBlue); b1.position.x = -0.28; const b2 = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.12, 0.25), policeRed); b2.position.x = 0.28; bar.add(b1, b2); bar.position.set(0, G.ymax + 0.06, -0.1); body.add(bar);
-    for (const side of [-1, 1]) { const t = textPlane('POLICÍA LOCAL', 1.8, 0.28, 'rgba(0,0,0,0)', '#1c3fa8', 'bold 34px Arial'); t.position.set(side * (halfW(model.H * 0.6, -0.2, 0.1, 0.9) + 0.02), model.H * 0.6, -0.2); t.rotation.y = side * Math.PI / 2; body.add(t); }
+      for (const side of [-1, 1]) { const gg = shGeo('stripe:' + model.id + ':' + y0.toFixed(3) + ':' + side, () => { const pos = [], idx = []; zs.forEach((z, i) => { const hw = halfW((y0 + y1) / 2, z, 0.14, L * 0.78 / 32 + 0.05) + 0.012; pos.push(side * hw, y0, z, side * hw, y1, z); if (i) { const a = (i - 1) * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } });
+        const q = new THREE.BufferGeometry(); q.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); q.setIndex(idx); q.computeVertexNormals(); return q; }); const m = new THREE.Mesh(gg, mat); body.add(m); } };
+    const sy = model.H * 0.45; ribbon(sy - 0.08, sy + 0.08, shMat('polBlueStripe', () => new THREE.MeshStandardMaterial({ color: 0x1c3fa8, roughness: 0.4, side: THREE.DoubleSide }))); ribbon(sy + 0.09, sy + 0.14, shMat('polYellowStripe', () => new THREE.MeshStandardMaterial({ color: 0xf2c200, roughness: 0.4, side: THREE.DoubleSide })));
+    bar = new THREE.Group(); const b1 = new THREE.Mesh(shBox(0.45, 0.12, 0.25), policeBlue); b1.position.x = -0.28; const b2 = new THREE.Mesh(shBox(0.45, 0.12, 0.25), policeRed); b2.position.x = 0.28; bar.add(b1, b2); bar.position.set(0, G.ymax + 0.06, -0.1); body.add(bar);
+    for (const side of [-1, 1]) { const t = sharedText('POLICÍA LOCAL', 1.8, 0.28, 'rgba(0,0,0,0)', '#1c3fa8', 'bold 34px Arial'); t.position.set(side * (halfW(model.H * 0.6, -0.2, 0.1, 0.9) + 0.02), model.H * 0.6, -0.2); t.rotation.y = side * Math.PI / 2; body.add(t); }
   }
-  if (model.id === 'taxi') { { const y = model.H * 0.48; for (const side of [-1, 1]) { const pos = [], idx = []; for (let i = 0; i <= 14; i++) { const z = -L * 0.35 + L * 0.7 * i / 14; const hw = halfW(y, z, 0.12, 0.2) + 0.012; pos.push(side * hw, y - 0.035, z, side * hw, y + 0.035, z); if (i) { const a = (i - 1) * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } } const gg = new THREE.BufferGeometry(); gg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); gg.setIndex(idx); gg.computeVertexNormals(); body.add(new THREE.Mesh(gg, new THREE.MeshStandardMaterial({ color: 0x1a8a3a, roughness: 0.4, side: THREE.DoubleSide }))); } } const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.09, 0.1), new THREE.MeshStandardMaterial({ color: 0x1fd15a, emissive: 0x1fd15a, emissiveIntensity: 1.2 })); lamp.position.set(-0.35, G.ymax + 0.02, 0.6); body.add(lamp); }
+  if (model.id === 'taxi') { { const y = model.H * 0.48; for (const side of [-1, 1]) { const gg = shGeo('taxiStripe:' + model.id + ':' + side, () => { const pos = [], idx = []; for (let i = 0; i <= 14; i++) { const z = -L * 0.35 + L * 0.7 * i / 14; const hw = halfW(y, z, 0.12, 0.2) + 0.012; pos.push(side * hw, y - 0.035, z, side * hw, y + 0.035, z); if (i) { const a = (i - 1) * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } } const q = new THREE.BufferGeometry(); q.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); q.setIndex(idx); q.computeVertexNormals(); return q; }); body.add(new THREE.Mesh(gg, shMat('taxiStripe', () => new THREE.MeshStandardMaterial({ color: 0x1a8a3a, roughness: 0.4, side: THREE.DoubleSide })))); } } const lamp = new THREE.Mesh(shBox(0.16, 0.09, 0.1), shMat('taxiLamp', () => new THREE.MeshStandardMaterial({ color: 0x1fd15a, emissive: 0x1fd15a, emissiveIntensity: 1.2 }))); lamp.position.set(-0.35, G.ymax + 0.02, 0.6); body.add(lamp); }
   if (model.id === 'basura' || model.id === 'grua' || model.id === 'daily' || model.id === 'sprinter' || model.id === 'canter') {
     // company / service lettering on the box sides
     const txt = model.id === 'basura' ? 'AYTO. LA LAGUNA' : model.id === 'grua' ? 'GRÚAS ANDE PEPE' : pick(['PAPAS EL MAGO', 'GOFIO LA MOLINETA', 'TRANSPORTES CHACHO', 'REFRESCOS CLIPPER-ITO', 'MUEBLES EL CAMBULLÓN']);
-    for (const side of [-1, 1]) { const t = textPlane(txt, Math.min(3.2, L * 0.5), 0.36, 'rgba(0,0,0,0)', '#1d2a33', 'bold 30px Arial'); t.position.set(side * (W / 2 + 0.02), model.H * 0.62, -L * 0.12); t.rotation.y = side * Math.PI / 2; body.add(t); }
+    for (const side of [-1, 1]) { const t = sharedText(txt, Math.min(3.2, L * 0.5), 0.36, 'rgba(0,0,0,0)', '#1d2a33', 'bold 30px Arial'); t.position.set(side * (W / 2 + 0.02), model.H * 0.62, -L * 0.12); t.rotation.y = side * Math.PI / 2; body.add(t); }
   }
   body.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = false; } });
   return { g, body, wheels, hl, tl, bar, paint };
@@ -217,12 +227,12 @@ function makeMotoMesh(model, color) {
   const wheels = [];
   for (const [z, front] of [[L / 2 - wr - 0.05, 1], [-L / 2 + wr + 0.08, 0]]) {
     const piv = new THREE.Group(); piv.position.set(0, wr, z); g.add(piv);
-    const tg = new THREE.TorusGeometry(wr - 0.045, 0.05, 8, 18); tg.rotateY(Math.PI / 2); const w = new THREE.Mesh(tg, tireMat);
-    const hub = new THREE.Mesh(new THREE.CylinderGeometry(wr * 0.6, wr * 0.6, 0.06, 12), motoMats.chrome); hub.rotation.z = Math.PI / 2; w.add(hub); w.castShadow = true; piv.add(w); wheels.push({ piv, w, front });
+    const tg = shGeo('motoTyre' + wr, () => { const q = new THREE.TorusGeometry(wr - 0.045, 0.05, 8, 18); q.rotateY(Math.PI / 2); return q; }); const w = new THREE.Mesh(tg, tireMat);
+    const hub = new THREE.Mesh(shGeo('motoHub' + wr, () => new THREE.CylinderGeometry(wr * 0.6, wr * 0.6, 0.06, 12)), motoMats.chrome); hub.rotation.z = Math.PI / 2; w.add(hub); w.castShadow = true; piv.add(w); wheels.push({ piv, w, front });
   }
-  const box = (w, h, d, mat, x, y, z, rx = 0) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.rotation.x = rx; body.add(m); return m; };
+  const box = (w, h, d, mat, x, y, z, rx = 0) => { const m = new THREE.Mesh(shBox(w, h, d), mat); m.position.set(x, y, z); m.rotation.x = rx; body.add(m); return m; };
   // rounded volume: capsule stretched along z
-  const pod = (w, h, d, mat, x, y, z, rx = 0) => { const m = new THREE.Mesh(new THREE.CapsuleGeometry(0.5, 1, 4, 10), mat); m.rotation.x = Math.PI / 2 + rx; m.scale.set(w, d / 2, h); m.position.set(x, y, z); body.add(m); return m; };
+  const pod = (w, h, d, mat, x, y, z, rx = 0) => { const m = new THREE.Mesh(shGeo('capsule', () => new THREE.CapsuleGeometry(0.5, 1, 4, 10)), mat); m.rotation.x = Math.PI / 2 + rx; m.scale.set(w, d / 2, h); m.position.set(x, y, z); body.add(m); return m; };
   const fz = L / 2 - wr - 0.05, rz = -L / 2 + wr + 0.08;
   if (kind === 'naked') {
     pod(0.34, 0.26, 0.5, paint, 0, 0.92, 0.15, -0.12);              // tank
@@ -250,7 +260,7 @@ function makeMotoMesh(model, color) {
     if (vespa) { pod(0.46, 0.3, 0.46, paint, 0, h0 + 0.16, -L * 0.26); }
     box(0.24, 0.04, 0.26, motoMats.dark, 0, h0 + 0.5, rz + 0.06);     // rack
   }
-  const tl = []; const t = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.06, 0.04), tailMat); t.position.set(0, kind === 'naked' ? 0.85 : 0.82, -L / 2 + 0.03); body.add(t); tl.push(t);
+  const tl = []; const t = new THREE.Mesh(shBox(0.16, 0.06, 0.04), tailMat); t.position.set(0, kind === 'naked' ? 0.85 : 0.82, -L / 2 + 0.03); body.add(t); tl.push(t);
   body.traverse((m) => { if (m.isMesh) m.castShadow = true; });
   return { g, body, wheels, hl: [], tl, bar: null, paint, moto: true };
 }

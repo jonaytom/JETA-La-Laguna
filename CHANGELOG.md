@@ -3,6 +3,14 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.52.0 — 2026-10-07 — Sin fuga de los coches del tráfico (auditoría P0.a)
+- Las piezas de los vehículos se crean una sola vez y las comparten todos: pilotos, barra de luces y franjas de la
+  policía, franja y luz del taxi, ruedas, cubos, carenados y piloto de las motos, y el casco del motorista. Los rótulos
+  («POLICÍA LOCAL», furgonetas, taxi, guagua) usan una textura por texto.
+- Cuando un coche se descarta y no vuelve al grupo de reutilizables (destrozado o grupo lleno), se libera su pintura y
+  lo que no es compartido; el motorista vuelve al grupo de peatones (antes se creaba uno nuevo por moto).
+- `__dbg.POOLS = { CARPOOL, HPOOL }` para que el auditor no cuente como fuga lo guardado para reutilizar.
+
 ## 0.51.0 — 2026-10-07 — Calles superpuestas a distinta altura, isletas y rampas de garaje
 - **Calles que se solapan con un terraplén** de cualquier altura (no solo los bajos) suben con él donde de verdad lo
   pisan: se acaban el asfalto «flotando» 2–3 m sobre otra calle (X 91 Z 1284, X 701 Z 814, X −741 Z 334) y los dos

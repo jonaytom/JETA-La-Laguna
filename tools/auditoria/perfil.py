@@ -35,8 +35,8 @@ __dbg.scene.traverse(o=>{ if(!o.geometry) return; meshes++; if(o.isInstancedMesh
   MB_DATA_json:+(document.getElementById('mapdata').textContent.length/1048576).toFixed(1)}})()"""
 # Rastreo del origen de las fugas: cada malla que se añade a algo durante las vueltas 2ª y 3ª guarda la pila de
 # llamadas que la creó. Al final, las geometrías que ya no están en la escena y no se liberaron con dispose() se
-# agrupan por función de origen. Ojo: lo que esté guardado en un pool para reutilizar también sale aquí (es normal
-# si la cifra no crece de una versión a otra).
+# agrupan por función de origen. Se descuentan las piezas compartidas (geometry.userData.shared) y lo que esté en
+# los pools que el juego expone en __dbg.POOLS (si no los expone, cuentan como sin liberar).
 TRAZA_ON = """(()=>{const T=__dbg.THREE; Error.stackTraceLimit=25; const R=window.__traza={geo:new Map(),disp:new WeakSet()};
  const skip=/^(add|traverse|Object3D|Mesh|Group|__traza|anonymous|Array|forEach|map|eval|<anonymous>)$/;
  const origen=()=>{const L=(new Error().stack||'').split('\\n').slice(2); const f=[]; for(const l of L){const m=l.match(/at (?:new )?([\\w$.]+) \\(/); if(!m) continue; const n=m[1].split('.').pop(); if(skip.test(n)) continue; f.push(n); if(f.length>=3) break;} return f.join(' ← ')||'?';};
@@ -44,8 +44,21 @@ TRAZA_ON = """(()=>{const T=__dbg.THREE; Error.stackTraceLimit=25; const R=windo
  const d0=T.BufferGeometry.prototype.dispose; T.BufferGeometry.prototype.dispose=function(){ R.disp.add(this); return d0.apply(this,arguments); };
 })()"""
 TRAZA_INFORME = """(()=>{const R=window.__traza; if(!R) return null; const vivas=new Set(); __dbg.scene.traverse(o=>{ if(o.geometry) vivas.add(o.geometry); });
- const cuenta={}; let n=0; for(const [g,org] of R.geo){ if(vivas.has(g)||R.disp.has(g)) continue; n++; cuenta[org]=(cuenta[org]||0)+1; }
- return {geometrias_fuera_de_escena_sin_liberar:n, por_origen:Object.entries(cuenta).sort((a,b)=>b[1]-a[1]).slice(0,12)};})()"""
+ /* lo que el juego guarda a propósito: pools y registros de piezas compartidas (__dbg.POOLS) */
+ const enPool=new Set(), visto=new WeakSet();
+ const recorre=(x,d)=>{ if(!x||typeof x!=='object'||d>6||visto.has(x)) return; visto.add(x);
+   if(x.isBufferGeometry){ enPool.add(x); return; }
+   if(x.isObject3D){ x.traverse(o=>{ if(o.geometry) enPool.add(o.geometry); }); return; }
+   if(x instanceof Map||x instanceof Set){ for(const v of x.values()) recorre(v,d+1); return; }
+   if(Array.isArray(x)){ for(const v of x) recorre(v,d+1); return; }
+   if(x.isMaterial||x.isTexture||ArrayBuffer.isView(x)) return;
+   for(const k in x) recorre(x[k],d+1); };
+ const P=(__dbg.POOLS||window.__dbg&&__dbg.POOLS); if(P) recorre(P,0);
+ const cuenta={}; let n=0, comp=0, pool=0; for(const [g,org] of R.geo){ if(vivas.has(g)||R.disp.has(g)) continue;
+   if(g.userData&&g.userData.shared){ comp++; continue; } if(enPool.has(g)){ pool++; continue; }
+   n++; cuenta[org]=(cuenta[org]||0)+1; }
+ return {geometrias_fuera_de_escena_sin_liberar:n, compartidas_descontadas:comp, en_pool_descontadas:pool, pools_expuestos:!!P,
+   por_origen:Object.entries(cuenta).sort((a,b)=>b[1]-a[1]).slice(0,12)};})()"""
 
 # pinta un fotograma igual que __snap() pero sin convertirlo a JPEG (eso solo cuesta tiempo)
 PINTA = "(()=>{const [bs,bc]=window.__bg, d=__dbg, c=d.camera, r=d.renderer; bc.position.copy(c.position); bc.quaternion.copy(c.quaternion); bc.fov=c.fov; bc.updateProjectionMatrix(); r.clear(); r.render(bs,bc); r.clearDepth(); r.render(d.scene,c);})()"
@@ -80,7 +93,18 @@ async def main():
         await pg.evaluate("(()=>{document.getElementById('menu').style.display='none'; window.__manual=true; __dbg.GAME.state='play'; __dbg.GAME.tod=12; __setYaw(0); __dbg.CAM.pitch=0.1;})()")
         await pg.evaluate("__step(30)"); await pg.wait_for_timeout(300)
         await pg.evaluate(PINTA)
+        await pg.evaluate("window.gc && (gc(), gc())")  # memoria medida tras limpiar: si no, depende de cuándo pasa el recolector
         res['inicio'] = await pg.evaluate(INFO)
+        # memoria «en régimen»: el juego suelta la copia en RAM de cada malla cuando la sube a la GPU, y eso depende de lo
+        # que la cámara haya visto. Para comparar versiones se sube TODO (un fotograma diminuto sin recorte por cámara ni
+        # sombras), se limpia la basura y entonces se mide.
+        res['inicio']['heapMB_antes_de_subir'] = res['inicio']['heapMB']
+        await pg.evaluate("""(()=>{const s=__dbg.scene, r=__dbg.renderer; const fc=[]; s.traverse(o=>{ if((o.isMesh||o.isPoints||o.isLine)&&o.frustumCulled){ fc.push(o); o.frustumCulled=false; } });
+          const au=r.shadowMap.autoUpdate; r.shadowMap.autoUpdate=false; r.setSize(64,36,false); {""" + PINTA[6:-4] + """}
+          for(const o of fc) o.frustumCulled=true; r.shadowMap.autoUpdate=au; r.setSize(640,360,false);})()""")
+        await pg.evaluate("window.gc && (gc(), gc())")
+        sub = await pg.evaluate(INFO)
+        res['inicio']['heapMB'] = sub['heapMB']; res['inicio']['geometrias_en_gpu_tras_subir'] = sub['geometries']
         res['memoria'] = await pg.evaluate(MEMJS); marca('memoria')
         # coste medio por subsistema en 120 pasos de juego andando
         await pg.evaluate("for(const k in __prof) delete __prof[k]")
