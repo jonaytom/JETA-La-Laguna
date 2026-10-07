@@ -45,6 +45,9 @@
 
 ## Vehículos (`06b_vmodels.js`, `07_vehicles.js`)
 
+- **Postura en moto** (v0.56): `seatHuman` marca `H.moto`; tras la animación `rideMoto(H)` inclina el tronco hacia el
+  manillar, abre los brazos y dobla los codos; las piernas van al reposapiés. Los motoristas se animan cada fotograma.
+
 - Catálogo de modelos **parodia** (nombre, categoría, base Kenney, dimensiones reales) construido sobre el
   **Kenney Car Kit** (`tools/kenney2json.py` → `data/kenney_cars.json`). La geometría se escala a las medidas
   reales y se separa en carrocería pintable, cristal, resto y ruedas.

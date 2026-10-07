@@ -33,7 +33,7 @@ function shootRay() {
   best.p3 = o.clone().addScaledVector(dir, best.d); return best;
 }
 function fireWeapon() {
-  if (WEAPON.cd > 0) return; if (WEAPON.ammo <= 0) { AUDIO.empty && AUDIO.empty(); HUD.toast(WEAPON.training ? 'Sin balas' : 'Sin balas. El Blanco te conseguirá más… algún día.', '#ffb3b3', 1.5); WEAPON.cd = 0.3; if (WEAPON.onShot) WEAPON.onShot(null); return; }
+  if (WEAPON.cd > 0) return; if (WEAPON.ammo <= 0) { AUDIO.empty && AUDIO.empty(); HUD.toast(WEAPON.training ? 'Sin bolas' : 'Sin bolas. El Blanco te conseguirá más… algún día.', '#ffb3b3', 1.5); WEAPON.cd = 0.3; if (WEAPON.onShot) WEAPON.onShot(null); return; }
   WEAPON.cd = 0.38; WEAPON.ammo--; updateWeaponHUD(); AUDIO.shot && AUDIO.shot(); CAM.shake = Math.max(CAM.shake, 0.18);
   PLAYER.h = CAM.yaw; // face where you aim
   muzzleFlash();
@@ -43,7 +43,7 @@ function fireWeapon() {
   else if (h.kind === 'car') { h.c.health -= 18; h.c.lastImpact = 0; }
   if (WEAPON.onShot) WEAPON.onShot(h);
   // shooting in the street is a serious crime if anybody sees or hears it
-  if (!WEAPON.training) {
+  if (!WEAPON.training && !WEAPON.lawful) { // lawful: the gang are city defenders on a mission (stopping a thief is not a crime)
     const witness = PEDS.some((p) => p.down <= 0 && Math.hypot(p.x - PLAYER.x, p.z - PLAYER.z) < 55) || CARS.some((c) => c.type === 'police' && Math.hypot(c.x - PLAYER.x, c.z - PLAYER.z) < 120);
     if (witness) { WANTED.armed = true; WANTED.crime(Math.max(3, Math.ceil(WANTED.level) + 1) - Math.ceil(WANTED.level), 'Disparos en la vía pública'); for (const p of PEDS) if (p.down <= 0 && Math.hypot(p.x - PLAYER.x, p.z - PLAYER.z) < 40) { p.flee = 10; p.fleeFrom = [PLAYER.x, PLAYER.z]; } }
   }

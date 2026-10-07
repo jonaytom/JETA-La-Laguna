@@ -12,7 +12,7 @@ const CONTROLS = (() => {
     A('pause', 'Pausa', 'Juego', ['KeyP', 'Escape']),
     A('f_punch', 'Puñetazo', 'Pelea', ['KeyJ', 'KeyU', 'ShiftRight']), A('f_kick', 'Patada', 'Pelea', ['KeyK', 'KeyI', 'ControlRight']), A('f_block', 'Cubrirse (siempre)', 'Pelea', ['KeyL']),
   ];
-  const NOTES = { Juego: 'Ratón: mirar · clic izq.: puñete / disparar · clic dcho.: apuntar · rueda: zoom', Pelea: 'Moverse con A/D o ←/→; atrás = andar hacia atrás y se cubre solo si el rival ataca. Arriba (W/↑) + abajo + puñetazo o patada: especiales. Espacio: saltar. Ratón: clic izq. puñetazo, dcho. patada.' };
+  const NOTES = { Juego: 'Ratón: mirar · clic izq.: puñete / disparar · clic dcho.: apuntar · rueda: zoom', Pelea: 'Moverse con A/D o ←/→; atrás = andar hacia atrás y se cubre solo si el rival ataca. Especiales: atrás, adelante + puñetazo = Bola de gofio; atrás, adelante + patada = Patada del Teide (avanza girando, 3 patadas); abajo, arriba (W/↑) + puñetazo = Gancho del Roque; abajo, arriba + patada = Salto del Pastor. Espacio: saltar. Ratón: clic izq. puñetazo, dcho. patada.' };
   try { const s = JSON.parse(localStorage.getItem('jeta_controls') || '{}'); for (const a of list) if (s[a.id]) a.alt = s[a.id]; } catch (e) { }
   const save = () => { try { const o = {}; for (const a of list) if (a.alt) o[a.id] = a.alt; localStorage.setItem('jeta_controls', JSON.stringify(o)); } catch (e) { } };
   const alias = (code) => { const out = []; for (const a of list) if (a.alt === code) out.push(a.def[0]); return out; };

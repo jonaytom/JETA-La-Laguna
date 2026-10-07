@@ -36,6 +36,10 @@ const FIGHT2D = (() => {
     gofio0: { tl: 0, sF: 40, eF: -120, sB: 30, eB: -130, hF: 22, kF: -22, hB: -20, kB: -14, dy: 2 },
     gofio1: { tl: 14, sF: 90, eF: 0, sB: 86, eB: 0, hF: 30, kF: -14, hB: -26, kB: -6, dy: 1 },
     teide: { tl: -25, sF: 140, eF: -10, sB: 30, eB: -80, hF: 155, kF: -10, hB: -10, kB: -30, dy: -8 },
+    gancho0: { tl: 16, sF: 40, eF: -120, sB: 40, eB: -110, hF: 40, kF: -60, hB: 30, kB: -60, dy: 10 },
+    gancho1: { tl: -10, sF: 172, eF: -20, sB: 30, eB: -100, hF: 30, kF: -40, hB: -10, kB: -60, dy: -4 },
+    spinA: { tl: -6, sF: 120, eF: -20, sB: 110, eB: -20, hF: 95, kF: -4, hB: 10, kB: -40, dy: -6 },
+    spinB: { tl: 6, sF: 100, eF: -30, sB: 120, eB: -30, hF: 20, kF: -60, hB: 95, kB: -4, dy: -6 },
     win: { tl: 0, sF: 172, eF: -10, sB: 20, eB: -30, hF: 10, kF: -6, hB: -12, kB: -6, dy: 0 },
     ko: { tl: -10, sF: 120, eF: 0, sB: 100, eB: -20, hF: 20, kF: -10, hB: -10, kB: -20, dy: 0, lying: true },
   };
@@ -136,9 +140,13 @@ const FIGHT2D = (() => {
     sweep: { su: 8, ac: 4, re: 18, dmg: 20, hs: 30, lv: 'low', box: [8, -14, 44, 0], p: ['crouch', 'sweep'], crouch: true, kd: true },
     jkick: { su: 4, ac: 10, re: 2, dmg: 20, hs: 20, lv: 'over', box: [8, -40, 36, -20], p: ['jump', 'jkick'], air: true },
     gofio: { su: 12, ac: 1, re: 24, dmg: 0, hs: 0, lv: 'mid', box: null, p: ['gofio0', 'gofio1'], proj: true },
-    teide: { su: 3, ac: 12, re: 22, dmg: 20, hs: 26, lv: 'high', box: [4, -96, 32, -40], p: ['kick0', 'teide'], kd: true, rise: true },
+    // specials (v0.56): 4 6 + P Bola de gofio · 4 6 + K Patada del Teide (spinning, moves forward, 3 kicks)
+    // 2 8 + P Gancho del Roque (rising uppercut) · 2 8 + K Salto del Pastor (the old flying kick)
+    teide: { su: 5, ac: 30, re: 14, dmg: 8, hs: 16, lv: 'high', box: [-8, -74, 38, -50], p: ['round0', 'spinA'], spin: ['spinA', 'spinB'], hits: 3, glide: 2.1 },
+    gancho: { su: 2, ac: 10, re: 20, dmg: 18, hs: 26, lv: 'high', box: [2, -104, 26, -50], p: ['gancho0', 'gancho1'], kd: true, rise: true, vy0: -7.4, inv: 8 },
+    pastor: { su: 3, ac: 12, re: 22, dmg: 20, hs: 26, lv: 'high', box: [4, -96, 32, -40], p: ['kick0', 'teide'], kd: true, rise: true, vy0: -6.4, inv: 6 },
   };
-  const CHAIN = { jab: ['jab', 'cross', 'kick', 'gofio', 'teide'], cross: ['kick', 'round', 'gofio', 'teide'], kick: ['round', 'gofio', 'teide'], cpunch: ['cpunch', 'sweep', 'gofio'] };
+  const SPECIALS = ['gofio', 'teide', 'gancho', 'pastor']; const CHAIN = { jab: ['jab', 'cross', 'kick', ...SPECIALS], cross: ['kick', 'round', ...SPECIALS], kick: ['round', ...SPECIALS], cpunch: ['cpunch', 'sweep', 'gofio', 'gancho'] };
   function mkFighter(o, x, dir) { return { name: o.name, spr: spritesFor(o.look, !!o.nose), x, y: GROUND, vx: 0, vy: 0, dir, hp: 100, shown: 100, st: 'idle', t: 0, mv: null, mt: 0, hitDone: false, stun: 0, crouch: false, block: false, wins: 0, ai: o.ai, buf: [], combo: 0, ko: false, inv: 0, chainOk: false, deal: (o.deal ?? 1) * (o.ai ? AI_DEAL : 1), recv: o.recv ?? 1 }; }
   // ---------------- input
   function onKey(e, down, nested) { if (!running) return; if (!nested) for (const c of CONTROLS.alias(e.code)) onKey({ code: c, preventDefault() { }, stopPropagation() { } }, down, true); const k = e.code; if (['KeyA', 'KeyD', 'KeyW', 'KeyS', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyJ', 'KeyK', 'KeyL', 'KeyU', 'KeyI', 'Space', 'ShiftRight', 'ControlRight'].includes(k)) { e.preventDefault(); e.stopPropagation(); } if (down) { if (!keys.has(k)) pressedK.add(k); keys.add(k); } else keys.delete(k); }
@@ -158,7 +166,7 @@ const FIGHT2D = (() => {
     const l = held('KeyA', 'ArrowLeft'), r = held('KeyD', 'ArrowRight'), u = held('Space'), upDir = held('KeyW', 'ArrowUp', 'Space'), d = held('KeyS', 'ArrowDown');
     const fwd = f.dir > 0 ? r : l, back = f.dir > 0 ? l : r;
     // numpad notation relative to facing, for specials: 2 down, 3 down-forward, 6 forward, 4 back
-    const n = d ? (fwd ? 3 : back ? 1 : 2) : upDir ? 8 : (fwd ? 6 : back ? 4 : 5); if (!f.buf.length || f.buf[f.buf.length - 1][0] !== n) f.buf.push([n, st.frame]); while (f.buf.length && st.frame - f.buf[0][1] > 30) f.buf.shift();
+    const n = d ? (fwd ? 3 : back ? 1 : 2) : upDir ? (fwd ? 9 : back ? 7 : 8) : (fwd ? 6 : back ? 4 : 5); if (!f.buf.length || f.buf[f.buf.length - 1][0] !== n) f.buf.push([n, st.frame]); while (f.buf.length && st.frame - f.buf[0][1] > 30) f.buf.shift();
     return { fwd, back, guard: back, up: u, down: d, P: hit('KeyJ', 'KeyU', 'ShiftRight'), K: hit('KeyK', 'KeyI', 'ControlRight'), B: held('KeyL'), seq: f.buf.map((q) => q[0]).join('') };
   }
   // ---------------- AI
@@ -173,13 +181,13 @@ const FIGHT2D = (() => {
     if (a.t > 0) { Object.assign(inp, a.hold); return inp; }
     a.t = 11 + Math.random() * (30 - a.lv * 16); a.hold = {};
     const r = Math.random();
-    if (dist > 120) { if (r < 0.65) a.hold.fwd = true; else if (r < 0.75 && a.lv > 0.4) { inp.seq = '236'; inp.P = true; } else if (r < 0.85) a.hold = { fwd: true, up: true }; }
+    if (dist > 120) { if (r < 0.65) a.hold.fwd = true; else if (r < 0.75 && a.lv > 0.4) { inp.seq = '456'; inp.P = true; } else if (r < 0.85) a.hold = { fwd: true, up: true }; }
     else if (dist > 46) { if (r < 0.5) a.hold.fwd = true; else if (r < 0.7) inp.K = true; else if (r < 0.8) { inp.down = true; inp.K = true; } else if (r < 0.88) a.hold = { fwd: true, up: true }; else a.hold.back = true; }
-    else { if (r < 0.35) inp.P = true; else if (r < 0.55) inp.K = true; else if (r < 0.65) { inp.down = true; inp.P = true; } else if (r < 0.72 && a.lv > 0.5) { inp.seq = '623'; inp.K = true; } else if (r < 0.85) a.hold.back = true; else a.blockT = 20; }
+    else { if (r < 0.35) inp.P = true; else if (r < 0.55) inp.K = true; else if (r < 0.65) { inp.down = true; inp.P = true; } else if (r < 0.72 && a.lv > 0.5) { const q = Math.random(); inp.seq = q < 0.4 ? '258' : '456'; if (q < 0.2) inp.P = true; else inp.K = true; } else if (r < 0.85) a.hold.back = true; else a.blockT = 20; }
     Object.assign(inp, a.hold); return inp;
   }
   // ---------------- core
-  function startMove(f, m) { if (st.ev && f === st.a) st.ev[m] = true; f.mv = m; f.mt = 0; f.wu = 0; f.hitDone = false; AUDIO.swing && AUDIO.swing(); if (m === 'teide') { f.vy = -6.4; f.y -= 1; f.inv = 6; } if (m === 'jkick' && f.y >= GROUND) f.mv = 'kick'; }
+  function startMove(f, m) { if (st.ev && f === st.a) st.ev[m] = true; f.mv = m; f.mt = 0; f.wu = 0; f.hitDone = false; AUDIO.swing && AUDIO.swing(); const S0 = MOVES[m]; if (S0.vy0) { f.vy = S0.vy0; f.y -= 1; f.inv = S0.inv || 0; } if (S0.hits) f.hitsLeft = S0.hits; if (m !== 'gofio' && SPECIALS.includes(m)) voice({ teide: '¡Patada del Teide!', gancho: '¡Gancho!', pastor: '¡Salto del pastor!' }[m]); if (m === 'jkick' && f.y >= GROUND) f.mv = 'kick'; }
   function stepFighter(f, o, inp) {
     f.t++; if (f.inv > 0) f.inv--;
     if (f.ko) { f.vy += 0.35; f.y = Math.min(GROUND, f.y + f.vy); f.x += f.vx; f.vx *= 0.92; return; }
@@ -196,9 +204,9 @@ const FIGHT2D = (() => {
     const want = inp.P ? 'P' : inp.K ? 'K' : null;
     if (want) {
       let m = null; const seq = inp.seq;
-      // specials: up, down + punch = Bola de gofio; up, down + kick = Patada del Teide (the AI still uses the old motions)
-      const ud = /8[^123]{0,2}[123][^8]?$/.test(seq);
-      if ((ud || (!f.ai ? false : /2\d?6$/.test(seq))) && want === 'P') m = 'gofio'; else if ((ud || (!f.ai ? false : /6\d?[23]$/.test(seq))) && want === 'K') m = 'teide';
+      // specials: back, forward (+P gofio / +K Teide); down, up (+P gancho / +K pastor). The buffer keeps ~0.5 s.
+      const bf = /[147][5]{0,3}[369]$/.test(seq) || /[147][5]{0,3}[369][5]{0,2}$/.test(seq), du = /[123][5]{0,3}[789]$/.test(seq) || /[123][5]{0,3}[789][5]{0,2}$/.test(seq);
+      if (bf) m = want === 'P' ? 'gofio' : 'teide'; else if (du) m = want === 'P' ? 'gancho' : 'pastor';
       else if (air) m = 'jkick'; else if (f.crouch) m = want === 'P' ? 'cpunch' : 'sweep'; else if (want === 'P') m = f.mv === 'jab' ? 'cross' : 'jab'; else m = f.mv === 'kick' || f.mv === 'cross' ? 'round' : 'kick';
       if (m === 'gofio' && st.proj.some((p) => p.owner === f)) m = 'jab';
       if (!f.mv) startMove(f, m); else if (f.chainOk && CHAIN[f.mv] && CHAIN[f.mv].includes(m)) { f.chainOk = false; startMove(f, m); }
@@ -207,12 +215,14 @@ const FIGHT2D = (() => {
       const M = MOVES[f.mv];
       if (f.ai && f.mt < M.su) { f.wu = (f.wu || 0) + 1 / AI_WINDUP; if (f.wu >= 1) { f.wu -= 1; f.mt++; } } else f.mt++;
       if (M.proj && f.mt === M.su) { st.proj.push({ x: f.x + f.dir * 26 * SZ, y: GROUND - 52 * SZ, vx: f.dir * 3.6, owner: f, t: 0 }); voice('¡Gofio!'); }
+      if (M.hits && f.hitDone && f.hitsLeft > 0 && (f.mt - M.su) % Math.round(M.ac / M.hits) === 0) f.hitDone = false; // spinning kick: a new hit every third of the spin
       if (M.box && !f.hitDone && f.mt > M.su && f.mt <= M.su + M.ac) {
         const bx0 = f.x + f.dir * M.box[0] * SZ, bx1 = f.x + f.dir * M.box[2] * SZ; const by0 = f.y + M.box[1] * SZ, by1 = f.y + M.box[3] * SZ;
         const hx0 = o.x - 11 * SZ, hx1 = o.x + 11 * SZ, hy0 = o.y - (o.crouch ? 50 : o.ko ? 20 : 74) * SZ, hy1 = o.y;
-        if (Math.max(bx0, bx1) > hx0 && Math.min(bx0, bx1) < hx1 && by1 > hy0 && by0 < hy1 && !o.ko && o.inv <= 0) { f.hitDone = true; land(f, o, M); }
+        if (Math.max(bx0, bx1) > hx0 && Math.min(bx0, bx1) < hx1 && by1 > hy0 && by0 < hy1 && !o.ko && o.inv <= 0) { f.hitDone = true; if (f.hitsLeft) f.hitsLeft--; land(f, o, M); }
       }
       if (M.rise) { f.vy += 0.3; f.y += f.vy; f.x += f.dir * 0.8; if (f.y >= GROUND) { f.y = GROUND; f.vy = 0; } }
+      if (M.glide && f.mt > M.su && f.mt <= M.su + M.ac) { f.x += f.dir * M.glide; f.y = GROUND - 6 * SZ * Math.sin(Math.PI * (f.mt - M.su) / M.ac); } else if (M.glide && f.y < GROUND) f.y = Math.min(GROUND, f.y + 2);
       if (f.mt >= M.su + M.ac + M.re || (M.air && !air && f.mt > 3)) { f.mv = null; f.chainOk = false; }
       if (air && !M.rise) { f.vy += 0.3; f.y = Math.min(GROUND, f.y + f.vy); f.x += f.vx; }
       return;
@@ -242,7 +252,7 @@ const FIGHT2D = (() => {
     if (f.ko) return f.y < GROUND - 2 ? 'hit' : 'ko';
     if (st.phase === 'end' && st.winner === f) return 'win';
     if (f.stun > 0) return f.block ? (f.crouch ? 'cblock' : 'block') : 'hit';
-    if (f.mv) { const M = MOVES[f.mv]; return M.p[f.mt <= M.su ? 0 : 1]; }
+    if (f.mv) { const M = MOVES[f.mv]; if (M.spin && f.mt > M.su && f.mt <= M.su + M.ac) return M.spin[Math.floor((f.mt - M.su) / 4) % M.spin.length]; return M.p[f.mt <= M.su ? 0 : 1]; }
     if (f.y < GROUND) return 'jump';
     if (f.crouch) return f.block ? 'cblock' : 'crouch';
     if (f.block) return 'block';
@@ -258,7 +268,7 @@ const FIGHT2D = (() => {
     for (const f of [st.a, st.b]) {
       const s = f.spr[poseOf(f)]; const w = s.width, h = s.height;
       cx.fillStyle = 'rgba(0,0,0,0.35)'; cx.fillRect(Math.round(f.x - 11), GROUND - 2, 22, 4);
-      cx.save(); cx.translate(Math.round(f.x), Math.round(f.y)); cx.scale((f.dir < 0 ? -SZ : SZ) / R, SZ / R);
+      cx.save(); cx.translate(Math.round(f.x), Math.round(f.y)); const Mv = f.mv && MOVES[f.mv]; const sd = Mv && Mv.spin && f.mt > Mv.su && f.mt <= Mv.su + Mv.ac && Math.floor((f.mt - Mv.su) / 4) % 2 ? -f.dir : f.dir; /* the spinning kick turns round */ cx.scale((sd < 0 ? -SZ : SZ) / R, SZ / R);
       if (f.stun > 0 && !f.block && (st.frame % 4 < 2)) cx.globalAlpha = 0.85;
       cx.drawImage(s, -Math.round(w / 2), -h + 2 * R); cx.restore();
     }

@@ -156,7 +156,7 @@ class Car {
     const tp = -Math.atan2(hf - hb, 2 * L), tr = Math.atan2(hl - hr, 2 * W); // rotateZ(+) lowers the right side (-X local)
     this.pitch = lerp(this.pitch, tp, 0.2); this.roll = lerp(this.roll, tr, 0.2);
     this.mesh.position.set(this.x, this.y, this.z);
-    if (this.type === 'moto') { this.lean = lerp(this.lean || 0, clamp(-this.yawRate * Math.max(0, this.fwdV) * 0.06, -0.6, 0.6), 0.15); this.roll = this.lean; if (this.rider) this.rider.root.visible = this.driver === 'ai' || this.driver === 'police'; }
+    if (this.type === 'moto') { this.lean = lerp(this.lean || 0, clamp(-this.yawRate * Math.max(0, this.fwdV) * 0.06, -0.6, 0.6), 0.15); this.roll = this.lean; if (this.rider) { this.rider.root.visible = this.driver === 'ai' || this.driver === 'police'; if (this.rider.root.visible) animHuman(this.rider, dt, 0); } if (this.driver === 'player' && typeof playerHuman !== 'undefined' && playerHuman.root.parent === this.mesh) animHuman(playerHuman, dt, 0); } // seated riders were never animated: they stood stiff on the moto
     this.mesh.rotation.set(0, 0, 0); this.mesh.rotateY(this.h); this.mesh.rotateX(this.pitch); this.mesh.rotateZ(this.roll);
     // body lean
     const lat = clamp(-this.yawRate * this.fwdV * 0.012, -0.08, 0.08); this.body.rotation.z = lerp(this.body.rotation.z, lat, 0.15);

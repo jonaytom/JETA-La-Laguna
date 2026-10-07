@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Lanzador de la auditoría completa de un proyecto (por defecto JETA La Laguna).
 
-Uso:  python auditar.py [config.json] [--repo RUTA] [--sin-perfil]
+Uso:  python auditar.py [config.json] [--repo RUTA] [--resultados RUTA] [--sin-perfil]
+  --resultados RUTA  dónde leer el historial y escribir los resultados (por defecto: RevisordeCodigo/resultados).
   --repo RUTA   audita una copia local (p. ej. el propio repositorio del juego) en vez de clonar de GitHub.
   1. Clona o actualiza el repositorio indicado en la configuración (o usa --repo).
   2. Construye el juego (comando 'build').
@@ -27,9 +28,15 @@ commit = sh('git log -1 --format=%h', work).stdout.strip() or 'local'
 if sh('git status --porcelain -- src', work).stdout.strip(): commit += '+cambios'
 
 version = open(os.path.join(work, cfg.get('archivo_version', 'VERSION'))).read().strip() if os.path.exists(os.path.join(work, cfg.get('archivo_version', 'VERSION'))) else commit
-out = os.path.join(AQUI, 'resultados', f'{datetime.date.today()}_{version}_{commit}'); os.makedirs(out, exist_ok=True)
+# carpeta de resultados: --resultados RUTA; si no, la de al lado de herramientas/ (RevisordeCodigo/resultados), para que
+# los resultados y el historial siempre caigan en el mismo sitio aunque se lance desde herramientas/
+if '--resultados' in sys.argv: RES = os.path.abspath(sys.argv[sys.argv.index('--resultados') + 1])
+elif os.path.basename(AQUI) == 'herramientas': RES = os.path.join(os.path.dirname(AQUI), 'resultados')
+else: RES = os.path.join(AQUI, 'resultados')
+out = os.path.join(RES, f'{datetime.date.today()}_{version}_{commit}'); os.makedirs(out, exist_ok=True)
+print('Resultados e historial en:', RES)
 
-hist_path = os.path.join(AQUI, 'resultados', 'historial.json')
+hist_path = os.path.join(RES, 'historial.json')
 hist = json.load(open(hist_path, encoding='utf-8')) if os.path.exists(hist_path) else []
 prev = hist[-1] if hist else None
 # para memoria/fugas se compara con la última medición COMPLETA (una pasada --sin-perfil no tiene esos datos)

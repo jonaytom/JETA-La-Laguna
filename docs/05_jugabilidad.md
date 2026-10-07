@@ -19,13 +19,30 @@
 ```
 
 - `pass(título, dinero)` cierra la misión, suma dinero, suena el estribillo y **guarda automáticamente**.
-  `fail(motivo)` la cancela (se puede repetir).
+  `fail(motivo)` la cancela y, cuando vuelves a estar jugando (tras reaparecer, una pelea…), pregunta
+  **«¿Reintentar?»**: te lleva al inicio de la misión y la empieza otra vez (`fail(motivo, true)` no lo pregunta).
+- **Guardar a mitad**: la partida guarda qué misión estaba en curso, pero al cargar empieza de nuevo en su círculo
+  (aviso en pantalla) y no queda nada suyo suelto (coches, ladrones, blancos, permiso de la pistola de bolas).
+  Las partidas antiguas que ya habían terminado la historia corta siguen con las misiones nuevas.
 - Diálogos: `talk([[quién, texto], …], alTerminar)` muestra subtítulos que **solo avanzan con clic / toque /
   Espacio / Enter**; `DLG.show(quién, título, texto, pregunta, opciones, cb)` abre un cuadro con opciones
   (teclas 1–9).
 - Historia actual: Vuelta al barrio (El Blanco) → Boca Papa → Una botella para Coco → El Canarión (carrera) →
   Sastrón (pagar 2500 $ + tutorial de pelea) → La firma de la banda (nombre) → Boca Papa te enseña a comer →
-  El campo de tiro de El Blanco (pistola) → mundo libre. Secundaria: Revancha con el Canarión.
+  El campo de tiro de El Blanco (pistola) → **Defensores de La Laguna** (v0.56, `12f_story2.js`) → mundo libre.
+  Secundaria: Revancha con el Canarión.
+- **Defensores de La Laguna** (`12f_story2.js`, se añaden con `MISSIONS.addStory()` usando las herramientas de
+  `MISSIONS.kit`): la pistola es de **bolas de plástico de aire comprimido** (`WEAPON.lawful`: disparar no es delito
+  durante estas misiones). Atraco en la farmacia (pelea 2D, persecución en coche y bolas al que huye a pie) →
+  Defensores de La Laguna (ceremonia en el Ayuntamiento: el alcalde **Don Yovoy Gofiérrez**, bigote y traje negro,
+  nombra a la banda grupo especial de la Policía Local; `GANG.defenders`) → El carterista del Cristo (Coco) →
+  Baches en la Vía de Ronda (alcalde; camión, 5 puntos, 4 min) → El rally de La Esperanza (Canarión; carrera contra
+  un pijo) → Los bancos del Adelantado (alcalde; pelea y bolas) → Grafiteros en el tranvía (Sastrón; contrarreloj y
+  dos blancos) → La guagua de la broma (Boca Papa; 10 s pegado a la guagua) → Escolta a la guagua del Romero
+  (alcalde; no alejarse más de 70 m) → El gofio robado (Boca Papa; pistas, pelea y furgoneta) → Carrera solidaria del
+  casco (alcalde; a pie) → Noche en el aeropuerto (El Blanco; de noche, persecución de la furgoneta del queso; el
+  alcalde os da **coche patrulla**, `GANG.patrol`). Los coches que huyen y las guaguas siguen una ruta del grafo
+  (`s2Path`/`s2DriveCar`, cinemáticos como el del Canarión); los que huyen a pie, `s2Runner`.
 - NPCs de la banda (`NPC.blanco`, `boca`, `coco`, `sastron`, `canarion`): Coco y Sastrón aparecen en dos sitios
   emblemáticos del casco elegidos al azar en cada partida.
 
@@ -49,7 +66,10 @@
   solo mientras el rival ataca** (como Street Fighter); L = cubrirse siempre. Luchadores a escala 0,8 (`SZ`), salen a
   62 px de cada borde.
 - Golpes: puñetazo 10 %, patada 20 %; bloqueados 1 % / 2 %. Combos encadenando golpes que conectan.
-- Especiales: **arriba, abajo + puñetazo** = Bola de gofio (proyectil); **arriba, abajo + patada** = Patada del Teide.
+- Especiales (v0.56): **atrás, adelante + puñetazo** = Bola de gofio (proyectil); **atrás, adelante + patada** =
+  Patada del Teide (avanza girando y da 3 patadas, estilo «tatsumaki»); **abajo, arriba + puñetazo** = Gancho del Roque
+  (gancho saltando hacia arriba, derriba); **abajo, arriba + patada** = Salto del Pastor (la patada voladora de antes).
+  Se reconocen con el búfer de direcciones de ~0,5 s; «arriba» es W/↑ (o ▲ en el móvil), que no salta.
 - Las 3 primeras peleas muestran un cartel de controles y esperan a pulsar Espacio; luego «FIGHT!».
 - Rivales: vecina (recibe ×2, pega ×0,5), doña (pega ×1,1, recibe ×0,5), cachas (pega ×2, recibe ×0,9), vecino,
   Canarión. **La CPU pega un 25 % menos** (`AI_DEAL`) y **prepara sus golpes 1,6 veces más despacio** (`AI_WINDUP`)

@@ -5,6 +5,8 @@
 - **Feedback de pruebas**: cuando Jonay comente fallos o mejoras sueltas, NO hacerlos directamente: anotarlos en
   `PENDIENTES.md` y revisarlos juntos después (así no se toca lo mismo dos veces). Solo se hace al momento lo que pida
   expresamente.
+- **Herramientas de prueba**: las que tengan algo de complejidad se guardan en `tests/` (pruebas) o
+  `tests/herramientas/` (fotos, sondas; índice en `LEEME.md`) y se reutilizan; no rehacerlas en cada versión.
 - El objetivo principal del juego es recrear bien el mapa real de La Laguna (OpenStreetMap). Comercios: siempre parodias.
 
 ## Rutina al publicar una versión nueva

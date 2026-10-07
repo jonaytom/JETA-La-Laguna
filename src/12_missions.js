@@ -62,8 +62,10 @@ function fightTutorial() {
     ['sweep', T ? 'Barrido: ▼ + K' : 'Barrido: S + patada', (e) => e.sweep],
     ['blocked', T ? 'Cúbrete: atrás cuando ataque' : 'Cúbrete: mantén atrás cuando Sastrón ataque', (e) => e.blocked],
     ['combo', 'Combo: puño, puño, patada', (e) => e.combo],
-    ['gofio', T ? 'Bola de gofio: ▲ ▼ + P' : 'Bola de gofio: W, S + puñetazo', (e) => e.gofio],
-    ['teide', T ? 'Patada del Teide: ▲ ▼ + K' : 'Patada del Teide: W, S + patada', (e) => e.teide],
+    ['gofio', T ? 'Bola de gofio: ◀ ▶ + P' : 'Bola de gofio: atrás, adelante + puñetazo', (e) => e.gofio],
+    ['teide', T ? 'Patada del Teide: ◀ ▶ + K' : 'Patada del Teide: atrás, adelante + patada', (e) => e.teide],
+    ['gancho', T ? 'Gancho del Roque: ▼ ▲ + P' : 'Gancho del Roque: abajo, arriba + puñetazo', (e) => e.gancho],
+    ['pastor', T ? 'Salto del Pastor: ▼ ▲ + K' : 'Salto del Pastor: abajo, arriba + patada', (e) => e.pastor],
   ];
   let i = 0, wait = 0;
   return {
@@ -100,7 +102,14 @@ const MISSIONS = (() => {
   function goto(x, z, r, color) { [x, z] = safeSpot(x, z, 0.3); clearBeacon(); beacon = BEACON.make(x, z, r, 7, color); data.goal = [x, z, r]; updateGPS(true); }
   function finish() { if (data.rival && data.rival.mode === 'race') { data.rival.mode = 'physics'; data.rival.driver = null; data.rival.ctl.brk = 1; } clearBeacon(); setObjective(null); const tr = TRACKS[activeTrack]; active = null; activeTrack = null; timer = 0; data = {}; GPS.path = null; return tr; }
   function pass(title, money, keepIdx) { const tr = finish(); if (!keepIdx) tr.idx++; PLAYER.money += money; setTimeout(() => { try { SAVE.auto('Misión superada: ' + title); } catch (e) { } }, 1500); MUSIC.jingle(); HUD.big('¡MISIÓN SUPERADA!', '#f5b72e', 4); HUD.toast(title + (money ? '  +$' + money : ''), '#7fe08a', 4); setTimeout(placeStarts, 2500); }
-  function fail(reason) { finish(); AUDIO.fail(); HUD.big('MISIÓN FALLIDA', '#e04848', 3.5); HUD.toast(reason, '#ffb3b3', 4); setTimeout(placeStarts, 2500); }
+  function fail(reason, noRetry) { const m = active, k = activeTrack; finish(); AUDIO.fail(); HUD.big('MISIÓN FALLIDA', '#e04848', 3.5); HUD.toast(reason, '#ffb3b3', 4); setTimeout(placeStarts, 2500); if (m && !noRetry) offerRetry(m, k); }
+  // after a failure: «¿Reintentar?» (works with the mouse, keys 1/2 and touch). Waits until the player is back in play
+  // (after a respawn, a 2D fight…) and gives up if another mission has started meanwhile.
+  function offerRetry(m, k) { let tries = 0; const ask = () => { if (active || TRACKS[k].list[TRACKS[k].idx] !== m) return; if (GAME.state !== 'play' || PLAYER.dead || (DLG && DLG.open)) { if (++tries < 40) setTimeout(ask, 500); return; }
+      DLG.show(m.who || '', m.title, 'La misión ha fallado. ¿Quieres volver a intentarlo desde el principio?', '', ['Reintentar', 'Ahora no'], (i) => { DLG.hide(); if (i === 0) retry(m, k); }); };
+    setTimeout(ask, 2600); }
+  function retry(m, k) { if (active) return; if (PLAYER.car) { try { exitCar(); } catch (e) { } } const sp = m.startPos(); const r = COL.resolve(sp[0], sp[1], 0.4); PLAYER.x = r.x; PLAYER.z = r.z; WANTED.level = 0; begin(m, k); }
+  function begin(m, k) { for (const kk in TRACKS) if (TRACKS[kk].beacon) { BEACON.free(TRACKS[kk].beacon); TRACKS[kk].beacon = null; } active = m; activeTrack = k; data = {}; setWaypoint(null); setObjective(null); HUD.big(active.title.toUpperCase(), '#fff', 3); active.start(); }
   function abort(msg) { finish(); if (msg) HUD.toast(msg, '#f5b72e', 4); setTimeout(placeStarts, 1500); }
   const near = (n, r = 3.2) => Math.hypot(PLAYER.x - n.x, PLAYER.z - n.z) < r && (!PLAYER.car || PLAYER.car.speed < 2);
   function moveNPC(n, x, z, face) { const [a, b] = safeSpot(x, z, 0.6); n.x = a; n.z = b; n.H.root.position.set(a, heightAt(a, b) + 0.17, b); if (face) n.H.root.rotation.y = Math.atan2(face[0] - a, face[1] - b); }
@@ -261,9 +270,10 @@ const MISSIONS = (() => {
         step = 0; const R = findRange(NPC.blanco.x, NPC.blanco.z); data.range = R;
         chat('El campo de tiro de El Blanco', [
           ['Ruymán «El Blanco»', '«Brrr... Chopa... mmm... ven... psss... ven.»<br><i>Mira a los lados. Abre el garaje de sus padres. Entre la lavadora vieja y las cajas de Navidad hay una caja de munición del ejército.</i>'],
-          ['Ruymán «El Blanco»', '«Ahhh... esto... mmm... pistola... brrr. Seis... seis balas.»<br><i>Te acompaña a un solar abandonado detrás de la casa. Coloca seis latas vacías encima de unos palés.</i>'],
+          ['Ruymán «El Blanco»', '«Ahhh... esto... mmm... pistola... brrr. Seis... seis bolas.»<br><i>Te acompaña a un solar abandonado detrás de la casa. Coloca seis latas vacías encima de unos palés.</i>'],
+          ['Ruymán «El Blanco»', '«Mmm... no... no es de verdad... psss. Bolas... plástico... aire... brrr... comprimido.»<br><i>Es una pistola de <b>bolas de plástico de aire comprimido</b>, una réplica de las de airsoft. Hace pupa y asusta, pero no mata. Eso sí: de lejos parece de verdad.</i>'],
           [CH, 'Blanco, yo salí para reformarme... Pero vale. Por si acaso. Solo para defendernos.'],
-          ['Ruymán «El Blanco»', `«Mmm... apunta... brrr... ¡dispara!»<br><b>Controles:</b> ${document.body.classList.contains('touchmode') ? 'pulsa <b>APUNTAR</b> y luego <b>DISPARAR</b>; arrastra el dedo para mover la mira' : 'mantén <b>clic derecho</b> para apuntar y haz <b>clic izquierdo</b> para disparar'}.<br>Tienes que tirar <b>las 6 latas con 6 balas</b>. Si fallas, El Blanco las vuelve a poner.`, 'Al lío'],
+          ['Ruymán «El Blanco»', `«Mmm... apunta... brrr... ¡dispara!»<br><b>Controles:</b> ${document.body.classList.contains('touchmode') ? 'pulsa <b>APUNTAR</b> y luego <b>DISPARAR</b>; arrastra el dedo para mover la mira' : 'mantén <b>clic derecho</b> para apuntar y haz <b>clic izquierdo</b> para disparar'}.<br>Tienes que tirar <b>las 6 latas con 6 bolas</b>. Si fallas, El Blanco las vuelve a poner.`, 'Al lío'],
         ], () => {
           if (active !== this) return;
           if (PLAYER.car) exitCar();
@@ -285,9 +295,9 @@ const MISSIONS = (() => {
         setTimeout(() => { for (const t of data.cans) scene.remove(t.mesh); }, 4000);
         takeWeapon();
         chat('El campo de tiro de El Blanco', [
-          ['Ruymán «El Blanco»', '«¡Mmm! ¡Brrr! ¡Bien... bien!»<br><i>Aplaude dos veces, muy serio. Te da la pistola y una caja con seis balas.</i>'],
-          ['Ruymán «El Blanco»', '«Psss... cuidado... mmm... policía... muchos... brrr... rápidos.»<br><i>Lo ha entendido hasta un turista: sacar un arma en la calle es <b>delito grave</b>. Si alguien te ve disparar, vendrá mucha más policía, con coches más rápidos, y costará mucho más despistarla. Sin pistola, a puñetazos (<kbd>Q</kbd> / clic).</i>', 'Entendido'],
-        ], () => { giveWeapon(6, false); pass('Tienes la pistola de El Blanco (6 balas)', 0); });
+          ['Ruymán «El Blanco»', '«¡Mmm! ¡Brrr! ¡Bien... bien!»<br><i>Aplaude dos veces, muy serio. Te da la pistola y una caja con seis bolas.</i>'],
+          ['Ruymán «El Blanco»', '«Psss... cuidado... mmm... policía... muchos... brrr... rápidos.»<br><i>Lo ha entendido hasta un turista: aunque sea de bolas, sacar algo que parece un arma en la calle es <b>delito grave</b>. Si alguien te ve disparar, vendrá mucha más policía, con coches más rápidos, y costará mucho más despistarla. Sin pistola, a puñetazos (<kbd>Q</kbd> / clic).</i>', 'Entendido'],
+        ], () => { giveWeapon(6, false); pass('Tienes la pistola de El Blanco (6 bolas)', 0); });
       },
       update() { },
     },
@@ -381,7 +391,10 @@ const MISSIONS = (() => {
   function mkNPC(o, x, z, extra) { const h = makeHuman(o); let [a, b] = safeSpot(x, z, 0.8);
     if (parkedNear(a, b, 4.5).length) for (let r = 3; r < 60; r += 2) { let ok = false; for (let k = 0; k < 16; k++) { const q = safeSpot(x + Math.cos(k / 16 * 6.283) * r, z + Math.sin(k / 16 * 6.283) * r, 0.8); if (!parkedNear(q[0], q[1], 4.5).length && !onCarriageway(q[0], q[1], 0.5)) { [a, b] = q; ok = true; break; } } if (ok) break; }
     const r = COL.resolve(a, b, 0.6); h.root.position.set(r.x, heightAt(r.x, r.z) + 0.17, r.z); h.root.rotation.y = Math.random() * 6; scene.add(h.root); if (extra) extra(h); return { x: r.x, z: r.z, H: h, home: [r.x, r.z] }; }
+  // toolkit for the missions defined in other files (12f_story2.js): they are appended to STORY
+  const KIT = { talk, chat, goto, clearBeacon, setObjective, pass, fail, abort, moveNPC, mkNPC, bold, CH, GANG, findRange, isActive: (m) => active === m, get data() { return data; }, setTimer(t) { timer = t; }, get timer() { return timer; } };
   return {
+    kit: KIT, addStory(list) { STORY.push(...list); },
     init() {
       // Ruymán «El Blanco», at his parents' door next to the start
       { const b = makeHuman({ skin: 0xf6dcc8, shirt: 0xf4f4f4, pants: 0x9a9a9a, hair: 0x3b2a1e, shoes: 0x333333, scale: 1.09, female: false, thin: true, longPants: true, beard: false, hairStyle: 'Hair_Buzzed', hd: true, sleeve: false, glasses: 'round', belt: false, sole: 0x1a1a1a, shoes: 0x2f3b55, watch: 0x2f3a2a });
@@ -423,15 +436,16 @@ const MISSIONS = (() => {
         const car = new Car(m ? null : 'sport', 0xffd200, cx, cz, Math.atan2(ux, uz), m || undefined); car.driver = null; car.mode = 'physics'; car.persist = true; car.ctl.brk = 1; NPC.canarionCar = car; }
       for (const k of ['blanco', 'coco', 'sastron', 'canarion']) COL.addCirc(NPC[k].x, NPC[k].z, 0.4);
       FOOD.init();
+      if (typeof story2Init === 'function') story2Init();
       placeStarts();
     },
     update(dt) {
-      for (const k of ['blanco', 'boca', 'coco', 'sastron', 'canarion']) { const n = NPC[k]; if (n && n.H) animHuman(n.H, dt, 0); }
+      for (const k of ['blanco', 'boca', 'coco', 'sastron', 'canarion', 'alcalde']) { const n = NPC[k]; if (n && n.H) animHuman(n.H, dt, 0); }
       if (NPC.blanco) NPC.blanco.H.head.rotation.y = Math.sin(performance.now() / 1300) * 0.3;
-      FOOD.update(dt);
+      FOOD.update(dt); if (typeof story2Tick === 'function') story2Tick(dt);
       BEACON.anim(beacon, dt); for (const k in TRACKS) BEACON.anim(TRACKS[k].beacon, dt);
       if (!active) for (const k in TRACKS) { const tr = TRACKS[k]; if (!tr.beacon || tr.idx >= tr.list.length) continue;
-        if (Math.hypot(PLAYER.x - tr.beacon.position.x, PLAYER.z - tr.beacon.position.z) < 2 && !PLAYER.car) { for (const kk in TRACKS) if (TRACKS[kk].beacon) { BEACON.free(TRACKS[kk].beacon); TRACKS[kk].beacon = null; } active = tr.list[tr.idx]; activeTrack = k; data = {}; setWaypoint(null); setObjective(null); HUD.big(active.title.toUpperCase(), '#fff', 3); active.start(); break; } }
+        if (Math.hypot(PLAYER.x - tr.beacon.position.x, PLAYER.z - tr.beacon.position.z) < 2 && !PLAYER.car && !DLG.open) { begin(tr.list[tr.idx], k); break; } }
       if (active) {
         if (timer > 0) { timer -= dt; const t = $('mtimer'); if (t) t.textContent = Math.floor(timer / 60) + ':' + String(Math.floor(timer % 60)).padStart(2, '0'); if (timer <= 0) { fail(/Canarión/.test(active.title) ? '¡El Canarión sigue siendo el más rápido! Vuelve a intentarlo.' : 'Se acabó el tiempo.'); return; } }
         if (active) active.update(dt);
@@ -442,14 +456,16 @@ const MISSIONS = (() => {
     target() { return active && data.goal ? data.goal : null; },
     blips() { const b = []; for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon) b.push([tr.beacon.position.x, tr.beacon.position.z, tr.css]); } if (active && data.goal) b.push([data.goal[0], data.goal[1], '#f5b72e']); return b; },
     prompt() { if (active || PLAYER.car) return ''; for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon && Math.hypot(PLAYER.x - tr.beacon.position.x, PLAYER.z - tr.beacon.position.z) < 6) return 'Acércate al círculo para hablar con ' + bold(tr.list[tr.idx].who); } return ''; },
-    fail(r) { if (active) { if (WEAPON.training) takeWeapon(); fail(r); } },
+    fail(r, noRetry) { if (active) { if (WEAPON.training) takeWeapon(); fail(r, noRetry); } },
+    _story: STORY,
     _setIdx(i, track = 'story') { TRACKS[track].idx = i; placeStarts(); },
     // save / load: which missions are done, the gang, tutorial flags (a mission in progress restarts from its beginning)
-    getState() { return { v: 2, story: TRACKS.story.idx, storyDone: !!TRACKS.story.done, side: TRACKS.side.idx, sideOpen: !!TRACKS.side.open, gang: { formed: GANG.formed, name: GANG.name, members: GANG.members.slice(), sastronTut: !!GANG.sastronTut }, active: active ? active.title : null }; },
+    getState() { return { v: 2, story: TRACKS.story.idx, storyDone: !!TRACKS.story.done, side: TRACKS.side.idx, sideOpen: !!TRACKS.side.open, gang: { formed: GANG.formed, name: GANG.name, members: GANG.members.slice(), sastronTut: !!GANG.sastronTut, defenders: !!GANG.defenders, patrol: !!GANG.patrol }, active: active ? active.title : null }; },
     setState(st) { if (active) { try { if (WEAPON.training) takeWeapon(); } catch (e) { } finish(); }
-      TRACKS.story.idx = (st.story | 0) - (!st.v && (st.story | 0) >= 3 ? 1 : 0); /* v1 saves had the Canarión race inside the story */ TRACKS.story.done = !!st.storyDone; TRACKS.side.idx = !st.v && (st.story | 0) >= 3 ? 1 : st.side | 0; TRACKS.side.open = !!st.sideOpen;
-      Object.assign(GANG, { formed: !!(st.gang && st.gang.formed), name: (st.gang && st.gang.name) || '', members: (st.gang && st.gang.members) || [], sastronTut: !!(st.gang && st.gang.sastronTut) });
-      setObjective(null); placeStarts(); },
+      TRACKS.story.idx = (st.story | 0) - (!st.v && (st.story | 0) >= 3 ? 1 : 0); /* v1 saves had the Canarión race inside the story */ TRACKS.story.done = !!st.storyDone && TRACKS.story.idx >= STORY.length; /* older saves finished a shorter story: carry on with the new missions */ TRACKS.side.idx = !st.v && (st.story | 0) >= 3 ? 1 : st.side | 0; TRACKS.side.open = !!st.sideOpen;
+      Object.assign(GANG, { formed: !!(st.gang && st.gang.formed), name: (st.gang && st.gang.name) || '', members: (st.gang && st.gang.members) || [], sastronTut: !!(st.gang && st.gang.sastronTut), defenders: !!(st.gang && st.gang.defenders), patrol: !!(st.gang && st.gang.patrol) });
+      setObjective(null); placeStarts();
+      if (st.active) setTimeout(() => HUD.toast('La misión «' + st.active + '» se guardó a medias: empieza de nuevo en su círculo', '#f5b72e', 6), 1200); },
     currentTitle() { const tr = TRACKS.story; return tr.idx < tr.list.length ? (tr.list[tr.idx].title || '') : 'Historia completada'; },
     get active() { return active; },
     get gang() { return GANG; },

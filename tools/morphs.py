@@ -37,6 +37,9 @@ for key in ('m', 'f'):
     x, y, z = P[:, 0], P[:, 1], P[:, 2]; nx, ny, nz = N[:, 0], N[:, 1], N[:, 2]
     front, back, side = np.clip(nz, 0, 1), np.clip(-nz, 0, 1), np.abs(nx)
     W = lambda *bs: region(ji, jw, bs)
+    # face: only double chin (under the jaw) and cheeks (sides, away from the mouth); lips and mouth never swell (Jonay)
+    jaw = lambda yc: (y < yc) * 1.0
+    cheek = lambda yc: ((y >= yc) & (y < yc + 0.06)) * (np.abs(x) > 0.04) * side
     torsoL = W('pelvis', 'spine_01', 'spine_02'); chest = W('spine_03'); clav = W('clavicle_l', 'clavicle_r')
     uarm = W('upperarm_l', 'upperarm_r'); larm = W('lowerarm_l', 'lowerarm_r'); thigh = W('thigh_l', 'thigh_r'); calf = W('calf_l', 'calf_r')
     neck = W('neck_01'); head = W('Head')
@@ -50,7 +53,7 @@ for key in ('m', 'f'):
          + 0.035 * g((y - hip) / 0.1) * back * torsoL
          + 0.03 * g((y - chestY) / 0.08) * front * chest
          + 0.02 * uarm + 0.011 * larm + 0.03 * thigh * g((y - 0.78 * k) / 0.22) + 0.012 * calf
-         + 0.022 * neck + 0.018 * head * (y < chin + 0.03) * front)
+         + 0.022 * neck * jaw(chin + 0.01) + 0.018 * head * (jaw(chin - 0.005) * front + 0.5 * cheek(chin)))
     D = N * t[:, None]; D[:, 1] -= 0.03 * g((y - navel) / 0.15) * front * torsoL  # belly sags a little
     M['fat'] = D
     # ---- normal (less fit)
@@ -73,7 +76,7 @@ for key in ('m', 'f'):
              + a * 0.035 * g((y - hip) / 0.12) * back * torsoL
              + a * 0.03 * g((y - chestY) / 0.09) * (front + 0.5 * side) * chest
              + a * 0.018 * uarm + a * 0.009 * larm + a * 0.035 * thigh * g((y - 0.8 * k) / 0.24) + a * 0.012 * calf
-             + a * 0.02 * neck + a * 0.016 * head * (y < chin + 0.035) * (front + side))
+             + a * 0.02 * neck * jaw(chin + 0.01) + a * 0.016 * head * (jaw(chin - 0.005) * (front + side) + 0.6 * cheek(chin)))
         D = N * t[:, None]; D[:, 1] -= a * 0.03 * g((y - navel) / 0.16) * front * torsoL; return D
     M['xfat'] = fatter(1.0); M['sfat'] = fatter(1.25)
     # ---- extra slim / super slim

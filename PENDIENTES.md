@@ -9,13 +9,14 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       largas y menos repetitivas, canciones de 1:30–2 min y luego otra; al menos 20 canciones en total combinando voces,
       estilo rap / hip hop de los 90, funk y R&B, con la misma técnica de ahora (síntesis en el navegador + voz).
 
-- [ ] **Ayuntamiento bien hecho** (Jonay, fotos en `docs/referencias/ayuntamiento/`): recrear el edificio para la
+- [x] v0.56.0 **Ayuntamiento bien hecho** (hecho: fachada de cantería con 5 arcos, balcones, frontón con escudo, rótulo y
+      5 banderas en el borde este de la Casa del Corregidor; falta ver la esquina y la Alhóndiga con más fotos) (Jonay, fotos en `docs/referencias/ayuntamiento/`): recrear el edificio para la
       ceremonia. Fachada de cantería gris oscura (piedra volcánica) a la Plaza del Adelantado / C. Consistorio: planta
       baja con 5 arcos de medio punto y escalones, planta alta con 5 ventanales de cuarterones y balcón de madera,
       pilastras, cornisa con pináculos (bolas), frontón curvo central con escudo y rótulo «AYUNTAMIENTO», 5 banderas
       (morada, Canarias, España, Tenerife/La Laguna, UE). Esquina con C. Obispo Rey Redondo; al lado la Casa del
       Corregidor (fachada amarilla) y detrás la Casa de la Alhóndiga; enfrente Iglesia de Las Catalinas.
-- [ ] **Morph «gordo»: labios y boca demasiado gruesos** (Jonay): la deformación de los cuerpos gordos (tallas
+- [x] v0.56.0 **Morph «gordo»: labios y boca demasiado gruesos** (Jonay): la deformación de los cuerpos gordos (tallas
       gordo / extra / súper) hincha también la boca. Limitar el morph en la cara (cabeza: solo papada y mejillas).
 - [ ] **Centros de salud y hospital** (Jonay): recrearlos; al morir apareces en el centro de salud más cercano. Buscar
       su situación (OSM `amenity=clinic/hospital`, `healthcare=*`: HUC, Hospiten, centros de salud de La Laguna-
@@ -25,7 +26,10 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       Ambulatorias / Hospital de Ofra) al otro, jardín con palmeras y escultura de acero, junto a la TF-5 y la Ctra.
       Gral. La Cuesta, parking HUC y la Montaña de Taco detrás.
 
-- [ ] **Historia: nueva tanda de misiones** (apuntes de Jonay, 7-oct) — por diseñar con él antes de programar:
+- [~] v0.56.0 **Historia: nueva tanda de misiones** (programadas las 12; **Jonay las prueba**: anotar aquí lo que no
+      guste). Alcalde: «Don Yovoy Gofiérrez», bigote y traje negro. Se pueden reintentar al fallar y, si se guarda a
+      mitad, al cargar empiezan de nuevo en su círculo (pruebas `prueba_misiones.py` y `prueba_misiones_guardado.py`).
+      Apuntes originales (7-oct):
       - Aclarar en la historia que la **pistola es de bolas de plástico de aire comprimido** (sirve en la misión siguiente).
       - **Atraco a una farmacia** (parodia): el primer ladrón se pelea contigo en la pelea 2D; el segundo huye y se sube a
         un coche: persecución hasta donde vaya y al final darle con la pistola de bolas para detenerlo. No es delito:
@@ -53,9 +57,15 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
            furgoneta por las vías de servicio y detenerla. Cierre de la tanda: el alcalde os da el coche patrulla de la
            banda (rotulado con el nombre que elegisteis).
 
+- [ ] **Mapa grande: menos textos y más legibles** (Jonay, 7-oct): de lejos solo lo importante y más rótulos según
+      te acercas (niveles de zoom); repasar colores del texto para que se lea bien y no se confunda con las rutas de
+      misiones (amarillo de la historia, azul de las secundarias, rojo de objetivos).
+- [ ] **Mapa grande: zoom inicial** (Jonay, 7-oct): al abrirlo, más cerca y centrado en el jugador (ahora se ve casi
+      todo el mapa).
+
 - [ ] **Móvil: acceso a todo** (Jonay): desde el móvil no se llega a las opciones (y revisar que todo lo que se hace con
       teclado —pausa, opciones, guardar, radio, armas, mapa…— tenga un botón o gesto táctil).
-- [ ] **Postura en la moto** (Jonay, captura en scooter): el personaje va «tieso como un palo», de pie entre el
+- [x] v0.56.0 **Postura en la moto** (Jonay, captura en scooter): el personaje va «tieso como un palo», de pie entre el
       asiento y el manillar; necesita una postura sentada que encaje (piernas al reposapiés, brazos al manillar).
 - [x] v0.55.0 **Aviso de la radio** (Jonay): al entrar en un coche, mostrar «cambia de emisora con Q» las primeras veces;
       cuando haya cambiado de emisora dos veces, guardarlo en la partida y no volver a mostrarlo (v0.55).
@@ -89,8 +99,20 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       parking con rótulos, valla perimetral) y aviones despegando/aterrizando de vez en cuando.
 - [~] Prueba de conducción de túneles/puentes: 3 de 97 sin terminar (v0.50; antes 10 de 111).
 
+- [ ] **Auditoría v0.56.0** (APTO CON AVISOS; memoria y fugas igual que la 0.55, llamadas 658 → 696, triángulos
+      5,50 → 5,62 M por el Ayuntamiento; no tocar hasta que Jonay lo diga): 3 avisos nuevos de geometría creada en
+      `12f_story2.js`: el bigote del alcalde (l. 68-69, se crea una vez al arrancar: sin importancia) y los **bancos
+      robados** de «Los bancos del Adelantado» (l. 187): se crean geometrías nuevas cada vez que se juega la misión y
+      `s2Clear` las quita de la escena sin `dispose()` → compartir una geometría o liberarla al limpiar.
+- [ ] **Auditoría v0.55.0** (`docs/auditorias/INFORME_AUDITORIA_JETA_v0.55.0.md`, APTO; no tocar hasta que Jonay lo diga):
+  - [ ] **P1.8** Al cambiar el tiempo, liberar los mapas de entorno de los otros tipos (`ENVC` en `13_main.js` crece
+        sin límite, hasta 48). Pocas líneas.
+  - [ ] **P1.7** Liberar también las posiciones de la ciudad tras subirlas a la GPU (~250 MB), conservándolas solo
+        cuando se ejecuta el agente revisor (p. ej. `?revisor=1`).
+  - [ ] **P1.5** (sigue) Mallas sueltas (11.314) → `Acc`/`InstancedMesh`, y menos detalle en la ciudad lejana.
+  - [ ] **P2.1 / P2.2 / P2.5** (siguen) Precalcular la ciudad en el build, modelos en binario, módulos + lint.
 - [ ] **Auditoría de código v0.49** (`docs/auditorias/INFORME_AUDITORIA_JETA_v0.49.0.md`, APTO CON AVISOS) — por decidir con Jonay:
-      P0.a coches de tráfico fuera del pool sin liberar + luces/cascos por coche; P0.b rótulos canvas sin caché;
+      ~~P0.a coches de tráfico fuera del pool sin liberar + luces/cascos por coche~~ (hecha en v0.52); P0.b rótulos canvas sin caché;
       aparcados en InstancedMesh; P1.5 mallas sueltas/LOD; mapas de reflejos en segundo plano; P2.1/P2.2/P2.5.
 - [x] v0.53.0 Auditor: **APTO** (comparado con la 0.51 re-medida). Fuga 477 → 0; memoria y geometría ya no suben
       (546 → 547 MB y 387 → 386 MB): los avisos de la 0.52 eran de la forma de medir.

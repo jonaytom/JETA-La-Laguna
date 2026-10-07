@@ -144,6 +144,11 @@ calzada debajo). **No pone barandilla** donde caería dentro de otra calzada al 
 - **Aeropuerto** (`05r_aeropuerto.js`, `buildAirport`): plataformas en celdas de 8 m sobre el terreno, pista y rodaje en
   tiras de 10 m con marcas, terminal sobre su planta OSM, torre, hangares y aviones (`makePlane`, geometría compartida).
 - Edificios singulares: iglesias (`05c`), Intercambiador (`05k`), pasarela de Anchieta (`05f`), pabellones (`05i`).
+- **Ayuntamiento** (`05s_ayuntamiento.js`, `buildAyuntamiento`, v0.56): fachada de cantería sobre el borde este de la
+  Casa del Corregidor (deco `ayto` en `05k_landmarks.js`): 5 arcos con escalones, planta alta con ventanales de
+  cuarterones y balcones de madera, pilastras, cornisa con bolas, frontón curvo con escudo, rótulo «AYUNTAMIENTO» y 5
+  banderas. `AYTO` (`door`, `front`, normal y eje de la fachada) lo usan las misiones del alcalde. Fotos en
+  `docs/referencias/ayuntamiento/`.
 
 ## Plazas y parques (`05n_plazas.js`)
 

@@ -149,6 +149,17 @@ function animHumanSkinned(H, dt, speed, state) {
   H.phase += dt * (speed > 0.15 ? 2.2 + speed * 1.25 : 0);
   play(H, want, want === 'Death01' ? 0.15 : 0.25).timeScale = ts;
   H.mixer.update(dt);
+  if (H.pose === 'ride' && H.moto) rideMoto(H);
+}
+// on a moto the car-driving clip leans back with the hands at a steering wheel: lean forward and reach the handlebar
+// (offsets found by searching bone rotations that bring the hands to the bar; applied after the clip every frame)
+const RIDE_Q = { ax: new THREE.Vector3(1, 0, 0), az: new THREE.Vector3(0, 0, 1), q: new THREE.Quaternion() };
+function rideMoto(H) {
+  if (!H.rb) { const by = (n) => H.skeleton.bones.find((b) => b.name === n); H.rb = { sp: by('spine_02'), ul: by('upperarm_l'), ur: by('upperarm_r'), ll: by('lowerarm_l'), lr: by('lowerarm_r') }; }
+  const B = H.rb, Q = RIDE_Q, k = H.moto === 'naked' ? 1 : 0.7;
+  B.sp.quaternion.multiply(Q.q.setFromAxisAngle(Q.ax, 0.5 * k));
+  B.ul.quaternion.multiply(Q.q.setFromAxisAngle(Q.az, 0.6)); B.ur.quaternion.multiply(Q.q.setFromAxisAngle(Q.az, -0.6));
+  B.ll.quaternion.multiply(Q.q.setFromAxisAngle(Q.ax, -0.4)); B.lr.quaternion.multiply(Q.q.setFromAxisAngle(Q.ax, -0.4));
 }
 function punchSkinned(H) { const n = H.lastPunch === 'Punch_Jab' ? 'Punch_Cross' : 'Punch_Jab'; H.lastPunch = n; const a = play(H, n, 0.08, 1.5); a.reset(); a.play(); H.oneShot = HUM.clips[n].duration / 1.5 * 0.8; }
 function hitSkinned(H) { const n = Math.random() < 0.5 ? 'Hit_Chest' : 'Hit_Head'; const a = play(H, n, 0.05, 1.2); a.reset(); a.play(); H.oneShot = HUM.clips[n].duration / 1.2; }

@@ -3,6 +3,28 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.56.1 — 2026-10-07 — Alcalde gordito
+- **Don Yovoy Gofiérrez** pasa a talla «gordito» (cuerpo y cara más llenos), sin llegar a las tallas gordas extremas.
+
+## 0.56.0 — 2026-10-07 — Defensores de La Laguna: 12 misiones, Ayuntamiento y alcalde
+- **Misiones nuevas** (12, tras el campo de tiro): Atraco en la farmacia, Defensores de La Laguna (ceremonia en el
+  Ayuntamiento), El carterista del Cristo, Baches en la Vía de Ronda, El rally de La Esperanza, Los bancos del
+  Adelantado, Grafiteros en el tranvía, La guagua de la broma, Escolta a la guagua del Romero, El gofio robado,
+  Carrera solidaria del casco y Noche en el aeropuerto (acaba con coche patrulla para la banda).
+- **El alcalde, Don Yovoy Gofiérrez** (bigote y traje negro), espera bajo los arcos del Ayuntamiento y encarga misiones.
+- **La pistola es de bolas de plástico** de aire comprimido: lo explica El Blanco y en estas misiones no es delito.
+- **Ayuntamiento** nuevo según las fotos: cantería, 5 arcos, balcones de madera, frontón con escudo y 5 banderas.
+- **Reintentar**: al fallar una misión se pregunta «¿Reintentar?» y te lleva a su inicio.
+- **Guardar a mitad**: al cargar, la misión empieza de nuevo en su círculo (con aviso) sin dejar nada suyo suelto;
+  las partidas que ya habían terminado la historia siguen con las misiones nuevas.
+- **Pelea 2D, especiales nuevos**: atrás-adelante + puñetazo = Bola de gofio; atrás-adelante + patada = Patada del
+  Teide (avanza girando, 3 patadas); abajo-arriba + puñetazo = Gancho del Roque; abajo-arriba + patada = Salto del
+  Pastor. En el tutorial de Sastrón.
+- **Moto**: el piloto va sentado, inclinado al manillar, con los pies en el reposapiés (antes, tieso de pie).
+- **Tallas gordas**: la deformación de la cara se limita a papada y mejillas (los labios ya no se hinchan).
+- Pruebas nuevas `prueba_misiones.py` (juega solas todas las misiones) y `prueba_misiones_guardado.py`;
+  herramientas de fotos reutilizables en `tests/herramientas/`.
+
 ## 0.55.0 — 2026-10-07 — Uniones de túneles y trincheras, pasarela y aviso de la radio
 - **Bocas de trinchera**: donde otra calle se incorpora a una calle hundida (Vía de Ronda, X 388 Z 1499), la trinchera
   no empieza a bajar hasta dejar atrás la incorporación (rampa del 15 %), salvo bajo los puentes que cruza; si allí

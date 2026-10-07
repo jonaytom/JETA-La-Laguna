@@ -6,5 +6,6 @@ ejecutando el juego. Cada informe tiene tareas P0 (críticas), P1 (rendimiento) 
 
 | Informe | Versión auditada | Fecha | Veredicto |
 |---|---|---|---|
-| [INFORME_AUDITORIA_JETA_v0.49.0.md](INFORME_AUDITORIA_JETA_v0.49.0.md) | 0.49.0 (93ef496) | 2026-10-07 | APTO CON AVISOS — pendiente de pasar a PENDIENTES.md |
+| [INFORME_AUDITORIA_JETA_v0.55.0.md](INFORME_AUDITORIA_JETA_v0.55.0.md) | 0.55.0 (copia del PC) | 2026-10-07 | APTO — pendiente de pasar a PENDIENTES.md |
+| [INFORME_AUDITORIA_JETA_v0.49.0.md](INFORME_AUDITORIA_JETA_v0.49.0.md) | 0.49.0 (93ef496) | 2026-10-07 | APTO CON AVISOS — aplicada (P0.4 en la v0.52) |
 | [INFORME_AUDITORIA_JETA_v0.46.0.md](INFORME_AUDITORIA_JETA_v0.46.0.md) | 0.46.0 (a14cc17) | 2026-10-06 | Aplicado en gran parte en la v0.49.0 |

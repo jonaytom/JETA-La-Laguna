@@ -59,7 +59,10 @@ unos 30 min.
 | `audit_cruces.py` | `auditCrossings()`: vías que se cruzan **sin enlace** a menos de 4,4 m de altura (2,7 m si la de abajo es peatonal). Debe dar 0. Guarda `/tmp/audit.json`. |
 | `audit_obstaculos.py` | `auditObstacles()` (requiere `run_test_audit.py`): muros, barandillas, losas o bocas de túnel dentro de la calzada de otra vía a altura de conducción. |
 | `prueba_conduccion_tuneles_puentes.py` | Un coche automático recorre los ~111 túneles, pasos inferiores y puentes; informa de los que no llegan al final (con captura `shots/df_<vía>.jpg`). Algunos fallos son tráfico que se cruza. |
-| `prueba_pelea_especiales.py` | Empieza una pelea, pulsa Espacio (cartel de controles) y comprueba las dos técnicas especiales. |
+| `prueba_pelea_especiales.py` | Empieza una pelea, pulsa Espacio (cartel de controles) y comprueba las cuatro técnicas especiales. |
+| `prueba_misiones.py [desde] [hasta]` | Piloto automático que juega las misiones de la historia (salta diálogos, gana las peleas, acierta los blancos, se sube al vehículo pedido) y comprueba que todas se terminan sin errores. |
+| `prueba_misiones_guardado.py` | Guardar a mitad de misión y cargar, «¿Reintentar?» tras fallar y partidas antiguas con la historia ya terminada. |
+| `herramientas/` | Scripts de fotos y sondas reutilizables (ver `tests/herramientas/LEEME.md`): se guardan para no rehacerlos. |
 | `prueba_bloqueo.py` | Mantener atrás bloquea los golpes del rival. |
 | `prueba_guardar_cargar.py` | Guarda una partida con progreso, la estropea y la carga desde la ventana de partidas. |
 | `prueba_muerte_coche.py` | Morir en un coche tras un choque y volver a jugar en ≤ 4 s. |
