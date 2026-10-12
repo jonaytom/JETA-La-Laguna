@@ -200,3 +200,29 @@ Las partidas v1 (con el Canarión dentro de la historia) se convierten al cargar
 - **Baloncesto**: lienzo a R = 4, `PXM` 30 px/m (la cancha mide 840 px y se ven ~16 m), cámara `camX` que sigue al
   balón; fondos `calle`, `colegio`, `pabellon` (`drawBg(style)`). Ventana verde = 0,51 s ± (0,13 − 0,011·distancia),
   entre ±0,04 y ±0,12. La CPU no tira a más de 9,5 m; su acierto se multiplica por 0,45 + 0,6·nivel.
+
+## Fútbol 2D y campos (v0.67)
+
+- **JETA SOCCER** (`09g_futbol2d.js`, `FUTBOL2D.start({ team, rival, kit, rivalKit, teamName, rivalName, time, lv, mateLv,
+  tutorial, auto, onEnd })`): 5 contra 5 (portero, 2 defensas, medio y delantero; `FORM`), campo vertical de 34×54 m con
+  porterías de 6×2,1 m, visto desde arriba como el Sensible Soccer: lienzo 480×270 a R = 3, 8 px/m, la cámara sube y baja
+  con el balón; radar abajo a la derecha. Tu equipo ataca hacia arriba.
+- **Controles** (los de todos los minijuegos): moverse como al andar; A = `E` / clic izq.: con balón, mantener para
+  cargar el chut (0,8 s máx.; más fuerte y, pasada la mitad, más alto) y soltar; tras chutar, izquierda / derecha dan
+  efecto 0,6 s; cerca de la portería ayuda a apuntar al lado que señalas (no al portero). Sin balón, entrada en plancha.
+  Clic dcho. / `Q`: con balón, pase al compañero al que miras (`bestPass`); mantenido, más fuerte y bombeado; sin balón,
+  cambiar al jugador más cercano al balón. `Espacio`: correr (turbo). Controlas siempre al que lleva el balón o al más
+  cercano (cambio automático cada 0,25 s si otro está 2 m más cerca). Chocar con el rival que lleva el balón te lo da a
+  veces; la CPU solo roba con entradas (según su nivel).
+- **Reglas sencillas**: banda (saca el otro equipo desde la línea), córner y saque de puerta; palos; gol de oro si hay
+  empate al final. El reloj marca 0–90' en `time` segundos reales.
+- **IA**: el del balón conduce hacia la portería, pasa si le aprietan y chuta a menos de 15 + 6·nivel m (error de
+  puntería (1 − nivel)·3,2 m); el resto sigue su sitio de la formación desplazado con el balón; los 1–2 más cercanos van
+  a por él. Porteros: se colocan entre balón y portería, se lanzan a donde cruza el chut y paran con 0,42 + 0,5·nivel −
+  0,03·(velocidad − 14) de probabilidad; si atrapan, la sacan al compañero más libre.
+- **Campos** (`12j_campos.js`): cada campo de fútbol 11, 7 o sala (`SPORTS.pitches` `f11`/`f7`/`fs`) entra en `COURTS`
+  con `sport: 'fut'` y balón blanco flotando: abiertos = E en el campo; encerrados o de colegio = puerta en la calle.
+  Tras el tutorial (`GANG.futbolTut`) se puede retar a cualquiera (nivel 1–5, $50·nivel). La banda: El Blanco de
+  portero, Boca Papa y Sastrón detrás, Coco en el medio y tú arriba (`gangTeam`).
+- **Misiones del Obispo** 3 y 4 (`O_FUT_SEMI`, nivel 0,06, tutorial; `O_FUT_COFRADES`, 0,28) en `obispoCampo()` = el
+  campo de 11 o 7 abierto más cercano al Obispado.

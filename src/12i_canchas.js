@@ -55,6 +55,7 @@ function canchasInit() {
     if (c.icon && c.icon.parent) c.icon.parent.remove(c.icon); Object.assign(c, { id: 'mayex', gate: 'door', x: d.x, z: d.z, label: 'Colegio Máyex', street: d.street || 'C. Pintor Cristino de Vera', style: 'colegio', level: 1 }); c.icon = gateIcon(d.x, d.z, 3.0); } }
   riosTejeraInit();
   torneoInit();
+  try { camposInit(); } catch (e) { console.warn('campos', e); } // v0.67: football pitches (12j_campos.js)
 }
 // ---------- the Pabellón Juan Ríos Tejera (C. Leopoldo de la Rosa Olivera): white walls, purple gate, the sign; E = in
 function riosTejeraInit() {
@@ -88,7 +89,7 @@ function courtGateNear() {
   }
   return null;
 }
-function courtPrompt(c) { return CONTROLS.kbd('use') + (c.gate === 'door' ? ' Entrar: ' + c.label : ' Jugar al baloncesto'); }
+function courtPrompt(c) { return CONTROLS.kbd('use') + (c.gate === 'door' ? ' Entrar: ' + c.label : c.sport === 'fut' ? ' Jugar al fútbol' : ' Jugar al baloncesto'); }
 const pickRivals = (seed) => { const i = (Math.abs(Math.floor(seed)) % 4) * 2; return [RIVAL_LOOKS[i], RIVAL_LOOKS[i + 1]]; };
 const cocoLook = () => (NPC.coco && NPC.coco.H ? { ...NPC.coco.H.look } : {});
 function playCourtGame(c, o) { // o: rival, rivalName, lv, time, tutorial, onEnd
@@ -96,6 +97,7 @@ function playCourtGame(c, o) { // o: rival, rivalName, lv, time, tutorial, onEnd
   return BASKET2D.start({ team: [{ name: 'EL CHOPA', look: { ...(playerHuman.look || {}) }, nose: true }, { name: 'COCO', look: cocoLook() }], rival: o.rival, teamName: typeof shortName === 'function' ? shortName() : 'JETA', rivalName: o.rivalName, time: o.time || 150, lv: o.lv, mateLv: 0.6, tutorial: !!o.tutorial, style: o.style || c.style || 'calle', onEnd: o.onEnd });
 }
 function useCourtGate(c) {
+  if (c.sport === 'fut') { useFieldGate(c); return; }
   const A = MISSIONS.active;
   if (A && A.gate === c.id && A.onGate) { A.onGate(c); return; }
   if (A) { HUD.toast('Termina primero la misión que llevas.', '#f5b72e', 3); return; }
@@ -117,7 +119,7 @@ const TORNEO_TEAMS = [
   { name: 'Los Magos de la Vega', short: 'MAGOS VEGA', cap: 'Don Tinguaro', lv: 0.75, prize: 1500 },
 ];
 function torneoInit() {
-  const pub = COURTS.filter((c) => c.gate === 'court' && !c.final).sort((a, b) => a.dist - b.dist);
+  const pub = COURTS.filter((c) => c.gate === 'court' && !c.final && c.sport !== 'fut').sort((a, b) => a.dist - b.dist);
   const used = new Set(typeof obispoCourt === 'function' ? [(obispoCourt(true) || {}).cx] : []);
   const chosen = []; for (const sp of [350, 220, 120, 0]) { for (const c of pub) { if (chosen.length >= 4) break; if (used.has(c.cx) || chosen.includes(c)) continue; if (chosen.every((q) => Math.hypot(q.cx - c.cx, q.cz - c.cz) >= sp)) chosen.push(c); } if (chosen.length >= 4) break; }
   const fin = COURTS.find((c) => c.final); if (chosen.length < 1 || !fin) return;

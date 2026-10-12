@@ -5,7 +5,7 @@
 import asyncio, sys, io, os, time, contextlib
 from playwright.async_api import async_playwright
 RESET = """(()=>{ const d=__dbg; try { if (d.DIARIO && d.DIARIO.open_) d.DIARIO.close(); } catch (e) {} try { if (d.BASKET2D.running) d.BASKET2D._abort(); } catch (e) {}
-  try { if (d.FIGHT2D.running) d.FIGHT2D._abort(); } catch (e) {} try { if (d.DLG.open) d.DLG.hide(); } catch (e) {} try { if (window.__TALK) window.__TALK.cur = null; } catch (e) {}
+  try { if (d.FIGHT2D.running) d.FIGHT2D._abort(); } catch (e) {} try { if (d.FUTBOL2D && d.FUTBOL2D.running) d.FUTBOL2D._abort(); } catch (e) {} try { if (d.DLG.open) d.DLG.hide(); } catch (e) {} try { if (window.__TALK) window.__TALK.cur = null; } catch (e) {}
   try { if (d.MISSIONS.active) d.MISSIONS.fail('fin de prueba', true); } catch (e) {} try { if (d.PLAYER.car) d.exitCar(); } catch (e) {}
   try { d.WANTED.level = 0; } catch (e) {} document.body.classList.remove('fighting'); window.__manual = true; d.GAME.state = 'play'; d.GAME.tod = 12; })()"""
 async def main():

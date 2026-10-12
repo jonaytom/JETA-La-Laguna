@@ -12,8 +12,8 @@ const CONTROLS = (() => {
     A('pause', 'Pausa', 'Juego', ['KeyP', 'Escape']),
     // v0.64 (Jonay): in the 2D fight the same hand as on the street: E punch, Space kick, ↑ / W jump (+ mouse buttons)
     // v0.65 (Jonay): every minigame uses the same keys: A = E / left click, B = Espacio, ↑ = up/jump, right click
-    A('f_punch', 'Botón A · pelea: puñetazo · baloncesto: tirar (mantener y soltar a tiempo)', 'Pelea', ['KeyE']), A('f_kick', 'Botón B · pelea: patada · baloncesto: correr (turbo)', 'Pelea', ['Space']), A('f_jump', 'Arriba · pelea: saltar', 'Pelea', ['ArrowUp', 'KeyW']),
-    A('b_pass', 'Baloncesto: pasar / robar (también clic derecho)', 'Pelea', ['KeyQ']),
+    A('f_punch', 'Botón A · pelea: puñetazo · baloncesto: tirar (mantener y soltar a tiempo) · fútbol: chutar / entrada', 'Pelea', ['KeyE']), A('f_kick', 'Botón B · pelea: patada · baloncesto y fútbol: correr (turbo)', 'Pelea', ['Space']), A('f_jump', 'Arriba · pelea: saltar', 'Pelea', ['ArrowUp', 'KeyW']),
+    A('b_pass', 'Baloncesto y fútbol: pasar / robar / cambiar de jugador (también clic derecho)', 'Pelea', ['KeyQ']),
   ];
   const NOTES = { Juego: 'Ratón: mirar · clic izq.: puñete / disparar · clic dcho.: apuntar · rueda: zoom', Pelea: 'Moverse con A/D o ←/→; atrás = andar hacia atrás y se cubre solo si el rival ataca. Especiales: atrás, adelante + puñetazo = Bola de gofio; atrás, adelante + patada = Patada del Teide (avanza girando, 3 patadas); abajo, arriba + puñetazo = Gancho del Roque; abajo, arriba + patada = Salto del Pastor. Ratón: clic izq. puñetazo, dcho. patada. Baloncesto: mantén A (clic izq. / E) para tirar y suéltalo con la barra en verde; clic dcho. (o Q) pasar / robar; B (Espacio) correr. Corriendo y tirando desde media distancia: ENTRADA EN COMBO (los mismos 4 especiales, un mate distinto cada uno).' };
   try { const s = JSON.parse(localStorage.getItem('jeta_controls') || '{}'); for (const a of list) if (s[a.id]) a.alt = s[a.id]; } catch (e) { }

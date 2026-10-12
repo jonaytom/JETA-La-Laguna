@@ -1,8 +1,10 @@
 prueba_arranque.py
-prueba_guardar_cargar.py
-prueba_baloncesto.py
-prueba_canchas.py
-prueba_obispo.py
-prueba_diario.py
 prueba_panel_controles.py
-herramientas/foto_noche.py -42 -239 5
+prueba_futbol.py
+prueba_canchas.py
+prueba_misiones_guardado.py
+prueba_persecuciones.py
+prueba_diario.py
+prueba_obispo.py
+prueba_baloncesto.py
+prueba_guardar_cargar.py

@@ -9,7 +9,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       encerradas y el Máyex): revisar una a una con `prueba_canchas.py` (lista y fotos) cuáles son públicas y cuáles de
       colegio, y mejorar su aspecto. Recrear mejor por fuera el **Pabellón Juan Ríos Tejera** (nave blanca, cubierta
       gris, valla morada; fotos en `docs/referencias/rios_tejera/`) y el **Colegio Máyex** (`docs/referencias/colegio_mayex/`).
-- [ ] **Fútbol tipo Sensible Soccer** para las misiones del Obispo (segunda pasada).
+- [x] v0.67.0 **Fútbol tipo Sensible Soccer** para las misiones del Obispo (segunda pasada).
 
 - [ ] **Prueba de conducción: tramos que fallan** (v0.65.0, pruebas en el PC de Jonay): Camino La Rúa (308, choca en una
       curva X 543 Z −909), Autopista del Norte (1287 X 43 Z 1155 y 2295 X −386 Z 678, se para) y, nuevo, **Camino La
@@ -24,7 +24,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 - [ ] **Giros de los coches perseguidos demasiado cerrados** (Jonay, 12-oct): en las persecuciones de misión los coches
       que huyen giran en seco; deberían girar de forma más gradual (curva más abierta, frenar antes de la esquina).
 
-- [ ] **Primeras misiones del Obispo: partidos para la obra de la iglesia** (v0.65.0: hechas las 2 de baloncesto; falta el fútbol) (Jonay, 12-oct; va con «El Obispo y el
+- [x] v0.67.0 **Primeras misiones del Obispo: partidos para la obra de la iglesia** (v0.65.0: las 2 de baloncesto; v0.67.0: las 2 de fútbol) (Jonay, 12-oct; va con «El Obispo y el
       Obispado» y los minijuegos de baloncesto tipo NBA Jam y fútbol tipo Sensible Soccer): jugar partidos de baloncesto
       y de fútbol para recaudar fondos para la obra de la iglesia; ahí aprendes a jugar los dos minijuegos 2D. Buscar
       la **cancha de baloncesto y el campo de fútbol más cercanos al Obispado** para esos partidos.
@@ -94,7 +94,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       necesaria en misiones como el incendio del Obispado). Por ahora no hay más armas.
 - [x] v0.65.0 **Minijuego de baloncesto 2D tipo NBA Jam** (falta: retos libres en cualquier cancha y controles en el móvil) (Jonay, 12-oct): en las canchas; retar a partidos con tus amigos de la
       banda contra la gente que está allí, para ganar dinero.
-- [ ] **Minijuego de fútbol 2D tipo Sensible Soccer** (Jonay, 12-oct): en los campos de fútbol.
+- [x] v0.67.0 **Minijuego de fútbol 2D tipo Sensible Soccer** (Jonay, 12-oct): en los campos de fútbol.
 - [ ] **Maleantes en busca y captura** (Jonay, 12-oct): cuando ya sabes pelear (tras las misiones), a veces salen en el
       minimapa NPC marcados con los que puedes pelear como con cualquiera, pero dan más dinero y son más difíciles: más
       combos y se cubren más. Tres niveles internos de dificultad, siempre por encima de la gente normal.

@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.66.1</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.67.0</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -59,6 +59,9 @@ jugable. Está previsto un <strong>proyecto aparte de creación de assets</stron
 <li>Controles principales (PC): <code>WASD</code> moverse · <code>Shift</code> correr · <code>Espacio</code> saltar · ratón cámara · <code>E</code> usar / entrar ·
   <code>F</code> coche · <code>Q</code> puñetazo a pie / cambiar emisora en coche · <code>Tab</code> pistola / puños · clic dcho. apuntar · <code>M</code> mapa · <code>G</code> brújula sí/no · <code>J</code> diario de misiones ·
   <code>Esc</code> pausa (guardar / cargar, opciones). Mando y pantalla táctil también funcionan.</li>
+<li>Minijuegos (pelea, baloncesto y fútbol 2D), siempre las mismas teclas: <code>E</code> / clic izq. = botón A (pelea: puñetazo;
+  baloncesto: tirar; fútbol: chutar o entrada), <code>Espacio</code> = B / correr, clic dcho. / <code>Q</code> = pasar (mantenido, más fuerte),
+  moverse como al andar.</li>
 </ul>
 <h2>Construir</h2>
 <p>Requisitos: Python 3.9+ (solo biblioteca estándar para construir).</p>
@@ -265,6 +268,14 @@ Ojo con los <code>const</code>/<code>let</code> usados antes de declararse (zona
 <td>Motor de <strong>pelea 2D pixel-art</strong> (estilo arcade).</td>
 </tr>
 <tr>
+<td><code>09f_basket2d.js</code></td>
+<td><code>BASKET2D</code>: baloncesto 2D 2 contra 2 (JETA JAM).</td>
+</tr>
+<tr>
+<td><code>09g_futbol2d.js</code></td>
+<td><code>FUTBOL2D</code>: fútbol 2D 5 contra 5 visto desde arriba (JETA SOCCER).</td>
+</tr>
+<tr>
 <td><code>09e_cops.js</code></td>
 <td>Policías a pie que bajan del coche, persiguen y disparan.</td>
 </tr>
@@ -309,6 +320,14 @@ Ojo con los <code>const</code>/<code>let</code> usados antes de declararse (zona
 <td>Modo Achamán (vuelo libre / dron / cenital).</td>
 </tr>
 <tr>
+<td><code>12g_obispo.js</code> / <code>12h_diario.js</code></td>
+<td>El Obispo y sus misiones; diario de misiones (J).</td>
+</tr>
+<tr>
+<td><code>12i_canchas.js</code> / <code>12j_campos.js</code></td>
+<td>Entradas de canchas y campos (<code>COURTS</code>), partidos libres y Torneo Lagunero.</td>
+</tr>
+<tr>
 <td><code>12e_save.js</code></td>
 <td><code>SAVE</code>: guardar y cargar partida.</td>
 </tr>
@@ -319,7 +338,7 @@ Ojo con los <code>const</code>/<code>let</code> usados antes de declararse (zona
 </tbody>
 </table>
 <h2>Estados del juego (<code>GAME.state</code>)</h2>
-<p><code>loading</code> → <code>menu</code> → <code>play</code> ⇄ <code>pause</code> / <code>dialog</code> / <code>cutscene</code> / <code>fight2d</code> / <code>achaman</code>.</p>
+<p><code>loading</code> → <code>menu</code> → <code>play</code> ⇄ <code>pause</code> / <code>dialog</code> / <code>cutscene</code> / <code>fight2d</code> / <code>basket2d</code> / <code>futbol2d</code> / <code>diary</code> / <code>achaman</code>.</p>
 <ul>
 <li><code>logic(dt)</code> (en <code>13_main.js</code>) solo simula el mundo en <code>play</code> (y parte en <code>achaman</code>).</li>
 <li><code>dialog</code>: un <code>DLG.show(...)</code> está abierto; al cerrarlo vuelve a <code>play</code>.</li>
@@ -1054,6 +1073,32 @@ Las partidas v1 (con el Canarión dentro de la historia) se convierten al cargar
 <li><strong>Baloncesto</strong>: lienzo a R = 4, <code>PXM</code> 30 px/m (la cancha mide 840 px y se ven ~16 m), cámara <code>camX</code> que sigue al
   balón; fondos <code>calle</code>, <code>colegio</code>, <code>pabellon</code> (<code>drawBg(style)</code>). Ventana verde = 0,51 s ± (0,13 − 0,011·distancia),
   entre ±0,04 y ±0,12. La CPU no tira a más de 9,5 m; su acierto se multiplica por 0,45 + 0,6·nivel.</li>
+</ul>
+<h2>Fútbol 2D y campos (v0.67)</h2>
+<ul>
+<li><strong>JETA SOCCER</strong> (<code>09g_futbol2d.js</code>, <code>FUTBOL2D.start({ team, rival, kit, rivalKit, teamName, rivalName, time, lv, mateLv,
+  tutorial, auto, onEnd })</code>): 5 contra 5 (portero, 2 defensas, medio y delantero; <code>FORM</code>), campo vertical de 34×54 m con
+  porterías de 6×2,1 m, visto desde arriba como el Sensible Soccer: lienzo 480×270 a R = 3, 8 px/m, la cámara sube y baja
+  con el balón; radar abajo a la derecha. Tu equipo ataca hacia arriba.</li>
+<li><strong>Controles</strong> (los de todos los minijuegos): moverse como al andar; A = <code>E</code> / clic izq.: con balón, mantener para
+  cargar el chut (0,8 s máx.; más fuerte y, pasada la mitad, más alto) y soltar; tras chutar, izquierda / derecha dan
+  efecto 0,6 s; cerca de la portería ayuda a apuntar al lado que señalas (no al portero). Sin balón, entrada en plancha.
+  Clic dcho. / <code>Q</code>: con balón, pase al compañero al que miras (<code>bestPass</code>); mantenido, más fuerte y bombeado; sin balón,
+  cambiar al jugador más cercano al balón. <code>Espacio</code>: correr (turbo). Controlas siempre al que lleva el balón o al más
+  cercano (cambio automático cada 0,25 s si otro está 2 m más cerca). Chocar con el rival que lleva el balón te lo da a
+  veces; la CPU solo roba con entradas (según su nivel).</li>
+<li><strong>Reglas sencillas</strong>: banda (saca el otro equipo desde la línea), córner y saque de puerta; palos; gol de oro si hay
+  empate al final. El reloj marca 0–90' en <code>time</code> segundos reales.</li>
+<li><strong>IA</strong>: el del balón conduce hacia la portería, pasa si le aprietan y chuta a menos de 15 + 6·nivel m (error de
+  puntería (1 − nivel)·3,2 m); el resto sigue su sitio de la formación desplazado con el balón; los 1–2 más cercanos van
+  a por él. Porteros: se colocan entre balón y portería, se lanzan a donde cruza el chut y paran con 0,42 + 0,5·nivel −
+  0,03·(velocidad − 14) de probabilidad; si atrapan, la sacan al compañero más libre.</li>
+<li><strong>Campos</strong> (<code>12j_campos.js</code>): cada campo de fútbol 11, 7 o sala (<code>SPORTS.pitches</code> <code>f11</code>/<code>f7</code>/<code>fs</code>) entra en <code>COURTS</code>
+  con <code>sport: 'fut'</code> y balón blanco flotando: abiertos = E en el campo; encerrados o de colegio = puerta en la calle.
+  Tras el tutorial (<code>GANG.futbolTut</code>) se puede retar a cualquiera (nivel 1–5, $50·nivel). La banda: El Blanco de
+  portero, Boca Papa y Sastrón detrás, Coco en el medio y tú arriba (<code>gangTeam</code>).</li>
+<li><strong>Misiones del Obispo</strong> 3 y 4 (<code>O_FUT_SEMI</code>, nivel 0,06, tutorial; <code>O_FUT_COFRADES</code>, 0,28) en <code>obispoCampo()</code> = el
+  campo de 11 o 7 abierto más cercano al Obispado.</li>
 </ul></section>
 <section id="s6"><div class="src">docs/06_audio.md</div><h1>6. Audio y radio procedural</h1>
 <p>Todo el sonido se <strong>sintetiza en tiempo real</strong> con Web Audio: no hay archivos de audio. Es una solución
@@ -1595,6 +1640,19 @@ que el cambio no obligue a tocar la lógica del juego.</p>
 <section id="s11"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.67.0 — 2026-10-12 — Fútbol 2D: JETA SOCCER</h2>
+<ul>
+<li><strong>Fútbol 2D 5 contra 5</strong>, visto desde arriba como el Sensible Soccer: campo que sube y baja con el balón, jugadores
+  pequeñitos con la equipación de cada equipo, radar, palos, bandas, córners, saques de puerta y gol de oro.</li>
+<li>Mismas teclas que el baloncesto: clic izquierdo (o E) chuta, cuanto más lo mantienes más fuerte y alto (y después
+    izquierda / derecha le dan efecto); sin balón es una entrada. Clic derecho (o Q) pasa al compañero al que miras,
+    mantenido más fuerte y bombeado; sin balón cambia de jugador. Espacio corre.</li>
+<li>Juegas con la banda: El Blanco de portero, Boca Papa y Sastrón atrás, Coco en el medio y tú arriba.</li>
+<li><strong>Campos de fútbol con entrada</strong> (balón blanco flotando): en los abiertos se pulsa E en el campo; los de colegio o
+  encerrados tienen puerta en la calle. Tras el primer partido, retos en cualquier campo (niveles 1–5).</li>
+<li><strong>Misiones del Obispo 3 y 4</strong>: «Un partido por La Concepción» (tutorial contra los seminaristas) y «El clásico de
+  las cofradías».</li>
+</ul>
 <h2>0.66.1 — 2026-10-12 — Baloncesto más fácil y pruebas solo de lo cambiado</h2>
 <ul>
 <li><strong>Baloncesto</strong>: más fácil en general: todos se mueven más despacio (los rivales flojos, más aún), la CPU roba y empuja mucho menos

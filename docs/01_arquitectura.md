@@ -55,6 +55,8 @@ entrada de todos los datos.
 | `09b_combat.js` | Puñetazos en 3D, peatones que se defienden. |
 | `09c_weapons.js` | Pistola: apuntado (IK del brazo), agarre en la mano, disparos, cambio puños/pistola. |
 | `09d_fight2d.js` | Motor de **pelea 2D pixel-art** (estilo arcade). |
+| `09f_basket2d.js` | `BASKET2D`: baloncesto 2D 2 contra 2 (JETA JAM). |
+| `09g_futbol2d.js` | `FUTBOL2D`: fútbol 2D 5 contra 5 visto desde arriba (JETA SOCCER). |
 | `09e_cops.js` | Policías a pie que bajan del coche, persiguen y disparan. |
 | `10_audio.js` | `AUDIO`: efectos sintetizados (motor, derrapes, sirena, golpes…). |
 | `10b_music.js` | `MUSIC`: radio hip hop procedural con letras y estribillo de misión. |
@@ -66,12 +68,14 @@ entrada de todos los datos.
 | `12_missions.js` | `DLG` (diálogos), `MISSIONS` (historia y secundarias), NPCs de la banda. |
 | `12b_food.js` | Tiendas de comida y salud. |
 | `12c_achaman.js` | Modo Achamán (vuelo libre / dron / cenital). |
+| `12g_obispo.js` / `12h_diario.js` | El Obispo y sus misiones; diario de misiones (J). |
+| `12i_canchas.js` / `12j_campos.js` | Entradas de canchas y campos (`COURTS`), partidos libres y Torneo Lagunero. |
 | `12e_save.js` | `SAVE`: guardar y cargar partida. |
 | `13_main.js` | `GAME` (estados), día/noche, menús, **secuencia de arranque** y **bucle principal**. |
 
 ## Estados del juego (`GAME.state`)
 
-`loading` → `menu` → `play` ⇄ `pause` / `dialog` / `cutscene` / `fight2d` / `achaman`.
+`loading` → `menu` → `play` ⇄ `pause` / `dialog` / `cutscene` / `fight2d` / `basket2d` / `futbol2d` / `diary` / `achaman`.
 
 - `logic(dt)` (en `13_main.js`) solo simula el mundo en `play` (y parte en `achaman`).
 - `dialog`: un `DLG.show(...)` está abierto; al cerrarlo vuelve a `play`.

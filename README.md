@@ -19,6 +19,9 @@ Los comercios son siempre **parodias** (nunca marcas reales) y la interfaz está
 - Controles principales (PC): `WASD` moverse · `Shift` correr · `Espacio` saltar · ratón cámara · `E` usar / entrar ·
   `F` coche · `Q` puñetazo a pie / cambiar emisora en coche · `Tab` pistola / puños · clic dcho. apuntar · `M` mapa · `G` brújula sí/no · `J` diario de misiones ·
   `Esc` pausa (guardar / cargar, opciones). Mando y pantalla táctil también funcionan.
+- Minijuegos (pelea, baloncesto y fútbol 2D), siempre las mismas teclas: `E` / clic izq. = botón A (pelea: puñetazo;
+  baloncesto: tirar; fútbol: chutar o entrada), `Espacio` = B / correr, clic dcho. / `Q` = pasar (mantenido, más fuerte),
+  moverse como al andar.
 
 ## Construir
 

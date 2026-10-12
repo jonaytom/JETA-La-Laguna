@@ -65,22 +65,25 @@ function obispoInit() {
 function obispoCourt(kind) {
   if (typeof COURTS === 'undefined' || !COURTS.length) return null;
   if (kind === 'mayex' || kind === undefined) { const m = COURTS.find((c) => c.id === 'mayex'); if (m) return m; }
-  return COURTS.filter((c) => c.gate === 'court' && !c.final).sort((a, b) => a.dist - b.dist)[0] || null;
+  return COURTS.filter((c) => c.gate === 'court' && !c.final && c.sport !== 'fut').sort((a, b) => a.dist - b.dist)[0] || null;
 }
 const shortName = () => { const g = (MISSIONS.gang && MISSIONS.gang.name) || ''; const s = g.replace(/^(Los|Las|La|El)\s+/i, '').toUpperCase(); return (s || 'JETA').slice(0, 11); };
 function obispoStartGame(m, o, c) {
   const K = MISSIONS.kit; m.st.step = 2; K.clearBeacon(); K.setObjective(null);
-  playCourtGame(c, { rival: o.rival, rivalName: o.rivalName, time: o.time, lv: o.lv, tutorial: o.tutorial, style: c.style,
-    onEnd: (r) => { if (!K.isActive(m)) return; if (r.won) { K.talk([[o.winWho, o.winLine(r.score)]], () => { K.pass(m.title, o.prize); if (o.tutorial && !MISSIONS.gang.basketTut) { MISSIONS.gang.basketTut = true; MISSIONS.refresh(); setTimeout(() => HUD.toast('Ya puedes retar a la gente en cualquier cancha (E) y se abre el TORNEO LAGUNERO (círculo naranja).', '#ff9f43', 7), 4500); } }); } else K.fail(o.loseLine); } });
+  const fut = o.sport === 'fut', play = fut ? playFieldGame : playCourtGame;
+  play(c, { rival: o.rival, rivalName: o.rivalName, time: o.time, lv: o.lv, tutorial: o.tutorial, style: c.style, kit: o.kit,
+    onEnd: (r) => { if (!K.isActive(m)) return; if (r.won) { K.talk([[o.winWho, o.winLine(r.score)]], () => { K.pass(m.title, o.prize);
+      if (fut && o.tutorial && !MISSIONS.gang.futbolTut) { MISSIONS.gang.futbolTut = true; setTimeout(() => HUD.toast('Ya puedes retar a la gente en cualquier campo de fútbol (E, balón blanco).', '#7fe08a', 7), 4500); }
+      if (!fut && o.tutorial && !MISSIONS.gang.basketTut) { MISSIONS.gang.basketTut = true; MISSIONS.refresh(); setTimeout(() => HUD.toast('Ya puedes retar a la gente en cualquier cancha (E) y se abre el TORNEO LAGUNERO (círculo naranja).', '#ff9f43', 7), 4500); } }); } else K.fail(o.loseLine); } });
 }
 function obispoGame(m, o) {
-  const K = MISSIONS.kit, c = obispoCourt(o.court); if (!c) { K.abort('No encuentro ninguna cancha de baloncesto cerca.'); return; }
+  const K = MISSIONS.kit, c = o.sport === 'fut' ? obispoCampo() : obispoCourt(o.court); if (!c) { K.abort(o.sport === 'fut' ? 'No encuentro ningún campo de fútbol cerca.' : 'No encuentro ninguna cancha de baloncesto cerca.'); return; }
   m.st = { step: 1, c, o };
   if (c.gate === 'door') { m.gate = c.id; m.onGate = () => { if (m.st && m.st.step === 1) obispoStartGame(m, o, c); }; K.goto(c.x, c.z, 2.2, 0xb388ff); K.setObjective(`Ve con Coco al ${K.bold(c.label)} (${c.street || 'la calle'}) y entra con ${CONTROLS.kbd('use')}`); }
-  else { m.gate = null; K.goto(c.cx, c.cz, 6, 0xb388ff); K.setObjective(`Ve a ${K.bold(c.label)} con Coco para el partido`); }
+  else { m.gate = null; K.goto(c.cx, c.cz, o.sport === 'fut' ? 10 : 6, 0xb388ff); K.setObjective(o.sport === 'fut' ? `Ve con la banda a ${K.bold(c.label)} para el partido` : `Ve a ${K.bold(c.label)} con Coco para el partido`); }
 }
 function obispoGameUpdate(m) {
-  const K = MISSIONS.kit, S = m.st; if (!S || S.step !== 1 || S.c.gate === 'door') return; const g = K.data.goal; if (!g || Math.hypot(PLAYER.x - g[0], PLAYER.z - g[1]) > 7) return;
+  const K = MISSIONS.kit, S = m.st; if (!S || S.step !== 1 || S.c.gate === 'door') return; const g = K.data.goal; if (!g || Math.hypot(PLAYER.x - g[0], PLAYER.z - g[1]) > (S.o.sport === 'fut' ? 12 : 7)) return;
   if (PLAYER.car) { if (PLAYER.car.speed > 2) return; exitCar(); }
   obispoStartGame(m, S.o, S.c);
 }
@@ -113,4 +116,35 @@ const M_OBISPO_2 = {
   },
   update() { obispoGameUpdate(this); },
 };
-MISSIONS.addObispo([M_OBISPO_1, M_OBISPO_2]);
+// ---------- v0.67: football. The gang (El Blanco in goal) against the seminarians (tutorial) and then the cofradías
+const SEMI_FUT = ['H. MATEO', 'H. TOMÁS', 'H. LUCAS', 'H. JUAN', 'H. MARCOS'].map((name, i) => ({ name, look: SEMINARISTAS[i % 2] }));
+const COFRADES = ['DON CHANO', 'PEPE EL VARAL', 'CAPATAZ', 'MONAGUILLO', 'EL CIRIO'].map((name, i) => ({ name, look: CRISTO_TEAM[i % 2] }));
+const O_FUT_SEMI = { sport: 'fut', rival: SEMI_FUT, rivalName: 'SEMINARIO', kit: { shirt: '#111', shorts: '#111', socks: '#111', stripe: '#f2f2f2', gk: { shirt: '#7e2a8c', shorts: '#111', socks: '#7e2a8c' } }, time: 150, lv: 0.06, tutorial: true, prize: 400,
+  winWho: 'Hermano Mateo', winLine: (s) => `${s[0]} a ${s[1]}. El Señor nos ha dado una lección de humildad. Y vuestro portero, otra de paciencia.`, loseLine: 'Os han ganado los seminaristas. Monseñor dice que la Fe mueve montañas, pero no el balón.' };
+const O_FUT_COFRADES = { sport: 'fut', rival: COFRADES, rivalName: 'COFRADES', kit: { shirt: '#7a1f1f', shorts: '#f2f2f2', socks: '#7a1f1f', gk: { shirt: '#f2f2f2', shorts: '#7a1f1f', socks: '#f2f2f2' } }, time: 180, lv: 0.28, tutorial: false, prize: 700,
+  winWho: OBISPO, winLine: (s) => `${s[0]} a ${s[1]}. ¡Gloria! Con esto se arregla el órgano de Santo Domingo. Ya no sonará como una guagua… sonará como un camión.`, loseLine: 'Los cofrades os han ganado. Llevan siglos cargando tronos: tienen piernas.' };
+const M_OBISPO_3 = {
+  title: 'Un partido por La Concepción', who: OBISPO,
+  hint() { return 'Monseñor ' + MISSIONS.kit.bold('Truchas') + ' quiere hablarte de fútbol: ve al ' + MISSIONS.kit.bold('Obispado'); },
+  startPos() { return M_OBISPO_1.startPos(); },
+  start() { const K = MISSIONS.kit, c = obispoCampo();
+    K.talk([[OBISPO, 'Hijo mío, el campanario de La Concepción se inclina. No tanto como la torre de Pisa, pero los turistas ya preguntan.'],
+      [OBISPO, 'Esta vez fútbol. Cinco contra cinco en ' + (c ? c.label : 'el campo') + ', contra mis seminaristas. Llévate a toda tu banda: El Blanco de portero, que en la mili paraba hasta las balas.'],
+      [K.CH, '¿Fútbol? Monseñor, yo de fútbol solo sé gritarle al árbitro.'],
+      [OBISPO, 'Pues hoy no hay árbitro: hay fe. Y yo desde la banda. Lo recaudado, para el campanario.']],
+      () => obispoGame(this, O_FUT_SEMI));
+  },
+  update() { obispoGameUpdate(this); },
+};
+const M_OBISPO_4 = {
+  title: 'El clásico de las cofradías', who: OBISPO,
+  hint() { return 'Monseñor ' + MISSIONS.kit.bold('Truchas') + ' tiene otro partido de fútbol: ve al ' + MISSIONS.kit.bold('Obispado'); },
+  startPos() { return M_OBISPO_1.startPos(); },
+  start() { const K = MISSIONS.kit, c = obispoCampo();
+    K.talk([[OBISPO, '¡El campanario ya está derecho! Bueno, menos torcido. Ahora el órgano de Santo Domingo, que suena como una guagua subiendo La Cuesta.'],
+      [OBISPO, 'Los de las cofradías os retan en ' + (c ? c.label : 'el campo') + '. Granate y blanco. Son mayores, pero llevan toda la vida cargando tronos en Semana Santa: no se cansan.'],
+      [K.CH, 'Tranquilo, Monseñor. Coco, tú en el medio; Boca, que no pase nadie.']], () => obispoGame(this, O_FUT_COFRADES));
+  },
+  update() { obispoGameUpdate(this); },
+};
+MISSIONS.addObispo([M_OBISPO_1, M_OBISPO_2, M_OBISPO_3, M_OBISPO_4]);

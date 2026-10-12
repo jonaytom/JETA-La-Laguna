@@ -30,5 +30,6 @@
   "prueba_misiones.py": "misiones de la historia de principio a fin",
   "audit_cruces.py": "auditoría de cruces de calles",
   "audit_hundimiento.py": "auditoría: nada hundido en el suelo",
-  "audit_obstaculos.py": "auditoría: obstáculos en calles y aceras"
+  "audit_obstaculos.py": "auditoría: obstáculos en calles y aceras",
+  "prueba_futbol.py": "fútbol 5 contra 5: partido, tutorial, ratón y misión del Obispo"
 }

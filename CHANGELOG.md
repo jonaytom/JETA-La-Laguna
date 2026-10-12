@@ -3,6 +3,18 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.67.0 — 2026-10-12 — Fútbol 2D: JETA SOCCER
+- **Fútbol 2D 5 contra 5**, visto desde arriba como el Sensible Soccer: campo que sube y baja con el balón, jugadores
+  pequeñitos con la equipación de cada equipo, radar, palos, bandas, córners, saques de puerta y gol de oro.
+  - Mismas teclas que el baloncesto: clic izquierdo (o E) chuta, cuanto más lo mantienes más fuerte y alto (y después
+    izquierda / derecha le dan efecto); sin balón es una entrada. Clic derecho (o Q) pasa al compañero al que miras,
+    mantenido más fuerte y bombeado; sin balón cambia de jugador. Espacio corre.
+  - Juegas con la banda: El Blanco de portero, Boca Papa y Sastrón atrás, Coco en el medio y tú arriba.
+- **Campos de fútbol con entrada** (balón blanco flotando): en los abiertos se pulsa E en el campo; los de colegio o
+  encerrados tienen puerta en la calle. Tras el primer partido, retos en cualquier campo (niveles 1–5).
+- **Misiones del Obispo 3 y 4**: «Un partido por La Concepción» (tutorial contra los seminaristas) y «El clásico de
+  las cofradías».
+
 ## 0.66.1 — 2026-10-12 — Baloncesto más fácil y pruebas solo de lo cambiado
 - **Baloncesto**: más fácil en general: todos se mueven más despacio (los rivales flojos, más aún), la CPU roba y empuja mucho menos
   (tú robas más), falla más tiros y mates (¡al hierro!) y tus tapones a los mates entran la mitad de las veces. El
