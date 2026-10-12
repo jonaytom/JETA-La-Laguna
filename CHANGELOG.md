@@ -3,6 +3,17 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.60.0 — 2026-10-12 — Flecha guía, noche más clara y carrera solidaria posible
+- **Flecha guía**: con un objetivo de misión (amarilla) o un destino marcado (rosa), una flecha en el suelo a tus pies
+  (sobre el coche si conduces) apunta por la ruta del GPS. Se esconde cerca del objetivo, en interiores y en menús.
+- **Noche más clara**: la luz mínima nocturna sube; de día todo queda igual.
+- **Carrera solidaria del casco**: hasta 4 controles a menos de 320 m del Ayuntamiento, en orden de cercanía, y
+  vuelta al Ayuntamiento; el tiempo se calcula con la distancia (antes eran ~6 min imposibles).
+- **Rutas lejos del borde**: carreras, coches que huyen y fugas a pie eligen recorridos a ≥ 90 m del borde del mapa
+  (antes el aviso del borde te devolvía atrás en plena persecución).
+- **Primera pelea 2D sin parón**: el fondo del escenario se prepara una vez durante la carga.
+- `.gitattributes`: finales de línea fijos (sin el aviso «LF will be replaced by CRLF» de git en Windows).
+
 ## 0.59.0 — 2026-10-12 — El mapa crece: La Cuesta y Taco
 - **Mapa más grande** alrededor de los centros de salud de **La Cuesta** (franja de X 2400–3450 por Z 1600–2250) y de
   **Taco** (X 1450–1850 por Z 3980–4430), unidas al borde del mapa anterior: unos 300 edificios y 390 calles nuevas de

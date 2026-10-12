@@ -75,8 +75,8 @@ function updateSun() {
   const ldir = _ldir.copy(moon ? _moonDir : dir);
   sun.color.copy(moon ? tmpC.set(0x8fa6d8) : sunCol);
   sun.intensity = moon ? 0.35 : 2.9 * dayI * (1 - overcast * 0.75) + 0.05;
-  hemi.color.copy(cZen).lerp(tmpC.set(0xffffff), 0.35); hemi.groundColor.set(0x5b5140).multiplyScalar(0.3 + dayI * 0.7);
-  hemi.intensity = 0.25 + dayI * (0.75 + overcast * 0.5);
+  hemi.color.copy(cZen).lerp(tmpC.set(0xffffff), 0.35); hemi.groundColor.set(0x5b5140).multiplyScalar(0.45 + dayI * 0.55);
+  hemi.intensity = 0.42 + dayI * (0.58 + overcast * 0.5); /* night floor raised (v0.60: it was too dark) */
   if (SKY.ring) SKY.ring.material.color.setScalar(0.18 + dayI * 0.72 * (1 - overcast * 0.3));
   bgSun.color.copy(sun.color); bgSun.intensity = sun.intensity * 0.9; bgSun.position.copy(ldir).multiplyScalar(1000); bgHemi.intensity = hemi.intensity; bgHemi.color.copy(hemi.color);
   // fog
@@ -84,7 +84,7 @@ function updateSun() {
   scene.fog.color.copy(fogCol); bgScene.fog.color.copy(fogCol);
   scene.fog.far = w === 2 ? 230 : w === 1 ? Q.far * 0.8 : Q.far; scene.fog.near = w === 2 ? 15 : 90;
   bgScene.fog.near = w === 2 ? 300 : w === 1 ? 1000 : 1400; bgScene.fog.far = w === 2 ? 900 : w === 1 ? 12000 : 22000;
-  renderer.toneMappingExposure = 1.0 + night * 0.35;
+  renderer.toneMappingExposure = 1.0 + night * 0.5;
   if (PLAYER.interior) { hemi.color.set(0xfff6ea); hemi.groundColor.set(0x8a8478); hemi.intensity = 1.25; sun.intensity = 0.9; sun.color.set(0xffffff); renderer.toneMappingExposure = 1.05; }
   // shadows follow the player
   const px = PLAYER.x, pz = PLAYER.z, py = PLAYER.y; const snap = 2;
@@ -174,7 +174,7 @@ function logic(dt, now) {
     // player car headlights
     const pc = PLAYER.car; headSpot.intensity = pc && U.uNight.value > 0.3 ? 60 : 0;
     if (pc) { const fx = Math.sin(pc.h), fz = Math.cos(pc.h); headSpot.position.set(pc.x + fx * 2, pc.y + 0.8, pc.z + fz * 2); headSpot.target.position.set(pc.x + fx * 20, pc.y - 1, pc.z + fz * 20); }
-    tt = performance.now(); AUDIO.update(dt); AMBIENCE.update(dt); HUD.update(dt); pm('hud', tt);
+    tt = performance.now(); AUDIO.update(dt); AMBIENCE.update(dt); HUD.update(dt); GUIDE.update(); pm('hud', tt);
     if (BIGMAP.open && frame % 10 === 0) BIGMAP.redraw();
   } else if (GAME.state === 'achaman') {
     GAME.tod = (GAME.tod + dt * dayRate(GAME.tod)) % 24; U.uTime.value += dt;
@@ -241,7 +241,7 @@ async function boot() {
   window.__GAME_READY = true;
 }
 boot();
-window.__bg = [bgScene, bgCamera]; window.__dbg = { AYTO, HUC, HEALTH, nearestHealth, exitCar, DLG, S2, POOLS: { CARPOOL, HPOOL, SHARED_GEO, VGEO }, SHARED_GEO, MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
+window.__bg = [bgScene, bgCamera]; window.__dbg = { GUIDE, AYTO, HUC, HEALTH, nearestHealth, exitCar, DLG, S2, POOLS: { CARPOOL, HPOOL, SHARED_GEO, VGEO }, SHARED_GEO, MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
 window.__snap = () => { updateUnderground(); bgCamera.position.copy(camera.position); bgCamera.quaternion.copy(camera.quaternion); bgCamera.fov = camera.fov; bgCamera.updateProjectionMatrix(); renderer.clear(); renderer.render(bgScene, bgCamera); renderer.clearDepth(); renderer.render(scene, camera); return renderer.domElement.toDataURL('image/jpeg', 0.85); };
 window.__setYaw = (y) => { CAM.yaw = y; CAM.pitch = 0.1; INPUT.lastMouse = performance.now(); };
 window.__hit = (p) => hitPed(p);

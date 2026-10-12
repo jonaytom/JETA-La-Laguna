@@ -64,6 +64,8 @@
   pantalla por prioridad y sin pisarse (`drawLabels`): de lejos barrios y lugares importantes; desde zoom 0,9 las
   grandes superficies (tipo 5), desde 1,2 las entradas visitables y desde 2,2 las tiendas. Colores de texto (blanco,
   crema, gris, verde de las entradas) distintos de los de rutas y marcas (amarillo, azul, rosa, rojo).
+- **Flecha guía** (`11c_guide.js`, v0.60): flecha plana a los pies (sobre el coche al conducir) que apunta a un punto
+  14 m (30 m en coche) más adelante por la ruta del GPS; amarilla para misiones, rosa para tu destino.
 - `MISSIONS.kit.track(x, z)`: objetivo que se mueve (un coche que perseguir): círculo amarillo y ruta GPS sin columna
   de luz; se actualiza cada 0,8 s.
 

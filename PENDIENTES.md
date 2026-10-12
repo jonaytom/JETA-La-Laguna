@@ -13,25 +13,49 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       `docs/auditorias/mapa_v0.58.2/mapa.md`. Revisar primero los 6 que cortan la calle y los 54 de calles principales
       (confirmados: C. Barcelona X −15 Z 217, Av. de los Menceyes X 298 Z 899). Siguen P1.5 y P2.1/P2.2/P2.5.
 
-- [ ] **Parón al empezar la primera pelea 2D** (Jonay, 12-oct): se queda congelada ~1 s en la transición del mundo 3D al 2D
+- [x] v0.60.0 **Parón al empezar la primera pelea 2D** (Jonay, 12-oct): se queda congelada ~1 s en la transición del mundo 3D al 2D
       (probablemente la primera captura del fondo / compilar el lienzo 2D: precalentarlo al cargar).
-- [ ] **Noche demasiado oscura** (Jonay, 12-oct): al anochecer baja tanto la luz que agobia; subir la luz mínima de la noche.
-- [ ] **Flecha hacia el objetivo** (Jonay, 12-oct): con un punto de misión o un destino marcado en el mapa, una flecha
+- [x] v0.60.0 **Noche demasiado oscura** (Jonay, 12-oct): al anochecer baja tanto la luz que agobia; subir la luz mínima de la noche.
+- [x] v0.60.0 **Flecha hacia el objetivo** (Jonay, 12-oct): con un punto de misión o un destino marcado en el mapa, una flecha
       superpuesta bajo el personaje que apunte hacia él, para no tener que mirar el mapa.
-- [ ] **Carrera solidaria del casco imposible** (Jonay, 12-oct): ~6 min corriendo y no llega a los dos últimos controles
+- [x] v0.60.0 **Carrera solidaria del casco imposible** (Jonay, 12-oct): ~6 min corriendo y no llega a los dos últimos controles
       (tuvo que teletransportarse). Reducir bastante las distancias (y/o el tiempo por control).
 - [ ] **Misiones por zonas** (Jonay, 12-oct): al principio Coco y Sastrón aparecen demasiado lejos; que las primeras
       misiones salgan cerca del inicio. Las siguientes pueden estar algo más lejos, pero cada tanda debería ir por zonas:
       estando en una zona, lo que se hace queda relativamente cerca de ese punto.
-- [ ] **Rutas de carreras y huidas lejos del borde del mapa** (Jonay, 12-oct): si un enemigo o una carrera lleva cerca
+- [x] v0.60.0 **Rutas de carreras y huidas lejos del borde del mapa** (Jonay, 12-oct): si un enemigo o una carrera lleva cerca
       del borde, el aviso del borde te teletransporta hacia atrás. Elegir rutas con margen (`worldEdgeDist`).
+- [ ] **El Obispo y el Obispado** (Jonay, 12-oct): nuevo personaje, el obispo de Tenerife, con **nombre parodia
+      inventado** y aspecto propio. Su sede es la **Casa Salazar** (C. San Agustín; fotos en
+      `docs/referencias/casa_salazar/`: fachada de cantería gris oscura, portada con columnas pareadas y frontón con
+      escudo, balcones de forja, rejas con crestería, remates con pináculos, patio interior con galería): recrearla bien.
+      Pack de **misiones secundarias** que se desbloquea a la vez que las del alcalde; no hacen falta para acabar el juego
+      («solo si eres religioso»), pero dan dinero: mejoras en las iglesias que ya hay (Catedral, La Concepción, Santo
+      Domingo, El Cristo…), p. ej. apagar un incendio con la escopeta de agua.
+- [ ] **Jugueterías** (Jonay, 12-oct): recrear varias (mejor las que ya hay en el mapa); allí se compran **bolitas** para
+      la pistola y otras armas: **escopeta de agua** (chorros de agua; se recarga en **fuentes** repartidas por la ciudad;
+      necesaria en misiones como el incendio del Obispado). Por ahora no hay más armas.
+- [ ] **Minijuego de baloncesto 2D tipo NBA Jam** (Jonay, 12-oct): en las canchas; retar a partidos con tus amigos de la
+      banda contra la gente que está allí, para ganar dinero.
+- [ ] **Minijuego de fútbol 2D tipo Sensible Soccer** (Jonay, 12-oct): en los campos de fútbol.
+- [ ] **Cambio de nombres** (Jonay, 12-oct; para no identificarlos con personas reales): **Ruymán «El Blanco» → Rayco
+      «El Blanco»** y **Santi «El Chopa» → Ayoze «El Chopa»** (los apodos no cambian). Buscar en diálogos, misiones,
+      títulos, docs y partidas guardadas.
+- [ ] **Intro: el texto de que El Chopa sale de prisión dura muy poco** (Jonay, 12-oct): dejarlo más tiempo en pantalla
+      (o que avance al pulsar).
+- [ ] **Callejero oficial en PDF** (Jonay, 12-oct): https://turismo.aytolalaguna.es/wp-content/uploads/2019/11/Callejero-La-Laguna-c.pdf
+      Sirve para definir bien las **zonas peatonales** (las del empedrado; ahora hay calles donde se pasa en coche y el
+      juego dice que son peatonales), tiene **información de edificios** para misiones y un dibujo en 3D bastante fiel de
+      los edificios del casco. Bajarlo a `docs/referencias/` y usarlo en una tanda de mapa.
 - [ ] **Animación al abatir a un enemigo de misión** (Jonay, 12-oct): con el tiro que lo detiene (uno, dos o los que
       haga falta) la figura se queda congelada. Que caiga al suelo y se queje (animación de caída/dolor, quejidos).
 - [x] v0.59.0 **Centro de Salud de Taco** (Jonay, capturas: C. Dona 22 / C. San Jerónimo, junto a la Plaza La Rana Gustavo y
       la Av. Taco TF-28): bloque verde claro de 2 plantas con contraventanas blancas, verja y rampa. Código CPX2+FM → X 1633
       Z 4292, ~310 m al sur del borde del mapa: va en la misma descarga que La Cuesta (`scripts/descargar_zonas.bat`).
 
-- [ ] **Radio: más canciones y voces** (Jonay): cada emisora con una voz distinta (no siempre la misma), letras más
+- [ ] **Radio: más canciones y voces** (Jonay; precisión 12-oct: **una voz distinta en cada canción**, de los
+      generadores de voz, y las 20 canciones repartidas entre las emisoras que ya hay). **Próxima tanda** junto con las
+      uniones de túneles que quedan y los 3 tramos que no termina la prueba de conducción. Original: cada emisora con una voz distinta (no siempre la misma), letras más
       largas y menos repetitivas, canciones de 1:30–2 min y luego otra; al menos 20 canciones en total combinando voces,
       estilo rap / hip hop de los 90, funk y R&B, con la misma técnica de ahora (síntesis en el navegador + voz).
 
@@ -208,6 +232,11 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       `docs/referencias/assets_vehiculos.md`.
 
 ## Extras para el final
+
+- [ ] **DLC Santa Cruz** (Jonay, 12-oct): se une por el sur a partir del final del mapa actual; carga aparte, con aviso,
+      para no hacer una sola carga enorme (`descargar_zona.ps1` + `merge_zona.py` ya sirven para bajar la zona).
+- [ ] **DLC norte** (Jonay, 12-oct): la bajada por Tegueste hasta Tejina, Bajamar y Punta del Hidalgo; también carga
+      aparte.
 
 - [ ] **Música «real»** para la radio (hip hop / rap de finales de los 90 y principios de los 2000). Jonay: «ni lo
       consideres, es un extra final».

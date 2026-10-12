@@ -357,13 +357,19 @@ const FIGHT2D = (() => {
     let best = null; for (const s of [1, -1]) { const px = mx + nx * s * 10, pz = mz + nz * s * 10; const free = COL.raycast(mx, mz, px, pz); if (!best || free > best.f) best = { f: free, px: mx + nx * s * 10 * Math.max(0.35, Math.min(1, free) - 0.05), pz: mz + nz * s * 10 * Math.max(0.35, Math.min(1, free) - 0.05) }; }
     const gy = heightAt(mx, mz); const cam = camera.clone(); cam.fov = 62; cam.aspect = W / H; cam.position.set(best.px, gy + 1.7, best.pz); cam.lookAt(mx, gy + 1.5, mz); cam.updateProjectionMatrix(); cam.updateMatrixWorld();
     const vis = hide.map((o) => o && o.visible); hide.forEach((o) => { if (o) o.visible = false; });
-    const rt = new THREE.WebGLRenderTarget(W * 2, H * 2); const prevT = renderer.getRenderTarget();
-    renderer.setRenderTarget(rt); renderer.clear(); bgCamera.position.copy(cam.position); bgCamera.quaternion.copy(cam.quaternion); renderer.render(bgScene, bgCamera); renderer.clearDepth(); renderer.render(scene, cam); renderer.setRenderTarget(prevT);
+    // drawn on the main canvas with the game camera and the same shaders as normal play (a render target needed its own
+    // shader variants: ~1 s freeze on the first fight and +34 programs), then the middle 16:9 strip is copied
+    const prev = { p: camera.position.clone(), q: camera.quaternion.clone(), fov: camera.fov, bp: bgCamera.position.clone(), bq: bgCamera.quaternion.clone() };
+    camera.position.copy(cam.position); camera.quaternion.copy(cam.quaternion); camera.fov = 62; camera.updateProjectionMatrix(); camera.updateMatrixWorld();
+    bgCamera.position.copy(cam.position); bgCamera.quaternion.copy(cam.quaternion); render();
+    const src = renderer.domElement, sw = src.width, sh = src.height, ch = Math.min(sh, sw * H / W), cw = ch * W / H;
+    const c0 = mkCanvas(W * 2, H * 2), x0 = c0.getContext('2d'); x0.drawImage(src, (sw - cw) / 2, (sh - ch) / 2, cw, ch, 0, 0, W * 2, H * 2);
+    camera.position.copy(prev.p); camera.quaternion.copy(prev.q); camera.fov = prev.fov; camera.updateProjectionMatrix(); camera.updateMatrixWorld(); bgCamera.position.copy(prev.bp); bgCamera.quaternion.copy(prev.bq);
     hide.forEach((o, i) => { if (o) o.visible = vis[i]; });
-    const px = new Uint8Array(W * 2 * H * 2 * 4); renderer.readRenderTargetPixels(rt, 0, 0, W * 2, H * 2, px); rt.dispose();
+    const px = x0.getImageData(0, 0, W * 2, H * 2).data;
     // flip and posterize with ordered dithering at the full 2× resolution → finer pixel art
     const BW = W * 2, BH = H * 2; const c = mkCanvas(BW, BH), x = c.getContext('2d'); const id = x.createImageData(BW, BH); const D = id.data; const bay = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
-    for (let y = 0; y < BH; y++) for (let xx = 0; xx < BW; xx++) { const i = ((BH - 1 - y) * BW + xx) * 4;
+    for (let y = 0; y < BH; y++) for (let xx = 0; xx < BW; xx++) { const i = (y * BW + xx) * 4; /* canvas rows are top-down (the render target was bottom-up) */
       const th = (bay[(y & 3) * 4 + (xx & 3)] / 16 - 0.5) * 26; const q = (v) => clamp(Math.round((v + th) / 32) * 32, 0, 255); const o = (y * BW + xx) * 4; D[o] = q(px[i]); D[o + 1] = q(px[i + 1]); D[o + 2] = q(px[i + 2]); D[o + 3] = 255; }
     x.putImageData(id, 0, 0); x.scale(2, 2);
     // darken a little so the fighters pop, and draw the floor line

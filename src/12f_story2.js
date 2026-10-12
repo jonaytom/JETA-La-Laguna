@@ -18,9 +18,11 @@ function s2Clear() {
 const s2Pass = (title, money) => { s2Clear(); K2().pass(title, money); };
 const s2Fail = (why) => { s2Clear(); K2().fail(why); };
 function s2Spot(x, z) { const rd = ROADSEG.nearest(x, z, (r) => r[0] <= 12 && !(r[3] & 6)); return rd ? [rd.x, rd.z, Math.atan2(rd.dx, rd.dz)] : [x, z, 0]; } /* [x, z, heading along the street] */
+// every point of a route at least m metres inside the play area (near the edge the border warning pulls you back)
+function s2FarFromEdge(r, m = 90) { for (let i = 0; i < r.length; i += 4) if (worldEdgeDist(r[i], r[i + 1]) < m) return false; return true; }
 function s2Route(x, z, minL, maxL, away) {
   const from = GRAPH.nearestNode(x, z); let best = null;
-  for (let k = 0; k < 50; k++) { const a = away != null ? away + rnd(-0.9, 0.9) : Math.random() * 6.283, d = rnd(minL * 0.6, maxL * 0.8); const to = GRAPH.nearestNode(x + Math.sin(a) * d, z + Math.cos(a) * d); const r = GRAPH.route(from, to); if (!r || r.length < 4) continue;
+  for (let k = 0; k < 50; k++) { const a = away != null ? away + rnd(-0.9, 0.9) : Math.random() * 6.283, d = rnd(minL * 0.6, maxL * 0.8); const to = GRAPH.nearestNode(x + Math.sin(a) * d, z + Math.cos(a) * d); const r = GRAPH.route(from, to); if (!r || r.length < 4 || !s2FarFromEdge(r)) continue;
     let L = 0; for (let i = 2; i < r.length; i += 2) L += Math.hypot(r[i] - r[i - 2], r[i + 1] - r[i - 1]); if (L >= minL && L <= maxL) return r; if (!best || Math.abs(L - minL) < best[0]) best = [Math.abs(L - minL), r]; }
   return best ? best[1] : [x, z, x + minL, z];
 }
@@ -47,7 +49,7 @@ function s2Runner(n, P, dt, speed, off = 0) { // a person running away along the
 function s2RunPath(n, minL, maxL, turn = 0) { const away = Math.atan2(n.x - PLAYER.x, n.z - PLAYER.z) + turn; /* always away from the player */
   const r = s2Route(n.x, n.z, minL, maxL, away), ex = r[r.length - 2], ez = r[r.length - 1];
   const w = WALKG.route(n.x, n.z, ex, ez); /* on foot they keep to pavements, squares and paths (a road route cut through walls) */
-  if (w && w.length >= 4) { const P = s2Path([n.x, n.z, ...w]); if (P.tot > minL * 0.5) return P; } /* too short (the end fell on the same walk node): road route */
+  if (w && w.length >= 4 && s2FarFromEdge(w, 60)) { const P = s2Path([n.x, n.z, ...w]); if (P.tot > minL * 0.5) return P; } /* too short (the end fell on the same walk node): road route */
   return s2Path([n.x, n.z, ...r]); }
 // a bouncing arrow over whoever must be chased (person or car) for the first seconds, so the player sees who it is
 let S2_ARROW = null;
@@ -309,8 +311,15 @@ const M_CARRERA = {
   hint() { return ALC + ' quiere que la banda dé ejemplo: ve al ' + b2('Ayuntamiento'); }, startPos: startAtAlcalde,
   start() { const K = K2(); this.st = { step: 0 };
     K.talk([[ALC, 'La carrera solidaria del casco histórico: todo lo recaudado va a la asociación de vecinos. Si el jefe de los Defensores corre, la gente dona más. ¡A pie, eh! Nada de coches.'], [ALC, 'Pasa por los controles antes de que se acabe el tiempo. Y sonríe a las cámaras.']], () => {
-      if (!K.isActive(this)) return; const ks = ['Catedral', 'Teatro Leal', 'Santo Domingo', 'Palacio Nava', 'Casa Lercaro', 'Concepción']; const pts = []; for (const k of ks) { const b = findBuilding(k); if (b) pts.push(s2Spot(b.cx, b.cz)); }
-      if (pts.length < 3) for (let i = 0; i < 4; i++) pts.push([PLAYER.x + Math.cos(i) * 150, PLAYER.z + Math.sin(i) * 150]); pts.push(AYTO.ok ? AYTO.front : [PLAYER.x, PLAYER.z]); this.st.cps = pts; this.st.cp = 0; this.st.step = 1; K.setTimer(60 + pts.length * 40); this.cp(); }); },
+      if (!K.isActive(this)) return;
+      // a short loop round the casco (v0.60: it was ~6 min and impossible): up to 4 landmarks within 320 m of the
+      // Ayuntamiento, visited nearest-first, back to the Ayuntamiento; time from the length at a jogging pace
+      const home = AYTO.ok ? AYTO.front : [PLAYER.x, PLAYER.z]; const cand = [];
+      for (const k of ['Catedral', 'Teatro Leal', 'Santo Domingo', 'Palacio Nava', 'Casa Lercaro', 'Iglesia de la Concepción', 'Casa Salazar', 'Casas Capitulares']) { const b = findBuilding(k); if (b && Math.hypot(b.cx - home[0], b.cz - home[1]) < 320) { const sp = s2Spot(b.cx, b.cz); if (Math.hypot(sp[0] - home[0], sp[1] - home[1]) > 60) cand.push(sp); } }
+      const pts = []; let cur = home; while (pts.length < 4 && cand.length) { cand.sort((p, q) => Math.hypot(p[0] - cur[0], p[1] - cur[1]) - Math.hypot(q[0] - cur[0], q[1] - cur[1])); cur = cand.shift(); if (!pts.some((q) => Math.hypot(q[0] - cur[0], q[1] - cur[1]) < 50)) pts.push(cur); }
+      if (pts.length < 2) for (let i = 0; i < 3; i++) pts.push([home[0] + Math.cos(i * 2.1) * 150, home[1] + Math.sin(i * 2.1) * 150]);
+      pts.push(home); let L = 0, prev = home; for (const p of pts) { L += Math.hypot(p[0] - prev[0], p[1] - prev[1]) * 1.35; prev = p; }
+      this.st.cps = pts; this.st.cp = 0; this.st.step = 1; this.st.len = L; K.setTimer(Math.round(40 + L / 3.2)); this.cp(); }); },
   cp() { const K = K2(), S = this.st, c = S.cps[S.cp]; const last = S.cp === S.cps.length - 1; K.goto(c[0], c[1], 4, last ? 0xf5b72e : 0x46c3ff); K.setObjective((last ? b2('¡Meta en el Ayuntamiento!') : `Control ${S.cp + 1}/${S.cps.length - 1}`) + ' · ¡a pie!'); },
   update() { const K = K2(), S = this.st; if (!S || S.step !== 1) return; if (PLAYER.car) { s2Fail('¡En coche no vale! Descalificado'); return; }
     const c = S.cps[S.cp]; if (s2AtGoal(4.5)) { AUDIO.cash(); S.cp++; if (S.cp >= S.cps.length) { K.setTimer(0); s2Pass('Carrera solidaria: 2.000 € para los vecinos', 700); return; } this.cp(); } },
