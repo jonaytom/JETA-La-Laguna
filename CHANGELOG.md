@@ -3,6 +3,14 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.59.0 — 2026-10-12 — El mapa crece: La Cuesta y Taco
+- **Mapa más grande** alrededor de los centros de salud de **La Cuesta** (franja de X 2400–3450 por Z 1600–2250) y de
+  **Taco** (X 1450–1850 por Z 3980–4430), unidas al borde del mapa anterior: unos 300 edificios y 390 calles nuevas de
+  OpenStreetMap, con su relieve (Copernicus) fundido con el del resto.
+- **Centros de Salud de La Cuesta y de Taco** rotulados; al morir cerca, reapareces allí.
+- Las zonas nuevas se descargan desde el PC (`scripts/descargar_zonas.bat`, reintentos y límites de los servidores) y se
+  integran con `tools/merge_zona.py` sin duplicar lo que ya había: reutilizable para futuras ampliaciones.
+
 ## 0.58.2 — 2026-10-12 — Centro de Salud de Finca España en su parcela
 - **Finca España**: ya no se sale a la Avenida de los Menceyes. Ocupa toda su parcela, entre la C. Pueblos de Tenerife y
   la C. El Coralito, con el aparcamiento detrás (la plaza vacía de al lado era parte del centro): ala baja al oeste y

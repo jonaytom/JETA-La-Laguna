@@ -19,13 +19,15 @@ ROOTS = ['loop', 'logic', 'render']
 HOT_NAME = re.compile(r'^(update\w*|tick|step|physics|sync|animate\w*|loop|logic|render|adaptRes)$')
 # funciones de creación/carga: aunque el bucle llegue a ellas (p. ej. cuando falta un objeto en el pool), no corren
 # cada fotograma. Sus avisos se marcan «bajo demanda» y bajan un nivel de severidad.
-COLD_NAME = re.compile(r'^(make|build|create|preload|precompute|init|setup|ensure|prep|load|new[A-Z_]|geoOf|warm)\w*$')
+COLD_NAME = re.compile(r'^((make|build|create|preload|precompute|init|setup|ensure|prep|load|new[A-Z_]|geoOf|warm)\w*|\w+Mesh)$')
 DOWN = {'crítica': 'alta', 'alta': 'media', 'media': 'baja', 'baja': 'baja'}
 
 PATTERNS = [  # (id, regex, severidad, explicación)
     ('alloc-three', r'new THREE\.(Vector[234]|Color|Quaternion|Matrix[34]|Euler|Box3|Sphere|Ray|Raycaster)\b', 'alta',
      'Reserva un objeto matemático cada fotograma -> basura para el GC y tirones. Reutilizar un temporal a nivel de módulo.'),
-    ('alloc-geo', r'new THREE\.\w*(Geometry|Material|Mesh|Texture)\b', 'crítica',
+    ('alloc-obj', r'new THREE\.(Mesh|Group|Object3D|Sprite)\(', 'media',
+     'Crea un objeto de escena (ligero si reutiliza geometría y material). Si se repite mucho, reutilizarlo o usar un pool.'),
+    ('alloc-geo', r'new THREE\.\w*(Geometry|Material|Texture)\b', 'crítica',
      'Crea geometría/material/textura en código que corre cada fotograma: memoria de GPU y compilación de shaders.'),
     ('clone', r'\.clone\(\)', 'media', 'clone() reserva memoria. Usar .copy() sobre un temporal.'),
     ('array-fn', r'\.(map|filter|reduce|flatMap|sort)\(', 'media',
@@ -140,7 +142,28 @@ def scan(repo):
     files, funcs = collect(repo)
     hot, demand = hot_set(funcs)
     findings = []
-    hot_funcs = [fn for fn in funcs if fn['name'] in hot or fn['name'] in demand]
+    # función anidada: hereda el estado de la función que la contiene (un `mk` auxiliar dentro de un build* no corre
+    # cada fotograma aunque en otro archivo haya otro `mk` que sí)
+    def padre(fn):
+        best = None
+        for g in funcs:
+            if g is fn or g['file'] != fn['file']: continue
+            if g['start'] < fn['start'] and g['end'] >= fn['end'] and (best is None or g['start'] > best['start']): best = g
+        return best
+    estado = {}
+    def est(fn):
+        k = id(fn)
+        if k in estado: return estado[k]
+        estado[k] = 'frio'  # evita ciclos
+        n = fn['name']; propio = 'hot' if n in hot else 'demand' if n in demand else 'frio'
+        pa = padre(fn)
+        if pa is not None:
+            ep = est(pa)
+            if ep == 'frio' and not HOT_NAME.match(n): propio = 'frio'
+            elif ep == 'demand' and propio == 'hot': propio = 'demand'
+        estado[k] = propio; return propio
+    hot_funcs = [fn for fn in funcs if est(fn) != 'frio']
+    for fn in hot_funcs: fn['_estado'] = est(fn)
     # evitar contar dos veces funciones anidadas: quedarse con el cuerpo más interno por posición
     for fn in hot_funcs:
         body = fn['body']; base = fn['start']; raw = fn['raw']
@@ -151,7 +174,10 @@ def scan(repo):
                 snippet = raw.splitlines()[line - 1].strip()
                 col = pos - (raw.rfind('\n', 0, pos) + 1)
                 snippet = snippet[max(0, col - 60): col + 80] if len(snippet) > 160 else snippet
-                dem = fn['name'] in demand
+                dem = fn.get('_estado') == 'demand'
+                # creación protegida por caché: dentro de un bloque `if (!ALGO) {` que aún no se ha cerrado → solo la 1.ª vez
+                prev_txt = body[:m.start()]; ci = prev_txt.rfind('if (!')
+                if ci >= 0 and prev_txt.count('{', ci) > prev_txt.count('}', ci): dem = True
                 findings.append(dict(id=pid, sev=DOWN[sev] if dem else sev, file=fn['file'], line=line, func=fn['name'],
                                      why=('[bajo demanda] ' if dem else '') + why, code=snippet, demanda=dem,
                                      firma=f"{fn['file']}|{fn['name']}|{pid}|" + re.sub(r'[\s\d.]+', '', snippet)[:80]))
@@ -172,7 +198,7 @@ def scan(repo):
         g['new ' + k] = len(re.findall(r'new THREE\.' + k + r'\b', allsrc))
     g['dispose()'] = allsrc.count('.dispose(')
     g['mergeGeometries'] = len(re.findall(r'merge\w*Geometr', allsrc))
-    g['funciones'] = len(funcs); g['funciones_cada_fotograma'] = len(hot); g['funciones_bajo_demanda'] = len(demand)
+    g['funciones'] = len(funcs); g['funciones_cada_fotograma'] = sum(1 for f in hot_funcs if f['_estado'] == 'hot'); g['funciones_bajo_demanda'] = sum(1 for f in hot_funcs if f['_estado'] == 'demand')
     sizes = {}
     for pat in ['data/*.json', 'data/*.js', 'assets/**/*', 'dist/*.html', 'template.html']:
         for p in glob.glob(os.path.join(repo, pat), recursive=True):

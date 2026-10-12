@@ -4,8 +4,14 @@ import * as THREE from 'three';
 const DATA = JSON.parse(document.getElementById('mapdata').textContent);
 const STR = DATA.S;
 // ---------- play area: bounding box minus the zones that are not needed (Jonay's map, docs/referencias/mapa/zonas_a_quitar.png)
-const WORLD = { x0: -4750, x1: 2400, z0: -1250, z1: 3980 }; // west part only as a band for the airport (see WORLD_EXCL)
+const WORLD = { x0: -4750, x1: 3450, z0: -1250, z1: 4430 }; // west part only as a band for the airport; east and south only the La Cuesta and Taco zones (see WORLD_EXCL)
 const WORLD_EXCL = [
+  // v0.59: the map grows only around the health centres of La Cuesta (X 3223 Z 1956) and Taco (X 1633 Z 4292), ≥100 m
+  // around each and joined to the old edge (x 2400 / z 3980); data from scripts/descargar_zonas.bat + tools/merge_zona.py
+  { x0: 2400, x1: 1e9, z0: -1e9, z1: 1600, name: 'este, al norte de La Cuesta' },
+  { x0: 2400, x1: 1e9, z0: 2250, z1: 1e9, name: 'este, al sur de La Cuesta' },
+  { x0: -1e9, x1: 1450, z0: 3980, z1: 1e9, name: 'sur, al oeste de Taco' },
+  { x0: 1850, x1: 1e9, z0: 3980, z1: 1e9, name: 'sur, al este de Taco' },
   { x0: -1e9, x1: -1900, z0: -1e9, z1: -450, name: 'oeste norte (fuera del corredor del aeropuerto)' },
   { x0: -1e9, x1: -1900, z0: 1400, z1: 1e9, name: 'oeste sur (fuera del corredor del aeropuerto)' },
   // monte NE (Valle Tabares, Valle Vinagre, Los Valles): the strip east of San Roque / La Verdellada is back (v0.46)

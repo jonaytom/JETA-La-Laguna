@@ -21,6 +21,8 @@ spl = RectBivariateSpline(gz[::-1], gx, g[::-1, :], kx=3, ky=3, s=0)
 base = float(spl(0, 0)[0, 0])
 DX = 16.0
 X0, X1, Z0, Z1 = (-4808 if 'ELEV2' in d else -2600), 2800, -1800, 4400  # -4808 keeps the 16 m grid aligned with the old -2600
+for _n, _E in d.get('ELEVX', {}).items():  # extra zones (tools/merge_zona.py) widen the heightmap to the east if needed
+    X1 = max(X1, X0 + math.ceil((_E['x0'] + (_E['nx'] - 1) * _E['d'] - X0) / 16) * 16)
 nx = int((X1 - X0) / DX) + 1
 nz = int((Z1 - Z0) / DX) + 1
 xs = X0 + np.arange(nx) * DX
@@ -36,6 +38,20 @@ if 'ELEV2' in d:  # western extension (airport): 32 m Copernicus grid, blended i
     H2 = spl2(np.clip(zs, z2.min(), z2.max()), np.clip(xs, x2.min(), x2.max())) - base
     wx = np.clip((xs - (-2446)) / 146.0, 0, 1)[None, :]  # 0 → only new grid, 1 → old grid
     H = H * wx + H2 * (1 - wx)
+for _n, _E in d.get('ELEVX', {}).items():  # extra zones: their 32 m grid inside, blended over 150 m on the sides where the old grid exists
+    g3 = np.array([v if v is not None else np.nan for v in _E['e']], dtype=float).reshape(_E['nz'], _E['nx'])
+    if np.isnan(g3).any():
+        m = np.isnan(g3); idx = np.where(~m); from scipy.interpolate import griddata
+        g3[m] = griddata(np.array(idx).T, g3[~m], np.array(np.where(m)).T, method='nearest')
+    x3 = _E['x0'] + np.arange(_E['nx']) * _E['d']; z3 = _E['z0'] + np.arange(_E['nz']) * _E['d']
+    H3 = RectBivariateSpline(z3, x3, g3, kx=1, ky=1, s=0)(np.clip(zs, z3.min(), z3.max()), np.clip(xs, x3.min(), x3.max())) - base
+    R = 150.0; XX, ZZ = np.meshgrid(xs, zs); w = np.ones_like(H)
+    inside = (XX >= x3.min()) & (XX <= x3.max()) & (ZZ >= z3.min()) & (ZZ <= z3.max())
+    for dist, ok in ((XX - x3.min(), x3.min() > gx.min()), (x3.max() - XX, x3.max() < gx.max()), (ZZ - z3.min(), z3.min() > gz.min()), (z3.max() - ZZ, z3.max() < gz.max())):
+        if ok: w = np.minimum(w, np.clip(dist / R, 0, 1))
+    w = np.where(inside, w, 0.0)
+    H = H * (1 - w) + H3 * w
+    print('zona extra', _n, 'relieve mezclado', int(inside.sum()), 'celdas')
 Hq = np.round(H * 10).astype(np.int16)
 hb64 = base64.b64encode(Hq.tobytes()).decode()
 print('base elev', base, 'H range', H.min(), H.max(), nx, nz)

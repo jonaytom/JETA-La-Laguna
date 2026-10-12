@@ -18,8 +18,10 @@
    **Auditor de código** (en cada versión, ANTES de publicar):
    a. Herramientas: solo las de `C:\Users\Jonay\RevisordeCodigo\herramientas\` (copiarlas frescas cada vez). Las
       copias de `repo\tools\auditoria\` son antiguas: no usarlas.
-   b. Línea base: copiar `C:\Users\Jonay\RevisordeCodigo\resultados\historial.json` a la carpeta `resultados/` que está
-      junto a las herramientas (`herramientas/resultados/historial.json`). Sin esto no compara con la versión anterior.
+   b. Línea base: copiar `C:\Users\Jonay\RevisordeCodigo\resultados\historial.json` a `<trabajo>/resultados/` (al lado
+      de `herramientas/`, NO dentro: el auditor v5 lo busca en `../resultados`). Sin esto no compara.
+   **Atajo (ahorra cuota)**: `bash tools/rutina_publicar.sh VERSION archivos…` hace build, auditor, espera y prepara
+      las listas para copiar a `E:\` y a RevisordeCodigo.
    c. Lanzarlo: `nohup python auditar.py --repo <copia del juego> > run.log 2>&1 &` (tarda ~3-4 min) y esperar a que
       termine mirando el log.
    d. Veredicto (`VEREDICTO.md` en la carpeta nueva de `resultados/`):

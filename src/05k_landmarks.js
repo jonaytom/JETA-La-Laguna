@@ -5,6 +5,9 @@ const LANDMARKS = [
   // Hospital Universitario de Canarias (05t_hospital.js): the OSM block is the low podium; slab, tower and helipad on top
   { re: /Área de Hospitalización/, atlas: 15, col: '#e8e3d8', H: 10, deco: ['huc'] },
   { re: /Actividades Ambulatorias/, atlas: 15, col: '#d9e2de', deco: ['glass'], label: 'Actividades Ambulatorias (HUC)' },
+  // health centres of the zones added in v0.59 (La Cuesta: white with green glass; Taco: pale green with white shutters)
+  { re: /^Centro de Salud La Cuesta/, atlas: 15, col: '#eef1ee', deco: ['salud:CENTRO DE SALUD LA CUESTA'], label: 'Centro de Salud La Cuesta' },
+  { re: /^CS Taco$/, atlas: 15, col: '#bccbaa', deco: ['salud:CENTRO DE SALUD TACO'], label: 'Centro de Salud Taco' },
   { re: /^Urgencias$/, atlas: 15, col: '#f2f2ee', deco: ['salud:URGENCIAS'], label: 'Urgencias HUC' },
   { re: /Alvarado-Bracamonte/, hip: true, atlas: 9, col: '#f4f1e8', H: 9.5, quoin: TUFF, deco: ['portal:tuff'], label: 'Casa de los Capitanes' },
   { re: /Palacio Nava/, hip: true, atlas: 9, col: '#b9b3a8', H: 11.5, quoin: GSTONE, deco: ['portal:grey', 'cornice'] },

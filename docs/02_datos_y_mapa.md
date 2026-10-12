@@ -105,3 +105,19 @@ python build.py
   X = −4808 (alineado con la rejilla de 16 m) y funde ambos relieves entre X −2446 y −2300.
 - Regenerar: `python tools/merge_aeropuerto.py && python prep.py && python build.py`.
 - Zona de juego: `WORLD.x0 = −4750` y dos exclusiones al oeste de X −1900 dejan solo el corredor Z −450…1400.
+
+## Ampliar el mapa con zonas nuevas (v0.59: La Cuesta y Taco)
+
+1. **Descarga en el PC de Jonay** (desde la nube no se puede: los servidores de OSM la bloquean):
+   `scripts\descargar_zona.ps1 -Nombre <zona> -X0 .. -X1 .. -Z0 .. -Z1 ..` (metros del juego; `descargar_zonas.bat`
+   lanza las de La Cuesta y Taco). Baja OSM por Overpass (geometría recortada a la zona, 3 servidores con reintentos)
+   y el relieve de Open-Meteo en rejilla de 32 m (100 puntos cada 11 s por su límite). Si un archivo ya está, no se
+   vuelve a bajar. Salida: `data/<zona>_osm_raw.json` y `data/<zona>_elev.json`.
+2. **Integrar**: `python tools/merge_zona.py <zona>` añade a `laguna_osm3.json` solo lo que cae fuera del área de juego
+   anterior (sin duplicados; los tranvías se dejan fuera) y guarda el relieve en `ELEVX[<zona>]`; `prep.py` lo funde
+   con el relieve base (rampa de 150 m en los lados donde hay relieve viejo) y ensancha la rejilla si hace falta.
+3. **Abrir la zona** en `01_core.js`: ampliar `WORLD` y añadir a `WORLD_EXCL` las bandas que no se quieren.
+4. `python prep.py && python build.py`.
+
+Ojo: `tools/merge_aeropuerto.py` regenera `laguna_osm3.json` desde `laguna_osm2.json`; si se vuelve a lanzar, repetir
+después `merge_zona.py lacuesta` y `merge_zona.py taco` (los archivos de las zonas están en `data/`).
