@@ -17,7 +17,7 @@ Los comercios son siempre **parodias** (nunca marcas reales) y la interfaz está
 - Abre `dist/JETA La Laguna.html` en Chrome / Edge / Firefox (PC o móvil). Necesita conexión la primera vez para
   descargar Three.js y las fuentes desde CDN.
 - Controles principales (PC): `WASD` moverse · `Shift` correr · `Espacio` saltar · ratón cámara · `E` usar / entrar ·
-  `F` coche · `Q` puñetazo a pie / cambiar emisora en coche · `Tab` pistola / puños · clic dcho. apuntar · `M` mapa ·
+  `F` coche · `Q` puñetazo a pie / cambiar emisora en coche · `Tab` pistola / puños · clic dcho. apuntar · `M` mapa · `G` brújula sí/no ·
   `Esc` pausa (guardar / cargar, opciones). Mando y pantalla táctil también funcionan.
 
 ## Construir

@@ -9,6 +9,8 @@ Se lanzan con el arnés de `tests/run_test.py` (servidor en `localhost:8765` sir
 | `foto_mapa.py [x z]` | Mapa grande a varios zooms (rótulos, colores). |
 | `foto_marca.py <índice>` | Juega una misión hasta la flecha roja de persecución y la fotografía. |
 | `foto_farmacia.py` | Persecución de la farmacia: robo del coche negro junto al Corola y el mapa con la ruta. |
+| `foto_jugador.py` | Jugador de pie, apuntando con puños y con pistola; lista los accesorios pequeños y dónde quedan. |
+| `sonda_guia.py x z` | Pone al jugador en x z con un destino marcado: dice si se ve la brújula y su altura; foto. |
 | `foto_guia.py` | Flecha guía a pie y en coche con un destino marcado. |
 | `foto_hospital.py` | Tres vistas del HUC y la puerta de cada centro de salud. |
 | `foto_ayuntamiento.py` | Tres vistas de la fachada del Ayuntamiento. |

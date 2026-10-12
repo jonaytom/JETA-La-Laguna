@@ -5,8 +5,27 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 
 ## Por revisar con Jonay
 
-- [ ] **Disco flotante junto al personaje** (Jonay, 12-oct, con capturas): al apuntar se ve algo pequeño y oscuro, como
+- [ ] **Primeras misiones del Obispo: partidos para la obra de la iglesia** (Jonay, 12-oct; va con «El Obispo y el
+      Obispado» y los minijuegos de baloncesto tipo NBA Jam y fútbol tipo Sensible Soccer): jugar partidos de baloncesto
+      y de fútbol para recaudar fondos para la obra de la iglesia; ahí aprendes a jugar los dos minijuegos 2D. Buscar
+      la **cancha de baloncesto y el campo de fútbol más cercanos al Obispado** para esos partidos.
+- [ ] **Farolas y árboles en medio de canchas y campos** (Jonay, 12-oct, bug): no puede haber farolas ni árboles dentro
+      de las canchas de baloncesto ni de los campos de fútbol; quitarlos al colocarlos.
+
+- [ ] **Avenida de La Trinidad: entradas al aparcamiento subterráneo** (Jonay, 12-oct, 8 capturas en
+      `docs/referencias/av_trinidad/`): ahora es un desastre. Adecuar las rampas de entrada y salida a las reales: la
+      del principio (Av. Trinidad 3, Parking Indigo «Trinidad Casco Histórico», rampa azul en medio de la calzada
+      partida) y la de abajo (Av. Trinidad 59, junto al Dialprix, rampa azul pegada a la acera con cuadrícula amarilla).
+      Las calles del juego son más anchas, así que los **edificios tienen que ser más estrechos** para que todo quepa
+      donde está; además hay **zonas que tienen casas y ahora están despejadas**. En esa zona el **tranvía va bajo
+      tierra** y está la **unión con la pasarela del Padre Anchieta**. Incluye el cruce con la C. Pedro Zerolo
+      (cuadrícula amarilla, pasos de peatones) y el lateral con soportales del n.º 76.
+
+- [x] v0.62.0 **Disco flotante junto al personaje** (Jonay, 12-oct, con capturas): al apuntar se ve algo pequeño y oscuro, como
       una moneda, flotando a la altura del pecho al lado del jugador; sale con la pistola y también con los puños.
+- [x] v0.62.0 **Carteles y señales se leen al revés por detrás** (Jonay, 12-oct, captura en Vía de Ronda X 778 Z −351): el
+      cartel verde de calles muestra el texto en espejo desde la parte de atrás; la cara trasera debería ser lisa o
+      llevar el texto al derecho.
 
 - [ ] **Auditoría v0.59.0** (APTO CON AVISOS; memoria 505 → 531 MB y vértices +5 % por las zonas nuevas, sin fugas):
       **76 edificios nuevos invadiendo la calzada** en La Cuesta/Taco (p. ej. Ctra. Gral. La Cuesta-Taco X 2839 Z 2244,
@@ -23,7 +42,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       superpuesta bajo el personaje que apunte hacia él, para no tener que mirar el mapa.
 - [x] v0.60.0 **Carrera solidaria del casco imposible** (Jonay, 12-oct): ~6 min corriendo y no llega a los dos últimos controles
       (tuvo que teletransportarse). Reducir bastante las distancias (y/o el tiempo por control).
-- [ ] **Misiones por zonas** (Jonay, 12-oct): al principio Coco y Sastrón aparecen demasiado lejos; que las primeras
+- [ ] **Misiones por zonas** (Jonay, 12-oct; v0.62.0: Coco y Sastrón ya salen cerca del inicio, falta lo de las zonas): al principio Coco y Sastrón aparecen demasiado lejos; que las primeras
       misiones salgan cerca del inicio. Las siguientes pueden estar algo más lejos, pero cada tanda debería ir por zonas:
       estando en una zona, lo que se hace queda relativamente cerca de ese punto.
 - [x] v0.60.0 **Rutas de carreras y huidas lejos del borde del mapa** (Jonay, 12-oct): si un enemigo o una carrera lleva cerca
@@ -51,7 +70,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 - [ ] **Maleantes en busca y captura** (Jonay, 12-oct): cuando ya sabes pelear (tras las misiones), a veces salen en el
       minimapa NPC marcados con los que puedes pelear como con cualquiera, pero dan más dinero y son más difíciles: más
       combos y se cubren más. Tres niveles internos de dificultad, siempre por encima de la gente normal.
-- [ ] **Nombre de la banda** (Jonay, 12-oct): en «La firma de la banda», la opción «Los Chachos de Aguere» pasa a ser
+- [x] v0.62.0 **Nombre de la banda** (Jonay, 12-oct): en «La firma de la banda», la opción «Los Chachos de Aguere» pasa a ser
       **teclear tu propio nombre**; «Los Magos de La Laguna» pasa a **«Los Magos de Aguere»**; «La Banda del Barraquito»
       se queda. Quedan 3 nombres propuestos más el tuyo.
 - [x] v0.61.0 **Cambio de nombres** (Jonay, 12-oct; para no identificarlos con personas reales): **Ruymán «El Blanco» → Rayco

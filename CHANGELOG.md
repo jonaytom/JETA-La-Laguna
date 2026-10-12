@@ -3,6 +3,27 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.62.1 — 2026-10-12 — Brújula: se ve a pie en todas partes y más pequeña en coche
+- **A pie se veía mal o nada** en aparcamientos, plazas y calles inclinadas: quedaba por debajo del pavimento. Ahora se
+  coloca a la altura de los pies del personaje (o de las ruedas del coche) y solo usa el terreno para inclinarse.
+- **En coche** el aro es poco más ancho que el coche (antes era enorme) y ya no tiembla en las bajadas: la inclinación
+  y la altura se suavizan.
+- **Tecla G**: muestra u oculta la brújula (se puede cambiar en Controles). No se usa la E porque es «usar / entrar».
+
+## 0.62.0 — 2026-10-12 — Brújula más pequeña, círculos fuera de edificios y fallos pequeños
+- **Brújula**: la mitad de tamaño y el doble de trazo; las puntas salen del borde del aro; el aro toma el color del
+  destino que manda (rosa si has marcado un punto en el mapa, si no amarillo de la misión principal). Se apoya en la
+  superficie real y se inclina con ella, y es algo más opaco para verse sobre suelos claros (el aro blanco no se distinguía en plazas de baldosa clara) (ya no se hunde en carreteras peraltadas ni puentes). En coche o camión rodea
+  todo el vehículo con trazo fino y se dibuja por encima de la carrocería.
+- **Círculos de misión fuera de los edificios**: el punto de inicio y los destinos se apartan hasta que el aro entero
+  queda en la calle (p. ej. Coco junto a la Casa Ossuna).
+- **La «moneda» flotante**: era la esfera del reloj, colocada mal (a ~1 m del brazo). Ahora va en la muñeca.
+- **Carteles al revés por detrás**: el cartel verde y los discos de la isleta de Marqués de Celada tienen la parte de
+  atrás lisa y gris; los rótulos del aparcamiento se leen bien por los dos lados.
+- **Nombre de la banda**: puedes escribir tu propio nombre; «Los Magos de Aguere» sustituye a «Los Magos de La Laguna».
+- **Coco y Sastrón** aparecen en dos de los tres sitios del casco más cercanos al inicio.
+- Herramienta nueva `tests/herramientas/foto_jugador.py` (jugador apuntando y accesorios pequeños).
+
 ## 0.61.0 — 2026-10-12 — Brújula a los pies, radio con 20 canciones y nombres nuevos
 - **Brújula a los pies** (sustituye a la flecha grande): un aro fino alrededor del personaje (o del coche) con una punta
   por cada destino activo, siempre en línea recta hacia él: amarilla misión o historia, azul secundaria, roja a quien

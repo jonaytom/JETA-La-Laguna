@@ -86,7 +86,7 @@ function buildRamp(x0, z0, x1, z1, yF, label) {
   const M_ = pkMats(); const dx = (x1 - x0) / Lr, dz = (z1 - z0) / Lr; const px = x0 - dz * 4.2, pz = z0 + dx * 4.2; const y = heightAt(px, pz);
   const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.2, 8), M_.steel); post.position.set(px, y + 1.6, pz); scene.add(post);
   const sg = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 0.08), new THREE.MeshStandardMaterial({ map: pkSignTex('P', '#1d4f9c', '#fff', 128, 128), roughness: 0.5 })); sg.position.set(px, y + 3.0, pz); sg.rotation.y = Math.atan2(-dx, -dz); scene.add(sg);
-  const lb = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.45), new THREE.MeshBasicMaterial({ map: pkSignTex(label, '#1d4f9c', '#fff', 512, 96), side: THREE.DoubleSide })); lb.position.set(px, y + 2.2, pz); lb.rotation.y = Math.atan2(-dx, -dz); scene.add(lb);
+  const lb = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.45), new THREE.MeshBasicMaterial({ map: pkSignTex(label, '#1d4f9c', '#fff', 512, 96), })); lb.position.set(px, y + 2.2, pz); lb.rotation.y = Math.atan2(-dx, -dz); scene.add(lb); { const lb2 = lb.clone(); lb2.rotation.y += Math.PI; scene.add(lb2); } // v0.62: readable from both sides (DoubleSide showed it mirrored)
   COL.addCirc(px, pz, 0.12);
 }
 // pedestrian stairwell: a glass pavilion on the surface over a stair that goes down into the hall

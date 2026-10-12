@@ -64,8 +64,12 @@
   pantalla por prioridad y sin pisarse (`drawLabels`): de lejos barrios y lugares importantes; desde zoom 0,9 las
   grandes superficies (tipo 5), desde 1,2 las entradas visitables y desde 2,2 las tiendas. Colores de texto (blanco,
   crema, gris, verde de las entradas) distintos de los de rutas y marcas (amarillo, azul, rosa, rojo).
-- **Brújula a los pies** (`11c_guide.js`, v0.61): aro fino alrededor del personaje (×3 alrededor del coche) con una
-  punta por destino activo (`MISSIONS.blips()` y `GPS.target`), en línea recta: amarilla, azul, roja o rosa.
+- **Brújula a los pies** (`11c_guide.js`, v0.61, rehecha en v0.62): aro de 0,4 m de radio alrededor del personaje con
+  una punta por destino activo (`MISSIONS.blips()` y `GPS.target`) saliendo del borde, en línea recta: amarilla, azul,
+  roja o rosa. El aro toma el color del destino que manda (rosa tu marca, si no amarillo). Se inclina con la superficie
+  (`heightAt`/`deckAt`). Altura desde los pies (`PLAYER.y` / `car.y` + 0,04; las calles y plazas se dibujan por encima de `heightAt`), inclinación y altura suavizadas. En vehículo, radio = medio ancho + 0,45 m, trazo fino y sin prueba de profundidad. `G` la oculta.
+- **Círculos de misión** (`ringClear(x, z, r)` en `12_missions.js`): `goto` y los puntos de inicio se apartan hasta 6 m
+  para que el aro entero quede fuera de los edificios.
 - `MISSIONS.kit.track(x, z)`: objetivo que se mueve (un coche que perseguir): círculo amarillo y ruta GPS sin columna
   de luz; se actualiza cada 0,8 s.
 
@@ -129,7 +133,7 @@
 ## Modo Achamán (`12c_achaman.js`)
 
 Desde el menú de inicio: vuelo libre (WASD, E/Q subir/bajar, Shift rápido), dron en órbita y vista cenital
-(`V` cambia), `M` mapa con teletransporte. `Esc` vuelve al menú.
+(`V` cambia), `M` mapa con teletransporte, `G` muestra u oculta la brújula. `Esc` vuelve al menú.
 
 ## Zona de juego y límites (`01_core.js`, `08b_border.js`)
 

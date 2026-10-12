@@ -10,7 +10,7 @@ AUTO = r"""() => {
   const d = __dbg, M = d.MISSIONS, P = d.PLAYER, m = M.active; if (!m) return 'idle';
   const S = m.st || {}; const T = window.__TALK;
   if (T && T.cur) { T.cur.next(); return 'talk'; }
-  if (d.DLG.open) { const b = document.getElementById('dlgopt0'); if (b) b.click(); return 'dlg'; }
+  if (d.DLG.open) { const b = document.getElementById('dlgopt0'); if (b) b.click(); else { const i = document.querySelector('#dlgOpts input'); if (i) { i.value = 'Los Probadores de Aguere'; document.querySelector('#dlgOpts button').click(); } } return 'dlg'; }
   if (d.FIGHT2D.running) { const s = d.FIGHT2D._st(); if (s) { if (s.phase === 'ready') s.readyTap = true; if (s.phase === 'fight' && s.b && !s.b.ko) { s.b.hp = 0; s.b.ko = true; } } return 'fight'; }
   for (const t of d.WEAPON.targets) if (!t.hit && t.npc && !t.npc.down && d.WEAPON.onHit) { d.WEAPON.onHit(t); return 'shot'; }
   const put = (x, z) => { const c = P.car; if (c) { c.x = x; c.z = z; c.vx = c.vz = 0; c.fwdV = 0; c.speed = 0; } P.x = x; P.z = z; };

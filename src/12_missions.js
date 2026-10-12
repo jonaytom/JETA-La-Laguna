@@ -29,7 +29,15 @@ const DLG = (() => {
   function pickIdx(i) { if (!onPick) return; const cb = onPick; onPick = null; cb(i); }
   function hide() { $('dlg').style.display = 'none'; onPick = null; if (GAME.state === 'dialog') { GAME.state = 'play'; GAME.lock(); } }
   window.addEventListener('keydown', (e) => { if ($('dlg').style.display !== 'block') return; const n = parseInt(e.key, 10); if (n >= 1 && n <= opts.length) pickIdx(n - 1); if ((e.key === 'Enter' || e.key === ' ') && !opts.length && onPick) pickIdx(0); });
-  return { show, hide, get open() { return $('dlg').style.display === 'block'; } };
+  // free text answer (v0.62: your own gang name): a text box and a button inside the dialog; game keys don't fire while typing
+  function ask(who, title, text, q, ph, max, cb) {
+    show(who, title, text, q, [], null); const box = $('dlgOpts'); const inp = document.createElement('input'); inp.type = 'text'; inp.maxLength = max; inp.placeholder = ph;
+    inp.style.cssText = 'width:100%;box-sizing:border-box;padding:10px 12px;font:inherit;font-size:18px;border-radius:8px;border:2px solid #f5b72e;background:#111a;color:#fff;margin-bottom:8px';
+    const ok = document.createElement('button'); ok.innerHTML = '<kbd>↵</kbd>Firmar'; const go = () => { const v = inp.value.replace(/[<>&"]/g, '').replace(/\s+/g, ' ').trim(); if (v.length < 2) { inp.focus(); return; } cb(v); };
+    ok.addEventListener('click', go); inp.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') go(); }); inp.addEventListener('keyup', (e) => e.stopPropagation());
+    box.appendChild(inp); box.appendChild(ok); setTimeout(() => inp.focus(), 50);
+  }
+  return { show, hide, ask, get open() { return $('dlg').style.display === 'block'; } };
 })();
 const NPC = {};
 // never leave a character or a goal inside a (non-visitable) building: move it to the nearest open street/park spot
@@ -40,6 +48,13 @@ function openSpotNear(x, z, pref = 0) {
   for (const r of [2.0, 2.6, 3.2, 4.0]) for (let k = 0; k < 16; k++) { const a = pref + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * Math.PI / 8; const px = x + Math.sin(a) * r, pz = z + Math.cos(a) * r;
     if (inAnyBuilding(px, pz) || COL.nearSeg(px, pz, 1.0) || lowAt(px, pz, heightAt(px, pz))) continue; const q = COL.resolve(px, pz, 1.0); if (Math.hypot(q.x - px, q.z - pz) > 0.02) continue; return [px, pz]; }
   return [x + 1.4, z + 1.4];
+}
+// a mission circle must not cut into a building: move its centre (up to ~6 m) until the whole ring stands in the open (Jonay, v0.62)
+function ringClear(x, z, r) {
+  const ok = (a, b) => { if (inAnyBuilding(a, b) || COL.nearSeg(a, b, r * 0.8)) return false; for (let k = 0; k < 8; k++) { const t = k / 8 * Math.PI * 2; if (inAnyBuilding(a + Math.cos(t) * r * 0.95, b + Math.sin(t) * r * 0.95)) return false; } return true; };
+  if (ok(x, z)) return [x, z];
+  for (let d = 0.5; d <= 6; d += 0.5) for (let k = 0; k < 16; k++) { const t = k / 16 * Math.PI * 2, a = x + Math.cos(t) * d, b = z + Math.sin(t) * d; if (ok(a, b) && !lowAt(a, b, heightAt(a, b))) return [a, b]; }
+  return [x, z];
 }
 function safeSpot(x, z, clear = 0.7) {
   const ok = (a, b, strict) => !inAnyBuilding(a, b) && !COL.nearSeg(a, b, clear) && (!strict || !onCarriageway(a, b, 0.3)) && !lowAt(a, b, heightAt(a, b));
@@ -99,7 +114,7 @@ const MISSIONS = (() => {
     my.next = next; next(); };
   const setObjective = (t) => { const o = $('objective'); if (!t) { o.style.display = 'none'; return; } o.style.display = 'block'; o.innerHTML = t + (timer > 0 ? `<span class="t" id="mtimer"></span>` : ''); };
   function clearBeacon() { if (beacon) { BEACON.free(beacon); beacon = null; } }
-  function goto(x, z, r, color) { [x, z] = safeSpot(x, z, 0.3); clearBeacon(); beacon = BEACON.make(x, z, r, 7, color); data.goal = [x, z, r]; updateGPS(true); }
+  function goto(x, z, r, color) { [x, z] = safeSpot(x, z, 0.3); [x, z] = ringClear(x, z, r); clearBeacon(); beacon = BEACON.make(x, z, r, 7, color); data.goal = [x, z, r]; updateGPS(true); }
   function finish() { if (data.rival && data.rival.mode === 'race') { data.rival.mode = 'physics'; data.rival.driver = null; data.rival.ctl.brk = 1; } clearBeacon(); setObjective(null); const tr = TRACKS[activeTrack]; active = null; activeTrack = null; timer = 0; data = {}; GPS.path = null; return tr; }
   function pass(title, money, keepIdx) { const tr = finish(); if (!keepIdx) tr.idx++; PLAYER.money += money; setTimeout(() => { try { SAVE.auto('Misión superada: ' + title); } catch (e) { } }, 1500); MUSIC.jingle(); HUD.big('¡MISIÓN SUPERADA!', '#f5b72e', 4); HUD.toast(title + (money ? '  +$' + money : ''), '#7fe08a', 4); setTimeout(placeStarts, 2500); }
   function fail(reason, noRetry) { const m = active, k = activeTrack; finish(); AUDIO.fail(); HUD.big('MISIÓN FALLIDA', '#e04848', 3.5); HUD.toast(reason, '#ffb3b3', 4); setTimeout(placeStarts, 2500); if (m && !noRetry) offerRetry(m, k); }
@@ -235,15 +250,21 @@ const MISSIONS = (() => {
           ['Boca Papa', 'Muy bonito, Chopa, se me caen las lágrimas. Ahora ponle nombre y firma aquí, en esta servilleta del bar.'],
         ], () => {
           if (active !== this) return;
-          const names = ['Los Chachos de Aguere', 'La Banda del Barraquito', 'Los Guanches del Casco', 'Los Magos de La Laguna'];
-          DLG.show('La firma de la banda', '¿Cómo se va a llamar la banda?', 'Boca Papa saca un boli mordido. Todos te miran. El Blanco hace <b>brrr</b>.', 'Elige el nombre:', names, (i) => {
-            DLG.hide(); GANG.formed = true; GANG.name = names[i]; GANG.members = ['Boca Papa', 'Rayco «El Blanco»', 'Coco', 'Sastrón'];
-            HUD.big(names[i].toUpperCase(), '#f5b72e', 6); MUSIC.jingle();
-            setTimeout(() => talk([['Boca Papa', `¡${names[i]}! Suena a leyenda. Tú eres el jefe, Chopa. Aquí empieza la historia.`], ['Boca Papa', 'Pero antes una lección, que te veo flojo de la cárcel: un jefe tiene que comer. Ven a verme y te explico.']], () => {
+          // v0.62: the first option lets you type your own name (Jonay)
+          const names = ['✎ Escribir mi propio nombre', 'La Banda del Barraquito', 'Los Guanches del Casco', 'Los Magos de Aguere'];
+          const sign = (name) => {
+            DLG.hide(); GANG.formed = true; GANG.name = name; GANG.members = ['Boca Papa', 'Rayco «El Blanco»', 'Coco', 'Sastrón'];
+            HUD.big(name.toUpperCase(), '#f5b72e', 6); MUSIC.jingle();
+            setTimeout(() => talk([['Boca Papa', `¡${name}! Suena a leyenda. Tú eres el jefe, Chopa. Aquí empieza la historia.`], ['Boca Papa', 'Pero antes una lección, que te veo flojo de la cárcel: un jefe tiene que comer. Ven a verme y te explico.']], () => {
               // everybody goes back to their spots; El Blanco to his parents' door
               moveNPC(NPC.blanco, NPC.blanco.home[0], NPC.blanco.home[1]); moveNPC(NPC.coco, NPC.coco.home[0], NPC.coco.home[1]); moveNPC(NPC.sastron, NPC.sastron.home[0], NPC.sastron.home[1]);
               pass('La banda está firmada', 500); }), 2500);
+          };
+          const pick = () => DLG.show('La firma de la banda', '¿Cómo se va a llamar la banda?', 'Boca Papa saca un boli mordido. Todos te miran. El Blanco hace <b>brrr</b>.', 'Elige el nombre:', names, (i) => {
+            if (i > 0) { sign(names[i]); return; }
+            DLG.ask('La firma de la banda', 'Tu propio nombre', 'Boca Papa te pasa el boli y la servilleta. «Venga, jefe, que no tenemos toda la tarde.»', 'Escribe el nombre de la banda:', 'Los … de Aguere', 28, sign);
           });
+          pick();
         });
       },
       update() { },
@@ -377,7 +398,7 @@ const MISSIONS = (() => {
     { title: 'Revancha con el Canarión', who: 'el Canarión', startPos() { return [NPC.canarion.x + 1.4, NPC.canarion.z + 1.4]; }, start() { startRace(this, false); }, update(dt) { raceUpdate(this, dt); } }];
   const TRACKS = { story: { list: STORY, idx: 0, beacon: null, color: 0xf5b72e, css: '#f5b72e' }, side: { list: SIDE, idx: 0, beacon: null, color: 0x5ec8ff, css: '#5ec8ff', open: false } };
   function placeStarts() {
-    for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon) { BEACON.free(tr.beacon); tr.beacon = null; } if (active || tr.idx >= tr.list.length) continue; if (k === 'side' && (!tr.open || PLAYER.money >= SASTRON_FEE)) continue; const sp = tr.list[tr.idx].startPos(); tr.beacon = BEACON.make(sp[0], sp[1], 1.4, 3, tr.color); if (k === 'story' && !active) { const h = tr.list[tr.idx].hint; if (h) setObjective('Siguiente: ' + h()); setWaypoint(sp[0], sp[1], true); } }
+    for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon) { BEACON.free(tr.beacon); tr.beacon = null; } if (active || tr.idx >= tr.list.length) continue; if (k === 'side' && (!tr.open || PLAYER.money >= SASTRON_FEE)) continue; const sp = ringClear(...tr.list[tr.idx].startPos(), 1.4); tr.beacon = BEACON.make(sp[0], sp[1], 1.4, 3, tr.color); if (k === 'story' && !active) { const h = tr.list[tr.idx].hint; if (h) setObjective('Siguiente: ' + h()); setWaypoint(sp[0], sp[1], true); } }
     if (TRACKS.story.idx >= STORY.length && !TRACKS.story.done) { TRACKS.story.done = true; setObjective(null); HUD.big((GANG.name || 'TU BANDA').toUpperCase(), '#f5b72e', 5); HUD.toast('Ya puedes moverte libremente por La Laguna. La historia continuará…', '#f5b72e', 8); }
   }
   // interesting spots of the historic centre: Coco and Sastrón show up near two of them (random every game)
@@ -413,7 +434,8 @@ const MISSIONS = (() => {
         const sp0 = safeSpot(bx, bz, 0.6); const r = COL.resolve(sp0[0], sp0[1], 0.6); NPC.boca = { x: r.x, z: r.z, H: h, home: [r.x, r.z] }; NPC.boca.start = openSpotNear(r.x, r.z, tw ? Math.atan2(r.x - tw.x, r.z - tw.z) : 0);
         h.root.position.set(r.x, heightAt(r.x, r.z) + 0.17, r.z); h.root.add(box); h.root.add(crate); h.root.rotation.y = face; scene.add(h.root); COL.addCirc(r.x, r.z, 0.5); }
       // two random interesting spots of the historic centre for Coco and Sastrón
-      const avail = SPOTS.map(([k, n]) => { const p = spotNear(k); return p ? { p, n } : null; }).filter(Boolean).sort(() => Math.random() - 0.5);
+      const B0 = NPC.boca || { x: -150, z: -150 }; // v0.62: the first missions stay near the start (Jonay): two of the three spots closest to Boca Papa, at random
+      const avail = SPOTS.map(([k, n]) => { const p = spotNear(k); return p ? { p, n, d: Math.hypot(p[0] - B0.x, p[1] - B0.z) } : null; }).filter(Boolean).sort((a, b) => a.d - b.d).slice(0, 3).sort(() => Math.random() - 0.5);
       const sc = avail[0] || { p: [-150, -150], n: 'el casco' }, ss = avail[1] || { p: [-200, -300], n: 'la Calle Herradores' };
       // Coco: bald ex-boxer, sleeps rough
       NPC.coco = mkNPC({ skin: 0xd9a27e, shirt: 0x7d7f6a, pants: 0x4b4a3f, hair: 0x6b5b4b, shoes: 0x3a2f25, scale: 1.0, female: false, beard: true, sleeve: true, longPants: true, hairStyle: null, hd: true, jacket: 0x5d4b3a, bag: 0x3f4c56, sole: 0x222222 }, sc.p[0], sc.p[1], (h) => {

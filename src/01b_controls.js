@@ -8,7 +8,7 @@ const CONTROLS = (() => {
     A('left', 'Izquierda', 'Juego', ['KeyA', 'ArrowLeft']), A('right', 'Derecha', 'Juego', ['KeyD', 'ArrowRight']),
     A('run', 'Correr', 'Juego', ['ShiftLeft']), A('walk', 'Andar despacio', 'Juego', ['KeyC', 'AltLeft']), A('jump', 'Saltar / freno de mano', 'Juego', ['Space']),
     A('punch', 'Puñete (a pie) · cambiar radio (en coche)', 'Juego', ['KeyQ']), A('car', 'Entrar / salir del coche', 'Juego', ['KeyF']), A('use', 'Usar / entrar en edificios', 'Juego', ['KeyE']),
-    A('horn', 'Claxon', 'Juego', ['KeyH']), A('flip', 'Enderezar coche', 'Juego', ['KeyR']), A('map', 'Mapa (GPS)', 'Juego', ['KeyM']), A('weap', 'Cambiar arma', 'Juego', ['Tab']),
+    A('horn', 'Claxon', 'Juego', ['KeyH']), A('flip', 'Enderezar coche', 'Juego', ['KeyR']), A('map', 'Mapa (GPS)', 'Juego', ['KeyM']), A('guide', 'Mostrar / ocultar la brújula', 'Juego', ['KeyG']), A('weap', 'Cambiar arma', 'Juego', ['Tab']),
     A('pause', 'Pausa', 'Juego', ['KeyP', 'Escape']),
     A('f_punch', 'Puñetazo', 'Pelea', ['KeyJ', 'KeyU', 'ShiftRight']), A('f_kick', 'Patada', 'Pelea', ['KeyK', 'KeyI', 'ControlRight']), A('f_block', 'Cubrirse (siempre)', 'Pelea', ['KeyL']),
   ];
