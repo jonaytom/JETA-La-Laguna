@@ -1,6 +1,10 @@
 import json,re,glob,sys,os,shutil
 ROOT=os.path.dirname(os.path.abspath(__file__)); os.chdir(ROOT)
 tpl=open('template.html',encoding='utf-8').read()
+# v0.66: a «//» note that swallowed code behind it on the same line breaks the game silently: stop the build
+sys.path.insert(0, os.path.join(ROOT, 'tools')); from comentarios_que_comen import revisar as _rev
+_m = _rev()
+if _m: print('FALLA EL BUILD: comentario «//» que se traga código (cámbialo por /* … */ o parte la línea):\n' + '\n'.join(_m)); sys.exit(1)
 js='\n'.join(open(f,encoding='utf-8').read() for f in sorted(glob.glob('src/*.js')))
 D=json.load(open('data/data.json',encoding='utf-8'))
 SH=[]

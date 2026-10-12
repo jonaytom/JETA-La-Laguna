@@ -3,6 +3,16 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.66.1 — 2026-10-12 — Baloncesto más fácil y pruebas solo de lo cambiado
+- **Baloncesto**: más fácil en general: todos se mueven más despacio (los rivales flojos, más aún), la CPU roba y empuja mucho menos
+  (tú robas más), falla más tiros y mates (¡al hierro!) y tus tapones a los mates entran la mitad de las veces. El
+  primer partido del Obispo, los retos de las canchas y el Torneo Lagunero bajan un punto de dificultad.
+- **Pruebas por zonas**: `PRUEBAS.bat` (y la orden `pruebas`) solo prueba lo que ha cambiado desde la última tanda
+  que pasó (huellas de cada archivo + `scripts/pruebas/categorias.json`) más las de la versión, con una sola carga del juego; las que fallan se repiten aparte.
+- El trabajador va diciendo qué prueba hace (con una frase de qué comprueba) y el sonido de las pruebas va silenciado.
+- `build.py` se para si un comentario `//` se ha tragado código detrás (pasó 3 veces en la 0.66: jugadores invisibles y
+  jugadores quietos).
+
 ## 0.66.0 — 2026-10-12 — Diario de misiones, Torneo Lagunero y baloncesto más cerca
 - **Diario de misiones (J)**: sobreimpreso, con las 4 líneas (Historia, El Canarión, El Obispo, Torneo Lagunero), el
   estado de cada misión, qué hacer en la siguiente y **todas las conversaciones** de cada misión (se guardan con la
@@ -13,9 +23,6 @@ el título de la entrada más reciente como mensaje del commit.
     borde para quien queda fuera.
   - La zona verde del tiro es más ancha cerca de la canasta y más estrecha de lejos.
   - La CPU ya no tira desde su campo, y los equipos flojos fallan casi todo (sobre todo de lejos).
-  - Más fácil en general: todos se mueven más despacio (los rivales flojos, más aún), la CPU roba y empuja mucho menos
-    (tú robas más), falla más tiros y mates (¡al hierro!) y tus tapones a los mates entran la mitad de las veces. El
-    primer partido del Obispo, los retos de las canchas y el Torneo Lagunero bajan un punto de dificultad.
   - Combos con un 20 % más de tiempo.
   - Jugadores, aro y balón un 30 % más grandes respecto a la cancha (se veían pequeños).
   - Fondos distintos: cancha de la calle, patio de colegio y pabellón cubierto.
@@ -29,8 +36,6 @@ el título de la entrada más reciente como mensaje del commit.
 - **Torneo Lagunero** (círculo naranja; se abre al ganar el primer partido): 4 equipos en canchas de la ciudad, cada
   uno más difícil, y **la final en el Pabellón Juan Ríos Tejera** (puerta morada y cartel en la C. Leopoldo de la Rosa
   Olivera; dentro, cancha de parqué con gradas).
-- **Pruebas por zonas**: `PRUEBAS.bat` (y la orden `pruebas`) solo prueba lo que ha cambiado desde la última tanda
-  que pasó (huellas de cada archivo + `scripts/pruebas/categorias.json`) más las de la versión, con una sola carga del juego; las que fallan se repiten aparte.
 - Trabajador: `auditar` como `auditar_jeta.bat` (resultados en `resultados_pc`), `subir_git` (sube ya a GitHub) y
   `borrar_auditoria_vieja`.
 

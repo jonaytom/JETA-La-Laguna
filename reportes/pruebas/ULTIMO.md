@@ -1,48 +1,51 @@
-# Pruebas 0.66.0 — 2026-10-12 21:57 — 6/7 OK
+# Pruebas 0.66.1 — 2026-10-12 22:17 — 8/8 OK
 
-Listas: cambios, version. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 328 s en total.
+Listas: cambios, version. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 176 s en total.
 
 | # | Prueba | Resultado | Tiempo |
 |---|---|---|---|
 | 1 | `prueba_arranque.py` | **OK** | 12 s |
-| 2 | `prueba_baloncesto.py` | **FALLA** (repetida aparte) | 139 s |
-| 3 | `prueba_obispo.py` | **OK** | 8 s |
-| 4 | `prueba_canchas.py` | **OK** | 4 s |
-| 5 | `prueba_diario.py` | **OK** | 0 s |
-| 6 | `prueba_panel_controles.py` | **OK** | 16 s |
-| 7 | `herramientas/foto_noche.py -42 -239 5` | **OK** | 3 s |
+| 2 | `prueba_guardar_cargar.py` | **OK** | 3 s |
+| 3 | `prueba_baloncesto.py` | **OK** | 106 s |
+| 4 | `prueba_canchas.py` | **OK** | 5 s |
+| 5 | `prueba_obispo.py` | **OK** | 7 s |
+| 6 | `prueba_diario.py` | **OK** | 0 s |
+| 7 | `prueba_panel_controles.py` | **OK** | 16 s |
+| 8 | `herramientas/foto_noche.py -42 -239 5` | **OK** | 3 s |
 
 ## Detalle
 
-**Archivos cambiados desde la última tanda de pruebas** (eligen las pruebas): `src/09f_basket2d.js`, `src/12g_obispo.js`, `src/12i_canchas.js`, `tests/prueba_baloncesto.py`, `tools/trabajador.py`
+**Archivos cambiados desde la última tanda de pruebas** (eligen las pruebas): `build.py`, `scripts/pruebas/sonda_basket.txt`, `scripts/publicar.log`, `src/09f_basket2d.js`, `src/12i_canchas.js`, `tests/herramientas/LEEME.md`, `tests/herramientas/sonda_baloncesto.py`, `tests/prueba_baloncesto.py`, `tools/comentarios_que_comen.py`, `tools/pruebas_locales.py`, `tools/trabajador.py`
 
 ### 1. prueba_arranque.py — OK
 
 ```
-30 pasos (ms): {'mediana': 33, 'peor': 213, 'estado': 'play'}
+30 pasos (ms): {'mediana': 36, 'peor': 113, 'estado': 'play'}
 errores JS []
 ARRANQUE OK
 ```
 
-### 2. prueba_baloncesto.py — FALLA (repetida aparte)
+### 2. prueba_guardar_cargar.py — OK
 
 ```
-En la carga compartida falló por:
-PARTIDO CPU FALLA
-equilibrio primer partido [0, 0] FALLA: los rivales del primer partido anotan demasiado
-BALONCESTO FALLA
---- repetida aparte:
-shot ms 2.2999999970197678
-{"frame":562,"calls":4766,"triangles":6520230,"points":0,"lines":1512} calls:4766
+saved {"v":1,"t":1791839705346,"label":"test","player":{"x":-188.85220316222484,"z":783.1196180571543,"h":0,"health":77,"money":1234},"car":{"type":"bus","model":null,"color":2067020,"h":-0.1292194454060533,"x":-190.85220316222484,"z":783.1196180571543},"weapon":{"has":true,"ammo":4,"out":true},"tod":15.5
+after {"st":"play","m":{"v":2,"story":3,"storyDone":false,"side":0,"sideOpen":false,"obispo":0,"torneo":0,"log":{},"gang":{"formed":false,"name":"","members":[],"sastronTut":false,"defenders":false,"patrol":false,"basketTut":false},"active":null},"money":1234,"hp":77,"tod":15.5,"car":true,"w":true,"ammo":4,"title":"La firma de la banda"}
+latest 2
+ERR []
+```
+
+### 3. prueba_baloncesto.py — OK
+
+```
 foto basket_inicio
 foto basket_partido
-cpu {'ph': 'play', 'sc': [0, 0], 'clock': 0, 'golden': True}
-resultado null
-PARTIDO CPU FALLA
-partido fácil 1 [0, 0]
-partido fácil 2 [0, 0]
-partido fácil 3 [0, 0]
-equilibrio primer partido [0, 0] FALLA: los rivales del primer partido anotan demasiado
+cpu {'ph': 'end', 'sc': [8, 2], 'clock': 0, 'golden': False}
+resultado {"won":true,"score":[8,2]}
+PARTIDO CPU OK
+partido fácil 1 [22, 0]
+partido fácil 2 [24, 0]
+partido fácil 3 [23, 0]
+equilibrio primer partido [69, 0] OK
 jugadores dibujados 62
 snap baloncesto_tamano
 clic derecho {"ev":{"pass":true},"mode":"pass"}
@@ -61,22 +64,7 @@ TUTORIAL OK
 cambio de defensor -> COCO
 fin {"won":true,"score":[9,2]} estado play
 errores JS []
-BALONCESTO FALLA
-```
-
-### 3. prueba_obispo.py — OK
-
-```
-info {'ok': True, 'front': [-42.17756237061555, -235.8174924176035], 'obispo': True, 'court': {'kind': 'bb', 'dist': 226, 'x': -50, 'z': -461}, 'lampsInCourts': 0, 'treesInCourts': 27, 'pitches': 161}
-alcanzable {'beacon': True, 'enCasa': False, 'choca': False, 'obispoEnCasa': False, 'dist': 1.3999999999999984}
-snap obispado
-activa Un partido por la Catedral
-meta (puerta del Máyex) [-63.254694489991394,-417.0525250427158,2.2]
-partido en marcha True
-estado 1 None
-torneo abierto True círculo naranja True
-errores JS []
-OBISPO OK
+BALONCESTO OK
 ```
 
 ### 4. prueba_canchas.py — OK
@@ -144,7 +132,22 @@ errores JS []
 CANCHAS OK
 ```
 
-### 5. prueba_diario.py — OK
+### 5. prueba_obispo.py — OK
+
+```
+info {'ok': True, 'front': [-42.17756237061555, -235.8174924176035], 'obispo': True, 'court': {'kind': 'bb', 'dist': 226, 'x': -50, 'z': -461}, 'lampsInCourts': 0, 'treesInCourts': 21, 'pitches': 161}
+alcanzable {'beacon': True, 'enCasa': False, 'choca': False, 'obispoEnCasa': False, 'dist': 1.3999999999999984}
+snap obispado
+activa Un partido por la Catedral
+meta (puerta del Máyex) [-63.254694489991394,-417.0525250427158,2.2]
+partido en marcha True
+estado 1 None
+torneo abierto True círculo naranja True
+errores JS []
+OBISPO OK
+```
+
+### 6. prueba_diario.py — OK
 
 ```
 activa Una botella para Coco
@@ -157,7 +160,7 @@ errores JS []
 DIARIO OK
 ```
 
-### 6. prueba_panel_controles.py — OK
+### 7. prueba_panel_controles.py — OK
 
 ```
 true
@@ -168,12 +171,12 @@ teclas {"walk":0,"jump":true,"jab":true,"kick":true}
 TECLAS OK
 ```
 
-### 7. herramientas/foto_noche.py -42 -239 5 — OK
+### 8. herramientas/foto_noche.py -42 -239 5 — OK
 
 ```
 fotogramas 0-1: 0.01 % de píxeles cambian
 fotogramas 1-2: 0.01 % de píxeles cambian
-fotogramas 2-3: 0.00 % de píxeles cambian
+fotogramas 2-3: 0.01 % de píxeles cambian
 ```
 
 Fotos/archivos nuevos en `tests/shots/`: baloncesto_tamano.jpg, basket_inicio.jpg, basket_partido.jpg, basket_tutorial.jpg, basket_zoom.jpg, entrada_mayex.jpg, entrada_rios_tejera.jpg, fightgo.png, noche_1.jpg, noche_2.jpg, obispado.jpg, ready.png

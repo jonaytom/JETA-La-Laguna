@@ -191,7 +191,7 @@ const BASKET2D = (() => {
       if (ctl) { mx = (held('vR') ? 1 : 0) - (held('vL') ? 1 : 0); mz = (held('vD') ? 1 : 0) - (held('vU') ? 1 : 0); run = held('vT') && p.turbo > 0; }
       else { const a = aiThink(p, dt); const dx = a.tx - p.x, dz = a.tz - p.z, L = Math.hypot(dx, dz); if (L > 0.25) { mx = dx / L; mz = dz / L; } run = a.run && p.turbo > 0; }
       const L = Math.hypot(mx, mz); if (L > 1) { mx /= L; mz /= L; }
-      const sp = (run ? 6.4 : 4.1) * (p.team === 1 ? 0.8 + 0.25 * p.lv : 1); // v0.66: slower all round; weak rivals slower still p.vx = lerp(p.vx, mx * sp, 0.25); p.vz = lerp(p.vz, mz * sp * 0.8, 0.25);
+      const sp = (run ? 6.4 : 4.1) * (p.team === 1 ? 0.8 + 0.25 * p.lv : 1); /* v0.66: slower all round; weak rivals slower still */ p.vx = lerp(p.vx, mx * sp, 0.25); p.vz = lerp(p.vz, mz * sp * 0.8, 0.25);
       if (run && L > 0.1) { p.turbo = Math.max(0, p.turbo - dt * 0.38); if (st.ev && p.human) st.ev.turbo = (st.ev.turbo || 0) + dt; } else p.turbo = Math.min(1, p.turbo + dt * 0.16);
       if (Math.abs(p.vx) > 0.3) p.dir = Math.sign(p.vx);
       if (p.human && L > 0.1 && st.ev) st.ev.walk = (st.ev.walk || 0) + dt;

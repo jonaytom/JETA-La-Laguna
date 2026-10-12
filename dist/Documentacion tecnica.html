@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.66.0</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.66.1</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -1595,6 +1595,17 @@ que el cambio no obligue a tocar la lógica del juego.</p>
 <section id="s11"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.66.1 — 2026-10-12 — Baloncesto más fácil y pruebas solo de lo cambiado</h2>
+<ul>
+<li><strong>Baloncesto</strong>: más fácil en general: todos se mueven más despacio (los rivales flojos, más aún), la CPU roba y empuja mucho menos
+  (tú robas más), falla más tiros y mates (¡al hierro!) y tus tapones a los mates entran la mitad de las veces. El
+  primer partido del Obispo, los retos de las canchas y el Torneo Lagunero bajan un punto de dificultad.</li>
+<li><strong>Pruebas por zonas</strong>: <code>PRUEBAS.bat</code> (y la orden <code>pruebas</code>) solo prueba lo que ha cambiado desde la última tanda
+  que pasó (huellas de cada archivo + <code>scripts/pruebas/categorias.json</code>) más las de la versión, con una sola carga del juego; las que fallan se repiten aparte.</li>
+<li>El trabajador va diciendo qué prueba hace (con una frase de qué comprueba) y el sonido de las pruebas va silenciado.</li>
+<li><code>build.py</code> se para si un comentario <code>//</code> se ha tragado código detrás (pasó 3 veces en la 0.66: jugadores invisibles y
+  jugadores quietos).</li>
+</ul>
 <h2>0.66.0 — 2026-10-12 — Diario de misiones, Torneo Lagunero y baloncesto más cerca</h2>
 <ul>
 <li><strong>Diario de misiones (J)</strong>: sobreimpreso, con las 4 líneas (Historia, El Canarión, El Obispo, Torneo Lagunero), el
@@ -1606,9 +1617,6 @@ el título de la entrada más reciente como mensaje del commit.</p>
     borde para quien queda fuera.</li>
 <li>La zona verde del tiro es más ancha cerca de la canasta y más estrecha de lejos.</li>
 <li>La CPU ya no tira desde su campo, y los equipos flojos fallan casi todo (sobre todo de lejos).</li>
-<li>Más fácil en general: todos se mueven más despacio (los rivales flojos, más aún), la CPU roba y empuja mucho menos
-    (tú robas más), falla más tiros y mates (¡al hierro!) y tus tapones a los mates entran la mitad de las veces. El
-    primer partido del Obispo, los retos de las canchas y el Torneo Lagunero bajan un punto de dificultad.</li>
 <li>Combos con un 20 % más de tiempo.</li>
 <li>Jugadores, aro y balón un 30 % más grandes respecto a la cancha (se veían pequeños).</li>
 <li>Fondos distintos: cancha de la calle, patio de colegio y pabellón cubierto.</li>
@@ -1622,8 +1630,6 @@ el título de la entrada más reciente como mensaje del commit.</p>
 <li><strong>Torneo Lagunero</strong> (círculo naranja; se abre al ganar el primer partido): 4 equipos en canchas de la ciudad, cada
   uno más difícil, y <strong>la final en el Pabellón Juan Ríos Tejera</strong> (puerta morada y cartel en la C. Leopoldo de la Rosa
   Olivera; dentro, cancha de parqué con gradas).</li>
-<li><strong>Pruebas por zonas</strong>: <code>PRUEBAS.bat</code> (y la orden <code>pruebas</code>) solo prueba lo que ha cambiado desde la última tanda
-  que pasó (huellas de cada archivo + <code>scripts/pruebas/categorias.json</code>) más las de la versión, con una sola carga del juego; las que fallan se repiten aparte.</li>
 <li>Trabajador: <code>auditar</code> como <code>auditar_jeta.bat</code> (resultados en <code>resultados_pc</code>), <code>subir_git</code> (sube ya a GitHub) y
   <code>borrar_auditoria_vieja</code>.</li>
 </ul>

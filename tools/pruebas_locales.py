@@ -69,7 +69,7 @@ def cambios():
             m = re.search(rx, f)
             if not m: continue
             for t in tests:
-                t = t.replace('$1', m.group(1) if m.groups() else '')
+                t = t.replace('$1', (m.group(1) or '') if m.groups() else '')
                 if os.path.exists(os.path.join(TESTS, t.split()[0])): mine.append(t)
         CAMBIOS['de'][f] = mine; out += mine
     return out

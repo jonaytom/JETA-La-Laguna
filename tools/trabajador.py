@@ -15,7 +15,7 @@
 #                              al final de cada pasada, DESPUÉS de «pruebas» en el mismo encargo (nunca a la vez)
 #   borrar_auditoria_vieja     borra repo\tools\auditoria (copia antigua del auditor)
 #   subir_git                  sube ya a GitHub (scripts\publicar.ps1; necesita «publicar <versión>» antes)
-# Si una orden falla, las siguientes no se hacen (salvo «pruebas», que siempre deja su informe).
+# Si una orden falla (también «pruebas», que deja igualmente su informe), las siguientes no se hacen.
 import os, sys, re, time, shutil, subprocess, datetime
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -102,7 +102,7 @@ def hacer(path):
         res.append(f'## {l} — {v} ({s} s)\n\n```\n{out[-3000:]}\n```\n')
         if code != 0:
             estado = 'FALLA'
-            if l.split()[0].lower() != 'pruebas': res.append('(se paran aquí las órdenes siguientes)\n'); break
+            res.append('(se paran aquí las órdenes siguientes)\n'); break  # v0.66.1: also when «pruebas» fails (it published a broken 0.66.0)
     res[0] = res[0].rstrip('\n') + f' — **{estado}**\n'
     open(os.path.join(HECHO, nombre + '.md'), 'w', encoding='utf-8').write('\n'.join(res))
     print(f'== {nombre}: {estado}\n', flush=True)

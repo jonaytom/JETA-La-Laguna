@@ -1,0 +1,3 @@
+# Sonda del baloncesto: partido automático contra rivales flojos (0.08) y normales (0.5)
+herramientas/sonda_baloncesto.py 0.08 60
+herramientas/sonda_baloncesto.py 0.5 40
