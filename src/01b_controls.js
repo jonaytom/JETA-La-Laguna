@@ -8,7 +8,7 @@ const CONTROLS = (() => {
     A('left', 'Izquierda', 'Juego', ['KeyA', 'ArrowLeft']), A('right', 'Derecha', 'Juego', ['KeyD', 'ArrowRight']),
     A('run', 'Correr', 'Juego', ['ShiftLeft']), A('walk', 'Andar despacio', 'Juego', ['KeyC', 'AltLeft']), A('jump', 'Saltar / freno de mano', 'Juego', ['Space']),
     A('punch', 'Puñete (a pie) · cambiar radio (en coche)', 'Juego', ['KeyQ']), A('car', 'Entrar / salir del coche', 'Juego', ['KeyF']), A('use', 'Usar / entrar en edificios', 'Juego', ['KeyE']),
-    A('horn', 'Claxon', 'Juego', ['KeyH']), A('flip', 'Enderezar coche', 'Juego', ['KeyR']), A('map', 'Mapa (GPS)', 'Juego', ['KeyM']), A('guide', 'Mostrar / ocultar la brújula', 'Juego', ['KeyG']), A('weap', 'Cambiar arma', 'Juego', ['Tab']),
+    A('horn', 'Claxon', 'Juego', ['KeyH']), A('flip', 'Enderezar coche', 'Juego', ['KeyR']), A('map', 'Mapa (GPS)', 'Juego', ['KeyM']), A('diary', 'Diario de misiones', 'Juego', ['KeyJ']), A('guide', 'Mostrar / ocultar la brújula', 'Juego', ['KeyG']), A('weap', 'Cambiar arma', 'Juego', ['Tab']),
     A('pause', 'Pausa', 'Juego', ['KeyP', 'Escape']),
     // v0.64 (Jonay): in the 2D fight the same hand as on the street: E punch, Space kick, ↑ / W jump (+ mouse buttons)
     // v0.65 (Jonay): every minigame uses the same keys: A = E / left click, B = Espacio, ↑ = up/jump, right click

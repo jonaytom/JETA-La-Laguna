@@ -3,6 +3,34 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.66.0 — 2026-10-12 — Diario de misiones, Torneo Lagunero y baloncesto más cerca
+- **Diario de misiones (J)**: sobreimpreso, con las 4 líneas (Historia, El Canarión, El Obispo, Torneo Lagunero), el
+  estado de cada misión, qué hacer en la siguiente y **todas las conversaciones** de cada misión (se guardan con la
+  partida). «Reiniciar desde aquí» vuelve a esa misión y todo lo que va detrás. El Blanco te da la libreta en la primera.
+- **Baloncesto**:
+  - El ratón estaba al revés: ahora clic izquierdo tira y el derecho pasa.
+  - Cámara mucho más cerca, con el doble de resolución: sigue al balón y enseña su mitad y algo más; flechas en el
+    borde para quien queda fuera.
+  - La zona verde del tiro es más ancha cerca de la canasta y más estrecha de lejos.
+  - La CPU ya no tira desde su campo, y los equipos flojos fallan casi todo (sobre todo de lejos).
+  - Combos con un 20 % más de tiempo.
+  - Jugadores, aro y balón un 30 % más grandes respecto a la cancha (se veían pequeños).
+  - Fondos distintos: cancha de la calle, patio de colegio y pabellón cubierto.
+- **Canchas con entrada**:
+  - Las públicas se juegan pisando la cancha y pulsando E.
+  - Las de colegio o encerradas entre edificios tienen una puerta en la calle (E), con un balón flotando encima.
+  - Las canchas dobles (dos dibujadas una encima de otra) quedan en una sola.
+  - Después del primer partido puedes retar a la gente de cualquier cancha (niveles 1–5).
+- **Obispo**: el primer partido es en el **Colegio Máyex** (se entra por su puerta de la C. Pintor Cristino de
+  Vera); el segundo, en una cancha pública.
+- **Torneo Lagunero** (círculo naranja; se abre al ganar el primer partido): 4 equipos en canchas de la ciudad, cada
+  uno más difícil, y **la final en el Pabellón Juan Ríos Tejera** (puerta morada y cartel en la C. Leopoldo de la Rosa
+  Olivera; dentro, cancha de parqué con gradas).
+- **Pruebas por zonas**: `PRUEBAS.bat` (y la orden `pruebas`) solo prueba lo que ha cambiado (git status +
+  `scripts/pruebas/categorias.json`) más las de la versión, con una sola carga del juego; las que fallan se repiten aparte.
+- Trabajador: `auditar` como `auditar_jeta.bat` (resultados en `resultados_pc`), `subir_git` (sube ya a GitHub) y
+  `borrar_auditoria_vieja`.
+
 ## 0.65.1 — 2026-10-12 — Arreglos del Obispado
 - **Monseñor Truchas y su círculo quedaban dentro de la Casa Salazar** (la portada se orientaba hacia dentro cuando la
   casa vecina estaba pegada): ahora la fachada se orienta desde la propia casa, solo hacia una calle, y el obispo y el

@@ -41,8 +41,13 @@ function pitchRects() {
     const h = Math.abs(Math.sin(cx * 12.9898 + cz * 78.233) * 43758.5453) % 1; // stable «random» per court
     const kind = area > 4800 ? 'f11' : area > 1600 ? 'f7' : area > 560 ? (h < 0.55 ? 'multi' : 'fs') : 'bb';
     let r = 0; for (const p of pts) r = Math.max(r, Math.hypot(p[0] - cx, p[1] - cz));
-    PITCH_RECTS.push({ cx, cz, F, kind, len, wid, r, pts });
+    PITCH_RECTS.push({ cx, cz, F, kind, len, wid, r, pts, area });
   }
+  // v0.66: two courts drawn on top of each other (OSM maps the court and the multi-sport area too, e.g. Colegio Máyex):
+  // keep the bigger one only
+  PITCH_RECTS.sort((a, b) => b.area - a.area);
+  const keep = []; for (const P of PITCH_RECTS) { const inBig = keep.some((Q) => { const u = (P.cx - Q.cx) * Q.F.ux + (P.cz - Q.cz) * Q.F.uz, v = (P.cx - Q.cx) * Q.F.vx + (P.cz - Q.cz) * Q.F.vz; return u > Q.F.u0 && u < Q.F.u1 && v > Q.F.v0 && v < Q.F.v1; }); if (!inBig) keep.push(P); }
+  PITCH_RECTS = keep;
   return PITCH_RECTS;
 }
 // inside a pitch or court (plus margin m, metres)? Used to keep trees, lamps and benches off them
@@ -61,7 +66,7 @@ function buildSports() {
     if (pts.length < 3) continue; let cx = 0, cz = 0; for (const p of pts) { cx += p[0]; cz += p[1]; } cx /= pts.length; cz /= pts.length;
     if (cx < WORLD.x0 || cx > WORLD.x1 || cz < WORLD.z0 || cz > WORLD.z1) continue;
     const F = axisFrame(pts, cx, cz); const len = F.u1 - F.u0, wid = F.v1 - F.v0; const area = len * wid; if (len < 12 || wid < 8) continue;
-    const pr = pitchRects().find((q) => Math.abs(q.cx - cx) < 0.01 && Math.abs(q.cz - cz) < 0.01); const kind = pr ? pr.kind : 'bb';
+    const pr = pitchRects().find((q) => Math.abs(q.cx - cx) < 0.01 && Math.abs(q.cz - cz) < 0.01); if (!pr) continue; /* a duplicate on top of a bigger one */ const kind = pr.kind;
     const tex = courtCanvas(kind, len, wid);
     const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: kind.startsWith('f') && kind !== 'fs' ? 0.95 : 0.6, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -6 });
     // raster the rectangle so it follows the ground

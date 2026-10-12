@@ -24,14 +24,15 @@ async def run(pg):
     print('activa', await pg.evaluate("__dbg.MISSIONS.active && __dbg.MISSIONS.active.title"))
     for _ in range(12):
         await pg.evaluate("(()=>{const T=window.__TALK; if (T && T.cur) T.cur.next(); __step(3);})()")
-    g = await pg.evaluate("JSON.stringify(__dbg.MISSIONS.target())"); print('meta', g)
-    await pg.evaluate("(()=>{const g=__dbg.MISSIONS.target(); const P=__dbg.PLAYER; if (g) { P.x=g[0]; P.z=g[1]; } __step(10);})()")
+    g = await pg.evaluate("JSON.stringify(__dbg.MISSIONS.target())"); print('meta (puerta del Máyex)', g)
+    await pg.evaluate("(()=>{const g=__dbg.MISSIONS.target(); const P=__dbg.PLAYER; if (g) { P.x=g[0]; P.z=g[1]; } __step(10); const c=__dbg.courtGateNear(); if (c) __dbg.useCourtGate(c); __step(5);})()")
     run2 = await pg.evaluate("__dbg.BASKET2D.running"); print('partido en marcha', run2)
     if run2:
         await asyncio.sleep(1.5); await pg.evaluate("(()=>{const s=__dbg.BASKET2D._st(); s.tut=null; s.score=[12,4]; s.phase='end'; s.pt=0.2; __dbg.BASKET2D._step(30);})()")
         await asyncio.sleep(2.5)
         for _ in range(6): await pg.evaluate("(()=>{const T=window.__TALK; if (T && T.cur) T.cur.next(); __step(3);})()")
     st2 = json.loads(await pg.evaluate("JSON.stringify(__dbg.MISSIONS.getState())")); print('estado', st2.get('obispo'), st2.get('active'))
-    ok = ok and run2 and st2.get('obispo') == 1 and not errs
+    tut = await pg.evaluate("__dbg.MISSIONS.gang.basketTut"); tb = await pg.evaluate("__dbg.MISSIONS.blips().some(q=>q[2]==='#ff9f43')"); print('torneo abierto', tut, 'círculo naranja', tb)
+    ok = ok and run2 and st2.get('obispo') == 1 and tut and tb and not errs
     print('errores JS', errs[:3])
     print('OBISPO', 'OK' if ok else 'FALLA')

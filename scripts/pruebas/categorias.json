@@ -1,0 +1,23 @@
+{
+  "_comentario": "Qué pruebas lanza «pruebas cambios» según los archivos cambiados desde la última subida a git (tools/pruebas_locales.py). Siempre va prueba_arranque.py. Clave = expresión regular sobre la ruta del archivo.",
+  "siempre": ["prueba_arranque.py"],
+  "reglas": [
+    ["^src/(03_collide|04_world|05_scenery|05[ce-hj-t]_)|^data/|^prep\\.py|^tools/merge_", ["prueba_bordes.py", "prueba_conduccion_tuneles_puentes.py", "prueba_parking_cristo.py"]],
+    ["^src/05r_", ["prueba_aeropuerto.py"]],
+    ["^src/05t_", ["prueba_hospital.py"]],
+    ["^src/(05i_sports|12i_canchas)", ["prueba_canchas.py", "prueba_baloncesto.py"]],
+    ["^src/(06b_vmodels|07_vehicles)", ["prueba_coche_y_boca.py", "prueba_freno_mano.py", "prueba_peralte.py", "prueba_muerte_coche.py"]],
+    ["^src/(06_actors|06a_humans|08_player|08b_border|09_peds|10c_steps)", ["prueba_pasos.py", "prueba_bordes.py", "herramientas/foto_jugador.py"]],
+    ["^src/(09b_combat|09c_weapons|09d_fight2d|09e_cops)", ["prueba_panel_controles.py", "prueba_pelea_especiales.py", "prueba_pelea_atras.py", "prueba_bloqueo.py"]],
+    ["^src/09f_basket2d", ["prueba_baloncesto.py"]],
+    ["^src/(10_audio|10b_music|10d_ambience)", ["prueba_ambiente.py", "herramientas/prueba_claxon.py"]],
+    ["^src/(11_hud|11c_guide)", ["herramientas/sonda_guia.py 284 112", "herramientas/sonda_guia.py 284 112 coche"]],
+    ["^src/(12_missions|12f_story2)", ["prueba_misiones_guardado.py", "prueba_persecuciones.py", "prueba_diario.py"]],
+    ["^src/12g_obispo", ["prueba_obispo.py"]],
+    ["^src/12h_diario", ["prueba_diario.py"]],
+    ["^src/12e_save", ["prueba_guardar_cargar.py", "prueba_misiones_guardado.py"]],
+    ["^src/(01_core|02_textures|13_main)|^template\\.html|^build\\.py", ["prueba_guardar_cargar.py"]],
+    ["^src/01b_controls", ["prueba_panel_controles.py"]],
+    ["^tests/(prueba_[a-z_]+\\.py)$", ["$1"]]
+  ]
+}

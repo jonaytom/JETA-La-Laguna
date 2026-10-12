@@ -7,12 +7,16 @@
 // ENTRADA EN COMBO: the game stops and you have a few seconds to do one of the 4 specials of the 2D fight (same keys:
 // directions + puño = left/E, patada = right/Espacio) for a different dunk. All keys in Opciones › Controles.
 const BASKET2D = (() => {
-  const W = 480, H = 270, R = 2, CL = 28, CW = 15;            // canvas (logical px) and court (metres)
-  const X0 = 22, X1 = 458, ZF = 132, ZN = 250;                // court on screen: left/right baselines, far/near sidelines
-  const PXM = (X1 - X0) / CL, PZM = (ZN - ZF) / CW, PYM = 15;  // px per metre along the court, in depth and in height
-  const sx = (x) => X0 + x * PXM, sy = (z, y = 0) => ZF + z * PZM - y * PYM;
+  // v0.66 (Jonay): a closer view, twice the resolution, the camera scrolls to show the half where the ball is and a bit
+  const W = 480, H = 270, R = 4, CL = 28, CW = 15;            // canvas (logical px, drawn at R×) and court (metres)
+  const PXM = 30, PZM = 12.5, PYM = 30, SC = 2.3;             // px per metre along, in depth and in height; SC = size vs v0.65
+  const X0 = 40, ZF = 70, ZN = ZF + CW * PZM, BGW = Math.round(2 * X0 + CL * PXM), BR = 2; // court in the world strip (BGW wide)
+  let camX = 0;
+  const wx = (x) => X0 + x * PXM;                             // world px (background); on screen it's minus the camera
+  const sx = (x) => wx(x) - camX, sy = (z, y = 0) => ZF + z * PZM - y * PYM;
+  const X1 = wx(CL);
   const HOOP = [{ x: 1.6, z: 7.5 }, { x: CL - 1.6, z: 7.5 }], RIM = 3.05, G = 9.8, THREE_PT = 6.75;
-  let cv = null, cx = null, bgC = null, running = false, st = null, raf = 0, last = 0, acc = 0, onEnd = null;
+  let cv = null, cx = null, running = false, st = null, raf = 0, last = 0, acc = 0, onEnd = null;
   const keys = new Set(), pressedK = new Set(), releasedK = new Set();
   // ---------- sprites (same drawer as the fight; a few extra poses)
   const P = () => FIGHT2D.POSES;
@@ -36,8 +40,8 @@ const BASKET2D = (() => {
   const press = (v, down) => { if (down) { if (!keys.has(v)) pressedK.add(v); keys.add(v); } else { if (keys.has(v)) releasedK.add(v); keys.delete(v); } };
   function onKey(e, down) { if (!running) return; const v = vcode(e.code); if (!v) return; e.preventDefault(); e.stopPropagation(); press(v, down); }
   window.addEventListener('keydown', (e) => onKey(e, true), true); window.addEventListener('keyup', (e) => onKey(e, false), true);
-  window.addEventListener('mousedown', (e) => { if (!running) return; e.preventDefault(); e.stopPropagation(); if (e.button === 0) press('vP', true); if (e.button === 2) press('vS', true); }, true);
-  window.addEventListener('mouseup', (e) => { if (!running) return; if (e.button === 0) press('vP', false); if (e.button === 2) press('vS', false); }, true);
+  window.addEventListener('mousedown', (e) => { if (!running) return; e.preventDefault(); e.stopPropagation(); if (e.button === 0) press('vS', true); if (e.button === 2) press('vP', true); }, true); // left = shoot, right = pass (v0.66: they were swapped)
+  window.addEventListener('mouseup', (e) => { if (!running) return; if (e.button === 0) press('vS', false); if (e.button === 2) press('vP', false); }, true);
   window.addEventListener('contextmenu', (e) => { if (running) e.preventDefault(); }, true);
   const held = (v) => keys.has(v), hit = (v) => pressedK.has(v), rel = (v) => releasedK.has(v);
   // ---------- little sounds (own nodes on the game's audio context)
@@ -73,7 +77,9 @@ const BASKET2D = (() => {
   function shotChance(p, d) {
     let k = d < 1.6 ? 0.88 : clamp(0.82 - d * 0.05, 0.22, 0.74);
     const o = openness(p); if (o < 1.3) k *= 0.62; else if (o < 2.2) k *= 0.85;
-    if (p.fire) k += 0.25; return clamp(k, 0.05, 0.97);
+    if (p.fire) k += 0.25;
+    if (!p.human) { k *= 0.45 + 0.6 * p.lv; k -= d * 0.03 * (1 - p.lv); } // v0.66: bad teams miss most shots, above all from far
+    return clamp(k, 0.03, 0.97);
   }
   // ---------- actions
   function jump(p, power = 5.2) { if (p.air || p.down > 0) return; p.vy = power; p.air = true; p.y = 0.01; }
@@ -82,7 +88,7 @@ const BASKET2D = (() => {
     if (p.human && held('vT') && d >= 2.4 && d <= 7.8 && p.turbo > 0.1) { startCombo(p, d); return; } // running in from mid range
     if (d < 3.3 && !p.human && p.wantDunk && p.turbo > 0.15) { // CPU dunk: fly to the rim
       p.act = 'dunk'; p.actT = 0; const T = 0.62; p.vy = G * T + 0.3; p.air = true; p.y = 0.01; p.vx = (h.x - p.x - Math.sign(h.x - p.x) * 0.25) / T; p.vz = (h.z - p.z) / T; p.turbo = Math.max(0, p.turbo - 0.15); return; }
-    p.act = 'shoot'; p.actT = 0; p.shootHold = true; p.holdT = 0; jump(p, 5.0);
+    p.act = 'shoot'; p.actT = 0; p.shootHold = true; p.holdT = 0; const hw = clamp(0.13 - d * 0.011, 0.04, 0.12); p.green = [0.51 - hw, 0.51 + hw]; jump(p, 5.0); // v0.66: the further, the narrower the green
   }
   // ---------- ENTRADA EN COMBO: the 4 specials of the 2D fight, each one a different dunk (3 s to do it, game paused)
   const COMBOS = [
@@ -94,7 +100,7 @@ const BASKET2D = (() => {
   function startCombo(p, d) {
     const c = COMBOS[(Math.random() * 4) | 0]; const sg = Math.sign(hoopOf(p.team).x - p.x) || 1;
     const vk = { adelante: [sg > 0 ? 'vR' : 'vL'], atras: [sg > 0 ? 'vL' : 'vR'], abajo: ['vD'], arriba: ['vU'], puno: ['vS'], patada: ['vT', 'vP'] };
-    st.combo = { c, i: 0, t: 3.0, by: p, need: c.seq.map((k) => vk[k]), sg, ok: null, d }; st.phase = 'combo'; p.turbo = Math.max(0, p.turbo - 0.2);
+    st.combo = { c, i: 0, t: 3.6, by: p, need: c.seq.map((k) => vk[k]), sg, ok: null, d }; st.phase = 'combo'; p.turbo = Math.max(0, p.turbo - 0.2);
     pressedK.clear(); banner('¡ENTRADA EN COMBO!', '#ffd400', 1.0); snd('crowd');
   }
   function comboStep(dt) {
@@ -112,7 +118,7 @@ const BASKET2D = (() => {
   }
   // the shot bar: the time the button is held; the green window is the top of the jump
   const GREEN = [0.42, 0.6], BAR = 1.0;
-  function timing(p) { const t = p.holdT; return t >= GREEN[0] && t <= GREEN[1] ? 'verde' : t >= GREEN[0] - 0.12 && t <= GREEN[1] + 0.12 ? 'casi' : 'mal'; }
+  function timing(p) { const t = p.holdT, g = p.green || GREEN; return t >= g[0] && t <= g[1] ? 'verde' : t >= g[0] - 0.1 && t <= g[1] + 0.1 ? 'casi' : 'mal'; }
   function release(p) { // shot leaves the hands: make or miss is decided here (timing, distance, defence, «en llamas»)
     if (st.ball.holder !== p) { p.shootHold = false; return; }
     const h = hoopOf(p.team), d = Math.hypot(h.x - p.x, h.z - p.z); let k = shotChance(p, d);
@@ -161,7 +167,7 @@ const BASKET2D = (() => {
       else if (!passive && !p.air) {
         if (guard && mate && openness(mate) > 2.5 && Math.random() < 0.02 + 0.03 * p.lv) pass(p, mate);
         else if (d < 3 && p.turbo > 0.3 && Math.random() < 0.04 * (0.5 + p.lv)) { p.wantDunk = true; startShot(p); p.wantDunk = false; }
-        else if ((d < p.shootR && (!guard || p.possT > 2.6)) || p.possT > 4.5) { startShot(p); p.aiRel = rnd(-0.12, 0.12) * (1.3 - p.lv); p.shootR = null; }
+        else if (d < 9.5 && ((d < p.shootR && (!guard || p.possT > 2.6)) || p.possT > 4.5)) { startShot(p); /* v0.66: never from its own half */ p.aiRel = rnd(-0.12, 0.12) * (1.3 - p.lv); p.shootR = null; }
       }
     } else if (own) { // off the ball: get open on the wing, away from the holder
       const hd = b.holder || (b.pass && b.pass.to) || p; const side = hd.z < 7.5 ? 1 : -1;
@@ -275,58 +281,80 @@ const BASKET2D = (() => {
   }
   // ---------- drawing
   function txt(s, x, y, size, col, align = 'center') { cx.font = `${size}px "Press Start 2P", monospace`; cx.textAlign = align; cx.textBaseline = 'top'; cx.fillStyle = '#000'; for (const [a, b] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) cx.fillText(s, x + a, y + b); cx.fillStyle = col; cx.fillText(s, x, y); }
-  function drawBg() {
-    const c = mkCanvas(W * R, H * R), x = c.getContext('2d'); x.scale(R, R);
-    const g = x.createLinearGradient(0, 0, 0, 110); g.addColorStop(0, '#5aa0d8'); g.addColorStop(1, '#bfe0f2'); x.fillStyle = g; x.fillRect(0, 0, W, 120);
-    // the town behind: rows of houses in the colours of La Laguna, a church tower
+  // backgrounds (one per style, cached): 'calle' public court in town, 'colegio' a school yard, 'pabellon' an indoor hall
+  const BGS = {};
+  function drawBg(style = 'calle') {
+    if (BGS[style]) return BGS[style];
+    const c = mkCanvas(BGW * BR, H * BR), x = c.getContext('2d'); x.scale(BR, BR); const Wd = BGW;
     let rs = 7; const rr = () => { rs = (rs * 9301 + 49297) % 233280; return rs / 233280; };
-    const cols = ['#e8d9b5', '#d9a441', '#b5552f', '#f2efe6', '#7d9c6f', '#c9c2b5', '#a8564a'];
-    for (let xx = -10; xx < W; ) { const w = 26 + rr() * 34, h = 30 + rr() * 38; x.fillStyle = cols[(rr() * cols.length) | 0]; x.fillRect(xx, 112 - h, w, h + 10); x.fillStyle = 'rgba(40,30,30,0.45)';
-      for (let wy = 112 - h + 6; wy < 106; wy += 11) for (let wx = xx + 4; wx < xx + w - 6; wx += 9) x.fillRect(wx, wy, 4, 6); x.fillStyle = '#8c3b2a'; x.fillRect(xx - 1, 112 - h - 3, w + 2, 4); xx += w + 1; }
-    x.fillStyle = '#ece6d6'; x.fillRect(372, 38, 22, 76); x.fillStyle = '#bdb4a2'; for (let k = 0; k < 4; k++) x.fillRect(376, 46 + k * 16, 6, 8); x.fillStyle = '#9a8f7c'; x.beginPath(); x.moveTo(370, 40); x.lineTo(383, 24); x.lineTo(396, 40); x.fill();
-    // fence and stands
-    x.fillStyle = '#3d4a3d'; x.fillRect(0, 110, W, 14); x.strokeStyle = 'rgba(200,210,215,0.55)'; x.lineWidth = 0.6; for (let k = -20; k < W; k += 6) { x.beginPath(); x.moveTo(k, 96); x.lineTo(k + 28, 124); x.stroke(); x.beginPath(); x.moveTo(k + 28, 96); x.lineTo(k, 124); x.stroke(); }
-    x.fillStyle = '#6b6f73'; x.fillRect(0, 94, W, 3);
-    // floor around the court (blue) and the court (orange)
-    x.fillStyle = '#2f5f9a'; x.fillRect(0, 124, W, H - 124); x.fillStyle = '#b5552f'; x.fillRect(X0, ZF, X1 - X0, ZN - ZF);
-    for (let i = 0; i < 2500; i++) { x.fillStyle = `rgba(${Math.random() < 0.5 ? '0,0,0' : '255,255,255'},0.05)`; x.fillRect(Math.random() * W, 124 + Math.random() * (H - 124), 1, 1); }
-    x.strokeStyle = '#f4f4ee'; x.lineWidth = 1.2; x.strokeRect(X0, ZF, X1 - X0, ZN - ZF); x.beginPath(); x.moveTo(sx(CL / 2), ZF); x.lineTo(sx(CL / 2), ZN); x.stroke();
-    x.beginPath(); x.ellipse(sx(CL / 2), sy(CW / 2), 1.8 * PXM, 1.8 * PZM, 0, 0, 7); x.stroke();
-    for (const s of [0, 1]) { const base = s ? CL : 0, sg = s ? -1 : 1, h = HOOP[s];
-      x.fillStyle = '#2f5f9a'; const kx0 = sx(s ? CL - 5.8 : 0), kw = 5.8 * PXM; x.fillRect(kx0, sy(CW / 2 - 2.45), kw, 4.9 * PZM); x.strokeRect(kx0, sy(CW / 2 - 2.45), kw, 4.9 * PZM);
-      x.beginPath(); x.ellipse(sx(base + sg * 5.8), sy(CW / 2), 1.8 * PXM, 1.8 * PZM, 0, 0, 7); x.stroke();
-      x.save(); x.beginPath(); x.rect(X0, ZF, X1 - X0, ZN - ZF); x.clip(); x.beginPath(); x.ellipse(sx(h.x), sy(h.z), THREE_PT * PXM, THREE_PT * PZM, 0, s ? Math.PI / 2 : -Math.PI / 2, s ? Math.PI * 1.5 : Math.PI / 2); x.stroke(); x.restore(); }
-    // painted name in the centre
-    x.font = '7px "Press Start 2P", monospace'; x.textAlign = 'center'; x.fillStyle = 'rgba(255,255,255,0.35)'; x.fillText('LA LAGUNA', sx(CL / 2), sy(CW / 2) - 3);
-    return c;
+    const noise = (y0, y1, a = 0.05) => { for (let i = 0; i < Wd * (y1 - y0) / 25; i++) { x.fillStyle = `rgba(${rr() < 0.5 ? '0,0,0' : '255,255,255'},${a})`; x.fillRect(rr() * Wd, y0 + rr() * (y1 - y0), 1, 1); } };
+    const indoor = style === 'pabellon';
+    if (indoor) { // Pabellón Juan Ríos Tejera: steel trusses, grey stands, white wall with ads, wooden floor, blue around
+      x.fillStyle = '#1d2128'; x.fillRect(0, 0, Wd, 62); x.strokeStyle = '#3d4a63'; x.lineWidth = 1.2;
+      for (let k = 0; k < Wd; k += 40) { x.beginPath(); x.moveTo(k, 0); x.lineTo(k + 20, 14); x.lineTo(k + 40, 0); x.stroke(); } x.fillStyle = '#3d4a63'; x.fillRect(0, 14, Wd, 2);
+      for (let k = 30; k < Wd; k += 90) { x.fillStyle = '#fff8d8'; x.beginPath(); x.arc(k, 18, 2.2, 0, 7); x.fill(); }
+      for (let r2 = 0; r2 < 7; r2++) { x.fillStyle = r2 % 2 ? '#5b5f66' : '#6c7078'; x.fillRect(0, 20 + r2 * 4.5, Wd, 4.5); }
+      for (let k = 0; k < Wd; k += 7) if (rr() < 0.35) { x.fillStyle = ['#c0392b', '#2e86c1', '#f1c40f', '#ecf0f1', '#27ae60'][(rr() * 5) | 0]; x.fillRect(k, 21 + ((rr() * 6) | 0) * 4.5, 3, 3); } // a few fans
+      x.fillStyle = '#f2f2ee'; x.fillRect(0, 52, Wd, 12); x.font = '5px "Press Start 2P", monospace'; x.textAlign = 'center';
+      ['GOFIO LA MOLINETA', 'PABELLÓN JUAN RÍOS TEJERA', 'PAPAS EL MAGO', 'AYTO. DE LA LAGUNA', 'MIEL DE PALMA'].forEach((t, i) => { x.fillStyle = ['#7a2b8c', '#1d4f9c', '#c0392b', '#1d6b45', '#b9770e'][i]; x.fillText(t, 100 + i * 180, 60); });
+      x.fillStyle = '#2f6fb5'; x.fillRect(0, 64, Wd, H - 64); x.fillStyle = '#d29a55'; x.fillRect(X0, ZF, CL * PXM, CW * PZM);
+      for (let k = ZF; k < ZN; k += 3) { x.fillStyle = 'rgba(120,70,25,0.18)'; x.fillRect(X0, k, CL * PXM, 0.6); } noise(64, H, 0.04);
+    } else {
+      const g = x.createLinearGradient(0, 0, 0, 56); g.addColorStop(0, '#5aa0d8'); g.addColorStop(1, '#bfe0f2'); x.fillStyle = g; x.fillRect(0, 0, Wd, 60);
+      const cols = style === 'colegio' ? ['#efe6c8', '#f2efe6', '#e8d9b5', '#c9d8c0'] : ['#e8d9b5', '#d9a441', '#b5552f', '#f2efe6', '#7d9c6f', '#c9c2b5', '#a8564a'];
+      for (let xx = -10; xx < Wd; ) { const w = 30 + rr() * 50, h = (style === 'colegio' ? 34 : 18) + rr() * 22; x.fillStyle = cols[(rr() * cols.length) | 0]; x.fillRect(xx, 52 - h, w, h + 6); x.fillStyle = 'rgba(40,30,30,0.45)';
+        for (let wy = 52 - h + 4; wy < 48; wy += 8) for (let wx2 = xx + 4; wx2 < xx + w - 5; wx2 += 7) x.fillRect(wx2, wy, 3, 4); x.fillStyle = style === 'colegio' ? '#d8d2c2' : '#8c3b2a'; x.fillRect(xx - 1, 52 - h - 2, w + 2, 3); xx += w + 1; }
+      if (style === 'colegio') { x.font = '6px "Press Start 2P", monospace'; x.textAlign = 'center'; x.fillStyle = '#7a6a3a'; x.fillText('COLEGIO MÁYEX', Wd / 2, 30); }
+      else { x.fillStyle = '#ece6d6'; x.fillRect(Wd * 0.7, 6, 20, 48); x.fillStyle = '#9a8f7c'; x.beginPath(); x.moveTo(Wd * 0.7 - 2, 8); x.lineTo(Wd * 0.7 + 10, -6); x.lineTo(Wd * 0.7 + 22, 8); x.fill(); }
+      x.fillStyle = '#3d4a3d'; x.fillRect(0, 50, Wd, 12); x.strokeStyle = 'rgba(200,210,215,0.55)'; x.lineWidth = 0.6; for (let k = -20; k < Wd; k += 6) { x.beginPath(); x.moveTo(k, 40); x.lineTo(k + 22, 62); x.stroke(); x.beginPath(); x.moveTo(k + 22, 40); x.lineTo(k, 62); x.stroke(); }
+      x.fillStyle = '#6b6f73'; x.fillRect(0, 39, Wd, 2);
+      x.fillStyle = style === 'colegio' ? '#3f8f5a' : '#2f5f9a'; x.fillRect(0, 62, Wd, H - 62); x.fillStyle = '#b5552f'; x.fillRect(X0, ZF, CL * PXM, CW * PZM); noise(62, H);
+    }
+    const line = indoor ? '#f8f8f4' : '#f4f4ee', paint = indoor ? '#2f6fb5' : style === 'colegio' ? '#3f8f5a' : '#2f5f9a';
+    x.strokeStyle = line; x.lineWidth = 1.6; x.strokeRect(X0, ZF, CL * PXM, CW * PZM); x.beginPath(); x.moveTo(wx(CL / 2), ZF); x.lineTo(wx(CL / 2), ZN); x.stroke();
+    if (indoor) { x.fillStyle = paint; x.beginPath(); x.ellipse(wx(CL / 2), sy(CW / 2), 1.8 * PXM, 1.8 * PZM, 0, 0, 7); x.fill(); }
+    x.beginPath(); x.ellipse(wx(CL / 2), sy(CW / 2), 1.8 * PXM, 1.8 * PZM, 0, 0, 7); x.stroke();
+    for (const s2 of [0, 1]) { const base = s2 ? CL : 0, sg = s2 ? -1 : 1, h = HOOP[s2];
+      x.fillStyle = paint; const kx0 = wx(s2 ? CL - 5.8 : 0), kw = 5.8 * PXM; x.fillRect(kx0, sy(CW / 2 - 2.45), kw, 4.9 * PZM); x.strokeRect(kx0, sy(CW / 2 - 2.45), kw, 4.9 * PZM);
+      x.beginPath(); x.ellipse(wx(base + sg * 5.8), sy(CW / 2), 1.8 * PXM, 1.8 * PZM, 0, 0, 7); x.stroke();
+      x.save(); x.beginPath(); x.rect(X0, ZF, CL * PXM, CW * PZM); x.clip(); x.beginPath(); x.ellipse(wx(h.x), sy(h.z), THREE_PT * PXM, THREE_PT * PZM, 0, s2 ? Math.PI / 2 : -Math.PI / 2, s2 ? Math.PI * 1.5 : Math.PI / 2); x.stroke(); x.restore(); }
+    x.font = '9px "Press Start 2P", monospace'; x.textAlign = 'center'; x.fillStyle = 'rgba(255,255,255,0.35)'; x.fillText(indoor ? 'LA LAGUNA' : style === 'colegio' ? 'M' : 'LA LAGUNA', wx(CL / 2), sy(CW / 2) - 4);
+    return (BGS[style] = c);
   }
-  function drawHoop(s) { const h = HOOP[s], sg = s ? 1 : -1; const rx = sx(h.x), ry = sy(h.z, RIM), base = sy(h.z);
-    cx.fillStyle = '#2a2d30'; cx.fillRect(rx + sg * 18 - 2, base - 52, 4, 52); cx.fillRect(Math.min(rx + sg * 18, rx + sg * 8), base - 50, 10, 3);
-    cx.fillStyle = 'rgba(0,0,0,0.25)'; cx.beginPath(); cx.ellipse(rx + sg * 18, base, 8, 2, 0, 0, 7); cx.fill();
-    cx.fillStyle = '#f4f4f2'; cx.fillRect(rx + sg * 7 - 2, ry - 24, 4, 26); cx.fillStyle = '#e8641c'; cx.fillRect(rx + sg * 7 - 1, ry - 10, 2, 8);
-    cx.strokeStyle = '#eef'; cx.lineWidth = 0.6; for (let k = -3; k <= 3; k++) { cx.beginPath(); cx.moveTo(rx + k * 1.4, ry); cx.lineTo(rx + k * 0.8, ry + 9); cx.stroke(); }
-    cx.strokeStyle = '#e8641c'; cx.lineWidth = 1.6; cx.beginPath(); cx.ellipse(rx, ry, 4.6, 1.5, 0, 0, 7); cx.stroke(); }
+  function updateCam(k = 0.1) { const b = st.ball, f = b.holder ? b.holder : b; const t = clamp(wx(f.x) - W / 2, 0, BGW - W); camX = k >= 1 ? t : camX + (t - camX) * k; }
+  function drawHoop(s) { const h = HOOP[s], sg = s ? 1 : -1; const rx = sx(h.x), ry = sy(h.z, RIM), base = sy(h.z), k = SC;
+    if (rx < -60 || rx > W + 60) return;
+    cx.fillStyle = st.style === 'pabellon' ? '#2f6fb5' : '#2a2d30'; cx.fillRect(rx + sg * 18 * k - 2 * k, base - 52 * k, 4 * k, 52 * k); cx.fillRect(Math.min(rx + sg * 18 * k, rx + sg * 8 * k), base - 50 * k, 10 * k, 3 * k);
+    cx.fillStyle = 'rgba(0,0,0,0.25)'; cx.beginPath(); cx.ellipse(rx + sg * 18 * k, base, 8 * k, 2 * k, 0, 0, 7); cx.fill();
+    cx.fillStyle = '#f4f4f2'; cx.fillRect(rx + sg * 7 * k - 2 * k, ry - 24 * k, 4 * k, 26 * k); cx.fillStyle = '#e8641c'; cx.fillRect(rx + sg * 7 * k - k, ry - 10 * k, 2 * k, 8 * k);
+    cx.strokeStyle = '#eef'; cx.lineWidth = 0.6 * k; for (let q = -3; q <= 3; q++) { cx.beginPath(); cx.moveTo(rx + q * 1.4 * k, ry); cx.lineTo(rx + q * 0.8 * k, ry + 9 * k); cx.stroke(); }
+    cx.strokeStyle = '#e8641c'; cx.lineWidth = 1.6 * k; cx.beginPath(); cx.ellipse(rx, ry, 4.6 * k, 1.5 * k, 0, 0, 7); cx.stroke(); }
   function drawPlayer(p) {
     const b = st.ball; let k = 'idle' + (Math.floor(st.time0 * 2) % 2);
     if (p.down > 0) k = 'ko'; else if (p.act === 'dunk') k = 'dunk'; else if (p.air) k = p.shootHold || b.holder === p ? 'shoot' : 'jump'; else if (p.act === 'push') k = 'jab1';
     else if (Math.hypot(p.vx, p.vz) > 0.5) k = (b.holder === p ? 'drib' : 'walk') + (Math.floor(p.walkT * 2.2) % 4); else if (b.holder && b.holder.team !== p.team && b.holder === p.mark) k = 'defend';
     if (st.phase === 'end' && !st.tut) k = (st.score[p.team] > st.score[1 - p.team]) ? 'win' : k;
-    const s = p.spr[k] || p.spr.idle0, sc = 0.37 + p.z * 0.004; const px = sx(p.x), py = sy(p.z, p.y);
-    cx.fillStyle = 'rgba(0,0,0,0.3)'; cx.beginPath(); cx.ellipse(px, sy(p.z), 7, 2.2, 0, 0, 7); cx.fill();
-    const w = (s.width / R) * sc, h2 = (s.height / R) * sc; cx.save(); cx.translate(px, py); if (p.dir < 0) cx.scale(-1, 1); cx.drawImage(s, -w / 2, -h2 * 0.98, w, h2); cx.restore();
-    if (p.fire) for (let i = 0; i < 3; i++) { cx.fillStyle = ['#ff5a1f', '#ffd400', '#ff8a3d'][i]; cx.fillRect(px - 5 + Math.random() * 10, py - h2 * 0.98 - 2 - Math.random() * 8, 2, 3); }
+    const s = p.spr[k] || p.spr.idle0, sc = (0.37 + p.z * 0.004) * SC; const px = sx(p.x), py = sy(p.z, p.y);
+    if (px < -60 || px > W + 60) { offscreen(p, px); return; }
+    cx.fillStyle = 'rgba(0,0,0,0.3)'; cx.beginPath(); cx.ellipse(px, sy(p.z), 7 * SC, 2.2 * SC, 0, 0, 7); cx.fill();
+    const w = (s.width / 2) * sc, h2 = (s.height / 2) * sc; /* the fight sprites are drawn at 2× (v0.66: was divided by this canvas' 4×) */
+    cx.save(); cx.translate(px, py); if (p.dir < 0) cx.scale(-1, 1); cx.drawImage(s, -w / 2, -h2 * 0.98, w, h2); cx.restore(); st.drawn = (st.drawn || 0) + 1;
+    if (p.fire) for (let i = 0; i < 3; i++) { cx.fillStyle = ['#ff5a1f', '#ffd400', '#ff8a3d'][i]; cx.fillRect(px - 5 * SC + Math.random() * 10 * SC, py - h2 * 0.98 - 2 - Math.random() * 8 * SC, 2 * SC, 3 * SC); }
     if (p.human && p.shootHold) { // the shot bar: fill while held, green band = release here
-      const bx = px + 9, by = py - h2, bh = 26; cx.fillStyle = 'rgba(0,0,0,0.7)'; cx.fillRect(bx - 1, by - 1, 6, bh + 2);
-      cx.fillStyle = '#2e7d32'; cx.fillRect(bx, by + bh * (1 - GREEN[1] / BAR), 4, bh * (GREEN[1] - GREEN[0]) / BAR);
-      const f = clamp(p.holdT / BAR, 0, 1), tm = timing(p); cx.fillStyle = tm === 'verde' ? '#7fe08a' : tm === 'casi' ? '#ffd400' : '#ff6b6b'; cx.fillRect(bx, by + bh * (1 - f), 4, 2); }
-    if (p.human) { cx.fillStyle = '#ffd400'; cx.beginPath(); cx.moveTo(px - 3, py - h2 - 8); cx.lineTo(px + 3, py - h2 - 8); cx.lineTo(px, py - h2 - 4); cx.fill(); }
-    else if (p.team === 0) { cx.fillStyle = '#7fe08a'; cx.fillRect(px - 1.5, py - h2 - 7, 3, 3); }
+      const bx = px + 9 * SC, by = py - h2, bh = 26 * SC; cx.fillStyle = 'rgba(0,0,0,0.7)'; cx.fillRect(bx - 1, by - 1, 4 * SC + 2, bh + 2);
+      const gr = p.green || GREEN; cx.fillStyle = '#2e7d32'; cx.fillRect(bx, by + bh * (1 - gr[1] / BAR), 4 * SC, bh * (gr[1] - gr[0]) / BAR);
+      const f = clamp(p.holdT / BAR, 0, 1), tm = timing(p); cx.fillStyle = tm === 'verde' ? '#7fe08a' : tm === 'casi' ? '#ffd400' : '#ff6b6b'; cx.fillRect(bx, by + bh * (1 - f), 4 * SC, 2.5); }
+    if (p.human) { cx.fillStyle = '#ffd400'; cx.beginPath(); cx.moveTo(px - 5, py - h2 - 12); cx.lineTo(px + 5, py - h2 - 12); cx.lineTo(px, py - h2 - 5); cx.fill(); }
+    else if (p.team === 0) { cx.fillStyle = '#7fe08a'; cx.fillRect(px - 2.5, py - h2 - 10, 5, 5); }
   }
-  function drawBall() { const b = st.ball; const px = sx(b.x), py = sy(b.z, b.y);
-    cx.fillStyle = 'rgba(0,0,0,0.3)'; cx.beginPath(); cx.ellipse(px, sy(b.z), 2.6, 1, 0, 0, 7); cx.fill();
-    cx.fillStyle = '#e8641c'; cx.beginPath(); cx.arc(px, py, 2.6, 0, 7); cx.fill(); cx.strokeStyle = '#4a1f08'; cx.lineWidth = 0.6; cx.beginPath(); cx.moveTo(px - 2.6, py); cx.lineTo(px + 2.6, py); cx.stroke(); cx.beginPath(); cx.arc(px, py, 2.6, 0, 7); cx.stroke(); }
+  function offscreen(p, px) { // a small arrow at the edge for a player out of the view
+    const x0 = px < 0 ? 4 : W - 4, y0 = clamp(sy(p.z, 1), 70, H - 10), sg = px < 0 ? -1 : 1; cx.fillStyle = p.human ? '#ffd400' : p.team === 0 ? '#7fe08a' : '#ff6b6b';
+    cx.beginPath(); cx.moveTo(x0, y0); cx.lineTo(x0 - sg * 7, y0 - 5); cx.lineTo(x0 - sg * 7, y0 + 5); cx.fill(); }
+  function drawBall() { const b = st.ball; const px = sx(b.x), py = sy(b.z, b.y), r = 2.6 * SC;
+    cx.fillStyle = 'rgba(0,0,0,0.3)'; cx.beginPath(); cx.ellipse(px, sy(b.z), r, r * 0.4, 0, 0, 7); cx.fill();
+    cx.fillStyle = '#e8641c'; cx.beginPath(); cx.arc(px, py, r, 0, 7); cx.fill(); cx.strokeStyle = '#4a1f08'; cx.lineWidth = 0.8; cx.beginPath(); cx.moveTo(px - r, py); cx.lineTo(px + r, py); cx.stroke(); cx.beginPath(); cx.arc(px, py, r, 0, 7); cx.stroke(); }
   function draw() {
-    cx.setTransform(R, 0, 0, R, 0, 0); cx.imageSmoothingEnabled = false; cx.drawImage(bgC, 0, 0, W, H);
+    cx.setTransform(R, 0, 0, R, 0, 0); cx.imageSmoothingEnabled = false; const bg = drawBg(st.style); cx.drawImage(bg, camX * BR, 0, W * BR, H * BR, 0, 0, W, H);
     const items = st.p.map((p) => ({ z: p.z, f: () => drawPlayer(p) })); items.push({ z: HOOP[0].z - 0.01, f: () => drawHoop(0) }, { z: HOOP[1].z - 0.01, f: () => drawHoop(1) });
     const b = st.ball; items.push({ z: b.mode === 'held' ? b.holder.z + 0.02 : b.z + (b.mode === 'net' ? 0.02 : 0), f: drawBall });
     items.sort((a, c) => a.z - c.z).forEach((it) => it.f());
@@ -348,7 +376,7 @@ const BASKET2D = (() => {
       const parts = C.c.seq.map((k, i) => ({ t: lab[k], c: C.ok === false && i === C.i ? '#ff6b6b' : i < C.i ? '#7fe08a' : '#fff' })); let x0 = W / 2 - 70;
       parts.forEach((q, i) => { txt(q.t, x0 + i * 60 + (i === 2 ? 10 : 0), 122, q.t.length > 1 ? 7 : 12, q.c); if (i < 2) txt(i === 1 ? '+' : ',', x0 + i * 60 + 30, 124, 8, '#aaa'); });
       txt(`puño = clic izq. / ${K_('f_punch')} · patada = ${K_('f_kick')} / clic dcho.`, W / 2, 146, 5, '#9fd7ff');
-      cx.fillStyle = '#333'; cx.fillRect(90, 160, W - 180, 5); cx.fillStyle = C.t > 1 ? '#7fe08a' : '#ff6b6b'; cx.fillRect(90, 160, (W - 180) * clamp(C.t / 3, 0, 1), 5); }
+      cx.fillStyle = '#333'; cx.fillRect(90, 160, W - 180, 5); cx.fillStyle = C.t > 1.2 ? '#7fe08a' : '#ff6b6b'; cx.fillRect(90, 160, (W - 180) * clamp(C.t / 3.6, 0, 1), 5); }
     if (st.phase === 'end') { const won = st.score[0] > st.score[1]; txt(won ? '¡GANÁIS!' : 'HABÉIS PERDIDO', W / 2, 100, 16, won ? '#7fe08a' : '#ff6b6b'); txt(`${st.score[0]} - ${st.score[1]}`, W / 2, 128, 10, '#fff'); }
     if (st.fade > 0) { cx.fillStyle = `rgba(0,0,0,${st.fade})`; cx.fillRect(0, 0, W, H); }
   }
@@ -356,7 +384,7 @@ const BASKET2D = (() => {
   function loop(now) {
     if (!running) return; raf = requestAnimationFrame(loop);
     let dt = Math.min(0.1, (now - last) / 1000); last = now; acc += dt;
-    while (acc >= 1 / 60) { step(1 / 60); pressedK.clear(); releasedK.clear(); acc -= 1 / 60; }
+    while (acc >= 1 / 60) { step(1 / 60); pressedK.clear(); releasedK.clear(); acc -= 1 / 60; updateCam(); }
     if (st.fadeDir) { st.fade = clamp(st.fade + st.fadeDir * dt * 2.5, 0, 1); if (st.fadeDir < 0 && st.fade === 0) st.fadeDir = 0; if (st.fadeDir > 0 && st.fade === 1) { st.fadeDir = 0; close(); return; } }
     draw();
   }
@@ -364,18 +392,18 @@ const BASKET2D = (() => {
   function start(opt) {
     if (running || FIGHT2D.running) return false; running = true; onEnd = opt.onEnd || null;
     if (!cv) { cv = document.createElement('canvas'); cv.id = 'basket2d'; cv.width = W * R; cv.height = H * R; cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;image-rendering:pixelated;background:#000;z-index:28;display:none'; document.body.appendChild(cv); cx = cv.getContext('2d'); }
-    if (!bgC) bgC = drawBg();
     const team = opt.team, riv = opt.rival;
     st = { p: [mkPlayer({ ...team[0], human: true }, 0, 0), mkPlayer(team[1], 0, 1), mkPlayer(riv[0], 1, 0), mkPlayer(riv[1], 1, 1)], ball: { x: 0, z: 0, y: 0, vx: 0, vz: 0, vy: 0, holder: null, mode: 'held' },
       score: [0, 0], clock: opt.time || 150, names: [opt.teamName || 'JETA', opt.rivalName || 'RIVALES'], phase: 'ready', pt: 0, time0: 0, bannerT: 0, banner: null, tip: '', ev: {}, golden: false,
-      tut: opt.tutorial ? { i: 0, wait: 0 } : null, auto: !!opt.auto, fade: 1, fadeDir: -1, stake: opt.stake || 0 };
+      tut: opt.tutorial ? { i: 0, wait: 0 } : null, auto: !!opt.auto, fade: 1, fadeDir: -1, stake: opt.stake || 0, style: opt.style || 'calle' };
     for (const q of st.p) if (q.team === 1) q.lv = opt.lv ?? 0.5; st.p[1].lv = opt.mateLv ?? 0.6;
-    place(0); keys.clear(); pressedK.clear(); releasedK.clear(); document.exitPointerLock?.();
+    place(0); updateCam(1); keys.clear(); pressedK.clear(); releasedK.clear(); document.exitPointerLock?.();
     GAME.state = 'basket2d'; document.body.classList.add('fighting'); cv.style.display = 'block';
     AUDIO.init && AUDIO.init(); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); return true;
   }
   function finish() { if (!st || st.fadeDir > 0) return; st.fadeDir = 1; }
   function close() { running = false; cancelAnimationFrame(raf); cv.style.display = 'none'; document.body.classList.remove('fighting'); GAME.state = 'play'; GAME.lock();
     const res = { won: st.score[0] > st.score[1], score: st.score.slice() }; if (onEnd) onEnd(res); }
-  return { start, get running() { return running; }, _st: () => st, _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); pressedK.clear(); releasedK.clear(); } }, _press: press };
+  function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); if (cv) cv.style.display = 'none'; document.body.classList.remove('fighting'); if (GAME.state === 'basket2d') GAME.state = 'play'; } // tests only
+  return { start, _abort: abort, get running() { return running; }, _st: () => st, _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); pressedK.clear(); releasedK.clear(); updateCam(); } }, _press: press };
 })();

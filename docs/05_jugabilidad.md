@@ -182,3 +182,21 @@ Las partidas v1 (con el Canarión dentro de la historia) se convierten al cargar
   aire toca el balón al salir. IA: el que lleva el balón entra hacia la canasta y tira según su distancia preferida y si
   está libre (la CPU también machaca); los demás se abren a la banda o defienden entre su hombre y la canasta. En el
   tutorial los rivales no se mueven y tu compañero te espera con el balón.
+
+## Diario, canchas y Torneo Lagunero (v0.66)
+
+- **Diario** (`12h_diario.js`, tecla `diary` = J): `MISSIONS.diary()` da cada línea (`story`, `side`, `obispo`, `torneo`) con
+  sus misiones y estado (`hecha`, `activa`, `siguiente`, `pendiente`); `MISSIONS.log(título)` las frases dichas en esa
+  misión (se apuntan en `talk` y `chat`, hasta 80 por misión, y se guardan en `getState().log`);
+  `MISSIONS.resetFrom(línea, i)` vuelve a la misión i de esa línea (borra el registro de las siguientes).
+- **Canchas** (`12i_canchas.js`, `COURTS`): una por cada cancha con canastas (`SPORTS.pitches` `bb`/`multi`, sin las
+  repetidas: `pitchRects` deja la mayor cuando dos se solapan). Si hay un edificio entre la cancha y la calle más
+  cercana, o un colegio a menos de 70 m, `gate: 'door'` = puerta en la acera (`streetDoor`) con E; si no, `gate:
+  'court'` = se pulsa E dentro de la cancha. Nivel 1–5 fijo por cancha. `courtGateNear()` / `useCourtGate(c)`:
+  misión que espera esa puerta (`m.gate`, `m.onGate`), o partido libre tras el tutorial (`GANG.basketTut`).
+  Colegio Máyex = `id: 'mayex'`; Pabellón Juan Ríos Tejera = `id: 'riostejera'`, `final: true`, fondo `pabellon`.
+- **Torneo Lagunero** (`TRACKS.torneo`, naranja `#ff9f43`, se abre con `GANG.basketTut`): 4 canchas públicas
+  repartidas (separadas ≥ 350 m si se puede) con niveles 0,4–0,7 y la final (0,85, 180 s) en el Ríos Tejera.
+- **Baloncesto**: lienzo a R = 4, `PXM` 30 px/m (la cancha mide 840 px y se ven ~16 m), cámara `camX` que sigue al
+  balón; fondos `calle`, `colegio`, `pabellon` (`drawBg(style)`). Ventana verde = 0,51 s ± (0,13 − 0,011·distancia),
+  entre ±0,04 y ±0,12. La CPU no tira a más de 9,5 m; su acierto se multiplica por 0,45 + 0,6·nivel.

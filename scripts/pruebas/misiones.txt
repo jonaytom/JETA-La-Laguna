@@ -3,3 +3,4 @@ prueba_misiones.py
 prueba_misiones_guardado.py
 prueba_persecuciones.py
 prueba_obispo.py
+prueba_diario.py

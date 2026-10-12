@@ -24,7 +24,7 @@
 
 `scripts\TRABAJADOR.bat` (ventana abierta en el PC de Jonay) ejecuta los encargos que Claude deja en
 `E:\Claude\GTA La Laguna\repo\cola\<id>.txt` y escribe el resultado en `cola\hecho\<id>.md`. Solo órdenes de una lista
-cerrada (`tools/trabajador.py`): `build`, `pruebas [listas…]`, `prep`, `merge_zona <zona>`, `copiar_html`,
+cerrada (`tools/trabajador.py`): `build`, `pruebas [listas…]` (sin nada = `cambios version`), `prep`, `merge_zona <zona>`, `copiar_html`,
 `publicar <versión>` (escribe `PUBLICAR.txt`: siempre la última), `esperar <s>`. Si no está abierto, pedirle a Jonay que
 lo abra (o que lance el `.bat` que toque). En la nube solo queda lo estrictamente necesario: editar el código (las
 herramientas de edición de Claude trabajan aquí) y publicar el Artifact (se sube el `dist/gta-la-laguna.html` que
@@ -36,16 +36,21 @@ compila el PC de Jonay).
    Antes de editar un archivo que Jonay pueda haber cambiado, traer su versión de `E:\…\repo\`.
 2. Copiar los archivos cambiados a `E:\Claude\GTA La Laguna\repo\` (`device_commit_files`), rellenar
    `scripts/PRUEBAS_LISTA.txt` con las pruebas de esta versión y dejar el encargo en `cola\`:
-   `build` + `pruebas version base`. Leer `cola\hecho\<id>.md` y `reportes\pruebas\ULTIMO.md` (y fotos de
+   `build` + `pruebas` (sin nada = `cambios version`: solo las pruebas de los archivos tocados según
+   `scripts/pruebas/categorias.json` + `PRUEBAS_LISTA.txt`, con una sola carga del juego; `pruebas base` o `todas` cuando
+   se toque algo general). Leer `cola\hecho\<id>.md` y `reportes\pruebas\ULTIMO.md` (y fotos de
    `tests\shots\` si hace falta). Si algo falla: arreglar y repetir.
-3. Todo OK → encargo `copiar_html` + `publicar <versión>`; traer `dist\gta-la-laguna.html` (`device_stage_files`) y
+3. Todo OK → encargo `copiar_html` + `publicar <versión>` + `subir_git` (sube a GitHub en el momento; la tarea
+   programada solo corre un par de veces al día) y, **después**, `auditar`; traer `dist\gta-la-laguna.html` (`device_stage_files`) y
    publicar el Artifact (https://claude.ai/artifact/TwcMQexTqQsGJWLpUYvcXJ).
-4. **Auditorías**: las pasa Jonay cuando quiere. Al empezar cada tanda, mirar en `C:\Users\Jonay\RevisordeCodigo\resultados\`
+4. **Auditorías**: las pasa Jonay cuando quiere. Al empezar cada tanda, mirar en `C:\Users\Jonay\RevisordeCodigo\resultados_pc\` (antes `resultados\`)
    si hay carpetas nuevas, leer su `VEREDICTO.md`, contárselo y anotar lo nuevo en `PENDIENTES.md`. Las mejoras de los
    auditores NO se aplican hasta que Jonay lo diga. **Agente revisor**: solo cuando Jonay lo pida.
    **Al final de cada pasada** (desde v0.65, a petición de Jonay: en su PC es rápido), con las pruebas ya OK y antes de
-   publicar: encargo `auditar` al trabajador (corre `auditar.py` en
-   `C:\Users\Jonay\RevisordeCodigo\herramientas\` con su `..\resultados\historial.json`: compara con la versión anterior y
+   publicar: encargo `auditar` al trabajador, **en el mismo encargo y después de `pruebas`, nunca a la vez** (se reparten el
+   PC y los tiempos salen falsos) (corre `auditar.py` en
+   `C:\Users\Jonay\RevisordeCodigo\herramientas\` como `auditar_jeta.bat`: `--copiar --gpu --resultados resultados_pc` y
+   `--primera` si aún no hay historial; salida 0 APTO, 1 con avisos, 2 NO APTO, 3 sin historial; compara con la anterior y
    el resultado queda ya en su sitio). Herramientas: solo las de `RevisordeCodigo\herramientas\` (las de
    `repo\tools\auditoria\` son antiguas). Veredicto (`VEREDICTO.md` de la carpeta nueva): **NO APTO** → no publicar y
    avisar; **APTO CON AVISOS** → publicar y apuntar los avisos nuevos en `PENDIENTES.md`; contarle siempre el veredicto y

@@ -1,3 +1,4 @@
 @echo off
-rem Las pruebas de esta version (scripts\PRUEBAS_LISTA.txt) + la base fija (scripts\pruebas\base.txt). Antes de cada version.
-call "%~dp0_motor_pruebas.bat" version base
+rem v0.66: solo las pruebas de lo que ha cambiado (git status + scripts\pruebas\categorias.json) + las de esta version
+rem (scripts\PRUEBAS_LISTA.txt), con una sola carga del juego. Para todo: PRUEBAS_TODAS.bat; por zonas: PRUEBAS_<ZONA>.bat.
+call "%~dp0_motor_pruebas.bat" cambios version

@@ -1,5 +1,8 @@
 # Pruebas de ESTA versión (las lanza scripts\PRUEBAS.bat junto con la base fija de scripts\pruebas\base.txt).
-# v0.65.1: Obispado (obispo y círculo alcanzables) y parpadeo de noche delante del Obispado
+# v0.66.0: baloncesto (ratón, cámara), canchas y entradas, Obispo en el Máyex, diario, parpadeo de noche
+prueba_baloncesto.py
+prueba_canchas.py
 prueba_obispo.py
+prueba_diario.py
+prueba_panel_controles.py
 herramientas/foto_noche.py -42 -239 5
-herramientas/foto_noche.py -42 -239 13

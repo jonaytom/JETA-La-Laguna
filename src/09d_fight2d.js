@@ -403,7 +403,8 @@ const FIGHT2D = (() => {
     const pad = $('fightPad'); if (!pad) return; const map = { fpL: 'vL', fpR: 'vR', fpU: 'vU', fpD: 'vD', fpP: 'vP', fpK: 'vK', fpB: 'vB' };
     for (const id in map) { const b = $(id); if (!b) continue; const k = map[id]; b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); if (!keys.has(k)) pressedK.add(k); keys.add(k); b.classList.add('on'); }); const up = (e) => { keys.delete(k); b.classList.remove('on'); }; b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up); }
   }
-  return { start, setupPad, get running() { return running; }, _st: () => st, POSES, spritesFor, figure: drawFigure, bodyK }; // figure/bodyK: also used by the basketball game (09f)
+  function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); if (cv) cv.style.display = 'none'; const fp = $('fightPad'); if (fp) fp.style.display = 'none'; document.body.classList.remove('fighting'); if (GAME.state === 'fight2d') GAME.state = 'play'; } // tests only
+  return { start, setupPad, _abort: abort, get running() { return running; }, _st: () => st, POSES, spritesFor, figure: drawFigure, bodyK }; // figure/bodyK: also used by the basketball game (09f)
 })();
 // ---- hooking it to the 3D world: punching a pedestrian starts a (short, one round) fight
 // women (unless big) take double damage and hit half as hard — and hitting them is always a crime;

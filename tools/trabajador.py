@@ -5,13 +5,16 @@
 #
 # Órdenes (una por línea; '#' = comentario):
 #   build                      python build.py (juego + documentación)
-#   pruebas [listas…]          tools/pruebas_locales.py  (version, base, pelea, misiones, coches, mapa, otros, todas)
+#   pruebas [listas…]          tools/pruebas_locales.py  (sin nada = cambios + version; base, pelea, misiones, coches, mapa, otros, todas)
 #   prep                       python prep.py  (regenera data/data.json desde OSM)
 #   merge_zona <zona>          python tools/merge_zona.py <zona>
 #   copiar_html                dist\JETA La Laguna.html y la documentación a E:\Claude\GTA La Laguna\
 #   publicar <versión>         escribe scripts\PUBLICAR.txt: la tarea programada lo sube a GitHub (siempre lo último)
 #   esperar <segundos>         pausa (máx. 600)
-#   auditar                    el auditor del Corrector (C:\Users\Jonay\RevisordeCodigo\herramientas): SOLO si Jonay lo pide
+#   auditar                    el auditor del Corrector, como auditar_jeta.bat (resultados en RevisordeCodigo\resultados_pc);
+#                              al final de cada pasada, DESPUÉS de «pruebas» en el mismo encargo (nunca a la vez)
+#   borrar_auditoria_vieja     borra repo\tools\auditoria (copia antigua del auditor)
+#   subir_git                  sube ya a GitHub (scripts\publicar.ps1; necesita «publicar <versión>» antes)
 # Si una orden falla, las siguientes no se hacen (salvo «pruebas», que siempre deja su informe).
 import os, sys, re, time, shutil, subprocess, datetime
 
@@ -23,14 +26,19 @@ ENV = dict(os.environ, PYTHONIOENCODING='utf-8', PYTHONUTF8='1', PIP_DISABLE_PIP
 ARG_OK = re.compile(r'^[A-Za-z0-9_.\-]+$')
 
 
-def run(cmd, limite=7200):
-    t0 = time.time()
+def run(cmd, limite=7200, eco=False):
+    """eco=True (pruebas): repeats on this window the progress lines (== …, >> prueba …) while it runs."""
+    t0 = time.time(); lines = []
     try:
-        r = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=limite, env=ENV)
-        out = (r.stdout + '\n' + r.stderr).strip(); code = r.returncode
-    except subprocess.TimeoutExpired:
-        out, code = 'TIEMPO AGOTADO', -1
-    return code, out, int(time.time() - t0)
+        pr = subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8', errors='replace', env=ENV)
+        for l in pr.stdout:
+            lines.append(l.rstrip('\n'))
+            if eco and (l.startswith('==') or l.startswith('>>') or l.startswith('  terminada') or l.startswith('   ')): print('   ' + l.rstrip(), flush=True)
+            if time.time() - t0 > limite: pr.kill(); lines.append('TIEMPO AGOTADO'); break
+        code = pr.wait(timeout=60)
+    except Exception as e:
+        lines.append(f'error: {e}'); code = -1
+    return code, '\n'.join(lines).strip(), int(time.time() - t0)
 
 
 def subprocess_run(cmd, cwd, limite=3600):
@@ -45,17 +53,27 @@ def orden(linea):
     if any(not ARG_OK.match(x) for x in a): return 1, 'argumento no permitido: ' + ' '.join(a), 0
     if o == 'build': return run([PY, 'build.py'])
     if o == 'pruebas':
-        code, out, s = run([PY, os.path.join('tools', 'pruebas_locales.py')] + (a or ['version', 'base']))
+        code, out, s = run([PY, os.path.join('tools', 'pruebas_locales.py')] + (a or ['cambios', 'version']), eco=True)
         informe = os.path.join(ROOT, 'reportes', 'pruebas', 'ULTIMO.md')
         resumen = open(informe, encoding='utf-8').readline().strip() if os.path.exists(informe) else ''
-        return (0 if 'FALLA' not in out and code == 0 else 2), resumen + '\n(informe completo: reportes/pruebas/ULTIMO.md)\n' + out[-1500:], s
-    if o == 'auditar':  # only when Jonay asks: the Corrector's auditor, run where it lives (its ../resultados is the real history)
-        her = os.path.join(os.path.expanduser('~'), 'RevisordeCodigo', 'herramientas')
+        m = re.search(r'== (\d+)/(\d+) OK', out); return (0 if m and m.group(1) == m.group(2) else 2)  # v0.66: by the final count (a test repeated apart says FALLA and then OK), resumen + '\n(informe completo: reportes/pruebas/ULTIMO.md)\n' + out[-1500:], s
+    if o == 'auditar':  # the Corrector's auditor, exactly like its auditar_jeta.bat (PARA_EL_PROGRAMADOR, 2026-10-12): GPU, copy, resultados_pc
+        rev = os.path.join(os.path.expanduser('~'), 'RevisordeCodigo'); her = os.path.join(rev, 'herramientas'); rpc = os.path.join(rev, 'resultados_pc')
         if not os.path.exists(os.path.join(her, 'auditar.py')): return 1, 'no encuentro ' + her, 0
-        code, out, s = subprocess_run([PY, 'auditar.py', '--repo', ROOT], her)
-        res = os.path.join(os.path.dirname(her), 'resultados'); dirs = sorted([d for d in os.listdir(res) if os.path.isdir(os.path.join(res, d))], key=lambda d: os.path.getmtime(os.path.join(res, d)))
-        ver = open(os.path.join(res, dirs[-1], 'VEREDICTO.md'), encoding='utf-8').read()[:2500] if dirs and os.path.exists(os.path.join(res, dirs[-1], 'VEREDICTO.md')) else ''
-        return (0 if 'NO APTO' not in ver else 2), (dirs[-1] if dirs else '') + '\n' + ver + '\n' + out[-800:], s
+        cmd = [PY, 'auditar.py', '--repo', ROOT, '--copiar', '--gpu', '--resultados', rpc] + ([] if os.path.exists(os.path.join(rpc, 'historial.json')) else ['--primera'])
+        code, out, s = subprocess_run(cmd, her)
+        dirs = sorted([d for d in os.listdir(rpc) if os.path.isdir(os.path.join(rpc, d))], key=lambda d: os.path.getmtime(os.path.join(rpc, d))) if os.path.isdir(rpc) else []
+        ver = open(os.path.join(rpc, dirs[-1], 'VEREDICTO.md'), encoding='utf-8').read()[:3000] if dirs and os.path.exists(os.path.join(rpc, dirs[-1], 'VEREDICTO.md')) else ''
+        txt = {0: 'APTO', 1: 'APTO CON AVISOS', 2: 'NO APTO', 3: 'FALTA EL HISTORIAL'}.get(code, 'código %s' % code)
+        return (0 if code in (0, 1) else 2), f'{txt} · {dirs[-1] if dirs else ""}\n{ver}\n{out[-800:]}', s
+    if o == 'subir_git':  # v0.66 (Jonay): run the GitHub upload now (the scheduled task only runs a couple of times a day)
+        code, out, s = run(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', os.path.join(ROOT, 'scripts', 'publicar.ps1')], 600)
+        logf = os.path.join(ROOT, 'scripts', 'publicar.log'); tail = ''.join(open(logf, encoding='utf-8', errors='replace').readlines()[-6:]) if os.path.exists(logf) else ''
+        return code, (out + '\n' + tail).strip(), s
+    if o == 'borrar_auditoria_vieja':  # one-off (PARA_EL_PROGRAMADOR): the old copy of the auditor inside the repo
+        p = os.path.join(ROOT, 'tools', 'auditoria')
+        if os.path.isdir(p): shutil.rmtree(p); return 0, 'borrada ' + p, 0
+        return 0, 'ya no existe ' + p, 0
     if o == 'prep': return run([PY, 'prep.py'])
     if o == 'merge_zona' and len(a) == 1: return run([PY, os.path.join('tools', 'merge_zona.py'), a[0]])
     if o == 'copiar_html':

@@ -61,51 +61,56 @@ function obispoInit() {
   NPC.obispo = { x, z, H, home: [x, z], name: OBISPO }; COL.addCirc(x, z, 0.4);
 }
 // ---------- the court for the charity games: the nearest one with hoops
-function obispoCourt() {
-  const o = OBISPADO.front || [0, 0]; let best = null, bd = 1e9;
-  for (const p of SPORTS.pitches) { if (p.kind !== 'bb' && p.kind !== 'multi') continue; const d = Math.hypot(p.cx - o[0], p.cz - o[1]); if (d < bd) { bd = d; best = p; } }
-  if (!best) return null; const rd = ROADSEG.nearest(best.cx, best.cz); const nm = rd && DATA.R[rd.ri][1] >= 0 ? STR[DATA.R[rd.ri][1]] : '';
-  return { ...best, place: nm ? 'la cancha de ' + nm : 'la cancha de baloncesto', dist: bd };
+// v0.66: the first game is in the yard of the Colegio Máyex (school door, E); the second one on a public court
+function obispoCourt(kind) {
+  if (typeof COURTS === 'undefined' || !COURTS.length) return null;
+  if (kind === 'mayex' || kind === undefined) { const m = COURTS.find((c) => c.id === 'mayex'); if (m) return m; }
+  return COURTS.filter((c) => c.gate === 'court' && !c.final).sort((a, b) => a.dist - b.dist)[0] || null;
 }
 const shortName = () => { const g = (MISSIONS.gang && MISSIONS.gang.name) || ''; const s = g.replace(/^(Los|Las|La|El)\s+/i, '').toUpperCase(); return (s || 'JETA').slice(0, 11); };
-// play a charity game: goto the court, then the 2D game; win → pass
+function obispoStartGame(m, o, c) {
+  const K = MISSIONS.kit; m.st.step = 2; K.clearBeacon(); K.setObjective(null);
+  playCourtGame(c, { rival: o.rival, rivalName: o.rivalName, time: o.time, lv: o.lv, tutorial: o.tutorial, style: c.style,
+    onEnd: (r) => { if (!K.isActive(m)) return; if (r.won) { K.talk([[o.winWho, o.winLine(r.score)]], () => { K.pass(m.title, o.prize); if (o.tutorial && !MISSIONS.gang.basketTut) { MISSIONS.gang.basketTut = true; MISSIONS.refresh(); setTimeout(() => HUD.toast('Ya puedes retar a la gente en cualquier cancha (E) y se abre el TORNEO LAGUNERO (círculo naranja).', '#ff9f43', 7), 4500); } }); } else K.fail(o.loseLine); } });
+}
 function obispoGame(m, o) {
-  const K = MISSIONS.kit, c = obispoCourt(); if (!c) { K.abort('No encuentro ninguna cancha de baloncesto cerca.'); return; }
-  m.st = { step: 1, c }; K.goto(c.cx, c.cz, 6, 0xb388ff); K.setObjective(`Ve a ${K.bold(c.place)} con Coco para el partido`);
+  const K = MISSIONS.kit, c = obispoCourt(o.court); if (!c) { K.abort('No encuentro ninguna cancha de baloncesto cerca.'); return; }
+  m.st = { step: 1, c, o };
+  if (c.gate === 'door') { m.gate = c.id; m.onGate = () => { if (m.st && m.st.step === 1) obispoStartGame(m, o, c); }; K.goto(c.x, c.z, 2.2, 0xb388ff); K.setObjective(`Ve con Coco al ${K.bold(c.label)} (${c.street || 'la calle'}) y entra con ${CONTROLS.kbd('use')}`); }
+  else { m.gate = null; K.goto(c.cx, c.cz, 6, 0xb388ff); K.setObjective(`Ve a ${K.bold(c.label)} con Coco para el partido`); }
 }
-function obispoGameUpdate(m, o) {
-  const K = MISSIONS.kit, S = m.st; if (!S || S.step !== 1) return; const g = K.data.goal; if (!g || Math.hypot(PLAYER.x - g[0], PLAYER.z - g[1]) > 7) return;
+function obispoGameUpdate(m) {
+  const K = MISSIONS.kit, S = m.st; if (!S || S.step !== 1 || S.c.gate === 'door') return; const g = K.data.goal; if (!g || Math.hypot(PLAYER.x - g[0], PLAYER.z - g[1]) > 7) return;
   if (PLAYER.car) { if (PLAYER.car.speed > 2) return; exitCar(); }
-  S.step = 2; K.clearBeacon(); K.setObjective(null);
-  const coco = NPC.coco && NPC.coco.H ? NPC.coco.H.look : {};
-  BASKET2D.start({ team: [{ name: 'EL CHOPA', look: { ...(playerHuman.look || {}) }, nose: true }, { name: 'COCO', look: { ...coco } }], rival: o.rival, teamName: shortName(), rivalName: o.rivalName, time: o.time, lv: o.lv, mateLv: 0.6, tutorial: o.tutorial,
-    onEnd: (r) => { if (!K.isActive(m)) return; if (r.won) { K.talk([[o.winWho, o.winLine(r.score)]], () => K.pass(m.title, o.prize)); } else K.fail(o.loseLine); } });
+  obispoStartGame(m, S.o, S.c);
 }
+const O_SEMINARIO = { court: 'mayex', rival: [{ name: 'H. TOMÁS', look: SEMINARISTAS[0] }, { name: 'H. LUCAS', look: SEMINARISTAS[1] }], rivalName: 'SEMINARIO', time: 120, lv: 0.15, tutorial: true, prize: 350,
+  winWho: 'Hermano Tomás', winLine: (s) => `${s[0]} a ${s[1]}... Que Dios os lo pague. Bueno, que os lo pague Monseñor, que tiene la llave del cepillo.`, loseLine: 'Os han ganado los seminaristas. ¡A rezar y a entrenar!' };
+const O_CRISTO = { court: 'publica', rival: [{ name: 'EL NENE', look: CRISTO_TEAM[0] }, { name: 'YERAY', look: CRISTO_TEAM[1] }], rivalName: 'EL CRISTO', time: 150, lv: 0.45, tutorial: false, prize: 600,
+  winWho: OBISPO, winLine: (s) => `${s[0]} a ${s[1]}. ¡Aleluya! Con esto pagamos el andamio. La próxima vez, fútbol: el Señor también es del Tenerife.`, loseLine: 'Los del Cristo os han ganado. Monseñor dice que recéis menos y defendáis más.' };
 const M_OBISPO_1 = {
   title: 'Un partido por la Catedral', who: OBISPO,
   hint() { return 'Monseñor ' + MISSIONS.kit.bold('Truchas') + ' te espera en el ' + MISSIONS.kit.bold('Obispado') + ' (Calle San Agustín)'; },
   startPos() { if (!OBISPADO.front) return [0, 0]; const p = [OBISPADO.front[0] + OBISPADO.nx * 1.4, OBISPADO.front[1] + OBISPADO.nz * 1.4]; return inAnyBuilding(p[0], p[1]) ? safeSpot(p[0], p[1], 0.8) : p; },
-  start() { const K = MISSIONS.kit, c = obispoCourt();
+  start() { const K = MISSIONS.kit, c = obispoCourt('mayex');
     K.talk([[OBISPO, 'Pasa, hijo, pasa. Soy Fermín Truchas, obispo de Nivaria por la gracia de Dios y por un error administrativo del Vaticano.'],
       [OBISPO, 'Me han dicho que tu banda ayuda al alcalde. Pues el Señor también tiene goteras: el tejado de la Catedral, el campanario de La Concepción, el órgano de Santo Domingo que suena como una guagua…'],
       [K.CH, '¿Y qué quiere, Monseñor? ¿Que robe un banco? Que yo eso ya lo dejé.'],
-      [OBISPO, '¡Válgame! No, no. Partidos benéficos. La gente paga por ver. Hoy jugáis en ' + (c ? c.place : 'la cancha') + ' contra mis seminaristas, el hermano Tomás y el hermano Lucas.'],
+      [OBISPO, '¡Válgame! No, no. Partidos benéficos. La gente paga por ver. Hoy jugáis en ' + (c ? 'el patio del ' + c.label : 'la cancha') + ' contra mis seminaristas, el hermano Tomás y el hermano Lucas. Las monjas os abren la puerta.'],
       [OBISPO, 'Son buenos chicos, pero tiran a canasta como rezan: con los ojos cerrados. Llévate a Coco, que tiene brazos de boxeador. Lo recaudado, para la obra de la iglesia… y una parte para vosotros, que el obrero merece su salario. Lucas 10,7.']],
-      () => obispoGame(this, {}));
+      () => obispoGame(this, O_SEMINARIO));
   },
-  update() { obispoGameUpdate(this, { rival: [{ name: 'H. TOMÁS', look: SEMINARISTAS[0] }, { name: 'H. LUCAS', look: SEMINARISTAS[1] }], rivalName: 'SEMINARIO', time: 120, lv: 0.28, tutorial: true, prize: 350,
-    winWho: 'Hermano Tomás', winLine: (s) => `${s[0]} a ${s[1]}... Que Dios os lo pague. Bueno, que os lo pague Monseñor, que tiene la llave del cepillo.`, loseLine: 'Os han ganado los seminaristas. ¡A rezar y a entrenar!' }); },
+  update() { obispoGameUpdate(this); },
 };
 const M_OBISPO_2 = {
   title: 'El torneo de la parroquia', who: OBISPO,
   hint() { return 'Monseñor ' + MISSIONS.kit.bold('Truchas') + ' tiene otro partido: ve al ' + MISSIONS.kit.bold('Obispado'); },
   startPos() { return M_OBISPO_1.startPos(); },
-  start() { const K = MISSIONS.kit, c = obispoCourt();
+  start() { const K = MISSIONS.kit, c = obispoCourt('publica');
     K.talk([[OBISPO, '¡Hijo mío! Con lo del otro día arreglamos tres tejas. Faltan cuatrocientas. Y una paloma que vive en el campanario y tiene más derechos que yo.'],
-      [OBISPO, 'Esta vez os toca contra los del Cristo, los de la camiseta granate. Juegan sucio: empujan. Pero el Señor dijo «pon la otra mejilla», no «deja que te metan un mate».'],
-      [K.CH, 'Tranquilo, Monseñor, que el turbo también es de Dios.']], () => obispoGame(this, {}));
+      [OBISPO, 'Esta vez os toca contra los del Cristo, los de la camiseta granate, en ' + (c ? c.label : 'la cancha') + '. Juegan sucio: empujan. Pero el Señor dijo «pon la otra mejilla», no «deja que te metan un mate».'],
+      [K.CH, 'Tranquilo, Monseñor, que el turbo también es de Dios.']], () => obispoGame(this, O_CRISTO));
   },
-  update() { obispoGameUpdate(this, { rival: [{ name: 'EL NENE', look: CRISTO_TEAM[0] }, { name: 'YERAY', look: CRISTO_TEAM[1] }], rivalName: 'EL CRISTO', time: 150, lv: 0.55, tutorial: false, prize: 600,
-    winWho: OBISPO, winLine: (s) => `${s[0]} a ${s[1]}. ¡Aleluya! Con esto pagamos el andamio. La próxima vez, fútbol: el Señor también es del Tenerife.`, loseLine: 'Los del Cristo os han ganado. Monseñor dice que recéis menos y defendáis más.' }); },
+  update() { obispoGameUpdate(this); },
 };
 MISSIONS.addObispo([M_OBISPO_1, M_OBISPO_2]);

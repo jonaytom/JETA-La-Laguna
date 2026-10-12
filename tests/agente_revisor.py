@@ -255,7 +255,7 @@ async def main():
     log(f'== Agente revisor v{VER} — {FECHA} — zonas nuevas: {", ".join(z["nombre"] for z in ZONES)}')
     try:
         async with async_playwright() as p:
-            b = await p.chromium.launch(args=['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'])
+            b = await p.chromium.launch(args=['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--mute-audio'])
             pg = await b.new_page(viewport={'width': 960, 'height': 540})
             errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
             async def load():

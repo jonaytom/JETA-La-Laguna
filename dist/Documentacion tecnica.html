@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.65.1</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.66.0</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -57,7 +57,7 @@ jugable. Está previsto un <strong>proyecto aparte de creación de assets</stron
 <li>Abre <code>dist/JETA La Laguna.html</code> en Chrome / Edge / Firefox (PC o móvil). Necesita conexión la primera vez para
   descargar Three.js y las fuentes desde CDN.</li>
 <li>Controles principales (PC): <code>WASD</code> moverse · <code>Shift</code> correr · <code>Espacio</code> saltar · ratón cámara · <code>E</code> usar / entrar ·
-  <code>F</code> coche · <code>Q</code> puñetazo a pie / cambiar emisora en coche · <code>Tab</code> pistola / puños · clic dcho. apuntar · <code>M</code> mapa · <code>G</code> brújula sí/no ·
+  <code>F</code> coche · <code>Q</code> puñetazo a pie / cambiar emisora en coche · <code>Tab</code> pistola / puños · clic dcho. apuntar · <code>M</code> mapa · <code>G</code> brújula sí/no · <code>J</code> diario de misiones ·
   <code>Esc</code> pausa (guardar / cargar, opciones). Mando y pantalla táctil también funcionan.</li>
 </ul>
 <h2>Construir</h2>
@@ -1036,6 +1036,24 @@ Las partidas v1 (con el Canarión dentro de la historia) se convierten al cargar
   aire toca el balón al salir. IA: el que lleva el balón entra hacia la canasta y tira según su distancia preferida y si
   está libre (la CPU también machaca); los demás se abren a la banda o defienden entre su hombre y la canasta. En el
   tutorial los rivales no se mueven y tu compañero te espera con el balón.</li>
+</ul>
+<h2>Diario, canchas y Torneo Lagunero (v0.66)</h2>
+<ul>
+<li><strong>Diario</strong> (<code>12h_diario.js</code>, tecla <code>diary</code> = J): <code>MISSIONS.diary()</code> da cada línea (<code>story</code>, <code>side</code>, <code>obispo</code>, <code>torneo</code>) con
+  sus misiones y estado (<code>hecha</code>, <code>activa</code>, <code>siguiente</code>, <code>pendiente</code>); <code>MISSIONS.log(título)</code> las frases dichas en esa
+  misión (se apuntan en <code>talk</code> y <code>chat</code>, hasta 80 por misión, y se guardan en <code>getState().log</code>);
+  <code>MISSIONS.resetFrom(línea, i)</code> vuelve a la misión i de esa línea (borra el registro de las siguientes).</li>
+<li><strong>Canchas</strong> (<code>12i_canchas.js</code>, <code>COURTS</code>): una por cada cancha con canastas (<code>SPORTS.pitches</code> <code>bb</code>/<code>multi</code>, sin las
+  repetidas: <code>pitchRects</code> deja la mayor cuando dos se solapan). Si hay un edificio entre la cancha y la calle más
+  cercana, o un colegio a menos de 70 m, <code>gate: 'door'</code> = puerta en la acera (<code>streetDoor</code>) con E; si no, <code>gate:
+  'court'</code> = se pulsa E dentro de la cancha. Nivel 1–5 fijo por cancha. <code>courtGateNear()</code> / <code>useCourtGate(c)</code>:
+  misión que espera esa puerta (<code>m.gate</code>, <code>m.onGate</code>), o partido libre tras el tutorial (<code>GANG.basketTut</code>).
+  Colegio Máyex = <code>id: 'mayex'</code>; Pabellón Juan Ríos Tejera = <code>id: 'riostejera'</code>, <code>final: true</code>, fondo <code>pabellon</code>.</li>
+<li><strong>Torneo Lagunero</strong> (<code>TRACKS.torneo</code>, naranja <code>#ff9f43</code>, se abre con <code>GANG.basketTut</code>): 4 canchas públicas
+  repartidas (separadas ≥ 350 m si se puede) con niveles 0,4–0,7 y la final (0,85, 180 s) en el Ríos Tejera.</li>
+<li><strong>Baloncesto</strong>: lienzo a R = 4, <code>PXM</code> 30 px/m (la cancha mide 840 px y se ven ~16 m), cámara <code>camX</code> que sigue al
+  balón; fondos <code>calle</code>, <code>colegio</code>, <code>pabellon</code> (<code>drawBg(style)</code>). Ventana verde = 0,51 s ± (0,13 − 0,011·distancia),
+  entre ±0,04 y ±0,12. La CPU no tira a más de 9,5 m; su acierto se multiplica por 0,45 + 0,6·nivel.</li>
 </ul></section>
 <section id="s6"><div class="src">docs/06_audio.md</div><h1>6. Audio y radio procedural</h1>
 <p>Todo el sonido se <strong>sintetiza en tiempo real</strong> con Web Audio: no hay archivos de audio. Es una solución
@@ -1156,9 +1174,13 @@ El Canarión (Guanche GT) toca una melodía popular. <code>tests/herramientas/pr
 <section id="s7"><div class="src">docs/07_pruebas.md</div><h1>Pruebas</h1>
 <blockquote>
 <p><strong>Desde v0.64.1 las pruebas se ejecutan en el PC de Jonay</strong> (no en la nube: no gasta uso y siempre es el mismo equipo).
-- <code>scripts\PRUEBAS.bat</code>: <strong>antes de cada versión</strong> = las de esa versión (<code>scripts/PRUEBAS_LISTA.txt</code>, la rellena
-  Claude) + la <strong>base fija</strong> (<code>scripts/pruebas/base.txt</code>: guardar/cargar, coche y Boca Papa, bordes, persecuciones,
-  túneles y puentes).
+- <code>scripts\PRUEBAS.bat</code> (v0.66): <strong>solo lo que ha cambiado</strong> = <code>cambios</code> (mira <code>git status</code> y, con las reglas de
+  <code>scripts/pruebas/categorias.json</code>, elige las pruebas de cada archivo tocado; <code>prueba_arranque.py</code> va siempre) +
+  <code>version</code> (<code>scripts/PRUEBAS_LISTA.txt</code>, la rellena Claude). Todas se ejecutan con <strong>una sola carga del juego</strong>
+  (<code>tests/run_varios.py</code>: entre prueba y prueba cierra minijuegos, diario y misiones); si una falla, se repite sola
+  con <code>run_test.py</code> y el informe lo marca «(repetida aparte)». El informe lista los archivos cambiados.
+- La <strong>base fija</strong> (<code>scripts/pruebas/base.txt</code>: guardar/cargar, coche y Boca Papa, bordes, persecuciones, túneles y
+  puentes) ya no va siempre: <code>PRUEBAS_BASE.bat</code> o la orden <code>pruebas base</code>.
 - Por temas: <code>PRUEBAS_BASE</code>, <code>PRUEBAS_PELEA</code>, <code>PRUEBAS_MISIONES</code>, <code>PRUEBAS_COCHES</code>, <code>PRUEBAS_MAPA</code> (con las
   <code>audit_*</code> de obstáculos, cruces y hundimientos), <code>PRUEBAS_OTROS</code> y <code>PRUEBAS_TODAS</code> (todo, muy larga). Cada lista es
   <code>scripts/pruebas/&lt;nombre&gt;.txt</code> (una prueba por línea con sus argumentos; <code>#</code> = comentario).
@@ -1571,6 +1593,35 @@ que el cambio no obligue a tocar la lógica del juego.</p>
 <section id="s11"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.66.0 — 2026-10-12 — Diario de misiones, Torneo Lagunero y baloncesto más cerca</h2>
+<ul>
+<li><strong>Diario de misiones (J)</strong>: sobreimpreso, con las 4 líneas (Historia, El Canarión, El Obispo, Torneo Lagunero), el
+  estado de cada misión, qué hacer en la siguiente y <strong>todas las conversaciones</strong> de cada misión (se guardan con la
+  partida). «Reiniciar desde aquí» vuelve a esa misión y todo lo que va detrás. El Blanco te da la libreta en la primera.</li>
+<li><strong>Baloncesto</strong>:</li>
+<li>El ratón estaba al revés: ahora clic izquierdo tira y el derecho pasa.</li>
+<li>Cámara mucho más cerca, con el doble de resolución: sigue al balón y enseña su mitad y algo más; flechas en el
+    borde para quien queda fuera.</li>
+<li>La zona verde del tiro es más ancha cerca de la canasta y más estrecha de lejos.</li>
+<li>La CPU ya no tira desde su campo, y los equipos flojos fallan casi todo (sobre todo de lejos).</li>
+<li>Combos con un 20 % más de tiempo.</li>
+<li>Jugadores, aro y balón un 30 % más grandes respecto a la cancha (se veían pequeños).</li>
+<li>Fondos distintos: cancha de la calle, patio de colegio y pabellón cubierto.</li>
+<li><strong>Canchas con entrada</strong>:</li>
+<li>Las públicas se juegan pisando la cancha y pulsando E.</li>
+<li>Las de colegio o encerradas entre edificios tienen una puerta en la calle (E), con un balón flotando encima.</li>
+<li>Las canchas dobles (dos dibujadas una encima de otra) quedan en una sola.</li>
+<li>Después del primer partido puedes retar a la gente de cualquier cancha (niveles 1–5).</li>
+<li><strong>Obispo</strong>: el primer partido es en el <strong>Colegio Máyex</strong> (se entra por su puerta de la C. Pintor Cristino de
+  Vera); el segundo, en una cancha pública.</li>
+<li><strong>Torneo Lagunero</strong> (círculo naranja; se abre al ganar el primer partido): 4 equipos en canchas de la ciudad, cada
+  uno más difícil, y <strong>la final en el Pabellón Juan Ríos Tejera</strong> (puerta morada y cartel en la C. Leopoldo de la Rosa
+  Olivera; dentro, cancha de parqué con gradas).</li>
+<li><strong>Pruebas por zonas</strong>: <code>PRUEBAS.bat</code> (y la orden <code>pruebas</code>) solo prueba lo que ha cambiado (git status +
+  <code>scripts/pruebas/categorias.json</code>) más las de la versión, con una sola carga del juego; las que fallan se repiten aparte.</li>
+<li>Trabajador: <code>auditar</code> como <code>auditar_jeta.bat</code> (resultados en <code>resultados_pc</code>), <code>subir_git</code> (sube ya a GitHub) y
+  <code>borrar_auditoria_vieja</code>.</li>
+</ul>
 <h2>0.65.1 — 2026-10-12 — Arreglos del Obispado</h2>
 <ul>
 <li><strong>Monseñor Truchas y su círculo quedaban dentro de la Casa Salazar</strong> (la portada se orientaba hacia dentro cuando la

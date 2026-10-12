@@ -1,9 +1,13 @@
 # Pruebas
 
 > **Desde v0.64.1 las pruebas se ejecutan en el PC de Jonay** (no en la nube: no gasta uso y siempre es el mismo equipo).
-> - `scripts\PRUEBAS.bat`: **antes de cada versión** = las de esa versión (`scripts/PRUEBAS_LISTA.txt`, la rellena
->   Claude) + la **base fija** (`scripts/pruebas/base.txt`: guardar/cargar, coche y Boca Papa, bordes, persecuciones,
->   túneles y puentes).
+> - `scripts\PRUEBAS.bat` (v0.66): **solo lo que ha cambiado** = `cambios` (mira `git status` y, con las reglas de
+>   `scripts/pruebas/categorias.json`, elige las pruebas de cada archivo tocado; `prueba_arranque.py` va siempre) +
+>   `version` (`scripts/PRUEBAS_LISTA.txt`, la rellena Claude). Todas se ejecutan con **una sola carga del juego**
+>   (`tests/run_varios.py`: entre prueba y prueba cierra minijuegos, diario y misiones); si una falla, se repite sola
+>   con `run_test.py` y el informe lo marca «(repetida aparte)». El informe lista los archivos cambiados.
+> - La **base fija** (`scripts/pruebas/base.txt`: guardar/cargar, coche y Boca Papa, bordes, persecuciones, túneles y
+>   puentes) ya no va siempre: `PRUEBAS_BASE.bat` o la orden `pruebas base`.
 > - Por temas: `PRUEBAS_BASE`, `PRUEBAS_PELEA`, `PRUEBAS_MISIONES`, `PRUEBAS_COCHES`, `PRUEBAS_MAPA` (con las
 >   `audit_*` de obstáculos, cruces y hundimientos), `PRUEBAS_OTROS` y `PRUEBAS_TODAS` (todo, muy larga). Cada lista es
 >   `scripts/pruebas/<nombre>.txt` (una prueba por línea con sus argumentos; `#` = comentario).

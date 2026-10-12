@@ -6,7 +6,7 @@ S='shots/'; import os, sys; os.makedirs(S, exist_ok=True)
 SIZES=[(890,400),(740,360),(1000,450)]
 async def main():
     async with async_playwright() as p:
-        b = await p.chromium.launch(args=['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist'])
+        b = await p.chromium.launch(args=['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist', '--mute-audio'])
         for i,(w,h) in enumerate(SIZES):
             ctx = await b.new_context(viewport={'width':w,'height':h}, device_scale_factor=1, is_mobile=True, has_touch=True)
             pg = await ctx.new_page()

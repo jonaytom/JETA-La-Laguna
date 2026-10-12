@@ -2,7 +2,7 @@ import asyncio, sys, json
 from playwright.async_api import async_playwright
 async def main():
     async with async_playwright() as p:
-        b = await p.chromium.launch(args=['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist'])
+        b = await p.chromium.launch(args=['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist', '--mute-audio'])
         pg = await b.new_page(viewport={'width':640,'height':360})
         logs=[]
         pg.on('console', lambda m: logs.append(m.type+': '+m.text))
