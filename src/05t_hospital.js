@@ -79,10 +79,52 @@ function buildGlassSkin(pts, top, col = 0x3f8f7c) {
 // health centre or A&E: the green cross plate over the door and the respawn spot in front of it
 function saludDeco(g, E, H, name) {
   const t = crossSignTex(name); const w = Math.min(E.L * 0.8, 12), h = w * 160 / 1024; const s = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ map: t, emissiveMap: t, emissive: 0xffffff, emissiveIntensity: 0.25, roughness: 0.5 }));
-  s.position.set(0, Math.max(3.2, H - h / 2 - 0.5), 0.12); g.add(s); /* along the top of the facade, above balconies and awnings */
+  s.position.set(0, Math.min(5.6, Math.max(3.2, H - h / 2 - 0.5)), 0.12); g.add(s); /* along the top of the facade, above balconies and awnings */
   const cr = new THREE.Group(), gm = new THREE.MeshStandardMaterial({ color: 0x22b35e, emissive: 0x22b35e, emissiveIntensity: 0.6 }); addMesh(cr, new THREE.BoxGeometry(1.2, 0.4, 0.15), gm, 0, 0, 0); addMesh(cr, new THREE.BoxGeometry(0.4, 1.2, 0.15), gm, 0, 0, 0);
-  cr.position.set(Math.min(E.L / 2 - 0.8, w / 2 + 1.2), Math.max(3.2, H - h / 2 - 0.5), 0.5); g.add(cr);
-  const [x, z] = safeSpot(E.mx + E.nx * 3.5, E.mz + E.nz * 3.5, 0.5); HEALTH.push({ x, z, name: name.replace(/^URGENCIAS$/, 'Urgencias del HUC'), h: Math.atan2(E.nx, E.nz) });
+  cr.position.set(Math.min(E.L / 2 - 0.8, w / 2 + 1.2), Math.min(5.6, Math.max(3.2, H - h / 2 - 0.5)), 0.5); g.add(cr);
+  const [x, z] = safeSpot(E.mx + E.nx * (E.gate || 3.5), E.mz + E.nz * (E.gate || 3.5), 0.5); HEALTH.push({ x, z, name: name.replace(/^URGENCIAS$/, 'Urgencias del HUC'), h: Math.atan2(E.nx, E.nz) });
 }
 // where you wake up after dying: the nearest health centre or A&E (else the start)
 function nearestHealth(x, z) { let best = null, bd = 1e12; for (const p of HEALTH) { const d = (p.x - x) ** 2 + (p.z - z) ** 2; if (d < bd) { bd = d; best = p; } } return best; }
+
+// health centres missing from OSM, placed from Jonay's Google Maps captures (plus codes → game metres)
+//   Finca España: Av. de los Menceyes 153 (FMFX+4R). It fills the whole plot between C. Pueblos de Tenerife (W),
+//   C. El Coralito (E), the car park (N) and the avenue (S): a lower west wing and the main block, brick ground floor
+//   and grey upper floor, front and railings to the avenue. The last stretch of OSM's «Pasaje el Dátil» crossed the plot
+//   and is cut at the car park (that is done here at load, before the roads are built).
+const EXTRA_SALUD = [{ name: 'CENTRO DE SALUD FINCA ESPAÑA', label: 'Centro de Salud Finca España',
+  poly: [[1385.6, 1600.2], [1450.2, 1620.9], [1441.6, 1650.1], [1381.7, 1616.8]], front: 2, split: 0.4,
+  trim: { name: 'Pasaje el Dátil', end: [1402, 1635.5], to: [1409.5, 1606.5] } }];
+for (const c of EXTRA_SALUD) if (c.trim) for (const r of DATA.R) { const p = r[4], n = p.length; if (n < 4 || r[1] < 0 || STR[r[1]] !== c.trim.name) continue;
+  if (Math.hypot(p[n - 2] - c.trim.end[0], p[n - 1] - c.trim.end[1]) < 2) { p[n - 2] = c.trim.to[0]; p[n - 1] = c.trim.to[1]; } else if (Math.hypot(p[0] - c.trim.end[0], p[1] - c.trim.end[1]) < 2) { p[0] = c.trim.to[0]; p[1] = c.trim.to[1]; } }
+function buildExtraSalud() {
+  const brick = new THREE.MeshStandardMaterial({ color: 0x8a4b38, roughness: 0.9 }), grey = new THREE.MeshStandardMaterial({ color: 0xa9adb0, roughness: 0.8 }), win = new THREE.MeshStandardMaterial({ color: 0x2c3a44, roughness: 0.2, metalness: 0.4 });
+  const iron = new THREE.MeshStandardMaterial({ color: 0x2a2c2e, roughness: 0.5, metalness: 0.6 }), roofM = new THREE.MeshStandardMaterial({ color: 0x8c9196, roughness: 0.9 });
+  const prism = (pts, y0, y1, m) => { const sh = new THREE.Shape(); pts.forEach(([x, z], i) => (i ? sh.lineTo(x, -z) : sh.moveTo(x, -z))); const g = new THREE.ExtrudeGeometry(sh, { depth: y1 - y0, bevelEnabled: false }); g.rotateX(-Math.PI / 2); const mesh = new THREE.Mesh(g, m); mesh.position.y = y0; mesh.castShadow = mesh.receiveShadow = true; scene.add(mesh); return mesh; };
+  const lerp2 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+  for (const c of EXTRA_SALUD) {
+    const P = c.poly; if (!P.every(([x, z]) => inPlayArea(x, z, 0))) continue;
+    const gy = Math.max(...P.map(([x, z]) => heightAt(x, z))) + 0.05, gb = Math.min(...P.map(([x, z]) => heightAt(x, z))) - 1.5;
+    // west wing (lower) and main block: split along the long sides
+    const [nw, ne, se, sw] = P, mN = lerp2(nw, ne, c.split), mS = lerp2(sw, se, c.split);
+    const wing = [nw, mN, mS, sw], main = [mN, ne, se, mS];
+    prism(wing, gb, gy + 4.2, brick); prism(wing, gy + 4.2, gy + 7.0, grey); prism(wing, gy + 7.0, gy + 7.3, roofM);
+    prism(main, gb, gy + 4.4, brick); prism(main, gy + 4.4, gy + 8.2, grey); prism(main, gy + 8.2, gy + 8.5, roofM);
+    // the front to the avenue (edge sw→se): windows, glass door, sign, railings with a gate, respawn spot
+    const L = Math.hypot(se[0] - sw[0], se[1] - sw[1]), ux = (se[0] - sw[0]) / L, uz = (se[1] - sw[1]) / L; let nx = -uz, nz = ux;
+    const cx = P.reduce((a, p) => a + p[0], 0) / 4, cz = P.reduce((a, p) => a + p[1], 0) / 4; if ((sw[0] - cx) * nx + (sw[1] - cz) * nz < 0) { nx = -nx; nz = -nz; }
+    const g = new THREE.Group(); g.position.set(sw[0], gy, sw[1]); g.rotation.y = Math.atan2(nx, nz); scene.add(g); // local x along the front (from sw), +z out to the avenue
+    const sgn = nz * ux - nx * uz > 0 ? 1 : -1, sideX = (t) => sgn * t; // local +x is (nz, -nx): along u or against it
+    for (let t = 2.5; t < L - 2; t += 4.2) { const main2 = t > L * c.split; addMesh(g, new THREE.BoxGeometry(3, 1.5, 0.1), win, sideX(t), main2 ? 6.3 : 5.6, 0.06); if (Math.abs(t - L * 0.68) > 3) addMesh(g, new THREE.BoxGeometry(2.4, 1.4, 0.1), win, sideX(t), 2.2, 0.06); }
+    const doorT = L * 0.68; addMesh(g, new THREE.BoxGeometry(3.6, 2.9, 0.14), new THREE.MeshStandardMaterial({ color: 0x9fb8c6, roughness: 0.15, metalness: 0.4 }), sideX(doorT), 1.9, 0.08);
+    const sg = new THREE.Group(); sg.position.set(sideX(doorT), 0, 0.02); g.add(sg);
+    const E = { L: 16, mx: sw[0] + ux * doorT, mz: sw[1] + uz * doorT, nx, nz }; saludDeco(sg, E, 8.2, c.name);
+    // railings 2.5 m out, gate in front of the door
+    const ry = 2.5; for (const [t0, t1] of [[0.5, doorT - 2.5], [doorT + 2.5, L - 0.5]]) { const len = t1 - t0, mid = (t0 + t1) / 2; addMesh(g, new THREE.BoxGeometry(len, 0.08, 0.08), iron, sideX(mid), 1.8, ry); for (let t = t0; t <= t1; t += 0.5) addMesh(g, new THREE.BoxGeometry(0.05, 1.8, 0.05), iron, sideX(t), 0.9, ry);
+      COL.addSeg(sw[0] + ux * t0 + nx * ry, sw[1] + uz * t0 + nz * ry, sw[0] + ux * t1 + nx * ry, sw[1] + uz * t1 + nz * ry); }
+    for (let i = 0; i < 4; i++) COL.addSeg(P[i][0], P[i][1], P[(i + 1) % 4][0], P[(i + 1) % 4][1]);
+    // part of the map: drawn on the minimap / map, nothing spawns inside (inAnyBuilding)
+    DATA.B.push([85, 6, 2, 0, -1, 500, P.flat()]);
+    LABELS.push([c.label, cx, cz, 1]);
+  }
+}

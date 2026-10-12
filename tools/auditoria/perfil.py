@@ -9,7 +9,9 @@ de shader, memoria JS, coste por subsistema (window.__prof) y FUGAS: cuántas ge
 vivas tras teletransportar al jugador por el mapa (peatones y coches que aparecen y desaparecen).
 Los tiempos absolutos con WebGL por software no son los de un PC real; sirven para comparar versiones.
 """
-import asyncio, json, os, sys, threading, http.server, functools
+import asyncio, json, os, sys, threading, http.server, functools, base64
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from mapa_js import MAPA_JS, CAPTURA_JS  # comprobación de edificios que invaden la calzada
 from playwright.async_api import async_playwright
 
 repo = sys.argv[1]; q = sys.argv[2] if len(sys.argv) > 2 else 'media'; out = sys.argv[3] if len(sys.argv) > 3 else None
@@ -106,6 +108,16 @@ async def main():
         sub = await pg.evaluate(INFO)
         res['inicio']['heapMB'] = sub['heapMB']; res['inicio']['geometrias_en_gpu_tras_subir'] = sub['geometries']
         res['memoria'] = await pg.evaluate(MEMJS); marca('memoria')
+        # mapa: edificios que invaden calzadas de coches (+ capturas cenitales de los peores casos)
+        try:
+            mp = await pg.evaluate(MAPA_JS)
+            cap_dir = os.path.join(os.path.dirname(os.path.abspath(out)) if out else '.', 'capturas_mapa'); os.makedirs(cap_dir, exist_ok=True)
+            for i, o in enumerate([o for o in mp['lista'] if o['sev'] != 'media'][:8]):
+                url = await pg.evaluate(f"{CAPTURA_JS}({o['x']},{o['z']})")
+                f = os.path.join(cap_dir, f"{i+1:02d}_{o['x']}_{o['z']}.jpg"); open(f, 'wb').write(base64.b64decode(url.split(',', 1)[1])); o['captura'] = os.path.basename(f)
+            res['mapa'] = mp
+        except Exception as e: res['mapa'] = {'error': str(e)}
+        marca('mapa')
         # coste medio por subsistema en 120 pasos de juego andando
         await pg.evaluate("for(const k in __prof) delete __prof[k]")
         t = await pg.evaluate("(()=>{const t0=performance.now(); __step(120,1/30,['KeyW']); return performance.now()-t0})()")

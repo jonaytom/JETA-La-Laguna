@@ -3,6 +3,18 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.58.2 — 2026-10-12 — Centro de Salud de Finca España en su parcela
+- **Finca España**: ya no se sale a la Avenida de los Menceyes. Ocupa toda su parcela, entre la C. Pueblos de Tenerife y
+  la C. El Coralito, con el aparcamiento detrás (la plaza vacía de al lado era parte del centro): ala baja al oeste y
+  bloque principal, fachada, puerta y verja a la avenida. Se ve en el minimapa y en el mapa. El último tramo del
+  «Pasaje el Dátil» de OSM, que cruzaba la parcela, se corta en el aparcamiento.
+
+## 0.58.1 — 2026-10-07 — Centros de salud en su sitio
+- Con las capturas de Jonay (códigos de Google Maps pasados a metros del juego): **Laguna-Universidad** (Av. Trinidad,
+  antes «La Laguna»), **San Benito** movido a su sitio real (C. Benito Pérez Galdós, estaba 240 m desviado) y
+  **Finca España** nuevo (Av. de los Menceyes 153; no está en OSM: bloque de ladrillo y gris con verja). La Cuesta
+  queda fuera del mapa actual.
+
 ## 0.58.0 — 2026-10-07 — Hospital Universitario de Canarias y centros de salud
 - **HUC** según las fotos: bloque de 12 plantas con bandas de ventanas, torre cilíndrica blanca con remate de cristal y
   helipuerto en voladizo, el edificio verde de cristal de Actividades Ambulatorias, Urgencias rotulada y jardín con

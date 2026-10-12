@@ -26,8 +26,9 @@ const LANDMARKS = [
 ];
 // buildings identified by position (unnamed in OSM): Santa Catalina's wooden mirador on the plaza
 const LANDMARK_AT = [
-  { x: -199, z: 266, r: 9, o: { atlas: 15, col: '#f2f2ee', H: 7.5, deco: ['salud:CENTRO DE SALUD LA LAGUNA'], label: 'Centro de Salud La Laguna' } },
-  { x: -1175, z: -243, r: 9, o: { atlas: 15, col: '#f2f2ee', H: 7.5, deco: ['salud:CENTRO DE SALUD SAN BENITO'], label: 'Centro de Salud San Benito' } },
+  // health centres (Jonay's Google Maps captures): Laguna-Universidad (Av. Trinidad 50), San Benito (C. Benito Pérez Galdós)
+  { x: -199, z: 266, r: 9, o: { atlas: 15, col: '#f2f2ee', H: 7.5, deco: ['salud:CENTRO DE SALUD LAGUNA-UNIVERSIDAD'], label: 'Centro de Salud Laguna-Universidad' } },
+  { x: -960, z: -133, r: 9, o: { atlas: 15, col: '#f2f2ee', deco: ['salud:CENTRO DE SALUD SAN BENITO'], label: 'Centro de Salud San Benito' } },
   { x: 150, z: -75, r: 12, o: { atlas: 6, col: '#f4f1e8', H: 10, deco: ['celosia'], label: 'Convento de Santa Catalina' } }];
 // Finca España, C. Tacoronte (zona del colega de Jonay): bloques de 3-4 plantas color arena / salmón
 const FINCA_COLS = ['#e8c9a0', '#e6b08f', '#dcc29a', '#eab7a0', '#e9d3b0'];

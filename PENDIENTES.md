@@ -5,6 +5,22 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 
 ## Por revisar con Jonay
 
+- [ ] **Noche demasiado oscura** (Jonay, 12-oct): al anochecer baja tanto la luz que agobia; subir la luz mínima de la noche.
+- [ ] **Flecha hacia el objetivo** (Jonay, 12-oct): con un punto de misión o un destino marcado en el mapa, una flecha
+      superpuesta bajo el personaje que apunte hacia él, para no tener que mirar el mapa.
+- [ ] **Carrera solidaria del casco imposible** (Jonay, 12-oct): ~6 min corriendo y no llega a los dos últimos controles
+      (tuvo que teletransportarse). Reducir bastante las distancias (y/o el tiempo por control).
+- [ ] **Misiones por zonas** (Jonay, 12-oct): al principio Coco y Sastrón aparecen demasiado lejos; que las primeras
+      misiones salgan cerca del inicio. Las siguientes pueden estar algo más lejos, pero cada tanda debería ir por zonas:
+      estando en una zona, lo que se hace queda relativamente cerca de ese punto.
+- [ ] **Rutas de carreras y huidas lejos del borde del mapa** (Jonay, 12-oct): si un enemigo o una carrera lleva cerca
+      del borde, el aviso del borde te teletransporta hacia atrás. Elegir rutas con margen (`worldEdgeDist`).
+- [ ] **Animación al abatir a un enemigo de misión** (Jonay, 12-oct): con el tiro que lo detiene (uno, dos o los que
+      haga falta) la figura se queda congelada. Que caiga al suelo y se queje (animación de caída/dolor, quejidos).
+- [ ] **Centro de Salud de Taco** (Jonay, capturas: C. Dona 22 / C. San Jerónimo, junto a la Plaza La Rana Gustavo y
+      la Av. Taco TF-28): bloque verde claro de 2 plantas con contraventanas blancas, verja y rampa. Taco queda fuera del
+      mapa actual: falta su código de Google Maps (p. ej. «FP..+..») para ampliar la zona de descarga junto a La Cuesta.
+
 - [ ] **Radio: más canciones y voces** (Jonay): cada emisora con una voz distinta (no siempre la misma), letras más
       largas y menos repetitivas, canciones de 1:30–2 min y luego otra; al menos 20 canciones en total combinando voces,
       estilo rap / hip hop de los 90, funk y R&B, con la misma técnica de ahora (síntesis en el navegador + voz).
@@ -19,9 +35,9 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 - [x] v0.56.0 **Morph «gordo»: labios y boca demasiado gruesos** (Jonay): la deformación de los cuerpos gordos (tallas
       gordo / extra / súper) hincha también la boca. Limitar el morph en la cara (cabeza: solo papada y mejillas).
 - [~] v0.58.0 **Centros de salud y hospital** (hecho: HUC con torre y helipuerto, EAA verde, Urgencias; centros de salud
-      La Laguna y San Benito; reaparecer en el más cercano). **Falta: coordenadas de los demás centros de salud** (La
-      Cuesta, Finca España, Taco, Tejina, Geneto…: OSM no los trae y no encontré direcciones fiables; Jonay puede
-      pasarlas desde el juego, X/Z del minimapa delante de la puerta). Original (Jonay): recrearlos; al morir apareces en el centro de salud más cercano. Buscar
+      La Laguna y San Benito; reaparecer en el más cercano). v0.58.1: Laguna-Universidad, San Benito (recolocado) y Finca España con las capturas de Jonay. **La Cuesta**
+      (C. Rector José Escobedo 6, X 3223 Z 1956) queda fuera del mapa: Jonay pide ampliar el mapa con ≥100 m alrededor
+      (12-oct). Script `scripts/descargar_la_cuesta.bat` (lo lanza Jonay: OSM + relieve) → integrar con `tools/merge_zona.py`. Original (Jonay): recrearlos; al morir apareces en el centro de salud más cercano. Buscar
       su situación (OSM `amenity=clinic/hospital`, `healthcare=*`: HUC, Hospiten, centros de salud de La Laguna-
       Mercedes, Finca España, San Benito, La Cuesta, Taco, Tejina…) y fotos.
       **HUC** (fotos de Jonay en `docs/referencias/hospital_huc/`): bloque largo de ~12 plantas con bandas horizontales,

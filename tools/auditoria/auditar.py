@@ -2,14 +2,17 @@
 """Lanzador de la auditoría completa de un proyecto (por defecto JETA La Laguna).
 
 Uso:  python auditar.py [config.json] [--repo RUTA] [--resultados RUTA] [--sin-perfil]
-  --resultados RUTA  dónde leer el historial y escribir los resultados (por defecto: RevisordeCodigo/resultados).
+  --resultados RUTA  carpeta del historial.json y de los resultados. Recomendado pasarla SIEMPRE. Si no se pasa:
+                     ../resultados si este archivo está en una carpeta llamada 'herramientas', si no ./resultados.
+                     Si ahí no hay historial.json, se para con un error (código 3) en vez de comparar con nada.
+  --primera          permite medir sin historial (solo para un proyecto nuevo).
   --repo RUTA   audita una copia local (p. ej. el propio repositorio del juego) en vez de clonar de GitHub.
   1. Clona o actualiza el repositorio indicado en la configuración (o usa --repo).
   2. Construye el juego (comando 'build').
-  3. Perfil dinámico con memoria y origen de fugas (perfil.py) + auditoría estática (auditor.py).
+  3. Perfil dinámico con memoria, origen de fugas y mapa (edificios en la calzada) (perfil.py) + auditoría estática.
   4. Compara con la última auditoría guardada (historial.json) y escribe resultados/<fecha>_<commit>/.
   5. Da un VEREDICTO (APTO / APTO CON AVISOS / NO APTO) comparando con la versión anterior -> VEREDICTO.md.
-     Código de salida: 0 apto, 1 apto con avisos, 2 no apto.
+     Código de salida: 0 apto, 1 apto con avisos, 2 no apto, 3 falta el historial.
 El informe final con recomendaciones lo redacta Claude leyendo estos resultados y el código cambiado.
 """
 import json, os, subprocess, sys, datetime, shutil
@@ -37,6 +40,12 @@ out = os.path.join(RES, f'{datetime.date.today()}_{version}_{commit}'); os.maked
 print('Resultados e historial en:', RES)
 
 hist_path = os.path.join(RES, 'historial.json')
+if not os.path.exists(hist_path) and '--primera' not in sys.argv:
+    # sin línea base la pasada no compara nada: mejor parar y decir dónde se buscó que dar un veredicto engañoso
+    print(f'ERROR: no hay historial en {hist_path}.\n'
+          f'Copia ahí RevisordeCodigo/resultados/historial.json o indica la carpeta con --resultados RUTA.\n'
+          f'(Solo para la primera medición de un proyecto nuevo: --primera)')
+    sys.exit(3)
 hist = json.load(open(hist_path, encoding='utf-8')) if os.path.exists(hist_path) else []
 prev = hist[-1] if hist else None
 # para memoria/fugas se compara con la última medición COMPLETA (una pasada --sin-perfil no tiene esos datos)
@@ -47,6 +56,7 @@ if prev: open(os.path.join(out, 'cambios_desde_ultima.diff'), 'w', encoding='utf
 b = sh(cfg['build'], work); open(os.path.join(out, 'build.log'), 'w', encoding='utf-8').write(b.stdout + b.stderr)
 py = sys.executable
 res = {'fecha': str(datetime.datetime.now())[:16], 'version': version, 'commit': commit, 'build_ok': b.returncode == 0}
+MAPA_LISTA = []
 if '--sin-perfil' not in sys.argv and cfg.get('perfil') and b.returncode == 0:
     for q in cfg['perfil'].get('calidades', ['media']):
         sh(f'"{py}" "{AQUI}/perfil.py" "{work}" {q} "{out}/perfil_{q}.json"')
@@ -59,6 +69,24 @@ if '--sin-perfil' not in sys.argv and cfg.get('perfil') and b.returncode == 0:
                                   'fuga_origen': (p['fugas'].get('origen') or {}).get('por_origen', [])[:5],
                                   'fuga_trazada': (p['fugas'].get('origen') or {}).get('geometrias_fuera_de_escena_sin_liberar'),
                                   'MB_geometria_RAM': mm['MB_geometria_en_RAM'], 'vertices': mm['vertices'], 'errores': p.get('errores_consola', [])}
+            mp = p.get('mapa') or {}
+            if 'lista' in mp:
+                ch = [o for o in mp['lista'] if o['problema'] == 'choque']
+                res['mapa'] = {k: mp[k] for k in ('choques', 'criticas', 'altas', 'medias', 'choques_en_principales', 'visuales')}
+                res['mapa']['claves'] = sorted({o['clave'] for o in ch})
+                MAPA_LISTA = mp['lista']
+                # informe del mapa con las peores invasiones y sus capturas
+                L = ['# Mapa: edificios que invaden la calzada', '', f"Versión {version}. Choques posibles (hay muro dentro del carril): **{mp['choques']}** "
+                     f"(críticas {mp['criticas']}, altas {mp['altas']}, medias {mp['medias']}; en calles principales {mp['choques_en_principales']}). "
+                     f"Solapes visuales sin muro (el coche atraviesa el edificio): {mp['visuales']}.", '',
+                     'Crítica = el edificio corta el eje de la calle; alta = invade ≥ 1,5 m; media = 1–1,5 m. Coordenadas X/Z del juego '
+                     '(teletransporte desde el mapa con T). Capturas en `capturas_mapa/` (poste rojo = punto de mayor invasión).', '',
+                     '| # | Gravedad | X | Z | Invade (m) | Tramo (m) | Calle | Tipo | Edificio | Captura |', '|---|---|---|---|---|---|---|---|---|---|']
+                for i, o in enumerate(mp['lista'][:60]):
+                    L.append(f"| {i+1} | {o['sev']} | {o['x']} | {o['z']} | {o['invasion_m']} | {o['tramo_m']} | {o['calle']} | {o['tipo']} | {o['edificio']} | {o.get('captura', '')} |")
+                open(f'{out}/mapa.md', 'w', encoding='utf-8').write('\n'.join(L))
+                json.dump(mp, open(f'{out}/mapa.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+            elif mp: res['mapa'] = {'error': mp.get('error')}
         except Exception as e: res[f'perfil_{q}'] = {'error': str(e)}
 # el análisis estático va después (segundos): en paralelo falsearía los tiempos del perfil con solo 2 núcleos
 subprocess.run([py, os.path.join(AQUI, 'auditor.py'), work, '--json', f'{out}/estatica.json', '--md', f'{out}/estatica.md'],
@@ -105,6 +133,24 @@ def veredicto(res, prev):
             det = [FIND[f] for f in nuevas if f in FIND][:5]
             aviso.append(f'{len(nuevas)} avisos nuevos (crítica/alta) del análisis estático, p. ej.: ' + '; '.join(f"`{d['file']}:{d['line']}` {d['func']}() {d['id']}" for d in det))
         else: bien.append('Ningún aviso nuevo de severidad crítica/alta en el código que corre cada fotograma.')
+    # ---- mapa: edificios en la calzada. Solo cuenta lo NUEVO respecto a la última medición con mapa.
+    mp = res.get('mapa') or {}
+    if 'claves' in mp:
+        pmap = next((h.get('mapa') for h in reversed(hist) if (h.get('mapa') or {}).get('claves') is not None), None)
+        if pmap is None:
+            aviso.append(f"Mapa (primera medición): {mp['choques']} sitios donde un edificio invade la calzada con muro "
+                         f"({mp['criticas']} cortan la calle, {mp['choques_en_principales']} en calles principales). Lista y capturas en mapa.md.")
+        else:
+            antes = set(pmap['claves']); nuevos = [o for o in MAPA_LISTA if o['problema'] == 'choque' and o['clave'] not in antes]
+            arreglados = len(antes - set(mp['claves']))
+            if nuevos:
+                graves = [o for o in nuevos if o['sev'] == 'crítica' and o['principal']]
+                txt = '; '.join(f"{o['calle']} (X {o['x']}, Z {o['z']}, {o['invasion_m']} m)" for o in nuevos[:5])
+                (malo if graves else aviso).append(f"Mapa: {len(nuevos)} edificios nuevos invadiendo la calzada"
+                    + (f", {len(graves)} cortan una calle principal" if graves else '') + f": {txt}. Ver mapa.md.")
+            else: bien.append('Mapa: ningún edificio nuevo invadiendo la calzada.')
+            if arreglados: bien.append(f'Mapa: {arreglados} invasiones de la versión anterior ya no aparecen.')
+    elif mp.get('error'): aviso.append('No se pudo hacer la comprobación del mapa: ' + str(mp['error']))
     estado = 'NO APTO' if malo else 'APTO CON AVISOS' if aviso else 'APTO'
     L = [f"# Veredicto: {estado}", '', f"Versión {res['version']} ({res['commit']}) · {res['fecha']}" + (f" · comparada con {prev['version']}" if prev else ' · primera medición') + (f" (memoria y fugas: con {prevp['version']})" if prevp and prevp is not prev else ''), '']
     for t, xs in (('Bloquea la publicación', malo), ('Avisos', aviso), ('Mejoras', bien)):

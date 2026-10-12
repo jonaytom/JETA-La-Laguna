@@ -23,7 +23,7 @@ const GAME = {
     }; GAME._respawnFinish = finish; setTimeout(finish, 3200);
   },
   // dying: back where the story starts (El Blanco's street), $100 less; finished missions stay finished
-  wasted() { if (GAME.state !== 'play') return; PLAYER.dead = true; const hc = nearestHealth(PLAYER.x, PLAYER.z); /* you wake up at the nearest health centre / A&E */ if (hc) { GAME.respawn(hc.x, hc.z, 'HAS MUERTO', '#e04848', Math.min(100, PLAYER.money)); setTimeout(() => HUD.toast('Te despiertas en ' + hc.name.charAt(0) + hc.name.slice(1).toLowerCase().replace(/la laguna/, 'La Laguna').replace(/san benito/, 'San Benito'), '#7fe08a', 4), 2500); return; } const st = (typeof NPC !== 'undefined' && NPC.blanco && NPC.blanco.home) || [PLAZA.x - 8, PLAZA.z + 20]; GAME.respawn(st[0] + 6, st[1] + 4, 'HAS MUERTO', '#e04848', Math.min(100, PLAYER.money)); },
+  wasted() { if (GAME.state !== 'play') return; PLAYER.dead = true; const hc = nearestHealth(PLAYER.x, PLAYER.z); /* you wake up at the nearest health centre / A&E */ if (hc) { GAME.respawn(hc.x, hc.z, 'HAS MUERTO', '#e04848', Math.min(100, PLAYER.money)); setTimeout(() => HUD.toast('Te despiertas en ' + hc.name.charAt(0) + hc.name.slice(1).toLowerCase().replace(/la laguna/, 'La Laguna').replace(/laguna-universidad/, 'Laguna-Universidad').replace(/san benito/, 'San Benito').replace(/finca españa/, 'Finca España'), '#7fe08a', 4), 2500); return; } const st = (typeof NPC !== 'undefined' && NPC.blanco && NPC.blanco.home) || [PLAZA.x - 8, PLAZA.z + 20]; GAME.respawn(st[0] + 6, st[1] + 4, 'HAS MUERTO', '#e04848', Math.min(100, PLAYER.money)); },
   busted() { if (GAME.state !== 'play') return; PLAYER.dead = true; const p = DATA.P.find((p) => STR[p[0]] === 'Policia Municipal'); GAME.respawn(p ? p[2] : 85, p ? p[3] + 6 : 90, '¡TE PILLARON!', '#6fa8ff', WANTED.fine || 250); },
 };
 
@@ -218,7 +218,7 @@ async function boot() {
     ['Modelando el relieve de Aguere…', () => { prepUndergroundAreas(); buildTerrain(); }],
     ['Levantando casas del casco histórico…', buildBuildings],
     ['Asfaltando calles y empedrando peatonales…', () => { buildRoads(); buildMedians(); buildCarParks(); finalizeCuts(); }],
-    ['Colocando la Catedral y la torre de La Concepción…', buildLandmarks],
+    ['Colocando la Catedral y la torre de La Concepción…', () => { buildLandmarks(); buildExtraSalud(); }],
     ['Pintando aparcamientos y abriendo grandes superficies…', () => { buildParkingLots(); buildBigStores(); }],
     ['Colgando los rótulos de las tiendas…', () => { const n = buildSigns(); console.log('signs', n); console.log('props', JSON.stringify(buildStreetProps())); }],
     ['Abriendo puertas: Catedral, cafetería, hipermercado…', () => { buildInteriorsAll(); }],
