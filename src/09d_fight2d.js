@@ -149,25 +149,29 @@ const FIGHT2D = (() => {
   const SPECIALS = ['gofio', 'teide', 'gancho', 'pastor']; const CHAIN = { jab: ['jab', 'cross', 'kick', ...SPECIALS], cross: ['kick', 'round', ...SPECIALS], kick: ['round', ...SPECIALS], cpunch: ['cpunch', 'sweep', 'gofio', 'gancho'] };
   function mkFighter(o, x, dir) { return { name: o.name, spr: spritesFor(o.look, !!o.nose), x, y: GROUND, vx: 0, vy: 0, dir, hp: 100, shown: 100, st: 'idle', t: 0, mv: null, mt: 0, hitDone: false, stun: 0, crouch: false, block: false, wins: 0, ai: o.ai, buf: [], combo: 0, ko: false, inv: 0, chainOk: false, deal: (o.deal ?? 1) * (o.ai ? AI_DEAL : 1), recv: o.recv ?? 1 }; }
   // ---------------- input
-  function onKey(e, down, nested) { if (!running) return; if (!nested) for (const c of CONTROLS.alias(e.code)) onKey({ code: c, preventDefault() { }, stopPropagation() { } }, down, true); const k = e.code; if (['KeyA', 'KeyD', 'KeyW', 'KeyS', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyJ', 'KeyK', 'KeyL', 'KeyU', 'KeyI', 'Space', 'ShiftRight', 'ControlRight'].includes(k)) { e.preventDefault(); e.stopPropagation(); } if (down) { if (!keys.has(k)) pressedK.add(k); keys.add(k); } else keys.delete(k); }
+  // v0.64: the keys come from Opciones › Controles (Pelea: puñetazo E, patada Espacio, salto ↑/W by default; moving uses the
+  // same keys as walking). They are turned into virtual buttons: vL vR vD (directions), vU (jump), vP, vK, vB (block, pad only)
+  function vcode(k) { const has = (id) => CONTROLS.codes(id).includes(k);
+    return has('f_punch') ? 'vP' : has('f_kick') ? 'vK' : has('f_jump') ? 'vU' : has('left') ? 'vL' : has('right') ? 'vR' : has('back') ? 'vD' : (k === 'Enter' ? 'vS' : null); }
+  function onKey(e, down) { if (!running) return; const v = vcode(e.code); if (!v) return; e.preventDefault(); e.stopPropagation(); if (down) { if (!keys.has(v)) pressedK.add(v); keys.add(v); } else keys.delete(v); }
   window.addEventListener('keydown', (e) => onKey(e, true), true); window.addEventListener('keyup', (e) => onKey(e, false), true);
   // mouse: left = punch, right = kick (and no context menu while fighting)
   const vk = (k, down) => { if (down) { if (!keys.has(k)) pressedK.add(k); keys.add(k); } else keys.delete(k); };
-  window.addEventListener('mousedown', (e) => { if (!running) return; e.preventDefault(); e.stopPropagation(); if (e.button === 0) vk('KeyJ', true); if (e.button === 2) vk('KeyK', true); }, true);
-  window.addEventListener('mouseup', (e) => { if (!running) return; if (e.button === 0) vk('KeyJ', false); if (e.button === 2) vk('KeyK', false); }, true);
+  window.addEventListener('mousedown', (e) => { if (!running) return; e.preventDefault(); e.stopPropagation(); if (e.button === 0) vk('vP', true); if (e.button === 2) vk('vK', true); }, true);
+  window.addEventListener('mouseup', (e) => { if (!running) return; if (e.button === 0) vk('vP', false); if (e.button === 2) vk('vK', false); }, true);
   window.addEventListener('contextmenu', (e) => { if (running) e.preventDefault(); }, true);
   // gamepad: A kick, X punch, Y jump, stick / d-pad to move
   const GPK = {}; function pollPad() { const gp = navigator.getGamepads ? [...navigator.getGamepads()].find((g) => g) : null; if (!gp) return; const b = (i) => !!(gp.buttons[i] && gp.buttons[i].pressed); const ax = gp.axes[0] || 0, ay = gp.axes[1] || 0;
-    const want = { KeyK: b(0), KeyJ: b(2), Space: b(3), ArrowLeft: b(14) || ax < -0.5, ArrowRight: b(15) || ax > 0.5, ArrowUp: b(12), ArrowDown: b(13) || ay > 0.5, KeyL: b(4) || b(6) };
+    const want = { vK: b(0), vP: b(2), vU: b(3) || b(12), vL: b(14) || ax < -0.5, vR: b(15) || ax > 0.5, vD: b(13) || ay > 0.5, vB: b(4) || b(6), vS: b(9) };
     for (const k in want) { if (want[k] && !GPK[k]) vk(k, true); if (!want[k] && GPK[k]) vk(k, false); GPK[k] = want[k]; } }
   const held = (...k) => k.some((q) => keys.has(q)); const hit = (...k) => k.some((q) => pressedK.has(q));
   function playerInput(f, o) {
-    // Space jumps; W / ↑ is just 'up' (for the specials), so it doesn't make you jump
-    const l = held('KeyA', 'ArrowLeft'), r = held('KeyD', 'ArrowRight'), u = held('Space'), upDir = held('KeyW', 'ArrowUp', 'Space'), d = held('KeyS', 'ArrowDown');
+    // up (↑ / W) jumps after 2 frames (10 just after «down»), so «down, up + punch / kick» still makes the specials
+    const l = held('vL'), r = held('vR'), upDir = held('vU'), d = held('vD'); f.upT = upDir ? (f.upT || 0) + 1 : 0; const dn = f.buf.some((q) => q[0] <= 3 && st.frame - q[1] < 14); const u = f.upT >= (dn ? 10 : 2) && !hit('vP', 'vK'); // just after «down» it waits a little longer for the special
     const fwd = f.dir > 0 ? r : l, back = f.dir > 0 ? l : r;
     // numpad notation relative to facing, for specials: 2 down, 3 down-forward, 6 forward, 4 back
     const n = d ? (fwd ? 3 : back ? 1 : 2) : upDir ? (fwd ? 9 : back ? 7 : 8) : (fwd ? 6 : back ? 4 : 5); if (!f.buf.length || f.buf[f.buf.length - 1][0] !== n) f.buf.push([n, st.frame]); while (f.buf.length && st.frame - f.buf[0][1] > 30) f.buf.shift();
-    return { fwd, back, guard: back, up: u, down: d, P: hit('KeyJ', 'KeyU', 'ShiftRight'), K: hit('KeyK', 'KeyI', 'ControlRight'), B: held('KeyL'), seq: f.buf.map((q) => q[0]).join('') };
+    return { fwd, back, guard: back, up: u, down: d, P: hit('vP'), K: hit('vK'), B: held('vB'), seq: f.buf.map((q) => q[0]).join('') };
   }
   // ---------------- AI
   function aiInput(f, o) {
@@ -295,10 +299,10 @@ const FIGHT2D = (() => {
     cx.fillStyle = 'rgba(0,0,0,0.78)'; cx.fillRect(bx, by, bw, bh); cx.fillStyle = '#ffd400'; cx.fillRect(bx, by, bw, 2); cx.fillRect(bx, by + bh - 2, bw, 2);
     txt('CONTROLES', W / 2, by + 8, 10, '#ffd400');
     const rows = touch ? [['PUÑO', 'P', '#ffd400'], ['PATADA', 'K', '#ff5252'], ['SALTO', '▲', '#5ec8ff'], ['CUBRIRSE', 'atrás', '#9fd7ff']]
-      : [['PUÑO', 'J · clic izq.', '#ffd400'], ['PATADA', 'K · clic dcho.', '#ff5252'], ['SALTO', 'Espacio', '#5ec8ff'], ['CUBRIRSE', 'atrás', '#9fd7ff']];
+      : [['PUÑO', CONTROLS.keyName('f_punch') + ' · clic izq.', '#ffd400'], ['PATADA', CONTROLS.keyName('f_kick') + ' · clic dcho.', '#ff5252'], ['SALTO', CONTROLS.keyName('f_jump'), '#5ec8ff'], ['CUBRIRSE', 'atrás', '#9fd7ff']];
     rows.forEach(([a, b, c], i) => { const y = by + 26 + i * 13; txt(a, bx + 14, y, 7, c, 'left'); txt(b, bx + bw - 14, y, 7, '#fff', 'right'); });
     txt(touch ? 'Más en Opciones' : 'Más en Opciones › Controles', W / 2, by + 80, 6, '#bbb');
-    if (st.frame % 50 < 34) txt(touch ? 'TOCA LA PANTALLA PARA EMPEZAR' : 'PULSA ESPACIO PARA EMPEZAR', W / 2, by + 92, 7, '#7fe08a');
+    if (st.frame % 50 < 34) txt(touch ? 'TOCA LA PANTALLA PARA EMPEZAR' : 'PULSA ' + CONTROLS.keyName('f_punch').toUpperCase() + ' PARA EMPEZAR', W / 2, by + 92, 7, '#7fe08a');
   }
   window.addEventListener('pointerdown', (e) => { if (running && st && st.phase === 'ready' && e.pointerType === 'touch') { st.readyTap = true; e.preventDefault(); } }, true);
   // ---------------- loop
@@ -308,7 +312,7 @@ const FIGHT2D = (() => {
     if (st.comboT > 0) st.comboT--;
     for (const f of [st.a, st.b]) f.shown += (f.hp - f.shown) * (f.shown > f.hp ? 0.06 : 1);
     if (st.phase === 'ready') { st.pt++; if (st.pt === 1) { st.banner = ''; voice('Round one'); }
-      if (st.pt > 20 && (hit('Space') || st.readyTap)) { st.readyTap = false; st.phase = 'intro'; st.pt = 79; } }
+      if (st.pt > 20 && (hit('vP', 'vK', 'vU', 'vS') || st.readyTap)) { st.readyTap = false; st.phase = 'intro'; st.pt = 79; } }
     if (st.phase === 'intro') { st.pt++; if (st.pt === 1) { st.banner = 'ROUND ' + st.round; st.bannerCol = '#fff'; voice('Round ' + ['one', 'two', 'three'][st.round - 1]); } if (st.pt === 80) { st.banner = 'FIGHT!'; st.bannerCol = '#ff5252'; voice('Fight!'); } if (st.pt === 120) { st.banner = ''; st.phase = 'fight'; } }
     const live = st.phase === 'fight';
     const ia = live ? playerInput(st.a, st.b) : {}; const ib = live ? aiInput(st.b, st.a) : {};
@@ -396,10 +400,10 @@ const FIGHT2D = (() => {
   }
   // touch pad for phones
   function setupPad() {
-    const pad = $('fightPad'); if (!pad) return; const map = { fpL: 'ArrowLeft', fpR: 'ArrowRight', fpU: 'Space', fpD: 'ArrowDown', fpP: 'KeyJ', fpK: 'KeyK', fpB: 'KeyL' };
+    const pad = $('fightPad'); if (!pad) return; const map = { fpL: 'vL', fpR: 'vR', fpU: 'vU', fpD: 'vD', fpP: 'vP', fpK: 'vK', fpB: 'vB' };
     for (const id in map) { const b = $(id); if (!b) continue; const k = map[id]; b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); if (!keys.has(k)) pressedK.add(k); keys.add(k); b.classList.add('on'); }); const up = (e) => { keys.delete(k); b.classList.remove('on'); }; b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up); }
   }
-  return { start, setupPad, get running() { return running; }, _st: () => st, POSES, spritesFor };
+  return { start, setupPad, get running() { return running; }, _st: () => st, POSES, spritesFor, figure: drawFigure, bodyK }; // figure/bodyK: also used by the basketball game (09f)
 })();
 // ---- hooking it to the 3D world: punching a pedestrian starts a (short, one round) fight
 // women (unless big) take double damage and hit half as hard — and hitting them is always a crime;

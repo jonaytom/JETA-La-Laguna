@@ -1,0 +1,4 @@
+# Otros: sonido ambiente, pasos, centros de salud
+prueba_ambiente.py
+prueba_pasos.py
+prueba_hospital.py

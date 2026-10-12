@@ -15,3 +15,5 @@ node_modules/
 Thumbs.db
 scripts/publicar.log
 scripts/PUBLICAR.txt
+# encargos del trabajador local (tools/trabajador.py)
+cola/

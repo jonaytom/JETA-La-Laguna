@@ -14,11 +14,11 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 - [ ] **Giros de los coches perseguidos demasiado cerrados** (Jonay, 12-oct): en las persecuciones de misión los coches
       que huyen giran en seco; deberían girar de forma más gradual (curva más abierta, frenar antes de la esquina).
 
-- [ ] **Primeras misiones del Obispo: partidos para la obra de la iglesia** (Jonay, 12-oct; va con «El Obispo y el
+- [ ] **Primeras misiones del Obispo: partidos para la obra de la iglesia** (v0.65.0: hechas las 2 de baloncesto; falta el fútbol) (Jonay, 12-oct; va con «El Obispo y el
       Obispado» y los minijuegos de baloncesto tipo NBA Jam y fútbol tipo Sensible Soccer): jugar partidos de baloncesto
       y de fútbol para recaudar fondos para la obra de la iglesia; ahí aprendes a jugar los dos minijuegos 2D. Buscar
       la **cancha de baloncesto y el campo de fútbol más cercanos al Obispado** para esos partidos.
-- [ ] **Farolas y árboles en medio de canchas y campos** (Jonay, 12-oct, bug): no puede haber farolas ni árboles dentro
+- [x] v0.65.0 **Farolas y árboles en medio de canchas y campos** (Jonay, 12-oct, bug): no puede haber farolas ni árboles dentro
       de las canchas de baloncesto ni de los campos de fútbol; quitarlos al colocarlos.
 
 - [ ] **Avenida de La Trinidad: entradas al aparcamiento subterráneo** (Jonay, 12-oct, 8 capturas en
@@ -56,7 +56,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       estando en una zona, lo que se hace queda relativamente cerca de ese punto.
 - [x] v0.60.0 **Rutas de carreras y huidas lejos del borde del mapa** (Jonay, 12-oct): si un enemigo o una carrera lleva cerca
       del borde, el aviso del borde te teletransporta hacia atrás. Elegir rutas con margen (`worldEdgeDist`).
-- [ ] **El Obispo y el Obispado** (Jonay, 12-oct): nuevo personaje, el obispo de Tenerife, con **nombre parodia
+- [ ] **El Obispo y el Obispado** (Jonay, 12-oct; v0.65.0: obispo y portada del Obispado hechos; falta recrear la casa entera y el resto del pack): nuevo personaje, el obispo de Tenerife, con **nombre parodia
       inventado** y aspecto propio. Su sede es la **Casa Salazar** (C. San Agustín; fotos en
       `docs/referencias/casa_salazar/`: fachada de cantería gris oscura, portada con columnas pareadas y frontón con
       escudo, balcones de forja, rejas con crestería, remates con pináculos, patio interior con galería): recrearla bien.
@@ -73,7 +73,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 - [ ] **Jugueterías** (Jonay, 12-oct): recrear varias (mejor las que ya hay en el mapa); allí se compran **bolitas** para
       la pistola y otras armas: **escopeta de agua** (chorros de agua; se recarga en **fuentes** repartidas por la ciudad;
       necesaria en misiones como el incendio del Obispado). Por ahora no hay más armas.
-- [ ] **Minijuego de baloncesto 2D tipo NBA Jam** (Jonay, 12-oct): en las canchas; retar a partidos con tus amigos de la
+- [x] v0.65.0 **Minijuego de baloncesto 2D tipo NBA Jam** (falta: retos libres en cualquier cancha y controles en el móvil) (Jonay, 12-oct): en las canchas; retar a partidos con tus amigos de la
       banda contra la gente que está allí, para ganar dinero.
 - [ ] **Minijuego de fútbol 2D tipo Sensible Soccer** (Jonay, 12-oct): en los campos de fútbol.
 - [ ] **Maleantes en busca y captura** (Jonay, 12-oct): cuando ya sabes pelear (tras las misiones), a veces salen en el

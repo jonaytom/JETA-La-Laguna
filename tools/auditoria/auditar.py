@@ -7,6 +7,9 @@ Uso:  python auditar.py [config.json] [--repo RUTA] [--resultados RUTA] [--sin-p
                      Si ahí no hay historial.json, se para con un error (código 3) en vez de comparar con nada.
   --primera          permite medir sin historial (solo para un proyecto nuevo).
   --repo RUTA   audita una copia local (p. ej. el propio repositorio del juego) en vez de clonar de GitHub.
+  --copiar      con --repo: copia el juego a una carpeta de trabajo antes de construirlo (no toca la carpeta original).
+  --gpu         mide con la tarjeta gráfica real (PC de referencia). Usar con su propio --resultados (p. ej.
+                resultados_pc): solo se compara con mediciones del mismo modo y la misma tarjeta.
   1. Clona o actualiza el repositorio indicado en la configuración (o usa --repo).
   2. Construye el juego (comando 'build').
   3. Perfil dinámico con memoria, origen de fugas y mapa (edificios en la calzada) (perfil.py) + auditoría estática.
@@ -20,9 +23,15 @@ import json, os, subprocess, sys, datetime, shutil
 AQUI = os.path.dirname(os.path.abspath(__file__))
 cfg_path = next((a for a in sys.argv[1:] if a.endswith('.json')), os.path.join(AQUI, 'proyectos', 'jeta.json'))
 cfg = json.load(open(cfg_path, encoding='utf-8'))
-sh = lambda c, cwd=None: subprocess.run(c, cwd=cwd, shell=True, capture_output=True, text=True, timeout=1800)
+sh = lambda c, cwd=None: subprocess.run(c, cwd=cwd, shell=True, capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=1800)
+GPU = '--gpu' in sys.argv; MODO = 'gpu' if GPU else 'software'
 if '--repo' in sys.argv:
     work = os.path.abspath(sys.argv[sys.argv.index('--repo') + 1])
+    if '--copiar' in sys.argv:  # construir en una copia: la carpeta del juego no se toca aunque el programador esté trabajando
+        copia = os.path.join(os.path.dirname(AQUI), 'trabajo', 'copia_juego')
+        shutil.rmtree(copia, ignore_errors=True)
+        shutil.copytree(work, copia, ignore=shutil.ignore_patterns('.git', 'docs', 'reportes', 'dist', 'tests', 'scripts', 'node_modules', '*.zip'))
+        work = copia
 else:
     work = os.path.join(AQUI, 'trabajo', cfg['nombre']); os.makedirs(os.path.dirname(work), exist_ok=True)
     if os.path.isdir(os.path.join(work, '.git')): sh('git pull -q', work)
@@ -49,17 +58,22 @@ if not os.path.exists(hist_path) and '--primera' not in sys.argv:
 hist = json.load(open(hist_path, encoding='utf-8')) if os.path.exists(hist_path) else []
 prev = hist[-1] if hist else None
 # para memoria/fugas se compara con la última medición COMPLETA (una pasada --sin-perfil no tiene esos datos)
-prevp = next((h for h in reversed(hist) if h.get('perfil_media') and 'error' not in h['perfil_media']), None)
+prevp = next((h for h in reversed(hist) if h.get('perfil_media') and 'error' not in h['perfil_media']
+              and h['perfil_media'].get('modo', 'software') == MODO), None)
 if prev: open(os.path.join(out, 'cambios_desde_ultima.diff'), 'w', encoding='utf-8').write(
     sh(f'git diff --stat {prev["commit"].split("+")[0]} -- {cfg.get("src", "src")}', work).stdout)
 
-b = sh(cfg['build'], work); open(os.path.join(out, 'build.log'), 'w', encoding='utf-8').write(b.stdout + b.stderr)
+bcmd = cfg['build']
+if bcmd.startswith('python '): bcmd = f'"{sys.executable}" ' + bcmd[len('python '):]
+print('Construyendo el juego…', flush=True)
+b = sh(bcmd, work); open(os.path.join(out, 'build.log'), 'w', encoding='utf-8').write(b.stdout + b.stderr)
 py = sys.executable
 res = {'fecha': str(datetime.datetime.now())[:16], 'version': version, 'commit': commit, 'build_ok': b.returncode == 0}
 MAPA_LISTA = []
 if '--sin-perfil' not in sys.argv and cfg.get('perfil') and b.returncode == 0:
     for q in cfg['perfil'].get('calidades', ['media']):
-        sh(f'"{py}" "{AQUI}/perfil.py" "{work}" {q} "{out}/perfil_{q}.json"')
+        print('Midiendo el juego (perfil, memoria, mapa y fugas)…', flush=True)
+        subprocess.run(f'"{py}" "{AQUI}/perfil.py" "{work}" {q} "{out}/perfil_{q}.json"' + (' --gpu' if GPU else ''), shell=True, timeout=3600)  # progreso a la vista
         try:
             p = json.load(open(f'{out}/perfil_{q}.json', encoding='utf-8')); mm = p['memoria']
             res[f'perfil_{q}'] = {'arranque_ms': p['arranque_total_ms'], 'llamadas': p['inicio']['calls'], 'triangulos': p['inicio']['tris'],
@@ -68,7 +82,8 @@ if '--sin-perfil' not in sys.argv and cfg.get('perfil') and b.returncode == 0:
                                   'fuga_texturas_vuelta': p['fugas']['texturas_por_vuelta_(2a-3a)'],
                                   'fuga_origen': (p['fugas'].get('origen') or {}).get('por_origen', [])[:5],
                                   'fuga_trazada': (p['fugas'].get('origen') or {}).get('geometrias_fuera_de_escena_sin_liberar'),
-                                  'MB_geometria_RAM': mm['MB_geometria_en_RAM'], 'vertices': mm['vertices'], 'errores': p.get('errores_consola', [])}
+                                  'MB_geometria_RAM': mm['MB_geometria_en_RAM'], 'vertices': mm['vertices'], 'errores': p.get('errores_consola', []),
+                                  'modo': p.get('modo', 'software'), 'gpu': p.get('gpu'), 'pintar_ms_720p': p.get('pintar_ms_720p')}
             mp = p.get('mapa') or {}
             if 'lista' in mp:
                 ch = [o for o in mp['lista'] if o['problema'] == 'choque']
@@ -121,6 +136,11 @@ def veredicto(res, prev):
         if d >= ko: malo.append('Empeora mucho ' + txt)
         elif d >= av: aviso.append('Empeora ' + txt)
         elif d <= -av: bien.append('Mejora ' + txt)
+    if MODO == 'gpu' and pm.get('pintar_ms_720p') and pa.get('pintar_ms_720p'):
+        a0, b0 = pa['pintar_ms_720p'], pm['pintar_ms_720p']; d = (b0 - a0) / a0 * 100
+        if pa.get('gpu') != pm.get('gpu'): aviso.append(f"Otra tarjeta gráfica que la de la medición anterior ({pa.get('gpu')} → {pm.get('gpu')}): el tiempo de pintado no es comparable.")
+        elif d >= 20: aviso.append(f'Pintar un fotograma (1280x720) tarda más: {a0} → {b0} ms ({d:+.0f} %).')
+        elif d <= -20: bien.append(f'Pintar un fotograma (1280x720) tarda menos: {a0} → {b0} ms ({d:+.0f} %).')
     if pa and fz is not None and pa.get('fuga_trazada') is not None:
         fa = pa['fuga_trazada']
         if fz > fa * 1.2 + 20: malo.append(f'La fuga empeora: {fa} → {fz} geometrías sin liberar.')
@@ -156,8 +176,8 @@ def veredicto(res, prev):
     for t, xs in (('Bloquea la publicación', malo), ('Avisos', aviso), ('Mejoras', bien)):
         if xs: L += [f'## {t}', ''] + [f'- {x}' for x in xs] + ['']
     if pm and 'error' not in pm:
-        L += ['## Métricas (calidad media)', '', '| Métrica | Anterior | Ahora |', '|---|---|---|']
-        for k in ('heapMB', 'MB_geometria_RAM', 'vertices', 'triangulos', 'llamadas', 'programas', 'fuga_trazada', 'logic_ms', 'arranque_ms'):
+        L += ['## Métricas (calidad media)', '', f"Modo: {pm.get('modo', 'software')}" + (f" · tarjeta: {pm.get('gpu')}" if pm.get('gpu') else ''), '', '| Métrica | Anterior | Ahora |', '|---|---|---|']
+        for k in ('heapMB', 'MB_geometria_RAM', 'vertices', 'triangulos', 'llamadas', 'programas', 'fuga_trazada', 'pintar_ms_720p', 'logic_ms', 'arranque_ms'):
             L.append(f"| {k} | {pa.get(k, '—')} | {pm.get(k, '—')} |")
     L += ['', 'NO APTO: arreglar antes de publicar. APTO CON AVISOS: se puede publicar; anotar los avisos en PENDIENTES.md.']
     return estado, '\n'.join(L)

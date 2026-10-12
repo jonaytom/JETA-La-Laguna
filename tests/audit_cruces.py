@@ -6,4 +6,4 @@ async def run(pg):
     r = json.loads(r); print('conflicts', len(r))
     from collections import Counter
     print(Counter((c['ta'],c['tb'],c['fa'],c['fb']) for c in r).most_common(30))
-    json.dump(r, open('/tmp/audit.json','w'))
+    json.dump(r, open('shots/audit_cruces.json','w'))

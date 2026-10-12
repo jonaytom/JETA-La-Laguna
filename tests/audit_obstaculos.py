@@ -5,4 +5,4 @@ async def run(pg):
     r = json.loads(await pg.evaluate("JSON.stringify(__dbg.auditObstacles())")); print('obstacles', len(r))
     from collections import Counter
     print(Counter((c['to'],c['tr']) for c in r).most_common(20))
-    json.dump(r, open('/tmp/obst.json','w'))
+    json.dump(r, open('shots/audit_obstaculos.json','w'))

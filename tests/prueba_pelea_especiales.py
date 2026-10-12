@@ -6,14 +6,14 @@ async def run(pg):
     await pg.evaluate("localStorage.removeItem('gtall_fights')")
     await pg.evaluate("(()=>{document.getElementById('menu').style.display='none'; window.__manual=true; window.__dbg.GAME.state='play'; __dbg.GAME.tod=12; __step(2);})()")
     print(await pg.evaluate("(()=>{const d=__dbg; const P=d.PLAYER; let p=d.PEDS.find(q=>q.down<=0); P.x=p.x+1.2; P.z=p.z; __step(2); return String(d.startStreetFight(p)); })()"))
-    await asyncio.sleep(2.5); await pg.keyboard.press('Space'); await asyncio.sleep(2.5)
+    await asyncio.sleep(2.5); await pg.keyboard.press('KeyE'); await asyncio.sleep(2.5)
     st="JSON.stringify({ph:__dbg.FIGHT2D._st().phase, ev:__dbg.FIGHT2D._st().ev, ay:__dbg.FIGHT2D._st().a.y})"
     print(await pg.evaluate(st))
     # back / forward depend on which side the player faces
     side = await pg.evaluate("__dbg.FIGHT2D._st().a.dir")
     B, F = ('KeyA', 'KeyD') if side > 0 else ('KeyD', 'KeyA')
     ok = True
-    for keys,lab in [([B,F,'KeyJ'],'gofio'),([B,F,'KeyK'],'teide'),(['KeyS','KeyW','KeyJ'],'gancho'),(['KeyS','KeyW','KeyK'],'pastor')]:
+    for keys,lab in [([B,F,'KeyE'],'gofio'),([B,F,'Space'],'teide'),(['KeyS','KeyW','KeyE'],'gancho'),(['KeyS','KeyW','Space'],'pastor')]:
         await asyncio.sleep(1.4)
         await pg.evaluate("(()=>{const s=__dbg.FIGHT2D._st(); s.b.hp=100; s.a.hp=100;})()")
         side = await pg.evaluate("__dbg.FIGHT2D._st().a.dir")  # the CPU may have jumped over: read the facing every time

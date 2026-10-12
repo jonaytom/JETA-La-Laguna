@@ -1,0 +1,6 @@
+# Base: en TODAS las versiones (pilla roturas inesperadas)
+prueba_guardar_cargar.py
+prueba_coche_y_boca.py
+prueba_bordes.py
+prueba_persecuciones.py
+prueba_conduccion_tuneles_puentes.py

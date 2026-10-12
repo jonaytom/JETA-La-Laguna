@@ -3,6 +3,37 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.65.0 — 2026-10-12 — El Obispo y el baloncesto 2D
+- **Monseñor Fermín Truchas, obispo de Nivaria** (parodia), en la puerta del **Obispado** (Casa Salazar, C. San
+  Agustín): portada de cantería oscura con columnas pareadas, frontón con escudo, balcones de forja y pináculos. Sus
+  misiones (círculo **morado**) se abren con las del alcalde y son opcionales:
+  1. **Un partido por la Catedral**: con Coco contra los seminaristas en la cancha más cercana, con tutorial.
+  2. **El torneo de la parroquia**: contra los del Cristo, más duros.
+- **«JETA JAM», baloncesto 2D 2 contra 2** al estilo de los arcades de los 90: los mismos sprites de la pelea, pases,
+  robos, empujones, tapones, triples, «¡en llamas!» tras 3 canastas seguidas, canasta de oro si hay empate y un
+  locutor. **Mismas teclas que la pelea** (norma para todos los minijuegos): mantener clic izquierdo / E para tirar y
+  soltar con la barra en verde (defendiendo, salta para taponar); clic derecho / Q pasar, robar (corriendo, empujón) o,
+  defendiendo lejos del balón, cambiar de defensor; Espacio correr. **Entrada en combo**: corriendo y tirando desde
+  media distancia el juego se para y tienes 3 s para uno de los 4 especiales de la pelea, cada uno un mate distinto
+  (Mate de Gofio, Molino del Teide, Gancho del Roque, Salto del Pastor). Tutorial de 7 pasos en el primer partido.
+- **Ni farolas ni árboles (ni bancos) dentro de canchas y campos**, y cada cancha es siempre del mismo tipo.
+- El trabajador local acepta `auditar` (solo cuando lo pidas). Pruebas nuevas: `prueba_baloncesto.py`, `prueba_obispo.py`
+  (`PRUEBAS_MINIJUEGOS.bat`).
+
+## 0.64.1 — 2026-10-12 — Pruebas en el PC de Jonay
+- **`scripts\PRUEBAS.bat`**: compila y lanza en tu PC las pruebas de `scripts/PRUEBAS_LISTA.txt` (o todas con
+  `PRUEBAS.bat todas`); la primera vez instala Playwright y su navegador. Informe en `reportes\pruebas\ULTIMO.md`, que
+  Claude lee antes de publicar. Desde ahora todo lo que se ejecuta (pruebas, fotos, sondas, herramientas) va en tu PC.
+- Las auditorías las pasas tú; Claude lee los resultados nuevos de `RevisordeCodigo\resultados` al empezar cada tanda.
+- Prueba de controles de la pelea más robusta (espera a aterrizar entre teclas).
+
+## 0.64.0 — 2026-10-12 — Pelea 2D con las mismas teclas que la calle
+- **Pelea 2D**: puñetazo `E`, patada `Espacio`, salto `↑` / `W` (más clic izquierdo y derecho del ratón). Fuera J, K,
+  L, U, I y las de Shift/Ctrl derechos. Los especiales siguen igual (abajo, arriba + golpe funciona aunque ↑ salte).
+- **Los textos de misión y de la pelea muestran las teclas que tengas en Opciones › Controles** (tutorial de Sastrón,
+  tarjeta de controles, «pulsa E para entrar», coche, armas…), no unas fijas.
+- La rutina de publicación ya no pasa el auditor de código salvo que Jonay lo pida.
+
 ## 0.63.1 — 2026-10-12 — Flecha del coche más discreta
 - La flecha que flota sobre el coche es mucho más pequeña (menos de la mitad), más transparente y casi plana: ya no
   parece que apunte al cielo ni de frente al suelo.

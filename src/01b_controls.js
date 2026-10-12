@@ -10,17 +10,20 @@ const CONTROLS = (() => {
     A('punch', 'Puñete (a pie) · cambiar radio (en coche)', 'Juego', ['KeyQ']), A('car', 'Entrar / salir del coche', 'Juego', ['KeyF']), A('use', 'Usar / entrar en edificios', 'Juego', ['KeyE']),
     A('horn', 'Claxon', 'Juego', ['KeyH']), A('flip', 'Enderezar coche', 'Juego', ['KeyR']), A('map', 'Mapa (GPS)', 'Juego', ['KeyM']), A('guide', 'Mostrar / ocultar la brújula', 'Juego', ['KeyG']), A('weap', 'Cambiar arma', 'Juego', ['Tab']),
     A('pause', 'Pausa', 'Juego', ['KeyP', 'Escape']),
-    A('f_punch', 'Puñetazo', 'Pelea', ['KeyJ', 'KeyU', 'ShiftRight']), A('f_kick', 'Patada', 'Pelea', ['KeyK', 'KeyI', 'ControlRight']), A('f_block', 'Cubrirse (siempre)', 'Pelea', ['KeyL']),
+    // v0.64 (Jonay): in the 2D fight the same hand as on the street: E punch, Space kick, ↑ / W jump (+ mouse buttons)
+    // v0.65 (Jonay): every minigame uses the same keys: A = E / left click, B = Espacio, ↑ = up/jump, right click
+    A('f_punch', 'Botón A · pelea: puñetazo · baloncesto: tirar (mantener y soltar a tiempo)', 'Pelea', ['KeyE']), A('f_kick', 'Botón B · pelea: patada · baloncesto: correr (turbo)', 'Pelea', ['Space']), A('f_jump', 'Arriba · pelea: saltar', 'Pelea', ['ArrowUp', 'KeyW']),
+    A('b_pass', 'Baloncesto: pasar / robar (también clic derecho)', 'Pelea', ['KeyQ']),
   ];
-  const NOTES = { Juego: 'Ratón: mirar · clic izq.: puñete / disparar · clic dcho.: apuntar · rueda: zoom', Pelea: 'Moverse con A/D o ←/→; atrás = andar hacia atrás y se cubre solo si el rival ataca. Especiales: atrás, adelante + puñetazo = Bola de gofio; atrás, adelante + patada = Patada del Teide (avanza girando, 3 patadas); abajo, arriba (W/↑) + puñetazo = Gancho del Roque; abajo, arriba + patada = Salto del Pastor. Espacio: saltar. Ratón: clic izq. puñetazo, dcho. patada.' };
+  const NOTES = { Juego: 'Ratón: mirar · clic izq.: puñete / disparar · clic dcho.: apuntar · rueda: zoom', Pelea: 'Moverse con A/D o ←/→; atrás = andar hacia atrás y se cubre solo si el rival ataca. Especiales: atrás, adelante + puñetazo = Bola de gofio; atrás, adelante + patada = Patada del Teide (avanza girando, 3 patadas); abajo, arriba + puñetazo = Gancho del Roque; abajo, arriba + patada = Salto del Pastor. Ratón: clic izq. puñetazo, dcho. patada. Baloncesto: mantén A (clic izq. / E) para tirar y suéltalo con la barra en verde; clic dcho. (o Q) pasar / robar; B (Espacio) correr. Corriendo y tirando desde media distancia: ENTRADA EN COMBO (los mismos 4 especiales, un mate distinto cada uno).' };
   try { const s = JSON.parse(localStorage.getItem('jeta_controls') || '{}'); for (const a of list) if (s[a.id]) a.alt = s[a.id]; } catch (e) { }
   const save = () => { try { const o = {}; for (const a of list) if (a.alt) o[a.id] = a.alt; localStorage.setItem('jeta_controls', JSON.stringify(o)); } catch (e) { } };
-  const alias = (code) => { const out = []; for (const a of list) if (a.alt === code) out.push(a.def[0]); return out; };
+  const alias = (code) => { const out = []; for (const a of list) if (a.alt === code && a.group === 'Juego') out.push(a.def[0]); return out; }; // fight keys are read by FIGHT2D itself
   const nice = (c) => !c ? '—' : c.replace(/^Key/, '').replace(/^Digit/, '').replace('ArrowUp', '↑').replace('ArrowDown', '↓').replace('ArrowLeft', '←').replace('ArrowRight', '→').replace('ShiftLeft', 'Shift izq.').replace('ShiftRight', 'Shift dcho.').replace('ControlRight', 'Ctrl dcho.').replace('ControlLeft', 'Ctrl izq.').replace('AltLeft', 'Alt').replace('Space', 'Espacio').replace('Escape', 'Esc');
   let ui = null, waiting = null;
   function render() {
     const rows = (g) => list.filter((a) => a.group === g).map((a) => `<tr><td>${a.label}</td><td>${a.def.map((c) => `<kbd>${nice(c)}</kbd>`).join(' ')}</td><td><button class="ctlb" data-id="${a.id}">${waiting === a.id ? 'Pulsa una tecla…' : a.alt ? nice(a.alt) : '+ añadir'}</button></td></tr>`).join('');
-    ui.querySelector('#ctlBody').innerHTML = ['Juego', 'Pelea'].map((g) => `<tr><th colspan="3">${g === 'Juego' ? 'EN LA CALLE' : 'PELEA 2D'}</th></tr>${rows(g)}<tr><td colspan="3" class="ctln">${NOTES[g]}</td></tr>`).join('');
+    ui.querySelector('#ctlBody').innerHTML = ['Juego', 'Pelea'].map((g) => `<tr><th colspan="3">${g === 'Juego' ? 'EN LA CALLE' : 'MINIJUEGOS (pelea 2D, baloncesto…)'}</th></tr>${rows(g)}<tr><td colspan="3" class="ctln">${NOTES[g]}</td></tr>`).join('');
     ui.querySelectorAll('.ctlb').forEach((b) => b.onclick = (e) => { e.stopPropagation(); waiting = b.dataset.id; render(); });
   }
   function open() {
@@ -33,5 +36,10 @@ const CONTROLS = (() => {
         const a = list.find((q) => q.id === waiting); if (e.code === 'Escape') { waiting = null; render(); return; } a.alt = e.code === 'Delete' || e.code === 'Backspace' ? null : e.code; waiting = null; save(); render(); }, true); }
     ui.style.display = 'flex'; render();
   }
-  return { list, alias, open, nice, get open_() { return ui && ui.style.display !== 'none'; } };
+  // the keys of an action (its own plus the one the player added) and a readable name for texts: mission tips, fight cards
+  const byId = (id) => list.find((a) => a.id === id);
+  const codes = (id) => { const a = byId(id); return a ? (a.alt ? [...a.def, a.alt] : a.def) : []; };
+  const keyName = (id) => { const a = byId(id); if (!a) return '?'; return (a.alt ? nice(a.alt) : nice(a.def[0])).replace('Space', 'Espacio'); };
+  const kbd = (id) => `<kbd>${keyName(id)}</kbd>`;
+  return { list, alias, open, nice, codes, keyName, kbd, get open_() { return ui && ui.style.display !== 'none'; } };
 })();

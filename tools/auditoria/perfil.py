@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Perfil dinámico de JETA La Laguna con Playwright (Chromium sin ventana, WebGL por software).
 
-Uso:  python perfil.py <carpeta_repo> [calidad=media] [salida.json]
+Uso:  python perfil.py <carpeta_repo> [calidad=media] [salida.json] [--gpu]
+  --gpu  usa la tarjeta gráfica real (PC de referencia de Jonay) en vez de WebGL por software; además mide cuánto
+         tarda en pintarse un fotograma a 1280x720. Las cifras de un modo y otro no se mezclan en el mismo historial.
 Requiere haber ejecutado antes `python build.py` (usa dist/test.html, que carga Three.js local).
 
 Mide: tiempo de cada paso de arranque, llamadas de dibujo, triángulos, nº de geometrías/texturas/programas
@@ -69,12 +71,18 @@ T0 = time.time(); TIEMPOS = {}
 def marca(k):
     global T0
     t = time.time(); TIEMPOS[k] = round(t - T0, 1); T0 = t
+    print(f'  · {k}: {TIEMPOS[k]} s', flush=True)
+
+GPU = '--gpu' in sys.argv
 
 async def main():
-    res = {'calidad': q}
+    res = {'calidad': q, 'modo': 'gpu' if GPU else 'software'}
     async with async_playwright() as p:
-        b = await p.chromium.launch(args=['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
-                                          '--ignore-gpu-blocklist', '--enable-precise-memory-info', '--js-flags=--expose-gc'])
+        comunes = ['--ignore-gpu-blocklist', '--enable-precise-memory-info', '--js-flags=--expose-gc']
+        if GPU:  # tarjeta gráfica real (Windows: ANGLE sobre Direct3D 11)
+            b = await p.chromium.launch(args=comunes + ['--enable-gpu', '--use-angle=d3d11' if os.name == 'nt' else '--use-angle=default'])
+        else:
+            b = await p.chromium.launch(args=comunes + ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'])
         pg = await b.new_page(viewport={'width': 640, 'height': 360})  # misma proporción (mismo encuadre y llamadas), 4 veces menos píxeles
         errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
         pg.on('console', lambda m: m.type == 'error' and 'Failed to load resource' not in m.text and errs.append(m.text))  # sin red no es fallo del juego
@@ -123,6 +131,13 @@ async def main():
         t = await pg.evaluate("(()=>{const t0=performance.now(); __step(120,1/30,['KeyW']); return performance.now()-t0})()")
         res['logic_ms_por_paso'] = round(t / 120, 2)
         res['prof_ms'] = {k: round(v, 3) for k, v in sorted((await pg.evaluate('__prof')).items(), key=lambda x: -x[1])}
+        # qué tarjeta gráfica ha usado de verdad (para no mezclar mediciones de máquinas distintas)
+        res['gpu'] = await pg.evaluate("""(()=>{try{const gl=__dbg.renderer.getContext(); const e=gl.getExtension('WEBGL_debug_renderer_info'); return e?gl.getParameter(e.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER);}catch(e){return '?';}})()""")
+        if GPU:
+            # tiempo real de pintar un fotograma a 1280x720 (con espera a que la GPU termine), mediana de 30
+            res['pintar_ms_720p'] = await pg.evaluate("""(()=>{const r=__dbg.renderer, gl=r.getContext(); r.setSize(1280,720,false); const t=[];
+              for(let i=0;i<35;i++){ const t0=performance.now(); """ + PINTA[6:-4].replace('const [bs,bc]', 'const [bs,bc]') + """; gl.finish(); if(i>=5) t.push(performance.now()-t0); }
+              r.setSize(640,360,false); t.sort((a,b)=>a-b); return +t[t.length>>1].toFixed(2);})()""")
         # fugas: teletransportes por el mapa haciendo aparecer peatones/coches
         marca('logica')
         # 3 vueltas por los MISMOS 8 puntos: la 1ª sube por subidas perezosas a la GPU (normal);
@@ -138,18 +153,18 @@ async def main():
                 await pg.evaluate(f"(()=>{{const P=__dbg.PLAYER; P.x={x}; P.z={z}; P.y=__dbg.heightAt({x},{z})+0.5;}})()")
                 t1 = time.time(); await pg.evaluate("__step(30,1/30)"); t2 = time.time(); await pg.evaluate(PINTA)
                 TIEMPOS['_paso_s'] = round(TIEMPOS.get('_paso_s', 0) + t2 - t1, 1); TIEMPOS['_pintar_s'] = round(TIEMPOS.get('_pintar_s', 0) + time.time() - t2, 1)
-            await pg.evaluate("window.gc && gc()"); rondas.append(await pg.evaluate(INFO))
+            await pg.evaluate("window.gc && gc()"); rondas.append(await pg.evaluate(INFO)); marca(f'vuelta {r + 1} de 3 (fugas)')
             if r == 0: await pg.evaluate(TRAZA_ON)  # tras la 1ª vuelta (calentamiento) se empieza a rastrear quién crea qué
         res['fugas'] = {'rondas': rondas,
                         'geometrias_por_vuelta_(2a-3a)': [rondas[i]['geometries'] - rondas[i-1]['geometries'] for i in (2, 3)],
                         'texturas_por_vuelta_(2a-3a)': [rondas[i]['textures'] - rondas[i-1]['textures'] for i in (2, 3)]}
-        res['fugas']['origen'] = await pg.evaluate(TRAZA_INFORME); marca('fugas')
+        res['fugas']['origen'] = await pg.evaluate(TRAZA_INFORME); marca('origen de las fugas')
         res['tiempos_s'] = TIEMPOS
         res['errores_consola'] = errs[:20]
         await b.close()
     srv.shutdown()
     s = json.dumps(res, ensure_ascii=False, indent=1)
     if out: open(out, 'w', encoding='utf-8').write(s)
-    print(s)
+    else: print(s)
 
 asyncio.run(main())

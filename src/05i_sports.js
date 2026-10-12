@@ -29,6 +29,29 @@ function noiseOverlay(x, W, H, a) { for (let i = 0; i < W * H / 60; i++) { x.fil
 let chainTex = null;
 function chainLink() { if (chainTex) return chainTex; const c = mkCanvas(64, 64), x = c.getContext('2d'); x.clearRect(0, 0, 64, 64); x.strokeStyle = 'rgba(190,200,205,0.9)'; x.lineWidth = 1.4; for (let i = -64; i < 128; i += 12) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i + 64, 64); x.stroke(); x.beginPath(); x.moveTo(i, 64); x.lineTo(i + 64, 0); x.stroke(); } chainTex = canvasTex(c); return chainTex; }
 const SPORTS = { pitches: [], halls: [] };
+// v0.65: the pitches and courts as rectangles, worked out before trees, lamps and street furniture are placed, so none of
+// them ends up in the middle of a game (Jonay). Also fixes the kind of each one (same court every game).
+let PITCH_RECTS = null;
+function pitchRects() {
+  if (PITCH_RECTS) return PITCH_RECTS; PITCH_RECTS = [];
+  for (const a of DATA.A) {
+    if (DATA.AT[a[0]] !== 'pitch') continue; const c2 = a[2]; const pts = []; for (let i = 0; i < c2.length; i += 2) pts.push([c2[i], c2[i + 1]]);
+    if (pts.length < 3) continue; let cx = 0, cz = 0; for (const p of pts) { cx += p[0]; cz += p[1]; } cx /= pts.length; cz /= pts.length;
+    const F = axisFrame(pts, cx, cz); const len = F.u1 - F.u0, wid = F.v1 - F.v0; if (len < 12 || wid < 8) continue; const area = len * wid;
+    const h = Math.abs(Math.sin(cx * 12.9898 + cz * 78.233) * 43758.5453) % 1; // stable «random» per court
+    const kind = area > 4800 ? 'f11' : area > 1600 ? 'f7' : area > 560 ? (h < 0.55 ? 'multi' : 'fs') : 'bb';
+    let r = 0; for (const p of pts) r = Math.max(r, Math.hypot(p[0] - cx, p[1] - cz));
+    PITCH_RECTS.push({ cx, cz, F, kind, len, wid, r, pts });
+  }
+  return PITCH_RECTS;
+}
+// inside a pitch or court (plus margin m, metres)? Used to keep trees, lamps and benches off them
+function inPitch(x, z, m = 1) {
+  for (const P of pitchRects()) { if (Math.abs(x - P.cx) > P.r + m || Math.abs(z - P.cz) > P.r + m) continue;
+    const F = P.F, u = (x - P.cx) * F.ux + (z - P.cz) * F.uz, v = (x - P.cx) * F.vx + (z - P.cz) * F.vz;
+    if (u > F.u0 - m && u < F.u1 + m && v > F.v0 - m && v < F.v1 + m) return P; }
+  return null;
+}
 function buildSports() {
   const white = M(0xf4f4f2, 0.4, 0.2), dark = M(0x2a2d30, 0.5, 0.6), orange = M(0xe8641c, 0.4, 0.6);
   const fenceMat = new THREE.MeshStandardMaterial({ map: chainLink(), transparent: true, alphaTest: 0.3, side: THREE.DoubleSide, roughness: 0.6, metalness: 0.5 });
@@ -38,7 +61,7 @@ function buildSports() {
     if (pts.length < 3) continue; let cx = 0, cz = 0; for (const p of pts) { cx += p[0]; cz += p[1]; } cx /= pts.length; cz /= pts.length;
     if (cx < WORLD.x0 || cx > WORLD.x1 || cz < WORLD.z0 || cz > WORLD.z1) continue;
     const F = axisFrame(pts, cx, cz); const len = F.u1 - F.u0, wid = F.v1 - F.v0; const area = len * wid; if (len < 12 || wid < 8) continue;
-    const kind = area > 4800 ? 'f11' : area > 1600 ? 'f7' : area > 560 ? (Math.random() < 0.55 ? 'multi' : 'fs') : 'bb';
+    const pr = pitchRects().find((q) => Math.abs(q.cx - cx) < 0.01 && Math.abs(q.cz - cz) < 0.01); const kind = pr ? pr.kind : 'bb';
     const tex = courtCanvas(kind, len, wid);
     const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: kind.startsWith('f') && kind !== 'fs' ? 0.95 : 0.6, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -6 });
     // raster the rectangle so it follows the ground
@@ -86,7 +109,7 @@ function buildSports() {
         const [sx, sz] = F.W((F.u0 + F.u1) / 2, v + side * 2.4); for (let t = -0.4; t <= 0.4; t += 0.1) { const [px, pz] = F.W((F.u0 + F.u1) / 2 + t * len, v + side * 2.4); COL.addCirc(px, pz, 2.4); } }
       LABELS.push([STR[inStadium[1]], cx, cz, 1]);
     }
-    SPORTS.pitches.push({ cx, cz, kind });
+    SPORTS.pitches.push({ cx, cz, kind, F, len, wid });
   }
 }
 // indoor halls: buildings named Pabellón / Polideportivo or sitting inside a sports complex

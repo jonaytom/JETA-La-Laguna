@@ -1,0 +1,2030 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JETA La Laguna — Documentación técnica</title>
+<style>
+:root{--bg:#fbf8f3;--panel:#f1ebe1;--ink:#2a2622;--mut:#76695c;--acc:#c0502a;--line:#e0d6c8;--code:#efe8dc}
+@media (prefers-color-scheme:dark){:root{--bg:#1b1917;--panel:#23201d;--ink:#ece6dd;--mut:#a59a8c;--acc:#f08a5d;--line:#3a352f;--code:#2b2723}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+nav{position:fixed;top:0;left:0;bottom:0;width:270px;overflow:auto;background:var(--panel);border-right:1px solid var(--line);padding:20px 14px}
+nav h1{font-size:17px;margin:0 0 2px}nav .v{color:var(--mut);font-size:13px;margin-bottom:14px}
+nav a{display:block;color:var(--ink);text-decoration:none;padding:6px 10px;border-radius:6px;font-size:14px}
+nav a:hover,nav a.on{background:var(--bg);color:var(--acc)}
+main{margin-left:270px;padding:24px 48px 80px;max-width:1000px}
+section{border-bottom:1px solid var(--line);padding:16px 0 32px}
+.src{font:12px ui-monospace,Consolas,monospace;color:var(--mut)}
+h1,h2,h3{line-height:1.25}h1{font-size:28px}h2{font-size:21px;margin-top:28px}h3{font-size:17px}
+a{color:var(--acc)}
+code{font:13.5px ui-monospace,Consolas,monospace;background:var(--code);padding:1px 5px;border-radius:4px}
+pre{background:var(--code);padding:12px 14px;border-radius:8px;overflow:auto}pre code{padding:0;background:none}
+table{border-collapse:collapse;width:100%;font-size:14px;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}th{background:var(--panel)}
+blockquote{margin:0;padding:6px 14px;border-left:4px solid var(--acc);background:var(--panel);border-radius:0 6px 6px 0}
+#menu{display:none}
+@media (max-width:820px){nav{transform:translateX(-100%);transition:.2s;z-index:5}nav.open{transform:none}
+main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px;left:10px;z-index:6;
+background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
+</style></head><body>
+<button id="menu">☰ Índice</button>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.65.0</div>
+<a href="#s0">JETA La Laguna</a>
+<a href="#s1">1. Arquitectura y construcción</a>
+<a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
+<a href="#s3">3. Mundo 3D</a>
+<a href="#s4">4. Personajes, vehículos, tráfico y colisiones</a>
+<a href="#s5">5. Jugabilidad</a>
+<a href="#s6">6. Audio y radio procedural</a>
+<a href="#s7">Pruebas</a>
+<a href="#s8">8. Versiones y publicación en GitHub</a>
+<a href="#s9">9. Licencias y créditos</a>
+<a href="#s10">10. Assets provisionales y cómo sustituirlos</a>
+<a href="#s11">Historial de versiones</a>
+</nav>
+<main><section id="s0"><div class="src">README.md</div><h1>JETA La Laguna</h1>
+<p>Juego de mundo abierto estilo GTA ambientado en <strong>San Cristóbal de La Laguna (Tenerife)</strong>, construido sobre el
+trazado real de OpenStreetMap. Todo el juego es <strong>un único archivo HTML</strong> (Three.js r160 + JavaScript), sin servidor:
+se abre con doble clic en <code>dist/JETA La Laguna.html</code>.</p>
+<p>Protagonista: Ayoze «El Chopa», recién salido de la cárcel, que reúne a su banda (Boca Papa, El Blanco, Sastrón y Coco).
+Los comercios son siempre <strong>parodias</strong> (nunca marcas reales) y la interfaz está en español con habla canaria.</p>
+<blockquote>
+<p><strong>Assets provisionales.</strong> Los modelos (coches Kenney, personajes Quaternius), las texturas (procedurales y de
+Poly Haven), el logotipo y los sonidos sintetizados son <strong>temporales</strong>: sirven para tener el juego completo y
+jugable. Está previsto un <strong>proyecto aparte de creación de assets</strong> que los sustituirá. Ver
+<a href="#s10">docs/10_assets.md</a> para saber dónde se carga cada uno y cómo cambiarlos sin tocar el resto.</p>
+</blockquote>
+<h2>Jugar</h2>
+<ul>
+<li>Abre <code>dist/JETA La Laguna.html</code> en Chrome / Edge / Firefox (PC o móvil). Necesita conexión la primera vez para
+  descargar Three.js y las fuentes desde CDN.</li>
+<li>Controles principales (PC): <code>WASD</code> moverse · <code>Shift</code> correr · <code>Espacio</code> saltar · ratón cámara · <code>E</code> usar / entrar ·
+  <code>F</code> coche · <code>Q</code> puñetazo a pie / cambiar emisora en coche · <code>Tab</code> pistola / puños · clic dcho. apuntar · <code>M</code> mapa · <code>G</code> brújula sí/no ·
+  <code>Esc</code> pausa (guardar / cargar, opciones). Mando y pantalla táctil también funcionan.</li>
+</ul>
+<h2>Construir</h2>
+<p>Requisitos: Python 3.9+ (solo biblioteca estándar para construir).</p>
+<pre><code class="language-bash">python build.py
+</code></pre>
+<p>Genera en <code>dist/</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Archivo</th>
+<th>Uso</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>JETA La Laguna.html</code></td>
+<td>Juego completo para abrir en local (el que se reparte).</td>
+</tr>
+<tr>
+<td><code>gta-la-laguna.html</code></td>
+<td>Misma versión sin <code>&lt;html&gt;/&lt;head&gt;</code> para publicarla como Artifact de Claude.</td>
+</tr>
+<tr>
+<td><code>test.html</code> + <code>three.module.min.js</code></td>
+<td>Versión que carga Three.js local, para las pruebas automáticas sin red.</td>
+</tr>
+</tbody>
+</table>
+<h2>Estructura del repositorio</h2>
+<pre><code>build.py            empaqueta todo en un HTML (concatena src/*.js en orden y mete los datos en JSON)
+prep.py             convierte la exportación de OpenStreetMap (data/laguna_osm2.json) en data/data.json
+template.html       HTML/CSS de la interfaz (HUD, menús, controles táctiles) con huecos __DATA__, __GAME__, __THREE__
+src/                código del juego (módulos numerados, se concatenan por orden alfabético)
+data/               datos ya procesados: mapa, personajes, coches, comercios, Three.js para pruebas
+assets/             texturas y logotipo que se incrustan en el HTML
+tools/              convertidores de modelos 3D (Kenney car kit, Quaternius) a JSON compacto
+tests/              pruebas automáticas con Playwright (navegador sin ventana) y auditorías del mapa
+docs/               documentación técnica
+scripts/            publicación automática a GitHub
+dist/               resultado de la construcción
+</code></pre>
+<h2>Documentación técnica</h2>
+<ol>
+<li><a href="#s1">Arquitectura y construcción</a></li>
+<li><a href="#s2">Datos del mapa (OpenStreetMap → data.json)</a></li>
+<li><a href="#s3">Mundo 3D: terreno, carreteras, puentes, túneles, edificios, plazas</a></li>
+<li><a href="#s4">Personajes, vehículos, tráfico y colisiones</a></li>
+<li><a href="#s5">Jugabilidad: misiones, peleas 2D, armas, policía, guardado</a></li>
+<li><a href="#s6">Audio y radio procedural</a></li>
+<li><a href="#s7">Pruebas y auditorías</a></li>
+<li><a href="#s8">Versiones y publicación en GitHub</a></li>
+<li><a href="#s9">Licencias y créditos</a></li>
+<li><a href="#s10">Assets provisionales y cómo sustituirlos</a></li>
+</ol>
+<h2>Licencias</h2>
+<p>El código es del autor del proyecto. Datos de mapa © colaboradores de OpenStreetMap (ODbL). Modelos de coches
+Kenney (CC0), personajes y animaciones Quaternius (CC0), texturas Poly Haven (CC0), Three.js (MIT).
+Detalle en <a href="#s9">docs/09_licencias.md</a>.</p></section>
+<section id="s1"><div class="src">docs/01_arquitectura.md</div><h1>1. Arquitectura y construcción</h1>
+<h2>Un solo HTML</h2>
+<p>El juego se distribuye como <strong>un único archivo HTML</strong> autocontenido. <code>build.py</code>:</p>
+<ol>
+<li>Lee <code>template.html</code> (HTML + CSS del HUD, menús y controles táctiles).</li>
+<li>Concatena <strong>todos</strong> los <code>src/*.js</code> en orden alfabético en un solo <code>&lt;script type="module"&gt;</code>. Por eso los
+   archivos llevan prefijo numérico (<code>01_core.js</code>, <code>04_world.js</code>, <code>05n_plazas.js</code>…): el orden importa porque
+   todo vive en el <strong>mismo ámbito de módulo</strong> (no hay <code>import</code>/<code>export</code> entre archivos; las funciones y
+   constantes de un archivo se ven en los siguientes).</li>
+<li>Carga <code>data/data.json</code> (mapa), añade los comercios (<code>data/shops*.txt</code>), la tabla de parodias de marcas
+   (<code>BRAND</code>), los coches (<code>data/kenney_cars.json</code>), los personajes (<code>data/chars.json</code>) y las texturas de
+   enlucido (base64), y lo incrusta todo como JSON en <code>&lt;script id="mapdata" type="application/json"&gt;</code>.</li>
+<li>Sustituye <code>__THREE__</code> por un <em>import map</em> que apunta a Three.js r160 (CDN o copia local para pruebas).</li>
+<li>Escribe las tres salidas de <code>dist/</code> (ver README).</li>
+</ol>
+<p><code>const DATA = JSON.parse(document.getElementById('mapdata').textContent)</code> (en <code>01_core.js</code>) es el punto de
+entrada de todos los datos.</p>
+<blockquote>
+<p>Regla práctica: si un archivo usa algo de otro <em>en tiempo de carga</em> (fuera de una función), el otro tiene que
+ir antes en el orden. Dentro de funciones da igual, porque se ejecutan cuando todo el módulo ya está cargado.
+Ojo con los <code>const</code>/<code>let</code> usados antes de declararse (zona muerta temporal): rompen el arranque entero.</p>
+</blockquote>
+<h2>Mapa de módulos (<code>src/</code>)</h2>
+<table>
+<thead>
+<tr>
+<th>Archivo</th>
+<th>Contenido</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>01_core.js</code></td>
+<td>Lectura de <code>DATA</code>, ensanchado de calles, <strong>separación de calzadas</strong> (dos sentidos y autovía/vía paralela), utilidades (<code>clamp</code>, <code>lerp</code>, <code>smooth</code>, <code>mulberry</code>), <code>heightAt</code> (alturas del terreno), presets de calidad (<code>QUALITY</code>), renderer/escena/cámara.</td>
+</tr>
+<tr>
+<td><code>02_textures.js</code></td>
+<td>Texturas procedurales en canvas (asfalto, adoquín, aceras, tejados), <strong>atlas de fachadas</strong> (16 estilos) y texturas de enlucido reales (<code>PLASTER</code>).</td>
+</tr>
+<tr>
+<td><code>03_collide.js</code></td>
+<td><code>COL</code>: colisiones 2D (segmentos y círculos en rejilla de 16 m) con <strong>rango de altura opcional</strong>.</td>
+</tr>
+<tr>
+<td><code>04_world.js</code></td>
+<td>Materiales, <strong>terreno</strong> con recortes, <strong>carreteras</strong> (cintas), <strong>puentes y túneles</strong>, auditorías, edificios, <strong>medianas</strong>. El archivo más grande.</td>
+</tr>
+<tr>
+<td><code>05_scenery.js</code></td>
+<td>Árboles (instanciados), farolas, <code>isHistoric</code>, utilidades de colocación.</td>
+</tr>
+<tr>
+<td><code>05c_churches.js</code></td>
+<td>Catedral, La Concepción (torre), resto de iglesias y ermitas.</td>
+</tr>
+<tr>
+<td><code>05d_signs.js</code></td>
+<td>Rótulos de comercios (parodias) en fachadas.</td>
+</tr>
+<tr>
+<td><code>05e_street.js</code></td>
+<td>Mobiliario del casco: terrazas, bancos, jardineras, bolardos, fuentes pequeñas.</td>
+</tr>
+<tr>
+<td><code>05f_anchieta.js</code></td>
+<td>Pasarela y anillo peatonal del Padre Anchieta (modelado a mano).</td>
+</tr>
+<tr>
+<td><code>05g_interiors.js</code></td>
+<td>Interiores (Catedral, cafetería Brasilito, hipermercado…), puertas.</td>
+</tr>
+<tr>
+<td><code>05h_commercial.js</code></td>
+<td>Grandes superficies y aparcamientos en superficie.</td>
+</tr>
+<tr>
+<td><code>05i_sports.js</code></td>
+<td>Campos de fútbol, canchas, pabellones.</td>
+</tr>
+<tr>
+<td><code>05j_signals.js</code></td>
+<td>Señales de tráfico (STOP, ceda) y marcas viales.</td>
+</tr>
+<tr>
+<td><code>05k_landmarks.js</code></td>
+<td>Edificios singulares (Intercambiador, etc.).</td>
+</tr>
+<tr>
+<td><code>05l_tramstops.js</code></td>
+<td>Paradas del tranvía.</td>
+</tr>
+<tr>
+<td><code>05m_parking.js</code></td>
+<td>Parkings subterráneos (Plaza del Cristo, Trinidad): salas, rampas, escaleras con pasillo.</td>
+</tr>
+<tr>
+<td><code>05n_plazas.js</code></td>
+<td><strong>Plazas y parques</strong>: Plaza del Adelantado (fuente de mármol), Camino Largo (palmeras), Parque de la Constitución (estanque con patos, bustos), parques y plazas genéricos.</td>
+</tr>
+<tr>
+<td><code>05o_concepcion.js</code></td>
+<td>La Concepción: iglesia y torre modeladas a partir de fotos sobre el plano OSM.</td>
+</tr>
+<tr>
+<td><code>05p_casas.js</code></td>
+<td>Casas que faltan en OSM, colocadas a mano (<code>CUSTOM_HOUSES</code>).</td>
+</tr>
+<tr>
+<td><code>05r_aeropuerto.js</code></td>
+<td>Aeropuerto de Los Rodeos (pista, rodaje, plataformas, terminal, torre, aviones).</td>
+</tr>
+<tr>
+<td><code>05q_inicio.js</code></td>
+<td>Esquina de inicio y Marqués de Celada: manzanas partidas en casas, edificios vestidos, señales, locales.</td>
+</tr>
+<tr>
+<td><code>06_actors.js</code> / <code>06a_humans.js</code></td>
+<td>Humanos: modelo con esqueleto (Quaternius) + animaciones, apariencia (<code>look</code>).</td>
+</tr>
+<tr>
+<td><code>06b_vmodels.js</code></td>
+<td>Catálogo de coches (parodias) a partir del Kenney car kit; luces, matrícula, rotulación.</td>
+</tr>
+<tr>
+<td><code>07_vehicles.js</code></td>
+<td><code>GRAPH</code> (grafo viario), clase <code>Car</code> (física), tráfico IA, policía en coche, tranvía.</td>
+</tr>
+<tr>
+<td><code>08_player.js</code></td>
+<td>Entrada (teclado/ratón/mando/táctil), control del jugador, entrar/salir de coches, pasos.</td>
+</tr>
+<tr>
+<td><code>09_peds.js</code></td>
+<td>Peatones y <code>WANTED</code> (nivel de búsqueda).</td>
+</tr>
+<tr>
+<td><code>09b_combat.js</code></td>
+<td>Puñetazos en 3D, peatones que se defienden.</td>
+</tr>
+<tr>
+<td><code>09c_weapons.js</code></td>
+<td>Pistola: apuntado (IK del brazo), agarre en la mano, disparos, cambio puños/pistola.</td>
+</tr>
+<tr>
+<td><code>09d_fight2d.js</code></td>
+<td>Motor de <strong>pelea 2D pixel-art</strong> (estilo arcade).</td>
+</tr>
+<tr>
+<td><code>09e_cops.js</code></td>
+<td>Policías a pie que bajan del coche, persiguen y disparan.</td>
+</tr>
+<tr>
+<td><code>10_audio.js</code></td>
+<td><code>AUDIO</code>: efectos sintetizados (motor, derrapes, sirena, golpes…).</td>
+</tr>
+<tr>
+<td><code>10b_music.js</code></td>
+<td><code>MUSIC</code>: radio hip hop procedural con letras y estribillo de misión.</td>
+</tr>
+<tr>
+<td><code>01b_controls.js</code></td>
+<td><code>CONTROLS</code>: teclas configurables y su pantalla.</td>
+</tr>
+<tr>
+<td><code>08b_border.js</code></td>
+<td>Límites del mundo: aviso y vuelta a la ciudad.</td>
+</tr>
+<tr>
+<td><code>10d_ambience.js</code></td>
+<td><code>AMBIENCE</code>: pájaros, coches, gente, campanas, perros, gaviotas.</td>
+</tr>
+<tr>
+<td><code>10c_steps.js</code></td>
+<td><code>STEPS</code>: muestras de pasos por suelo, reverberación y <code>footContacts</code> (sincronía con la animación).</td>
+</tr>
+<tr>
+<td><code>11_hud.js</code></td>
+<td>HUD, minimapa, mapa grande, GPS (<code>GPS</code>, grafo peatonal <code>WALKG</code>), controles táctiles.</td>
+</tr>
+<tr>
+<td><code>12_missions.js</code></td>
+<td><code>DLG</code> (diálogos), <code>MISSIONS</code> (historia y secundarias), NPCs de la banda.</td>
+</tr>
+<tr>
+<td><code>12b_food.js</code></td>
+<td>Tiendas de comida y salud.</td>
+</tr>
+<tr>
+<td><code>12c_achaman.js</code></td>
+<td>Modo Achamán (vuelo libre / dron / cenital).</td>
+</tr>
+<tr>
+<td><code>12e_save.js</code></td>
+<td><code>SAVE</code>: guardar y cargar partida.</td>
+</tr>
+<tr>
+<td><code>13_main.js</code></td>
+<td><code>GAME</code> (estados), día/noche, menús, <strong>secuencia de arranque</strong> y <strong>bucle principal</strong>.</td>
+</tr>
+</tbody>
+</table>
+<h2>Estados del juego (<code>GAME.state</code>)</h2>
+<p><code>loading</code> → <code>menu</code> → <code>play</code> ⇄ <code>pause</code> / <code>dialog</code> / <code>cutscene</code> / <code>fight2d</code> / <code>achaman</code>.</p>
+<ul>
+<li><code>logic(dt)</code> (en <code>13_main.js</code>) solo simula el mundo en <code>play</code> (y parte en <code>achaman</code>).</li>
+<li><code>dialog</code>: un <code>DLG.show(...)</code> está abierto; al cerrarlo vuelve a <code>play</code>.</li>
+<li><code>cutscene</code>: fundidos (morir, cargar partida, usar puertas).</li>
+<li><code>fight2d</code>: el motor de pelea 2D tiene su propio bucle (<code>requestAnimationFrame</code>) y el 3D se congela.</li>
+</ul>
+<h2>Arranque (<code>boot()</code> en <code>13_main.js</code>)</h2>
+<p>Pasos con mensaje en la pantalla de carga, en este orden (cada uno protegido con try/catch):</p>
+<ol>
+<li>Terreno (<code>prepUndergroundAreas</code>, <code>buildTerrain</code>).</li>
+<li>Edificios (<code>buildBuildings</code>).</li>
+<li>Carreteras: <code>buildRoads</code> (incluye depresiones, elevaciones de puentes), <code>buildMedians</code>, <code>buildCarParks</code>, <code>finalizeCuts</code>.</li>
+<li>Monumentos (<code>buildLandmarks</code>: iglesias, pasarela…).</li>
+<li>Aparcamientos y grandes superficies.</li>
+<li>Rótulos y mobiliario urbano.</li>
+<li>Interiores.</li>
+<li>Árboles: <code>scatterTrees</code> → <code>buildPlazasParks</code> → <code>buildTrees</code>.</li>
+<li>Farolas, postes del tranvía, props de plazas, paradas.</li>
+<li>Deportes, señales, <strong><code>finalizeChunks</code></strong> (fusiona la geometría por trozos de mapa), cielo.</li>
+<li>Coches aparcados, tranvía, mapa, jugador, misiones, controles, guardado.</li>
+<li>Tráfico inicial y compilación de sombreadores.</li>
+</ol>
+<h2>Bucle principal</h2>
+<p><code>loop()</code> → <code>logic(dt)</code> → render. En <code>play</code>:
+física de coches a pasos fijos de 1/90 s, tráfico, tranvía, peatones, <code>WANTED</code>, policías a pie, misiones,
+GPS (cada 3 fotogramas), cámara, armas, radio, guardado automático, sol/entorno, audio y HUD.</p>
+<p>La resolución se adapta sola (<code>adaptRes</code>) para mantener los FPS; <code>QUALITY</code> (baja / móvil / media / alta) fija
+sombras, distancia de dibujado, número de peatones, coches y densidad de árboles.</p>
+<h2>Geometría por trozos (<code>Acc</code> / <code>acc()</code> / <code>finalizeChunks</code>)</h2>
+<p>Casi todo lo estático (carreteras, muros, barandillas, mobiliario simple) se acumula en <code>Acc</code> por <strong>trozo de
+mapa y material</strong> (<code>acc(x, z, 'trim')</code>), y al final se fusiona en un <code>BufferGeometry</code> por trozo. Así hay pocas
+llamadas de dibujo aunque haya millones de triángulos. Lo repetido (árboles, bancos, farolas, coches aparcados)
+usa <code>InstancedMesh</code>.</p>
+<h2>Depuración</h2>
+<p><code>window.__dbg</code> expone los objetos principales (<code>PLAYER</code>, <code>CARS</code>, <code>GAME</code>, <code>MISSIONS</code>, <code>ROADY</code>, <code>auditCrossings</code>,
+<code>auditObstacles</code>, <code>SAVE</code>, <code>MUSIC</code>…). <code>window.__step(n, dt, teclas)</code> avanza la simulación a mano y
+<code>window.__snap()</code> devuelve una captura JPEG del canvas. Lo usan las pruebas (ver <code>docs/07_pruebas.md</code>).</p></section>
+<section id="s2"><div class="src">docs/02_datos_y_mapa.md</div><h1>2. Datos del mapa (OpenStreetMap → <code>data.json</code>)</h1>
+<h2>Origen</h2>
+<p><code>data/laguna_osm2.json</code> es una exportación de OpenStreetMap de la zona de La Laguna (edificios, vías, usos del
+suelo, puntos de interés, tranvía, árboles) más una rejilla de elevación (<code>ELEV</code>). Formato de entrada que espera
+<code>prep.py</code>:</p>
+<pre><code>{ &quot;B&quot;: [[tags, coords], ...],   edificios (coords planas lon/lat ya pasadas a metros, ver abajo)
+  &quot;R&quot;: [[tags, coords], ...],   vías (highway=*)
+  &quot;A&quot;: [[tags, coords], ...],   áreas (landuse, leisure, natural, amenity=parking)
+  &quot;T&quot;: [[tags, coords], ...],   vías del tranvía
+  &quot;N&quot;: [[x, z], ...],           árboles sueltos (natural=tree)
+  &quot;P&quot;: [[nombre, tipo, [x, z]], ...],  puntos de interés
+  &quot;ELEV&quot;: { &quot;N&quot;: n, &quot;E&quot;: [...n*n alturas...], &quot;la0&quot;, &quot;la1&quot;, &quot;lo0&quot;, &quot;lo1&quot; } }
+</code></pre>
+<h2>Sistema de coordenadas</h2>
+<ul>
+<li>Origen: latitud <strong>28.4875</strong>, longitud <strong>−16.3150</strong> (casco histórico).</li>
+<li><strong>x</strong> = metros hacia el <strong>este</strong>; <strong>z</strong> = metros hacia el <strong>sur</strong> (z crece al bajar de latitud).</li>
+<li><strong>y</strong> = altura en metros respecto a la cota del origen (<code>H.base</code>).</li>
+<li>Las coordenadas se redondean a 0,5 m (<code>q()</code>), lo que hace que los nodos compartidos entre vías coincidan
+  exactamente: la clave <code>"x,z"</code> identifica un cruce en todo el código (<code>nodeCount</code>, <code>K(x, z)</code>).</li>
+</ul>
+<h2><code>prep.py</code> paso a paso</h2>
+<ol>
+<li><strong>Relieve</strong>: interpola la rejilla de elevación con un spline bicúbico (SciPy) y la remuestrea cada 16 m en el
+   rectángulo x ∈ [−2600, 2800], z ∈ [−1800, 4400]. Se guarda en decímetros como <code>int16</code> en base64 (<code>H.d</code>).</li>
+<li><strong>Edificios</strong>: une los anillos abiertos de multipolígonos, orienta en sentido antihorario, y clasifica:
+   estilo (colonial en el casco, moderno, bloque, industrial, iglesia, invernadero, institucional), plantas,
+   altura, tipo de tejado (plano / a cuatro aguas) y una semilla aleatoria estable (hash de las coordenadas).</li>
+<li><strong>Vías</strong>: tipo (<code>RT</code>), ancho (por defecto por tipo, o <code>width</code>/<code>lanes</code> de OSM), sentido único (incluido
+   <code>oneway=-1</code> → se invierte la geometría), puente, túnel, rotonda y firme.</li>
+<li><strong>Rotondas pequeñas</strong>: se agrandan (radio ×1,9 hasta 16 m) y se deforma radialmente todo lo de alrededor
+   (<code>W</code>, <em>warps</em>) para que quepan los coches. <code>build.py</code> aplica la misma deformación a los comercios.</li>
+<li><strong>Grafo de tráfico</strong> (<code>G</code>): solo vías aptas para coches; se corta en cada cruce.</li>
+<li><strong>Tranvía</strong> (<code>T</code>): encadena los tramos desde la parada de La Trinidad.</li>
+<li><strong>Áreas</strong> (<code>A</code>): parques, jardines, césped, bosque, agua, aparcamientos, plazas… Las vías peatonales cerradas
+   también se añaden como plazas.</li>
+</ol>
+<h2>Formato de <code>data/data.json</code></h2>
+<table>
+<thead>
+<tr>
+<th>Clave</th>
+<th>Formato</th>
+<th>Notas</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>H</code></td>
+<td><code>{x0, z0, dx, nx, nz, base, d}</code></td>
+<td>Relieve; <code>heightAt(x, z)</code> interpola con la misma triangulación que la malla.</td>
+</tr>
+<tr>
+<td><code>S</code></td>
+<td><code>[cadena, ...]</code></td>
+<td>Tabla de nombres; el resto guarda índices (−1 = sin nombre).</td>
+</tr>
+<tr>
+<td><code>RT</code></td>
+<td>tipos de vía</td>
+<td><code>motorway, motorway_link, trunk, primary, primary_link, secondary, secondary_link, tertiary, tertiary_link, unclassified, residential, living_street, service, pedestrian, footway, steps, path, track, cycleway</code>. Índice ≤ 12 = apta para coches.</td>
+</tr>
+<tr>
+<td><code>AT</code></td>
+<td>tipos de área</td>
+<td><code>park, garden, grass, farmland, meadow, pitch, forest, scrub, water, cemetery, playground, parking, residential, industrial, square, sports, orchard</code>.</td>
+</tr>
+<tr>
+<td><code>B</code></td>
+<td><code>[alto×10, estilo, plantas, tejado, nombre, semilla×1000, coords]</code></td>
+<td>Edificios.</td>
+</tr>
+<tr>
+<td><code>R</code></td>
+<td><code>[tipo, nombre, ancho, flags, coords]</code></td>
+<td>Vías. Ver flags abajo.</td>
+</tr>
+<tr>
+<td><code>G</code></td>
+<td><code>{n: [x,z,...], e: [[a, b, tipo, sentidoÚnico, ancho, nombre, puntosIntermedios], ...]}</code></td>
+<td>Grafo de tráfico. Todos sus puntos son también puntos de <code>R</code>.</td>
+</tr>
+<tr>
+<td><code>T</code></td>
+<td><code>[x, z, ...]</code></td>
+<td>Línea del tranvía.</td>
+</tr>
+<tr>
+<td><code>A</code></td>
+<td><code>[tipo, nombre, coords]</code></td>
+<td>Áreas.</td>
+</tr>
+<tr>
+<td><code>N</code></td>
+<td><code>[x, z, ...]</code></td>
+<td>Árboles de OSM.</td>
+</tr>
+<tr>
+<td><code>P</code></td>
+<td><code>[nombre, tipo, x, z]</code></td>
+<td>Puntos de interés (paradas, monumentos, farmacias…).</td>
+</tr>
+<tr>
+<td><code>W</code></td>
+<td><code>[cx, cz, Rviejo, Rnuevo, K]</code></td>
+<td>Deformaciones de rotondas.</td>
+</tr>
+<tr>
+<td><code>RB</code></td>
+<td><code>[cx, cz, R, ancho]</code></td>
+<td>Rotondas (isleta central).</td>
+</tr>
+</tbody>
+</table>
+<p>Añadidos por <code>build.py</code>: <code>SH</code> (comercios <code>[x, z, categoría, nombre]</code>), <code>BRAND</code> (marca real → parodia),
+<code>KV</code> (coches), <code>HUM</code> (personajes), <code>PLASTER</code> (texturas).</p>
+<h3>Flags de las vías (<code>R[i][3]</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>Bit</th>
+<th>Valor</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>1</td>
+<td>Sentido único (en el sentido de dibujo).</td>
+</tr>
+<tr>
+<td>1</td>
+<td>2</td>
+<td>Puente (<code>bridge=yes/viaduct</code>).</td>
+</tr>
+<tr>
+<td>2</td>
+<td>4</td>
+<td>Túnel (<code>tunnel=yes/building_passage</code>).</td>
+</tr>
+<tr>
+<td>3–4</td>
+<td>8 / 16</td>
+<td>Firme: 1 = adoquín/pavimento, 2 = tierra.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>32</td>
+<td>Rotonda.</td>
+</tr>
+</tbody>
+</table>
+<h2>Ajustes al cargar (<code>01_core.js</code>)</h2>
+<ul>
+<li><strong>Ensanchado</strong> (<code>WIDEN</code>, <code>WIDEN2</code>): las anchuras de OSM se quedan cortas a escala de juego; se multiplican
+  (×1,12 a ×1,3 según tipo, con mínimos) y en el casco se usa un ensanchado más suave.</li>
+<li><strong>Separación de calzadas</strong> (<code>separateCarriageways</code>): ver <code>docs/03_mundo_3d.md</code>. Mueve vértices compartidos
+  a la vez en <code>R</code> y en <code>G</code> para que el tráfico siga coincidiendo con la carretera dibujada.</li>
+</ul>
+<h2>Comercios y parodias</h2>
+<p><code>data/shops.txt</code> y <code>data/shops_new.txt</code>: una línea por comercio <code>x|z|categoría|nombre</code>. Categorías de una letra
+(<code>S</code> súper, <code>R</code> restaurante, <code>C</code> cafetería, <code>B</code> bar, <code>F</code> comida rápida, <code>K</code> banco, <code>P</code> farmacia, <code>G</code> gasolinera,
+<code>H</code> hotel, <code>V</code> ropa, <code>O</code> óptica, <code>L</code> librería, <code>D</code> dulcería, <code>T</code> telefonía, <code>E</code> peluquería, <code>J</code> joyería, <code>M</code> otros).
+Los nombres de marcas reales se sustituyen siempre por su parodia con la tabla <code>BRAND</code> de <code>build.py</code>
+(p. ej. Alcampo → «Alcampito», McDonald's → «McGofio»). Nunca se usan marcas reales ni nombres inventados para
+negocios reales concretos.</p>
+<h2>Regenerar el mapa</h2>
+<pre><code class="language-bash">pip install numpy scipy
+python prep.py      # data/laguna_osm2.json → data/data.json
+python build.py
+</code></pre>
+<h2>Ampliación del aeropuerto (v0.44)</h2>
+<ul>
+<li><code>data/aeropuerto_osm.json</code>: descarga de Overpass (vías, edificios, usos del suelo, <code>aeroway</code>) de la caja
+  28.462–28.500 N, 16.375–16.325 O, ya en coordenadas de juego (<code>[tags, coords en deltas]</code>).</li>
+<li><code>data/aeropuerto_elev.json</code>: relieve Open-Meteo/Copernicus en rejilla de 32 m (X −4400…−2512, Z −500…1484).</li>
+<li><code>tools/merge_aeropuerto.py</code> une todo con <code>laguna_osm2.json</code> (sin duplicados) → <code>laguna_osm3.json</code>, con <code>AW</code>
+  (elementos aeroportuarios) y <code>ELEV2</code>. <code>prep.py</code> usa <code>laguna_osm3.json</code> si existe; el mapa de alturas empieza en
+  X = −4808 (alineado con la rejilla de 16 m) y funde ambos relieves entre X −2446 y −2300.</li>
+<li>Regenerar: <code>python tools/merge_aeropuerto.py &amp;&amp; python prep.py &amp;&amp; python build.py</code>.</li>
+<li>Zona de juego: <code>WORLD.x0 = −4750</code> y dos exclusiones al oeste de X −1900 dejan solo el corredor Z −450…1400.</li>
+</ul>
+<h2>Ampliar el mapa con zonas nuevas (v0.59: La Cuesta y Taco)</h2>
+<ol>
+<li><strong>Descarga en el PC de Jonay</strong> (desde la nube no se puede: los servidores de OSM la bloquean):
+   <code>scripts\descargar_zona.ps1 -Nombre &lt;zona&gt; -X0 .. -X1 .. -Z0 .. -Z1 ..</code> (metros del juego; <code>descargar_zonas.bat</code>
+   lanza las de La Cuesta y Taco). Baja OSM por Overpass (geometría recortada a la zona, 3 servidores con reintentos)
+   y el relieve de Open-Meteo en rejilla de 32 m (100 puntos cada 11 s por su límite). Si un archivo ya está, no se
+   vuelve a bajar. Salida: <code>data/&lt;zona&gt;_osm_raw.json</code> y <code>data/&lt;zona&gt;_elev.json</code>.</li>
+<li><strong>Integrar</strong>: <code>python tools/merge_zona.py &lt;zona&gt;</code> añade a <code>laguna_osm3.json</code> solo lo que cae fuera del área de juego
+   anterior (sin duplicados; los tranvías se dejan fuera) y guarda el relieve en <code>ELEVX[&lt;zona&gt;]</code>; <code>prep.py</code> lo funde
+   con el relieve base (rampa de 150 m en los lados donde hay relieve viejo) y ensancha la rejilla si hace falta.</li>
+<li><strong>Abrir la zona</strong> en <code>01_core.js</code>: ampliar <code>WORLD</code> y añadir a <code>WORLD_EXCL</code> las bandas que no se quieren.</li>
+<li><code>python prep.py &amp;&amp; python build.py</code>.</li>
+</ol>
+<p>Ojo: <code>tools/merge_aeropuerto.py</code> regenera <code>laguna_osm3.json</code> desde <code>laguna_osm2.json</code>; si se vuelve a lanzar, repetir
+después <code>merge_zona.py lacuesta</code> y <code>merge_zona.py taco</code> (los archivos de las zonas están en <code>data/</code>).</p></section>
+<section id="s3"><div class="src">docs/03_mundo_3d.md</div><h1>3. Mundo 3D</h1>
+<blockquote>
+<p>Nota: texturas, modelos y materiales descritos aquí son <strong>provisionales</strong> (ver <code>10_assets.md</code>); lo que es
+definitivo es la lógica de construcción (geometría a partir del mapa, colocación, colisiones).</p>
+</blockquote>
+<h2>Terreno (<code>buildTerrain</code>, <code>04_world.js</code>)</h2>
+<ul>
+<li>Malla regular a partir de <code>DATA.H</code> (16 m por celda). <code>heightAt(x, z)</code> usa <strong>la misma triangulación</strong> (diagonal de
+  (1,0) a (0,1)) para que todo lo que se apoya en el suelo coincida exactamente con lo que se ve.</li>
+<li>Textura: mezcla (<em>splat</em>) pintada en un canvas con los usos del suelo (parque, bosque, plazas pavimentadas…)
+  más un detalle de ruido.</li>
+<li><strong>Material a dos caras</strong>: si la cámara queda por debajo del suelo (dentro de una trinchera o túnel) se ve una
+  cara oscura color tierra en vez de un agujero.</li>
+</ul>
+<h3>Recortes del terreno (trincheras, rampas)</h3>
+<p>Las trincheras abiertas de pasos inferiores y rampas de parking necesitan un <strong>agujero</strong> en el terreno. No se
+modifica la malla: el sombreador del terreno descarta píxeles.</p>
+<ul>
+<li><code>TCUTS</code>: lista de segmentos <code>[x1, z1, x2, z2, semiancho, grupo]</code>.</li>
+<li>Se suben a una textura de coma flotante (<code>TCUT_TEX</code>, hasta <code>NCUT = 512</code> segmentos y <code>NGRP = 160</code> grupos)
+  y a una rejilla de ocupación de 32 m (<code>CG_TEX</code>) para que el sombreador solo pruebe los segmentos cercanos.</li>
+<li><code>inCut(x, z, margen)</code> responde en JavaScript si un punto cae en un recorte (árboles, farolas y mobiliario lo
+  usan para no aparecer flotando sobre un hueco).</li>
+</ul>
+<h2>Carreteras (<code>buildRoads</code>)</h2>
+<p>Cada vía se dibuja como una <strong>cinta</strong> (<code>ribbon</code>) subdividida cada ≤ 5 m, pegada al terreno o a una función de
+altura propia (<code>hf</code>). Cada clase de firme tiene un pequeño desplazamiento vertical (<code>YOFF</code>) para evitar parpadeos:
+aceras 0,09, peatonal 0,10, asfalto 0,13, asfalto con líneas 0,15, cruces 0,155.</p>
+<p>Tipos de dibujo según la vía:</p>
+<table>
+<thead>
+<tr>
+<th>Caso</th>
+<th>Cómo se construye</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Normal</td>
+<td>Cinta sobre el terreno + acera (<code>w + 4,2</code>) en calles urbanas + discos en los cruces.</td>
+</tr>
+<tr>
+<td>Hundida (<code>DEP</code>)</td>
+<td><code>tunnelRoad</code>: trinchera abierta o tubo cubierto (ver «Túneles»).</td>
+</tr>
+<tr>
+<td>Puente</td>
+<td>Cinta con perfil propio + <code>bridgeDressing</code> (bordillo, barandilla, pilas).</td>
+</tr>
+<tr>
+<td>Rampa de acceso a un puente</td>
+<td>Cinta elevada (<code>RAISE</code> / <code>RAISE_SPAN</code>) + barandillas.</td>
+</tr>
+</tbody>
+</table>
+<p><code>ROADY[ri]</code> guarda, para cada vía, la función de altura <strong>tal como se ha construido</strong> (<code>roadYFn</code>). La usan las
+auditorías, las medianas y el sistema de obstáculos.</p>
+<h2>Separación de calzadas (<code>01_core.js</code> → <code>separateCarriageways</code>)</h2>
+<p>En OSM cada sentido de una autovía o avenida doble es una vía distinta; con las anchuras de juego se solapaban.
+Al cargar:</p>
+<ol>
+<li>Para cada vértice de una vía se busca otra vía <strong>paralela</strong> (|cos| &gt; 0,94) a menos de
+   <code>(ancho1 + ancho2)/2 + mediana</code> metros. Mediana: 2,4 m entre autovías, 2,6 m entre autovía y otra vía,
+   1,4 m entre calles urbanas.</li>
+<li>Se calcula el desplazamiento necesario hacia fuera (la mitad para cada lado, máx. 3,2 m), suavizado a lo largo
+   de la vía y <strong>atenuado cerca de los puntos donde se unen</strong> (incorporaciones y salidas).</li>
+<li>Si el desplazamiento hiciera que dos vías se crucen donde antes no lo hacían, se deshace en esa zona.</li>
+<li>El mismo desplazamiento se aplica a <strong>todas las copias del vértice</strong> en <code>R</code> y en el grafo <code>G</code>, para que el
+  tráfico circule por donde se dibuja la carretera.</li>
+</ol>
+<h2>Medianas (<code>buildMedians</code>)</h2>
+<p>Recorre las vías cada 3 m buscando una vía paralela al mismo nivel con un hueco entre bordes de −0,4 a 6 m:</p>
+<ul>
+<li>Si alguna es autovía/autopista/vía rápida → <strong>barrera de hormigón tipo New Jersey</strong> (0,82 m), con colisión.</li>
+<li>Si no → <strong>isleta</strong> con bordillo (0,16 m), con césped y alguna palmera si es ancha.</li>
+<li>Se deja <strong>hueco en los cruces</strong> (nodos con 3+ vías a menos de 16 m o una vía que cruza la mediana).</li>
+</ul>
+<h2>Puentes y pasos elevados (<code>computeRaises</code>)</h2>
+<ol>
+<li><code>crossingsOf(ri)</code> calcula las <strong>intersecciones geométricas</strong> de una vía con las demás (rejilla de segmentos
+   <code>XSEG</code>); si las dos vías comparten un nodo a menos de 6 m es un cruce normal, no un puente.</li>
+<li>Para cada puente (<code>flag 2</code>) se mide la altura libre necesaria sobre lo que cruza: <strong>5,4 m</strong> sobre calzadas,
+   <strong>3,2 m</strong> sobre caminos peatonales. Si la vía de abajo está hundida (<code>DEP</code>) se usa su altura real en ese punto
+   (las rampas de acceso de un paso inferior son poco profundas).</li>
+<li>Si falta altura, el tablero se eleva (<code>RAISE</code>) y se crean <strong>rampas</strong> en las vías que continúan el puente
+   (cadenas de hasta 6 tramos, 170 m), con meseta mientras pasan por encima de otras calles.
+   Pasarelas peatonales: rampas más cortas y empinadas (<code>Rr = H·7</code> m).</li>
+<li>Puentes gemelos (un tablero por sentido) reciben la misma elevación (<code>TWIN_NEED</code>).</li>
+<li><strong>Iteración</strong> (hasta 5 pasadas): si la rampa de un puente eleva una vía que pasa por debajo de <strong>otro</strong>
+   puente, ese otro puente se sube más (<code>EXTRA_NEED</code>) y se recalcula todo.</li>
+<li>Un «puente» que solo salva un paso inferior (p. ej. una rotonda sobre una avenida hundida) se construye a ras
+   de suelo (<code>AT_GRADE</code>).</li>
+<li><strong>Vías que comparten terraplén</strong> (v0.50, <code>followOverlaps</code>): si una vía (enlace, carril de incorporación, calle
+   pegada) pisa la calzada de una rampa elevada o del extremo bajo de un puente (&lt; 3,2 m sobre el terreno), sube con
+   ella en ese tramo (rampas suaves de <code>h·14</code> m). Se hace antes y después de que las calles que tocan una rampa por un
+   nodo suban a su encuentro, y en dos pasadas para que lo elevado arrastre a sus vecinas.
+   Desde v0.51 también sigue a terraplenes más altos cuando su eje cae dentro de esa calzada y van en paralelo (no a
+   tableros de puente, que pueden cruzar por encima).</li>
+<li><strong>Isletas de rotonda</strong> (<code>roundaboutIsland</code>): siguen el terreno en anillos de ~6 m y se encogen hasta que ninguna
+   otra calzada pisa su borde.</li>
+</ol>
+<p><code>bridgeProfile(c)</code> da al tablero una ligera comba y nunca lo deja por debajo del terreno. <code>bridgeDressing</code>
+añade bordillo-parapeto, barandilla de acero, cara inferior y pilas (solo donde el tablero está alto y no hay
+calzada debajo). <strong>No pone barandilla</strong> donde caería dentro de otra calzada al mismo nivel (<code>inOtherRoad</code>).</p>
+<h2>Túneles y pasos inferiores (<code>computeDepressions</code>, <code>tunnelRoad</code>)</h2>
+<ul>
+<li>Vías con <code>flag 4</code> y aptas para coches: profundidad 7,8 m (autovías) o 7,2 m (efectiva ×1,12 − 0,5: <code>depthOf</code> deja a
+  nivel el primer medio metro de cada rampa), con transición a lo largo de la
+  propia vía y de hasta 4 tramos de las vías que la continúan (rampas de 55–75 m).</li>
+<li><strong>Pasos peatonales bajo calzada</strong>: un camino con <code>flag 4</code> solo se hunde si de verdad cruza una calzada
+  (3,6 m, rampas de 22 m, tubo de 2,9 m de alto). Los pasajes bajo edificios se quedan a nivel de calle.</li>
+<li><code>tunnelRoad</code> recorre la vía cada ≤ 4 m:</li>
+<li><strong>Cubierto</strong> (solo donde el techo, a <code>H</code> = 6 m, queda bajo tierra; ancho calzada + 2 m): paredes, techo, losa superior, luces, y <strong>boca</strong> con dintel y
+    pilastras. El dintel nunca asoma por encima del terreno (por si pasa una calle por encima).</li>
+<li><strong>Abierto</strong>: muros de contención hasta el suelo + pretil, y un recorte en el terreno (<code>TCUTS</code>).</li>
+<li><code>twinWall</code>: no se ponen muros entre dos tubos gemelos que van pegados.</li>
+<li>Plataformas transitables: <code>TUNNEL_DECKS</code> y <code>BRIDGE_DECKS</code>. <code>lowAt(x, z, y)</code> devuelve el suelo bajo tierra
+  más próximo a la altura <code>y</code>; <code>deckAt</code> el tablero de puente. Coches y jugador los usan para saber dónde pisan.
+  En los extremos poco profundos de una trinchera no hay sujeción lateral, para poder salir a la calle.
+  Si una plataforma queda a menos de 1,6 m bajo el terreno y allí no hay hueco (<code>inCut</code>), <code>lowAt</code> la ignora y se pisa
+  el terreno (evita hundirse). Auditoría: <code>tests/audit_hundimiento.py</code>.
+  En los tableros de puente y las trincheras de calle, la altura sale del <strong>tramo más cercano</strong> del eje (antes, en
+  curvas con pendiente, el máximo de varios tramos daba alturas de más adelante y el coche «volaba» o pegaba saltos).
+  <code>trenchPush</code> solo empuja de lado (entrar de frente por la boca de una trinchera es entrar por la calle) y no actúa
+  sobre una calle a ras de suelo.
+  El asfalto de una calle hundida casi a ras (&lt; 1,2 m) baja hasta el terreno por el lado bajo (<code>ribbon(..., blend)</code>).
+  Solo las calles con coches «tapan» el extremo poco profundo de una trinchera (<code>onSurfaceRoad</code>); una acera o plaza no
+  (así se baja a las rampas de garaje que pasan bajo ellas).
+  <strong>Bocas de trinchera</strong> (v0.55, final de <code>computeDepressions</code>): en cada cadena hundida se buscan las calles a ras que
+  se incorporan (comparten nodo y se solapan ≥ 8 m); la profundidad se limita a 0,5 m + 15 % de la distancia a ellas,
+  salvo bajo los cruces a distinto nivel; si la trinchera debe ser honda (≤ 4 m) allí, la calle que se incorpora baja.
+  <code>twinWall</code> solo quita la pared si la otra trinchera va a &lt; 0,6 m y a la misma altura que el suelo propio.</li>
+</ul>
+<h2>Edificios (<code>buildBuildings</code>)</h2>
+<ul>
+<li>Extrusión de la planta con altura = plantas × (3,1 m o 3,6 m en el casco). Tejado plano o a cuatro aguas con teja.</li>
+<li>Fachadas con un <strong>atlas</strong> de 16 estilos (colonial canario con ventanas de guillotina y rejas, vivienda moderna,
+  bloque, nave, institucional…) aplicado en coordenadas de plantas y vanos; una máscara indica qué parte se tiñe
+  con el color del edificio y qué es cristal (que se ilumina de noche al azar).</li>
+<li>Encima, <strong>enlucido real</strong> de Poly Haven (estuco liso, enlucido pintado, enlucido gastado; uno por edificio
+  según su semilla) en escala de metros, con su mapa de normales (<code>PLASTER</code>).</li>
+<li><strong>La Concepción</strong> (<code>05o_concepcion.js</code>): el bloque de la torre se recorta del contorno OSM al cargar
+  (<code>carveConcTower</code> en <code>04_world.js</code>, junto a <code>CONC_TOWER_HINT</code>; <code>CONC_TOWER_FIX</code> permite forzar el centro). La iglesia
+  (muros, zócalo, aleros, nave central con óculos, vidrieras, portadas, cabecera) y la torre (4 cuerpos, reloj,
+  campanario, linterna) se generan en metros sobre el plano real y se fusionan por material. Fotos de referencia en
+  <code>docs/referencias/concepcion/</code>.</li>
+<li><strong>Pabellón de Finca España</strong> (<code>05p_casas.js</code>, <code>buildPabellon</code>) y colores de C. Tacoronte (<code>fincaEspanaLook</code> en <code>05k</code>).</li>
+<li><strong>Relleno de barrios vacíos en OSM</strong> (<code>05q_inicio.js</code>, <code>FILL_ZONES</code>): Lucas Vega / Montaraz y San Miguel de Chimisay.</li>
+<li><strong>Casas añadidas a mano</strong> (<code>05p_casas.js</code>, lista <code>CUSTOM_HOUSES</code>): edificios que no están en OSM. Para pasar
+  coordenadas de Google Maps al juego: <code>x = (lon + 16.315) · cos(28.4875°) · 111320</code>, <code>z = −(lat − 28.4875) · 110574</code>.</li>
+<li><strong>Esquina de inicio</strong> (<code>05q_inicio.js</code>): <code>splitCoarseBlocks()</code> (antes de <code>buildBuildings</code>) sustituye las manzanas de
+  <code>BLOCK_SPLIT</code> por casas en hilera a lo largo de sus fachadas (fondo ≤ 11,5 m, ancho 5,5–11 m, 1–4 plantas, patio
+  interior), viste algunas según las fotos (<code>INICIO_SPOTS</code>, <code>INICIO_DRESS</code>) y añade locales en la subida
+  (<code>INICIO_SHOPS</code>). <code>brandInside()</code> da nombre de marca a edificios sin nombre que contienen su tienda.</li>
+<li><strong>Aeropuerto</strong> (<code>05r_aeropuerto.js</code>, <code>buildAirport</code>): plataformas en celdas de 8 m sobre el terreno, pista y rodaje en
+  tiras de 10 m con marcas, terminal sobre su planta OSM, torre, hangares y aviones (<code>makePlane</code>, geometría compartida).</li>
+<li>Árboles y farolas no se plantan a menos de ~4,5 m del eje del tranvía (<code>nearTram</code>, rejilla de 32 m).</li>
+<li>Edificios singulares: iglesias (<code>05c</code>), Intercambiador (<code>05k</code>), pasarela de Anchieta (<code>05f</code>), pabellones (<code>05i</code>).</li>
+<li><strong>HUC y centros de salud</strong> (<code>05t_hospital.js</code>, v0.58): sobre el bloque OSM «Área de Hospitalización» (zócalo de 10 m)
+  <code>buildHUC</code> levanta el bloque de 12 plantas (rectángulo mínimo del contorno), la torre cilíndrica con el helipuerto en
+  el extremo opuesto al edificio verde (EAA, piel de cristal <code>buildGlassSkin</code>), palmeras y escultura. Los centros de
+  salud (<code>LANDMARK_AT</code> en <code>05k</code>) y Urgencias llevan <code>saludDeco</code>: rótulo con cruz verde y un punto de reaparición en
+  <code>HEALTH</code>. Fotos en <code>docs/referencias/hospital_huc/</code>. Los que no están en OSM se levantan aparte (<code>EXTRA_SALUD</code>,
+  <code>buildExtraSalud</code>: Finca España, sobre la parcela entera entre sus calles, con su contorno en <code>DATA.B</code>). Posiciones sacadas de los códigos de Google Maps (Plus Codes) → metros del juego.</li>
+<li><strong>Ayuntamiento</strong> (<code>05s_ayuntamiento.js</code>, <code>buildAyuntamiento</code>, v0.56): fachada de cantería sobre el borde este de la
+  Casa del Corregidor (deco <code>ayto</code> en <code>05k_landmarks.js</code>): 5 arcos con escalones, planta alta con ventanales de
+  cuarterones y balcones de madera, pilastras, cornisa con bolas, frontón curvo con escudo, rótulo «AYUNTAMIENTO» y 5
+  banderas. <code>AYTO</code> (<code>door</code>, <code>front</code>, normal y eje de la fachada) lo usan las misiones del alcalde. Fotos en
+  <code>docs/referencias/ayuntamiento/</code>.</li>
+</ul>
+<h2>Plazas y parques (<code>05n_plazas.js</code>)</h2>
+<ul>
+<li><strong>Plaza del Adelantado</strong>: polígono entre las calles del mismo nombre. Fuente neoclásica de mármol (pilón
+  octogonal, pedestal con caños, dos tazas con lámina de agua y remate), anillo de parterres, 10 bancos mirando a
+  la fuente, paseos de piedra a cada lado, laureles de Indias en hileras, faroles y papeleras.</li>
+<li><strong>Camino Largo</strong>: dos hileras de palmeras canarias (≈165) en los bordes del paseo (eje calculado con las vías
+  «Avenida Universidad»), bancos y faroles.</li>
+<li><strong>Parque de la Constitución</strong>: estanque ovalado elevado con isleta y patos animados, bustos de José Martí y
+  Simón Bolívar en su posición OSM, parque infantil.</li>
+<li><strong>Parques genéricos</strong> (&gt; 900 m²): paseo perimetral, caminos al centro, rotonda con fuente en los grandes,
+  bancos, farolas, parterres y parque infantil si superan 5000 m².</li>
+<li><strong>Plazas genéricas</strong>: árboles en el perímetro (laureles en el casco), bancos mirando al centro, faroles y
+  fuente central en las grandes.</li>
+<li>Al final se quitan los árboles aleatorios que caían sobre caminos o elementos.</li>
+</ul>
+<h2>Parkings subterráneos (<code>05m_parking.js</code>)</h2>
+<p>Salas de 31 m de ancho a ~4,3 m bajo el suelo con plazas, columnas, luces y coches aparcados; rampas de coches
+(<code>tunnelRoad</code> con techo bajo) y escaleras con pabellón de cristal. En La Trinidad la escalera busca acera libre y,
+si queda fuera de la sala, se une con un <strong>pasillo subterráneo</strong>. <code>UGC</code> guarda columnas y coches como obstáculos
+que solo cuentan bajo tierra (<code>ugcPush</code>).</p>
+<h2>Auditorías del mapa</h2>
+<p><code>auditCrossings()</code> y <code>auditObstacles()</code> (al final de <code>04_world.js</code>) buscan automáticamente cruces a la misma
+altura sin enlace y estructuras metidas en carriles. Ver <code>docs/07_pruebas.md</code>.</p></section>
+<section id="s4"><div class="src">docs/04_personajes_y_vehiculos.md</div><h1>4. Personajes, vehículos, tráfico y colisiones</h1>
+<blockquote>
+<p>Nota: texturas, modelos y materiales descritos aquí son <strong>provisionales</strong> (ver <code>10_assets.md</code>); lo que es
+definitivo es la lógica de construcción (geometría a partir del mapa, colocación, colisiones).</p>
+</blockquote>
+<h2>Humanos (<code>06a_humans.js</code>)</h2>
+<ul>
+<li>Modelos: <strong>Quaternius Universal Base Characters</strong> (cuerpo masculino y femenino con esqueleto tipo Unreal:
+  <code>root, pelvis, spine_01..03, neck_01, Head, clavicle/upperarm/lowerarm/hand_l|r</code>, dedos…) y animaciones del
+  <strong>Universal Animation Library</strong> (andar, correr, saltar, sentado, puñetazo, golpeado, muerte…). Se convierten
+  con <code>tools/chars2json.py</code> a <code>data/chars.json</code> (geometría cuantizada + clips).</li>
+<li><code>makeHuman(opciones)</code> crea un personaje con <code>SkinnedMesh</code> y un <code>AnimationMixer</code>. Opciones habituales:
+  <code>female, skin, shirt, pants, shoes, sole, hair, hairStyle ('Hair_SimpleParted', 'Hair_Buzzed', 'Hair_Long',
+  'Hair_Buns', 'Hair_BuzzedFemale', null), beard, cap, beanie, glasses ('sun' | 'round'), jacket, chain, watch,
+  bag, cane, belt, sleeve, longPants, fat, thin, scale, hd</code>.</li>
+<li><strong>Complexión (cuerpos propios)</strong>: el cuerpo base es de «superhéroe». <code>tools/morphs.py</code> (después de
+  <code>chars2json.py</code>) genera cuatro <em>morphs</em> propios sobre la malla, según el hueso de cada vértice y su normal:
+  <code>normal</code> (menos músculo), <code>fat</code> (barriga, michelines, espalda, culo, brazos y muslos gruesos, papada), <code>teen</code>
+  (más delgado), <code>old</code> (barriga blanda, pecho caído), <code>xfat</code> / <code>sfat</code> (extra y súper gordo, se suman a <code>fat</code>) y
+  <code>slim</code> / <code>sslim</code> (extra y súper delgado). Tallas con nombre: <code>makeHuman({ build: { size: 'superSlim' | 'extraSlim' |
+  'normal' | 'athletic' | 'fat' | 'extraFat' | 'superFat' } })</code>. La pelea 2D ensancha o estrecha el sprite según la talla. Se guardan en <code>chars.json</code> (<code>bodies.*.morph</code>, int8/800) y en
+  el juego son <em>morph targets</em> del <code>SkinnedMesh</code>, mezclables: <code>makeHuman({ build: { normal: 0.6, fat: 0.8 } })</code>.
+  Sin <code>build</code>, los personajes son de talla media (<code>normal 0.7</code>); solo los de la calle (<code>random: true</code>: peatones,
+  motoristas) salen con un reparto aleatorio, casi siempre en el rango medio y con los extremos raros (normal, relleno, atlético, mayor —pelo canoso—,
+  adolescente —más bajo y cabeza algo mayor—). <code>fat</code> / <code>thin</code> antiguos se traducen a <code>build</code>. Mismas animaciones.</li>
+<li><code>H.look</code> guarda la apariencia resuelta: el motor de pelea 2D la usa para dibujar el sprite pixel-art del mismo
+  personaje.</li>
+<li><code>animHuman(H, dt, velocidad, estado)</code> elige el clip (parado / andar / correr / aire / caído / sentado).</li>
+</ul>
+<h2>Jugador (<code>08_player.js</code>)</h2>
+<ul>
+<li>Entrada unificada: teclado (<code>KEYS</code>, <code>PRESSED</code>), ratón (bloqueo de puntero), mando (<code>INPUT.gp</code>) y táctil
+  (<code>INPUT.touch</code>, joystick y botones del HUD).</li>
+<li><strong>Móvil</strong> (<code>body.touchmode</code>, v0.54): tamaños en función del alto de pantalla (<code>--b</code>, <code>--mm</code>). Minimapa arriba a la
+  izquierda (tocarlo abre el mapa) con MAPA debajo y el joystick abajo; reloj, dinero y estrellas arriba a la derecha y
+  los botones al alcance del pulgar abajo a la derecha. Los botones cambian según se va a pie o en coche
+  (ENTRAR/SALIR, SALTO/FRENO MANO, CORRER/CLAXON).</li>
+<li>Andar 2,4 m/s aprox., correr con <code>Shift</code>, salto con velocidad inicial 5,3 m/s y gravedad 16 m/s².</li>
+<li>Suelo: interior (planta del interior), bajo tierra (<code>lowAt</code>), tablero de puente (<code>deckAt</code>) o terreno.
+  Bajo tierra no se puede atravesar la pared hacia la superficie y se respetan los obstáculos de parking.</li>
+<li><strong>Pasos</strong>: suenan en el apoyo real de cada pie de la animación (<code>footContacts</code>), con el sonido del suelo que pisa
+  (asfalto, adoquín del casco, baldosa, césped/tierra) y eco en túneles e interiores. Ver <code>06_audio.md</code>.</li>
+<li><code>E</code> usa puertas y tiendas (prefiere la comida si está más cerca que la salida), <code>F</code> entra/sale de coches,
+  <code>H</code> claxon, <code>R</code> endereza el coche.</li>
+</ul>
+<h2>Vehículos (<code>06b_vmodels.js</code>, <code>07_vehicles.js</code>)</h2>
+<ul>
+<li>
+<p><strong>Postura en moto</strong> (v0.56): <code>seatHuman</code> marca <code>H.moto</code>; tras la animación <code>rideMoto(H)</code> inclina el tronco hacia el
+  manillar, abre los brazos y dobla los codos; las piernas van al reposapiés. Los motoristas se animan cada fotograma.</p>
+</li>
+<li>
+<p>Catálogo de modelos <strong>parodia</strong> (nombre, categoría, base Kenney, dimensiones reales) construido sobre el
+  <strong>Kenney Car Kit</strong> (<code>tools/kenney2json.py</code> → <code>data/kenney_cars.json</code>). La geometría se escala a las medidas
+  reales y se separa en carrocería pintable, cristal, resto y ruedas.</p>
+</li>
+<li>Luces traseras, matrícula, franjas y rótulos (Policía Local, taxi, empresas) se colocan <strong>sobre la carrocería</strong>
+  muestreando la geometría (<code>halfW</code>), no sobre un rectángulo teórico.</li>
+<li><code>Car</code>: física simple de coche con agarre, derrape, aceleración limitada por potencia y resistencia ajustada a
+  la velocidad máxima de cada categoría (<code>TOP_BY_CAT</code>, 100–200 km/h). Pasos fijos de 1/90 s.</li>
+<li>Aceleración global <code>CAR_ACCEL = 0,85</code> (la punta no cambia: la resistencia escala con la aceleración). Dirección:
+  giro máximo <code>0,56 / (1 + v/13)</code> rad, alcanzado con un suavizado de <code>dt·5,5</code>.</li>
+<li><strong>Inclinación</strong>: altura del suelo en 4 puntos (delante, detrás, izquierda, derecha) → cabeceo y alabeo; así las 4
+  ruedas apoyan en calles con mucha pendiente lateral (<code>tests/prueba_peralte.py</code>).</li>
+<li><strong>Freno de mano</strong> (v0.54, Espacio / botón FRENO MANO): bloquea las ruedas traseras: frena (~0,5 g, y sujeta el coche
+  parado), el eje trasero pierde agarre lateral, el coche gira más cerrado y conserva parte de la inercia en la dirección
+  anterior, así que derrapa; al soltar recupera el agarre poco a poco. Las ruedas traseras dejan de girar.
+  Prueba: <code>tests/prueba_freno_mano.py</code> (a 60 km/h: un toque de 0,5 s da ~28° de derrape y se recupera).</li>
+<li>Altura: terreno, tablero de puente (con contención lateral), o suelo bajo tierra (<code>lowAt</code>) sin atravesar techos.
+  Escalón máximo al subir a un tablero: ~0,35 m más lo que sube el propio tablero en el trozo que mira el coche
+  (<code>deckAt(..., slack)</code>); así no se sube a una rampa vecina más alta que solo se solapa por el borde (v0.50).</li>
+<li>Coches aparcados: instanciados a baja resolución y convertidos en <code>Car</code> real al interactuar.</li>
+<li><strong>Memoria (v0.52, auditoría P0.a)</strong>: las piezas de los vehículos se crean una vez y se comparten (<code>shGeo</code>, <code>shBox</code>,
+  <code>shMat</code>, <code>sharedText</code>, geometría por modelo en <code>VGEO</code>; marcadas con <code>userData.shared</code>). Un coche que deja la escena
+  vuelve a <code>CARPOOL</code> (hasta 6 por modelo); si está destrozado o el grupo está lleno, <code>disposeCarMesh</code> libera su pintura
+  y lo no compartido, y su motorista vuelve a <code>HPOOL.ped</code>. <code>__dbg.POOLS</code> expone los grupos para el auditor.</li>
+</ul>
+<h2>Tráfico</h2>
+<ul>
+<li><code>GRAPH</code> (desde <code>DATA.G</code>): nodos y aristas con velocidad por tipo de vía; <code>route(a, b)</code> es un A* (las autovías
+  cuentan como más cortas).</li>
+<li>Los coches IA siguen aristas con un desplazamiento de carril (<code>laneOff</code>), frenan en curvas, en STOP / ceda el
+  paso y detrás de otros coches.</li>
+<li>Tranvía: recorre <code>DATA.T</code> con paradas (<code>05l_tramstops.js</code>).</li>
+</ul>
+<h2>Peatones (<code>09_peds.js</code>)</h2>
+<ul>
+<li>Red peatonal <code>PEDWAYS</code> (calles + aceras + caminos). Cada peatón sigue una vía con desplazamiento lateral (acera)
+  y en los cruces elige otra.</li>
+<li><strong>Anti-atasco</strong>: si avanza mucho menos de lo que intenta durante 0,45 s, se acerca al centro de la vía, luego da
+  la vuelta, y tras varios intentos desaparece (si no lo estás mirando).</li>
+<li>Reaccionan: huyen de coches rápidos y de la policía, se quejan si los empujas, algunos se defienden.</li>
+</ul>
+<h2>Policía (<code>09_peds.js</code> <code>WANTED</code>, <code>07_vehicles.js</code>, <code>09e_cops.js</code>)</h2>
+<ul>
+<li><code>WANTED.level</code> de 0 a 5 estrellas. Patrullas que te persiguen (más y más rápidas con disparos/«armado»).
+  Te pierden si no te ven durante un tiempo que crece con las estrellas.</li>
+<li><strong>A pie</strong>: si el coche patrulla está parado cerca o no puede llegar, bajan 1–2 agentes que corren hacia ti
+  (siguen el grafo peatonal <code>WALKG</code> si no te ven, esquivan paredes), te dan porrazos y te detienen.</li>
+<li>Con <strong>4+ estrellas disparan</strong>: cada 2,2–3,4 s, probabilidad de acierto según distancia y si corres;
+  38–48 puntos por impacto (2–3 tiros te matan).</li>
+</ul>
+<h2>Colisiones (<code>03_collide.js</code>)</h2>
+<ul>
+<li><code>COL.addSeg(x1, z1, x2, z2, y0, y1)</code> y <code>COL.addCirc(x, z, r, y0, y1)</code> en una rejilla de 16 m.</li>
+<li><strong>Rango de altura</strong>: antes de consultar se fija <code>COL.qy</code> (altura de quien choca). Un coche en un puente no choca
+  con árboles, farolas, pilas ni medianas que hay debajo. Los círculos sin rango usan por defecto
+  [suelo − 1, suelo + 3,4] (troncos, postes).</li>
+<li><code>COL.resolve(x, z, r)</code> empuja un círculo fuera de los obstáculos; <code>COL.raycast</code> para líneas de visión.</li>
+</ul></section>
+<section id="s5"><div class="src">docs/05_jugabilidad.md</div><h1>5. Jugabilidad</h1>
+<h2>Misiones (<code>12_missions.js</code>)</h2>
+<h3>Estructura</h3>
+<ul>
+<li><code>TRACKS.story</code> (historia, amarillo) y <code>TRACKS.side</code> (secundarias, azul). Cada pista tiene <code>list</code> (misiones),
+  <code>idx</code> (siguiente misión) y una <strong>baliza</strong> (cilindro de luz) en <code>startPos()</code> de la siguiente misión.</li>
+<li>Cada misión es un objeto:</li>
+</ul>
+<pre><code class="language-js">{ title: 'Sastrón', who: 'Sastrón',
+  startPos() { return [x, z]; },        // dónde se activa
+  hint() { return 'Busca a Sastrón en …'; },  // texto «Siguiente:» + ruta GPS amarilla
+  start() { … },                         // diálogos iniciales, objetivos
+  update(dt) { … },                      // lógica mientras está activa
+  onEvent(tipo, dato) { … },             // 'enter' (coche), 'bought', 'ate', 'hit'…
+}
+</code></pre>
+<ul>
+<li><code>pass(título, dinero)</code> cierra la misión, suma dinero, suena el estribillo y <strong>guarda automáticamente</strong>.
+  Dos círculos de inicio nunca coinciden; si hay dos a menos de 2 m, empieza el más cercano.
+  <code>fail(motivo)</code> la cancela y, cuando vuelves a estar jugando (tras reaparecer, una pelea…), pregunta
+  <strong>«¿Reintentar?»</strong>: te lleva al inicio de la misión y la empieza otra vez (<code>fail(motivo, true)</code> no lo pregunta).</li>
+<li><strong>Guardar a mitad</strong>: la partida guarda qué misión estaba en curso, pero al cargar empieza de nuevo en su círculo
+  (aviso en pantalla) y no queda nada suyo suelto (coches, ladrones, blancos, permiso de la pistola de bolas).
+  Las partidas antiguas que ya habían terminado la historia corta siguen con las misiones nuevas.</li>
+<li>Diálogos: <code>talk([[quién, texto], …], alTerminar)</code> muestra subtítulos que <strong>solo avanzan con clic / toque /
+  Espacio / Enter</strong>; <code>DLG.show(quién, título, texto, pregunta, opciones, cb)</code> abre un cuadro con opciones
+  (teclas 1–9).</li>
+<li>Historia actual: Vuelta al barrio (El Blanco) → Boca Papa → Una botella para Coco → El Canarión (carrera) →
+  Sastrón (pagar 2500 $ + tutorial de pelea) → La firma de la banda (nombre) → Boca Papa te enseña a comer →
+  El campo de tiro de El Blanco (pistola) → <strong>Defensores de La Laguna</strong> (v0.56, <code>12f_story2.js</code>) → mundo libre.
+  Secundaria: Revancha con el Canarión.</li>
+<li><strong>Defensores de La Laguna</strong> (<code>12f_story2.js</code>, se añaden con <code>MISSIONS.addStory()</code> usando las herramientas de
+  <code>MISSIONS.kit</code>): la pistola es de <strong>bolas de plástico de aire comprimido</strong> (<code>WEAPON.lawful</code>: disparar no es delito
+  durante estas misiones). Atraco en la farmacia (pelea 2D; el segundo ladrón roba un coche negro aparcado junto a un Tollota Corola que coges tú; persecución hasta X −1548 Z −693, luego huye a pie por el camino de tierra hasta el Camino Tornero, X −1696 Z −883: dos tiros de bolas y se pone a llorar, lo agarras) →
+  Defensores de La Laguna (ceremonia en el Ayuntamiento: el alcalde <strong>Don Yovoy Gofiérrez</strong>, bigote y traje negro,
+  nombra a la banda grupo especial de la Policía Local; <code>GANG.defenders</code>) → El carterista del Cristo (Coco) →
+  Baches en la Vía de Ronda (alcalde; camión, 5 puntos, 4 min) → El rally de La Esperanza (Canarión; carrera contra
+  un pijo) → Los bancos del Adelantado (alcalde; pelea y bolas) → Grafiteros en el tranvía (Sastrón; contrarreloj y
+  dos blancos) → La guagua de la broma (Boca Papa; 10 s pegado a la guagua) → Escolta a la guagua del Romero
+  (alcalde; no alejarse más de 70 m) → El gofio robado (Boca Papa; pistas, pelea y furgoneta) → Carrera solidaria del
+  casco (alcalde; a pie) → Noche en el aeropuerto (El Blanco; de noche, persecución de la furgoneta del queso; el
+  alcalde os da <strong>coche patrulla</strong>, <code>GANG.patrol</code>). Los coches que huyen y las guaguas siguen una ruta del grafo
+  (<code>s2Path</code>/<code>s2DriveCar</code>, cinemáticos como el del Canarión); los que huyen a pie, <code>s2Runner</code> con <code>s2RunPath</code> (sale de
+  donde está, lejos del jugador, por <code>WALKG</code>; nunca se mueve más de 1,8 × su velocidad por paso). <code>s2Mark(o, s)</code>: flecha
+  roja sobre el perseguido unos segundos y punto rojo en los mapas (<code>s2Blips</code>) mientras dura la persecución.</li>
+<li>NPCs de la banda (<code>NPC.blanco</code>, <code>boca</code>, <code>coco</code>, <code>sastron</code>, <code>canarion</code>): Coco y Sastrón aparecen en dos sitios
+  emblemáticos del casco elegidos al azar en cada partida.</li>
+</ul>
+<h2>GPS y mapa (<code>11_hud.js</code>)</h2>
+<ul>
+<li><code>setWaypoint(x, z, historia)</code>: rosa = destino puesto por el jugador; amarillo = misión o siguiente paso.</li>
+<li><strong>A pie</strong> se calcula la ruta con <code>WALKG</code>, un grafo con todas las calles, plazas, caminos y escaleras (A<em> con
+  montículo binario, los caminos peatonales cuestan menos). </em><em>En coche</em>*, con <code>GRAPH.routeFrom</code> (respeta sentidos):
+  empieza en la calle por la que vas (<code>nearestEdge</code>) y en tu sentido de marcha, y acaba en la calle del destino. La ruta
+  se mantiene y solo se recorta mientras la sigues (a menos de 14 m) y el destino no se mueve más de 12 m.</li>
+<li>Minimapa y mapa grande (<code>M</code>, zoom con rueda/pellizco, <code>T</code> teletransporte en modo Achamán). Las carreteras van en
+  azules para no confundirse con el amarillo/rosa de las rutas.</li>
+<li><strong>Coordenadas</strong>: encima del minimapa se ven X y Z del jugador (metros del mapa); en el mapa grande, las del cursor
+  y las del destino marcado (abajo a la izquierda). Sirven para indicar posiciones exactas al corregir el mapa.</li>
+<li><strong>Mapa grande</strong> (v0.57): se abre centrado en el jugador con zoom 1,2 (~1 km de ancho). Los rótulos se dibujan en
+  pantalla por prioridad y sin pisarse (<code>drawLabels</code>): de lejos barrios y lugares importantes; desde zoom 0,9 las
+  grandes superficies (tipo 5), desde 1,2 las entradas visitables y desde 2,2 las tiendas. Colores de texto (blanco,
+  crema, gris, verde de las entradas) distintos de los de rutas y marcas (amarillo, azul, rosa, rojo).</li>
+<li><strong>Brújula a los pies</strong> (<code>11c_guide.js</code>, v0.61, rehecha en v0.62): aro pequeño alrededor del personaje con
+  una punta por destino activo (<code>MISSIONS.blips()</code> y <code>GPS.target</code>) saliendo del borde, en línea recta: amarilla, azul,
+  roja o rosa. El aro toma el color del destino que manda (rosa tu marca, si no amarillo). Se inclina con la superficie
+  (<code>heightAt</code>/<code>deckAt</code>). Altura desde los pies (<code>PLAYER.y</code> + 0,04; las calles y plazas se dibujan por encima de <code>heightAt</code>), inclinación y altura suavizadas. Aro de 0,28 m (v0.63). <strong>En vehículo no hay aro</strong>: una flecha maciza flota sobre el techo hacia el destino que manda, girada hacia la cámara y dibujada por encima de todo (como en Crazy Taxi). <code>G</code> la oculta.</li>
+<li><strong>Círculos de misión</strong> (<code>ringClear(x, z, r)</code> en <code>12_missions.js</code>): <code>goto</code> y los puntos de inicio se apartan hasta 6 m
+  para que el aro entero quede fuera de los edificios.</li>
+<li><code>MISSIONS.kit.track(x, z)</code>: objetivo que se mueve (un coche que perseguir): círculo amarillo y ruta GPS sin columna
+  de luz; se actualiza cada 0,8 s.</li>
+</ul>
+<h2>Peleas 2D (<code>09d_fight2d.js</code>)</h2>
+<ul>
+<li>Al pegar a un peatón empieza una pelea pixel-art (escenario lógico de 320×180, dibujado al doble, 640×360: sprites
+  con cara —ojo, ceja, boca, oreja—, pelo con mechones, pliegues, cinturón, suela; fondo con el doble de píxeles): el fondo es una captura lateral de la
+  escena 3D real posterizada con <em>dithering</em>; los luchadores se dibujan proceduralmente a partir de su <code>look</code>.</li>
+<li>Controles (v0.64, configurables en Opciones › Controles, grupo Pelea): puñetazo = <code>E</code> / clic izq. (mando X); patada =
+  <code>Espacio</code> / clic dcho. (mando A); saltar = <code>↑</code> / <code>W</code> (mando Y); moverse y agacharse con las teclas de andar (A/D, S).
+  El salto espera 2 fotogramas (10 justo después de «abajo») para que «abajo, arriba + golpe» haga el especial.
+  <strong>Atrás = andar hacia atrás, y se cubre solo mientras el rival ataca</strong> (como Street Fighter); cubrirse siempre solo con
+  mando (LB). FIGHT2D convierte las teclas en botones virtuales (<code>vL vR vD vU vP vK</code>) con <code>CONTROLS.codes(id)</code>. Los
+  textos de misión y de la pelea usan <code>CONTROLS.keyName(id)</code> / <code>CONTROLS.kbd(id)</code>: salen las teclas que tenga el jugador. Luchadores a escala 0,8 (<code>SZ</code>), salen a
+  62 px de cada borde.</li>
+<li>Golpes: puñetazo 10 %, patada 20 %; bloqueados 1 % / 2 %. Combos encadenando golpes que conectan.</li>
+<li>Especiales (v0.56): <strong>atrás, adelante + puñetazo</strong> = Bola de gofio (proyectil); <strong>atrás, adelante + patada</strong> =
+  Patada del Teide (avanza girando y da 3 patadas, estilo «tatsumaki»); <strong>abajo, arriba + puñetazo</strong> = Gancho del Roque
+  (gancho saltando hacia arriba, derriba); <strong>abajo, arriba + patada</strong> = Salto del Pastor (la patada voladora de antes).
+  Se reconocen con el búfer de direcciones de ~0,5 s; «arriba» es W/↑ (o ▲ en el móvil), que no salta.</li>
+<li>Las 3 primeras peleas muestran un cartel de controles y esperan a pulsar Espacio; luego «FIGHT!».</li>
+<li>Rivales: vecina (recibe ×2, pega ×0,5), doña (pega ×1,1, recibe ×0,5), cachas (pega ×2, recibe ×0,9), vecino,
+  Canarión. <strong>La CPU pega un 25 % menos</strong> (<code>AI_DEAL</code>) y <strong>prepara sus golpes 1,6 veces más despacio</strong> (<code>AI_WINDUP</code>)
+  para que dé tiempo a verlos venir y cubrirse; también ataca algo menos a menudo. Ganar: 5–25 $ (5 % de las veces 100 $). Perder: −10 de salud.</li>
+<li>Pegar a una mujer siempre trae a la policía (multa 100 $); a un hombre, si hay 5+ testigos (60 %).</li>
+<li>Tutorial de Sastrón (<code>fightTutorial</code>): 9 pasos (andar, puñetazo, patada, salto, barrido, cubrirse, combo y los
+  dos especiales); en el paso de cubrirse Sastrón ataca despacio y el paso se da por bueno a los 25 s.</li>
+</ul>
+<h2>Armas (<code>09c_weapons.js</code>)</h2>
+<ul>
+<li>Pistola de El Blanco (6 balas). Botón dcho. apunta (el brazo se orienta con IK hacia la cámara), izquierdo
+  dispara. <code>Tab</code> / 1 / 2 / cruceta del mando / tocar el letrero del arma: cambia entre puños y pistola.</li>
+<li>La pistola se coloca en la palma con el cañón en la dirección de los nudillos y los dedos se cierran sobre la
+  empuñadura (<code>gripGun</code>).</li>
+<li>Disparar donde alguien te ve es delito grave (más policía y más rápida, cuesta más perderla).</li>
+</ul>
+<h2>Salud, comida y muerte</h2>
+<ul>
+<li>
+<p>Al morir reapareces en el centro de salud o las urgencias más cercanas (<code>nearestHealth</code>, lista <code>HEALTH</code>).</p>
+</li>
+<li>
+<p>La salud baja con golpes, porrazos, disparos y choques fuertes. Se recupera comiendo en tiendas
+  (<code>12b_food.js</code>, icono rojo) o en la barra de la cafetería.</p>
+</li>
+<li><strong>Muerte</strong>: fundido, «HAS MUERTO», reapareces junto a la calle de El Blanco con 100 $ menos (si los tienes);
+  las misiones completadas se conservan. Cada paso de la reaparición está protegido y hay un vigilante que te
+  revive a los 6 s pase lo que pase.</li>
+<li><strong>Detenido</strong>: reapareces en la Policía Local pagando la multa.</li>
+</ul>
+<h2>Día y noche (<code>13_main.js</code>)</h2>
+<ul>
+<li>Empieza a las 10:00. Día (7:36–20:24): 1 hora de juego = 150 s (≈ 30 min). Noche: 1 hora = 40 s (≈ 8 min).</li>
+<li>El sol, la luz ambiente, las ventanas encendidas, las farolas y los faros siguen la hora. Tiempo: despejado,
+  panza de burro, bruma.</li>
+</ul>
+<h2>Guardar y cargar (<code>12e_save.js</code>)</h2>
+<ul>
+<li>Guarda en <code>localStorage</code> (<code>jeta_save_auto</code>, <code>jeta_save_1..3</code>): posición y orientación (en la puerta si estabas
+  dentro de un edificio), salud, dinero, pistola y balas, coche en el que ibas (tipo, modelo, color), hora,
+  número de peleas, estado de la historia y de la banda (<code>MISSIONS.getState()</code>). La misión en curso se reinicia.</li>
+<li>Automático al superar misión, cada 3 min y al cerrar la página. Menú de pausa → «Guardar / Cargar»; menú de
+  inicio → «Continuar partida» / «Cargar». Exportar/importar como archivo <code>.json</code>.</li>
+<li>Para añadir un dato nuevo a la partida: incluirlo en <code>snapshot()</code> y restaurarlo en <code>apply()</code> (y si es de
+  misiones, en <code>getState()</code> / <code>setState()</code>); subir <code>VER</code> si cambia el formato.</li>
+</ul>
+<h2>Modo Achamán (<code>12c_achaman.js</code>)</h2>
+<p>Desde el menú de inicio: vuelo libre (WASD, E/Q subir/bajar, Shift rápido), dron en órbita y vista cenital
+(<code>V</code> cambia), <code>M</code> mapa con teletransporte, <code>G</code> muestra u oculta la brújula. <code>Esc</code> vuelve al menú.</p>
+<h2>Zona de juego y límites (<code>01_core.js</code>, <code>08b_border.js</code>)</h2>
+<ul>
+<li><code>WORLD</code> (caja) menos <code>WORLD_EXCL</code> (rectángulos: el monte del NE en escalera, Los Baldíos/La Vega al SO y, al oeste
+  de X −1900, todo salvo el corredor del aeropuerto). <code>worldEdgeDist(x, z)</code> da la
+  distancia al borde (negativa fuera) e <code>inPlayArea(x, z, margen)</code> si un punto está dentro.</li>
+<li>Al cargar, <code>pruneWorld()</code> elimina edificios, áreas, árboles, POI, tiendas, tramos de calle y aristas de tráfico
+  fuera de la zona de juego (no se dibujan ni generan tráfico).</li>
+<li><code>updateBorder()</code>: a menos de 50 m del borde aviso «Saliendo del mundo»; a menos de 12 m, teletransporte unos 100 m
+  hacia dentro siguiendo el gradiente de <code>worldEdgeDist</code> y después a la calle a nivel más cercana que no esté en un
+  edificio ni bajo tierra; en coche, orientado hacia dentro. Prueba: <code>tests/prueba_bordes.py</code>.</li>
+</ul>
+<h2>Controles configurables (<code>01b_controls.js</code>, <code>CONTROLS</code>)</h2>
+<p>Lista de acciones con sus teclas de siempre y una tecla extra opcional (<code>localStorage</code> <code>jeta_controls</code>). Los
+manejadores de teclado (juego y pelea) traducen la tecla extra a la tecla original con <code>CONTROLS.alias()</code>, así el
+resto del código no cambia. Pantalla en menú principal y pausa (botón CONTROLES).</p>
+<h2>Orden de la historia (v0.43)</h2>
+<p>Vuelta al barrio → Una botella para Coco → <strong>Sastrón</strong> (pelea de prueba con tutorial; si ganas pide $2500) →
+La firma de la banda → … La <strong>carrera con el Canarión</strong> es una misión secundaria (círculo azul) que se abre al hablar
+del dinero con Sastrón; después quedan las revanchas. También se puede reunir el dinero peleando por la calle.
+Las partidas v1 (con el Canarión dentro de la historia) se convierten al cargar (<code>getState().v = 2</code>).</p>
+<h2>El Obispo y el baloncesto 2D (v0.65)</h2>
+<ul>
+<li><strong>Obispado</strong> (<code>12g_obispo.js</code>, <code>buildObispado</code>): en la fachada de la Casa Salazar que da a la C. San Agustín, portada
+  (columnas pareadas, entablamento, frontón con escudo), chapado de cantería oscura (<code>aytoStoneTex</code>), balcones de forja y
+  pináculos. <code>OBISPADO.front</code> = sitio del obispo y del círculo. <strong>Monseñor Fermín Truchas</strong> (<code>NPC.obispo</code>).</li>
+<li><strong>Pista de misiones <code>obispo</code></strong> (<code>TRACKS.obispo</code>, color <code>#b388ff</code>): se abre cuando la historia llega a las misiones
+  del alcalde (<code>obispoOpen</code>). Se guarda en <code>getState().obispo</code>. Misiones en <code>MISSIONS.addObispo</code>.</li>
+<li><strong>Cancha</strong>: <code>obispoCourt()</code> = la de baloncesto (<code>bb</code> o <code>multi</code>) más cercana al Obispado. <code>pitchRects()</code> calcula todas
+  las canchas y campos antes de plantar árboles, farolas y mobiliario; <code>inPitch(x, z, margen)</code> los deja fuera.</li>
+<li><strong>JETA JAM</strong> (<code>09f_basket2d.js</code>, <code>BASKET2D.start({ team, rival, teamName, rivalName, time, lv, mateLv, tutorial,
+  onEnd })</code>): lienzo 480×270, cancha de 28×15 m vista de lado. Teclas = las de la pelea (<code>f_punch</code> A: tirar / tapón,
+  <code>f_kick</code> B: correr, <code>b_pass</code> + clic dcho.: pasar / robar / cambiar de defensor; moverse con las de andar).
+  <strong>Tiro</strong>: mientras se mantiene, barra junto al jugador; ventana verde <code>GREEN</code> = 0,42–0,60 s (lo alto del salto): en
+  verde ≈ 70–95 % según distancia y defensa, «casi» 70 % de lo normal, fuera 10 %. Triple a más de 6,75 m.
+  <strong>Entrada en combo</strong> (<code>startCombo</code>): corriendo y tirando a 2,4–7,8 m, fase <code>combo</code> (todo parado), 3 s para la
+  secuencia del especial (<code>COMBOS</code>: ◀▶/▼▲ relativas a la canasta + puño A o patada B/clic dcho.); bien = mate que no
+  se puede taponar; mal = balón suelto. Robo 42 % (CPU según su nivel); corriendo, empujón. Tapón si un defensor en el
+  aire toca el balón al salir. IA: el que lleva el balón entra hacia la canasta y tira según su distancia preferida y si
+  está libre (la CPU también machaca); los demás se abren a la banda o defienden entre su hombre y la canasta. En el
+  tutorial los rivales no se mueven y tu compañero te espera con el balón.</li>
+</ul></section>
+<section id="s6"><div class="src">docs/06_audio.md</div><h1>6. Audio y radio procedural</h1>
+<p>Todo el sonido se <strong>sintetiza en tiempo real</strong> con Web Audio: no hay archivos de audio. Es una solución
+<strong>provisional</strong>: el proyecto de assets podrá aportar efectos, música y voces grabadas (ver <code>10_assets.md</code>).</p>
+<h2>Efectos (<code>10_audio.js</code>, objeto <code>AUDIO</code>)</h2>
+<ul>
+<li>Se inicializa con el primer clic (los navegadores no dejan sonar audio antes).</li>
+<li><code>master</code> (volumen general) ← motor (diente de sierra + cuadrada por un pasa-bajos que sigue revoluciones y marchas),
+  derrape (ruido filtrado), sirena (cuadrada modulada, atenuada con la distancia a la patrulla más cercana),
+  ambiente urbano y pájaros de día.</li>
+<li>Utilidades: <code>burst(dur, frec, vol, tipo)</code> (ruido filtrado con envolvente) y <code>tone(frec, dur, vol, forma, retraso)</code>.</li>
+<li>Efectos: <code>crash</code>, <code>thud</code>, <code>horn</code>, <code>door</code>, <code>shot</code>, <code>clink</code>, <code>cash</code>, <code>pickup</code>, <code>fail</code>, <code>wanted</code>, <code>bell</code>, <code>swing</code>,
+  <code>mumble</code> (murmullo de voz), <strong><code>footstep(correr, blando, suelo, volumen)</code></strong>, <strong><code>jump</code></strong> (barrido de aire +
+  gruñido) y <strong><code>land(velocidad)</code></strong> (golpe sordo + los dos pies).</li>
+</ul>
+<h2>Pasos (<code>10c_steps.js</code>, objeto <code>STEPS</code> y función <code>footContacts</code>)</h2>
+<ul>
+<li><strong>Muestras pre-generadas</strong> al iniciar el audio (60 <code>AudioBuffer</code>): 5 suelos × 2 ritmos × 6 variantes.</li>
+<li>Cada paso son <strong>dos impactos</strong>: talón y, 75–105 ms después, la punta (al correr casi juntos y más fuertes).</li>
+<li>Cada impacto = <strong>modos resonantes amortiguados</strong> (suela + suelo), un <strong>clic</strong> de ruido filtrado y
+    <strong>arenilla</strong> (micro-clics); además un <strong>roce</strong> de suela.</li>
+<li>Suelos: <code>hard</code> (asfalto/acera), <code>stone</code> (adoquín y losa del casco histórico), <code>tile</code> (interiores),
+    <code>soft</code> (césped/tierra: golpe sordo + crujido largo), <code>metal</code> (chapa).</li>
+<li><code>STEPS.play(suelo, 'walk'|'run', volumen)</code>: elige una variante distinta a la anterior, varía tono (±6 %) y
+  volumen y alterna un poco izquierda/derecha.</li>
+<li><strong>Acústica</strong>: <code>STEPS.setSpace('' | 'tunnel' | 'room' | 'park')</code> manda parte del sonido a una reverberación
+  (respuesta al impulso generada): túnel/parking cubierto 1,6 s, interior 0,45 s.</li>
+<li><strong>Sincronía con la animación</strong> (<code>footContacts(H, dt, cb, activo)</code>): cada fotograma mide la altura de cada
+  tobillo (<code>foot_l</code>, <code>foot_r</code>) respecto al personaje, con mínimo y máximo adaptativos. El paso suena cuando el
+  pie que cae <strong>frena en seco</strong> en la mitad baja de su recorrido (apoyo); se rearma al levantarlo de nuevo, con
+  0,22 s de margen. Funciona con cualquier clip (andar, trotar, esprintar) y velocidad de reproducción.</li>
+<li>El jugador elige el suelo en <code>08_player.js</code> (<code>PLAYER.surface</code>). Si el personaje no tiene esqueleto se usa la
+  distancia recorrida (0,75 m andando, 1,15 m corriendo).</li>
+</ul>
+<h2>Radio (<code>10b_music.js</code>, objeto <code>MUSIC</code>)</h2>
+<p>Se enciende al subir a un coche. <code>Q</code> (o tocar el velocímetro) cambia de emisora:</p>
+<table>
+<thead>
+<tr>
+<th>Emisora</th>
+<th>Estilo</th>
+<th>BPM</th>
+<th>Swing</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gofio FM 90.1</td>
+<td>boom bap de los 90 (piano, contrabajo, scratches)</td>
+<td>88</td>
+<td>0,16</td>
+</tr>
+<tr>
+<td>Radio Aguere 96.6</td>
+<td>G-funk (silbido con portamento, bajo sintetizado, colchón)</td>
+<td>94</td>
+<td>0,10</td>
+</tr>
+<tr>
+<td>Mojo Picón 102.3</td>
+<td>rap duro (metales, caja seca)</td>
+<td>97</td>
+<td>0,06</td>
+</tr>
+<tr>
+<td>Radio apagada</td>
+<td>—</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3>Cómo se genera una canción</h3>
+<ul>
+<li><code>makeSong(estilo)</code> con una semilla aleatoria: tónica (La2–Re#3), escala menor, progresión de 4 acordes según el
+  estilo, patrones de 16 pasos de bombo/caja/charles, línea de bajo, ritmo de acordes y un motivo melódico.</li>
+<li><strong>Planificador</strong>: <code>setInterval</code> cada 25 ms que programa notas con 150 ms de antelación en el reloj de audio
+  (<code>ctx.currentTime</code>), con swing en los semicorcheas impares.</li>
+<li>Estructura de 32 compases: 2 de intro sin caja → estrofa (8) → estribillo ×2 (4) → estrofa (8) → estribillo ×2 (4)
+  → final instrumental (6). Cada 8 compases hay un redoble; a los 32 se inventa otra canción.</li>
+<li>Instrumentos sintetizados: bombo (seno con caída de tono + saturación), caja (ruido + triángulo + pequeña sala),
+  charles abierto/cerrado, bajo (triángulo/sierra + sub), acordes (piano FM / sierras desafinadas / metales),
+  silbido G-funk con vibrato, scratch (buffer reproducido con velocidad variable), crujido de vinilo.</li>
+<li>Bus de música → pasa-bajos → compresor → <code>master</code>. Volumen propio en el menú de pausa (<code>SETTINGS.music</code>).</li>
+</ul>
+<h3>Voces</h3>
+<ul>
+<li>Letras originales en inglés por grupos de rima (<code>RHYMES</code>) y estribillos por emisora (<code>HOOKS</code>); <code>writeLyrics</code>
+  compone dos estrofas distintas por canción.</li>
+<li>Se cantan con la <strong>síntesis de voz del sistema</strong> (<code>speechSynthesis</code>), eligiendo una voz inglesa masculina.
+  Cada verso arranca al inicio de su compás y la velocidad se ajusta al número de sílabas para que ocupe el compás.</li>
+<li>Gritos sueltos (<em>ad-libs</em>) en los compases sin letra y el nombre de la emisora al cambiarla.</li>
+<li>Limitación: es una voz de lectura de texto; no pasa por Web Audio, así que no admite efectos ni sincronía exacta.</li>
+</ul>
+<h2>Estribillo de misión (<code>MUSIC.jingle()</code>)</h2>
+<p>Al superar una misión: 2 compases a 96 BPM (bombo, caja, metales con la progresión i–VI–VII, gancho melódico,
+scratch final) y un grito («Mission complete!»…). Si la radio sonaba, se pausa y vuelve después con canción nueva.</p>
+<h2>Ambiente de la ciudad (<code>10d_ambience.js</code>, objeto <code>AMBIENCE</code>)</h2>
+<p>Sonidos posicionales (panorama estéreo respecto a la cámara y atenuación con la distancia), sintetizados:</p>
+<ul>
+<li><strong>Pájaros</strong> en los árboles cercanos (<code>TREES</code>): gorrión (chips), canario (trino), mirlo (silbidos) y paloma
+  (arrullo). Cada 0,8–3,5 s de día, muy de vez en cuando de noche.</li>
+<li><strong>Coches</strong>: 3 voces de motor (sierra + triángulo + ruido de rodadura, pasa-bajos) asignadas a los 3 coches más
+  cercanos; tono según velocidad y marcha, volumen según distancia.</li>
+<li><strong>Gente charlando</strong>: si hay 2+ peatones a menos de 3,5 m entre sí y a menos de 22 m, sílabas con dos formantes,
+  voces graves y agudas por turnos y alguna risa.</li>
+<li><strong>Campanas</strong> de La Concepción y la Catedral (7:00–22:00): tantas campanadas como la hora (reloj de 12 h) y una
+  a la media.</li>
+<li><strong>Perros</strong> y <strong>gaviotas</strong> lejanos de vez en cuando. Dentro de edificios el ambiente baja al 25 % y en coche al 55 %.</li>
+<li>Los pasos (<code>10c_steps.js</code>) suenan ahora a ~35 % del volumen anterior.</li>
+</ul>
+<h2>Claxon (v0.63)</h2>
+<p><code>AUDIO.horn(car)</code> en <code>10_audio.js</code>: uno por tipo de vehículo (<code>HORNS</code>): notas, duración, filtro y pitidos. Ondas de diente
+de sierra por un recortador suave (<code>tanh</code>) y un paso bajo resonante, ataque y caída cortos y un poco de vibrato; cada coche
+guarda una pequeña variación de tono (<code>car.hornK</code>). Utilitario y moto: dos pitidos agudos; turismo y taxi: dos notas;
+SUV y furgoneta más graves; deportivo brillante; guagua y policía graves; camión: bocina de aire de tres notas. El coche de
+El Canarión (Guanche GT) toca una melodía popular. <code>tests/herramientas/prueba_claxon.py</code> los toca todos y los graba.</p></section>
+<section id="s7"><div class="src">docs/07_pruebas.md</div><h1>Pruebas</h1>
+<blockquote>
+<p><strong>Desde v0.64.1 las pruebas se ejecutan en el PC de Jonay</strong> (no en la nube: no gasta uso y siempre es el mismo equipo).
+- <code>scripts\PRUEBAS.bat</code>: <strong>antes de cada versión</strong> = las de esa versión (<code>scripts/PRUEBAS_LISTA.txt</code>, la rellena
+  Claude) + la <strong>base fija</strong> (<code>scripts/pruebas/base.txt</code>: guardar/cargar, coche y Boca Papa, bordes, persecuciones,
+  túneles y puentes).
+- Por temas: <code>PRUEBAS_BASE</code>, <code>PRUEBAS_PELEA</code>, <code>PRUEBAS_MISIONES</code>, <code>PRUEBAS_COCHES</code>, <code>PRUEBAS_MAPA</code> (con las
+  <code>audit_*</code> de obstáculos, cruces y hundimientos), <code>PRUEBAS_OTROS</code> y <code>PRUEBAS_TODAS</code> (todo, muy larga). Cada lista es
+  <code>scripts/pruebas/&lt;nombre&gt;.txt</code> (una prueba por línea con sus argumentos; <code>#</code> = comentario).
+- También las lanza el <strong>trabajador local</strong> (<code>scripts\TRABAJADOR.bat</code>, ver CLAUDE.md) con la orden <code>pruebas</code>.
+- Todas llaman a <code>scripts\_motor_pruebas.bat</code> (→ <code>_python.bat</code>: busca Python y lo instala con winget si falta; instala
+  Playwright, su Chromium y <code>markdown</code> la primera vez) → <code>tools/pruebas_locales.py</code>: compila, sirve <code>dist/</code> en el 8765, lanza cada
+  prueba con <code>tests/run_test.py</code> (15 min máx.) y escribe <code>reportes/pruebas/ULTIMO.md</code> + copia con fecha (OK / FALLA /
+  TIEMPO, líneas útiles y fotos nuevas de <code>tests/shots/</code>). FALLA = error, o la salida trae FALLA, PAGEERROR,
+  Traceback, TIEMPO o «not ready». Las pruebas escriben sus datos en <code>tests/shots/</code> (nada en <code>/tmp</code>).</p>
+</blockquote>
+<p>Las pruebas abren el juego en un <strong>Chromium sin ventana</strong> (Playwright, WebGL por SwiftShader) y lo controlan
+desde Python a través de <code>window.__dbg</code>, <code>window.__step</code> y <code>window.__snap</code>.</p>
+<h2>Preparación</h2>
+<pre><code class="language-bash">pip install playwright
+python -m playwright install chromium
+python build.py
+cd dist &amp;&amp; python -m http.server 8765      # en otra terminal, desde la raíz del repo
+</code></pre>
+<h2>Ejecutar</h2>
+<p>Desde la raíz del repositorio:</p>
+<pre><code class="language-bash">python tests/run_test.py tests/audit_cruces.py           # calidad «baja», 640×360
+python tests/run_test_alta.py tests/prueba_pelea_especiales.py   # calidad «alta»
+python tests/run_test_audit.py tests/audit_obstaculos.py  # arranca con window.__AUDIT = true
+</code></pre>
+<p><code>run_test*.py</code> abre <code>http://localhost:8765/test.html</code>, espera a <code>window.__GAME_READY</code>, ejecuta la función
+<code>run(pg)</code> del script de prueba y muestra los últimos mensajes de consola. <code>tests/_helpers.py</code> aporta <code>snap()</code>
+(guarda capturas en <code>shots/</code>) y <code>st()</code> (estado resumido).</p>
+<h2>Agente revisor de jugabilidad (cada versión)</h2>
+<p><code>python tests/agente_revisor.py</code> recorre el mapa como un probador y escribe un informe de bugs en <code>reportes/</code>.
+Abre el juego con <code>?revisor=1</code>: solo así se conservan en memoria las posiciones de los triángulos de la ciudad, que el
+agente lee (en el juego normal se liberan al subirlas a la tarjeta gráfica: ~250 MB menos, auditoría P1.7).
+Se ejecuta <strong>después de cada versión</strong> (rutina de <code>CLAUDE.md</code>). Hace tres pasadas:</p>
+<ol>
+<li><strong>Zonas nuevas</strong>: todas las vías dentro de los rectángulos de <code>tests/zonas_revision.json</code>, que se actualiza en
+   cada versión con lo que ha cambiado (<code>{"nombre","x0","x1","z0","z1"}</code>).</li>
+<li><strong>Riesgo</strong>: todas las vías de riesgo del mapa en todas las versiones: enlaces de autopista, puentes, túneles,
+   pasos inferiores y rampas elevadas.</li>
+<li><strong>Rotación</strong>: un lote (250 por defecto, <code>--lote N</code>) de vías normales, las que hace más que no se revisan según
+   <code>reportes/cobertura.json</code>. En pocas versiones se recorre el mapa entero sin dejar de ver lo antiguo.</li>
+</ol>
+<p>Comprobaciones:
+- <strong>Superficies</strong> (cada 6 m de calzada, con un índice propio de triángulos en casillas de 8 m, mucho más rápido que
+  el Raycaster): textura de acera/suelo por encima del asfalto (texturas cruzadas), algo plano flotando sobre la
+  calzada (losa, andén, tablero) o calzada por debajo del terreno.
+- <strong>En coche</strong>: un coche sigue la vía con solo su física (sin tráfico): se sale, vuela, se hunde, salto brusco de
+  altura, roza el techo de un túnel, se atasca (y si es contra un muro) o no termina la vía.
+- <strong>A pie</strong>: el personaje anda por aceras y caminos: se hunde bajo la superficie visible o se atasca.</p>
+<p>Salida, escrita <strong>mientras recorre</strong>: <code>reportes/revision_v&lt;versión&gt;_&lt;fecha&gt;.md</code> (+ <code>.json</code>), el registro en vivo
+<code>_registro.txt</code>, capturas en <code>reportes/img/</code> y <code>reportes/ULTIMO.md</code> (copia del último). Cada aviso lleva X/Z, vía,
+pasada y captura, y se compara con el informe anterior: 🆕 nuevo, ↻ sigue, y la lista de <strong>arreglados</strong>.
+Opciones: <code>--solo-zonas</code> (rápido, solo la pasada 1) y <code>--todo</code> (todo el mapa de una vez). Una pasada normal tarda
+unos 30 min.</p>
+<h2>Pruebas incluidas</h2>
+<table>
+<thead>
+<tr>
+<th>Script</th>
+<th>Qué comprueba</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>audit_cruces.py</code></td>
+<td><code>auditCrossings()</code>: vías que se cruzan <strong>sin enlace</strong> a menos de 4,4 m de altura (2,7 m si la de abajo es peatonal). Debe dar 0. Guarda <code>/tmp/audit.json</code>.</td>
+</tr>
+<tr>
+<td><code>audit_obstaculos.py</code></td>
+<td><code>auditObstacles()</code> (requiere <code>run_test_audit.py</code>): muros, barandillas, losas o bocas de túnel dentro de la calzada de otra vía a altura de conducción.</td>
+</tr>
+<tr>
+<td><code>prueba_conduccion_tuneles_puentes.py</code></td>
+<td>Un coche automático recorre los ~111 túneles, pasos inferiores y puentes; informa de los que no llegan al final (con captura <code>shots/df_&lt;vía&gt;.jpg</code>). Algunos fallos son tráfico que se cruza.</td>
+</tr>
+<tr>
+<td><code>prueba_pelea_especiales.py</code></td>
+<td>Empieza una pelea, pulsa Espacio (cartel de controles) y comprueba las cuatro técnicas especiales.</td>
+</tr>
+<tr>
+<td><code>prueba_misiones.py [desde] [hasta]</code></td>
+<td>Piloto automático que juega las misiones de la historia (salta diálogos, gana las peleas, acierta los blancos, se sube al vehículo pedido) y comprueba que todas se terminan sin errores.</td>
+</tr>
+<tr>
+<td><code>prueba_hospital.py</code></td>
+<td>Muere junto a cada centro de salud / urgencias y comprueba que reapareces allí.</td>
+</tr>
+<tr>
+<td><code>prueba_persecuciones.py [índices]</code></td>
+<td>En cada persecución: el perseguido aparece cerca y a la vista, no da saltos y se aleja (a pie y en coche).</td>
+</tr>
+<tr>
+<td><code>prueba_misiones_guardado.py</code></td>
+<td>Guardar a mitad de misión y cargar, «¿Reintentar?» tras fallar y partidas antiguas con la historia ya terminada.</td>
+</tr>
+<tr>
+<td><code>herramientas/</code></td>
+<td>Scripts de fotos y sondas reutilizables (ver <code>tests/herramientas/LEEME.md</code>): se guardan para no rehacerlos.</td>
+</tr>
+<tr>
+<td><code>prueba_bloqueo.py</code></td>
+<td>Mantener atrás bloquea los golpes del rival.</td>
+</tr>
+<tr>
+<td><code>prueba_guardar_cargar.py</code></td>
+<td>Guarda una partida con progreso, la estropea y la carga desde la ventana de partidas.</td>
+</tr>
+<tr>
+<td><code>prueba_muerte_coche.py</code></td>
+<td>Morir en un coche tras un choque y volver a jugar en ≤ 4 s.</td>
+</tr>
+<tr>
+<td><code>prueba_pasos.py</code></td>
+<td>Andar, trotar y esprintar: cuenta los pasos, comprueba que alternan pie izquierdo/derecho y mide el desfase entre el sonido y el apoyo del tobillo (objetivo: ±40 ms).</td>
+</tr>
+<tr>
+<td><code>prueba_peralte.py</code></td>
+<td>Coloca un coche en los puntos de calle con más pendiente lateral y comprueba que las 4 ruedas quedan a la misma altura sobre el suelo.</td>
+</tr>
+<tr>
+<td><code>prueba_coche_y_boca.py</code></td>
+<td>0–100 km/h y punta de un coche, sitio del círculo de Boca Papa y texto de coordenadas del minimapa.</td>
+</tr>
+<tr>
+<td><code>prueba_bordes.py</code></td>
+<td>Aviso y vuelta desde los bordes y las zonas quitadas (a pie y en coche).</td>
+</tr>
+<tr>
+<td><code>prueba_ambiente.py</code></td>
+<td>Inicia el audio y deja sonar el ambiente con cambio de hora (campanas) sin errores.</td>
+</tr>
+<tr>
+<td><code>prueba_pelea_atras.py</code></td>
+<td>Atrás sin ataque = retrocede; con ataque = se cubre.</td>
+</tr>
+<tr>
+<td><code>audit_hundimiento.py</code></td>
+<td>Puntos de túnel/trinchera bajo el suelo sin hueco (debe dar 0).</td>
+</tr>
+<tr>
+<td><code>prueba_parking_cristo.py</code></td>
+<td>Sube andando por las dos escaleras del parking del Cristo y baja en coche por las rampas midiendo el hueco con el techo.</td>
+</tr>
+<tr>
+<td><code>prueba_aeropuerto.py</code></td>
+<td>El aeropuerto se construye y hay ruta en coche desde el inicio hasta la terminal.</td>
+</tr>
+<tr>
+<td><code>agente_revisor.py</code></td>
+<td>Agente revisor (ver arriba): informe de bugs de las zonas nuevas, vías de riesgo y rotación.</td>
+</tr>
+<tr>
+<td><code>prueba_panel_controles.py</code></td>
+<td>Fases <code>ready</code> → <code>intro</code> → <code>fight</code> de las primeras peleas.</td>
+</tr>
+</tbody>
+</table>
+<h2>Cómo escribir una prueba</h2>
+<pre><code class="language-python">import asyncio, os
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '_helpers.py')).read().split('async def run')[0])
+async def run(pg):
+    await pg.evaluate(&quot;(()=&gt;{document.getElementById('menu').style.display='none'; window.__manual=true; __dbg.GAME.state='play'; __step(3);})()&quot;)
+    print(await pg.evaluate(&quot;JSON.stringify({x: __dbg.PLAYER.x, money: __dbg.PLAYER.money})&quot;))
+    await snap(pg, 'mi_captura')     # shots/mi_captura.jpg
+</code></pre>
+<ul>
+<li><code>window.__manual = true</code> detiene el bucle automático y la simulación avanza solo con <code>__step(n, dt, teclas)</code>.</li>
+<li>Para fotos: poner <code>__dbg.GAME.state = 'x'</code> (estado desconocido = no se mueve la cámara), colocar
+  <code>__dbg.camera</code> y llamar a <code>snap()</code>. Las capturas de pantalla de Playwright (<code>pg.screenshot</code>) suelen agotar el
+  tiempo con el juego en marcha; usar <code>snap()</code>.</li>
+</ul>
+<h2>Comprobación de sintaxis rápida</h2>
+<p><code>build.py</code> no valida el JavaScript. Para encontrar errores sin abrir el navegador:</p>
+<pre><code class="language-bash">python -c &quot;import re;s=open('dist/test.html',encoding='utf-8').read();open('chk.mjs','w').write(re.findall(r'&lt;script type=\&quot;module\&quot;&gt;(.*?)&lt;/script&gt;',s,re.S)[-1])&quot;
+node --check chk.mjs
+</code></pre></section>
+<section id="s8"><div class="src">docs/08_publicacion.md</div><h1>8. Versiones y publicación en GitHub</h1>
+<h2>Flujo</h2>
+<pre><code>Claude (nube)                                 Tu PC (E:\Claude\GTA La Laguna\repo)            GitHub
+─────────────                                 ─────────────────────────────────────            ──────
+1. cambia src/…, sube VERSION, añade
+   entrada en CHANGELOG.md
+2. python build.py  (+ pruebas)
+3. copia a tu carpeta los archivos
+   cambiados y, el último,
+   scripts/PUBLICAR.txt          ───────────▶  4. la tarea programada (cada 10 min)
+                                                  ve PUBLICAR.txt y ejecuta
+                                                  scripts/publicar.ps1:
+                                                  git add / commit &quot;vX.Y.Z - título&quot;
+                                                  / tag vX.Y.Z / push           ───────────▶  repositorio
+</code></pre>
+<ul>
+<li><code>PUBLICAR.txt</code> hace de «semáforo»: se escribe <strong>después</strong> de todos los demás archivos, así nunca se sube una
+  versión a medio copiar. El script lo borra al publicar.</li>
+<li>El mensaje del commit sale de <code>VERSION</code> y del título de la primera entrada de <code>CHANGELOG.md</code>; cada versión
+  queda además marcada con una etiqueta <code>vX.Y.Z</code>.</li>
+<li>El registro de lo publicado (y de los errores) queda en <code>scripts/publicar.log</code> (no se sube).</li>
+</ul>
+<h2>Puesta en marcha (una sola vez)</h2>
+<ol>
+<li>Instala <strong>Git for Windows</strong>: <a href="https://git-scm.com/download/win">https://git-scm.com/download/win</a> (opciones por defecto; incluye el
+   <em>Git Credential Manager</em>, que guarda tu sesión de GitHub de forma segura).</li>
+<li>En GitHub crea un repositorio <strong>vacío</strong> (sin README) en <a href="https://github.com/new">https://github.com/new</a>, por ejemplo
+   <code>jeta-la-laguna</code>, privado.</li>
+<li>Ejecuta <code>scripts\configurar_github.bat</code> (doble clic) y pega la dirección del repositorio
+   (<code>https://github.com/TU_USUARIO/jeta-la-laguna.git</code>). El script:
+   - crea el repositorio git local (<code>main</code>), te pide nombre y email para los commits si no los tienes;
+   - hace la primera subida: <strong>la primera vez se abre el navegador para iniciar sesión en GitHub</strong>;
+   - registra la tarea programada «JETA La Laguna - publicar en GitHub» (cada 10 minutos).</li>
+</ol>
+<p>Desde ese momento cada versión nueva completa que Claude deje en la carpeta se sube sola.
+<code>scripts\publicar_ahora.bat</code> fuerza una subida inmediata (por ejemplo, si cambias algo tú a mano).</p>
+<p>Para quitar la publicación automática: Programador de tareas de Windows → borrar la tarea, o en PowerShell
+<code>Unregister-ScheduledTask -TaskName 'JETA La Laguna - publicar en GitHub'</code>.</p>
+<h2>Números de versión</h2>
+<p><code>MAYOR.MENOR.PARCHE</code>: la <strong>MENOR</strong> sube con cada entrega publicada (coincide con la versión del Artifact de
+Claude), el <strong>PARCHE</strong> con arreglos pequeños sobre la misma entrega.</p>
+<h2>Linux / macOS</h2>
+<p><code>scripts/publicar.sh</code> hace lo mismo; prográmalo con cron (<code>*/10 * * * * /ruta/repo/scripts/publicar.sh</code>).</p>
+<h3>Si <code>configurar_github.bat</code> no pide iniciar sesión</h3>
+<ul>
+<li>Mira <code>scripts\configurar.log</code> (lo escribe siempre).</li>
+<li>Lo más habitual es que <strong>no esté instalado Git for Windows</strong>: el script lo detecta, ofrece instalarlo con <code>winget</code>
+  o indica la descarga (https://git-scm.com/download/win). Tras instalarlo, vuelve a ejecutar el <code>.bat</code>.</li>
+<li>La sesión de GitHub la gestiona <strong>Git Credential Manager</strong> (viene con Git for Windows): la primera subida abre el
+  navegador. Claude nunca maneja contraseñas ni tokens.</li>
+<li>Si GitHub rechaza la subida («rejected»), el repositorio remoto no estaba vacío.</li>
+</ul>
+<h2>Documentación para leer en local</h2>
+<p><code>build.py</code> también genera <code>dist/Documentacion tecnica.html</code> (con <code>tools/docs2html.py</code>): el README, todos los
+<code>docs/*.md</code> y el historial de versiones en una sola página con índice, que funciona sin conexión. Se copia a
+<code>E:\Claude\GTA La Laguna\Documentación técnica.html</code> con cada versión.</p></section>
+<section id="s9"><div class="src">docs/09_licencias.md</div><h1>9. Licencias y créditos</h1>
+<blockquote>
+<p>Los assets de terceros de esta tabla son <strong>provisionales</strong> hasta que el proyecto de assets propio los sustituya
+(ver <code>10_assets.md</code>). Al cambiarlos, actualizar esta tabla.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Recurso</th>
+<th>Uso en el juego</th>
+<th>Licencia</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Datos de <strong>OpenStreetMap</strong></td>
+<td>Calles, edificios, usos del suelo, puntos de interés, tranvía</td>
+<td>© colaboradores de OpenStreetMap, <strong>ODbL 1.0</strong>. Hay que citar la fuente (ya aparece en los créditos del menú).</td>
+</tr>
+<tr>
+<td>Relieve <strong>Copernicus DEM</strong> (vía Open-Meteo)</td>
+<td>Alturas del terreno</td>
+<td>© DLR / Airbus, licencia Copernicus (uso libre con atribución).</td>
+</tr>
+<tr>
+<td><strong>Kenney Car Kit</strong> (kenney.nl)</td>
+<td>Base de todos los coches</td>
+<td><strong>CC0</strong> (dominio público). Ver <code>LICENSE_kenney.txt</code>.</td>
+</tr>
+<tr>
+<td><strong>Quaternius</strong> Universal Base Characters y Universal Animation Library</td>
+<td>Personajes y animaciones</td>
+<td><strong>CC0</strong>.</td>
+</tr>
+<tr>
+<td><strong>Poly Haven</strong> (polyhaven.com): white_stucco, painted_plaster_wall, worn_plaster_wall</td>
+<td>Textura de enlucido de las fachadas</td>
+<td><strong>CC0</strong>.</td>
+</tr>
+<tr>
+<td><strong>Three.js</strong> r160</td>
+<td>Motor 3D (se carga desde cdnjs)</td>
+<td>MIT.</td>
+</tr>
+<tr>
+<td>Fuentes Google (Oswald, Barlow, Audiowide, Russo One, Yellowtail, Press Start 2P)</td>
+<td>Interfaz</td>
+<td>SIL Open Font License.</td>
+</tr>
+</tbody>
+</table>
+<p>Todo lo demás (código, texturas procedurales, música y efectos sintetizados, letras de la radio, historia,
+personajes y nombres de comercios parodia) es original del proyecto.</p>
+<p>Los nombres de comercios son siempre <strong>parodias</strong> de marcas reales (tabla <code>BRAND</code> en <code>build.py</code>) para no usar
+marcas registradas; el juego no imita ni representa a ningún negocio real concreto.</p></section>
+<section id="s10"><div class="src">docs/10_assets.md</div><h1>10. Assets provisionales y cómo sustituirlos</h1>
+<p>Todo el arte y el sonido actuales son <strong>provisionales</strong>. Sirven para tener el juego completo y jugable mientras
+un <strong>proyecto aparte de creación de assets</strong> produce los definitivos (modelos, texturas, sonido, música, voces).
+Este documento es el inventario de <strong>qué se usa, dónde se carga y qué contrato debe cumplir</strong> el reemplazo, para
+que el cambio no obligue a tocar la lógica del juego.</p>
+<h2>Principios para el proyecto de assets</h2>
+<ul>
+<li><strong>La lógica no depende del arte.</strong> Colisiones, alturas, rutas, misiones y física leen datos del mapa y medidas
+  (ancho/largo de coches, altura de plantas…), no la malla. Un modelo nuevo debe respetar esas medidas.</li>
+<li><strong>Un único HTML.</strong> Hoy todo se incrusta en el HTML (<code>build.py</code>). Si los assets nuevos pesan mucho, la
+  alternativa prevista es cargar un paquete aparte (<code>.glb</code>, <code>.ktx2</code>, audio) junto al HTML; habría que añadir un
+  cargador y una pantalla de carga, sin cambiar el resto.</li>
+<li><strong>Mantener los nombres de los puntos de anclaje</strong> (huesos del esqueleto, nombres de piezas de los coches) o
+  adaptar el convertidor (<code>tools/</code>) para que la salida tenga el mismo formato.</li>
+</ul>
+<h2>Inventario</h2>
+<table>
+<thead>
+<tr>
+<th>Asset</th>
+<th>Estado actual</th>
+<th>Dónde se carga</th>
+<th>Contrato para sustituirlo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Personajes</strong></td>
+<td>Quaternius Universal Base Characters (2 cuerpos)</td>
+<td><code>tools/chars2json.py</code> + <code>tools/morphs.py</code> → <code>data/chars.json</code> → <code>DATA.HUM</code> → <code>06a_humans.js</code> (<code>makeHuman</code>)</td>
+<td>Esqueleto con los mismos nombres de hueso (<code>root, pelvis, spine_01..03, neck_01, Head, clavicle_*, upperarm_*, lowerarm_*, hand_*, dedos *_01..03_*, thigh_*, calf_*, foot_*, ball_*</code>), ~1,8 m de alto, mirando a +Z. Pelo, barba y accesorios como piezas que se anclan a <code>Head</code>/<code>spine_03</code>.</td>
+</tr>
+<tr>
+<td><strong>Animaciones</strong></td>
+<td>Quaternius Universal Animation Library</td>
+<td><code>data/chars.json</code> (<code>anims</code>) → <code>HUM.clips</code></td>
+<td>Mismos nombres de clip o tabla de equivalencias en <code>animHumanSkinned</code> (andar, correr, saltar, en el aire, aterrizar, sentado, puñetazo, golpeado, muerte, interactuar).</td>
+</tr>
+<tr>
+<td><strong>Coches</strong></td>
+<td>Kenney Car Kit (estilo juguete)</td>
+<td><code>tools/kenney2json.py</code> → <code>data/kenney_cars.json</code> → <code>DATA.KV</code> → <code>06b_vmodels.js</code></td>
+<td>Por modelo: carrocería pintable separada del cristal y del resto, 4 ruedas como piezas propias (<code>wheel-*</code>) centradas en su eje, medidas reales (L, W, H del catálogo <code>VMODELS_RAW</code>). Luces, matrícula y rotulación se colocan solas sobre la carrocería.</td>
+</tr>
+<tr>
+<td><strong>Fachadas</strong></td>
+<td>Atlas procedural de 16 estilos en canvas</td>
+<td><code>02_textures.js</code> (<code>TEX.facade</code>, <code>TEX.facadeMask</code>, <code>FSTY</code>)</td>
+<td>Atlas 8×2 celdas por estilo (planta baja y planta tipo) + máscara (R = parte teñible, G = cristal que se ilumina). Medidas de vano/planta en <code>FSTY</code>.</td>
+</tr>
+<tr>
+<td><strong>Enlucido</strong></td>
+<td>Poly Haven 1k (3 tipos) reducidos a 512</td>
+<td><code>assets/textures/plaster_*.jpg</code> → <code>DATA.PLASTER</code></td>
+<td><code>plaster_det.jpg</code>: 3 detalles en gris en R/G/B centrados en 0,5; <code>plaster_n1/n2.jpg</code>: normales empaquetadas (XY de cada tipo).</td>
+</tr>
+<tr>
+<td><strong>Suelos</strong></td>
+<td>Procedurales: asfalto, adoquín, aceras, tierra, tejados</td>
+<td><code>02_textures.js</code></td>
+<td>Texturas repetibles; la escala la fija <code>ribbon(..., tileLen)</code>.</td>
+</tr>
+<tr>
+<td><strong>Terreno</strong></td>
+<td>Mezcla procedural por usos del suelo</td>
+<td><code>04_world.js</code> (<code>buildTerrain</code>, máscara <code>SPLAT</code>)</td>
+<td>Se puede sustituir por texturas por capa (césped, tierra, roca, pavimento) manteniendo la máscara.</td>
+</tr>
+<tr>
+<td><strong>Edificios singulares</strong></td>
+<td>Modelados en código (Catedral, La Concepción, Anchieta, Intercambiador…)</td>
+<td><code>05c_churches.js</code>, <code>05f_anchieta.js</code>, <code>05k_landmarks.js</code></td>
+<td>Modelo con la planta OSM como huella; mismas coordenadas.</td>
+</tr>
+<tr>
+<td><strong>Mobiliario y plazas</strong></td>
+<td>Geometría simple en código (bancos, farolas, fuentes, parques infantiles, patos)</td>
+<td><code>05e_street.js</code>, <code>05n_plazas.js</code>, <code>05_scenery.js</code></td>
+<td>Un modelo por tipo instanciable (<code>InstancedMesh</code>); la colocación ya está resuelta.</td>
+</tr>
+<tr>
+<td><strong>Árboles</strong></td>
+<td>4 tipos en código (laurel, palmera canaria, pino canario, genérico)</td>
+<td><code>05_scenery.js</code> (<code>buildTrees</code>)</td>
+<td>Tronco + copa por tipo, escala 1 ≈ árbol medio; se instancian.</td>
+</tr>
+<tr>
+<td><strong>Pelea 2D</strong></td>
+<td>Sprites pixel-art generados del <code>look</code></td>
+<td><code>09d_fight2d.js</code> (<code>spritesFor</code>, <code>drawFigure</code>)</td>
+<td>Hojas de sprites por personaje con las poses de <code>POSES</code>.</td>
+</tr>
+<tr>
+<td><strong>Interfaz</strong></td>
+<td>HTML/CSS, fuentes Google</td>
+<td><code>template.html</code></td>
+<td>Libre; los IDs de los elementos los usa el código.</td>
+</tr>
+<tr>
+<td><strong>Logotipo / icono</strong></td>
+<td>SVG provisional (atardecer, Teide y «J»)</td>
+<td><code>assets/logo/</code>, incrustado en <code>template.html</code></td>
+<td>PNG 64 y 180 px.</td>
+</tr>
+<tr>
+<td><strong>Efectos de sonido</strong></td>
+<td>Sintetizados</td>
+<td><code>10_audio.js</code></td>
+<td>Sustituir el cuerpo de cada método (<code>footstep</code>, <code>shot</code>, <code>crash</code>…) por la reproducción de un <code>AudioBuffer</code>; los puntos de llamada no cambian.</td>
+</tr>
+<tr>
+<td><strong>Pasos</strong></td>
+<td>Muestras sintetizadas al iniciar (5 suelos × andar/correr × 6 variantes)</td>
+<td><code>10c_steps.js</code> (<code>bank</code>)</td>
+<td>Sustituir el contenido de <code>bank[suelo][ritmo]</code> por grabaciones (varias por suelo, mono, ~0,25 s, el impacto al principio del archivo). La sincronía y la reverberación siguen igual.</td>
+</tr>
+<tr>
+<td><strong>Música y voces</strong></td>
+<td>Hip hop procedural + voz del sistema</td>
+<td><code>10b_music.js</code></td>
+<td><code>MUSIC</code> puede reproducir pistas grabadas por emisora manteniendo <code>update</code>, <code>next</code>, <code>jingle</code>.</td>
+</tr>
+</tbody>
+</table></section>
+<section id="s11"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
+<p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
+el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.65.0 — 2026-10-12 — El Obispo y el baloncesto 2D</h2>
+<ul>
+<li><strong>Monseñor Fermín Truchas, obispo de Nivaria</strong> (parodia), en la puerta del <strong>Obispado</strong> (Casa Salazar, C. San
+  Agustín): portada de cantería oscura con columnas pareadas, frontón con escudo, balcones de forja y pináculos. Sus
+  misiones (círculo <strong>morado</strong>) se abren con las del alcalde y son opcionales:
+  1. <strong>Un partido por la Catedral</strong>: con Coco contra los seminaristas en la cancha más cercana, con tutorial.
+  2. <strong>El torneo de la parroquia</strong>: contra los del Cristo, más duros.</li>
+<li><strong>«JETA JAM», baloncesto 2D 2 contra 2</strong> al estilo de los arcades de los 90: los mismos sprites de la pelea, pases,
+  robos, empujones, tapones, triples, «¡en llamas!» tras 3 canastas seguidas, canasta de oro si hay empate y un
+  locutor. <strong>Mismas teclas que la pelea</strong> (norma para todos los minijuegos): mantener clic izquierdo / E para tirar y
+  soltar con la barra en verde (defendiendo, salta para taponar); clic derecho / Q pasar, robar (corriendo, empujón) o,
+  defendiendo lejos del balón, cambiar de defensor; Espacio correr. <strong>Entrada en combo</strong>: corriendo y tirando desde
+  media distancia el juego se para y tienes 3 s para uno de los 4 especiales de la pelea, cada uno un mate distinto
+  (Mate de Gofio, Molino del Teide, Gancho del Roque, Salto del Pastor). Tutorial de 7 pasos en el primer partido.</li>
+<li><strong>Ni farolas ni árboles (ni bancos) dentro de canchas y campos</strong>, y cada cancha es siempre del mismo tipo.</li>
+<li>El trabajador local acepta <code>auditar</code> (solo cuando lo pidas). Pruebas nuevas: <code>prueba_baloncesto.py</code>, <code>prueba_obispo.py</code>
+  (<code>PRUEBAS_MINIJUEGOS.bat</code>).</li>
+</ul>
+<h2>0.64.1 — 2026-10-12 — Pruebas en el PC de Jonay</h2>
+<ul>
+<li><strong><code>scripts\PRUEBAS.bat</code></strong>: compila y lanza en tu PC las pruebas de <code>scripts/PRUEBAS_LISTA.txt</code> (o todas con
+  <code>PRUEBAS.bat todas</code>); la primera vez instala Playwright y su navegador. Informe en <code>reportes\pruebas\ULTIMO.md</code>, que
+  Claude lee antes de publicar. Desde ahora todo lo que se ejecuta (pruebas, fotos, sondas, herramientas) va en tu PC.</li>
+<li>Las auditorías las pasas tú; Claude lee los resultados nuevos de <code>RevisordeCodigo\resultados</code> al empezar cada tanda.</li>
+<li>Prueba de controles de la pelea más robusta (espera a aterrizar entre teclas).</li>
+</ul>
+<h2>0.64.0 — 2026-10-12 — Pelea 2D con las mismas teclas que la calle</h2>
+<ul>
+<li><strong>Pelea 2D</strong>: puñetazo <code>E</code>, patada <code>Espacio</code>, salto <code>↑</code> / <code>W</code> (más clic izquierdo y derecho del ratón). Fuera J, K,
+  L, U, I y las de Shift/Ctrl derechos. Los especiales siguen igual (abajo, arriba + golpe funciona aunque ↑ salte).</li>
+<li><strong>Los textos de misión y de la pelea muestran las teclas que tengas en Opciones › Controles</strong> (tutorial de Sastrón,
+  tarjeta de controles, «pulsa E para entrar», coche, armas…), no unas fijas.</li>
+<li>La rutina de publicación ya no pasa el auditor de código salvo que Jonay lo pida.</li>
+</ul>
+<h2>0.63.1 — 2026-10-12 — Flecha del coche más discreta</h2>
+<ul>
+<li>La flecha que flota sobre el coche es mucho más pequeña (menos de la mitad), más transparente y casi plana: ya no
+  parece que apunte al cielo ni de frente al suelo.</li>
+</ul>
+<h2>0.63.0 — 2026-10-12 — Claxon para cada coche y flecha flotante en coche</h2>
+<ul>
+<li><strong>Claxon nuevo, uno por tipo de vehículo</strong> (el de antes era un pitido cuadrado muy feo): utilitario y moto con dos
+  pitidos agudos, turismo y taxi de dos notas, SUV y furgoneta más graves, deportivo brillante, guagua y policía graves y
+  el camión con bocina de aire. Cada coche suena un poco distinto, y el Guanche GT de El Canarión toca una melodía.</li>
+<li><strong>Brújula en coche</strong>: en lugar del aro (seguía siendo enorme) hay una <strong>flecha maciza flotando sobre el techo</strong> que
+  apunta al destino principal (rosa si has marcado uno), siempre vuelta hacia la cámara, como en los juegos de taxis.</li>
+<li><strong>Brújula a pie</strong>: el aro es un 30 % más pequeño.</li>
+</ul>
+<h2>0.62.1 — 2026-10-12 — Brújula: se ve a pie en todas partes y más pequeña en coche</h2>
+<ul>
+<li><strong>A pie se veía mal o nada</strong> en aparcamientos, plazas y calles inclinadas: quedaba por debajo del pavimento. Ahora se
+  coloca a la altura de los pies del personaje (o de las ruedas del coche) y solo usa el terreno para inclinarse.</li>
+<li><strong>En coche</strong> el aro es poco más ancho que el coche (antes era enorme) y ya no tiembla en las bajadas: la inclinación
+  y la altura se suavizan.</li>
+<li><strong>Tecla G</strong>: muestra u oculta la brújula (se puede cambiar en Controles). No se usa la E porque es «usar / entrar».</li>
+</ul>
+<h2>0.62.0 — 2026-10-12 — Brújula más pequeña, círculos fuera de edificios y fallos pequeños</h2>
+<ul>
+<li><strong>Brújula</strong>: la mitad de tamaño y el doble de trazo; las puntas salen del borde del aro; el aro toma el color del
+  destino que manda (rosa si has marcado un punto en el mapa, si no amarillo de la misión principal). Se apoya en la
+  superficie real y se inclina con ella, y es algo más opaco para verse sobre suelos claros (el aro blanco no se distinguía en plazas de baldosa clara) (ya no se hunde en carreteras peraltadas ni puentes). En coche o camión rodea
+  todo el vehículo con trazo fino y se dibuja por encima de la carrocería.</li>
+<li><strong>Círculos de misión fuera de los edificios</strong>: el punto de inicio y los destinos se apartan hasta que el aro entero
+  queda en la calle (p. ej. Coco junto a la Casa Ossuna).</li>
+<li><strong>La «moneda» flotante</strong>: era la esfera del reloj, colocada mal (a ~1 m del brazo). Ahora va en la muñeca.</li>
+<li><strong>Carteles al revés por detrás</strong>: el cartel verde y los discos de la isleta de Marqués de Celada tienen la parte de
+  atrás lisa y gris; los rótulos del aparcamiento se leen bien por los dos lados.</li>
+<li><strong>Nombre de la banda</strong>: puedes escribir tu propio nombre; «Los Magos de Aguere» sustituye a «Los Magos de La Laguna».</li>
+<li><strong>Coco y Sastrón</strong> aparecen en dos de los tres sitios del casco más cercanos al inicio.</li>
+<li>Herramienta nueva <code>tests/herramientas/foto_jugador.py</code> (jugador apuntando y accesorios pequeños).</li>
+</ul>
+<h2>0.61.0 — 2026-10-12 — Brújula a los pies, radio con 20 canciones y nombres nuevos</h2>
+<ul>
+<li><strong>Brújula a los pies</strong> (sustituye a la flecha grande): un aro fino alrededor del personaje (o del coche) con una punta
+  por cada destino activo, siempre en línea recta hacia él: amarilla misión o historia, azul secundaria, roja a quien
+  persigues, rosa tu destino del mapa. Tras teletransportarte vuelve el siguiente punto de la historia.</li>
+<li><strong>Radio</strong>: 20 canciones con título y artista inventados (7 + 7 + 6 en las tres emisoras), cada una con <strong>su propia
+  voz</strong> (voces del navegador con tono y ritmo propios), siempre el mismo ritmo y letra, ~1:45 con tres estrofas sin
+  repetir versos; al empezar una canción sale su título.</li>
+<li><strong>Nombres</strong>: Ruymán «El Blanco» pasa a ser <strong>Rayco «El Blanco»</strong> y Santi «El Chopa», <strong>Ayoze «El Chopa»</strong>.</li>
+<li><strong>Intro</strong>: el texto de que El Chopa sale de la cárcel ahora queda en un cuadro hasta pulsar «¡Vamos!».</li>
+<li>Prueba de conducción de túneles y puentes: el tiempo de cada tramo depende de su longitud y se pueden probar tramos
+  sueltos (<code>prueba_conduccion_tuneles_puentes.py 1287,2295</code>). El enlace de la autopista (X −386 Z 678) ya pasa.</li>
+</ul>
+<h2>0.60.0 — 2026-10-12 — Flecha guía, noche más clara y carrera solidaria posible</h2>
+<ul>
+<li><strong>Flecha guía</strong>: con un objetivo de misión (amarilla) o un destino marcado (rosa), una flecha en el suelo a tus pies
+  (sobre el coche si conduces) apunta por la ruta del GPS. Se esconde cerca del objetivo, en interiores y en menús.</li>
+<li><strong>Noche más clara</strong>: la luz mínima nocturna sube; de día todo queda igual.</li>
+<li><strong>Carrera solidaria del casco</strong>: hasta 4 controles a menos de 320 m del Ayuntamiento, en orden de cercanía, y
+  vuelta al Ayuntamiento; el tiempo se calcula con la distancia (antes eran ~6 min imposibles).</li>
+<li><strong>Rutas lejos del borde</strong>: carreras, coches que huyen y fugas a pie eligen recorridos a ≥ 90 m del borde del mapa
+  (antes el aviso del borde te devolvía atrás en plena persecución).</li>
+<li><strong>Primera pelea 2D sin parón</strong>: el fondo del escenario se prepara una vez durante la carga.</li>
+<li><code>.gitattributes</code>: finales de línea fijos (sin el aviso «LF will be replaced by CRLF» de git en Windows).</li>
+</ul>
+<h2>0.59.0 — 2026-10-12 — El mapa crece: La Cuesta y Taco</h2>
+<ul>
+<li><strong>Mapa más grande</strong> alrededor de los centros de salud de <strong>La Cuesta</strong> (franja de X 2400–3450 por Z 1600–2250) y de
+  <strong>Taco</strong> (X 1450–1850 por Z 3980–4430), unidas al borde del mapa anterior: unos 300 edificios y 390 calles nuevas de
+  OpenStreetMap, con su relieve (Copernicus) fundido con el del resto.</li>
+<li><strong>Centros de Salud de La Cuesta y de Taco</strong> rotulados; al morir cerca, reapareces allí.</li>
+<li>Las zonas nuevas se descargan desde el PC (<code>scripts/descargar_zonas.bat</code>, reintentos y límites de los servidores) y se
+  integran con <code>tools/merge_zona.py</code> sin duplicar lo que ya había: reutilizable para futuras ampliaciones.</li>
+</ul>
+<h2>0.58.2 — 2026-10-12 — Centro de Salud de Finca España en su parcela</h2>
+<ul>
+<li><strong>Finca España</strong>: ya no se sale a la Avenida de los Menceyes. Ocupa toda su parcela, entre la C. Pueblos de Tenerife y
+  la C. El Coralito, con el aparcamiento detrás (la plaza vacía de al lado era parte del centro): ala baja al oeste y
+  bloque principal, fachada, puerta y verja a la avenida. Se ve en el minimapa y en el mapa. El último tramo del
+  «Pasaje el Dátil» de OSM, que cruzaba la parcela, se corta en el aparcamiento.</li>
+</ul>
+<h2>0.58.1 — 2026-10-07 — Centros de salud en su sitio</h2>
+<ul>
+<li>Con las capturas de Jonay (códigos de Google Maps pasados a metros del juego): <strong>Laguna-Universidad</strong> (Av. Trinidad,
+  antes «La Laguna»), <strong>San Benito</strong> movido a su sitio real (C. Benito Pérez Galdós, estaba 240 m desviado) y
+  <strong>Finca España</strong> nuevo (Av. de los Menceyes 153; no está en OSM: bloque de ladrillo y gris con verja). La Cuesta
+  queda fuera del mapa actual.</li>
+</ul>
+<h2>0.58.0 — 2026-10-07 — Hospital Universitario de Canarias y centros de salud</h2>
+<ul>
+<li><strong>HUC</strong> según las fotos: bloque de 12 plantas con bandas de ventanas, torre cilíndrica blanca con remate de cristal y
+  helipuerto en voladizo, el edificio verde de cristal de Actividades Ambulatorias, Urgencias rotulada y jardín con
+  palmeras y la escultura de acero.</li>
+<li><strong>Centros de salud</strong> de La Laguna y de San Benito: fachada blanca con el rótulo y la cruz verde.</li>
+<li><strong>Al morir te despiertas en el centro de salud o las urgencias más cercanas</strong> (antes, en casa de El Blanco).</li>
+</ul>
+<h2>0.57.0 — 2026-10-07 — Persecuciones visibles, mapa legible, GPS estable y menos memoria</h2>
+<ul>
+<li><strong>Mapa grande</strong>: se abre más cerca y centrado en ti. Los rótulos ya no se pisan: de lejos solo barrios y lugares
+  importantes; al acercarte salen grandes superficies, entradas y, muy cerca, las tiendas. Texto con borde oscuro y
+  colores que no se confunden con las rutas de misión.</li>
+<li><strong>Atraco en la farmacia</strong>: el segundo ladrón corre y roba un coche negro aparcado junto a un Tollota Corola (para
+  ti); el coche sale en el mapa como círculo amarillo con la ruta para seguirlo; sube hacia Las Gavias, se baja y huye
+  a pie por el camino de tierra hacia el Camino Tornero: dale dos tiros de bolas antes de que llegue, se pone a
+  llorar y lo agarras.</li>
+<li><strong>Canarión</strong>: el círculo azul de las carreras ya arranca a la primera (el de «El rally de La Esperanza» estaba
+  encima; ahora están separados y empieza el más cercano).</li>
+<li><strong>Persecuciones</strong>: una flecha roja encima de quien hay que perseguir (persona, coche o guagua) los primeros segundos,
+  y un punto rojo en el minimapa y el mapa grande mientras dura. Los que huyen a pie salen desde donde están (Pepe
+  ya no desaparecía de golpe), siempre alejándose de ti, por aceras, plazas y caminos y sin saltos.</li>
+<li><strong>Rutas del GPS</strong>: en coche la ruta sale de la calle por la que vas y en tu sentido de marcha (antes salía del cruce
+  más cercano, que podía estar detrás, en una calle paralela o en un puente) y no se recalcula mientras la sigues:
+  solo se recorta lo ya hecho. Ya no da saltos ni va marcha atrás.</li>
+<li><strong>Coches aparcados de misión</strong> (el camión de los baches, la furgoneta del gofio…): ya no se van solos marcha atrás;
+  un coche sin conductor con el freno puesto se queda quieto aunque haya cuesta.</li>
+<li><strong>Tranvía</strong>: sin árboles ni farolas encima de la vía.</li>
+<li><strong>Memoria</strong> (auditorías; medido: memoria JS 544 → 503 MB, geometría en RAM 382 → 342 MB): las posiciones de la ciudad se liberan al subirlas a la tarjeta gráfica (solo el agente
+  revisor las conserva, con <code>?revisor=1</code>); al cambiar el tiempo se liberan los mapas de entorno del tiempo anterior;
+  los bancos de la misión «Los bancos del Adelantado» se liberan al terminar.</li>
+</ul>
+<h2>0.56.1 — 2026-10-07 — Alcalde gordito</h2>
+<ul>
+<li><strong>Don Yovoy Gofiérrez</strong> pasa a talla «gordito» (cuerpo y cara más llenos), sin llegar a las tallas gordas extremas.</li>
+</ul>
+<h2>0.56.0 — 2026-10-07 — Defensores de La Laguna: 12 misiones, Ayuntamiento y alcalde</h2>
+<ul>
+<li><strong>Misiones nuevas</strong> (12, tras el campo de tiro): Atraco en la farmacia, Defensores de La Laguna (ceremonia en el
+  Ayuntamiento), El carterista del Cristo, Baches en la Vía de Ronda, El rally de La Esperanza, Los bancos del
+  Adelantado, Grafiteros en el tranvía, La guagua de la broma, Escolta a la guagua del Romero, El gofio robado,
+  Carrera solidaria del casco y Noche en el aeropuerto (acaba con coche patrulla para la banda).</li>
+<li><strong>El alcalde, Don Yovoy Gofiérrez</strong> (bigote y traje negro), espera bajo los arcos del Ayuntamiento y encarga misiones.</li>
+<li><strong>La pistola es de bolas de plástico</strong> de aire comprimido: lo explica El Blanco y en estas misiones no es delito.</li>
+<li><strong>Ayuntamiento</strong> nuevo según las fotos: cantería, 5 arcos, balcones de madera, frontón con escudo y 5 banderas.</li>
+<li><strong>Reintentar</strong>: al fallar una misión se pregunta «¿Reintentar?» y te lleva a su inicio.</li>
+<li><strong>Guardar a mitad</strong>: al cargar, la misión empieza de nuevo en su círculo (con aviso) sin dejar nada suyo suelto;
+  las partidas que ya habían terminado la historia siguen con las misiones nuevas.</li>
+<li><strong>Pelea 2D, especiales nuevos</strong>: atrás-adelante + puñetazo = Bola de gofio; atrás-adelante + patada = Patada del
+  Teide (avanza girando, 3 patadas); abajo-arriba + puñetazo = Gancho del Roque; abajo-arriba + patada = Salto del
+  Pastor. En el tutorial de Sastrón.</li>
+<li><strong>Moto</strong>: el piloto va sentado, inclinado al manillar, con los pies en el reposapiés (antes, tieso de pie).</li>
+<li><strong>Tallas gordas</strong>: la deformación de la cara se limita a papada y mejillas (los labios ya no se hinchan).</li>
+<li>Pruebas nuevas <code>prueba_misiones.py</code> (juega solas todas las misiones) y <code>prueba_misiones_guardado.py</code>;
+  herramientas de fotos reutilizables en <code>tests/herramientas/</code>.</li>
+</ul>
+<h2>0.55.0 — 2026-10-07 — Uniones de túneles y trincheras, pasarela y aviso de la radio</h2>
+<ul>
+<li><strong>Bocas de trinchera</strong>: donde otra calle se incorpora a una calle hundida (Vía de Ronda, X 388 Z 1499), la trinchera
+  no empieza a bajar hasta dejar atrás la incorporación (rampa del 15 %), salvo bajo los puentes que cruza; si allí
+  tiene que ser honda, es la calle que se incorpora la que baja con ella. Ya no se cae el coche 1,7 m en la boca.</li>
+<li><strong>Túneles por dentro</strong>: la pared entre dos trincheras pegadas solo se quita cuando de verdad van juntas (a menos de
+  0,6 m y a la misma altura): en el Camino el Vallado ya no se ve el exterior por los lados. El fondo de tierra solo se
+  pone en los tramos cubiertos (en la trinchera abierta tapaba el cielo).</li>
+<li><strong>Pasarela de La Trinidad</strong>: unos trozos de puente peatonal de OSM se montaban sobre la rampa hacia San Miguel de
+  Geneto a otra altura y no dejaban pasar; ahora la rampa es continua.</li>
+<li><strong>Radio</strong>: al subir a un coche se avisa de cómo cambiar de emisora (Q / tocar el velocímetro) hasta que la hayas
+  cambiado dos veces; se guarda con la partida.</li>
+</ul>
+<h2>0.54.0 — 2026-10-07 — Freno de mano de verdad y modo móvil ordenado</h2>
+<ul>
+<li><strong>Freno de mano</strong>: bloquea las ruedas traseras. El coche frena, la trasera se va y gira más cerrado; un toque a
+  60 km/h da un derrape de ~30° que se recoge solo al soltar; mantenido, el coche cruza y se para. Las ruedas traseras
+  dejan de girar mientras está echado.</li>
+<li><strong>Modo móvil</strong>: el minimapa ya no tapa las estrellas ni los botones. Minimapa arriba a la izquierda (tocarlo abre el
+  mapa), reloj, dinero y estrellas arriba a la derecha, botones abajo a la derecha al alcance del pulgar, todo escalado
+  al alto de la pantalla. Los botones cambian en el coche: SALIR, FRENO MANO y CLAXON.</li>
+<li><strong>Invernaderos</strong> (el «edificio transparente» junto a la pasarela de Padre Anchieta es un invernadero de OSM): ahora
+  siguen la pendiente (antes eran una caja de cristal plana de hasta 13 m de alto en cuesta), son de plástico lechoso y
+  llevan estructura blanca.</li>
+</ul>
+<h2>0.53.0 — 2026-10-07 — Paradas del tranvía, escalera de la pasarela y paredes de túnel</h2>
+<ul>
+<li><strong>Paradas del tranvía</strong>: en 9 paradas la calzada pisaba las vías y el andén y el coche se atascaba. Ahora, junto a
+  cada parada, la calle se aparta hacia fuera con una curva suave lo justo para dejar sitio al andén, sin meterse en
+  edificios ni aceras (se calcula en <code>prep.py</code>). Los andenes son un 20 % más pequeños que los reales (24 × 1,85 m).</li>
+<li><strong>Pasarela de La Trinidad</strong>: la escalera sureste ya no baja a la carretera; sale un tramo llano hacia el campus y la
+  escalera llega a la acera en X −272, Z 709.</li>
+<li><strong>Túneles</strong>: entre dos trincheras pegadas solo se quita la pared si las dos van a la misma altura; si la de al lado
+  va a otra profundidad o aún a ras, la pared se mantiene (antes se veía el exterior a través del túnel).</li>
+</ul>
+<h2>0.52.0 — 2026-10-07 — Sin fuga de los coches del tráfico (auditoría P0.a)</h2>
+<ul>
+<li>Las piezas de los vehículos se crean una sola vez y las comparten todos: pilotos, barra de luces y franjas de la
+  policía, franja y luz del taxi, ruedas, cubos, carenados y piloto de las motos, y el casco del motorista. Los rótulos
+  («POLICÍA LOCAL», furgonetas, taxi, guagua) usan una textura por texto.</li>
+<li>Cuando un coche se descarta y no vuelve al grupo de reutilizables (destrozado o grupo lleno), se libera su pintura y
+  lo que no es compartido; el motorista vuelve al grupo de peatones (antes se creaba uno nuevo por moto).</li>
+<li><code>__dbg.POOLS = { CARPOOL, HPOOL }</code> para que el auditor no cuente como fuga lo guardado para reutilizar.</li>
+</ul>
+<h2>0.51.0 — 2026-10-07 — Calles superpuestas a distinta altura, isletas y rampas de garaje</h2>
+<ul>
+<li><strong>Calles que se solapan con un terraplén</strong> de cualquier altura (no solo los bajos) suben con él donde de verdad lo
+  pisan: se acaban el asfalto «flotando» 2–3 m sobre otra calle (X 91 Z 1284, X 701 Z 814, X −741 Z 334) y los dos
+  últimos «vuela» de los enlaces de la TF-5 (X 750 Z 3486, X 717 Z 3390).</li>
+<li><strong>Isletas de rotonda</strong> que siguen el terreno (antes eran un disco plano a la altura del centro y en cuesta quedaban
+  1–1,5 m por encima de la calzada) y que se encogen si una calle de entrada les pasa por encima.</li>
+<li><strong>Inicio de las trincheras</strong>: donde la calle hundida aún va casi a ras, su asfalto baja hasta el suelo por el lado
+  bajo (en cuesta flotaba ~1 m sobre la calle de al lado, X 752 Z 1268).</li>
+<li><strong>Rampas de garaje</strong> bajo plazas y aceras: el coche ya baja por ellas (antes la acera «tapaba» la rampa y el coche
+  se quedaba arriba, X 2212 Z 3366).</li>
+<li>Agente revisor: no da «atasco» ni «no termina» en calles que siguen fuera del borde del mundo.</li>
+</ul>
+<h2>0.50.0 — 2026-10-07 — Enlaces de autopista, trincheras y fuentes</h2>
+<ul>
+<li><strong>Enlaces de autopista sin «volar»</strong>: el coche ya no salta a una rampa vecina más alta que se solapa con su calzada.
+  Las vías que comparten terraplén con una rampa elevada suben con ella en ese tramo; el coche solo sube a un tablero
+  si el escalón es pequeño (o si es el propio tablero que sube); y en curvas con pendiente la altura del puente o la
+  trinchera sale del tramo más cercano. Prueba de conducción del agente: de 94 a 25 avisos (de 40 «vuela» a 3–6).</li>
+<li><strong>Trincheras</strong>: las rampas de bajada terminan antes de los cruces; el coche ya no rebota en la boca de su propia
+  trinchera ni se atasca en una calle a ras pegada a la trinchera gemela (X 1800, Z 3160); muros a ras donde otra
+  calle toca la trinchera; sin losas de techo dentro de otra calzada. Túneles y puentes: fallan 3 de 97 (antes 10 de 111).</li>
+<li><strong>Túneles por dentro</strong>: si la cámara queda bajo tierra se ve un fondo de tierra en vez del cielo o el subsuelo
+  transparente.</li>
+<li><strong>Fuentes</strong> de plazas y parques fusionadas en pocas mallas (menos llamadas de dibujo).</li>
+<li><strong>Vallas de canchas</strong> que ya no cruzan la calle (C. Castellón / Valencia); los andenes del tranvía se acortan si sus
+  rampas llegan a la calzada.</li>
+<li>Agente revisor: ya no da error al leer coches aparcados que se rehacen durante la prueba.</li>
+</ul>
+<h2>0.49.0 — 2026-10-07 — Rendimiento (auditoría) y menú principal nuevo</h2>
+<ul>
+<li><strong>Menú principal</strong>: botones en columna como en los juegos (continuar / nueva partida / cargar / opciones / controles
+  / modo Achamán), número de versión en la esquina y una descripción del juego a la altura de lo que ya es.</li>
+<li><strong>Memoria</strong> (auditoría P0.1): la geometría de la ciudad y de los coches aparcados guarda normales en 8 bits y colores en
+  8 bits, y suelta de la RAM las copias que ya están en la tarjeta gráfica; los aparcados se rehacen por zona cuando
+  te llevas uno. Memoria al arrancar: de ~1.200 MB a ~620 MB (y baja más según se va viendo la ciudad).</li>
+<li><strong>Sin fugas ni tirones</strong> (P0.2–P0.3): peatones, Canariones y policías salen de un grupo preparado durante la carga y
+  se reutilizan; los coches del tráfico que se van se guardan para reutilizarlos; las pistolas de los policías y las
+  balizas de misión se reutilizan o se liberan.</li>
+<li><strong>Por fotograma</strong> (P1): el HUD solo toca la página cuando cambia algo, el minimapa se dibuja a 30 Hz, los avisos
+  («F Entrar…», puertas, comida) se buscan cada 6 fotogramas, colisiones y sol sin crear basura, y los mapas de
+  reflejos del cielo se preparan durante la carga (uno por hora y media) en vez de recalcularse jugando.</li>
+<li><strong>Funciona sin internet</strong> (P2): la copia del PC lleva Three.js y las fuentes dentro del HTML; los sombreadores se
+  compilan sin congelar la carga.</li>
+<li>Rutina: en cada versión se lanza el auditor de código (el agente revisor, solo cuando Jonay lo pida); sus mejoras
+  solo se aplican cuando Jonay lo dice. El agente revisor ignora las mallas cuyos datos ya se liberaron de la RAM.</li>
+</ul>
+<h2>0.48.1 — 2026-10-07 — Tallas: el protagonista vuelve a talla media</h2>
+<ul>
+<li>El Chopa, los personajes de misión, los de las tiendas y los policías son siempre de talla media (antes podían salir
+  con una talla aleatoria, incluso súper gordo).</li>
+<li>Reparto de tallas de los peatones más realista: la mayoría en el rango medio; atléticos, delgados y gordos menos
+  frecuentes, y los extremos (súper delgado / extra y súper gordo) raros (2–4 %).</li>
+</ul>
+<h2>0.48.0 — 2026-10-07 — Pelea 2D en alta resolución y siete tallas de cuerpo</h2>
+<ul>
+<li><strong>Pelea 2D con el doble de resolución</strong> (640×360 en vez de 320×180, misma jugabilidad): los luchadores tienen cara
+  (ojo, ceja, boca, oreja), mechones y brillo en el pelo, pliegues y borde iluminado en la ropa, cinturón con hebilla,
+  manga corta, rodilleras de luz y suela de las zapatillas; el fondo de la calle se pixela con el doble de detalle.
+  El sprite se ensancha o estrecha según la talla del personaje (barriga en los gordos).</li>
+<li><strong>Siete tallas de cuerpo</strong>: súper delgado, extra delgado, normal, atlético, gordo, extra gordo y súper gordo (más
+  mayores y adolescentes). Los peatones salen con un reparto de todas ellas.</li>
+</ul>
+<h2>0.47.0 — 2026-10-06 — Agente revisor de jugabilidad y cuerpos variados</h2>
+<ul>
+<li><strong>Cuerpos variados (versión propia)</strong>: sobre el cuerpo «superhéroe» de Quaternius, cuatro formas propias mezclables
+  —normal (menos músculo), relleno/barrigón, adolescente y mayor—; los peatones salen con un reparto de cuerpos
+  y alturas (había un fallo que anulaba la variación de altura). Mismas animaciones.</li>
+<li><strong>Agente revisor</strong> (<code>tests/agente_revisor.py</code>): tras cada versión recorre en coche, a pie y con rayos de
+  superficie las zonas nuevas, todas las vías de riesgo (enlaces de autopista, puentes, túneles, rampas) y un lote
+  rotatorio del resto del mapa. Escribe el informe mientras avanza (<code>reportes/</code>, con capturas y coordenadas) y lo
+  compara con el anterior: avisos nuevos, que siguen y arreglados.</li>
+<li><strong>Aeropuerto</strong>: el puente que se quedaba en el aire (X −3303, Z −143) ahora baja a nivel: la rampa se ajusta al
+  largo de vía disponible y sigue por la esquina si hace falta.</li>
+<li><strong>Aceras</strong>: ya no son una losa entera bajo la calzada sino dos franjas a los lados; se acaba el «suelo» de acera
+  que asomaba sobre el asfalto (p. ej. X −2933, Z −43).</li>
+<li>Arreglos de la primera tanda del agente:</li>
+<li>Las franjas de acera se cortan donde entran en otra calzada (bocas de cruce, enlaces): no más acera cruzando
+    la carretera.</li>
+<li>El asfalto ya no deja asomar el terreno por dentro en zonas de relieve irregular (aeropuerto): la cinta se
+    levanta lo justo sobre los «bultos» del terreno entre sus bordes.</li>
+<li>Pretiles de puentes y rampas: no se ponen dentro de la calzada de un enlace que se une a ellos.</li>
+<li>Las calles que se unen a una rampa o puente elevado en uno de sus nudos suben a su encuentro (antes se quedaban
+    a nivel bajo el tablero: «coche que vuela» y «tablero flotando»).</li>
+<li>27 edificios pequeños atravesados por una calle (marquesinas mapeadas como edificio, sobre todo en el
+    aeropuerto) se quitan, y 28 caminos sin salida que entraban en un edificio se cortan en la pared.</li>
+<li>El agente distingue ahora «edificio sobre la vía», mide la superficie respecto al asfalto realmente dibujado (menos
+  falsos avisos), da más tiempo a las vías largas y permite recomprobar solo unas vías (<code>--vias</code>, <code>--pruebas</code>).</li>
+</ul>
+<h2>0.46.0 — 2026-10-06 — Vuelven dos zonas del mapa</h2>
+<ul>
+<li>Se recuperan las zonas marcadas por Jonay que se habían quitado: al suroeste, de Guajara / San Felipe / San
+  Bartolomé de Geneto hasta El Coromoto (X −1200…158, Z 1376…2810); al noreste, la franja al este de San Roque y La
+  Verdellada (hasta una línea escalonada X 781/1300/1805). Siguen fuera Los Baldíos, La Vega y el monte de Valle
+  Tabares / Las Mercedes.</li>
+</ul>
+<h2>0.45.0 — 2026-10-05 — Finca España, Chimisay y La Pirámide</h2>
+<ul>
+<li><strong>Finca España</strong>: pabellón del Complejo Deportivo Islas Canarias junto al campo (hormigón gris, cubierta blanca
+  a un agua que vuela sobre la esquina, franja de cristal verde agua y lamas oscuras, pilares morados y rótulo).
+  Los bloques de C. Tacoronte (zona del colega) en tonos arena y salmón.</li>
+<li><strong>San Miguel de Chimisay / El Cardonal</strong>: el barrio, vacío en OSM, se llena con unas 600 casas y bloques a lo
+  largo de sus calles (alrededor de la casa del hermano).</li>
+<li><strong>Edificio La Pirámide</strong> (Campus de Guajara): pirámide escalonada de cristal y hormigón.</li>
+<li>Los rellenos de barrios ignoran los usos «residencial/césped/matorral» de OSM (antes bloqueaban el relleno).</li>
+</ul>
+<h2>0.44.0 — 2026-10-05 — Aeropuerto de Los Rodeos</h2>
+<ul>
+<li><strong>Aeropuerto Tenerife Norte</strong> al oeste, con datos reales de OpenStreetMap: pista 12/30 de 3,4 km × 45 m con
+  marcas (eje, bordes, «piano» de umbral, zona de toma y números 12 y 30), calles de rodaje con su línea amarilla,
+  plataformas de hormigón, terminal (piedra clara, doble banda acristalada, marquesina volada sobre pilares con
+  banda verde y rótulo «TENERIFE NORTE · CIUDAD DE LA LAGUNA»), torre de control, hangares y 17 turbohélices de la
+  aerolínea parodia «Guanchavía» en sus puestos, con el morro hacia la terminal.</li>
+<li><strong>Mapa ampliado</strong> hacia el oeste en un corredor (Z −450 a 1400) con relieve real (Copernicus DEM, rejilla de 32 m
+  fundida con la anterior) y las calles, casas y fincas de la zona: Camino San Lázaro, Calle Aviación, TF-5,
+  Carretera General del Norte, Guamasa / El Portezuelo… (+1275 edificios, +815 vías). Hay ruta en coche desde el
+  inicio hasta la terminal (≈2,8 km).</li>
+<li>Minimapa a escala 0,45 para que el mapa grande siga siendo ligero.</li>
+</ul>
+<h2>0.43.0 — 2026-10-05 — Túneles, parking del Cristo, Sastrón primero y arreglos</h2>
+<ul>
+<li><strong>Historia</strong>: Sastrón te pone a prueba con la pelea en cuanto le conoces; al ganarle pide la pasta y te ofrece la
+  carrera del Canarión (opcional y recomendada) o reunirla peleando por la calle. Las partidas guardadas antiguas se
+  adaptan solas.</li>
+<li><strong>Túneles y pasos inferiores</strong>: más hondos (7,2–8,4 m), tubos y bocas más anchos y altos (6 m); el techo solo se
+  construye donde queda bajo tierra (antes asomaba como una losa blanca cruzando la carretera, p. ej. en la
+  estación de guaguas). Los primeros 0,5 m de cada rampa quedan a nivel: ya no te hundes en el asfalto al llegar a un
+  cruce (Alcampito, TF-5 y 42 sitios más; auditoría a 0).</li>
+<li><strong>Estación de guaguas</strong>: andenes, guaguas y rótulos ya no se colocan sobre la autopista hundida.</li>
+<li><strong>Parking de la Plaza del Cristo</strong>: 1,1 m más hondo, sala de 3,4 m de alto, rampas más largas y anchas con boca de
+  3,9 m (los coches ya no rozan el techo), paredes del fondo que los coches no atraviesan, y las escaleras de salida
+  sin coches aparcados que las taponaban (columnas y coches solo cuentan a la altura del suelo del parking).</li>
+<li><strong>Pistola</strong>: los dedos parten cada fotograma de su postura de reposo (al apuntar la mano ya no gira sin parar) y el
+  primer disparo no congela el juego (la luz del fogonazo existe desde el principio y no obliga a recompilar).</li>
+</ul>
+<h2>0.42.0 — 2026-10-05 — Peleas tipo Street Fighter, controles configurables, menú ancho y terreno</h2>
+<ul>
+<li><strong>Pelea 2D</strong>: mantener atrás anda hacia atrás; solo se cubre si el rival está atacando (golpe en preparación o
+  activo, o bola de gofio que viene). Luchadores un 20 % más pequeños (sprites e impactos) y más separados al
+  empezar (≈190 px) para poder lanzar especiales a distancia.</li>
+<li>Tutorial de pelea con textos cortos que se reparten en dos líneas y cartel de controles reducido.</li>
+<li><strong>Pantalla de CONTROLES</strong> (menú principal y pausa): cada acción conserva sus teclas y se le puede añadir otra;
+  se guarda en el navegador.</li>
+<li><strong>Menú principal</strong> al 75 % del ancho en PC, botones en una fila y botón Achamán legible (texto oscuro sobre ámbar).</li>
+<li><strong>Terreno</strong>: en 42 zonas (306 puntos) el personaje y los coches se hundían unos centímetros porque el final poco
+  profundo de una trinchera quedaba por debajo del suelo sin hueco; ahora se pisa el terreno
+  (<code>tests/audit_hundimiento.py</code> da 0).</li>
+</ul>
+<h2>0.41.0 — 2026-10-05 — Límites del mundo, ambiente sonoro, pistola y Mercadona</h2>
+<ul>
+<li><strong>Límites del mundo</strong>: a 50 m del borde aparece «Saliendo del mundo»; si sigues, vuelves 100 m hacia dentro, sobre una
+  calle (nunca encima de un edificio), a pie o en coche y mirando hacia dentro.</li>
+<li><strong>Zonas quitadas</strong> (no se cargan ni se dibujan): el monte del noreste (Valle Tabares, Valle Vinagre, Los Valles) y el
+  campo del suroeste (Los Baldíos, La Vega, Geneto). ~950 edificios, 460 calles y 550 tramos de tráfico menos.</li>
+<li><strong>Ambiente sonoro</strong>: pájaros de varias especies en los árboles (más de día), motor de los coches cercanos con su
+  posición, gente charlando (y riendo) cuando hay grupos, campanas de La Concepción y la Catedral a las horas y a la
+  media, perros y gaviotas a lo lejos. Todo con estéreo según la cámara.</li>
+<li><strong>Pasos</strong> bastante más suaves.</li>
+<li><strong>Pistola</strong>: la empuñadura queda dentro del puño cerrado en cada fotograma (antes bailaba 4–7 cm al andar) y el
+  pulgar la abraza.</li>
+<li><strong>Mercadona</strong> (Merca Mona): la entrada principal da a Marqués de Celada (n.º 55), con el hueco oscuro, el rótulo,
+  el balcón corrido con barandilla y la esquina curva.</li>
+<li><strong>Lucas Vega / Callejón Montaraz</strong>: el solar vacío se llena de casas (45) como en la realidad.</li>
+</ul>
+<h2>0.40.0 — 2026-10-05 — Esquina de inicio y Calle Marqués de Celada</h2>
+<ul>
+<li>Las manzanas que OSM dibuja como un único bloque de 4–5 plantas alrededor del inicio (Marqués de Celada, Adelantado,
+  Teobaldo Power, Carretas) se parten en casas de 1–4 plantas con colores canarios, tejados de teja y patio dentro.</li>
+<li>Edificio amarillo de Teobaldo Power: amarillo ocre, zócalo de piedra, tejado a cuatro aguas y balcones con barandilla.</li>
+<li>En la esquina: casa baja beige y medianera rosa, edificio crema con balcones de madera, casa roja canaria con
+  esquinas de basalto y casa blanca encalada con remate de teja; isleta con señales «Vía de Ronda / Punta del Hidalgo»,
+  prohibido, STOP y «20»; bolardos y contenedores.</li>
+<li>Locales en la subida de Marqués de Celada (pizzería, ferretería, bares, panadería, frutería, farmacia, peluquería…).</li>
+<li>El Mercadona de Teobaldo Power (sin nombre en OSM) aparece como «Merca Mona» con su rótulo: cualquier edificio sin
+  nombre que contenga una tienda de marca toma su nombre.</li>
+</ul>
+<h2>0.39.0 — 2026-10-02 — La Concepción rehecha</h2>
+<ul>
+<li>Torre en su sitio real: el bloque cuadrado que sobresale del plano OSM en el flanco norte (~X −529, Z −346). Ya no
+  hay paredes de la iglesia donde está la torre.</li>
+<li>Torre nueva (~31 m): cantería de basalto oscuro, 4 cuerpos con cornisas, pilastras en las esquinas, ventanas con
+  balconcitos de hierro, reloj en tres caras, campanario con dos arcos por lado y campanas, linterna octogonal con
+  arcos, cupulín y cruz; galería canaria de madera y verja con plantas al pie.</li>
+<li>Iglesia nueva: muros encalados con zócalo de basalto, alero de dos hileras de teja, nave central elevada con
+  óculos, ventanales de medio punto con vidrieras y marco de piedra rojiza, portada barroca de piedra con frontón
+  partido y escudo + arco ciego junto a la torre, segunda portada lateral, y cabecera alta blanca con pilastras de
+  basalto y dos filas de ventanas.</li>
+<li>Boca Papa y el círculo de sus misiones, fuera de la verja de la torre y alcanzables.</li>
+<li>Casa del hermano en Av. San Miguel de Chimisay / Av. El Cardonal (no estaba en OSM): casa blanca de 2 plantas con
+  torreta en la azotea, puerta gris, ventanas con marco negro y muro blanco.</li>
+</ul>
+<h2>0.38.0 — 2026-10-02 — Coches en pendientes laterales, peleas más justas y coordenadas</h2>
+<ul>
+<li>Los coches se inclinan bien en calles con pendiente lateral (el alabeo estaba al revés: un lado flotaba).</li>
+<li>Coches: aceleran un 15 % menos (misma velocidad punta) y la dirección es un poco más suave.</li>
+<li>Peleas 2D: la CPU pega un 25 % menos, prepara los golpes 1,6× más despacio y ataca algo menos.</li>
+<li>Círculo de inicio de las misiones de Boca Papa en un sitio despejado (no pegado a la torre ni al árbol).</li>
+<li>Coordenadas X/Z encima del minimapa y del cursor/destino en el mapa grande.</li>
+</ul>
+<h2>0.37.0 — 2026-10-02 — Pasos sincronizados y con mejor sonido</h2>
+<ul>
+<li>Los pasos suenan justo cuando el pie toca el suelo: se detecta el apoyo real de cada pie en la animación (andar, trotar, esprintar).</li>
+<li>Sonido nuevo: talón + punta, con resonancias de suela y suelo, arenilla y roce; 6 variantes por suelo para que no se repita.</li>
+<li>Suelos distintos: asfalto, adoquín/losa del casco, baldosa en interiores, césped/tierra y chapa.</li>
+<li>Eco en túneles y parkings, y algo de sala en interiores. El aterrizaje de un salto usa los dos pies.</li>
+<li>Documentación técnica en una sola página para leer en local (<code>Documentación técnica.html</code>).</li>
+</ul>
+<h2>0.36.0 — 2026-10-02 — Guardar y cargar partida, repositorio y documentación</h2>
+<ul>
+<li>Guardado y carga de partida: 3 ranuras manuales + automática (al superar misión, cada 3 min y al cerrar), exportar/importar <code>.json</code>.</li>
+<li>Repositorio git con el código fuente, los datos, las pruebas y la documentación técnica (<code>docs/</code>).</li>
+<li>Scripts de publicación automática a GitHub (<code>scripts/</code>).</li>
+</ul>
+<h2>0.35.0 — 2026-10-01 — Reaparición robusta al morir</h2>
+<ul>
+<li>La reaparición tras morir (también dentro de un coche destrozado) nunca se queda bloqueada; vigilante de 6 s.</li>
+</ul>
+<h2>0.34.0 — Mapa con carreteras en azul</h2>
+<ul>
+<li>Carreteras del mapa y minimapa en tonos azules; el amarillo y el rosa quedan solo para rutas de misión / GPS.</li>
+</ul>
+<h2>0.33.0 — Rap en inglés en la radio</h2>
+<h2>0.32.0 — Voces rapeando en la radio</h2>
+<h2>0.31.0 — Días largos y noches cortas (día 30 min, noche 8 min)</h2>
+<h2>0.30.0 — Efectos de sonido (pasos, salto, caída) y radio hip hop procedural con estribillo de misión</h2>
+<h2>0.29.0 — Plazas y parques (Adelantado, Camino Largo, Parque de la Constitución y genéricos)</h2>
+<h2>0.28.0 — Repaso de carreteras: puentes, túneles, cruces, medianas y separación de calzadas</h2>
+<h2>0.27.0 — Icono del juego</h2>
+<h2>0.26.0 — Policía a pie que dispara (4+ estrellas), cambio de arma, GPS peatonal, arreglos varios</h2>
+<h2>0.25.0 — Controles en las primeras peleas y textura real de enlucido en fachadas</h2>
+<h2>≤ 0.24 — Versiones anteriores (mundo, misiones de la historia, peleas 2D, modo Achamán, armas, parkings…)</h2></section></main>
+<script>
+const nav=document.getElementById('nav');document.getElementById('menu').onclick=()=>nav.classList.toggle('open');
+nav.querySelectorAll('a').forEach(a=>a.onclick=()=>nav.classList.remove('open'));
+const links=[...nav.querySelectorAll('a')];
+const io=new IntersectionObserver(es=>{const e=es.find(e=>e.isIntersecting);if(e)links.forEach(l=>l.classList.toggle('on',l.getAttribute('href')=='#'+e.target.id))},{rootMargin:'-10% 0px -80% 0px'});
+document.querySelectorAll('section').forEach(s=>io.observe(s));
+</script></body></html>

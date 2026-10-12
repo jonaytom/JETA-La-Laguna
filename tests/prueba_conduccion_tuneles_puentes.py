@@ -35,4 +35,5 @@ async def run(pg):
         if not r['done']:
             bad.append(r); print('FAIL', r); await snap(pg, 'df_%d'%ri); await pg.evaluate("__dbg.GAME.state='play'")
     print('failed', len(bad), 'of', len(ids))
-    json.dump(bad, open('/tmp/drive.json','w'))
+    json.dump(bad, open('shots/conduccion.json','w'))
+    print('CONDUCCION', 'OK' if not bad else 'FALLA')

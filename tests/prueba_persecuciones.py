@@ -11,7 +11,7 @@ async def run(pg):
     await pg.evaluate("(()=>{document.getElementById('menu').style.display='none'; window.__manual=true; __dbg.GAME.state='play'; __dbg.GAME.lock=()=>{}; __dbg.GAME.tod=12; __step(2);})()")
     ok_all = True
     for i in idx:
-        await pg.evaluate("(i)=>{const d=__dbg, M=d.MISSIONS; if (M.active) M.fail('x', true); if (d.PLAYER.car) d.exitCar(); __step(5); M._setIdx(i); const p=M._story[i].startPos(); d.PLAYER.x=p[0]; d.PLAYER.z=p[1]; __step(10);}", i)
+        await pg.evaluate("(i)=>{const d=__dbg, M=d.MISSIONS; if (M.active) M.fail('x', true); if (d.PLAYER.car) d.exitCar(); __step(5); M._setIdx(i); const b=M.blips().find(q=>q[2]==='#f5b72e'); const p=b ? [b[0], b[1]] : M._story[i].startPos(); d.PLAYER.x=p[0]; d.PLAYER.z=p[1]; __step(10);}", i)
         found = False
         for _ in range(600):
             if await pg.evaluate("__dbg.S2.marks.length"): found = True; break

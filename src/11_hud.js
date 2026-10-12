@@ -163,10 +163,10 @@ const HUD = (() => {
       // prompt (nearest car / door / food stall: linear searches, so not every frame — audit P1.4)
       if (tick % 6 === 0) {
         let pr = '';
-        if (!PLAYER.car) { const t = nearestEnterable(); if (t) pr = t instanceof Car && t.driver ? '<kbd>F</kbd> Robar vehículo' : '<kbd>F</kbd> Entrar en el vehículo'; }
-        else if (PLAYER.car.speed < 2 && PLAYER.car.health <= 0) pr = 'Motor averiado · <kbd>F</kbd> para salir';
-        const dr = nearestDoor(); if (dr) pr = dr.exit ? '<kbd>E</kbd> Salir a la calle' : `<kbd>E</kbd> Entrar: ${dr.it.name}`;
-        { const f = FOOD.near(); if (f && (!dr || (f.counter && dr.exit && Math.hypot(PLAYER.x - f.x, PLAYER.z - f.z) < Math.hypot(PLAYER.x - dr.it.exit.x, PLAYER.z - dr.it.exit.z)))) pr = `<kbd>E</kbd> ${f.counter ? 'Pedir en la barra' : 'Comprar comida'}: ${f.name}`; }
+        if (!PLAYER.car) { const t = nearestEnterable(); if (t) pr = CONTROLS.kbd('car') + (t instanceof Car && t.driver ? ' Robar vehículo' : ' Entrar en el vehículo'); }
+        else if (PLAYER.car.speed < 2 && PLAYER.car.health <= 0) pr = 'Motor averiado · ' + CONTROLS.kbd('car') + ' para salir';
+        const dr = nearestDoor(); if (dr) pr = dr.exit ? CONTROLS.kbd('use') + ' Salir a la calle' : `${CONTROLS.kbd('use')} Entrar: ${dr.it.name}`;
+        { const f = FOOD.near(); if (f && (!dr || (f.counter && dr.exit && Math.hypot(PLAYER.x - f.x, PLAYER.z - f.z) < Math.hypot(PLAYER.x - dr.it.exit.x, PLAYER.z - dr.it.exit.z)))) pr = `${CONTROLS.kbd('use')} ${f.counter ? 'Pedir en la barra' : 'Comprar comida'}: ${f.name}`; }
         const mp = MISSIONS.prompt(); if (mp) pr = mp;
         if (pr !== lastPrompt) { lastPrompt = pr; const pe = hudEl("prompt"); if (pr) { pe.innerHTML = pr; pe.style.display = 'block'; } else pe.style.display = 'none'; }
       }

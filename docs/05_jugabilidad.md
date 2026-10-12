@@ -78,9 +78,12 @@
 - Al pegar a un peatón empieza una pelea pixel-art (escenario lógico de 320×180, dibujado al doble, 640×360: sprites
   con cara —ojo, ceja, boca, oreja—, pelo con mechones, pliegues, cinturón, suela; fondo con el doble de píxeles): el fondo es una captura lateral de la
   escena 3D real posterizada con *dithering*; los luchadores se dibujan proceduralmente a partir de su `look`.
-- Controles: puñetazo = clic izq. / J / Shift dcho. (mando X); patada = clic dcho. / K / Ctrl dcho. (mando A);
-  saltar = Espacio (mando Y); W/↑ = «arriba» (no salta); agacharse = S/↓; **atrás = andar hacia atrás, y se cubre
-  solo mientras el rival ataca** (como Street Fighter); L = cubrirse siempre. Luchadores a escala 0,8 (`SZ`), salen a
+- Controles (v0.64, configurables en Opciones › Controles, grupo Pelea): puñetazo = `E` / clic izq. (mando X); patada =
+  `Espacio` / clic dcho. (mando A); saltar = `↑` / `W` (mando Y); moverse y agacharse con las teclas de andar (A/D, S).
+  El salto espera 2 fotogramas (10 justo después de «abajo») para que «abajo, arriba + golpe» haga el especial.
+  **Atrás = andar hacia atrás, y se cubre solo mientras el rival ataca** (como Street Fighter); cubrirse siempre solo con
+  mando (LB). FIGHT2D convierte las teclas en botones virtuales (`vL vR vD vU vP vK`) con `CONTROLS.codes(id)`. Los
+  textos de misión y de la pelea usan `CONTROLS.keyName(id)` / `CONTROLS.kbd(id)`: salen las teclas que tenga el jugador. Luchadores a escala 0,8 (`SZ`), salen a
   62 px de cada borde.
 - Golpes: puñetazo 10 %, patada 20 %; bloqueados 1 % / 2 %. Combos encadenando golpes que conectan.
 - Especiales (v0.56): **atrás, adelante + puñetazo** = Bola de gofio (proyectil); **atrás, adelante + patada** =
@@ -158,3 +161,24 @@ Vuelta al barrio → Una botella para Coco → **Sastrón** (pelea de prueba con
 La firma de la banda → … La **carrera con el Canarión** es una misión secundaria (círculo azul) que se abre al hablar
 del dinero con Sastrón; después quedan las revanchas. También se puede reunir el dinero peleando por la calle.
 Las partidas v1 (con el Canarión dentro de la historia) se convierten al cargar (`getState().v = 2`).
+
+## El Obispo y el baloncesto 2D (v0.65)
+
+- **Obispado** (`12g_obispo.js`, `buildObispado`): en la fachada de la Casa Salazar que da a la C. San Agustín, portada
+  (columnas pareadas, entablamento, frontón con escudo), chapado de cantería oscura (`aytoStoneTex`), balcones de forja y
+  pináculos. `OBISPADO.front` = sitio del obispo y del círculo. **Monseñor Fermín Truchas** (`NPC.obispo`).
+- **Pista de misiones `obispo`** (`TRACKS.obispo`, color `#b388ff`): se abre cuando la historia llega a las misiones
+  del alcalde (`obispoOpen`). Se guarda en `getState().obispo`. Misiones en `MISSIONS.addObispo`.
+- **Cancha**: `obispoCourt()` = la de baloncesto (`bb` o `multi`) más cercana al Obispado. `pitchRects()` calcula todas
+  las canchas y campos antes de plantar árboles, farolas y mobiliario; `inPitch(x, z, margen)` los deja fuera.
+- **JETA JAM** (`09f_basket2d.js`, `BASKET2D.start({ team, rival, teamName, rivalName, time, lv, mateLv, tutorial,
+  onEnd })`): lienzo 480×270, cancha de 28×15 m vista de lado. Teclas = las de la pelea (`f_punch` A: tirar / tapón,
+  `f_kick` B: correr, `b_pass` + clic dcho.: pasar / robar / cambiar de defensor; moverse con las de andar).
+  **Tiro**: mientras se mantiene, barra junto al jugador; ventana verde `GREEN` = 0,42–0,60 s (lo alto del salto): en
+  verde ≈ 70–95 % según distancia y defensa, «casi» 70 % de lo normal, fuera 10 %. Triple a más de 6,75 m.
+  **Entrada en combo** (`startCombo`): corriendo y tirando a 2,4–7,8 m, fase `combo` (todo parado), 3 s para la
+  secuencia del especial (`COMBOS`: ◀▶/▼▲ relativas a la canasta + puño A o patada B/clic dcho.); bien = mate que no
+  se puede taponar; mal = balón suelto. Robo 42 % (CPU según su nivel); corriendo, empujón. Tapón si un defensor en el
+  aire toca el balón al salir. IA: el que lleva el balón entra hacia la canasta y tira según su distancia preferida y si
+  está libre (la CPU también machaca); los demás se abren a la banda o defienden entre su hombre y la canasta. En el
+  tutorial los rivales no se mueven y tu compañero te espera con el balón.

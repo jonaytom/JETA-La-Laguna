@@ -16,7 +16,7 @@ function buildPlazasParks() {
   const placed = []; // [x,z,r] keep-out discs (features), used to clear trees and avoid overlaps
   const paths = []; // segments [x1,z1,x2,z2,w]
   const bench = [], bin = [], bed = [], playground = [], bust = [];
-  const free = (x, z, r) => !COL.nearSeg(x, z, r) && !onCarriageway(x, z, r * 0.6) && !inAnyBuilding(x, z) && !placed.some((p) => Math.hypot(p[0] - x, p[1] - z) < p[2] + r);
+  const free = (x, z, r) => !COL.nearSeg(x, z, r) && !onCarriageway(x, z, r * 0.6) && !inAnyBuilding(x, z) && !inPitch(x, z, r) && !placed.some((p) => Math.hypot(p[0] - x, p[1] - z) < p[2] + r);
   const addPath = (pts, w = 2.6) => { ribbon(pts, w, 'footway', YOFF.footway + 0.005, 2.4, w / 2.4); for (let i = 0; i < pts.length - 2; i += 2) paths.push([pts[i], pts[i + 1], pts[i + 2], pts[i + 3], w]); };
   const nearPath = (x, z, m) => paths.some((s) => { const dx = s[2] - s[0], dz = s[3] - s[1], L2 = dx * dx + dz * dz || 1; const t = clamp(((x - s[0]) * dx + (z - s[1]) * dz) / L2, 0, 1); return Math.hypot(x - s[0] - dx * t, z - s[1] - dz * t) < s[4] / 2 + m; });
   const benchAt = (x, z, faceX, faceZ) => { if (!free(x, z, 0.7)) return false; bench.push([x, z, Math.atan2(faceX - x, faceZ - z)]); placed.push([x, z, 0.9]); return true; };

@@ -1,0 +1,5 @@
+# Pelea 2D: controles, especiales, cubrirse
+prueba_panel_controles.py
+prueba_pelea_especiales.py
+prueba_pelea_atras.py
+prueba_bloqueo.py

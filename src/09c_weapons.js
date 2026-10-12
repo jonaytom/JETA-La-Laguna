@@ -17,7 +17,7 @@ function ensureGunMesh() {
 }
 function updateWeaponHUD() {
   const w = $('weap'); if (!w) return; w.style.display = WEAPON.has ? 'block' : 'none'; const tm = document.body.classList.contains('touchmode');
-  if (WEAPON.has) w.innerHTML = WEAPON.out ? `PISTOLA <b>${WEAPON.ammo}</b><small>/${WEAPON.max}</small><br><small style="font-size:12px;opacity:.75">${tm ? 'toca: puños' : 'TAB / 1: puños'}</small>` : `PUÑOS<br><small style="font-size:12px;opacity:.75">${tm ? 'toca: pistola' : 'TAB / 2: pistola'}</small>`;
+  if (WEAPON.has) w.innerHTML = WEAPON.out ? `PISTOLA <b>${WEAPON.ammo}</b><small>/${WEAPON.max}</small><br><small style="font-size:12px;opacity:.75">${tm ? 'toca: puños' : CONTROLS.keyName('weap').toUpperCase() + ' / 1: puños'}</small>` : `PUÑOS<br><small style="font-size:12px;opacity:.75">${tm ? 'toca: pistola' : CONTROLS.keyName('weap').toUpperCase() + ' / 2: pistola'}</small>`;
   const t = document.body.classList.contains('touchmode'); for (const id of ['tbA', 'tbD']) { const b = $(id); if (b) b.style.display = WEAPON.has && WEAPON.out && t ? 'flex' : 'none'; }
 }
 // ray from the camera through the crosshair; returns the first thing hit

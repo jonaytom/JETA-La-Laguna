@@ -1,4 +1,19 @@
-# 7. Pruebas y auditorías
+# Pruebas
+
+> **Desde v0.64.1 las pruebas se ejecutan en el PC de Jonay** (no en la nube: no gasta uso y siempre es el mismo equipo).
+> - `scripts\PRUEBAS.bat`: **antes de cada versión** = las de esa versión (`scripts/PRUEBAS_LISTA.txt`, la rellena
+>   Claude) + la **base fija** (`scripts/pruebas/base.txt`: guardar/cargar, coche y Boca Papa, bordes, persecuciones,
+>   túneles y puentes).
+> - Por temas: `PRUEBAS_BASE`, `PRUEBAS_PELEA`, `PRUEBAS_MISIONES`, `PRUEBAS_COCHES`, `PRUEBAS_MAPA` (con las
+>   `audit_*` de obstáculos, cruces y hundimientos), `PRUEBAS_OTROS` y `PRUEBAS_TODAS` (todo, muy larga). Cada lista es
+>   `scripts/pruebas/<nombre>.txt` (una prueba por línea con sus argumentos; `#` = comentario).
+> - También las lanza el **trabajador local** (`scripts\TRABAJADOR.bat`, ver CLAUDE.md) con la orden `pruebas`.
+> - Todas llaman a `scripts\_motor_pruebas.bat` (→ `_python.bat`: busca Python y lo instala con winget si falta; instala
+>   Playwright, su Chromium y `markdown` la primera vez) → `tools/pruebas_locales.py`: compila, sirve `dist/` en el 8765, lanza cada
+>   prueba con `tests/run_test.py` (15 min máx.) y escribe `reportes/pruebas/ULTIMO.md` + copia con fecha (OK / FALLA /
+>   TIEMPO, líneas útiles y fotos nuevas de `tests/shots/`). FALLA = error, o la salida trae FALLA, PAGEERROR,
+>   Traceback, TIEMPO o «not ready». Las pruebas escriben sus datos en `tests/shots/` (nada en `/tmp`).
+
 
 Las pruebas abren el juego en un **Chromium sin ventana** (Playwright, WebGL por SwiftShader) y lo controlan
 desde Python a través de `window.__dbg`, `window.__step` y `window.__snap`.
