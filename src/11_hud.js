@@ -255,7 +255,7 @@ const BIGMAP = (() => {
           rn = ROADSEG.nearest(x, z, (r) => r[0] <= 12); if (rn && rn.d < 4) c.h = Math.atan2(rn.dx, rn.dz); }
         c.x = x; c.z = z; c.vx = c.vz = 0; c.fwdV = 0; c.yawRate = 0; c.y = heightAt(x, z) + 0.2; c.low = null; c.onDeck = false; c.sync(0.016); PLAYER.x = x; PLAYER.z = z; PLAYER.y = c.y; }
       else { const sp = safeSpot(x, z, 0.6); PLAYER.x = sp[0]; PLAYER.z = sp[1]; PLAYER.y = heightAt(sp[0], sp[1]) + 0.2; PLAYER.vy = 0; PLAYER.low = null; PLAYER.onDeck = false; }
-      setWaypoint(null); if (open) BIGMAP.toggle(); updateCamera(0.016); AUDIO.cash(); HUD.toast('Teletransportado', '#3ddc97', 2);
+      setWaypoint(null); if (!MISSIONS.active) MISSIONS.refresh(); /* the next story stop (circle, route and compass) comes back */ if (open) BIGMAP.toggle(); updateCamera(0.016); AUDIO.cash(); HUD.toast('Teletransportado', '#3ddc97', 2);
     },
   };
 })();

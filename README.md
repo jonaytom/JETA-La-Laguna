@@ -4,7 +4,7 @@ Juego de mundo abierto estilo GTA ambientado en **San Cristóbal de La Laguna (T
 trazado real de OpenStreetMap. Todo el juego es **un único archivo HTML** (Three.js r160 + JavaScript), sin servidor:
 se abre con doble clic en `dist/JETA La Laguna.html`.
 
-Protagonista: Santi «El Chopa», recién salido de la cárcel, que reúne a su banda (Boca Papa, El Blanco, Sastrón y Coco).
+Protagonista: Ayoze «El Chopa», recién salido de la cárcel, que reúne a su banda (Boca Papa, El Blanco, Sastrón y Coco).
 Los comercios son siempre **parodias** (nunca marcas reales) y la interfaz está en español con habla canaria.
 
 > **Assets provisionales.** Los modelos (coches Kenney, personajes Quaternius), las texturas (procedurales y de

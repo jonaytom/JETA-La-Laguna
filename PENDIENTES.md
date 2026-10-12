@@ -5,6 +5,9 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 
 ## Por revisar con Jonay
 
+- [ ] **Disco flotante junto al personaje** (Jonay, 12-oct, con capturas): al apuntar se ve algo pequeño y oscuro, como
+      una moneda, flotando a la altura del pecho al lado del jugador; sale con la pistola y también con los puños.
+
 - [ ] **Auditoría v0.59.0** (APTO CON AVISOS; memoria 505 → 531 MB y vértices +5 % por las zonas nuevas, sin fugas):
       **76 edificios nuevos invadiendo la calzada** en La Cuesta/Taco (p. ej. Ctra. Gral. La Cuesta-Taco X 2839 Z 2244,
       Ctra. de Valle Tabares X 2502 Z 1648). Lista en `docs/auditorias/mapa_v0.59.0/mapa.md`. Total del mapa: 527.
@@ -32,16 +35,29 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       Pack de **misiones secundarias** que se desbloquea a la vez que las del alcalde; no hacen falta para acabar el juego
       («solo si eres religioso»), pero dan dinero: mejoras en las iglesias que ya hay (Catedral, La Concepción, Santo
       Domingo, El Cristo…), p. ej. apagar un incendio con la escopeta de agua.
+- [ ] **Economía y armas** (Jonay, 12-oct), junto con las jugueterías:
+      - El dinero va en **euros, no dólares** (HUD «$00000350» → euros; textos «+$1500», multas, precios, docs).
+      - **Bolitas baratas**; la **escopeta de agua cara**: hacen falta varias misiones para poder comprarla.
+      - **Recompensas proporcionadas** (misiones, peleas, baloncesto, fútbol): que no haya munición infinita tras unas
+        pocas misiones ni la escopeta de agua al empezar. Repasar todas las cantidades con una tabla de economía.
+      - **Escopeta de agua**: diseñarla bien (modelo y postura al apuntar); se cambia con **Tab** como pistola y puños.
+      - **Patada en 3D con el botón derecho** cuando no llevas arma; dar una patada a alguien también lleva a la pelea 2D.
 - [ ] **Jugueterías** (Jonay, 12-oct): recrear varias (mejor las que ya hay en el mapa); allí se compran **bolitas** para
       la pistola y otras armas: **escopeta de agua** (chorros de agua; se recarga en **fuentes** repartidas por la ciudad;
       necesaria en misiones como el incendio del Obispado). Por ahora no hay más armas.
 - [ ] **Minijuego de baloncesto 2D tipo NBA Jam** (Jonay, 12-oct): en las canchas; retar a partidos con tus amigos de la
       banda contra la gente que está allí, para ganar dinero.
 - [ ] **Minijuego de fútbol 2D tipo Sensible Soccer** (Jonay, 12-oct): en los campos de fútbol.
-- [ ] **Cambio de nombres** (Jonay, 12-oct; para no identificarlos con personas reales): **Ruymán «El Blanco» → Rayco
+- [ ] **Maleantes en busca y captura** (Jonay, 12-oct): cuando ya sabes pelear (tras las misiones), a veces salen en el
+      minimapa NPC marcados con los que puedes pelear como con cualquiera, pero dan más dinero y son más difíciles: más
+      combos y se cubren más. Tres niveles internos de dificultad, siempre por encima de la gente normal.
+- [ ] **Nombre de la banda** (Jonay, 12-oct): en «La firma de la banda», la opción «Los Chachos de Aguere» pasa a ser
+      **teclear tu propio nombre**; «Los Magos de La Laguna» pasa a **«Los Magos de Aguere»**; «La Banda del Barraquito»
+      se queda. Quedan 3 nombres propuestos más el tuyo.
+- [x] v0.61.0 **Cambio de nombres** (Jonay, 12-oct; para no identificarlos con personas reales): **Ruymán «El Blanco» → Rayco
       «El Blanco»** y **Santi «El Chopa» → Ayoze «El Chopa»** (los apodos no cambian). Buscar en diálogos, misiones,
       títulos, docs y partidas guardadas.
-- [ ] **Intro: el texto de que El Chopa sale de prisión dura muy poco** (Jonay, 12-oct): dejarlo más tiempo en pantalla
+- [x] v0.61.0 **Intro: el texto de que El Chopa sale de prisión dura muy poco** (Jonay, 12-oct): dejarlo más tiempo en pantalla
       (o que avance al pulsar).
 - [ ] **Callejero oficial en PDF** (Jonay, 12-oct): https://turismo.aytolalaguna.es/wp-content/uploads/2019/11/Callejero-La-Laguna-c.pdf
       Sirve para definir bien las **zonas peatonales** (las del empedrado; ahora hay calles donde se pasa en coche y el
@@ -53,7 +69,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       la Av. Taco TF-28): bloque verde claro de 2 plantas con contraventanas blancas, verja y rampa. Código CPX2+FM → X 1633
       Z 4292, ~310 m al sur del borde del mapa: va en la misma descarga que La Cuesta (`scripts/descargar_zonas.bat`).
 
-- [ ] **Radio: más canciones y voces** (Jonay; precisión 12-oct: **una voz distinta en cada canción**, de los
+- [x] v0.61.0 **Radio: más canciones y voces** (Jonay; precisión 12-oct: **una voz distinta en cada canción**, de los
       generadores de voz, y las 20 canciones repartidas entre las emisoras que ya hay). **Próxima tanda** junto con las
       uniones de túneles que quedan y los 3 tramos que no termina la prueba de conducción. Original: cada emisora con una voz distinta (no siempre la misma), letras más
       largas y menos repetitivas, canciones de 1:30–2 min y luego otra; al menos 20 canciones en total combinando voces,
@@ -160,7 +176,10 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 
 - [ ] Aeropuerto: afinar con las fotos (rotonda-cúpula, depósitos de combustible, naves SEUR/ITV/Binter, P de
       parking con rótulos, valla perimetral) y aviones despegando/aterrizando de vez en cuando.
-- [~] Prueba de conducción de túneles/puentes: 3 de 97 sin terminar (v0.50; antes 10 de 111).
+- [~] Prueba de conducción de túneles/puentes (v0.61): el enlace X −386 Z 678 ya pasa; la Autopista del Norte
+      (X 44 Z 1156) se para por tráfico en la prueba (en línea recta pasa a 18 m/s); el Camino La Rúa (X 543 Z −909) choca
+      en una esquina: sin investigar. Quedan también las uniones: rampas X −495 Z 683 y X 2210 Z 3312, finales de tablero
+      X 377 Z −268 y X 820 Z 3494.
 
 - [ ] **Auditoría v0.58.0** (APTO CON AVISOS; métricas iguales que la 0.57): 1 aviso nuevo `05t_hospital.js:44` `mk()`:
       material del HUC creado al construir la ciudad, una sola vez (falso aviso).

@@ -3,6 +3,18 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.61.0 — 2026-10-12 — Brújula a los pies, radio con 20 canciones y nombres nuevos
+- **Brújula a los pies** (sustituye a la flecha grande): un aro fino alrededor del personaje (o del coche) con una punta
+  por cada destino activo, siempre en línea recta hacia él: amarilla misión o historia, azul secundaria, roja a quien
+  persigues, rosa tu destino del mapa. Tras teletransportarte vuelve el siguiente punto de la historia.
+- **Radio**: 20 canciones con título y artista inventados (7 + 7 + 6 en las tres emisoras), cada una con **su propia
+  voz** (voces del navegador con tono y ritmo propios), siempre el mismo ritmo y letra, ~1:45 con tres estrofas sin
+  repetir versos; al empezar una canción sale su título.
+- **Nombres**: Ruymán «El Blanco» pasa a ser **Rayco «El Blanco»** y Santi «El Chopa», **Ayoze «El Chopa»**.
+- **Intro**: el texto de que El Chopa sale de la cárcel ahora queda en un cuadro hasta pulsar «¡Vamos!».
+- Prueba de conducción de túneles y puentes: el tiempo de cada tramo depende de su longitud y se pueden probar tramos
+  sueltos (`prueba_conduccion_tuneles_puentes.py 1287,2295`). El enlace de la autopista (X −386 Z 678) ya pasa.
+
 ## 0.60.0 — 2026-10-12 — Flecha guía, noche más clara y carrera solidaria posible
 - **Flecha guía**: con un objetivo de misión (amarilla) o un destino marcado (rosa), una flecha en el suelo a tus pies
   (sobre el coche si conduces) apunta por la ruta del GPS. Se esconde cerca del objetivo, en interiores y en menús.

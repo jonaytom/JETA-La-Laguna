@@ -97,13 +97,13 @@ const startAt = (k, dx = 1.3) => () => [NPC[k].x + dx, NPC[k].z + dx];
 
 // ---------- 1. Atraco en la farmacia
 const M_FARMACIA = {
-  title: 'Atraco en la farmacia', who: 'Ruymán «El Blanco»',
+  title: 'Atraco en la farmacia', who: 'Rayco «El Blanco»',
   hint() { return 'Ve a ver a ' + b2('El Blanco') + ': tiene algo que contarte de la pistola'; },
   startPos: startAt('blanco'),
   start() { const K = K2(); this.st = { step: 0 };
     const ph = poiNear('pharmacy', PLAYER.x, PLAYER.z); this.st.ph = ph ? [ph[2], ph[3], ph[0] >= 0 ? STR[ph[0]] : 'la farmacia'] : [PLAYER.x + 200, PLAYER.z, 'la farmacia'];
-    K.talk([['Ruymán «El Blanco»', '«Brrr... Chopa... mmm... la pistola... psss... bolas... de plástico.»'], [K.CH, 'Ya, Blanco, ya me lo dijiste: aire comprimido, bolas de plástico. Pupa sí, pero no mata.'],
-      ['Ruymán «El Blanco»', '«Mmm... radio... ¡brrr!... farmacia... atraco... ¡ahora!»'], ['Radio de la Local (en el escáner de El Blanco)', `Atraco en curso en ${this.st.ph[2]}. Dos individuos. Todas las patrullas ocupadas en las fiestas.`],
+    K.talk([['Rayco «El Blanco»', '«Brrr... Chopa... mmm... la pistola... psss... bolas... de plástico.»'], [K.CH, 'Ya, Blanco, ya me lo dijiste: aire comprimido, bolas de plástico. Pupa sí, pero no mata.'],
+      ['Rayco «El Blanco»', '«Mmm... radio... ¡brrr!... farmacia... atraco... ¡ahora!»'], ['Radio de la Local (en el escáner de El Blanco)', `Atraco en curso en ${this.st.ph[2]}. Dos individuos. Todas las patrullas ocupadas en las fiestas.`],
       [K.CH, 'Nadie va a ir... Vamos nosotros. Una banda que defiende su barrio. ¡Al lío!']], () => { if (!K.isActive(this)) return; s2Armed(); this.st.step = 1; const [x, z] = s2Spot(this.st.ph[0], this.st.ph[1]); K.goto(x, z, 4, 0xe53935); K.setObjective('Ve a ' + b2(this.st.ph[2]) + ' antes de que se escapen los ladrones'); K.setTimer(150); });
   },
   update(dt) { const K = K2(), S = this.st; if (!S) return;
@@ -166,7 +166,7 @@ const M_CEREMONIA = {
       [ALC, `Por eso, con el poder que me da este bigote... digo, este bastón de mando, nombro a «${K.GANG.name || 'la banda'}» <b>Defensores de La Laguna</b>: un grupo especial de la Policía Local para los problemas de la ciudad.`],
       ['Boca Papa', 'Señor alcalde, ¿eso trae dietas? Porque yo como mucho.'],
       [ALC, 'Trae responsabilidad, señor Papa. Y un bocadillo en cada ceremonia. Desde hoy podéis detener a malhechores. Eso sí: siempre con la de bolas y sin romper el mobiliario urbano.'],
-      ['Ruymán «El Blanco»', '«Mmm... ¡brrr!... ¡a la orden!»<br><i>Saluda militarmente. Se le cae la gorra.</i>'],
+      ['Rayco «El Blanco»', '«Mmm... ¡brrr!... ¡a la orden!»<br><i>Saluda militarmente. Se le cae la gorra.</i>'],
       [K.CH, 'Gracias, alcalde. Salí del talego para hacer las cosas bien. Esto es exactamente lo que buscaba.'],
       [ALC, 'Pues estad atentos al teléfono. Esta ciudad tiene muchos problemas... y muy poco presupuesto.'],
     ], () => { K.GANG.defenders = true; for (const [k] of ring) if (NPC[k]) K.moveNPC(NPC[k], NPC[k].home[0], NPC[k].home[1]); HUD.big('DEFENSORES DE LA LAGUNA', '#f5b72e', 5); s2Pass('Sois Defensores de La Laguna', 1000); });
@@ -327,10 +327,10 @@ const M_CARRERA = {
 
 // ---------- 12. Noche en el aeropuerto (final de la tanda: el coche patrulla de la banda)
 const M_AEROPUERTO = {
-  title: 'Noche en el aeropuerto', who: 'Ruymán «El Blanco»',
+  title: 'Noche en el aeropuerto', who: 'Rayco «El Blanco»',
   hint() { return b2('El Blanco') + ' ha oído algo en su escáner: ve a casa de sus padres'; }, startPos: startAt('blanco'),
   start() { const K = K2(); this.st = { step: 0 };
-    K.talk([['Ruymán «El Blanco»', '«Brrr... noche... mmm... aeropuerto... psss... queso... ¡contrabando!»'], ['Boca Papa (por el móvil)', 'Lo que quiere decir El Blanco: unos contrabandistas sacan queso de cabra sin registro por las vías de servicio de Los Rodeos. Esta noche. ¡Que es queso nuestro, Chopa!']], () => {
+    K.talk([['Rayco «El Blanco»', '«Brrr... noche... mmm... aeropuerto... psss... queso... ¡contrabando!»'], ['Boca Papa (por el móvil)', 'Lo que quiere decir El Blanco: unos contrabandistas sacan queso de cabra sin registro por las vías de servicio de Los Rodeos. Esta noche. ¡Que es queso nuestro, Chopa!']], () => {
       if (!K.isActive(this)) return; GAME.tod = 22.5; try { updateSun(); updateEnvironment(true); } catch (e) { } s2Armed();
       const aw = DATA.AW && DATA.AW.find((a) => a[0] === 'runway'); const p = aw ? [aw[3][0], aw[3][1]] : [-3100, -200]; const q = s2Spot(p[0] + 60, p[1] + 60); this.st.P = s2Path(s2Route(q[0], q[1], 900, 1500)); this.st.p = this.st.P.at(0); this.st.step = 1; K.goto(this.st.p[0], this.st.p[1], 8, 0xe53935); K.setObjective('Ve al ' + b2('aeropuerto de Los Rodeos')); }); },
   update(dt) { const K = K2(), S = this.st; if (!S || !S.step) return;

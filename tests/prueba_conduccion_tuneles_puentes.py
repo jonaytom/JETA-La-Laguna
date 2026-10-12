@@ -13,7 +13,7 @@ JS = r"""
   let wp=1, maxDy=0, stuckT=0, t=0, prog=0;
   const ctl=()=>{ while(wp<pts.length-1 && Math.hypot(pts[wp][0]-car.x,pts[wp][1]-car.z)<8) wp++; const g=pts[wp]; const want=Math.atan2(g[0]-car.x,g[1]-car.z); let da=want-car.h; while(da>Math.PI)da-=2*Math.PI; while(da<-Math.PI)da+=2*Math.PI;
     car.ctl={thr: car.speed<13?0.8:0.2, brk:0, steer:Math.max(-1,Math.min(1,da*2)), hb:0}; };
-  for (let k=0;k<30*40;k++){ ctl(); __step(1,1/30); t+=1/30; // progress = distance to end
+  for (let k=0;k<30*Math.max(40, L/8+15);k++){ /* time limit from the length (a 800 m motorway didn't fit in 40 s) */ ctl(); if (k%15===0) for (const o of d.CARS) if (o!==car && o.driver && o.driver!=='player' && o.driver!=='test' && Math.hypot(o.x-car.x,o.z-car.z)<60 && o.remove) o.remove(); /* random traffic out of the way: this test measures the road */ __step(1,1/30); t+=1/30; // progress = distance to end
     const de=Math.hypot(pts[pts.length-1][0]-car.x,pts[pts.length-1][1]-car.z); if (de<6) { break; }
     if (car.speed<1) stuckT+=1/30; else stuckT=0; if (stuckT>4) break; }
   const de=Math.hypot(pts[pts.length-1][0]-car.x,pts[pts.length-1][1]-car.z);
@@ -27,6 +27,8 @@ async def run(pg):
     await pg.evaluate("(()=>{document.getElementById('menu').style.display='none'; window.__manual=true; window.__dbg.GAME.state='play'; __dbg.GAME.tod=12; __step(3);})()")
     ids = json.loads(await pg.evaluate("""(()=>{const d=__dbg; const DATA=__dbg.DATA; const out=[]; DATA.R.forEach((rd,ri)=>{ if(rd[0]>10) return; if (d.DEP.has(ri) || (rd[3]&2)) out.push(ri); }); return JSON.stringify(out)})()"""))
     print('roads', len(ids)); bad=[]
+    import sys
+    if len(sys.argv) > 2: ids = [int(v) for v in sys.argv[2].split(',')]  # only these roads (DATA.R indices)
     for ri in ids:
         r = await pg.evaluate(JS, ri)
         if r.get('skip'): continue

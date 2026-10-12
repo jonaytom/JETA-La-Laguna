@@ -1,32 +1,34 @@
-// ============ flecha guía hacia el objetivo (v0.60) ============
-// With a mission goal or a destination marked on the map, a flat arrow on the ground at the player's feet (over the car
-// when driving) points along the GPS route, so you don't have to keep looking at the map. Yellow for missions, pink
-// for your own destination. Hidden indoors, in menus and fights, and when the goal is close.
+// ============ brújula a los pies hacia los objetivos (v0.60, rehecha a petición de Jonay) ============
+// A thin ring on the ground round the player (round the car when driving) with a small pointer on its edge for every
+// active destination, always pointing straight at it like a compass (not along the streets): yellow = mission / next
+// story stop, blue = side mission, red = whoever you are chasing, pink = your own destination on the map. Subtle: thin,
+// semi-transparent, under the character. Hidden indoors, in menus and fights; a pointer hides when its goal is close.
 const GUIDE = (() => {
-  let mesh = null, matY = null, matP = null;
+  let g = null, ring = null; const tips = [], mats = {};
+  const mat = (css) => mats[css] || (mats[css] = new THREE.MeshBasicMaterial({ color: new THREE.Color(css), transparent: true, opacity: 0.5, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }));
+  let tipGeo = null;
   function make() {
-    const sh = new THREE.Shape(); sh.moveTo(0, 1.1); sh.lineTo(0.62, 0.25); sh.lineTo(0.22, 0.25); sh.lineTo(0.22, -0.7); sh.lineTo(-0.22, -0.7); sh.lineTo(-0.22, 0.25); sh.lineTo(-0.62, 0.25); sh.closePath();
-    const g = new THREE.ShapeGeometry(sh); g.rotateX(-Math.PI / 2); g.userData.shared = true; // tip towards local -z after the rotation
-    const mk = (c) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.85, depthTest: false, depthWrite: false });
-    matY = mk(0xf5b72e); matP = mk(0xe040fb); mesh = new THREE.Mesh(g, matY); mesh.renderOrder = 15; mesh.visible = false; scene.add(mesh);
+    const rg = new THREE.RingGeometry(0.78, 0.81, 48); rg.rotateX(-Math.PI / 2); rg.userData.shared = true;
+    const sh = new THREE.Shape(); sh.moveTo(0, 0.24); sh.lineTo(0.12, 0); sh.lineTo(0.04, 0.03); sh.lineTo(0, -0.01); sh.lineTo(-0.04, 0.03); sh.lineTo(-0.12, 0); sh.closePath();
+    tipGeo = new THREE.ShapeGeometry(sh); tipGeo.rotateX(-Math.PI / 2); tipGeo.translate(0, 0, -0.84); tipGeo.userData.shared = true; // pointer on the ring's edge, towards local -z
+    g = new THREE.Group(); const rm = mat('#ffffff').clone(); rm.opacity = 0.32; ring = new THREE.Mesh(rg, rm); ring.renderOrder = 2; g.add(ring); g.visible = false; scene.add(g);
   }
-  // a point some metres ahead along the GPS route (the route starts at the player), else the target itself
-  function aim(tgt) {
-    const P = GPS.path; if (!P || P.length < 4) return tgt; let acc = 0;
-    for (let i = 2; i < P.length; i += 2) { const d = Math.hypot(P[i] - P[i - 2], P[i + 1] - P[i - 1]); acc += d; if (acc > (PLAYER.car ? 30 : 14)) return [P[i], P[i + 1]]; }
-    return tgt;
+  function tip(i) { while (tips.length <= i) { const m = new THREE.Mesh(tipGeo, mat('#f5b72e')); m.renderOrder = 2; g.add(m); tips.push(m); } return tips[i]; }
+  function goals() {
+    const L = []; const add = (x, z, css) => { if (!L.some((q) => Math.abs(q[0] - x) + Math.abs(q[1] - z) < 4)) L.push([x, z, css]); };
+    for (const b of MISSIONS.blips()) add(b[0], b[1], b[2] || '#f5b72e'); // mission goal, story / side beacons, chased people and cars
+    if (GPS.target && !GPS.story) add(GPS.target[0], GPS.target[1], '#e040fb'); else if (GPS.target) add(GPS.target[0], GPS.target[1], '#f5b72e');
+    return L;
   }
   return {
     update() {
-      if (!mesh) make();
-      const tgt = MISSIONS.target() || GPS.target; const car = PLAYER.car;
-      const show = tgt && GAME.state === 'play' && !PLAYER.interior && !PLAYER.dead && !(BIGMAP && BIGMAP.open) && Math.hypot(tgt[0] - PLAYER.x, tgt[1] - PLAYER.z) > 8;
-      mesh.visible = !!show; if (!show) return;
-      const [ax, az] = aim(tgt); const h = Math.atan2(ax - PLAYER.x, az - PLAYER.z);
-      const r = car ? 0 : 1.3, y = car ? (car.y || heightAt(car.x, car.z)) + (car.T ? car.T.H : 1.5) + 0.7 : (PLAYER.y != null ? PLAYER.y : heightAt(PLAYER.x, PLAYER.z)) + 0.08;
-      const bob = car ? Math.sin(performance.now() / 260) * 0.15 : 0;
-      mesh.position.set(PLAYER.x + Math.sin(h) * r, y + bob, PLAYER.z + Math.cos(h) * r); mesh.rotation.set(0, h + Math.PI, 0); mesh.scale.setScalar(car ? 1.15 : 1);
-      mesh.material = MISSIONS.target() || GPS.story ? matY : matP; mesh.material.opacity = car ? 0.6 : 0.85;
+      if (!g) make();
+      const ok = GAME.state === 'play' && !PLAYER.interior && !PLAYER.dead && !(BIGMAP && BIGMAP.open);
+      const L = ok ? goals().filter((q) => Math.hypot(q[0] - PLAYER.x, q[1] - PLAYER.z) > 6) : [];
+      g.visible = L.length > 0; tips.forEach((t) => { t.visible = false; }); if (!g.visible) return;
+      const car = PLAYER.car; const y = car ? heightAt(car.x, car.z) + 0.06 : (PLAYER.y != null ? PLAYER.y : heightAt(PLAYER.x, PLAYER.z)) + 0.04;
+      g.position.set(PLAYER.x, y, PLAYER.z); g.scale.setScalar(car ? 3.0 : 1);
+      L.slice(0, 6).forEach((q, i) => { const t = tip(i); t.visible = true; t.material = mat(q[2]); t.rotation.y = Math.atan2(q[0] - PLAYER.x, q[1] - PLAYER.z) + Math.PI; });
     },
   };
 })();

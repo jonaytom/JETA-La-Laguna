@@ -47,8 +47,8 @@ function safeSpot(x, z, clear = 0.7) {
   for (const strict of [true, false]) for (let r = 1; r <= 80; r += 1) for (let k = 0; k < 24; k++) { const a = k / 24 * Math.PI * 2, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r; if (ok(px, pz, strict)) return [px, pz]; }
   return [x, z];
 }
-// ============ STORY: Santi «El Chopa» vuelve al barrio ============
-// Santi «El Chopa» (por su narizota): listo, pero acabó preso por robar. Sale de la cárcel y quiere redimirse en La Laguna.
+// ============ STORY: Ayoze «El Chopa» vuelve al barrio ============
+// Ayoze «El Chopa» (por su narizota): listo, pero acabó preso por robar. Sale de la cárcel y quiere redimirse en La Laguna.
 // El Blanco es su amigo de la infancia de verdad (exmilitar, se le fue la cabeza, vive con sus padres, entiende de armas);
 // los demás son gente del barrio, de la pandilla de El Blanco, a los que la vida ha tratado fatal.
 // fight tutorial (Sastrón): step by step through the 2D fighting controls, then a real round
@@ -119,8 +119,8 @@ const MISSIONS = (() => {
   // ======================= STORY =======================
   const STORY = [
     {
-      title: 'Vuelta al barrio', who: 'Ruymán «El Blanco»',
-      hint() { return 'Habla con ' + bold('Ruymán «El Blanco»') + ', en la puerta de casa de sus padres'; },
+      title: 'Vuelta al barrio', who: 'Rayco «El Blanco»',
+      hint() { return 'Habla con ' + bold('Rayco «El Blanco»') + ', en la puerta de casa de sus padres'; },
       startPos() { return [NPC.blanco.x + 1.2, NPC.blanco.z + 1.2]; },
       start() {
         step = 0; data.round = 0; data.fails = 0;
@@ -132,9 +132,9 @@ const MISSIONS = (() => {
         const fails = ['Brrr... no... ehhh... pssss... ¡NO!', 'Ahhh... prrr... tú no... ejem... escuchas...', 'Pss... mi madre... ehhh... eso lo entiende...', 'Mmm... firmes... ¡FIRMES!... brrr... no...'];
         const ask = () => {
           const r = R[data.round]; AUDIO.mumble(2.2);
-          DLG.show('Ruymán «El Blanco»', data.round === 0 ? 'Descifra lo que dice El Blanco' : `Descifra lo que dice El Blanco (${data.round + 1}/3)`, `«${r.t}»`, r.q, r.o, (i) => {
+          DLG.show('Rayco «El Blanco»', data.round === 0 ? 'Descifra lo que dice El Blanco' : `Descifra lo que dice El Blanco (${data.round + 1}/3)`, `«${r.t}»`, r.q, r.o, (i) => {
             if (i === r.ok) { AUDIO.cash(); data.round++; if (data.round < R.length) setTimeout(ask, 250); else end(); }
-            else { data.fails++; AUDIO.fail(); AUDIO.mumble(1.2); DLG.show('Ruymán «El Blanco»', 'Eso no era…', `«${pick(fails)}»`, '', ['Intentarlo otra vez'], () => setTimeout(ask, 200)); }
+            else { data.fails++; AUDIO.fail(); AUDIO.mumble(1.2); DLG.show('Rayco «El Blanco»', 'Eso no era…', `«${pick(fails)}»`, '', ['Intentarlo otra vez'], () => setTimeout(ask, 200)); }
           });
         };
         const end = () => {
@@ -142,12 +142,12 @@ const MISSIONS = (() => {
             DLG.hide(); step = 1; goto(NPC.boca.x, NPC.boca.z, 2.5); setObjective('Ve a la ' + bold('torre de La Concepción') + ' y busca a ' + bold('Boca Papa'));
           });
         };
-        chat('Santi «El Chopa» vuelve al barrio', [
-          ['Santi «El Chopa»', 'Tres años en la cárcel por un robo que planeé demasiado bien... casi. Hoy vuelvo al barrio donde me crié, con una bolsa de plástico y ganas de empezar de cero.<br>Y en la puerta de casa de sus padres, como si el tiempo no hubiera pasado, está <b>Ruymán, «El Blanco»</b>. Mi amigo de toda la vida.'],
-          [CH, '¡Blanco! ¡Chacho, soy yo, Santi! El Chopa. ¿No me reconoces? Con esta nariz no me confunde nadie.'],
-          ['Ruymán «El Blanco»', '«Brrr... mmm... ahhh... ¿Cho...pa?... psss... mmm.»<br><i>Te mira la nariz. Sonríe. Te ha reconocido.</i>'],
+        chat('Ayoze «El Chopa» vuelve al barrio', [
+          ['Ayoze «El Chopa»', 'Tres años en la cárcel por un robo que planeé demasiado bien... casi. Hoy vuelvo al barrio donde me crié, con una bolsa de plástico y ganas de empezar de cero.<br>Y en la puerta de casa de sus padres, como si el tiempo no hubiera pasado, está <b>Rayco, «El Blanco»</b>. Mi amigo de toda la vida.'],
+          [CH, '¡Blanco! ¡Chacho, soy yo, Ayoze! El Chopa. ¿No me reconoces? Con esta nariz no me confunde nadie.'],
+          ['Rayco «El Blanco»', '«Brrr... mmm... ahhh... ¿Cho...pa?... psss... mmm.»<br><i>Te mira la nariz. Sonríe. Te ha reconocido.</i>'],
           [CH, 'Salí ayer de la prisión. Me cogieron por listo, Blanco... por pasarme de listo. Pero se acabó. Quiero hacer las cosas bien, redimirme. Vivir en La Laguna como una persona normal.'],
-          ['Ruymán «El Blanco»', '«Ahhh... brrr... mmm... nor... mal... psss.»<br><i>Ruymán estuvo en el ejército. Volvió de su última misión callado y raro, y desde entonces vive con sus padres, que le planchan el chándal gris. De armas sabe más que nadie del barrio. De hablar, no tanto.</i>'],
+          ['Rayco «El Blanco»', '«Ahhh... brrr... mmm... nor... mal... psss.»<br><i>Rayco estuvo en el ejército. Volvió de su última misión callado y raro, y desde entonces vive con sus padres, que le planchan el chándal gris. De armas sabe más que nadie del barrio. De hablar, no tanto.</i>'],
           [CH, 'Oye... ¿y la gente? ¿La pandilla de cuando éramos chicos? ¿Qué fue de los colegas?', 'Preguntarle por la pandilla'],
         ], () => setTimeout(ask, 200));
       },
@@ -170,7 +170,7 @@ const MISSIONS = (() => {
       start() {
         const it = INTERIORS.find((i) => i.id === 'cafe'); data.bar = it; step = 0;
         talk([['Coco', '¿Qué miras? ¿Nunca has visto a un calvo con estilo? Soy Coco. «Kid Aguere», me llamaban. Tres veces campeón de Canarias de los pesos medios.'],
-          ['Coco', '¿El Chopa? ¿El amigo de El Blanco? Ahhh, el de la nariz... Hice la mili con Ruymán, ¿sabes? Él volvió rarito y yo volví sin pelo. La vida, mi niño.'],
+          ['Coco', '¿El Chopa? ¿El amigo de El Blanco? Ahhh, el de la nariz... Hice la mili con Rayco, ¿sabes? Él volvió rarito y yo volví sin pelo. La vida, mi niño.'],
           ['Coco', `Mira, yo no hablo con la garganta seca. Tráeme una botella de Ron Arrecostao de ${it ? it.name : 'la cafetería'}, la que tiene la puerta abierta. Y de las grandes.`]]);
         if (it) { goto(it.door.x + it.door.nx * 2, it.door.z + it.door.nz * 2, 2.2); setObjective(`Entra en ${bold(it.name)} y compra una ${bold('botella de ron')} en la barra`); }
         else setObjective('Compra una botella de ron');
@@ -197,7 +197,7 @@ const MISSIONS = (() => {
         step = 0;
         if (GANG.sastronTut) { talk([['Sastrón', '¿Ya traes las perras, Chopa? Las tijeras están impacientes.']], () => this.pay()); return; }
         talk([['Sastrón', '¡Quieto ahí! No te muevas... ochenta y dos de pecho, cuarenta de cuello y una nariz... una nariz de talla especial. ¡Tú eres el Chopa!'],
-          ['Sastrón', 'Yo vestí a media Laguna. Trajes de boda, de comunión, de entierro... El de la comunión de Ruymán, con su pajarita. Luego las tijeras empezaron a hablarme. Y tenían razón en todo.'],
+          ['Sastrón', 'Yo vestí a media Laguna. Trajes de boda, de comunión, de entierro... El de la comunión de Rayco, con su pajarita. Luego las tijeras empezaron a hablarme. Y tenían razón en todo.'],
           ['Sastrón', 'Pero antes de coserte nada te tomo las medidas... ¡a guantazos! Coco me enseñó todo lo que sé. Ponte en guardia, Chopa.']], () => {
           if (active !== this) return;
           FIGHT2D.start({ a: { name: 'EL CHOPA', look: { ...(playerHuman.look || {}) }, nose: true }, b: { name: 'SASTRÓN', look: NPC.sastron.H.look || {}, deal: 0.4, recv: 1.3, ai: { lv: 0, t: 0, blockT: 0, passive: true } },
@@ -226,8 +226,8 @@ const MISSIONS = (() => {
         for (const [n, r, a] of ring) moveNPC(n, b.x + Math.cos(a) * r, b.z + Math.sin(a) * r, [b.x, b.z]);
         $('fade').style.opacity = 1; setTimeout(() => { $('fade').style.opacity = 0; }, 600);
         chat('La firma de la banda', [
-          ['Boca Papa', 'Bueno, bueno... ¡ya estamos todos! La pandilla del barrio otra vez junta. Un boxeador calvo, un sastre que habla con sus tijeras, un militar que dice brrr, yo... y el jefe: Santi, el Chopa.'],
-          ['Ruymán «El Blanco»', '«Brrr... mmm... ehhh... jefe... psss... ¡jefe! Mmm.»<br><i>Se pone firme. Es lo más parecido a un discurso que le has oído en treinta años.</i>'],
+          ['Boca Papa', 'Bueno, bueno... ¡ya estamos todos! La pandilla del barrio otra vez junta. Un boxeador calvo, un sastre que habla con sus tijeras, un militar que dice brrr, yo... y el jefe: Ayoze, el Chopa.'],
+          ['Rayco «El Blanco»', '«Brrr... mmm... ehhh... jefe... psss... ¡jefe! Mmm.»<br><i>Se pone firme. Es lo más parecido a un discurso que le has oído en treinta años.</i>'],
           ['Boca Papa', 'El Blanco dice que está muy contento. Y que va a montar la armería de la banda en el garaje de su madre. Cuando ella no mire.'],
           ['Coco', 'Yo me encargo de que sepáis pelear. Y el primero que me diga «calvo» se lleva un sopapo.'],
           ['Sastrón', 'Y yo de que vayáis elegantes. Nadie respeta a una banda con chándal... con perdón, Blanco.'],
@@ -237,7 +237,7 @@ const MISSIONS = (() => {
           if (active !== this) return;
           const names = ['Los Chachos de Aguere', 'La Banda del Barraquito', 'Los Guanches del Casco', 'Los Magos de La Laguna'];
           DLG.show('La firma de la banda', '¿Cómo se va a llamar la banda?', 'Boca Papa saca un boli mordido. Todos te miran. El Blanco hace <b>brrr</b>.', 'Elige el nombre:', names, (i) => {
-            DLG.hide(); GANG.formed = true; GANG.name = names[i]; GANG.members = ['Boca Papa', 'Ruymán «El Blanco»', 'Coco', 'Sastrón'];
+            DLG.hide(); GANG.formed = true; GANG.name = names[i]; GANG.members = ['Boca Papa', 'Rayco «El Blanco»', 'Coco', 'Sastrón'];
             HUD.big(names[i].toUpperCase(), '#f5b72e', 6); MUSIC.jingle();
             setTimeout(() => talk([['Boca Papa', `¡${names[i]}! Suena a leyenda. Tú eres el jefe, Chopa. Aquí empieza la historia.`], ['Boca Papa', 'Pero antes una lección, que te veo flojo de la cárcel: un jefe tiene que comer. Ven a verme y te explico.']], () => {
               // everybody goes back to their spots; El Blanco to his parents' door
@@ -263,17 +263,17 @@ const MISSIONS = (() => {
       update() { },
     },
     {
-      title: 'El campo de tiro de El Blanco', who: 'Ruymán «El Blanco»',
+      title: 'El campo de tiro de El Blanco', who: 'Rayco «El Blanco»',
       hint() { return 'Ve a ver a ' + bold('El Blanco') + ' a casa de sus padres'; },
       startPos() { return [NPC.blanco.x + 1.2, NPC.blanco.z + 1.2]; },
       start() {
         step = 0; const R = findRange(NPC.blanco.x, NPC.blanco.z); data.range = R;
         chat('El campo de tiro de El Blanco', [
-          ['Ruymán «El Blanco»', '«Brrr... Chopa... mmm... ven... psss... ven.»<br><i>Mira a los lados. Abre el garaje de sus padres. Entre la lavadora vieja y las cajas de Navidad hay una caja de munición del ejército.</i>'],
-          ['Ruymán «El Blanco»', '«Ahhh... esto... mmm... pistola... brrr. Seis... seis bolas.»<br><i>Te acompaña a un solar abandonado detrás de la casa. Coloca seis latas vacías encima de unos palés.</i>'],
-          ['Ruymán «El Blanco»', '«Mmm... no... no es de verdad... psss. Bolas... plástico... aire... brrr... comprimido.»<br><i>Es una pistola de <b>bolas de plástico de aire comprimido</b>, una réplica de las de airsoft. Hace pupa y asusta, pero no mata. Eso sí: de lejos parece de verdad.</i>'],
+          ['Rayco «El Blanco»', '«Brrr... Chopa... mmm... ven... psss... ven.»<br><i>Mira a los lados. Abre el garaje de sus padres. Entre la lavadora vieja y las cajas de Navidad hay una caja de munición del ejército.</i>'],
+          ['Rayco «El Blanco»', '«Ahhh... esto... mmm... pistola... brrr. Seis... seis bolas.»<br><i>Te acompaña a un solar abandonado detrás de la casa. Coloca seis latas vacías encima de unos palés.</i>'],
+          ['Rayco «El Blanco»', '«Mmm... no... no es de verdad... psss. Bolas... plástico... aire... brrr... comprimido.»<br><i>Es una pistola de <b>bolas de plástico de aire comprimido</b>, una réplica de las de airsoft. Hace pupa y asusta, pero no mata. Eso sí: de lejos parece de verdad.</i>'],
           [CH, 'Blanco, yo salí para reformarme... Pero vale. Por si acaso. Solo para defendernos.'],
-          ['Ruymán «El Blanco»', `«Mmm... apunta... brrr... ¡dispara!»<br><b>Controles:</b> ${document.body.classList.contains('touchmode') ? 'pulsa <b>APUNTAR</b> y luego <b>DISPARAR</b>; arrastra el dedo para mover la mira' : 'mantén <b>clic derecho</b> para apuntar y haz <b>clic izquierdo</b> para disparar'}.<br>Tienes que tirar <b>las 6 latas con 6 bolas</b>. Si fallas, El Blanco las vuelve a poner.`, 'Al lío'],
+          ['Rayco «El Blanco»', `«Mmm... apunta... brrr... ¡dispara!»<br><b>Controles:</b> ${document.body.classList.contains('touchmode') ? 'pulsa <b>APUNTAR</b> y luego <b>DISPARAR</b>; arrastra el dedo para mover la mira' : 'mantén <b>clic derecho</b> para apuntar y haz <b>clic izquierdo</b> para disparar'}.<br>Tienes que tirar <b>las 6 latas con 6 bolas</b>. Si fallas, El Blanco las vuelve a poner.`, 'Al lío'],
         ], () => {
           if (active !== this) return;
           if (PLAYER.car) exitCar();
@@ -295,8 +295,8 @@ const MISSIONS = (() => {
         setTimeout(() => { for (const t of data.cans) scene.remove(t.mesh); }, 4000);
         takeWeapon();
         chat('El campo de tiro de El Blanco', [
-          ['Ruymán «El Blanco»', '«¡Mmm! ¡Brrr! ¡Bien... bien!»<br><i>Aplaude dos veces, muy serio. Te da la pistola y una caja con seis bolas.</i>'],
-          ['Ruymán «El Blanco»', '«Psss... cuidado... mmm... policía... muchos... brrr... rápidos.»<br><i>Lo ha entendido hasta un turista: aunque sea de bolas, sacar algo que parece un arma en la calle es <b>delito grave</b>. Si alguien te ve disparar, vendrá mucha más policía, con coches más rápidos, y costará mucho más despistarla. Sin pistola, a puñetazos (<kbd>Q</kbd> / clic).</i>', 'Entendido'],
+          ['Rayco «El Blanco»', '«¡Mmm! ¡Brrr! ¡Bien... bien!»<br><i>Aplaude dos veces, muy serio. Te da la pistola y una caja con seis bolas.</i>'],
+          ['Rayco «El Blanco»', '«Psss... cuidado... mmm... policía... muchos... brrr... rápidos.»<br><i>Lo ha entendido hasta un turista: aunque sea de bolas, sacar algo que parece un arma en la calle es <b>delito grave</b>. Si alguien te ve disparar, vendrá mucha más policía, con coches más rápidos, y costará mucho más despistarla. Sin pistola, a puñetazos (<kbd>Q</kbd> / clic).</i>', 'Entendido'],
         ], () => { giveWeapon(6, false); pass('Tienes la pistola de El Blanco (6 bolas)', 0); });
       },
       update() { },
@@ -396,7 +396,7 @@ const MISSIONS = (() => {
   return {
     kit: KIT, addStory(list) { STORY.push(...list); },
     init() {
-      // Ruymán «El Blanco», at his parents' door next to the start
+      // Rayco «El Blanco», at his parents' door next to the start
       { const b = makeHuman({ skin: 0xf6dcc8, shirt: 0xf4f4f4, pants: 0x9a9a9a, hair: 0x3b2a1e, shoes: 0x333333, scale: 1.09, female: false, thin: true, longPants: true, beard: false, hairStyle: 'Hair_Buzzed', hd: true, sleeve: false, glasses: 'round', belt: false, sole: 0x1a1a1a, shoes: 0x2f3b55, watch: 0x2f3a2a });
         let p = safeSpot(PLAYER.x + 4, PLAYER.z + 1.5); const r = COL.resolve(p[0], p[1], 0.5); NPC.blanco = { x: r.x, z: r.z, H: b, home: [r.x, r.z] };
         b.root.position.set(r.x, heightAt(r.x, r.z) + 0.17, r.z); b.root.rotation.y = Math.atan2(PLAYER.x - r.x, PLAYER.z - r.z); scene.add(b.root); }
@@ -458,7 +458,7 @@ const MISSIONS = (() => {
     blips() { const b = []; for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon) b.push([tr.beacon.position.x, tr.beacon.position.z, tr.css]); } if (active && data.goal) b.push([data.goal[0], data.goal[1], '#f5b72e']); if (active && typeof s2Blips === 'function') b.push(...s2Blips()); return b; },
     prompt() { if (active || PLAYER.car) return ''; for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon && Math.hypot(PLAYER.x - tr.beacon.position.x, PLAYER.z - tr.beacon.position.z) < 6) return 'Acércate al círculo para hablar con ' + bold(tr.list[tr.idx].who); } return ''; },
     fail(r, noRetry) { if (active) { if (WEAPON.training) takeWeapon(); fail(r, noRetry); } },
-    _story: STORY,
+    _story: STORY, refresh() { if (!active) placeStarts(); },
     _setIdx(i, track = 'story') { TRACKS[track].idx = i; placeStarts(); },
     // save / load: which missions are done, the gang, tutorial flags (a mission in progress restarts from its beginning)
     getState() { return { v: 2, story: TRACKS.story.idx, storyDone: !!TRACKS.story.done, side: TRACKS.side.idx, sideOpen: !!TRACKS.side.open, gang: { formed: GANG.formed, name: GANG.name, members: GANG.members.slice(), sastronTut: !!GANG.sastronTut, defenders: !!GANG.defenders, patrol: !!GANG.patrol }, active: active ? active.title : null }; },
