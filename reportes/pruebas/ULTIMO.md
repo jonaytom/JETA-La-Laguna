@@ -1,36 +1,49 @@
-# Pruebas 0.65.0 — 2026-10-12 17:52 — 1/1 OK
+# Pruebas 0.65.1 — 2026-10-12 18:06 — 3/3 OK
 
-Listas: version. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 122 s en total.
+Listas: version. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 398 s en total.
 
 | # | Prueba | Resultado | Tiempo |
 |---|---|---|---|
-| 1 | `prueba_baloncesto.py` | **OK** | 122 s |
+| 1 | `prueba_obispo.py` | **OK** | 131 s |
+| 2 | `herramientas/foto_noche.py -42 -239 5` | **OK** | 133 s |
+| 3 | `herramientas/foto_noche.py -42 -239 13` | **OK** | 134 s |
 
 ## Detalle
 
-### 1. prueba_baloncesto.py — OK
+### 1. prueba_obispo.py — OK
 
 ```
-shot ms 1.9000000022351742
-{"frame":562,"calls":4508,"triangles":6656367,"points":0,"lines":2592} calls:4508
-foto basket_inicio
-foto basket_partido
-cpu {'ph': 'end', 'sc': [10, 4], 'clock': 0, 'golden': False}
-resultado {"won":true,"score":[10,4]}
-PARTIDO CPU OK
-tras moverse 1
-tras correr 2
-tras pasar 3
-tras recibir 4
-tras tirar 5
-tras combo 6
-foto basket_tutorial
-tutorial 99
-TUTORIAL OK
-cambio de defensor -> COCO
-fin {"won":true,"score":[9,2]} estado play
+shot ms 86.39999999850988
+{"frame":560,"calls":4576,"triangles":6542075,"points":0,"lines":2160} calls:4576
+info {'ok': True, 'front': [-42.17756237061555, -235.8174924176035], 'obispo': True, 'court': {'kind': 'bb', 'place': 'la cancha de Calle Pintor Cristino de Vera', 'dist': 226, 'x': -50, 'z': -461}, 'lampsInCourts': 0, 'treesInCourts': 31, 'pitches': 176}
+alcanzable {'beacon': True, 'enCasa': False, 'choca': False, 'obispoEnCasa': False, 'dist': 1.3999999999999984}
+snap obispado
+activa Un partido por la Catedral
+meta [-50.25,-461.5,6]
+partido en marcha True
+estado 1 None
 errores JS []
-BALONCESTO OK
+OBISPO OK
 ```
 
-Fotos/archivos nuevos en `tests/shots/`: basket_inicio.jpg, basket_partido.jpg, basket_tutorial.jpg
+Fotos/archivos nuevos en `tests/shots/`: obispado.jpg
+
+### 2. herramientas/foto_noche.py -42 -239 5 — OK
+
+```
+shot ms 65.70000000298023
+{"frame":562,"calls":4447,"triangles":6624336,"points":0,"lines":1296} calls:4447
+sin PIL: solo fotos
+```
+
+Fotos/archivos nuevos en `tests/shots/`: noche_1.jpg, noche_2.jpg
+
+### 3. herramientas/foto_noche.py -42 -239 13 — OK
+
+```
+shot ms 53.0
+{"frame":562,"calls":4441,"triangles":6549317,"points":0,"lines":1296} calls:4441
+sin PIL: solo fotos
+```
+
+Fotos/archivos nuevos en `tests/shots/`: noche_1.jpg, noche_2.jpg
