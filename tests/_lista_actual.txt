@@ -1,18 +1,7 @@
 prueba_arranque.py
-prueba_panel_controles.py
-prueba_canchas.py
 prueba_baloncesto.py
-prueba_pasos.py
-prueba_bordes.py
-herramientas/foto_jugador.py
-prueba_pelea_especiales.py
-prueba_pelea_atras.py
-prueba_bloqueo.py
-herramientas/sonda_guia.py 284 112
-herramientas/sonda_guia.py 284 112 coche
-prueba_misiones_guardado.py
-prueba_persecuciones.py
-prueba_diario.py
 prueba_obispo.py
-prueba_guardar_cargar.py
+prueba_canchas.py
+prueba_diario.py
+prueba_panel_controles.py
 herramientas/foto_noche.py -42 -239 5

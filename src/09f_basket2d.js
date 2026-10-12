@@ -78,7 +78,7 @@ const BASKET2D = (() => {
     let k = d < 1.6 ? 0.88 : clamp(0.82 - d * 0.05, 0.22, 0.74);
     const o = openness(p); if (o < 1.3) k *= 0.62; else if (o < 2.2) k *= 0.85;
     if (p.fire) k += 0.25;
-    if (!p.human) { k *= 0.45 + 0.6 * p.lv; k -= d * 0.03 * (1 - p.lv); } // v0.66: bad teams miss most shots, above all from far
+    if (!p.human) { k *= 0.3 + 0.75 * p.lv; k -= d * 0.035 * (1 - p.lv); } // v0.66: bad teams miss most shots, above all from far
     return clamp(k, 0.03, 0.97);
   }
   // ---------- actions
@@ -134,9 +134,9 @@ const BASKET2D = (() => {
   function pass(from, to) { const b = st.ball; if (b.holder !== from || !to || to.down > 0) return; b.holder = null; b.mode = 'pass'; b.x = from.x; b.z = from.z; b.y = from.y + 1.3; b.pass = { to, t: 0, from }; b.inter = false; if (st.ev && from.human) st.ev.pass = true; }
   function steal(p) { const b = st.ball; const v = b.holder; if (!v || v.team === p.team || p.down > 0 || p.stealCD > 0) return; p.stealCD = 0.5; p.act = 'push'; p.actT = 0;
     if (dist(p, v) > 1.3) return;
-    const shove = (p.human ? held('vT') : Math.random() < 0.3) && p.turbo > 0.2;
+    const shove = (p.human ? held('vT') : Math.random() < 0.35 * p.lv) && p.turbo > 0.2;
     if (shove) { p.turbo -= 0.25; v.down = 1.0; v.shootHold = false; b.holder = null; b.mode = 'loose'; b.x = v.x; b.z = v.z; b.y = 1; b.vx = rnd(-2, 2); b.vz = rnd(-2, 2); b.vy = 2; banner('¡EMPUJÓN!', '#ff8a3d'); snd('bounce'); if (st.ev && p.human) st.ev.steal = true; return; }
-    if (Math.random() < (p.human ? 0.42 : 0.18 + p.lv * 0.25)) { give(p); banner('¡ROBO!', '#5ec8ff'); if (st.ev && p.human) st.ev.steal = true; }
+    if (Math.random() < (p.human ? 0.55 : 0.06 + p.lv * 0.3)) { give(p); banner('¡ROBO!', '#5ec8ff'); if (st.ev && p.human) st.ev.steal = true; }
   }
   // ---------- banners & HUD state
   function banner(t, c = '#ffd400', dur = 1.2) { st.banner = { t, c, dur, t0: st.time0 }; st.bannerT = dur; }
@@ -166,7 +166,7 @@ const BASKET2D = (() => {
       if (tutMate) { tx = p.x; tz = p.z; run = false; }
       else if (!passive && !p.air) {
         if (guard && mate && openness(mate) > 2.5 && Math.random() < 0.02 + 0.03 * p.lv) pass(p, mate);
-        else if (d < 3 && p.turbo > 0.3 && Math.random() < 0.04 * (0.5 + p.lv)) { p.wantDunk = true; startShot(p); p.wantDunk = false; }
+        else if (d < 3 && p.turbo > 0.3 && Math.random() < 0.05 * p.lv) { p.wantDunk = true; startShot(p); p.wantDunk = false; }
         else if (d < 9.5 && ((d < p.shootR && (!guard || p.possT > 2.6)) || p.possT > 4.5)) { startShot(p); /* v0.66: never from its own half */ p.aiRel = rnd(-0.12, 0.12) * (1.3 - p.lv); p.shootR = null; }
       }
     } else if (own) { // off the ball: get open on the wing, away from the holder
@@ -175,7 +175,7 @@ const BASKET2D = (() => {
     } else if (own === false) { // defence: stay between your man and the basket
       const m = p.mark || rivals(p)[p.idx % 2]; const hd = b.holder;
       const k = hd === m ? 1.0 : 2.2; const L = Math.hypot(dh.x - m.x, dh.z - m.z) || 1; tx = m.x + (dh.x - m.x) / L * k; tz = m.z + (dh.z - m.z) / L * k; run = dist(p, m) > 4;
-      if (!passive && hd === m && dist(p, m) < 1.2 && Math.random() < dt * (0.25 + 0.9 * p.lv)) steal(p);
+      if (!passive && hd === m && dist(p, m) < 1.2 && Math.random() < dt * (0.1 + 0.7 * p.lv)) steal(p);
       if (!passive && m.air && m.shootHold && dist(p, m) < 1.8 && !p.air && Math.random() < dt * 6 * p.lv) jump(p, 5.4);
     }
     if (passive) { tx = p.x; tz = p.z; }
@@ -191,7 +191,7 @@ const BASKET2D = (() => {
       if (ctl) { mx = (held('vR') ? 1 : 0) - (held('vL') ? 1 : 0); mz = (held('vD') ? 1 : 0) - (held('vU') ? 1 : 0); run = held('vT') && p.turbo > 0; }
       else { const a = aiThink(p, dt); const dx = a.tx - p.x, dz = a.tz - p.z, L = Math.hypot(dx, dz); if (L > 0.25) { mx = dx / L; mz = dz / L; } run = a.run && p.turbo > 0; }
       const L = Math.hypot(mx, mz); if (L > 1) { mx /= L; mz /= L; }
-      const sp = run ? 7.8 : 5.0; p.vx = lerp(p.vx, mx * sp, 0.25); p.vz = lerp(p.vz, mz * sp * 0.8, 0.25);
+      const sp = (run ? 6.4 : 4.1) * (p.team === 1 ? 0.8 + 0.25 * p.lv : 1); // v0.66: slower all round; weak rivals slower still p.vx = lerp(p.vx, mx * sp, 0.25); p.vz = lerp(p.vz, mz * sp * 0.8, 0.25);
       if (run && L > 0.1) { p.turbo = Math.max(0, p.turbo - dt * 0.38); if (st.ev && p.human) st.ev.turbo = (st.ev.turbo || 0) + dt; } else p.turbo = Math.min(1, p.turbo + dt * 0.16);
       if (Math.abs(p.vx) > 0.3) p.dir = Math.sign(p.vx);
       if (p.human && L > 0.1 && st.ev) st.ev.walk = (st.ev.walk || 0) + dt;
@@ -212,9 +212,9 @@ const BASKET2D = (() => {
       p.vy -= G * dt; p.y += p.vy * dt;
       if (p.act === 'dunk') { const h = hoopOf(p.team); p.dir = Math.sign(h.x - p.x) || p.dir;
         if (st.ball.holder === p && (p.vy < 0.6 || p.sure) && Math.hypot(h.x - p.x, h.z - p.z) < 0.9) { // slam it
-          const blk = !p.sure && rivals(p).find((q) => q.air && q.y > 0.6 && dist(q, p) < 1.0 && Math.random() < 0.35 * q.lv); p.sure = false;
+          const blk = !p.sure && rivals(p).find((q) => q.air && q.y > 0.6 && dist(q, p) < 1.0 && Math.random() < (q.human ? 0.5 : 0.35 * q.lv)); const fallo = !p.sure && !p.human && Math.random() > 0.45 + 0.55 * p.lv; p.sure = false; // v0.66: weak CPU dunkers hit the rim
           const b = st.ball; b.holder = null;
-          if (blk) { b.mode = 'loose'; b.x = p.x; b.z = p.z; b.y = RIM; b.vx = -Math.sign(h.x - CL / 2) * 4; b.vz = rnd(-2, 2); b.vy = 2; banner('¡TAPÓN!', '#ff6b6b'); snd('rim'); }
+          if (blk || fallo) { b.mode = 'loose'; b.x = p.x; b.z = p.z; b.y = RIM; b.vx = -Math.sign(h.x - CL / 2) * 4; b.vz = rnd(-2, 2); b.vy = 2; banner(blk ? '¡TAPÓN!' : '¡AL HIERRO!', '#ff6b6b'); snd('rim'); }
           else { b.mode = 'net'; b.x = h.x; b.z = h.z; b.y = RIM; b.vx = b.vz = 0; b.vy = -2; score(p.team, 2, p, 'dunk'); }
         } }
       if (p.y <= 0) { p.y = 0; p.vy = 0; p.air = false; p.sure = false; p.combo = null; if (p.act === 'dunk' || p.act === 'shoot') p.act = ''; if (p.shootHold) { p.landingRelease = true; release(p); } if (st.ev && p.human) st.ev.jump = true; }

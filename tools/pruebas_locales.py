@@ -1,7 +1,7 @@
 # Pruebas en el PC de Jonay (v0.64.1): lo lanza scripts/PRUEBAS.bat. Así las pruebas corren en su equipo y no gastan uso.
 #   1) build.py  2) servidor local en dist/ (puerto 8765)  3) cada prueba de scripts/PRUEBAS_LISTA.txt con tests/run_test.py
 #   4) informe en reportes/pruebas/ULTIMO.md (y una copia con fecha) que Claude lee antes de publicar.
-# Uso: python tools/pruebas_locales.py [listas…]   cambios (según lo cambiado desde la última subida a git, ver
+# Uso: python tools/pruebas_locales.py [listas…]   cambios (lo cambiado desde la última tanda en que pasaron sus pruebas: huellas.json; ver
 #      scripts/pruebas/categorias.json; por defecto junto con «version»), version (= scripts/PRUEBAS_LISTA.txt), base,
 #      pelea, misiones, coches, mapa, otros, minijuegos (scripts/pruebas/<nombre>.txt), todas, o una ruta .txt
 # v0.66.1: todas las pruebas comparten UNA carga del juego (tests/run_varios.py); la que falle se repite aparte, con
@@ -26,23 +26,64 @@ def servidor():
 
 
 CAMBIOS = {}
+HUELLAS = os.path.join(ROOT, 'reportes', 'pruebas', 'huellas.json')
+ZONAS = ('src', 'data', 'tests', 'tools', 'scripts')  # folders whose files can pick tests (plus the root .py)
+
+
+def huellas_ahora():
+    import hashlib
+    h = {}
+    for z in ZONAS:
+        for r, ds, fs in os.walk(os.path.join(ROOT, z)):
+            ds[:] = [d for d in ds if d not in ('shots', '__pycache__', 'node_modules')]
+            for n in fs:
+                q = os.path.join(r, n); rel = os.path.relpath(q, ROOT).replace('\\', '/')
+                if rel.startswith('tests/_lista') or n.endswith('.pyc'): continue
+                try: h[rel] = hashlib.md5(open(q, 'rb').read()).hexdigest()
+                except OSError: pass
+    for n in os.listdir(ROOT):
+        if n.endswith('.py'): h[n] = hashlib.md5(open(os.path.join(ROOT, n), 'rb').read()).hexdigest()
+    return h
+
+
 def cambios():
-    """tests for the files changed since the last upload to git (git status), by scripts/pruebas/categorias.json"""
-    import json, re
+    """v0.66: tests for the files changed since the last test run where THEIR tests passed (reportes/pruebas/huellas.json:
+    a hash per file, refreshed at the end of each run except for files whose tests failed). Without that file yet,
+    falls back to git status. Rules: scripts/pruebas/categorias.json; a changed test file runs itself."""
+    import re
     cfg = json.load(open(os.path.join(ROOT, 'scripts', 'pruebas', 'categorias.json'), encoding='utf-8'))
-    try: st = subprocess.run(['git', 'status', '--porcelain', '-uall'], cwd=ROOT, capture_output=True, text=True, encoding='utf-8', errors='replace').stdout
-    except Exception as e: print('sin git:', e); st = ''
-    files = sorted({l[3:].strip().strip('"').replace('\\', '/').split(' -> ')[-1] for l in st.splitlines() if l.strip()})
-    out = list(cfg['siempre']); CAMBIOS['archivos'] = files; CAMBIOS['reglas'] = []
+    ahora = huellas_ahora(); CAMBIOS['ahora'] = ahora
+    if os.path.exists(HUELLAS):
+        antes = json.load(open(HUELLAS, encoding='utf-8')); CAMBIOS['desde'] = 'la última tanda de pruebas'
+        files = sorted(f for f in ahora if antes.get(f) != ahora[f]); CAMBIOS['antes'] = antes
+    else:
+        CAMBIOS['desde'] = 'la última subida a git (aún no hay huellas)'; CAMBIOS['antes'] = {}
+        try: st = subprocess.run(['git', 'status', '--porcelain', '-uall'], cwd=ROOT, capture_output=True, text=True, encoding='utf-8', errors='replace').stdout
+        except Exception as e: print('sin git:', e); st = ''
+        files = sorted({l[3:].strip().strip('"').replace('\\', '/').split(' -> ')[-1] for l in st.splitlines() if l.strip()})
+    out = list(cfg['siempre']); CAMBIOS['archivos'] = files; CAMBIOS['de'] = {}
     for f in files:
+        mine = []
+        if f.startswith('tests/') and f.endswith('.py') and os.path.basename(f).startswith(('prueba_', 'audit_')): mine.append(f[6:])
         for rx, tests in cfg['reglas']:
             m = re.search(rx, f)
             if not m: continue
-            CAMBIOS['reglas'].append(f)
             for t in tests:
                 t = t.replace('$1', m.group(1) if m.groups() else '')
-                if os.path.exists(os.path.join(TESTS, t.split()[0])): out.append(t)
+                if os.path.exists(os.path.join(TESTS, t.split()[0])): mine.append(t)
+        CAMBIOS['de'][f] = mine; out += mine
     return out
+
+
+def guardar_huellas(resultados):
+    """after a run: every file takes its current hash, except a changed file with a test that did not pass (so it's tried again)."""
+    if 'ahora' not in CAMBIOS: return
+    nuevo = dict(CAMBIOS['ahora']); antes = CAMBIOS.get('antes', {})
+    for f, tests in CAMBIOS.get('de', {}).items():
+        if any(resultados.get(t) != 'OK' for t in tests):
+            if f in antes: nuevo[f] = antes[f]
+            else: nuevo.pop(f, None)
+    os.makedirs(os.path.dirname(HUELLAS), exist_ok=True); json.dump(nuevo, open(HUELLAS, 'w', encoding='utf-8'), indent=0)
 
 
 def lista(args):
@@ -79,9 +120,9 @@ def main():
     if b.returncode != 0:
         open(os.path.join(OUT, 'ULTIMO.md'), 'w', encoding='utf-8').write(f'# Pruebas {ver}: FALLA EL BUILD\n\n```\n{b.stdout[-2000:]}\n{b.stderr[-3000:]}\n```\n'); sys.exit(1)
     srv = servidor()
-    filas, detalle = [], []
+    filas, detalle = [], []; RES = {}
     t_all = time.time()
-    if CAMBIOS.get('archivos') is not None: print('== cambiado desde la última subida:', len(CAMBIOS['archivos']), 'archivos')
+    if CAMBIOS.get('archivos') is not None: print(f"== cambiado desde {CAMBIOS.get('desde')}: {len(CAMBIOS['archivos'])} archivos")
     lp = os.path.join(TESTS, '_lista_actual.txt'); open(lp, 'w', encoding='utf-8').write('\n'.join(pruebas) + '\n')
     print(f'== {len(pruebas)} pruebas con una sola carga del juego', flush=True); t0 = time.time()
     # v0.66: streamed, so the window (and the worker) say which test is running right now
@@ -118,12 +159,13 @@ def main():
             v = veredicto(code, out2); seg = int(time.time() - t1); out = 'En la carga compartida falló por:\n' + '\n'.join(motivo) + '\n--- repetida aparte:\n' + out2; nota = ' (repetida aparte)'
         utiles = [l for l in out.splitlines() if not l.startswith('log:') and not l.startswith('warning:') and l.strip()]
         print(f'   {v}{nota} {linea} ({seg} s)', flush=True)
-        filas.append(f'| {i} | `{linea}` | **{v}**{nota} | {seg} s |')
+        RES[linea] = v; filas.append(f'| {i} | `{linea}` | **{v}**{nota} | {seg} s |')
         detalle.append(f'### {i}. {linea} — {v}{nota}\n\n```\n' + '\n'.join(utiles[-60:]) + '\n```\n')
     nuevas = [os.path.basename(f) for f in glob.glob(os.path.join(TESTS, 'shots', '*')) if os.path.getmtime(f) >= t0 - 1]
     if nuevas: detalle.append('Fotos/archivos nuevos en `tests/shots/`: ' + ', '.join(sorted(nuevas)) + '\n')
-    if CAMBIOS.get('archivos') is not None: detalle.insert(0, '**Archivos cambiados desde la última subida a git** (eligen las pruebas): ' + (', '.join(f'`{f}`' for f in CAMBIOS['archivos'][:60]) or 'ninguno') + '\n')
+    if CAMBIOS.get('archivos') is not None: detalle.insert(0, f'**Archivos cambiados desde {CAMBIOS.get("desde", "")}** (eligen las pruebas): ' + (', '.join(f'`{f}`' for f in CAMBIOS['archivos'][:60]) or 'ninguno') + '\n')
     if srv: srv.shutdown()
+    guardar_huellas(RES)
     ok = sum(1 for f in filas if '**OK**' in f)
     fecha = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
     md = (f'# Pruebas {ver} — {fecha} — {ok}/{len(filas)} OK\n\nListas: {", ".join(nombres)}. En el PC de Jonay (`scripts\\PRUEBAS*.bat`), {int(time.time() - t_all)} s en total.\n\n'

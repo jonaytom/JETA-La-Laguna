@@ -22,6 +22,14 @@ async def run(pg):
     res = await pg.evaluate("JSON.stringify(window.__bres)"); print('resultado', res)
     ok1 = res != 'null' and sum(s['sc']) > 0 and not await pg.evaluate("__dbg.BASKET2D.running")
     print('PARTIDO CPU', 'OK' if ok1 else 'FALLA')
+    # 1a) v0.66 balance: the first game (rivals lv 0.08) must be easy: 3 automatic games, our team should win clearly
+    tot = [0, 0]
+    for g in range(3):
+        await pg.evaluate("""() => { window.__bres = null; const L = %s; __dbg.BASKET2D.start({ team: [{name:'A1', look:L},{name:'A2', look:L}], rival: [{name:'B1', look:L},{name:'B2', look:L}], time: 120, lv: 0.08, mateLv: 0.6, auto: true, onEnd: (r) => { window.__bres = r; } }); }""" % LOOK)
+        await pg.evaluate("__dbg.BASKET2D._step(60*125)")
+        sc = json.loads(await pg.evaluate("JSON.stringify(__dbg.BASKET2D._st().score)")); tot[0] += sc[0]; tot[1] += sc[1]; print('partido fácil', g + 1, sc)
+        await pg.evaluate("(()=>{ if (__dbg.BASKET2D.running) __dbg.BASKET2D._abort(); })()")
+    print('equilibrio primer partido', tot, 'OK' if tot[0] >= 2 * max(1, tot[1]) else 'FALLA: los rivales del primer partido anotan demasiado')
     # 1b) the mouse: left = shoot (hold and release), right = pass (v0.66: they were swapped)
     await pg.evaluate("() => { const L = %s; __dbg.BASKET2D.start({ team: [{name:'YO', look:L},{name:'COCO', look:L}], rival: [{name:'R1', look:L},{name:'R2', look:L}], time: 60, lv: 0.3 }); }" % LOOK)
     await asyncio.sleep(0.5)

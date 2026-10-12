@@ -84,9 +84,9 @@ function obispoGameUpdate(m) {
   if (PLAYER.car) { if (PLAYER.car.speed > 2) return; exitCar(); }
   obispoStartGame(m, S.o, S.c);
 }
-const O_SEMINARIO = { court: 'mayex', rival: [{ name: 'H. TOMÁS', look: SEMINARISTAS[0] }, { name: 'H. LUCAS', look: SEMINARISTAS[1] }], rivalName: 'SEMINARIO', time: 120, lv: 0.15, tutorial: true, prize: 350,
+const O_SEMINARIO = { court: 'mayex', rival: [{ name: 'H. TOMÁS', look: SEMINARISTAS[0] }, { name: 'H. LUCAS', look: SEMINARISTAS[1] }], rivalName: 'SEMINARIO', time: 120, lv: 0.08, tutorial: true, prize: 350,
   winWho: 'Hermano Tomás', winLine: (s) => `${s[0]} a ${s[1]}... Que Dios os lo pague. Bueno, que os lo pague Monseñor, que tiene la llave del cepillo.`, loseLine: 'Os han ganado los seminaristas. ¡A rezar y a entrenar!' };
-const O_CRISTO = { court: 'publica', rival: [{ name: 'EL NENE', look: CRISTO_TEAM[0] }, { name: 'YERAY', look: CRISTO_TEAM[1] }], rivalName: 'EL CRISTO', time: 150, lv: 0.45, tutorial: false, prize: 600,
+const O_CRISTO = { court: 'publica', rival: [{ name: 'EL NENE', look: CRISTO_TEAM[0] }, { name: 'YERAY', look: CRISTO_TEAM[1] }], rivalName: 'EL CRISTO', time: 150, lv: 0.32, tutorial: false, prize: 600,
   winWho: OBISPO, winLine: (s) => `${s[0]} a ${s[1]}. ¡Aleluya! Con esto pagamos el andamio. La próxima vez, fútbol: el Señor también es del Tenerife.`, loseLine: 'Los del Cristo os han ganado. Monseñor dice que recéis menos y defendáis más.' };
 const M_OBISPO_1 = {
   title: 'Un partido por la Catedral', who: OBISPO,

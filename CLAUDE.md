@@ -36,7 +36,7 @@ compila el PC de Jonay).
    Antes de editar un archivo que Jonay pueda haber cambiado, traer su versión de `E:\…\repo\`.
 2. Copiar los archivos cambiados a `E:\Claude\GTA La Laguna\repo\` (`device_commit_files`), rellenar
    `scripts/PRUEBAS_LISTA.txt` con las pruebas de esta versión y dejar el encargo en `cola\`:
-   `build` + `pruebas` (sin nada = `cambios version`: solo las pruebas de los archivos tocados según
+   `build` + `pruebas` (sin nada = `cambios version`: solo las pruebas de los archivos tocados desde la última tanda que pasó, según
    `scripts/pruebas/categorias.json` + `PRUEBAS_LISTA.txt`, con una sola carga del juego; `pruebas base` o `todas` cuando
    se toque algo general). Leer `cola\hecho\<id>.md` y `reportes\pruebas\ULTIMO.md` (y fotos de
    `tests\shots\` si hace falta). Si algo falla: arreglar y repetir.

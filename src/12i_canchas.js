@@ -104,17 +104,17 @@ function useCourtGate(c) {
   const prize = 40 * c.level;
   DLG.show(c.label, 'Partido 2 contra 2', `Los de aquí os retan a ti y a Coco. <b>Nivel ${c.level}/5</b>. Si ganáis: <b>$${prize}</b>.`, '¿Jugáis?', ['Jugar', 'Ahora no'], (i) => {
     DLG.hide(); if (i !== 0) return;
-    playCourtGame(c, { rival: pickRivals(c.cx + c.cz).map((l, k) => ({ name: ['EL MÁS ALTO', 'EL PIBE'][k], look: l })), rivalName: (c.street || 'LA CANCHA').replace(/^(Calle|Avenida|Camino|Plaza)\s+(de\s+(la\s+|los\s+|las\s+)?)?/i, '').toUpperCase().slice(0, 11), lv: 0.2 + 0.13 * c.level, time: 120,
+    playCourtGame(c, { rival: pickRivals(c.cx + c.cz).map((l, k) => ({ name: ['EL MÁS ALTO', 'EL PIBE'][k], look: l })), rivalName: (c.street || 'LA CANCHA').replace(/^(Calle|Avenida|Camino|Plaza)\s+(de\s+(la\s+|los\s+|las\s+)?)?/i, '').toUpperCase().slice(0, 11), lv: 0.08 + 0.14 * c.level, time: 120,
       onEnd: (r) => { if (r.won) { PLAYER.money += prize; AUDIO.cash && AUDIO.cash(); HUD.toast(`¡Ganado! +$${prize}`, '#7fe08a', 4); } else HUD.toast('Os han ganado. Vuelve cuando quieras la revancha.', '#ffb3b3', 4); } });
   });
 }
 // ---------- Torneo Lagunero: 4 public courts around town (each harder) and the final in the Ríos Tejera
 const TORNEO_TEAMS = [
-  { name: 'Los Baifos de San Benito', short: 'BAIFOS', cap: 'Yeray «el Baifo»', lv: 0.4, prize: 300 },
-  { name: 'Los Perenquenes de Taco', short: 'PERENQUENES', cap: 'Echedey', lv: 0.5, prize: 450 },
-  { name: 'Los Guanchinches del Coromoto', short: 'GUANCHINCHES', cap: 'Acaymo', lv: 0.6, prize: 600 },
-  { name: 'Barranco Grande Brothers', short: 'BARRANCO', cap: 'Kevin y Jonathan', lv: 0.7, prize: 800 },
-  { name: 'Los Magos de la Vega', short: 'MAGOS VEGA', cap: 'Don Tinguaro', lv: 0.85, prize: 1500 },
+  { name: 'Los Baifos de San Benito', short: 'BAIFOS', cap: 'Yeray «el Baifo»', lv: 0.28, prize: 300 },
+  { name: 'Los Perenquenes de Taco', short: 'PERENQUENES', cap: 'Echedey', lv: 0.38, prize: 450 },
+  { name: 'Los Guanchinches del Coromoto', short: 'GUANCHINCHES', cap: 'Acaymo', lv: 0.48, prize: 600 },
+  { name: 'Barranco Grande Brothers', short: 'BARRANCO', cap: 'Kevin y Jonathan', lv: 0.6, prize: 800 },
+  { name: 'Los Magos de la Vega', short: 'MAGOS VEGA', cap: 'Don Tinguaro', lv: 0.75, prize: 1500 },
 ];
 function torneoInit() {
   const pub = COURTS.filter((c) => c.gate === 'court' && !c.final).sort((a, b) => a.dist - b.dist);

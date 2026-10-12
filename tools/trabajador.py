@@ -56,7 +56,8 @@ def orden(linea):
         code, out, s = run([PY, os.path.join('tools', 'pruebas_locales.py')] + (a or ['cambios', 'version']), eco=True)
         informe = os.path.join(ROOT, 'reportes', 'pruebas', 'ULTIMO.md')
         resumen = open(informe, encoding='utf-8').readline().strip() if os.path.exists(informe) else ''
-        m = re.search(r'== (\d+)/(\d+) OK', out); return (0 if m and m.group(1) == m.group(2) else 2)  # v0.66: by the final count (a test repeated apart says FALLA and then OK), resumen + '\n(informe completo: reportes/pruebas/ULTIMO.md)\n' + out[-1500:], s
+        # v0.66: verdict by the final count (a test repeated apart prints FALLA and then OK)
+        m = re.search(r'== (\d+)/(\d+) OK', out); return (0 if m and m.group(1) == m.group(2) else 2), resumen + '\n(informe completo: reportes/pruebas/ULTIMO.md)\n' + out[-1500:], s
     if o == 'auditar':  # the Corrector's auditor, exactly like its auditar_jeta.bat (PARA_EL_PROGRAMADOR, 2026-10-12): GPU, copy, resultados_pc
         rev = os.path.join(os.path.expanduser('~'), 'RevisordeCodigo'); her = os.path.join(rev, 'herramientas'); rpc = os.path.join(rev, 'resultados_pc')
         if not os.path.exists(os.path.join(her, 'auditar.py')): return 1, 'no encuentro ' + her, 0

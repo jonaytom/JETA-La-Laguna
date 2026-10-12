@@ -1,8 +1,10 @@
 # Pruebas
 
 > **Desde v0.64.1 las pruebas se ejecutan en el PC de Jonay** (no en la nube: no gasta uso y siempre es el mismo equipo).
-> - `scripts\PRUEBAS.bat` (v0.66): **solo lo que ha cambiado** = `cambios` (mira `git status` y, con las reglas de
->   `scripts/pruebas/categorias.json`, elige las pruebas de cada archivo tocado; `prueba_arranque.py` va siempre) +
+> - `scripts\PRUEBAS.bat` (v0.66): **solo lo que ha cambiado** = `cambios` (compara cada archivo de `src/ data/ tests/ tools/ scripts/` con su huella de la última tanda en que
+>   pasaron sus pruebas, `reportes/pruebas/huellas.json`; si una prueba falla, sus archivos siguen contando como cambiados
+>   hasta que pase. Con las reglas de `scripts/pruebas/categorias.json` elige las pruebas de cada archivo tocado; una prueba
+>   cambiada se lanza sola; `prueba_arranque.py` va siempre. Sin huellas aún, usa `git status`) +
 >   `version` (`scripts/PRUEBAS_LISTA.txt`, la rellena Claude). Todas se ejecutan con **una sola carga del juego**
 >   (`tests/run_varios.py`: entre prueba y prueba cierra minijuegos, diario y misiones); si una falla, se repite sola
 >   con `run_test.py` y el informe lo marca «(repetida aparte)». El informe lista los archivos cambiados.
