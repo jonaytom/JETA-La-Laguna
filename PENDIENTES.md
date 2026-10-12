@@ -5,6 +5,15 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 
 ## Por revisar con Jonay
 
+- [ ] **Diario de misiones con la tecla J** (Jonay, 12-oct): un diario sobreimpreso en pantalla (como en muchos juegos de
+      misiones) con las misiones hechas y las conversaciones agrupadas por misión, su estado (terminada o no) y cuál
+      sigue. Al elegir una misión se ven sus detalles (diálogos) y hay un botón **Reiniciar** que reinicia esa misión y
+      todo lo que va detrás (útil ahora para las pruebas). En la primera misión, cuando El Blanco te la asigne, te dice
+      que con la J puedes ver las misiones. (Ojo: la J ya es puñetazo en la pelea 2D, pero solo dentro de la pelea.)
+
+- [ ] **Giros de los coches perseguidos demasiado cerrados** (Jonay, 12-oct): en las persecuciones de misión los coches
+      que huyen giran en seco; deberían girar de forma más gradual (curva más abierta, frenar antes de la esquina).
+
 - [ ] **Primeras misiones del Obispo: partidos para la obra de la iglesia** (Jonay, 12-oct; va con «El Obispo y el
       Obispado» y los minijuegos de baloncesto tipo NBA Jam y fútbol tipo Sensible Soccer): jugar partidos de baloncesto
       y de fútbol para recaudar fondos para la obra de la iglesia; ahí aprendes a jugar los dos minijuegos 2D. Buscar

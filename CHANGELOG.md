@@ -3,6 +3,18 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.63.1 — 2026-10-12 — Flecha del coche más discreta
+- La flecha que flota sobre el coche es mucho más pequeña (menos de la mitad), más transparente y casi plana: ya no
+  parece que apunte al cielo ni de frente al suelo.
+
+## 0.63.0 — 2026-10-12 — Claxon para cada coche y flecha flotante en coche
+- **Claxon nuevo, uno por tipo de vehículo** (el de antes era un pitido cuadrado muy feo): utilitario y moto con dos
+  pitidos agudos, turismo y taxi de dos notas, SUV y furgoneta más graves, deportivo brillante, guagua y policía graves y
+  el camión con bocina de aire. Cada coche suena un poco distinto, y el Guanche GT de El Canarión toca una melodía.
+- **Brújula en coche**: en lugar del aro (seguía siendo enorme) hay una **flecha maciza flotando sobre el techo** que
+  apunta al destino principal (rosa si has marcado uno), siempre vuelta hacia la cámara, como en los juegos de taxis.
+- **Brújula a pie**: el aro es un 30 % más pequeño.
+
 ## 0.62.1 — 2026-10-12 — Brújula: se ve a pie en todas partes y más pequeña en coche
 - **A pie se veía mal o nada** en aparcamientos, plazas y calles inclinadas: quedaba por debajo del pavimento. Ahora se
   coloca a la altura de los pies del personaje (o de las ruedas del coche) y solo usa el terreno para inclinarse.

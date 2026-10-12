@@ -71,7 +71,7 @@ function updatePlayer(dt) {
     if (gp) { thr = Math.max(thr, gp.rt); brk = Math.max(brk, gp.lt); if (gp.lx) st = -gp.lx; }
     if (INPUT.touch.active) { const ty = -INPUT.touch.y; thr = Math.max(thr, ty > 0.2 ? ty : 0); brk = Math.max(brk, ty < -0.2 ? -ty : 0); st = -INPUT.touch.x; }
     c.thr = thr; c.brk = brk; c.steer = st; c.hb = key('Space') || (gp && gp.hold(0)) || INPUT.touch.hb ? 1 : 0;
-    if (pressed('KeyH') || (gp && gp.down(10))) AUDIO.horn();
+    if (pressed('KeyH') || (gp && gp.down(10))) AUDIO.horn(PLAYER.car);
     if (pressed('KeyR')) { const car = PLAYER.car; if (car.speed < 3) { car.pitch = 0; car.roll = 0; car.vx = car.vz = 0; const r = COL.resolve(car.x, car.z, 2.5); car.x = r.x; car.z = r.z; } }
     PLAYER.x = PLAYER.car.x; PLAYER.z = PLAYER.car.z; PLAYER.y = PLAYER.car.y; PLAYER.speed = PLAYER.car.speed;
     // pedestrian zone: the Policía Local doesn't like cars on La Carrera

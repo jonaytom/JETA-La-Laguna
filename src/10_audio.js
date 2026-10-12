@@ -22,6 +22,38 @@ const AUDIO = (() => {
   }
   function burst(dur, freq, vol, type = 'lowpass') { if (!ctx) return; const s = ctx.createBufferSource(); s.buffer = noiseBuf; const f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq; const g = ctx.createGain(); const t = ctx.currentTime; g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur); s.connect(f); f.connect(g); g.connect(master); s.start(t, Math.random()); s.stop(t + dur + 0.05); }
   function tone(freq, dur, vol, type = 'sine', when = 0) { if (!ctx) return; const o = ctx.createOscillator(); o.type = type; o.frequency.value = freq; const g = ctx.createGain(); const t = ctx.currentTime + when; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.05); }
+  // ---- horns (v0.63): one per kind of vehicle instead of the same harsh square beep. Saw waves through a soft clipper and a
+  // resonant low-pass (the horn's metal bell), a short attack/release and a little vibrato; every car keeps its own slight
+  // pitch offset. Hz = the notes of each horn, d = length, f = filter, beeps = short repeated toots (small cars, motos).
+  const HORNS = {
+    compact: { hz: [523, 659], d: 0.16, f: 2400, beeps: 2, v: 0.06 },
+    sedan: { hz: [392, 494], d: 0.38, f: 1900, v: 0.065 }, taxi: { hz: [415, 523], d: 0.3, f: 2000, beeps: 2, v: 0.065 },
+    suv: { hz: [349, 440], d: 0.42, f: 1700, v: 0.07 }, sport: { hz: [466, 587], d: 0.28, f: 2800, v: 0.065 },
+    van: { hz: [311, 392], d: 0.45, f: 1500, v: 0.07 }, police: { hz: [262, 330], d: 0.5, f: 1400, v: 0.08 },
+    bus: { hz: [220, 277], d: 0.6, f: 1200, v: 0.08 }, truck: { hz: [147, 185, 220], d: 0.85, f: 1000, a: 0.06, v: 0.085 }, // air horn chord
+    moto: { hz: [622], d: 0.12, f: 3000, beeps: 2, v: 0.05 },
+  };
+  let hornShaper = null, hornBusy = 0;
+  function hornNote(hz, t0, d, cfg, k) {
+    const out = ctx.createGain(); const flt = ctx.createBiquadFilter(); flt.type = 'lowpass'; flt.frequency.value = cfg.f; flt.Q.value = 3.5;
+    if (!hornShaper) { hornShaper = ctx.createWaveShaper(); const c = new Float32Array(256); for (let i = 0; i < 256; i++) { const x = i / 127.5 - 1; c[i] = Math.tanh(2.2 * x); } hornShaper.curve = c; hornShaper.connect(master); }
+    const vib = ctx.createOscillator(); vib.frequency.value = 6; const vg = ctx.createGain(); vg.gain.value = hz * 0.004; vib.connect(vg);
+    const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = hz * k; vg.connect(o.frequency);
+    const a = cfg.a || 0.012, g = out.gain; g.setValueAtTime(0.0001, t0); g.exponentialRampToValueAtTime(cfg.v / cfg.hz.length * 2, t0 + a); g.setValueAtTime(cfg.v / cfg.hz.length * 2, t0 + d); g.exponentialRampToValueAtTime(0.0001, t0 + d + 0.07);
+    o.connect(flt); flt.connect(out); out.connect(hornShaper); o.start(t0); vib.start(t0); o.stop(t0 + d + 0.1); vib.stop(t0 + d + 0.1);
+  }
+  function hornPlay(car) {
+    if (!ctx) return; const t = ctx.currentTime; if (t < hornBusy) return;
+    if (car && !car.hornK) car.hornK = 0.95 + Math.random() * 0.1;
+    const k = car ? car.hornK : 1;
+    if (car && car.model && car.model.id === 'guancheGT') { // the Canarión's car plays a little tune (folk tune, parody)
+      const N = [392, 392, 392, 523, 659, 392, 392, 392, 523, 659]; const D = [0.11, 0.11, 0.11, 0.22, 0.3, 0.11, 0.11, 0.11, 0.22, 0.3];
+      let w = 0; N.forEach((hz, i) => { hornNote(hz, t + w, D[i] * 0.85, { f: 2600, v: 0.06, hz: [1] }, k); w += D[i]; }); hornBusy = t + w; return;
+    }
+    const cfg = HORNS[car && car.type] || HORNS.sedan; const n = cfg.beeps || 1;
+    for (let b = 0; b < n; b++) for (const hz of cfg.hz) hornNote(hz, t + b * (cfg.d + 0.09), cfg.d, cfg, k);
+    hornBusy = t + n * (cfg.d + 0.09) - 0.05;
+  }
   let birdT = 0;
   // footsteps: pre-rendered samples per surface (see 10c_steps.js); kept the old signature for NPC callers
   function footstep(run, soft, surface, vol = 1) { if (!ctx) return; STEPS.play(surface || (soft ? 'soft' : 'hard'), run ? 'run' : 'walk', vol); }
@@ -51,7 +83,7 @@ const AUDIO = (() => {
     },
     crash(v) { burst(0.35, 900, clamp(v / 20, 0.1, 0.7)); burst(0.8, 200, clamp(v / 25, 0.1, 0.6)); },
     thud(d) { burst(0.2, 300, clamp(0.4 - d / 100, 0.02, 0.4)); },
-    horn() { tone(415, 0.45, 0.08, 'square'); tone(520, 0.45, 0.06, 'square'); },
+    horn(car) { hornPlay(car); },
     door() { burst(0.12, 250, 0.35); },
     step(k) { burst(0.05, 700 + Math.random() * 400, 0.04 * clamp(k, 0.3, 1.2), 'bandpass'); },
     wanted() { [660, 880, 660].forEach((f, i) => tone(f, 0.18, 0.06, 'triangle', i * 0.12)); },

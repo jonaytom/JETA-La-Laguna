@@ -264,7 +264,7 @@ const M_GUAGUA = {
   update(dt) { const K = K2(), S = this.st; if (!S || !S.step) return;
     S.trk = (S.trk || 0) - dt; if (S.trk <= 0) { S.trk = 0.8; K.track(S.bus.x, S.bus.z, 8); } const d = Math.hypot(PLAYER.x - S.bus.x, PLAYER.z - S.bus.z); const done = s2DriveCar(S.bus, S.P, dt, 19, (dd) => (dd > 200 ? 0.6 : dd < 20 ? 0.85 : 1));
     if (S.bus.health < 40) { s2Fail('¡Has destrozado la guagua!'); return; } if (done) { s2Fail('El bromista ha llegado a su destino y ha subido el vídeo'); return; }
-    if (PLAYER.car && d < 16) { S.near += dt; if (Math.floor(S.near * 2) !== Math.floor((S.near - dt) * 2)) AUDIO.horn && AUDIO.horn(); } const left = Math.max(0, 10 - S.near);
+    if (PLAYER.car && d < 16) { S.near += dt; if (Math.floor(S.near * 2) !== Math.floor((S.near - dt) * 2)) AUDIO.horn && AUDIO.horn(PLAYER.car); } const left = Math.max(0, 10 - S.near);
     K.setObjective(PLAYER.car ? (d < 16 ? `¡Pítale! Aguanta pegado: ${left.toFixed(0)} s` : 'Acércate a la ' + b2('guagua') + ` (${Math.round(d)} m)`) : 'Súbete a un coche');
     if (S.near >= 10) { S.bus.mode = 'physics'; S.bus.driver = null; S.bus.ctl.brk = 1; K.talk([['Bromista', 'Vale, vale, ya paro... ¡Hola, mis seguidores! ¡Me ha pillado la Local de los Defensores!']], () => s2Pass('Guagua recuperada sin un rasguño', 900)); S.step = 0; } },
 };

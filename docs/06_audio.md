@@ -86,3 +86,11 @@ Sonidos posicionales (panorama estéreo respecto a la cámara y atenuación con 
   a la media.
 - **Perros** y **gaviotas** lejanos de vez en cuando. Dentro de edificios el ambiente baja al 25 % y en coche al 55 %.
 - Los pasos (`10c_steps.js`) suenan ahora a ~35 % del volumen anterior.
+
+## Claxon (v0.63)
+
+`AUDIO.horn(car)` en `10_audio.js`: uno por tipo de vehículo (`HORNS`): notas, duración, filtro y pitidos. Ondas de diente
+de sierra por un recortador suave (`tanh`) y un paso bajo resonante, ataque y caída cortos y un poco de vibrato; cada coche
+guarda una pequeña variación de tono (`car.hornK`). Utilitario y moto: dos pitidos agudos; turismo y taxi: dos notas;
+SUV y furgoneta más graves; deportivo brillante; guagua y policía graves; camión: bocina de aire de tres notas. El coche de
+El Canarión (Guanche GT) toca una melodía popular. `tests/herramientas/prueba_claxon.py` los toca todos y los graba.
