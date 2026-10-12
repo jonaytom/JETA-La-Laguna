@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.67.0</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.68.0</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -266,6 +266,10 @@ Ojo con los <code>const</code>/<code>let</code> usados antes de declararse (zona
 <tr>
 <td><code>09d_fight2d.js</code></td>
 <td>Motor de <strong>pelea 2D pixel-art</strong> (estilo arcade).</td>
+</tr>
+<tr>
+<td><code>05u_trinidad.js</code></td>
+<td>Avenida de La Trinidad: anchos, edificios recortados, casas en solares, aparcamientos Indigo, Pedro Zerolo, soportales.</td>
 </tr>
 <tr>
 <td><code>09f_basket2d.js</code></td>
@@ -573,7 +577,21 @@ python build.py
 <li><code>python prep.py &amp;&amp; python build.py</code>.</li>
 </ol>
 <p>Ojo: <code>tools/merge_aeropuerto.py</code> regenera <code>laguna_osm3.json</code> desde <code>laguna_osm2.json</code>; si se vuelve a lanzar, repetir
-después <code>merge_zona.py lacuesta</code> y <code>merge_zona.py taco</code> (los archivos de las zonas están en <code>data/</code>).</p></section>
+después <code>merge_zona.py lacuesta</code> y <code>merge_zona.py taco</code> (los archivos de las zonas están en <code>data/</code>).</p>
+<h2>Avenida de La Trinidad (v0.68, <code>05u_trinidad.js</code>)</h2>
+<ul>
+<li><code>trinidadWidths()</code> (desde <code>01_core.js</code>, antes de indexar calles): las dos calzadas de la avenida pasan a 6,6 m.</li>
+<li><code>trinidadGeo()</code>: las dos calzadas como polilíneas desde arriba (casco) hasta Padre Anchieta (<code>TRI.A</code> baja, <code>TRI.B</code>
+  sube; <code>at(s)</code>, <code>proj(x, z)</code>, <code>out</code> = lado de la acera), el cruce con Pedro Zerolo (<code>TRI.pz</code>) y la rampa del n.º 59
+  (<code>TRI.rampB</code>).</li>
+<li><code>streetTrim(pts)</code> (en <code>buildBuildings</code>): las esquinas de edificio a menos de media calzada + 2,6 m de acera vuelven a
+  la línea de la acera (+4 m junto a la rampa del n.º 59); también en <code>DATA.B</code> para <code>inAnyBuilding</code>.</li>
+<li><code>trinidadFill()</code>: solares libres (sin edificio, calle, tranvía ni zona de parque, plaza, aparcamiento, deporte…) de
+  ≥ 12 m de frente y ≥ 8 m de fondo junto a la acera reciben bloques de 10–16 m como el edificio real más cercano.</li>
+<li><code>trinidadParking()</code> (desde <code>buildCarParks</code>): salas «Trinidad Casco Histórico» (rampa en la mediana, de <code>mid(20)</code> a la
+  sala, 60 m) y «Trinidad Centro» (rampa junto a la acera, 46 m, sala de 56 m); <code>buildRamp(…, { w, wc })</code> admite ancho
+  y color de muros. Pintura con <code>triDecal</code> (cuadrícula amarilla, pasos de cebra). <code>trinidadArcades()</code>: soportales.</li>
+</ul></section>
 <section id="s3"><div class="src">docs/03_mundo_3d.md</div><h1>3. Mundo 3D</h1>
 <blockquote>
 <p>Nota: texturas, modelos y materiales descritos aquí son <strong>provisionales</strong> (ver <code>10_assets.md</code>); lo que es
@@ -1640,6 +1658,24 @@ que el cambio no obligue a tocar la lógica del juego.</p>
 <section id="s11"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.68.0 — 2026-10-12 — Avenida de La Trinidad y obstáculos del auditor</h2>
+<ul>
+<li><strong>Avenida de La Trinidad</strong> (con las capturas de Jonay):</li>
+<li>Cada calzada tiene ahora un carril y aparcamiento (6,6 m, antes 9 m), y el tranvía cabe en medio.</li>
+<li>Los edificios que pisaban la calzada o la acera retroceden hasta la línea de la acera.</li>
+<li>En los solares vacíos junto a la avenida salen casas como las de al lado.</li>
+<li><strong>Dos aparcamientos Indigo</strong>, con rampas de muros azules: «Trinidad Casco Histórico», con la rampa en medio de la
+    calzada partida al principio de la avenida (n.º 3); y «Trinidad Centro», con la rampa junto a la acera y la
+    cuadrícula amarilla delante, en el n.º 59, junto al súper, justo encima de la C. Pedro Zerolo.</li>
+<li><strong>Cruce con Pedro Zerolo</strong>: cuadrícula amarilla donde cruza el tranvía y pasos de peatones.</li>
+<li><strong>Soportales</strong> con columnas en la manzana del súper y en el n.º 76.</li>
+<li><strong>Obstáculos graves del auditor</strong>:</li>
+<li>El Canarión ya no espera en la otra calzada de la Trinidad.</li>
+<li>Fuera los pilares de la pasarela de Padre Anchieta que caían en la calzada (Glorieta del Brasil).</li>
+<li>Fuera los postes de canastas y porterías de canchas dibujadas encima de una calle (Camino de las Peras, Av. Lora
+    Tamayo).</li>
+<li>El poste del cartel de los aparcamientos ya nunca cae en la calzada.</li>
+</ul>
 <h2>0.67.0 — 2026-10-12 — Fútbol 2D: JETA SOCCER</h2>
 <ul>
 <li><strong>Fútbol 2D 5 contra 5</strong>, visto desde arriba como el Sensible Soccer: campo que sube y baja con el balón, jugadores

@@ -81,14 +81,15 @@ function buildSports() {
     if (kind !== 'bb') {
       const gw = kind === 'f11' ? 7.32 : kind === 'f7' ? 6 : 3, gh = kind === 'f11' ? 2.44 : 2;
       for (const s of [0, 1]) { const u = s ? F.u1 - 1.5 : F.u0 + 1.5; const back = s ? 1 : -1;
-        for (const dv of [-gw / 2, gw / 2]) { add(new THREE.BoxGeometry(0.12, gh, 0.12), white, u, dv + (F.v0 + F.v1) / 2, gh / 2); const pp = at(u, dv + (F.v0 + F.v1) / 2); COL.addCirc(pp[0], pp[2], 0.12); }
+        for (const dv of [-gw / 2, gw / 2]) { const pp = at(u, dv + (F.v0 + F.v1) / 2); if (onCarriageway(pp[0], pp[2], 0.4)) continue; add(new THREE.BoxGeometry(0.12, gh, 0.12), white, u, dv + (F.v0 + F.v1) / 2, gh / 2); COL.addCirc(pp[0], pp[2], 0.12); }
         add(new THREE.BoxGeometry(0.12, 0.12, gw + 0.12), white, u, (F.v0 + F.v1) / 2, gh, Math.PI / 2 * 0).rotation.y = F.ang + Math.PI / 2;
         const net = add(new THREE.PlaneGeometry(gw, gh), fenceMat, u + back * 1.1, (F.v0 + F.v1) / 2, gh / 2); net.rotation.y = F.ang; }
     }
     // basketball hoops
     if (kind === 'bb' || kind === 'multi') {
       for (const s of [0, 1]) { const u = s ? F.u1 - 0.3 : F.u0 + 0.3; const back = s ? 1 : -1; const vm = (F.v0 + F.v1) / 2;
-        add(new THREE.CylinderGeometry(0.09, 0.09, 3.6, 8), dark, u + back * 0.6, vm, 1.8); const pp = at(u + back * 0.6, vm); COL.addCirc(pp[0], pp[2], 0.12);
+        const pp = at(u + back * 0.6, vm); if (onCarriageway(pp[0], pp[2], 0.4)) continue; /* v0.68: a court drawn over a road: no pole in the carriageway (auditor) */
+        add(new THREE.CylinderGeometry(0.09, 0.09, 3.6, 8), dark, u + back * 0.6, vm, 1.8); COL.addCirc(pp[0], pp[2], 0.12);
         const bd = add(new THREE.BoxGeometry(1.8, 1.05, 0.05), white, u, vm, 3.4);
         const ring = add(new THREE.TorusGeometry(0.23, 0.02, 6, 16), orange, u - back * 0.35, vm, 3.05); ring.rotation.set(Math.PI / 2, 0, 0); }
     }

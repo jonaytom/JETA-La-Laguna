@@ -31,7 +31,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 - [x] v0.65.0 **Farolas y árboles en medio de canchas y campos** (Jonay, 12-oct, bug): no puede haber farolas ni árboles dentro
       de las canchas de baloncesto ni de los campos de fútbol; quitarlos al colocarlos.
 
-- [ ] **Avenida de La Trinidad: entradas al aparcamiento subterráneo** (Jonay, 12-oct, 8 capturas en
+- [~] v0.68.0 (calzadas de 6,6 m, edificios a la línea de la acera, casas en los solares, las dos rampas Indigo, Pedro Zerolo y soportales; **falta el tranvía bajo tierra junto a Padre Anchieta**) **Avenida de La Trinidad: entradas al aparcamiento subterráneo** (Jonay, 12-oct, 8 capturas en
       `docs/referencias/av_trinidad/`): ahora es un desastre. Adecuar las rampas de entrada y salida a las reales: la
       del principio (Av. Trinidad 3, Parking Indigo «Trinidad Casco Histórico», rampa azul en medio de la calzada
       partida) y la de abajo (Av. Trinidad 59, junto al Dialprix, rampa azul pegada a la acera con cuadrícula amarilla).
@@ -46,6 +46,10 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       cartel verde de calles muestra el texto en espejo desde la parte de atrás; la cara trasera debería ser lisa o
       llevar el texto al derecho.
 
+- [ ] **Auditoría v0.67.0** (APTO CON AVISOS; pruebas 10/10, sin fugas ni obstáculos nuevos): 1 aviso nuevo
+      `12j_campos.js:12` `footIcon()` (geometría que se crea una vez al cargar, como las de las canchas); calidad del código:
+      `09f_basket2d.js` baja de B a D y `09g_futbol2d.js` entra con D (líneas muy largas y funciones grandes: partirlas si
+      Jonay quiere). Pintar 32 → 41 ms otra vez en la 2.ª pasada del día (vigilar). No tocar hasta que Jonay lo diga.
 - [ ] **Auditoría v0.66.0** (APTO CON AVISOS, comparada con la 0.65.1; sin fugas ni obstáculos nuevos; pruebas 18/18):
       5 avisos nuevos de geometría creada en `12i_canchas.js` (`gateIcon()` l. 33 y `riosTejeraInit()` l. 72–77): se
       crean una vez al cargar (puertas de canchas, pabellón), no al jugar; valorar compartir geometrías si Jonay quiere.

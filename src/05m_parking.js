@@ -80,10 +80,10 @@ function buildHall(F, uc, L, yF, name, gaps) {
 }
 function rampProfile(Lr, yF) { return (s, x, z) => lerp(heightAt(x, z), yF, smooth(0, 1, (s - 2) / Math.max(4, Lr - 8))); }
 // ramp from (x0,z0) on the surface to (x1,z1) inside the hall, built with the tunnel/cutting machinery
-function buildRamp(x0, z0, x1, z1, yF, label) {
-  const Lr = Math.hypot(x1 - x0, z1 - z0); const c = [x0, z0, x1, z1]; tunnelRoad(c, 6.8, 'asphalt', 8, rampProfile(Lr, yF), { H: 3.9, cover: 4.3 });
+function buildRamp(x0, z0, x1, z1, yF, label, o = {}) { // o: w (width), wc (wall colour: the Indigo ones are blue)
+  const Lr = Math.hypot(x1 - x0, z1 - z0); const c = [x0, z0, x1, z1]; tunnelRoad(c, o.w || 6.8, 'asphalt', 8, rampProfile(Lr, yF), { H: 3.9, cover: 4.3, wc: o.wc });
   // entrance sign on a post at the top
-  const M_ = pkMats(); const dx = (x1 - x0) / Lr, dz = (z1 - z0) / Lr; const px = x0 - dz * 4.2, pz = z0 + dx * 4.2; const y = heightAt(px, pz);
+  const M_ = pkMats(); const dx = (x1 - x0) / Lr, dz = (z1 - z0) / Lr; const so = (o.w || 6.8) / 2 + 0.8; let px = x0 - dz * so, pz = z0 + dx * so; if (onCarriagewayEarly(px, pz, 0.4) || inAnyBuilding(px, pz)) { px = x0 + dz * so; pz = z0 - dx * so; } if (onCarriagewayEarly(px, pz, 0.4) || inAnyBuilding(px, pz)) return; /* v0.68: the post never on a carriageway (auditor) */ const y = heightAt(px, pz);
   const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.2, 8), M_.steel); post.position.set(px, y + 1.6, pz); scene.add(post);
   const sg = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 0.08), new THREE.MeshStandardMaterial({ map: pkSignTex('P', '#1d4f9c', '#fff', 128, 128), roughness: 0.5 })); sg.position.set(px, y + 3.0, pz); sg.rotation.y = Math.atan2(-dx, -dz); scene.add(sg);
   const lb = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.45), new THREE.MeshBasicMaterial({ map: pkSignTex(label, '#1d4f9c', '#fff', 512, 96), })); lb.position.set(px, y + 2.2, pz); lb.rotation.y = Math.atan2(-dx, -dz); scene.add(lb); { const lb2 = lb.clone(); lb2.rotation.y += Math.PI; scene.add(lb2); } // v0.62: readable from both sides (DoubleSide showed it mirrored)
@@ -141,46 +141,8 @@ function buildCarParks() {
       acc0 += Ls; }
     PLAZA_PROPS.push(['kiosk', ...F2.W(uc, 0)]);
   }
-  // ---- Avenida de La Trinidad: hall under the first stretch of the avenue, ramp on the side of the road
-  const roads = DATA.R.filter((r) => r[1] >= 0 && STR[r[1]] === 'Avenida de La Trinidad');
-  if (roads.length) {
-    // the end of the avenue closest to the old town
-    let best = null; for (const r of roads) { const q = r[4]; for (const i of [0, q.length - 2]) { const d = Math.hypot(q[i] - PLAZA.x, q[i + 1] - PLAZA.z); if (!best || d < best.d) best = { d, r, i }; } }
-    const q = best.r[4], fwd = best.i === 0 ? 1 : -1; const pts = []; for (let i = 0; i < q.length; i += 2) pts.push([q[i], q[i + 1]]); if (fwd < 0) pts.reverse();
-    // walk 70 m from the end along the avenue
-    const along = (s) => { let acc = 0; for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1], Ls = Math.hypot(b[0] - a[0], b[1] - a[1]); if (acc + Ls >= s) { const t = (s - acc) / Ls; return { x: a[0] + (b[0] - a[0]) * t, z: a[1] + (b[1] - a[1]) * t, ux: (b[0] - a[0]) / Ls, uz: (b[1] - a[1]) / Ls }; } acc += Ls; } const a = pts[pts.length - 2], b = pts[pts.length - 1], Ls = Math.hypot(b[0] - a[0], b[1] - a[1]); return { x: b[0], z: b[1], ux: (b[0] - a[0]) / Ls, uz: (b[1] - a[1]) / Ls }; };
-    const m = along(75); const w = best.r[2]; const L = 64;
-    const F = { cx: m.x, cz: m.z, ux: m.ux, uz: m.uz }; F.W = (u, v) => [F.cx + F.ux * u - F.uz * v, F.cz + F.uz * u + F.ux * v];
-    let gmin = 1e9; for (let u = -L / 2; u <= L / 2; u += 6) for (let v = -15; v <= 15; v += 5) { const [x, z] = F.W(u, v); gmin = Math.min(gmin, heightAt(x, z)); }
-    const yF = gmin - 5.4;
-    // look for a free strip on either side of the avenue for the ramp (beside the carriageway, not on it, not in buildings)
-    let ramp = null;
-    for (const side of [1, -1]) for (const vr of [w / 2 + 3.6, w / 2 + 2.6, w / 2 + 4.6, w / 2 + 1.8]) for (const dirS of [1, -1]) {
-      if (ramp) break; const v = side * vr; if (Math.abs(v) > 15.5 - 3.2) continue;
-      const u1 = dirS * (L / 2 - 3.5); let u0 = dirS * (L / 2 + 30); { const t0 = F.W(u0, v); const drop = heightAt(t0[0], t0[1]) - yF; u0 = dirS * (L / 2 - 3.5 + Math.max(33, drop / 0.13 + 8)); const t1 = F.W(u0, v); const drop2 = heightAt(t1[0], t1[1]) - yF; u0 = dirS * (L / 2 - 3.5 + Math.max(33, drop2 / 0.13 + 8)); } let ok = true;
-      for (let u = Math.min(u0, u1); u <= Math.max(u0, u1); u += 2) for (const dv of [-3.4, 0, 3.4]) { const [x, z] = F.W(u, v + dv); if (inAnyBuilding(x, z) || (Math.abs(u) > L / 2 - 6 && COL.nearSeg(x, z, 0.6))) { ok = false; break; } }
-      if (ok) ramp = { v, u0, u1 };
-    }
-    console.log('trinidad ramp', JSON.stringify(ramp), 'w', w, 'centre', F.cx | 0, F.cz | 0);
-    if (!ramp) ramp = { v: 7.25, u0: L / 2 + 30, u1: L / 2 - 3.5 }; // fallback: from the end of the avenue's island
-    // stairwells on real pavement (never on a carriageway). If the pavement is outside the hall, an underground corridor joins them.
-    // only the open part (pavilion + hole, first ~8 m) must be on pavement; the rest of the flight is underground
-    const swOk = (u0, v0, du, dv) => { for (let t = -1; t <= 8.5; t += 0.75) for (const q of [-1.4, 0, 1.4]) { const [x, z] = F.W(u0 + du * t - dv * q, v0 + dv * t + du * q); if (inAnyBuilding(x, z) || onCarriagewayEarly(x, z) || COL.nearSeg(x, z, 0.3)) return false; } return true; };
-    const found = [];
-    for (const side of [1, -1]) { let best = null;
-      // a) along the avenue on the pavement, b) in a side street, going down towards the avenue
-      for (let av = 9; av <= 34 && !best; av += 0.7) for (let uu = -34; uu <= 34 && !best; uu += 2) for (const [du, dv] of [[1, 0], [-1, 0], [0, -side]]) {
-        const ue = du ? uu + du * 11.5 : uu; if (Math.abs(ue) > L / 2 - 2.5) continue; if (dv && av < 24) continue; if (Math.abs(ramp.u1 - ue) < 6 && Math.sign(ramp.v) === side) continue;
-        if (swOk(uu, side * av, du, dv)) { best = { u: uu, v: side * av, du, dv, ue }; break; } }
-      if (best) found.push(best); }
-    const gaps = [[ramp.u1 > 0 ? 'u+' : 'u-', ramp.v, 7.2]];
-    for (const f of found) { const vb = f.v + f.dv * 11.5; if (Math.abs(vb) > 14) gaps.push([f.v > 0 ? 'v+' : 'v-', f.ue, 2.6]); }
-    buildHall(F, 0, L, yF, 'Trinidad', gaps);
-    const top = F.W(ramp.u0, ramp.v), bot = F.W(ramp.u1, ramp.v); buildRamp(top[0], top[1], bot[0], bot[1], yF, 'PARKING TRINIDAD');
-    for (const f of found) { const p = F.W(f.u, f.v); const vb = f.v + f.dv * 11.5; const corr = Math.abs(vb) > 14 ? F.W(f.ue, Math.sign(f.v) * 14.5) : null; const dx = F.ux * f.du - F.uz * f.dv, dz = F.uz * f.du + F.ux * f.dv; buildStairwell(p[0], p[1], dx, dz, yF, corr); }
-    console.log('trinidad stairwells', JSON.stringify(found));
-    CARPARKS.push({ name: 'Parking Trinidad', x: F.cx, z: F.cz, F, uc: 0, L, yF });
-  }
+  // ---- Avenida de La Trinidad: two Indigo car parks (v0.68, 05u_trinidad.js)
+  try { trinidadParking(); } catch (e) { console.error('trinidad parking', e); }
   console.log('car parks', CARPARKS.map((c) => c.name).join(', '), 'ugc', UGC.length);
 }
 // simple props for the plaza (benches and a kiosk), built after the scenery is ready

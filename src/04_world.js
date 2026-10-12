@@ -636,7 +636,7 @@ function tunnelRoad(c, w, cls, tile, hf, opt = {}) {
   const pts = []; let dist = 0;
   for (let i = 0; i < c.length - 2; i += 2) { const x1 = c[i], z1 = c[i + 1], x2 = c[i + 2], z2 = c[i + 3], Ls = Math.hypot(x2 - x1, z2 - z1) || 1; const n = Math.max(1, Math.ceil(Ls / 4)); for (let k = 0; k < n; k++) { const x = x1 + (x2 - x1) * k / n, z = z1 + (z2 - z1) * k / n; pts.push([x, z, hf(dist + Ls * k / n, x, z), (x2 - x1) / Ls, (z2 - z1) / Ls]); } dist += Ls; }
   pts.push([c[c.length - 2], c[c.length - 1], hf(dist, c[c.length - 2], c[c.length - 1]), pts[pts.length - 1][3], pts[pts.length - 1][4]]);
-  const dep = (p) => heightAt(p[0], p[1]) - p[2]; const covered = (p) => dep(p) > Math.max(opt.cover || 3.4, H + 0.35); /* the roof must stay under the ground (it used to stick out as a white slab across the road) */ const wc = [0.66, 0.64, 0.6];
+  const dep = (p) => heightAt(p[0], p[1]) - p[2]; const covered = (p) => dep(p) > Math.max(opt.cover || 3.4, H + 0.35); /* the roof must stay under the ground (it used to stick out as a white slab across the road) */ const wc = opt.wc || [0.66, 0.64, 0.6];
   const Pt = (p, sg, y, e = hw) => [p[0] - p[4] * e * sg, p[2] + y, p[1] + p[3] * e * sg];
   for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1];
     if (covered(a) || covered(b)) {
@@ -756,6 +756,7 @@ function hull(pts) { const p = pts.slice().sort((a, b) => a[0] - b[0] || a[1] - 
 function buildBuildings() {
   indexRoads(); let bi = 0;
   try { splitCoarseBlocks(); } catch (e) { console.error('inicio split', e); }
+  try { trinidadFill(); } catch (e) { console.error('trinidad fill', e); }
   for (const b of DATA.B) {
     bi++;
     const [h10, style, lv, roofT, nameIdx, seed, c] = b;
@@ -763,6 +764,7 @@ function buildBuildings() {
     let n = pts.length; if (n < 3) continue;
     if (isTramStopBuilding(nameIdx, pts)) continue; // drawn as proper tram stops
     pts = insetPoly(pts, style === 4 ? 0.3 : 0.75);
+    if (style !== 4) { const t = streetTrim(pts); if (t !== pts) { pts = t; const o = []; for (let i = 0; i < c.length; i += 2) o.push([c[i], c[i + 1]]); const t2 = streetTrim(o); if (t2 !== o) b[6] = t2.flat(); } } // v0.68: off the carriageway and pavement of the Av. de La Trinidad (DATA.B too, for inAnyBuilding)
     if (style === 4 && nameIdx >= 0 && /Concepción/.test(STR[nameIdx])) { pts = carveConcTower(pts); n = pts.length; }
     let bmin = 1e9, bmax = -1e9, cx = 0, cz = 0;
     for (const p of pts) { const h = heightAt(p[0], p[1]); bmin = Math.min(bmin, h); bmax = Math.max(bmax, h); cx += p[0]; cz += p[1]; }
@@ -1040,6 +1042,7 @@ function buildMedians() {
         const nx = (best.px - x) / best.d, nz = (best.pz - z) / best.d; const off = rd[2] / 2 + Math.max(0, best.gap) / 2; const mx = x + nx * off, mz = z + nz * off;
         // a side road crossing the median here = opening
         const cross = ROADSEG.nearest(mx, mz, (r) => r !== rd && r !== R[best.rj] && r[0] <= 12 && !(r[3] & 6)); if (cross && cross.d < R[cross.ri][2] / 2 + 0.5) continue;
+        if (triRampZone(mx, mz)) continue; // v0.68: the car park ramp in the middle of the Av. de La Trinidad
         const key = ri + ':' + best.rj; let run = runs.get(key); if (!run) runs.set(key, run = []);
         run.push([mx, mz, (ya + yb) / 2, Math.max(0, best.gap), big(rd[0]) || big(R[best.rj][0]) ? 2 : 1, s0 + t]); }
       s0 += L; } });

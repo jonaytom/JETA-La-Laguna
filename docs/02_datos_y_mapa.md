@@ -121,3 +121,17 @@ python build.py
 
 Ojo: `tools/merge_aeropuerto.py` regenera `laguna_osm3.json` desde `laguna_osm2.json`; si se vuelve a lanzar, repetir
 después `merge_zona.py lacuesta` y `merge_zona.py taco` (los archivos de las zonas están en `data/`).
+
+## Avenida de La Trinidad (v0.68, `05u_trinidad.js`)
+
+- `trinidadWidths()` (desde `01_core.js`, antes de indexar calles): las dos calzadas de la avenida pasan a 6,6 m.
+- `trinidadGeo()`: las dos calzadas como polilíneas desde arriba (casco) hasta Padre Anchieta (`TRI.A` baja, `TRI.B`
+  sube; `at(s)`, `proj(x, z)`, `out` = lado de la acera), el cruce con Pedro Zerolo (`TRI.pz`) y la rampa del n.º 59
+  (`TRI.rampB`).
+- `streetTrim(pts)` (en `buildBuildings`): las esquinas de edificio a menos de media calzada + 2,6 m de acera vuelven a
+  la línea de la acera (+4 m junto a la rampa del n.º 59); también en `DATA.B` para `inAnyBuilding`.
+- `trinidadFill()`: solares libres (sin edificio, calle, tranvía ni zona de parque, plaza, aparcamiento, deporte…) de
+  ≥ 12 m de frente y ≥ 8 m de fondo junto a la acera reciben bloques de 10–16 m como el edificio real más cercano.
+- `trinidadParking()` (desde `buildCarParks`): salas «Trinidad Casco Histórico» (rampa en la mediana, de `mid(20)` a la
+  sala, 60 m) y «Trinidad Centro» (rampa junto a la acera, 46 m, sala de 56 m); `buildRamp(…, { w, wc })` admite ancho
+  y color de muros. Pintura con `triDecal` (cuadrícula amarilla, pasos de cebra). `trinidadArcades()`: soportales.

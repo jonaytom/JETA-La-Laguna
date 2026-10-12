@@ -52,6 +52,7 @@ const inCore0 = (x, z) => { let ins = false; for (let i = 0, j = CORE0.length - 
 const WIDEN2 = (t, w, one, x, z) => inCore0(x, z) && t >= 9 ? Math.round(Math.max(w * 1.15, t === 12 ? 5 : 7.2) * 10) / 10 : WIDEN(t, w, one);
 for (const rd of DATA.R) { if (rd[0] <= 12) { const c = rd[4], m = (c.length >> 2) << 1; rd[2] = WIDEN2(rd[0], rd[2], rd[3] & 1, c[m], c[m + 1]); } }
 for (const e of DATA.G.e) { const a = e[0] * 2; e[4] = WIDEN2(e[2], e[4], e[3], DATA.G.n[a], DATA.G.n[a + 1]); }
+trinidadWidths(); // v0.68: Av. de La Trinidad, one lane + parking per carriageway (05u_trinidad.js); after the widening
 const $ = (id) => document.getElementById(id);
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const lerp = (a, b, t) => a + (b - a) * t;

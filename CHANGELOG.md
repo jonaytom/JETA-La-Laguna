@@ -3,6 +3,23 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.68.0 — 2026-10-12 — Avenida de La Trinidad y obstáculos del auditor
+- **Avenida de La Trinidad** (con las capturas de Jonay):
+  - Cada calzada tiene ahora un carril y aparcamiento (6,6 m, antes 9 m), y el tranvía cabe en medio.
+  - Los edificios que pisaban la calzada o la acera retroceden hasta la línea de la acera.
+  - En los solares vacíos junto a la avenida salen casas como las de al lado.
+  - **Dos aparcamientos Indigo**, con rampas de muros azules: «Trinidad Casco Histórico», con la rampa en medio de la
+    calzada partida al principio de la avenida (n.º 3); y «Trinidad Centro», con la rampa junto a la acera y la
+    cuadrícula amarilla delante, en el n.º 59, junto al súper, justo encima de la C. Pedro Zerolo.
+  - **Cruce con Pedro Zerolo**: cuadrícula amarilla donde cruza el tranvía y pasos de peatones.
+  - **Soportales** con columnas en la manzana del súper y en el n.º 76.
+- **Obstáculos graves del auditor**:
+  - El Canarión ya no espera en la otra calzada de la Trinidad.
+  - Fuera los pilares de la pasarela de Padre Anchieta que caían en la calzada (Glorieta del Brasil).
+  - Fuera los postes de canastas y porterías de canchas dibujadas encima de una calle (Camino de las Peras, Av. Lora
+    Tamayo).
+  - El poste del cartel de los aparcamientos ya nunca cae en la calzada.
+
 ## 0.67.0 — 2026-10-12 — Fútbol 2D: JETA SOCCER
 - **Fútbol 2D 5 contra 5**, visto desde arriba como el Sensible Soccer: campo que sube y baja con el balón, jugadores
   pequeñitos con la equipación de cada equipo, radar, palos, bandas, córners, saques de puerta y gol de oro.

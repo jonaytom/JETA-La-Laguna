@@ -1,0 +1,2 @@
+# Sonda de la Av. de La Trinidad
+herramientas/sonda_trinidad.py

@@ -5,7 +5,7 @@
 import asyncio, os, base64, json
 exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '_helpers.py'), encoding='utf-8').read().split('async def run')[0])
 async def foto(pg, name):
-    await pg.evaluate("__dbg.FUTBOL2D._draw()")
+    await pg.evaluate("(()=>{ const s=__dbg.FUTBOL2D._st(); if (s) { s.fade=0; s.fadeDir=0; } __dbg.FUTBOL2D._draw(); })()")
     d = await pg.evaluate("document.getElementById('futbol2d').toDataURL('image/jpeg', 0.85)")
     os.makedirs('shots', exist_ok=True); open('shots/' + name + '.jpg', 'wb').write(base64.b64decode(d.split(',')[1])); print('foto', name)
 LOOK = "({skin:0xd9a47c, shirt:0xf5f5f5, pants:0x2b3a55, hair:0x1a1410, longPants:true, hd:true})"

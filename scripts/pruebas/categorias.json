@@ -19,6 +19,13 @@
    ]
   ],
   [
+   "^src/(05u_trinidad|05m_parking)",
+   [
+    "prueba_trinidad.py",
+    "prueba_parking_cristo.py"
+   ]
+  ],
+  [
    "^src/05t_",
    [
     "prueba_hospital.py"

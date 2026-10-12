@@ -205,7 +205,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="tb" id="tbS">CORRER</div>
 <div class="tb" id="tbM">MAPA</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">v0.67.0</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">v0.68.0</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -297,6 +297,7 @@ const inCore0 = (x, z) => { let ins = false; for (let i = 0, j = CORE0.length - 
 const WIDEN2 = (t, w, one, x, z) => inCore0(x, z) && t >= 9 ? Math.round(Math.max(w * 1.15, t === 12 ? 5 : 7.2) * 10) / 10 : WIDEN(t, w, one);
 for (const rd of DATA.R) { if (rd[0] <= 12) { const c = rd[4], m = (c.length >> 2) << 1; rd[2] = WIDEN2(rd[0], rd[2], rd[3] & 1, c[m], c[m + 1]); } }
 for (const e of DATA.G.e) { const a = e[0] * 2; e[4] = WIDEN2(e[2], e[4], e[3], DATA.G.n[a], DATA.G.n[a + 1]); }
+trinidadWidths(); // v0.68: Av. de La Trinidad, one lane + parking per carriageway (05u_trinidad.js); after the widening
 const $ = (id) => document.getElementById(id);
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -1502,7 +1503,7 @@ function tunnelRoad(c, w, cls, tile, hf, opt = {}) {
   const pts = []; let dist = 0;
   for (let i = 0; i < c.length - 2; i += 2) { const x1 = c[i], z1 = c[i + 1], x2 = c[i + 2], z2 = c[i + 3], Ls = Math.hypot(x2 - x1, z2 - z1) || 1; const n = Math.max(1, Math.ceil(Ls / 4)); for (let k = 0; k < n; k++) { const x = x1 + (x2 - x1) * k / n, z = z1 + (z2 - z1) * k / n; pts.push([x, z, hf(dist + Ls * k / n, x, z), (x2 - x1) / Ls, (z2 - z1) / Ls]); } dist += Ls; }
   pts.push([c[c.length - 2], c[c.length - 1], hf(dist, c[c.length - 2], c[c.length - 1]), pts[pts.length - 1][3], pts[pts.length - 1][4]]);
-  const dep = (p) => heightAt(p[0], p[1]) - p[2]; const covered = (p) => dep(p) > Math.max(opt.cover || 3.4, H + 0.35); /* the roof must stay under the ground (it used to stick out as a white slab across the road) */ const wc = [0.66, 0.64, 0.6];
+  const dep = (p) => heightAt(p[0], p[1]) - p[2]; const covered = (p) => dep(p) > Math.max(opt.cover || 3.4, H + 0.35); /* the roof must stay under the ground (it used to stick out as a white slab across the road) */ const wc = opt.wc || [0.66, 0.64, 0.6];
   const Pt = (p, sg, y, e = hw) => [p[0] - p[4] * e * sg, p[2] + y, p[1] + p[3] * e * sg];
   for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1];
     if (covered(a) || covered(b)) {
@@ -1622,6 +1623,7 @@ function hull(pts) { const p = pts.slice().sort((a, b) => a[0] - b[0] || a[1] - 
 function buildBuildings() {
   indexRoads(); let bi = 0;
   try { splitCoarseBlocks(); } catch (e) { console.error('inicio split', e); }
+  try { trinidadFill(); } catch (e) { console.error('trinidad fill', e); }
   for (const b of DATA.B) {
     bi++;
     const [h10, style, lv, roofT, nameIdx, seed, c] = b;
@@ -1629,6 +1631,7 @@ function buildBuildings() {
     let n = pts.length; if (n < 3) continue;
     if (isTramStopBuilding(nameIdx, pts)) continue; // drawn as proper tram stops
     pts = insetPoly(pts, style === 4 ? 0.3 : 0.75);
+    if (style !== 4) { const t = streetTrim(pts); if (t !== pts) { pts = t; const o = []; for (let i = 0; i < c.length; i += 2) o.push([c[i], c[i + 1]]); const t2 = streetTrim(o); if (t2 !== o) b[6] = t2.flat(); } } // v0.68: off the carriageway and pavement of the Av. de La Trinidad (DATA.B too, for inAnyBuilding)
     if (style === 4 && nameIdx >= 0 && /Concepción/.test(STR[nameIdx])) { pts = carveConcTower(pts); n = pts.length; }
     let bmin = 1e9, bmax = -1e9, cx = 0, cz = 0;
     for (const p of pts) { const h = heightAt(p[0], p[1]); bmin = Math.min(bmin, h); bmax = Math.max(bmax, h); cx += p[0]; cz += p[1]; }
@@ -1906,6 +1909,7 @@ function buildMedians() {
         const nx = (best.px - x) / best.d, nz = (best.pz - z) / best.d; const off = rd[2] / 2 + Math.max(0, best.gap) / 2; const mx = x + nx * off, mz = z + nz * off;
         // a side road crossing the median here = opening
         const cross = ROADSEG.nearest(mx, mz, (r) => r !== rd && r !== R[best.rj] && r[0] <= 12 && !(r[3] & 6)); if (cross && cross.d < R[cross.ri][2] / 2 + 0.5) continue;
+        if (triRampZone(mx, mz)) continue; // v0.68: the car park ramp in the middle of the Av. de La Trinidad
         const key = ri + ':' + best.rj; let run = runs.get(key); if (!run) runs.set(key, run = []);
         run.push([mx, mz, (ya + yb) / 2, Math.max(0, best.gap), big(rd[0]) || big(R[best.rj][0]) ? 2 : 1, s0 + t]); }
       s0 += L; } });
@@ -2635,7 +2639,7 @@ function buildRampMesh(pts, w, wallMat, floorMat, colMat) {
     q(fl, [a[0] + nx, a[2], a[1] + nz], [b[0] + nx, b[2], b[1] + nz], [b[0] - nx, b[2], b[1] - nz], [a[0] - nx, a[2], a[1] - nz]);
     q(pos, [a[0] + nx, a[2] - 0.7, a[1] + nz], [b[0] + nx, b[2] - 0.7, b[1] + nz], [b[0] - nx, b[2] - 0.7, b[1] - nz], [a[0] - nx, a[2] - 0.7, a[1] - nz]);
     for (const s of [1, -1]) q(pos, [a[0] + nx * s, a[2] - 0.7, a[1] + nz * s], [b[0] + nx * s, b[2] - 0.7, b[1] + nz * s], [b[0] + nx * s, b[2] + 1.15, b[1] + nz * s], [a[0] + nx * s, a[2] + 1.15, a[1] + nz * s]);
-    if (i % 3 === 0 && a[2] - heightAt(a[0], a[1]) > 2) { const g = heightAt(a[0], a[1]); const h = a[2] - 0.7 - g; const c = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, h, 10), colMat); c.position.set(a[0], g + h / 2, a[1]); scene.add(c); COL.addCirc(a[0], a[1], 0.4); }
+    if (i % 3 === 0 && a[2] - heightAt(a[0], a[1]) > 2 && !onCarriageway(a[0], a[1], 0.8)) { /* v0.68: no pillar in a carriageway (auditor: Glorieta del Brasil) */ const g = heightAt(a[0], a[1]); const h = a[2] - 0.7 - g; const c = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, h, 10), colMat); c.position.set(a[0], g + h / 2, a[1]); scene.add(c); COL.addCirc(a[0], a[1], 0.4); }
   }
   for (const [arr, m] of [[pos, wallMat], [fl, floorMat]]) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3)); g.computeVertexNormals(); const me = new THREE.Mesh(g, m); me.castShadow = true; me.receiveShadow = true; scene.add(me); }
 }
@@ -2982,14 +2986,15 @@ function buildSports() {
     if (kind !== 'bb') {
       const gw = kind === 'f11' ? 7.32 : kind === 'f7' ? 6 : 3, gh = kind === 'f11' ? 2.44 : 2;
       for (const s of [0, 1]) { const u = s ? F.u1 - 1.5 : F.u0 + 1.5; const back = s ? 1 : -1;
-        for (const dv of [-gw / 2, gw / 2]) { add(new THREE.BoxGeometry(0.12, gh, 0.12), white, u, dv + (F.v0 + F.v1) / 2, gh / 2); const pp = at(u, dv + (F.v0 + F.v1) / 2); COL.addCirc(pp[0], pp[2], 0.12); }
+        for (const dv of [-gw / 2, gw / 2]) { const pp = at(u, dv + (F.v0 + F.v1) / 2); if (onCarriageway(pp[0], pp[2], 0.4)) continue; add(new THREE.BoxGeometry(0.12, gh, 0.12), white, u, dv + (F.v0 + F.v1) / 2, gh / 2); COL.addCirc(pp[0], pp[2], 0.12); }
         add(new THREE.BoxGeometry(0.12, 0.12, gw + 0.12), white, u, (F.v0 + F.v1) / 2, gh, Math.PI / 2 * 0).rotation.y = F.ang + Math.PI / 2;
         const net = add(new THREE.PlaneGeometry(gw, gh), fenceMat, u + back * 1.1, (F.v0 + F.v1) / 2, gh / 2); net.rotation.y = F.ang; }
     }
     // basketball hoops
     if (kind === 'bb' || kind === 'multi') {
       for (const s of [0, 1]) { const u = s ? F.u1 - 0.3 : F.u0 + 0.3; const back = s ? 1 : -1; const vm = (F.v0 + F.v1) / 2;
-        add(new THREE.CylinderGeometry(0.09, 0.09, 3.6, 8), dark, u + back * 0.6, vm, 1.8); const pp = at(u + back * 0.6, vm); COL.addCirc(pp[0], pp[2], 0.12);
+        const pp = at(u + back * 0.6, vm); if (onCarriageway(pp[0], pp[2], 0.4)) continue; /* v0.68: a court drawn over a road: no pole in the carriageway (auditor) */
+        add(new THREE.CylinderGeometry(0.09, 0.09, 3.6, 8), dark, u + back * 0.6, vm, 1.8); COL.addCirc(pp[0], pp[2], 0.12);
         const bd = add(new THREE.BoxGeometry(1.8, 1.05, 0.05), white, u, vm, 3.4);
         const ring = add(new THREE.TorusGeometry(0.23, 0.02, 6, 16), orange, u - back * 0.35, vm, 3.05); ring.rotation.set(Math.PI / 2, 0, 0); }
     }
@@ -3424,10 +3429,10 @@ function buildHall(F, uc, L, yF, name, gaps) {
 }
 function rampProfile(Lr, yF) { return (s, x, z) => lerp(heightAt(x, z), yF, smooth(0, 1, (s - 2) / Math.max(4, Lr - 8))); }
 // ramp from (x0,z0) on the surface to (x1,z1) inside the hall, built with the tunnel/cutting machinery
-function buildRamp(x0, z0, x1, z1, yF, label) {
-  const Lr = Math.hypot(x1 - x0, z1 - z0); const c = [x0, z0, x1, z1]; tunnelRoad(c, 6.8, 'asphalt', 8, rampProfile(Lr, yF), { H: 3.9, cover: 4.3 });
+function buildRamp(x0, z0, x1, z1, yF, label, o = {}) { // o: w (width), wc (wall colour: the Indigo ones are blue)
+  const Lr = Math.hypot(x1 - x0, z1 - z0); const c = [x0, z0, x1, z1]; tunnelRoad(c, o.w || 6.8, 'asphalt', 8, rampProfile(Lr, yF), { H: 3.9, cover: 4.3, wc: o.wc });
   // entrance sign on a post at the top
-  const M_ = pkMats(); const dx = (x1 - x0) / Lr, dz = (z1 - z0) / Lr; const px = x0 - dz * 4.2, pz = z0 + dx * 4.2; const y = heightAt(px, pz);
+  const M_ = pkMats(); const dx = (x1 - x0) / Lr, dz = (z1 - z0) / Lr; const so = (o.w || 6.8) / 2 + 0.8; let px = x0 - dz * so, pz = z0 + dx * so; if (onCarriagewayEarly(px, pz, 0.4) || inAnyBuilding(px, pz)) { px = x0 + dz * so; pz = z0 - dx * so; } if (onCarriagewayEarly(px, pz, 0.4) || inAnyBuilding(px, pz)) return; /* v0.68: the post never on a carriageway (auditor) */ const y = heightAt(px, pz);
   const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.2, 8), M_.steel); post.position.set(px, y + 1.6, pz); scene.add(post);
   const sg = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 0.08), new THREE.MeshStandardMaterial({ map: pkSignTex('P', '#1d4f9c', '#fff', 128, 128), roughness: 0.5 })); sg.position.set(px, y + 3.0, pz); sg.rotation.y = Math.atan2(-dx, -dz); scene.add(sg);
   const lb = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.45), new THREE.MeshBasicMaterial({ map: pkSignTex(label, '#1d4f9c', '#fff', 512, 96), })); lb.position.set(px, y + 2.2, pz); lb.rotation.y = Math.atan2(-dx, -dz); scene.add(lb); { const lb2 = lb.clone(); lb2.rotation.y += Math.PI; scene.add(lb2); } // v0.62: readable from both sides (DoubleSide showed it mirrored)
@@ -3485,46 +3490,8 @@ function buildCarParks() {
       acc0 += Ls; }
     PLAZA_PROPS.push(['kiosk', ...F2.W(uc, 0)]);
   }
-  // ---- Avenida de La Trinidad: hall under the first stretch of the avenue, ramp on the side of the road
-  const roads = DATA.R.filter((r) => r[1] >= 0 && STR[r[1]] === 'Avenida de La Trinidad');
-  if (roads.length) {
-    // the end of the avenue closest to the old town
-    let best = null; for (const r of roads) { const q = r[4]; for (const i of [0, q.length - 2]) { const d = Math.hypot(q[i] - PLAZA.x, q[i + 1] - PLAZA.z); if (!best || d < best.d) best = { d, r, i }; } }
-    const q = best.r[4], fwd = best.i === 0 ? 1 : -1; const pts = []; for (let i = 0; i < q.length; i += 2) pts.push([q[i], q[i + 1]]); if (fwd < 0) pts.reverse();
-    // walk 70 m from the end along the avenue
-    const along = (s) => { let acc = 0; for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1], Ls = Math.hypot(b[0] - a[0], b[1] - a[1]); if (acc + Ls >= s) { const t = (s - acc) / Ls; return { x: a[0] + (b[0] - a[0]) * t, z: a[1] + (b[1] - a[1]) * t, ux: (b[0] - a[0]) / Ls, uz: (b[1] - a[1]) / Ls }; } acc += Ls; } const a = pts[pts.length - 2], b = pts[pts.length - 1], Ls = Math.hypot(b[0] - a[0], b[1] - a[1]); return { x: b[0], z: b[1], ux: (b[0] - a[0]) / Ls, uz: (b[1] - a[1]) / Ls }; };
-    const m = along(75); const w = best.r[2]; const L = 64;
-    const F = { cx: m.x, cz: m.z, ux: m.ux, uz: m.uz }; F.W = (u, v) => [F.cx + F.ux * u - F.uz * v, F.cz + F.uz * u + F.ux * v];
-    let gmin = 1e9; for (let u = -L / 2; u <= L / 2; u += 6) for (let v = -15; v <= 15; v += 5) { const [x, z] = F.W(u, v); gmin = Math.min(gmin, heightAt(x, z)); }
-    const yF = gmin - 5.4;
-    // look for a free strip on either side of the avenue for the ramp (beside the carriageway, not on it, not in buildings)
-    let ramp = null;
-    for (const side of [1, -1]) for (const vr of [w / 2 + 3.6, w / 2 + 2.6, w / 2 + 4.6, w / 2 + 1.8]) for (const dirS of [1, -1]) {
-      if (ramp) break; const v = side * vr; if (Math.abs(v) > 15.5 - 3.2) continue;
-      const u1 = dirS * (L / 2 - 3.5); let u0 = dirS * (L / 2 + 30); { const t0 = F.W(u0, v); const drop = heightAt(t0[0], t0[1]) - yF; u0 = dirS * (L / 2 - 3.5 + Math.max(33, drop / 0.13 + 8)); const t1 = F.W(u0, v); const drop2 = heightAt(t1[0], t1[1]) - yF; u0 = dirS * (L / 2 - 3.5 + Math.max(33, drop2 / 0.13 + 8)); } let ok = true;
-      for (let u = Math.min(u0, u1); u <= Math.max(u0, u1); u += 2) for (const dv of [-3.4, 0, 3.4]) { const [x, z] = F.W(u, v + dv); if (inAnyBuilding(x, z) || (Math.abs(u) > L / 2 - 6 && COL.nearSeg(x, z, 0.6))) { ok = false; break; } }
-      if (ok) ramp = { v, u0, u1 };
-    }
-    console.log('trinidad ramp', JSON.stringify(ramp), 'w', w, 'centre', F.cx | 0, F.cz | 0);
-    if (!ramp) ramp = { v: 7.25, u0: L / 2 + 30, u1: L / 2 - 3.5 }; // fallback: from the end of the avenue's island
-    // stairwells on real pavement (never on a carriageway). If the pavement is outside the hall, an underground corridor joins them.
-    // only the open part (pavilion + hole, first ~8 m) must be on pavement; the rest of the flight is underground
-    const swOk = (u0, v0, du, dv) => { for (let t = -1; t <= 8.5; t += 0.75) for (const q of [-1.4, 0, 1.4]) { const [x, z] = F.W(u0 + du * t - dv * q, v0 + dv * t + du * q); if (inAnyBuilding(x, z) || onCarriagewayEarly(x, z) || COL.nearSeg(x, z, 0.3)) return false; } return true; };
-    const found = [];
-    for (const side of [1, -1]) { let best = null;
-      // a) along the avenue on the pavement, b) in a side street, going down towards the avenue
-      for (let av = 9; av <= 34 && !best; av += 0.7) for (let uu = -34; uu <= 34 && !best; uu += 2) for (const [du, dv] of [[1, 0], [-1, 0], [0, -side]]) {
-        const ue = du ? uu + du * 11.5 : uu; if (Math.abs(ue) > L / 2 - 2.5) continue; if (dv && av < 24) continue; if (Math.abs(ramp.u1 - ue) < 6 && Math.sign(ramp.v) === side) continue;
-        if (swOk(uu, side * av, du, dv)) { best = { u: uu, v: side * av, du, dv, ue }; break; } }
-      if (best) found.push(best); }
-    const gaps = [[ramp.u1 > 0 ? 'u+' : 'u-', ramp.v, 7.2]];
-    for (const f of found) { const vb = f.v + f.dv * 11.5; if (Math.abs(vb) > 14) gaps.push([f.v > 0 ? 'v+' : 'v-', f.ue, 2.6]); }
-    buildHall(F, 0, L, yF, 'Trinidad', gaps);
-    const top = F.W(ramp.u0, ramp.v), bot = F.W(ramp.u1, ramp.v); buildRamp(top[0], top[1], bot[0], bot[1], yF, 'PARKING TRINIDAD');
-    for (const f of found) { const p = F.W(f.u, f.v); const vb = f.v + f.dv * 11.5; const corr = Math.abs(vb) > 14 ? F.W(f.ue, Math.sign(f.v) * 14.5) : null; const dx = F.ux * f.du - F.uz * f.dv, dz = F.uz * f.du + F.ux * f.dv; buildStairwell(p[0], p[1], dx, dz, yF, corr); }
-    console.log('trinidad stairwells', JSON.stringify(found));
-    CARPARKS.push({ name: 'Parking Trinidad', x: F.cx, z: F.cz, F, uc: 0, L, yF });
-  }
+  // ---- Avenida de La Trinidad: two Indigo car parks (v0.68, 05u_trinidad.js)
+  try { trinidadParking(); } catch (e) { console.error('trinidad parking', e); }
   console.log('car parks', CARPARKS.map((c) => c.name).join(', '), 'ugc', UGC.length);
 }
 // simple props for the plaza (benches and a kiosk), built after the scenery is ready
@@ -4532,6 +4499,160 @@ function buildExtraSalud() {
     DATA.B.push([85, 6, 2, 0, -1, 500, P.flat()]);
     LABELS.push([c.label, cx, cz, 1]);
   }
+}
+
+// ============ Avenida de La Trinidad (v0.68, Jonay's captures in docs/referencias/av_trinidad/) ============
+// The avenue is a split carriageway with the tram down the middle. In the game the carriageways were 9 m (two lanes
+// each) and the buildings stood on the pavement; now each one is 6.6 m (one lane + parking, as the real one), the
+// buildings are trimmed back to the pavement line, and the empty lots along it get terraced blocks like their
+// neighbours. Two Indigo car parks: «Trinidad Casco Histórico» (blue ramp in the middle of the split carriageway at
+// the top of the avenue, Av. Trinidad 3) and «Trinidad Centro» (blue ramp beside the pavement, with the yellow box
+// grid, at Av. Trinidad 59 next to the Dialprix, just above Calle Pedro Zerolo). At Pedro Zerolo: yellow box grid
+// where the tram crosses and zebra crossings. Arcades (soportales) at the Dialprix block and at n.º 76.
+const TRI = { ok: false };
+const TRI_NAME = 'Avenida de La Trinidad', TRI_SIDEWALK = 2.6;
+// the two carriageways as polylines from the top of the avenue (old town) down to Padre Anchieta
+function trinidadGeo() {
+  if (TRI.ok || TRI.fail) return TRI.ok ? TRI : null;
+  const rs = []; DATA.R.forEach((r, ri) => { if (r[1] >= 0 && STR[r[1]] === TRI_NAME && r[0] <= 12) rs.push(ri); });
+  if (rs.length < 2) { TRI.fail = true; return null; }
+  const P = (ri, i) => [DATA.R[ri][4][i], DATA.R[ri][4][i + 1]], first = (ri) => P(ri, 0), last = (ri) => P(ri, DATA.R[ri][4].length - 2);
+  const near = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]) < 0.6;
+  const plaza = typeof PLAZA !== 'undefined' ? [PLAZA.x, PLAZA.z] : [0, 0];
+  const chain = (fwd) => { // fwd: follow the way direction (starts at the top); else backwards (ends at the top)
+    let cur = rs.slice().sort((a, b) => { const pa = fwd ? first(a) : last(a), pb = fwd ? first(b) : last(b); return Math.hypot(pa[0] - plaza[0], pa[1] - plaza[1]) - Math.hypot(pb[0] - plaza[0], pb[1] - plaza[1]); })[0];
+    const used = new Set([cur]); const pts = []; const add = (ri) => { const c = DATA.R[ri][4]; const q = []; for (let i = 0; i < c.length; i += 2) q.push([c[i], c[i + 1]]); if (!fwd) q.reverse(); for (const p of q) if (!pts.length || !near(pts[pts.length - 1], p)) pts.push(p); };
+    add(cur); for (;;) { const end = pts[pts.length - 1]; const nx = rs.find((ri) => !used.has(ri) && near(fwd ? first(ri) : last(ri), end)); if (nx === undefined) break; used.add(nx); add(nx); }
+    return { pts, w: DATA.R[cur][2], used };
+  };
+  const A = chain(true), B = chain(false); if (A.pts.length < 2 || B.pts.length < 2) { TRI.fail = true; return null; }
+  const mk = (c) => { const s = [0]; for (let i = 1; i < c.pts.length; i++) s.push(s[i - 1] + Math.hypot(c.pts[i][0] - c.pts[i - 1][0], c.pts[i][1] - c.pts[i - 1][1])); c.s = s; c.len = s[s.length - 1];
+    c.at = (q) => { q = clamp(q, 0, c.len); let i = 1; while (i < s.length - 1 && s[i] < q) i++; const a = c.pts[i - 1], b = c.pts[i], L = s[i] - s[i - 1] || 1, t = (q - s[i - 1]) / L; return { x: a[0] + (b[0] - a[0]) * t, z: a[1] + (b[1] - a[1]) * t, ux: (b[0] - a[0]) / L, uz: (b[1] - a[1]) / L }; };
+    c.proj = (x, z) => { let best = { d: 1e9 }; for (let i = 0; i < c.pts.length - 1; i++) { const a = c.pts[i], b = c.pts[i + 1], dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz || 1; const t = clamp(((x - a[0]) * dx + (z - a[1]) * dz) / L2, 0, 1); const px = a[0] + dx * t, pz = a[1] + dz * t, d = Math.hypot(x - px, z - pz); if (d < best.d) best = { d, s: c.s[i] + t * Math.sqrt(L2), px, pz }; } return best; };
+    return c; };
+  mk(A); mk(B);
+  // the outer side of each carriageway (the pavement, away from the other one): +1 = to the left of the travel line
+  for (const [c, o] of [[A, B], [B, A]]) { const p = c.at(c.len * 0.4); const l = [p.x - p.uz * 8, p.z + p.ux * 8]; c.out = o.proj(l[0], l[1]).d > o.proj(p.x + p.uz * 8, p.z - p.ux * 8).d ? 1 : -1; }
+  // the west chain is the one going down (A, from the top), the east one comes up (B, taken from the top as well)
+  Object.assign(TRI, { ok: true, A, B, mid: (q) => { const p = A.at(q), r = B.proj(p.x, p.z); return { x: (p.x + r.px) / 2, z: (p.z + r.pz) / 2, ux: p.ux, uz: p.uz }; } });
+  // Calle Pedro Zerolo: where it meets the two carriageways
+  const pz = []; DATA.R.forEach((r, ri) => { if (r[1] >= 0 && STR[r[1]] === 'Calle Pedro Zerolo') pz.push(ri); });
+  let jA = null, jB = null; for (const ri of pz) { const c = DATA.R[ri][4]; for (let i = 0; i < c.length; i += 2) { const a = A.proj(c[i], c[i + 1]), b = B.proj(c[i], c[i + 1]); if (a.d < 1 && (!jA || a.d < jA.d)) jA = { ...a, ri }; if (b.d < 1 && (!jB || b.d < jB.d)) jB = { ...b, ri }; } }
+  if (jB && !jA) jA = A.proj(jB.px, jB.pz); // Pedro Zerolo only reaches the carriageway that comes up: the other one, straight across
+  TRI.pz = jA && jB ? { a: jA, b: jB } : null;
+  // the «Trinidad Centro» ramp (Av. Trinidad 59): on the carriageway that comes up (B), beside its pavement, starting ~14 m
+  // above the Pedro Zerolo junction and going down towards the top of the avenue; the pavement goes round it
+  if (TRI.pz) { const s0 = TRI.pz.b.s - 16, s1 = s0 - 46; TRI.rampB = { s0, s1, v: B.out * (B.w / 2 + 2.0) }; }
+  // the «Casco Histórico» ramp: in the middle, from 20 m down the avenue to the hall (60 m long, centred 102 m down)
+  { const m = TRI.mid(102), t = TRI.mid(20); TRI.hallA = { x: m.x, z: m.z, ux: m.ux, uz: m.uz, L: 60 }; TRI.rampA = { x0: t.x, z0: t.z, x1: m.x - m.ux * 26.5, z1: m.z - m.uz * 26.5 }; }
+  return TRI;
+}
+// in 01_core-time terms this runs before the roads are indexed: one lane + parking per carriageway, like the real one
+function trinidadWidths() { for (const r of DATA.R) if (r[1] >= 0 && STR[r[1]] === 'Avenida de La Trinidad' && r[0] <= 12 && r[2] > 6.6) r[2] = 6.6; } // called from 01_core (the consts of this file don't exist yet then)
+// clearance from the carriageway centre line: half the road + pavement (+ the ramp beside the pavement at n.º 59)
+function trinidadClear(c, s) { let k = c.w / 2 + TRI_SIDEWALK; const r = TRI.rampB; if (r && c === TRI.B && s < r.s0 + 18 && s > r.s1 - 4) k += 4.0; return k; }
+// buildings: every corner that stands on the carriageway or the pavement of the avenue goes back to the pavement line
+function streetTrim(pts) {
+  const T = trinidadGeo(); if (!T) return pts; let moved = false; const out = pts.map((p) => p.slice());
+  for (const q of out) for (const c of [T.A, T.B]) { const r = c.proj(q[0], q[1]); const k = trinidadClear(c, r.s); if (r.d < k && r.d > 0.4) { const f = k / r.d; q[0] = r.px + (q[0] - r.px) * f; q[1] = r.pz + (q[1] - r.pz) * f; moved = true; } }
+  if (!moved) return pts; const a0 = polyArea(pts), a1 = polyArea(out);
+  return Math.sign(a0) === Math.sign(a1) && Math.abs(a1) > Math.abs(a0) * 0.35 && Math.abs(a1) > 25 ? out : pts;
+}
+// empty lots along the avenue (Jonay: «zonas que tienen casas y ahora están despejadas»): terraced blocks like the neighbours
+function trinidadFill() {
+  const T = trinidadGeo(); if (!T) return 0;
+  const boxes = DATA.B.map((b) => { const c = b[6]; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (let i = 0; i < c.length; i += 2) { x0 = Math.min(x0, c[i]); x1 = Math.max(x1, c[i]); z0 = Math.min(z0, c[i + 1]); z1 = Math.max(z1, c[i + 1]); } return [x0, x1, z0, z1]; });
+  const near = []; DATA.B.forEach((b, i) => { const bb = boxes[i]; const cx = (bb[0] + bb[1]) / 2, cz = (bb[2] + bb[3]) / 2; if (Math.min(T.A.proj(cx, cz).d, T.B.proj(cx, cz).d) < 70) near.push(i); });
+  const inB = (x, z) => { for (const i of near) { const bb = boxes[i]; if (x < bb[0] || x > bb[1] || z < bb[2] || z > bb[3]) continue; if (pip(x, z, DATA.B[i][6])) return true; } return false; };
+  const BLOCK = new Set(['park', 'garden', 'pitch', 'playground', 'parking', 'square', 'sports', 'cemetery', 'water', 'forest'].map((t) => DATA.AT.indexOf(t)));
+  const areas = DATA.A.filter((a) => BLOCK.has(a[0]) && a[2].length > 5 && Math.min(T.A.proj(a[2][0], a[2][1]).d, T.B.proj(a[2][0], a[2][1]).d) < 160);
+  const inArea = (x, z) => areas.some((a) => pip(x, z, a[2]));
+  const tramNear = (x, z, m) => { const t = DATA.T; for (let i = 0; i < t.length - 2; i += 2) { const dx = t[i + 2] - t[i], dz = t[i + 3] - t[i + 1], L2 = dx * dx + dz * dz || 1; const u = clamp(((x - t[i]) * dx + (z - t[i + 1]) * dz) / L2, 0, 1); if (Math.hypot(x - t[i] - dx * u, z - t[i + 1] - dz * u) < m) return true; } return false; };
+  const hit = (rd) => !!rd && rd.d < DATA.R[rd.ri][2] / 2 + 1.6; const onRoad = (x, z) => hit(ROADSEG.nearest(x, z, (r) => r[0] <= 12)) || hit(ROADSEG.nearest(x, z));
+  const free = (x, z) => !inB(x, z) && !onRoad(x, z) && !inArea(x, z) && !tramNear(x, z, 5) && Math.min(T.A.proj(x, z).d, T.B.proj(x, z).d) > 5.5;
+  let added = 0; let seed = 7; const rr = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+  for (const c of [T.A, T.B]) {
+    const runs = []; let run = null;
+    for (let s = 6; s < c.len - 25; s += 2) { const p = c.at(s), nx = -p.uz * c.out, nz = p.ux * c.out, f0 = trinidadClear(c, s) + 0.2;
+      let dep = 0; for (let d = 1; d <= 17; d += 2) { if (!free(p.x + nx * (f0 + d), p.z + nz * (f0 + d))) break; dep = d + 1; }
+      if (dep >= 8) { if (run && s - run.s1 <= 2) { run.s1 = s; run.dep = Math.min(run.dep, dep); } else { run = { s0: s, s1: s, dep }; runs.push(run); } } else run = null; }
+    for (const r of runs) { const L = r.s1 - r.s0 - 2; if (L < 12) continue; const n = Math.max(1, Math.round(L / 13)); const lot = L / n;
+      for (let k = 0; k < n; k++) { const sa = r.s0 + 1 + k * lot + 0.15, sb = sa + lot - 0.3; const dep = Math.min(r.dep, 10 + Math.floor(rr() * 5));
+        const pa = c.at(sa), pb = c.at(sb); const fa = trinidadClear(c, sa) + 0.2, fb = trinidadClear(c, sb) + 0.2; const na = [-pa.uz * c.out, pa.ux * c.out], nb = [-pb.uz * c.out, pb.ux * c.out];
+        const poly = [[pa.x + na[0] * fa, pa.z + na[1] * fa], [pb.x + nb[0] * fb, pb.z + nb[1] * fb], [pb.x + nb[0] * (fb + dep), pb.z + nb[1] * (fb + dep)], [pa.x + na[0] * (fa + dep), pa.z + na[1] * (fa + dep)]];
+        if (!poly.every((q) => free(q[0], q[1]))) continue;
+        // like the nearest real building of the avenue: style, floors (± 1) and roof
+        let nb0 = null, bd = 1e9; for (const i of near) { const bb = boxes[i]; const d = Math.hypot((bb[0] + bb[1]) / 2 - poly[0][0], (bb[2] + bb[3]) / 2 - poly[0][1]); if (d < bd && DATA.B[i][1] !== 4) { bd = d; nb0 = DATA.B[i]; } }
+        const lv = clamp((nb0 ? nb0[2] : 5) + Math.round(rr() * 2 - 1), 3, 8); const style = nb0 ? nb0[1] : 2;
+        DATA.B.push([lv * 32 + 1, style, lv, nb0 ? nb0[3] : 0, -1, Math.floor(rr() * 1000), poly.flat()]); boxes.push([Math.min(...poly.map((q) => q[0])), Math.max(...poly.map((q) => q[0])), Math.min(...poly.map((q) => q[1])), Math.max(...poly.map((q) => q[1]))]); near.push(DATA.B.length - 1); added++; } }
+  }
+  console.log('trinidad: casas nuevas', added); TRI.added = added; return added;
+}
+// the median islands stay off the «Casco Histórico» ramp (buildMedians runs before the car parks)
+function triRampZone(x, z) { const T = trinidadGeo(); if (!T || !T.rampA) return false; const r = T.rampA, dx = r.x1 - r.x0, dz = r.z1 - r.z0, L2 = dx * dx + dz * dz || 1; const t = clamp(((x - r.x0) * dx + (z - r.z0) * dz) / L2, -0.08, 1.05); return Math.hypot(x - r.x0 - dx * t, z - r.z0 - dz * t) < 4.2; }
+// ---------- paint on the asphalt: a canvas texture on a grid that follows the ground
+function triDecal(cx, cz, ux, uz, len, wid, draw, y0 = 0.19) {
+  const px = 40, cw = Math.max(16, Math.round(wid * px)), ch = Math.max(16, Math.round(len * px)); const c = mkCanvas(cw, ch), x = c.getContext('2d'); draw(x, cw, ch, px);
+  const nu = Math.max(1, Math.ceil(len / 2)), nv = Math.max(1, Math.ceil(wid / 2)); const g = new THREE.PlaneGeometry(wid, len, nv, nu); const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) { const v = p.getX(i), u = -p.getY(i); const X = cx + ux * u - uz * v, Z = cz + uz * u + ux * v; p.setXYZ(i, X, heightAt(X, Z) + y0, Z); }
+  g.computeVertexNormals(); const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: canvasTex(c, { repeat: false }), transparent: true, depthWrite: false, roughness: 0.8, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -8 }));
+  m.material.side = THREE.DoubleSide; m.renderOrder = 2; scene.add(m); return m;
+}
+const yellowBox = (x, w, h, k) => { x.strokeStyle = '#f2c230'; x.lineWidth = 0.14 * k; x.strokeRect(0.1 * k, 0.1 * k, w - 0.2 * k, h - 0.2 * k); x.beginPath(); for (let d = -h; d < w + h; d += 1.6 * k) { x.moveTo(d, 0); x.lineTo(d + h, h); x.moveTo(d + h, 0); x.lineTo(d, h); } x.save(); x.rect(0, 0, w, h); x.clip(); x.stroke(); x.restore(); };
+const zebra = (x, w, h, k) => { x.fillStyle = '#f4f4ee'; for (let v = 0.3 * k; v < w - 0.3 * k; v += 1.0 * k) x.fillRect(v, 0.2 * k, 0.5 * k, h - 0.4 * k); };
+// ---------- the two Indigo car parks (built with the 05m_parking.js machinery)
+function trinidadParking() {
+  const T = trinidadGeo(); if (!T) return;
+  const blue = [0.12, 0.38, 0.75];
+  const depthAt = (F, L) => { let gmin = 1e9; for (let u = -L / 2; u <= L / 2; u += 6) for (let v = -15; v <= 15; v += 5) { const [x, z] = F.W(u, v); gmin = Math.min(gmin, heightAt(x, z)); } return gmin - 5.4; };
+  const frame = (x, z, ux, uz) => { const F = { cx: x, cz: z, ux, uz }; F.W = (u, v) => [F.cx + F.ux * u - F.uz * v, F.cz + F.uz * u + F.ux * v]; return F; };
+  const stairs = (F, L, yF, rampV, rampEnd) => { // pedestrian stairwells on real pavement, one each side if possible
+    const swOk = (u0, v0, du, dv) => { for (let t = -1; t <= 8.5; t += 0.75) for (const q of [-1.4, 0, 1.4]) { const [x, z] = F.W(u0 + du * t - dv * q, v0 + dv * t + du * q); if (inAnyBuilding(x, z) || onCarriagewayEarly(x, z) || COL.nearSeg(x, z, 0.3)) return false; } return true; };
+    const found = []; for (const side of [1, -1]) { let best = null;
+      for (let av = 9; av <= 34 && !best; av += 0.7) for (let uu = -34; uu <= 34 && !best; uu += 2) for (const [du, dv] of [[1, 0], [-1, 0], [0, -side]]) {
+        const ue = du ? uu + du * 11.5 : uu; if (Math.abs(ue) > L / 2 - 2.5) continue; if (dv && av < 24) continue; if (Math.abs(rampEnd - ue) < 6 && Math.sign(rampV) === side) continue;
+        if (swOk(uu, side * av, du, dv)) { best = { u: uu, v: side * av, du, dv, ue }; break; } }
+      if (best) found.push(best); }
+    return found; };
+  const make = (F, L, rampTop, rampBot, rampV, rampW, name, label, end) => {
+    const yF = depthAt(F, L); const found = stairs(F, L, yF, rampV, end === 'u-' ? -L / 2 + 3.5 : L / 2 - 3.5);
+    const gaps = [[end, rampV, rampW + 1.6]]; for (const f of found) { const vb = f.v + f.dv * 11.5; if (Math.abs(vb) > 14) gaps.push([f.v > 0 ? 'v+' : 'v-', f.ue, 2.6]); }
+    buildHall(F, 0, L, yF, name, gaps);
+    buildRamp(rampTop[0], rampTop[1], rampBot[0], rampBot[1], yF, label, { w: rampW, wc: blue });
+    for (const f of found) { const p = F.W(f.u, f.v); const vb = f.v + f.dv * 11.5; const corr = Math.abs(vb) > 14 ? F.W(f.ue, Math.sign(f.v) * 14.5) : null; const dx = F.ux * f.du - F.uz * f.dv, dz = F.uz * f.du + F.ux * f.dv; buildStairwell(p[0], p[1], dx, dz, yF, corr); }
+    CARPARKS.push({ name: 'Parking ' + name, x: F.cx, z: F.cz, F, uc: 0, L, yF });
+  };
+  // A) «Trinidad Casco Histórico»: the ramp in the middle of the split carriageway at the top, going down the avenue
+  { const h = T.hallA, L = h.L; const F = frame(h.x, h.z, h.ux, h.uz); const top = [T.rampA.x0, T.rampA.z0], bot = F.W(-L / 2 + 3.5, 0);
+    make(F, L, top, bot, 0, 4.2, 'Trinidad Casco Histórico', 'TRINIDAD CASCO HISTÓRICO', 'u-'); }
+  // B) «Trinidad Centro» (Av. Trinidad 59): beside the pavement of the carriageway that comes up, above Pedro Zerolo
+  const r = T.rampB; if (r) { const B = T.B, L = 56; const pc = B.at(r.s1 - L / 2 + 3.5); const ux = pc.ux, uz = pc.uz; // the hall axis points down the avenue: its u+ end meets the ramp
+    const off = B.out * 3; const nx = -pc.uz, nz = pc.ux; const F = frame(pc.x + nx * off, pc.z + nz * off, ux, uz);
+    const t0 = B.at(r.s0), t1 = B.at(r.s1); const vR = r.v - off; // the ramp's offset in the hall frame
+    const top = [t0.x + nx * r.v, t0.z + nz * r.v], bot = [t1.x + nx * r.v, t1.z + nz * r.v];
+    make(F, L, top, bot, vR, 3.8, 'Trinidad Centro', 'TRINIDAD CENTRO', 'u+');
+    // the yellow box grid in front of the ramp mouth
+    const g0 = B.at(r.s0 + 4), gv = B.out * (B.w / 2 - 1.6); triDecal(g0.x + nx * gv, g0.z + nz * gv, -g0.ux, -g0.uz, 8, 3.2, (x, w, h, k) => yellowBox(x, w, h, k)); }
+  // Pedro Zerolo: yellow box grid where the tram crosses between the carriageways, zebra crossings on both carriageways
+  if (T.pz) { const a = T.pz.a, b = T.pz.b; const cx = (a.px + b.px) / 2, cz = (a.pz + b.pz) / 2; const dx = b.px - a.px, dz = b.pz - a.pz, L = Math.hypot(dx, dz) || 1;
+    const along = T.A.at(a.s); triDecal(cx, cz, along.ux, along.uz, 12, Math.max(4, L - T.A.w - 0.6), (x, w, h, k) => yellowBox(x, w, h, k));
+    for (const [c, j] of [[T.A, a], [T.B, b]]) for (const ds of [-6, 6]) { const p = c.at(j.s + ds); triDecal(p.x, p.z, p.ux, p.uz, 3.2, c.w - 0.4, (x, w, h, k) => zebra(x, w, h, k)); }
+    const pzr = DATA.R[b.ri][4]; const st = Math.hypot(pzr[0] - b.px, pzr[1] - b.pz) < 2 ? 0 : pzr.length - 2; const nxt = st === 0 ? 2 : pzr.length - 4; const ux = pzr[nxt] - pzr[st], uz = pzr[nxt + 1] - pzr[st + 1], Lp = Math.hypot(ux, uz) || 1;
+    const q = [b.px + ux / Lp * (T.B.w / 2 + 3.5), b.pz + uz / Lp * (T.B.w / 2 + 3.5)]; triDecal(q[0], q[1], ux / Lp, uz / Lp, 3.2, DATA.R[b.ri][2] - 0.4, (x, w, h, k) => zebra(x, w, h, k)); }
+}
+// ---------- soportales: pillars along the facade facing the avenue (Dialprix block and n.º 76)
+function trinidadArcades() {
+  const T = trinidadGeo(); if (!T || !T.pz) return 0; let n = 0;
+  const spots = [{ c: T.B, s: T.pz.b.s - 28, col: 0x5f7a3a }, { c: T.A, s: T.A.len - 90, col: 0xb8a3a8 }];
+  for (const sp of spots) { const c = sp.c, p = c.at(sp.s), nx = -p.uz * c.out, nz = p.ux * c.out; const k = trinidadClear(c, sp.s);
+    // the building just behind the pavement there, and its edge facing the avenue
+    let best = null; for (const b of BUILD) { if (!b.pts || Math.hypot(b.cx - p.x, b.cz - p.z) > 45) continue; for (let i = 0; i < b.pts.length; i++) { const a = b.pts[i], e = b.pts[(i + 1) % b.pts.length]; const mx = (a[0] + e[0]) / 2, mz = (a[1] + e[1]) / 2; const r = c.proj(mx, mz); const L = Math.hypot(e[0] - a[0], e[1] - a[1]);
+      if (L < 8 || r.d > k + 2.5 || Math.abs(r.s - sp.s) > 30) continue; const par = Math.abs(((e[0] - a[0]) * p.ux + (e[1] - a[1]) * p.uz) / L); if (par < 0.9) continue; if (!best || r.d < best.d) best = { a, e, L, d: r.d }; } }
+    if (!best) continue; const mat = M(sp.col, 0.75); const ex = (best.e[0] - best.a[0]) / best.L, ez = (best.e[1] - best.a[1]) / best.L;
+    for (let t = 1.5; t < best.L - 1; t += 3.8) { const x = best.a[0] + ex * t + nx * 0.35, z = best.a[1] + ez * t + nz * 0.35; if (onCarriagewayEarly(x, z, 0.3)) continue; const y = heightAt(x, z);
+      const col = new THREE.Mesh(new THREE.BoxGeometry(0.5, 3.6, 0.5), mat); col.position.set(x, y + 1.8, z); col.rotation.y = Math.atan2(ex, ez); col.castShadow = true; scene.add(col); COL.addCirc(x, z, 0.3); n++; }
+    const mx = (best.a[0] + best.e[0]) / 2 + nx * 0.35, mz = (best.a[1] + best.e[1]) / 2 + nz * 0.35; const beam = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.5, best.L - 1), mat); beam.position.set(mx, heightAt(mx, mz) + 3.75, mz); beam.rotation.y = Math.atan2(ex, ez); scene.add(beam); }
+  return n;
 }
 
 // ============ humans & vehicle meshes ============
@@ -8670,9 +8791,10 @@ const MISSIONS = (() => {
       // El Canarión: Gran Canaria swagger, yellow & blue, next to his car on Avenida de La Trinidad
       { const pt = centroidOfNamedWays('Avenida de La Trinidad') || [200, 600]; const rd = ROADSEG.nearest(pt[0], pt[1], (r) => r[0] <= 12 && !(r[3] & 6));
         const rx = rd ? rd.x : pt[0], rz = rd ? rd.z : pt[1]; const L = rd ? Math.hypot(rd.dx, rd.dz) || 1 : 1, ux = rd ? rd.dx / L : 1, uz = rd ? rd.dz / L : 0; const w = rd ? DATA.R[rd.ri][2] : 8;
-        NPC.canarion = mkNPC({ skin: 0xc98e64, shirt: 0xffd200, pants: 0x1d4f9c, hair: 0x111111, shoes: 0xf2f2f2, scale: 1.04, female: false, beard: false, sleeve: false, longPants: true, hairStyle: 'Hair_SimpleParted', hd: true, glasses: 'sun', chain: true, watch: 0xd9b44a, sole: 0x1d4f9c }, rx - uz * (w / 2 + 3), rz + ux * (w / 2 + 3));
-        NPC.canarion.road = [rx - uz * (w / 4), rz + ux * (w / 4)];
-        const m = VMODELS && VMODELS.guancheGT; const cx = rx - uz * (w / 2 - 1.2) + ux * 5, cz = rz + ux * (w / 2 - 1.2) + uz * 5;
+        let sd = 1; { const tx = rx - uz * (w / 2 + 3), tz = rz + ux * (w / 2 + 3); if (onCarriageway(tx, tz, 1.2) || inAnyBuilding(tx, tz)) sd = -1; } // v0.68: twin carriageways: the pavement, not the other road (auditor)
+        NPC.canarion = mkNPC({ skin: 0xc98e64, shirt: 0xffd200, pants: 0x1d4f9c, hair: 0x111111, shoes: 0xf2f2f2, scale: 1.04, female: false, beard: false, sleeve: false, longPants: true, hairStyle: 'Hair_SimpleParted', hd: true, glasses: 'sun', chain: true, watch: 0xd9b44a, sole: 0x1d4f9c }, rx - uz * (w / 2 + 3) * sd, rz + ux * (w / 2 + 3) * sd);
+        NPC.canarion.road = [rx - uz * (w / 4) * sd, rz + ux * (w / 4) * sd];
+        const m = VMODELS && VMODELS.guancheGT; const cx = rx - uz * (w / 2 - 1.2) * sd + ux * 5, cz = rz + ux * (w / 2 - 1.2) * sd + uz * 5;
         const car = new Car(m ? null : 'sport', 0xffd200, cx, cz, Math.atan2(ux, uz), m || undefined); car.driver = null; car.mode = 'physics'; car.persist = true; car.ctl.brk = 1; NPC.canarionCar = car; }
       for (const k of ['blanco', 'coco', 'sastron', 'canarion']) COL.addCirc(NPC[k].x, NPC[k].z, 0.4);
       FOOD.init();
@@ -9909,7 +10031,7 @@ async function boot() {
     ['Colgando los rótulos de las tiendas…', () => { const n = buildSigns(); console.log('signs', n); console.log('props', JSON.stringify(buildStreetProps())); }],
     ['Abriendo puertas: Catedral, cafetería, hipermercado…', () => { buildInteriorsAll(); }],
     ['Plantando laureles de Indias…', () => { scatterTrees(); buildPlazasParks(); buildTrees(); }],
-    ['Encendiendo farolas…', () => { buildLamps(); buildTramPoles(); buildRoofProps(); buildPlazaProps(); console.log('tram stops', buildTramStops()); }],
+    ['Encendiendo farolas…', () => { buildLamps(); buildTramPoles(); buildRoofProps(); buildPlazaProps(); console.log('tram stops', buildTramStops()); console.log('soportales', trinidadArcades()); }],
     ['Marcando campos de fútbol y canchas…', () => { buildSports(); }],
     ['Poniendo señales de STOP y ceda el paso…', () => { buildTrafficSigns(); }],
     ['Uniendo geometría…', finalizeChunks],
@@ -9927,7 +10049,7 @@ async function boot() {
   window.__GAME_READY = true;
 }
 boot();
-window.__bg = [bgScene, bgCamera]; window.__dbg = { BASKET2D, FUTBOL2D, obispoCampo, OBISPADO, SPORTS, inAnyBuilding, COURTS, courtGateNear, useCourtGate, DIARIO, inPitch, pitchRects, obispoCourt, LAMPS, TREES, GUIDE, AYTO, HUC, HEALTH, nearestHealth, exitCar, DLG, S2, POOLS: { CARPOOL, HPOOL, SHARED_GEO, VGEO }, SHARED_GEO, MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
+window.__bg = [bgScene, bgCamera]; window.__dbg = { BASKET2D, FUTBOL2D, obispoCampo, TRI, OBISPADO, SPORTS, inAnyBuilding, COURTS, courtGateNear, useCourtGate, DIARIO, inPitch, pitchRects, obispoCourt, LAMPS, TREES, GUIDE, AYTO, HUC, HEALTH, nearestHealth, exitCar, DLG, S2, POOLS: { CARPOOL, HPOOL, SHARED_GEO, VGEO }, SHARED_GEO, MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
 window.__snap = () => { updateUnderground(); bgCamera.position.copy(camera.position); bgCamera.quaternion.copy(camera.quaternion); bgCamera.fov = camera.fov; bgCamera.updateProjectionMatrix(); renderer.clear(); renderer.render(bgScene, bgCamera); renderer.clearDepth(); renderer.render(scene, camera); return renderer.domElement.toDataURL('image/jpeg', 0.85); };
 window.__setYaw = (y) => { CAM.yaw = y; CAM.pitch = 0.1; INPUT.lastMouse = performance.now(); };
 window.__hit = (p) => hitPed(p);

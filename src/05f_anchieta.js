@@ -120,7 +120,7 @@ function buildRampMesh(pts, w, wallMat, floorMat, colMat) {
     q(fl, [a[0] + nx, a[2], a[1] + nz], [b[0] + nx, b[2], b[1] + nz], [b[0] - nx, b[2], b[1] - nz], [a[0] - nx, a[2], a[1] - nz]);
     q(pos, [a[0] + nx, a[2] - 0.7, a[1] + nz], [b[0] + nx, b[2] - 0.7, b[1] + nz], [b[0] - nx, b[2] - 0.7, b[1] - nz], [a[0] - nx, a[2] - 0.7, a[1] - nz]);
     for (const s of [1, -1]) q(pos, [a[0] + nx * s, a[2] - 0.7, a[1] + nz * s], [b[0] + nx * s, b[2] - 0.7, b[1] + nz * s], [b[0] + nx * s, b[2] + 1.15, b[1] + nz * s], [a[0] + nx * s, a[2] + 1.15, a[1] + nz * s]);
-    if (i % 3 === 0 && a[2] - heightAt(a[0], a[1]) > 2) { const g = heightAt(a[0], a[1]); const h = a[2] - 0.7 - g; const c = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, h, 10), colMat); c.position.set(a[0], g + h / 2, a[1]); scene.add(c); COL.addCirc(a[0], a[1], 0.4); }
+    if (i % 3 === 0 && a[2] - heightAt(a[0], a[1]) > 2 && !onCarriageway(a[0], a[1], 0.8)) { /* v0.68: no pillar in a carriageway (auditor: Glorieta del Brasil) */ const g = heightAt(a[0], a[1]); const h = a[2] - 0.7 - g; const c = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, h, 10), colMat); c.position.set(a[0], g + h / 2, a[1]); scene.add(c); COL.addCirc(a[0], a[1], 0.4); }
   }
   for (const [arr, m] of [[pos, wallMat], [fl, floorMat]]) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3)); g.computeVertexNormals(); const me = new THREE.Mesh(g, m); me.castShadow = true; me.receiveShadow = true; scene.add(me); }
 }

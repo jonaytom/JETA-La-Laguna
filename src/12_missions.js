@@ -459,9 +459,10 @@ const MISSIONS = (() => {
       // El Canarión: Gran Canaria swagger, yellow & blue, next to his car on Avenida de La Trinidad
       { const pt = centroidOfNamedWays('Avenida de La Trinidad') || [200, 600]; const rd = ROADSEG.nearest(pt[0], pt[1], (r) => r[0] <= 12 && !(r[3] & 6));
         const rx = rd ? rd.x : pt[0], rz = rd ? rd.z : pt[1]; const L = rd ? Math.hypot(rd.dx, rd.dz) || 1 : 1, ux = rd ? rd.dx / L : 1, uz = rd ? rd.dz / L : 0; const w = rd ? DATA.R[rd.ri][2] : 8;
-        NPC.canarion = mkNPC({ skin: 0xc98e64, shirt: 0xffd200, pants: 0x1d4f9c, hair: 0x111111, shoes: 0xf2f2f2, scale: 1.04, female: false, beard: false, sleeve: false, longPants: true, hairStyle: 'Hair_SimpleParted', hd: true, glasses: 'sun', chain: true, watch: 0xd9b44a, sole: 0x1d4f9c }, rx - uz * (w / 2 + 3), rz + ux * (w / 2 + 3));
-        NPC.canarion.road = [rx - uz * (w / 4), rz + ux * (w / 4)];
-        const m = VMODELS && VMODELS.guancheGT; const cx = rx - uz * (w / 2 - 1.2) + ux * 5, cz = rz + ux * (w / 2 - 1.2) + uz * 5;
+        let sd = 1; { const tx = rx - uz * (w / 2 + 3), tz = rz + ux * (w / 2 + 3); if (onCarriageway(tx, tz, 1.2) || inAnyBuilding(tx, tz)) sd = -1; } // v0.68: twin carriageways: the pavement, not the other road (auditor)
+        NPC.canarion = mkNPC({ skin: 0xc98e64, shirt: 0xffd200, pants: 0x1d4f9c, hair: 0x111111, shoes: 0xf2f2f2, scale: 1.04, female: false, beard: false, sleeve: false, longPants: true, hairStyle: 'Hair_SimpleParted', hd: true, glasses: 'sun', chain: true, watch: 0xd9b44a, sole: 0x1d4f9c }, rx - uz * (w / 2 + 3) * sd, rz + ux * (w / 2 + 3) * sd);
+        NPC.canarion.road = [rx - uz * (w / 4) * sd, rz + ux * (w / 4) * sd];
+        const m = VMODELS && VMODELS.guancheGT; const cx = rx - uz * (w / 2 - 1.2) * sd + ux * 5, cz = rz + ux * (w / 2 - 1.2) * sd + uz * 5;
         const car = new Car(m ? null : 'sport', 0xffd200, cx, cz, Math.atan2(ux, uz), m || undefined); car.driver = null; car.mode = 'physics'; car.persist = true; car.ctl.brk = 1; NPC.canarionCar = car; }
       for (const k of ['blanco', 'coco', 'sastron', 'canarion']) COL.addCirc(NPC[k].x, NPC[k].z, 0.4);
       FOOD.init();
