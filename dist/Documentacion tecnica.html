@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.65.0</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.65.1</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -1571,6 +1571,14 @@ que el cambio no obligue a tocar la lógica del juego.</p>
 <section id="s11"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.65.1 — 2026-10-12 — Arreglos del Obispado</h2>
+<ul>
+<li><strong>Monseñor Truchas y su círculo quedaban dentro de la Casa Salazar</strong> (la portada se orientaba hacia dentro cuando la
+  casa vecina estaba pegada): ahora la fachada se orienta desde la propia casa, solo hacia una calle, y el obispo y el
+  círculo siempre quedan en la calle, alcanzables.</li>
+<li><strong>Parpadeo de la fachada del Obispado</strong>: el chapado de piedra tocaba la pared y peleaban (z-fighting); ahora es un
+  plano separado 14 cm. Herramienta nueva <code>foto_noche.py</code> para medir parpadeos.</li>
+</ul>
 <h2>0.65.0 — 2026-10-12 — El Obispo y el baloncesto 2D</h2>
 <ul>
 <li><strong>Monseñor Fermín Truchas, obispo de Nivaria</strong> (parodia), en la puerta del <strong>Obispado</strong> (Casa Salazar, C. San

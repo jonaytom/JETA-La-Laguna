@@ -1,7 +1,5 @@
 # Pruebas de ESTA versión (las lanza scripts\PRUEBAS.bat junto con la base fija de scripts\pruebas\base.txt).
-# Una por línea: script de tests/ y sus argumentos. Claude la rellena en cada versión.
-# v0.65.0: baloncesto 2D, Obispo, farolas y árboles fuera de canchas, teclas de la pelea, persecución de los grafiteros
-prueba_baloncesto.py
+# v0.65.1: Obispado (obispo y círculo alcanzables) y parpadeo de noche delante del Obispado
 prueba_obispo.py
-prueba_panel_controles.py
-prueba_persecuciones.py
+herramientas/foto_noche.py -42 -239 5
+herramientas/foto_noche.py -42 -239 13

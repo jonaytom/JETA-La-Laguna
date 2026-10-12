@@ -197,7 +197,7 @@ const BASKET2D = (() => {
       if (rel('vS') && p.shootHold && p.air) release(p);
       if (hit('vP')) { if (b.holder === p) pass(p, mate); else if (b.holder === mate) pass(mate, p);
         else if (b.holder && b.holder.team !== p.team && dist(p, b.holder) <= 1.4) steal(p);
-        else if (mate) { p.human = false; mate.human = true; p.shootHold = false; if (st.ev) st.ev.swap = true; } } // defending away from the ball: right click = switch to the other defender
+        else if (mate && st.time0 > (st.swapAt || 0)) { p.human = false; mate.human = true; p.shootHold = false; st.swapAt = st.time0 + 0.25; pressedK.delete('vP'); if (st.ev) st.ev.swap = true; } } // (once: the mate is stepped right after and sees the same click) // defending away from the ball: right click = switch to the other defender
     }
     if (!ctl && p.shootHold && p.air && p.vy < 0.4 + (p.aiRel || 0) * 6) release(p);
     if (p.shootHold) { p.holdT += dt; if (ctl && p.holdT > BAR) release(p); }

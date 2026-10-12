@@ -24,6 +24,7 @@ exit /b 1
 :tengo
 echo Usando %PY%
 %PY% -c "import markdown" 2>nul || %PY% -m pip install --user --quiet markdown
+%PY% -c "import PIL" 2>nul || %PY% -m pip install --user --quiet pillow
 %PY% -c "import playwright" 2>nul || (
   echo Instalando Playwright la primera vez...
   %PY% -m pip install --user --quiet playwright || (pause & exit /b 1)

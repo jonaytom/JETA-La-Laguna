@@ -1,22 +1,22 @@
-# Pruebas 0.65.0 — 2026-10-12 17:30 — 1/1 OK
+# Pruebas 0.65.0 — 2026-10-12 17:52 — 1/1 OK
 
-Listas: version. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 126 s en total.
+Listas: version. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 122 s en total.
 
 | # | Prueba | Resultado | Tiempo |
 |---|---|---|---|
-| 1 | `prueba_baloncesto.py` | **OK** | 126 s |
+| 1 | `prueba_baloncesto.py` | **OK** | 122 s |
 
 ## Detalle
 
 ### 1. prueba_baloncesto.py — OK
 
 ```
-shot ms 3.600000001490116
-{"frame":562,"calls":4541,"triangles":6673706,"points":0,"lines":1944} calls:4541
+shot ms 1.9000000022351742
+{"frame":562,"calls":4508,"triangles":6656367,"points":0,"lines":2592} calls:4508
 foto basket_inicio
 foto basket_partido
-cpu {'ph': 'end', 'sc': [11, 7], 'clock': 0, 'golden': False}
-resultado {"won":true,"score":[11,7]}
+cpu {'ph': 'end', 'sc': [10, 4], 'clock': 0, 'golden': False}
+resultado {"won":true,"score":[10,4]}
 PARTIDO CPU OK
 tras moverse 1
 tras correr 2
@@ -27,6 +27,7 @@ tras combo 6
 foto basket_tutorial
 tutorial 99
 TUTORIAL OK
+cambio de defensor -> COCO
 fin {"won":true,"score":[9,2]} estado play
 errores JS []
 BALONCESTO OK

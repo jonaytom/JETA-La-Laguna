@@ -10,7 +10,11 @@ async def run(pg):
       court: c && { kind: c.kind, place: c.place, dist: Math.round(c.dist), x: Math.round(c.cx), z: Math.round(c.cz) },
       lampsInCourts: d.LAMPS.filter(l => d.inPitch(l[0], l[1], 0)).length, treesInCourts: d.TREES.filter(t => d.inPitch(t[0], t[1], 0)).length, pitches: d.pitchRects().length }; })())"""))
     print('info', info)
-    ok = info['ok'] and info['obispo'] and info['court'] and info['lampsInCourts'] == 0
+    reach = json.loads(await pg.evaluate("""JSON.stringify((()=>{ const d=__dbg, O=d.OBISPADO; const M=d.MISSIONS; const i=M._story.findIndex(m=>/farmacia/i.test(m.title)); M._setIdx(i); M._setIdx(0,'obispo');
+      const b=M.blips().find(q=>q[2]==='#b388ff'); if (!b) return { beacon: false }; const r=d.COL.resolve(b[0], b[1], 0.4);
+      return { beacon: true, enCasa: d.inAnyBuilding(b[0], b[1]), choca: Math.hypot(r.x-b[0], r.z-b[1]) > 0.05, obispoEnCasa: d.inAnyBuilding(d.NPC.obispo.x, d.NPC.obispo.z), dist: Math.hypot(b[0]-d.NPC.obispo.x, b[1]-d.NPC.obispo.z) }; })())"""))
+    print('alcanzable', reach)
+    ok = info['ok'] and info['obispo'] and info['court'] and info['lampsInCourts'] == 0 and reach.get('beacon') and not reach.get('enCasa') and not reach.get('choca') and not reach.get('obispoEnCasa')
     # photo of the Obispado: stand in front of the door, looking at it
     await pg.evaluate("(()=>{const d=__dbg, O=d.OBISPADO, P=d.PLAYER; P.x=O.front[0]+O.nx*9; P.z=O.front[1]+O.nz*9; P.h=Math.atan2(-O.nx,-O.nz); __step(40);})()")
     await snap(pg, 'obispado')

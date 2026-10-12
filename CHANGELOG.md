@@ -3,6 +3,13 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.65.1 — 2026-10-12 — Arreglos del Obispado
+- **Monseñor Truchas y su círculo quedaban dentro de la Casa Salazar** (la portada se orientaba hacia dentro cuando la
+  casa vecina estaba pegada): ahora la fachada se orienta desde la propia casa, solo hacia una calle, y el obispo y el
+  círculo siempre quedan en la calle, alcanzables.
+- **Parpadeo de la fachada del Obispado**: el chapado de piedra tocaba la pared y peleaban (z-fighting); ahora es un
+  plano separado 14 cm. Herramienta nueva `foto_noche.py` para medir parpadeos.
+
 ## 0.65.0 — 2026-10-12 — El Obispo y el baloncesto 2D
 - **Monseñor Fermín Truchas, obispo de Nivaria** (parodia), en la puerta del **Obispado** (Casa Salazar, C. San
   Agustín): portada de cantería oscura con columnas pareadas, frontón con escudo, balcones de forja y pináculos. Sus

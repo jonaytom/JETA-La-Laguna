@@ -16,9 +16,10 @@ const CRISTO_TEAM = [
 // coat of arms, iron balconies, pinnacles). The full recreation of the house is still pending (PENDIENTES).
 function buildObispado() {
   const b = findBuilding('Casa Salazar'); if (!b) return;
-  const P = b.pts, n = P.length; let E = null, best = -1;
+  const P = b.pts, n = P.length, flat = P.flat(); let E = null, best = -1;
   for (let i = 0; i < n; i++) { const p = P[i], q = P[(i + 1) % n]; const L = Math.hypot(q[0] - p[0], q[1] - p[1]); if (L < 6) continue;
-    let nx = (q[1] - p[1]) / L, nz = -(q[0] - p[0]) / L; const mx = (p[0] + q[0]) / 2, mz = (p[1] + q[1]) / 2; if (inAnyBuilding(mx + nx * 0.6, mz + nz * 0.6)) { nx = -nx; nz = -nz; }
+    let nx = (q[1] - p[1]) / L, nz = -(q[0] - p[0]) / L; const mx = (p[0] + q[0]) / 2, mz = (p[1] + q[1]) / 2; if (pip(mx + nx * 0.4, mz + nz * 0.4, flat)) { nx = -nx; nz = -nz; } /* outward from THIS house (v0.65.1: a neighbour used to flip it inwards) */
+    if (inAnyBuilding(mx + nx * 3, mz + nz * 3)) continue; /* the street must be in front */
     const rd = ROADSEG.nearest(mx + nx * 4, mz + nz * 4); if (!rd || rd.d > 9) continue; const nm = DATA.R[rd.ri][1] >= 0 ? STR[DATA.R[rd.ri][1]] : '';
     const sc = L + (/Agust/i.test(nm) ? 100 : 0); if (sc > best) { best = sc; E = { p, q, L, nx, nz, mx, mz }; } }
   if (!E) return;
@@ -28,9 +29,10 @@ function buildObispado() {
   const box = (w, h, d, mat, u, y, o) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); const p = at(u, y, o); m.position.set(...p); m.rotation.y = ang; m.castShadow = true; root.add(m); return m; };
   const cyl = (r, h, mat, u, y, o) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 1.08, h, 10), mat); m.position.set(...at(u, y, o)); m.castShadow = true; root.add(m); return m; };
   // dark stone facing over the whole front, ground and first floor
-  const fh = Math.max(7, Math.min(11, (b.top || g0 + 9) - g0)); const face = box(E.L, fh, 0.12, stone, 0, fh / 2, 0.06); face.material.map.repeat.set(E.L / 4, fh / 4);
+  const fh = Math.max(7, Math.min(11, (b.top || g0 + 9) - g0)); stone.polygonOffset = true; stone.polygonOffsetFactor = -2; stone.polygonOffsetUnits = -2;
+  const face = new THREE.Mesh(new THREE.PlaneGeometry(E.L - 0.2, fh), stone); face.position.set(...at(0, fh / 2, 0.14)); face.rotation.y = ang; root.add(face); stone.map.repeat.set(E.L / 4, fh / 4); stone.map.anisotropy = 4; // v0.65.1: a plane 14 cm off the wall (the box touched it and flickered)
   // portal: door, two pairs of columns, entablature, triangular pediment with the coat of arms
-  box(2.2, 3.4, 0.1, wood, 0, 1.7, 0.14);
+  box(2.2, 3.4, 0.1, wood, 0, 1.7, 0.22);
   for (const s of [-1, 1]) for (const k of [1.55, 2.1]) { cyl(0.2, 4.2, stone, s * k, 2.1, 0.45); box(0.55, 0.3, 0.55, stone, s * k, 0.15, 0.45); box(0.55, 0.3, 0.55, stone, s * k, 4.3, 0.45); }
   box(5.2, 0.6, 0.8, stone, 0, 4.75, 0.45);
   { const sh = new THREE.Shape(); sh.moveTo(-2.7, 0); sh.lineTo(2.7, 0); sh.lineTo(0, 1.5); sh.closePath(); const ge = new THREE.ExtrudeGeometry(sh, { depth: 0.6, bevelEnabled: false }); ge.translate(0, 0, -0.3);
@@ -39,10 +41,12 @@ function buildObispado() {
     x.fillStyle = '#f2d36b'; x.fillRect(58, 34, 12, 72); x.fillRect(38, 52, 52, 12); x.strokeStyle = '#3a3733'; x.lineWidth = 5; x.stroke();
     const m = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 1.1), new THREE.MeshStandardMaterial({ map: canvasTex(c, { repeat: false }), roughness: 0.8 })); m.position.set(...at(0, 5.75, 0.78)); m.rotation.y = ang; root.add(m); }
   // iron balconies on the first floor and pinnacles on top of the facade
-  for (const u of [-E.L / 2 + 2.5, -E.L / 4, E.L / 4, E.L / 2 - 2.5]) { if (Math.abs(u) < 3.2) continue; box(1.6, 0.12, 0.7, stone, u, 3.9, 0.4); box(1.6, 0.05, 0.05, iron, u, 4.85, 0.74); for (let k = -0.75; k <= 0.76; k += 0.15) box(0.03, 0.95, 0.03, iron, u + k, 4.4, 0.74); box(1.2, 2.2, 0.08, dark, u, 5.0, 0.13); }
+  for (const u of [-E.L / 2 + 2.5, -E.L / 4, E.L / 4, E.L / 2 - 2.5]) { if (Math.abs(u) < 3.2) continue; box(1.6, 0.12, 0.7, stone, u, 3.9, 0.4); box(1.6, 0.05, 0.05, iron, u, 4.85, 0.74); for (let k = -0.75; k <= 0.76; k += 0.15) box(0.03, 0.95, 0.03, iron, u + k, 4.4, 0.74); box(1.2, 2.2, 0.08, dark, u, 5.0, 0.21); }
   for (const u of [-E.L / 2 + 0.4, E.L / 2 - 0.4, -2.1, 2.1]) { const m = new THREE.Mesh(new THREE.ConeGeometry(0.22, 1.1, 6), stone); m.position.set(...at(u, fh + 0.55, 0.1)); root.add(m); }
   scene.add(root);
-  const door = at(0, 0, 1.6); Object.assign(OBISPADO, { ok: true, door: [door[0], door[2]], nx: E.nx, nz: E.nz, front: [door[0] + E.nx * 1.4, door[2] + E.nz * 1.4] });
+  const door = at(0, 0, 1.6); let fr = [door[0] + E.nx * 1.6, door[2] + E.nz * 1.6];
+  if (inAnyBuilding(fr[0], fr[1]) || COL.nearSeg(fr[0], fr[1], 0.6)) fr = safeSpot(fr[0], fr[1], 0.6); // v0.65.1: always reachable, out in the street
+  Object.assign(OBISPADO, { ok: true, door: [door[0], door[2]], nx: E.nx, nz: E.nz, front: fr });
   for (const s of [-1, 1]) for (const k of [1.55, 2.1]) { const p = at(s * k, 0, 0.45); COL.addCirc(p[0], p[2], 0.25); }
 }
 // ---------- the bishop himself, in purple, at the door
@@ -80,7 +84,7 @@ function obispoGameUpdate(m, o) {
 const M_OBISPO_1 = {
   title: 'Un partido por la Catedral', who: OBISPO,
   hint() { return 'Monseñor ' + MISSIONS.kit.bold('Truchas') + ' te espera en el ' + MISSIONS.kit.bold('Obispado') + ' (Calle San Agustín)'; },
-  startPos() { return OBISPADO.front ? [OBISPADO.front[0] + OBISPADO.nx * 1.3, OBISPADO.front[1] + OBISPADO.nz * 1.3] : [0, 0]; },
+  startPos() { if (!OBISPADO.front) return [0, 0]; const p = [OBISPADO.front[0] + OBISPADO.nx * 1.4, OBISPADO.front[1] + OBISPADO.nz * 1.4]; return inAnyBuilding(p[0], p[1]) ? safeSpot(p[0], p[1], 0.8) : p; },
   start() { const K = MISSIONS.kit, c = obispoCourt();
     K.talk([[OBISPO, 'Pasa, hijo, pasa. Soy Fermín Truchas, obispo de Nivaria por la gracia de Dios y por un error administrativo del Vaticano.'],
       [OBISPO, 'Me han dicho que tu banda ayuda al alcalde. Pues el Señor también tiene goteras: el tejado de la Catedral, el campanario de La Concepción, el órgano de Santo Domingo que suena como una guagua…'],
