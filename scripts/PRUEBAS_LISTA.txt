@@ -1,8 +1,8 @@
 # Pruebas de ESTA versión (scripts\PRUEBAS.bat las junta con las de lo cambiado).
-# v0.70.0: pendientes fáciles (edificios en calzada, aviones, persecuciones, Telepisa, marcas viales) y maleantes
-prueba_pendientes_faciles.py
-prueba_recorte.py
-prueba_maleantes.py
+# v0.71.0: misiones por zonas (orden nuevo, grafiteros en Padre Anchieta, partidas de antes)
+prueba_misiones_guardado.py
 prueba_persecuciones.py
-prueba_trinidad.py
+prueba_diario.py
+prueba_guardar_cargar.py
 herramientas/sonda_zonas.py
+prueba_misiones.py 16 16

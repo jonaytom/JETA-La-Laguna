@@ -238,3 +238,11 @@ Las partidas v1 (con el Canarión dentro de la historia) se convierten al cargar
 - Coches perseguidos (`s2DriveCar`) y el Canarión: `roundedAt()` redondea las esquinas de la ruta (punto medio entre
   R m antes y R m después, R = 3–7 m según la velocidad) y frenan por la curva más cerrada de los próximos 12–35 m.
 
+## Orden de la historia por zonas (v0.71)
+
+- `MISSIONS.addStory` (12f_story2.js) en este orden, tras las 7 del barrio del inicio: casco y Ayuntamiento (Defensores,
+  Bancos, Gofio robado, Carterista, Carrera solidaria) → Trinidad / Vía de Ronda / norte (Rally, Baches, Romero, Guagua
+  de la broma, Grafiteros en Padre Anchieta) → Noche en el aeropuerto.
+- Guardado v3: `skip` = misiones ya hechas fuera de orden. Las partidas v ≤ 2 se convierten con `STORY_V2` (el orden
+  antiguo): se sigue por la primera no hecha y las hechas se saltan (`placeStarts`); el diario las marca como hechas.
+

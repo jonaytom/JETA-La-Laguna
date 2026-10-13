@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.70.0</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.71.0</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -1140,6 +1140,14 @@ Las partidas v1 (con el Canarión dentro de la historia) se convierten al cargar
   capturados. Recompensa 150/300/600 $, sin delito; si pierdes, −15 de salud y sigue marcado.</li>
 <li>Coches perseguidos (<code>s2DriveCar</code>) y el Canarión: <code>roundedAt()</code> redondea las esquinas de la ruta (punto medio entre
   R m antes y R m después, R = 3–7 m según la velocidad) y frenan por la curva más cerrada de los próximos 12–35 m.</li>
+</ul>
+<h2>Orden de la historia por zonas (v0.71)</h2>
+<ul>
+<li><code>MISSIONS.addStory</code> (12f_story2.js) en este orden, tras las 7 del barrio del inicio: casco y Ayuntamiento (Defensores,
+  Bancos, Gofio robado, Carterista, Carrera solidaria) → Trinidad / Vía de Ronda / norte (Rally, Baches, Romero, Guagua
+  de la broma, Grafiteros en Padre Anchieta) → Noche en el aeropuerto.</li>
+<li>Guardado v3: <code>skip</code> = misiones ya hechas fuera de orden. Las partidas v ≤ 2 se convierten con <code>STORY_V2</code> (el orden
+  antiguo): se sigue por la primera no hecha y las hechas se saltan (<code>placeStarts</code>); el diario las marca como hechas.</li>
 </ul></section>
 <section id="s6"><div class="src">docs/06_audio.md</div><h1>6. Audio y radio procedural</h1>
 <p>Todo el sonido se <strong>sintetiza en tiempo real</strong> con Web Audio: no hay archivos de audio. Es una solución
@@ -1681,6 +1689,16 @@ que el cambio no obligue a tocar la lógica del juego.</p>
 <section id="s11"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.71.0 — 2026-10-13 — Misiones por zonas</h2>
+<ul>
+<li><strong>La historia va por zonas</strong> (Jonay): tras el barrio del inicio (El Blanco, La Concepción, Coco y Sastrón) van las del
+  casco y el Ayuntamiento (Defensores, Los bancos del Adelantado, El gofio robado, El carterista del Cristo, Carrera
+  solidaria), luego La Trinidad, la Vía de Ronda y el norte (El rally de La Esperanza, Baches en la Vía de Ronda,
+  Escolta a la guagua del Romero, La guagua de la broma, Grafiteros en el tranvía) y, de final, Noche en el aeropuerto.</li>
+<li><strong>Grafiteros en el tranvía</strong> ya no te manda a Las Mantecas (3,5 km): los grafiteros están en la parada de Padre Anchieta.</li>
+<li><strong>Partidas guardadas de antes</strong>: se convierten por título: sigues por la primera misión que no hiciste en el orden
+  nuevo y las que ya hiciste se saltan (el diario J las muestra como hechas). Partidas nuevas: versión 3 del guardado.</li>
+</ul>
 <h2>0.70.0 — 2026-10-13 — Pendientes fáciles y maleantes en busca y captura</h2>
 <ul>
 <li><strong>Maleantes en busca y captura</strong>: cuando ya sabes pelear (tras la misión de Sastrón), de vez en cuando sale en el

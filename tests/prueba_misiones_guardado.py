@@ -43,5 +43,11 @@ async def run(pg):
     s = json.loads(await pg.evaluate(ST))
     c3 = not s['m']['storyDone'] and s['m']['story'] == 6 and s['blips'] > 0
     print('3 partida antigua:', 'OK' if c3 else 'FALLA', s['m']); ok &= c3
+    # 4) v0.70: a save from before the missions were sorted by zones (old order: 10 done = up to «Baches en la Vía de Ronda»)
+    #    goes on with the first one not done in the new order, skips the ones already done, and keeps that after saving
+    r = json.loads(await pg.evaluate("""JSON.stringify((()=>{ const M=__dbg.MISSIONS; M.setState({v:2, story:10, side:1, sideOpen:true, gang:{formed:true, name:'Los Chopas', members:['boca'], sastronTut:true, defenders:true}}); __step(3);
+      const T=M._story.map(m=>m.title), g=M.getState(); const a={sig:T[g.story], skip:g.skip}; M.setState(JSON.parse(JSON.stringify(g))); __step(3); const g2=M.getState(); a.sig2=T[g2.story]; a.skip2=g2.skip; return a; })())"""))
+    c4 = r['sig'] == 'Los bancos del Adelantado' and sorted(r['skip']) == ['Baches en la Vía de Ronda', 'El carterista del Cristo'] and r['sig2'] == r['sig'] and sorted(r['skip2']) == sorted(r['skip'])
+    print('4 orden por zonas (partida de antes):', 'OK' if c4 else 'FALLA', r); ok &= c4
     print('ERRORES JS:', errs[:5])
     print('CONTINUIDAD', 'OK' if ok and not errs else 'FALLA')

@@ -3,6 +3,15 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.71.0 — 2026-10-13 — Misiones por zonas
+- **La historia va por zonas** (Jonay): tras el barrio del inicio (El Blanco, La Concepción, Coco y Sastrón) van las del
+  casco y el Ayuntamiento (Defensores, Los bancos del Adelantado, El gofio robado, El carterista del Cristo, Carrera
+  solidaria), luego La Trinidad, la Vía de Ronda y el norte (El rally de La Esperanza, Baches en la Vía de Ronda,
+  Escolta a la guagua del Romero, La guagua de la broma, Grafiteros en el tranvía) y, de final, Noche en el aeropuerto.
+- **Grafiteros en el tranvía** ya no te manda a Las Mantecas (3,5 km): los grafiteros están en la parada de Padre Anchieta.
+- **Partidas guardadas de antes**: se convierten por título: sigues por la primera misión que no hiciste en el orden
+  nuevo y las que ya hiciste se saltan (el diario J las muestra como hechas). Partidas nuevas: versión 3 del guardado.
+
 ## 0.70.0 — 2026-10-13 — Pendientes fáciles y maleantes en busca y captura
 - **Maleantes en busca y captura**: cuando ya sabes pelear (tras la misión de Sastrón), de vez en cuando sale en el
   minimapa (punto verde lima) un maleante con mote entre la gente de la calle. Le pegas y empieza la pelea 2D, pero es

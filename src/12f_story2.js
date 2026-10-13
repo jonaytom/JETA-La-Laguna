@@ -252,9 +252,9 @@ const M_BANCOS = {
 const M_TRANVIA = {
   title: 'Grafiteros en el tranvía', who: 'Sastrón',
   hint() { return b2('Sastrón') + ' está indignado junto a ' + b2(NPC.sastron.place || 'su sitio'); }, startPos: startAt('sastron'),
-  start() { const K = K2(); this.st = { step: 0 }; const T = DATA.T; let best = null; for (const p of DATA.P) if (p[1] === 'tram_stop' && p[0] >= 0 && /Mantecas/.test(STR[p[0]])) best = [p[2], p[3]]; if (!best) best = [T[Math.floor(T.length / 4) * 2], T[Math.floor(T.length / 4) * 2 + 1]]; this.st.p = s2Spot(best[0], best[1]);
-    K.talk([['Sastrón', '¡Un sacrilegio, Chopa! Unos niñatos están pintando el tranvía en Las Mantecas. ¡Con spray fosforito! Las tijeras dicen que no combina con nada.'], ['Sastrón', 'Corre antes de que acaben. Y llévate la de bolas: son rápidos.']], () => {
-      if (!K.isActive(this)) return; s2Armed(); this.st.step = 1; K.goto(this.st.p[0], this.st.p[1], 6, 0xe53935); K.setObjective('Llega a la parada de ' + b2('Las Mantecas') + ' antes de que se vayan'); K.setTimer(120); }); },
+  start() { const K = K2(); this.st = { step: 0 }; const T = DATA.T; let best = null; for (const p of DATA.P) if (p[1] === 'tram_stop' && p[0] >= 0 && /Padre Anchieta/.test(STR[p[0]])) best = [p[2], p[3]]; if (!best) best = [T[Math.floor(T.length / 4) * 2], T[Math.floor(T.length / 4) * 2 + 1]]; this.st.p = s2Spot(best[0], best[1]);
+    K.talk([['Sastrón', '¡Un sacrilegio, Chopa! Unos niñatos están pintando el tranvía en la parada de Padre Anchieta. ¡Con spray fosforito! Las tijeras dicen que no combina con nada.'], ['Sastrón', 'Corre antes de que acaben. Y llévate la de bolas: son rápidos.']], () => {
+      if (!K.isActive(this)) return; s2Armed(); this.st.step = 1; K.goto(this.st.p[0], this.st.p[1], 6, 0xe53935); K.setObjective('Llega a la parada de ' + b2('Padre Anchieta') + ' antes de que se vayan'); K.setTimer(120); }); },
   update(dt) { const K = K2(), S = this.st; if (!S || !S.step) return;
     if (S.step === 1 && s2AtGoal(12)) { K.setTimer(0); K.clearBeacon(); S.step = 2; S.g = [s2Human(THIEF_LOOKS[1], S.p[0] + 4, S.p[1] + 3), s2Human(THIEF_LOOKS[0], S.p[0] - 4, S.p[1] - 2)]; S.Ps = S.g.map((n, i) => s2RunPath(n, 150, 260, i ? 0.7 : -0.7)); S.left = 2; S.g.forEach((n) => s2Mark(n, 8));
       WEAPON.targets = S.g.map((n) => ({ x: n.x, y: 0, z: n.z, r: 0.5, hit: false, npc: n })); WEAPON.onHit = (t) => { if (t.npc && !t.npc.down) { s2Down(t.npc); S.left--; HUD.toast(S.left ? '¡Uno menos!' : '¡Los dos!', '#7fe08a', 1.5); if (!S.left) K2().talk([['Grafitero', '¡Au! ¡Vale, lo limpiamos, lo limpiamos!']], () => s2Pass('Tranvía sin pintadas', 800)); } };
@@ -355,4 +355,7 @@ const M_AEROPUERTO = {
       s2Pass('Tenéis coche patrulla propio', 2000); }); },
 };
 
-MISSIONS.addStory([M_FARMACIA, M_CEREMONIA, M_CARTERISTA, M_BACHES, M_RALLY, M_BANCOS, M_TRANVIA, M_GUAGUA, M_ROMERO, M_GOFIO, M_CARRERA, M_AEROPUERTO]);
+// v0.70 (Jonay: missions by zones): after the starting barrio (El Blanco, La Concepción, Coco, Sastrón) come the casco
+// and the Ayuntamiento, then La Trinidad / Vía de Ronda / the north, and the airport as the finale. Saves from before
+// this order are converted by title (MISSIONS.setState, STORY_V2).
+MISSIONS.addStory([M_FARMACIA, M_CEREMONIA, M_BANCOS, M_GOFIO, M_CARTERISTA, M_CARRERA, M_RALLY, M_BACHES, M_ROMERO, M_GUAGUA, M_TRANVIA, M_AEROPUERTO]);

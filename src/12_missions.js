@@ -104,6 +104,10 @@ window.addEventListener('keydown', (e) => { if ((e.code === 'Enter' || e.code ==
 const MISSIONS = (() => {
   let active = null, activeTrack = null, step = 0, timer = 0, beacon = null, data = {};
   // v0.66: everything said during each mission, for the diary (J); saved with the game
+  // v0.70: story missions already done out of order (a save from before the missions were sorted by zones)
+  const STORY_SKIP = new Set();
+  // the story order of the saves v ≤ 2 (before v0.70): their «story» index counts in this list
+  const STORY_V2 = ['Vuelta al barrio', 'Una botella para Coco', 'Sastrón', 'La firma de la banda', 'Boca Papa te enseña a comer', 'El campo de tiro de El Blanco', 'Atraco en la farmacia', 'Defensores de La Laguna', 'El carterista del Cristo', 'Baches en la Vía de Ronda', 'El rally de La Esperanza', 'Los bancos del Adelantado', 'Grafiteros en el tranvía', 'La guagua de la broma', 'Escolta a la guagua del Romero', 'El gofio robado', 'Carrera solidaria del casco', 'Noche en el aeropuerto'];
   const LOG = {}; const logLine = (who, t) => { if (!active || !t) return; const L = LOG[active.title] || (LOG[active.title] = []); if (L.length < 80) L.push([who || '', String(t)]); };
   const GANG = { formed: false, name: '', members: [] }; window.GANG = GANG;
   const SASTRON_FEE = 2500;
@@ -405,6 +409,7 @@ const MISSIONS = (() => {
   const TRACKS = { story: { list: STORY, idx: 0, beacon: null, color: 0xf5b72e, css: '#f5b72e' }, side: { list: SIDE, idx: 0, beacon: null, color: 0x5ec8ff, css: '#5ec8ff', open: false }, obispo: { list: OBISPO_LIST, idx: 0, beacon: null, color: 0xb388ff, css: '#b388ff' }, torneo: { list: TORNEO_LIST, idx: 0, beacon: null, color: 0xff9f43, css: '#ff9f43' } };
   const obispoOpen = () => { if (!NPC.obispo) return false; const i = STORY.findIndex((m) => m.who === 'Don Yovoy Gofiérrez' || /farmacia/i.test(m.title)); return TRACKS.story.done || (i >= 0 && TRACKS.story.idx >= i); };
   function placeStarts() {
+    while (TRACKS.story.idx < STORY.length && STORY_SKIP.has(STORY[TRACKS.story.idx].title)) TRACKS.story.idx++;
     for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon) { BEACON.free(tr.beacon); tr.beacon = null; } if (active || tr.idx >= tr.list.length) continue; if (k === 'side' && (!tr.open || PLAYER.money >= SASTRON_FEE)) continue; if (k === 'obispo' && !obispoOpen()) continue; if (k === 'torneo' && !GANG.basketTut) continue; const sp = ringClear(...tr.list[tr.idx].startPos(), 1.4); tr.beacon = BEACON.make(sp[0], sp[1], 1.4, 3, tr.color); if (k === 'story' && !active) { const h = tr.list[tr.idx].hint; if (h) setObjective('Siguiente: ' + h()); setWaypoint(sp[0], sp[1], true); } }
     if (TRACKS.story.idx >= STORY.length && !TRACKS.story.done) { TRACKS.story.done = true; setObjective(null); HUD.big((GANG.name || 'TU BANDA').toUpperCase(), '#f5b72e', 5); HUD.toast('Ya puedes moverte libremente por La Laguna. La historia continuará…', '#f5b72e', 8); }
   }
@@ -494,17 +499,19 @@ const MISSIONS = (() => {
     // the mission diary (12h_diario.js): every track, its missions and their state; the log; restart from a mission
     diary() { const NAMES = { story: 'Historia', side: 'El Canarión', obispo: 'El Obispo', torneo: 'Torneo Lagunero' };
       return Object.keys(TRACKS).map((k) => { const tr = TRACKS[k]; const locked = (k === 'obispo' && !obispoOpen()) || (k === 'torneo' && !GANG.basketTut) || (k === 'side' && !tr.open && tr.idx === 0);
-        return { key: k, name: NAMES[k] || k, css: tr.css, locked, list: tr.list.map((m, i) => ({ title: m.title, who: m.who || '', state: active === m ? 'activa' : i < tr.idx || (k === 'story' && tr.done) ? 'hecha' : i === tr.idx ? 'siguiente' : 'pendiente', hint: i === tr.idx && m.hint ? m.hint() : '' })) }; }); },
+        return { key: k, name: NAMES[k] || k, css: tr.css, locked, list: tr.list.map((m, i) => ({ title: m.title, who: m.who || '', state: active === m ? 'activa' : i < tr.idx || (k === 'story' && (tr.done || STORY_SKIP.has(m.title))) ? 'hecha' : i === tr.idx ? 'siguiente' : 'pendiente', hint: i === tr.idx && m.hint ? m.hint() : '' })) }; }); },
     log(title) { return LOG[title] || []; },
     resetFrom(k, i) { const tr = TRACKS[k]; if (!tr || i < 0 || i >= tr.list.length) return false; if (active) { try { if (WEAPON.training) takeWeapon(); } catch (e) { } finish(); }
-      for (let j = i; j < tr.list.length; j++) delete LOG[tr.list[j].title];
+      for (let j = i; j < tr.list.length; j++) { delete LOG[tr.list[j].title]; if (k === 'story') STORY_SKIP.delete(tr.list[j].title); }
       tr.idx = i; if (k === 'story') tr.done = false; if (k === 'obispo' && i === 0) GANG.basketTut = false; if (k === 'obispo' && i <= 2) GANG.futbolTut = false; if (k === 'side' && i === 0) tr.open = false;
       setObjective(null); placeStarts(); return true; },
     _setIdx(i, track = 'story') { TRACKS[track].idx = i; placeStarts(); },
     // save / load: which missions are done, the gang, tutorial flags (a mission in progress restarts from its beginning)
-    getState() { return { v: 2, story: TRACKS.story.idx, storyDone: !!TRACKS.story.done, side: TRACKS.side.idx, sideOpen: !!TRACKS.side.open, obispo: TRACKS.obispo.idx, torneo: TRACKS.torneo.idx, log: LOG, gang: { formed: GANG.formed, name: GANG.name, members: GANG.members.slice(), sastronTut: !!GANG.sastronTut, defenders: !!GANG.defenders, patrol: !!GANG.patrol, basketTut: !!GANG.basketTut, futbolTut: !!GANG.futbolTut }, active: active ? active.title : null }; },
+    getState() { return { v: 3, story: TRACKS.story.idx, skip: [...STORY_SKIP], storyDone: !!TRACKS.story.done, side: TRACKS.side.idx, sideOpen: !!TRACKS.side.open, obispo: TRACKS.obispo.idx, torneo: TRACKS.torneo.idx, log: LOG, gang: { formed: GANG.formed, name: GANG.name, members: GANG.members.slice(), sastronTut: !!GANG.sastronTut, defenders: !!GANG.defenders, patrol: !!GANG.patrol, basketTut: !!GANG.basketTut, futbolTut: !!GANG.futbolTut }, active: active ? active.title : null }; },
     setState(st) { if (active) { try { if (WEAPON.training) takeWeapon(); } catch (e) { } finish(); }
-      TRACKS.story.idx = (st.story | 0) - (!st.v && (st.story | 0) >= 3 ? 1 : 0); /* v1 saves had the Canarión race inside the story */ TRACKS.story.done = !!st.storyDone && TRACKS.story.idx >= STORY.length; /* older saves finished a shorter story: carry on with the new missions */ TRACKS.side.idx = !st.v && (st.story | 0) >= 3 ? 1 : st.side | 0; TRACKS.obispo.idx = st.obispo | 0; TRACKS.torneo.idx = st.torneo | 0; for (const k in LOG) delete LOG[k]; Object.assign(LOG, st.log || {}); TRACKS.side.open = !!st.sideOpen;
+      TRACKS.story.idx = (st.story | 0) - (!st.v && (st.story | 0) >= 3 ? 1 : 0); /* v1 saves had the Canarión race inside the story */
+      STORY_SKIP.clear(); if ((st.v | 0) >= 3) for (const t of st.skip || []) STORY_SKIP.add(t);
+      else { /* v ≤ 2: the index counts in the old order; the first old mission not done is where you go on, the done ones after it in the new order are skipped */ const n = TRACKS.story.idx, done = new Set(STORY_V2.slice(0, n)); let i = 0; while (i < STORY.length && done.has(STORY[i].title)) i++; TRACKS.story.idx = n >= STORY_V2.length ? n : i; for (let j = i; j < STORY.length; j++) if (done.has(STORY[j].title)) STORY_SKIP.add(STORY[j].title); } TRACKS.story.done = !!st.storyDone && TRACKS.story.idx >= STORY.length; /* older saves finished a shorter story: carry on with the new missions */ TRACKS.side.idx = !st.v && (st.story | 0) >= 3 ? 1 : st.side | 0; TRACKS.obispo.idx = st.obispo | 0; TRACKS.torneo.idx = st.torneo | 0; for (const k in LOG) delete LOG[k]; Object.assign(LOG, st.log || {}); TRACKS.side.open = !!st.sideOpen;
       Object.assign(GANG, { formed: !!(st.gang && st.gang.formed), name: (st.gang && st.gang.name) || '', members: (st.gang && st.gang.members) || [], sastronTut: !!(st.gang && st.gang.sastronTut), defenders: !!(st.gang && st.gang.defenders), patrol: !!(st.gang && st.gang.patrol), basketTut: !!(st.gang && st.gang.basketTut), futbolTut: !!(st.gang && st.gang.futbolTut) });
       setObjective(null); placeStarts();
       window.__missionResumed = st.active || null; if (st.active) setTimeout(() => HUD.toast('La misión «' + st.active + '» se guardó a medias: empieza de nuevo en su círculo', '#f5b72e', 6), 3500); /* after the radio hint of the car you load in */ },
