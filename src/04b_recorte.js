@@ -22,7 +22,7 @@ function roadClipGrid() {
         if (!ok) break; j = jj; dev = dv; }
       add(c[2 * i], c[2 * i + 1], c[2 * j], c[2 * j + 1], r[2] / 2 + 0.3 + dev, r[2] / 2 + 0.3); i = j; } });
   // the streets as they are drawn (every piece, no straight runs): to measure how deep a point sits in a carriageway
-  const raw = [], m2 = new Map(); DATA.R.forEach((r) => { if (r[0] > 12 || (r[3] & 6)) return; const c = r[4], k0 = r[2] / 2 + 0.3; for (let i = 0; i + 3 < c.length; i += 2) { const ax = c[i], az = c[i + 1], L = Math.hypot(c[i + 2] - ax, c[i + 3] - az); if (L < 0.05) continue; const id = raw.push({ ax, az, ux: (c[i + 2] - ax) / L, uz: (c[i + 3] - az) / L, L, k0 }) - 1;
+  const raw = [], m2 = new Map(); DATA.R.forEach((r) => { if ((r[0] > 12 && r[0] !== 13) || (r[3] & 6)) return; /* v0.74: pedestrian streets too (a corner pushed out of one street into a pedestrian one blocked Calle Heraclio Sánchez) */ const c = r[4], k0 = r[2] / 2 + 0.3; for (let i = 0; i + 3 < c.length; i += 2) { const ax = c[i], az = c[i + 1], L = Math.hypot(c[i + 2] - ax, c[i + 3] - az); if (L < 0.05) continue; const id = raw.push({ ax, az, ux: (c[i + 2] - ax) / L, uz: (c[i + 3] - az) / L, L, k0 }) - 1;
     for (let a = Math.floor((Math.min(ax, c[i + 2]) - k0) / CS); a <= Math.floor((Math.max(ax, c[i + 2]) + k0) / CS); a++) for (let b = Math.floor((Math.min(az, c[i + 3]) - k0) / CS); b <= Math.floor((Math.max(az, c[i + 3]) + k0) / CS); b++) { const key = a * 100003 + b; let l = m2.get(key); if (!l) m2.set(key, l = []); l.push(id); } } });
   RCLIP = { CS, m, segs, raw, m2, cut: 0 }; return RCLIP;
 }

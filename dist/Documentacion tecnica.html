@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.73.0</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.74.0</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -1702,6 +1702,20 @@ que el cambio no obligue a tocar la lógica del juego.</p>
 <section id="s11"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.74.0 — 2026-10-13 — Seis arreglos rápidos</h2>
+<ul>
+<li><strong>Aeropuerto</strong>: la rotonda acristalada de la terminal se coloca donde no pisa ninguna vía (antes caía sobre las vías
+  de servicio del lado aire: coches atascados y el revisor la veía «flotando»); si no cabe entera, más pequeña.</li>
+<li><strong>Obstáculos en calzada</strong>: la comprobación «¿está en una calzada?» mira ya las tres calles más cercanas y no solo la
+  más próxima (junto a una calle estrecha, la autopista ancha de al lado quedaba sin mirar: poste junto a la TF-13).
+  Los árboles de OSM que quedaban dentro de una calle con coches (Calle Juan de Vera) no se plantan.</li>
+<li><strong>Enemigos abatidos en las misiones</strong>: ya no se quedan congelados; caen con su animación, suena el golpe y se quejan
+  de vez en cuando si estás cerca.</li>
+<li><strong>Recorte de edificios</strong>: al empujar una esquina fuera de una calle tampoco puede meterse en una calle peatonal
+  (atasco a pie en la Calle Heraclio Sánchez).</li>
+<li><strong>Callejero</strong>: lista de los 36 edificios de la leyenda en <code>docs/referencias/callejero/edificios.md</code>, con cuáles tienen
+  ya algo propio en el juego (22) y cuáles son aún el bloque genérico (14), para misiones y para recrearlos.</li>
+</ul>
 <h2>0.73.0 — 2026-10-13 — Fáciles: auditoría, marcas viales y el agente revisor</h2>
 <ul>
 <li><strong>Edificios en calzada (auditoría 0.70)</strong>: el recorte ya no devuelve nunca un edificio más metido en una calle que

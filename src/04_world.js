@@ -770,7 +770,8 @@ function lowAt(x, z, py) {
   }
   return best;
 }
-function onCarriagewayEarly(x, z, m = 1) { const rd = ROADSEG.nearest(x, z, (r) => r[0] <= 12 && !(r[3] & 2)); return !!rd && rd.d < DATA.R[rd.ri][2] / 2 + m; }
+function onCarriagewayEarly(x, z, m = 1) { // v0.74: not only the nearest street (beside a narrow one, a wide motorway could still be under the point)
+  const seen = new Set(); for (let k = 0; k < 3; k++) { const rd = ROADSEG.nearest(x, z, (r) => r[0] <= 12 && !(r[3] & 2) && !seen.has(r)); if (!rd || rd.d > 12) return false; if (rd.d < DATA.R[rd.ri][2] / 2 + m) return true; seen.add(DATA.R[rd.ri]); } return false; }
 // ---------- buildings
 const PAL = {
   0: ['#e0b04e', '#a8513a', '#f3eee2', '#9fc4d6', '#a7c092', '#e7a47c', '#ecd276', '#d88d63', '#f1e7c8', '#b8cbd8', '#c56b4b', '#efe5d2'],

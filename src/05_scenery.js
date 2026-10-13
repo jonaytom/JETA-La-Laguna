@@ -46,7 +46,7 @@ function onAnyPaved(x, z, margin = 0.2) { const rd = ROADSEG.nearest(x, z, (r) =
 const TREES = []; // x,z,type(0 laurel,1 palm,2 pine,3 generic),scale
 function pip(x, z, c) { let ins = false; for (let i = 0, j = c.length - 2; i < c.length; j = i, i += 2) { const xi = c[i], zi = c[i + 1], xj = c[j], zj = c[j + 1]; if ((zi > z) !== (zj > z) && x < (xj - xi) * (z - zi) / (zj - zi) + xi) ins = !ins; } return ins; }
 function scatterTrees() {
-  for (let i = 0; i < DATA.N.length; i += 2) TREES.push([DATA.N[i], DATA.N[i + 1], Math.random() < 0.15 ? 1 : 0, rnd(0.8, 1.2)]);
+  for (let i = 0; i < DATA.N.length; i += 2) { if (onCarriagewayEarly(DATA.N[i], DATA.N[i + 1], 0.6)) continue; /* v0.74: OSM trees standing in a street that is now driven (Calle Juan de Vera) */ TREES.push([DATA.N[i], DATA.N[i + 1], Math.random() < 0.15 ? 1 : 0, rnd(0.8, 1.2)]); }
   const AT = DATA.AT;
   for (const a of DATA.A) {
     const k = AT[a[0]]; const dens = { park: 1 / 180, garden: 1 / 260, forest: 1 / 70, scrub: 1 / 400, grass: 1 / 700, cemetery: 1 / 300, orchard: 1 / 90, square: 1 / 900 }[k];

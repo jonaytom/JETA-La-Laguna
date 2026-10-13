@@ -3,6 +3,19 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.74.0 — 2026-10-13 — Seis arreglos rápidos
+- **Aeropuerto**: la rotonda acristalada de la terminal se coloca donde no pisa ninguna vía (antes caía sobre las vías
+  de servicio del lado aire: coches atascados y el revisor la veía «flotando»); si no cabe entera, más pequeña.
+- **Obstáculos en calzada**: la comprobación «¿está en una calzada?» mira ya las tres calles más cercanas y no solo la
+  más próxima (junto a una calle estrecha, la autopista ancha de al lado quedaba sin mirar: poste junto a la TF-13).
+  Los árboles de OSM que quedaban dentro de una calle con coches (Calle Juan de Vera) no se plantan.
+- **Enemigos abatidos en las misiones**: ya no se quedan congelados; caen con su animación, suena el golpe y se quejan
+  de vez en cuando si estás cerca.
+- **Recorte de edificios**: al empujar una esquina fuera de una calle tampoco puede meterse en una calle peatonal
+  (atasco a pie en la Calle Heraclio Sánchez).
+- **Callejero**: lista de los 36 edificios de la leyenda en `docs/referencias/callejero/edificios.md`, con cuáles tienen
+  ya algo propio en el juego (22) y cuáles son aún el bloque genérico (14), para misiones y para recrearlos.
+
 ## 0.73.0 — 2026-10-13 — Fáciles: auditoría, marcas viales y el agente revisor
 - **Edificios en calzada (auditoría 0.70)**: el recorte ya no devuelve nunca un edificio más metido en una calle que
   el original (un corte a lo largo de una calle que seguía por el cruce dentro de la siguiente, o una esquina empujada

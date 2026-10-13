@@ -49,6 +49,15 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       cartel verde de calles muestra el texto en espejo desde la parte de atrás; la cara trasera debería ser lisa o
       llevar el texto al derecho.
 
+- [~] v0.74.0 (rotonda del aeropuerto, árbol de Juan de Vera, poste junto a la TF-13, Heraclio Sánchez) **Auditoría y agente revisor v0.73.0** (13-oct; APTO CON AVISOS; pruebas 9/9 con los 3 tramos de conducción como «conocidos»):
+      auditoría: 18 edificios «nuevos» en calzada (varios ya salían antes: X −855 Z 56/70/86 3,4 m, X 1615 Z 3466, X 70 Z 220);
+      2 obstáculos nuevos: árbol o farola en **Calle Juan de Vera** (X −149 Z −235: la calle pasó de peatonal a calle con
+      coches y el árbol se quedó dentro) y poste en la Autopista del Norte junto a la TF-13 (X 372 Z 1522).
+      Revisor (412 s, 68 avisos, 51 nuevos, casi todos en las zonas nuevas): **aeropuerto** — la rotonda acristalada de la
+      terminal cae encima de las vías de servicio del lado aire (X −3080 Z 30–50: coches atascados, «flota 1–3 m») y los
+      caminos alrededor de la terminal atascan a pie; enlaces junto a Cam. San Lázaro (X −3270 Z −270) siguen flotando
+      0,8–1,3 m; Calle Heraclio Sánchez (X −86 Z 232) y un camino junto al tranvía (X −279 Z 583) atascan a pie; quedan
+      hundimientos en caminos de la periferia (X 962 Z 2710, 618 −777, 2248 3253). Detalle en `reportes/ULTIMO.md`.
 - [x] v0.73.0 (edificios que empeoraban, columnas del Intercambiador; el bolardo en Autopista del Norte X −1216 Z −14 y Cam. San Francisco de Paula X −1139 Z 2155 de la auditoría 0.72 sin localizar: mirar si vuelven) **Auditoría v0.70.0** (APTO CON AVISOS, comparada con la 0.69; repaso 3/3 y tanda 16/18: falla la conducción en los
       tramos de siempre —Camino La Rúa 308, Autopista del Norte 1287, Camino La Hornera 1667— y faltaban los aviones, ya
       arreglados): edificios en calzada 172 → 96 (116 ya no salen, 43 «nuevos» por los empujes de esquinas: Calle Las Eras
@@ -150,7 +159,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       Sirve para definir bien las **zonas peatonales** (las del empedrado; ahora hay calles donde se pasa en coche y el
       juego dice que son peatonales), tiene **información de edificios** para misiones y un dibujo en 3D bastante fiel de
       los edificios del casco. Bajarlo a `docs/referencias/` y usarlo en una tanda de mapa.
-- [ ] **Animación al abatir a un enemigo de misión** (Jonay, 12-oct): con el tiro que lo detiene (uno, dos o los que
+- [x] v0.74.0 (cae con la animación, golpe y quejidos) **Animación al abatir a un enemigo de misión** (Jonay, 12-oct): con el tiro que lo detiene (uno, dos o los que
       haga falta) la figura se queda congelada. Que caiga al suelo y se queje (animación de caída/dolor, quejidos).
 - [x] v0.59.0 **Centro de Salud de Taco** (Jonay, capturas: C. Dona 22 / C. San Jerónimo, junto a la Plaza La Rana Gustavo y
       la Av. Taco TF-28): bloque verde claro de 2 plantas con contraventanas blancas, verja y rampa. Código CPX2+FM → X 1633

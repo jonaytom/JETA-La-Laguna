@@ -7,3 +7,8 @@ prueba_grandes.py
 prueba_recorte.py
 prueba_trinidad.py
 prueba_aeropuerto.py
+prueba_misiones_guardado.py
+prueba_persecuciones.py
+prueba_diario.py
+prueba_guardar_cargar.py
+prueba_074.py

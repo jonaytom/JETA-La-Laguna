@@ -79,7 +79,12 @@ function s2Armed(n) { if (!WEAPON.has) giveWeapon(6, false); WEAPON.ammo = Math.
 function s2Target(n, onHit) { const t = { x: n.x, y: 0, z: n.z, r: 0.5, hit: false, npc: n }; WEAPON.targets = [t]; WEAPON.onHit = (h) => { if (h === t) onHit(); };
   WEAPON.onShot = () => { if (WEAPON.ammo <= 0) setTimeout(() => { if (WEAPON.lawful) { WEAPON.ammo = 6; updateWeaponHUD(); HUD.toast('El Blanco te lanza otro cargador de bolas', '#f5b72e', 2); } }, 1200); }; return t; }
 function s2TrackTarget(t) { if (!t || t.hit) return; t.x = t.npc.x; t.z = t.npc.z; t.y = heightAt(t.x, t.z) + 1.1; }
-function s2Down(n) { if (n.H.skinned) { n.H.oneShot = 0; animHuman(n.H, 0.016, 0, 'down'); } n.down = true; }
+// v0.74 (Jonay: the figure froze on the shot that stops it): it falls (the 'down' animation keeps playing in
+// story2Tick), a thud, and it moans now and then while you are near
+const S2_QUEJIDOS = ['¡Ay, ay, ay... mi madre!', '¡Uuuf... que me has dao, chacho!', '¡Ayyy... vale, vale, me rindo!', '¡Ños, qué daño... para ya!', '¡Ay mi pierna... socorro!'];
+function s2Down(n) { if (n.H.skinned) n.H.oneShot = 0; n.down = true; n.downT = 0; n.moan = 0.4; AUDIO.thud && AUDIO.thud(2); }
+function s2DownTick(dt) { for (const n of S2.npcs) { if (!n.down || !n.H || !n.H.root.visible) continue; n.downT += dt; animHuman(n.H, dt, 0, 'down');
+  n.moan -= dt; if (n.moan <= 0 && n.downT < 14) { n.moan = 3.5 + Math.random() * 3; if (Math.hypot(PLAYER.x - n.x, PLAYER.z - n.z) < 25) SUB.show('<b>' + (n.name || 'Herido') + ':</b> ' + pick(S2_QUEJIDOS), 2.2); } } }
 const s2Near = (x, z, r) => Math.hypot(PLAYER.x - x, PLAYER.z - z) < r;
 // at the current beacon (K.goto moves the goal to a safe spot, so check against that and not the raw point)
 const s2AtGoal = (r) => { const g = K2().data.goal; return !!g && s2Near(g[0], g[1], r); };
@@ -98,6 +103,7 @@ function story2Init() {
 }
 // nothing of these missions may survive them (a failure, an abort, loading a game saved halfway…)
 function story2Tick(dt) { if (!MISSIONS.active && (S2.npcs.length || S2.cars.length || S2.extras.length || WEAPON.lawful || WEAPON.onHit)) { s2Clear(); return; }
+  try { s2DownTick(dt); } catch (e) { }
   for (let i = S2.marks.length - 1; i >= 0; i--) { const k = S2.marks[i], o = k.o; k.t -= dt; const hid = o.H ? !o.H.root.visible || o.down : o.dead;
     if (k.t <= 0 || hid) { if (k.a.parent) k.a.parent.remove(k.a); S2.marks.splice(i, 1); continue; }
     const top = o.H ? 2.5 : (o.T ? o.T.H : 1.6) + 1.2; k.a.position.set(o.x, heightAt(o.x, o.z) + (o.y && !o.H ? o.y - heightAt(o.x, o.z) : 0) + top + 0.35 * Math.abs(Math.sin(performance.now() / 220)), o.z); k.a.rotation.y += dt * 3; k.a.scale.setScalar(o.H ? 1 : 1.5); } }

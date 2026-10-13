@@ -1,7 +1,6 @@
 # Pruebas de ESTA versión (scripts\PRUEBAS.bat las junta con las de lo cambiado).
-# v0.73.0: fáciles (recorte, Intercambiador, marcas viales, hundimientos del revisor, fallos conocidos de conducción)
-prueba_recorte.py
-prueba_pendientes_faciles.py
+# v0.74.0: seis arreglos rápidos (rotonda del aeropuerto, obstáculos en calzada, enemigos abatidos, recorte, callejero)
+prueba_074.py
 prueba_grandes.py
-prueba_conduccion_tuneles_puentes.py
-prueba_arranque.py
+prueba_recorte.py
+prueba_persecuciones.py
