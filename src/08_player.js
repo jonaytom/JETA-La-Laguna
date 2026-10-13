@@ -118,7 +118,7 @@ function updatePlayer(dt) {
   DB('low+trench'); if (lw) { const lim = Math.max(0.3, lw.hw - 0.35); if (lw.d > lim && lw.d > 0.01) { const k = lim / lw.d; nx = lw.px + (nx - lw.px) * k; nz = lw.pz + (nz - lw.pz) * k; } }
   DB('clamp'); PLAYER.x = nx; PLAYER.z = nz;
   const dk = deckAt(nx, nz, PLAYER.y); PLAYER.onDeck = dk > -1e8 && dk > heightAt(nx, nz) + 0.5;
-  const gy = PLAYER.interior ? PLAYER.interior.floor + 0.02 : lw ? lw.y : Math.max(heightAt(nx, nz) + 0.17, dk);
+  const sf = surfAt(nx, nz); const gy = PLAYER.interior ? PLAYER.interior.floor + 0.02 : lw ? lw.y : Math.max(heightAt(nx, nz) + 0.17, dk, sf - heightAt(nx, nz) < 1.6 ? sf + 0.07 : -1e9); // v0.73: the visible path over a hollow
   if ((pressed('Space') || (gp && gp.down(1)) || INPUT.touch.jump) && PLAYER.onGround) { PLAYER.vy = 5.3; PLAYER.onGround = false; INPUT.touch.jump = false; AUDIO.jump(); }
   PLAYER.vy -= 16 * dt; PLAYER.y += PLAYER.vy * dt;
   if (PLAYER.y <= gy) { PLAYER.y = gy; if (!PLAYER.onGround) { AUDIO.land(-PLAYER.vy); PLAYER.stepD = 0; } PLAYER.vy = 0; PLAYER.onGround = true; }

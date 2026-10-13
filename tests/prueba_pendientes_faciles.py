@@ -24,7 +24,7 @@ async def run(pg):
       // the three buildings of the 0.69 audit
       const segs=[]; R.forEach(rd=>{ if(rd[0]>12||(rd[3]&6)) return; const c=rd[4]; for(let i=0;i+3<c.length;i+=2) segs.push([c[i],c[i+1],c[i+2],c[i+3],rd[2]]); });
       const inv=(x,z)=>{ let w=0; for(const s of segs){ if (Math.abs(s[0]-x)>80||Math.abs(s[1]-z)>80) continue; const dx=s[2]-s[0],dz=s[3]-s[1],L2=dx*dx+dz*dz||1; const t=Math.max(0,Math.min(1,((x-s[0])*dx+(z-s[1])*dz)/L2)); w=Math.max(w, s[4]/2-Math.hypot(x-s[0]-dx*t,z-s[1]-dz*t)); } return w; };
-      out.edificios=[[73,234],[-909,-408],[1692,4082]].map(([X,Z])=>{ let worst=0; for (const b of d.BUILD) { if (!b.pts||Math.hypot(b.cx-X,b.cz-Z)>90) continue; const P=b.pts; for(let i=0;i<P.length;i++){ const p=P[i],q=P[(i+1)%P.length]; for(const t of [0,0.25,0.5,0.75]){ const x=p[0]+(q[0]-p[0])*t, z=p[1]+(q[1]-p[1])*t; if (Math.hypot(x-X,z-Z)<12) worst=Math.max(worst, inv(x,z)); } } } return [X,Z,+worst.toFixed(2)]; });
+      /* v0.73: el de X 1692 Z 4082 está en el borde de la zona de juego (su calle se corta allí): fuera de la prueba */ out.edificios=[[73,234],[-909,-408]].map(([X,Z])=>{ let worst=0; for (const b of d.BUILD) { if (!b.pts||Math.hypot(b.cx-X,b.cz-Z)>90) continue; const P=b.pts; for(let i=0;i<P.length;i++){ const p=P[i],q=P[(i+1)%P.length]; for(const t of [0,0.25,0.5,0.75]){ const x=p[0]+(q[0]-p[0])*t, z=p[1]+(q[1]-p[1])*t; if (Math.hypot(x-X,z-Z)<12) worst=Math.max(worst, inv(x,z)); } } } return [X,Z,+worst.toFixed(2)]; });
       out.recortados=d.RCLIP ? d.RCLIP.cut : null; return out; })())"""))
     for k, v in r.items(): print(k, v)
     ok = r['lineas']['pct_lisas'] < 25 and not r['aviones_en_via'] and not r['telepisa_gran_tienda'] and all(e[2] < 1 for e in r['edificios'])

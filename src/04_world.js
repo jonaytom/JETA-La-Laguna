@@ -216,10 +216,16 @@ const ROADCLASS = (rd) => {
   if (paved === 2 || t === 'track' || t === 'path') return 'dirt';
   if (t === 'footway' || t === 'steps' || t === 'cycleway') return 'footway';
   if (t === 'pedestrian' || paved === 1) return 'paving';
-  if (rd[0] <= 8 && rd[2] >= 7) return 'asphaltLines';
+  if (rd[0] <= 8 && rd[2] >= 7 && !([1, 4, 6, 8].includes(rd[0]) && (rd[3] & 1))) return 'asphaltLines'; // v0.73: one-way slip roads have no centre line
   return 'asphalt';
 };
 const YOFF = { sidewalk: 0.09, dirt: 0.08, footway: 0.1, asphalt: 0.13, paving: 0.13, asphaltLines: 0.15, disc: 0.155, discPave: 0.135, tram: 0.17 };
+// v0.73 (agente revisor: «se hunde 0,3–1,1 m bajo la superficie visible» on paths and pavements): where a ribbon
+// drawn as a straight chord across its width stands clearly above the terrain (a hollow under a path), remember its
+// height in 3 m cells so people walk on what you see (08_player.js, surfAt)
+const SURF = new Map(), SURF_MK = new Set(['footway', 'paving', 'sidewalk', 'asphalt', 'asphaltLines', 'dirt']);
+function surfMark(x, z, y) { const k = Math.floor(x / 3) * 100003 + Math.floor(z / 3), o = SURF.get(k); if (o === undefined || y > o) SURF.set(k, y); }
+function surfAt(x, z) { const v = SURF.get(Math.floor(x / 3) * 100003 + Math.floor(z / 3)); return v === undefined ? -1e9 : v; }
 function ribbon(pts, w, mk, yoff, tileLen, uSpan = 1, hf = null, blend = false) { /* blend: a sunk road near grade follows the ground across its width (flat on a cross slope it floated ~1 m over the road beside it) */
   // pts: flat [x,z,...]; subdivide to max 5m
   const P = [];
@@ -242,7 +248,9 @@ function ribbon(pts, w, mk, yoff, tileLen, uSpan = 1, hf = null, blend = false) 
     const lx = p[0] + nx * hw * miter, lz = p[1] + nz * hw * miter, rx = p[0] - nx * hw * miter, rz = p[1] - nz * hw * miter;
     if (hf) { const hy = hf(dist, p[0], p[1]) + yoff; let kl = 0, kr = 0; if (blend) { const g = heightAt(p[0], p[1]), k = smooth(0, 1, 1 - (g - hy + yoff) / 1.2); kl = k * Math.min(0, heightAt(lx, lz) - g); kr = k * Math.min(0, heightAt(rx, rz) - g); } L.push([lx, hy + kl, lz]); R.push([rx, hy + kr, rz]); } else { const hl = heightAt(lx, lz), hr = heightAt(rx, rz); let lift = 0; /* the ribbon is a straight chord across the width: lift it where the 16 m terrain bulges inside (grass poking through the asphalt) */
       if (w > 3) for (const f of [0.25, 0.5, 0.75]) lift = Math.max(lift, heightAt(lx + (rx - lx) * f, lz + (rz - lz) * f) - (hl + (hr - hl) * f));
-      L.push([lx, hl + yoff + lift, lz]); R.push([rx, hr + yoff + lift, rz]); } V.push(dist / tileLen);
+      if ((mk === 'asphalt' || mk === 'asphaltLines') && lift > 0.4) lift = 0.4; // v0.73 (agente revisor: a road lifted 0.8 m floated over the one it meets at a junction)
+      L.push([lx, hl + yoff + lift, lz]); R.push([rx, hr + yoff + lift, rz]);
+      if (SURF_MK.has(mk)) for (const f of [0.15, 0.5, 0.85]) { const x = lx + (rx - lx) * f, z = lz + (rz - lz) * f, y = hl + (hr - hl) * f + yoff + lift; if (y - heightAt(x, z) > 0.25) surfMark(x, z, y); } } V.push(dist / tileLen);
   }
   const A = acc(P[0][0], P[0][1], mk);
   for (let i = 0; i < P.length - 1; i++) A.quad(L[i], R[i], R[i + 1], L[i + 1], [0, V[i]], [uSpan, V[i]], [uSpan, V[i + 1]], [0, V[i + 1]], null, undefined, [0, 1, 0]);

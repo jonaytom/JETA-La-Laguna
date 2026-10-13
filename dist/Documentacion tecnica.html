@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.72.0</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.73.0</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -1702,6 +1702,23 @@ que el cambio no obligue a tocar la lógica del juego.</p>
 <section id="s11"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.73.0 — 2026-10-13 — Fáciles: auditoría, marcas viales y el agente revisor</h2>
+<ul>
+<li><strong>Edificios en calzada (auditoría 0.70)</strong>: el recorte ya no devuelve nunca un edificio más metido en una calle que
+  el original (un corte a lo largo de una calle que seguía por el cruce dentro de la siguiente, o una esquina empujada
+  hacia otra calle): Calle Las Eras, Tabajoste, Camino La Cañada… La profundidad se mide ya con la calle tal como se
+  dibuja, tramo a tramo. Invasiones ≥ 1 m en todo el mapa: 189 → 159, ninguna peor que antes (las casas pequeñas pueden perder hasta el 60 %).</li>
+<li><strong>Columnas del Intercambiador</strong> (los «árboles o farolas» en la vía de servicio junto a Padre Anchieta): se apartan
+  del carril de las guaguas. Carteles «P» y postes de la valla del aeropuerto: nunca dentro de una calzada (auditoría
+  0.72); la valla, con postes cada 12 m (menos geometría).</li>
+<li><strong>Marcas viales</strong>: los ramales de un solo sentido (enlaces de autopista y de vías principales) ya no llevan línea
+  central.</li>
+<li><strong>Agente revisor</strong>: el personaje ya no se hunde en caminos y aceras que pasan por una hondonada (se pisa la superficie
+  que se ve: alturas guardadas en celdas de 3 m donde el camino queda por encima del terreno); una calle que se elevaba
+  para tapar un bulto del terreno ya no sube más de 0,4 m (flotaba sobre la que cruza).</li>
+<li><strong>Prueba de conducción</strong>: los tramos que fallan desde hace tiempo (Camino La Rúa, dos de la Autopista del Norte,
+  Camino La Hornera) son «fallos conocidos»: salen como aviso y la prueba pasa si solo fallan ellos.</li>
+</ul>
 <h2>0.72.0 — 2026-10-13 — Pendientes grandes del mapa</h2>
 <ul>
 <li><strong>Obispado (Casa Salazar)</strong> entera por fuera, con las fotos de Jonay: dos plantas de cantería oscura; ventanas bajas con

@@ -3,6 +3,22 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.73.0 — 2026-10-13 — Fáciles: auditoría, marcas viales y el agente revisor
+- **Edificios en calzada (auditoría 0.70)**: el recorte ya no devuelve nunca un edificio más metido en una calle que
+  el original (un corte a lo largo de una calle que seguía por el cruce dentro de la siguiente, o una esquina empujada
+  hacia otra calle): Calle Las Eras, Tabajoste, Camino La Cañada… La profundidad se mide ya con la calle tal como se
+  dibuja, tramo a tramo. Invasiones ≥ 1 m en todo el mapa: 189 → 159, ninguna peor que antes (las casas pequeñas pueden perder hasta el 60 %).
+- **Columnas del Intercambiador** (los «árboles o farolas» en la vía de servicio junto a Padre Anchieta): se apartan
+  del carril de las guaguas. Carteles «P» y postes de la valla del aeropuerto: nunca dentro de una calzada (auditoría
+  0.72); la valla, con postes cada 12 m (menos geometría).
+- **Marcas viales**: los ramales de un solo sentido (enlaces de autopista y de vías principales) ya no llevan línea
+  central.
+- **Agente revisor**: el personaje ya no se hunde en caminos y aceras que pasan por una hondonada (se pisa la superficie
+  que se ve: alturas guardadas en celdas de 3 m donde el camino queda por encima del terreno); una calle que se elevaba
+  para tapar un bulto del terreno ya no sube más de 0,4 m (flotaba sobre la que cruza).
+- **Prueba de conducción**: los tramos que fallan desde hace tiempo (Camino La Rúa, dos de la Autopista del Norte,
+  Camino La Hornera) son «fallos conocidos»: salen como aviso y la prueba pasa si solo fallan ellos.
+
 ## 0.72.0 — 2026-10-13 — Pendientes grandes del mapa
 - **Obispado (Casa Salazar)** entera por fuera, con las fotos de Jonay: dos plantas de cantería oscura; ventanas bajas con
   rejas, banda de rosetas y crestería de forja; balcones sobre ménsulas con barandas de hierro y frontón en cada ventana

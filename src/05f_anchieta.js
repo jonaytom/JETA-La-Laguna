@@ -148,7 +148,7 @@ function buildIntercambiador(b) {
   mk(fascia, new THREE.MeshStandardMaterial({ color: 0x1f8a4c, roughness: 0.5, side: THREE.DoubleSide }));
   // columns on a grid inside the footprint
   const F = axisFrame(pts, b.cx, b.cz); const colM = new THREE.MeshStandardMaterial({ color: 0x9aa0a4, roughness: 0.5, metalness: 0.5 });
-  for (let u = F.u0 + 6; u < F.u1 - 3; u += 14) for (let v = F.v0 + 6; v < F.v1 - 3; v += 16) { const [x, z] = F.W(u, v); if (!pip(x, z, pts.flat())) continue; const g = heightAt(x, z); const c = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, y - g, 10), colM); c.position.set(x, g + (y - g) / 2, z); c.castShadow = true; scene.add(c); COL.addCirc(x, z, 0.4); }
+  for (let u = F.u0 + 6; u < F.u1 - 3; u += 14) for (let v0 = F.v0 + 6; v0 < F.v1 - 3; v0 += 16) { let x = 0, z = 0, ok = false; for (const dv of [0, 3, -3, 5.5, -5.5]) { [x, z] = F.W(u, v0 + dv); if (pip(x, z, pts.flat()) && !onCarriagewayEarly(x, z, 0.6)) { ok = true; break; } } if (!ok) continue; /* v0.73 (auditor): never in a bus lane */ const g = heightAt(x, z); const c = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, y - g, 10), colM); c.position.set(x, g + (y - g) / 2, z); c.castShadow = true; scene.add(c); COL.addCirc(x, z, 0.4); }
   // platforms (raised island kerbs) and green guaguas parked in the bays
   const platM = new THREE.MeshStandardMaterial({ color: 0xbdb8ae, roughness: 0.9 });
   const len = F.u1 - F.u0, wid = F.v1 - F.v0;

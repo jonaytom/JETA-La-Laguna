@@ -21,7 +21,10 @@ function roadClipGrid() {
           const px = c[2 * q + 2] - c[2 * i], pz = c[2 * q + 3] - c[2 * i + 1]; dv = Math.max(dv, Math.abs((px * cz - pz * cx) / CL)); }
         if (!ok) break; j = jj; dev = dv; }
       add(c[2 * i], c[2 * i + 1], c[2 * j], c[2 * j + 1], r[2] / 2 + 0.3 + dev, r[2] / 2 + 0.3); i = j; } });
-  RCLIP = { CS, m, segs, cut: 0 }; return RCLIP;
+  // the streets as they are drawn (every piece, no straight runs): to measure how deep a point sits in a carriageway
+  const raw = [], m2 = new Map(); DATA.R.forEach((r) => { if (r[0] > 12 || (r[3] & 6)) return; const c = r[4], k0 = r[2] / 2 + 0.3; for (let i = 0; i + 3 < c.length; i += 2) { const ax = c[i], az = c[i + 1], L = Math.hypot(c[i + 2] - ax, c[i + 3] - az); if (L < 0.05) continue; const id = raw.push({ ax, az, ux: (c[i + 2] - ax) / L, uz: (c[i + 3] - az) / L, L, k0 }) - 1;
+    for (let a = Math.floor((Math.min(ax, c[i + 2]) - k0) / CS); a <= Math.floor((Math.max(ax, c[i + 2]) + k0) / CS); a++) for (let b = Math.floor((Math.min(az, c[i + 3]) - k0) / CS); b <= Math.floor((Math.max(az, c[i + 3]) + k0) / CS); b++) { const key = a * 100003 + b; let l = m2.get(key); if (!l) m2.set(key, l = []); l.push(id); } } });
+  RCLIP = { CS, m, segs, raw, m2, cut: 0 }; return RCLIP;
 }
 // is (x, z) on the carriageway of some road piece (other than `skip`)? A building corner that sticks out past the end of
 // one road piece is still on the road when it sits in the junction or in the next piece (v0.70: blocks on corners)
@@ -59,16 +62,20 @@ function roadClip(pts) {
   // corners that still stick into a road (where a road piece ends or bends inside the footprint): push that vertex out
   // across the nearest piece, up to 4 m (v0.70)
   const P0 = P, ch0 = changed;
-  const deepAt = (x, z) => { const l = G.m.get(Math.floor(x / G.CS) * 100003 + Math.floor(z / G.CS)); let w = 0; if (l) for (const id of l) { const s = G.segs[id]; const t = Math.max(0, Math.min(s.L, (x - s.ax) * s.ux + (z - s.az) * s.uz)); w = Math.max(w, s.k0 - Math.hypot(x - s.ax - s.ux * t, z - s.az - s.uz * t)); } return w; };
+  const deepAt = (x, z) => { const l = G.m2.get(Math.floor(x / G.CS) * 100003 + Math.floor(z / G.CS)); let w = 0; if (l) for (const id of l) { const s = G.raw[id]; const t = Math.max(0, Math.min(s.L, (x - s.ax) * s.ux + (z - s.az) * s.uz)); w = Math.max(w, s.k0 - Math.hypot(x - s.ax - s.ux * t, z - s.az - s.uz * t)); } return w; };
   for (let pass = 0; pass < 2; pass++) { const Q = []; let ins = false; // edges whose middle is in the road get a vertex there, to be pushed out too
     for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length]; Q.push(p); const mx = (p[0] + q[0]) / 2, mz = (p[1] + q[1]) / 2; if (Math.hypot(q[0] - p[0], q[1] - p[1]) > 2 && deepAt(mx, mz) > 0.5) { Q.push([mx, mz]); ins = true; } }
     if (ins) { P = Q; changed = true; } }
   for (let i = 0; i < P.length; i++) { const p = P[i]; const l = G.m.get(Math.floor(p[0] / G.CS) * 100003 + Math.floor(p[1] / G.CS)); if (!l) continue;
     let best = null; for (const id of l) { const s = G.segs[id]; const t = Math.max(0, Math.min(s.L, (p[0] - s.ax) * s.ux + (p[1] - s.az) * s.uz)); const qx = s.ax + s.ux * t, qz = s.az + s.uz * t, d = Math.hypot(p[0] - qx, p[1] - qz);
       const need = s.k0 - d; if (need > 0.5 && d > 0.05 && (!best || need > best.need)) best = { need, ox: (p[0] - qx) / d, oz: (p[1] - qz) / d }; }
-    if (best && best.need < 4) { if (P === pts) P = pts.slice(); P[i] = [p[0] + best.ox * best.need, p[1] + best.oz * best.need]; changed = true; } }
+    if (best && best.need < 4) { const q = [p[0] + best.ox * best.need, p[1] + best.oz * best.need]; if (deepAt(q[0], q[1]) > 0.3) continue; /* v0.73: pushed out of one street into another (a corner): leave it */ { const a = P[(i + P.length - 1) % P.length], c = P[(i + 1) % P.length]; let bad = false; for (const nb of [a, c]) for (const t of [0.25, 0.5, 0.75]) { const ox = p[0] + (nb[0] - p[0]) * t, oz = p[1] + (nb[1] - p[1]) * t, nx2 = q[0] + (nb[0] - q[0]) * t, nz2 = q[1] + (nb[1] - q[1]) * t; if (deepAt(nx2, nz2) > Math.max(0.3, deepAt(ox, oz))) bad = true; } if (bad) continue; } /* ...nor may its two edges cut into one */ if (P === pts) P = pts.slice(); P[i] = q; changed = true; } }
   if (P !== P0 && selfCross(P)) { P = P0; changed = ch0; } // a push that folds the outline over itself: keep the straight cuts only
+  // v0.73 (auditor 0.70: 43 «new» invasions): never hand back an outline that sits deeper in some street than the
+  // original did (a cut along one street that runs on through a junction into the next one)
+  const polyDeep = (Q) => { let w = 0; for (let i = 0; i < Q.length; i++) { const p = Q[i], q = Q[(i + 1) % Q.length]; for (const t of [0, 0.25, 0.5, 0.75]) w = Math.max(w, deepAt(p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t)); } return w; };
+  if (changed) { const d0 = polyDeep(pts); if (polyDeep(P) > d0 + 0.1) { if (P !== P0 && ch0 && polyDeep(P0) <= d0 + 0.1) P = P0; else return pts; } }
   if (!changed) return pts;
-  const a0 = Math.abs(polyArea(pts)), a1 = Math.abs(polyArea(P)); if (a1 < a0 * 0.5 || a1 < 12 || selfCross(P)) return pts;
+  const a0 = Math.abs(polyArea(pts)), a1 = Math.abs(polyArea(P)); if (a1 < a0 * (a0 < 150 ? 0.4 : 0.5) || a1 < 12 || selfCross(P)) return pts; // small houses may lose a bit more (v0.73)
   G.cut++; return P;
 }

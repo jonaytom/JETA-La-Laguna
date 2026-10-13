@@ -49,7 +49,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       cartel verde de calles muestra el texto en espejo desde la parte de atrás; la cara trasera debería ser lisa o
       llevar el texto al derecho.
 
-- [ ] **Auditoría v0.70.0** (APTO CON AVISOS, comparada con la 0.69; repaso 3/3 y tanda 16/18: falla la conducción en los
+- [x] v0.73.0 (edificios que empeoraban, columnas del Intercambiador; el bolardo en Autopista del Norte X −1216 Z −14 y Cam. San Francisco de Paula X −1139 Z 2155 de la auditoría 0.72 sin localizar: mirar si vuelven) **Auditoría v0.70.0** (APTO CON AVISOS, comparada con la 0.69; repaso 3/3 y tanda 16/18: falla la conducción en los
       tramos de siempre —Camino La Rúa 308, Autopista del Norte 1287, Camino La Hornera 1667— y faltaban los aviones, ya
       arreglados): edificios en calzada 172 → 96 (116 ya no salen, 43 «nuevos» por los empujes de esquinas: Calle Las Eras
       X −439 Z −786 4,6 m, Calle Tabajoste X −1070 Z 1763 4,6 m, Camino La Cañada X −4677 Z −52…; ver `mapa.md`);
@@ -63,7 +63,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       edificios por debajo, con alguna tienda y bares dentro. El revisor los da como «edificio que tapa el camino»
       (X −176 Z −66 y X −212 Z 54): no hay que quitar el edificio, sino hacer el paso por debajo (hueco en la planta baja,
       techo, luz) con tiendas y bares parodia a los lados.
-- [ ] **Agente revisor v0.69.0** (Jonay lo pidió, 13-oct; 6 min en su PC; `reportes/ULTIMO.md` con capturas en `reportes/img/`):
+- [~] v0.73.0 (hundimientos en caminos/aceras, calle que flotaba; quedan texturas «trim» sobre enlaces, atascos, salidas de calzada, edificios sobre caminos y saltos: ver el revisor 0.73) **Agente revisor v0.69.0** (Jonay lo pidió, 13-oct; 6 min en su PC; `reportes/ULTIMO.md` con capturas en `reportes/img/`):
       47 avisos (en la v0.48 eran 130; 39 de aquellos ya no salen). Se hunde a pie 9 (aceras/caminos 0,3–1,1 m bajo el suelo:
       X 151 Z 159, 728 930, 168 717, 225 999…) y en coche 1 (rampa de servicio X 2210 Z 3312, ya apuntada); edificios sobre
       caminos 10 (Pasaje Teide X −176 Z −66, Pasaje Aguere X −212 Z 54, Edificio Beneharo, Camino La Rúa 308…); atascos 8;
@@ -248,7 +248,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       Carretera de San Miguel de Geneto): revisar dónde se queda parado el personaje.
 - [x] v0.54.0 **Freno de mano** (Jonay): al accionarlo debe bloquear las ruedas traseras: frena, derrapa un poco y gira más
       cerrado, como en la realidad. Revisar cómo hacerlo y proponerlo.
-- [~] v0.70.0 (sin líneas donde una calle está dentro de otra: cruces, incorporaciones, glorietas; mirar las fotos `faciles_*`) **Marcas viales** (apunte de Jonay): con los puentes y cruces hay líneas que se cruzan por todas partes; también
+- [~] v0.73.0 (ramales de un sentido sin línea central) v0.70.0 (sin líneas donde una calle está dentro de otra: cruces, incorporaciones, glorietas; mirar las fotos `faciles_*`) **Marcas viales** (apunte de Jonay): con los puentes y cruces hay líneas que se cruzan por todas partes; también
       en salidas e incorporaciones (autopista, Vía de Ronda) y en las glorietas.
 - [x] v0.57.0 **Árboles y farolas sobre la vía del tranvía** (115 árboles y las farolas a menos de 4–5 m del eje) (Jonay, captura en una glorieta junto al tranvía).
 

@@ -103,15 +103,17 @@ function airportExtras() {
     sheds.forEach(({ b }, i) => { const E = frontEdge(b.pts); if (!E) return; const w = Math.min(E.L * 0.6, 22), h = w / 7; const sg = bigSign(SG[i][0], w, h, SG[i][1], SG[i][2]); const H = (b.top || heightAt(b.cx, b.cz) + 8) - h / 2 - 0.6; sg.position.set(E.mx + E.nx * 0.25, H, E.mz + E.nz * 0.25); sg.rotation.y = Math.atan2(E.nx, E.nz); root.add(sg); AIRPORT.sheds.push(SG[i][0]); }); }
   // «P» signs on the service roads on the landside of the terminal
   if (T) { const P = []; DATA.R.forEach((rd) => { if (P.length >= 3 || DATA.RT[rd[0]] !== 'service') return; const c = rd[4]; for (let i = 0; i + 3 < c.length && P.length < 3; i += 2) { const x = c[i], z = c[i + 1], d = Math.hypot(x - T.cx, z - T.cz); if (d < 90 || d > 280 || z > T.cz + 40) continue; if (P.some((p) => Math.hypot(p[0] - x, p[1] - z) < 70)) continue; const L = Math.hypot(c[i + 2] - x, c[i + 3] - z) || 1; P.push([x + (c[i + 3] - z) / L * (rd[2] / 2 + 1.2), z - (c[i + 2] - x) / L * (rd[2] / 2 + 1.2), Math.atan2(c[i + 2] - x, c[i + 3] - z)]); } });
+    for (let i = P.length - 1; i >= 0; i--) if (onCarriagewayEarly(P[i][0], P[i][1], 0.5)) P.splice(i, 1); // v0.73 (auditor): never on another street
     P.forEach(([x, z, h], i) => { const g = heightAt(x, z), fr = cFrame(x, g, z, h); B.geo(new THREE.CylinderGeometry(0.06, 0.06, 3.4, 8), steel, fr(0, 1.7, 0)); const sg = bigSign('P' + (i + 1) + ' PARKING', 2.2, 1.1, '#1d4f9c', '#ffffff'); sg.position.set(x, g + 3.0, z); sg.rotation.y = h + Math.PI / 2; root.add(sg); COL.addCirc(x, z, 0.12); });
     AIRPORT.psigns = P.length; }
   // perimeter fence along the aerodrome boundary (posts every 4 m, wire mesh), with gaps where a road goes through
   { const ae = AW.find((a) => a[0] === 'aerodrome'); if (ae) { const c = ae[3]; const cv = mkCanvas(64, 64), x2 = cv.getContext('2d'); x2.strokeStyle = '#8d9396'; x2.lineWidth = 2; for (let k = -64; k < 128; k += 12) { x2.beginPath(); x2.moveTo(k, 0); x2.lineTo(k + 64, 64); x2.moveTo(k + 64, 0); x2.lineTo(k, 64); x2.stroke(); }
       const tex = canvasTex(cv); const mesh = new THREE.MeshStandardMaterial({ map: tex, transparent: true, alphaTest: 0.3, side: THREE.DoubleSide, roughness: 0.6, metalness: 0.5 }); let n = 0;
-      for (let i = 0; i + 3 < c.length; i += 2) { const ax = c[i], az = c[i + 1], bx = c[i + 2], bz = c[i + 3], L = Math.hypot(bx - ax, bz - az); if (L < 0.5) continue; const k = Math.max(1, Math.ceil(L / 4));
+      for (let i = 0; i + 3 < c.length; i += 2) { const ax = c[i], az = c[i + 1], bx = c[i + 2], bz = c[i + 3], L = Math.hypot(bx - ax, bz - az); if (L < 0.5) continue; const k = Math.max(1, Math.ceil(L / 6));
         for (let j = 0; j < k; j++) { const t0 = j / k, t1 = (j + 1) / k, x0 = ax + (bx - ax) * t0, z0 = az + (bz - az) * t0, x1 = ax + (bx - ax) * t1, z1 = az + (bz - az) * t1, xm = (x0 + x1) / 2, zm = (z0 + z1) / 2;
           const rd = ROADSEG.nearest(xm, zm); if ((rd && rd.d < DATA.R[rd.ri][2] / 2 + 1) || inAnyBuilding(xm, zm)) continue; const y0 = heightAt(x0, z0), y1 = heightAt(x1, z1);
-          B.quad(mesh, [x0, y0, z0], [x1, y1, z1], [x1, y1 + 2.4, z1], [x0, y0 + 2.4, z0], 2.4); B.geo(new THREE.CylinderGeometry(0.05, 0.05, 2.6, 6), steel, cFrame(x0, y0, z0, 0)(0, 1.3, 0)); n++; } }
+          if (onCarriagewayEarly(x0, z0, 0.6) || onCarriagewayEarly(x1, z1, 0.6)) continue; /* v0.73 (auditor): no post in a carriageway */
+          B.quad(mesh, [x0, y0, z0], [x1, y1, z1], [x1, y1 + 2.4, z1], [x0, y0 + 2.4, z0], 2.4); if (j % 2 === 0) B.geo(new THREE.CylinderGeometry(0.05, 0.05, 2.6, 4), steel, cFrame(x0, y0, z0, 0)(0, 1.3, 0)); n++; } }
       AIRPORT.fence = n; } }
   B.finish(root); scene.add(root);
 }

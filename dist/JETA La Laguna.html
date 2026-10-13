@@ -205,7 +205,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="tb" id="tbS">CORRER</div>
 <div class="tb" id="tbM">MAPA</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">v0.72.0</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">v0.73.0</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -1087,10 +1087,16 @@ const ROADCLASS = (rd) => {
   if (paved === 2 || t === 'track' || t === 'path') return 'dirt';
   if (t === 'footway' || t === 'steps' || t === 'cycleway') return 'footway';
   if (t === 'pedestrian' || paved === 1) return 'paving';
-  if (rd[0] <= 8 && rd[2] >= 7) return 'asphaltLines';
+  if (rd[0] <= 8 && rd[2] >= 7 && !([1, 4, 6, 8].includes(rd[0]) && (rd[3] & 1))) return 'asphaltLines'; // v0.73: one-way slip roads have no centre line
   return 'asphalt';
 };
 const YOFF = { sidewalk: 0.09, dirt: 0.08, footway: 0.1, asphalt: 0.13, paving: 0.13, asphaltLines: 0.15, disc: 0.155, discPave: 0.135, tram: 0.17 };
+// v0.73 (agente revisor: «se hunde 0,3–1,1 m bajo la superficie visible» on paths and pavements): where a ribbon
+// drawn as a straight chord across its width stands clearly above the terrain (a hollow under a path), remember its
+// height in 3 m cells so people walk on what you see (08_player.js, surfAt)
+const SURF = new Map(), SURF_MK = new Set(['footway', 'paving', 'sidewalk', 'asphalt', 'asphaltLines', 'dirt']);
+function surfMark(x, z, y) { const k = Math.floor(x / 3) * 100003 + Math.floor(z / 3), o = SURF.get(k); if (o === undefined || y > o) SURF.set(k, y); }
+function surfAt(x, z) { const v = SURF.get(Math.floor(x / 3) * 100003 + Math.floor(z / 3)); return v === undefined ? -1e9 : v; }
 function ribbon(pts, w, mk, yoff, tileLen, uSpan = 1, hf = null, blend = false) { /* blend: a sunk road near grade follows the ground across its width (flat on a cross slope it floated ~1 m over the road beside it) */
   // pts: flat [x,z,...]; subdivide to max 5m
   const P = [];
@@ -1113,7 +1119,9 @@ function ribbon(pts, w, mk, yoff, tileLen, uSpan = 1, hf = null, blend = false) 
     const lx = p[0] + nx * hw * miter, lz = p[1] + nz * hw * miter, rx = p[0] - nx * hw * miter, rz = p[1] - nz * hw * miter;
     if (hf) { const hy = hf(dist, p[0], p[1]) + yoff; let kl = 0, kr = 0; if (blend) { const g = heightAt(p[0], p[1]), k = smooth(0, 1, 1 - (g - hy + yoff) / 1.2); kl = k * Math.min(0, heightAt(lx, lz) - g); kr = k * Math.min(0, heightAt(rx, rz) - g); } L.push([lx, hy + kl, lz]); R.push([rx, hy + kr, rz]); } else { const hl = heightAt(lx, lz), hr = heightAt(rx, rz); let lift = 0; /* the ribbon is a straight chord across the width: lift it where the 16 m terrain bulges inside (grass poking through the asphalt) */
       if (w > 3) for (const f of [0.25, 0.5, 0.75]) lift = Math.max(lift, heightAt(lx + (rx - lx) * f, lz + (rz - lz) * f) - (hl + (hr - hl) * f));
-      L.push([lx, hl + yoff + lift, lz]); R.push([rx, hr + yoff + lift, rz]); } V.push(dist / tileLen);
+      if ((mk === 'asphalt' || mk === 'asphaltLines') && lift > 0.4) lift = 0.4; // v0.73 (agente revisor: a road lifted 0.8 m floated over the one it meets at a junction)
+      L.push([lx, hl + yoff + lift, lz]); R.push([rx, hr + yoff + lift, rz]);
+      if (SURF_MK.has(mk)) for (const f of [0.15, 0.5, 0.85]) { const x = lx + (rx - lx) * f, z = lz + (rz - lz) * f, y = hl + (hr - hl) * f + yoff + lift; if (y - heightAt(x, z) > 0.25) surfMark(x, z, y); } } V.push(dist / tileLen);
   }
   const A = acc(P[0][0], P[0][1], mk);
   for (let i = 0; i < P.length - 1; i++) A.quad(L[i], R[i], R[i + 1], L[i + 1], [0, V[i]], [uSpan, V[i]], [uSpan, V[i + 1]], [0, V[i + 1]], null, undefined, [0, 1, 0]);
@@ -2033,7 +2041,10 @@ function roadClipGrid() {
           const px = c[2 * q + 2] - c[2 * i], pz = c[2 * q + 3] - c[2 * i + 1]; dv = Math.max(dv, Math.abs((px * cz - pz * cx) / CL)); }
         if (!ok) break; j = jj; dev = dv; }
       add(c[2 * i], c[2 * i + 1], c[2 * j], c[2 * j + 1], r[2] / 2 + 0.3 + dev, r[2] / 2 + 0.3); i = j; } });
-  RCLIP = { CS, m, segs, cut: 0 }; return RCLIP;
+  // the streets as they are drawn (every piece, no straight runs): to measure how deep a point sits in a carriageway
+  const raw = [], m2 = new Map(); DATA.R.forEach((r) => { if (r[0] > 12 || (r[3] & 6)) return; const c = r[4], k0 = r[2] / 2 + 0.3; for (let i = 0; i + 3 < c.length; i += 2) { const ax = c[i], az = c[i + 1], L = Math.hypot(c[i + 2] - ax, c[i + 3] - az); if (L < 0.05) continue; const id = raw.push({ ax, az, ux: (c[i + 2] - ax) / L, uz: (c[i + 3] - az) / L, L, k0 }) - 1;
+    for (let a = Math.floor((Math.min(ax, c[i + 2]) - k0) / CS); a <= Math.floor((Math.max(ax, c[i + 2]) + k0) / CS); a++) for (let b = Math.floor((Math.min(az, c[i + 3]) - k0) / CS); b <= Math.floor((Math.max(az, c[i + 3]) + k0) / CS); b++) { const key = a * 100003 + b; let l = m2.get(key); if (!l) m2.set(key, l = []); l.push(id); } } });
+  RCLIP = { CS, m, segs, raw, m2, cut: 0 }; return RCLIP;
 }
 // is (x, z) on the carriageway of some road piece (other than `skip`)? A building corner that sticks out past the end of
 // one road piece is still on the road when it sits in the junction or in the next piece (v0.70: blocks on corners)
@@ -2071,17 +2082,21 @@ function roadClip(pts) {
   // corners that still stick into a road (where a road piece ends or bends inside the footprint): push that vertex out
   // across the nearest piece, up to 4 m (v0.70)
   const P0 = P, ch0 = changed;
-  const deepAt = (x, z) => { const l = G.m.get(Math.floor(x / G.CS) * 100003 + Math.floor(z / G.CS)); let w = 0; if (l) for (const id of l) { const s = G.segs[id]; const t = Math.max(0, Math.min(s.L, (x - s.ax) * s.ux + (z - s.az) * s.uz)); w = Math.max(w, s.k0 - Math.hypot(x - s.ax - s.ux * t, z - s.az - s.uz * t)); } return w; };
+  const deepAt = (x, z) => { const l = G.m2.get(Math.floor(x / G.CS) * 100003 + Math.floor(z / G.CS)); let w = 0; if (l) for (const id of l) { const s = G.raw[id]; const t = Math.max(0, Math.min(s.L, (x - s.ax) * s.ux + (z - s.az) * s.uz)); w = Math.max(w, s.k0 - Math.hypot(x - s.ax - s.ux * t, z - s.az - s.uz * t)); } return w; };
   for (let pass = 0; pass < 2; pass++) { const Q = []; let ins = false; // edges whose middle is in the road get a vertex there, to be pushed out too
     for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length]; Q.push(p); const mx = (p[0] + q[0]) / 2, mz = (p[1] + q[1]) / 2; if (Math.hypot(q[0] - p[0], q[1] - p[1]) > 2 && deepAt(mx, mz) > 0.5) { Q.push([mx, mz]); ins = true; } }
     if (ins) { P = Q; changed = true; } }
   for (let i = 0; i < P.length; i++) { const p = P[i]; const l = G.m.get(Math.floor(p[0] / G.CS) * 100003 + Math.floor(p[1] / G.CS)); if (!l) continue;
     let best = null; for (const id of l) { const s = G.segs[id]; const t = Math.max(0, Math.min(s.L, (p[0] - s.ax) * s.ux + (p[1] - s.az) * s.uz)); const qx = s.ax + s.ux * t, qz = s.az + s.uz * t, d = Math.hypot(p[0] - qx, p[1] - qz);
       const need = s.k0 - d; if (need > 0.5 && d > 0.05 && (!best || need > best.need)) best = { need, ox: (p[0] - qx) / d, oz: (p[1] - qz) / d }; }
-    if (best && best.need < 4) { if (P === pts) P = pts.slice(); P[i] = [p[0] + best.ox * best.need, p[1] + best.oz * best.need]; changed = true; } }
+    if (best && best.need < 4) { const q = [p[0] + best.ox * best.need, p[1] + best.oz * best.need]; if (deepAt(q[0], q[1]) > 0.3) continue; /* v0.73: pushed out of one street into another (a corner): leave it */ { const a = P[(i + P.length - 1) % P.length], c = P[(i + 1) % P.length]; let bad = false; for (const nb of [a, c]) for (const t of [0.25, 0.5, 0.75]) { const ox = p[0] + (nb[0] - p[0]) * t, oz = p[1] + (nb[1] - p[1]) * t, nx2 = q[0] + (nb[0] - q[0]) * t, nz2 = q[1] + (nb[1] - q[1]) * t; if (deepAt(nx2, nz2) > Math.max(0.3, deepAt(ox, oz))) bad = true; } if (bad) continue; } /* ...nor may its two edges cut into one */ if (P === pts) P = pts.slice(); P[i] = q; changed = true; } }
   if (P !== P0 && selfCross(P)) { P = P0; changed = ch0; } // a push that folds the outline over itself: keep the straight cuts only
+  // v0.73 (auditor 0.70: 43 «new» invasions): never hand back an outline that sits deeper in some street than the
+  // original did (a cut along one street that runs on through a junction into the next one)
+  const polyDeep = (Q) => { let w = 0; for (let i = 0; i < Q.length; i++) { const p = Q[i], q = Q[(i + 1) % Q.length]; for (const t of [0, 0.25, 0.5, 0.75]) w = Math.max(w, deepAt(p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t)); } return w; };
+  if (changed) { const d0 = polyDeep(pts); if (polyDeep(P) > d0 + 0.1) { if (P !== P0 && ch0 && polyDeep(P0) <= d0 + 0.1) P = P0; else return pts; } }
   if (!changed) return pts;
-  const a0 = Math.abs(polyArea(pts)), a1 = Math.abs(polyArea(P)); if (a1 < a0 * 0.5 || a1 < 12 || selfCross(P)) return pts;
+  const a0 = Math.abs(polyArea(pts)), a1 = Math.abs(polyArea(P)); if (a1 < a0 * (a0 < 150 ? 0.4 : 0.5) || a1 < 12 || selfCross(P)) return pts; // small houses may lose a bit more (v0.73)
   G.cut++; return P;
 }
 
@@ -2814,7 +2829,7 @@ function buildIntercambiador(b) {
   mk(fascia, new THREE.MeshStandardMaterial({ color: 0x1f8a4c, roughness: 0.5, side: THREE.DoubleSide }));
   // columns on a grid inside the footprint
   const F = axisFrame(pts, b.cx, b.cz); const colM = new THREE.MeshStandardMaterial({ color: 0x9aa0a4, roughness: 0.5, metalness: 0.5 });
-  for (let u = F.u0 + 6; u < F.u1 - 3; u += 14) for (let v = F.v0 + 6; v < F.v1 - 3; v += 16) { const [x, z] = F.W(u, v); if (!pip(x, z, pts.flat())) continue; const g = heightAt(x, z); const c = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, y - g, 10), colM); c.position.set(x, g + (y - g) / 2, z); c.castShadow = true; scene.add(c); COL.addCirc(x, z, 0.4); }
+  for (let u = F.u0 + 6; u < F.u1 - 3; u += 14) for (let v0 = F.v0 + 6; v0 < F.v1 - 3; v0 += 16) { let x = 0, z = 0, ok = false; for (const dv of [0, 3, -3, 5.5, -5.5]) { [x, z] = F.W(u, v0 + dv); if (pip(x, z, pts.flat()) && !onCarriagewayEarly(x, z, 0.6)) { ok = true; break; } } if (!ok) continue; /* v0.73 (auditor): never in a bus lane */ const g = heightAt(x, z); const c = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, y - g, 10), colM); c.position.set(x, g + (y - g) / 2, z); c.castShadow = true; scene.add(c); COL.addCirc(x, z, 0.4); }
   // platforms (raised island kerbs) and green guaguas parked in the bays
   const platM = new THREE.MeshStandardMaterial({ color: 0xbdb8ae, roughness: 0.9 });
   const len = F.u1 - F.u0, wid = F.v1 - F.v0;
@@ -4450,15 +4465,17 @@ function airportExtras() {
     sheds.forEach(({ b }, i) => { const E = frontEdge(b.pts); if (!E) return; const w = Math.min(E.L * 0.6, 22), h = w / 7; const sg = bigSign(SG[i][0], w, h, SG[i][1], SG[i][2]); const H = (b.top || heightAt(b.cx, b.cz) + 8) - h / 2 - 0.6; sg.position.set(E.mx + E.nx * 0.25, H, E.mz + E.nz * 0.25); sg.rotation.y = Math.atan2(E.nx, E.nz); root.add(sg); AIRPORT.sheds.push(SG[i][0]); }); }
   // «P» signs on the service roads on the landside of the terminal
   if (T) { const P = []; DATA.R.forEach((rd) => { if (P.length >= 3 || DATA.RT[rd[0]] !== 'service') return; const c = rd[4]; for (let i = 0; i + 3 < c.length && P.length < 3; i += 2) { const x = c[i], z = c[i + 1], d = Math.hypot(x - T.cx, z - T.cz); if (d < 90 || d > 280 || z > T.cz + 40) continue; if (P.some((p) => Math.hypot(p[0] - x, p[1] - z) < 70)) continue; const L = Math.hypot(c[i + 2] - x, c[i + 3] - z) || 1; P.push([x + (c[i + 3] - z) / L * (rd[2] / 2 + 1.2), z - (c[i + 2] - x) / L * (rd[2] / 2 + 1.2), Math.atan2(c[i + 2] - x, c[i + 3] - z)]); } });
+    for (let i = P.length - 1; i >= 0; i--) if (onCarriagewayEarly(P[i][0], P[i][1], 0.5)) P.splice(i, 1); // v0.73 (auditor): never on another street
     P.forEach(([x, z, h], i) => { const g = heightAt(x, z), fr = cFrame(x, g, z, h); B.geo(new THREE.CylinderGeometry(0.06, 0.06, 3.4, 8), steel, fr(0, 1.7, 0)); const sg = bigSign('P' + (i + 1) + ' PARKING', 2.2, 1.1, '#1d4f9c', '#ffffff'); sg.position.set(x, g + 3.0, z); sg.rotation.y = h + Math.PI / 2; root.add(sg); COL.addCirc(x, z, 0.12); });
     AIRPORT.psigns = P.length; }
   // perimeter fence along the aerodrome boundary (posts every 4 m, wire mesh), with gaps where a road goes through
   { const ae = AW.find((a) => a[0] === 'aerodrome'); if (ae) { const c = ae[3]; const cv = mkCanvas(64, 64), x2 = cv.getContext('2d'); x2.strokeStyle = '#8d9396'; x2.lineWidth = 2; for (let k = -64; k < 128; k += 12) { x2.beginPath(); x2.moveTo(k, 0); x2.lineTo(k + 64, 64); x2.moveTo(k + 64, 0); x2.lineTo(k, 64); x2.stroke(); }
       const tex = canvasTex(cv); const mesh = new THREE.MeshStandardMaterial({ map: tex, transparent: true, alphaTest: 0.3, side: THREE.DoubleSide, roughness: 0.6, metalness: 0.5 }); let n = 0;
-      for (let i = 0; i + 3 < c.length; i += 2) { const ax = c[i], az = c[i + 1], bx = c[i + 2], bz = c[i + 3], L = Math.hypot(bx - ax, bz - az); if (L < 0.5) continue; const k = Math.max(1, Math.ceil(L / 4));
+      for (let i = 0; i + 3 < c.length; i += 2) { const ax = c[i], az = c[i + 1], bx = c[i + 2], bz = c[i + 3], L = Math.hypot(bx - ax, bz - az); if (L < 0.5) continue; const k = Math.max(1, Math.ceil(L / 6));
         for (let j = 0; j < k; j++) { const t0 = j / k, t1 = (j + 1) / k, x0 = ax + (bx - ax) * t0, z0 = az + (bz - az) * t0, x1 = ax + (bx - ax) * t1, z1 = az + (bz - az) * t1, xm = (x0 + x1) / 2, zm = (z0 + z1) / 2;
           const rd = ROADSEG.nearest(xm, zm); if ((rd && rd.d < DATA.R[rd.ri][2] / 2 + 1) || inAnyBuilding(xm, zm)) continue; const y0 = heightAt(x0, z0), y1 = heightAt(x1, z1);
-          B.quad(mesh, [x0, y0, z0], [x1, y1, z1], [x1, y1 + 2.4, z1], [x0, y0 + 2.4, z0], 2.4); B.geo(new THREE.CylinderGeometry(0.05, 0.05, 2.6, 6), steel, cFrame(x0, y0, z0, 0)(0, 1.3, 0)); n++; } }
+          if (onCarriagewayEarly(x0, z0, 0.6) || onCarriagewayEarly(x1, z1, 0.6)) continue; /* v0.73 (auditor): no post in a carriageway */
+          B.quad(mesh, [x0, y0, z0], [x1, y1, z1], [x1, y1 + 2.4, z1], [x0, y0 + 2.4, z0], 2.4); if (j % 2 === 0) B.geo(new THREE.CylinderGeometry(0.05, 0.05, 2.6, 4), steel, cFrame(x0, y0, z0, 0)(0, 1.3, 0)); n++; } }
       AIRPORT.fence = n; } }
   B.finish(root); scene.add(root);
 }
@@ -6042,7 +6059,7 @@ function updatePlayer(dt) {
   DB('low+trench'); if (lw) { const lim = Math.max(0.3, lw.hw - 0.35); if (lw.d > lim && lw.d > 0.01) { const k = lim / lw.d; nx = lw.px + (nx - lw.px) * k; nz = lw.pz + (nz - lw.pz) * k; } }
   DB('clamp'); PLAYER.x = nx; PLAYER.z = nz;
   const dk = deckAt(nx, nz, PLAYER.y); PLAYER.onDeck = dk > -1e8 && dk > heightAt(nx, nz) + 0.5;
-  const gy = PLAYER.interior ? PLAYER.interior.floor + 0.02 : lw ? lw.y : Math.max(heightAt(nx, nz) + 0.17, dk);
+  const sf = surfAt(nx, nz); const gy = PLAYER.interior ? PLAYER.interior.floor + 0.02 : lw ? lw.y : Math.max(heightAt(nx, nz) + 0.17, dk, sf - heightAt(nx, nz) < 1.6 ? sf + 0.07 : -1e9); // v0.73: the visible path over a hollow
   if ((pressed('Space') || (gp && gp.down(1)) || INPUT.touch.jump) && PLAYER.onGround) { PLAYER.vy = 5.3; PLAYER.onGround = false; INPUT.touch.jump = false; AUDIO.jump(); }
   PLAYER.vy -= 16 * dt; PLAYER.y += PLAYER.vy * dt;
   if (PLAYER.y <= gy) { PLAYER.y = gy; if (!PLAYER.onGround) { AUDIO.land(-PLAYER.vy); PLAYER.stepD = 0; } PLAYER.vy = 0; PLAYER.onGround = true; }
