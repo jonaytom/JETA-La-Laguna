@@ -212,13 +212,13 @@ const M_BACHES = {
   start() { const K = K2(); this.st = { step: 0 };
     K.talk([[ALC, 'Defensores, la Vía de Ronda tiene más baches que un queso de cabra. El camión del asfalto lleva tres semanas aparcado porque el conductor está de vacaciones... perpetuas.'], [ALC, 'Llévalo por los cinco puntos marcados antes de que cierren la obra. Y no lo vuelques, que es el único que tenemos.']], () => {
       if (!K.isActive(this)) return; const [x, z, h] = s2Spot(PLAYER.x + 12, PLAYER.z + 8); this.st.truck = s2Car('daily', 0xf2c200, x, z, h); this.st.truck.keep = true;
-      const vr = centroidOfNamedWays('Vía de Ronda de La Laguna') || [400, 1300]; const P = s2Route(vr[0], vr[1], 1300, 2200); const c = s2Path(P); this.st.cps = [0.15, 0.35, 0.55, 0.75, 0.97].map((f) => c.at(c.tot * f)); this.st.cp = 0; this.st.step = 1;
+      const vr = centroidOfNamedWays('Vía de Ronda de La Laguna') || [400, 1300]; const P = s2Route(vr[0], vr[1], 1300, 2200); const c = s2Path(P); this.st.P = c; this.st.cps = [0.15, 0.35, 0.55, 0.75, 0.97].map((f) => c.at(c.tot * f)); this.st.cp = 0; this.st.step = 1;
       K.goto(x, z, 3, 0xf5b72e); K.setObjective('Súbete al ' + b2('camión del asfalto')); }); },
   update(dt) { const K = K2(), S = this.st; if (!S || !S.step) return;
     if (S.step === 1 && PLAYER.car === S.truck) { S.step = 2; K.setTimer(240); this.cp(); }
     if (S.step === 2) { if (S.truck.dead || S.truck.health <= 15) { s2Fail('¡Has destrozado el camión del asfalto!'); return; } if (PLAYER.car !== S.truck) { K.setObjective('Vuelve al ' + b2('camión') + ': sin él no hay asfalto'); return; }
       if (s2AtGoal(8)) { AUDIO.cash(); HUD.toast('¡Bache tapado!', '#7fe08a', 1.2); S.cp++; if (S.cp >= S.cps.length) { K.setTimer(0); s2Pass('Vía de Ronda sin baches', 900); return; } this.cp(); } } },
-  cp() { const K = K2(), S = this.st, c = S.cps[S.cp]; K.goto(c[0], c[1], 7, 0x46c3ff); K.setObjective(`Tapa los baches: punto ${S.cp + 1}/${S.cps.length}`); },
+  cp() { const K = K2(), S = this.st, c = S.cps[S.cp]; K.goto(c[0], c[1], 7, 0x46c3ff); K.ahead(S.cps, S.cp, S.P && S.P.pts); K.setObjective(`Tapa los baches: punto ${S.cp + 1}/${S.cps.length}`); },
 };
 
 // ---------- 5. El rally de La Esperanza (carrera contra un pijo)
@@ -235,7 +235,7 @@ const M_RALLY = {
       ['3', '2', '1'].forEach((t, i) => setTimeout(() => { if (K.isActive(this)) { HUD.big(t, '#fff', 0.8); AUDIO.cash(); } }, i * 1000)); setTimeout(() => { if (!K.isActive(this)) return; HUD.big('¡YA!', '#7fe08a', 1.2); S.step = 3; S.cp = 0; this.cp(); }, 3000); }
     if (S.step === 3) { const done = s2DriveCar(S.rv, S.P, dt, 27, (d) => (d > 150 ? 0.82 : 1.0)); if (done) { s2Fail('El pijo ha llegado primero. «¡Papá me compra otro!»'); return; }
       if (!PLAYER.car) { K.setObjective('¡Vuelve a un coche!'); return; } if (s2AtGoal(9)) { AUDIO.cash(); S.cp++; if (S.cp >= S.cps.length) { K2().talk([['Pijo de La Esperanza', 'Ugh... vale. Me rindo. Pero no le digáis nada a mi padre, que es concejal.']]); s2Pass('Rally ilegal cancelado', 1200); return; } this.cp(); } } },
-  cp() { const K = K2(), S = this.st, c = S.cps[S.cp]; const last = S.cp === S.cps.length - 1; K.goto(c[0], c[1], 7, last ? 0xf5b72e : 0x46c3ff); K.setObjective((last ? b2('¡META!') : `Control ${S.cp + 1}/${S.cps.length - 1}`) + ' · Gánale al pijo'); },
+  cp() { const K = K2(), S = this.st, c = S.cps[S.cp]; const last = S.cp === S.cps.length - 1; K.goto(c[0], c[1], 7, last ? 0xf5b72e : 0x46c3ff); K.ahead(S.cps, S.cp, S.P.pts); K.setObjective((last ? b2('¡META!') : `Control ${S.cp + 1}/${S.cps.length - 1}`) + ' · Gánale al pijo'); },
 };
 
 // ---------- 6. Los bancos de la Plaza del Adelantado (encargo del alcalde)
@@ -336,7 +336,7 @@ const M_CARRERA = {
       if (pts.length < 2) for (let i = 0; i < 3; i++) pts.push([home[0] + Math.cos(i * 2.1) * 150, home[1] + Math.sin(i * 2.1) * 150]);
       pts.push(home); let L = 0, prev = home; for (const p of pts) { L += Math.hypot(p[0] - prev[0], p[1] - prev[1]) * 1.35; prev = p; }
       this.st.cps = pts; this.st.cp = 0; this.st.step = 1; this.st.len = L; K.setTimer(Math.round(40 + L / 3.2)); this.cp(); }); },
-  cp() { const K = K2(), S = this.st, c = S.cps[S.cp]; const last = S.cp === S.cps.length - 1; K.goto(c[0], c[1], 4, last ? 0xf5b72e : 0x46c3ff); K.setObjective((last ? b2('¡Meta en el Ayuntamiento!') : `Control ${S.cp + 1}/${S.cps.length - 1}`) + ' · ¡a pie!'); },
+  cp() { const K = K2(), S = this.st, c = S.cps[S.cp]; const last = S.cp === S.cps.length - 1; K.goto(c[0], c[1], 4, last ? 0xf5b72e : 0x46c3ff); K.ahead(S.cps, S.cp); K.setObjective((last ? b2('¡Meta en el Ayuntamiento!') : `Control ${S.cp + 1}/${S.cps.length - 1}`) + ' · ¡a pie!'); },
   update() { const K = K2(), S = this.st; if (!S || S.step !== 1) return; if (PLAYER.car) { s2Fail('¡En coche no vale! Descalificado'); return; }
     const c = S.cps[S.cp]; if (s2AtGoal(4.5)) { AUDIO.cash(); S.cp++; if (S.cp >= S.cps.length) { K.setTimer(0); s2Pass('Carrera solidaria: 2.000 € para los vecinos', 700); return; } this.cp(); } },
 };

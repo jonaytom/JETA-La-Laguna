@@ -3,6 +3,24 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.75.0 — 2026-10-13 — Copa Laguna, reglas del portero y flechas de misión
+- **Copa Laguna**: torneo de fútbol como el Torneo Lagunero (se abre tras el primer partido de fútbol del Obispo): cuatro
+  campos por la ciudad, cada rival más fuerte (Atlético Gofio de Geneto, Unión Perenquén, Deportivo Papas Arrugadas,
+  Real Mojo Tejina) y la **final en el Estadio Francisco Peraza** contra Los Galácticos de Guamasa.
+- **Estadio Francisco Peraza**: las gradas que salían como muros son ya gradas de verdad (asientos en pendiente sobre la
+  pista, tribuna este con techo) y tiene entrada en la calle con su nombre y taquilla.
+- **Fútbol**: el portero coge el balón con la mano y una parada se ataja o se despeja; mientras la tiene, y en los saques
+  de banda (con la mano), córners y saques de puerta, nadie se acerca a menos de 3,5 m (círculo a rayas), no hay robos
+  ni entradas y el que saca no corre; una plancha al portero es falta y vuelve a sacar él.
+- **Al acabar un partido el personaje ya no sigue corriendo solo**: las teclas se sueltan al entrar y salir de los
+  minijuegos y de la pelea 2D.
+- **Flecha sobre el coche**: en las persecuciones apunta al coche o a la persona que persigues; en las carreras, al
+  siguiente control. En las carreras se ve ya la ruta de los dos controles siguientes (azul a rayas en el minimapa y el
+  mapa grande).
+- **Diario (J)**: guarda todas las conversaciones (también las del final de cada misión y las sueltas), de la más
+  reciente a la primera y con quién dijo cada cosa, y tiene una entrada con todas juntas. Las misiones hechas en
+  partidas de antes del diario lo explican.
+
 ## 0.74.0 — 2026-10-13 — Seis arreglos rápidos
 - **Aeropuerto**: la rotonda acristalada de la terminal se coloca donde no pisa ninguna vía (antes caía sobre las vías
   de servicio del lado aire: coches atascados y el revisor la veía «flotando»); si no cabe entera, más pequeña.

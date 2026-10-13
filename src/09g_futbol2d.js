@@ -6,6 +6,11 @@
 // without the ball, a slide tackle. Right click (or Q): with the ball a pass to the mate you face (held longer: harder
 // and lofted, like the shot); without it, change to
 // the player nearest the ball. Espacio = sprint (turbo bar). All keys in Opciones › Controles.
+// v0.75 (Jonay): restarts. The keeper catches the ball with his hands in his box (a save is either held or parried);
+// while he holds it, and during every throw-in, corner and goal kick, the other team cannot come within SP_R metres
+// (they are kept outside the dashed circle), nobody can tackle or steal it, and the taker cannot run with the ball:
+// the keeper passes it straight from where he is, throw-ins are thrown by hand (a pass with a short lob). Sliding into
+// a keeper holding the ball is always a foul and he restarts from the goal-kick spot.
 const FUTBOL2D = (() => {
   const W = 480, H = 270, R = 3, S = 8;                     // canvas (logical px, drawn at R×) and px per metre
   const PW = 34, PL = 54, GW = 6, GH = 2.1, MG = 7;          // pitch width / length, goal width / height, margin (m)
@@ -23,6 +28,8 @@ const FUTBOL2D = (() => {
   const ownY = (team) => (team === 0 ? PL : 0);
   const mates = (p) => st.p.filter((q) => q.team === p.team && q !== p), rivals = (p) => st.p.filter((q) => q.team !== p.team);
   const outfield = (team) => st.p.filter((q) => q.team === team && q.role !== 'gk');
+  const SP_R = 3.5; // the no-approach radius round the taker of a restart
+  const inOwnBox = (p) => Math.abs(p.x - PW / 2) < 11 && Math.abs(p.y - ownY(p.team)) < 11;
   function banner(t, c = '#ffd400', dur = 1.4) { st.banner = { t, c, dur }; st.bannerT = dur; }
   // formation for 5 a side (team 0, own goal at the bottom): keeper, 2 defenders, a midfielder and a striker
   const FORM = [['gk', PW / 2, PL - 1.2], ['def', PW * 0.3, PL - 13], ['def', PW * 0.7, PL - 13], ['mid', PW * 0.5, PL - 23], ['fwd', PW * 0.5, PL - 33]];
@@ -34,18 +41,20 @@ const FUTBOL2D = (() => {
   }
   function kickoff(team) { // everybody in his own half, the ball on the spot for «team»
     for (const p of st.p) { const [x, y] = home(p); p.x = x; p.y = p.team === 0 ? Math.max(y, PL / 2 + 1.5) : Math.min(y, PL / 2 - 1.5); p.vx = p.vy = 0; p.down = p.slide = 0; p.hold = 0; p.dive = 0; p.dir = p.team === 0 ? -Math.PI / 2 : Math.PI / 2; }
-    const b = st.ball; Object.assign(b, { x: PW / 2, y: PL / 2, z: 0, vx: 0, vy: 0, vz: 0, owner: null, curve: 0, curveT: 0, shot: null });
+    const b = st.ball; Object.assign(b, { x: PW / 2, y: PL / 2, z: 0, vx: 0, vy: 0, vz: 0, owner: null, curve: 0, curveT: 0, shot: null }); st.sp = null;
     const k = st.p.find((q) => q.team === team && q.role === 'fwd'); k.x = PW / 2; k.y = PL / 2 + (team === 0 ? 0.6 : -0.6); give(k);
     if (team === 0) st.ctl = k;
   }
   function give(p) { const b = st.ball; b.owner = p; b.z = 0; b.vz = 0; b.curveT = 0; b.shot = null; st.last = p; p.kickCD = 0;
+    st.sp = p.role === 'gk' && inOwnBox(p) ? { p, kind: 'gk', t: 0 } : st.sp && st.sp.p === p ? st.sp : null; // in his hands: nobody may come and take it
     if (p.role === 'gk') p.dir = p.team === 0 ? -Math.PI / 2 : Math.PI / 2;
     b.x = p.x + Math.cos(p.dir) * 0.55; b.y = p.y + Math.sin(p.dir) * 0.55; } // the ball goes straight to his feet (a throw-in from outside the line lands inside)
   // ---------- kicks
   function kick(p, ang, speed, vz, curve = 0) {
+    if (st.sp && st.sp.p === p) { if (st.sp.kind === 'banda') { speed = Math.min(speed, 13); vz = Math.max(vz, 2.2); curve = 0; } st.sp = null; } // a throw-in: thrown by hand, never a shot
     const b = st.ball; b.owner = null; b.x = p.x + Math.cos(ang) * 0.5; b.y = p.y + Math.sin(ang) * 0.5; b.vx = Math.cos(ang) * speed; b.vy = Math.sin(ang) * speed; b.vz = vz; b.z = Math.max(b.z, 0.05);
     b.curve = curve; b.curveT = curve ? 0.7 : 0; b.kicker = p; st.last = p; p.kickCD = 0.35; snd('kick');
-    const gy = goalY(p.team); b.shot = Math.abs(gy - p.y) < 30 && Math.sign(gy - p.y) === Math.sign(b.vy) && speed > 11 ? { team: p.team, saved: false } : null;
+    const gy = goalY(p.team); b.shot = p.role !== 'gk' && Math.abs(gy - p.y) < 30 && Math.sign(gy - p.y) === Math.sign(b.vy) && speed > 11 ? { team: p.team, saved: false } : null;
   }
   function shootAI(p) { const gy = goalY(p.team), side = Math.random() < 0.5 ? -1 : 1, err = (1 - p.lv) * 3.2 * (Math.random() * 2 - 1);
     const tx = PW / 2 + side * (GW / 2 - 0.7) + err, ang = Math.atan2(gy - p.y, tx - p.x); kick(p, ang, 15 + 7 * p.lv, 1 + Math.random() * 2.2); if (st.ev) st.ev.cpuShot = (st.ev.cpuShot || 0) + 1; }
@@ -79,12 +88,12 @@ const FUTBOL2D = (() => {
       if (p.waitPass > 0 && b.to === p) { tx = b.x; ty = b.y; run = true; }
       else if (rank === 0 || (rank === 1 && own === false && D(p, b) < 8)) { tx = b.x + b.vx * 0.25; ty = b.y + b.vy * 0.25; run = D(p, b) > 3; }
       else { tx = hx0 + (b.x - PW / 2) * 0.3; ty = clamp(hy0 + push + (p.team === 0 ? 3 : -3), 3, PL - 3); }
-      if (own === false && D(p, b) < 1.0 && p.kickCD <= 0 && !st.tut && Math.random() < dt * (0.25 + 1.6 * p.lv)) tackle(p, b.owner, 0.12 + 0.45 * p.lv);
+      if (own === false && !st.sp && D(p, b) < 1.0 && p.kickCD <= 0 && !st.tut && Math.random() < dt * (0.25 + 1.6 * p.lv)) tackle(p, b.owner, 0.12 + 0.45 * p.lv);
     }
     if (st.tut && p.team === 1) { tx = p.x; ty = p.y; run = false; }
     return { tx, ty, run };
   }
-  function tackle(p, v, chance) { if (!v || v.down > 0) return; p.kickCD = 0.6; if (Math.random() < chance) { const b = st.ball; b.owner = null; b.vx = (b.x - v.x) * 3 + (p.x < v.x ? 2 : -2); b.vy = (b.y - v.y) * 3; b.vz = 0.5; st.last = p; v.kickCD = 0.7; if (st.ev && p.team === 0 && p === st.ctl) st.ev.tackle = true; } }
+  function tackle(p, v, chance) { if (!v || v.down > 0 || st.sp) return; p.kickCD = 0.6; if (Math.random() < chance) { const b = st.ball; b.owner = null; b.vx = (b.x - v.x) * 3 + (p.x < v.x ? 2 : -2); b.vy = (b.y - v.y) * 3; b.vz = 0.5; st.last = p; v.kickCD = 0.7; if (st.ev && p.team === 0 && p === st.ctl) st.ev.tackle = true; } }
   function keeper(p, dt) {
     if (st.tut && p.team === 1) return { tx: p.x, ty: p.y, sp: 0 };
     const b = st.ball, oy = ownY(p.team), sg = p.team === 0 ? -1 : 1; let tx = clamp(PW / 2 + (b.x - PW / 2) * 0.3, PW / 2 - GW / 2 + 0.4, PW / 2 + GW / 2 - 0.4), ty = oy + sg * 1.1, sp = 5.5;
@@ -104,9 +113,12 @@ const FUTBOL2D = (() => {
     p.kickCD = Math.max(0, p.kickCD - dt); p.waitPass = Math.max(0, (p.waitPass || 0) - dt); p.dive = Math.max(0, p.dive - dt);
     if (p.down > 0) { p.down -= dt; p.vx *= 0.9; p.vy *= 0.9; p.x += p.vx * dt; p.y += p.vy * dt; return; }
     if (p.slide > 0) { p.slide -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.97; p.vy *= 0.97; const b = st.ball;
-      if (Math.hypot(b.x - p.x, b.y - p.y) < 0.95 && b.z < 0.8) { const v = b.owner; if (v && v.team !== p.team) { v.down = 0.8; v.kickCD = 0.8; } b.owner = null; b.vx = Math.cos(p.dir) * 6; b.vy = Math.sin(p.dir) * 6; b.vz = 0.3; st.last = p; p.slide = Math.min(p.slide, 0.15); if (st.ev && p === st.ctl) st.ev.tackle = true; snd('kick'); }
+      if (st.sp && b.owner === st.sp.p && b.owner.team !== p.team && Math.hypot(b.owner.x - p.x, b.owner.y - p.y) < 1.1) { foul(p, b.owner); return; }
+      if (!st.sp && Math.hypot(b.x - p.x, b.y - p.y) < 0.95 && b.z < 0.8) { const v = b.owner; if (v && v.team !== p.team) { v.down = 0.8; v.kickCD = 0.8; } b.owner = null; b.vx = Math.cos(p.dir) * 6; b.vy = Math.sin(p.dir) * 6; b.vz = 0.3; st.last = p; p.slide = Math.min(p.slide, 0.15); if (st.ev && p === st.ctl) st.ev.tackle = true; snd('kick'); }
       return; }
     const ctl = p === st.ctl && !st.auto; let mx = 0, my = 0, run = false, sp = 5.6;
+    if (st.sp && st.sp.p === p && p.role !== 'gk' && st.ball.owner === p) { // the taker of a throw-in / corner: aims, doesn't walk
+      p.vx = p.vy = 0; if (ctl) { const ax = (held('vR') ? 1 : 0) - (held('vL') ? 1 : 0), ay = (held('vD') ? 1 : 0) - (held('vU') ? 1 : 0); if (ax || ay) p.dir = Math.atan2(ay, ax); humanButtons(p, ax, ay); } return; }
     if (p.role === 'gk') { const k = keeper(p, dt); const dx = k.tx - p.x, dy = k.ty - p.y, L = Math.hypot(dx, dy); if (L > 0.15) { mx = dx / L; my = dy / L; } sp = k.sp; if (sp === 0) { p.vx = p.vy = 0; return; } }
     else if (ctl) { mx = (held('vR') ? 1 : 0) - (held('vL') ? 1 : 0); my = (held('vD') ? 1 : 0) - (held('vU') ? 1 : 0); run = held('vT') && p.turbo > 0; if (mx || my) { const L = Math.hypot(mx, my); mx /= L; my /= L; } }
     else { const a = aiPlayer(p, dt); const dx = a.tx - p.x, dy = a.ty - p.y, L = Math.hypot(dx, dy); if (L > 0.4) { mx = dx / L; my = dy / L; } run = a.run && p.turbo > 0.2; }
@@ -148,6 +160,7 @@ const FUTBOL2D = (() => {
     if (b.z > 0) b.vz -= 9.8 * dt; if (b.z <= 0) { b.z = 0; if (b.vz < -1.5) b.vz = -b.vz * 0.45; else b.vz = 0; }
     const fr = b.z > 0.05 ? 0.15 : 1.0; b.vx -= b.vx * fr * dt; b.vy -= b.vy * fr * dt; }
     // the goal, the posts and the lines
+    if (st.sp && b.owner === st.sp.p) return; // a throw-in / corner taker stands on the line with the ball in his hands
     for (const t of [0, 1]) { const gy = goalY(t); const crossed = t === 0 ? b.y < 0 : b.y > PL; if (!crossed) continue;
       const inPosts = Math.abs(b.x - PW / 2) < GW / 2;
       if (inPosts && b.z < GH) { goal(t); return; }
@@ -156,20 +169,33 @@ const FUTBOL2D = (() => {
     if (b.x < 0 || b.x > PW) { outOfPlay('banda'); return; }
     if (b.owner) return;
     // somebody controls it
-    for (const p of st.p) { if (p.down > 0 || p.kickCD > 0 || p.slide > 0) continue; if (Math.hypot(b.x - p.x, b.y - p.y) < (p.role === 'gk' ? 0.9 : 0.7) && b.z < (p.role === 'gk' ? 2.2 : 0.9)) {
+    for (const p of st.p) { if (p.down > 0 || p.kickCD > 0 || p.slide > 0) continue; const hands = p.role === 'gk' && inOwnBox(p); if (Math.hypot(b.x - p.x, b.y - p.y) < (hands ? 0.9 : 0.7) && b.z < (hands ? 2.2 : 0.9)) {
       if (b.shot && p.role !== 'gk' && Math.hypot(b.vx, b.vy) > 16 && Math.random() < 0.5) { b.vx *= -0.3; b.vy *= -0.3; st.last = p; continue; } // a hard shot bounces off a body
-      give(p); if (p.role === 'gk') p.hold = 1.0; if (p.team === 0 && st.ev && p === st.ctl) st.ev.control = true; if (p.team === 0 && p.role !== 'gk') st.ctl = p; return; } }
+      give(p); if (p.role === 'gk') p.hold = hands ? 1.0 : 0.15; if (p.team === 0 && st.ev && p === st.ctl) st.ev.control = true; if (p.team === 0 && p.role !== 'gk') st.ctl = p; return; } }
   }
   function outOfPlay(kind, t) { // simple restarts: throw-in / corner / goal kick to the right team, after a short pause
     const b = st.ball, lastT = st.last ? st.last.team : 0; snd('whistle');
     if (kind === 'banda') { const team = 1 - lastT; const x = clamp(b.x, 0.3, PW - 0.3), y = clamp(b.y, 1, PL - 1); const p = outfield(team).sort((a, c) => Math.hypot(a.x - x, a.y - y) - Math.hypot(c.x - x, c.y - y))[0];
-      p.x = x < PW / 2 ? -0.3 : PW + 0.3; p.y = y; p.dir = x < PW / 2 ? 0 : Math.PI; give(p); restart(p, 'SAQUE DE BANDA'); return; }
+      p.x = x < PW / 2 ? -0.3 : PW + 0.3; p.y = y; p.dir = x < PW / 2 ? 0 : Math.PI; give(p); st.sp = { p, kind: 'banda', t: 0 }; restart(p, 'SAQUE DE BANDA'); return; }
     const defT = 1 - t; // the team defending that goal line
-    if (lastT === defT) { const p = outfield(t).sort((a, c) => D(a, b) - D(c, b))[0]; const cxr = b.x < PW / 2 ? 0.3 : PW - 0.3, cyr = goalY(t) + (t === 0 ? 0.3 : -0.3); p.x = cxr; p.y = cyr; p.dir = Math.atan2(PL / 2 - cyr, PW / 2 - cxr); give(p); restart(p, 'CÓRNER'); }
-    else { const k = st.p.find((q) => q.team === defT && q.role === 'gk'); k.x = PW / 2; k.y = ownY(defT) + (defT === 0 ? -2 : 2); give(k); k.hold = 1.3; restart(k, 'SAQUE DE PUERTA'); }
+    if (lastT === defT) { const p = outfield(t).sort((a, c) => D(a, b) - D(c, b))[0]; const cxr = b.x < PW / 2 ? 0.3 : PW - 0.3, cyr = goalY(t) + (t === 0 ? 0.3 : -0.3); p.x = cxr; p.y = cyr; p.dir = Math.atan2(PL / 2 - cyr, PW / 2 - cxr); give(p); st.sp = { p, kind: 'corner', t: 0 }; restart(p, 'CÓRNER'); }
+    else goalKick(defT, 'SAQUE DE PUERTA');
   }
+  function goalKick(team, label) { const k = st.p.find((q) => q.team === team && q.role === 'gk'); k.x = PW / 2; k.y = ownY(team) + (team === 0 ? -2 : 2); k.vx = k.vy = 0; give(k); k.hold = 1.3; st.sp = { p: k, kind: 'gk', t: 0 }; restart(k, label); }
+  // a foul on the taker of a restart (a slide into the keeper holding the ball, or into a throw-in): whistle and again
+  function foul(p, v) { const b = st.ball; snd('whistle'); p.slide = 0; p.vx = p.vy = 0; p.down = 0.6; p.kickCD = 1; if (st.ev && p === st.ctl) st.ev.foul = true;
+    if (v.role === 'gk') { goalKick(v.team, '¡FALTA AL PORTERO!'); return; }
+    st.sp.t = 0; give(v); st.sp = st.sp && st.sp.p === v ? st.sp : { p: v, kind: 'banda', t: 0 }; restart(v, '¡FALTA!'); b.vx = b.vy = 0; }
+  // nobody of the other team inside the circle round the taker until the ball is played (a slide may still go in: foul)
+  function keepAway() { const sp = st.sp; if (!sp) return; const t = sp.p;
+    for (const p of st.p) { if (p.team === t.team || p.slide > 0) continue; const dx = p.x - t.x, dy = p.y - t.y, d = Math.hypot(dx, dy); if (d >= SP_R) continue;
+      const ux = d > 0.01 ? dx / d : 0, uy = d > 0.01 ? dy / d : (t.team === 0 ? -1 : 1); p.x = t.x + ux * SP_R; p.y = t.y + uy * SP_R; const vn = p.vx * ux + p.vy * uy; if (vn < 0) { p.vx -= vn * ux; p.vy -= vn * uy; } } }
+  // the CPU (and you, if you wait too long) takes its throw-ins and corners
+  function takeRestart(dt) { const sp = st.sp; if (!sp) return; sp.t += dt; const tk = sp.p; if (tk.role === 'gk' || st.ball.owner !== tk) { if (st.ball.owner !== tk && tk.role !== 'gk') st.sp = null; return; }
+    if (sp.t < 0.9 || (tk === st.ctl && !st.auto && sp.t < 8)) return;
+    const ang = Math.atan2(PL / 2 - tk.y, PW / 2 - tk.x); const q = bestPass(tk, ang); if (q) passTo(tk, q, sp.kind === 'corner' ? 0.5 : 0.2); else kick(tk, ang, 10, 2); }
   function restart(p, label) { st.pause = 0.7; banner(label, '#fff', 0.8); if (p.team === 0 && p.role !== 'gk') st.ctl = p; }
-  function goal(t) { st.score[t]++; st.phase = 'goal'; st.pt = 2.4; st.next = 1 - t; st.ball.owner = null; st.ball.vx *= 0.1; st.ball.vy *= 0.1;
+  function goal(t) { st.sp = null; st.score[t]++; st.phase = 'goal'; st.pt = 2.4; st.next = 1 - t; st.ball.owner = null; st.ball.vx *= 0.1; st.ball.vy *= 0.1;
     banner('¡GOOOOL!', t === 0 ? '#7fe08a' : '#ff6b6b', 2.2); snd('goal'); snd('whistle'); say('¡Gol!'); if (st.ev && t === 0) st.ev.goal = true;
     if (st.golden) { st.phase = 'end'; st.pt = 3; } }
   function step(dt) {
@@ -187,8 +213,9 @@ const FUTBOL2D = (() => {
     if (b.owner && b.owner.team === 0 && b.owner.role !== 'gk') st.ctl = b.owner;
     else if (st.swT <= 0 && !(b.owner && b.owner.team === 0)) { const n = nearestCtl(false); if (n !== st.ctl && D(n, b) + 2 < D(st.ctl, b) && st.ctl.slide <= 0) { st.ctl = n; } st.swT = 0.25; }
     for (const p of st.p) stepPlayer(p, dt);
+    keepAway(); takeRestart(dt);
     // running into the ball takes it off the rival (you: easily; the CPU only by tackling)
-    const me = st.ctl; if (!st.auto && me && b.owner && b.owner.team === 1 && b.owner.role !== 'gk' && me.down <= 0 && me.kickCD <= 0 && Math.hypot(b.x - me.x, b.y - me.y) < 0.6 && Math.random() < dt * 2.5) { b.owner.kickCD = 0.6; give(me); if (st.ev) st.ev.tackle = true; }
+    const me = st.ctl; if (!st.auto && !st.sp && me && b.owner && b.owner.team === 1 && b.owner.role !== 'gk' && me.down <= 0 && me.kickCD <= 0 && Math.hypot(b.x - me.x, b.y - me.y) < 0.6 && Math.random() < dt * 2.5) { b.owner.kickCD = 0.6; give(me); if (st.ev) st.ev.tackle = true; }
     stepBall(dt);
   }
   // ---------- tutorial (first game, against the seminarians who stand still)
@@ -264,7 +291,9 @@ const FUTBOL2D = (() => {
     if (p === st.ctl && st.pcharge > 0.14) { const f = st.pcharge / 0.8; cx.fillStyle = 'rgba(0,0,0,0.7)'; cx.fillRect(px - 9, py - 14, 3, 12); cx.fillStyle = '#5ec8ff'; cx.fillRect(px - 8.5, py - 2.5 - 11 * f, 2, 11 * f); }
     if (p === st.ctl && st.charge > 0) { const f = st.charge / 0.8; cx.fillStyle = 'rgba(0,0,0,0.7)'; cx.fillRect(px + 6, py - 14, 3, 12); cx.fillStyle = f > 0.55 ? '#ffd400' : '#7fe08a'; cx.fillRect(px + 6.5, py - 2.5 - 11 * f, 2, 11 * f); }
   }
-  function drawBall() { const b = st.ball; const px = sxp(b.x), py = sy(b.y), lift = b.z * S * 0.8, r = 1.7 + Math.min(1.2, b.z * 0.25);
+  function drawBall() { const b = st.ball; const hh = b.owner && st.sp && st.sp.p === b.owner && st.sp.kind !== 'corner' ? b.owner : null; // in the keeper's hands / over the head for a throw-in
+    if (hh) { const px = sxp(hh.x), py = sy(hh.y) - (st.sp.kind === 'banda' ? 15.5 : 9); cx.fillStyle = '#fff'; cx.beginPath(); cx.arc(px, py, 1.8, 0, 7); cx.fill(); cx.fillStyle = '#222'; cx.fillRect(px - 0.6, py - 0.6, 1.2, 1.2); return; }
+    const px = sxp(b.x), py = sy(b.y), lift = b.z * S * 0.8, r = 1.7 + Math.min(1.2, b.z * 0.25);
     cx.fillStyle = 'rgba(0,0,0,0.35)'; cx.beginPath(); cx.ellipse(px, py, 1.8, 0.9, 0, 0, 7); cx.fill();
     cx.fillStyle = '#fff'; cx.beginPath(); cx.arc(px, py - 1.5 - lift, r, 0, 7); cx.fill(); cx.fillStyle = '#222'; cx.fillRect(px - 0.6, py - 2.1 - lift, 1.2, 1.2); }
   function drawRadar() { const w = 34, h = PL / PW * 34, x0 = W - w - 8, y0 = H - h - 8; cx.fillStyle = 'rgba(0,0,0,0.55)'; cx.fillRect(x0 - 2, y0 - 2, w + 4, h + 4); cx.strokeStyle = 'rgba(255,255,255,0.6)'; cx.lineWidth = 0.5; cx.strokeRect(x0, y0, w, h);
@@ -274,6 +303,7 @@ const FUTBOL2D = (() => {
   function updateCam(k = 0.12) { const b = st.ball; const target = clamp(syw(b.y) - H * 0.55, 0, BGH - H); camY = lerp(camY, target, k); }
   function draw() {
     cx.setTransform(R, 0, 0, R, 0, 0); cx.imageSmoothingEnabled = false; const bg = drawBg(); cx.drawImage(bg, 0, camY * BR, W * BR, H * BR, 0, 0, W, H);
+    if (st.sp && st.ball.owner === st.sp.p) { const t = st.sp.p; cx.save(); cx.strokeStyle = 'rgba(255,255,255,0.55)'; cx.lineWidth = 0.8; cx.setLineDash([3, 3]); cx.beginPath(); cx.arc(sxp(t.x), sy(t.y), SP_R * S, 0, 7); cx.stroke(); cx.restore(); }
     const items = st.p.map((p) => ({ y: p.y, f: () => drawPlayer(p) })); items.push({ y: st.ball.y + 0.01, f: drawBall }); items.sort((a, c) => a.y - c.y).forEach((it) => it.f());
     // crossbars over the players near the goals
     for (const t of [0, 1]) { const gy = t ? sy(PL) : sy(0); cx.fillStyle = '#fff'; cx.fillRect(sxp(PW / 2 - GW / 2) - 1, gy - GH * S * 0.8, GW * S + 2, 1.5); }
@@ -309,7 +339,7 @@ const FUTBOL2D = (() => {
     const t0 = opt.team || [], t1 = opt.rival || [];
     st = { p: [], ball: { x: PW / 2, y: PL / 2, z: 0, vx: 0, vy: 0, vz: 0, owner: null, curve: 0, curveT: 0, shot: null }, score: [0, 0], time: opt.time || 180, clock: opt.time || 180,
       names: [opt.teamName || 'JETA', opt.rivalName || 'RIVALES'], phase: 'ready', pt: 0, time0: 0, bannerT: 0, banner: null, tip: '', ev: {}, golden: false, ctl: null, charge: 0, pcharge: 0, aft: 0, pause: 0,
-      tut: opt.tutorial ? { i: 0, wait: 0 } : null, auto: !!opt.auto, fade: 1, fadeDir: -1 };
+      tut: opt.tutorial ? { i: 0, wait: 0 } : null, sp: null, auto: !!opt.auto, fade: 1, fadeDir: -1 };
     for (let i = 0; i < 5; i++) st.p.push(mkPlayer(t0[i] || { name: 'JUG ' + (i + 1) }, 0, i, k0));
     for (let i = 0; i < 5; i++) st.p.push(mkPlayer(t1[i] || { name: 'RIV ' + (i + 1) }, 1, i, k1));
     for (const q of st.p) q.lv = q.team === 1 ? opt.lv ?? 0.5 : opt.mateLv ?? 0.6;
@@ -320,5 +350,5 @@ const FUTBOL2D = (() => {
   function close() { running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'futbol2d', true);
     const res = { won: st.score[0] > st.score[1], score: st.score.slice() }; if (onEnd) onEnd(res); }
   function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'futbol2d', false); } // tests only
-  return { start, _abort: abort, get running() { return running; }, _st: () => st, _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); updateCam(); } }, _press: press, _draw: () => draw() };
+  return { start, _abort: abort, get running() { return running; }, _st: () => st, _foul: (p, v) => foul(p, v), _give: (p) => give(p), _out: (k, t) => outOfPlay(k, t), _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); updateCam(); } }, _press: press, _draw: () => draw() };
 })();

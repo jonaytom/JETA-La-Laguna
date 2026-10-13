@@ -108,7 +108,12 @@ const MISSIONS = (() => {
   const STORY_SKIP = new Set();
   // the story order of the saves v ≤ 2 (before v0.70): their «story» index counts in this list
   const STORY_V2 = ['Vuelta al barrio', 'Una botella para Coco', 'Sastrón', 'La firma de la banda', 'Boca Papa te enseña a comer', 'El campo de tiro de El Blanco', 'Atraco en la farmacia', 'Defensores de La Laguna', 'El carterista del Cristo', 'Baches en la Vía de Ronda', 'El rally de La Esperanza', 'Los bancos del Adelantado', 'Grafiteros en el tranvía', 'La guagua de la broma', 'Escolta a la guagua del Romero', 'El gofio robado', 'Carrera solidaria del casco', 'Noche en el aeropuerto'];
-  const LOG = {}; const logLine = (who, t) => { if (!active || !t) return; const L = LOG[active.title] || (LOG[active.title] = []); if (L.length < 80) L.push([who || '', String(t)]); };
+  // v0.75 (Jonay: missions already done showed no dialogue): every line keeps when it was said, so the diary lists them
+  // newest first; what is said just after a mission ends (its closing lines) still goes to it, and talk outside any
+  // mission goes to «Charlas sueltas». A mission played again keeps only its latest run.
+  const LOG = {}; let lastTitle = null, lastT = 0, stamp = 0; const LOOSE = 'Charlas sueltas';
+  const logLine = (who, t) => { if (!t) return; const title = active ? active.title : lastTitle && performance.now() - lastT < 30000 ? lastTitle : LOOSE;
+    const L = LOG[title] || (LOG[title] = []); stamp = Math.max(Date.now(), stamp + 1); L.push([who || '', String(t), stamp]); /* strictly increasing: two lines in the same ms keep their order */ if (L.length > 120) L.splice(0, L.length - 120); };
   const GANG = { formed: false, name: '', members: [] }; window.GANG = GANG;
   const SASTRON_FEE = 2500;
   const TALK = { cur: null }; window.__TALK = TALK;
@@ -122,7 +127,19 @@ const MISSIONS = (() => {
   const setObjective = (t) => { const o = $('objective'); if (!t) { o.style.display = 'none'; return; } o.style.display = 'block'; o.innerHTML = t + (timer > 0 ? `<span class="t" id="mtimer"></span>` : ''); };
   function clearBeacon() { if (beacon) { BEACON.free(beacon); beacon = null; } }
   function goto(x, z, r, color) { [x, z] = safeSpot(x, z, 0.3); [x, z] = ringClear(x, z, r); clearBeacon(); beacon = BEACON.make(x, z, r, 7, color); data.goal = [x, z, r]; updateGPS(true); }
-  function finish() { if (data.rival && data.rival.mode === 'race') { data.rival.mode = 'physics'; data.rival.driver = null; data.rival.ctl.brk = 1; } clearBeacon(); setObjective(null); const tr = TRACKS[activeTrack]; active = null; activeTrack = null; timer = 0; data = {}; GPS.path = null; return tr; }
+  // v0.75 (Jonay): in races, the route of the next two controls after the one you're heading to is already drawn
+  // (dimmer) on the minimap and the big map, so you see the turns coming. P = the race's own path (flat x,z list) if it
+  // has one; otherwise it is routed by road (car) or on foot.
+  function ahead(cps, i, P) {
+    data.race = true; const nx = (cps || []).slice(i + 1, i + 3); data.ahead = nx.length ? nx : null; data.aheadPath = null; if (!nx.length) return;
+    const a = cps[i], b = nx[nx.length - 1];
+    const near = (x, z, from) => { let bi = from, bd = 1e18; for (let k = from; k < P.length; k += 2) { const d = (P[k] - x) ** 2 + (P[k + 1] - z) ** 2; if (d < bd) { bd = d; bi = k; } } return bi; };
+    if (P && P.length >= 4) { const i0 = near(a[0], a[1], 0), i1 = near(b[0], b[1], i0); if (i1 > i0) { data.aheadPath = P.slice(i0, i1 + 2); return; } }
+    const out = [a[0], a[1]]; let prev = a;
+    for (const q of nx) { let r = null; try { r = PLAYER.car ? GRAPH.routeFrom(prev[0], prev[1], Math.atan2(q[0] - prev[0], q[1] - prev[1]), q[0], q[1]) : WALKG.route(prev[0], prev[1], q[0], q[1]); } catch (e) { r = null; } if (r) out.push(...r); out.push(q[0], q[1]); prev = q; }
+    data.aheadPath = out;
+  }
+  function finish() { if (data.rival && data.rival.mode === 'race') { data.rival.mode = 'physics'; data.rival.driver = null; data.rival.ctl.brk = 1; } clearBeacon(); setObjective(null); const tr = TRACKS[activeTrack]; if (active) { lastTitle = active.title; lastT = performance.now(); } active = null; activeTrack = null; timer = 0; data = {}; GPS.path = null; return tr; }
   function pass(title, money, keepIdx) { const tr = finish(); if (!keepIdx) tr.idx++; PLAYER.money += money; setTimeout(() => { try { SAVE.auto('Misión superada: ' + title); } catch (e) { } }, 1500); MUSIC.jingle(); HUD.big('¡MISIÓN SUPERADA!', '#f5b72e', 4); HUD.toast(title + (money ? '  +$' + money : ''), '#7fe08a', 4); setTimeout(placeStarts, 2500); }
   function fail(reason, noRetry) { const m = active, k = activeTrack; finish(); AUDIO.fail(); HUD.big('MISIÓN FALLIDA', '#e04848', 3.5); HUD.toast(reason, '#ffb3b3', 4); setTimeout(placeStarts, 2500); if (m && !noRetry) offerRetry(m, k); }
   // after a failure: «¿Reintentar?» (works with the mouse, keys 1/2 and touch). Waits until the player is back in play
@@ -131,7 +148,7 @@ const MISSIONS = (() => {
       DLG.show(m.who || '', m.title, 'La misión ha fallado. ¿Quieres volver a intentarlo desde el principio?', '', ['Reintentar', 'Ahora no'], (i) => { DLG.hide(); if (i === 0) retry(m, k); }); };
     setTimeout(ask, 2600); }
   function retry(m, k) { if (active) return; if (PLAYER.car) { try { exitCar(); } catch (e) { } } const sp = m.startPos(); const r = COL.resolve(sp[0], sp[1], 0.4); PLAYER.x = r.x; PLAYER.z = r.z; WANTED.level = 0; begin(m, k); }
-  function begin(m, k) { for (const kk in TRACKS) if (TRACKS[kk].beacon) { BEACON.free(TRACKS[kk].beacon); TRACKS[kk].beacon = null; } active = m; activeTrack = k; data = {}; setWaypoint(null); setObjective(null); HUD.big(active.title.toUpperCase(), '#fff', 3); active.start(); }
+  function begin(m, k) { LOG[m.title] = []; for (const kk in TRACKS) if (TRACKS[kk].beacon) { BEACON.free(TRACKS[kk].beacon); TRACKS[kk].beacon = null; } active = m; activeTrack = k; data = {}; setWaypoint(null); setObjective(null); HUD.big(active.title.toUpperCase(), '#fff', 3); active.start(); }
   function abort(msg) { finish(); if (msg) HUD.toast(msg, '#f5b72e', 4); setTimeout(placeStarts, 1500); }
   const near = (n, r = 3.2) => Math.hypot(PLAYER.x - n.x, PLAYER.z - n.z) < r && (!PLAYER.car || PLAYER.car.speed < 2);
   function moveNPC(n, x, z, face) { const [a, b] = safeSpot(x, z, 0.6); n.x = a; n.z = b; n.H.root.position.set(a, heightAt(a, b) + 0.17, b); if (face) n.H.root.rotation.y = Math.atan2(face[0] - a, face[1] - b); }
@@ -199,7 +216,7 @@ const MISSIONS = (() => {
         else setObjective('Compra una botella de ron');
       },
       wantsBottle() { return step === 0; },
-      onEvent(t, tag) { if (t === 'bought' && tag === 'ron' && step === 0) { step = 1; SUB.show(bold('Camarera:') + ' ¿Ron a estas horas? Bueno, cariño, tú sabrás. Que no te vea el cura.', 4); goto(NPC.coco.x, NPC.coco.z, 2.5); setObjective('Lleva la botella a ' + bold('Coco')); } },
+      onEvent(t, tag) { if (t === 'bought' && tag === 'ron' && step === 0) { step = 1; SUB.show(bold('Camarera:') + ' ¿Ron a estas horas? Bueno, cariño, tú sabrás. Que no te vea el cura.', 4); logLine('Camarera', '¿Ron a estas horas? Bueno, cariño, tú sabrás. Que no te vea el cura.'); goto(NPC.coco.x, NPC.coco.z, 2.5); setObjective('Lleva la botella a ' + bold('Coco')); } },
       update() {
         if (step === 0 && data.bar && PLAYER.interior === data.bar && beacon) { clearBeacon(); setObjective(`Acércate a la ${bold('barra')} y pulsa ${CONTROLS.kbd('use')} / ENTRAR para pedir`); }
         if (step === 1 && near(NPC.coco)) {
@@ -344,7 +361,7 @@ const MISSIONS = (() => {
     cps.push([pts[pts.length - 2], pts[pts.length - 1]]); data.cps = cps; data.start = [pts[0], pts[1]]; data.pts = pts;
     data.cum = [0]; for (let i = 2; i < pts.length; i += 2) data.cum.push(data.cum[data.cum.length - 1] + Math.hypot(pts[i] - pts[i - 2], pts[i + 1] - pts[i - 1]));
   }
-  function raceCP() { const c = data.cps[data.cp]; const last = data.cp === data.cps.length - 1; goto(c[0], c[1], last ? 7 : 6, last ? 0xf5b72e : 0x46c3ff); setObjective((last ? bold('¡META!') : `Control ${data.cp + 1}/${data.cps.length - 1}`) + ' · Gánale al Canarión'); }
+  function raceCP() { const c = data.cps[data.cp]; const last = data.cp === data.cps.length - 1; goto(c[0], c[1], last ? 7 : 6, last ? 0xf5b72e : 0x46c3ff); ahead(data.cps, data.cp, data.pts); setObjective((last ? bold('¡META!') : `Control ${data.cp + 1}/${data.cps.length - 1}`) + ' · Gánale al Canarión'); }
   function raceUpdate(m, dt) {
     if (step === 0) { if (PLAYER.car) { step = 1; goto(data.start[0], data.start[1], 5, 0x46c3ff); setObjective('Ve a la ' + bold('línea de salida')); } return; }
     if (step === 1) {
@@ -405,12 +422,13 @@ const MISSIONS = (() => {
     },
     { title: 'Revancha con el Canarión', who: 'el Canarión', startPos() { return [NPC.canarion.x + 1.4, NPC.canarion.z + 1.4]; }, start() { startRace(this, false); }, update(dt) { raceUpdate(this, dt); } }];
   const OBISPO_LIST = []; // v0.65: the bishop's optional pack (12g_obispo.js), opens with the mayor's missions
+  const COPA_LIST = []; // v0.75: Copa Laguna de fútbol (12j_campos.js), opens after your first football game
   const TORNEO_LIST = []; // v0.66: Torneo Lagunero de baloncesto (12i_canchas.js), opens after your first basketball game
-  const TRACKS = { story: { list: STORY, idx: 0, beacon: null, color: 0xf5b72e, css: '#f5b72e' }, side: { list: SIDE, idx: 0, beacon: null, color: 0x5ec8ff, css: '#5ec8ff', open: false }, obispo: { list: OBISPO_LIST, idx: 0, beacon: null, color: 0xb388ff, css: '#b388ff' }, torneo: { list: TORNEO_LIST, idx: 0, beacon: null, color: 0xff9f43, css: '#ff9f43' } };
+  const TRACKS = { story: { list: STORY, idx: 0, beacon: null, color: 0xf5b72e, css: '#f5b72e' }, side: { list: SIDE, idx: 0, beacon: null, color: 0x5ec8ff, css: '#5ec8ff', open: false }, obispo: { list: OBISPO_LIST, idx: 0, beacon: null, color: 0xb388ff, css: '#b388ff' }, torneo: { list: TORNEO_LIST, idx: 0, beacon: null, color: 0xff9f43, css: '#ff9f43' }, copa: { list: COPA_LIST, idx: 0, beacon: null, color: 0x26d07c, css: '#26d07c' } };
   const obispoOpen = () => { if (!NPC.obispo) return false; const i = STORY.findIndex((m) => m.who === 'Don Yovoy Gofiérrez' || /farmacia/i.test(m.title)); return TRACKS.story.done || (i >= 0 && TRACKS.story.idx >= i); };
   function placeStarts() {
     while (TRACKS.story.idx < STORY.length && STORY_SKIP.has(STORY[TRACKS.story.idx].title)) TRACKS.story.idx++;
-    for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon) { BEACON.free(tr.beacon); tr.beacon = null; } if (active || tr.idx >= tr.list.length) continue; if (k === 'side' && (!tr.open || PLAYER.money >= SASTRON_FEE)) continue; if (k === 'obispo' && !obispoOpen()) continue; if (k === 'torneo' && !GANG.basketTut) continue; const sp = ringClear(...tr.list[tr.idx].startPos(), 1.4); tr.beacon = BEACON.make(sp[0], sp[1], 1.4, 3, tr.color); if (k === 'story' && !active) { const h = tr.list[tr.idx].hint; if (h) setObjective('Siguiente: ' + h()); setWaypoint(sp[0], sp[1], true); } }
+    for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon) { BEACON.free(tr.beacon); tr.beacon = null; } if (active || tr.idx >= tr.list.length) continue; if (k === 'side' && (!tr.open || PLAYER.money >= SASTRON_FEE)) continue; if (k === 'obispo' && !obispoOpen()) continue; if (k === 'torneo' && !GANG.basketTut) continue; if (k === 'copa' && !GANG.futbolTut) continue; const sp = ringClear(...tr.list[tr.idx].startPos(), 1.4); tr.beacon = BEACON.make(sp[0], sp[1], 1.4, 3, tr.color); if (k === 'story' && !active) { const h = tr.list[tr.idx].hint; if (h) setObjective('Siguiente: ' + h()); setWaypoint(sp[0], sp[1], true); } }
     if (TRACKS.story.idx >= STORY.length && !TRACKS.story.done) { TRACKS.story.done = true; setObjective(null); HUD.big((GANG.name || 'TU BANDA').toUpperCase(), '#f5b72e', 5); HUD.toast('Ya puedes moverte libremente por La Laguna. La historia continuará…', '#f5b72e', 8); }
   }
   // interesting spots of the historic centre: Coco and Sastrón show up near two of them (random every game)
@@ -425,9 +443,9 @@ const MISSIONS = (() => {
     if (parkedNear(a, b, 4.5).length) for (let r = 3; r < 60; r += 2) { let ok = false; for (let k = 0; k < 16; k++) { const q = safeSpot(x + Math.cos(k / 16 * 6.283) * r, z + Math.sin(k / 16 * 6.283) * r, 0.8); if (!parkedNear(q[0], q[1], 4.5).length && !onCarriageway(q[0], q[1], 0.5)) { [a, b] = q; ok = true; break; } } if (ok) break; }
     const r = COL.resolve(a, b, 0.6); h.root.position.set(r.x, heightAt(r.x, r.z) + 0.17, r.z); h.root.rotation.y = Math.random() * 6; scene.add(h.root); if (extra) extra(h); return { x: r.x, z: r.z, H: h, home: [r.x, r.z] }; }
   // toolkit for the missions defined in other files (12f_story2.js): they are appended to STORY
-  const KIT = { talk, chat, goto, clearBeacon, track(x, z, r = 6) { clearBeacon(); data.goal = [x, z, r]; updateGPS(true); } /* a moving goal (a car to follow): yellow blip + GPS route, no light column */, setObjective, pass, fail, abort, moveNPC, mkNPC, bold, CH, GANG, findRange, isActive: (m) => active === m, get data() { return data; }, setTimer(t) { timer = t; }, get timer() { return timer; } };
+  const KIT = { talk, chat, goto, clearBeacon, ahead, track(x, z, r = 6) { clearBeacon(); data.goal = [x, z, r]; updateGPS(true); } /* a moving goal (a car to follow): yellow blip + GPS route, no light column */, setObjective, pass, fail, abort, moveNPC, mkNPC, bold, CH, GANG, findRange, isActive: (m) => active === m, get data() { return data; }, setTimer(t) { timer = t; }, get timer() { return timer; } };
   return {
-    kit: KIT, addStory(list) { STORY.push(...list); }, addObispo(list) { OBISPO_LIST.push(...list); }, addTorneo(list) { TORNEO_LIST.push(...list); },
+    kit: KIT, addStory(list) { STORY.push(...list); }, addObispo(list) { OBISPO_LIST.push(...list); }, addTorneo(list) { TORNEO_LIST.push(...list); }, addCopa(list) { COPA_LIST.push(...list); },
     initMissions() {
       // Rayco «El Blanco», at his parents' door next to the start
       { const b = makeHuman({ skin: 0xf6dcc8, shirt: 0xf4f4f4, pants: 0x9a9a9a, hair: 0x3b2a1e, shoes: 0x333333, scale: 1.09, female: false, thin: true, longPants: true, beard: false, hairStyle: 'Hair_Buzzed', hd: true, sleeve: false, glasses: 'round', belt: false, sole: 0x1a1a1a, shoes: 0x2f3b55, watch: 0x2f3a2a });
@@ -492,26 +510,28 @@ const MISSIONS = (() => {
     onEvent(t, d) { if (!active) return; if (t === 'enter' && active.gotCar) active.gotCar(); if (active.onEvent) active.onEvent(t, d); },
     wantsBottle() { return !!(active && active.wantsBottle && active.wantsBottle()); },
     target() { return active && data.goal ? data.goal : null; },
+    aheadPath() { return active && data.aheadPath ? data.aheadPath : null; }, aheadPts() { return active && data.ahead ? data.ahead : null; }, isRace() { return !!(active && data.race); },
     blips() { const b = []; for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon) b.push([tr.beacon.position.x, tr.beacon.position.z, tr.css]); } if (active && data.goal) b.push([data.goal[0], data.goal[1], '#f5b72e']); if (active && typeof s2Blips === 'function') b.push(...s2Blips()); b.push(...MALEANTES.blips()); return b; },
     prompt() { if (active || PLAYER.car) return ''; for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon && Math.hypot(PLAYER.x - tr.beacon.position.x, PLAYER.z - tr.beacon.position.z) < 6) return 'Acércate al círculo para hablar con ' + bold(tr.list[tr.idx].who); } return ''; },
     fail(r, noRetry) { if (active) { if (WEAPON.training) takeWeapon(); fail(r, noRetry); } },
     _story: STORY, refresh() { if (!active) placeStarts(); },
     // the mission diary (12h_diario.js): every track, its missions and their state; the log; restart from a mission
-    diary() { const NAMES = { story: 'Historia', side: 'El Canarión', obispo: 'El Obispo', torneo: 'Torneo Lagunero' };
-      return Object.keys(TRACKS).map((k) => { const tr = TRACKS[k]; const locked = (k === 'obispo' && !obispoOpen()) || (k === 'torneo' && !GANG.basketTut) || (k === 'side' && !tr.open && tr.idx === 0);
+    diary() { const NAMES = { story: 'Historia', side: 'El Canarión', obispo: 'El Obispo', torneo: 'Torneo Lagunero', copa: 'Copa Laguna' };
+      return Object.keys(TRACKS).map((k) => { const tr = TRACKS[k]; const locked = (k === 'obispo' && !obispoOpen()) || (k === 'torneo' && !GANG.basketTut) || (k === 'copa' && !GANG.futbolTut) || (k === 'side' && !tr.open && tr.idx === 0);
         return { key: k, name: NAMES[k] || k, css: tr.css, locked, list: tr.list.map((m, i) => ({ title: m.title, who: m.who || '', state: active === m ? 'activa' : i < tr.idx || (k === 'story' && (tr.done || STORY_SKIP.has(m.title))) ? 'hecha' : i === tr.idx ? 'siguiente' : 'pendiente', hint: i === tr.idx && m.hint ? m.hint() : '' })) }; }); },
-    log(title) { return LOG[title] || []; },
+    log(title) { return (LOG[title] || []).slice().reverse(); }, // newest first
+    logAll() { const out = []; for (const k in LOG) for (const q of LOG[k]) out.push([q[0], q[1], q[2] || 0, k]); return out.sort((a, b) => b[2] - a[2]); }, logLine, LOOSE,
     resetFrom(k, i) { const tr = TRACKS[k]; if (!tr || i < 0 || i >= tr.list.length) return false; if (active) { try { if (WEAPON.training) takeWeapon(); } catch (e) { } finish(); }
       for (let j = i; j < tr.list.length; j++) { delete LOG[tr.list[j].title]; if (k === 'story') STORY_SKIP.delete(tr.list[j].title); }
       tr.idx = i; if (k === 'story') tr.done = false; if (k === 'obispo' && i === 0) GANG.basketTut = false; if (k === 'obispo' && i <= 2) GANG.futbolTut = false; if (k === 'side' && i === 0) tr.open = false;
       setObjective(null); placeStarts(); return true; },
     _setIdx(i, track = 'story') { TRACKS[track].idx = i; placeStarts(); },
     // save / load: which missions are done, the gang, tutorial flags (a mission in progress restarts from its beginning)
-    getState() { return { v: 3, story: TRACKS.story.idx, skip: [...STORY_SKIP], storyDone: !!TRACKS.story.done, side: TRACKS.side.idx, sideOpen: !!TRACKS.side.open, obispo: TRACKS.obispo.idx, torneo: TRACKS.torneo.idx, log: LOG, gang: { formed: GANG.formed, name: GANG.name, members: GANG.members.slice(), sastronTut: !!GANG.sastronTut, defenders: !!GANG.defenders, patrol: !!GANG.patrol, basketTut: !!GANG.basketTut, futbolTut: !!GANG.futbolTut }, active: active ? active.title : null }; },
+    getState() { return { v: 3, story: TRACKS.story.idx, skip: [...STORY_SKIP], storyDone: !!TRACKS.story.done, side: TRACKS.side.idx, sideOpen: !!TRACKS.side.open, obispo: TRACKS.obispo.idx, torneo: TRACKS.torneo.idx, copa: TRACKS.copa.idx, log: LOG, gang: { formed: GANG.formed, name: GANG.name, members: GANG.members.slice(), sastronTut: !!GANG.sastronTut, defenders: !!GANG.defenders, patrol: !!GANG.patrol, basketTut: !!GANG.basketTut, futbolTut: !!GANG.futbolTut }, active: active ? active.title : null }; },
     setState(st) { if (active) { try { if (WEAPON.training) takeWeapon(); } catch (e) { } finish(); }
       TRACKS.story.idx = (st.story | 0) - (!st.v && (st.story | 0) >= 3 ? 1 : 0); /* v1 saves had the Canarión race inside the story */
       STORY_SKIP.clear(); if ((st.v | 0) >= 3) for (const t of st.skip || []) STORY_SKIP.add(t);
-      else { /* v ≤ 2: the index counts in the old order; the first old mission not done is where you go on, the done ones after it in the new order are skipped */ const n = TRACKS.story.idx, done = new Set(STORY_V2.slice(0, n)); let i = 0; while (i < STORY.length && done.has(STORY[i].title)) i++; TRACKS.story.idx = n >= STORY_V2.length ? n : i; for (let j = i; j < STORY.length; j++) if (done.has(STORY[j].title)) STORY_SKIP.add(STORY[j].title); } TRACKS.story.done = !!st.storyDone && TRACKS.story.idx >= STORY.length; /* older saves finished a shorter story: carry on with the new missions */ TRACKS.side.idx = !st.v && (st.story | 0) >= 3 ? 1 : st.side | 0; TRACKS.obispo.idx = st.obispo | 0; TRACKS.torneo.idx = st.torneo | 0; for (const k in LOG) delete LOG[k]; Object.assign(LOG, st.log || {}); TRACKS.side.open = !!st.sideOpen;
+      else { /* v ≤ 2: the index counts in the old order; the first old mission not done is where you go on, the done ones after it in the new order are skipped */ const n = TRACKS.story.idx, done = new Set(STORY_V2.slice(0, n)); let i = 0; while (i < STORY.length && done.has(STORY[i].title)) i++; TRACKS.story.idx = n >= STORY_V2.length ? n : i; for (let j = i; j < STORY.length; j++) if (done.has(STORY[j].title)) STORY_SKIP.add(STORY[j].title); } TRACKS.story.done = !!st.storyDone && TRACKS.story.idx >= STORY.length; /* older saves finished a shorter story: carry on with the new missions */ TRACKS.side.idx = !st.v && (st.story | 0) >= 3 ? 1 : st.side | 0; TRACKS.obispo.idx = st.obispo | 0; TRACKS.torneo.idx = st.torneo | 0; TRACKS.copa.idx = st.copa | 0; for (const k in LOG) delete LOG[k]; Object.assign(LOG, st.log || {}); TRACKS.side.open = !!st.sideOpen;
       Object.assign(GANG, { formed: !!(st.gang && st.gang.formed), name: (st.gang && st.gang.name) || '', members: (st.gang && st.gang.members) || [], sastronTut: !!(st.gang && st.gang.sastronTut), defenders: !!(st.gang && st.gang.defenders), patrol: !!(st.gang && st.gang.patrol), basketTut: !!(st.gang && st.gang.basketTut), futbolTut: !!(st.gang && st.gang.futbolTut) });
       setObjective(null); placeStarts();
       window.__missionResumed = st.active || null; if (st.active) setTimeout(() => HUD.toast('La misión «' + st.active + '» se guardó a medias: empieza de nuevo en su círculo', '#f5b72e', 6), 3500); /* after the radio hint of the car you load in */ },

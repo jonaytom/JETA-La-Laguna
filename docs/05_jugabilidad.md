@@ -224,6 +224,18 @@ Las partidas v1 (con el Canarión dentro de la historia) se convierten al cargar
   con `sport: 'fut'` y balón blanco flotando: abiertos = E en el campo; encerrados o de colegio = puerta en la calle.
   Tras el tutorial (`GANG.futbolTut`) se puede retar a cualquiera (nivel 1–5, $50·nivel). La banda: El Blanco de
   portero, Boca Papa y Sastrón detrás, Coco en el medio y tú arriba (`gangTeam`).
+- **Saques (v0.75)**: el portero coge el balón con la mano dentro de su área (`inOwnBox`; fuera, como uno de campo). Una
+  parada se ataja (55 %) o se despeja. Mientras el portero lo tiene en las manos y en cada banda, córner y saque de puerta
+  hay un **saque** (`st.sp = {p, kind: 'gk'|'banda'|'corner', t}`): los rivales no pasan del círculo de `SP_R` = 3,5 m
+  (`keepAway`, se dibuja a rayas), no hay entradas ni robos y el que saca no anda (apunta). La banda se saca con la mano
+  (`kick` la convierte en un pase bombeado de 13 m/s como mucho). Una plancha contra el que saca es **falta**
+  (`foul`): al portero, saque de puerta otra vez. La CPU saca a los 0,9 s; si eres tú y no sacas en 8 s, sale solo
+  (`takeRestart`).
+- **Teclas al salir** (v0.75): `MINI.show` / `MINI.hide` y el final de la pelea 2D vacían `KEYS`, `PRESSED` y el táctil
+  (`MINI.clearWorldInput`): una tecla pulsada al empezar el partido no se quedaba «suelta» y el personaje seguía corriendo.
+- **Copa Laguna** (v0.75, `TRACKS.copa`, verde `#26d07c`, se abre con `GANG.futbolTut`; `copaInit` en `12j_campos.js`):
+  4 campos (no el del Obispo ni los de sala) repartidos por la ciudad, rivales de nivel 0,3 → 0,62 y la **final en el
+  Estadio Francisco Peraza** (`COURTS` id `peraza`, puerta en la calle; fuera de la final no abre), nivel 0,76, $2000.
 - **Misiones del Obispo** 3 y 4 (`O_FUT_SEMI`, nivel 0,06, tutorial; `O_FUT_COFRADES`, 0,28) en `obispoCampo()` = el
   campo de 11 o 7 abierto más cercano al Obispado.
 
@@ -246,3 +258,15 @@ Las partidas v1 (con el Canarión dentro de la historia) se convierten al cargar
 - Guardado v3: `skip` = misiones ya hechas fuera de orden. Las partidas v ≤ 2 se convierten con `STORY_V2` (el orden
   antiguo): se sigue por la primera no hecha y las hechas se saltan (`placeStarts`); el diario las marca como hechas.
 
+## Flechas y rutas de misión (v0.75)
+
+- **Flecha sobre el coche** (`11c_guide.js`): apunta a tu marca (rosa); si no, en una persecución al **perseguido** (rojo
+  `#ff3b30`, el más cercano: `s2Blips`), y si no al objetivo amarillo. En las carreras (`MISSIONS.isRace()`) no se
+  persigue al rival: apunta al siguiente control.
+- **Ruta adelantada en las carreras** (`MISSIONS.kit.ahead(cps, i, pts)`): al ir hacia un control ya se ve en el minimapa y
+  en el mapa grande (azul a rayas) el recorrido de los **dos siguientes**, sacado del recorrido de la propia carrera
+  (`pts`) o, si no lo hay, de la red de calles (coche) o a pie. Lo usan la carrera del Canarión, el rally, los baches y la
+  carrera solidaria.
+- **Diario** (v0.75): cada frase se guarda con su hora; lo dicho justo al acabar una misión (30 s) va a esa misión y lo
+  de fuera de misión a «Charlas sueltas». En cada misión salen de la más reciente a la primera, y arriba de la lista está
+  «Todas las conversaciones». Volver a jugar una misión deja solo su última partida.

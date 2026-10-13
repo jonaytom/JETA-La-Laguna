@@ -5,6 +5,54 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 
 ## Por revisar con Jonay
 
+- [ ] **Maleantes: que quede claro cuándo empiezan** (Jonay, 13-oct, apunte): no se entiende de dónde salen. Que se
+      presenten al **terminar el tutorial de pelea (Sastrón)**: alguien te lo explica (qué son, recompensa, cómo se ven) y
+      en el minimapa salen como **puntos rojos** (ahora son verde lima `#c6ff00`; ojo, el rojo es también el de los
+      perseguidos en misión: distinguirlos, p. ej. con otra forma).
+- [ ] **Más misiones del Canarión, de carreras de coches** (Jonay, 13-oct, apunte): p. ej. una carrera **de noche en la
+      pista del aeropuerto de Los Rodeos** (mucho espacio; llegar con los coches hasta allí «será una locura»: pensar el
+      acceso, o que empiece fuera y la carrera entre por la valla/el acceso de servicio).
+- [ ] **Pabellón Juan Ríos Tejera: sale un bloque de pisos de ladrillo** (Jonay, 13-oct, con foto en X −1497 Z −598, Calle
+      Leopoldo de la Rosa Olivera; **0.76**): el juego coge como pabellón el edificio grande equivocado (o el genérico de
+      viviendas). El de verdad (Street View, n.º 7–8): nave baja y alargada, **paredes blancas con franjas verticales
+      moradas**, cubierta gris de chapa, muro bajo blanco a la calle con la **verja morada** de entrada y palmeras.
+- [ ] **Tranvía en trinchera junto al Campus Central (Av. Ángel Guimerá Jorge, X −197 Z 732): una «acera» cruza por
+      encima de la vía** (Jonay, 13-oct, con foto; **0.76**): un paso peatonal de OSM se dibuja plano a la altura de la calle,
+      flotando sobre la trinchera. O se quita, o se hace pasarela de verdad (barandillas, canto), o va al nivel de la vía.
+- [ ] **v0.76: rifle de agua, jugueterías y 10 misiones nuevas** (Jonay, 13-oct; **se hace en la 0.76**, justo después de
+      la 0.75). Se llama siempre **«rifle de agua»** (aunque Jonay diga pistola o escopeta).
+      - **Siguiente misión del hilo principal**: El Blanco te dice que ya puedes comprar el rifle de agua y se **abren las
+        jugueterías**. Una vez comprado, se prueba como el tutorial de las latas: El Blanco **prende fuego a unos papeles**
+        y los apagas; luego **recargas en una fuente** que hay allí mismo y, por último, **le mojas la cabeza a Boca Papa**,
+        que duerme al lado, **desde 10 m**.
+      - Diseño del rifle: estilo «pistola de agua eléctrica tipo rifle» (referencia: SK8 Waterleopard, de airsoftyecla.es):
+        chorro parabólico de unos 10 m en recto; donde cae deja un charquito unos segundos; apaga fuegos y empapa a la gente.
+      - **Personaje nuevo: el policía secreta**, estilo Torrente (gordito, bigote, muy chapado a la antigua; inventarle
+        nombre). Su primera misión se recoge en la **Avenida de los Menceyes**.
+      - **Al menos 10 misiones nuevas** entre el Obispo (p. ej. apagar el fuego de una iglesia) y el policía secreta,
+        combinando pistola, rifle de agua, peleas, baloncesto, fútbol, coches y carreras a pie, cada vez más complejas.
+
+- [x] v0.75.0 **Copa Laguna (fútbol)** (Jonay, 13-oct): torneo de fútbol con la misma dinámica que el Torneo Lagunero de
+      baloncesto (partidos en campos repartidos, rivales cada vez más fuertes, se abre tras el tutorial de fútbol), pero la
+      **final se juega en el Estadio Municipal Francisco Peraza** (en el mapa: área deportiva en X −431 Z −1007, campo en
+      X −436 Z −1002, anexo en X −573 Z −1043). Recrear el estadio para la final (gradas, entrada).
+
+- [x] v0.75.0 **Al acabar un partido (fútbol y baloncesto) el personaje sigue corriendo solo hacia delante** en el mundo 3D
+      (Jonay, 13-oct, apunte): probablemente una tecla que quedó «pulsada» al cerrar el minijuego; soltar todas al volver.
+- [x] v0.75.0 **Fútbol: portero y saques** (Jonay, 13-oct, apunte):
+      - El **portero puede coger la pelota con la mano**. Cuando para, puede **rebotar o atajarla**. Si la ataja, nadie se
+        la puede quitar (si lo intentas, siempre es falta y vuelve a sacar el portero).
+      - **Saque del portero** (tras atajarla, saque de puerta o falta): desde el punto de saque, **pasando directamente**
+        (no puede correr con el balón). Mientras saca, el juego **no deja acercarse del todo**: ni entrada ni quitarle la
+        pelota hasta que saque.
+      - **Saques de banda con la mano**: funcionan igual que el de puerta, pero los saca un jugador de campo; mismo radio
+        en el que no te puedes acercar, sin entradas ni robos hasta que saque.
+
+- [x] v0.75.0 **Diario (J): las misiones completadas salen sin diálogo** (Jonay, 13-oct, apunte): deberían salir sus
+      conversaciones, de la más reciente a la primera, y con quién dijo cada cosa. Mirar: `logLine` solo apunta mientras
+      la misión está activa (las charlas de antes de aceptarla y las de las misiones ya hechas en partidas de antes de la
+      v0.66 no quedan) y si el registro (`LOG`) se guarda y se carga bien con la partida.
+
 - [ ] **Canchas: repasar accesos y diseño de todas** (Jonay, 12-oct; v0.66.0: hecha la entrada por puerta en las
       encerradas y el Máyex): revisar una a una con `prueba_canchas.py` (lista y fotos) cuáles son públicas y cuáles de
       colegio, y mejorar su aspecto. Recrear mejor por fuera el **Pabellón Juan Ríos Tejera** (nave blanca, cubierta
@@ -49,6 +97,10 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       cartel verde de calles muestra el texto en espejo desde la parte de atrás; la cara trasera debería ser lisa o
       llevar el texto al derecho.
 
+- [ ] **Auditoría v0.74.0** (APTO CON AVISOS; pruebas 14/14; ningún edificio ni obstáculo nuevo en calzada, 1 menos):
+      pintar un fotograma 43,8 → 49,9 ms y arranque 12,3 → 14,1 s (puede ser ruido; si se repite, mirar la comprobación
+      de calzada, que ahora mira 3 calles en vez de 1 al colocar el mobiliario). La prueba 0.74 cuenta 468 árboles a menos
+      de 0,2 m del borde de una calzada (isletas y medianas, casi todos): revisar si alguno está de verdad dentro.
 - [~] v0.74.0 (rotonda del aeropuerto, árbol de Juan de Vera, poste junto a la TF-13, Heraclio Sánchez) **Auditoría y agente revisor v0.73.0** (13-oct; APTO CON AVISOS; pruebas 9/9 con los 3 tramos de conducción como «conocidos»):
       auditoría: 18 edificios «nuevos» en calzada (varios ya salían antes: X −855 Z 56/70/86 3,4 m, X 1615 Z 3466, X 70 Z 220);
       2 obstáculos nuevos: árbol o farola en **Calle Juan de Vera** (X −149 Z −235: la calle pasó de peatonal a calle con

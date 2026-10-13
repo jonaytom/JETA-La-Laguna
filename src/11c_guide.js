@@ -4,7 +4,7 @@
 // story stop, blue = side mission, red = whoever you are chasing, pink = your own destination on the map. Subtle: thin,
 // semi-transparent, under the character. Hidden indoors, in menus and fights; a pointer hides when its goal is close.
 const GUIDE = (() => {
-  let g = null, ring = null; const tips = [], mats = {};
+  let g = null, ring = null, lastLead = null; const tips = [], mats = {};
   const mat = (css) => mats[css] || (mats[css] = new THREE.MeshBasicMaterial({ color: new THREE.Color(css), transparent: true, opacity: 0.6, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4, depthTest: !onTop }));
   const rmats = {}; const ringMat = (css) => rmats[css] || (rmats[css] = Object.assign(mat(css).clone(), { opacity: 0.5 }));
   let tipGeo = null, carArrow = null, bob = 0, rgCar = null, rgFoot = null, onTop = false; const UP = new THREE.Vector3(0, 1, 0), NRM = new THREE.Vector3(0, 1, 0), TGT = new THREE.Vector3(), QY = new THREE.Quaternion(), QT = new THREE.Quaternion(); let sy = 0, off = false;
@@ -28,6 +28,7 @@ const GUIDE = (() => {
     return L;
   }
   return {
+    get lead() { return lastLead; }, // tests: where the arrow over the car points
     update() {
       if (!g) makeGuide();
       if (pressed('KeyG')) { off = !off; HUD.toast(off ? 'Brújula oculta (G)' : 'Brújula visible (G)'); } // v0.62.1: toggle with G (E is «usar / entrar»)
@@ -37,8 +38,12 @@ const GUIDE = (() => {
       const car = PLAYER.car;
       carArrow.visible = false;
       if (car) { // vehicle: only the floating arrow, towards your own mark (pink) or else the main mission
-        g.visible = false; const lead = L.find((q) => q[2] === '#e040fb') || L.find((q) => q[2] === '#f5b72e') || L[0];
-        bob += 0.05; const H = (car.T && car.T.H) || 1.5; carArrow.position.set(car.x, car.y + H + 0.75 + Math.sin(bob) * 0.06, car.z); carArrow.scale.setScalar(0.6); // v0.63.1: smaller, more see-through, almost flat (Jonay)
+        g.visible = false;
+        // v0.75 (Jonay): in a chase the arrow points at the car / person you're after (red), not at the mission's
+        // goal; your own map mark (pink) still comes first; in races the goal is the next control (yellow)
+        const red = MISSIONS.isRace() ? null : L.filter((q) => q[2] === '#ff3b30').sort((p, q) => Math.hypot(p[0] - car.x, p[1] - car.z) - Math.hypot(q[0] - car.x, q[1] - car.z))[0];
+        const lead = L.find((q) => q[2] === '#e040fb') || red || L.find((q) => q[2] === '#f5b72e') || L[0];
+        lastLead = lead; bob += 0.05; const H = (car.T && car.T.H) || 1.5; carArrow.position.set(car.x, car.y + H + 0.75 + Math.sin(bob) * 0.06, car.z); carArrow.scale.setScalar(0.6); // v0.63.1: smaller, more see-through, almost flat (Jonay)
         // aim at the goal, then tip its face towards the camera so it never shows edge-on
         QY.setFromAxisAngle(UP, Math.atan2(lead[0] - car.x, lead[1] - car.z) + Math.PI);
         TGT.set(camera.position.x - car.x, 0, camera.position.z - car.z); const cl = TGT.length() || 1; TGT.multiplyScalar(0.3 / cl); TGT.y = 1; TGT.normalize(); QT.setFromUnitVectors(UP, TGT);
@@ -58,7 +63,7 @@ const GUIDE = (() => {
       // in a car or a lorry the ring goes round the whole vehicle and is drawn over it (it used to be hidden by the body)
       if (onTop !== !!car) { onTop = !!car; for (const m of [...Object.values(mats), ...Object.values(rmats)]) { m.depthTest = !onTop; m.needsUpdate = true; } g.traverse((o2) => { o2.renderOrder = onTop ? 20 : 2; }); ring.geometry = onTop ? rgCar : rgFoot; }
       // the ring takes the colour of the leading goal: your own map mark (pink) if you set one, else the main mission (yellow)
-      const lead = L.find((q) => q[2] === '#e040fb') || L.find((q) => q[2] === '#f5b72e') || L[0]; ring.material = ringMat(lead[2]);
+      const lead = L.find((q) => q[2] === '#e040fb') || (!MISSIONS.isRace() && L.find((q) => q[2] === '#ff3b30')) || L.find((q) => q[2] === '#f5b72e') || L[0]; ring.material = ringMat(lead[2]);
       L.slice(0, 6).forEach((q, i) => { const t = tip(i); t.visible = true; t.material = mat(q[2]); t.rotation.y = Math.atan2(q[0] - PLAYER.x, q[1] - PLAYER.z) + Math.PI; });
     },
   };

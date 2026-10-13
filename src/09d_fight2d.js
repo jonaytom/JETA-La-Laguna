@@ -396,7 +396,7 @@ const FIGHT2D = (() => {
   }
   function finishFight() {
     const won = st.winner === st.a; const res = { won, hpA: st.a.hp, hpB: st.b.hp, rounds: [st.a.wins, st.b.wins] };
-    st.trans = { kind: 'out', t: 0, dur: 0.7, done: () => { running = false; cancelAnimationFrame(raf); cv.style.display = 'none'; $('fightPad').style.display = 'none'; document.body.classList.remove('fighting'); GAME.state = 'play'; GAME.lock(); if (onEnd) onEnd(res); } };
+    st.trans = { kind: 'out', t: 0, dur: 0.7, done: () => { running = false; cancelAnimationFrame(raf); cv.style.display = 'none'; $('fightPad').style.display = 'none'; document.body.classList.remove('fighting'); MINI.clearWorldInput(); GAME.state = 'play'; GAME.lock(); if (onEnd) onEnd(res); } };
   }
   // touch pad for phones
   function setupPad() {

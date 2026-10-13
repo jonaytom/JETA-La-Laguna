@@ -41,7 +41,10 @@ const MINI = (() => {
   function rows(cx, W, list, y0) { list.forEach(([a, c], i) => { txt(cx, a, 74, y0 + i * 13, 6, '#9fd7ff', 'left'); txt(cx, c, W - 74, y0 + i * 13, 6, '#fff', 'right'); }); }
   function endScreen(cx, W, score) { const won = score[0] > score[1]; txt(cx, won ? '¡GANÁIS!' : 'HABÉIS PERDIDO', W / 2, 100, 16, won ? '#7fe08a' : '#ff6b6b'); txt(cx, `${score[0]} - ${score[1]}`, W / 2, 128, 10, '#fff'); }
   // the game's canvas in front of the 3D world, and back
-  function show(cv, state) { GAME.state = state; document.body.classList.add('fighting'); cv.style.display = 'block'; if (AUDIO.init) AUDIO.init(); }
-  function hide(cv, state, lock) { if (cv) cv.style.display = 'none'; document.body.classList.remove('fighting'); if (lock) { GAME.state = 'play'; GAME.lock(); } else if (GAME.state === state) GAME.state = 'play'; }
-  return { input, snd, say, txt, turbo, banner, rows, endScreen, show, hide };
+  // v0.75 (Jonay): the game catches the keys while it runs, so a key held when it started (W…) never got its «up» in the
+  // 3D world and the character went on running alone after the match: the walking keys are emptied on the way in and out
+  function clearWorldInput() { KEYS.clear(); PRESSED.clear(); const T = INPUT.touch; T.x = T.y = 0; T.active = false; T.sprint = false; T.jump = false; T.hb = false; PLAYER.speed = 0; }
+  function show(cv, state) { clearWorldInput(); GAME.state = state; document.body.classList.add('fighting'); cv.style.display = 'block'; if (AUDIO.init) AUDIO.init(); }
+  function hide(cv, state, lock) { clearWorldInput(); if (cv) cv.style.display = 'none'; document.body.classList.remove('fighting'); if (lock) { GAME.state = 'play'; GAME.lock(); } else if (GAME.state === state) GAME.state = 'play'; }
+  return { input, snd, say, txt, turbo, banner, rows, endScreen, show, hide, clearWorldInput };
 })();

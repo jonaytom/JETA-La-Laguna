@@ -838,6 +838,7 @@ function buildBuildings() {
     let pts = []; for (let i = 0; i < c.length; i += 2) pts.push([c[i], c[i + 1]]);
     let n = pts.length; if (n < 3) continue;
     if (isTramStopBuilding(nameIdx, pts)) continue; // drawn as proper tram stops
+    { let qx = 0, qz = 0; for (const p of pts) { qx += p[0]; qz += p[1]; } if (perazaStand(style, insetPoly(pts, 0.4), qx / n, qz / n)) continue; } // v0.75: the stands of the Estadio Francisco Peraza (05v_peraza.js)
     pts = insetPoly(pts, style === 4 ? 0.3 : 0.75);
     if (style !== 4) { const t = roadClip(streetTrim(pts)); if (t !== pts) { pts = t; n = pts.length; const o = []; for (let i = 0; i < c.length; i += 2) o.push([c[i], c[i + 1]]); const t2 = roadClip(streetTrim(o)); if (t2 !== o) b[6] = t2.flat(); } } // v0.68–0.69: off the carriageways (04b_recorte.js; the Av. de La Trinidad with its pavement); DATA.B too, for inAnyBuilding
     if (style === 4 && nameIdx >= 0 && /Concepción/.test(STR[nameIdx])) { pts = carveConcTower(pts); n = pts.length; }

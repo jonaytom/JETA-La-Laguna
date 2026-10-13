@@ -109,7 +109,7 @@ function buildSports() {
     }
     // grandstands when the pitch sits in a named stadium / sports complex
     const inStadium = sportsAreas.find((s2) => s2[1] >= 0 && /Estadio|Campo|Complejo/.test(STR[s2[1]]) && pip(cx, cz, s2[2]));
-    if (inStadium && kind === 'f11') {
+    if (inStadium && kind === 'f11' && !/Francisco Peraza/.test(STR[inStadium[1]])) { // (the Francisco Peraza has its own stands: 05v_peraza.js)
       const standM = M(0xb8b4ac, 0.9), seatM = M(0x1f6fb5, 0.6);
       for (const side of [-1, 1]) { const v = side < 0 ? F.v0 - 4 : F.v1 + 4; for (let st = 0; st < 6; st++) { const s = add(new THREE.BoxGeometry(0.8 + (5 - st) * 0.8, 0.5 + st * 0.5, len * 0.8), st % 2 ? standM : seatM, (F.u0 + F.u1) / 2, v + side * st * 0.8, (0.5 + st * 0.5) / 2); s.rotation.y = F.ang + Math.PI / 2 * 0; s.rotation.y = F.ang; }
         const [sx, sz] = F.W((F.u0 + F.u1) / 2, v + side * 2.4); for (let t = -0.4; t <= 0.4; t += 0.1) { const [px, pz] = F.W((F.u0 + F.u1) / 2 + t * len, v + side * 2.4); COL.addCirc(px, pz, 2.4); } }
@@ -117,6 +117,7 @@ function buildSports() {
     }
     SPORTS.pitches.push({ cx, cz, kind, F, len, wid });
   }
+  try { buildPeraza(); } catch (e) { console.error('peraza', e); } // v0.75
 }
 // indoor halls: buildings named Pabellón / Polideportivo or sitting inside a sports complex
 function buildSportsHalls() {

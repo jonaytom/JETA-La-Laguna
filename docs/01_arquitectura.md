@@ -57,6 +57,7 @@ entrada de todos los datos.
 | `09d_fight2d.js` | Motor de **pelea 2D pixel-art** (estilo arcade). |
 | `04b_recorte.js` | Recorta los edificios que se meten en una calzada (`roadClip`: cortes rectos, esquinas empujadas). |
 | `09ea_minijuegos.js` | `MINI`: teclas, sonidos, voz, textos y marcador comunes a los minijuegos 2D. |
+| `05v_peraza.js` | Estadio Municipal Francisco Peraza: gradas en pendiente, tribuna con techo, puerta y taquilla (final de la Copa Laguna). |
 | `05u_trinidad.js` | Avenida de La Trinidad: anchos, edificios recortados, casas en solares, aparcamientos Indigo, Pedro Zerolo, soportales. |
 | `09f_basket2d.js` | `BASKET2D`: baloncesto 2D 2 contra 2 (JETA JAM). |
 | `09g_futbol2d.js` | `FUTBOL2D`: fútbol 2D 5 contra 5 visto desde arriba (JETA SOCCER). |

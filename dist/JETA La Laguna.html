@@ -205,7 +205,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="tb" id="tbS">CORRER</div>
 <div class="tb" id="tbM">MAPA</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">v0.74.0</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">v0.75.0</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -1709,6 +1709,7 @@ function buildBuildings() {
     let pts = []; for (let i = 0; i < c.length; i += 2) pts.push([c[i], c[i + 1]]);
     let n = pts.length; if (n < 3) continue;
     if (isTramStopBuilding(nameIdx, pts)) continue; // drawn as proper tram stops
+    { let qx = 0, qz = 0; for (const p of pts) { qx += p[0]; qz += p[1]; } if (perazaStand(style, insetPoly(pts, 0.4), qx / n, qz / n)) continue; } // v0.75: the stands of the Estadio Francisco Peraza (05v_peraza.js)
     pts = insetPoly(pts, style === 4 ? 0.3 : 0.75);
     if (style !== 4) { const t = roadClip(streetTrim(pts)); if (t !== pts) { pts = t; n = pts.length; const o = []; for (let i = 0; i < c.length; i += 2) o.push([c[i], c[i + 1]]); const t2 = roadClip(streetTrim(o)); if (t2 !== o) b[6] = t2.flat(); } } // v0.68–0.69: off the carriageways (04b_recorte.js; the Av. de La Trinidad with its pavement); DATA.B too, for inAnyBuilding
     if (style === 4 && nameIdx >= 0 && /Concepción/.test(STR[nameIdx])) { pts = carveConcTower(pts); n = pts.length; }
@@ -3177,7 +3178,7 @@ function buildSports() {
     }
     // grandstands when the pitch sits in a named stadium / sports complex
     const inStadium = sportsAreas.find((s2) => s2[1] >= 0 && /Estadio|Campo|Complejo/.test(STR[s2[1]]) && pip(cx, cz, s2[2]));
-    if (inStadium && kind === 'f11') {
+    if (inStadium && kind === 'f11' && !/Francisco Peraza/.test(STR[inStadium[1]])) { // (the Francisco Peraza has its own stands: 05v_peraza.js)
       const standM = M(0xb8b4ac, 0.9), seatM = M(0x1f6fb5, 0.6);
       for (const side of [-1, 1]) { const v = side < 0 ? F.v0 - 4 : F.v1 + 4; for (let st = 0; st < 6; st++) { const s = add(new THREE.BoxGeometry(0.8 + (5 - st) * 0.8, 0.5 + st * 0.5, len * 0.8), st % 2 ? standM : seatM, (F.u0 + F.u1) / 2, v + side * st * 0.8, (0.5 + st * 0.5) / 2); s.rotation.y = F.ang + Math.PI / 2 * 0; s.rotation.y = F.ang; }
         const [sx, sz] = F.W((F.u0 + F.u1) / 2, v + side * 2.4); for (let t = -0.4; t <= 0.4; t += 0.1) { const [px, pz] = F.W((F.u0 + F.u1) / 2 + t * len, v + side * 2.4); COL.addCirc(px, pz, 2.4); } }
@@ -3185,6 +3186,7 @@ function buildSports() {
     }
     SPORTS.pitches.push({ cx, cz, kind, F, len, wid });
   }
+  try { buildPeraza(); } catch (e) { console.error('peraza', e); } // v0.75
 }
 // indoor halls: buildings named Pabellón / Polideportivo or sitting inside a sports complex
 function buildSportsHalls() {
@@ -4888,6 +4890,77 @@ function trinidadArcades() {
       const col = new THREE.Mesh(new THREE.BoxGeometry(0.5, 3.6, 0.5), mat); col.position.set(x, y + 1.8, z); col.rotation.y = Math.atan2(ex, ez); col.castShadow = true; scene.add(col); COL.addCirc(x, z, 0.3); n++; }
     const mx = (best.a[0] + best.e[0]) / 2 + nx * 0.35, mz = (best.a[1] + best.e[1]) / 2 + nz * 0.35; const beam = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.5, best.L - 1), mat); beam.position.set(mx, heightAt(mx, mz) + 3.75, mz); beam.rotation.y = Math.atan2(ex, ez); scene.add(beam); }
   return n;
+}
+
+// ============ Estadio Municipal Francisco Peraza (v0.75, Jonay: la final de la Copa Laguna se juega aquí) ============
+// OSM draws its stands as four thin 9.9 m «buildings» round the athletics track (west, east + north curve, south and a
+// small one): drawn as buildings they were plain walls. Here they are stands: the seating slopes up from the edge of
+// the track (rows of blue seats and grey steps), a concrete back wall and, over the biggest one (the east tribune), a
+// roof on pillars. The entrance is a gate on the nearest street with the stadium's name and a ticket booth; E there
+// only opens for the final of the Copa Laguna (12j_campos.js).
+const PERAZA = { area: null, stands: [], door: null, ok: false, cx: -436, cz: -1002 };
+// called from buildBuildings for every OSM building: true = it is one of the stands (kept for buildPeraza)
+function perazaStand(style, pts, cx, cz) {
+  if (style !== 6) return false;
+  if (PERAZA.area === null) { const a = DATA.A.find((q) => q[1] >= 0 && /Estadio Municipal Francisco Peraza/.test(STR[q[1]])); PERAZA.area = a ? a[2] : false; }
+  if (!PERAZA.area || Math.hypot(cx - PERAZA.cx, cz - PERAZA.cz) > 140) return false;
+  if (!pts.some((p) => pip(p[0], p[1], PERAZA.area)) && !pip(cx, cz, PERAZA.area)) return false;
+  PERAZA.stands.push(pts); for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[(i + 1) % pts.length]; COL.addSeg(p[0], p[1], q[0], q[1]); }
+  return true;
+}
+let PERAZA_SEATS = null;
+function perazaSeatTex() { // rows of blue seats with grey steps between them (v runs from the track up to the back)
+  if (PERAZA_SEATS) return PERAZA_SEATS; const c = mkCanvas(16, 256), x = c.getContext('2d');
+  for (let r = 0; r < 16; r++) { x.fillStyle = '#9d9a93'; x.fillRect(0, r * 16, 16, 16); x.fillStyle = r % 5 === 2 ? '#e8e8e8' : '#1f6fb5'; x.fillRect(0, r * 16 + 3, 16, 9); x.fillStyle = 'rgba(0,0,0,0.25)'; x.fillRect(0, r * 16 + 12, 16, 2); }
+  PERAZA_SEATS = canvasTex(c, { repeat: true }); return PERAZA_SEATS;
+}
+function buildPeraza() {
+  const P = SPORTS.pitches.find((q) => Math.hypot(q.cx - PERAZA.cx, q.cz - PERAZA.cz) < 25); if (!P || !PERAZA.stands.length) return;
+  const F = P.F, uc = (F.u0 + F.u1) / 2, vc = (F.v0 + F.v1) / 2;
+  const dPitch = (x, z) => { const u = (x - P.cx) * F.ux + (z - P.cz) * F.uz, v = (x - P.cx) * F.vx + (z - P.cz) * F.vz; return Math.hypot(Math.max(0, Math.abs(u - uc) - P.len / 2), Math.max(0, Math.abs(v - vc) - P.wid / 2)); };
+  const seatM = new THREE.MeshStandardMaterial({ map: perazaSeatTex(), roughness: 0.8 }), wallM = M(0xc9c4b8, 0.9), roofM = M(0x5d6268, 0.5, 0.5, { side: THREE.DoubleSide }), postM = M(0x8a8f94, 0.5, 0.6);
+  let big = null, bigA = 0; for (const pts of PERAZA.stands) { const A = Math.abs(polyArea(pts)); if (A > bigA) { bigA = A; big = pts; } }
+  const root = new THREE.Group(); root.name = 'Estadio Francisco Peraza';
+  for (const pts of PERAZA.stands) {
+    const n = pts.length; const g = pts.map((p) => heightAt(p[0], p[1])); const g0 = Math.min(...g); const d = pts.map((p) => dPitch(p[0], p[1]));
+    const d0 = Math.min(...d), d1 = Math.max(...d); const HS = pts === big ? 8.5 : 6.5;
+    const t = d.map((v) => (d1 - d0 > 2 ? (v - d0) / (d1 - d0) : 0.5)); const y = t.map((v) => g0 + 0.9 + v * HS);
+    // the sloping seats
+    const tri = THREE.ShapeUtils.triangulateShape(pts.map((p) => new THREE.Vector2(p[0], p[1])), []); const pos = [], uv = [];
+    for (const [a, b, c] of tri) { const cr = (pts[b][0] - pts[a][0]) * (pts[c][1] - pts[a][1]) - (pts[b][1] - pts[a][1]) * (pts[c][0] - pts[a][0]); const o = cr > 0 ? [a, c, b] : [a, b, c]; for (const i of o) { pos.push(pts[i][0], y[i], pts[i][1]); uv.push(0.5, t[i] * 2.4); } }
+    const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); sg.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); sg.computeVertexNormals();
+    const seats = new THREE.Mesh(sg, seatM); seats.receiveShadow = true; seats.castShadow = true; root.add(seats);
+    // walls all round, from the ground up to the seats
+    const wp = []; for (let i = 0; i < n; i++) { const j = (i + 1) % n, p = pts[i], q = pts[j]; wp.push(p[0], g[i] - 0.6, p[1], q[0], g[j] - 0.6, q[1], q[0], y[j] + (t[j] > 0.9 ? 1.1 : 0), q[1], p[0], g[i] - 0.6, p[1], q[0], y[j] + (t[j] > 0.9 ? 1.1 : 0), q[1], p[0], y[i] + (t[i] > 0.9 ? 1.1 : 0), p[1]); }
+    const wg = new THREE.BufferGeometry(); wg.setAttribute('position', new THREE.Float32BufferAttribute(wp, 3)); wg.computeVertexNormals();
+    const walls = new THREE.Mesh(wg, new THREE.MeshStandardMaterial({ color: 0xc9c4b8, roughness: 0.9, side: THREE.DoubleSide })); walls.castShadow = true; walls.receiveShadow = true; root.add(walls);
+    // the roof of the main tribune, on pillars along its back
+    if (pts === big) {
+      const ry = g0 + 0.9 + HS + 3.6; const rp = []; for (const [a, b, c] of tri) for (const i of [a, b, c]) rp.push(pts[i][0], ry + (1 - t[i]) * 0.6, pts[i][1]);
+      const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.Float32BufferAttribute(rp, 3)); rg.computeVertexNormals(); const roof = new THREE.Mesh(rg, roofM); roof.castShadow = true; root.add(roof);
+      let acc2 = 99; for (let i = 0; i < n; i++) { const j = (i + 1) % n; acc2 += Math.hypot(pts[j][0] - pts[i][0], pts[j][1] - pts[i][1]); if (t[i] < 0.85 || acc2 < 12) continue; acc2 = 0; const h = ry - g[i]; const post = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, h, 8), postM); post.position.set(pts[i][0], g[i] + h / 2, pts[i][1]); post.castShadow = true; root.add(post); }
+    }
+  }
+  scene.add(root); PERAZA.ok = true; PERAZA.pitch = P;
+  // the entrance on the street: two white pillars, a green gate, the name over it and a ticket booth
+  const d = streetDoor(PERAZA.cx, PERAZA.cz); if (!d) return;
+  PERAZA.door = [d.x, d.z]; PERAZA.street = d.street;
+  const g = new THREE.Group(); const ang = Math.atan2(d.nx, d.nz); const y0 = heightAt(d.x, d.z);
+  const green = M(0x1f7a3d, 0.5, 0.4), white = M(0xf2f2ee, 0.85);
+  const at = (u, yy, o2) => [d.x + Math.cos(ang) * u + d.nx * o2, y0 + yy, d.z - Math.sin(ang) * u + d.nz * o2];
+  const add = (geo, m, u, yy, o2) => { const mesh = new THREE.Mesh(geo, m); mesh.position.set(...at(u, yy, o2)); mesh.rotation.y = ang; mesh.castShadow = true; g.add(mesh); return mesh; };
+  for (const u of [-2.6, 2.6]) { add(new THREE.BoxGeometry(0.7, 4.2, 0.7), white, u, 2.1, -1.5); const p = at(u, 0, -1.5); COL.addCirc(p[0], p[2], 0.45); }
+  add(new THREE.BoxGeometry(5.9, 0.9, 0.5), white, 0, 4.5, -1.5);
+  for (let k = -2.1; k <= 2.11; k += 0.21) { if (Math.abs(k) < 1.2) continue; add(new THREE.BoxGeometry(0.05, 2.4, 0.05), green, k, 1.2, -1.6); } // the gate, open in the middle
+  const c = mkCanvas(640, 120), x = c.getContext('2d'); x.fillStyle = '#f4f4ef'; x.fillRect(0, 0, 640, 120); x.fillStyle = '#1f7a3d'; x.fillRect(0, 0, 640, 14); x.fillRect(0, 106, 640, 14);
+  x.fillStyle = '#1f7a3d'; x.textAlign = 'center'; x.font = 'bold 26px sans-serif'; x.fillText('ESTADIO MUNICIPAL', 320, 46); x.font = 'bold 40px sans-serif'; x.fillText('FRANCISCO PERAZA', 320, 92);
+  const sign = add(new THREE.PlaneGeometry(5.6, 1.05), new THREE.MeshStandardMaterial({ map: canvasTex(c, { repeat: false }), roughness: 0.6 }), 0, 4.5, -1.2);
+  // ticket booth beside the gate
+  add(new THREE.BoxGeometry(1.8, 2.5, 1.6), white, 4.6, 1.25, -2.6); add(new THREE.BoxGeometry(2.0, 0.15, 1.8), green, 4.6, 2.55, -2.6);
+  { const p = at(4.6, 0, -2.6); COL.addCirc(p[0], p[2], 1.1); }
+  const tc = mkCanvas(256, 64), tx = tc.getContext('2d'); tx.fillStyle = '#1f7a3d'; tx.fillRect(0, 0, 256, 64); tx.fillStyle = '#fff'; tx.font = 'bold 34px sans-serif'; tx.textAlign = 'center'; tx.fillText('TAQUILLA', 128, 44);
+  const ts = add(new THREE.PlaneGeometry(1.5, 0.38), new THREE.MeshStandardMaterial({ map: canvasTex(tc, { repeat: false }), roughness: 0.6 }), 4.6, 2.15, -1.78);
+  scene.add(g);
 }
 
 // ============ humans & vehicle meshes ============
@@ -6873,7 +6946,7 @@ const FIGHT2D = (() => {
   }
   function finishFight() {
     const won = st.winner === st.a; const res = { won, hpA: st.a.hp, hpB: st.b.hp, rounds: [st.a.wins, st.b.wins] };
-    st.trans = { kind: 'out', t: 0, dur: 0.7, done: () => { running = false; cancelAnimationFrame(raf); cv.style.display = 'none'; $('fightPad').style.display = 'none'; document.body.classList.remove('fighting'); GAME.state = 'play'; GAME.lock(); if (onEnd) onEnd(res); } };
+    st.trans = { kind: 'out', t: 0, dur: 0.7, done: () => { running = false; cancelAnimationFrame(raf); cv.style.display = 'none'; $('fightPad').style.display = 'none'; document.body.classList.remove('fighting'); MINI.clearWorldInput(); GAME.state = 'play'; GAME.lock(); if (onEnd) onEnd(res); } };
   }
   // touch pad for phones
   function setupPad() {
@@ -7040,9 +7113,12 @@ const MINI = (() => {
   function rows(cx, W, list, y0) { list.forEach(([a, c], i) => { txt(cx, a, 74, y0 + i * 13, 6, '#9fd7ff', 'left'); txt(cx, c, W - 74, y0 + i * 13, 6, '#fff', 'right'); }); }
   function endScreen(cx, W, score) { const won = score[0] > score[1]; txt(cx, won ? '¡GANÁIS!' : 'HABÉIS PERDIDO', W / 2, 100, 16, won ? '#7fe08a' : '#ff6b6b'); txt(cx, `${score[0]} - ${score[1]}`, W / 2, 128, 10, '#fff'); }
   // the game's canvas in front of the 3D world, and back
-  function show(cv, state) { GAME.state = state; document.body.classList.add('fighting'); cv.style.display = 'block'; if (AUDIO.init) AUDIO.init(); }
-  function hide(cv, state, lock) { if (cv) cv.style.display = 'none'; document.body.classList.remove('fighting'); if (lock) { GAME.state = 'play'; GAME.lock(); } else if (GAME.state === state) GAME.state = 'play'; }
-  return { input, snd, say, txt, turbo, banner, rows, endScreen, show, hide };
+  // v0.75 (Jonay): the game catches the keys while it runs, so a key held when it started (W…) never got its «up» in the
+  // 3D world and the character went on running alone after the match: the walking keys are emptied on the way in and out
+  function clearWorldInput() { KEYS.clear(); PRESSED.clear(); const T = INPUT.touch; T.x = T.y = 0; T.active = false; T.sprint = false; T.jump = false; T.hb = false; PLAYER.speed = 0; }
+  function show(cv, state) { clearWorldInput(); GAME.state = state; document.body.classList.add('fighting'); cv.style.display = 'block'; if (AUDIO.init) AUDIO.init(); }
+  function hide(cv, state, lock) { clearWorldInput(); if (cv) cv.style.display = 'none'; document.body.classList.remove('fighting'); if (lock) { GAME.state = 'play'; GAME.lock(); } else if (GAME.state === state) GAME.state = 'play'; }
+  return { input, snd, say, txt, turbo, banner, rows, endScreen, show, hide, clearWorldInput };
 })();
 
 // ============ «JETA JAM»: 2D basketball, 2 vs 2, in the style of the 90s arcade games (v0.65) ============
@@ -7445,6 +7521,11 @@ const BASKET2D = (() => {
 // without the ball, a slide tackle. Right click (or Q): with the ball a pass to the mate you face (held longer: harder
 // and lofted, like the shot); without it, change to
 // the player nearest the ball. Espacio = sprint (turbo bar). All keys in Opciones › Controles.
+// v0.75 (Jonay): restarts. The keeper catches the ball with his hands in his box (a save is either held or parried);
+// while he holds it, and during every throw-in, corner and goal kick, the other team cannot come within SP_R metres
+// (they are kept outside the dashed circle), nobody can tackle or steal it, and the taker cannot run with the ball:
+// the keeper passes it straight from where he is, throw-ins are thrown by hand (a pass with a short lob). Sliding into
+// a keeper holding the ball is always a foul and he restarts from the goal-kick spot.
 const FUTBOL2D = (() => {
   const W = 480, H = 270, R = 3, S = 8;                     // canvas (logical px, drawn at R×) and px per metre
   const PW = 34, PL = 54, GW = 6, GH = 2.1, MG = 7;          // pitch width / length, goal width / height, margin (m)
@@ -7462,6 +7543,8 @@ const FUTBOL2D = (() => {
   const ownY = (team) => (team === 0 ? PL : 0);
   const mates = (p) => st.p.filter((q) => q.team === p.team && q !== p), rivals = (p) => st.p.filter((q) => q.team !== p.team);
   const outfield = (team) => st.p.filter((q) => q.team === team && q.role !== 'gk');
+  const SP_R = 3.5; // the no-approach radius round the taker of a restart
+  const inOwnBox = (p) => Math.abs(p.x - PW / 2) < 11 && Math.abs(p.y - ownY(p.team)) < 11;
   function banner(t, c = '#ffd400', dur = 1.4) { st.banner = { t, c, dur }; st.bannerT = dur; }
   // formation for 5 a side (team 0, own goal at the bottom): keeper, 2 defenders, a midfielder and a striker
   const FORM = [['gk', PW / 2, PL - 1.2], ['def', PW * 0.3, PL - 13], ['def', PW * 0.7, PL - 13], ['mid', PW * 0.5, PL - 23], ['fwd', PW * 0.5, PL - 33]];
@@ -7473,18 +7556,20 @@ const FUTBOL2D = (() => {
   }
   function kickoff(team) { // everybody in his own half, the ball on the spot for «team»
     for (const p of st.p) { const [x, y] = home(p); p.x = x; p.y = p.team === 0 ? Math.max(y, PL / 2 + 1.5) : Math.min(y, PL / 2 - 1.5); p.vx = p.vy = 0; p.down = p.slide = 0; p.hold = 0; p.dive = 0; p.dir = p.team === 0 ? -Math.PI / 2 : Math.PI / 2; }
-    const b = st.ball; Object.assign(b, { x: PW / 2, y: PL / 2, z: 0, vx: 0, vy: 0, vz: 0, owner: null, curve: 0, curveT: 0, shot: null });
+    const b = st.ball; Object.assign(b, { x: PW / 2, y: PL / 2, z: 0, vx: 0, vy: 0, vz: 0, owner: null, curve: 0, curveT: 0, shot: null }); st.sp = null;
     const k = st.p.find((q) => q.team === team && q.role === 'fwd'); k.x = PW / 2; k.y = PL / 2 + (team === 0 ? 0.6 : -0.6); give(k);
     if (team === 0) st.ctl = k;
   }
   function give(p) { const b = st.ball; b.owner = p; b.z = 0; b.vz = 0; b.curveT = 0; b.shot = null; st.last = p; p.kickCD = 0;
+    st.sp = p.role === 'gk' && inOwnBox(p) ? { p, kind: 'gk', t: 0 } : st.sp && st.sp.p === p ? st.sp : null; // in his hands: nobody may come and take it
     if (p.role === 'gk') p.dir = p.team === 0 ? -Math.PI / 2 : Math.PI / 2;
     b.x = p.x + Math.cos(p.dir) * 0.55; b.y = p.y + Math.sin(p.dir) * 0.55; } // the ball goes straight to his feet (a throw-in from outside the line lands inside)
   // ---------- kicks
   function kick(p, ang, speed, vz, curve = 0) {
+    if (st.sp && st.sp.p === p) { if (st.sp.kind === 'banda') { speed = Math.min(speed, 13); vz = Math.max(vz, 2.2); curve = 0; } st.sp = null; } // a throw-in: thrown by hand, never a shot
     const b = st.ball; b.owner = null; b.x = p.x + Math.cos(ang) * 0.5; b.y = p.y + Math.sin(ang) * 0.5; b.vx = Math.cos(ang) * speed; b.vy = Math.sin(ang) * speed; b.vz = vz; b.z = Math.max(b.z, 0.05);
     b.curve = curve; b.curveT = curve ? 0.7 : 0; b.kicker = p; st.last = p; p.kickCD = 0.35; snd('kick');
-    const gy = goalY(p.team); b.shot = Math.abs(gy - p.y) < 30 && Math.sign(gy - p.y) === Math.sign(b.vy) && speed > 11 ? { team: p.team, saved: false } : null;
+    const gy = goalY(p.team); b.shot = p.role !== 'gk' && Math.abs(gy - p.y) < 30 && Math.sign(gy - p.y) === Math.sign(b.vy) && speed > 11 ? { team: p.team, saved: false } : null;
   }
   function shootAI(p) { const gy = goalY(p.team), side = Math.random() < 0.5 ? -1 : 1, err = (1 - p.lv) * 3.2 * (Math.random() * 2 - 1);
     const tx = PW / 2 + side * (GW / 2 - 0.7) + err, ang = Math.atan2(gy - p.y, tx - p.x); kick(p, ang, 15 + 7 * p.lv, 1 + Math.random() * 2.2); if (st.ev) st.ev.cpuShot = (st.ev.cpuShot || 0) + 1; }
@@ -7518,12 +7603,12 @@ const FUTBOL2D = (() => {
       if (p.waitPass > 0 && b.to === p) { tx = b.x; ty = b.y; run = true; }
       else if (rank === 0 || (rank === 1 && own === false && D(p, b) < 8)) { tx = b.x + b.vx * 0.25; ty = b.y + b.vy * 0.25; run = D(p, b) > 3; }
       else { tx = hx0 + (b.x - PW / 2) * 0.3; ty = clamp(hy0 + push + (p.team === 0 ? 3 : -3), 3, PL - 3); }
-      if (own === false && D(p, b) < 1.0 && p.kickCD <= 0 && !st.tut && Math.random() < dt * (0.25 + 1.6 * p.lv)) tackle(p, b.owner, 0.12 + 0.45 * p.lv);
+      if (own === false && !st.sp && D(p, b) < 1.0 && p.kickCD <= 0 && !st.tut && Math.random() < dt * (0.25 + 1.6 * p.lv)) tackle(p, b.owner, 0.12 + 0.45 * p.lv);
     }
     if (st.tut && p.team === 1) { tx = p.x; ty = p.y; run = false; }
     return { tx, ty, run };
   }
-  function tackle(p, v, chance) { if (!v || v.down > 0) return; p.kickCD = 0.6; if (Math.random() < chance) { const b = st.ball; b.owner = null; b.vx = (b.x - v.x) * 3 + (p.x < v.x ? 2 : -2); b.vy = (b.y - v.y) * 3; b.vz = 0.5; st.last = p; v.kickCD = 0.7; if (st.ev && p.team === 0 && p === st.ctl) st.ev.tackle = true; } }
+  function tackle(p, v, chance) { if (!v || v.down > 0 || st.sp) return; p.kickCD = 0.6; if (Math.random() < chance) { const b = st.ball; b.owner = null; b.vx = (b.x - v.x) * 3 + (p.x < v.x ? 2 : -2); b.vy = (b.y - v.y) * 3; b.vz = 0.5; st.last = p; v.kickCD = 0.7; if (st.ev && p.team === 0 && p === st.ctl) st.ev.tackle = true; } }
   function keeper(p, dt) {
     if (st.tut && p.team === 1) return { tx: p.x, ty: p.y, sp: 0 };
     const b = st.ball, oy = ownY(p.team), sg = p.team === 0 ? -1 : 1; let tx = clamp(PW / 2 + (b.x - PW / 2) * 0.3, PW / 2 - GW / 2 + 0.4, PW / 2 + GW / 2 - 0.4), ty = oy + sg * 1.1, sp = 5.5;
@@ -7543,9 +7628,12 @@ const FUTBOL2D = (() => {
     p.kickCD = Math.max(0, p.kickCD - dt); p.waitPass = Math.max(0, (p.waitPass || 0) - dt); p.dive = Math.max(0, p.dive - dt);
     if (p.down > 0) { p.down -= dt; p.vx *= 0.9; p.vy *= 0.9; p.x += p.vx * dt; p.y += p.vy * dt; return; }
     if (p.slide > 0) { p.slide -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.97; p.vy *= 0.97; const b = st.ball;
-      if (Math.hypot(b.x - p.x, b.y - p.y) < 0.95 && b.z < 0.8) { const v = b.owner; if (v && v.team !== p.team) { v.down = 0.8; v.kickCD = 0.8; } b.owner = null; b.vx = Math.cos(p.dir) * 6; b.vy = Math.sin(p.dir) * 6; b.vz = 0.3; st.last = p; p.slide = Math.min(p.slide, 0.15); if (st.ev && p === st.ctl) st.ev.tackle = true; snd('kick'); }
+      if (st.sp && b.owner === st.sp.p && b.owner.team !== p.team && Math.hypot(b.owner.x - p.x, b.owner.y - p.y) < 1.1) { foul(p, b.owner); return; }
+      if (!st.sp && Math.hypot(b.x - p.x, b.y - p.y) < 0.95 && b.z < 0.8) { const v = b.owner; if (v && v.team !== p.team) { v.down = 0.8; v.kickCD = 0.8; } b.owner = null; b.vx = Math.cos(p.dir) * 6; b.vy = Math.sin(p.dir) * 6; b.vz = 0.3; st.last = p; p.slide = Math.min(p.slide, 0.15); if (st.ev && p === st.ctl) st.ev.tackle = true; snd('kick'); }
       return; }
     const ctl = p === st.ctl && !st.auto; let mx = 0, my = 0, run = false, sp = 5.6;
+    if (st.sp && st.sp.p === p && p.role !== 'gk' && st.ball.owner === p) { // the taker of a throw-in / corner: aims, doesn't walk
+      p.vx = p.vy = 0; if (ctl) { const ax = (held('vR') ? 1 : 0) - (held('vL') ? 1 : 0), ay = (held('vD') ? 1 : 0) - (held('vU') ? 1 : 0); if (ax || ay) p.dir = Math.atan2(ay, ax); humanButtons(p, ax, ay); } return; }
     if (p.role === 'gk') { const k = keeper(p, dt); const dx = k.tx - p.x, dy = k.ty - p.y, L = Math.hypot(dx, dy); if (L > 0.15) { mx = dx / L; my = dy / L; } sp = k.sp; if (sp === 0) { p.vx = p.vy = 0; return; } }
     else if (ctl) { mx = (held('vR') ? 1 : 0) - (held('vL') ? 1 : 0); my = (held('vD') ? 1 : 0) - (held('vU') ? 1 : 0); run = held('vT') && p.turbo > 0; if (mx || my) { const L = Math.hypot(mx, my); mx /= L; my /= L; } }
     else { const a = aiPlayer(p, dt); const dx = a.tx - p.x, dy = a.ty - p.y, L = Math.hypot(dx, dy); if (L > 0.4) { mx = dx / L; my = dy / L; } run = a.run && p.turbo > 0.2; }
@@ -7587,6 +7675,7 @@ const FUTBOL2D = (() => {
     if (b.z > 0) b.vz -= 9.8 * dt; if (b.z <= 0) { b.z = 0; if (b.vz < -1.5) b.vz = -b.vz * 0.45; else b.vz = 0; }
     const fr = b.z > 0.05 ? 0.15 : 1.0; b.vx -= b.vx * fr * dt; b.vy -= b.vy * fr * dt; }
     // the goal, the posts and the lines
+    if (st.sp && b.owner === st.sp.p) return; // a throw-in / corner taker stands on the line with the ball in his hands
     for (const t of [0, 1]) { const gy = goalY(t); const crossed = t === 0 ? b.y < 0 : b.y > PL; if (!crossed) continue;
       const inPosts = Math.abs(b.x - PW / 2) < GW / 2;
       if (inPosts && b.z < GH) { goal(t); return; }
@@ -7595,20 +7684,33 @@ const FUTBOL2D = (() => {
     if (b.x < 0 || b.x > PW) { outOfPlay('banda'); return; }
     if (b.owner) return;
     // somebody controls it
-    for (const p of st.p) { if (p.down > 0 || p.kickCD > 0 || p.slide > 0) continue; if (Math.hypot(b.x - p.x, b.y - p.y) < (p.role === 'gk' ? 0.9 : 0.7) && b.z < (p.role === 'gk' ? 2.2 : 0.9)) {
+    for (const p of st.p) { if (p.down > 0 || p.kickCD > 0 || p.slide > 0) continue; const hands = p.role === 'gk' && inOwnBox(p); if (Math.hypot(b.x - p.x, b.y - p.y) < (hands ? 0.9 : 0.7) && b.z < (hands ? 2.2 : 0.9)) {
       if (b.shot && p.role !== 'gk' && Math.hypot(b.vx, b.vy) > 16 && Math.random() < 0.5) { b.vx *= -0.3; b.vy *= -0.3; st.last = p; continue; } // a hard shot bounces off a body
-      give(p); if (p.role === 'gk') p.hold = 1.0; if (p.team === 0 && st.ev && p === st.ctl) st.ev.control = true; if (p.team === 0 && p.role !== 'gk') st.ctl = p; return; } }
+      give(p); if (p.role === 'gk') p.hold = hands ? 1.0 : 0.15; if (p.team === 0 && st.ev && p === st.ctl) st.ev.control = true; if (p.team === 0 && p.role !== 'gk') st.ctl = p; return; } }
   }
   function outOfPlay(kind, t) { // simple restarts: throw-in / corner / goal kick to the right team, after a short pause
     const b = st.ball, lastT = st.last ? st.last.team : 0; snd('whistle');
     if (kind === 'banda') { const team = 1 - lastT; const x = clamp(b.x, 0.3, PW - 0.3), y = clamp(b.y, 1, PL - 1); const p = outfield(team).sort((a, c) => Math.hypot(a.x - x, a.y - y) - Math.hypot(c.x - x, c.y - y))[0];
-      p.x = x < PW / 2 ? -0.3 : PW + 0.3; p.y = y; p.dir = x < PW / 2 ? 0 : Math.PI; give(p); restart(p, 'SAQUE DE BANDA'); return; }
+      p.x = x < PW / 2 ? -0.3 : PW + 0.3; p.y = y; p.dir = x < PW / 2 ? 0 : Math.PI; give(p); st.sp = { p, kind: 'banda', t: 0 }; restart(p, 'SAQUE DE BANDA'); return; }
     const defT = 1 - t; // the team defending that goal line
-    if (lastT === defT) { const p = outfield(t).sort((a, c) => D(a, b) - D(c, b))[0]; const cxr = b.x < PW / 2 ? 0.3 : PW - 0.3, cyr = goalY(t) + (t === 0 ? 0.3 : -0.3); p.x = cxr; p.y = cyr; p.dir = Math.atan2(PL / 2 - cyr, PW / 2 - cxr); give(p); restart(p, 'CÓRNER'); }
-    else { const k = st.p.find((q) => q.team === defT && q.role === 'gk'); k.x = PW / 2; k.y = ownY(defT) + (defT === 0 ? -2 : 2); give(k); k.hold = 1.3; restart(k, 'SAQUE DE PUERTA'); }
+    if (lastT === defT) { const p = outfield(t).sort((a, c) => D(a, b) - D(c, b))[0]; const cxr = b.x < PW / 2 ? 0.3 : PW - 0.3, cyr = goalY(t) + (t === 0 ? 0.3 : -0.3); p.x = cxr; p.y = cyr; p.dir = Math.atan2(PL / 2 - cyr, PW / 2 - cxr); give(p); st.sp = { p, kind: 'corner', t: 0 }; restart(p, 'CÓRNER'); }
+    else goalKick(defT, 'SAQUE DE PUERTA');
   }
+  function goalKick(team, label) { const k = st.p.find((q) => q.team === team && q.role === 'gk'); k.x = PW / 2; k.y = ownY(team) + (team === 0 ? -2 : 2); k.vx = k.vy = 0; give(k); k.hold = 1.3; st.sp = { p: k, kind: 'gk', t: 0 }; restart(k, label); }
+  // a foul on the taker of a restart (a slide into the keeper holding the ball, or into a throw-in): whistle and again
+  function foul(p, v) { const b = st.ball; snd('whistle'); p.slide = 0; p.vx = p.vy = 0; p.down = 0.6; p.kickCD = 1; if (st.ev && p === st.ctl) st.ev.foul = true;
+    if (v.role === 'gk') { goalKick(v.team, '¡FALTA AL PORTERO!'); return; }
+    st.sp.t = 0; give(v); st.sp = st.sp && st.sp.p === v ? st.sp : { p: v, kind: 'banda', t: 0 }; restart(v, '¡FALTA!'); b.vx = b.vy = 0; }
+  // nobody of the other team inside the circle round the taker until the ball is played (a slide may still go in: foul)
+  function keepAway() { const sp = st.sp; if (!sp) return; const t = sp.p;
+    for (const p of st.p) { if (p.team === t.team || p.slide > 0) continue; const dx = p.x - t.x, dy = p.y - t.y, d = Math.hypot(dx, dy); if (d >= SP_R) continue;
+      const ux = d > 0.01 ? dx / d : 0, uy = d > 0.01 ? dy / d : (t.team === 0 ? -1 : 1); p.x = t.x + ux * SP_R; p.y = t.y + uy * SP_R; const vn = p.vx * ux + p.vy * uy; if (vn < 0) { p.vx -= vn * ux; p.vy -= vn * uy; } } }
+  // the CPU (and you, if you wait too long) takes its throw-ins and corners
+  function takeRestart(dt) { const sp = st.sp; if (!sp) return; sp.t += dt; const tk = sp.p; if (tk.role === 'gk' || st.ball.owner !== tk) { if (st.ball.owner !== tk && tk.role !== 'gk') st.sp = null; return; }
+    if (sp.t < 0.9 || (tk === st.ctl && !st.auto && sp.t < 8)) return;
+    const ang = Math.atan2(PL / 2 - tk.y, PW / 2 - tk.x); const q = bestPass(tk, ang); if (q) passTo(tk, q, sp.kind === 'corner' ? 0.5 : 0.2); else kick(tk, ang, 10, 2); }
   function restart(p, label) { st.pause = 0.7; banner(label, '#fff', 0.8); if (p.team === 0 && p.role !== 'gk') st.ctl = p; }
-  function goal(t) { st.score[t]++; st.phase = 'goal'; st.pt = 2.4; st.next = 1 - t; st.ball.owner = null; st.ball.vx *= 0.1; st.ball.vy *= 0.1;
+  function goal(t) { st.sp = null; st.score[t]++; st.phase = 'goal'; st.pt = 2.4; st.next = 1 - t; st.ball.owner = null; st.ball.vx *= 0.1; st.ball.vy *= 0.1;
     banner('¡GOOOOL!', t === 0 ? '#7fe08a' : '#ff6b6b', 2.2); snd('goal'); snd('whistle'); say('¡Gol!'); if (st.ev && t === 0) st.ev.goal = true;
     if (st.golden) { st.phase = 'end'; st.pt = 3; } }
   function step(dt) {
@@ -7626,8 +7728,9 @@ const FUTBOL2D = (() => {
     if (b.owner && b.owner.team === 0 && b.owner.role !== 'gk') st.ctl = b.owner;
     else if (st.swT <= 0 && !(b.owner && b.owner.team === 0)) { const n = nearestCtl(false); if (n !== st.ctl && D(n, b) + 2 < D(st.ctl, b) && st.ctl.slide <= 0) { st.ctl = n; } st.swT = 0.25; }
     for (const p of st.p) stepPlayer(p, dt);
+    keepAway(); takeRestart(dt);
     // running into the ball takes it off the rival (you: easily; the CPU only by tackling)
-    const me = st.ctl; if (!st.auto && me && b.owner && b.owner.team === 1 && b.owner.role !== 'gk' && me.down <= 0 && me.kickCD <= 0 && Math.hypot(b.x - me.x, b.y - me.y) < 0.6 && Math.random() < dt * 2.5) { b.owner.kickCD = 0.6; give(me); if (st.ev) st.ev.tackle = true; }
+    const me = st.ctl; if (!st.auto && !st.sp && me && b.owner && b.owner.team === 1 && b.owner.role !== 'gk' && me.down <= 0 && me.kickCD <= 0 && Math.hypot(b.x - me.x, b.y - me.y) < 0.6 && Math.random() < dt * 2.5) { b.owner.kickCD = 0.6; give(me); if (st.ev) st.ev.tackle = true; }
     stepBall(dt);
   }
   // ---------- tutorial (first game, against the seminarians who stand still)
@@ -7703,7 +7806,9 @@ const FUTBOL2D = (() => {
     if (p === st.ctl && st.pcharge > 0.14) { const f = st.pcharge / 0.8; cx.fillStyle = 'rgba(0,0,0,0.7)'; cx.fillRect(px - 9, py - 14, 3, 12); cx.fillStyle = '#5ec8ff'; cx.fillRect(px - 8.5, py - 2.5 - 11 * f, 2, 11 * f); }
     if (p === st.ctl && st.charge > 0) { const f = st.charge / 0.8; cx.fillStyle = 'rgba(0,0,0,0.7)'; cx.fillRect(px + 6, py - 14, 3, 12); cx.fillStyle = f > 0.55 ? '#ffd400' : '#7fe08a'; cx.fillRect(px + 6.5, py - 2.5 - 11 * f, 2, 11 * f); }
   }
-  function drawBall() { const b = st.ball; const px = sxp(b.x), py = sy(b.y), lift = b.z * S * 0.8, r = 1.7 + Math.min(1.2, b.z * 0.25);
+  function drawBall() { const b = st.ball; const hh = b.owner && st.sp && st.sp.p === b.owner && st.sp.kind !== 'corner' ? b.owner : null; // in the keeper's hands / over the head for a throw-in
+    if (hh) { const px = sxp(hh.x), py = sy(hh.y) - (st.sp.kind === 'banda' ? 15.5 : 9); cx.fillStyle = '#fff'; cx.beginPath(); cx.arc(px, py, 1.8, 0, 7); cx.fill(); cx.fillStyle = '#222'; cx.fillRect(px - 0.6, py - 0.6, 1.2, 1.2); return; }
+    const px = sxp(b.x), py = sy(b.y), lift = b.z * S * 0.8, r = 1.7 + Math.min(1.2, b.z * 0.25);
     cx.fillStyle = 'rgba(0,0,0,0.35)'; cx.beginPath(); cx.ellipse(px, py, 1.8, 0.9, 0, 0, 7); cx.fill();
     cx.fillStyle = '#fff'; cx.beginPath(); cx.arc(px, py - 1.5 - lift, r, 0, 7); cx.fill(); cx.fillStyle = '#222'; cx.fillRect(px - 0.6, py - 2.1 - lift, 1.2, 1.2); }
   function drawRadar() { const w = 34, h = PL / PW * 34, x0 = W - w - 8, y0 = H - h - 8; cx.fillStyle = 'rgba(0,0,0,0.55)'; cx.fillRect(x0 - 2, y0 - 2, w + 4, h + 4); cx.strokeStyle = 'rgba(255,255,255,0.6)'; cx.lineWidth = 0.5; cx.strokeRect(x0, y0, w, h);
@@ -7713,6 +7818,7 @@ const FUTBOL2D = (() => {
   function updateCam(k = 0.12) { const b = st.ball; const target = clamp(syw(b.y) - H * 0.55, 0, BGH - H); camY = lerp(camY, target, k); }
   function draw() {
     cx.setTransform(R, 0, 0, R, 0, 0); cx.imageSmoothingEnabled = false; const bg = drawBg(); cx.drawImage(bg, 0, camY * BR, W * BR, H * BR, 0, 0, W, H);
+    if (st.sp && st.ball.owner === st.sp.p) { const t = st.sp.p; cx.save(); cx.strokeStyle = 'rgba(255,255,255,0.55)'; cx.lineWidth = 0.8; cx.setLineDash([3, 3]); cx.beginPath(); cx.arc(sxp(t.x), sy(t.y), SP_R * S, 0, 7); cx.stroke(); cx.restore(); }
     const items = st.p.map((p) => ({ y: p.y, f: () => drawPlayer(p) })); items.push({ y: st.ball.y + 0.01, f: drawBall }); items.sort((a, c) => a.y - c.y).forEach((it) => it.f());
     // crossbars over the players near the goals
     for (const t of [0, 1]) { const gy = t ? sy(PL) : sy(0); cx.fillStyle = '#fff'; cx.fillRect(sxp(PW / 2 - GW / 2) - 1, gy - GH * S * 0.8, GW * S + 2, 1.5); }
@@ -7748,7 +7854,7 @@ const FUTBOL2D = (() => {
     const t0 = opt.team || [], t1 = opt.rival || [];
     st = { p: [], ball: { x: PW / 2, y: PL / 2, z: 0, vx: 0, vy: 0, vz: 0, owner: null, curve: 0, curveT: 0, shot: null }, score: [0, 0], time: opt.time || 180, clock: opt.time || 180,
       names: [opt.teamName || 'JETA', opt.rivalName || 'RIVALES'], phase: 'ready', pt: 0, time0: 0, bannerT: 0, banner: null, tip: '', ev: {}, golden: false, ctl: null, charge: 0, pcharge: 0, aft: 0, pause: 0,
-      tut: opt.tutorial ? { i: 0, wait: 0 } : null, auto: !!opt.auto, fade: 1, fadeDir: -1 };
+      tut: opt.tutorial ? { i: 0, wait: 0 } : null, sp: null, auto: !!opt.auto, fade: 1, fadeDir: -1 };
     for (let i = 0; i < 5; i++) st.p.push(mkPlayer(t0[i] || { name: 'JUG ' + (i + 1) }, 0, i, k0));
     for (let i = 0; i < 5; i++) st.p.push(mkPlayer(t1[i] || { name: 'RIV ' + (i + 1) }, 1, i, k1));
     for (const q of st.p) q.lv = q.team === 1 ? opt.lv ?? 0.5 : opt.mateLv ?? 0.6;
@@ -7759,7 +7865,7 @@ const FUTBOL2D = (() => {
   function close() { running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'futbol2d', true);
     const res = { won: st.score[0] > st.score[1], score: st.score.slice() }; if (onEnd) onEnd(res); }
   function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'futbol2d', false); } // tests only
-  return { start, _abort: abort, get running() { return running; }, _st: () => st, _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); updateCam(); } }, _press: press, _draw: () => draw() };
+  return { start, _abort: abort, get running() { return running; }, _st: () => st, _foul: (p, v) => foul(p, v), _give: (p) => give(p), _out: (k, t) => outOfPlay(k, t), _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); updateCam(); } }, _press: press, _draw: () => draw() };
 })();
 
 // ============ Maleantes en busca y captura (v0.70, Jonay) ============
@@ -8372,6 +8478,8 @@ const HUD = (() => {
     mx.translate(-PLAYER.x, -PLAYER.z); const s = 1 / mmScale * MAP.scale;
     // GPS route
     if (GPS.path) { mx.strokeStyle = MISSIONS.target() || GPS.story ? '#f5b72e' : '#e040fb'; mx.lineWidth = 7 * s * 1.6; mx.lineJoin = 'round'; mx.lineCap = 'round'; mx.beginPath(); const p = GPS.path; for (let i = 0; i < p.length; i += 2) i ? mx.lineTo(p[i], p[i + 1]) : mx.moveTo(p[i], p[i + 1]); mx.stroke(); }
+    // v0.75: races: the route of the next two controls, dimmer, with their dots
+    { const ap = MISSIONS.aheadPath(); if (ap) { mx.save(); mx.globalAlpha = 0.55; mx.strokeStyle = '#46c3ff'; mx.lineWidth = 5 * s * 1.6; mx.setLineDash([9 * s * 1.6, 6 * s * 1.6]); mx.beginPath(); for (let i = 0; i < ap.length; i += 2) i ? mx.lineTo(ap[i], ap[i + 1]) : mx.moveTo(ap[i], ap[i + 1]); mx.stroke(); mx.restore(); for (const q of MISSIONS.aheadPts() || []) blip(q[0], q[1], '#46c3ff', 6 * s * 1.6); } }
     // tram
     if (TRAM.parts) { const t = TRAM.parts[0].position; blip(t.x, t.z, '#e04848', 5 * s * 1.6, 'sq'); }
     // police
@@ -8458,10 +8566,12 @@ const BIGMAP = (() => {
     x.save(); x.translate(W / 2, H / 2); x.scale(k, k); x.translate(-cx, -cz);
     x.save(); x.translate(MAP.x0, MAP.z0); x.scale(1 / MAP.scale, 1 / MAP.scale); x.drawImage(MAPC, 0, 0); x.restore();
     if (GPS.path) { x.strokeStyle = MISSIONS.target() || GPS.story ? '#f5b72e' : '#e040fb'; x.lineWidth = 6 / k * devicePixelRatio; x.beginPath(); const p = GPS.path; for (let i = 0; i < p.length; i += 2) i ? x.lineTo(p[i], p[i + 1]) : x.moveTo(p[i], p[i + 1]); x.stroke(); }
+    { const ap = MISSIONS.aheadPath(); if (ap) { x.save(); x.globalAlpha = 0.6; x.strokeStyle = '#46c3ff'; x.lineWidth = 4 / k * devicePixelRatio; x.setLineDash([10 / k * devicePixelRatio, 7 / k * devicePixelRatio]); x.beginPath(); for (let i = 0; i < ap.length; i += 2) i ? x.lineTo(ap[i], ap[i + 1]) : x.moveTo(ap[i], ap[i + 1]); x.stroke(); x.restore(); } }
     const dot = (px, pz, c, r) => { x.fillStyle = c; x.strokeStyle = '#000'; x.lineWidth = 2 / k * devicePixelRatio; x.beginPath(); x.arc(px, pz, r / k * devicePixelRatio, 0, 7); x.fill(); x.stroke(); };
     for (const c of CARS) if (c.driver === 'police') dot(c.x, c.z, '#3d7bff', 5);
     for (const f of FOOD.shops) { x.fillStyle = '#e53935'; x.strokeStyle = '#fff'; x.lineWidth = 1.5 / k * devicePixelRatio; const sz = 5 * devicePixelRatio / k; x.fillRect(f.x - sz, f.z - sz, sz * 2, sz * 2); x.strokeRect(f.x - sz, f.z - sz, sz * 2, sz * 2); }
     for (const m of MISSIONS.blips()) dot(m[0], m[1], m[2] || '#f5b72e', 8);
+    for (const q of MISSIONS.aheadPts() || []) dot(q[0], q[1], '#46c3ff', 6);
     if (GPS.target) dot(GPS.target[0], GPS.target[1], '#e040fb', 8);
     x.save(); x.translate(PLAYER.x, PLAYER.z); x.rotate(-(PLAYER.car ? PLAYER.car.h : PLAYER.h) + Math.PI); const a = 12 / k * devicePixelRatio; x.fillStyle = '#fff'; x.strokeStyle = '#000'; x.lineWidth = 2 / k * devicePixelRatio; x.beginPath(); x.moveTo(0, -a); x.lineTo(a * 0.7, a * 0.7); x.lineTo(0, a * 0.35); x.lineTo(-a * 0.7, a * 0.7); x.closePath(); x.fill(); x.stroke(); x.restore();
     x.restore();
@@ -8561,7 +8671,7 @@ function setupTouch() {
 // story stop, blue = side mission, red = whoever you are chasing, pink = your own destination on the map. Subtle: thin,
 // semi-transparent, under the character. Hidden indoors, in menus and fights; a pointer hides when its goal is close.
 const GUIDE = (() => {
-  let g = null, ring = null; const tips = [], mats = {};
+  let g = null, ring = null, lastLead = null; const tips = [], mats = {};
   const mat = (css) => mats[css] || (mats[css] = new THREE.MeshBasicMaterial({ color: new THREE.Color(css), transparent: true, opacity: 0.6, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4, depthTest: !onTop }));
   const rmats = {}; const ringMat = (css) => rmats[css] || (rmats[css] = Object.assign(mat(css).clone(), { opacity: 0.5 }));
   let tipGeo = null, carArrow = null, bob = 0, rgCar = null, rgFoot = null, onTop = false; const UP = new THREE.Vector3(0, 1, 0), NRM = new THREE.Vector3(0, 1, 0), TGT = new THREE.Vector3(), QY = new THREE.Quaternion(), QT = new THREE.Quaternion(); let sy = 0, off = false;
@@ -8585,6 +8695,7 @@ const GUIDE = (() => {
     return L;
   }
   return {
+    get lead() { return lastLead; }, // tests: where the arrow over the car points
     update() {
       if (!g) makeGuide();
       if (pressed('KeyG')) { off = !off; HUD.toast(off ? 'Brújula oculta (G)' : 'Brújula visible (G)'); } // v0.62.1: toggle with G (E is «usar / entrar»)
@@ -8594,8 +8705,12 @@ const GUIDE = (() => {
       const car = PLAYER.car;
       carArrow.visible = false;
       if (car) { // vehicle: only the floating arrow, towards your own mark (pink) or else the main mission
-        g.visible = false; const lead = L.find((q) => q[2] === '#e040fb') || L.find((q) => q[2] === '#f5b72e') || L[0];
-        bob += 0.05; const H = (car.T && car.T.H) || 1.5; carArrow.position.set(car.x, car.y + H + 0.75 + Math.sin(bob) * 0.06, car.z); carArrow.scale.setScalar(0.6); // v0.63.1: smaller, more see-through, almost flat (Jonay)
+        g.visible = false;
+        // v0.75 (Jonay): in a chase the arrow points at the car / person you're after (red), not at the mission's
+        // goal; your own map mark (pink) still comes first; in races the goal is the next control (yellow)
+        const red = MISSIONS.isRace() ? null : L.filter((q) => q[2] === '#ff3b30').sort((p, q) => Math.hypot(p[0] - car.x, p[1] - car.z) - Math.hypot(q[0] - car.x, q[1] - car.z))[0];
+        const lead = L.find((q) => q[2] === '#e040fb') || red || L.find((q) => q[2] === '#f5b72e') || L[0];
+        lastLead = lead; bob += 0.05; const H = (car.T && car.T.H) || 1.5; carArrow.position.set(car.x, car.y + H + 0.75 + Math.sin(bob) * 0.06, car.z); carArrow.scale.setScalar(0.6); // v0.63.1: smaller, more see-through, almost flat (Jonay)
         // aim at the goal, then tip its face towards the camera so it never shows edge-on
         QY.setFromAxisAngle(UP, Math.atan2(lead[0] - car.x, lead[1] - car.z) + Math.PI);
         TGT.set(camera.position.x - car.x, 0, camera.position.z - car.z); const cl = TGT.length() || 1; TGT.multiplyScalar(0.3 / cl); TGT.y = 1; TGT.normalize(); QT.setFromUnitVectors(UP, TGT);
@@ -8615,7 +8730,7 @@ const GUIDE = (() => {
       // in a car or a lorry the ring goes round the whole vehicle and is drawn over it (it used to be hidden by the body)
       if (onTop !== !!car) { onTop = !!car; for (const m of [...Object.values(mats), ...Object.values(rmats)]) { m.depthTest = !onTop; m.needsUpdate = true; } g.traverse((o2) => { o2.renderOrder = onTop ? 20 : 2; }); ring.geometry = onTop ? rgCar : rgFoot; }
       // the ring takes the colour of the leading goal: your own map mark (pink) if you set one, else the main mission (yellow)
-      const lead = L.find((q) => q[2] === '#e040fb') || L.find((q) => q[2] === '#f5b72e') || L[0]; ring.material = ringMat(lead[2]);
+      const lead = L.find((q) => q[2] === '#e040fb') || (!MISSIONS.isRace() && L.find((q) => q[2] === '#ff3b30')) || L.find((q) => q[2] === '#f5b72e') || L[0]; ring.material = ringMat(lead[2]);
       L.slice(0, 6).forEach((q, i) => { const t = tip(i); t.visible = true; t.material = mat(q[2]); t.rotation.y = Math.atan2(q[0] - PLAYER.x, q[1] - PLAYER.z) + Math.PI; });
     },
   };
@@ -8731,7 +8846,12 @@ const MISSIONS = (() => {
   const STORY_SKIP = new Set();
   // the story order of the saves v ≤ 2 (before v0.70): their «story» index counts in this list
   const STORY_V2 = ['Vuelta al barrio', 'Una botella para Coco', 'Sastrón', 'La firma de la banda', 'Boca Papa te enseña a comer', 'El campo de tiro de El Blanco', 'Atraco en la farmacia', 'Defensores de La Laguna', 'El carterista del Cristo', 'Baches en la Vía de Ronda', 'El rally de La Esperanza', 'Los bancos del Adelantado', 'Grafiteros en el tranvía', 'La guagua de la broma', 'Escolta a la guagua del Romero', 'El gofio robado', 'Carrera solidaria del casco', 'Noche en el aeropuerto'];
-  const LOG = {}; const logLine = (who, t) => { if (!active || !t) return; const L = LOG[active.title] || (LOG[active.title] = []); if (L.length < 80) L.push([who || '', String(t)]); };
+  // v0.75 (Jonay: missions already done showed no dialogue): every line keeps when it was said, so the diary lists them
+  // newest first; what is said just after a mission ends (its closing lines) still goes to it, and talk outside any
+  // mission goes to «Charlas sueltas». A mission played again keeps only its latest run.
+  const LOG = {}; let lastTitle = null, lastT = 0, stamp = 0; const LOOSE = 'Charlas sueltas';
+  const logLine = (who, t) => { if (!t) return; const title = active ? active.title : lastTitle && performance.now() - lastT < 30000 ? lastTitle : LOOSE;
+    const L = LOG[title] || (LOG[title] = []); stamp = Math.max(Date.now(), stamp + 1); L.push([who || '', String(t), stamp]); /* strictly increasing: two lines in the same ms keep their order */ if (L.length > 120) L.splice(0, L.length - 120); };
   const GANG = { formed: false, name: '', members: [] }; window.GANG = GANG;
   const SASTRON_FEE = 2500;
   const TALK = { cur: null }; window.__TALK = TALK;
@@ -8745,7 +8865,19 @@ const MISSIONS = (() => {
   const setObjective = (t) => { const o = $('objective'); if (!t) { o.style.display = 'none'; return; } o.style.display = 'block'; o.innerHTML = t + (timer > 0 ? `<span class="t" id="mtimer"></span>` : ''); };
   function clearBeacon() { if (beacon) { BEACON.free(beacon); beacon = null; } }
   function goto(x, z, r, color) { [x, z] = safeSpot(x, z, 0.3); [x, z] = ringClear(x, z, r); clearBeacon(); beacon = BEACON.make(x, z, r, 7, color); data.goal = [x, z, r]; updateGPS(true); }
-  function finish() { if (data.rival && data.rival.mode === 'race') { data.rival.mode = 'physics'; data.rival.driver = null; data.rival.ctl.brk = 1; } clearBeacon(); setObjective(null); const tr = TRACKS[activeTrack]; active = null; activeTrack = null; timer = 0; data = {}; GPS.path = null; return tr; }
+  // v0.75 (Jonay): in races, the route of the next two controls after the one you're heading to is already drawn
+  // (dimmer) on the minimap and the big map, so you see the turns coming. P = the race's own path (flat x,z list) if it
+  // has one; otherwise it is routed by road (car) or on foot.
+  function ahead(cps, i, P) {
+    data.race = true; const nx = (cps || []).slice(i + 1, i + 3); data.ahead = nx.length ? nx : null; data.aheadPath = null; if (!nx.length) return;
+    const a = cps[i], b = nx[nx.length - 1];
+    const near = (x, z, from) => { let bi = from, bd = 1e18; for (let k = from; k < P.length; k += 2) { const d = (P[k] - x) ** 2 + (P[k + 1] - z) ** 2; if (d < bd) { bd = d; bi = k; } } return bi; };
+    if (P && P.length >= 4) { const i0 = near(a[0], a[1], 0), i1 = near(b[0], b[1], i0); if (i1 > i0) { data.aheadPath = P.slice(i0, i1 + 2); return; } }
+    const out = [a[0], a[1]]; let prev = a;
+    for (const q of nx) { let r = null; try { r = PLAYER.car ? GRAPH.routeFrom(prev[0], prev[1], Math.atan2(q[0] - prev[0], q[1] - prev[1]), q[0], q[1]) : WALKG.route(prev[0], prev[1], q[0], q[1]); } catch (e) { r = null; } if (r) out.push(...r); out.push(q[0], q[1]); prev = q; }
+    data.aheadPath = out;
+  }
+  function finish() { if (data.rival && data.rival.mode === 'race') { data.rival.mode = 'physics'; data.rival.driver = null; data.rival.ctl.brk = 1; } clearBeacon(); setObjective(null); const tr = TRACKS[activeTrack]; if (active) { lastTitle = active.title; lastT = performance.now(); } active = null; activeTrack = null; timer = 0; data = {}; GPS.path = null; return tr; }
   function pass(title, money, keepIdx) { const tr = finish(); if (!keepIdx) tr.idx++; PLAYER.money += money; setTimeout(() => { try { SAVE.auto('Misión superada: ' + title); } catch (e) { } }, 1500); MUSIC.jingle(); HUD.big('¡MISIÓN SUPERADA!', '#f5b72e', 4); HUD.toast(title + (money ? '  +$' + money : ''), '#7fe08a', 4); setTimeout(placeStarts, 2500); }
   function fail(reason, noRetry) { const m = active, k = activeTrack; finish(); AUDIO.fail(); HUD.big('MISIÓN FALLIDA', '#e04848', 3.5); HUD.toast(reason, '#ffb3b3', 4); setTimeout(placeStarts, 2500); if (m && !noRetry) offerRetry(m, k); }
   // after a failure: «¿Reintentar?» (works with the mouse, keys 1/2 and touch). Waits until the player is back in play
@@ -8754,7 +8886,7 @@ const MISSIONS = (() => {
       DLG.show(m.who || '', m.title, 'La misión ha fallado. ¿Quieres volver a intentarlo desde el principio?', '', ['Reintentar', 'Ahora no'], (i) => { DLG.hide(); if (i === 0) retry(m, k); }); };
     setTimeout(ask, 2600); }
   function retry(m, k) { if (active) return; if (PLAYER.car) { try { exitCar(); } catch (e) { } } const sp = m.startPos(); const r = COL.resolve(sp[0], sp[1], 0.4); PLAYER.x = r.x; PLAYER.z = r.z; WANTED.level = 0; begin(m, k); }
-  function begin(m, k) { for (const kk in TRACKS) if (TRACKS[kk].beacon) { BEACON.free(TRACKS[kk].beacon); TRACKS[kk].beacon = null; } active = m; activeTrack = k; data = {}; setWaypoint(null); setObjective(null); HUD.big(active.title.toUpperCase(), '#fff', 3); active.start(); }
+  function begin(m, k) { LOG[m.title] = []; for (const kk in TRACKS) if (TRACKS[kk].beacon) { BEACON.free(TRACKS[kk].beacon); TRACKS[kk].beacon = null; } active = m; activeTrack = k; data = {}; setWaypoint(null); setObjective(null); HUD.big(active.title.toUpperCase(), '#fff', 3); active.start(); }
   function abort(msg) { finish(); if (msg) HUD.toast(msg, '#f5b72e', 4); setTimeout(placeStarts, 1500); }
   const near = (n, r = 3.2) => Math.hypot(PLAYER.x - n.x, PLAYER.z - n.z) < r && (!PLAYER.car || PLAYER.car.speed < 2);
   function moveNPC(n, x, z, face) { const [a, b] = safeSpot(x, z, 0.6); n.x = a; n.z = b; n.H.root.position.set(a, heightAt(a, b) + 0.17, b); if (face) n.H.root.rotation.y = Math.atan2(face[0] - a, face[1] - b); }
@@ -8822,7 +8954,7 @@ const MISSIONS = (() => {
         else setObjective('Compra una botella de ron');
       },
       wantsBottle() { return step === 0; },
-      onEvent(t, tag) { if (t === 'bought' && tag === 'ron' && step === 0) { step = 1; SUB.show(bold('Camarera:') + ' ¿Ron a estas horas? Bueno, cariño, tú sabrás. Que no te vea el cura.', 4); goto(NPC.coco.x, NPC.coco.z, 2.5); setObjective('Lleva la botella a ' + bold('Coco')); } },
+      onEvent(t, tag) { if (t === 'bought' && tag === 'ron' && step === 0) { step = 1; SUB.show(bold('Camarera:') + ' ¿Ron a estas horas? Bueno, cariño, tú sabrás. Que no te vea el cura.', 4); logLine('Camarera', '¿Ron a estas horas? Bueno, cariño, tú sabrás. Que no te vea el cura.'); goto(NPC.coco.x, NPC.coco.z, 2.5); setObjective('Lleva la botella a ' + bold('Coco')); } },
       update() {
         if (step === 0 && data.bar && PLAYER.interior === data.bar && beacon) { clearBeacon(); setObjective(`Acércate a la ${bold('barra')} y pulsa ${CONTROLS.kbd('use')} / ENTRAR para pedir`); }
         if (step === 1 && near(NPC.coco)) {
@@ -8967,7 +9099,7 @@ const MISSIONS = (() => {
     cps.push([pts[pts.length - 2], pts[pts.length - 1]]); data.cps = cps; data.start = [pts[0], pts[1]]; data.pts = pts;
     data.cum = [0]; for (let i = 2; i < pts.length; i += 2) data.cum.push(data.cum[data.cum.length - 1] + Math.hypot(pts[i] - pts[i - 2], pts[i + 1] - pts[i - 1]));
   }
-  function raceCP() { const c = data.cps[data.cp]; const last = data.cp === data.cps.length - 1; goto(c[0], c[1], last ? 7 : 6, last ? 0xf5b72e : 0x46c3ff); setObjective((last ? bold('¡META!') : `Control ${data.cp + 1}/${data.cps.length - 1}`) + ' · Gánale al Canarión'); }
+  function raceCP() { const c = data.cps[data.cp]; const last = data.cp === data.cps.length - 1; goto(c[0], c[1], last ? 7 : 6, last ? 0xf5b72e : 0x46c3ff); ahead(data.cps, data.cp, data.pts); setObjective((last ? bold('¡META!') : `Control ${data.cp + 1}/${data.cps.length - 1}`) + ' · Gánale al Canarión'); }
   function raceUpdate(m, dt) {
     if (step === 0) { if (PLAYER.car) { step = 1; goto(data.start[0], data.start[1], 5, 0x46c3ff); setObjective('Ve a la ' + bold('línea de salida')); } return; }
     if (step === 1) {
@@ -9028,12 +9160,13 @@ const MISSIONS = (() => {
     },
     { title: 'Revancha con el Canarión', who: 'el Canarión', startPos() { return [NPC.canarion.x + 1.4, NPC.canarion.z + 1.4]; }, start() { startRace(this, false); }, update(dt) { raceUpdate(this, dt); } }];
   const OBISPO_LIST = []; // v0.65: the bishop's optional pack (12g_obispo.js), opens with the mayor's missions
+  const COPA_LIST = []; // v0.75: Copa Laguna de fútbol (12j_campos.js), opens after your first football game
   const TORNEO_LIST = []; // v0.66: Torneo Lagunero de baloncesto (12i_canchas.js), opens after your first basketball game
-  const TRACKS = { story: { list: STORY, idx: 0, beacon: null, color: 0xf5b72e, css: '#f5b72e' }, side: { list: SIDE, idx: 0, beacon: null, color: 0x5ec8ff, css: '#5ec8ff', open: false }, obispo: { list: OBISPO_LIST, idx: 0, beacon: null, color: 0xb388ff, css: '#b388ff' }, torneo: { list: TORNEO_LIST, idx: 0, beacon: null, color: 0xff9f43, css: '#ff9f43' } };
+  const TRACKS = { story: { list: STORY, idx: 0, beacon: null, color: 0xf5b72e, css: '#f5b72e' }, side: { list: SIDE, idx: 0, beacon: null, color: 0x5ec8ff, css: '#5ec8ff', open: false }, obispo: { list: OBISPO_LIST, idx: 0, beacon: null, color: 0xb388ff, css: '#b388ff' }, torneo: { list: TORNEO_LIST, idx: 0, beacon: null, color: 0xff9f43, css: '#ff9f43' }, copa: { list: COPA_LIST, idx: 0, beacon: null, color: 0x26d07c, css: '#26d07c' } };
   const obispoOpen = () => { if (!NPC.obispo) return false; const i = STORY.findIndex((m) => m.who === 'Don Yovoy Gofiérrez' || /farmacia/i.test(m.title)); return TRACKS.story.done || (i >= 0 && TRACKS.story.idx >= i); };
   function placeStarts() {
     while (TRACKS.story.idx < STORY.length && STORY_SKIP.has(STORY[TRACKS.story.idx].title)) TRACKS.story.idx++;
-    for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon) { BEACON.free(tr.beacon); tr.beacon = null; } if (active || tr.idx >= tr.list.length) continue; if (k === 'side' && (!tr.open || PLAYER.money >= SASTRON_FEE)) continue; if (k === 'obispo' && !obispoOpen()) continue; if (k === 'torneo' && !GANG.basketTut) continue; const sp = ringClear(...tr.list[tr.idx].startPos(), 1.4); tr.beacon = BEACON.make(sp[0], sp[1], 1.4, 3, tr.color); if (k === 'story' && !active) { const h = tr.list[tr.idx].hint; if (h) setObjective('Siguiente: ' + h()); setWaypoint(sp[0], sp[1], true); } }
+    for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon) { BEACON.free(tr.beacon); tr.beacon = null; } if (active || tr.idx >= tr.list.length) continue; if (k === 'side' && (!tr.open || PLAYER.money >= SASTRON_FEE)) continue; if (k === 'obispo' && !obispoOpen()) continue; if (k === 'torneo' && !GANG.basketTut) continue; if (k === 'copa' && !GANG.futbolTut) continue; const sp = ringClear(...tr.list[tr.idx].startPos(), 1.4); tr.beacon = BEACON.make(sp[0], sp[1], 1.4, 3, tr.color); if (k === 'story' && !active) { const h = tr.list[tr.idx].hint; if (h) setObjective('Siguiente: ' + h()); setWaypoint(sp[0], sp[1], true); } }
     if (TRACKS.story.idx >= STORY.length && !TRACKS.story.done) { TRACKS.story.done = true; setObjective(null); HUD.big((GANG.name || 'TU BANDA').toUpperCase(), '#f5b72e', 5); HUD.toast('Ya puedes moverte libremente por La Laguna. La historia continuará…', '#f5b72e', 8); }
   }
   // interesting spots of the historic centre: Coco and Sastrón show up near two of them (random every game)
@@ -9048,9 +9181,9 @@ const MISSIONS = (() => {
     if (parkedNear(a, b, 4.5).length) for (let r = 3; r < 60; r += 2) { let ok = false; for (let k = 0; k < 16; k++) { const q = safeSpot(x + Math.cos(k / 16 * 6.283) * r, z + Math.sin(k / 16 * 6.283) * r, 0.8); if (!parkedNear(q[0], q[1], 4.5).length && !onCarriageway(q[0], q[1], 0.5)) { [a, b] = q; ok = true; break; } } if (ok) break; }
     const r = COL.resolve(a, b, 0.6); h.root.position.set(r.x, heightAt(r.x, r.z) + 0.17, r.z); h.root.rotation.y = Math.random() * 6; scene.add(h.root); if (extra) extra(h); return { x: r.x, z: r.z, H: h, home: [r.x, r.z] }; }
   // toolkit for the missions defined in other files (12f_story2.js): they are appended to STORY
-  const KIT = { talk, chat, goto, clearBeacon, track(x, z, r = 6) { clearBeacon(); data.goal = [x, z, r]; updateGPS(true); } /* a moving goal (a car to follow): yellow blip + GPS route, no light column */, setObjective, pass, fail, abort, moveNPC, mkNPC, bold, CH, GANG, findRange, isActive: (m) => active === m, get data() { return data; }, setTimer(t) { timer = t; }, get timer() { return timer; } };
+  const KIT = { talk, chat, goto, clearBeacon, ahead, track(x, z, r = 6) { clearBeacon(); data.goal = [x, z, r]; updateGPS(true); } /* a moving goal (a car to follow): yellow blip + GPS route, no light column */, setObjective, pass, fail, abort, moveNPC, mkNPC, bold, CH, GANG, findRange, isActive: (m) => active === m, get data() { return data; }, setTimer(t) { timer = t; }, get timer() { return timer; } };
   return {
-    kit: KIT, addStory(list) { STORY.push(...list); }, addObispo(list) { OBISPO_LIST.push(...list); }, addTorneo(list) { TORNEO_LIST.push(...list); },
+    kit: KIT, addStory(list) { STORY.push(...list); }, addObispo(list) { OBISPO_LIST.push(...list); }, addTorneo(list) { TORNEO_LIST.push(...list); }, addCopa(list) { COPA_LIST.push(...list); },
     initMissions() {
       // Rayco «El Blanco», at his parents' door next to the start
       { const b = makeHuman({ skin: 0xf6dcc8, shirt: 0xf4f4f4, pants: 0x9a9a9a, hair: 0x3b2a1e, shoes: 0x333333, scale: 1.09, female: false, thin: true, longPants: true, beard: false, hairStyle: 'Hair_Buzzed', hd: true, sleeve: false, glasses: 'round', belt: false, sole: 0x1a1a1a, shoes: 0x2f3b55, watch: 0x2f3a2a });
@@ -9115,26 +9248,28 @@ const MISSIONS = (() => {
     onEvent(t, d) { if (!active) return; if (t === 'enter' && active.gotCar) active.gotCar(); if (active.onEvent) active.onEvent(t, d); },
     wantsBottle() { return !!(active && active.wantsBottle && active.wantsBottle()); },
     target() { return active && data.goal ? data.goal : null; },
+    aheadPath() { return active && data.aheadPath ? data.aheadPath : null; }, aheadPts() { return active && data.ahead ? data.ahead : null; }, isRace() { return !!(active && data.race); },
     blips() { const b = []; for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon) b.push([tr.beacon.position.x, tr.beacon.position.z, tr.css]); } if (active && data.goal) b.push([data.goal[0], data.goal[1], '#f5b72e']); if (active && typeof s2Blips === 'function') b.push(...s2Blips()); b.push(...MALEANTES.blips()); return b; },
     prompt() { if (active || PLAYER.car) return ''; for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon && Math.hypot(PLAYER.x - tr.beacon.position.x, PLAYER.z - tr.beacon.position.z) < 6) return 'Acércate al círculo para hablar con ' + bold(tr.list[tr.idx].who); } return ''; },
     fail(r, noRetry) { if (active) { if (WEAPON.training) takeWeapon(); fail(r, noRetry); } },
     _story: STORY, refresh() { if (!active) placeStarts(); },
     // the mission diary (12h_diario.js): every track, its missions and their state; the log; restart from a mission
-    diary() { const NAMES = { story: 'Historia', side: 'El Canarión', obispo: 'El Obispo', torneo: 'Torneo Lagunero' };
-      return Object.keys(TRACKS).map((k) => { const tr = TRACKS[k]; const locked = (k === 'obispo' && !obispoOpen()) || (k === 'torneo' && !GANG.basketTut) || (k === 'side' && !tr.open && tr.idx === 0);
+    diary() { const NAMES = { story: 'Historia', side: 'El Canarión', obispo: 'El Obispo', torneo: 'Torneo Lagunero', copa: 'Copa Laguna' };
+      return Object.keys(TRACKS).map((k) => { const tr = TRACKS[k]; const locked = (k === 'obispo' && !obispoOpen()) || (k === 'torneo' && !GANG.basketTut) || (k === 'copa' && !GANG.futbolTut) || (k === 'side' && !tr.open && tr.idx === 0);
         return { key: k, name: NAMES[k] || k, css: tr.css, locked, list: tr.list.map((m, i) => ({ title: m.title, who: m.who || '', state: active === m ? 'activa' : i < tr.idx || (k === 'story' && (tr.done || STORY_SKIP.has(m.title))) ? 'hecha' : i === tr.idx ? 'siguiente' : 'pendiente', hint: i === tr.idx && m.hint ? m.hint() : '' })) }; }); },
-    log(title) { return LOG[title] || []; },
+    log(title) { return (LOG[title] || []).slice().reverse(); }, // newest first
+    logAll() { const out = []; for (const k in LOG) for (const q of LOG[k]) out.push([q[0], q[1], q[2] || 0, k]); return out.sort((a, b) => b[2] - a[2]); }, logLine, LOOSE,
     resetFrom(k, i) { const tr = TRACKS[k]; if (!tr || i < 0 || i >= tr.list.length) return false; if (active) { try { if (WEAPON.training) takeWeapon(); } catch (e) { } finish(); }
       for (let j = i; j < tr.list.length; j++) { delete LOG[tr.list[j].title]; if (k === 'story') STORY_SKIP.delete(tr.list[j].title); }
       tr.idx = i; if (k === 'story') tr.done = false; if (k === 'obispo' && i === 0) GANG.basketTut = false; if (k === 'obispo' && i <= 2) GANG.futbolTut = false; if (k === 'side' && i === 0) tr.open = false;
       setObjective(null); placeStarts(); return true; },
     _setIdx(i, track = 'story') { TRACKS[track].idx = i; placeStarts(); },
     // save / load: which missions are done, the gang, tutorial flags (a mission in progress restarts from its beginning)
-    getState() { return { v: 3, story: TRACKS.story.idx, skip: [...STORY_SKIP], storyDone: !!TRACKS.story.done, side: TRACKS.side.idx, sideOpen: !!TRACKS.side.open, obispo: TRACKS.obispo.idx, torneo: TRACKS.torneo.idx, log: LOG, gang: { formed: GANG.formed, name: GANG.name, members: GANG.members.slice(), sastronTut: !!GANG.sastronTut, defenders: !!GANG.defenders, patrol: !!GANG.patrol, basketTut: !!GANG.basketTut, futbolTut: !!GANG.futbolTut }, active: active ? active.title : null }; },
+    getState() { return { v: 3, story: TRACKS.story.idx, skip: [...STORY_SKIP], storyDone: !!TRACKS.story.done, side: TRACKS.side.idx, sideOpen: !!TRACKS.side.open, obispo: TRACKS.obispo.idx, torneo: TRACKS.torneo.idx, copa: TRACKS.copa.idx, log: LOG, gang: { formed: GANG.formed, name: GANG.name, members: GANG.members.slice(), sastronTut: !!GANG.sastronTut, defenders: !!GANG.defenders, patrol: !!GANG.patrol, basketTut: !!GANG.basketTut, futbolTut: !!GANG.futbolTut }, active: active ? active.title : null }; },
     setState(st) { if (active) { try { if (WEAPON.training) takeWeapon(); } catch (e) { } finish(); }
       TRACKS.story.idx = (st.story | 0) - (!st.v && (st.story | 0) >= 3 ? 1 : 0); /* v1 saves had the Canarión race inside the story */
       STORY_SKIP.clear(); if ((st.v | 0) >= 3) for (const t of st.skip || []) STORY_SKIP.add(t);
-      else { /* v ≤ 2: the index counts in the old order; the first old mission not done is where you go on, the done ones after it in the new order are skipped */ const n = TRACKS.story.idx, done = new Set(STORY_V2.slice(0, n)); let i = 0; while (i < STORY.length && done.has(STORY[i].title)) i++; TRACKS.story.idx = n >= STORY_V2.length ? n : i; for (let j = i; j < STORY.length; j++) if (done.has(STORY[j].title)) STORY_SKIP.add(STORY[j].title); } TRACKS.story.done = !!st.storyDone && TRACKS.story.idx >= STORY.length; /* older saves finished a shorter story: carry on with the new missions */ TRACKS.side.idx = !st.v && (st.story | 0) >= 3 ? 1 : st.side | 0; TRACKS.obispo.idx = st.obispo | 0; TRACKS.torneo.idx = st.torneo | 0; for (const k in LOG) delete LOG[k]; Object.assign(LOG, st.log || {}); TRACKS.side.open = !!st.sideOpen;
+      else { /* v ≤ 2: the index counts in the old order; the first old mission not done is where you go on, the done ones after it in the new order are skipped */ const n = TRACKS.story.idx, done = new Set(STORY_V2.slice(0, n)); let i = 0; while (i < STORY.length && done.has(STORY[i].title)) i++; TRACKS.story.idx = n >= STORY_V2.length ? n : i; for (let j = i; j < STORY.length; j++) if (done.has(STORY[j].title)) STORY_SKIP.add(STORY[j].title); } TRACKS.story.done = !!st.storyDone && TRACKS.story.idx >= STORY.length; /* older saves finished a shorter story: carry on with the new missions */ TRACKS.side.idx = !st.v && (st.story | 0) >= 3 ? 1 : st.side | 0; TRACKS.obispo.idx = st.obispo | 0; TRACKS.torneo.idx = st.torneo | 0; TRACKS.copa.idx = st.copa | 0; for (const k in LOG) delete LOG[k]; Object.assign(LOG, st.log || {}); TRACKS.side.open = !!st.sideOpen;
       Object.assign(GANG, { formed: !!(st.gang && st.gang.formed), name: (st.gang && st.gang.name) || '', members: (st.gang && st.gang.members) || [], sastronTut: !!(st.gang && st.gang.sastronTut), defenders: !!(st.gang && st.gang.defenders), patrol: !!(st.gang && st.gang.patrol), basketTut: !!(st.gang && st.gang.basketTut), futbolTut: !!(st.gang && st.gang.futbolTut) });
       setObjective(null); placeStarts();
       window.__missionResumed = st.active || null; if (st.active) setTimeout(() => HUD.toast('La misión «' + st.active + '» se guardó a medias: empieza de nuevo en su círculo', '#f5b72e', 6), 3500); /* after the radio hint of the car you load in */ },
@@ -9567,13 +9702,13 @@ const M_BACHES = {
   start() { const K = K2(); this.st = { step: 0 };
     K.talk([[ALC, 'Defensores, la Vía de Ronda tiene más baches que un queso de cabra. El camión del asfalto lleva tres semanas aparcado porque el conductor está de vacaciones... perpetuas.'], [ALC, 'Llévalo por los cinco puntos marcados antes de que cierren la obra. Y no lo vuelques, que es el único que tenemos.']], () => {
       if (!K.isActive(this)) return; const [x, z, h] = s2Spot(PLAYER.x + 12, PLAYER.z + 8); this.st.truck = s2Car('daily', 0xf2c200, x, z, h); this.st.truck.keep = true;
-      const vr = centroidOfNamedWays('Vía de Ronda de La Laguna') || [400, 1300]; const P = s2Route(vr[0], vr[1], 1300, 2200); const c = s2Path(P); this.st.cps = [0.15, 0.35, 0.55, 0.75, 0.97].map((f) => c.at(c.tot * f)); this.st.cp = 0; this.st.step = 1;
+      const vr = centroidOfNamedWays('Vía de Ronda de La Laguna') || [400, 1300]; const P = s2Route(vr[0], vr[1], 1300, 2200); const c = s2Path(P); this.st.P = c; this.st.cps = [0.15, 0.35, 0.55, 0.75, 0.97].map((f) => c.at(c.tot * f)); this.st.cp = 0; this.st.step = 1;
       K.goto(x, z, 3, 0xf5b72e); K.setObjective('Súbete al ' + b2('camión del asfalto')); }); },
   update(dt) { const K = K2(), S = this.st; if (!S || !S.step) return;
     if (S.step === 1 && PLAYER.car === S.truck) { S.step = 2; K.setTimer(240); this.cp(); }
     if (S.step === 2) { if (S.truck.dead || S.truck.health <= 15) { s2Fail('¡Has destrozado el camión del asfalto!'); return; } if (PLAYER.car !== S.truck) { K.setObjective('Vuelve al ' + b2('camión') + ': sin él no hay asfalto'); return; }
       if (s2AtGoal(8)) { AUDIO.cash(); HUD.toast('¡Bache tapado!', '#7fe08a', 1.2); S.cp++; if (S.cp >= S.cps.length) { K.setTimer(0); s2Pass('Vía de Ronda sin baches', 900); return; } this.cp(); } } },
-  cp() { const K = K2(), S = this.st, c = S.cps[S.cp]; K.goto(c[0], c[1], 7, 0x46c3ff); K.setObjective(`Tapa los baches: punto ${S.cp + 1}/${S.cps.length}`); },
+  cp() { const K = K2(), S = this.st, c = S.cps[S.cp]; K.goto(c[0], c[1], 7, 0x46c3ff); K.ahead(S.cps, S.cp, S.P && S.P.pts); K.setObjective(`Tapa los baches: punto ${S.cp + 1}/${S.cps.length}`); },
 };
 
 // ---------- 5. El rally de La Esperanza (carrera contra un pijo)
@@ -9590,7 +9725,7 @@ const M_RALLY = {
       ['3', '2', '1'].forEach((t, i) => setTimeout(() => { if (K.isActive(this)) { HUD.big(t, '#fff', 0.8); AUDIO.cash(); } }, i * 1000)); setTimeout(() => { if (!K.isActive(this)) return; HUD.big('¡YA!', '#7fe08a', 1.2); S.step = 3; S.cp = 0; this.cp(); }, 3000); }
     if (S.step === 3) { const done = s2DriveCar(S.rv, S.P, dt, 27, (d) => (d > 150 ? 0.82 : 1.0)); if (done) { s2Fail('El pijo ha llegado primero. «¡Papá me compra otro!»'); return; }
       if (!PLAYER.car) { K.setObjective('¡Vuelve a un coche!'); return; } if (s2AtGoal(9)) { AUDIO.cash(); S.cp++; if (S.cp >= S.cps.length) { K2().talk([['Pijo de La Esperanza', 'Ugh... vale. Me rindo. Pero no le digáis nada a mi padre, que es concejal.']]); s2Pass('Rally ilegal cancelado', 1200); return; } this.cp(); } } },
-  cp() { const K = K2(), S = this.st, c = S.cps[S.cp]; const last = S.cp === S.cps.length - 1; K.goto(c[0], c[1], 7, last ? 0xf5b72e : 0x46c3ff); K.setObjective((last ? b2('¡META!') : `Control ${S.cp + 1}/${S.cps.length - 1}`) + ' · Gánale al pijo'); },
+  cp() { const K = K2(), S = this.st, c = S.cps[S.cp]; const last = S.cp === S.cps.length - 1; K.goto(c[0], c[1], 7, last ? 0xf5b72e : 0x46c3ff); K.ahead(S.cps, S.cp, S.P.pts); K.setObjective((last ? b2('¡META!') : `Control ${S.cp + 1}/${S.cps.length - 1}`) + ' · Gánale al pijo'); },
 };
 
 // ---------- 6. Los bancos de la Plaza del Adelantado (encargo del alcalde)
@@ -9691,7 +9826,7 @@ const M_CARRERA = {
       if (pts.length < 2) for (let i = 0; i < 3; i++) pts.push([home[0] + Math.cos(i * 2.1) * 150, home[1] + Math.sin(i * 2.1) * 150]);
       pts.push(home); let L = 0, prev = home; for (const p of pts) { L += Math.hypot(p[0] - prev[0], p[1] - prev[1]) * 1.35; prev = p; }
       this.st.cps = pts; this.st.cp = 0; this.st.step = 1; this.st.len = L; K.setTimer(Math.round(40 + L / 3.2)); this.cp(); }); },
-  cp() { const K = K2(), S = this.st, c = S.cps[S.cp]; const last = S.cp === S.cps.length - 1; K.goto(c[0], c[1], 4, last ? 0xf5b72e : 0x46c3ff); K.setObjective((last ? b2('¡Meta en el Ayuntamiento!') : `Control ${S.cp + 1}/${S.cps.length - 1}`) + ' · ¡a pie!'); },
+  cp() { const K = K2(), S = this.st, c = S.cps[S.cp]; const last = S.cp === S.cps.length - 1; K.goto(c[0], c[1], 4, last ? 0xf5b72e : 0x46c3ff); K.ahead(S.cps, S.cp); K.setObjective((last ? b2('¡Meta en el Ayuntamiento!') : `Control ${S.cp + 1}/${S.cps.length - 1}`) + ' · ¡a pie!'); },
   update() { const K = K2(), S = this.st; if (!S || S.step !== 1) return; if (PLAYER.car) { s2Fail('¡En coche no vale! Descalificado'); return; }
     const c = S.cps[S.cp]; if (s2AtGoal(4.5)) { AUDIO.cash(); S.cp++; if (S.cp >= S.cps.length) { K.setTimer(0); s2Pass('Carrera solidaria: 2.000 € para los vecinos', 700); return; } this.cp(); } },
 };
@@ -9934,18 +10069,24 @@ const DIARIO = (() => {
   }
   function render() {
     const tracks = MISSIONS.diary();
-    ui.querySelector('#diaList').innerHTML = tracks.map((t) => `<div style="margin:6px 0 2px;font:400 15px Audiowide,Oswald,sans-serif;color:${t.css}">${esc(t.name)}${t.locked ? ' <span style="color:#999;font-size:12px">(aún no)</span>' : ''}</div>` +
+    // v0.75: first entry, every conversation of the game, newest first
+    ui.querySelector('#diaList').innerHTML = `<div class="diaItem" data-k="__all" data-i="0" style="cursor:pointer;padding:6px 8px;border-radius:6px;margin:0 0 4px;font:400 15px Audiowide,Oswald,sans-serif;color:#ffd27a;background:${sel && sel.k === '__all' ? 'rgba(255,111,184,.28)' : 'transparent'}">💬 Todas las conversaciones</div>` + tracks.map((t) => `<div style="margin:6px 0 2px;font:400 15px Audiowide,Oswald,sans-serif;color:${t.css}">${esc(t.name)}${t.locked ? ' <span style="color:#999;font-size:12px">(aún no)</span>' : ''}</div>` +
       t.list.map((m, i) => `<div class="diaItem" data-k="${t.key}" data-i="${i}" style="cursor:pointer;padding:5px 8px;border-radius:6px;margin:1px 0;font:400 14px Barlow,sans-serif;color:${m.state === 'pendiente' ? '#8f8a9a' : '#fff'};background:${sel && sel.k === t.key && sel.i === i ? 'rgba(255,111,184,.28)' : 'transparent'}">
         <span style="display:inline-block;width:18px;color:${m.state === 'hecha' ? '#7fe08a' : m.state === 'activa' ? '#ffd400' : t.css}">${ICON[m.state]}</span>${esc(m.title)}</div>`).join('')).join('');
     ui.querySelectorAll('.diaItem').forEach((el) => el.onclick = () => { sel = { k: el.dataset.k, i: +el.dataset.i }; render(); });
     const det = ui.querySelector('#diaDet');
     if (!sel) { const t = tracks.find((q) => q.key === 'story'); const i = t.list.findIndex((m) => m.state === 'activa' || m.state === 'siguiente'); sel = { k: 'story', i: Math.max(0, i) }; return render(); }
+    const line = (who, tx) => `<p style="margin:0 0 6px">${who ? `<b style="color:#ffd27a">${esc(who)}:</b> ` : ''}${tx}</p>`;
+    if (sel.k === '__all') { const all = MISSIONS.logAll(); let cur = null;
+      det.innerHTML = `<div style="font:400 22px Audiowide,Oswald,sans-serif;color:#ffd27a">Conversaciones</div><div style="color:#bdb6c9;margin:2px 0 8px;font:400 14px Barlow,sans-serif">De la más reciente a la primera</div><div style="font:400 15px Barlow,sans-serif;line-height:1.35">` +
+        (all.length ? all.map(([who, tx, , title]) => (title !== cur ? `<div style="margin:10px 0 4px;color:#9fd7ff;font:400 13px Audiowide,Oswald,sans-serif">${esc(cur = title)}</div>` : '') + line(who, tx)).join('') : '<p style="color:#8f8a9a">Aún no hay conversaciones.</p>') + '</div>';
+      return; }
     const t = tracks.find((q) => q.key === sel.k), m = t && t.list[sel.i]; if (!m) { det.innerHTML = ''; return; }
     const log = MISSIONS.log(m.title);
     det.innerHTML = `<div style="font:400 22px Audiowide,Oswald,sans-serif;color:${t.css}">${esc(m.title)}</div>
       <div style="color:#bdb6c9;margin:2px 0 8px;font:400 14px Barlow,sans-serif">${esc(t.name)} · ${m.who ? 'Te la da ' + esc(m.who) + ' · ' : ''}<b style="color:${m.state === 'hecha' ? '#7fe08a' : m.state === 'activa' ? '#ffd400' : '#fff'}">${LABEL[m.state]}</b></div>
       ${m.hint ? `<div style="margin-bottom:8px;font:400 15px Barlow,sans-serif">➜ ${m.hint}</div>` : ''}
-      <div style="font:400 15px Barlow,sans-serif;line-height:1.35">${log.length ? log.map(([who, tx]) => `<p style="margin:0 0 6px">${who ? `<b style="color:#ffd27a">${esc(who)}:</b> ` : ''}${tx}</p>`).join('') : '<p style="color:#8f8a9a">Aún no hay conversaciones de esta misión.</p>'}</div>
+      <div style="font:400 15px Barlow,sans-serif;line-height:1.35">${log.length ? '<div style="color:#8f8a9a;font-size:13px;margin-bottom:4px">De lo más reciente a lo primero</div>' + log.map(([who, tx]) => line(who, tx)).join('') : `<p style="color:#8f8a9a">${m.state === 'hecha' ? 'Esta misión se terminó en una partida de antes de que el diario guardara las conversaciones: si la repites («Reiniciar desde aquí») quedarán aquí.' : 'Aún no hay conversaciones de esta misión.'}</p>`}</div>
       <div style="margin-top:10px"><button class="btn" id="diaReset" style="font-size:15px;padding:8px 16px">REINICIAR DESDE AQUÍ</button>
       <span style="color:#8f8a9a;font:400 13px Barlow,sans-serif;margin-left:8px">vuelve a esta misión y todo lo que va detrás en «${esc(t.name)}»</span></div>`;
     det.querySelector('#diaReset').onclick = () => { if (!confirmReset(m.title)) return; MISSIONS.resetFrom(sel.k, sel.i); HUD.toast('Reiniciado desde «' + m.title + '»', t.css, 4); render(); };
@@ -10129,6 +10270,41 @@ function camposInit() {
     else Object.assign(c, { gate: 'court', x: P.cx, z: P.cz, label: what + (c.street ? ' de ' + c.street : '') });
     c.icon = footIcon(c.x, c.z, c.gate === 'door' ? 3.0 : 4.6); COURTS.push(c);
   }
+  // v0.75: the Estadio Francisco Peraza: its door on the street (05v_peraza.js) only opens for the Copa Laguna final
+  if (typeof PERAZA !== 'undefined' && PERAZA.door) { let c = COURTS.find((q) => q.sport === 'fut' && Math.hypot(q.cx - PERAZA.cx, q.cz - PERAZA.cz) < 30);
+    if (!c) { c = { id: 'f' + n++, sport: 'fut', cx: PERAZA.cx, cz: PERAZA.cz, kind: 'f11', dist: Math.hypot(PERAZA.cx - o[0], PERAZA.cz - o[1]) }; COURTS.push(c); }
+    if (c.icon && c.icon.parent) c.icon.parent.remove(c.icon);
+    Object.assign(c, { id: 'peraza', gate: 'door', x: PERAZA.door[0], z: PERAZA.door[1], label: 'Estadio Francisco Peraza', street: PERAZA.street || c.street, level: 5, final: true, F: null }); c.icon = footIcon(c.x, c.z, 3.4); }
+  copaInit();
+}
+// ---------- Copa Laguna (v0.75, Jonay): the football tournament, like the Torneo Lagunero of basketball: 4 pitches
+// round town (each harder) and the final in the Estadio Francisco Peraza. Opens after the Obispo's football game.
+const COPA_TEAMS = [
+  { name: 'Atlético Gofio de Geneto', short: 'AT. GOFIO', cap: 'Míster Cholo Pérez', lv: 0.3, prize: 350, kit: { shirt: '#c0392b', shorts: '#f2f2f2', socks: '#c0392b', stripe: '#f2f2f2' } },
+  { name: 'Unión Perenquén de Finca España', short: 'PERENQUÉN', cap: 'Yeray «el Lagarto»', lv: 0.4, prize: 500, kit: { shirt: '#27ae60', shorts: '#222', socks: '#27ae60' } },
+  { name: 'Deportivo Papas Arrugadas de Valle Guerra', short: 'PAPAS ARR.', cap: 'Don Fefo', lv: 0.5, prize: 700, kit: { shirt: '#f1c40f', shorts: '#6d3b16', socks: '#6d3b16' } },
+  { name: 'Real Mojo Tejina Balompié', short: 'REAL MOJO', cap: 'Iballa la entrenadora', lv: 0.62, prize: 900, kit: { shirt: '#8e44ad', shorts: '#f2f2f2', socks: '#8e44ad' } },
+  { name: 'Los Galácticos de Guamasa', short: 'GALÁCTICOS', cap: 'Florentino Guanche', lv: 0.76, prize: 2000, kit: { shirt: '#f2f2f2', shorts: '#f2f2f2', socks: '#f2f2f2', stripe: '#d4af37' } },
+];
+function copaInit() {
+  const fin = COURTS.find((c) => c.sport === 'fut' && c.final); const ob = obispoCampo();
+  const pub = COURTS.filter((c) => c.sport === 'fut' && !c.final && c !== ob && c.kind !== 'fs').sort((a, b) => a.dist - b.dist);
+  const chosen = []; for (const sp of [450, 300, 150, 0]) { for (const c of pub) { if (chosen.length >= 4) break; if (chosen.includes(c)) continue; if (chosen.every((q) => Math.hypot(q.cx - c.cx, q.cz - c.cz) >= sp)) chosen.push(c); } if (chosen.length >= 4) break; }
+  if (!chosen.length || !fin) return;
+  const list = COPA_TEAMS.map((t, i) => { const finalGame = i === 4; const c = finalGame ? fin : chosen[i % chosen.length];
+    const rival = [0, 1, 2, 3, 4].map((k) => ({ name: (k === 0 ? 'PORTERO' : t.short.slice(0, 7) + ' ' + (k + 1)), look: RIVAL_LOOKS[(i * 2 + k) % RIVAL_LOOKS.length] }));
+    return { title: finalGame ? 'Copa Laguna: la final' : `Copa Laguna ${i + 1}/5`, who: t.cap, court: c,
+      hint() { return `${t.name} os esperan en ${MISSIONS.kit.bold(finalGame ? 'el Estadio Francisco Peraza' : c.label)}`; },
+      startPos() { return [c.x, c.z]; },
+      start() { const K = MISSIONS.kit;
+        const lines = finalGame ? [[t.cap, 'La final de la Copa Laguna, en el Francisco Peraza, con gradas, megafonía y hasta el concejal en el palco. Nosotros no perdemos aquí desde que se inventó el gofio.'], ['El Blanco', 'Brrr... ¡portería a cero!... mmm... pssst.'], [K.CH, 'Ya lo habéis oído. El Blanco no deja pasar ni el aire. ¡A por la copa!']]
+          : [[t.cap, `¿Vosotros sois los de la Copa? Somos ${t.name}. Aquí se juega al fútbol de verdad, no al de los videojuegos.`], ['Boca Papa', 'Chopa, yo atrás no dejo pasar a nadie. Bueno, a nadie que no me invite a un barraquito.']];
+        K.talk(lines, () => { if (!K.isActive(this)) return;
+          playFieldGame(c, { rival, rivalName: t.short, kit: t.kit, lv: t.lv, time: finalGame ? 210 : 160,
+            onEnd: (r) => { if (!K.isActive(this)) return; if (r.won) { if (finalGame) HUD.big('¡CAMPEONES DE LA COPA LAGUNA!', '#26d07c', 6); K.pass(this.title, t.prize); } else K.fail(finalGame ? 'Habéis perdido la final. Volved a intentarlo en el Francisco Peraza.' : `${t.name} os han ganado.`); } }); }); },
+      update() { } };
+  });
+  MISSIONS.addCopa(list);
 }
 // the Obispo's pitch: the nearest real football field (11 or 7) you can walk onto, else any
 function obispoCampo() {
@@ -10153,6 +10329,7 @@ function useFieldGate(c) {
   const A = MISSIONS.active;
   if (A && A.gate === c.id && A.onGate) { A.onGate(c); return; }
   if (A) { HUD.toast('Termina primero la misión que llevas.', '#f5b72e', 3); return; }
+  if (c.final) { HUD.toast('El Estadio Francisco Peraza solo abre para la final de la Copa Laguna.', '#26d07c', 4); return; }
   if (!MISSIONS.gang.futbolTut) { HUD.toast('Aquí se juega al fútbol. Primero aprende: Monseñor Truchas, en el Obispado, organiza partidos benéficos.', '#b388ff', 5); return; }
   const prize = 50 * c.level, kit = FOOT_RIVAL_KITS[(c.level + Math.floor(Math.abs(c.cx))) % FOOT_RIVAL_KITS.length];
   DLG.show(c.label, 'Partido 5 contra 5', `Los del barrio os retan: la banda contra ellos. <b>Nivel ${c.level}/5</b>. Si ganáis: <b>$${prize}</b>.`, '¿Jugáis?', ['Jugar', 'Ahora no'], (i) => {
@@ -10405,7 +10582,7 @@ async function boot() {
   window.__GAME_READY = true;
 }
 boot();
-window.__bg = [bgScene, bgCamera]; window.__dbg = { get RCLIP() { return RCLIP; }, get TCUTS() { return TCUTS; }, s2Human, s2Down, s2DownTick, onCarriagewayEarly, FLIGHT, updateAirport, TF13, TRAM_TRENCH, tramDepth, OBISPADO_TEX: obispadoTex, MALEANTES, startStreetFight, lineRuns, BIGSTORES, SIGN, roadClip, BASKET2D, FUTBOL2D, obispoCampo, TRI, OBISPADO, SPORTS, inAnyBuilding, COURTS, courtGateNear, useCourtGate, DIARIO, inPitch, pitchRects, obispoCourt, LAMPS, TREES, GUIDE, AYTO, HUC, HEALTH, nearestHealth, exitCar, DLG, S2, POOLS: { CARPOOL, HPOOL, SHARED_GEO, VGEO }, SHARED_GEO, MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
+window.__bg = [bgScene, bgCamera]; window.__dbg = { get RCLIP() { return RCLIP; }, PERAZA, MINI, KEYS, PRESSED, INPUT, get TCUTS() { return TCUTS; }, s2Human, s2Down, s2DownTick, onCarriagewayEarly, FLIGHT, updateAirport, TF13, TRAM_TRENCH, tramDepth, OBISPADO_TEX: obispadoTex, MALEANTES, startStreetFight, lineRuns, BIGSTORES, SIGN, roadClip, BASKET2D, FUTBOL2D, obispoCampo, TRI, OBISPADO, SPORTS, inAnyBuilding, COURTS, courtGateNear, useCourtGate, DIARIO, inPitch, pitchRects, obispoCourt, LAMPS, TREES, GUIDE, AYTO, HUC, HEALTH, nearestHealth, exitCar, DLG, S2, POOLS: { CARPOOL, HPOOL, SHARED_GEO, VGEO }, SHARED_GEO, MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
 window.__snap = () => { updateUnderground(); bgCamera.position.copy(camera.position); bgCamera.quaternion.copy(camera.quaternion); bgCamera.fov = camera.fov; bgCamera.updateProjectionMatrix(); renderer.clear(); renderer.render(bgScene, bgCamera); renderer.clearDepth(); renderer.render(scene, camera); return renderer.domElement.toDataURL('image/jpeg', 0.85); };
 window.__setYaw = (y) => { CAM.yaw = y; CAM.pitch = 0.1; INPUT.lastMouse = performance.now(); };
 window.__hit = (p) => hitPed(p);

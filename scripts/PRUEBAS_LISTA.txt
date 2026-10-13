@@ -1,6 +1,6 @@
 # Pruebas de ESTA versión (scripts\PRUEBAS.bat las junta con las de lo cambiado).
-# v0.74.0: seis arreglos rápidos (rotonda del aeropuerto, obstáculos en calzada, enemigos abatidos, recorte, callejero)
-prueba_074.py
-prueba_grandes.py
-prueba_recorte.py
-prueba_persecuciones.py
+# v0.75.0: Copa Laguna y Estadio Francisco Peraza, reglas del portero y saques, flechas de persecución y carreras, diario
+prueba_075.py
+prueba_futbol.py
+prueba_diario.py
+prueba_canchas.py

@@ -196,3 +196,11 @@ altura sin enlace y estructuras metidas en carriles. Ver `docs/07_pruebas.md`.
   (anillo 6 m, túneles 7,4 m, accesos hasta 75 m); bocas de bóveda con `archPath`/`archFrame`.
 - **Aeropuerto** (`airportExtras`, `updateAirport`/`FLIGHT` en `05r_aeropuerto.js`).
 - **Callejero** (`CALLEJERO_TRAFICO` en `01_core.js`, antes del ensanche de calles).
+
+## Estadio Municipal Francisco Peraza (v0.75)
+
+- `05v_peraza.js`: las cuatro gradas que OSM pinta como «edificios» de 9,9 m (estilo 6) dentro del área del estadio
+  (`perazaStand`, llamado desde `buildBuildings`) se hacen gradas: los asientos suben en pendiente desde la pista de
+  atletismo hasta el fondo (filas azules y escalones grises, `perazaSeatTex`), con muro trasero y, en la más grande (la
+  tribuna este), techo sobre pilares. Puerta en la calle más cercana con el nombre del estadio y una taquilla
+  (`PERAZA.door`). Las gradas genéricas de `buildSports` no se ponen en este estadio.

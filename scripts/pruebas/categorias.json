@@ -99,6 +99,12 @@
    ]
   ],
   [
+   "^src/(05v_peraza|09ea_minijuegos|09g_futbol2d|11c_guide|12h_diario|12j_campos)",
+   [
+    "prueba_075.py"
+   ]
+  ],
+  [
    "^src/(09g_futbol2d|12j_campos)",
    [
     "prueba_futbol.py",

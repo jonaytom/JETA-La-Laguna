@@ -21,18 +21,24 @@ const DIARIO = (() => {
   }
   function render() {
     const tracks = MISSIONS.diary();
-    ui.querySelector('#diaList').innerHTML = tracks.map((t) => `<div style="margin:6px 0 2px;font:400 15px Audiowide,Oswald,sans-serif;color:${t.css}">${esc(t.name)}${t.locked ? ' <span style="color:#999;font-size:12px">(aún no)</span>' : ''}</div>` +
+    // v0.75: first entry, every conversation of the game, newest first
+    ui.querySelector('#diaList').innerHTML = `<div class="diaItem" data-k="__all" data-i="0" style="cursor:pointer;padding:6px 8px;border-radius:6px;margin:0 0 4px;font:400 15px Audiowide,Oswald,sans-serif;color:#ffd27a;background:${sel && sel.k === '__all' ? 'rgba(255,111,184,.28)' : 'transparent'}">💬 Todas las conversaciones</div>` + tracks.map((t) => `<div style="margin:6px 0 2px;font:400 15px Audiowide,Oswald,sans-serif;color:${t.css}">${esc(t.name)}${t.locked ? ' <span style="color:#999;font-size:12px">(aún no)</span>' : ''}</div>` +
       t.list.map((m, i) => `<div class="diaItem" data-k="${t.key}" data-i="${i}" style="cursor:pointer;padding:5px 8px;border-radius:6px;margin:1px 0;font:400 14px Barlow,sans-serif;color:${m.state === 'pendiente' ? '#8f8a9a' : '#fff'};background:${sel && sel.k === t.key && sel.i === i ? 'rgba(255,111,184,.28)' : 'transparent'}">
         <span style="display:inline-block;width:18px;color:${m.state === 'hecha' ? '#7fe08a' : m.state === 'activa' ? '#ffd400' : t.css}">${ICON[m.state]}</span>${esc(m.title)}</div>`).join('')).join('');
     ui.querySelectorAll('.diaItem').forEach((el) => el.onclick = () => { sel = { k: el.dataset.k, i: +el.dataset.i }; render(); });
     const det = ui.querySelector('#diaDet');
     if (!sel) { const t = tracks.find((q) => q.key === 'story'); const i = t.list.findIndex((m) => m.state === 'activa' || m.state === 'siguiente'); sel = { k: 'story', i: Math.max(0, i) }; return render(); }
+    const line = (who, tx) => `<p style="margin:0 0 6px">${who ? `<b style="color:#ffd27a">${esc(who)}:</b> ` : ''}${tx}</p>`;
+    if (sel.k === '__all') { const all = MISSIONS.logAll(); let cur = null;
+      det.innerHTML = `<div style="font:400 22px Audiowide,Oswald,sans-serif;color:#ffd27a">Conversaciones</div><div style="color:#bdb6c9;margin:2px 0 8px;font:400 14px Barlow,sans-serif">De la más reciente a la primera</div><div style="font:400 15px Barlow,sans-serif;line-height:1.35">` +
+        (all.length ? all.map(([who, tx, , title]) => (title !== cur ? `<div style="margin:10px 0 4px;color:#9fd7ff;font:400 13px Audiowide,Oswald,sans-serif">${esc(cur = title)}</div>` : '') + line(who, tx)).join('') : '<p style="color:#8f8a9a">Aún no hay conversaciones.</p>') + '</div>';
+      return; }
     const t = tracks.find((q) => q.key === sel.k), m = t && t.list[sel.i]; if (!m) { det.innerHTML = ''; return; }
     const log = MISSIONS.log(m.title);
     det.innerHTML = `<div style="font:400 22px Audiowide,Oswald,sans-serif;color:${t.css}">${esc(m.title)}</div>
       <div style="color:#bdb6c9;margin:2px 0 8px;font:400 14px Barlow,sans-serif">${esc(t.name)} · ${m.who ? 'Te la da ' + esc(m.who) + ' · ' : ''}<b style="color:${m.state === 'hecha' ? '#7fe08a' : m.state === 'activa' ? '#ffd400' : '#fff'}">${LABEL[m.state]}</b></div>
       ${m.hint ? `<div style="margin-bottom:8px;font:400 15px Barlow,sans-serif">➜ ${m.hint}</div>` : ''}
-      <div style="font:400 15px Barlow,sans-serif;line-height:1.35">${log.length ? log.map(([who, tx]) => `<p style="margin:0 0 6px">${who ? `<b style="color:#ffd27a">${esc(who)}:</b> ` : ''}${tx}</p>`).join('') : '<p style="color:#8f8a9a">Aún no hay conversaciones de esta misión.</p>'}</div>
+      <div style="font:400 15px Barlow,sans-serif;line-height:1.35">${log.length ? '<div style="color:#8f8a9a;font-size:13px;margin-bottom:4px">De lo más reciente a lo primero</div>' + log.map(([who, tx]) => line(who, tx)).join('') : `<p style="color:#8f8a9a">${m.state === 'hecha' ? 'Esta misión se terminó en una partida de antes de que el diario guardara las conversaciones: si la repites («Reiniciar desde aquí») quedarán aquí.' : 'Aún no hay conversaciones de esta misión.'}</p>`}</div>
       <div style="margin-top:10px"><button class="btn" id="diaReset" style="font-size:15px;padding:8px 16px">REINICIAR DESDE AQUÍ</button>
       <span style="color:#8f8a9a;font:400 13px Barlow,sans-serif;margin-left:8px">vuelve a esta misión y todo lo que va detrás en «${esc(t.name)}»</span></div>`;
     det.querySelector('#diaReset').onclick = () => { if (!confirmReset(m.title)) return; MISSIONS.resetFrom(sel.k, sel.i); HUD.toast('Reiniciado desde «' + m.title + '»', t.css, 4); render(); };
