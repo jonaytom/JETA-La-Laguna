@@ -31,12 +31,22 @@ function s2Path(pts) { const cum = [0]; for (let i = 2; i < pts.length; i += 2) 
   const tot = cum[cum.length - 1];
   const at = (s) => { s = clamp(s, 0, tot); let k = 1; while (k < cum.length - 1 && cum[k] < s) k++; const t = (s - cum[k - 1]) / ((cum[k] - cum[k - 1]) || 1); return [lerp(pts[(k - 1) * 2], pts[k * 2], t), lerp(pts[(k - 1) * 2 + 1], pts[k * 2 + 1], t), Math.atan2(pts[k * 2] - pts[(k - 1) * 2], pts[k * 2 + 1] - pts[(k - 1) * 2 + 1])]; };
   return { pts, cum, tot, at, s: 0, v: 0 }; }
+// a point of a car's route with the corners rounded: the middle of the points R m behind and R m ahead (R grows with
+// speed); the plain route at the start and the end so the car doesn't jump (v0.70, Jonay: chased cars turned on the spot)
+function roundedAt(at, s, v, tot) {
+  const R = clamp(3 + v * 0.25, 3, 7), q0 = at(s - R), q1 = at(s + R), qh = Math.atan2(q1[0] - q0[0], q1[1] - q0[1]);
+  const qs = at(s), f = Math.min(clamp(s / R, 0, 1), clamp((tot - s) / R, 0, 1));
+  return [lerp(qs[0], (q0[0] + q1[0]) / 2, f), lerp(qs[1], (q0[1] + q1[1]) / 2, f), qs[2] + angDiff(qs[2], qh) * f];
+}
 // car driven along the path (kinematic, like the Canarión's): brakes for bends, keeps a gap to the player
 function s2DriveCar(c, P, dt, top, gapRule) {
-  const a = P.at(P.s), b = P.at(Math.min(P.tot, P.s + 25)); const bend = Math.abs(angDiff(a[2], b[2]));
-  let vt = (bend > 1.0 ? 0.35 : bend > 0.5 ? 0.55 : bend > 0.25 ? 0.75 : 1) * top; if (gapRule) vt *= gapRule(Math.hypot(PLAYER.x - c.x, PLAYER.z - c.z));
+  // v0.70 (Jonay: they turned on the spot): brake for the sharpest bend in the next 12–35 m (further when fast) and
+  // drive through it on a rounded line (the middle of the points R m behind and R m ahead) instead of the polyline corner
+  const a = P.at(P.s), look = 12 + P.v * 1.2; let bend = 0; for (const d of [look * 0.5, look, look * 1.5]) bend = Math.max(bend, Math.abs(angDiff(a[2], P.at(Math.min(P.tot, P.s + d))[2])));
+  let vt = (bend > 1.0 ? 0.32 : bend > 0.5 ? 0.5 : bend > 0.25 ? 0.72 : 1) * top; if (gapRule) vt *= gapRule(Math.hypot(PLAYER.x - c.x, PLAYER.z - c.z));
   P.v = lerp(P.v, vt, clamp(dt * (vt < P.v ? 2.5 : 0.8), 0, 1)); P.s = Math.min(P.tot, P.s + P.v * dt);
-  const q = P.at(P.s); c.x = q[0] + Math.cos(q[2]) * 1.6; c.z = q[1] - Math.sin(q[2]) * 1.6; c.h += angDiff(c.h, q[2]) * clamp(dt * 6, 0, 1); c.fwdV = P.v; c.vx = Math.sin(q[2]) * P.v; c.vz = Math.cos(q[2]) * P.v;
+  const q = roundedAt(P.at, P.s, P.v, P.tot);
+  c.x = q[0] + Math.cos(q[2]) * 1.6; c.z = q[1] - Math.sin(q[2]) * 1.6; c.h += angDiff(c.h, q[2]) * clamp(dt * 4, 0, 1); c.fwdV = P.v; c.vx = Math.sin(q[2]) * P.v; c.vz = Math.cos(q[2]) * P.v;
   return P.s >= P.tot - 1;
 }
 function s2Runner(n, P, dt, speed, off = 0) { // a person running away along the path (off: metres to the side of the road axis)

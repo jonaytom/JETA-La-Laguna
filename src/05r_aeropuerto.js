@@ -69,7 +69,12 @@ function buildAirport() {
     const tris = THREE.ShapeUtils.triangulateShape(P.map((p) => new THREE.Vector2(p[0], p[1])), []); for (const t of tris) { const x = P[t[0]], y = P[t[1]], z = P[t[2]]; B.quad(steel, [x[0], g0 + 11, x[1]], [z[0], g0 + 11, z[1]], [y[0], g0 + 11, y[1]], [y[0], g0 + 11, y[1]]); } }
   B.finish(root); scene.add(root);
   // ---- parked turboprops of the parody airline (high wing, two propellers, T-tail), nose to the terminal
-  const tc = AIRPORT.terminal; for (const a of AW) if (a[0] === 'parking_position') { const x = a[3][0], z = a[3][1]; const h = tc ? Math.atan2(tc.cx - x, tc.cz - z) : 0; const pl = makePlane(); pl.position.set(x, heightAt(x, z), z); pl.rotation.y = h; scene.add(pl); AIRPORT.planes.push(pl); for (const k of [-8, 0, 8]) COL.addCirc(x + Math.sin(h) * k, z + Math.cos(h) * k, 1.6); }
+  const tc = AIRPORT.terminal; for (const a of AW) if (a[0] === 'parking_position') { let x = a[3][0], z = a[3][1]; const h = tc ? Math.atan2(tc.cx - x, tc.cz - z) : 0;
+    // v0.70 (auditor): OSM draws the apron's service lanes through the stands; move the plane to the nearest spot (rings
+    // every 2 m up to 40 m) where none of its three collision circles is on a lane
+    const free = (x0, z0) => [-8, 0, 8].every((k) => { const px = x0 + Math.sin(h) * k, pz = z0 + Math.cos(h) * k, rd = ROADSEG.nearest(px, pz, (r) => r[0] <= 12 && !(r[3] & 2)); return !rd || rd.d >= DATA.R[rd.ri][2] / 2 + 1.9; });
+    if (!free(x, z)) { let found = null; for (let r = 2; r <= 40 && !found; r += 2) for (let k = 0, n = Math.ceil(r * 1.6); k < n; k++) { const a = k / n * Math.PI * 2, x1 = x + Math.sin(a) * r, z1 = z + Math.cos(a) * r; if (free(x1, z1)) { found = [x1, z1]; break; } } if (found) [x, z] = found; }
+    const pl = makePlane(); pl.position.set(x, heightAt(x, z), z); pl.rotation.y = h; scene.add(pl); AIRPORT.planes.push(pl); for (const k of [-8, 0, 8]) COL.addCirc(x + Math.sin(h) * k, z + Math.cos(h) * k, 1.6); }
   AIRPORT.ok = true;
 }
 let PLANE_GEO = null;

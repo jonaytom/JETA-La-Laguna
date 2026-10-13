@@ -416,12 +416,14 @@ function startStreetFight(p) {
   if (p.kind === undefined) p.kind = fem ? (big || Math.random() < 0.22 ? 'gorda' : 'mujer') : (p.canarion ? 'canarion' : (big || Math.random() < 0.2 ? 'fuerte' : 'hombre'));
   const K = { mujer: { deal: 0.5, recv: 2, name: 'VECINA' }, gorda: { deal: 1.1, recv: 0.5, name: 'DOÑA' }, fuerte: { deal: 2, recv: 0.9, name: 'CACHAS' }, hombre: { deal: 1, recv: 1, name: 'VECINO' }, canarion: { deal: 1, recv: 1, name: 'CANARIÓN' } }[p.kind];
   if (p.kind === 'gorda') lk.fat = true; if (p.kind === 'fuerte') lk.strong = true;
+  const mal = p.maleante ? MALEANTES.fightFor(p) : null; if (mal) lk.strong = true; // v0.70: a wanted thug (09h_maleantes.js)
   const crowd = PEDS.filter((q) => q !== p && q.down <= 0 && Math.hypot(q.x - PLAYER.x, q.z - PLAYER.z) < 25).length;
   const pl = playerHuman.look || {};
   FIGHT2D.start({
-    a: { name: 'EL CHOPA', look: { ...pl }, nose: true }, b: { name: K.name, look: lk, deal: K.deal, recv: K.recv, ai: { lv: rnd(0.25, 0.55), t: 0, blockT: 0 } },
+    a: { name: 'EL CHOPA', look: { ...pl }, nose: true }, b: mal ? { name: mal.name, look: lk, deal: mal.deal, recv: mal.recv, ai: { lv: mal.lv, t: 0, blockT: 0 } } : { name: K.name, look: lk, deal: K.deal, recv: K.recv, ai: { lv: rnd(0.25, 0.55), t: 0, blockT: 0 } },
     ax: PLAYER.x, az: PLAYER.z, bx: p.x, bz: p.z, hide: [playerHuman.root, p.H.root, WEAPON.mesh],
     onEnd: (r) => {
+      if (mal) { MALEANTES.result(p, r.won); if (r.won) { p.down = 8; p.fight = 0; p.fought = true; } else { PLAYER.health = Math.max(1, PLAYER.health - 15); PLAYER.down = 2; } FIGHT.cd = 1.5; return; } // no crime: he is wanted
       if (r.won) { const cash = Math.random() < 0.05 ? 100 : Math.round(rnd(5, 25)); PLAYER.money += cash; AUDIO.cash(); HUD.toast(`¡Pelea ganada! +$${cash}`, cash >= 100 ? '#ffd400' : '#7fe08a', 3); p.down = 6; p.fight = 0; p.paid = true; SUB.show('<b>' + (p.canarion ? 'Canarión' : fem ? 'Vecina' : 'Vecino') + ':</b> ' + pick(p.canarion ? LINES.canCry : LINES.pay), 3); }
       else { PLAYER.health = Math.max(1, PLAYER.health - 10); HUD.toast('Te han dado una paliza… -10 de salud', '#ffb3b3', 3); p.flee = 6; p.fleeFrom = [PLAYER.x, PLAYER.z]; PLAYER.down = 2; SUB.show('<b>' + (fem ? 'Vecina' : 'Peatón') + ':</b> ' + pick(LINES.win), 3); }
       p.fought = true; FIGHT.cd = 1.5;

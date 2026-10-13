@@ -33,5 +33,8 @@
   "audit_obstaculos.py": "auditoría: obstáculos en calles y aceras",
   "prueba_futbol.py": "fútbol 5 contra 5: partido, tutorial, ratón y misión del Obispo",
   "prueba_trinidad.py": "Av. Trinidad: anchos, edificios, rampas del parking, fotos",
-  "prueba_recorte.py": "edificios fuera de la calzada en todo el mapa, con fotos"
+  "prueba_recorte.py": "edificios fuera de la calzada en todo el mapa, con fotos",
+  "prueba_maleantes.py": "maleantes en busca y captura: salen, pelea difícil y recompensa",
+  "prueba_pendientes_faciles.py": "marcas viales, aviones, Telepisa y edificios en calzada",
+  "herramientas/sonda_zonas.py": "dónde se recoge y por dónde pasa cada misión"
 }

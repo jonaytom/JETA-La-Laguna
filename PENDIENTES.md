@@ -9,7 +9,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       encerradas y el Máyex): revisar una a una con `prueba_canchas.py` (lista y fotos) cuáles son públicas y cuáles de
       colegio, y mejorar su aspecto. Recrear mejor por fuera el **Pabellón Juan Ríos Tejera** (nave blanca, cubierta
       gris, valla morada; fotos en `docs/referencias/rios_tejera/`) y el **Colegio Máyex** (`docs/referencias/colegio_mayex/`).
-- [ ] **Av. de La Trinidad: el edificio de «Telepisa»** (Jonay, 13-oct): junto a la rampa del n.º 59 sale un edificio
+- [x] v0.70.0 (las franquicias de bajo ya no hacen gran superficie) **Av. de La Trinidad: el edificio de «Telepisa»** (Jonay, 13-oct): junto a la rampa del n.º 59 sale un edificio
       enorme, bajo y plano con el cartel de Telepisa en el tejado. En la realidad la pizzería es solo el bajo: tiene que
       ser un bloque de viviendas con la tienda en la planta baja (cartel en la fachada, no arriba).
 - [x] v0.67.0 **Fútbol tipo Sensible Soccer** para las misiones del Obispo (segunda pasada).
@@ -24,7 +24,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       todo lo que va detrás (útil ahora para las pruebas). En la primera misión, cuando El Blanco te la asigne, te dice
       que con la J puedes ver las misiones. (Ojo: la J ya es puñetazo en la pelea 2D, pero solo dentro de la pelea.)
 
-- [ ] **Giros de los coches perseguidos demasiado cerrados** (Jonay, 12-oct): en las persecuciones de misión los coches
+- [x] v0.70.0 (curva redondeada y frenada antes; también el Canarión) **Giros de los coches perseguidos demasiado cerrados** (Jonay, 12-oct): en las persecuciones de misión los coches
       que huyen giran en seco; deberían girar de forma más gradual (curva más abierta, frenar antes de la esquina).
 
 - [x] v0.67.0 **Primeras misiones del Obispo: partidos para la obra de la iglesia** (v0.65.0: las 2 de baloncesto; v0.67.0: las 2 de fútbol) (Jonay, 12-oct; va con «El Obispo y el
@@ -49,6 +49,10 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       cartel verde de calles muestra el texto en espejo desde la parte de atrás; la cara trasera debería ser lisa o
       llevar el texto al derecho.
 
+- [x] v0.70.0 (recorte en esquinas y empuje: 374 → 189 invasiones; aviones apartados; gunGeos se crea una vez) **Auditoría v0.69.0** (APTO CON AVISOS, comparada con la 0.68; pruebas 22/23, falla solo la conducción en los tramos de siempre: Camino La Rúa 308 y Autopista del Norte 1287 y 2295; Camino La Hornera ya pasa): 326 invasiones de calzada menos, sin obstáculos nuevos, sin fugas, calidad del código **B** (72). Avisos nuevos:
+      3 edificios nuevos en calzada que salen del recorte: Plaza de San Cristóbal (X 73, Z 234, 1,9 m), Av. Lucas Vega (X -909, Z -408, 2,3 m) y uno sin nombre (X 1692, Z 4082, 1,9 m);
+      `09c_weapons.js:20` `gunGeos()` alloc-geo (geometría compartida que se crea una sola vez: probable falso aviso, revisar).
+      Métricas: llamadas 667 → 674, vértices +3 %, pintar 44,2 → 44,7 ms, arranque 11,9 → 12,2 s.
 - [x] v0.69.0 (salas: los avisos venían de un `make` con el mismo nombre que otro de la brújula; ya no salen) **Auditoría v0.68.0** (APTO CON AVISOS; pruebas 4/4; 12 invasiones de calzada y 6 obstáculos menos, llamadas
       688 → 667, triángulos −2 %): 52 avisos «nuevos» de geometría creada en `buildHall()` (`05m_parking.js`): son las salas
       de los aparcamientos, que ahora se crean desde `05u_trinidad.js` (se hacen una vez al cargar). Pintar 41 → 44 ms
@@ -58,7 +62,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       `12j_campos.js:12` `footIcon()` (geometría que se crea una vez al cargar, como las de las canchas); calidad del código:
       `09f_basket2d.js` baja de B a D y `09g_futbol2d.js` entra con D (líneas muy largas y funciones grandes: partirlas si
       Jonay quiere). Pintar 32 → 41 ms otra vez en la 2.ª pasada del día (vigilar). No tocar hasta que Jonay lo diga.
-- [~] v0.69.0 (puertas de canchas ya no salen; obstáculos de árboles, farolas, mobiliario y parada del tranvía quitados; quedan los aviones del aeropuerto en las vías de servicio de la plataforma y el agente revisor, sin repasar desde la v0.48) **Auditoría v0.66.0** (APTO CON AVISOS, comparada con la 0.65.1; sin fugas ni obstáculos nuevos; pruebas 18/18):
+- [~] v0.69.0 (puertas de canchas ya no salen; obstáculos de árboles, farolas, mobiliario y parada del tranvía quitados; aviones apartados en la v0.70.0; queda el agente revisor, sin repasar desde la v0.48) **Auditoría v0.66.0** (APTO CON AVISOS, comparada con la 0.65.1; sin fugas ni obstáculos nuevos; pruebas 18/18):
       5 avisos nuevos de geometría creada en `12i_canchas.js` (`gateIcon()` l. 33 y `riosTejeraInit()` l. 72–77): se
       crean una vez al cargar (puertas de canchas, pabellón), no al jugar; valorar compartir geometrías si Jonay quiere.
       Obstáculos en calzada (40; 5 «alta», capturas en `resultados_pc\2026-10-12_0.66.0_local\capturas_mapa`): Av. de La
@@ -82,7 +86,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       superpuesta bajo el personaje que apunte hacia él, para no tener que mirar el mapa.
 - [x] v0.60.0 **Carrera solidaria del casco imposible** (Jonay, 12-oct): ~6 min corriendo y no llega a los dos últimos controles
       (tuvo que teletransportarse). Reducir bastante las distancias (y/o el tiempo por control).
-- [ ] **Misiones por zonas** (Jonay, 12-oct; v0.62.0: Coco y Sastrón ya salen cerca del inicio, falta lo de las zonas): al principio Coco y Sastrón aparecen demasiado lejos; que las primeras
+- [~] v0.70.0 (sonda `herramientas/sonda_zonas.py` con los datos; falta reordenar con ellos) **Misiones por zonas** (Jonay, 12-oct; v0.62.0: Coco y Sastrón ya salen cerca del inicio, falta lo de las zonas): al principio Coco y Sastrón aparecen demasiado lejos; que las primeras
       misiones salgan cerca del inicio. Las siguientes pueden estar algo más lejos, pero cada tanda debería ir por zonas:
       estando en una zona, lo que se hace queda relativamente cerca de ese punto.
 - [x] v0.60.0 **Rutas de carreras y huidas lejos del borde del mapa** (Jonay, 12-oct): si un enemigo o una carrera lleva cerca
@@ -107,7 +111,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 - [x] v0.65.0 **Minijuego de baloncesto 2D tipo NBA Jam** (falta: retos libres en cualquier cancha y controles en el móvil) (Jonay, 12-oct): en las canchas; retar a partidos con tus amigos de la
       banda contra la gente que está allí, para ganar dinero.
 - [x] v0.67.0 **Minijuego de fútbol 2D tipo Sensible Soccer** (Jonay, 12-oct): en los campos de fútbol.
-- [ ] **Maleantes en busca y captura** (Jonay, 12-oct): cuando ya sabes pelear (tras las misiones), a veces salen en el
+- [x] v0.70.0 (`09h_maleantes.js`; Jonay lo prueba) **Maleantes en busca y captura** (Jonay, 12-oct): cuando ya sabes pelear (tras las misiones), a veces salen en el
       minimapa NPC marcados con los que puedes pelear como con cualquiera, pero dan más dinero y son más difíciles: más
       combos y se cubren más. Tres niveles internos de dificultad, siempre por encima de la gente normal.
 - [x] v0.62.0 **Nombre de la banda** (Jonay, 12-oct): en «La firma de la banda», la opción «Los Chachos de Aguere» pasa a ser
@@ -220,7 +224,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       Carretera de San Miguel de Geneto): revisar dónde se queda parado el personaje.
 - [x] v0.54.0 **Freno de mano** (Jonay): al accionarlo debe bloquear las ruedas traseras: frena, derrapa un poco y gira más
       cerrado, como en la realidad. Revisar cómo hacerlo y proponerlo.
-- [ ] **Marcas viales** (apunte de Jonay): con los puentes y cruces hay líneas que se cruzan por todas partes; también
+- [~] v0.70.0 (sin líneas donde una calle está dentro de otra: cruces, incorporaciones, glorietas; mirar las fotos `faciles_*`) **Marcas viales** (apunte de Jonay): con los puentes y cruces hay líneas que se cruzan por todas partes; también
       en salidas e incorporaciones (autopista, Vía de Ronda) y en las glorietas.
 - [x] v0.57.0 **Árboles y farolas sobre la vía del tranvía** (115 árboles y las farolas a menos de 4–5 m del eje) (Jonay, captura en una glorieta junto al tranvía).
 

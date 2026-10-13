@@ -3,6 +3,27 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.70.0 — 2026-10-13 — Pendientes fáciles y maleantes en busca y captura
+- **Maleantes en busca y captura**: cuando ya sabes pelear (tras la misión de Sastrón), de vez en cuando sale en el
+  minimapa (punto verde lima) un maleante con mote entre la gente de la calle. Le pegas y empieza la pelea 2D, pero es
+  más difícil que con cualquiera: se cubre más, encadena más combos y pega más fuerte (tres niveles, que suben a medida
+  que vas capturando). Ganarle da una recompensa (150, 300 o 600 $) y no es delito; si pierdes, sigue marcado. No salen
+  durante una misión, y se escapan si te alejas o pasan 4 minutos.
+- **Persecuciones más suaves**: los coches que huyen en las misiones (y el Canarión en la carrera) ya no giran en seco
+  en las esquinas: toman la curva redondeada y frenan antes, mirando la curva más cerrada de lo que les queda delante.
+- **Marcas viales**: las líneas de una calle ya no se pintan donde la calle está dentro de otra (bocas de cruce,
+  incorporaciones y salidas que van pegadas a la vía, glorietas): ahí el asfalto va liso y se acabaron las líneas cruzadas.
+- **Telepisa en la Avenida de La Trinidad**: era una nave baja y plana con el cartel en el tejado. Las franquicias de bajo
+  (pizzerías, bancos, tiendas de móviles, cafés, ópticas…) ya no convierten el edificio en una gran superficie: el
+  bloque de viviendas queda como es y la tienda lleva su cartel en la fachada.
+- **Edificios en calzada (auditoría 0.69)**: el recorte también entra en las esquinas (cuando lo que se sale del tramo
+  de calle está en otra calle, el cruce), empuja hacia fuera las esquinas que siguen metidas (hasta 4 m, sin deformar el
+  edificio) y admite recortes hasta la mitad del edificio. Invasiones de ≥ 1 m: 374 → 189.
+- **Aviones del aeropuerto**: si su puesto cae sobre una vía de servicio de la plataforma, el avión se aparta hasta
+  dejarla libre.
+- Herramienta nueva `tests/herramientas/sonda_zonas.py` (dónde se recoge cada misión y por dónde pasa) para ordenar las
+  misiones por zonas en la próxima pasada. Pruebas nuevas: `prueba_maleantes.py`, `prueba_pendientes_faciles.py`.
+
 ## 0.69.0 — 2026-10-13 — A fondo con los avisos del auditor
 - **Edificios fuera de la calzada en todo el mapa** (el auditor contaba 515 metidos en los carriles): como las calles del
   juego son más anchas que las reales, cada edificio que se mete más de 0,6 m en una calzada se recorta en línea

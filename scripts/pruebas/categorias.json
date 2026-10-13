@@ -164,6 +164,18 @@
    [
     "$1"
    ]
+  ],
+  [
+   "^src/09h_maleantes|^src/09d_fight2d",
+   [
+    "prueba_maleantes.py"
+   ]
+  ],
+  [
+   "^src/(04_world|04b_recorte|05q_inicio|05r_aeropuerto)",
+   [
+    "prueba_pendientes_faciles.py"
+   ]
   ]
  ]
 }

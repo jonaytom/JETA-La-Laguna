@@ -1,10 +1,8 @@
 # Pruebas de ESTA versión (scripts\PRUEBAS.bat las junta con las de lo cambiado).
-# v0.69.0: avisos del auditor (edificios fuera de la calzada, obstáculos, temporales, nombres, minijuegos compartidos)
+# v0.70.0: pendientes fáciles (edificios en calzada, aviones, persecuciones, Telepisa, marcas viales) y maleantes
+prueba_pendientes_faciles.py
 prueba_recorte.py
-prueba_baloncesto.py
-prueba_futbol.py
-prueba_panel_controles.py
-prueba_ambiente.py
-prueba_guardar_cargar.py
-prueba_misiones_guardado.py
+prueba_maleantes.py
+prueba_persecuciones.py
 prueba_trinidad.py
+herramientas/sonda_zonas.py

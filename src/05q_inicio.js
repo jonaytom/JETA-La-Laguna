@@ -89,9 +89,12 @@ function splitCoarseBlocks() {
   console.log('inicio: parcels', INICIO.parcels.length, 'shops', k, 'brand shops', INICIO.brandShops.length);
 }
 // name of the brand whose parody sign sits inside an unnamed building (called from buildBuildings)
+// brands that are only a shop on the ground floor of a block of flats (v0.70, Jonay: Telepisa on the Trinidad was drawn as
+// a huge low store with its sign on the roof): the building stays a normal block and the shop gets its sign on the facade
+const GROUND_BRANDS = new Set(['Telepizza', 'BBVA', 'Caixabank', 'Banco Santander', 'Bankinter', 'Cajamar', 'Banco Sabadell', 'Banca March', 'Starbucks', 'Vodafone', 'Orange', 'Mango', 'Bershka', 'Stradivarius', 'Expert', 'Granier', 'ONCE', 'GAES', 'Multiópticas', 'Optica 2000', 'Halcón Viajes', 'Folder', 'IQOS', 'Covirán', 'Spar', 'Supercor']);
 function brandInside(pts) {
   if (!INICIO.brandShops) return null; const A = Math.abs(polyArea(pts)); if (A < 800) return null;
-  for (const s of INICIO.brandShops) { if (!inicioPip(pts, s[0], s[1])) continue; for (const k in DATA.BRAND) if (s[3].startsWith(DATA.BRAND[k])) return k; }
+  for (const s of INICIO.brandShops) { if (!inicioPip(pts, s[0], s[1])) continue; for (const k in DATA.BRAND) if (!GROUND_BRANDS.has(k) && s[3].startsWith(DATA.BRAND[k])) return k; }
   return null;
 }
 

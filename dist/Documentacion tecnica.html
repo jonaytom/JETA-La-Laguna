@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.69.0</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.70.0</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -269,7 +269,7 @@ Ojo con los <code>const</code>/<code>let</code> usados antes de declararse (zona
 </tr>
 <tr>
 <td><code>04b_recorte.js</code></td>
-<td>Recorta los edificios que se meten en una calzada (<code>roadClip</code>).</td>
+<td>Recorta los edificios que se meten en una calzada (<code>roadClip</code>: cortes rectos, esquinas empujadas).</td>
 </tr>
 <tr>
 <td><code>09ea_minijuegos.js</code></td>
@@ -286,6 +286,10 @@ Ojo con los <code>const</code>/<code>let</code> usados antes de declararse (zona
 <tr>
 <td><code>09g_futbol2d.js</code></td>
 <td><code>FUTBOL2D</code>: fútbol 2D 5 contra 5 visto desde arriba (JETA SOCCER).</td>
+</tr>
+<tr>
+<td><code>09h_maleantes.js</code></td>
+<td><code>MALEANTES</code>: maleantes en busca y captura (minimapa, pelea 2D más difícil, recompensa).</td>
 </tr>
 <tr>
 <td><code>09e_cops.js</code></td>
@@ -1125,6 +1129,17 @@ Las partidas v1 (con el Canarión dentro de la historia) se convierten al cargar
   portero, Boca Papa y Sastrón detrás, Coco en el medio y tú arriba (<code>gangTeam</code>).</li>
 <li><strong>Misiones del Obispo</strong> 3 y 4 (<code>O_FUT_SEMI</code>, nivel 0,06, tutorial; <code>O_FUT_COFRADES</code>, 0,28) en <code>obispoCampo()</code> = el
   campo de 11 o 7 abierto más cercano al Obispado.</li>
+</ul>
+<h2>Maleantes en busca y captura (v0.70)</h2>
+<ul>
+<li><code>09h_maleantes.js</code> (<code>MALEANTES</code>): se abre con <code>GANG.sastronTut</code> (ya sabes pelear). Cada 1,5–3,5 min, fuera de las
+  misiones, un peatón (hombre) a 45–120 m pasa a ser maleante con mote: punto verde lima <code>#c6ff00</code> en el minimapa
+  (<code>MISSIONS.blips()</code>), 4 min para encontrarlo; si el peatón desaparece (lejos), se escapa.</li>
+<li>Pegarle abre la pelea 2D (<code>startStreetFight</code>) con la IA más alta que la gente normal (0,25–0,55): nivel 1 = 0,66,
+  2 = 0,78, 3 = 0,9 (se cubre y encadena más), golpe ×1,25/1,5/1,8 y aguante ×0,9/0,8/0,7. Los niveles suben con los
+  capturados. Recompensa 150/300/600 $, sin delito; si pierdes, −15 de salud y sigue marcado.</li>
+<li>Coches perseguidos (<code>s2DriveCar</code>) y el Canarión: <code>roundedAt()</code> redondea las esquinas de la ruta (punto medio entre
+  R m antes y R m después, R = 3–7 m según la velocidad) y frenan por la curva más cerrada de los próximos 12–35 m.</li>
 </ul></section>
 <section id="s6"><div class="src">docs/06_audio.md</div><h1>6. Audio y radio procedural</h1>
 <p>Todo el sonido se <strong>sintetiza en tiempo real</strong> con Web Audio: no hay archivos de audio. Es una solución
@@ -1666,6 +1681,28 @@ que el cambio no obligue a tocar la lógica del juego.</p>
 <section id="s11"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.70.0 — 2026-10-13 — Pendientes fáciles y maleantes en busca y captura</h2>
+<ul>
+<li><strong>Maleantes en busca y captura</strong>: cuando ya sabes pelear (tras la misión de Sastrón), de vez en cuando sale en el
+  minimapa (punto verde lima) un maleante con mote entre la gente de la calle. Le pegas y empieza la pelea 2D, pero es
+  más difícil que con cualquiera: se cubre más, encadena más combos y pega más fuerte (tres niveles, que suben a medida
+  que vas capturando). Ganarle da una recompensa (150, 300 o 600 $) y no es delito; si pierdes, sigue marcado. No salen
+  durante una misión, y se escapan si te alejas o pasan 4 minutos.</li>
+<li><strong>Persecuciones más suaves</strong>: los coches que huyen en las misiones (y el Canarión en la carrera) ya no giran en seco
+  en las esquinas: toman la curva redondeada y frenan antes, mirando la curva más cerrada de lo que les queda delante.</li>
+<li><strong>Marcas viales</strong>: las líneas de una calle ya no se pintan donde la calle está dentro de otra (bocas de cruce,
+  incorporaciones y salidas que van pegadas a la vía, glorietas): ahí el asfalto va liso y se acabaron las líneas cruzadas.</li>
+<li><strong>Telepisa en la Avenida de La Trinidad</strong>: era una nave baja y plana con el cartel en el tejado. Las franquicias de bajo
+  (pizzerías, bancos, tiendas de móviles, cafés, ópticas…) ya no convierten el edificio en una gran superficie: el
+  bloque de viviendas queda como es y la tienda lleva su cartel en la fachada.</li>
+<li><strong>Edificios en calzada (auditoría 0.69)</strong>: el recorte también entra en las esquinas (cuando lo que se sale del tramo
+  de calle está en otra calle, el cruce), empuja hacia fuera las esquinas que siguen metidas (hasta 4 m, sin deformar el
+  edificio) y admite recortes hasta la mitad del edificio. Invasiones de ≥ 1 m: 374 → 189.</li>
+<li><strong>Aviones del aeropuerto</strong>: si su puesto cae sobre una vía de servicio de la plataforma, el avión se aparta hasta
+  dejarla libre.</li>
+<li>Herramienta nueva <code>tests/herramientas/sonda_zonas.py</code> (dónde se recoge cada misión y por dónde pasa) para ordenar las
+  misiones por zonas en la próxima pasada. Pruebas nuevas: <code>prueba_maleantes.py</code>, <code>prueba_pendientes_faciles.py</code>.</li>
+</ul>
 <h2>0.69.0 — 2026-10-13 — A fondo con los avisos del auditor</h2>
 <ul>
 <li><strong>Edificios fuera de la calzada en todo el mapa</strong> (el auditor contaba 515 metidos en los carriles): como las calles del

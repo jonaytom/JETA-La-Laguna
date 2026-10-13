@@ -358,12 +358,12 @@ const MISSIONS = (() => {
     if (step === 3) {
       // the rival drives the route: fast on straights, brakes for bends, a little rubber band so the race stays tight
       { const rc = data.rival, p = data.pts, cum = data.cum, tot = cum[cum.length - 1]; const at = (s) => { let k = 1; while (k < cum.length - 1 && cum[k] < s) k++; const t = (s - cum[k - 1]) / ((cum[k] - cum[k - 1]) || 1); return [lerp(p[(k - 1) * 2], p[k * 2], t), lerp(p[(k - 1) * 2 + 1], p[k * 2 + 1], t), Math.atan2(p[k * 2] - p[(k - 1) * 2], p[k * 2 + 1] - p[(k - 1) * 2 + 1])]; };
-        const a = at(data.rs), b = at(Math.min(tot, data.rs + 25)); const bend = Math.abs(angDiff(a[2], b[2]));
+        const a = at(data.rs), look = 12 + data.rv * 1.2; let bend = 0; for (const d of [look * 0.5, look, look * 1.5]) bend = Math.max(bend, Math.abs(angDiff(a[2], at(Math.min(tot, data.rs + d))[2])));
         // player progress along the route (nearest checkpoint index as a proxy)
         const pS = data.cp > 0 ? Math.min(tot, data.cp * 300) : 0; const gap = data.rs - pS;
         let vt = (bend > 1.0 ? 9 : bend > 0.5 ? 14 : bend > 0.25 ? 20 : 27) * (gap > 120 ? 0.82 : gap < -120 ? 1.18 : 1);
         data.rv = lerp(data.rv, vt, clamp(dt * (vt < data.rv ? 2.5 : 0.7), 0, 1)); data.rs = Math.min(tot, data.rs + data.rv * dt); data.roff = lerp(data.roff, 1.6, dt * 0.3);
-        const q = at(data.rs), dx = Math.sin(q[2]), dz = Math.cos(q[2]); rc.x = q[0] + dz * data.roff; rc.z = q[1] - dx * data.roff; rc.h += angDiff(rc.h, q[2]) * clamp(dt * 6, 0, 1); rc.fwdV = data.rv; rc.vx = dx * data.rv; rc.vz = dz * data.rv;
+        const q = roundedAt((s) => at(clamp(s, 0, tot)), data.rs, data.rv, tot), dx = Math.sin(q[2]), dz = Math.cos(q[2]); rc.x = q[0] + dz * data.roff; rc.z = q[1] - dx * data.roff; rc.h += angDiff(rc.h, q[2]) * clamp(dt * 4, 0, 1); rc.fwdV = data.rv; rc.vx = dx * data.rv; rc.vz = dz * data.rv;
         if (data.rs >= tot - 1) { if (WANTED) {} talk([['El Canarión (por el móvil)', '¡Jajaja! ¡Llegué primero, chicharrero! Te espero con las papas arrugadas... que pagas tú.']]); rc.mode = 'physics'; rc.driver = null; rc.ctl.brk = 1; fail('El Canarión ha llegado primero. ¡Revancha cuando quieras!'); return; } }
       if (!PLAYER.car) { setObjective('¡Vuelve a un coche, que el Canarión no espera!'); return; }
       const [gx, gz] = data.goal; if (Math.hypot(PLAYER.x - gx, PLAYER.z - gz) < 9) { data.cp++; AUDIO.cash(); if (data.cp >= data.cps.length) { const left = Math.round((data.cum[data.cum.length - 1] - data.rs) / Math.max(8, data.rv)); if (data.rival) { data.rival.mode = 'physics'; data.rival.driver = null; data.rival.ctl.brk = 1; }
@@ -487,7 +487,7 @@ const MISSIONS = (() => {
     onEvent(t, d) { if (!active) return; if (t === 'enter' && active.gotCar) active.gotCar(); if (active.onEvent) active.onEvent(t, d); },
     wantsBottle() { return !!(active && active.wantsBottle && active.wantsBottle()); },
     target() { return active && data.goal ? data.goal : null; },
-    blips() { const b = []; for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon) b.push([tr.beacon.position.x, tr.beacon.position.z, tr.css]); } if (active && data.goal) b.push([data.goal[0], data.goal[1], '#f5b72e']); if (active && typeof s2Blips === 'function') b.push(...s2Blips()); return b; },
+    blips() { const b = []; for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon) b.push([tr.beacon.position.x, tr.beacon.position.z, tr.css]); } if (active && data.goal) b.push([data.goal[0], data.goal[1], '#f5b72e']); if (active && typeof s2Blips === 'function') b.push(...s2Blips()); b.push(...MALEANTES.blips()); return b; },
     prompt() { if (active || PLAYER.car) return ''; for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon && Math.hypot(PLAYER.x - tr.beacon.position.x, PLAYER.z - tr.beacon.position.z) < 6) return 'Acércate al círculo para hablar con ' + bold(tr.list[tr.idx].who); } return ''; },
     fail(r, noRetry) { if (active) { if (WEAPON.training) takeWeapon(); fail(r, noRetry); } },
     _story: STORY, refresh() { if (!active) placeStarts(); },

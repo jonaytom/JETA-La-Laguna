@@ -226,3 +226,15 @@ Las partidas v1 (con el Canarión dentro de la historia) se convierten al cargar
   portero, Boca Papa y Sastrón detrás, Coco en el medio y tú arriba (`gangTeam`).
 - **Misiones del Obispo** 3 y 4 (`O_FUT_SEMI`, nivel 0,06, tutorial; `O_FUT_COFRADES`, 0,28) en `obispoCampo()` = el
   campo de 11 o 7 abierto más cercano al Obispado.
+
+## Maleantes en busca y captura (v0.70)
+
+- `09h_maleantes.js` (`MALEANTES`): se abre con `GANG.sastronTut` (ya sabes pelear). Cada 1,5–3,5 min, fuera de las
+  misiones, un peatón (hombre) a 45–120 m pasa a ser maleante con mote: punto verde lima `#c6ff00` en el minimapa
+  (`MISSIONS.blips()`), 4 min para encontrarlo; si el peatón desaparece (lejos), se escapa.
+- Pegarle abre la pelea 2D (`startStreetFight`) con la IA más alta que la gente normal (0,25–0,55): nivel 1 = 0,66,
+  2 = 0,78, 3 = 0,9 (se cubre y encadena más), golpe ×1,25/1,5/1,8 y aguante ×0,9/0,8/0,7. Los niveles suben con los
+  capturados. Recompensa 150/300/600 $, sin delito; si pierdes, −15 de salud y sigue marcado.
+- Coches perseguidos (`s2DriveCar`) y el Canarión: `roundedAt()` redondea las esquinas de la ruta (punto medio entre
+  R m antes y R m después, R = 3–7 m según la velocidad) y frenan por la curva más cerrada de los próximos 12–35 m.
+

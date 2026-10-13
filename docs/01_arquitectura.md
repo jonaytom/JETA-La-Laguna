@@ -55,11 +55,12 @@ entrada de todos los datos.
 | `09b_combat.js` | Puñetazos en 3D, peatones que se defienden. |
 | `09c_weapons.js` | Pistola: apuntado (IK del brazo), agarre en la mano, disparos, cambio puños/pistola. |
 | `09d_fight2d.js` | Motor de **pelea 2D pixel-art** (estilo arcade). |
-| `04b_recorte.js` | Recorta los edificios que se meten en una calzada (`roadClip`). |
+| `04b_recorte.js` | Recorta los edificios que se meten en una calzada (`roadClip`: cortes rectos, esquinas empujadas). |
 | `09ea_minijuegos.js` | `MINI`: teclas, sonidos, voz, textos y marcador comunes a los minijuegos 2D. |
 | `05u_trinidad.js` | Avenida de La Trinidad: anchos, edificios recortados, casas en solares, aparcamientos Indigo, Pedro Zerolo, soportales. |
 | `09f_basket2d.js` | `BASKET2D`: baloncesto 2D 2 contra 2 (JETA JAM). |
 | `09g_futbol2d.js` | `FUTBOL2D`: fútbol 2D 5 contra 5 visto desde arriba (JETA SOCCER). |
+| `09h_maleantes.js` | `MALEANTES`: maleantes en busca y captura (minimapa, pelea 2D más difícil, recompensa). |
 | `09e_cops.js` | Policías a pie que bajan del coche, persiguen y disparan. |
 | `10_audio.js` | `AUDIO`: efectos sintetizados (motor, derrapes, sirena, golpes…). |
 | `10b_music.js` | `MUSIC`: radio hip hop procedural con letras y estribillo de misión. |

@@ -306,7 +306,8 @@ function buildRoads() {
       const hf0 = bridgeProfile(c), hf = RAISE.has(ri) ? (s, x, z) => hf0(s, x, z) + raiseOf(ri, s) : hf0; ribbon(c, w, cls, YOFF[cls], tile, cls === 'asphaltLines' ? 1 : w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8), hf);
       bridgeDressing(c, w, hf, rd[0] <= 12); continue;
     }
-    ribbon(c, w, cls, YOFF[cls], tile, cls === 'asphaltLines' ? 1 : w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8));
+    if (cls === 'asphaltLines') { for (const [s0, s1, ln] of lineRuns(ri, c)) { const pc = subPoly(c, s0, s1); if (pc.length >= 4) ribbon(pc, w, ln ? 'asphaltLines' : 'asphalt', ln ? YOFF.asphaltLines : YOFF.asphalt, ln ? tile : 8, ln ? 1 : w / 8); } }
+    else ribbon(c, w, cls, YOFF[cls], tile, cls === 'asphaltLines' ? 1 : w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8));
     if (['primary', 'secondary', 'tertiary', 'residential', 'unclassified', 'primary_link', 'secondary_link', 'tertiary_link', 'living_street'].includes(t) && cls !== 'paving')
       for (const sd of [1, -1]) ribbonBand(c, sd * (w / 2 - 0.3), sd * (w / 2 + 2.1), 'sidewalk', YOFF.sidewalk, 2.4, ri); // two kerb-side strips (a full-width slab under the road poked through it on curved slopes)
     // junction discs
@@ -321,6 +322,20 @@ function buildRoads() {
   if (DATA.T.length > 3) ribbon(DATA.T, 7.2, 'tram', YOFF.tram, 6, 1);
 }
 
+// v0.70 (Jonay: lane lines crossing each other at junctions, slip roads and roundabouts): the stretches of a lined
+// road that lie inside another road's carriageway (a junction mouth, a slip road running alongside before it merges, a
+// roundabout) are drawn as plain asphalt; the lines go on where the road is on its own again. Returns [s0, s1, lines].
+function polyAt(c, s) { for (let i = 0; i < c.length - 2; i += 2) { const L = Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]); if (s <= L || i === c.length - 4) { const t = L ? clamp(s / L, 0, 1) : 0; return [c[i] + (c[i + 2] - c[i]) * t, c[i + 1] + (c[i + 3] - c[i + 1]) * t]; } s -= L; } return [c[0], c[1]]; }
+function lineRuns(ri, c) {
+  const L = polyLen(c), out = []; if (L < 1) return [[0, L, true]];
+  const other = (r) => r !== DATA.R[ri] && r[0] <= 12 && !(r[3] & 6);
+  const inOther = (x, z) => { const rd = ROADSEG.nearest(x, z, other); return !!rd && rd.d < DATA.R[rd.ri][2] / 2 + 0.4; };
+  const N = Math.max(2, Math.ceil(L / 2)); let cur = null, s0 = 0;
+  for (let k = 0; k <= N; k++) { const s = L * k / N, p = polyAt(c, s), ln = !inOther(p[0], p[1]); if (cur === null) cur = ln; else if (ln !== cur) { const m = s - L / N / 2; out.push([s0, m, cur]); s0 = m; cur = ln; } }
+  out.push([s0, L, cur]);
+  // plain bits shorter than 3 m inside a long lined stretch are noise (a footpath touching the kerb): keep the lines there
+  return out.filter((r) => r[1] - r[0] > 0.05).map((r) => (!r[2] && r[1] - r[0] < 3 ? [r[0], r[1], true] : r)).reduce((a, r) => { const q = a[a.length - 1]; if (q && q[2] === r[2]) q[1] = r[1]; else a.push(r.slice()); return a; }, []);
+}
 function bridgeProfile(c) {
   const cum = [0]; for (let i = 2; i < c.length; i += 2) cum.push(cum[cum.length - 1] + Math.hypot(c[i] - c[i - 2], c[i + 1] - c[i - 1]));
   const L = cum[cum.length - 1] || 1; const g0 = heightAt(c[0], c[1]), g1 = heightAt(c[c.length - 2], c[c.length - 1]);
