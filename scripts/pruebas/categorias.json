@@ -176,6 +176,12 @@
    [
     "prueba_pendientes_faciles.py"
    ]
+  ],
+  [
+   "^src/(04_world|05k_landmarks|05r_aeropuerto|12g_obispo|07_vehicles|05_scenery|01_core)",
+   [
+    "prueba_grandes.py"
+   ]
   ]
  ]
 }

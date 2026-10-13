@@ -317,9 +317,13 @@ function buildRoads() {
     }
   }
   OBST_RI = -1; DRESS_RI = -1;
+  try { tf13Portals(); } catch (e) { console.error('tf13 portals', e); }
   for (const r of DATA.RB || []) roundaboutIsland(r[0], r[1], r[2], WIDEN(3, r[3], 1));
   // tram track
-  if (DATA.T.length > 3) ribbon(DATA.T, 7.2, 'tram', YOFF.tram, 6, 1);
+  if (DATA.T.length > 3) { const L = polyLen(DATA.T), a = TRAM_TRENCH.s0 - 2, b = TRAM_TRENCH.s3 + 2; // v0.72: under ground between Pedro Zerolo and Padre Anchieta
+    if (L > b + 5) { ribbon(subPoly(DATA.T, 0, a), 7.2, 'tram', YOFF.tram, 6, 1); ribbon(subPoly(DATA.T, b, L), 7.2, 'tram', YOFF.tram, 6, 1);
+      const sub = subPoly(DATA.T, a, b); TUN_RI = -1; tunnelRoad(sub, 7.2, 'tram', 6, (s, x, z) => heightAt(x, z) - tramDepth(a + s), { H: 5.0, cover: 4.2, wc: [0.55, 0.53, 0.5], coveredAt: (p) => tramDepth(a + p[5]) > 4.4 && tramUnderRoad(p[0], p[1], p[3], p[4]) }); }
+    else ribbon(DATA.T, 7.2, 'tram', YOFF.tram, 6, 1); }
 }
 
 // v0.70 (Jonay: lane lines crossing each other at junctions, slip roads and roundabouts): the stretches of a lined
@@ -467,6 +471,43 @@ function computeDepressions() {
   for (const pts of OV.values()) { if (pts.length < 4) continue; for (const [x, z, rj, sj, ri, ss] of pts) { const dT = depthOf(ri, ss) / 1.12 + 0.5; if (dT < 1.1) continue; let a = sink.get(rj); if (!a) sink.set(rj, a = []); a.push([sj, dT]); } }
   for (const [rj, a0] of sink) { const a = a0.filter((q) => q[1] <= 4.0); if (a.length < 4 || a.length < a0.length / 2) { sink.delete(rj); continue; } /* only a clear merge into a moderately deep trench; deeper ones keep the street at grade (the cap above) */ const Lj = polyLen(DATA.R[rj][4]); push(rj, (q) => { let m = 0; for (const [s0, d] of a) { const R = Math.max(8, d / 0.12); const t = Math.abs(q - s0); if (t < R) m = Math.max(m, d * smooth(0, 1, (R - t) / R)); } return m; }); }
   console.log('trench mouths kept at grade under overlapping streets', ncap, 'streets sinking with a trench', JSON.stringify([...sink].map(([k, a]) => [k, a.length, Math.max(...a.map((q) => q[1])).toFixed(1)])));
+  try { tf13Bowl(); } catch (e) { console.error('tf13', e); }
+}
+// v0.72 (Jonay, docs/referencias/tf13_geneto/): the split roundabout of the TF-13 under the TF-5. Real: the TF-5 stays
+// up and the two halves of the roundabout lie in a cutting with stone walls, joined by two vaulted tunnels under the
+// motorway; the TF-13 (to Cam. La Hornera), the slip roads and the street to Geneto come down to it. The generic
+// trench rules could not sink it (junctions every 20 m), so it is set here by position: the halves 6 m down, the
+// tunnels 7.4 m (covered), and every street that meets it ramps back to grade within 75 m of the ring.
+const TF13 = { ring: [], tubes: [], app: [], D: 6.0, DT: 7.4, R: 75 };
+function tf13Bowl() {
+  // found by geometry (DATA.R is trimmed to the play area at load, so OSM indices move): the two tunnel pieces of the
+  // roundabout under the TF-5, the rest of the roundabout around them, and the streets that join it (chained)
+  const R = DATA.R, C = [352, 1500], near = (c, x, z, d) => { for (let i = 0; i < c.length; i += 2) if (Math.hypot(c[i] - x, c[i + 1] - z) < d) return true; return false; };
+  R.forEach((r, ri) => { if (r[0] > 12 || !(r[3] & 4)) return; const c = r[4]; if (near(c, 347, 1470, 4) && near(c, 320, 1492, 4)) TF13.tubes.push(ri); else if (near(c, 353, 1528, 4) && near(c, 382, 1508, 4)) TF13.tubes.push(ri); });
+  if (TF13.tubes.length !== 2) return;
+  R.forEach((r, ri) => { if (r[0] > 12 || !(r[3] & 32) || TF13.tubes.includes(ri)) return; const c = r[4]; for (let i = 0; i < c.length; i += 2) if (Math.hypot(c[i] - C[0], c[i + 1] - C[1]) > 80) return; TF13.ring.push(ri); });
+  const nodes = new Set(); const addN = (ri) => { const c = R[ri][4]; nodes.add(K(c[0], c[1])); nodes.add(K(c[c.length - 2], c[c.length - 1])); }; TF13.ring.concat(TF13.tubes).forEach(addN);
+  const inSet = new Set(TF13.ring.concat(TF13.tubes));
+  for (let pass = 0; pass < 3; pass++) R.forEach((r, ri) => { if (inSet.has(ri) || r[0] > 12 || r[0] === 0 || (r[3] & 6)) return; const c = r[4]; if (!nodes.has(K(c[0], c[1])) && !nodes.has(K(c[c.length - 2], c[c.length - 1]))) return; if (!near(c, C[0], C[1], 170)) return; inSet.add(ri); TF13.app.push(ri); addN(ri); });
+  const raw = (d) => (d <= 0 ? 0 : d / 1.12 + 0.5); // depthOf() flattens the first 0.5 m and scales by 1.12
+  const ringPts = []; for (const ri of TF13.ring.concat(TF13.tubes)) { const c = R[ri][4]; for (let i = 0; i < c.length - 2; i += 2) { const L = Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]); for (let u = 0; u <= L; u += 3) ringPts.push([c[i] + (c[i + 2] - c[i]) * u / L, c[i + 1] + (c[i + 3] - c[i + 1]) * u / L]); } }
+  const along = (ri) => { const c = R[ri][4], cum = [0]; for (let i = 2; i < c.length; i += 2) cum.push(cum[cum.length - 1] + Math.hypot(c[i] - c[i - 2], c[i + 1] - c[i - 1]));
+    return (q) => { let j = 1; while (j < cum.length - 1 && cum[j] < q) j++; const t = clamp((q - cum[j - 1]) / ((cum[j] - cum[j - 1]) || 1), 0, 1); return [lerp(c[(j - 1) * 2], c[j * 2], t), lerp(c[(j - 1) * 2 + 1], c[j * 2 + 1], t)]; }; };
+  for (const ri of TF13.ring) DEP.set(ri, [() => raw(TF13.D)]);
+  for (const ri of TF13.tubes) { const L = polyLen(R[ri][4]); DEP.set(ri, [(q) => raw(TF13.D + (TF13.DT - TF13.D) * smooth(0, 1, Math.min(q, L - q) / Math.min(10, L / 2)))]); }
+  for (const ri of TF13.app) { const at = along(ri), L = polyLen(R[ri][4]), tab = []; // depth every 2 m along the street (depthOf is called every frame)
+    for (let q = 0; q <= L + 2; q += 2) { const [x, z] = at(Math.min(q, L)); let dr = 1e9; for (const p of ringPts) dr = Math.min(dr, Math.hypot(p[0] - x, p[1] - z)); tab.push(raw(TF13.D * smooth(0, 1, 1 - dr / TF13.R))); }
+    if (Math.max(...tab) < raw(0.4)) continue; /* never reaches down: left as it was */ DEP.set(ri, [(q) => { const f = clamp(q, 0, L) / 2, i = Math.floor(f); return lerp(tab[i], tab[Math.min(i + 1, tab.length - 1)], f - i); }]); }
+  TF13.ok = true;
+}
+// stone vaults at the four mouths of the two tunnels (the tube itself is the generic tunnelRoad box)
+function tf13Portals() {
+  if (!TF13.ok) return; const st = new THREE.MeshStandardMaterial({ color: 0x6e6a63, map: typeof aytoStoneTex === 'function' ? aytoStoneTex() : null, roughness: 0.95 }); if (st.map) st.map.repeat.set(0.25, 0.25);
+  for (const ri of TF13.tubes) { const c = DATA.R[ri][4], L = polyLen(c), hf = depressedHF(ri);
+    for (const q of [3.3, L - 3.3]) { const a = polyAt(c, Math.max(0, q - 0.5)), b = polyAt(c, Math.min(L, q + 0.5)), m = polyAt(c, q); const ang = Math.atan2(b[0] - a[0], b[1] - a[1]); const y = hf(q, m[0], m[1]);
+      const w = 9.4, h = 6.6, top = Math.max(h + 1.2, heightAt(m[0], m[1]) - y + 0.8); const sh = new THREE.Shape(); sh.moveTo(-w / 2 - 3, 0); sh.lineTo(w / 2 + 3, 0); sh.lineTo(w / 2 + 3, top); sh.lineTo(-w / 2 - 3, top); sh.closePath(); sh.holes.push(archPath(w, h));
+      const g = new THREE.ExtrudeGeometry(sh, { depth: 0.9, bevelEnabled: false, curveSegments: 14 }); g.translate(0, 0, -0.45); const mesh = new THREE.Mesh(g, st); mesh.position.set(m[0], y - 0.1, m[1]); mesh.rotation.y = ang; mesh.castShadow = mesh.receiveShadow = true; scene.add(mesh);
+      const ring = new THREE.Mesh(archFrame(w, h, 0.55, 1.1), st); ring.position.set(m[0], y - 0.1, m[1]); ring.rotation.y = ang; ring.translateZ(-0.55); scene.add(ring); } }
 }
 // segment-intersection crossings of road ri with any other road (no shared node near the crossing = different levels)
 let XSEG = null;
@@ -644,14 +685,24 @@ function twinWall(x, z, y0, y1) {
       if (Math.abs(yAt(g, t, Math.sqrt(L2)) - yOwn) < 1.6) return true; } }
   return false;
 }
+// v0.72 (Jonay, Av. Trinidad): the tram goes down into a cutting after Calle Pedro Zerolo, under the Padre Anchieta
+// junction and comes up again before the Padre Anchieta stop (s = metres along DATA.T). Open cutting with railings;
+// a covered box only where a street crosses over it. Grades ≤ 8 %.
+const TRAM_TRENCH = { s0: 455, s1: 540, s2: 670, s3: 752, D: 6.4 };
+let TRAM_TP = null; // points of the cutting (every 3 m) for tramTrenchAt
+function tramTrenchAt(x, z, r) { if (!TRAM_TP) { TRAM_TP = []; const c = DATA.T; if (c.length > 3) { const sub = subPoly(c, TRAM_TRENCH.s0, TRAM_TRENCH.s3); for (let i = 0; i + 3 < sub.length; i += 2) { const L = Math.hypot(sub[i + 2] - sub[i], sub[i + 3] - sub[i + 1]); for (let u = 0; u < L; u += 3) TRAM_TP.push(sub[i] + (sub[i + 2] - sub[i]) * u / L, sub[i + 1] + (sub[i + 3] - sub[i + 1]) * u / L); } } }
+  for (let i = 0; i < TRAM_TP.length; i += 2) if (Math.abs(TRAM_TP[i] - x) < r && Math.abs(TRAM_TP[i + 1] - z) < r && Math.hypot(TRAM_TP[i] - x, TRAM_TP[i + 1] - z) < r) return true; return false; }
+function tramDepth(s) { const T = TRAM_TRENCH; if (s <= T.s0 || s >= T.s3) return 0; const k = s < T.s1 ? (s - T.s0) / (T.s1 - T.s0) : s > T.s2 ? (T.s3 - s) / (T.s3 - T.s2) : 1; return T.D * k * k * (3 - 2 * k); }
+// a street crossing over the cutting here (one running alongside it, like the Avenida itself, does not count)
+function tramUnderRoad(x, z, ux, uz) { const rd = ROADSEG.nearest(x, z, (r) => r[0] <= 12 && !(r[3] & 6)); if (!rd || rd.d > DATA.R[rd.ri][2] / 2 + 3.5) return false; const L = Math.hypot(rd.dx, rd.dz) || 1; return Math.abs((rd.dx * ux + rd.dz * uz) / L) < 0.75; }
 function tunnelRoad(c, w, cls, tile, hf, opt = {}) {
   ribbon(c, w, cls, YOFF[cls], tile, cls === 'asphaltLines' ? 1 : w / 8, hf, true);
   // covered stretch -> tube with walls, ceiling and lights; open stretch -> cutting with retaining walls
   const T = acc(c[0], c[1], 'tunnel'); const L2 = acc(c[0], c[1], 'tunnelLight'); const W = acc(c[0], c[1], 'trim'); const hw = w / 2 + (opt.H ? 0.6 : 1.0), H = opt.H || 6.0; // roomier tubes and mouths
   const pts = []; let dist = 0;
-  for (let i = 0; i < c.length - 2; i += 2) { const x1 = c[i], z1 = c[i + 1], x2 = c[i + 2], z2 = c[i + 3], Ls = Math.hypot(x2 - x1, z2 - z1) || 1; const n = Math.max(1, Math.ceil(Ls / 4)); for (let k = 0; k < n; k++) { const x = x1 + (x2 - x1) * k / n, z = z1 + (z2 - z1) * k / n; pts.push([x, z, hf(dist + Ls * k / n, x, z), (x2 - x1) / Ls, (z2 - z1) / Ls]); } dist += Ls; }
-  pts.push([c[c.length - 2], c[c.length - 1], hf(dist, c[c.length - 2], c[c.length - 1]), pts[pts.length - 1][3], pts[pts.length - 1][4]]);
-  const dep = (p) => heightAt(p[0], p[1]) - p[2]; const covered = (p) => dep(p) > Math.max(opt.cover || 3.4, H + 0.35); /* the roof must stay under the ground (it used to stick out as a white slab across the road) */ const wc = opt.wc || [0.66, 0.64, 0.6];
+  for (let i = 0; i < c.length - 2; i += 2) { const x1 = c[i], z1 = c[i + 1], x2 = c[i + 2], z2 = c[i + 3], Ls = Math.hypot(x2 - x1, z2 - z1) || 1; const n = Math.max(1, Math.ceil(Ls / 4)); for (let k = 0; k < n; k++) { const x = x1 + (x2 - x1) * k / n, z = z1 + (z2 - z1) * k / n; pts.push([x, z, hf(dist + Ls * k / n, x, z), (x2 - x1) / Ls, (z2 - z1) / Ls, dist + Ls * k / n]); } dist += Ls; }
+  pts.push([c[c.length - 2], c[c.length - 1], hf(dist, c[c.length - 2], c[c.length - 1]), pts[pts.length - 1][3], pts[pts.length - 1][4], dist]);
+  const dep = (p) => heightAt(p[0], p[1]) - p[2]; const covered = opt.coveredAt || ((p) => dep(p) > Math.max(opt.cover || 3.4, H + 0.35)); /* the roof must stay under the ground (it used to stick out as a white slab across the road) */ const wc = opt.wc || [0.66, 0.64, 0.6];
   const Pt = (p, sg, y, e = hw) => [p[0] - p[4] * e * sg, p[2] + y, p[1] + p[3] * e * sg];
   for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1];
     if (covered(a) || covered(b)) {
@@ -680,7 +731,7 @@ function tunnelRoad(c, w, cls, tile, hf, opt = {}) {
       else TCUTS.push([a[0], a[1], b[0], b[1], hw + 0.15, gid]);
     }
   }
-  TUNNEL_DECKS.push({ type: 'path', pts: pts.map((p) => [p[0], p[1], p[2] + 0.12]), w: w + 1.0, road: true, tunnel: true, hw: w / 2 + 0.3, ceil: opt.H ? opt.H - 0.3 : undefined });
+  TUNNEL_DECKS.push({ type: 'path', pts: pts.map((p) => [p[0], p[1], p[2] + 0.12]), w: w + 1.0, road: true, tunnel: true, hw: w / 2 + 0.3, tram: cls === 'tram', ceil: opt.H ? opt.H - 0.3 : undefined });
 }
 const underground = (x, z, y) => y < heightAt(x, z) - 1.6; // deep in a tunnel/cutting: surface obstacles don't apply
 // open cutting edge for things on the surface: returns push-out vector or null
@@ -1058,6 +1109,7 @@ function buildMedians() {
         // a side road crossing the median here = opening
         const cross = ROADSEG.nearest(mx, mz, (r) => r !== rd && r !== R[best.rj] && r[0] <= 12 && !(r[3] & 6)); if (cross && cross.d < R[cross.ri][2] / 2 + 0.5) continue;
         if (triRampZone(mx, mz)) continue; // v0.68: the car park ramp in the middle of the Av. de La Trinidad
+        if (tramTrenchAt(mx, mz, 7)) continue; // v0.72: no island over the tram cutting
         const key = ri + ':' + best.rj; let run = runs.get(key); if (!run) runs.set(key, run = []);
         run.push([mx, mz, (ya + yb) / 2, Math.max(0, best.gap), big(rd[0]) || big(R[best.rj][0]) ? 2 : 1, s0 + t]); }
       s0 += L; } });

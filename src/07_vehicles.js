@@ -425,7 +425,7 @@ function updateTram(dt) {
   let s = TRAM.s; TRAM.circ.length = 0; const a = {}, b = {};
   for (let i = 0; i < 3; i++) {
     const p = TRAM.parts[i]; const L = p.userData.len; tramAt(s + L / 2 * TRAM.dir, a); tramAt(s - L / 2 * TRAM.dir, b);
-    const cx = (a.x + b.x) / 2, cz = (a.z + b.z) / 2; p.position.set(cx, heightAt(cx, cz) + 0.15, cz); p.rotation.y = Math.atan2(a.x - b.x, a.z - b.z);
+    const cx = (a.x + b.x) / 2, cz = (a.z + b.z) / 2; p.position.set(cx, heightAt(cx, cz) + 0.15 - tramDepth(s), cz); /* v0.72: the cutting at Padre Anchieta */ p.rotation.y = Math.atan2(a.x - b.x, a.z - b.z);
     for (let k = -1; k <= 1; k++) TRAM.circ.push([cx + (a.x - b.x) / L * k * L * 0.33, cz + (a.z - b.z) / L * k * L * 0.33, 1.35]);
     s -= (L + 0.6) * TRAM.dir;
   }

@@ -13,7 +13,7 @@ const LANDMARKS = [
   { re: /Palacio Nava/, hip: true, atlas: 9, col: '#b9b3a8', H: 11.5, quoin: GSTONE, deco: ['portal:grey', 'cornice'] },
   { re: /Casa del Corregidor/, hip: true, atlas: 9, col: '#d6b067', H: 10.5, quoin: GSTONE, deco: ['portal:tuff', 'cornice', 'ayto'], label: 'Casa del Corregidor' }, // the block also holds the town hall: its stone facade is built apart (05s_ayuntamiento.js)
   { re: /Casas Capitulares/, hip: true, atlas: 9, col: '#d9d5cc', H: 9.5, quoin: GSTONE, deco: ['portal:grey'] },
-  { re: /Casa Salazar/, hip: true, atlas: 9, col: '#bdb6aa', H: 10.5, quoin: GSTONE, deco: ['portal:grey', 'towers2'], label: 'Casa Salazar' },
+  { re: /Casa Salazar/, hip: true, atlas: 9, col: '#7d786f', H: 10.5, quoin: BASALT, deco: ['towers2'], label: 'Obispado (Casa Salazar)' }, // the facade is built in 12g_obispo.js (v0.72)
   { re: /Casa Lercaro/, hip: true, atlas: 8, col: '#f3efe6', H: 9.5, quoin: BASALT, deco: ['portal:grey'], label: 'Museo de Historia (Casa Lercaro)' },
   { re: /Casa Montañés/, hip: true, atlas: 8, col: '#e7c98a', H: 9.5, quoin: BASALT, deco: ['portal:grey'] },
   { re: /Teatro Leal/, atlas: 7, col: '#efd2c4', H: 15, deco: ['pediment', 'balustrade', 'sign:TEATRO LEAL'] },
@@ -37,7 +37,12 @@ const LANDMARK_AT = [
 const FINCA_COLS = ['#e8c9a0', '#e6b08f', '#dcc29a', '#eab7a0', '#e9d3b0'];
 function fincaEspanaLook(cx, cz) { if (cx < 1840 || cx > 2080 || cz < 1180 || cz > 1285) return null; return { col: FINCA_COLS[Math.abs(Math.round(cx * 7 + cz * 3)) % FINCA_COLS.length], atlas: 2 }; }
 function landmarkFor(name) { for (const L of LANDMARKS) if (L.re.test(name)) return L; return null; }
-function landmarkAt(cx, cz) { for (const L of LANDMARK_AT) if (Math.hypot(cx - L.x, cz - L.z) < L.r) return L.o; return fincaEspanaLook(cx, cz); }
+function landmarkAt(cx, cz) { for (const L of LANDMARK_AT) if (Math.hypot(cx - L.x, cz - L.z) < L.r) return L.o; return fincaEspanaLook(cx, cz) || guajaraLook(cx, cz); }
+// Urbanización Guajara (v0.72, docs/referencias/tf13_geneto/): chalets with hipped red tile roofs and white or cream
+// walls, on the north-west side of the TF-5 by Cam. San Bartolomé de Geneto (C. Roque Nublo, Tindaya, Timanfaya)
+const GUAJARA_COLS = ['#f4efe4', '#efe3cf', '#f2e6d6', '#e9dcc6', '#f6f1e7'];
+function guajaraLook(cx, cz) { if (cx < 160 || cx > 480 || cz < 1545 || cz > 1790) return null; if ((cx - 396) * 236 - (cz - 1536) * 211 > -400) return null; // only on the far side of the motorway
+  return { col: GUAJARA_COLS[Math.abs(Math.round(cx * 5 + cz * 11)) % GUAJARA_COLS.length], hip: true, atlas: 8 }; }
 const LMQ = [];
 // edge of the footprint that faces the street (long and close to a road)
 function frontEdge(pts) {
@@ -81,7 +86,7 @@ function buildLandmarkDeco() {
       if (kind === 'pediment') { const tri = new THREE.Shape(); const w = Math.min(E.L * 0.5, 12); tri.moveTo(-w / 2, 0); tri.lineTo(w / 2, 0); tri.lineTo(0, w * 0.22); tri.closePath(); addMesh(g, new THREE.ExtrudeGeometry(tri, { depth: 0.5, bevelEnabled: false }), LMMAT.white, 0, H, -0.1);
         for (const x of [-w / 2, -w / 6, w / 6, w / 2]) box(0.5, H - 4.5, 0.3, LMMAT.white, x * 0.9, 4.5 + (H - 4.5) / 2, 0.12); }
       if (kind === 'sign') { const s = signPlate(arg, Math.min(E.L * 0.6, 9), 0.9); s.position.set(0, Math.min(H - 1.2, 4.6), 0.08); g.add(s); }
-      if (kind === 'towers2') for (const sx of [-1, 1]) { const tw = 4.2, th = H + 3.2; const t = box(tw, th, tw, new THREE.MeshStandardMaterial({ color: 0xbdb6aa, roughness: 0.9 }), sx * (E.L / 2 - tw / 2), th / 2, -tw / 2 + 0.05);
+      if (kind === 'towers2') for (const sx of [-1, 1]) { const tw = 4.2, th = H + 3.2; const t = box(tw, th, tw, new THREE.MeshStandardMaterial({ color: new THREE.Color(L.col || '#bdb6aa'), roughness: 0.9 }), sx * (E.L / 2 - tw / 2), th / 2, -tw / 2 + 0.05);
         box(tw + 0.5, 0.4, tw + 0.5, LMMAT.grey, sx * (E.L / 2 - tw / 2), th, -tw / 2 + 0.05); const c = addMesh(g, new THREE.ConeGeometry(tw * 0.72, 1.6, 4), MAT.roofTile, sx * (E.L / 2 - tw / 2), th + 1.0, -tw / 2 + 0.05); c.rotation.y = Math.PI / 4; }
       if (kind === 'celosia') { // long carved wooden mirador on the upper wall
         const w = Math.min(E.L * 0.8, 24), h = 3.2, y = Math.max(3.5, H - h - 1.2); box(w, h, 1.0, LMMAT.wood, 0, y + h / 2, 0.5); box(w + 0.6, 0.3, 1.3, LMMAT.wood, 0, y + h + 0.15, 0.55); box(w + 0.3, 0.3, 1.2, LMMAT.wood, 0, y - 0.15, 0.5);

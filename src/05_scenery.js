@@ -192,10 +192,11 @@ function isHistoric(x, z) { return pip(x, z, HIST_CORE); }
 function buildTramPoles() {
   const T = DATA.T; if (T.length < 4) return; const o = new THREE.Object3D();
   const g = mergeGeos([(() => { const g = new THREE.CylinderGeometry(0.1, 0.12, 6.5, 6); g.translate(0, 3.25, 0); return g; })(), (() => { const g = new THREE.BoxGeometry(3.6, 0.08, 0.08); g.translate(0, 6, 0); return g; })()]);
-  const pos = []; let a = 0;
-  for (let i = 0; i < T.length - 2; i += 2) { const L = Math.hypot(T[i + 2] - T[i], T[i + 3] - T[i + 1]); while (a < L) { pos.push([T[i] + (T[i + 2] - T[i]) * a / L, T[i + 1] + (T[i + 3] - T[i + 1]) * a / L, Math.atan2(T[i + 2] - T[i], T[i + 3] - T[i + 1])]); a += 35; } a -= L; }
+  const pos = []; let a = 0, s0 = 0;
+  for (let i = 0; i < T.length - 2; i += 2) { const L = Math.hypot(T[i + 2] - T[i], T[i + 3] - T[i + 1]); while (a < L) { pos.push([T[i] + (T[i + 2] - T[i]) * a / L, T[i + 1] + (T[i + 3] - T[i + 1]) * a / L, Math.atan2(T[i + 2] - T[i], T[i + 3] - T[i + 1]), tramDepth(s0 + a)]); a += 35; } a -= L; s0 += L; }
+  for (let i = pos.length - 1; i >= 0; i--) if (pos[i][3] > 2) pos.splice(i, 1); // v0.72: none down in the cutting (the wire hangs from its walls)
   const m = new THREE.InstancedMesh(g, new THREE.MeshStandardMaterial({ color: 0x55595c, metalness: 0.6, roughness: 0.5 }), pos.length);
-  pos.forEach((p, i) => { o.position.set(p[0], heightAt(p[0], p[1]), p[1]); o.rotation.y = p[2] + Math.PI / 2; o.updateMatrix(); m.setMatrixAt(i, o.matrix); COL.addCirc(p[0], p[1], 0.15); });
+  pos.forEach((p, i) => { o.position.set(p[0], heightAt(p[0], p[1]) - p[3], p[1]); o.rotation.y = p[2] + Math.PI / 2; o.updateMatrix(); m.setMatrixAt(i, o.matrix); if (p[3] < 1) COL.addCirc(p[0], p[1], 0.15); }); // v0.72: poles down in the cutting
   m.castShadow = true; scene.add(m);
 }
 

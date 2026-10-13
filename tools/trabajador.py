@@ -15,6 +15,7 @@
 #                              al final de cada pasada, DESPUÉS de «pruebas» en el mismo encargo (nunca a la vez)
 #   borrar_auditoria_vieja     borra repo\tools\auditoria (copia antigua del auditor)
 #   subir_git                  sube ya a GitHub (scripts\publicar.ps1; necesita «publicar <versión>» antes)
+#   descargar <clave>          baja una referencia de la lista cerrada DESCARGAS (p. ej. callejero) a docs/referencias/
 #   revisor [--solo-zonas|--todo|--lote N]   tests/agente_revisor.py (agente que conduce y anda por el mapa; solo si Jonay lo pide)
 # Si una orden falla (también «pruebas», que deja igualmente su informe), las siguientes no se hacen.
 import os, sys, re, time, shutil, subprocess, datetime
@@ -24,6 +25,9 @@ COLA = os.path.join(ROOT, 'cola'); HECHO = os.path.join(COLA, 'hecho')
 JUEGO = os.path.dirname(ROOT)  # E:\Claude\GTA La Laguna
 PY = sys.executable
 ENV = dict(os.environ, PYTHONIOENCODING='utf-8', PYTHONUTF8='1', PIP_DISABLE_PIP_VERSION_CHECK='1')
+DESCARGAS = {  # v0.72: only these (key -> url, destination inside the repo)
+    'callejero': ('https://turismo.aytolalaguna.es/wp-content/uploads/2019/11/Callejero-La-Laguna-c.pdf', os.path.join('docs', 'referencias', 'callejero', 'Callejero-La-Laguna.pdf')),
+}
 ARG_OK = re.compile(r'^[A-Za-z0-9_.\-]+$')
 
 
@@ -81,6 +85,11 @@ def orden(linea):
         code, out, s = run([PY, os.path.join('tests', 'agente_revisor.py')] + a, 14400, eco=True)
         ult = os.path.join(ROOT, 'reportes', 'ULTIMO.md'); res = open(ult, encoding='utf-8').read()[:2500] if os.path.exists(ult) else ''
         return code, res + '\n(informe completo: reportes/ULTIMO.md)\n' + out[-1200:], s
+    if o == 'descargar' and len(a) == 1 and a[0] in DESCARGAS:
+        import urllib.request; t0 = time.time(); url, dst = DESCARGAS[a[0]]; dst = os.path.join(ROOT, dst); os.makedirs(os.path.dirname(dst), exist_ok=True)
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=120) as r, open(dst, 'wb') as f: f.write(r.read())
+        return 0, f'{dst} ({os.path.getsize(dst) // 1024} KB)', int(time.time() - t0)
     if o == 'prep': return run([PY, 'prep.py'])
     if o == 'merge_zona' and len(a) == 1: return run([PY, os.path.join('tools', 'merge_zona.py'), a[0]])
     if o == 'copiar_html':
@@ -102,7 +111,8 @@ def hacer(path):
     res = [f'# Encargo {nombre} — {datetime.datetime.now():%Y-%m-%d %H:%M}\n']; estado = 'OK'
     for l in lineas:
         print(f'[{datetime.datetime.now():%H:%M:%S}] {l}', flush=True)
-        code, out, s = orden(l)
+        try: code, out, s = orden(l)
+        except Exception as e: code, out, s = 1, f'ERROR: {e}', 0  # v0.72: an order that breaks still leaves its report
         v = 'OK' if code == 0 else 'FALLA'
         print(f'   {v} ({s} s)', flush=True)
         res.append(f'## {l} — {v} ({s} s)\n\n```\n{out[-3000:]}\n```\n')

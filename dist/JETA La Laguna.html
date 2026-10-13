@@ -205,7 +205,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="tb" id="tbS">CORRER</div>
 <div class="tb" id="tbM">MAPA</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">v0.71.0</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">v0.72.0</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -295,6 +295,10 @@ const WIDEN = (t, w, one) => { const f = t <= 2 ? 1.12 : t <= 8 ? 1.3 : t <= 10 
 const CORE0 = [[-680, -420], [-420, -640], [-120, -700], [320, -720], [360, 120], [260, 320], [-160, 300], [-420, 120], [-700, -120]];
 const inCore0 = (x, z) => { let ins = false; for (let i = 0, j = CORE0.length - 1; i < CORE0.length; j = i++) { const [xi, zi] = CORE0[i], [xj, zj] = CORE0[j]; if ((zi > z) !== (zj > z) && x < (xj - xi) * (z - zi) / (zj - zi) + xi) ins = !ins; } return ins; };
 const WIDEN2 = (t, w, one, x, z) => inCore0(x, z) && t >= 9 ? Math.round(Math.max(w * 1.15, t === 12 ? 5 : 7.2) * 10) / 10 : WIDEN(t, w, one);
+// v0.72 (official street map, docs/referencias/callejero/): streets of the old town that OSM gives as pedestrian but
+// that cars do use (smooth paving, not cobbles, on the town hall's map): drawn and driven as normal streets
+const CALLEJERO_TRAFICO = /^Calle (Bencomo|Juan de Vera|Rodriguez Moure|Ascanio y Nieves)$/;
+for (const rd of DATA.R) { if (rd[1] >= 0 && CALLEJERO_TRAFICO.test(DATA.S[rd[1]]) && (rd[0] === 13 || ((rd[3] >> 3) & 3) === 1)) { rd[0] = 10; rd[3] &= ~(3 << 3); rd[2] = Math.max(rd[2], 6); } }
 for (const rd of DATA.R) { if (rd[0] <= 12) { const c = rd[4], m = (c.length >> 2) << 1; rd[2] = WIDEN2(rd[0], rd[2], rd[3] & 1, c[m], c[m + 1]); } }
 for (const e of DATA.G.e) { const a = e[0] * 2; e[4] = WIDEN2(e[2], e[4], e[3], DATA.G.n[a], DATA.G.n[a + 1]); }
 trinidadWidths(); // v0.68: Av. de La Trinidad, one lane + parking per carriageway (05u_trinidad.js); after the widening
@@ -1184,9 +1188,13 @@ function buildRoads() {
     }
   }
   OBST_RI = -1; DRESS_RI = -1;
+  try { tf13Portals(); } catch (e) { console.error('tf13 portals', e); }
   for (const r of DATA.RB || []) roundaboutIsland(r[0], r[1], r[2], WIDEN(3, r[3], 1));
   // tram track
-  if (DATA.T.length > 3) ribbon(DATA.T, 7.2, 'tram', YOFF.tram, 6, 1);
+  if (DATA.T.length > 3) { const L = polyLen(DATA.T), a = TRAM_TRENCH.s0 - 2, b = TRAM_TRENCH.s3 + 2; // v0.72: under ground between Pedro Zerolo and Padre Anchieta
+    if (L > b + 5) { ribbon(subPoly(DATA.T, 0, a), 7.2, 'tram', YOFF.tram, 6, 1); ribbon(subPoly(DATA.T, b, L), 7.2, 'tram', YOFF.tram, 6, 1);
+      const sub = subPoly(DATA.T, a, b); TUN_RI = -1; tunnelRoad(sub, 7.2, 'tram', 6, (s, x, z) => heightAt(x, z) - tramDepth(a + s), { H: 5.0, cover: 4.2, wc: [0.55, 0.53, 0.5], coveredAt: (p) => tramDepth(a + p[5]) > 4.4 && tramUnderRoad(p[0], p[1], p[3], p[4]) }); }
+    else ribbon(DATA.T, 7.2, 'tram', YOFF.tram, 6, 1); }
 }
 
 // v0.70 (Jonay: lane lines crossing each other at junctions, slip roads and roundabouts): the stretches of a lined
@@ -1334,6 +1342,43 @@ function computeDepressions() {
   for (const pts of OV.values()) { if (pts.length < 4) continue; for (const [x, z, rj, sj, ri, ss] of pts) { const dT = depthOf(ri, ss) / 1.12 + 0.5; if (dT < 1.1) continue; let a = sink.get(rj); if (!a) sink.set(rj, a = []); a.push([sj, dT]); } }
   for (const [rj, a0] of sink) { const a = a0.filter((q) => q[1] <= 4.0); if (a.length < 4 || a.length < a0.length / 2) { sink.delete(rj); continue; } /* only a clear merge into a moderately deep trench; deeper ones keep the street at grade (the cap above) */ const Lj = polyLen(DATA.R[rj][4]); push(rj, (q) => { let m = 0; for (const [s0, d] of a) { const R = Math.max(8, d / 0.12); const t = Math.abs(q - s0); if (t < R) m = Math.max(m, d * smooth(0, 1, (R - t) / R)); } return m; }); }
   console.log('trench mouths kept at grade under overlapping streets', ncap, 'streets sinking with a trench', JSON.stringify([...sink].map(([k, a]) => [k, a.length, Math.max(...a.map((q) => q[1])).toFixed(1)])));
+  try { tf13Bowl(); } catch (e) { console.error('tf13', e); }
+}
+// v0.72 (Jonay, docs/referencias/tf13_geneto/): the split roundabout of the TF-13 under the TF-5. Real: the TF-5 stays
+// up and the two halves of the roundabout lie in a cutting with stone walls, joined by two vaulted tunnels under the
+// motorway; the TF-13 (to Cam. La Hornera), the slip roads and the street to Geneto come down to it. The generic
+// trench rules could not sink it (junctions every 20 m), so it is set here by position: the halves 6 m down, the
+// tunnels 7.4 m (covered), and every street that meets it ramps back to grade within 75 m of the ring.
+const TF13 = { ring: [], tubes: [], app: [], D: 6.0, DT: 7.4, R: 75 };
+function tf13Bowl() {
+  // found by geometry (DATA.R is trimmed to the play area at load, so OSM indices move): the two tunnel pieces of the
+  // roundabout under the TF-5, the rest of the roundabout around them, and the streets that join it (chained)
+  const R = DATA.R, C = [352, 1500], near = (c, x, z, d) => { for (let i = 0; i < c.length; i += 2) if (Math.hypot(c[i] - x, c[i + 1] - z) < d) return true; return false; };
+  R.forEach((r, ri) => { if (r[0] > 12 || !(r[3] & 4)) return; const c = r[4]; if (near(c, 347, 1470, 4) && near(c, 320, 1492, 4)) TF13.tubes.push(ri); else if (near(c, 353, 1528, 4) && near(c, 382, 1508, 4)) TF13.tubes.push(ri); });
+  if (TF13.tubes.length !== 2) return;
+  R.forEach((r, ri) => { if (r[0] > 12 || !(r[3] & 32) || TF13.tubes.includes(ri)) return; const c = r[4]; for (let i = 0; i < c.length; i += 2) if (Math.hypot(c[i] - C[0], c[i + 1] - C[1]) > 80) return; TF13.ring.push(ri); });
+  const nodes = new Set(); const addN = (ri) => { const c = R[ri][4]; nodes.add(K(c[0], c[1])); nodes.add(K(c[c.length - 2], c[c.length - 1])); }; TF13.ring.concat(TF13.tubes).forEach(addN);
+  const inSet = new Set(TF13.ring.concat(TF13.tubes));
+  for (let pass = 0; pass < 3; pass++) R.forEach((r, ri) => { if (inSet.has(ri) || r[0] > 12 || r[0] === 0 || (r[3] & 6)) return; const c = r[4]; if (!nodes.has(K(c[0], c[1])) && !nodes.has(K(c[c.length - 2], c[c.length - 1]))) return; if (!near(c, C[0], C[1], 170)) return; inSet.add(ri); TF13.app.push(ri); addN(ri); });
+  const raw = (d) => (d <= 0 ? 0 : d / 1.12 + 0.5); // depthOf() flattens the first 0.5 m and scales by 1.12
+  const ringPts = []; for (const ri of TF13.ring.concat(TF13.tubes)) { const c = R[ri][4]; for (let i = 0; i < c.length - 2; i += 2) { const L = Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]); for (let u = 0; u <= L; u += 3) ringPts.push([c[i] + (c[i + 2] - c[i]) * u / L, c[i + 1] + (c[i + 3] - c[i + 1]) * u / L]); } }
+  const along = (ri) => { const c = R[ri][4], cum = [0]; for (let i = 2; i < c.length; i += 2) cum.push(cum[cum.length - 1] + Math.hypot(c[i] - c[i - 2], c[i + 1] - c[i - 1]));
+    return (q) => { let j = 1; while (j < cum.length - 1 && cum[j] < q) j++; const t = clamp((q - cum[j - 1]) / ((cum[j] - cum[j - 1]) || 1), 0, 1); return [lerp(c[(j - 1) * 2], c[j * 2], t), lerp(c[(j - 1) * 2 + 1], c[j * 2 + 1], t)]; }; };
+  for (const ri of TF13.ring) DEP.set(ri, [() => raw(TF13.D)]);
+  for (const ri of TF13.tubes) { const L = polyLen(R[ri][4]); DEP.set(ri, [(q) => raw(TF13.D + (TF13.DT - TF13.D) * smooth(0, 1, Math.min(q, L - q) / Math.min(10, L / 2)))]); }
+  for (const ri of TF13.app) { const at = along(ri), L = polyLen(R[ri][4]), tab = []; // depth every 2 m along the street (depthOf is called every frame)
+    for (let q = 0; q <= L + 2; q += 2) { const [x, z] = at(Math.min(q, L)); let dr = 1e9; for (const p of ringPts) dr = Math.min(dr, Math.hypot(p[0] - x, p[1] - z)); tab.push(raw(TF13.D * smooth(0, 1, 1 - dr / TF13.R))); }
+    if (Math.max(...tab) < raw(0.4)) continue; /* never reaches down: left as it was */ DEP.set(ri, [(q) => { const f = clamp(q, 0, L) / 2, i = Math.floor(f); return lerp(tab[i], tab[Math.min(i + 1, tab.length - 1)], f - i); }]); }
+  TF13.ok = true;
+}
+// stone vaults at the four mouths of the two tunnels (the tube itself is the generic tunnelRoad box)
+function tf13Portals() {
+  if (!TF13.ok) return; const st = new THREE.MeshStandardMaterial({ color: 0x6e6a63, map: typeof aytoStoneTex === 'function' ? aytoStoneTex() : null, roughness: 0.95 }); if (st.map) st.map.repeat.set(0.25, 0.25);
+  for (const ri of TF13.tubes) { const c = DATA.R[ri][4], L = polyLen(c), hf = depressedHF(ri);
+    for (const q of [3.3, L - 3.3]) { const a = polyAt(c, Math.max(0, q - 0.5)), b = polyAt(c, Math.min(L, q + 0.5)), m = polyAt(c, q); const ang = Math.atan2(b[0] - a[0], b[1] - a[1]); const y = hf(q, m[0], m[1]);
+      const w = 9.4, h = 6.6, top = Math.max(h + 1.2, heightAt(m[0], m[1]) - y + 0.8); const sh = new THREE.Shape(); sh.moveTo(-w / 2 - 3, 0); sh.lineTo(w / 2 + 3, 0); sh.lineTo(w / 2 + 3, top); sh.lineTo(-w / 2 - 3, top); sh.closePath(); sh.holes.push(archPath(w, h));
+      const g = new THREE.ExtrudeGeometry(sh, { depth: 0.9, bevelEnabled: false, curveSegments: 14 }); g.translate(0, 0, -0.45); const mesh = new THREE.Mesh(g, st); mesh.position.set(m[0], y - 0.1, m[1]); mesh.rotation.y = ang; mesh.castShadow = mesh.receiveShadow = true; scene.add(mesh);
+      const ring = new THREE.Mesh(archFrame(w, h, 0.55, 1.1), st); ring.position.set(m[0], y - 0.1, m[1]); ring.rotation.y = ang; ring.translateZ(-0.55); scene.add(ring); } }
 }
 // segment-intersection crossings of road ri with any other road (no shared node near the crossing = different levels)
 let XSEG = null;
@@ -1511,14 +1556,24 @@ function twinWall(x, z, y0, y1) {
       if (Math.abs(yAt(g, t, Math.sqrt(L2)) - yOwn) < 1.6) return true; } }
   return false;
 }
+// v0.72 (Jonay, Av. Trinidad): the tram goes down into a cutting after Calle Pedro Zerolo, under the Padre Anchieta
+// junction and comes up again before the Padre Anchieta stop (s = metres along DATA.T). Open cutting with railings;
+// a covered box only where a street crosses over it. Grades ≤ 8 %.
+const TRAM_TRENCH = { s0: 455, s1: 540, s2: 670, s3: 752, D: 6.4 };
+let TRAM_TP = null; // points of the cutting (every 3 m) for tramTrenchAt
+function tramTrenchAt(x, z, r) { if (!TRAM_TP) { TRAM_TP = []; const c = DATA.T; if (c.length > 3) { const sub = subPoly(c, TRAM_TRENCH.s0, TRAM_TRENCH.s3); for (let i = 0; i + 3 < sub.length; i += 2) { const L = Math.hypot(sub[i + 2] - sub[i], sub[i + 3] - sub[i + 1]); for (let u = 0; u < L; u += 3) TRAM_TP.push(sub[i] + (sub[i + 2] - sub[i]) * u / L, sub[i + 1] + (sub[i + 3] - sub[i + 1]) * u / L); } } }
+  for (let i = 0; i < TRAM_TP.length; i += 2) if (Math.abs(TRAM_TP[i] - x) < r && Math.abs(TRAM_TP[i + 1] - z) < r && Math.hypot(TRAM_TP[i] - x, TRAM_TP[i + 1] - z) < r) return true; return false; }
+function tramDepth(s) { const T = TRAM_TRENCH; if (s <= T.s0 || s >= T.s3) return 0; const k = s < T.s1 ? (s - T.s0) / (T.s1 - T.s0) : s > T.s2 ? (T.s3 - s) / (T.s3 - T.s2) : 1; return T.D * k * k * (3 - 2 * k); }
+// a street crossing over the cutting here (one running alongside it, like the Avenida itself, does not count)
+function tramUnderRoad(x, z, ux, uz) { const rd = ROADSEG.nearest(x, z, (r) => r[0] <= 12 && !(r[3] & 6)); if (!rd || rd.d > DATA.R[rd.ri][2] / 2 + 3.5) return false; const L = Math.hypot(rd.dx, rd.dz) || 1; return Math.abs((rd.dx * ux + rd.dz * uz) / L) < 0.75; }
 function tunnelRoad(c, w, cls, tile, hf, opt = {}) {
   ribbon(c, w, cls, YOFF[cls], tile, cls === 'asphaltLines' ? 1 : w / 8, hf, true);
   // covered stretch -> tube with walls, ceiling and lights; open stretch -> cutting with retaining walls
   const T = acc(c[0], c[1], 'tunnel'); const L2 = acc(c[0], c[1], 'tunnelLight'); const W = acc(c[0], c[1], 'trim'); const hw = w / 2 + (opt.H ? 0.6 : 1.0), H = opt.H || 6.0; // roomier tubes and mouths
   const pts = []; let dist = 0;
-  for (let i = 0; i < c.length - 2; i += 2) { const x1 = c[i], z1 = c[i + 1], x2 = c[i + 2], z2 = c[i + 3], Ls = Math.hypot(x2 - x1, z2 - z1) || 1; const n = Math.max(1, Math.ceil(Ls / 4)); for (let k = 0; k < n; k++) { const x = x1 + (x2 - x1) * k / n, z = z1 + (z2 - z1) * k / n; pts.push([x, z, hf(dist + Ls * k / n, x, z), (x2 - x1) / Ls, (z2 - z1) / Ls]); } dist += Ls; }
-  pts.push([c[c.length - 2], c[c.length - 1], hf(dist, c[c.length - 2], c[c.length - 1]), pts[pts.length - 1][3], pts[pts.length - 1][4]]);
-  const dep = (p) => heightAt(p[0], p[1]) - p[2]; const covered = (p) => dep(p) > Math.max(opt.cover || 3.4, H + 0.35); /* the roof must stay under the ground (it used to stick out as a white slab across the road) */ const wc = opt.wc || [0.66, 0.64, 0.6];
+  for (let i = 0; i < c.length - 2; i += 2) { const x1 = c[i], z1 = c[i + 1], x2 = c[i + 2], z2 = c[i + 3], Ls = Math.hypot(x2 - x1, z2 - z1) || 1; const n = Math.max(1, Math.ceil(Ls / 4)); for (let k = 0; k < n; k++) { const x = x1 + (x2 - x1) * k / n, z = z1 + (z2 - z1) * k / n; pts.push([x, z, hf(dist + Ls * k / n, x, z), (x2 - x1) / Ls, (z2 - z1) / Ls, dist + Ls * k / n]); } dist += Ls; }
+  pts.push([c[c.length - 2], c[c.length - 1], hf(dist, c[c.length - 2], c[c.length - 1]), pts[pts.length - 1][3], pts[pts.length - 1][4], dist]);
+  const dep = (p) => heightAt(p[0], p[1]) - p[2]; const covered = opt.coveredAt || ((p) => dep(p) > Math.max(opt.cover || 3.4, H + 0.35)); /* the roof must stay under the ground (it used to stick out as a white slab across the road) */ const wc = opt.wc || [0.66, 0.64, 0.6];
   const Pt = (p, sg, y, e = hw) => [p[0] - p[4] * e * sg, p[2] + y, p[1] + p[3] * e * sg];
   for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1];
     if (covered(a) || covered(b)) {
@@ -1547,7 +1602,7 @@ function tunnelRoad(c, w, cls, tile, hf, opt = {}) {
       else TCUTS.push([a[0], a[1], b[0], b[1], hw + 0.15, gid]);
     }
   }
-  TUNNEL_DECKS.push({ type: 'path', pts: pts.map((p) => [p[0], p[1], p[2] + 0.12]), w: w + 1.0, road: true, tunnel: true, hw: w / 2 + 0.3, ceil: opt.H ? opt.H - 0.3 : undefined });
+  TUNNEL_DECKS.push({ type: 'path', pts: pts.map((p) => [p[0], p[1], p[2] + 0.12]), w: w + 1.0, road: true, tunnel: true, hw: w / 2 + 0.3, tram: cls === 'tram', ceil: opt.H ? opt.H - 0.3 : undefined });
 }
 const underground = (x, z, y) => y < heightAt(x, z) - 1.6; // deep in a tunnel/cutting: surface obstacles don't apply
 // open cutting edge for things on the surface: returns push-out vector or null
@@ -1925,6 +1980,7 @@ function buildMedians() {
         // a side road crossing the median here = opening
         const cross = ROADSEG.nearest(mx, mz, (r) => r !== rd && r !== R[best.rj] && r[0] <= 12 && !(r[3] & 6)); if (cross && cross.d < R[cross.ri][2] / 2 + 0.5) continue;
         if (triRampZone(mx, mz)) continue; // v0.68: the car park ramp in the middle of the Av. de La Trinidad
+        if (tramTrenchAt(mx, mz, 7)) continue; // v0.72: no island over the tram cutting
         const key = ri + ':' + best.rj; let run = runs.get(key); if (!run) runs.set(key, run = []);
         run.push([mx, mz, (ya + yb) / 2, Math.max(0, best.gap), big(rd[0]) || big(R[best.rj][0]) ? 2 : 1, s0 + t]); }
       s0 += L; } });
@@ -2223,10 +2279,11 @@ function isHistoric(x, z) { return pip(x, z, HIST_CORE); }
 function buildTramPoles() {
   const T = DATA.T; if (T.length < 4) return; const o = new THREE.Object3D();
   const g = mergeGeos([(() => { const g = new THREE.CylinderGeometry(0.1, 0.12, 6.5, 6); g.translate(0, 3.25, 0); return g; })(), (() => { const g = new THREE.BoxGeometry(3.6, 0.08, 0.08); g.translate(0, 6, 0); return g; })()]);
-  const pos = []; let a = 0;
-  for (let i = 0; i < T.length - 2; i += 2) { const L = Math.hypot(T[i + 2] - T[i], T[i + 3] - T[i + 1]); while (a < L) { pos.push([T[i] + (T[i + 2] - T[i]) * a / L, T[i + 1] + (T[i + 3] - T[i + 1]) * a / L, Math.atan2(T[i + 2] - T[i], T[i + 3] - T[i + 1])]); a += 35; } a -= L; }
+  const pos = []; let a = 0, s0 = 0;
+  for (let i = 0; i < T.length - 2; i += 2) { const L = Math.hypot(T[i + 2] - T[i], T[i + 3] - T[i + 1]); while (a < L) { pos.push([T[i] + (T[i + 2] - T[i]) * a / L, T[i + 1] + (T[i + 3] - T[i + 1]) * a / L, Math.atan2(T[i + 2] - T[i], T[i + 3] - T[i + 1]), tramDepth(s0 + a)]); a += 35; } a -= L; s0 += L; }
+  for (let i = pos.length - 1; i >= 0; i--) if (pos[i][3] > 2) pos.splice(i, 1); // v0.72: none down in the cutting (the wire hangs from its walls)
   const m = new THREE.InstancedMesh(g, new THREE.MeshStandardMaterial({ color: 0x55595c, metalness: 0.6, roughness: 0.5 }), pos.length);
-  pos.forEach((p, i) => { o.position.set(p[0], heightAt(p[0], p[1]), p[1]); o.rotation.y = p[2] + Math.PI / 2; o.updateMatrix(); m.setMatrixAt(i, o.matrix); COL.addCirc(p[0], p[1], 0.15); });
+  pos.forEach((p, i) => { o.position.set(p[0], heightAt(p[0], p[1]) - p[3], p[1]); o.rotation.y = p[2] + Math.PI / 2; o.updateMatrix(); m.setMatrixAt(i, o.matrix); if (p[3] < 1) COL.addCirc(p[0], p[1], 0.15); }); // v0.72: poles down in the cutting
   m.castShadow = true; scene.add(m);
 }
 
@@ -3270,7 +3327,7 @@ const LANDMARKS = [
   { re: /Palacio Nava/, hip: true, atlas: 9, col: '#b9b3a8', H: 11.5, quoin: GSTONE, deco: ['portal:grey', 'cornice'] },
   { re: /Casa del Corregidor/, hip: true, atlas: 9, col: '#d6b067', H: 10.5, quoin: GSTONE, deco: ['portal:tuff', 'cornice', 'ayto'], label: 'Casa del Corregidor' }, // the block also holds the town hall: its stone facade is built apart (05s_ayuntamiento.js)
   { re: /Casas Capitulares/, hip: true, atlas: 9, col: '#d9d5cc', H: 9.5, quoin: GSTONE, deco: ['portal:grey'] },
-  { re: /Casa Salazar/, hip: true, atlas: 9, col: '#bdb6aa', H: 10.5, quoin: GSTONE, deco: ['portal:grey', 'towers2'], label: 'Casa Salazar' },
+  { re: /Casa Salazar/, hip: true, atlas: 9, col: '#7d786f', H: 10.5, quoin: BASALT, deco: ['towers2'], label: 'Obispado (Casa Salazar)' }, // the facade is built in 12g_obispo.js (v0.72)
   { re: /Casa Lercaro/, hip: true, atlas: 8, col: '#f3efe6', H: 9.5, quoin: BASALT, deco: ['portal:grey'], label: 'Museo de Historia (Casa Lercaro)' },
   { re: /Casa Montañés/, hip: true, atlas: 8, col: '#e7c98a', H: 9.5, quoin: BASALT, deco: ['portal:grey'] },
   { re: /Teatro Leal/, atlas: 7, col: '#efd2c4', H: 15, deco: ['pediment', 'balustrade', 'sign:TEATRO LEAL'] },
@@ -3294,7 +3351,12 @@ const LANDMARK_AT = [
 const FINCA_COLS = ['#e8c9a0', '#e6b08f', '#dcc29a', '#eab7a0', '#e9d3b0'];
 function fincaEspanaLook(cx, cz) { if (cx < 1840 || cx > 2080 || cz < 1180 || cz > 1285) return null; return { col: FINCA_COLS[Math.abs(Math.round(cx * 7 + cz * 3)) % FINCA_COLS.length], atlas: 2 }; }
 function landmarkFor(name) { for (const L of LANDMARKS) if (L.re.test(name)) return L; return null; }
-function landmarkAt(cx, cz) { for (const L of LANDMARK_AT) if (Math.hypot(cx - L.x, cz - L.z) < L.r) return L.o; return fincaEspanaLook(cx, cz); }
+function landmarkAt(cx, cz) { for (const L of LANDMARK_AT) if (Math.hypot(cx - L.x, cz - L.z) < L.r) return L.o; return fincaEspanaLook(cx, cz) || guajaraLook(cx, cz); }
+// Urbanización Guajara (v0.72, docs/referencias/tf13_geneto/): chalets with hipped red tile roofs and white or cream
+// walls, on the north-west side of the TF-5 by Cam. San Bartolomé de Geneto (C. Roque Nublo, Tindaya, Timanfaya)
+const GUAJARA_COLS = ['#f4efe4', '#efe3cf', '#f2e6d6', '#e9dcc6', '#f6f1e7'];
+function guajaraLook(cx, cz) { if (cx < 160 || cx > 480 || cz < 1545 || cz > 1790) return null; if ((cx - 396) * 236 - (cz - 1536) * 211 > -400) return null; // only on the far side of the motorway
+  return { col: GUAJARA_COLS[Math.abs(Math.round(cx * 5 + cz * 11)) % GUAJARA_COLS.length], hip: true, atlas: 8 }; }
 const LMQ = [];
 // edge of the footprint that faces the street (long and close to a road)
 function frontEdge(pts) {
@@ -3338,7 +3400,7 @@ function buildLandmarkDeco() {
       if (kind === 'pediment') { const tri = new THREE.Shape(); const w = Math.min(E.L * 0.5, 12); tri.moveTo(-w / 2, 0); tri.lineTo(w / 2, 0); tri.lineTo(0, w * 0.22); tri.closePath(); addMesh(g, new THREE.ExtrudeGeometry(tri, { depth: 0.5, bevelEnabled: false }), LMMAT.white, 0, H, -0.1);
         for (const x of [-w / 2, -w / 6, w / 6, w / 2]) box(0.5, H - 4.5, 0.3, LMMAT.white, x * 0.9, 4.5 + (H - 4.5) / 2, 0.12); }
       if (kind === 'sign') { const s = signPlate(arg, Math.min(E.L * 0.6, 9), 0.9); s.position.set(0, Math.min(H - 1.2, 4.6), 0.08); g.add(s); }
-      if (kind === 'towers2') for (const sx of [-1, 1]) { const tw = 4.2, th = H + 3.2; const t = box(tw, th, tw, new THREE.MeshStandardMaterial({ color: 0xbdb6aa, roughness: 0.9 }), sx * (E.L / 2 - tw / 2), th / 2, -tw / 2 + 0.05);
+      if (kind === 'towers2') for (const sx of [-1, 1]) { const tw = 4.2, th = H + 3.2; const t = box(tw, th, tw, new THREE.MeshStandardMaterial({ color: new THREE.Color(L.col || '#bdb6aa'), roughness: 0.9 }), sx * (E.L / 2 - tw / 2), th / 2, -tw / 2 + 0.05);
         box(tw + 0.5, 0.4, tw + 0.5, LMMAT.grey, sx * (E.L / 2 - tw / 2), th, -tw / 2 + 0.05); const c = addMesh(g, new THREE.ConeGeometry(tw * 0.72, 1.6, 4), MAT.roofTile, sx * (E.L / 2 - tw / 2), th + 1.0, -tw / 2 + 0.05); c.rotation.y = Math.PI / 4; }
       if (kind === 'celosia') { // long carved wooden mirador on the upper wall
         const w = Math.min(E.L * 0.8, 24), h = 3.2, y = Math.max(3.5, H - h - 1.2); box(w, h, 1.0, LMMAT.wood, 0, y + h / 2, 0.5); box(w + 0.6, 0.3, 1.3, LMMAT.wood, 0, y + h + 0.15, 0.55); box(w + 0.3, 0.3, 1.2, LMMAT.wood, 0, y - 0.15, 0.5);
@@ -4360,7 +4422,59 @@ function buildAirport() {
     const free = (x0, z0) => [-8, 0, 8].every((k) => { const px = x0 + Math.sin(h) * k, pz = z0 + Math.cos(h) * k, rd = ROADSEG.nearest(px, pz, (r) => r[0] <= 12 && !(r[3] & 2)); return !rd || rd.d >= DATA.R[rd.ri][2] / 2 + 1.9; });
     if (!free(x, z)) { let found = null; for (let r = 2; r <= 40 && !found; r += 2) for (let k = 0, n = Math.ceil(r * 1.6); k < n; k++) { const a = k / n * Math.PI * 2, x1 = x + Math.sin(a) * r, z1 = z + Math.cos(a) * r; if (free(x1, z1)) { found = [x1, z1]; break; } } if (found) [x, z] = found; }
     const pl = makePlane(); pl.position.set(x, heightAt(x, z), z); pl.rotation.y = h; scene.add(pl); AIRPORT.planes.push(pl); for (const k of [-8, 0, 8]) COL.addCirc(x + Math.sin(h) * k, z + Math.cos(h) * k, 1.6); }
+  try { airportExtras(); } catch (e) { console.error('aeropuerto extras', e); }
   AIRPORT.ok = true;
+}
+// ---- v0.72 (Jonay, docs/referencias/aeropuerto/): the round domed hall of the terminal, fuel tanks by the Rotonda
+// Sempiterno, the sheds along Cam. San Lázaro (parody SEUR, ITV and the island airline's hangar), «P» parking signs
+// and the perimeter fence of the airfield (visual: no collision, so the night mission can still get onto the apron)
+function airportExtras() {
+  const AW = DATA.AW || [], B = concBuckets(), root = new THREE.Group(); root.name = 'aeropuerto2';
+  const mat = (c, r = 0.85, m = 0) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m });
+  const white = mat(0xf2f2ef, 0.6), steel = mat(0x9aa0a4, 0.5, 0.5), stoneL = mat(0xd9d2c3, 0.9), glass = mat(0x2c3e4c, 0.15, 0.6), blue = mat(0x1d4f9c, 0.6), tankW = mat(0xf4f4f2, 0.4, 0.3);
+  const freeAt = (x, z, r) => { if (inAnyBuilding(x, z)) return false; const rd = ROADSEG.nearest(x, z); if (rd && rd.d < DATA.R[rd.ri][2] / 2 + r) return false; for (const a of AW) if ((a[0] === 'apron' || a[0] === 'terminal') && pip(x, z, a[3])) return false; return true; };
+  // the domed rotunda on the airside middle of the terminal
+  const T = AIRPORT.terminal; if (T && AIRPORT.runway) { let rp = null, bd = 1e9; for (let s = 0; s < AIRPORT.runway.tot; s += 20) { const q = AIRPORT.runway.at(s); const d = Math.hypot(q[0] - T.cx, q[1] - T.cz); if (d < bd) { bd = d; rp = q; } }
+    const ux = (rp[0] - T.cx) / bd, uz = (rp[1] - T.cz) / bd, cx = T.cx + ux * 30, cz = T.cz + uz * 30, R = 26, g0 = T.g0;
+    const fr = cFrame(cx, g0, cz, 0); B.geo(new THREE.CylinderGeometry(R, R, 12, 40, 1, true), glass, fr(0, 6, 0)); B.geo(new THREE.CylinderGeometry(R + 1.2, R + 1.2, 1.2, 40), white, fr(0, 12.6, 0));
+    B.geo(new THREE.SphereGeometry(R * 1.35, 40, 10, 0, Math.PI * 2, 0, 0.75), white, fr(0, 13.2 - R * 1.35 * Math.cos(0.75), 0)); B.geo(new THREE.CylinderGeometry(R * 0.35, R * 0.35, 1.6, 24), glass, fr(0, 13.2 + R * 1.35 * (1 - Math.cos(0.75)) - 0.2, 0));
+    for (let k = 0; k < 20; k++) { const a = k / 20 * Math.PI * 2; B.geo(cBox(0.6, 12, 0.6), white, fr(Math.sin(a) * (R + 0.3), 6, Math.cos(a) * (R + 0.3))); }
+    COL.addCirc(cx, cz, R); AIRPORT.rotunda = [cx, cz, R]; }
+  // fuel tanks (four white cylinders in a fenced yard), north of Cam. San Lázaro near the Rotonda Sempiterno
+  { let spot = null; for (let r = 0; r <= 160 && !spot; r += 10) for (let k = 0; k < Math.max(1, r / 5) && !spot; k++) { const a = k / Math.max(1, r / 5) * Math.PI * 2, x = -2360 + Math.sin(a) * r, z = 20 + Math.cos(a) * r; if ([[0, 0], [16, 0], [0, 16], [16, 16]].every(([dx, dz]) => freeAt(x + dx, z + dz, 9))) spot = [x, z]; }
+    if (spot) { const g0 = heightAt(spot[0] + 8, spot[1] + 8); for (const [dx, dz] of [[0, 0], [16, 0], [0, 16], [16, 16]]) { const x = spot[0] + dx, z = spot[1] + dz, fr = cFrame(x, g0, z, 0); B.geo(new THREE.CylinderGeometry(6.5, 6.5, 13, 28), tankW, fr(0, 6.5, 0)); B.geo(new THREE.SphereGeometry(6.5, 28, 6, 0, Math.PI * 2, 0, 0.5), tankW, fr(0, 13 - 6.5 * Math.cos(0.5), 0)); B.geo(cBox(0.15, 13.5, 0.15), steel, fr(6.6, 6.75, 0)); COL.addCirc(x, z, 6.6); }
+      const lg = bigSign('DICE COMBUSTIBLES', 10, 1.4, '#c8102e', '#ffffff'); lg.position.set(spot[0] + 8, g0 + 9, spot[1] - 6.7); root.add(lg); AIRPORT.tanks = spot; } }
+  // sheds along Cam. San Lázaro: the three biggest buildings between the terminal and the motorway get their parody signs
+  { const sheds = BUILD.filter((b) => b.pts && b.cx > -3250 && b.cx < -2450 && b.cz > -340 && b.cz < -95).map((b) => ({ b, a: Math.abs(polyArea(b.pts)) })).sort((p, q) => q.a - p.a).slice(0, 3);
+    const SG = [['SEURRO PAQUETERÍA', '#1d4f9c', '#ffd400'], ['GUANCHAVÍA · HANGAR', '#1f8a4c', '#ffffff'], ['ITV LOS RODEOS', '#f2f2ef', '#c8102e']]; AIRPORT.sheds = [];
+    sheds.forEach(({ b }, i) => { const E = frontEdge(b.pts); if (!E) return; const w = Math.min(E.L * 0.6, 22), h = w / 7; const sg = bigSign(SG[i][0], w, h, SG[i][1], SG[i][2]); const H = (b.top || heightAt(b.cx, b.cz) + 8) - h / 2 - 0.6; sg.position.set(E.mx + E.nx * 0.25, H, E.mz + E.nz * 0.25); sg.rotation.y = Math.atan2(E.nx, E.nz); root.add(sg); AIRPORT.sheds.push(SG[i][0]); }); }
+  // «P» signs on the service roads on the landside of the terminal
+  if (T) { const P = []; DATA.R.forEach((rd) => { if (P.length >= 3 || DATA.RT[rd[0]] !== 'service') return; const c = rd[4]; for (let i = 0; i + 3 < c.length && P.length < 3; i += 2) { const x = c[i], z = c[i + 1], d = Math.hypot(x - T.cx, z - T.cz); if (d < 90 || d > 280 || z > T.cz + 40) continue; if (P.some((p) => Math.hypot(p[0] - x, p[1] - z) < 70)) continue; const L = Math.hypot(c[i + 2] - x, c[i + 3] - z) || 1; P.push([x + (c[i + 3] - z) / L * (rd[2] / 2 + 1.2), z - (c[i + 2] - x) / L * (rd[2] / 2 + 1.2), Math.atan2(c[i + 2] - x, c[i + 3] - z)]); } });
+    P.forEach(([x, z, h], i) => { const g = heightAt(x, z), fr = cFrame(x, g, z, h); B.geo(new THREE.CylinderGeometry(0.06, 0.06, 3.4, 8), steel, fr(0, 1.7, 0)); const sg = bigSign('P' + (i + 1) + ' PARKING', 2.2, 1.1, '#1d4f9c', '#ffffff'); sg.position.set(x, g + 3.0, z); sg.rotation.y = h + Math.PI / 2; root.add(sg); COL.addCirc(x, z, 0.12); });
+    AIRPORT.psigns = P.length; }
+  // perimeter fence along the aerodrome boundary (posts every 4 m, wire mesh), with gaps where a road goes through
+  { const ae = AW.find((a) => a[0] === 'aerodrome'); if (ae) { const c = ae[3]; const cv = mkCanvas(64, 64), x2 = cv.getContext('2d'); x2.strokeStyle = '#8d9396'; x2.lineWidth = 2; for (let k = -64; k < 128; k += 12) { x2.beginPath(); x2.moveTo(k, 0); x2.lineTo(k + 64, 64); x2.moveTo(k + 64, 0); x2.lineTo(k, 64); x2.stroke(); }
+      const tex = canvasTex(cv); const mesh = new THREE.MeshStandardMaterial({ map: tex, transparent: true, alphaTest: 0.3, side: THREE.DoubleSide, roughness: 0.6, metalness: 0.5 }); let n = 0;
+      for (let i = 0; i + 3 < c.length; i += 2) { const ax = c[i], az = c[i + 1], bx = c[i + 2], bz = c[i + 3], L = Math.hypot(bx - ax, bz - az); if (L < 0.5) continue; const k = Math.max(1, Math.ceil(L / 4));
+        for (let j = 0; j < k; j++) { const t0 = j / k, t1 = (j + 1) / k, x0 = ax + (bx - ax) * t0, z0 = az + (bz - az) * t0, x1 = ax + (bx - ax) * t1, z1 = az + (bz - az) * t1, xm = (x0 + x1) / 2, zm = (z0 + z1) / 2;
+          const rd = ROADSEG.nearest(xm, zm); if ((rd && rd.d < DATA.R[rd.ri][2] / 2 + 1) || inAnyBuilding(xm, zm)) continue; const y0 = heightAt(x0, z0), y1 = heightAt(x1, z1);
+          B.quad(mesh, [x0, y0, z0], [x1, y1, z1], [x1, y1 + 2.4, z1], [x0, y0 + 2.4, z0], 2.4); B.geo(new THREE.CylinderGeometry(0.05, 0.05, 2.6, 6), steel, cFrame(x0, y0, z0, 0)(0, 1.3, 0)); n++; } }
+      AIRPORT.fence = n; } }
+  B.finish(root); scene.add(root);
+}
+// ---- planes landing and taking off now and then (only drawn while you are within ~2 km of the runway)
+const FLIGHT = { t: 25, p: null, kind: 0 };
+function updateAirport(dt) {
+  const R = AIRPORT.runway; if (!R) return; const mid = R.at(R.tot / 2); if (Math.hypot(PLAYER.x - mid[0], PLAYER.z - mid[1]) > 2600) { if (FLIGHT.p) { FLIGHT.p.visible = false; } return; }
+  if (!FLIGHT.p) { FLIGHT.p = makePlane(); FLIGHT.p.visible = false; scene.add(FLIGHT.p); }
+  const P = FLIGHT.p; if (!FLIGHT.on) { FLIGHT.t -= dt; if (FLIGHT.t > 0) return; FLIGHT.on = true; FLIGHT.kind = 1 - FLIGHT.kind; FLIGHT.s = FLIGHT.kind ? -2600 : 120; FLIGHT.v = FLIGHT.kind ? 72 : 0; P.visible = true; }
+  // runway 30: landing from the east end towards the west, take-off the same way (s measured from the east threshold)
+  const along = (s) => { const q = R.at(clamp(R.tot - s, 0, R.tot)); const ex = s < 0 ? -s : s > R.tot ? s - R.tot : 0, sg = s < 0 ? 1 : -1; return [q[0] + q[2] * ex * sg, q[1] + q[3] * ex * sg, -q[2], -q[3]]; };
+  let alt = 0, pitch = 0;
+  if (FLIGHT.kind) { /* landing: 3° glide, flare, touchdown at 300 m, braking */ FLIGHT.v = FLIGHT.s < 300 ? 72 : Math.max(12, FLIGHT.v - 2.6 * dt); FLIGHT.s += FLIGHT.v * dt; alt = FLIGHT.s < 300 ? Math.max(0, (300 - FLIGHT.s) * 0.052) : 0; pitch = alt > 0 ? -0.05 : 0; if (FLIGHT.s > 1700) FLIGHT.on = false; }
+  else { /* take-off: roll, rotate at 900 m, 8° climb */ FLIGHT.v = Math.min(78, FLIGHT.v + 3.2 * dt); FLIGHT.s += FLIGHT.v * dt; alt = FLIGHT.s > 900 ? (FLIGHT.s - 900) * 0.14 : 0; pitch = FLIGHT.s > 900 ? -0.16 : 0; if (FLIGHT.s > 4500) FLIGHT.on = false; }
+  const a = along(FLIGHT.s); P.position.set(a[0], heightAt(a[0], a[1]) * (alt > 40 ? 0 : 1) + (alt > 40 ? heightAt(a[0], a[1]) : 0) + alt + 0.1, a[1]); P.rotation.set(pitch, Math.atan2(a[2], a[3]), 0, 'YXZ');
+  if (!FLIGHT.on) { P.visible = false; FLIGHT.t = 70 + Math.random() * 60; }
 }
 let PLANE_GEO = null;
 function makePlane() {
@@ -5802,7 +5916,7 @@ function updateTram(dt) {
   let s = TRAM.s; TRAM.circ.length = 0; const a = {}, b = {};
   for (let i = 0; i < 3; i++) {
     const p = TRAM.parts[i]; const L = p.userData.len; tramAt(s + L / 2 * TRAM.dir, a); tramAt(s - L / 2 * TRAM.dir, b);
-    const cx = (a.x + b.x) / 2, cz = (a.z + b.z) / 2; p.position.set(cx, heightAt(cx, cz) + 0.15, cz); p.rotation.y = Math.atan2(a.x - b.x, a.z - b.z);
+    const cx = (a.x + b.x) / 2, cz = (a.z + b.z) / 2; p.position.set(cx, heightAt(cx, cz) + 0.15 - tramDepth(s), cz); /* v0.72: the cutting at Padre Anchieta */ p.rotation.y = Math.atan2(a.x - b.x, a.z - b.z);
     for (let k = -1; k <= 1; k++) TRAM.circ.push([cx + (a.x - b.x) / L * k * L * 0.33, cz + (a.z - b.z) / L * k * L * 0.33, 1.35]);
     s -= (L + 0.6) * TRAM.dir;
   }
@@ -9592,8 +9706,28 @@ const CRISTO_TEAM = [
   { skin: 0xb27650, shirt: 0x7a1f1f, pants: 0xf2f2f2, hair: 0x111111, hairStyle: 'Hair_Buzzed', longPants: false, sleeve: false, hd: true, shoes: 0xf2f2f2, build: { slim: 0.4 } },
   { skin: 0xe0b08c, shirt: 0x7a1f1f, pants: 0xf2f2f2, hair: 0x5a3a20, hairStyle: 'Hair_Long', longPants: false, sleeve: false, hd: true, shoes: 0xf2f2f2, beard: true },
 ];
-// ---------- the Obispado: a portal on the facade of the Casa Salazar (dark ashlar, paired columns, pediment with the
-// coat of arms, iron balconies, pinnacles). The full recreation of the house is still pending (PENDIENTES).
+// ---------- the Obispado: the Casa Salazar on Calle San Agustín (v0.72, docs/referencias/casa_salazar/): two storeys of
+// dark volcanic ashlar; ground floor: big windows behind iron grilles with a band of rosettes and a carved cresting on
+// top; first floor: balconies on corbels with forged railings and a small pediment over each window; the portal in the
+// middle with paired fluted columns on carved pedestals, a balcony window above it framed by more paired columns, and a
+// baroque crest with the coat of arms and pinnacles over the cornice; through the open door you see the zaguán and the
+// patio with its wooden gallery. The corner towers come from the landmark (05k_landmarks.js, 'towers2').
+function obispadoTex(kind) {
+  const W = { grille: [256, 384], crest: [256, 96], rail: [256, 128], win: [128, 224], zaguan: [256, 384] }[kind], c = mkCanvas(W[0], W[1]), x = c.getContext('2d');
+  if (kind === 'grille') { x.strokeStyle = '#5d6166'; x.lineWidth = 7; for (let k = 0; k <= 10; k++) { const xx = 8 + k * 24; x.beginPath(); x.moveTo(xx, 0); x.lineTo(xx, 384); x.stroke(); }
+    x.lineWidth = 10; for (const y of [6, 378]) { x.beginPath(); x.moveTo(0, y); x.lineTo(256, y); x.stroke(); }
+    x.fillStyle = '#5d6166'; x.fillRect(0, 222, 256, 20); for (let k = 0; k < 10; k++) { x.beginPath(); x.arc(14 + k * 25, 232, 9, 0, 7); x.fill(); } }
+  if (kind === 'crest') { x.strokeStyle = '#5d6166'; x.lineWidth = 7; x.beginPath(); x.moveTo(4, 92); x.lineTo(252, 92); x.stroke();
+    for (const sx of [-1, 1]) for (let k = 0; k < 3; k++) { const cx = 128 + sx * (22 + k * 36), r = 26 - k * 5; x.beginPath(); x.arc(cx, 92 - r, r, sx > 0 ? Math.PI : 0, sx > 0 ? Math.PI * 2.6 : -Math.PI * 1.6, sx < 0); x.stroke(); }
+    x.beginPath(); x.arc(128, 40, 22, 0, 7); x.stroke(); x.beginPath(); x.moveTo(128, 18); x.lineTo(128, 2); x.stroke(); }
+  if (kind === 'rail') { x.strokeStyle = '#2b2d30'; x.lineWidth = 8; for (const y of [6, 122]) { x.beginPath(); x.moveTo(0, y); x.lineTo(256, y); x.stroke(); } x.lineWidth = 4; for (let k = 0; k <= 32; k++) { x.beginPath(); x.moveTo(4 + k * 7.8, 6); x.lineTo(4 + k * 7.8, 122); x.stroke(); }
+    x.lineWidth = 3; for (let k = 0; k < 16; k++) { x.beginPath(); x.arc(8 + k * 16, 108, 6, 0, 7); x.stroke(); } }
+  if (kind === 'win') { x.fillStyle = '#5a2e1a'; x.fillRect(0, 0, 128, 224); x.fillStyle = '#2c3a44'; for (let r = 0; r < 4; r++) for (let k = 0; k < 2; k++) x.fillRect(12 + k * 56, 12 + r * 52, 48, 44); x.fillStyle = 'rgba(190,215,230,.25)'; x.fillRect(12, 12, 104, 50); }
+  if (kind === 'zaguan') { x.fillStyle = '#ece6d8'; x.fillRect(0, 0, 256, 384); x.fillStyle = '#5b3a22'; for (let k = 0; k < 9; k++) x.fillRect(0, k * 14, 256, 8); // wooden ceiling
+    x.fillStyle = '#4c4a46'; x.fillRect(0, 300, 256, 84); x.fillStyle = '#7fa35a'; x.fillRect(70, 150, 116, 160); x.fillStyle = '#d9c39a'; x.fillRect(70, 150, 116, 30); x.fillStyle = '#6b4123'; for (let k = 0; k < 5; k++) x.fillRect(74 + k * 27, 150, 6, 50); // patio with the gallery
+    x.strokeStyle = '#1c1c1c'; x.lineWidth = 4; for (let k = 0; k <= 8; k++) { x.beginPath(); x.moveTo(70 + k * 14.5, 160); x.lineTo(70 + k * 14.5, 310); x.stroke(); } x.beginPath(); x.arc(128, 165, 58, Math.PI, 0); x.stroke(); }
+  return canvasTex(c, { repeat: false });
+}
 function buildObispado() {
   const b = findBuilding('Casa Salazar'); if (!b) return;
   const P = b.pts, n = P.length, flat = P.flat(); let E = null, best = -1;
@@ -9603,31 +9737,50 @@ function buildObispado() {
     const rd = ROADSEG.nearest(mx + nx * 4, mz + nz * 4); if (!rd || rd.d > 9) continue; const nm = DATA.R[rd.ri][1] >= 0 ? STR[DATA.R[rd.ri][1]] : '';
     const sc = L + (/Agust/i.test(nm) ? 100 : 0); if (sc > best) { best = sc; E = { p, q, L, nx, nz, mx, mz }; } }
   if (!E) return;
-  const ux = (E.q[0] - E.p[0]) / E.L, uz = (E.q[1] - E.p[1]) / E.L, ang = Math.atan2(E.nx, E.nz), g0 = Math.min(heightAt(E.p[0], E.p[1]), heightAt(E.q[0], E.q[1]));
-  const root = new THREE.Group(); const stone = new THREE.MeshStandardMaterial({ color: 0x8a857c, map: aytoStoneTex(), roughness: 0.92 }); const dark = M(0x2b2a28, 0.9), iron = M(0x161616, 0.5, 0.6), wood = M(0x4a2c17, 0.8);
-  const at = (u, y, o) => [E.mx + ux * u + E.nx * o, g0 + y, E.mz + uz * u + E.nz * o];
-  const box = (w, h, d, mat, u, y, o) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); const p = at(u, y, o); m.position.set(...p); m.rotation.y = ang; m.castShadow = true; root.add(m); return m; };
-  const cyl = (r, h, mat, u, y, o) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 1.08, h, 10), mat); m.position.set(...at(u, y, o)); m.castShadow = true; root.add(m); return m; };
-  // dark stone facing over the whole front, ground and first floor
-  const fh = Math.max(7, Math.min(11, (b.top || g0 + 9) - g0)); stone.polygonOffset = true; stone.polygonOffsetFactor = -2; stone.polygonOffsetUnits = -2;
-  const face = new THREE.Mesh(new THREE.PlaneGeometry(E.L - 0.2, fh), stone); face.position.set(...at(0, fh / 2, 0.14)); face.rotation.y = ang; root.add(face); stone.map.repeat.set(E.L / 4, fh / 4); stone.map.anisotropy = 4; // v0.65.1: a plane 14 cm off the wall (the box touched it and flickered)
-  // portal: door, two pairs of columns, entablature, triangular pediment with the coat of arms
-  box(2.2, 3.4, 0.1, wood, 0, 1.7, 0.22);
-  for (const s of [-1, 1]) for (const k of [1.55, 2.1]) { cyl(0.2, 4.2, stone, s * k, 2.1, 0.45); box(0.55, 0.3, 0.55, stone, s * k, 0.15, 0.45); box(0.55, 0.3, 0.55, stone, s * k, 4.3, 0.45); }
-  box(5.2, 0.6, 0.8, stone, 0, 4.75, 0.45);
-  { const sh = new THREE.Shape(); sh.moveTo(-2.7, 0); sh.lineTo(2.7, 0); sh.lineTo(0, 1.5); sh.closePath(); const ge = new THREE.ExtrudeGeometry(sh, { depth: 0.6, bevelEnabled: false }); ge.translate(0, 0, -0.3);
-    const m = new THREE.Mesh(ge, stone); m.position.set(...at(0, 5.05, 0.45)); m.rotation.y = ang; root.add(m); }
+  const ang = Math.atan2(E.nx, E.nz), g0 = Math.min(heightAt(E.p[0], E.p[1]), heightAt(E.q[0], E.q[1])), L = E.L;
+  const fr = cFrame(E.mx, g0, E.mz, ang); const at = (u, y, o) => new THREE.Vector3(u, y, o).applyMatrix4(fr(0, 0, 0));
+  const root = new THREE.Group(); root.name = 'obispado'; const B = concBuckets();
+  const stone = new THREE.MeshStandardMaterial({ color: 0x8a857c, map: aytoStoneTex(), roughness: 0.92 }), carved = M(0x77736b, 0.9), wood = M(0x4a2c17, 0.8), glassD = M(0x1d2328, 0.35, 0.3);
+  const alpha = (t) => new THREE.MeshStandardMaterial({ map: t, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide, roughness: 0.6, metalness: 0.4 });
+  const mGrille = alpha(obispadoTex('grille')), mCrest = alpha(obispadoTex('crest')), mRail = alpha(obispadoTex('rail'));
+  const mWin = new THREE.MeshStandardMaterial({ map: obispadoTex('win'), roughness: 0.7 }), mZag = new THREE.MeshStandardMaterial({ map: obispadoTex('zaguan'), roughness: 0.9 });
+  const plane = (w, h, mat, x, y, z, ry = 0) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat); m.applyMatrix4(fr(x, y, z, ry)); root.add(m); return m; };
+  const box = (w, h, d, mat, x, y, z) => B.geo(cBox(w, h, d), mat, fr(x, y, z));
+  const col = (r, h, x, y, z, mat = carved) => B.geo(new THREE.CylinderGeometry(r * 0.9, r, h, 12), mat, fr(x, y + h / 2, z));
+  const pin = (x, y, z, s = 1) => { B.geo(new THREE.ConeGeometry(0.2 * s, 1.0 * s, 8), carved, fr(x, y + 0.5 * s, z)); B.geo(new THREE.SphereGeometry(0.12 * s, 8, 6), carved, fr(x, y + 1.05 * s, z)); };
+  // dark ashlar over the whole front (a plane 14 cm off the wall: a box touching it flickered, v0.65.1), plinth, string course, cornice
+  const fh = Math.max(9, Math.min(11, (b.top || g0 + 10) - g0)); stone.polygonOffset = true; stone.polygonOffsetFactor = -2; stone.polygonOffsetUnits = -2;
+  stone.map.repeat.set(L / 4, fh / 4); stone.map.anisotropy = 4; plane(L - 0.2, fh, stone, 0, fh / 2, 0.14);
+  box(L - 0.2, 0.7, 0.3, carved, 0, 0.35, 0.25); box(L - 0.2, 0.3, 0.35, carved, 0, 4.95, 0.3); box(L + 0.3, 0.45, 0.75, carved, 0, fh - 0.1, 0.4); box(L + 0.1, 0.2, 0.5, carved, 0, fh - 0.45, 0.32);
+  // portal: zaguán seen through the open door, the two leaves open inwards, paired fluted columns on carved pedestals, entablature with dentils
+  plane(2.2, 3.5, mZag, 0, 1.75, 0.16); box(0.12, 3.5, 1.0, wood, -1.05, 1.75, -0.35); box(0.12, 3.5, 1.0, wood, 1.05, 1.75, -0.35);
+  box(2.9, 0.35, 0.4, carved, 0, 3.7, 0.3); for (const s of [-1, 1]) box(0.35, 3.6, 0.35, carved, s * 1.28, 1.8, 0.3);
+  for (const s of [-1, 1]) for (const k of [1.75, 2.35]) { box(0.65, 1.1, 0.65, carved, s * k, 0.55, 0.55); col(0.22, 3.2, s * k, 1.1, 0.55); box(0.6, 0.3, 0.6, carved, s * k, 4.45, 0.55); }
+  box(5.8, 0.5, 0.95, carved, 0, 4.85, 0.55); for (let x = -2.7; x <= 2.71; x += 0.36) box(0.16, 0.16, 0.16, carved, x, 4.52, 1.05);
+  // central balcony with the window framed by paired columns, crest with the coat of arms and pinnacles above the cornice
+  box(4.4, 0.18, 1.0, carved, 0, 5.25, 0.65); plane(4.3, 1.0, mRail, 0, 5.85, 1.12); for (const s of [-1, 1]) plane(0.95, 1.0, mRail, s * 2.15, 5.85, 0.65, Math.PI / 2);
+  plane(1.5, 2.6, mWin, 0, 6.65, 0.18); for (const s of [-1, 1]) for (const k of [1.1, 1.55]) col(0.15, 3.3, s * k, 5.3, 0.4);
+  box(3.8, 0.4, 0.6, carved, 0, 8.8, 0.4);
+  { const sh = new THREE.Shape(); sh.moveTo(-2.6, 0); sh.lineTo(2.6, 0); sh.lineTo(2.6, 0.6); sh.quadraticCurveTo(2.4, 1.6, 1.3, 1.5); sh.quadraticCurveTo(0.9, 2.6, 0, 2.9); sh.quadraticCurveTo(-0.9, 2.6, -1.3, 1.5); sh.quadraticCurveTo(-2.4, 1.6, -2.6, 0.6); sh.closePath();
+    const ge = new THREE.ExtrudeGeometry(sh, { depth: 0.5, bevelEnabled: false, curveSegments: 6 }); ge.translate(0, 0, -0.1); B.geo(ge, stone, fr(0, fh + 0.15, 0.2));
+    pin(0, fh + 3.0, 0.45, 1.2); for (const s of [-1, 1]) { pin(s * 2.4, fh + 0.75, 0.45); pin(s * 1.3, fh + 1.55, 0.45, 0.9); } }
   { const c = mkCanvas(128, 160), x = c.getContext('2d'); x.fillStyle = '#6d6a63'; x.fillRect(0, 0, 128, 160); x.fillStyle = '#7e2a8c'; x.beginPath(); x.moveTo(16, 20); x.lineTo(112, 20); x.lineTo(112, 90); x.quadraticCurveTo(64, 150, 16, 90); x.closePath(); x.fill();
     x.fillStyle = '#f2d36b'; x.fillRect(58, 34, 12, 72); x.fillRect(38, 52, 52, 12); x.strokeStyle = '#3a3733'; x.lineWidth = 5; x.stroke();
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 1.1), new THREE.MeshStandardMaterial({ map: canvasTex(c, { repeat: false }), roughness: 0.8 })); m.position.set(...at(0, 5.75, 0.78)); m.rotation.y = ang; root.add(m); }
-  // iron balconies on the first floor and pinnacles on top of the facade
-  for (const u of [-E.L / 2 + 2.5, -E.L / 4, E.L / 4, E.L / 2 - 2.5]) { if (Math.abs(u) < 3.2) continue; box(1.6, 0.12, 0.7, stone, u, 3.9, 0.4); box(1.6, 0.05, 0.05, iron, u, 4.85, 0.74); for (let k = -0.75; k <= 0.76; k += 0.15) box(0.03, 0.95, 0.03, iron, u + k, 4.4, 0.74); box(1.2, 2.2, 0.08, dark, u, 5.0, 0.21); }
-  for (const u of [-E.L / 2 + 0.4, E.L / 2 - 0.4, -2.1, 2.1]) { const m = new THREE.Mesh(new THREE.ConeGeometry(0.22, 1.1, 6), stone); m.position.set(...at(u, fh + 0.55, 0.1)); root.add(m); }
-  scene.add(root);
-  const door = at(0, 0, 1.6); let fr = [door[0] + E.nx * 1.6, door[2] + E.nz * 1.6];
-  if (inAnyBuilding(fr[0], fr[1]) || COL.nearSeg(fr[0], fr[1], 0.6)) fr = safeSpot(fr[0], fr[1], 0.6); // v0.65.1: always reachable, out in the street
-  Object.assign(OBISPADO, { ok: true, door: [door[0], door[2]], nx: E.nx, nz: E.nz, front: fr });
-  for (const s of [-1, 1]) for (const k of [1.55, 2.1]) { const p = at(s * k, 0, 0.45); COL.addCirc(p[0], p[2], 0.25); }
+    plane(1.0, 1.25, new THREE.MeshStandardMaterial({ map: canvasTex(c, { repeat: false }), roughness: 0.8 }), 0, fh + 1.45, 0.72); }
+  // side bays: grilled windows with cresting below, balconies with pediments above; pinnacles over the cornice at each bay
+  const half = L / 2 - 4.6, nb = Math.max(1, Math.floor((half - 3.0) / 3.9 + 1));
+  for (const s of [-1, 1]) for (let i = 0; i < nb; i++) { const u = s * (3.6 + (i + 0.5) * Math.min(3.9, (half - 3.0) / nb + 0.0001)); if (Math.abs(u) > half + 1) continue;
+    plane(1.7, 2.7, mWin, u, 2.25, 0.17); plane(2.1, 3.0, mGrille, u, 2.2, 0.55); for (const k of [-1, 1]) plane(0.4, 3.0, mGrille, u + k * 1.05, 2.2, 0.36, Math.PI / 2);
+    plane(2.3, 0.8, mCrest, u, 4.1, 0.55); box(2.0, 0.12, 0.5, carved, u, 3.72, 0.4);
+    box(1.9, 0.16, 0.8, carved, u, 5.4, 0.55); for (const k of [-0.7, 0, 0.7]) box(0.18, 0.4, 0.6, carved, u + k, 5.12, 0.45); plane(1.9, 0.95, mRail, u, 5.95, 0.93); for (const k of [-1, 1]) plane(0.75, 0.95, mRail, u + k * 0.95, 5.95, 0.55, Math.PI / 2);
+    plane(1.25, 2.4, mWin, u, 6.75, 0.17); for (const k of [-1, 1]) box(0.22, 2.7, 0.22, carved, u + k * 0.8, 6.8, 0.25);
+    { const sh = new THREE.Shape(); sh.moveTo(-1.05, 0); sh.lineTo(1.05, 0); sh.lineTo(0, 0.55); sh.closePath(); B.geo(new THREE.ExtrudeGeometry(sh, { depth: 0.3, bevelEnabled: false }), carved, fr(u, 8.25, 0.15)); box(2.2, 0.18, 0.4, carved, u, 8.18, 0.3); }
+    pin(u, fh + 0.15, 0.5, 0.8); }
+  B.finish(root); scene.add(root);
+  const door = at(0, 0, 1.6); let front = [door.x + E.nx * 1.6, door.z + E.nz * 1.6];
+  if (inAnyBuilding(front[0], front[1]) || COL.nearSeg(front[0], front[1], 0.6)) front = safeSpot(front[0], front[1], 0.6); // v0.65.1: always reachable, out in the street
+  Object.assign(OBISPADO, { ok: true, door: [door.x, door.z], nx: E.nx, nz: E.nz, front, bays: nb * 2, L });
+  for (const s of [-1, 1]) for (const k of [1.75, 2.35]) { const p = at(s * k, 0, 0.55); COL.addCirc(p.x, p.z, 0.35); }
 }
 // ---------- the bishop himself, in purple, at the door
 function obispoInit() {
@@ -10147,7 +10300,7 @@ function logic(dt, now) {
       while (acc2 >= h && n < 6) { for (const c of CARS) if (c.mode === 'physics') { if (!c.driver || c.crashed) { c.ctl.thr = 0; c.ctl.brk = c.driver === 'player' ? c.ctl.brk : 1; } c.physics(h); } carCollisions(); tramCollisions(); acc2 -= h; n++; }
       pm('phys', tt); tt = performance.now(); for (const c of CARS) { if (c.mode === 'traffic') updateTraffic(c, dt); c.sync(dt); }
       pm('traffic', tt); tt = performance.now(); trafficT -= dt; if (trafficT < 0) { trafficT = 0.25; manageTraffic(); updateParkedLOD(); }
-      pm('manage', tt); tt = performance.now(); updateTram(dt); updatePeds(dt); pm('peds', tt); tt = performance.now(); WANTED.update(dt); if (GAME.state === 'play') updateCops(dt); MISSIONS.update(dt); pm('miss', tt);
+      pm('manage', tt); tt = performance.now(); updateTram(dt); try { updateAirport(dt); } catch (e) { } updatePeds(dt); pm('peds', tt); tt = performance.now(); WANTED.update(dt); if (GAME.state === 'play') updateCops(dt); MISSIONS.update(dt); pm('miss', tt);
       if (frame % 3 === 0) updateGPS();
     }
     updateCamera(dt); updateWeapons(dt); MUSIC.update(); SAVE.update(dt);
@@ -10223,7 +10376,7 @@ async function boot() {
   window.__GAME_READY = true;
 }
 boot();
-window.__bg = [bgScene, bgCamera]; window.__dbg = { get RCLIP() { return RCLIP; }, MALEANTES, startStreetFight, lineRuns, BIGSTORES, SIGN, roadClip, BASKET2D, FUTBOL2D, obispoCampo, TRI, OBISPADO, SPORTS, inAnyBuilding, COURTS, courtGateNear, useCourtGate, DIARIO, inPitch, pitchRects, obispoCourt, LAMPS, TREES, GUIDE, AYTO, HUC, HEALTH, nearestHealth, exitCar, DLG, S2, POOLS: { CARPOOL, HPOOL, SHARED_GEO, VGEO }, SHARED_GEO, MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
+window.__bg = [bgScene, bgCamera]; window.__dbg = { get RCLIP() { return RCLIP; }, get TCUTS() { return TCUTS; }, depthOf, FLIGHT, updateAirport, TF13, TRAM_TRENCH, tramDepth, OBISPADO_TEX: obispadoTex, MALEANTES, startStreetFight, lineRuns, BIGSTORES, SIGN, roadClip, BASKET2D, FUTBOL2D, obispoCampo, TRI, OBISPADO, SPORTS, inAnyBuilding, COURTS, courtGateNear, useCourtGate, DIARIO, inPitch, pitchRects, obispoCourt, LAMPS, TREES, GUIDE, AYTO, HUC, HEALTH, nearestHealth, exitCar, DLG, S2, POOLS: { CARPOOL, HPOOL, SHARED_GEO, VGEO }, SHARED_GEO, MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
 window.__snap = () => { updateUnderground(); bgCamera.position.copy(camera.position); bgCamera.quaternion.copy(camera.quaternion); bgCamera.fov = camera.fov; bgCamera.updateProjectionMatrix(); renderer.clear(); renderer.render(bgScene, bgCamera); renderer.clearDepth(); renderer.render(scene, camera); return renderer.domElement.toDataURL('image/jpeg', 0.85); };
 window.__setYaw = (y) => { CAM.yaw = y; CAM.pitch = 0.1; INPUT.lastMouse = performance.now(); };
 window.__hit = (p) => hitPed(p);

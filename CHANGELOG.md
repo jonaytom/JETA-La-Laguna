@@ -3,6 +3,26 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.72.0 — 2026-10-13 — Pendientes grandes del mapa
+- **Obispado (Casa Salazar)** entera por fuera, con las fotos de Jonay: dos plantas de cantería oscura; ventanas bajas con
+  rejas, banda de rosetas y crestería de forja; balcones sobre ménsulas con barandas de hierro y frontón en cada ventana
+  alta; portada con columnas dobles estriadas sobre pedestales tallados, balcón central entre columnas y remate barroco
+  con el escudo y pináculos sobre la cornisa; por la puerta abierta se ve el zaguán y el patio con su galería. Torres
+  de las esquinas en el mismo gris.
+- **El tranvía va bajo tierra** entre la Calle Pedro Zerolo y la parada de Padre Anchieta: baja en trinchera con muros
+  y barandas (pendientes ≤ 8 %), pasa cubierto por debajo de las calles que lo cruzan en el cruce de Padre Anchieta y
+  sube antes de la parada. Los postes de la catenaria no se ponen dentro de la trinchera.
+- **TF-13 / rotonda partida bajo la TF-5**: las dos mitades de la rotonda bajan 6 m en trinchera con muros de piedra y
+  se unen por dos túneles con bocas de bóveda bajo la autopista; la TF-13 (hacia Cam. La Hornera), los enlaces y la calle
+  hacia Geneto bajan hasta ella. **Urbanización Guajara**: chalets blancos y crema con tejado rojo a cuatro aguas.
+- **Aeropuerto** con las fotos: rotonda acristalada con cúpula en el centro de la terminal, cuatro depósitos de
+  combustible junto a la Rotonda Sempiterno, carteles en las naves de Cam. San Lázaro (paquetería, hangar de la
+  aerolínea de la isla, ITV), carteles «P» de los aparcamientos y valla perimetral. **Aviones que aterrizan y despegan**
+  de vez en cuando (pista 30) cuando estás cerca.
+- **Callejero oficial** (PDF del Ayuntamiento en `docs/referencias/callejero/`): las calles Bencomo, Juan de Vera,
+  Rodríguez Moure y Ascanio y Nieves, que OSM daba como peatonales, son calles con coches (en el plano no van empedradas).
+- El trabajador tiene la orden nueva `descargar <clave>` (lista cerrada; de momento, el callejero).
+
 ## 0.71.0 — 2026-10-13 — Misiones por zonas
 - **La historia va por zonas** (Jonay): tras el barrio del inicio (El Blanco, La Concepción, Coco y Sastrón) van las del
   casco y el Ayuntamiento (Defensores, Los bancos del Adelantado, El gofio robado, El carterista del Cristo, Carrera

@@ -50,6 +50,10 @@ const WIDEN = (t, w, one) => { const f = t <= 2 ? 1.12 : t <= 8 ? 1.3 : t <= 10 
 const CORE0 = [[-680, -420], [-420, -640], [-120, -700], [320, -720], [360, 120], [260, 320], [-160, 300], [-420, 120], [-700, -120]];
 const inCore0 = (x, z) => { let ins = false; for (let i = 0, j = CORE0.length - 1; i < CORE0.length; j = i++) { const [xi, zi] = CORE0[i], [xj, zj] = CORE0[j]; if ((zi > z) !== (zj > z) && x < (xj - xi) * (z - zi) / (zj - zi) + xi) ins = !ins; } return ins; };
 const WIDEN2 = (t, w, one, x, z) => inCore0(x, z) && t >= 9 ? Math.round(Math.max(w * 1.15, t === 12 ? 5 : 7.2) * 10) / 10 : WIDEN(t, w, one);
+// v0.72 (official street map, docs/referencias/callejero/): streets of the old town that OSM gives as pedestrian but
+// that cars do use (smooth paving, not cobbles, on the town hall's map): drawn and driven as normal streets
+const CALLEJERO_TRAFICO = /^Calle (Bencomo|Juan de Vera|Rodriguez Moure|Ascanio y Nieves)$/;
+for (const rd of DATA.R) { if (rd[1] >= 0 && CALLEJERO_TRAFICO.test(DATA.S[rd[1]]) && (rd[0] === 13 || ((rd[3] >> 3) & 3) === 1)) { rd[0] = 10; rd[3] &= ~(3 << 3); rd[2] = Math.max(rd[2], 6); } }
 for (const rd of DATA.R) { if (rd[0] <= 12) { const c = rd[4], m = (c.length >> 2) << 1; rd[2] = WIDEN2(rd[0], rd[2], rd[3] & 1, c[m], c[m + 1]); } }
 for (const e of DATA.G.e) { const a = e[0] * 2; e[4] = WIDEN2(e[2], e[4], e[3], DATA.G.n[a], DATA.G.n[a + 1]); }
 trinidadWidths(); // v0.68: Av. de La Trinidad, one lane + parking per carriageway (05u_trinidad.js); after the widening

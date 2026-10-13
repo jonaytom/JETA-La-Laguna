@@ -36,5 +36,6 @@
   "prueba_recorte.py": "edificios fuera de la calzada en todo el mapa, con fotos",
   "prueba_maleantes.py": "maleantes en busca y captura: salen, pelea difícil y recompensa",
   "prueba_pendientes_faciles.py": "marcas viales, aviones, Telepisa y edificios en calzada",
-  "herramientas/sonda_zonas.py": "dónde se recoge y por dónde pasa cada misión"
+  "herramientas/sonda_zonas.py": "dónde se recoge y por dónde pasa cada misión",
+  "prueba_grandes.py": "Obispado, tranvía bajo tierra, TF-13, aeropuerto y callejero"
 }

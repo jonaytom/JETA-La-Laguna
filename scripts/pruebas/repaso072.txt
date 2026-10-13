@@ -1,0 +1,6 @@
+# v0.72.0: repaso (TF-13 por geometría, trinchera del tranvía sin isletas encima, Guajara)
+prueba_arranque.py
+prueba_grandes.py
+prueba_trinidad.py
+prueba_bordes.py
+prueba_conduccion_tuneles_puentes.py

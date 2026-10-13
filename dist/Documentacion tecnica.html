@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.71.0</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.72.0</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -796,7 +796,20 @@ si queda fuera de la sala, se une con un <strong>pasillo subterráneo</strong>. 
 que solo cuentan bajo tierra (<code>ugcPush</code>).</p>
 <h2>Auditorías del mapa</h2>
 <p><code>auditCrossings()</code> y <code>auditObstacles()</code> (al final de <code>04_world.js</code>) buscan automáticamente cruces a la misma
-altura sin enlace y estructuras metidas en carriles. Ver <code>docs/07_pruebas.md</code>.</p></section>
+altura sin enlace y estructuras metidas en carriles. Ver <code>docs/07_pruebas.md</code>.</p>
+<h2>Pendientes grandes del mapa (v0.72)</h2>
+<ul>
+<li><strong>Obispado</strong> (<code>12g_obispo.js</code>, <code>buildObispado</code>): fachada de la Casa Salazar por vanos (rejas y crestería con texturas
+  de canvas con transparencia, balcones, frontones, portada con columnas dobles, remate con escudo y pináculos, zaguán
+  pintado detrás de la puerta). Todo en un <code>concBuckets</code> (pocas llamadas de dibujo).</li>
+<li><strong>Tranvía bajo tierra</strong> (<code>TRAM_TRENCH</code>, <code>tramDepth(s)</code> en <code>04_world.js</code>): tramo de <code>DATA.T</code> entre s = 455 y 752 m
+  dibujado con <code>tunnelRoad</code> (opción <code>coveredAt</code>: cubierto solo bajo las calles que lo cruzan); el tranvía (<code>07_vehicles</code>)
+  y los postes (<code>05_scenery</code>) bajan con <code>tramDepth</code>.</li>
+<li><strong>TF-13</strong> (<code>TF13</code>, <code>tf13Bowl</code>, <code>tf13Portals</code>): profundidad fijada por posición al final de <code>computeDepressions</code>
+  (anillo 6 m, túneles 7,4 m, accesos hasta 75 m); bocas de bóveda con <code>archPath</code>/<code>archFrame</code>.</li>
+<li><strong>Aeropuerto</strong> (<code>airportExtras</code>, <code>updateAirport</code>/<code>FLIGHT</code> en <code>05r_aeropuerto.js</code>).</li>
+<li><strong>Callejero</strong> (<code>CALLEJERO_TRAFICO</code> en <code>01_core.js</code>, antes del ensanche de calles).</li>
+</ul></section>
 <section id="s4"><div class="src">docs/04_personajes_y_vehiculos.md</div><h1>4. Personajes, vehículos, tráfico y colisiones</h1>
 <blockquote>
 <p>Nota: texturas, modelos y materiales descritos aquí son <strong>provisionales</strong> (ver <code>10_assets.md</code>); lo que es
@@ -1689,6 +1702,27 @@ que el cambio no obligue a tocar la lógica del juego.</p>
 <section id="s11"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.72.0 — 2026-10-13 — Pendientes grandes del mapa</h2>
+<ul>
+<li><strong>Obispado (Casa Salazar)</strong> entera por fuera, con las fotos de Jonay: dos plantas de cantería oscura; ventanas bajas con
+  rejas, banda de rosetas y crestería de forja; balcones sobre ménsulas con barandas de hierro y frontón en cada ventana
+  alta; portada con columnas dobles estriadas sobre pedestales tallados, balcón central entre columnas y remate barroco
+  con el escudo y pináculos sobre la cornisa; por la puerta abierta se ve el zaguán y el patio con su galería. Torres
+  de las esquinas en el mismo gris.</li>
+<li><strong>El tranvía va bajo tierra</strong> entre la Calle Pedro Zerolo y la parada de Padre Anchieta: baja en trinchera con muros
+  y barandas (pendientes ≤ 8 %), pasa cubierto por debajo de las calles que lo cruzan en el cruce de Padre Anchieta y
+  sube antes de la parada. Los postes de la catenaria no se ponen dentro de la trinchera.</li>
+<li><strong>TF-13 / rotonda partida bajo la TF-5</strong>: las dos mitades de la rotonda bajan 6 m en trinchera con muros de piedra y
+  se unen por dos túneles con bocas de bóveda bajo la autopista; la TF-13 (hacia Cam. La Hornera), los enlaces y la calle
+  hacia Geneto bajan hasta ella. <strong>Urbanización Guajara</strong>: chalets blancos y crema con tejado rojo a cuatro aguas.</li>
+<li><strong>Aeropuerto</strong> con las fotos: rotonda acristalada con cúpula en el centro de la terminal, cuatro depósitos de
+  combustible junto a la Rotonda Sempiterno, carteles en las naves de Cam. San Lázaro (paquetería, hangar de la
+  aerolínea de la isla, ITV), carteles «P» de los aparcamientos y valla perimetral. <strong>Aviones que aterrizan y despegan</strong>
+  de vez en cuando (pista 30) cuando estás cerca.</li>
+<li><strong>Callejero oficial</strong> (PDF del Ayuntamiento en <code>docs/referencias/callejero/</code>): las calles Bencomo, Juan de Vera,
+  Rodríguez Moure y Ascanio y Nieves, que OSM daba como peatonales, son calles con coches (en el plano no van empedradas).</li>
+<li>El trabajador tiene la orden nueva <code>descargar &lt;clave&gt;</code> (lista cerrada; de momento, el callejero).</li>
+</ul>
 <h2>0.71.0 — 2026-10-13 — Misiones por zonas</h2>
 <ul>
 <li><strong>La historia va por zonas</strong> (Jonay): tras el barrio del inicio (El Blanco, La Concepción, Coco y Sastrón) van las del

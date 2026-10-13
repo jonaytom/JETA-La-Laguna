@@ -183,3 +183,16 @@ que solo cuentan bajo tierra (`ugcPush`).
 
 `auditCrossings()` y `auditObstacles()` (al final de `04_world.js`) buscan automáticamente cruces a la misma
 altura sin enlace y estructuras metidas en carriles. Ver `docs/07_pruebas.md`.
+
+## Pendientes grandes del mapa (v0.72)
+
+- **Obispado** (`12g_obispo.js`, `buildObispado`): fachada de la Casa Salazar por vanos (rejas y crestería con texturas
+  de canvas con transparencia, balcones, frontones, portada con columnas dobles, remate con escudo y pináculos, zaguán
+  pintado detrás de la puerta). Todo en un `concBuckets` (pocas llamadas de dibujo).
+- **Tranvía bajo tierra** (`TRAM_TRENCH`, `tramDepth(s)` en `04_world.js`): tramo de `DATA.T` entre s = 455 y 752 m
+  dibujado con `tunnelRoad` (opción `coveredAt`: cubierto solo bajo las calles que lo cruzan); el tranvía (`07_vehicles`)
+  y los postes (`05_scenery`) bajan con `tramDepth`.
+- **TF-13** (`TF13`, `tf13Bowl`, `tf13Portals`): profundidad fijada por posición al final de `computeDepressions`
+  (anillo 6 m, túneles 7,4 m, accesos hasta 75 m); bocas de bóveda con `archPath`/`archFrame`.
+- **Aeropuerto** (`airportExtras`, `updateAirport`/`FLIGHT` en `05r_aeropuerto.js`).
+- **Callejero** (`CALLEJERO_TRAFICO` en `01_core.js`, antes del ensanche de calles).

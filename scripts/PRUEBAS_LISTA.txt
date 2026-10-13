@@ -1,8 +1,8 @@
 # Pruebas de ESTA versión (scripts\PRUEBAS.bat las junta con las de lo cambiado).
-# v0.71.0: misiones por zonas (orden nuevo, grafiteros en Padre Anchieta, partidas de antes)
-prueba_misiones_guardado.py
+# v0.72.0: pendientes grandes del mapa (Obispado, tranvía bajo tierra, TF-13, aeropuerto, callejero)
+prueba_grandes.py
+prueba_obispo.py
+prueba_trinidad.py
+prueba_aeropuerto.py
+prueba_conduccion_tuneles_puentes.py
 prueba_persecuciones.py
-prueba_diario.py
-prueba_guardar_cargar.py
-herramientas/sonda_zonas.py
-prueba_misiones.py 16 16
