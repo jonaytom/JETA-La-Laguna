@@ -13,6 +13,33 @@
    ]
   ],
   [
+   "^src/04b_recorte",
+   [
+    "prueba_recorte.py",
+    "prueba_bordes.py",
+    "prueba_trinidad.py"
+   ]
+  ],
+  [
+   "^src/(09ea_minijuegos|09f_basket2d|09g_futbol2d)",
+   [
+    "prueba_baloncesto.py",
+    "prueba_futbol.py"
+   ]
+  ],
+  [
+   "^src/(09c_weapons|09e_cops)",
+   [
+    "prueba_panel_controles.py"
+   ]
+  ],
+  [
+   "^src/(10_audio|10c_steps|10d_ambience|12b_food|12e_save|12c_achaman|11c_guide|05l_tramstops)",
+   [
+    "prueba_arranque.py"
+   ]
+  ],
+  [
    "^src/05r_",
    [
     "prueba_aeropuerto.py"

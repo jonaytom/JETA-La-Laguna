@@ -17,7 +17,6 @@ const BASKET2D = (() => {
   const X1 = wx(CL);
   const HOOP = [{ x: 1.6, z: 7.5 }, { x: CL - 1.6, z: 7.5 }], RIM = 3.05, G = 9.8, THREE_PT = 6.75;
   let cv = null, cx = null, running = false, st = null, raf = 0, last = 0, acc = 0, onEnd = null;
-  const keys = new Set(), pressedK = new Set(), releasedK = new Set();
   // ---------- sprites (same drawer as the fight; a few extra poses)
   const P = () => FIGHT2D.POSES;
   const EXTRA = {
@@ -35,25 +34,9 @@ const BASKET2D = (() => {
     SPR.set(key, s); return s;
   }
   // ---------- input (virtual buttons from the player's controls)
-  function vcode(k) { const has = (id) => CONTROLS.codes(id).includes(k);
-    return has('f_punch') ? 'vS' : has('b_pass') ? 'vP' : has('f_kick') ? 'vT' : has('left') ? 'vL' : has('right') ? 'vR' : has('fwd') ? 'vU' : has('back') ? 'vD' : k === 'Enter' ? 'vS' : null; }
-  const press = (v, down) => { if (down) { if (!keys.has(v)) pressedK.add(v); keys.add(v); } else { if (keys.has(v)) releasedK.add(v); keys.delete(v); } };
-  function onKey(e, down) { if (!running) return; const v = vcode(e.code); if (!v) return; e.preventDefault(); e.stopPropagation(); press(v, down); }
-  window.addEventListener('keydown', (e) => onKey(e, true), true); window.addEventListener('keyup', (e) => onKey(e, false), true);
-  window.addEventListener('mousedown', (e) => { if (!running) return; e.preventDefault(); e.stopPropagation(); if (e.button === 0) press('vS', true); if (e.button === 2) press('vP', true); }, true); // left = shoot, right = pass (v0.66: they were swapped)
-  window.addEventListener('mouseup', (e) => { if (!running) return; if (e.button === 0) press('vS', false); if (e.button === 2) press('vP', false); }, true);
-  window.addEventListener('contextmenu', (e) => { if (running) e.preventDefault(); }, true);
-  const held = (v) => keys.has(v), hit = (v) => pressedK.has(v), rel = (v) => releasedK.has(v);
+  const IN = MINI.input(() => running), { press, held, hit, rel } = IN, keys = IN.keys; // v0.69: shared with the other minigames (09ea_minijuegos.js)
   // ---------- little sounds (own nodes on the game's audio context)
-  function snd(kind) { const ctx = AUDIO.ctx, out = AUDIO.master; if (!ctx || !out) return; const t = ctx.currentTime; const g = ctx.createGain(); g.connect(out);
-    if (kind === 'bounce') { const o = ctx.createOscillator(); o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(60, t + 0.08); g.gain.setValueAtTime(0.18, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.1); o.connect(g); o.start(t); o.stop(t + 0.12); return; }
-    if (kind === 'buzzer') { const o = ctx.createOscillator(); o.type = 'square'; o.frequency.value = 196; g.gain.setValueAtTime(0.06, t); g.gain.setValueAtTime(0.06, t + 0.7); g.gain.exponentialRampToValueAtTime(0.001, t + 0.8); o.connect(g); o.start(t); o.stop(t + 0.85); return; }
-    if (kind === 'rim') { const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = 520; g.gain.setValueAtTime(0.08, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.25); o.connect(g); o.start(t); o.stop(t + 0.3); return; }
-    const s = ctx.createBufferSource(); s.buffer = AUDIO.noise; const f = ctx.createBiquadFilter(); // swish / crowd
-    if (kind === 'swish') { f.type = 'highpass'; f.frequency.value = 2500; g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.35); s.connect(f); f.connect(g); s.start(t, Math.random()); s.stop(t + 0.4); }
-    else { f.type = 'bandpass'; f.frequency.value = 900; f.Q.value = 0.6; g.gain.setValueAtTime(0.001, t); g.gain.linearRampToValueAtTime(0.1, t + 0.15); g.gain.exponentialRampToValueAtTime(0.001, t + 1.4); s.connect(f); f.connect(g); s.start(t, Math.random()); s.stop(t + 1.5); }
-  }
-  function say(text) { try { const ss = window.speechSynthesis; if (!ss) return; const u = new SpeechSynthesisUtterance(text); const v = ss.getVoices().find((q) => /^es/i.test(q.lang)); if (v) u.voice = v; u.lang = 'es-ES'; u.rate = 1.15; u.pitch = 0.75; u.volume = 0.9; ss.cancel(); ss.speak(u); } catch (e) { } }
+  const snd = MINI.snd, say = (t) => MINI.say(t);
   // ---------- setup
   function mkPlayer(o, team, i) {
     return { name: o.name, look: o.look || {}, spr: sprites(o.look || {}, !!o.nose), team, human: !!o.human, x: 0, z: 0, y: 0, vx: 0, vz: 0, vy: 0, dir: team ? -1 : 1, turbo: 1, down: 0, act: '', actT: 0, air: false,
@@ -101,7 +84,7 @@ const BASKET2D = (() => {
     const c = COMBOS[(Math.random() * 4) | 0]; const sg = Math.sign(hoopOf(p.team).x - p.x) || 1;
     const vk = { adelante: [sg > 0 ? 'vR' : 'vL'], atras: [sg > 0 ? 'vL' : 'vR'], abajo: ['vD'], arriba: ['vU'], puno: ['vS'], patada: ['vT', 'vP'] };
     st.combo = { c, i: 0, t: 3.6, by: p, need: c.seq.map((k) => vk[k]), sg, ok: null, d }; st.phase = 'combo'; p.turbo = Math.max(0, p.turbo - 0.2);
-    pressedK.clear(); banner('¡ENTRADA EN COMBO!', '#ffd400', 1.0); snd('crowd');
+    IN.clearHits(); banner('¡ENTRADA EN COMBO!', '#ffd400', 1.0); snd('crowd');
   }
   function comboStep(dt) {
     const C = st.combo; if (C.ok !== null) { C.end -= dt; if (C.end <= 0) { st.phase = 'play'; st.combo = null; } return; }
@@ -203,7 +186,7 @@ const BASKET2D = (() => {
       if (rel('vS') && p.shootHold && p.air) release(p);
       if (hit('vP')) { if (b.holder === p) pass(p, mate); else if (b.holder === mate) pass(mate, p);
         else if (b.holder && b.holder.team !== p.team && dist(p, b.holder) <= 1.4) steal(p);
-        else if (mate && st.time0 > (st.swapAt || 0)) { p.human = false; mate.human = true; p.shootHold = false; st.swapAt = st.time0 + 0.25; pressedK.delete('vP'); if (st.ev) st.ev.swap = true; } } // (once: the mate is stepped right after and sees the same click) // defending away from the ball: right click = switch to the other defender
+        else if (mate && st.time0 > (st.swapAt || 0)) { p.human = false; mate.human = true; p.shootHold = false; st.swapAt = st.time0 + 0.25; IN.consume('vP'); if (st.ev) st.ev.swap = true; } } // (once: the mate is stepped right after and sees the same click) // defending away from the ball: right click = switch to the other defender
     }
     if (!ctl && p.shootHold && p.air && p.vy < 0.4 + (p.aiRel || 0) * 6) release(p);
     if (p.shootHold) { p.holdT += dt; if (ctl && p.holdT > BAR) release(p); }
@@ -280,7 +263,7 @@ const BASKET2D = (() => {
     if (ok(st.ev)) { t.wait = 0.9; st.tip = '¡BIEN!  ' + tip(); AUDIO.cash && AUDIO.cash(); }
   }
   // ---------- drawing
-  function txt(s, x, y, size, col, align = 'center') { cx.font = `${size}px "Press Start 2P", monospace`; cx.textAlign = align; cx.textBaseline = 'top'; cx.fillStyle = '#000'; for (const [a, b] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) cx.fillText(s, x + a, y + b); cx.fillStyle = col; cx.fillText(s, x, y); }
+  const txt = (s, x, y, size, col, align) => MINI.txt(cx, s, x, y, size, col, align);
   // backgrounds (one per style, cached): 'calle' public court in town, 'colegio' a school yard, 'pabellon' an indoor hall
   const BGS = {};
   function drawBg(style = 'calle') {
@@ -363,12 +346,12 @@ const BASKET2D = (() => {
     txt(st.names[0], W / 2 - 92, 11, 7, '#7fe08a'); txt(st.names[1], W / 2 + 92, 11, 7, '#ff6b6b');
     txt(String(st.score[0]), W / 2 - 92, 22, 9, '#fff'); txt(String(st.score[1]), W / 2 + 92, 22, 9, '#fff');
     const cl = st.tut ? '--:--' : st.golden ? 'ORO' : `${Math.floor(st.clock / 60)}:${String(Math.floor(st.clock % 60)).padStart(2, '0')}`; txt(cl, W / 2, 16, 9, st.golden ? '#ffd400' : '#fff');
-    const hu = st.p.find((q) => q.human); cx.fillStyle = 'rgba(0,0,0,0.6)'; cx.fillRect(10, H - 16, 64, 8); cx.fillStyle = hu.turbo > 0.25 ? '#5ec8ff' : '#ff6b6b'; cx.fillRect(11, H - 15, 62 * hu.turbo, 6); txt('TURBO', 42, H - 26, 6, '#fff');
+    const hu = st.p.find((q) => q.human); MINI.turbo(cx, H, hu.turbo);
     if (st.tip) { cx.fillStyle = 'rgba(0,0,0,0.7)'; cx.fillRect(40, H - 34, W - 80, 16); txt(st.tip, W / 2, H - 29, 6, '#ffd400'); }
-    if (st.bannerT > 0 && st.banner) { const k = Math.min(1, (st.banner.dur - st.bannerT) * 6); txt(st.banner.t, W / 2, 64, Math.round(10 + 6 * k), st.banner.c); }
+    MINI.banner(cx, st, W, 64, 10);
     if (st.phase === 'ready') { cx.fillStyle = 'rgba(0,0,0,0.8)'; cx.fillRect(60, 50, W - 120, 132); txt('JETA JAM · 2 CONTRA 2', W / 2, 58, 9, '#ffd400');
       const rows = [['MOVERSE', `${K_('left')} ${K_('right')} ${K_('fwd')} ${K_('back')}`], ['TIRAR (mantén, suelta en verde)', `clic izq. · ${K_('f_punch')}`], ['PASAR / ROBAR / CAMBIAR', `clic dcho. · ${K_('b_pass')}`], ['TAPÓN (defendiendo)', `clic izq. · ${K_('f_punch')}`], ['CORRER (turbo)', K_('f_kick')], ['COMBO', 'corriendo + tiro a media distancia']];
-      rows.forEach(([a, c], i) => { txt(a, 74, 78 + i * 13, 6, '#9fd7ff', 'left'); txt(c, W - 74, 78 + i * 13, 6, '#fff', 'right'); });
+      MINI.rows(cx, W, rows, 78);
       if (Math.floor(st.time0 * 2) % 2 === 0) txt(`CLIC IZQ. O ${K_('f_punch').toUpperCase()} PARA EMPEZAR`, W / 2, 162, 7, '#7fe08a'); }
     if (st.phase === 'combo' && st.combo) { const C = st.combo; // the combo panel: the move, its inputs (done ones in green) and the time left
       cx.fillStyle = 'rgba(0,0,0,0.78)'; cx.fillRect(70, 78, W - 140, 96); txt('¡ENTRADA EN COMBO!', W / 2, 84, 9, '#ffd400'); txt(C.c.name, W / 2, 100, 8, '#fff');
@@ -377,14 +360,14 @@ const BASKET2D = (() => {
       parts.forEach((q, i) => { txt(q.t, x0 + i * 60 + (i === 2 ? 10 : 0), 122, q.t.length > 1 ? 7 : 12, q.c); if (i < 2) txt(i === 1 ? '+' : ',', x0 + i * 60 + 30, 124, 8, '#aaa'); });
       txt(`puño = clic izq. / ${K_('f_punch')} · patada = ${K_('f_kick')} / clic dcho.`, W / 2, 146, 5, '#9fd7ff');
       cx.fillStyle = '#333'; cx.fillRect(90, 160, W - 180, 5); cx.fillStyle = C.t > 1.2 ? '#7fe08a' : '#ff6b6b'; cx.fillRect(90, 160, (W - 180) * clamp(C.t / 3.6, 0, 1), 5); }
-    if (st.phase === 'end') { const won = st.score[0] > st.score[1]; txt(won ? '¡GANÁIS!' : 'HABÉIS PERDIDO', W / 2, 100, 16, won ? '#7fe08a' : '#ff6b6b'); txt(`${st.score[0]} - ${st.score[1]}`, W / 2, 128, 10, '#fff'); }
+    if (st.phase === 'end') MINI.endScreen(cx, W, st.score);
     if (st.fade > 0) { cx.fillStyle = `rgba(0,0,0,${st.fade})`; cx.fillRect(0, 0, W, H); }
   }
   // ---------- loop
   function loop(now) {
     if (!running) return; raf = requestAnimationFrame(loop);
     let dt = Math.min(0.1, (now - last) / 1000); last = now; acc += dt;
-    while (acc >= 1 / 60) { step(1 / 60); pressedK.clear(); releasedK.clear(); acc -= 1 / 60; updateCam(); }
+    while (acc >= 1 / 60) { step(1 / 60); IN.frame(); acc -= 1 / 60; updateCam(); }
     if (st.fadeDir) { st.fade = clamp(st.fade + st.fadeDir * dt * 2.5, 0, 1); if (st.fadeDir < 0 && st.fade === 0) st.fadeDir = 0; if (st.fadeDir > 0 && st.fade === 1) { st.fadeDir = 0; close(); return; } }
     draw();
   }
@@ -397,13 +380,12 @@ const BASKET2D = (() => {
       score: [0, 0], clock: opt.time || 150, names: [opt.teamName || 'JETA', opt.rivalName || 'RIVALES'], phase: 'ready', pt: 0, time0: 0, bannerT: 0, banner: null, tip: '', ev: {}, golden: false,
       tut: opt.tutorial ? { i: 0, wait: 0 } : null, auto: !!opt.auto, fade: 1, fadeDir: -1, stake: opt.stake || 0, style: opt.style || 'calle' };
     for (const q of st.p) if (q.team === 1) q.lv = opt.lv ?? 0.5; st.p[1].lv = opt.mateLv ?? 0.6;
-    place(0); updateCam(1); keys.clear(); pressedK.clear(); releasedK.clear(); document.exitPointerLock?.();
-    GAME.state = 'basket2d'; document.body.classList.add('fighting'); cv.style.display = 'block';
-    AUDIO.init && AUDIO.init(); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); return true;
+    place(0); updateCam(1); IN.reset(); document.exitPointerLock?.();
+    MINI.show(cv, 'basket2d'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); return true;
   }
   function finish() { if (!st || st.fadeDir > 0) return; st.fadeDir = 1; }
-  function close() { running = false; cancelAnimationFrame(raf); cv.style.display = 'none'; document.body.classList.remove('fighting'); GAME.state = 'play'; GAME.lock();
+  function close() { running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'basket2d', true);
     const res = { won: st.score[0] > st.score[1], score: st.score.slice() }; if (onEnd) onEnd(res); }
-  function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); if (cv) cv.style.display = 'none'; document.body.classList.remove('fighting'); if (GAME.state === 'basket2d') GAME.state = 'play'; } // tests only
-  return { start, _abort: abort, get running() { return running; }, _st: () => st, _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); pressedK.clear(); releasedK.clear(); updateCam(); } }, _press: press };
+  function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'basket2d', false); } // tests only
+  return { start, _abort: abort, get running() { return running; }, _st: () => st, _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); updateCam(); } }, _press: press };
 })();

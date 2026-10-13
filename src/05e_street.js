@@ -2,7 +2,7 @@
 function isPedRoad(rd) { return RTN[rd[0]] === 'pedestrian'; }
 function buildStreetProps() {
   const o = new THREE.Object3D(); const lists = { bench: [], planter: [], bollard: [], table: [], parasol: [], fount: [] };
-  const free = (x, z, r) => !COL.nearSeg(x, z, r) && !onCarriageway(x, z, r * 0.5) && !inPitch(x, z, r);
+  const free = (x, z, r) => !COL.nearSeg(x, z, r) && !onCarriagewayEarly(x, z, r * 0.5) && !inPitch(x, z, r);
   // along pedestrian streets
   for (const rd of DATA.R) {
     if (!isPedRoad(rd)) continue; const c = rd[4], w = rd[2];

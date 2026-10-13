@@ -111,7 +111,7 @@ function trinidadParking() {
         if (swOk(uu, side * av, du, dv)) { best = { u: uu, v: side * av, du, dv, ue }; break; } }
       if (best) found.push(best); }
     return found; };
-  const make = (F, L, rampTop, rampBot, rampV, rampW, name, label, end) => {
+  const buildTriHall = (F, L, rampTop, rampBot, rampV, rampW, name, label, end) => {
     const yF = depthAt(F, L); const found = stairs(F, L, yF, rampV, end === 'u-' ? -L / 2 + 3.5 : L / 2 - 3.5);
     const gaps = [[end, rampV, rampW + 1.6]]; for (const f of found) { const vb = f.v + f.dv * 11.5; if (Math.abs(vb) > 14) gaps.push([f.v > 0 ? 'v+' : 'v-', f.ue, 2.6]); }
     buildHall(F, 0, L, yF, name, gaps);
@@ -121,13 +121,13 @@ function trinidadParking() {
   };
   // A) «Trinidad Casco Histórico»: the ramp in the middle of the split carriageway at the top, going down the avenue
   { const h = T.hallA, L = h.L; const F = frame(h.x, h.z, h.ux, h.uz); const top = [T.rampA.x0, T.rampA.z0], bot = F.W(-L / 2 + 3.5, 0);
-    make(F, L, top, bot, 0, 4.2, 'Trinidad Casco Histórico', 'TRINIDAD CASCO HISTÓRICO', 'u-'); }
+    buildTriHall(F, L, top, bot, 0, 4.2, 'Trinidad Casco Histórico', 'TRINIDAD CASCO HISTÓRICO', 'u-'); }
   // B) «Trinidad Centro» (Av. Trinidad 59): beside the pavement of the carriageway that comes up, above Pedro Zerolo
   const r = T.rampB; if (r) { const B = T.B, L = 56; const pc = B.at(r.s1 - L / 2 + 3.5); const ux = pc.ux, uz = pc.uz; // the hall axis points down the avenue: its u+ end meets the ramp
     const off = B.out * 3; const nx = -pc.uz, nz = pc.ux; const F = frame(pc.x + nx * off, pc.z + nz * off, ux, uz);
     const t0 = B.at(r.s0), t1 = B.at(r.s1); const vR = r.v - off; // the ramp's offset in the hall frame
     const top = [t0.x + nx * r.v, t0.z + nz * r.v], bot = [t1.x + nx * r.v, t1.z + nz * r.v];
-    make(F, L, top, bot, vR, 3.8, 'Trinidad Centro', 'TRINIDAD CENTRO', 'u+');
+    buildTriHall(F, L, top, bot, vR, 3.8, 'Trinidad Centro', 'TRINIDAD CENTRO', 'u+');
     // the yellow box grid in front of the ramp mouth
     const g0 = B.at(r.s0 + 4), gv = B.out * (B.w / 2 - 1.6); triDecal(g0.x + nx * gv, g0.z + nz * gv, -g0.ux, -g0.uz, 8, 3.2, (x, w, h, k) => yellowBox(x, w, h, k)); }
   // Pedro Zerolo: yellow box grid where the tram crosses between the carriageways, zebra crossings on both carriageways

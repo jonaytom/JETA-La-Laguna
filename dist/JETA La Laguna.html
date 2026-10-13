@@ -205,7 +205,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="tb" id="tbS">CORRER</div>
 <div class="tb" id="tbM">MAPA</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">v0.68.0</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">v0.69.0</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -1631,7 +1631,7 @@ function buildBuildings() {
     let n = pts.length; if (n < 3) continue;
     if (isTramStopBuilding(nameIdx, pts)) continue; // drawn as proper tram stops
     pts = insetPoly(pts, style === 4 ? 0.3 : 0.75);
-    if (style !== 4) { const t = streetTrim(pts); if (t !== pts) { pts = t; const o = []; for (let i = 0; i < c.length; i += 2) o.push([c[i], c[i + 1]]); const t2 = streetTrim(o); if (t2 !== o) b[6] = t2.flat(); } } // v0.68: off the carriageway and pavement of the Av. de La Trinidad (DATA.B too, for inAnyBuilding)
+    if (style !== 4) { const t = roadClip(streetTrim(pts)); if (t !== pts) { pts = t; n = pts.length; const o = []; for (let i = 0; i < c.length; i += 2) o.push([c[i], c[i + 1]]); const t2 = roadClip(streetTrim(o)); if (t2 !== o) b[6] = t2.flat(); } } // v0.68–0.69: off the carriageways (04b_recorte.js; the Av. de La Trinidad with its pavement); DATA.B too, for inAnyBuilding
     if (style === 4 && nameIdx >= 0 && /Concepción/.test(STR[nameIdx])) { pts = carveConcTower(pts); n = pts.length; }
     let bmin = 1e9, bmax = -1e9, cx = 0, cz = 0;
     for (const p of pts) { const h = heightAt(p[0], p[1]); bmin = Math.min(bmin, h); bmax = Math.max(bmax, h); cx += p[0]; cz += p[1]; }
@@ -1939,6 +1939,54 @@ function buildMedians() {
   }
 }
 
+// ============ Buildings off the carriageways (v0.69, auditor: 515 buildings standing in the lanes) ============
+// The game's streets are wider than the OSM ones (WIDEN in 01_core.js), so many footprints end up inside the lanes.
+// Every building footprint is cut back with a straight cut along each carriageway it invades (half the road + 0.3 m),
+// on the side where the building is. Not touched: churches and landmarks (style 4), footprints a road goes right
+// through (passages), cuts that would reach past the end of the road piece, and cuts that would leave less than
+// 60 % of the building, and cuts of less than 0.6 m. The Avenida de La Trinidad has its own wider rule (pavement included, 05u_trinidad.js).
+let RCLIP = null;
+function roadClipGrid() {
+  if (RCLIP) return RCLIP; const CS = 40, m = new Map(); const segs = [];
+  // each road as straight runs (pieces that turn less than 12°), so a long building beside a road drawn with many short
+  // pieces is cut by one long line instead of being skipped by every short piece
+  const add = (ax, az, bx, bz, k) => { const L = Math.hypot(bx - ax, bz - az); if (L < 0.3) return; const sg = { ax, az, ux: (bx - ax) / L, uz: (bz - az) / L, L, k }; const id = segs.push(sg) - 1;
+    const x0 = Math.floor((Math.min(ax, bx) - k) / CS), x1 = Math.floor((Math.max(ax, bx) + k) / CS), z0 = Math.floor((Math.min(az, bz) - k) / CS), z1 = Math.floor((Math.max(az, bz) + k) / CS);
+    for (let a = x0; a <= x1; a++) for (let b = z0; b <= z1; b++) { const key = a * 100003 + b; let l = m.get(key); if (!l) m.set(key, l = []); l.push(id); } };
+  DATA.R.forEach((r) => { if (r[0] > 12 || (r[3] & 6)) return; const c = r[4], n = c.length / 2; let i = 0;
+    while (i < n - 1) { let j = i + 1, dev = 0;
+      for (let jj = i + 2; jj < n; jj++) { const cx = c[2 * jj] - c[2 * i], cz = c[2 * jj + 1] - c[2 * i + 1], CL = Math.hypot(cx, cz) || 1; let ok = true, dv = 0;
+        for (let q = i; q < jj && ok; q++) { const sx = c[2 * q + 2] - c[2 * q], sz = c[2 * q + 3] - c[2 * q + 1], SL = Math.hypot(sx, sz) || 1; if ((sx * cx + sz * cz) / (SL * CL) < 0.978) ok = false;
+          const px = c[2 * q + 2] - c[2 * i], pz = c[2 * q + 3] - c[2 * i + 1]; dv = Math.max(dv, Math.abs((px * cz - pz * cx) / CL)); }
+        if (!ok) break; j = jj; dev = dv; }
+      add(c[2 * i], c[2 * i + 1], c[2 * j], c[2 * j + 1], r[2] / 2 + 0.3 + dev); i = j; } });
+  RCLIP = { CS, m, segs, cut: 0 }; return RCLIP;
+}
+// keep the part of the polygon where (x - a)·n >= k (Sutherland–Hodgman against one half-plane)
+function clipHalf(P, ax, az, nx, nz, k) {
+  const out = [], f = (p) => (p[0] - ax) * nx + (p[1] - az) * nz - k;
+  for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length], fp = f(p), fq = f(q);
+    if (fp >= 0) out.push(p); if ((fp >= 0) !== (fq >= 0)) { const t = fp / (fp - fq); out.push([p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t]); } }
+  return out;
+}
+function roadClip(pts) {
+  const G = roadClipGrid(); let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const p of pts) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); z0 = Math.min(z0, p[1]); z1 = Math.max(z1, p[1]); }
+  const ids = new Set(); for (let a = Math.floor(x0 / G.CS); a <= Math.floor(x1 / G.CS); a++) for (let b = Math.floor(z0 / G.CS); b <= Math.floor(z1 / G.CS); b++) { const l = G.m.get(a * 100003 + b); if (l) for (const id of l) ids.add(id); }
+  if (!ids.size) return pts;
+  let P = pts, changed = false;
+  for (const id of ids) { const s = G.segs[id]; const nx = -s.uz, nz = s.ux; let cx = 0, cz = 0; for (const p of P) { cx += p[0]; cz += p[1]; } cx /= P.length; cz /= P.length;
+    const sc = (cx - s.ax) * nx + (cz - s.az) * nz; if (Math.abs(sc) < s.k) continue; const sg = Math.sign(sc); // a road through the middle: a passage, leave it
+    let hit = false, beyond = false, deep = 0;
+    for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length];
+      for (const tt of [0, 0.5]) { const x = p[0] + (q[0] - p[0]) * tt, z = p[1] + (q[1] - p[1]) * tt; const d = ((x - s.ax) * nx + (z - s.az) * nz) * sg; if (d >= s.k) continue;
+        const t = (x - s.ax) * s.ux + (z - s.az) * s.uz; if (t >= 0 && t <= s.L) { hit = true; deep = Math.max(deep, s.k - d); } else if (t < -1.5 || t > s.L + 1.5) beyond = true; } }
+    if (!hit || beyond || deep < 0.6) continue; // grazing the kerb by a few centimetres: leave it
+    const Q = clipHalf(P, s.ax, s.az, nx * sg, nz * sg, s.k); if (Q.length < 3) return pts; P = Q; changed = true; }
+  if (!changed) return pts;
+  const a0 = Math.abs(polyArea(pts)), a1 = Math.abs(polyArea(P)); if (a1 < a0 * 0.6 || a1 < 12) return pts;
+  G.cut++; return P;
+}
+
 // ============ landmarks, vegetation, street furniture, sky ============
 const stoneTex = (() => { const c = mkCanvas(256, 256), x = c.getContext('2d'); x.fillStyle = '#6f6a62'; x.fillRect(0, 0, 256, 256); const r = mulberry(55);
   for (let yy = 0; yy < 8; yy++) { let xx = -(yy % 2) * 20; while (xx < 256) { const w = 34 + r() * 26, g = 120 + r() * 50; x.fillStyle = `rgb(${g},${g - 6},${g - 16})`; x.fillRect(xx + 2, yy * 32 + 2, w - 3, 29); xx += w; } }
@@ -2045,7 +2093,7 @@ function nearTram(x, z, r) {
 }
 function buildTrees() {
   const types = [[], [], [], []]; let offTram = 0;
-  for (const t of TREES) { if (!inPlayArea(t[0], t[1], -5)) continue; if (overTunnel(t[0], t[1]) || inCut(t[0], t[1], 2.2)) continue; if (onCarriageway(t[0], t[1], 0.9)) continue; if (inPitch(t[0], t[1], 1.5 + t[3])) continue; /* v0.65: never inside a court or pitch */ if (nearTram(t[0], t[1], 4.4 + (t[2] === 1 ? 0 : 0.8) * t[3])) { offTram++; continue; } /* no trunk or crown over the tram */ if (!t[4] && onAnyPaved(t[0], t[1], -0.3) && !isGreen(t[0], t[1])) continue; types[t[2]].push(t); }
+  for (const t of TREES) { if (!inPlayArea(t[0], t[1], -5)) continue; if (overTunnel(t[0], t[1]) || inCut(t[0], t[1], 2.2)) continue; if (onCarriagewayEarly(t[0], t[1], 0.9)) continue; if (inPitch(t[0], t[1], 1.5 + t[3])) continue; /* v0.65: never inside a court or pitch */ if (nearTram(t[0], t[1], 4.4 + (t[2] === 1 ? 0 : 0.8) * t[3])) { offTram++; continue; } /* no trunk or crown over the tram */ if (!t[4] && onAnyPaved(t[0], t[1], -0.3) && !isGreen(t[0], t[1])) continue; types[t[2]].push(t); }
   console.log('trees kept off the tram track', offTram);
   const barkMat = new THREE.MeshStandardMaterial({ color: 0x5a4636, roughness: 1 });
   const leafMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85, flatShading: true });
@@ -2096,7 +2144,7 @@ function buildLamps() {
       while (acc2 < L) {
         const off = t === 'pedestrian' ? w / 2 - 0.6 : w / 2 + 0.5;
         const x = x1 + (x2 - x1) * acc2 / L + nx * off * side, z = z1 + (z2 - z1) * acc2 / L + nz * off * side;
-        if (!COL.nearSeg(x, z, 0.5) && !onCarriageway(x, z, 0.35) && !overTunnel(x, z)) LAMPS.push([x, z, Math.atan2(-nx * side, -nz * side), isHistoric(x, z)]);
+        if (!COL.nearSeg(x, z, 0.5) && !onCarriagewayEarly(x, z, 0.35) && !overTunnel(x, z)) LAMPS.push([x, z, Math.atan2(-nx * side, -nz * side), isHistoric(x, z)]);
         acc2 += 30; side = -side;
       }
       acc2 -= L;
@@ -2440,7 +2488,7 @@ function buildSigns() {
 function isPedRoad(rd) { return RTN[rd[0]] === 'pedestrian'; }
 function buildStreetProps() {
   const o = new THREE.Object3D(); const lists = { bench: [], planter: [], bollard: [], table: [], parasol: [], fount: [] };
-  const free = (x, z, r) => !COL.nearSeg(x, z, r) && !onCarriageway(x, z, r * 0.5) && !inPitch(x, z, r);
+  const free = (x, z, r) => !COL.nearSeg(x, z, r) && !onCarriagewayEarly(x, z, r * 0.5) && !inPitch(x, z, r);
   // along pedestrian streets
   for (const rd of DATA.R) {
     if (!isPedRoad(rd)) continue; const c = rd[4], w = rd[2];
@@ -3330,17 +3378,17 @@ function buildTramStops() {
       box(g, mWood, 0.42, 0.06, 3.2, sx + 0.38, 0.78, -1.5); box(g, mWood, 0.05, 0.4, 3.2, sx + 0.6, 1.05, -1.5);
       for (const zz of [-2.9, -0.1]) box(g, mSteel, 0.36, 0.45, 0.06, sx + 0.38, 0.53, zz);
       // ticket machine + info totem
-      box(g, mGreen, 0.55, 1.5, 0.5, sx + 0.5, 1.07, SL / 2 + 1.4); box(g, M(0x1a2228, 0.3), 0.02, 0.35, 0.3, sx + 0.22, 1.35, SL / 2 + 1.4);
+      const mach = [box(g, mGreen, 0.55, 1.5, 0.5, sx + 0.5, 1.07, SL / 2 + 1.4), box(g, M(0x1a2228, 0.3), 0.02, 0.35, 0.3, sx + 0.22, 1.35, SL / 2 + 1.4)];
       const tot = box(g, M(0x3a3f44, 0.5, 0.4), 0.16, 2.4, 0.5, sx + 0.3, 1.52, -SL / 2 - 1.6);
       const panel = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 1.24), sign); panel.position.set(sx + 0.3 - 0.09, 1.95, -SL / 2 - 1.6); panel.rotation.y = -Math.PI / 2; g.add(panel);
-      const panel2 = panel.clone(); panel2.position.x = sx + 0.3 + 0.09; panel2.rotation.y = Math.PI / 2; g.add(panel2);
+      const panel2 = panel.clone(); panel2.position.x = sx + 0.3 + 0.09; panel2.rotation.y = Math.PI / 2; g.add(panel2); const totem = [tot, panel, panel2];
       // waste bin
       box(g, M(0x2b5a33, 0.6), 0.4, 0.75, 0.4, sx + 0.8, 0.7, SL / 2 + 0.4);
       scene.add(g); g.updateMatrixWorld(true);
       // collisions: posts, glass back wall, totem and machine
       const W2 = (lx, lz) => { const v = new THREE.Vector3(lx, 0, lz).applyMatrix4(g.matrixWorld); return [v.x, v.z]; };
       const a = W2(sx + 0.72, -SL / 2), b = W2(sx + 0.72, SL / 2); COL.addSeg(a[0], a[1], b[0], b[1]);
-      for (const [lx, lz, r] of [[sx + 0.5, SL / 2 + 1.4, 0.4], [sx + 0.3, -SL / 2 - 1.6, 0.3]]) { const p = W2(lx, lz); COL.addCirc(p[0], p[1], r); }
+      for (const [lx, lz, r, ms] of [[sx + 0.5, SL / 2 + 1.4, 0.4, mach], [sx + 0.3, -SL / 2 - 1.6, 0.3, totem]]) { const p = W2(lx, lz); if (onCarriageway(p[0], p[1], r)) { for (const m of ms) if (m.parent) m.parent.remove(m); continue; } COL.addCirc(p[0], p[1], r); } // v0.69 (auditor): a platform end on the carriageway: no machine / totem there
       n++;
     }
   }
@@ -3525,7 +3573,7 @@ function buildPlazasParks() {
   const placed = []; // [x,z,r] keep-out discs (features), used to clear trees and avoid overlaps
   const paths = []; // segments [x1,z1,x2,z2,w]
   const bench = [], bin = [], bed = [], playground = [], bust = [];
-  const free = (x, z, r) => !COL.nearSeg(x, z, r) && !onCarriageway(x, z, r * 0.6) && !inAnyBuilding(x, z) && !inPitch(x, z, r) && !placed.some((p) => Math.hypot(p[0] - x, p[1] - z) < p[2] + r);
+  const free = (x, z, r) => !COL.nearSeg(x, z, r) && !onCarriagewayEarly(x, z, r * 0.6) && !inAnyBuilding(x, z) && !inPitch(x, z, r) && !placed.some((p) => Math.hypot(p[0] - x, p[1] - z) < p[2] + r);
   const addPath = (pts, w = 2.6) => { ribbon(pts, w, 'footway', YOFF.footway + 0.005, 2.4, w / 2.4); for (let i = 0; i < pts.length - 2; i += 2) paths.push([pts[i], pts[i + 1], pts[i + 2], pts[i + 3], w]); };
   const nearPath = (x, z, m) => paths.some((s) => { const dx = s[2] - s[0], dz = s[3] - s[1], L2 = dx * dx + dz * dz || 1; const t = clamp(((x - s[0]) * dx + (z - s[1]) * dz) / L2, 0, 1); return Math.hypot(x - s[0] - dx * t, z - s[1] - dz * t) < s[4] / 2 + m; });
   const benchAt = (x, z, faceX, faceZ) => { if (!free(x, z, 0.7)) return false; bench.push([x, z, Math.atan2(faceX - x, faceZ - z)]); placed.push([x, z, 0.9]); return true; };
@@ -4614,7 +4662,7 @@ function trinidadParking() {
         if (swOk(uu, side * av, du, dv)) { best = { u: uu, v: side * av, du, dv, ue }; break; } }
       if (best) found.push(best); }
     return found; };
-  const make = (F, L, rampTop, rampBot, rampV, rampW, name, label, end) => {
+  const buildTriHall = (F, L, rampTop, rampBot, rampV, rampW, name, label, end) => {
     const yF = depthAt(F, L); const found = stairs(F, L, yF, rampV, end === 'u-' ? -L / 2 + 3.5 : L / 2 - 3.5);
     const gaps = [[end, rampV, rampW + 1.6]]; for (const f of found) { const vb = f.v + f.dv * 11.5; if (Math.abs(vb) > 14) gaps.push([f.v > 0 ? 'v+' : 'v-', f.ue, 2.6]); }
     buildHall(F, 0, L, yF, name, gaps);
@@ -4624,13 +4672,13 @@ function trinidadParking() {
   };
   // A) «Trinidad Casco Histórico»: the ramp in the middle of the split carriageway at the top, going down the avenue
   { const h = T.hallA, L = h.L; const F = frame(h.x, h.z, h.ux, h.uz); const top = [T.rampA.x0, T.rampA.z0], bot = F.W(-L / 2 + 3.5, 0);
-    make(F, L, top, bot, 0, 4.2, 'Trinidad Casco Histórico', 'TRINIDAD CASCO HISTÓRICO', 'u-'); }
+    buildTriHall(F, L, top, bot, 0, 4.2, 'Trinidad Casco Histórico', 'TRINIDAD CASCO HISTÓRICO', 'u-'); }
   // B) «Trinidad Centro» (Av. Trinidad 59): beside the pavement of the carriageway that comes up, above Pedro Zerolo
   const r = T.rampB; if (r) { const B = T.B, L = 56; const pc = B.at(r.s1 - L / 2 + 3.5); const ux = pc.ux, uz = pc.uz; // the hall axis points down the avenue: its u+ end meets the ramp
     const off = B.out * 3; const nx = -pc.uz, nz = pc.ux; const F = frame(pc.x + nx * off, pc.z + nz * off, ux, uz);
     const t0 = B.at(r.s0), t1 = B.at(r.s1); const vR = r.v - off; // the ramp's offset in the hall frame
     const top = [t0.x + nx * r.v, t0.z + nz * r.v], bot = [t1.x + nx * r.v, t1.z + nz * r.v];
-    make(F, L, top, bot, vR, 3.8, 'Trinidad Centro', 'TRINIDAD CENTRO', 'u+');
+    buildTriHall(F, L, top, bot, vR, 3.8, 'Trinidad Centro', 'TRINIDAD CENTRO', 'u+');
     // the yellow box grid in front of the ramp mouth
     const g0 = B.at(r.s0 + 4), gv = B.out * (B.w / 2 - 1.6); triDecal(g0.x + nx * gv, g0.z + nz * gv, -g0.ux, -g0.uz, 8, 3.2, (x, w, h, k) => yellowBox(x, w, h, k)); }
   // Pedro Zerolo: yellow box grid where the tram crosses between the carriageways, zebra crossings on both carriageways
@@ -6128,18 +6176,22 @@ function takeWeapon() { WEAPON.has = false; WEAPON.ammo = 0; WEAPON.aiming = fal
 function ensureGunMesh() {
   if (WEAPON.mesh) { WEAPON.mesh.visible = true; return; }
   const g = new THREE.Group(); const dark = M(0x1e1f22, 0.35, 0.7), grip = M(0x3a2a20, 0.7);
-  const slide = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.04, 0.19), dark); slide.position.set(0, 0.03, 0.06);
-  const handle = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.1, 0.045), grip); handle.position.set(0, -0.025, 0); handle.rotation.x = -0.25;
+  const G = gunGeos(); const slide = new THREE.Mesh(G.slide, dark); slide.position.set(0, 0.03, 0.06);
+  const handle = new THREE.Mesh(G.handle, grip); handle.position.set(0, -0.025, 0); handle.rotation.x = -0.25;
   g.add(slide, handle); g.scale.setScalar(1.35); WEAPON.mesh = g; scene.add(g);
 }
+// v0.69 (auditor): the gun's two boxes, made once and shared by your gun and the police ones
+let GUN_GEO = null;
+function gunGeos() { if (!GUN_GEO) { GUN_GEO = { slide: new THREE.BoxGeometry(0.035, 0.04, 0.19), handle: new THREE.BoxGeometry(0.03, 0.1, 0.045) }; GUN_GEO.slide.userData.shared = GUN_GEO.handle.userData.shared = true; } return GUN_GEO; }
 function updateWeaponHUD() {
   const w = $('weap'); if (!w) return; w.style.display = WEAPON.has ? 'block' : 'none'; const tm = document.body.classList.contains('touchmode');
   if (WEAPON.has) w.innerHTML = WEAPON.out ? `PISTOLA <b>${WEAPON.ammo}</b><small>/${WEAPON.max}</small><br><small style="font-size:12px;opacity:.75">${tm ? 'toca: puños' : CONTROLS.keyName('weap').toUpperCase() + ' / 1: puños'}</small>` : `PUÑOS<br><small style="font-size:12px;opacity:.75">${tm ? 'toca: pistola' : CONTROLS.keyName('weap').toUpperCase() + ' / 2: pistola'}</small>`;
   const t = document.body.classList.contains('touchmode'); for (const id of ['tbA', 'tbD']) { const b = $(id); if (b) b.style.display = WEAPON.has && WEAPON.out && t ? 'flex' : 'none'; }
 }
 // ray from the camera through the crosshair; returns the first thing hit
+const _rayO = new THREE.Vector3(), _rayD = new THREE.Vector3(), _aimD = new THREE.Vector3(); // v0.69 (auditor): no new vectors per shot
 function shootRay() {
-  const o = camera.position.clone(); const dir = new THREE.Vector3(); camera.getWorldDirection(dir);
+  const o = _rayO.copy(camera.position); const dir = _rayD; camera.getWorldDirection(dir);
   const skip = Math.hypot(o.x - PLAYER.x, o.z - PLAYER.z) + 0.6; const maxD = 140;
   // walls (2D) cap the range
   const ex = o.x + dir.x * maxD, ez = o.z + dir.z * maxD; const tw = COL.raycast(o.x, o.z, ex, ez); const hz = Math.hypot(dir.x, dir.z) || 1e-6; let best = { d: tw < 1 ? tw * maxD / hz : maxD, kind: 'wall' };
@@ -6167,18 +6219,18 @@ function fireWeapon() {
 }
 // muzzle flash light exists from the start (intensity 0): adding a light on the first shot forced every material to
 // recompile its shaders and froze the game for ~1 s
-let flashLight = new THREE.PointLight(0xffc870, 0, 9, 2); scene.add(flashLight);
+let flashLight = new THREE.PointLight(0xffc870, 0, 9, 2); scene.add(flashLight); const _flashP = new THREE.Vector3();
 function muzzleFlash() {
   if (!flashLight) { flashLight = new THREE.PointLight(0xffc870, 0, 9, 2); scene.add(flashLight); }
-  const m = WEAPON.mesh; const p = new THREE.Vector3(); if (m) m.getWorldPosition(p); else p.set(PLAYER.x, PLAYER.y + 1.4, PLAYER.z);
+  const m = WEAPON.mesh; const p = _flashP; if (m) m.getWorldPosition(p); else p.set(PLAYER.x, PLAYER.y + 1.4, PLAYER.z);
   flashLight.position.copy(p); flashLight.intensity = 6; setTimeout(() => { flashLight.intensity = 0; }, 60);
 }
 // arm pose: point the right arm along the aim direction (done after the animation mixer)
-const _qa = new THREE.Quaternion(), _qb = new THREE.Quaternion(), _va = new THREE.Vector3(), _vb = new THREE.Vector3(), _vc = new THREE.Vector3();
+const _qa = new THREE.Quaternion(), _qb = new THREE.Quaternion(), _qc = new THREE.Quaternion(), _va = new THREE.Vector3(), _vb = new THREE.Vector3(), _vc = new THREE.Vector3();
 function aimArm(H, dir) {
   if (!H.skinned) return; const sk = H.skeleton; const up = sk.getBoneByName('upperarm_r'), lo = sk.getBoneByName('lowerarm_r'), ha = sk.getBoneByName('hand_r'); if (!up || !lo || !ha) return;
   const align = (b, child) => { b.updateWorldMatrix(true, false); child.updateWorldMatrix(false, false); b.getWorldPosition(_va); child.getWorldPosition(_vb); _vc.subVectors(_vb, _va).normalize();
-    _qa.setFromUnitVectors(_vc, dir); b.getWorldQuaternion(_qb); _qb.premultiply(_qa); const pq = new THREE.Quaternion(); b.parent.getWorldQuaternion(pq); b.quaternion.copy(pq.invert().multiply(_qb)); b.updateWorldMatrix(false, true); };
+    _qa.setFromUnitVectors(_vc, dir); b.getWorldQuaternion(_qb); _qb.premultiply(_qa); const pq = _qc; b.parent.getWorldQuaternion(pq); b.quaternion.copy(pq.invert().multiply(_qb)); b.updateWorldMatrix(false, true); };
   align(up, lo); align(lo, ha);
 }
 function updateWeapons(dt) {
@@ -6189,8 +6241,8 @@ function updateWeapons(dt) {
   if (WEAPON.want && canUse()) fireWeapon(); WEAPON.want = false;
   if (WEAPON.has && WEAPON.mesh) {
     WEAPON.mesh.visible = !PLAYER.car && !PLAYER.interior && !!WEAPON.out;
-    if (WEAPON.aiming && playerHuman) { PLAYER.h = CAM.yaw; playerHuman.root.rotation.y = PLAYER.h; const d = new THREE.Vector3(); camera.getWorldDirection(d); aimArm(playerHuman, d); }
-    if (playerHuman && playerHuman.skinned && WEAPON.mesh.visible && WEAPON.out) { let d = null; if (WEAPON.aiming) { d = new THREE.Vector3(); camera.getWorldDirection(d); } gripGun(playerHuman, WEAPON.mesh, d); }
+    if (WEAPON.aiming && playerHuman) { PLAYER.h = CAM.yaw; playerHuman.root.rotation.y = PLAYER.h; const d = _aimD; camera.getWorldDirection(d); aimArm(playerHuman, d); }
+    if (playerHuman && playerHuman.skinned && WEAPON.mesh.visible && WEAPON.out) { let d = null; if (WEAPON.aiming) { d = _aimD; camera.getWorldDirection(d); } gripGun(playerHuman, WEAPON.mesh, d); }
   }
   // flying cans
   for (const t of WEAPON.targets) if (t.hit && t.mesh && t.vy !== undefined) { t.vy -= 9.8 * dt; t.mesh.position.x += t.vx * dt; t.mesh.position.z += t.vz * dt; t.mesh.position.y += t.vy * dt; t.mesh.rotation.x += dt * 9; const g = heightAt(t.mesh.position.x, t.mesh.position.z) + 0.06; if (t.mesh.position.y < g) { t.mesh.position.y = g; t.vy = 0; t.vx *= 0.5; t.vz *= 0.5; } }
@@ -6198,28 +6250,30 @@ function updateWeapons(dt) {
 
 // the pistol sits in the palm of the right hand: barrel along the knuckles' direction, slide on the thumb side, fingers wrapped round the grip
 const GRIP = { curl: 1.25, sgn: 1 };
+// v0.69 (auditor): temporaries made once and the bones looked up once per skeleton (this runs every frame while aiming)
+const GG = { ph: new THREE.Vector3(), pm: new THREE.Vector3(), pi: new THREE.Vector3(), pp: new THREE.Vector3(), fwd: new THREE.Vector3(), up: new THREE.Vector3(), x: new THREE.Vector3(), m: new THREE.Matrix4(), palm: new THREE.Vector3(), axis: new THREE.Vector3(), qd: new THREE.Quaternion(), qw: new THREE.Quaternion(), qp: new THREE.Quaternion(), fist: new THREE.Vector3(), tmp: new THREE.Vector3(), hOff: new THREE.Vector3() };
 function gripGun(H, mesh, aimDir) {
-  const sk = H.skeleton, B = (n) => sk.getBoneByName(n); const hand = B('hand_r'), mid = B('middle_01_r'), ind = B('index_01_r'), pin = B('pinky_01_r'); if (!hand || !mid) return;
+  const sk = H.skeleton; const bc = sk.userData || (sk.userData = {}); const cache = bc.bones || (bc.bones = {}); const B = (n) => (n in cache ? cache[n] : (cache[n] = sk.getBoneByName(n) || null)); const hand = B('hand_r'), mid = B('middle_01_r'), ind = B('index_01_r'), pin = B('pinky_01_r'); if (!hand || !mid) return;
   // start every frame from the rest pose of the fingers/thumb (not every clip keys them: rotations would pile up and spin the hand)
   for (const f of ['index', 'middle', 'ring', 'pinky', 'thumb']) for (const k of ['01', '02', '03']) { const b = B(f + '_' + k + '_r'); if (!b) continue; if (!b.userData.q0) b.userData.q0 = b.quaternion.clone(); b.quaternion.copy(b.userData.q0); }
   hand.updateWorldMatrix(true, true);
-  const ph = new THREE.Vector3(), pm = new THREE.Vector3(), pi = new THREE.Vector3(), pp = new THREE.Vector3();
+  const { ph, pm, pi, pp } = GG;
   hand.getWorldPosition(ph); mid.getWorldPosition(pm); ind.getWorldPosition(pi); pin.getWorldPosition(pp);
-  const fwd = aimDir ? aimDir.clone().normalize() : pm.clone().sub(ph).normalize();
-  const up = pi.clone().sub(pp); up.addScaledVector(fwd, -up.dot(fwd)).normalize();
-  const x = new THREE.Vector3().crossVectors(up, fwd).normalize();
-  const m = new THREE.Matrix4().makeBasis(x, up, fwd); mesh.quaternion.setFromRotationMatrix(m);
+  const fwd = aimDir ? GG.fwd.copy(aimDir).normalize() : GG.fwd.copy(pm).sub(ph).normalize();
+  const up = GG.up.copy(pi).sub(pp); up.addScaledVector(fwd, -up.dot(fwd)).normalize();
+  const x = GG.x.crossVectors(up, fwd).normalize();
+  const m = GG.m.makeBasis(x, up, fwd); mesh.quaternion.setFromRotationMatrix(m);
   // palm centre: a bit before the knuckles, on the palm side
-  const palm = ph.clone().lerp(pm, 0.8); palm.addScaledVector(x, GRIP.sgn * -0.025); palm.addScaledVector(up, -0.005);
+  const palm = GG.palm.copy(ph).lerp(pm, 0.8); palm.addScaledVector(x, GRIP.sgn * -0.025); palm.addScaledVector(up, -0.005);
   mesh.position.copy(palm);
   // curl the four fingers round the grip (rotation about the knuckle line)
-  const axis = pi.clone().sub(pp).normalize(); const qd = new THREE.Quaternion(), qw = new THREE.Quaternion(), qp = new THREE.Quaternion();
+  const axis = GG.axis.copy(pi).sub(pp).normalize(); const { qd, qw, qp } = GG;
   for (const f of ['index', 'middle', 'ring', 'pinky']) for (const k of ['01', '02', '03']) { const b = B(f + '_' + k + '_r'); if (!b) continue; b.updateWorldMatrix(true, false);
     qd.setFromAxisAngle(axis, GRIP.sgn * GRIP.curl * (k === '01' ? 0.85 : 0.7)); b.getWorldQuaternion(qw); qw.premultiply(qd); b.parent.getWorldQuaternion(qp); b.quaternion.copy(qp.invert().multiply(qw)); b.updateWorldMatrix(false, true); }
   // the handle goes exactly inside the closed fist: halfway between the knuckles and the middle phalanges
-  const fist = new THREE.Vector3(), tmp = new THREE.Vector3(); let nf = 0;
+  const fist = GG.fist.set(0, 0, 0), tmp = GG.tmp; let nf = 0;
   for (const f of ['index', 'middle', 'ring', 'pinky']) for (const k of ['01', '02']) { const b = B(f + '_' + k + '_r'); if (!b) continue; b.getWorldPosition(tmp); fist.add(tmp); nf++; }
-  if (nf) { fist.multiplyScalar(1 / nf); const hOff = new THREE.Vector3(0, -0.025, 0).multiplyScalar(mesh.scale.x).applyQuaternion(mesh.quaternion); mesh.position.copy(fist).sub(hOff); }
+  if (nf) { fist.multiplyScalar(1 / nf); const hOff = GG.hOff.set(0, -0.025, 0).multiplyScalar(mesh.scale.x).applyQuaternion(mesh.quaternion); mesh.position.copy(fist).sub(hOff); }
   // thumb wraps over the other side of the grip
   for (const k of ['01', '02']) { const b = B('thumb_' + k + '_r'); if (!b) continue; b.updateWorldMatrix(true, false); qd.setFromAxisAngle(fwd, GRIP.sgn * -0.45); b.getWorldQuaternion(qw); qw.premultiply(qd); b.parent.getWorldQuaternion(qp); b.quaternion.copy(qp.invert().multiply(qw)); b.updateWorldMatrix(false, true); }
   mesh.updateMatrixWorld(true);
@@ -6670,13 +6724,13 @@ function startStreetFight(p) {
 
 // ============ police on foot: when the patrol car can't get to you, the officers get out and chase you running.
 // With 4+ stars they also shoot (2-3 hits kill, depending on your health).
-const COPS = [];
+const COPS = []; const _copD = new THREE.Vector3(), _copA = new THREE.Vector3(); // v0.69 (auditor): temporaries
 const COP_LOOK = { skin: 0xd9a47c, shirt: 0x1d2b4f, pants: 0x1a2236, shoes: 0x111111, sole: 0x111111, cap: 0x1d2b4f, female: false, beard: false, sleeve: true, longPants: true, hairStyle: 'Hair_Buzzed', belt: true };
 function copGunMesh() {
   if (GUNPOOL.length) { const g = GUNPOOL.pop(); g.visible = true; return g; } /* reuse (audit P0.3) */
   const g = new THREE.Group(); const dark = M(0x1e1f22, 0.35, 0.7);
-  const slide = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.04, 0.19), dark); slide.position.set(0, 0.03, 0.06);
-  const handle = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.1, 0.045), dark); handle.position.set(0, -0.025, 0); handle.rotation.x = -0.25;
+  const G = gunGeos(); const slide = new THREE.Mesh(G.slide, dark); slide.position.set(0, 0.03, 0.06);
+  const handle = new THREE.Mesh(G.handle, dark); handle.position.set(0, -0.025, 0); handle.rotation.x = -0.25;
   g.add(slide, handle); g.scale.setScalar(1.35); scene.add(g); return g;
 }
 function newCopHuman() { return makeHuman({ ...COP_LOOK, skin: pick([0xd9a47c, 0xc68a64, 0xe8bf9c, 0xa8744e]) }); }
@@ -6692,7 +6746,7 @@ function removeCop(c) { releaseHuman('cop', c.H); if (c.gun) { c.gun.visible = f
 function copLineOfSight(c) { return COL.raycast(c.x, c.z, PLAYER.x, PLAYER.z) >= 1; }
 function copShoot(c, dist, stars) {
   // aim, flash, bang; chance to hit drops with distance and when you run
-  AUDIO.shot && AUDIO.shot(); const d = new THREE.Vector3(PLAYER.x - c.x, 0.2, PLAYER.z - c.z).normalize();
+  AUDIO.shot && AUDIO.shot(); const d = _copD.set(PLAYER.x - c.x, 0.2, PLAYER.z - c.z).normalize();
   if (!c.gun) c.gun = copGunMesh(); c.aimT = 0.7;
   if (typeof flashLight !== 'undefined' && flashLight) { flashLight.position.set(c.x + d.x * 0.7, heightAt(c.x, c.z) + 1.4, c.z + d.z * 0.7); flashLight.intensity = 6; setTimeout(() => { flashLight.intensity = 0; }, 60); }
   const pHit = clamp(0.6 - dist / 55 - (PLAYER.speed > 4 ? 0.2 : 0) + (stars >= 5 ? 0.1 : 0), 0.15, 0.8);
@@ -6746,13 +6800,61 @@ function updateCops(dt) {
     animHuman(c.H, dt, sp);
     const gy = (typeof lowAt === 'function' && PLAYER.y < heightAt(c.x, c.z) - 1.5) ? PLAYER.y : heightAt(c.x, c.z);
     c.H.root.position.set(c.x, gy + 0.17, c.z); c.H.root.rotation.y = c.h; c.H.root.visible = dist < 120;
-    if (c.aimT > 0 && c.H.skinned) { const d = new THREE.Vector3(dx, (PLAYER.y + 1.2) - (gy + 1.45), dz).normalize(); aimArm(c.H, d); if (!c.gun) c.gun = copGunMesh(); c.gun.visible = true; gripGun(c.H, c.gun, d); }
+    if (c.aimT > 0 && c.H.skinned) { const d = _copA.set(dx, (PLAYER.y + 1.2) - (gy + 1.45), dz).normalize(); aimArm(c.H, d); if (!c.gun) c.gun = copGunMesh(); c.gun.visible = true; gripGun(c.H, c.gun, d); }
     else if (c.gun) c.gun.visible = false;
   }
 }
 // officers on foot also count for "seen" and for getting busted
 function copsSee() { for (const c of COPS) if (Math.hypot(c.x - PLAYER.x, c.z - PLAYER.z) < 45 && copLineOfSight(c)) return true; return false; }
 function copsNear() { for (const c of COPS) if (Math.hypot(c.x - PLAYER.x, c.z - PLAYER.z) < 1.8) return true; return false; }
+
+// ============ Shared pieces of the 2D minigames (v0.69, auditor: basketball and football repeated ~18 % of their code) ============
+// Same keys for every minigame (Jonay): botón A = E / left click (vS), right click or Q (vP), B = Espacio (vT) and the
+// walking keys for the directions. MINI.input(isRunning) gives each game its own set of virtual buttons; MINI.snd plays
+// the little synthesised sounds; MINI.say is the speaker's voice; MINI.txt writes pixel text with a black outline.
+const MINI = (() => {
+  function vcode(k) { const has = (id) => CONTROLS.codes(id).includes(k);
+    return has('f_punch') ? 'vS' : has('b_pass') ? 'vP' : has('f_kick') ? 'vT' : has('left') ? 'vL' : has('right') ? 'vR' : has('fwd') ? 'vU' : has('back') ? 'vD' : k === 'Enter' ? 'vS' : null; }
+  function input(isRunning) {
+    const keys = new Set(), pressedK = new Set(), releasedK = new Set();
+    const press = (v, down) => { if (down) { if (!keys.has(v)) pressedK.add(v); keys.add(v); } else { if (keys.has(v)) releasedK.add(v); keys.delete(v); } };
+    const onKey = (e, down) => { if (!isRunning()) return; const v = vcode(e.code); if (!v) return; e.preventDefault(); e.stopPropagation(); press(v, down); };
+    window.addEventListener('keydown', (e) => onKey(e, true), true); window.addEventListener('keyup', (e) => onKey(e, false), true);
+    window.addEventListener('mousedown', (e) => { if (!isRunning()) return; e.preventDefault(); e.stopPropagation(); if (e.button === 0) press('vS', true); if (e.button === 2) press('vP', true); }, true); // left = A, right = pass
+    window.addEventListener('mouseup', (e) => { if (!isRunning()) return; if (e.button === 0) press('vS', false); if (e.button === 2) press('vP', false); }, true);
+    window.addEventListener('contextmenu', (e) => { if (isRunning()) e.preventDefault(); }, true);
+    return { keys, press, held: (v) => keys.has(v), hit: (v) => pressedK.has(v), rel: (v) => releasedK.has(v), consume(v) { pressedK.delete(v); }, clearHits() { pressedK.clear(); }, frame() { pressedK.clear(); releasedK.clear(); }, reset() { keys.clear(); pressedK.clear(); releasedK.clear(); } };
+  }
+  const tone = (ctx, g, type, f0, f1, vol, dur) => { const o = ctx.createOscillator(); o.type = type; const t = ctx.currentTime; o.frequency.setValueAtTime(f0, t); if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + dur * 0.8);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur); o.connect(g); o.start(t); o.stop(t + dur + 0.02); return o; };
+  function noise(ctx, g, ftype, freq, q, vol, attack, dur) { const t = ctx.currentTime; const s = ctx.createBufferSource(); s.buffer = AUDIO.noise; const f = ctx.createBiquadFilter(); f.type = ftype; f.frequency.value = freq; if (q) f.Q.value = q;
+    if (attack) { g.gain.setValueAtTime(0.001, t); g.gain.linearRampToValueAtTime(vol, t + attack); } else g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur); s.connect(f); f.connect(g); s.start(t, Math.random()); s.stop(t + dur + 0.1); }
+  function snd(kind) { const ctx = AUDIO.ctx, out = AUDIO.master; if (!ctx || !out) return; const g = ctx.createGain(); g.connect(out); const t = ctx.currentTime;
+    switch (kind) {
+      case 'bounce': tone(ctx, g, 'sine', 150, 60, 0.18, 0.1); return;
+      case 'kick': tone(ctx, g, 'sine', 120, 45, 0.22, 0.09); return;
+      case 'rim': tone(ctx, g, 'triangle', 520, 0, 0.08, 0.25); return;
+      case 'post': tone(ctx, g, 'triangle', 760, 0, 0.08, 0.3); return;
+      case 'buzzer': { const o = ctx.createOscillator(); o.type = 'square'; o.frequency.value = 196; g.gain.setValueAtTime(0.06, t); g.gain.setValueAtTime(0.06, t + 0.7); g.gain.exponentialRampToValueAtTime(0.001, t + 0.8); o.connect(g); o.start(t); o.stop(t + 0.85); return; }
+      case 'whistle': { const o = ctx.createOscillator(), lfo = ctx.createOscillator(), lg = ctx.createGain(); o.frequency.value = 2300; lfo.frequency.value = 28; lg.gain.value = 120; lfo.connect(lg); lg.connect(o.frequency);
+        g.gain.setValueAtTime(0.05, t); g.gain.setValueAtTime(0.05, t + 0.45); g.gain.exponentialRampToValueAtTime(0.001, t + 0.5); o.connect(g); o.start(t); lfo.start(t); o.stop(t + 0.52); lfo.stop(t + 0.52); return; }
+      case 'swish': noise(ctx, g, 'highpass', 2500, 0, 0.12, 0, 0.35); return;
+      case 'goal': noise(ctx, g, 'bandpass', 800, 0.5, 0.16, 0.2, 2.4); return;
+      default: noise(ctx, g, 'bandpass', 900, 0.6, 0.1, 0.15, 1.4); // crowd
+    } }
+  function say(text, rate = 1.15, pitch = 0.75) { try { const ss = window.speechSynthesis; if (!ss) return; const u = new SpeechSynthesisUtterance(text); const v = ss.getVoices().find((q) => /^es/i.test(q.lang)); if (v) u.voice = v; u.lang = 'es-ES'; u.rate = rate; u.pitch = pitch; u.volume = 0.9; ss.cancel(); ss.speak(u); } catch (e) { } }
+  function txt(cx, s, x, y, size, col, align = 'center') { cx.font = `${size}px "Press Start 2P", monospace`; cx.textAlign = align; cx.textBaseline = 'top'; cx.fillStyle = '#000';
+    for (const [a, b] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) cx.fillText(s, x + a, y + b); cx.fillStyle = col; cx.fillText(s, x, y); }
+  // HUD pieces both games draw the same way
+  function turbo(cx, H, t) { cx.fillStyle = 'rgba(0,0,0,0.6)'; cx.fillRect(10, H - 16, 64, 8); cx.fillStyle = t > 0.25 ? '#5ec8ff' : '#ff6b6b'; cx.fillRect(11, H - 15, 62 * t, 6); txt(cx, 'TURBO', 42, H - 26, 6, '#fff'); }
+  function banner(cx, st, W, y, size) { if (!(st.bannerT > 0 && st.banner)) return; const k = Math.min(1, (st.banner.dur - st.bannerT) * 6); txt(cx, st.banner.t, W / 2, y, Math.round(size + 6 * k), st.banner.c); }
+  function rows(cx, W, list, y0) { list.forEach(([a, c], i) => { txt(cx, a, 74, y0 + i * 13, 6, '#9fd7ff', 'left'); txt(cx, c, W - 74, y0 + i * 13, 6, '#fff', 'right'); }); }
+  function endScreen(cx, W, score) { const won = score[0] > score[1]; txt(cx, won ? '¡GANÁIS!' : 'HABÉIS PERDIDO', W / 2, 100, 16, won ? '#7fe08a' : '#ff6b6b'); txt(cx, `${score[0]} - ${score[1]}`, W / 2, 128, 10, '#fff'); }
+  // the game's canvas in front of the 3D world, and back
+  function show(cv, state) { GAME.state = state; document.body.classList.add('fighting'); cv.style.display = 'block'; if (AUDIO.init) AUDIO.init(); }
+  function hide(cv, state, lock) { if (cv) cv.style.display = 'none'; document.body.classList.remove('fighting'); if (lock) { GAME.state = 'play'; GAME.lock(); } else if (GAME.state === state) GAME.state = 'play'; }
+  return { input, snd, say, txt, turbo, banner, rows, endScreen, show, hide };
+})();
 
 // ============ «JETA JAM»: 2D basketball, 2 vs 2, in the style of the 90s arcade games (v0.65) ============
 // Side view of the court, the same pixel-art sprites as the 2D fight (made from the players' real clothes). You and a
@@ -6773,7 +6875,6 @@ const BASKET2D = (() => {
   const X1 = wx(CL);
   const HOOP = [{ x: 1.6, z: 7.5 }, { x: CL - 1.6, z: 7.5 }], RIM = 3.05, G = 9.8, THREE_PT = 6.75;
   let cv = null, cx = null, running = false, st = null, raf = 0, last = 0, acc = 0, onEnd = null;
-  const keys = new Set(), pressedK = new Set(), releasedK = new Set();
   // ---------- sprites (same drawer as the fight; a few extra poses)
   const P = () => FIGHT2D.POSES;
   const EXTRA = {
@@ -6791,25 +6892,9 @@ const BASKET2D = (() => {
     SPR.set(key, s); return s;
   }
   // ---------- input (virtual buttons from the player's controls)
-  function vcode(k) { const has = (id) => CONTROLS.codes(id).includes(k);
-    return has('f_punch') ? 'vS' : has('b_pass') ? 'vP' : has('f_kick') ? 'vT' : has('left') ? 'vL' : has('right') ? 'vR' : has('fwd') ? 'vU' : has('back') ? 'vD' : k === 'Enter' ? 'vS' : null; }
-  const press = (v, down) => { if (down) { if (!keys.has(v)) pressedK.add(v); keys.add(v); } else { if (keys.has(v)) releasedK.add(v); keys.delete(v); } };
-  function onKey(e, down) { if (!running) return; const v = vcode(e.code); if (!v) return; e.preventDefault(); e.stopPropagation(); press(v, down); }
-  window.addEventListener('keydown', (e) => onKey(e, true), true); window.addEventListener('keyup', (e) => onKey(e, false), true);
-  window.addEventListener('mousedown', (e) => { if (!running) return; e.preventDefault(); e.stopPropagation(); if (e.button === 0) press('vS', true); if (e.button === 2) press('vP', true); }, true); // left = shoot, right = pass (v0.66: they were swapped)
-  window.addEventListener('mouseup', (e) => { if (!running) return; if (e.button === 0) press('vS', false); if (e.button === 2) press('vP', false); }, true);
-  window.addEventListener('contextmenu', (e) => { if (running) e.preventDefault(); }, true);
-  const held = (v) => keys.has(v), hit = (v) => pressedK.has(v), rel = (v) => releasedK.has(v);
+  const IN = MINI.input(() => running), { press, held, hit, rel } = IN, keys = IN.keys; // v0.69: shared with the other minigames (09ea_minijuegos.js)
   // ---------- little sounds (own nodes on the game's audio context)
-  function snd(kind) { const ctx = AUDIO.ctx, out = AUDIO.master; if (!ctx || !out) return; const t = ctx.currentTime; const g = ctx.createGain(); g.connect(out);
-    if (kind === 'bounce') { const o = ctx.createOscillator(); o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(60, t + 0.08); g.gain.setValueAtTime(0.18, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.1); o.connect(g); o.start(t); o.stop(t + 0.12); return; }
-    if (kind === 'buzzer') { const o = ctx.createOscillator(); o.type = 'square'; o.frequency.value = 196; g.gain.setValueAtTime(0.06, t); g.gain.setValueAtTime(0.06, t + 0.7); g.gain.exponentialRampToValueAtTime(0.001, t + 0.8); o.connect(g); o.start(t); o.stop(t + 0.85); return; }
-    if (kind === 'rim') { const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = 520; g.gain.setValueAtTime(0.08, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.25); o.connect(g); o.start(t); o.stop(t + 0.3); return; }
-    const s = ctx.createBufferSource(); s.buffer = AUDIO.noise; const f = ctx.createBiquadFilter(); // swish / crowd
-    if (kind === 'swish') { f.type = 'highpass'; f.frequency.value = 2500; g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.35); s.connect(f); f.connect(g); s.start(t, Math.random()); s.stop(t + 0.4); }
-    else { f.type = 'bandpass'; f.frequency.value = 900; f.Q.value = 0.6; g.gain.setValueAtTime(0.001, t); g.gain.linearRampToValueAtTime(0.1, t + 0.15); g.gain.exponentialRampToValueAtTime(0.001, t + 1.4); s.connect(f); f.connect(g); s.start(t, Math.random()); s.stop(t + 1.5); }
-  }
-  function say(text) { try { const ss = window.speechSynthesis; if (!ss) return; const u = new SpeechSynthesisUtterance(text); const v = ss.getVoices().find((q) => /^es/i.test(q.lang)); if (v) u.voice = v; u.lang = 'es-ES'; u.rate = 1.15; u.pitch = 0.75; u.volume = 0.9; ss.cancel(); ss.speak(u); } catch (e) { } }
+  const snd = MINI.snd, say = (t) => MINI.say(t);
   // ---------- setup
   function mkPlayer(o, team, i) {
     return { name: o.name, look: o.look || {}, spr: sprites(o.look || {}, !!o.nose), team, human: !!o.human, x: 0, z: 0, y: 0, vx: 0, vz: 0, vy: 0, dir: team ? -1 : 1, turbo: 1, down: 0, act: '', actT: 0, air: false,
@@ -6857,7 +6942,7 @@ const BASKET2D = (() => {
     const c = COMBOS[(Math.random() * 4) | 0]; const sg = Math.sign(hoopOf(p.team).x - p.x) || 1;
     const vk = { adelante: [sg > 0 ? 'vR' : 'vL'], atras: [sg > 0 ? 'vL' : 'vR'], abajo: ['vD'], arriba: ['vU'], puno: ['vS'], patada: ['vT', 'vP'] };
     st.combo = { c, i: 0, t: 3.6, by: p, need: c.seq.map((k) => vk[k]), sg, ok: null, d }; st.phase = 'combo'; p.turbo = Math.max(0, p.turbo - 0.2);
-    pressedK.clear(); banner('¡ENTRADA EN COMBO!', '#ffd400', 1.0); snd('crowd');
+    IN.clearHits(); banner('¡ENTRADA EN COMBO!', '#ffd400', 1.0); snd('crowd');
   }
   function comboStep(dt) {
     const C = st.combo; if (C.ok !== null) { C.end -= dt; if (C.end <= 0) { st.phase = 'play'; st.combo = null; } return; }
@@ -6959,7 +7044,7 @@ const BASKET2D = (() => {
       if (rel('vS') && p.shootHold && p.air) release(p);
       if (hit('vP')) { if (b.holder === p) pass(p, mate); else if (b.holder === mate) pass(mate, p);
         else if (b.holder && b.holder.team !== p.team && dist(p, b.holder) <= 1.4) steal(p);
-        else if (mate && st.time0 > (st.swapAt || 0)) { p.human = false; mate.human = true; p.shootHold = false; st.swapAt = st.time0 + 0.25; pressedK.delete('vP'); if (st.ev) st.ev.swap = true; } } // (once: the mate is stepped right after and sees the same click) // defending away from the ball: right click = switch to the other defender
+        else if (mate && st.time0 > (st.swapAt || 0)) { p.human = false; mate.human = true; p.shootHold = false; st.swapAt = st.time0 + 0.25; IN.consume('vP'); if (st.ev) st.ev.swap = true; } } // (once: the mate is stepped right after and sees the same click) // defending away from the ball: right click = switch to the other defender
     }
     if (!ctl && p.shootHold && p.air && p.vy < 0.4 + (p.aiRel || 0) * 6) release(p);
     if (p.shootHold) { p.holdT += dt; if (ctl && p.holdT > BAR) release(p); }
@@ -7036,7 +7121,7 @@ const BASKET2D = (() => {
     if (ok(st.ev)) { t.wait = 0.9; st.tip = '¡BIEN!  ' + tip(); AUDIO.cash && AUDIO.cash(); }
   }
   // ---------- drawing
-  function txt(s, x, y, size, col, align = 'center') { cx.font = `${size}px "Press Start 2P", monospace`; cx.textAlign = align; cx.textBaseline = 'top'; cx.fillStyle = '#000'; for (const [a, b] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) cx.fillText(s, x + a, y + b); cx.fillStyle = col; cx.fillText(s, x, y); }
+  const txt = (s, x, y, size, col, align) => MINI.txt(cx, s, x, y, size, col, align);
   // backgrounds (one per style, cached): 'calle' public court in town, 'colegio' a school yard, 'pabellon' an indoor hall
   const BGS = {};
   function drawBg(style = 'calle') {
@@ -7119,12 +7204,12 @@ const BASKET2D = (() => {
     txt(st.names[0], W / 2 - 92, 11, 7, '#7fe08a'); txt(st.names[1], W / 2 + 92, 11, 7, '#ff6b6b');
     txt(String(st.score[0]), W / 2 - 92, 22, 9, '#fff'); txt(String(st.score[1]), W / 2 + 92, 22, 9, '#fff');
     const cl = st.tut ? '--:--' : st.golden ? 'ORO' : `${Math.floor(st.clock / 60)}:${String(Math.floor(st.clock % 60)).padStart(2, '0')}`; txt(cl, W / 2, 16, 9, st.golden ? '#ffd400' : '#fff');
-    const hu = st.p.find((q) => q.human); cx.fillStyle = 'rgba(0,0,0,0.6)'; cx.fillRect(10, H - 16, 64, 8); cx.fillStyle = hu.turbo > 0.25 ? '#5ec8ff' : '#ff6b6b'; cx.fillRect(11, H - 15, 62 * hu.turbo, 6); txt('TURBO', 42, H - 26, 6, '#fff');
+    const hu = st.p.find((q) => q.human); MINI.turbo(cx, H, hu.turbo);
     if (st.tip) { cx.fillStyle = 'rgba(0,0,0,0.7)'; cx.fillRect(40, H - 34, W - 80, 16); txt(st.tip, W / 2, H - 29, 6, '#ffd400'); }
-    if (st.bannerT > 0 && st.banner) { const k = Math.min(1, (st.banner.dur - st.bannerT) * 6); txt(st.banner.t, W / 2, 64, Math.round(10 + 6 * k), st.banner.c); }
+    MINI.banner(cx, st, W, 64, 10);
     if (st.phase === 'ready') { cx.fillStyle = 'rgba(0,0,0,0.8)'; cx.fillRect(60, 50, W - 120, 132); txt('JETA JAM · 2 CONTRA 2', W / 2, 58, 9, '#ffd400');
       const rows = [['MOVERSE', `${K_('left')} ${K_('right')} ${K_('fwd')} ${K_('back')}`], ['TIRAR (mantén, suelta en verde)', `clic izq. · ${K_('f_punch')}`], ['PASAR / ROBAR / CAMBIAR', `clic dcho. · ${K_('b_pass')}`], ['TAPÓN (defendiendo)', `clic izq. · ${K_('f_punch')}`], ['CORRER (turbo)', K_('f_kick')], ['COMBO', 'corriendo + tiro a media distancia']];
-      rows.forEach(([a, c], i) => { txt(a, 74, 78 + i * 13, 6, '#9fd7ff', 'left'); txt(c, W - 74, 78 + i * 13, 6, '#fff', 'right'); });
+      MINI.rows(cx, W, rows, 78);
       if (Math.floor(st.time0 * 2) % 2 === 0) txt(`CLIC IZQ. O ${K_('f_punch').toUpperCase()} PARA EMPEZAR`, W / 2, 162, 7, '#7fe08a'); }
     if (st.phase === 'combo' && st.combo) { const C = st.combo; // the combo panel: the move, its inputs (done ones in green) and the time left
       cx.fillStyle = 'rgba(0,0,0,0.78)'; cx.fillRect(70, 78, W - 140, 96); txt('¡ENTRADA EN COMBO!', W / 2, 84, 9, '#ffd400'); txt(C.c.name, W / 2, 100, 8, '#fff');
@@ -7133,14 +7218,14 @@ const BASKET2D = (() => {
       parts.forEach((q, i) => { txt(q.t, x0 + i * 60 + (i === 2 ? 10 : 0), 122, q.t.length > 1 ? 7 : 12, q.c); if (i < 2) txt(i === 1 ? '+' : ',', x0 + i * 60 + 30, 124, 8, '#aaa'); });
       txt(`puño = clic izq. / ${K_('f_punch')} · patada = ${K_('f_kick')} / clic dcho.`, W / 2, 146, 5, '#9fd7ff');
       cx.fillStyle = '#333'; cx.fillRect(90, 160, W - 180, 5); cx.fillStyle = C.t > 1.2 ? '#7fe08a' : '#ff6b6b'; cx.fillRect(90, 160, (W - 180) * clamp(C.t / 3.6, 0, 1), 5); }
-    if (st.phase === 'end') { const won = st.score[0] > st.score[1]; txt(won ? '¡GANÁIS!' : 'HABÉIS PERDIDO', W / 2, 100, 16, won ? '#7fe08a' : '#ff6b6b'); txt(`${st.score[0]} - ${st.score[1]}`, W / 2, 128, 10, '#fff'); }
+    if (st.phase === 'end') MINI.endScreen(cx, W, st.score);
     if (st.fade > 0) { cx.fillStyle = `rgba(0,0,0,${st.fade})`; cx.fillRect(0, 0, W, H); }
   }
   // ---------- loop
   function loop(now) {
     if (!running) return; raf = requestAnimationFrame(loop);
     let dt = Math.min(0.1, (now - last) / 1000); last = now; acc += dt;
-    while (acc >= 1 / 60) { step(1 / 60); pressedK.clear(); releasedK.clear(); acc -= 1 / 60; updateCam(); }
+    while (acc >= 1 / 60) { step(1 / 60); IN.frame(); acc -= 1 / 60; updateCam(); }
     if (st.fadeDir) { st.fade = clamp(st.fade + st.fadeDir * dt * 2.5, 0, 1); if (st.fadeDir < 0 && st.fade === 0) st.fadeDir = 0; if (st.fadeDir > 0 && st.fade === 1) { st.fadeDir = 0; close(); return; } }
     draw();
   }
@@ -7153,15 +7238,14 @@ const BASKET2D = (() => {
       score: [0, 0], clock: opt.time || 150, names: [opt.teamName || 'JETA', opt.rivalName || 'RIVALES'], phase: 'ready', pt: 0, time0: 0, bannerT: 0, banner: null, tip: '', ev: {}, golden: false,
       tut: opt.tutorial ? { i: 0, wait: 0 } : null, auto: !!opt.auto, fade: 1, fadeDir: -1, stake: opt.stake || 0, style: opt.style || 'calle' };
     for (const q of st.p) if (q.team === 1) q.lv = opt.lv ?? 0.5; st.p[1].lv = opt.mateLv ?? 0.6;
-    place(0); updateCam(1); keys.clear(); pressedK.clear(); releasedK.clear(); document.exitPointerLock?.();
-    GAME.state = 'basket2d'; document.body.classList.add('fighting'); cv.style.display = 'block';
-    AUDIO.init && AUDIO.init(); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); return true;
+    place(0); updateCam(1); IN.reset(); document.exitPointerLock?.();
+    MINI.show(cv, 'basket2d'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); return true;
   }
   function finish() { if (!st || st.fadeDir > 0) return; st.fadeDir = 1; }
-  function close() { running = false; cancelAnimationFrame(raf); cv.style.display = 'none'; document.body.classList.remove('fighting'); GAME.state = 'play'; GAME.lock();
+  function close() { running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'basket2d', true);
     const res = { won: st.score[0] > st.score[1], score: st.score.slice() }; if (onEnd) onEnd(res); }
-  function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); if (cv) cv.style.display = 'none'; document.body.classList.remove('fighting'); if (GAME.state === 'basket2d') GAME.state = 'play'; } // tests only
-  return { start, _abort: abort, get running() { return running; }, _st: () => st, _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); pressedK.clear(); releasedK.clear(); updateCam(); } }, _press: press };
+  function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'basket2d', false); } // tests only
+  return { start, _abort: abort, get running() { return running; }, _st: () => st, _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); updateCam(); } }, _press: press };
 })();
 
 // ============ «JETA SOCCER»: 2D football, 5 a side, seen from above like the 90s Sensible Soccer (v0.67) ============
@@ -7179,26 +7263,9 @@ const FUTBOL2D = (() => {
   const sxp = (x) => X0 + x * S, syw = (y) => (y + MG) * S;  // pitch metres -> background px
   let cv = null, cx = null, running = false, raf = 0, last = 0, acc = 0, st = null, onEnd = null, camY = 0, bgCache = null;
   // ---------- input: virtual buttons, the same as the basketball (vS = A, vP = pass, vT = sprint)
-  const keys = new Set(), pressedK = new Set(), releasedK = new Set();
-  function vcode(k) { const has = (id) => CONTROLS.codes(id).includes(k);
-    return has('f_punch') ? 'vS' : has('b_pass') ? 'vP' : has('f_kick') ? 'vT' : has('left') ? 'vL' : has('right') ? 'vR' : has('fwd') ? 'vU' : has('back') ? 'vD' : k === 'Enter' ? 'vS' : null; }
-  const press = (v, down) => { if (down) { if (!keys.has(v)) pressedK.add(v); keys.add(v); } else { if (keys.has(v)) releasedK.add(v); keys.delete(v); } };
-  function onKey(e, down) { if (!running) return; const v = vcode(e.code); if (!v) return; e.preventDefault(); e.stopPropagation(); press(v, down); }
-  window.addEventListener('keydown', (e) => onKey(e, true), true); window.addEventListener('keyup', (e) => onKey(e, false), true);
-  window.addEventListener('mousedown', (e) => { if (!running) return; e.preventDefault(); e.stopPropagation(); if (e.button === 0) press('vS', true); if (e.button === 2) press('vP', true); }, true);
-  window.addEventListener('mouseup', (e) => { if (!running) return; if (e.button === 0) press('vS', false); if (e.button === 2) press('vP', false); }, true);
-  window.addEventListener('contextmenu', (e) => { if (running) e.preventDefault(); }, true);
-  const held = (v) => keys.has(v), hit = (v) => pressedK.has(v), rel = (v) => releasedK.has(v);
+  const IN = MINI.input(() => running), { press, held, hit, rel } = IN, keys = IN.keys; // v0.69: shared with the other minigames (09ea_minijuegos.js)
   // ---------- sounds
-  function snd(kind) { const ctx = AUDIO.ctx, out = AUDIO.master; if (!ctx || !out) return; const t = ctx.currentTime; const g = ctx.createGain(); g.connect(out);
-    if (kind === 'kick') { const o = ctx.createOscillator(); o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.07); g.gain.setValueAtTime(0.22, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.09); o.connect(g); o.start(t); o.stop(t + 0.1); return; }
-    if (kind === 'whistle') { const o = ctx.createOscillator(), lfo = ctx.createOscillator(), lg = ctx.createGain(); o.frequency.value = 2300; lfo.frequency.value = 28; lg.gain.value = 120; lfo.connect(lg); lg.connect(o.frequency);
-      g.gain.setValueAtTime(0.05, t); g.gain.setValueAtTime(0.05, t + 0.45); g.gain.exponentialRampToValueAtTime(0.001, t + 0.5); o.connect(g); o.start(t); lfo.start(t); o.stop(t + 0.52); lfo.stop(t + 0.52); return; }
-    if (kind === 'post') { const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = 760; g.gain.setValueAtTime(0.08, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.3); o.connect(g); o.start(t); o.stop(t + 0.32); return; }
-    const s = ctx.createBufferSource(); s.buffer = AUDIO.noise; const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 800; f.Q.value = 0.5;
-    g.gain.setValueAtTime(0.001, t); g.gain.linearRampToValueAtTime(kind === 'goal' ? 0.16 : 0.08, t + 0.2); g.gain.exponentialRampToValueAtTime(0.001, t + (kind === 'goal' ? 2.4 : 1.2)); s.connect(f); f.connect(g); s.start(t, Math.random()); s.stop(t + 2.5);
-  }
-  function say(text) { try { const ss = window.speechSynthesis; if (!ss) return; const u = new SpeechSynthesisUtterance(text); const v = ss.getVoices().find((q) => /^es/i.test(q.lang)); if (v) u.voice = v; u.lang = 'es-ES'; u.rate = 1.1; u.pitch = 0.8; ss.cancel(); ss.speak(u); } catch (e) { } }
+  const snd = MINI.snd, say = (t) => MINI.say(t);
   // ---------- helpers
   const hx = (n, d = '#888') => (typeof n === 'number' ? '#' + (n >>> 0).toString(16).padStart(6, '0') : typeof n === 'string' ? n : d);
   const D = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -7395,7 +7462,7 @@ const FUTBOL2D = (() => {
     if (ok(st.ev)) { t.wait = 0.9; st.tip = '¡BIEN!  ' + tip(); AUDIO.cash && AUDIO.cash(); }
   }
   // ---------- drawing
-  function txt(s, x, y, size, col, align = 'center') { cx.font = `${size}px "Press Start 2P", monospace`; cx.textAlign = align; cx.textBaseline = 'top'; cx.fillStyle = '#000'; for (const [a, c] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) cx.fillText(s, x + a, y + c); cx.fillStyle = col; cx.fillText(s, x, y); }
+  const txt = (s, x, y, size, col, align) => MINI.txt(cx, s, x, y, size, col, align);
   function drawBg() { // the whole pitch once: striped grass, lines, goals with nets, ad boards and the stands at the sides
     if (bgCache) return bgCache; const c = mkCanvas(W * BR, BGH * BR), x = c.getContext('2d'); x.scale(BR, BR);
     x.fillStyle = '#2d6e34'; x.fillRect(0, 0, W, BGH);
@@ -7463,22 +7530,22 @@ const FUTBOL2D = (() => {
     cx.fillStyle = 'rgba(0,0,0,0.72)'; cx.fillRect(W / 2 - 120, 6, 240, 26); cx.fillStyle = '#ffd400'; cx.fillRect(W / 2 - 120, 6, 240, 1.5);
     txt(st.names[0], W / 2 - 74, 10, 6, '#7fe08a'); txt(st.names[1], W / 2 + 74, 10, 6, '#ff6b6b'); txt(String(st.score[0]), W / 2 - 74, 20, 8, '#fff'); txt(String(st.score[1]), W / 2 + 74, 20, 8, '#fff');
     const min = Math.min(90, Math.floor((1 - st.clock / st.time) * 90)); txt(st.tut ? "--'" : st.golden ? 'ORO' : `${min}'`, W / 2, 14, 8, st.golden ? '#ffd400' : '#fff');
-    const hu = st.ctl || st.p[1]; cx.fillStyle = 'rgba(0,0,0,0.6)'; cx.fillRect(10, H - 16, 64, 8); cx.fillStyle = hu.turbo > 0.25 ? '#5ec8ff' : '#ff6b6b'; cx.fillRect(11, H - 15, 62 * hu.turbo, 6); txt('TURBO', 42, H - 26, 6, '#fff');
+    const hu = st.ctl || st.p[1]; MINI.turbo(cx, H, hu.turbo);
     drawRadar();
     if (st.tip) { cx.fillStyle = 'rgba(0,0,0,0.7)'; cx.fillRect(30, H - 46, W - 90, 16); txt(st.tip, (W - 60) / 2, H - 41, 5, '#ffd400'); }
-    if (st.bannerT > 0 && st.banner) { const k = Math.min(1, (st.banner.dur - st.bannerT) * 6); txt(st.banner.t, W / 2, 60, Math.round(9 + 6 * k), st.banner.c); }
+    MINI.banner(cx, st, W, 60, 9);
     if (st.phase === 'ready') { cx.fillStyle = 'rgba(0,0,0,0.82)'; cx.fillRect(60, 48, W - 120, 140); txt('JETA SOCCER · 5 CONTRA 5', W / 2, 56, 9, '#ffd400');
       const rows = [['MOVERSE', `${K_('left')} ${K_('right')} ${K_('fwd')} ${K_('back')}`], ['CHUTAR (mantén y suelta)', `clic izq. · ${K_('f_punch')}`], ['EFECTO (tras chutar)', `${K_('left')} / ${K_('right')}`], ['PASAR (mantén: más fuerte y bombeado)', `clic dcho. · ${K_('b_pass')}`], ['ENTRADA (sin balón)', `clic izq. · ${K_('f_punch')}`], ['CAMBIAR DE JUGADOR', `clic dcho. · ${K_('b_pass')}`], ['CORRER (turbo)', K_('f_kick')]];
-      rows.forEach(([a, c], i) => { txt(a, 74, 74 + i * 13, 6, '#9fd7ff', 'left'); txt(c, W - 74, 74 + i * 13, 6, '#fff', 'right'); });
+      MINI.rows(cx, W, rows, 74);
       if (Math.floor(st.time0 * 2) % 2 === 0) txt(`CLIC IZQ. O ${K_('f_punch').toUpperCase()} PARA EMPEZAR`, W / 2, 170, 7, '#7fe08a'); }
-    if (st.phase === 'end') { const won = st.score[0] > st.score[1]; txt(won ? '¡GANÁIS!' : 'HABÉIS PERDIDO', W / 2, 100, 16, won ? '#7fe08a' : '#ff6b6b'); txt(`${st.score[0]} - ${st.score[1]}`, W / 2, 128, 10, '#fff'); }
+    if (st.phase === 'end') MINI.endScreen(cx, W, st.score);
     if (st.fade > 0) { cx.fillStyle = `rgba(0,0,0,${st.fade})`; cx.fillRect(0, 0, W, H); }
   }
   // ---------- loop
   function loop(now) {
     if (!running) return; raf = requestAnimationFrame(loop);
     const dt = Math.min(0.1, (now - last) / 1000); last = now; acc += dt;
-    while (acc >= 1 / 60) { step(1 / 60); pressedK.clear(); releasedK.clear(); acc -= 1 / 60; updateCam(); }
+    while (acc >= 1 / 60) { step(1 / 60); IN.frame(); acc -= 1 / 60; updateCam(); }
     if (st.fadeDir) { st.fade = clamp(st.fade + st.fadeDir * dt * 2.5, 0, 1); if (st.fadeDir < 0 && st.fade === 0) st.fadeDir = 0; if (st.fadeDir > 0 && st.fade === 1) { st.fadeDir = 0; close(); return; } }
     draw();
   }
@@ -7496,15 +7563,14 @@ const FUTBOL2D = (() => {
     for (let i = 0; i < 5; i++) st.p.push(mkPlayer(t0[i] || { name: 'JUG ' + (i + 1) }, 0, i, k0));
     for (let i = 0; i < 5; i++) st.p.push(mkPlayer(t1[i] || { name: 'RIV ' + (i + 1) }, 1, i, k1));
     for (const q of st.p) q.lv = q.team === 1 ? opt.lv ?? 0.5 : opt.mateLv ?? 0.6;
-    kickoff(0); st.ctl = st.p.find((q) => q.team === 0 && q.role === 'fwd'); updateCam(1); keys.clear(); pressedK.clear(); releasedK.clear(); document.exitPointerLock?.();
-    GAME.state = 'futbol2d'; document.body.classList.add('fighting'); cv.style.display = 'block';
-    AUDIO.init && AUDIO.init(); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); return true;
+    kickoff(0); st.ctl = st.p.find((q) => q.team === 0 && q.role === 'fwd'); updateCam(1); IN.reset(); document.exitPointerLock?.();
+    MINI.show(cv, 'futbol2d'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); return true;
   }
   function finish() { if (!st || st.fadeDir > 0) return; st.fadeDir = 1; }
-  function close() { running = false; cancelAnimationFrame(raf); cv.style.display = 'none'; document.body.classList.remove('fighting'); GAME.state = 'play'; GAME.lock();
+  function close() { running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'futbol2d', true);
     const res = { won: st.score[0] > st.score[1], score: st.score.slice() }; if (onEnd) onEnd(res); }
-  function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); if (cv) cv.style.display = 'none'; document.body.classList.remove('fighting'); if (GAME.state === 'futbol2d') GAME.state = 'play'; } // tests only
-  return { start, _abort: abort, get running() { return running; }, _st: () => st, _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); pressedK.clear(); releasedK.clear(); updateCam(); } }, _press: press, _draw: () => draw() };
+  function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'futbol2d', false); } // tests only
+  return { start, _abort: abort, get running() { return running; }, _st: () => st, _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); updateCam(); } }, _press: press, _draw: () => draw() };
 })();
 
 // ============ procedural audio ============
@@ -7515,7 +7581,7 @@ const AUDIO = (() => {
     if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
     try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
     master = ctx.createGain(); master.gain.value = A.vol; master.connect(ctx.destination);
-    setTimeout(() => { try { STEPS.init(ctx, master); } catch (e) { console.warn('steps', e); } }, 0);
+    setTimeout(() => { try { STEPS.initSteps(ctx, master); } catch (e) { console.warn('steps', e); } }, 0);
     noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate); const d = noiseBuf.getChannelData(0); let b = 0; for (let i = 0; i < d.length; i++) { d[i] = Math.random() * 2 - 1; }
     // engine
     engF = ctx.createBiquadFilter(); engF.type = 'lowpass'; engF.frequency.value = 600; engG = ctx.createGain(); engG.gain.value = 0;
@@ -7858,7 +7924,7 @@ const STEPS = (() => {
     return b;
   }
   const IRS = {};
-  function init(audioCtx, dest) {
+  function initSteps(audioCtx, dest) {
     if (ctx || !audioCtx) return; ctx = audioCtx; const sr = ctx.sampleRate;
     out = ctx.createGain(); out.gain.value = 1; out.connect(dest);
     verb = ctx.createConvolver(); verbSend = ctx.createGain(); verbSend.gain.value = 0; verbSend.connect(verb); verb.connect(dest);
@@ -7880,7 +7946,7 @@ const STEPS = (() => {
     if (ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = pan ?? side * 0.12; g.connect(p); node = p; }
     s.connect(g); node.connect(out); node.connect(verbSend); s.start(t);
   }
-  return { init, play, setSpace, get ready() { return !!bank; } };
+  return { initSteps, play, setSpace, get ready() { return !!bank; } };
 })();
 
 // --- foot-contact detector for skinned humans: fires when a foot comes down to the ground ---
@@ -7917,7 +7983,7 @@ function footContacts(H, dt, cb, active = true) {
 const AMBIENCE = (() => {
   let out = null, ready = false, t = 0, birdT = 1, chatT = 2, dogT = 20, gullT = 30, lastHour = -1; const carV = [];
   const R = (a, b) => a + Math.random() * (b - a);
-  function init() { const ctx = AUDIO.ctx; if (!ctx || ready) return !!ready; out = ctx.createGain(); out.gain.value = 1; out.connect(AUDIO.master); ready = true;
+  function initAmbience() { const ctx = AUDIO.ctx; if (!ctx || ready) return !!ready; out = ctx.createGain(); out.gain.value = 1; out.connect(AUDIO.master); ready = true;
     for (let i = 0; i < 3; i++) { const o = ctx.createOscillator(); o.type = 'sawtooth'; const o2 = ctx.createOscillator(); o2.type = 'triangle'; const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 500; const n = ctx.createBufferSource(); n.buffer = AUDIO.noise; n.loop = true; const nf = ctx.createBiquadFilter(); nf.type = 'bandpass'; nf.frequency.value = 700; nf.Q.value = 0.6; const ng = ctx.createGain(); ng.gain.value = 0.5;
       const g = ctx.createGain(); g.gain.value = 0; const p = ctx.createStereoPanner ? ctx.createStereoPanner() : ctx.createGain(); o.connect(f); o2.connect(f); n.connect(nf); nf.connect(ng); ng.connect(f); f.connect(g); g.connect(p); p.connect(out); o.start(); o2.start(); n.start(); carV.push({ o, o2, f, g, p, car: null }); }
     return true; }
@@ -7951,7 +8017,7 @@ const AMBIENCE = (() => {
   function gull(x, z) { const ctx = AUDIO.ctx, s = spatial(x, z, 60); const t0 = ctx.currentTime + 0.02; for (let i = 0; i < 3; i++) chirp(t0 + i * 0.35, R(1500, 1900), R(900, 1100), 0.3, 0.035 * s.gain, s.pan); }
   return {
     update(dt) {
-      if (!AUDIO.ctx || AUDIO.ctx.state !== 'running') return; if (!ready && !init()) return; t += dt; const ctx = AUDIO.ctx; const night = U.uNight.value > 0.5; const inside = PLAYER.interior;
+      if (!AUDIO.ctx || AUDIO.ctx.state !== 'running') return; if (!ready && !initAmbience()) return; t += dt; const ctx = AUDIO.ctx; const night = U.uNight.value > 0.5; const inside = PLAYER.interior;
       out.gain.setTargetAtTime(inside ? 0.25 : PLAYER.car ? 0.55 : 1, ctx.currentTime, 0.3);
       // birds near trees, mostly in daylight
       birdT -= dt; if (birdT < 0) { birdT = night ? R(8, 20) : R(0.8, 3.5); let tr = null; for (let k = 0; k < 12; k++) { const c = TREES[Math.random() * TREES.length | 0]; if (c && Math.hypot(c[0] - PLAYER.x, c[1] - PLAYER.z) < 45) { tr = c; break; } }
@@ -8274,7 +8340,7 @@ const GUIDE = (() => {
   const mat = (css) => mats[css] || (mats[css] = new THREE.MeshBasicMaterial({ color: new THREE.Color(css), transparent: true, opacity: 0.6, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4, depthTest: !onTop }));
   const rmats = {}; const ringMat = (css) => rmats[css] || (rmats[css] = Object.assign(mat(css).clone(), { opacity: 0.5 }));
   let tipGeo = null, carArrow = null, bob = 0, rgCar = null, rgFoot = null, onTop = false; const UP = new THREE.Vector3(0, 1, 0), NRM = new THREE.Vector3(0, 1, 0), TGT = new THREE.Vector3(), QY = new THREE.Quaternion(), QT = new THREE.Quaternion(); let sy = 0, off = false;
-  function make() {
+  function makeGuide() {
     const rg = new THREE.RingGeometry(0.22, 0.28, 40); rg.rotateX(-Math.PI / 2); rg.userData.shared = true; rgCar = new THREE.RingGeometry(0.385, 0.40, 64); rgCar.rotateX(-Math.PI / 2); rgCar.userData.shared = true; rgFoot = rg; // thinner stroke when scaled up round a vehicle
     const sh = new THREE.Shape(); sh.moveTo(0, 0.24); sh.lineTo(0.12, 0); sh.lineTo(0.04, 0.03); sh.lineTo(0, -0.01); sh.lineTo(-0.04, 0.03); sh.lineTo(-0.12, 0); sh.closePath();
     tipGeo = new THREE.ShapeGeometry(sh); tipGeo.rotateX(-Math.PI / 2); tipGeo.translate(0, 0, -0.265); tipGeo.userData.shared = true; // pointer growing out of the ring's edge, towards local -z
@@ -8295,7 +8361,7 @@ const GUIDE = (() => {
   }
   return {
     update() {
-      if (!g) make();
+      if (!g) makeGuide();
       if (pressed('KeyG')) { off = !off; HUD.toast(off ? 'Brújula oculta (G)' : 'Brújula visible (G)'); } // v0.62.1: toggle with G (E is «usar / entrar»)
       const ok = !off && GAME.state === 'play' && !PLAYER.interior && !PLAYER.dead && !(BIGMAP && BIGMAP.open);
       const L = ok ? goals().filter((q) => Math.hypot(q[0] - PLAYER.x, q[1] - PLAYER.z) > 6) : [];
@@ -8755,7 +8821,7 @@ const MISSIONS = (() => {
   const KIT = { talk, chat, goto, clearBeacon, track(x, z, r = 6) { clearBeacon(); data.goal = [x, z, r]; updateGPS(true); } /* a moving goal (a car to follow): yellow blip + GPS route, no light column */, setObjective, pass, fail, abort, moveNPC, mkNPC, bold, CH, GANG, findRange, isActive: (m) => active === m, get data() { return data; }, setTimer(t) { timer = t; }, get timer() { return timer; } };
   return {
     kit: KIT, addStory(list) { STORY.push(...list); }, addObispo(list) { OBISPO_LIST.push(...list); }, addTorneo(list) { TORNEO_LIST.push(...list); },
-    init() {
+    initMissions() {
       // Rayco «El Blanco», at his parents' door next to the start
       { const b = makeHuman({ skin: 0xf6dcc8, shirt: 0xf4f4f4, pants: 0x9a9a9a, hair: 0x3b2a1e, shoes: 0x333333, scale: 1.09, female: false, thin: true, longPants: true, beard: false, hairStyle: 'Hair_Buzzed', hd: true, sleeve: false, glasses: 'round', belt: false, sole: 0x1a1a1a, shoes: 0x2f3b55, watch: 0x2f3a2a });
         let p = safeSpot(PLAYER.x + 4, PLAYER.z + 1.5); const r = COL.resolve(p[0], p[1], 0.5); NPC.blanco = { x: r.x, z: r.z, H: b, home: [r.x, r.z] };
@@ -8797,7 +8863,7 @@ const MISSIONS = (() => {
         const m = VMODELS && VMODELS.guancheGT; const cx = rx - uz * (w / 2 - 1.2) * sd + ux * 5, cz = rz + ux * (w / 2 - 1.2) * sd + uz * 5;
         const car = new Car(m ? null : 'sport', 0xffd200, cx, cz, Math.atan2(ux, uz), m || undefined); car.driver = null; car.mode = 'physics'; car.persist = true; car.ctl.brk = 1; NPC.canarionCar = car; }
       for (const k of ['blanco', 'coco', 'sastron', 'canarion']) COL.addCirc(NPC[k].x, NPC[k].z, 0.4);
-      FOOD.init();
+      FOOD.initFood();
       if (typeof story2Init === 'function') story2Init();
       if (typeof obispoInit === 'function') obispoInit();
       if (typeof canchasInit === 'function') { try { canchasInit(); } catch (e) { console.warn('canchas', e); } }
@@ -8862,7 +8928,7 @@ const FOOD = (() => {
     const c = mkCanvas(128, 128), x = c.getContext('2d'); x.fillStyle = '#e53935'; x.beginPath(); x.arc(64, 64, 58, 0, 7); x.fill(); x.lineWidth = 8; x.strokeStyle = '#fff'; x.stroke();
     x.fillStyle = '#fff'; x.fillRect(52, 28, 24, 72); x.fillRect(28, 52, 72, 24); return canvasTex(c, { repeat: false });
   }
-  function init() {
+  function initFood() {
     // pick food shops spread over the map (one every ~220 m at most), preferring the historic core and the avenues
     const cands = DATA.SH.filter((s) => MENU[s[2]]).map((s) => ({ s, k: (isHistoric(s[0], s[1]) ? 0 : 1) + Math.random() * 0.5 }));
     cands.sort((a, b) => a.k - b.k);
@@ -8895,19 +8961,19 @@ const FOOD = (() => {
   }
   function update(dt) { const t = performance.now() / 1000; for (const s of shops) { const d = Math.abs(s.x - camera.position.x) + Math.abs(s.z - camera.position.z); s.spr.visible = d < 260 && !PLAYER.interior; if (s.spr.visible) s.spr.position.y = heightAt(s.x, s.z) + 3.0 + Math.sin(t * 2 + s.x) * 0.15; } }
   function nearest(x, z) { let b = null, bd = 1e9; for (const s of shops) { const d = Math.hypot(s.x - x, s.z - z); if (d < bd) { bd = d; b = s; } } return b; }
-  return { init, near, open, update, nearest, get shops() { return shops; } };
+  return { initFood, near, open, update, nearest, get shops() { return shops; } };
 })();
 // health lost in traffic accidents (driver) and from police batons
 function playerCrashDamage(v) { if (v < 7) return; const dmg = (v - 6) * 1.6; PLAYER.health -= dmg; if (PLAYER.health <= 0) GAME.wasted(); else if (dmg > 12) HUD.toast('¡Ay! Te has dado un buen golpe (-' + Math.round(dmg) + ' salud)', '#ffb3b3', 2); }
 
 // ============ Modo ACHAMÁN: god mode to fly over La Laguna (no game, just sightseeing) — chosen from the start menu ============
 const ACH = { on: false, x: 0, y: 0, z: 0, yaw: 0, pitch: -0.25, mode: 'libre', orbit: { cx: 0, cz: 0, r: 120, a: 0, h: 80 }, saved: null, speed: 1 };
-const ACH_MODES = ['libre', 'dron', 'cenital'];
+const ACH_MODES = ['libre', 'dron', 'cenital']; const _achD = new THREE.Vector3(); // v0.69 (auditor): temporary
 function achamanStart() {
   AUDIO.init(); $('menu').style.display = 'none';
   ACH.saved = { x: PLAYER.x, z: PLAYER.z, y: PLAYER.y, h: PLAYER.h };
   ACH.on = true; ACH.mode = 'libre'; ACH.x = camera.position.x; ACH.y = camera.position.y; ACH.z = camera.position.z;
-  const d = new THREE.Vector3(); camera.getWorldDirection(d); ACH.yaw = Math.atan2(d.x, d.z); ACH.pitch = Math.asin(clamp(d.y, -0.99, 0.99));
+  const d = _achD; camera.getWorldDirection(d); ACH.yaw = Math.atan2(d.x, d.z); ACH.pitch = Math.asin(clamp(d.y, -0.99, 0.99));
   playerHuman.root.visible = false; GAME.state = 'achaman'; document.body.classList.add('achaman'); $('achHud').style.display = 'block';
   achSetMode('libre'); HUD.big('MODO ACHAMÁN', '#f5b72e', 3.5);
   achLock();
@@ -8921,7 +8987,7 @@ function achamanEnd() {
 function achSetMode(m) {
   ACH.mode = m; $('achMode').textContent = { libre: 'VUELO LIBRE', dron: 'DRON (órbita)', cenital: 'CENITAL' }[m];
   if (m === 'dron') { // orbit around the point you are looking at
-    const d = new THREE.Vector3(); camera.getWorldDirection(d); let t = 60; if (d.y < -0.05) t = clamp((ACH.y - heightAt(ACH.x, ACH.z)) / -d.y, 20, 400);
+    const d = _achD; camera.getWorldDirection(d); let t = 60; if (d.y < -0.05) t = clamp((ACH.y - heightAt(ACH.x, ACH.z)) / -d.y, 20, 400);
     const cx = ACH.x + d.x * t, cz = ACH.z + d.z * t; ACH.orbit = { cx, cz, r: Math.max(40, Math.hypot(ACH.x - cx, ACH.z - cz)), a: Math.atan2(ACH.x - cx, ACH.z - cz), h: Math.max(25, ACH.y - heightAt(cx, cz)) };
   }
   if (m === 'cenital') { ACH.y = Math.max(ACH.y, heightAt(ACH.x, ACH.z) + 140); }
@@ -8953,7 +9019,7 @@ function updateAchaman(dt) {
     const o = ACH.orbit; o.a += dt * 0.12 - mdx * 0.002; o.h = clamp(o.h + iy * 25 * dt * fast + mdy * 0.08, 8, 600); o.r = clamp(o.r - iz * 30 * dt * fast, 15, 900);
     const fx = Math.sin(o.a + Math.PI / 2), fz = Math.cos(o.a + Math.PI / 2); o.cx += fx * ix * 25 * dt * fast; o.cz += fz * ix * 25 * dt * fast;
     ACH.x = o.cx + Math.sin(o.a) * o.r; ACH.z = o.cz + Math.cos(o.a) * o.r; const gc = heightAt(o.cx, o.cz); ACH.y = Math.max(gc + o.h, heightAt(ACH.x, ACH.z) + 3);
-    camera.position.set(ACH.x, ACH.y, ACH.z); camera.lookAt(o.cx, gc + 4, o.cz); const d = new THREE.Vector3(); camera.getWorldDirection(d); ACH.yaw = Math.atan2(d.x, d.z); ACH.pitch = Math.asin(clamp(d.y, -0.99, 0.99));
+    camera.position.set(ACH.x, ACH.y, ACH.z); camera.lookAt(o.cx, gc + 4, o.cz); const d = _achD; camera.getWorldDirection(d); ACH.yaw = Math.atan2(d.x, d.z); ACH.pitch = Math.asin(clamp(d.y, -0.99, 0.99));
   } else { // cenital: straight down, north up
     const sp = 40 * fast * (ACH.y - g) / 150; ACH.x += ix * sp * dt; ACH.z -= iz * sp * dt; ACH.y = clamp(ACH.y + (iy * 60 * fast + mdy * 0.3) * dt * (iy ? 1 : 0) + (iy ? 0 : mdy * 0.3), g + 25, 2500);
     camera.position.set(ACH.x, ACH.y, ACH.z); camera.up.set(0, 0, -1); camera.lookAt(ACH.x, g, ACH.z); camera.up.set(0, 1, 0);
@@ -9023,23 +9089,23 @@ const SAVE = (() => {
     ui.querySelector('#svBack').addEventListener('click', close);
     ui.querySelector('#svExport').addEventListener('click', () => { const s = GAME.state === 'menu' ? (latest() || {}).s : snapshot('Archivo'); if (!s) { HUD.toast('No hay partida que descargar', '#ffb3b3'); return; } const b = new Blob([JSON.stringify(s)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'JETA-partida-' + new Date(s.t).toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.json'; document.body.appendChild(a); a.click(); a.remove(); });
     ui.querySelector('#svImport').addEventListener('click', () => ui.querySelector('#svFile').click());
-    ui.querySelector('#svFile').addEventListener('change', (e) => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { try { const s = JSON.parse(r.result); if (!s.player) throw 0; store.set('1', s); render(); loadSlot('1'); } catch (err) { alertBox('Ese archivo no es una partida de JETA La Laguna.'); } }; r.readAsText(f); e.target.value = ''; });
+    ui.querySelector('#svFile').addEventListener('change', (e) => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { try { const s = JSON.parse(r.result); if (!s.player) throw 0; store.set('1', s); renderSlots(); loadSlot('1'); } catch (err) { alertBox('Ese archivo no es una partida de JETA La Laguna.'); } }; r.readAsText(f); e.target.value = ''; });
   }
   function alertBox(t) { const l = ui.querySelector('#svList'); const p = document.createElement('p'); p.style.cssText = 'color:#ffb3b3;text-align:center'; p.textContent = t; l.prepend(p); }
-  function render() {
+  function renderSlots() {
     const l = ui.querySelector('#svList'); ui.querySelector('#svTitle').textContent = mode === 'save' ? 'GUARDAR / CARGAR' : 'CARGAR PARTIDA';
     l.innerHTML = SLOTS.map((k) => { const s = store.get(k); const name = k === 'auto' ? 'Automático' : 'Ranura ' + k;
       return `<div style="display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 12px;margin:8px 0;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:rgba(0,0,0,.25);font:400 15px Barlow,sans-serif;color:#fff">
         <div style="min-width:90px;font:700 16px Oswald,sans-serif;color:#f5b72e">${name}</div><div style="flex:1">${describe(s)}</div>
         <div style="white-space:nowrap">${mode === 'save' && k !== 'auto' ? `<button class="btn sec" data-save="${k}" style="padding:8px 14px;font-size:15px">GUARDAR</button>` : ''}${s ? `<button class="btn" data-load="${k}" style="padding:8px 14px;font-size:15px">CARGAR</button>` : ''}</div></div>`; }).join('');
-    l.querySelectorAll('[data-save]').forEach((b) => b.addEventListener('click', () => { const k = b.dataset.save; if (store.get(k) && b.dataset.sure !== '1') { b.dataset.sure = '1'; b.textContent = '¿SOBRESCRIBIR?'; return; } const s = save(k, 'Guardado a mano'); if (s) { AUDIO.cash && AUDIO.cash(); render(); } else alertBox('No se pudo guardar (el navegador no deja guardar datos).'); }));
+    l.querySelectorAll('[data-save]').forEach((b) => b.addEventListener('click', () => { const k = b.dataset.save; if (store.get(k) && b.dataset.sure !== '1') { b.dataset.sure = '1'; b.textContent = '¿SOBRESCRIBIR?'; return; } const s = save(k, 'Guardado a mano'); if (s) { AUDIO.cash && AUDIO.cash(); renderSlots(); } else alertBox('No se pudo guardar (el navegador no deja guardar datos).'); }));
     l.querySelectorAll('[data-load]').forEach((b) => b.addEventListener('click', () => loadSlot(b.dataset.load)));
   }
   function loadSlot(k) { const s = store.get(k); if (!s) return; close(true); const fromMenu = GAME.state === 'menu';
     if (fromMenu) { $('menu').style.display = 'none'; AUDIO.init(); }
     $('fade').style.opacity = 1; GAME.state = 'cutscene';
     setTimeout(() => { apply(s); $('pause').style.display = 'none'; $('fade').style.opacity = 0; GAME.state = 'play'; GAME.lock(); HUD.big('PARTIDA CARGADA', '#f5b72e', 2.5); HUD.toast(s.mission ? 'Misión: ' + s.mission : '', '#f5b72e', 4); }, 450); }
-  function open(m) { if (!ui) build(); mode = m; render(); ui.style.display = 'flex'; document.exitPointerLock?.(); }
+  function open(m) { if (!ui) build(); mode = m; renderSlots(); ui.style.display = 'flex'; document.exitPointerLock?.(); }
   function close(silent) { if (ui) ui.style.display = 'none'; }
   return {
     save, auto, latest, snapshot, apply, open, close, store,
@@ -10038,7 +10104,7 @@ async function boot() {
     ['Pintando el cielo y el Teide…', buildSky],
     ['Aparcando coches y poniendo el tranvía…', () => { buildParked(); buildTram(); }],
     ['Dibujando el mapa…', () => { buildMapCanvas(); buildLabels(); }],
-    ['Llegando a la Plaza del Adelantado…', () => { initPlayer(); MISSIONS.init(); setupTouch(); FIGHT2D.setupPad(); setupAchaman(); SAVE.setup(); }],
+    ['Llegando a la Plaza del Adelantado…', () => { initPlayer(); MISSIONS.initMissions(); setupTouch(); FIGHT2D.setupPad(); setupAchaman(); SAVE.setup(); }],
     ['Arrancando el tráfico…', () => { for (let i = 0; i < Q.traffic; i++) { const sp = trafficSpawnPoint(20, Q.far * 0.3 + 40, false); if (sp) { const E = GRAPH.edges[sp[0]]; const busOK = ['primary', 'secondary', 'tertiary'].includes(E.type) && Math.random() < 0.05; const c = busOK ? new Car('bus', null, 0, 0, 0) : new Car(null, null, 0, 0, 0, trafficModel(E.type)); c.personality = rnd(0.85, 1.15); spawnTraffic(c, sp[0], sp[1], sp[2]); } } }],
     ['Preparando a la gente de la calle…', () => { try { for (const f of ['8px "Press Start 2P"', '16px Oswald', '16px Barlow', '16px "Russo One"', '16px Audiowide', '16px Yellowtail']) document.fonts.load(f); } catch (e) { } preloadHumans(Q.peds + 8, 3, 6, { ped: () => newPedHuman(false), can: () => newPedHuman(true), cop: newCopHuman }); }],
     ['Compilando sombreadores…', async () => { precomputeEnv(); updateCamera(0.016); if (renderer.compileAsync) await renderer.compileAsync(scene, camera); else renderer.compile(scene, camera); renderer.compile(bgScene, bgCamera); preloadDone(); }], /* async compile: the page doesn't freeze (audit P2.4) */
@@ -10049,7 +10115,7 @@ async function boot() {
   window.__GAME_READY = true;
 }
 boot();
-window.__bg = [bgScene, bgCamera]; window.__dbg = { BASKET2D, FUTBOL2D, obispoCampo, TRI, OBISPADO, SPORTS, inAnyBuilding, COURTS, courtGateNear, useCourtGate, DIARIO, inPitch, pitchRects, obispoCourt, LAMPS, TREES, GUIDE, AYTO, HUC, HEALTH, nearestHealth, exitCar, DLG, S2, POOLS: { CARPOOL, HPOOL, SHARED_GEO, VGEO }, SHARED_GEO, MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
+window.__bg = [bgScene, bgCamera]; window.__dbg = { get RCLIP() { return RCLIP; }, BASKET2D, FUTBOL2D, obispoCampo, TRI, OBISPADO, SPORTS, inAnyBuilding, COURTS, courtGateNear, useCourtGate, DIARIO, inPitch, pitchRects, obispoCourt, LAMPS, TREES, GUIDE, AYTO, HUC, HEALTH, nearestHealth, exitCar, DLG, S2, POOLS: { CARPOOL, HPOOL, SHARED_GEO, VGEO }, SHARED_GEO, MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
 window.__snap = () => { updateUnderground(); bgCamera.position.copy(camera.position); bgCamera.quaternion.copy(camera.quaternion); bgCamera.fov = camera.fov; bgCamera.updateProjectionMatrix(); renderer.clear(); renderer.render(bgScene, bgCamera); renderer.clearDepth(); renderer.render(scene, camera); return renderer.domElement.toDataURL('image/jpeg', 0.85); };
 window.__setYaw = (y) => { CAM.yaw = y; CAM.pitch = 0.1; INPUT.lastMouse = performance.now(); };
 window.__hit = (p) => hitPed(p);

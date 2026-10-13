@@ -6,7 +6,7 @@ const AUDIO = (() => {
     if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
     try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
     master = ctx.createGain(); master.gain.value = A.vol; master.connect(ctx.destination);
-    setTimeout(() => { try { STEPS.init(ctx, master); } catch (e) { console.warn('steps', e); } }, 0);
+    setTimeout(() => { try { STEPS.initSteps(ctx, master); } catch (e) { console.warn('steps', e); } }, 0);
     noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate); const d = noiseBuf.getChannelData(0); let b = 0; for (let i = 0; i < d.length; i++) { d[i] = Math.random() * 2 - 1; }
     // engine
     engF = ctx.createBiquadFilter(); engF.type = 'lowpass'; engF.frequency.value = 600; engG = ctx.createGain(); engG.gain.value = 0;

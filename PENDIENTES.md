@@ -9,6 +9,9 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       encerradas y el Máyex): revisar una a una con `prueba_canchas.py` (lista y fotos) cuáles son públicas y cuáles de
       colegio, y mejorar su aspecto. Recrear mejor por fuera el **Pabellón Juan Ríos Tejera** (nave blanca, cubierta
       gris, valla morada; fotos en `docs/referencias/rios_tejera/`) y el **Colegio Máyex** (`docs/referencias/colegio_mayex/`).
+- [ ] **Av. de La Trinidad: el edificio de «Telepisa»** (Jonay, 13-oct): junto a la rampa del n.º 59 sale un edificio
+      enorme, bajo y plano con el cartel de Telepisa en el tejado. En la realidad la pizzería es solo el bajo: tiene que
+      ser un bloque de viviendas con la tienda en la planta baja (cartel en la fachada, no arriba).
 - [x] v0.67.0 **Fútbol tipo Sensible Soccer** para las misiones del Obispo (segunda pasada).
 
 - [ ] **Prueba de conducción: tramos que fallan** (v0.65.0, pruebas en el PC de Jonay): Camino La Rúa (308, choca en una
@@ -46,11 +49,16 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       cartel verde de calles muestra el texto en espejo desde la parte de atrás; la cara trasera debería ser lisa o
       llevar el texto al derecho.
 
-- [ ] **Auditoría v0.67.0** (APTO CON AVISOS; pruebas 10/10, sin fugas ni obstáculos nuevos): 1 aviso nuevo
+- [x] v0.69.0 (salas: los avisos venían de un `make` con el mismo nombre que otro de la brújula; ya no salen) **Auditoría v0.68.0** (APTO CON AVISOS; pruebas 4/4; 12 invasiones de calzada y 6 obstáculos menos, llamadas
+      688 → 667, triángulos −2 %): 52 avisos «nuevos» de geometría creada en `buildHall()` (`05m_parking.js`): son las salas
+      de los aparcamientos, que ahora se crean desde `05u_trinidad.js` (se hacen una vez al cargar). Pintar 41 → 44 ms
+      (vigilar). La prueba de conducción sigue fallando solo en los tramos ya apuntados (Camino La Rúa, Autopista del
+      Norte 1287, Camino La Hornera). No tocar hasta que Jonay lo diga.
+- [x] v0.69.0 (baloncesto y fútbol comparten `09ea_minijuegos.js`: D → B/C; `footIcon` ya no sale) **Auditoría v0.67.0** (APTO CON AVISOS; pruebas 10/10, sin fugas ni obstáculos nuevos): 1 aviso nuevo
       `12j_campos.js:12` `footIcon()` (geometría que se crea una vez al cargar, como las de las canchas); calidad del código:
       `09f_basket2d.js` baja de B a D y `09g_futbol2d.js` entra con D (líneas muy largas y funciones grandes: partirlas si
       Jonay quiere). Pintar 32 → 41 ms otra vez en la 2.ª pasada del día (vigilar). No tocar hasta que Jonay lo diga.
-- [ ] **Auditoría v0.66.0** (APTO CON AVISOS, comparada con la 0.65.1; sin fugas ni obstáculos nuevos; pruebas 18/18):
+- [~] v0.69.0 (puertas de canchas ya no salen; obstáculos de árboles, farolas, mobiliario y parada del tranvía quitados; quedan los aviones del aeropuerto en las vías de servicio de la plataforma y el agente revisor, sin repasar desde la v0.48) **Auditoría v0.66.0** (APTO CON AVISOS, comparada con la 0.65.1; sin fugas ni obstáculos nuevos; pruebas 18/18):
       5 avisos nuevos de geometría creada en `12i_canchas.js` (`gateIcon()` l. 33 y `riosTejeraInit()` l. 72–77): se
       crean una vez al cargar (puertas de canchas, pabellón), no al jugar; valorar compartir geometrías si Jonay quiere.
       Obstáculos en calzada (40; 5 «alta», capturas en `resultados_pc\2026-10-12_0.66.0_local\capturas_mapa`): Av. de La
@@ -59,10 +67,10 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       «media» son casi todas de vías de servicio (5,2 m) cerca de -3300 100 y -200 800: revisar si son reales.
       Pintar un fotograma 31 → 42 ms en la 2.ª pasada del mismo día con el mismo mapa: probablemente ruido (solo cambió el baloncesto).
       Agente revisor de jugabilidad: 130 avisos, 32 nuevos (ver `reportes/ULTIMO.md` del auditor). No tocar hasta que Jonay lo diga.
-- [ ] **Auditoría v0.59.0** (APTO CON AVISOS; memoria 505 → 531 MB y vértices +5 % por las zonas nuevas, sin fugas):
+- [~] v0.69.0 (recorte general: de los 515 edificios en calzada quedan los que cortan la calle entera o perderían más del 40 %) **Auditoría v0.59.0** (APTO CON AVISOS; memoria 505 → 531 MB y vértices +5 % por las zonas nuevas, sin fugas):
       **76 edificios nuevos invadiendo la calzada** en La Cuesta/Taco (p. ej. Ctra. Gral. La Cuesta-Taco X 2839 Z 2244,
       Ctra. de Valle Tabares X 2502 Z 1648). Lista en `docs/auditorias/mapa_v0.59.0/mapa.md`. Total del mapa: 527.
-- [ ] **Auditoría v0.58.2** (Corrector, APTO; no tocar hasta que Jonay lo diga): el auditor detecta ahora **edificios que
+- [~] v0.69.0 (ver la 0.59) **Auditoría v0.58.2** (Corrector, APTO; no tocar hasta que Jonay lo diga): el auditor detecta ahora **edificios que
       invaden la calzada**: 452 posibles (6 cortan la calle, 54 en calles principales), lista con capturas en
       `docs/auditorias/mapa_v0.58.2/mapa.md`. Revisar primero los 6 que cortan la calle y los 54 de calles principales
       (confirmados: C. Barcelona X −15 Z 217, Av. de los Menceyes X 298 Z 899). Siguen P1.5 y P2.1/P2.2/P2.5.
@@ -232,9 +240,9 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       en una esquina: sin investigar. Quedan también las uniones: rampas X −495 Z 683 y X 2210 Z 3312, finales de tablero
       X 377 Z −268 y X 820 Z 3494.
 
-- [ ] **Auditoría v0.58.0** (APTO CON AVISOS; métricas iguales que la 0.57): 1 aviso nuevo `05t_hospital.js:44` `mk()`:
+- [x] v0.69.0 (falso aviso: material creado una vez) **Auditoría v0.58.0** (APTO CON AVISOS; métricas iguales que la 0.57): 1 aviso nuevo `05t_hospital.js:44` `mk()`:
       material del HUC creado al construir la ciudad, una sola vez (falso aviso).
-- [ ] **Auditoría v0.57.0** (APTO CON AVISOS; memoria JS 544 → 503 MB, geometría 382 → 342 MB, llamadas 696 → 680,
+- [x] v0.69.0 (falso aviso: la flecha se crea una vez) **Auditoría v0.57.0** (APTO CON AVISOS; memoria JS 544 → 503 MB, geometría 382 → 342 MB, llamadas 696 → 680,
       sin fugas): 3 avisos nuevos en `s2Mark()` (`12f_story2.js:54-56`): es la flecha de persecución; su geometría se
       crea una sola vez y se reutiliza (falso aviso, se puede marcar como «bajo demanda»).
 - [x] v0.57.0 (bancos liberados al limpiar la misión) **Auditoría v0.56.0** (APTO CON AVISOS; memoria y fugas igual que la 0.55, llamadas 658 → 696, triángulos

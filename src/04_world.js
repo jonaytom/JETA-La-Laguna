@@ -764,7 +764,7 @@ function buildBuildings() {
     let n = pts.length; if (n < 3) continue;
     if (isTramStopBuilding(nameIdx, pts)) continue; // drawn as proper tram stops
     pts = insetPoly(pts, style === 4 ? 0.3 : 0.75);
-    if (style !== 4) { const t = streetTrim(pts); if (t !== pts) { pts = t; const o = []; for (let i = 0; i < c.length; i += 2) o.push([c[i], c[i + 1]]); const t2 = streetTrim(o); if (t2 !== o) b[6] = t2.flat(); } } // v0.68: off the carriageway and pavement of the Av. de La Trinidad (DATA.B too, for inAnyBuilding)
+    if (style !== 4) { const t = roadClip(streetTrim(pts)); if (t !== pts) { pts = t; n = pts.length; const o = []; for (let i = 0; i < c.length; i += 2) o.push([c[i], c[i + 1]]); const t2 = roadClip(streetTrim(o)); if (t2 !== o) b[6] = t2.flat(); } } // v0.68–0.69: off the carriageways (04b_recorte.js; the Av. de La Trinidad with its pavement); DATA.B too, for inAnyBuilding
     if (style === 4 && nameIdx >= 0 && /Concepción/.test(STR[nameIdx])) { pts = carveConcTower(pts); n = pts.length; }
     let bmin = 1e9, bmax = -1e9, cx = 0, cz = 0;
     for (const p of pts) { const h = heightAt(p[0], p[1]); bmin = Math.min(bmin, h); bmax = Math.max(bmax, h); cx += p[0]; cz += p[1]; }

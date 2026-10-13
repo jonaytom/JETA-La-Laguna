@@ -3,6 +3,21 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.69.0 — 2026-10-13 — A fondo con los avisos del auditor
+- **Edificios fuera de la calzada en todo el mapa** (el auditor contaba 515 metidos en los carriles): como las calles del
+  juego son más anchas que las reales, cada edificio que se mete más de 0,6 m en una calzada se recorta en línea
+  recta hasta el bordillo (media calzada + 0,3 m). No se tocan iglesias y monumentos, edificios con un paso por debajo
+  ni recortes que dejarían menos del 60 % del edificio.
+- **Obstáculos en la calzada**: árboles, farolas, bancos, jardineras y mesas ya no se colocan en ninguna calzada (antes
+  solo miraban las calles con tráfico); la máquina de billetes y el tótem de una parada del tranvía que caían en la
+  Av. de La Trinidad se quitan si pisan la calzada.
+- **Menos basura por fotograma**: al apuntar y disparar (tu pistola y la de la policía) y en el modo Achamán ya no se
+  crean vectores ni matrices nuevos cada vez; los huesos de la mano se buscan una sola vez. La pistola comparte sus
+  piezas con las de la policía.
+- **Código más ordenado**: baloncesto y fútbol comparten teclas, sonidos, voz, textos y marcador
+  (`09ea_minijuegos.js`); nombres de funciones repetidos (`init`, `make`, `render`) cambiados para que el auditor no
+  confunda el código de carga con el de cada fotograma.
+
 ## 0.68.0 — 2026-10-12 — Avenida de La Trinidad y obstáculos del auditor
 - **Avenida de La Trinidad** (con las capturas de Jonay):
   - Cada calzada tiene ahora un carril y aparcamiento (6,6 m, antes 9 m), y el tranvía cabe en medio.

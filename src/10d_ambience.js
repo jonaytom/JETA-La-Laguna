@@ -4,7 +4,7 @@
 const AMBIENCE = (() => {
   let out = null, ready = false, t = 0, birdT = 1, chatT = 2, dogT = 20, gullT = 30, lastHour = -1; const carV = [];
   const R = (a, b) => a + Math.random() * (b - a);
-  function init() { const ctx = AUDIO.ctx; if (!ctx || ready) return !!ready; out = ctx.createGain(); out.gain.value = 1; out.connect(AUDIO.master); ready = true;
+  function initAmbience() { const ctx = AUDIO.ctx; if (!ctx || ready) return !!ready; out = ctx.createGain(); out.gain.value = 1; out.connect(AUDIO.master); ready = true;
     for (let i = 0; i < 3; i++) { const o = ctx.createOscillator(); o.type = 'sawtooth'; const o2 = ctx.createOscillator(); o2.type = 'triangle'; const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 500; const n = ctx.createBufferSource(); n.buffer = AUDIO.noise; n.loop = true; const nf = ctx.createBiquadFilter(); nf.type = 'bandpass'; nf.frequency.value = 700; nf.Q.value = 0.6; const ng = ctx.createGain(); ng.gain.value = 0.5;
       const g = ctx.createGain(); g.gain.value = 0; const p = ctx.createStereoPanner ? ctx.createStereoPanner() : ctx.createGain(); o.connect(f); o2.connect(f); n.connect(nf); nf.connect(ng); ng.connect(f); f.connect(g); g.connect(p); p.connect(out); o.start(); o2.start(); n.start(); carV.push({ o, o2, f, g, p, car: null }); }
     return true; }
@@ -38,7 +38,7 @@ const AMBIENCE = (() => {
   function gull(x, z) { const ctx = AUDIO.ctx, s = spatial(x, z, 60); const t0 = ctx.currentTime + 0.02; for (let i = 0; i < 3; i++) chirp(t0 + i * 0.35, R(1500, 1900), R(900, 1100), 0.3, 0.035 * s.gain, s.pan); }
   return {
     update(dt) {
-      if (!AUDIO.ctx || AUDIO.ctx.state !== 'running') return; if (!ready && !init()) return; t += dt; const ctx = AUDIO.ctx; const night = U.uNight.value > 0.5; const inside = PLAYER.interior;
+      if (!AUDIO.ctx || AUDIO.ctx.state !== 'running') return; if (!ready && !initAmbience()) return; t += dt; const ctx = AUDIO.ctx; const night = U.uNight.value > 0.5; const inside = PLAYER.interior;
       out.gain.setTargetAtTime(inside ? 0.25 : PLAYER.car ? 0.55 : 1, ctx.currentTime, 0.3);
       // birds near trees, mostly in daylight
       birdT -= dt; if (birdT < 0) { birdT = night ? R(8, 20) : R(0.8, 3.5); let tr = null; for (let k = 0; k < 12; k++) { const c = TREES[Math.random() * TREES.length | 0]; if (c && Math.hypot(c[0] - PLAYER.x, c[1] - PLAYER.z) < 45) { tr = c; break; } }

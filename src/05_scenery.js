@@ -104,7 +104,7 @@ function nearTram(x, z, r) {
 }
 function buildTrees() {
   const types = [[], [], [], []]; let offTram = 0;
-  for (const t of TREES) { if (!inPlayArea(t[0], t[1], -5)) continue; if (overTunnel(t[0], t[1]) || inCut(t[0], t[1], 2.2)) continue; if (onCarriageway(t[0], t[1], 0.9)) continue; if (inPitch(t[0], t[1], 1.5 + t[3])) continue; /* v0.65: never inside a court or pitch */ if (nearTram(t[0], t[1], 4.4 + (t[2] === 1 ? 0 : 0.8) * t[3])) { offTram++; continue; } /* no trunk or crown over the tram */ if (!t[4] && onAnyPaved(t[0], t[1], -0.3) && !isGreen(t[0], t[1])) continue; types[t[2]].push(t); }
+  for (const t of TREES) { if (!inPlayArea(t[0], t[1], -5)) continue; if (overTunnel(t[0], t[1]) || inCut(t[0], t[1], 2.2)) continue; if (onCarriagewayEarly(t[0], t[1], 0.9)) continue; if (inPitch(t[0], t[1], 1.5 + t[3])) continue; /* v0.65: never inside a court or pitch */ if (nearTram(t[0], t[1], 4.4 + (t[2] === 1 ? 0 : 0.8) * t[3])) { offTram++; continue; } /* no trunk or crown over the tram */ if (!t[4] && onAnyPaved(t[0], t[1], -0.3) && !isGreen(t[0], t[1])) continue; types[t[2]].push(t); }
   console.log('trees kept off the tram track', offTram);
   const barkMat = new THREE.MeshStandardMaterial({ color: 0x5a4636, roughness: 1 });
   const leafMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85, flatShading: true });
@@ -155,7 +155,7 @@ function buildLamps() {
       while (acc2 < L) {
         const off = t === 'pedestrian' ? w / 2 - 0.6 : w / 2 + 0.5;
         const x = x1 + (x2 - x1) * acc2 / L + nx * off * side, z = z1 + (z2 - z1) * acc2 / L + nz * off * side;
-        if (!COL.nearSeg(x, z, 0.5) && !onCarriageway(x, z, 0.35) && !overTunnel(x, z)) LAMPS.push([x, z, Math.atan2(-nx * side, -nz * side), isHistoric(x, z)]);
+        if (!COL.nearSeg(x, z, 0.5) && !onCarriagewayEarly(x, z, 0.35) && !overTunnel(x, z)) LAMPS.push([x, z, Math.atan2(-nx * side, -nz * side), isHistoric(x, z)]);
         acc2 += 30; side = -side;
       }
       acc2 -= L;

@@ -62,7 +62,7 @@ const STEPS = (() => {
     return b;
   }
   const IRS = {};
-  function init(audioCtx, dest) {
+  function initSteps(audioCtx, dest) {
     if (ctx || !audioCtx) return; ctx = audioCtx; const sr = ctx.sampleRate;
     out = ctx.createGain(); out.gain.value = 1; out.connect(dest);
     verb = ctx.createConvolver(); verbSend = ctx.createGain(); verbSend.gain.value = 0; verbSend.connect(verb); verb.connect(dest);
@@ -84,7 +84,7 @@ const STEPS = (() => {
     if (ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = pan ?? side * 0.12; g.connect(p); node = p; }
     s.connect(g); node.connect(out); node.connect(verbSend); s.start(t);
   }
-  return { init, play, setSpace, get ready() { return !!bank; } };
+  return { initSteps, play, setSpace, get ready() { return !!bank; } };
 })();
 
 // --- foot-contact detector for skinned humans: fires when a foot comes down to the ground ---

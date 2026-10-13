@@ -8,7 +8,7 @@ const GUIDE = (() => {
   const mat = (css) => mats[css] || (mats[css] = new THREE.MeshBasicMaterial({ color: new THREE.Color(css), transparent: true, opacity: 0.6, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4, depthTest: !onTop }));
   const rmats = {}; const ringMat = (css) => rmats[css] || (rmats[css] = Object.assign(mat(css).clone(), { opacity: 0.5 }));
   let tipGeo = null, carArrow = null, bob = 0, rgCar = null, rgFoot = null, onTop = false; const UP = new THREE.Vector3(0, 1, 0), NRM = new THREE.Vector3(0, 1, 0), TGT = new THREE.Vector3(), QY = new THREE.Quaternion(), QT = new THREE.Quaternion(); let sy = 0, off = false;
-  function make() {
+  function makeGuide() {
     const rg = new THREE.RingGeometry(0.22, 0.28, 40); rg.rotateX(-Math.PI / 2); rg.userData.shared = true; rgCar = new THREE.RingGeometry(0.385, 0.40, 64); rgCar.rotateX(-Math.PI / 2); rgCar.userData.shared = true; rgFoot = rg; // thinner stroke when scaled up round a vehicle
     const sh = new THREE.Shape(); sh.moveTo(0, 0.24); sh.lineTo(0.12, 0); sh.lineTo(0.04, 0.03); sh.lineTo(0, -0.01); sh.lineTo(-0.04, 0.03); sh.lineTo(-0.12, 0); sh.closePath();
     tipGeo = new THREE.ShapeGeometry(sh); tipGeo.rotateX(-Math.PI / 2); tipGeo.translate(0, 0, -0.265); tipGeo.userData.shared = true; // pointer growing out of the ring's edge, towards local -z
@@ -29,7 +29,7 @@ const GUIDE = (() => {
   }
   return {
     update() {
-      if (!g) make();
+      if (!g) makeGuide();
       if (pressed('KeyG')) { off = !off; HUD.toast(off ? 'Brújula oculta (G)' : 'Brújula visible (G)'); } // v0.62.1: toggle with G (E is «usar / entrar»)
       const ok = !off && GAME.state === 'play' && !PLAYER.interior && !PLAYER.dead && !(BIGMAP && BIGMAP.open);
       const L = ok ? goals().filter((q) => Math.hypot(q[0] - PLAYER.x, q[1] - PLAYER.z) > 6) : [];

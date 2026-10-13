@@ -15,6 +15,7 @@
 #                              al final de cada pasada, DESPUÉS de «pruebas» en el mismo encargo (nunca a la vez)
 #   borrar_auditoria_vieja     borra repo\tools\auditoria (copia antigua del auditor)
 #   subir_git                  sube ya a GitHub (scripts\publicar.ps1; necesita «publicar <versión>» antes)
+#   revisor [--solo-zonas|--todo|--lote N]   tests/agente_revisor.py (agente que conduce y anda por el mapa; solo si Jonay lo pide)
 # Si una orden falla (también «pruebas», que deja igualmente su informe), las siguientes no se hacen.
 import os, sys, re, time, shutil, subprocess, datetime
 
@@ -75,6 +76,11 @@ def orden(linea):
         p = os.path.join(ROOT, 'tools', 'auditoria')
         if os.path.isdir(p): shutil.rmtree(p); return 0, 'borrada ' + p, 0
         return 0, 'ya no existe ' + p, 0
+    if o == 'revisor':  # v0.69 (Jonay): the gameplay agent; only these flags
+        if any(x not in ('--solo-zonas', '--todo', '--lote') and not x.isdigit() for x in a): return 1, 'opción no permitida: ' + ' '.join(a), 0
+        code, out, s = run([PY, os.path.join('tests', 'agente_revisor.py')] + a, 14400, eco=True)
+        ult = os.path.join(ROOT, 'reportes', 'ULTIMO.md'); res = open(ult, encoding='utf-8').read()[:2500] if os.path.exists(ult) else ''
+        return code, res + '\n(informe completo: reportes/ULTIMO.md)\n' + out[-1200:], s
     if o == 'prep': return run([PY, 'prep.py'])
     if o == 'merge_zona' and len(a) == 1: return run([PY, os.path.join('tools', 'merge_zona.py'), a[0]])
     if o == 'copiar_html':

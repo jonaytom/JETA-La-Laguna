@@ -423,7 +423,7 @@ const MISSIONS = (() => {
   const KIT = { talk, chat, goto, clearBeacon, track(x, z, r = 6) { clearBeacon(); data.goal = [x, z, r]; updateGPS(true); } /* a moving goal (a car to follow): yellow blip + GPS route, no light column */, setObjective, pass, fail, abort, moveNPC, mkNPC, bold, CH, GANG, findRange, isActive: (m) => active === m, get data() { return data; }, setTimer(t) { timer = t; }, get timer() { return timer; } };
   return {
     kit: KIT, addStory(list) { STORY.push(...list); }, addObispo(list) { OBISPO_LIST.push(...list); }, addTorneo(list) { TORNEO_LIST.push(...list); },
-    init() {
+    initMissions() {
       // Rayco «El Blanco», at his parents' door next to the start
       { const b = makeHuman({ skin: 0xf6dcc8, shirt: 0xf4f4f4, pants: 0x9a9a9a, hair: 0x3b2a1e, shoes: 0x333333, scale: 1.09, female: false, thin: true, longPants: true, beard: false, hairStyle: 'Hair_Buzzed', hd: true, sleeve: false, glasses: 'round', belt: false, sole: 0x1a1a1a, shoes: 0x2f3b55, watch: 0x2f3a2a });
         let p = safeSpot(PLAYER.x + 4, PLAYER.z + 1.5); const r = COL.resolve(p[0], p[1], 0.5); NPC.blanco = { x: r.x, z: r.z, H: b, home: [r.x, r.z] };
@@ -465,7 +465,7 @@ const MISSIONS = (() => {
         const m = VMODELS && VMODELS.guancheGT; const cx = rx - uz * (w / 2 - 1.2) * sd + ux * 5, cz = rz + ux * (w / 2 - 1.2) * sd + uz * 5;
         const car = new Car(m ? null : 'sport', 0xffd200, cx, cz, Math.atan2(ux, uz), m || undefined); car.driver = null; car.mode = 'physics'; car.persist = true; car.ctl.brk = 1; NPC.canarionCar = car; }
       for (const k of ['blanco', 'coco', 'sastron', 'canarion']) COL.addCirc(NPC[k].x, NPC[k].z, 0.4);
-      FOOD.init();
+      FOOD.initFood();
       if (typeof story2Init === 'function') story2Init();
       if (typeof obispoInit === 'function') obispoInit();
       if (typeof canchasInit === 'function') { try { canchasInit(); } catch (e) { console.warn('canchas', e); } }

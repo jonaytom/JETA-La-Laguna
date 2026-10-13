@@ -16,7 +16,8 @@ async def main():
         logs = []; pg.on('console', lambda m: logs.append(m.type + ': ' + m.text)); pg.on('pageerror', lambda e: logs.append('PAGEERROR: ' + str(e)))
         await pg.goto('http://localhost:8765/test.html?q=baja')
         try: await pg.wait_for_function('window.__GAME_READY', timeout=180000)
-        except Exception as e: print('not ready', e)
+        except Exception as e:  # v0.69: the game didn't load: every test would wait for nothing
+            print('not ready', e); print('NO CARGA: ' + ' | '.join(l for l in logs if 'PAGEERROR' in l or l.startswith('error'))[:800]); await b.close(); return
         await pg.wait_for_timeout(1500)
         for line in lines:
             parts = line.split(); t0 = time.time(); logs.clear()

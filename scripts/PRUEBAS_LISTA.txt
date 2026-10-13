@@ -1,6 +1,10 @@
 # Pruebas de ESTA versión (scripts\PRUEBAS.bat las junta con las de lo cambiado).
-# v0.68.0: Av. de La Trinidad (anchos, edificios, aparcamientos, Pedro Zerolo) y obstáculos graves del auditor
+# v0.69.0: avisos del auditor (edificios fuera de la calzada, obstáculos, temporales, nombres, minijuegos compartidos)
+prueba_recorte.py
+prueba_baloncesto.py
+prueba_futbol.py
+prueba_panel_controles.py
+prueba_ambiente.py
+prueba_guardar_cargar.py
+prueba_misiones_guardado.py
 prueba_trinidad.py
-prueba_parking_cristo.py
-prueba_canchas.py
-herramientas/sonda_trinidad.py

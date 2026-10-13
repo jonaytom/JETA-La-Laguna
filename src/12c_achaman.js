@@ -1,11 +1,11 @@
 // ============ Modo ACHAMÁN: god mode to fly over La Laguna (no game, just sightseeing) — chosen from the start menu ============
 const ACH = { on: false, x: 0, y: 0, z: 0, yaw: 0, pitch: -0.25, mode: 'libre', orbit: { cx: 0, cz: 0, r: 120, a: 0, h: 80 }, saved: null, speed: 1 };
-const ACH_MODES = ['libre', 'dron', 'cenital'];
+const ACH_MODES = ['libre', 'dron', 'cenital']; const _achD = new THREE.Vector3(); // v0.69 (auditor): temporary
 function achamanStart() {
   AUDIO.init(); $('menu').style.display = 'none';
   ACH.saved = { x: PLAYER.x, z: PLAYER.z, y: PLAYER.y, h: PLAYER.h };
   ACH.on = true; ACH.mode = 'libre'; ACH.x = camera.position.x; ACH.y = camera.position.y; ACH.z = camera.position.z;
-  const d = new THREE.Vector3(); camera.getWorldDirection(d); ACH.yaw = Math.atan2(d.x, d.z); ACH.pitch = Math.asin(clamp(d.y, -0.99, 0.99));
+  const d = _achD; camera.getWorldDirection(d); ACH.yaw = Math.atan2(d.x, d.z); ACH.pitch = Math.asin(clamp(d.y, -0.99, 0.99));
   playerHuman.root.visible = false; GAME.state = 'achaman'; document.body.classList.add('achaman'); $('achHud').style.display = 'block';
   achSetMode('libre'); HUD.big('MODO ACHAMÁN', '#f5b72e', 3.5);
   achLock();
@@ -19,7 +19,7 @@ function achamanEnd() {
 function achSetMode(m) {
   ACH.mode = m; $('achMode').textContent = { libre: 'VUELO LIBRE', dron: 'DRON (órbita)', cenital: 'CENITAL' }[m];
   if (m === 'dron') { // orbit around the point you are looking at
-    const d = new THREE.Vector3(); camera.getWorldDirection(d); let t = 60; if (d.y < -0.05) t = clamp((ACH.y - heightAt(ACH.x, ACH.z)) / -d.y, 20, 400);
+    const d = _achD; camera.getWorldDirection(d); let t = 60; if (d.y < -0.05) t = clamp((ACH.y - heightAt(ACH.x, ACH.z)) / -d.y, 20, 400);
     const cx = ACH.x + d.x * t, cz = ACH.z + d.z * t; ACH.orbit = { cx, cz, r: Math.max(40, Math.hypot(ACH.x - cx, ACH.z - cz)), a: Math.atan2(ACH.x - cx, ACH.z - cz), h: Math.max(25, ACH.y - heightAt(cx, cz)) };
   }
   if (m === 'cenital') { ACH.y = Math.max(ACH.y, heightAt(ACH.x, ACH.z) + 140); }
@@ -51,7 +51,7 @@ function updateAchaman(dt) {
     const o = ACH.orbit; o.a += dt * 0.12 - mdx * 0.002; o.h = clamp(o.h + iy * 25 * dt * fast + mdy * 0.08, 8, 600); o.r = clamp(o.r - iz * 30 * dt * fast, 15, 900);
     const fx = Math.sin(o.a + Math.PI / 2), fz = Math.cos(o.a + Math.PI / 2); o.cx += fx * ix * 25 * dt * fast; o.cz += fz * ix * 25 * dt * fast;
     ACH.x = o.cx + Math.sin(o.a) * o.r; ACH.z = o.cz + Math.cos(o.a) * o.r; const gc = heightAt(o.cx, o.cz); ACH.y = Math.max(gc + o.h, heightAt(ACH.x, ACH.z) + 3);
-    camera.position.set(ACH.x, ACH.y, ACH.z); camera.lookAt(o.cx, gc + 4, o.cz); const d = new THREE.Vector3(); camera.getWorldDirection(d); ACH.yaw = Math.atan2(d.x, d.z); ACH.pitch = Math.asin(clamp(d.y, -0.99, 0.99));
+    camera.position.set(ACH.x, ACH.y, ACH.z); camera.lookAt(o.cx, gc + 4, o.cz); const d = _achD; camera.getWorldDirection(d); ACH.yaw = Math.atan2(d.x, d.z); ACH.pitch = Math.asin(clamp(d.y, -0.99, 0.99));
   } else { // cenital: straight down, north up
     const sp = 40 * fast * (ACH.y - g) / 150; ACH.x += ix * sp * dt; ACH.z -= iz * sp * dt; ACH.y = clamp(ACH.y + (iy * 60 * fast + mdy * 0.3) * dt * (iy ? 1 : 0) + (iy ? 0 : mdy * 0.3), g + 25, 2500);
     camera.position.set(ACH.x, ACH.y, ACH.z); camera.up.set(0, 0, -1); camera.lookAt(ACH.x, g, ACH.z); camera.up.set(0, 1, 0);

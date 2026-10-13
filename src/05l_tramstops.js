@@ -61,17 +61,17 @@ function buildTramStops() {
       box(g, mWood, 0.42, 0.06, 3.2, sx + 0.38, 0.78, -1.5); box(g, mWood, 0.05, 0.4, 3.2, sx + 0.6, 1.05, -1.5);
       for (const zz of [-2.9, -0.1]) box(g, mSteel, 0.36, 0.45, 0.06, sx + 0.38, 0.53, zz);
       // ticket machine + info totem
-      box(g, mGreen, 0.55, 1.5, 0.5, sx + 0.5, 1.07, SL / 2 + 1.4); box(g, M(0x1a2228, 0.3), 0.02, 0.35, 0.3, sx + 0.22, 1.35, SL / 2 + 1.4);
+      const mach = [box(g, mGreen, 0.55, 1.5, 0.5, sx + 0.5, 1.07, SL / 2 + 1.4), box(g, M(0x1a2228, 0.3), 0.02, 0.35, 0.3, sx + 0.22, 1.35, SL / 2 + 1.4)];
       const tot = box(g, M(0x3a3f44, 0.5, 0.4), 0.16, 2.4, 0.5, sx + 0.3, 1.52, -SL / 2 - 1.6);
       const panel = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 1.24), sign); panel.position.set(sx + 0.3 - 0.09, 1.95, -SL / 2 - 1.6); panel.rotation.y = -Math.PI / 2; g.add(panel);
-      const panel2 = panel.clone(); panel2.position.x = sx + 0.3 + 0.09; panel2.rotation.y = Math.PI / 2; g.add(panel2);
+      const panel2 = panel.clone(); panel2.position.x = sx + 0.3 + 0.09; panel2.rotation.y = Math.PI / 2; g.add(panel2); const totem = [tot, panel, panel2];
       // waste bin
       box(g, M(0x2b5a33, 0.6), 0.4, 0.75, 0.4, sx + 0.8, 0.7, SL / 2 + 0.4);
       scene.add(g); g.updateMatrixWorld(true);
       // collisions: posts, glass back wall, totem and machine
       const W2 = (lx, lz) => { const v = new THREE.Vector3(lx, 0, lz).applyMatrix4(g.matrixWorld); return [v.x, v.z]; };
       const a = W2(sx + 0.72, -SL / 2), b = W2(sx + 0.72, SL / 2); COL.addSeg(a[0], a[1], b[0], b[1]);
-      for (const [lx, lz, r] of [[sx + 0.5, SL / 2 + 1.4, 0.4], [sx + 0.3, -SL / 2 - 1.6, 0.3]]) { const p = W2(lx, lz); COL.addCirc(p[0], p[1], r); }
+      for (const [lx, lz, r, ms] of [[sx + 0.5, SL / 2 + 1.4, 0.4, mach], [sx + 0.3, -SL / 2 - 1.6, 0.3, totem]]) { const p = W2(lx, lz); if (onCarriageway(p[0], p[1], r)) { for (const m of ms) if (m.parent) m.parent.remove(m); continue; } COL.addCirc(p[0], p[1], r); } // v0.69 (auditor): a platform end on the carriageway: no machine / totem there
       n++;
     }
   }

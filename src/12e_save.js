@@ -49,23 +49,23 @@ const SAVE = (() => {
     ui.querySelector('#svBack').addEventListener('click', close);
     ui.querySelector('#svExport').addEventListener('click', () => { const s = GAME.state === 'menu' ? (latest() || {}).s : snapshot('Archivo'); if (!s) { HUD.toast('No hay partida que descargar', '#ffb3b3'); return; } const b = new Blob([JSON.stringify(s)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'JETA-partida-' + new Date(s.t).toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.json'; document.body.appendChild(a); a.click(); a.remove(); });
     ui.querySelector('#svImport').addEventListener('click', () => ui.querySelector('#svFile').click());
-    ui.querySelector('#svFile').addEventListener('change', (e) => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { try { const s = JSON.parse(r.result); if (!s.player) throw 0; store.set('1', s); render(); loadSlot('1'); } catch (err) { alertBox('Ese archivo no es una partida de JETA La Laguna.'); } }; r.readAsText(f); e.target.value = ''; });
+    ui.querySelector('#svFile').addEventListener('change', (e) => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { try { const s = JSON.parse(r.result); if (!s.player) throw 0; store.set('1', s); renderSlots(); loadSlot('1'); } catch (err) { alertBox('Ese archivo no es una partida de JETA La Laguna.'); } }; r.readAsText(f); e.target.value = ''; });
   }
   function alertBox(t) { const l = ui.querySelector('#svList'); const p = document.createElement('p'); p.style.cssText = 'color:#ffb3b3;text-align:center'; p.textContent = t; l.prepend(p); }
-  function render() {
+  function renderSlots() {
     const l = ui.querySelector('#svList'); ui.querySelector('#svTitle').textContent = mode === 'save' ? 'GUARDAR / CARGAR' : 'CARGAR PARTIDA';
     l.innerHTML = SLOTS.map((k) => { const s = store.get(k); const name = k === 'auto' ? 'Automático' : 'Ranura ' + k;
       return `<div style="display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 12px;margin:8px 0;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:rgba(0,0,0,.25);font:400 15px Barlow,sans-serif;color:#fff">
         <div style="min-width:90px;font:700 16px Oswald,sans-serif;color:#f5b72e">${name}</div><div style="flex:1">${describe(s)}</div>
         <div style="white-space:nowrap">${mode === 'save' && k !== 'auto' ? `<button class="btn sec" data-save="${k}" style="padding:8px 14px;font-size:15px">GUARDAR</button>` : ''}${s ? `<button class="btn" data-load="${k}" style="padding:8px 14px;font-size:15px">CARGAR</button>` : ''}</div></div>`; }).join('');
-    l.querySelectorAll('[data-save]').forEach((b) => b.addEventListener('click', () => { const k = b.dataset.save; if (store.get(k) && b.dataset.sure !== '1') { b.dataset.sure = '1'; b.textContent = '¿SOBRESCRIBIR?'; return; } const s = save(k, 'Guardado a mano'); if (s) { AUDIO.cash && AUDIO.cash(); render(); } else alertBox('No se pudo guardar (el navegador no deja guardar datos).'); }));
+    l.querySelectorAll('[data-save]').forEach((b) => b.addEventListener('click', () => { const k = b.dataset.save; if (store.get(k) && b.dataset.sure !== '1') { b.dataset.sure = '1'; b.textContent = '¿SOBRESCRIBIR?'; return; } const s = save(k, 'Guardado a mano'); if (s) { AUDIO.cash && AUDIO.cash(); renderSlots(); } else alertBox('No se pudo guardar (el navegador no deja guardar datos).'); }));
     l.querySelectorAll('[data-load]').forEach((b) => b.addEventListener('click', () => loadSlot(b.dataset.load)));
   }
   function loadSlot(k) { const s = store.get(k); if (!s) return; close(true); const fromMenu = GAME.state === 'menu';
     if (fromMenu) { $('menu').style.display = 'none'; AUDIO.init(); }
     $('fade').style.opacity = 1; GAME.state = 'cutscene';
     setTimeout(() => { apply(s); $('pause').style.display = 'none'; $('fade').style.opacity = 0; GAME.state = 'play'; GAME.lock(); HUD.big('PARTIDA CARGADA', '#f5b72e', 2.5); HUD.toast(s.mission ? 'Misión: ' + s.mission : '', '#f5b72e', 4); }, 450); }
-  function open(m) { if (!ui) build(); mode = m; render(); ui.style.display = 'flex'; document.exitPointerLock?.(); }
+  function open(m) { if (!ui) build(); mode = m; renderSlots(); ui.style.display = 'flex'; document.exitPointerLock?.(); }
   function close(silent) { if (ui) ui.style.display = 'none'; }
   return {
     save, auto, latest, snapshot, apply, open, close, store,

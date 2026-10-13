@@ -140,6 +140,13 @@ def main():
         pr.wait(timeout=30)
     except Exception as e: txt_l.append(f'error lanzando run_varios: {e}')
     txt = '\n'.join(txt_l)
+    nocarga = next((l for l in txt.splitlines() if l.startswith('NO CARGA')), None)
+    if nocarga:  # v0.69: the game doesn't even load: no point repeating each test apart (each one would wait for nothing)
+        print('== EL JUEGO NO CARGA:', nocarga[:300], flush=True)
+        md = f'# Pruebas {ver} — EL JUEGO NO CARGA\n\n```\n{nocarga}\n```\n\nNo se ha ejecutado ninguna prueba.\n'
+        open(os.path.join(OUT, 'ULTIMO.md'), 'w', encoding='utf-8').write(md)
+        if srv: srv.shutdown()
+        print(f'\n== 0/{len(pruebas)} OK · el juego no carga'); sys.exit(1)
     trozos = {}; cur = None; buf = []; segs = {}
     for l in txt.splitlines():
         if l.startswith('=== INICIO '): cur = l[11:].strip(); buf = []; continue

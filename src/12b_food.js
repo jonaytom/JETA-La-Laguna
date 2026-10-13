@@ -14,7 +14,7 @@ const FOOD = (() => {
     const c = mkCanvas(128, 128), x = c.getContext('2d'); x.fillStyle = '#e53935'; x.beginPath(); x.arc(64, 64, 58, 0, 7); x.fill(); x.lineWidth = 8; x.strokeStyle = '#fff'; x.stroke();
     x.fillStyle = '#fff'; x.fillRect(52, 28, 24, 72); x.fillRect(28, 52, 72, 24); return canvasTex(c, { repeat: false });
   }
-  function init() {
+  function initFood() {
     // pick food shops spread over the map (one every ~220 m at most), preferring the historic core and the avenues
     const cands = DATA.SH.filter((s) => MENU[s[2]]).map((s) => ({ s, k: (isHistoric(s[0], s[1]) ? 0 : 1) + Math.random() * 0.5 }));
     cands.sort((a, b) => a.k - b.k);
@@ -47,7 +47,7 @@ const FOOD = (() => {
   }
   function update(dt) { const t = performance.now() / 1000; for (const s of shops) { const d = Math.abs(s.x - camera.position.x) + Math.abs(s.z - camera.position.z); s.spr.visible = d < 260 && !PLAYER.interior; if (s.spr.visible) s.spr.position.y = heightAt(s.x, s.z) + 3.0 + Math.sin(t * 2 + s.x) * 0.15; } }
   function nearest(x, z) { let b = null, bd = 1e9; for (const s of shops) { const d = Math.hypot(s.x - x, s.z - z); if (d < bd) { bd = d; b = s; } } return b; }
-  return { init, near, open, update, nearest, get shops() { return shops; } };
+  return { initFood, near, open, update, nearest, get shops() { return shops; } };
 })();
 // health lost in traffic accidents (driver) and from police batons
 function playerCrashDamage(v) { if (v < 7) return; const dmg = (v - 6) * 1.6; PLAYER.health -= dmg; if (PLAYER.health <= 0) GAME.wasted(); else if (dmg > 12) HUD.toast('¡Ay! Te has dado un buen golpe (-' + Math.round(dmg) + ' salud)', '#ffb3b3', 2); }

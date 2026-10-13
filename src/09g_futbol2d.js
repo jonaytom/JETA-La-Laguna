@@ -13,26 +13,9 @@ const FUTBOL2D = (() => {
   const sxp = (x) => X0 + x * S, syw = (y) => (y + MG) * S;  // pitch metres -> background px
   let cv = null, cx = null, running = false, raf = 0, last = 0, acc = 0, st = null, onEnd = null, camY = 0, bgCache = null;
   // ---------- input: virtual buttons, the same as the basketball (vS = A, vP = pass, vT = sprint)
-  const keys = new Set(), pressedK = new Set(), releasedK = new Set();
-  function vcode(k) { const has = (id) => CONTROLS.codes(id).includes(k);
-    return has('f_punch') ? 'vS' : has('b_pass') ? 'vP' : has('f_kick') ? 'vT' : has('left') ? 'vL' : has('right') ? 'vR' : has('fwd') ? 'vU' : has('back') ? 'vD' : k === 'Enter' ? 'vS' : null; }
-  const press = (v, down) => { if (down) { if (!keys.has(v)) pressedK.add(v); keys.add(v); } else { if (keys.has(v)) releasedK.add(v); keys.delete(v); } };
-  function onKey(e, down) { if (!running) return; const v = vcode(e.code); if (!v) return; e.preventDefault(); e.stopPropagation(); press(v, down); }
-  window.addEventListener('keydown', (e) => onKey(e, true), true); window.addEventListener('keyup', (e) => onKey(e, false), true);
-  window.addEventListener('mousedown', (e) => { if (!running) return; e.preventDefault(); e.stopPropagation(); if (e.button === 0) press('vS', true); if (e.button === 2) press('vP', true); }, true);
-  window.addEventListener('mouseup', (e) => { if (!running) return; if (e.button === 0) press('vS', false); if (e.button === 2) press('vP', false); }, true);
-  window.addEventListener('contextmenu', (e) => { if (running) e.preventDefault(); }, true);
-  const held = (v) => keys.has(v), hit = (v) => pressedK.has(v), rel = (v) => releasedK.has(v);
+  const IN = MINI.input(() => running), { press, held, hit, rel } = IN, keys = IN.keys; // v0.69: shared with the other minigames (09ea_minijuegos.js)
   // ---------- sounds
-  function snd(kind) { const ctx = AUDIO.ctx, out = AUDIO.master; if (!ctx || !out) return; const t = ctx.currentTime; const g = ctx.createGain(); g.connect(out);
-    if (kind === 'kick') { const o = ctx.createOscillator(); o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.07); g.gain.setValueAtTime(0.22, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.09); o.connect(g); o.start(t); o.stop(t + 0.1); return; }
-    if (kind === 'whistle') { const o = ctx.createOscillator(), lfo = ctx.createOscillator(), lg = ctx.createGain(); o.frequency.value = 2300; lfo.frequency.value = 28; lg.gain.value = 120; lfo.connect(lg); lg.connect(o.frequency);
-      g.gain.setValueAtTime(0.05, t); g.gain.setValueAtTime(0.05, t + 0.45); g.gain.exponentialRampToValueAtTime(0.001, t + 0.5); o.connect(g); o.start(t); lfo.start(t); o.stop(t + 0.52); lfo.stop(t + 0.52); return; }
-    if (kind === 'post') { const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = 760; g.gain.setValueAtTime(0.08, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.3); o.connect(g); o.start(t); o.stop(t + 0.32); return; }
-    const s = ctx.createBufferSource(); s.buffer = AUDIO.noise; const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 800; f.Q.value = 0.5;
-    g.gain.setValueAtTime(0.001, t); g.gain.linearRampToValueAtTime(kind === 'goal' ? 0.16 : 0.08, t + 0.2); g.gain.exponentialRampToValueAtTime(0.001, t + (kind === 'goal' ? 2.4 : 1.2)); s.connect(f); f.connect(g); s.start(t, Math.random()); s.stop(t + 2.5);
-  }
-  function say(text) { try { const ss = window.speechSynthesis; if (!ss) return; const u = new SpeechSynthesisUtterance(text); const v = ss.getVoices().find((q) => /^es/i.test(q.lang)); if (v) u.voice = v; u.lang = 'es-ES'; u.rate = 1.1; u.pitch = 0.8; ss.cancel(); ss.speak(u); } catch (e) { } }
+  const snd = MINI.snd, say = (t) => MINI.say(t);
   // ---------- helpers
   const hx = (n, d = '#888') => (typeof n === 'number' ? '#' + (n >>> 0).toString(16).padStart(6, '0') : typeof n === 'string' ? n : d);
   const D = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -229,7 +212,7 @@ const FUTBOL2D = (() => {
     if (ok(st.ev)) { t.wait = 0.9; st.tip = '¡BIEN!  ' + tip(); AUDIO.cash && AUDIO.cash(); }
   }
   // ---------- drawing
-  function txt(s, x, y, size, col, align = 'center') { cx.font = `${size}px "Press Start 2P", monospace`; cx.textAlign = align; cx.textBaseline = 'top'; cx.fillStyle = '#000'; for (const [a, c] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) cx.fillText(s, x + a, y + c); cx.fillStyle = col; cx.fillText(s, x, y); }
+  const txt = (s, x, y, size, col, align) => MINI.txt(cx, s, x, y, size, col, align);
   function drawBg() { // the whole pitch once: striped grass, lines, goals with nets, ad boards and the stands at the sides
     if (bgCache) return bgCache; const c = mkCanvas(W * BR, BGH * BR), x = c.getContext('2d'); x.scale(BR, BR);
     x.fillStyle = '#2d6e34'; x.fillRect(0, 0, W, BGH);
@@ -297,22 +280,22 @@ const FUTBOL2D = (() => {
     cx.fillStyle = 'rgba(0,0,0,0.72)'; cx.fillRect(W / 2 - 120, 6, 240, 26); cx.fillStyle = '#ffd400'; cx.fillRect(W / 2 - 120, 6, 240, 1.5);
     txt(st.names[0], W / 2 - 74, 10, 6, '#7fe08a'); txt(st.names[1], W / 2 + 74, 10, 6, '#ff6b6b'); txt(String(st.score[0]), W / 2 - 74, 20, 8, '#fff'); txt(String(st.score[1]), W / 2 + 74, 20, 8, '#fff');
     const min = Math.min(90, Math.floor((1 - st.clock / st.time) * 90)); txt(st.tut ? "--'" : st.golden ? 'ORO' : `${min}'`, W / 2, 14, 8, st.golden ? '#ffd400' : '#fff');
-    const hu = st.ctl || st.p[1]; cx.fillStyle = 'rgba(0,0,0,0.6)'; cx.fillRect(10, H - 16, 64, 8); cx.fillStyle = hu.turbo > 0.25 ? '#5ec8ff' : '#ff6b6b'; cx.fillRect(11, H - 15, 62 * hu.turbo, 6); txt('TURBO', 42, H - 26, 6, '#fff');
+    const hu = st.ctl || st.p[1]; MINI.turbo(cx, H, hu.turbo);
     drawRadar();
     if (st.tip) { cx.fillStyle = 'rgba(0,0,0,0.7)'; cx.fillRect(30, H - 46, W - 90, 16); txt(st.tip, (W - 60) / 2, H - 41, 5, '#ffd400'); }
-    if (st.bannerT > 0 && st.banner) { const k = Math.min(1, (st.banner.dur - st.bannerT) * 6); txt(st.banner.t, W / 2, 60, Math.round(9 + 6 * k), st.banner.c); }
+    MINI.banner(cx, st, W, 60, 9);
     if (st.phase === 'ready') { cx.fillStyle = 'rgba(0,0,0,0.82)'; cx.fillRect(60, 48, W - 120, 140); txt('JETA SOCCER · 5 CONTRA 5', W / 2, 56, 9, '#ffd400');
       const rows = [['MOVERSE', `${K_('left')} ${K_('right')} ${K_('fwd')} ${K_('back')}`], ['CHUTAR (mantén y suelta)', `clic izq. · ${K_('f_punch')}`], ['EFECTO (tras chutar)', `${K_('left')} / ${K_('right')}`], ['PASAR (mantén: más fuerte y bombeado)', `clic dcho. · ${K_('b_pass')}`], ['ENTRADA (sin balón)', `clic izq. · ${K_('f_punch')}`], ['CAMBIAR DE JUGADOR', `clic dcho. · ${K_('b_pass')}`], ['CORRER (turbo)', K_('f_kick')]];
-      rows.forEach(([a, c], i) => { txt(a, 74, 74 + i * 13, 6, '#9fd7ff', 'left'); txt(c, W - 74, 74 + i * 13, 6, '#fff', 'right'); });
+      MINI.rows(cx, W, rows, 74);
       if (Math.floor(st.time0 * 2) % 2 === 0) txt(`CLIC IZQ. O ${K_('f_punch').toUpperCase()} PARA EMPEZAR`, W / 2, 170, 7, '#7fe08a'); }
-    if (st.phase === 'end') { const won = st.score[0] > st.score[1]; txt(won ? '¡GANÁIS!' : 'HABÉIS PERDIDO', W / 2, 100, 16, won ? '#7fe08a' : '#ff6b6b'); txt(`${st.score[0]} - ${st.score[1]}`, W / 2, 128, 10, '#fff'); }
+    if (st.phase === 'end') MINI.endScreen(cx, W, st.score);
     if (st.fade > 0) { cx.fillStyle = `rgba(0,0,0,${st.fade})`; cx.fillRect(0, 0, W, H); }
   }
   // ---------- loop
   function loop(now) {
     if (!running) return; raf = requestAnimationFrame(loop);
     const dt = Math.min(0.1, (now - last) / 1000); last = now; acc += dt;
-    while (acc >= 1 / 60) { step(1 / 60); pressedK.clear(); releasedK.clear(); acc -= 1 / 60; updateCam(); }
+    while (acc >= 1 / 60) { step(1 / 60); IN.frame(); acc -= 1 / 60; updateCam(); }
     if (st.fadeDir) { st.fade = clamp(st.fade + st.fadeDir * dt * 2.5, 0, 1); if (st.fadeDir < 0 && st.fade === 0) st.fadeDir = 0; if (st.fadeDir > 0 && st.fade === 1) { st.fadeDir = 0; close(); return; } }
     draw();
   }
@@ -330,13 +313,12 @@ const FUTBOL2D = (() => {
     for (let i = 0; i < 5; i++) st.p.push(mkPlayer(t0[i] || { name: 'JUG ' + (i + 1) }, 0, i, k0));
     for (let i = 0; i < 5; i++) st.p.push(mkPlayer(t1[i] || { name: 'RIV ' + (i + 1) }, 1, i, k1));
     for (const q of st.p) q.lv = q.team === 1 ? opt.lv ?? 0.5 : opt.mateLv ?? 0.6;
-    kickoff(0); st.ctl = st.p.find((q) => q.team === 0 && q.role === 'fwd'); updateCam(1); keys.clear(); pressedK.clear(); releasedK.clear(); document.exitPointerLock?.();
-    GAME.state = 'futbol2d'; document.body.classList.add('fighting'); cv.style.display = 'block';
-    AUDIO.init && AUDIO.init(); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); return true;
+    kickoff(0); st.ctl = st.p.find((q) => q.team === 0 && q.role === 'fwd'); updateCam(1); IN.reset(); document.exitPointerLock?.();
+    MINI.show(cv, 'futbol2d'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); return true;
   }
   function finish() { if (!st || st.fadeDir > 0) return; st.fadeDir = 1; }
-  function close() { running = false; cancelAnimationFrame(raf); cv.style.display = 'none'; document.body.classList.remove('fighting'); GAME.state = 'play'; GAME.lock();
+  function close() { running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'futbol2d', true);
     const res = { won: st.score[0] > st.score[1], score: st.score.slice() }; if (onEnd) onEnd(res); }
-  function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); if (cv) cv.style.display = 'none'; document.body.classList.remove('fighting'); if (GAME.state === 'futbol2d') GAME.state = 'play'; } // tests only
-  return { start, _abort: abort, get running() { return running; }, _st: () => st, _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); pressedK.clear(); releasedK.clear(); updateCam(); } }, _press: press, _draw: () => draw() };
+  function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'futbol2d', false); } // tests only
+  return { start, _abort: abort, get running() { return running; }, _st: () => st, _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); updateCam(); } }, _press: press, _draw: () => draw() };
 })();

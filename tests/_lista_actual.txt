@@ -1,4 +1,23 @@
-prueba_trinidad.py
+prueba_arranque.py
+prueba_bordes.py
+prueba_conduccion_tuneles_puentes.py
 prueba_parking_cristo.py
+prueba_recorte.py
+prueba_trinidad.py
+prueba_panel_controles.py
+prueba_pelea_especiales.py
+prueba_pelea_atras.py
+prueba_bloqueo.py
+prueba_baloncesto.py
+prueba_futbol.py
 prueba_canchas.py
-herramientas/sonda_trinidad.py
+prueba_ambiente.py
+herramientas/prueba_claxon.py
+prueba_pasos.py
+herramientas/foto_jugador.py
+herramientas/sonda_guia.py 284 112
+herramientas/sonda_guia.py 284 112 coche
+prueba_misiones_guardado.py
+prueba_persecuciones.py
+prueba_diario.py
+prueba_guardar_cargar.py

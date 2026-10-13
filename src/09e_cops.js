@@ -1,12 +1,12 @@
 // ============ police on foot: when the patrol car can't get to you, the officers get out and chase you running.
 // With 4+ stars they also shoot (2-3 hits kill, depending on your health).
-const COPS = [];
+const COPS = []; const _copD = new THREE.Vector3(), _copA = new THREE.Vector3(); // v0.69 (auditor): temporaries
 const COP_LOOK = { skin: 0xd9a47c, shirt: 0x1d2b4f, pants: 0x1a2236, shoes: 0x111111, sole: 0x111111, cap: 0x1d2b4f, female: false, beard: false, sleeve: true, longPants: true, hairStyle: 'Hair_Buzzed', belt: true };
 function copGunMesh() {
   if (GUNPOOL.length) { const g = GUNPOOL.pop(); g.visible = true; return g; } /* reuse (audit P0.3) */
   const g = new THREE.Group(); const dark = M(0x1e1f22, 0.35, 0.7);
-  const slide = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.04, 0.19), dark); slide.position.set(0, 0.03, 0.06);
-  const handle = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.1, 0.045), dark); handle.position.set(0, -0.025, 0); handle.rotation.x = -0.25;
+  const G = gunGeos(); const slide = new THREE.Mesh(G.slide, dark); slide.position.set(0, 0.03, 0.06);
+  const handle = new THREE.Mesh(G.handle, dark); handle.position.set(0, -0.025, 0); handle.rotation.x = -0.25;
   g.add(slide, handle); g.scale.setScalar(1.35); scene.add(g); return g;
 }
 function newCopHuman() { return makeHuman({ ...COP_LOOK, skin: pick([0xd9a47c, 0xc68a64, 0xe8bf9c, 0xa8744e]) }); }
@@ -22,7 +22,7 @@ function removeCop(c) { releaseHuman('cop', c.H); if (c.gun) { c.gun.visible = f
 function copLineOfSight(c) { return COL.raycast(c.x, c.z, PLAYER.x, PLAYER.z) >= 1; }
 function copShoot(c, dist, stars) {
   // aim, flash, bang; chance to hit drops with distance and when you run
-  AUDIO.shot && AUDIO.shot(); const d = new THREE.Vector3(PLAYER.x - c.x, 0.2, PLAYER.z - c.z).normalize();
+  AUDIO.shot && AUDIO.shot(); const d = _copD.set(PLAYER.x - c.x, 0.2, PLAYER.z - c.z).normalize();
   if (!c.gun) c.gun = copGunMesh(); c.aimT = 0.7;
   if (typeof flashLight !== 'undefined' && flashLight) { flashLight.position.set(c.x + d.x * 0.7, heightAt(c.x, c.z) + 1.4, c.z + d.z * 0.7); flashLight.intensity = 6; setTimeout(() => { flashLight.intensity = 0; }, 60); }
   const pHit = clamp(0.6 - dist / 55 - (PLAYER.speed > 4 ? 0.2 : 0) + (stars >= 5 ? 0.1 : 0), 0.15, 0.8);
@@ -76,7 +76,7 @@ function updateCops(dt) {
     animHuman(c.H, dt, sp);
     const gy = (typeof lowAt === 'function' && PLAYER.y < heightAt(c.x, c.z) - 1.5) ? PLAYER.y : heightAt(c.x, c.z);
     c.H.root.position.set(c.x, gy + 0.17, c.z); c.H.root.rotation.y = c.h; c.H.root.visible = dist < 120;
-    if (c.aimT > 0 && c.H.skinned) { const d = new THREE.Vector3(dx, (PLAYER.y + 1.2) - (gy + 1.45), dz).normalize(); aimArm(c.H, d); if (!c.gun) c.gun = copGunMesh(); c.gun.visible = true; gripGun(c.H, c.gun, d); }
+    if (c.aimT > 0 && c.H.skinned) { const d = _copA.set(dx, (PLAYER.y + 1.2) - (gy + 1.45), dz).normalize(); aimArm(c.H, d); if (!c.gun) c.gun = copGunMesh(); c.gun.visible = true; gripGun(c.H, c.gun, d); }
     else if (c.gun) c.gun.visible = false;
   }
 }
