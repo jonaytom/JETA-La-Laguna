@@ -70,6 +70,22 @@ function aimArm(H, dir) {
     _qa.setFromUnitVectors(_vc, dir); b.getWorldQuaternion(_qb); _qb.premultiply(_qa); const pq = _qc; b.parent.getWorldQuaternion(pq); b.quaternion.copy(pq.invert().multiply(_qb)); b.updateWorldMatrix(false, true); };
   align(up, lo); align(lo, ha);
 }
+// v0.79: two-bone arm IK (rifle held with both hands): the hand of `side` ('r'/'l') goes to T, the elbow towards `pole`
+const _IK = { S: new THREE.Vector3(), E: new THREE.Vector3(), W: new THREE.Vector3(), u: new THREE.Vector3(), v: new THREE.Vector3(), d: new THREE.Vector3(), p: new THREE.Vector3(), qa: new THREE.Quaternion(), qb: new THREE.Quaternion(), qc: new THREE.Quaternion() };
+function boneAim(b, child, dir) { const I = _IK; b.updateWorldMatrix(true, false); child.updateWorldMatrix(false, false); b.getWorldPosition(I.p); child.getWorldPosition(I.d); I.d.sub(I.p).normalize();
+  I.qa.setFromUnitVectors(I.d, dir); b.getWorldQuaternion(I.qb); I.qb.premultiply(I.qa); b.parent.getWorldQuaternion(I.qc); b.quaternion.copy(I.qc.invert().multiply(I.qb)); b.updateWorldMatrix(false, true); }
+function armIK(H, side, T, pole) {
+  if (!H.skinned) return false; const sk = H.skeleton; const bc = sk.userData || (sk.userData = {}); const cache = bc.bones || (bc.bones = {}); const B = (n) => (n in cache ? cache[n] : (cache[n] = sk.getBoneByName(n) || null));
+  const up = B('upperarm_' + side), lo = B('lowerarm_' + side), ha = B('hand_' + side); if (!up || !lo || !ha) return false; const I = _IK;
+  up.updateWorldMatrix(true, true); up.getWorldPosition(I.S); lo.getWorldPosition(I.E); ha.getWorldPosition(I.W);
+  const a = I.E.distanceTo(I.S), b = I.W.distanceTo(I.E); I.u.subVectors(T, I.S); const d = clamp(I.u.length(), 0.05, (a + b) * 0.995); I.u.normalize();
+  const x = (a * a - b * b + d * d) / (2 * d), h = Math.sqrt(Math.max(0, a * a - x * x));
+  I.v.copy(pole).addScaledVector(I.u, -pole.dot(I.u)); if (I.v.lengthSq() < 1e-6) I.v.set(0, -1, 0).addScaledVector(I.u, I.u.y); I.v.normalize();
+  I.E.copy(I.S).addScaledVector(I.u, x).addScaledVector(I.v, h); // where the elbow goes
+  boneAim(up, lo, I.v.subVectors(I.E, I.S).normalize());
+  lo.getWorldPosition(I.E); I.W.copy(I.S).addScaledVector(I.u, d); boneAim(lo, ha, I.v.subVectors(I.W, I.E).normalize());
+  return true;
+}
 function updateWeapons(dt) {
   weaponSwitchInput();
   if (WEAPON.cd > 0) WEAPON.cd -= dt;

@@ -3,6 +3,33 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.79.0 — 2026-10-19 — Rifle a dos manos, palomitas, regates y mates de combo
+- **Rifle de agua con las dos manos**: ya no atraviesa el brazo.
+  - Apuntando: la culata al hombro, la mano derecha en la empuñadura con el codo abajo y la izquierda bajo el
+    guardamanos.
+  - Sin apuntar: cruzado delante del cuerpo, cogido con las dos manos.
+  - Para eso hay una cinemática inversa de dos huesos para los brazos (`armIK`).
+- **Mapa grande**: los puntos de misión, los destinos y las tiendas se pintan encima de los nombres. Antes un punto azul
+  quedaba tapado por «Centro de Salud…».
+- **Fútbol**:
+  - **Palomitas**: el portero se estira a por los tiros que le pasan lejos, y blocan o despejan («¡PALOMITA!»).
+  - **Saque de centro tras cada gol**: lo saca el que lo recibió, con el pie. El rival se queda fuera del círculo y no
+    puede quitarle el balón hasta que lo pasa o corre con él.
+  - **Fuerza del tiro según la distancia**: cerca de la portería, un tiro a tope se va por encima del larguero. Desde
+    casi el medio campo sí se puede pegar a tope.
+  - **Regate**: dos veces Espacio con el balón. Es un quiebro que el rival no puede robar.
+- **Baloncesto**:
+  - **Cada combo es un mate espectacular con su propia animación**, cuadro a cuadro y con el balón en las manos.
+    - Con puño: el **Mate 360 del Gofio** y el **Molino del Teide** (windmill/tomahawk).
+    - Con patada: **Espaldas del Roque** (de espaldas, abriendo las piernas y con el balón abajo primero) y
+      **Entrepiernas del Pastor** (pasa el balón entre las piernas en el salto, de frente).
+  - **La CPU también hace combos de mate**, más cuanto mejor es el equipo. No se le ven las teclas y puede fallarlos.
+    Un mate de combo en el aire no se puede robar.
+  - **Los pases largos van en arco** (antes iban rectísimos).
+- Prueba nueva `prueba_079.py`: el rifle con las dos manos y fotos; en fútbol, el saque de centro, las palomitas, la
+  fuerza del tiro y el regate; los 4 mates con fotos de cada uno, los combos de la CPU buena y el pase largo; el mapa.
+- Plan de las recreativas, la consola y el pisito en `docs/11_recreativas.md`.
+
 ## 0.78.1 — 2026-10-19 — Pasaje Aguere en dos niveles: escaleras curvas y galería baja
 - **Patio del Cine Aguere en dos niveles**: desde Herradores se llega al patio a nivel de calle, a un rellano con
   barandilla. Desde ahí **dos escaleras curvas, una por la izquierda y otra por la derecha**, bajan rodeando el círculo

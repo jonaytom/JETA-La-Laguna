@@ -182,6 +182,19 @@ Las partidas v1 (con el Canarión dentro de la historia) se convierten al cargar
   aire toca el balón al salir. IA: el que lleva el balón entra hacia la canasta y tira según su distancia preferida y si
   está libre (la CPU también machaca); los demás se abren a la banda o defienden entre su hombre y la canasta. En el
   tutorial los rivales no se mueven y tu compañero te espera con el balón.
+- **Mates de combo (v0.79)**: cada combo es un mate con su propia animación, `DK`.
+  - Los 4 mates:
+    - `m360`: Mate 360 del Gofio, ◀▶ + puño. El cuerpo gira con `scale(cos)`.
+    - `molino`: Molino del Teide, ▼▲ + puño. El brazo hace el molino entero.
+    - `espaldas`: Espaldas del Roque, ◀▶ + patada. Va de espaldas a la canasta, con las piernas abiertas y el balón
+      abajo primero.
+    - `piernas`: Entrepiernas del Pastor, ▼▲ + patada. El balón pasa bajo los muslos.
+  - Cada mate tiene 5–6 poses clave a lo largo del vuelo (0,85 s), suavizadas, y 16 cuadros que hace `FIGHT2D.figure` y
+    se guardan. El balón va en la mano: `handAt` repite los huesos del dibujo de la pelea.
+  - La CPU hace combos (`cpuCombo`): una vez por posesión, al entrar a 2,6–7,4 m, con una probabilidad de
+    8 % + 55 %·nivel², sin panel ni pausa. Acierta un 30 % + 60 %·nivel, un 15 % menos si la defienden.
+  - Un mate de combo en el aire no se puede robar.
+  - Pases: van en arco, con una duración de 0,18 + 0,055·distancia s y una altura de 0,2 + 0,16·distancia m.
 
 ## Diario, canchas y Torneo Lagunero (v0.66)
 
@@ -207,6 +220,16 @@ Las partidas v1 (con el Canarión dentro de la historia) se convierten al cargar
   tutorial, auto, onEnd })`): 5 contra 5 (portero, 2 defensas, medio y delantero; `FORM`), campo vertical de 34×54 m con
   porterías de 6×2,1 m, visto desde arriba como el Sensible Soccer: lienzo 480×270 a R = 3, 8 px/m, la cámara sube y baja
   con el balón; radar abajo a la derecha. Tu equipo ataca hacia arriba.
+- **v0.79**:
+  - **Palomitas**: con un tiro que cruza a más de 1 m del portero y le llega en menos de 0,75 s, el portero se tira
+    (`diveStep`), con un 55 % + 40 %·nivel de probabilidad. Llega a 1,45 + 0,45·nivel m en el aire. Bloca o despeja y
+    luego queda un momento en el suelo.
+  - **Saque de centro** (`st.sp.kind = 'centro'`, radio 6 m): lo hace el equipo que encajó. El rival se queda fuera del
+    círculo hasta que el balón se pasa o el que saca se aleja 1,6 m con él. La CPU espera 0,8 s.
+  - **Tiro**: la velocidad es 11 + 9·fuerza y la subida 0,6 + 7,2·(fuerza − 0,35)/0,65. A tope se va por encima desde
+    8 m y entra desde unos 22–27 m.
+  - **Regate**: doble Espacio en 0,3 s con el balón (`dribble`). Es un quiebro de 0,45 s hacia el lado contrario al
+    rival más cercano, sin entradas ni robos.
 - **Controles** (los de todos los minijuegos): moverse como al andar; A = `E` / clic izq.: con balón, mantener para
   cargar el chut (0,8 s máx.; más fuerte y, pasada la mitad, más alto) y soltar; tras chutar, izquierda / derecha dan
   efecto 0,6 s; cerca de la portería ayuda a apuntar al lado que señalas (no al portero). Sin balón, entrada en plancha.

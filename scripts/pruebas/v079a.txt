@@ -1,0 +1,5 @@
+# v0.79: rifle a dos manos, mapa, fútbol (palomitas, saque de centro, fuerza, regate), basket (mates de combo, CPU, pases en arco)
+prueba_079.py
+prueba_futbol.py
+prueba_baloncesto.py
+prueba_arranque.py

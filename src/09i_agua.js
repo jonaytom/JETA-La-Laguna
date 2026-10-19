@@ -27,6 +27,30 @@ function wetChasePed(p, dt) {
   if (d < 1.25 && GAME.state === 'play' && PLAYER.down <= 0) { p.wetChase = 0; if (typeof startStreetFight === 'function' && startStreetFight(p)) SUB.show('<b>Peatón empapado:</b> ¡Ahora vas a ver lo que es mojarse!', 2.5); else startFight(p); }
   return true;
 }
+// both hands on the rifle (see AGUA.update); aim = world direction when aiming, null when carried
+const HR = { dir: new THREE.Vector3(), r: new THREE.Vector3(), T: new THREE.Vector3(), pole: new THREE.Vector3(), sh: new THREE.Vector3(), fist: new THREE.Vector3(), tmp: new THREE.Vector3(), x: new THREE.Vector3(), up: new THREE.Vector3(), m: new THREE.Matrix4(), grip: new THREE.Vector3(), hg: new THREE.Vector3() };
+function holdRifle(H, aim) {
+  const m = RIFLE.mesh, fx = Math.sin(PLAYER.h), fz = Math.cos(PLAYER.h); const dir = HR.dir; if (aim) dir.copy(aim).normalize(); else dir.set(fx, -0.22, fz).normalize();
+  HR.r.set(-fz, 0, fx); // the character's right (forward × up)
+  if (!aim) dir.set(fx * 0.5 - HR.r.x * 0.8, -0.15, fz * 0.5 - HR.r.z * 0.8).normalize(); // carried across the body, the muzzle to the front-left (so the left hand reaches the handguard)
+  if (!H.skinned) { m.position.set(PLAYER.x + HR.r.x * 0.2 + fx * 0.3, PLAYER.y + 1.1, PLAYER.z + HR.r.z * 0.2 + fz * 0.3); m.quaternion.setFromRotationMatrix(HR.m.lookAt(HR.tmp.set(0, 0, 0), HR.up.copy(dir).negate(), HR.x.set(0, 1, 0))); m.updateMatrixWorld(true); return; }
+  const sk = H.skeleton, sh = sk.getBoneByName('upperarm_r'); sh.updateWorldMatrix(true, false); sh.getWorldPosition(HR.sh);
+  // right hand target: the grip, 30 cm along the aim from the shoulder (aiming) or by the right hip (carried)
+  if (aim) HR.T.copy(HR.sh).addScaledVector(dir, 0.22).addScaledVector(HR.r, -0.08).y -= 0.06; // close to the shoulder, a bit to the centre: the left hand reaches
+  else HR.T.set(PLAYER.x + HR.r.x * 0.15 + fx * 0.14, PLAYER.y + 1.08, PLAYER.z + HR.r.z * 0.15 + fz * 0.14);
+  armIK(H, 'r', HR.T, HR.pole.copy(HR.r).multiplyScalar(0.7).add(HR.tmp.set(0, -1, 0)));
+  gripGun(H, m, dir); // closes the fingers round the grip (and places the mesh: replaced just below)
+  // upright rifle (tank on top) along dir, its grip in the fist
+  const up = HR.up.set(0, 1, 0).addScaledVector(dir, -dir.y).normalize(); const x = HR.x.crossVectors(up, dir).normalize(); up.crossVectors(dir, x);
+  m.quaternion.setFromRotationMatrix(HR.m.makeBasis(x, up, dir));
+  const fist = HR.fist.set(0, 0, 0); let nf = 0; const bc = sk.userData.bones || {};
+  for (const f of ['index', 'middle', 'ring', 'pinky']) for (const k of ['01', '02']) { const bn = bc[f + '_' + k + '_r'] || sk.getBoneByName(f + '_' + k + '_r'); if (!bn) continue; bn.getWorldPosition(HR.tmp); fist.add(HR.tmp); nf++; }
+  if (!nf) sk.getBoneByName('hand_r').getWorldPosition(fist); else fist.multiplyScalar(1 / nf);
+  m.position.copy(fist).sub(HR.grip.set(0, -0.06, 0).multiplyScalar(m.scale.x).applyQuaternion(m.quaternion)); m.updateMatrixWorld(true);
+  // left hand under the handguard
+  HR.hg.set(0, -0.045, aim ? 0.18 : 0.32).applyMatrix4(m.matrixWorld);
+  armIK(H, 'l', HR.hg, HR.pole.copy(HR.r).multiplyScalar(-0.8).add(HR.tmp.set(0, -1, 0)));
+}
 const AGUA = (() => {
   const N = 110; let inst = null, spawnT = 0, sndT = 0, shopT = 0; const D = []; // drops: [x, y, z, vx, vy, vz, alive]
   const PUD = []; let pudGeo = null; const tmpM = new THREE.Matrix4(), tmpV = new THREE.Vector3(), aimV = new THREE.Vector3(), handV = new THREE.Vector3(), O3 = new THREE.Vector3(), NEG = new THREE.Vector3(), UP3 = new THREE.Vector3(0, 1, 0);
@@ -87,13 +111,12 @@ const AGUA = (() => {
     if (!use) RIFLE.firing = false; else if (WEAPON.touchAim) WEAPON.aiming = true;
     if (use && WEAPON.want) { RIFLE.touchT = 0.5; WEAPON.want = false; } // a tap on the phone's fire button: a short burst
     if (RIFLE.touchT > 0) RIFLE.touchT -= dt;
-    // hold the rifle: in the right hand, along the aim when aiming, pointing ahead and down when not
+    // hold the rifle (v0.79, Jonay: it went through the arm): both hands, like a real rifle. Aiming: the butt at the right
+    // shoulder along the aim, the right hand on the grip (elbow down and out), the left hand under the handguard. Not
+    // aiming: carried at the hip pointing ahead and a bit down, both hands on it.
     if (use && RIFLE.mesh && playerHuman) {
-      if (WEAPON.aiming) { PLAYER.h = CAM.yaw; playerHuman.root.rotation.y = PLAYER.h; camera.getWorldDirection(aimV); aimArm(playerHuman, aimV); }
-      const hand = playerHuman.skinned && playerHuman.skeleton.getBoneByName('hand_r'); if (hand) { hand.updateWorldMatrix(true, false); hand.getWorldPosition(handV); } else handV.set(PLAYER.x, PLAYER.y + 1.1, PLAYER.z);
-      const fx = Math.sin(PLAYER.h), fz = Math.cos(PLAYER.h); const dir = WEAPON.aiming ? aimV : tmpV.set(fx, -0.35, fz).normalize();
-      RIFLE.mesh.position.copy(handV); tmpM.lookAt(O3, NEG.copy(dir).negate(), UP3); RIFLE.mesh.quaternion.setFromRotationMatrix(tmpM);
-      if (!WEAPON.aiming) RIFLE.mesh.position.addScaledVector(dir, 0.05); RIFLE.mesh.updateMatrixWorld(true);
+      if (WEAPON.aiming) { PLAYER.h = CAM.yaw; playerHuman.root.rotation.y = PLAYER.h; camera.getWorldDirection(aimV); }
+      holdRifle(playerHuman, WEAPON.aiming ? aimV : null);
       const wl = RIFLE.mesh.userData.water; const k = clamp(RIFLE.water / RIFLE.max, 0.02, 1); wl.scale.y = k; wl.position.y = 0.098 - 0.07 * (1 - k) / 2;
     }
     // spray

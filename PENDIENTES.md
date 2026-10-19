@@ -11,6 +11,9 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
     ruido. Repetir.
   - El arranque sube de 8,2 a 9,4 s.
 - [ ] **PAQUETE «RECREATIVAS Y MINIJUEGOS» (Jonay, 19-oct: «para acometer YA», plan v0.79 → v0.84)**:
+  Hecho en v0.79.0: armas (rifle a dos manos), minimapa (puntos encima), fútbol (palomitas, saque de centro, fuerza
+  del tiro, regate) y basket (combos de la CPU, 4 mates animados, pases en arco). Falta lo de recreativas en adelante
+  (plan en `docs/11_recreativas.md`).
   - **Armas**: el rifle de agua atraviesa el brazo, y al apuntar también se ve mal. La pistola está bien: orientar el
     rifle igual y ponerlo bien en la mano (capturas en X 189 Z 7).
   - **Minimapa**: los puntos de misión no pueden quedar bajo las letras (el punto azul tapado por los nombres de calles

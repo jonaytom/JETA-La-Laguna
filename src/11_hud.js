@@ -194,6 +194,10 @@ const BIGMAP = (() => {
     x.save(); x.translate(MAP.x0, MAP.z0); x.scale(1 / MAP.scale, 1 / MAP.scale); x.drawImage(MAPC, 0, 0); x.restore();
     if (GPS.path) { x.strokeStyle = MISSIONS.target() || GPS.story ? '#f5b72e' : '#e040fb'; x.lineWidth = 6 / k * devicePixelRatio; x.beginPath(); const p = GPS.path; for (let i = 0; i < p.length; i += 2) i ? x.lineTo(p[i], p[i + 1]) : x.moveTo(p[i], p[i + 1]); x.stroke(); }
     { const ap = MISSIONS.aheadPath(); if (ap) { x.save(); x.globalAlpha = 0.6; x.strokeStyle = '#46c3ff'; x.lineWidth = 4 / k * devicePixelRatio; x.setLineDash([10 / k * devicePixelRatio, 7 / k * devicePixelRatio]); x.beginPath(); for (let i = 0; i < ap.length; i += 2) i ? x.lineTo(ap[i], ap[i + 1]) : x.moveTo(ap[i], ap[i + 1]); x.stroke(); x.restore(); } }
+    x.restore();
+    drawLabels(W, H, k);
+    // v0.79 (Jonay): the markers go over the names (a mission dot hidden under «Centro de Salud…»)
+    x.save(); x.translate(W / 2, H / 2); x.scale(k, k); x.translate(-cx, -cz);
     const dot = (px, pz, c, r) => { x.fillStyle = c; x.strokeStyle = '#000'; x.lineWidth = 2 / k * devicePixelRatio; x.beginPath(); x.arc(px, pz, r / k * devicePixelRatio, 0, 7); x.fill(); x.stroke(); };
     for (const c of CARS) if (c.driver === 'police') dot(c.x, c.z, '#3d7bff', 5);
     for (const f of FOOD.shops) { x.fillStyle = '#e53935'; x.strokeStyle = '#fff'; x.lineWidth = 1.5 / k * devicePixelRatio; const sz = 5 * devicePixelRatio / k; x.fillRect(f.x - sz, f.z - sz, sz * 2, sz * 2); x.strokeRect(f.x - sz, f.z - sz, sz * 2, sz * 2); }
@@ -202,7 +206,6 @@ const BIGMAP = (() => {
     if (GPS.target) dot(GPS.target[0], GPS.target[1], '#e040fb', 8);
     x.save(); x.translate(PLAYER.x, PLAYER.z); x.rotate(-(PLAYER.car ? PLAYER.car.h : PLAYER.h) + Math.PI); const a = 12 / k * devicePixelRatio; x.fillStyle = '#fff'; x.strokeStyle = '#000'; x.lineWidth = 2 / k * devicePixelRatio; x.beginPath(); x.moveTo(0, -a); x.lineTo(a * 0.7, a * 0.7); x.lineTo(0, a * 0.35); x.lineTo(-a * 0.7, a * 0.7); x.closePath(); x.fill(); x.stroke(); x.restore();
     x.restore();
-    drawLabels(W, H, k);
   }
   // labels: drawn in screen space, by priority, skipping any that would overlap one already drawn (and repeated names).
   // Far away only the neighbourhoods and the main landmarks; zooming in adds big stores, entrances and then the shops.

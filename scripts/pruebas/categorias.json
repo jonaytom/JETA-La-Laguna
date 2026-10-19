@@ -210,6 +210,14 @@
     "prueba_parking_cristo.py",
     "prueba_trinidad.py"
    ]
+  ],
+  [
+   "^src/09f_basket2d|^src/09g_futbol2d|^src/09i_agua|^src/09c_weapons|^src/11_hud",
+   [
+    "prueba_079.py",
+    "prueba_futbol.py",
+    "prueba_baloncesto.py"
+   ]
   ]
  ]
 }

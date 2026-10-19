@@ -6,6 +6,10 @@
 // defender; defending, the shot button jumps to block; Espacio runs (turbo). Running + shooting from mid range =
 // ENTRADA EN COMBO: the game stops and you have a few seconds to do one of the 4 specials of the 2D fight (same keys:
 // directions + puño = left/E, patada = right/Espacio) for a different dunk. All keys in Opciones › Controles.
+// v0.79 (Jonay): every combo is its own spectacular dunk, animated frame by frame (the ball goes with the hands):
+// with puño the 360 and the windmill/tomahawk, with patada the back dunk (legs open, the ball down first) and the
+// between-the-legs (front). The CPU does combo dunks too (more the better it is; you don't see its inputs, it can
+// miss). Long passes go in an arc (they went dead straight).
 const BASKET2D = (() => {
   // v0.66 (Jonay): a closer view, twice the resolution, the camera scrolls to show the half where the ball is and a bit
   const W = 480, H = 270, R = 4, CL = 28, CW = 15;            // canvas (logical px, drawn at R×) and court (metres)
@@ -39,7 +43,7 @@ const BASKET2D = (() => {
   const snd = MINI.snd, say = (t) => MINI.say(t);
   // ---------- setup
   function mkPlayer(o, team, i) {
-    return { name: o.name, look: o.look || {}, spr: sprites(o.look || {}, !!o.nose), team, human: !!o.human, x: 0, z: 0, y: 0, vx: 0, vz: 0, vy: 0, dir: team ? -1 : 1, turbo: 1, down: 0, act: '', actT: 0, air: false,
+    return { name: o.name, look: o.look || {}, nose: !!o.nose, spr: sprites(o.look || {}, !!o.nose), team, human: !!o.human, x: 0, z: 0, y: 0, vx: 0, vz: 0, vy: 0, dir: team ? -1 : 1, turbo: 1, down: 0, act: '', actT: 0, air: false,
       shootHold: false, holdT: 0, streak: 0, fire: false, lv: o.lv ?? 0.5, think: 0, tgt: [0, 0], walkT: Math.random() * 3, idx: i, mark: null, stealCD: 0 };
   }
   function place(attacking) { // positions after a basket / at the start: «attacking» team brings the ball from its own half
@@ -50,7 +54,7 @@ const BASKET2D = (() => {
     for (const q of st.p) { q.vx = q.vz = q.vy = 0; q.y = 0; q.air = false; q.act = ''; q.down = 0; q.shootHold = false; q.dir = q.team ? -1 : 1; }
     const carrier = A.find((q) => q.human) || A[0]; give(carrier); st.possT = 0;
   }
-  function give(p) { const b = st.ball; b.holder = p; b.mode = 'held'; b.shot = null; b.pass = null; st.possT = 0; st.lastTouch = p; }
+  function give(p) { p.cTried = false; const b = st.ball; b.holder = p; b.mode = 'held'; b.shot = null; b.pass = null; st.possT = 0; st.lastTouch = p; }
   // ---------- court geometry helpers
   const hoopOf = (team) => HOOP[team === 0 ? 1 : 0]; // team 0 attacks the right hoop
   const dist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
@@ -75,11 +79,54 @@ const BASKET2D = (() => {
   }
   // ---------- ENTRADA EN COMBO: the 4 specials of the 2D fight, each one a different dunk (3 s to do it, game paused)
   const COMBOS = [
-    { id: 'gofio', name: 'MATE DE GOFIO', seq: ['atras', 'adelante', 'puno'] },
-    { id: 'teide', name: 'MOLINO DEL TEIDE', seq: ['atras', 'adelante', 'patada'] },
-    { id: 'gancho', name: 'GANCHO DEL ROQUE', seq: ['abajo', 'arriba', 'puno'] },
-    { id: 'pastor', name: 'SALTO DEL PASTOR', seq: ['abajo', 'arriba', 'patada'] },
+    { id: 'm360', name: 'MATE 360 DEL GOFIO', seq: ['atras', 'adelante', 'puno'] },
+    { id: 'molino', name: 'MOLINO DEL TEIDE', seq: ['abajo', 'arriba', 'puno'] },
+    { id: 'espaldas', name: 'ESPALDAS DEL ROQUE', seq: ['atras', 'adelante', 'patada'] },
+    { id: 'piernas', name: 'ENTREPIERNAS DEL PASTOR', seq: ['abajo', 'arriba', 'patada'] },
   ];
+  // ---------- the combo dunks, frame by frame. Each: keyframes of the pose over the flight (u 0→1, slam at 1), which
+  // hand carries the ball (F front / B back / or a point of its own) and extra moves of the whole body (spin = 360,
+  // back = turned away from the hoop). Angles as in the fight's poses: 0 = hanging, + towards the facing side, 180 up.
+  const DK = {
+    m360: { spin: [0.12, 0.78], keys: [
+      [0, { tl: 6, sF: 70, eF: -95, sB: 62, eB: -100, hF: 60, kF: -90, hB: 30, kB: -80, dy: 0 }],
+      [0.3, { tl: 0, sF: 95, eF: -70, sB: 90, eB: -75, hF: 85, kF: -115, hB: 70, kB: -115, dy: -4 }],
+      [0.75, { tl: -4, sF: 150, eF: -40, sB: 140, eB: -45, hF: 80, kF: -110, hB: 60, kB: -100, dy: -4 }],
+      [0.9, { tl: -12, sF: 182, eF: -6, sB: 170, eB: -10, hF: 40, kF: -60, hB: 10, kB: -40, dy: -4 }],
+      [1, { tl: 14, sF: 140, eF: -4, sB: 130, eB: -8, hF: 30, kF: -50, hB: 0, kB: -30, dy: -2 }]], ball: 'FB' },
+    molino: { keys: [
+      [0, { tl: 4, sF: 60, eF: -40, sB: 40, eB: -90, hF: 80, kF: -100, hB: -10, kB: -40, dy: 0 }],
+      [0.25, { tl: -6, sF: 0, eF: -10, sB: 60, eB: -80, hF: 95, kF: -105, hB: -20, kB: -50, dy: -3 }],
+      [0.45, { tl: -14, sF: -90, eF: -8, sB: 70, eB: -70, hF: 90, kF: -100, hB: -25, kB: -50, dy: -4 }],
+      [0.68, { tl: -16, sF: -180, eF: -6, sB: 80, eB: -60, hF: 80, kF: -90, hB: -20, kB: -45, dy: -4 }],
+      [0.86, { tl: -6, sF: -205, eF: -4, sB: 70, eB: -60, hF: 60, kF: -70, hB: -10, kB: -40, dy: -3 }],
+      [1, { tl: 18, sF: -225, eF: -2, sB: 50, eB: -70, hF: 40, kF: -50, hB: 0, kB: -30, dy: -2 }]], ball: 'F' },
+    espaldas: { back: true, keys: [
+      [0, { tl: 4, sF: 30, eF: -30, sB: 26, eB: -34, hF: 30, kF: -40, hB: -20, kB: -30, dy: 0 }],
+      [0.3, { tl: 10, sF: 8, eF: -6, sB: 4, eB: -8, hF: 62, kF: -24, hB: -62, kB: -24, dy: -2 }],
+      [0.55, { tl: 4, sF: 4, eF: -4, sB: 0, eB: -6, hF: 70, kF: -20, hB: -70, kB: -20, dy: -3 }],
+      [0.8, { tl: -14, sF: -120, eF: -20, sB: -110, eB: -24, hF: 55, kF: -30, hB: -55, kB: -30, dy: -4 }],
+      [1, { tl: -26, sF: -168, eF: -8, sB: -160, eB: -10, hF: 40, kF: -40, hB: -40, kB: -40, dy: -3 }]], ball: 'FB' },
+    piernas: { keys: [
+      [0, { tl: 6, sF: 80, eF: -80, sB: 60, eB: -90, hF: 60, kF: -80, hB: 20, kB: -60, dy: 0 }],
+      [0.25, { tl: 14, sF: 40, eF: -20, sB: 30, eB: -40, hF: 100, kF: -60, hB: 40, kB: -100, dy: -3 }],
+      [0.42, { tl: 18, sF: 14, eF: -6, sB: 0, eB: -20, hF: 110, kF: -50, hB: 50, kB: -110, dy: -4 }],
+      [0.58, { tl: 12, sF: 30, eF: -30, sB: -20, eB: -10, hF: 105, kF: -55, hB: 45, kB: -105, dy: -4 }],
+      [0.82, { tl: -4, sF: 60, eF: -60, sB: 175, eB: -10, hF: 70, kF: -70, hB: 20, kB: -60, dy: -4 }],
+      [1, { tl: 16, sF: 50, eF: -70, sB: 140, eB: -4, hF: 40, kF: -50, hB: 0, kB: -30, dy: -2 }]], ball: 'piernas' },
+  };
+  const DKN = 16; // frames per dunk
+  function dunkPose(id, u) { const ks = DK[id].keys; let i = 0; while (i < ks.length - 2 && u > ks[i + 1][0]) i++; const [u0, a] = ks[i], [u1, b] = ks[i + 1]; const t = clamp((u - u0) / ((u1 - u0) || 1), 0, 1), e = t * t * (3 - 2 * t);
+    const o = {}; for (const k in a) o[k] = typeof a[k] === 'number' ? a[k] + (b[k] - a[k]) * e : a[k]; return o; }
+  function dunkSprite(p, id, f) { const key = 'dk_' + id + '_' + f; if (!p.spr[key]) p.spr[key] = FIGHT2D.figure(p.look, dunkPose(id, f / (DKN - 1)), p.nose); return p.spr[key]; }
+  // where a hand is in the sprite (same bones as the fight's drawer: 72×88 units, hip at 36,50+dy)
+  function handAt(P, front) { const r = (a) => a * Math.PI / 180, hy = 50 + (P.dy || 0), lean = r(P.tl || 0); const nk = [36 + Math.sin(lean) * 22, hy - Math.cos(lean) * 22];
+    const s0 = front ? [nk[0] + 2, nk[1] + 3] : [nk[0] - 2, nk[1] + 3], aS = front ? P.sF : P.sB, aE = front ? P.eF : P.eB;
+    const e = [s0[0] + Math.sin(r(aS)) * 11, s0[1] + Math.cos(r(aS)) * 11]; return [e[0] + Math.sin(r(aS + aE)) * 10, e[1] + Math.cos(r(aS + aE)) * 10]; }
+  function ballInDunk(id, u, P) { const d = DK[id];
+    if (d.ball === 'F') return handAt(P, true);
+    if (d.ball === 'piernas') { if (u < 0.3) return handAt(P, true); if (u < 0.62) { const k = (u - 0.3) / 0.32; return [44 - k * 18, 60 + Math.sin(k * Math.PI) * 6]; } return handAt(P, false); } // under the thighs, front to back
+    const a = handAt(P, true), b = handAt(P, false); return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]; }
   function startCombo(p, d) {
     const c = COMBOS[(Math.random() * 4) | 0]; const sg = Math.sign(hoopOf(p.team).x - p.x) || 1;
     const vk = { adelante: [sg > 0 ? 'vR' : 'vL'], atras: [sg > 0 ? 'vL' : 'vR'], abajo: ['vD'], arriba: ['vU'], puno: ['vS'], patada: ['vT', 'vP'] };
@@ -92,10 +139,14 @@ const BASKET2D = (() => {
     for (const v of all) if (hit(v)) { if (C.need[C.i].includes(v)) { C.i++; snd('bounce'); if (C.i >= C.need.length) { comboDone(true); return; } } else { comboDone(false); return; } }
     if (C.t <= 0) comboDone(false);
   }
+  // the CPU's combos: no panel and no pause; the better the team, the more often and the surer
+  function cpuCombo(p, d) { const c = COMBOS[(Math.random() * 4) | 0]; p.turbo = Math.max(0, p.turbo - 0.2);
+    st.combo = { c, i: 0, t: 0, by: p, need: [], sg: Math.sign(hoopOf(p.team).x - p.x) || 1, ok: null, d, cpu: true }; const ph = st.phase;
+    comboDone(Math.random() < 0.3 + 0.6 * p.lv - (openness(p) < 1.3 ? 0.15 : 0)); st.phase = ph; st.combo = null; if (st.ev) st.ev.cpuCombo = (st.ev.cpuCombo || 0) + 1; }
   function comboDone(ok) {
     const C = st.combo, p = C.by, h = hoopOf(p.team); C.ok = ok; C.end = 0.5;
     if (ok) { // the dunk: a long flight to the rim, scored when he gets there (can't be blocked)
-      const T = 0.85; p.act = 'dunk'; p.combo = C.c.id; p.air = true; p.y = 0.01; p.vy = G * T * 0.55 + 1.2; p.vx = (h.x - p.x - Math.sign(h.x - p.x) * 0.25) / T; p.vz = (h.z - p.z) / T; p.sure = true;
+      const T = 0.85; p.act = 'dunk'; p.combo = C.c.id; p.cT = 0; p.air = true; p.y = 0.01; p.vy = G * T * 0.55 + 1.2; p.vx = (h.x - p.x - Math.sign(h.x - p.x) * 0.25) / T; p.vz = (h.z - p.z) / T; p.sure = true;
       banner('¡' + C.c.name + '!', '#ffd400', 1.6); if (st.ev) st.ev.combo = true; say(C.c.name.charAt(0) + C.c.name.slice(1).toLowerCase());
     } else { const b = st.ball; b.holder = null; b.mode = 'loose'; b.x = p.x; b.z = p.z; b.y = 1.2; b.vx = rnd(-2, 2); b.vz = rnd(-2, 2); b.vy = 2.5; banner('¡COMBO FALLADO!', '#ff6b6b', 1.2); }
   }
@@ -114,8 +165,9 @@ const BASKET2D = (() => {
     b.shot = { make, pts, by: p, team: p.team, hoop: h, tx, tz }; p.shootHold = false; p.landingRelease = false; st.lastTouch = p; st.possT = 0;
     if (st.ev) st.ev.shot = true;
   }
-  function pass(from, to) { const b = st.ball; if (b.holder !== from || !to || to.down > 0) return; b.holder = null; b.mode = 'pass'; b.x = from.x; b.z = from.z; b.y = from.y + 1.3; b.pass = { to, t: 0, from }; b.inter = false; if (st.ev && from.human) st.ev.pass = true; }
-  function steal(p) { const b = st.ball; const v = b.holder; if (!v || v.team === p.team || p.down > 0 || p.stealCD > 0) return; p.stealCD = 0.5; p.act = 'push'; p.actT = 0;
+  function pass(from, to) { const b = st.ball; if (b.holder !== from || !to || to.down > 0) return; b.holder = null; b.mode = 'pass'; b.x = from.x; b.z = from.z; b.y = from.y + 1.3;
+    const L = dist(from, to); b.pass = { to, t: 0, from, T: clamp(0.18 + L * 0.055, 0.22, 0.9), x0: b.x, z0: b.z, y0: b.y, arc: L < 3 ? 0.15 : 0.2 + L * 0.16 }; b.inter = false; if (st.ev && from.human) st.ev.pass = true; } // v0.79: the longer, the higher the arc
+  function steal(p) { const b = st.ball; const v = b.holder; if (!v || v.team === p.team || p.down > 0 || p.stealCD > 0 || (v.air && v.sure)) return; /* a combo dunk in the air can't be stolen */ p.stealCD = 0.5; p.act = 'push'; p.actT = 0;
     if (dist(p, v) > 1.3) return;
     const shove = (p.human ? held('vT') : Math.random() < 0.35 * p.lv) && p.turbo > 0.2;
     if (shove) { p.turbo -= 0.25; v.down = 1.0; v.shootHold = false; b.holder = null; b.mode = 'loose'; b.x = v.x; b.z = v.z; b.y = 1; b.vx = rnd(-2, 2); b.vz = rnd(-2, 2); b.vy = 2; banner('¡EMPUJÓN!', '#ff8a3d'); snd('bounce'); if (st.ev && p.human) st.ev.steal = true; return; }
@@ -150,6 +202,7 @@ const BASKET2D = (() => {
       else if (!passive && !p.air) {
         if (guard && mate && openness(mate) > 2.5 && Math.random() < 0.02 + 0.03 * p.lv) pass(p, mate);
         else if (d < 3 && p.turbo > 0.3 && Math.random() < 0.05 * p.lv) { p.wantDunk = true; startShot(p); p.wantDunk = false; }
+        else if (!st.tut && !p.cTried && d >= 2.6 && d <= 7.4) { p.cTried = true; if (Math.random() < 0.08 + 0.55 * p.lv * p.lv) cpuCombo(p, d); } // v0.79: once per possession, when he gets in range: the good ones fly in with a combo
         else if (d < 9.5 && ((d < p.shootR && (!guard || p.possT > 2.6)) || p.possT > 4.5)) { startShot(p); /* v0.66: never from its own half */ p.aiRel = rnd(-0.12, 0.12) * (1.3 - p.lv); p.shootR = null; }
       }
     } else if (own) { // off the ball: get open on the wing, away from the holder
@@ -192,7 +245,7 @@ const BASKET2D = (() => {
     if (p.shootHold) { p.holdT += dt; if (ctl && p.holdT > BAR) release(p); }
     // air / dunk
     if (p.air) {
-      p.vy -= G * dt; p.y += p.vy * dt;
+      p.vy -= G * dt; p.y += p.vy * dt; if (p.combo) p.cT = (p.cT || 0) + dt;
       if (p.act === 'dunk') { const h = hoopOf(p.team); p.dir = Math.sign(h.x - p.x) || p.dir;
         if (st.ball.holder === p && (p.vy < 0.6 || p.sure) && Math.hypot(h.x - p.x, h.z - p.z) < 0.9) { // slam it
           const blk = !p.sure && rivals(p).find((q) => q.air && q.y > 0.6 && dist(q, p) < 1.0 && Math.random() < (q.human ? 0.5 : 0.35 * q.lv)); const fallo = !p.sure && !p.human && Math.random() > 0.45 + 0.55 * p.lv; p.sure = false; // v0.66: weak CPU dunkers hit the rim
@@ -210,7 +263,9 @@ const BASKET2D = (() => {
     if (b.mode === 'held') { const p = b.holder; b.x = p.x + p.dir * 0.32; b.z = p.z + 0.05; b.y = p.air ? p.y + (p.act === 'dunk' ? 2.4 : 2.1) : 0.25 + Math.abs(Math.sin(performance.now() / 120)) * 0.75; st.possT += dt; return; }
     if (b.mode === 'pass') { const to = b.pass.to; const tx = to.x, tz = to.z, L = Math.hypot(tx - b.x, tz - b.z); const v = 15 * dt;
       for (const q of rivals(b.pass.from)) if (!b.inter && q.down <= 0 && Math.hypot(q.x - b.x, q.z - b.z) < 0.55) { b.inter = true; if (Math.random() < (st.tut ? 0 : 0.35)) { give(q); banner('¡INTERCEPTADA!', '#5ec8ff'); return; } }
-      if (L < v || L < 0.4) { give(to); if (st.ev && to.human) st.ev.catch = true; return; } b.x += (tx - b.x) / L * v; b.z += (tz - b.z) / L * v; b.y = lerp(b.y, to.y + 1.3, 0.2); return; }
+      const P = b.pass; P.t += dt; const u = clamp(P.t / P.T, 0, 1); void v; void L;
+      if (u >= 1) { give(to); if (st.ev && to.human) st.ev.catch = true; return; }
+      b.x = lerp(P.x0, tx, u); b.z = lerp(P.z0, tz, u); b.y = lerp(P.y0, to.y + 1.3, u) + 4 * P.arc * u * (1 - u); return; }
     if (b.mode === 'air') { b.t += dt; b.vy -= G * dt; b.x += b.vx * dt; b.z += b.vz * dt; b.y += b.vy * dt;
       if (b.t < 0.3) for (const q of st.p) if (q.team !== b.shot.team && q.air && Math.hypot(q.x - b.x, q.z - b.z) < 0.8 && Math.abs(q.y + 2.3 - b.y) < 0.6 && Math.random() < 0.4 * q.lv + (q.human ? 0.35 : 0)) {
         b.mode = 'loose'; b.vx = -b.vx * 0.4 + rnd(-1, 1); b.vz = rnd(-2, 2); b.vy = 1.5; banner('¡TAPÓN!', q.team === 0 ? '#7fe08a' : '#ff6b6b'); snd('rim'); if (st.ev && q.human) st.ev.block = true; return; }
@@ -313,15 +368,21 @@ const BASKET2D = (() => {
     cx.strokeStyle = '#eef'; cx.lineWidth = 0.6 * k; for (let q = -3; q <= 3; q++) { cx.beginPath(); cx.moveTo(rx + q * 1.4 * k, ry); cx.lineTo(rx + q * 0.8 * k, ry + 9 * k); cx.stroke(); }
     cx.strokeStyle = '#e8641c'; cx.lineWidth = 1.6 * k; cx.beginPath(); cx.ellipse(rx, ry, 4.6 * k, 1.5 * k, 0, 0, 7); cx.stroke(); }
   function drawPlayer(p) {
-    const b = st.ball; let k = 'idle' + (Math.floor(st.time0 * 2) % 2);
+    p.ballScr = null; const b = st.ball; let k = 'idle' + (Math.floor(st.time0 * 2) % 2);
     if (p.down > 0) k = 'ko'; else if (p.act === 'dunk') k = 'dunk'; else if (p.air) k = p.shootHold || b.holder === p ? 'shoot' : 'jump'; else if (p.act === 'push') k = 'jab1';
     else if (Math.hypot(p.vx, p.vz) > 0.5) k = (b.holder === p ? 'drib' : 'walk') + (Math.floor(p.walkT * 2.2) % 4); else if (b.holder && b.holder.team !== p.team && b.holder === p.mark) k = 'defend';
     if (st.phase === 'end' && !st.tut) k = (st.score[p.team] > st.score[1 - p.team]) ? 'win' : k;
-    const s = p.spr[k] || p.spr.idle0, sc = (0.37 + p.z * 0.004) * SC; const px = sx(p.x), py = sy(p.z, p.y);
+    const cmb = p.combo && p.act === 'dunk' && DK[p.combo] ? p.combo : null, cu = cmb ? clamp((p.cT || 0) / 0.85, 0, 1) : 0, cf = Math.round(cu * (DKN - 1));
+    const s = cmb ? dunkSprite(p, cmb, cf) : p.spr[k] || p.spr.idle0, sc = (0.37 + p.z * 0.004) * SC; const px = sx(p.x), py = sy(p.z, p.y);
     if (px < -60 || px > W + 60) { offscreen(p, px); return; }
     cx.fillStyle = 'rgba(0,0,0,0.3)'; cx.beginPath(); cx.ellipse(px, sy(p.z), 7 * SC, 2.2 * SC, 0, 0, 7); cx.fill();
     const w = (s.width / 2) * sc, h2 = (s.height / 2) * sc; /* the fight sprites are drawn at 2× (v0.66: was divided by this canvas' 4×) */
-    cx.save(); cx.translate(px, py); if (p.dir < 0) cx.scale(-1, 1); cx.drawImage(s, -w / 2, -h2 * 0.98, w, h2); cx.restore(); st.drawn = (st.drawn || 0) + 1;
+    let fx = p.dir < 0 ? -1 : 1; if (cmb && DK[cmb].back) fx = -fx; // turned away from the hoop
+    let kx = fx; if (cmb && DK[cmb].spin) { const [a, b] = DK[cmb].spin, t = clamp((cu - a) / (b - a), 0, 1); kx = fx * Math.cos(t * Math.PI * 2); if (Math.abs(kx) < 0.3) kx = 0.3 * Math.sign(kx || 1); } // the 360: the body turns round
+    cx.save(); cx.translate(px, py); cx.scale(kx, 1); cx.drawImage(s, -w / 2, -h2 * 0.98, w, h2); cx.restore(); st.drawn = (st.drawn || 0) + 1;
+    if (cmb) { const P2 = dunkPose(cmb, cf / (DKN - 1)), hb = ballInDunk(cmb, cu, P2); p.ballScr = [px + (hb[0] - 36) * sc * kx, py - h2 * 0.98 + hb[1] * sc]; // the ball in his hands
+      if (cu > 0.2) for (let i = 0; i < 4; i++) { cx.fillStyle = `rgba(255,255,255,${0.12 + 0.05 * i})`; cx.fillRect(px - fx * (10 + i * 5) * SC * 0.4, py - h2 * (0.3 + 0.15 * i), 2 * SC, 1); } } // speed lines
+    else p.ballScr = null;
     if (p.fire) for (let i = 0; i < 3; i++) { cx.fillStyle = ['#ff5a1f', '#ffd400', '#ff8a3d'][i]; cx.fillRect(px - 5 * SC + Math.random() * 10 * SC, py - h2 * 0.98 - 2 - Math.random() * 8 * SC, 2 * SC, 3 * SC); }
     if (p.human && p.shootHold) { // the shot bar: fill while held, green band = release here
       const bx = px + 9 * SC, by = py - h2, bh = 26 * SC; cx.fillStyle = 'rgba(0,0,0,0.7)'; cx.fillRect(bx - 1, by - 1, 4 * SC + 2, bh + 2);
@@ -333,7 +394,7 @@ const BASKET2D = (() => {
   function offscreen(p, px) { // a small arrow at the edge for a player out of the view
     const x0 = px < 0 ? 4 : W - 4, y0 = clamp(sy(p.z, 1), 70, H - 10), sg = px < 0 ? -1 : 1; cx.fillStyle = p.human ? '#ffd400' : p.team === 0 ? '#7fe08a' : '#ff6b6b';
     cx.beginPath(); cx.moveTo(x0, y0); cx.lineTo(x0 - sg * 7, y0 - 5); cx.lineTo(x0 - sg * 7, y0 + 5); cx.fill(); }
-  function drawBall() { const b = st.ball; const px = sx(b.x), py = sy(b.z, b.y), r = 2.6 * SC;
+  function drawBall() { const b = st.ball; const hb = b.mode === 'held' && b.holder && b.holder.ballScr; const px = hb ? hb[0] : sx(b.x), py = hb ? hb[1] : sy(b.z, b.y), r = 2.6 * SC;
     cx.fillStyle = 'rgba(0,0,0,0.3)'; cx.beginPath(); cx.ellipse(px, sy(b.z), r, r * 0.4, 0, 0, 7); cx.fill();
     cx.fillStyle = '#e8641c'; cx.beginPath(); cx.arc(px, py, r, 0, 7); cx.fill(); cx.strokeStyle = '#4a1f08'; cx.lineWidth = 0.8; cx.beginPath(); cx.moveTo(px - r, py); cx.lineTo(px + r, py); cx.stroke(); cx.beginPath(); cx.arc(px, py, r, 0, 7); cx.stroke(); }
   function draw() {
@@ -387,5 +448,8 @@ const BASKET2D = (() => {
   function close() { running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'basket2d', true);
     const res = { won: st.score[0] > st.score[1], score: st.score.slice() }; if (onEnd) onEnd(res); }
   function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'basket2d', false); } // tests only
-  return { start, _abort: abort, get running() { return running; }, _st: () => st, _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); updateCam(); } }, _press: press };
+  // tests: a combo dunk of your own (id from COMBOS), a pass, and drawing a frame
+  function _dunk(id) { const p = st.p.find((q) => q.human); give(p); const h = hoopOf(p.team); p.x = h.x - Math.sign(h.x - CL / 2) * 5; p.z = h.z; p.air = false; p.y = 0;
+    st.combo = { c: COMBOS.find((c) => c.id === id) || COMBOS[0], i: 0, t: 3, by: p, need: [], sg: 1, ok: null, d: 5 }; comboDone(true); st.phase = 'play'; st.combo = null; return p; }
+  return { start, _abort: abort, get running() { return running; }, _st: () => st, _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); updateCam(); } }, _press: press, _dunk, _pass: (a, b) => pass(st.p[a], st.p[b]), _draw: () => draw(), COMBOS };
 })();
