@@ -3,6 +3,27 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.77.0 — 2026-10-19 — Rendimiento: ciudad juntada, recorte por distancia y carga más rápida
+- **Piezas sueltas juntadas** (auditorías P1.5): las ~5.000 piezas sueltas que no se mueven (bancos, bolardos,
+  papeleras, piezas de iglesias, gradas…) se juntan en una malla por material y celda de 125 m. Personas, coches, patos
+  y lo que se mueve u oculta se quedan como estaban.
+- **Recorte por distancia según la niebla**: lo que queda detrás de la niebla ya no se pinta; los detalles pequeños
+  (molduras, balcones, rótulos, mobiliario) solo de cerca; las copas de los árboles lejanos con pocos triángulos.
+  Árboles, farolas, postes y señales van por celdas (antes se pintaban enteros para toda la ciudad).
+  En la calle: **de ~5.600 a ~1.900 llamadas de dibujo y de 5,1 a 3,5 millones de triángulos** por fotograma; en el
+  auditor (con tarjeta gráfica) pintar un fotograma pasa de 47,8 a 29,8 ms y el arranque de 13,2 a 8,4 s.
+- **Coches aparcados instanciados**: una geometría por modelo para todos los coches aparcados (pintura por coche).
+  Su paso de la carga pasa de ~1,9 s a ~0,3 s y la geometría en memoria baja (38 → 36 MB).
+- **Carga más rápida**: plazas y parques de ~3,2 s a ~0,4 s (rejilla para no comparar cada árbol con cada banco).
+  En total, de ~11,2 s a ~7,6 s en el PC de pruebas.
+- **Lint** (auditoría P2.5): el build comprueba que no hay nombres sin declarar ni declarados dos veces entre archivos.
+- Pruebas: `prueba_077.py` (fotos del mismo sitio con la ciudad juntada y con las piezas originales);
+  `sonda_rendimiento.py` mide llamadas, triángulos y cada paso de la carga. El piloto automático de las misiones ya
+  compra el rifle, apaga los fuegos y moja a Boca Papa.
+- Al cargar una partida se quitan los coches que quedaban de misiones anteriores, y el coche del Canarión deja de
+  contar como coche de misión al acabar la carrera.
+- Las pruebas ya no suenan (voz del sistema y sonido del juego en silencio).
+
 ## 0.76.0 — 2026-10-19 — Rifle de agua, el Secreta y 14 misiones nuevas
 - **Rifle de agua** (estilo rifle eléctrico de juguete, blanco y naranja con depósito transparente): chorro en parábola
   de unos 10 m que deja charquitos, apaga fuegos y empapa a la gente; se llena en las fuentes (E) y se vende en las

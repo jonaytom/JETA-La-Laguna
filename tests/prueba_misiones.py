@@ -23,7 +23,13 @@ AUTO = r"""() => {
   if (/rally|guagua|Romero/i.test(m.title) && !P.car) { const c = new d.Car('sedan', 0xd03030, P.x + 3, P.z, 0); c.persist = true; ride(c); return 'car'; }
   if (S.bus && S.bus.mode === 'race') { const h = S.bus.h; put(S.bus.x - Math.sin(h) * 9, S.bus.z - Math.cos(h) * 9); return 'escort'; }
   if (/rally/i.test(m.title) && S.step === 2) return 'countdown';
-  for (const n of [S.n]) if (n && !n.down && n.H.root.visible) { put(n.x + 1.2, n.z); return 'chase'; }
+  for (const n of [S.n]) if (n && n.H && !n.down && n.H.root.visible) { put(n.x + 1.2, n.z); return 'chase'; }
+  if (d.RIFLE && d.RIFLE.has) { // v0.77: water rifle steps (fires, soaking a target from far, refilling)
+    for (const f of d.FIRES) if (!f.out && !f.free) { put(f.x + 6, f.z); d.AGUA.douseFire(f, 999); return 'douse'; }
+    for (const t of d.RIFLE.targets) if (!t.done && t.onHit) { put(t.x + 10.5, t.z); __step(1); t.onHit(t, true, 10.5); if (d.RIFLE.onDouse) d.RIFLE.onDouse(t, true); return 'soak'; }
+    if (/fuente|recarga|llena/i.test(document.getElementById('objective').innerText) && d.RIFLE.water > d.RIFLE.max - 1) d.RIFLE.water = 20;
+  }
+  if (d.AGUA && d.AGUA.prompt) { const pr = d.AGUA.prompt(); if ((/juguetería/.test(pr) && !d.RIFLE.has) || /fuente/.test(pr)) { d.AGUA.use(); return 'shop'; } } // v0.77: toy shop (buy the rifle) / fountain (refill)
   const g = M.target(); if (g) { put(g[0], g[1]); return 'goto'; }
   return 'wait';
 }"""

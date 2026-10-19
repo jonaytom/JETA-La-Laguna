@@ -1,0 +1,4 @@
+# v0.77: prueba nueva y las que fallaron en la tanda grande (repetidas solas)
+prueba_077.py
+prueba_misiones_guardado.py
+prueba_misiones.py 18 18

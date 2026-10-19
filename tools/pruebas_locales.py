@@ -11,6 +11,7 @@ import os, sys, json, time, glob, shutil, subprocess, threading, functools, http
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TESTS = os.path.join(ROOT, 'tests'); OUT = os.path.join(ROOT, 'reportes', 'pruebas')
 LIMITE = 15 * 60  # segundos por prueba
+FRAGILES = {'prueba_persecuciones.py', 'prueba_conduccion_tuneles_puentes.py', 'prueba_bordes.py'}  # v0.77: these sometimes fail only in the shared load
 ENV = dict(os.environ, PYTHONIOENCODING='utf-8', PYTHONUTF8='1')  # Windows: read the UTF-8 test scripts as UTF-8
 
 
@@ -156,7 +157,13 @@ def main():
         out = trozos.get(linea); seg = segs.get(linea, 0); nota = ''
         v = veredicto(0, out) if out is not None else 'FALLA'
         if out is None: out = 'no llegó a ejecutarse en la carga compartida\n' + txt[-1500:]
-        if v != 'OK':  # again on its own, with a fresh load
+        # v0.77 (Jonay: «perdemos mucho tiempo»): only repeat apart what may have been spoilt by the test before it —
+        # a crash (Traceback / page error / no output) or one of the tests known to be sensitive to the shared load. A test
+        # that simply says FALLA, ran out of time, or is a tool (herramientas/: probes and photos) is reported as it is.
+        crash = any(w in out for w in ('Traceback', 'PAGEERROR', 'not ready', 'no llegó a ejecutarse'))
+        repetir = v != 'OK' and not linea.startswith('herramientas/') and 'TIEMPO' not in (out or '') and (crash or linea.split()[0] in FRAGILES)
+        if v != 'OK' and not repetir: print(f'>> {linea}: {v} (no se repite aparte: ' + ('herramienta' if linea.startswith('herramientas/') else 'se acabó el tiempo' if 'TIEMPO' in (out or '') else 'fallo de la propia prueba') + ')', flush=True)
+        if repetir:  # again on its own, with a fresh load
             partes = linea.split(); t1 = time.time(); print(f'>> {linea}: {v} en la carga compartida, la repito aparte', flush=True)
             try:
                 r = subprocess.run([sys.executable, 'run_test.py', partes[0]] + partes[1:], cwd=TESTS, capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=LIMITE, env=ENV)

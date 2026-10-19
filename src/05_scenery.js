@@ -113,6 +113,7 @@ function buildTrees() {
     { // laurel de Indias: big dense round crown
       trunk: (() => { const g = new THREE.CylinderGeometry(0.28, 0.45, 3.2, 7); g.translate(0, 1.6, 0); return g; })(),
       crown: (() => { const a = jitterGeo(new THREE.IcosahedronGeometry(3.6, 1), 0.9, 1); a.scale(1.15, 0.8, 1.15); a.translate(0, 5.4, 0); const b = jitterGeo(new THREE.IcosahedronGeometry(2.6, 1), 0.7, 2); b.translate(1.8, 4.6, 0.6); const c = jitterGeo(new THREE.IcosahedronGeometry(2.4, 1), 0.7, 3); c.translate(-1.6, 4.8, -0.8); return mergeGeos([a, b, c]); })(),
+      lo: (() => { const g = new THREE.IcosahedronGeometry(3.9, 0); g.scale(1.35, 0.85, 1.25); g.translate(0, 5.2, 0); g.computeVertexNormals(); return g; })(), // v0.77: 20 triangles instead of 240
       color: [0x2f5a26, 0x3b6a2c, 0x2a4f22],
     },
     { // canary palm
@@ -128,6 +129,7 @@ function buildTrees() {
     { // generic street tree
       trunk: (() => { const g = new THREE.CylinderGeometry(0.16, 0.24, 2.6, 6); g.translate(0, 1.3, 0); return g; })(),
       crown: (() => { const a = jitterGeo(new THREE.IcosahedronGeometry(2.2, 1), 0.6, 20); a.scale(1, 1.1, 1); a.translate(0, 4, 0); return a; })(),
+      lo: (() => { const g = new THREE.IcosahedronGeometry(2.2, 0); g.scale(1, 1.1, 1); g.translate(0, 4, 0); g.computeVertexNormals(); return g; })(),
       color: [0x4f7a32, 0x5d8a3a, 0x6f8f3a, 0x46702d],
     },
   ];
@@ -139,7 +141,7 @@ function buildTrees() {
       tm.setMatrixAt(i, o.matrix); cm.setMatrixAt(i, o.matrix); col.set(pick(d.color)).multiplyScalar(0.85 + Math.random() * 0.3); cm.setColorAt(i, col);
       COL.addCirc(t[0], t[1], (ti === 3 ? 0.25 : 0.45) * t[3]);
     });
-    [tm, cm].forEach((m) => { m.castShadow = true; m.receiveShadow = true; scene.add(m); });
+    [tm, cm].forEach((m) => { m.castShadow = true; m.receiveShadow = true; m.userData.tree = true; scene.add(m); }); if (d.lo) cm.userData.lo = d.lo; // v0.77: far crowns with few triangles (05w_optimiza.js)
   });
 }
 
@@ -175,7 +177,7 @@ function buildLamps() {
     const L = groups[gi]; if (!L.length) return;
     const pm1 = new THREE.InstancedMesh(pg, pm, L.length), hm = new THREE.InstancedMesh(hg, lampHeadMat, L.length);
     L.forEach((l, i) => { o.position.set(l[0], heightAt(l[0], l[1]) + 0.1, l[1]); o.rotation.y = l[2]; o.scale.setScalar(1); o.updateMatrix(); pm1.setMatrixAt(i, o.matrix); hm.setMatrixAt(i, o.matrix); COL.addCirc(l[0], l[1], 0.14); });
-    pm1.castShadow = true; scene.add(pm1); scene.add(hm);
+    pm1.castShadow = true; hm.userData.big = true; /* v0.77: lit heads stay visible far away at night */ scene.add(pm1); scene.add(hm);
   });
   // light pools (night)
   const c = mkCanvas(64, 64), x = c.getContext('2d'); const g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(255,200,130,1)'); g.addColorStop(1, 'rgba(255,200,130,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64);

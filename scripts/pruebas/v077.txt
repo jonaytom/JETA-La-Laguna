@@ -1,0 +1,3 @@
+# v0.77 rendimiento: sonda, fotos de comprobación de la ciudad junta y pruebas que tocan el mundo
+herramientas/sonda_rendimiento.py
+herramientas/foto_desde_arriba.py vistas077.json

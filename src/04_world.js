@@ -1065,7 +1065,8 @@ function finalizeChunks() {
     const isRoad = ['asphalt', 'asphaltLines', 'paving', 'sidewalk', 'footway', 'dirt', 'tram', 'disc', 'discPave', 'tunnelLight', 'grass'].includes(mk);
     m.receiveShadow = true; m.castShadow = !isRoad && mk !== 'glassHouse';
     if (isRoad) m.renderOrder = 1;
-    m.matrixAutoUpdate = false; scene.add(m); meshes++;
+    m.matrixAutoUpdate = false; m.name = 'chunk:' + mk; m.userData.chunk = k; scene.add(m); meshes++;
+    lodAdd(m, mk === 'trim' || mk === 'balcony' || mk === 'wood' || mk.startsWith('sign')); // v0.77: far city without the small details
   }
   CHUNKS.clear();
   return meshes;

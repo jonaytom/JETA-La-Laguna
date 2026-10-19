@@ -26,6 +26,9 @@ Salida (se va escribiendo mientras recorre): reportes/revision_v<versión>_<fech
 """
 import asyncio, json, os, sys, time, subprocess, datetime, base64, io
 from playwright.async_api import async_playwright
+MUDO = """(()=>{ try { if (window.speechSynthesis) { window.speechSynthesis.speak = () => {}; } } catch (e) {}
+  try { const P = window.BaseAudioContext && BaseAudioContext.prototype, d = P && Object.getOwnPropertyDescriptor(P, 'destination');
+    if (d) Object.defineProperty(P, 'destination', { get() { if (!this.__mudo) { const g = this.createGain(); g.gain.value = 0; g.connect(d.get.call(this)); this.__mudo = g; } return this.__mudo; } }); } catch (e) {} })()"""  # v0.77: tests in silence (--mute-audio doesn't stop the system voice)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REP = os.path.join(ROOT, 'reportes'); IMG = os.path.join(REP, 'img'); os.makedirs(IMG, exist_ok=True)
@@ -257,6 +260,7 @@ async def main():
         async with async_playwright() as p:
             b = await p.chromium.launch(args=['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--mute-audio'])
             pg = await b.new_page(viewport={'width': 960, 'height': 540})
+            await pg.add_init_script(MUDO)
             errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
             async def load():
                 await pg.goto('http://localhost:8766/test.html?q=baja&revisor=1'); await pg.wait_for_function('window.__GAME_READY', timeout=240000)

@@ -119,9 +119,16 @@ async def run(pg):
   `__dbg.camera` y llamar a `snap()`. Las capturas de pantalla de Playwright (`pg.screenshot`) suelen agotar el
   tiempo con el juego en marcha; usar `snap()`.
 
+## Lint (v0.77)
+
+`build.py` pasa antes `tools/lint_js.py` (Python puro, sin Node): busca **nombres usados que no están declarados en
+ningún archivo** (erratas, funciones borradas) y **nombres declarados dos veces en el nivel superior** de dos archivos
+(el juego es un único módulo: eso es un SyntaxError y no carga nada). Si encuentra algo, el build falla y lo lista
+(`archivo:línea nombre`). Se puede pasar suelto: `python tools/lint_js.py`.
+
 ## Comprobación de sintaxis rápida
 
-`build.py` no valida el JavaScript. Para encontrar errores sin abrir el navegador:
+`build.py` no comprueba la sintaxis del JavaScript. Para encontrar errores sin abrir el navegador:
 
 ```bash
 python -c "import re;s=open('dist/test.html',encoding='utf-8').read();open('chk.mjs','w').write(re.findall(r'<script type=\"module\">(.*?)</script>',s,re.S)[-1])"

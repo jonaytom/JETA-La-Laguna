@@ -219,3 +219,23 @@ altura sin enlace y estructuras metidas en carriles. Ver `docs/07_pruebas.md`.
 - Pabellón Juan Ríos Tejera (`riosHall` / `buildRiosHall`, `05v_peraza.js`): el edificio del área deportiva se hace
   nave blanca con franjas moradas, cubierta gris y linterna central.
 
+
+## Rendimiento: piezas juntadas y recorte por distancia (v0.77, `05w_optimiza.js`)
+
+- Paso de carga «Juntando piezas sueltas…» (tras `finalizeChunks`): `mergeStatics()` recorre la escena y junta las
+  mallas sueltas (bancos, bolardos, piezas de iglesias, gradas…) en **una malla por material y celda de 125 m**
+  (nombre `fusion`), en coordenadas del mundo; las pequeñas (radio < 2,5 m) van aparte como «detalle». **No junta**: lo
+  oculto al cargar, lo que cuelga de un grupo con nombre, lo transparente, lo que lleva `userData` o `onBeforeRender`,
+  y lo marcado con `userData.noMerge` (personas, coches, motos, patos). Si un objeto nuevo se mueve o se oculta solo,
+  hay que marcarlo `noMerge` o ponerle nombre a su grupo.
+- `splitInstanced()`: las mallas instanciadas grandes del nivel superior (árboles, farolas, postes del tranvía, señales,
+  mobiliario de plazas) se parten por celda de 250 m: antes eran una para toda la ciudad y se pintaban enteras.
+- `updateCityLOD()` (al moverse la cámara 12 m; también en `__snap`): lo que queda más allá de la niebla no se pinta; el
+  detalle (molduras `trim`, balcones, madera, rótulos de los trozos de ciudad y las piezas pequeñas) solo hasta
+  `min(niebla, 230 + niebla/4)`; las copas de laurel y de árbol genérico a más de 170 m usan una copa de 20 triángulos.
+- Coches aparcados: una `InstancedMesh` por modelo y celda de 800 m (`buildParked`), color de pintura por coche
+  (atributo `aPaint` en el shader); al llevarte uno, su instancia se encoge a 0.
+- En las pruebas (`navigator.webdriver`) se guardan las piezas originales: `__dbg.unfuse(true)` las vuelve a poner para
+  comparar fotos (`prueba_077.py`, fotos `v077_*_junta` / `v077_*_suelta`).
+- Medir: `tests/herramientas/sonda_rendimiento.py` (llamadas y triángulos ocultando cada grupo, censo de la escena,
+  tiempos de cada paso de la carga; todo en `tests/shots/sonda_rendimiento.txt`).

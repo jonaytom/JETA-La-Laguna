@@ -1,0 +1,3 @@
+# v0.77: sonda y misión del rifle
+herramientas/sonda_rendimiento.py
+prueba_misiones.py 18 18

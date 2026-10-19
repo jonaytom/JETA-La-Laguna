@@ -1,0 +1,5 @@
+# v0.77: misiones (rifle, coches de misión que quedaban) en el mismo orden que en «todas»
+prueba_misiones.py
+prueba_misiones_guardado.py
+prueba_077.py
+prueba_guardar_cargar.py

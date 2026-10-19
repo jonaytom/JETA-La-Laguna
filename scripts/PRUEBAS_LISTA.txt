@@ -1,8 +1,6 @@
 # Pruebas de ESTA versión (scripts\PRUEBAS.bat las junta con las de lo cambiado).
-# v0.76.0: rifle de agua, misiones nuevas (Secreta, Obispo, Canarión), parkings, Ríos Tejera
-prueba_076.py
-prueba_maleantes.py
+# v0.77.0: rendimiento (piezas juntadas, recorte por distancia, aparcados instanciados, carga más rápida, lint)
+prueba_077.py
 prueba_misiones_guardado.py
 prueba_guardar_cargar.py
-prueba_diario.py
-herramientas/sonda_paso.py
+herramientas/sonda_rendimiento.py

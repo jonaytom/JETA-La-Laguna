@@ -10,7 +10,7 @@ const PANTS = [0x2b3a55, 0x1d1d1d, 0x4a4036, 0x6b705c, 0x3a506b, 0x8d7b68, 0x222
 const HAIR = [0x1a1410, 0x3b2a1e, 0x6b4a2b, 0xb58b52, 0x8c8c8c, 0x0d0d0d];
 function makeHumanLegacy(o = {}) {
   const skin = o.skin ?? pick(SKIN), shirt = o.shirt ?? pick(SHIRT), pants = o.pants ?? pick(PANTS), hair = o.hair ?? pick(HAIR);
-  const root = new THREE.Group(); const body = new THREE.Group(); root.add(body);
+  const root = new THREE.Group(); root.userData.noMerge = true; /* v0.77: never fused (05w_optimiza.js) */ const body = new THREE.Group(); root.add(body);
   const s = o.scale ?? rnd(0.92, 1.06); body.scale.setScalar(s);
   const mSkin = M(skin, 0.7), mShirt = M(shirt, 0.9), mPants = M(pants, 0.9), mShoe = M(o.shoes ?? pick([0x111111, 0xeeeeee, 0x5a3b22]), 0.6), mHair = M(hair, 0.9);
   const hips = new THREE.Group(); hips.position.y = 0.95; body.add(hips);

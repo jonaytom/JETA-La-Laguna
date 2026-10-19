@@ -5,6 +5,12 @@ tpl=open('template.html',encoding='utf-8').read()
 sys.path.insert(0, os.path.join(ROOT, 'tools')); from comentarios_que_comen import revisar as _rev
 _m = _rev()
 if _m: print('FALLA EL BUILD: comentario «//» que se traga código (cámbialo por /* … */ o parte la línea):\n' + '\n'.join(_m)); sys.exit(1)
+# v0.77 (auditoría P2.5): lint without Node — names used but declared nowhere, and top-level names declared twice
+import io, contextlib; import lint_js as _lint
+_buf = io.StringIO()
+with contextlib.redirect_stdout(_buf): _lr = _lint.main()
+_lt = _buf.getvalue(); print(_lt.splitlines()[0] if _lt else 'LINT: ?')
+if _lr or not _lt.startswith('LINT: 0 nombres sin declarar'): print('FALLA EL BUILD por el lint (tools/lint_js.py):\n' + _lt); sys.exit(1)
 js='\n'.join(open(f,encoding='utf-8').read() for f in sorted(glob.glob('src/*.js')))
 D=json.load(open('data/data.json',encoding='utf-8'))
 SH=[]

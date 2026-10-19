@@ -5,6 +5,42 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 
 ## Por revisar con Jonay
 
+- [ ] **Baloncesto 2D: 3 contra 3 y control al recibir** (Jonay, 19-oct, apunte): que sea **3x3** (ahora 2x2). Al pasar,
+      **el que recibe el balón pasa a ser el tuyo** automáticamente; ahora hay que volver a pulsar pasar en medio del pase
+      para quedarte con el control del receptor.
+- [~] v0.77.0 **Punto 17, rendimiento (auditorías viejas)**. Hecho: piezas sueltas juntadas por material y celda, recorte
+      por distancia según la niebla (detalle solo de cerca, copas lejanas simples), árboles/farolas/señales por celda,
+      coches aparcados instanciados, plazas 3,2 s → 0,4 s, lint en el build. Medido (sonda, vista de calle): llamadas
+      ~5.600 → ~1.900, triángulos 5,1 M → 3,5 M; carga ~11,2 → ~7,6 s. **Auditoría 0.77.0** (APTO CON AVISOS, vs 0.76):
+      pintar 47,8 → 29,8 ms, arranque 13,2 → 8,4 s, geometría en RAM 38 → 36 MB, memoria JS 214 → 228 MB (+6 %: los
+      ~4.000 objetos de las celdas instanciadas), triángulos 5,45 M → 4,0 M, **llamadas 624 → 811** en la vista del
+      auditor (los aparcados van por modelo: ~45 modelos por celda de 800 m; si molesta, usar menos modelos para los
+      aparcados o celdas más grandes). Primer intento NO APTO (+17 % memoria) por guardar las piezas originales
+      también en el auditor y no liberar los vértices juntados: arreglado. **Queda / por decidir**:
+      - Quedan ~4.500 piezas sin juntar: las de **grupos con nombre** (iglesias, aeropuerto, estadio, «inicio»: ~3.400)
+        porque el código las puede buscar por nombre; se pueden juntar dentro de su grupo (seguro: el grupo se sigue
+        moviendo/ocultando) → otras ~1.000 llamadas menos. Y **personas de decorado** (no se juntan para que se animen).
+      - El **terreno** es una sola malla de ~400.000 triángulos (se pinta casi entero siempre): partirlo por trozos con
+        menos detalle lejos.
+      - **Precalcular la ciudad al compilar** (P2.1): lo que más tarda ahora es calles (1,1 s), edificios (1,1 s), unir
+        geometría (0,8 s) y sombreadores (0,7 s). Ganaría ~2–3 s pero es un cambio grande (portar la generación a
+        `build.py` o guardar la geometría en binario); mejor cuando lo demás esté quieto.
+      - **Modelos en binario** (P2.2): coches y personas ya lo están (Int16 en base64); `data.json` (mapa, ~3 MB) sigue en
+        JSON: se podría cuantizar.
+      - **Módulos** (P2.5): el juego se publica como un único archivo HTML, así que los `src/*.js` se juntan en uno; partirlo
+        en módulos ES no cambia nada para el jugador y el riesgo principal (nombres repetidos o sin declarar) ya lo pilla
+        el lint. Se deja así salvo que Jonay quiera.
+- [ ] **Para mirar** (visto en las fotos de la 0.77, ya estaba antes): en la Plaza del Adelantado y en el casco hay **marcos
+      grises flotando** sobre las fachadas (vigas horizontales a la altura del tejado y algún poste suelto), en
+      X 105 Z −45 mirando a la plaza y en X −60 Z −230 mirando a X −10 Z −150. ¿Soportales/pérgolas mal colocados?
+
+- [ ] **Auditoría 0.76.0** (APTO CON AVISOS; llamadas 679 → 624, pintar 45,5 → 44,9 ms, arranque 13,7 → 13,0 s,
+      memoria casi igual, sin fugas): `makeFire()` (`09i_agua.js:17`) crea un cilindro nuevo por fuego (compartir la
+      geometría); `12k_agua.js` sale con nota D (misiones en funciones muy largas: partirlas). Sin probar a mano aún:
+      las 14 misiones nuevas solo se han probado hasta que arrancan (la del rifle, entera).
+      Segunda auditoría de la misma 0.76 (19-oct 10:53): sin avisos nuevos; pintar 44,9 → 47,8 ms (ruido entre pasadas),
+      calidad B (71). El agente revisor sigue con los datos de la v0.73 (68 avisos): pasarlo de nuevo cuando Jonay quiera.
+
 - [x] v0.76.0 **Maleantes: que quede claro cuándo empiezan** (Jonay, 13-oct, apunte): no se entiende de dónde salen. Que se
       presenten al **terminar el tutorial de pelea (Sastrón)**: alguien te lo explica (qué son, recompensa, cómo se ven) y
       en el minimapa salen como **puntos rojos** (ahora son verde lima `#c6ff00`; ojo, el rojo es también el de los
@@ -68,7 +104,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       la misión está activa (las charlas de antes de aceptarla y las de las misiones ya hechas en partidas de antes de la
       v0.66 no quedan) y si el registro (`LOG`) se guarda y se carga bien con la partida.
 
-- [ ] **Canchas: repasar accesos y diseño de todas** (Jonay, 12-oct; v0.66.0: hecha la entrada por puerta en las
+- [ ] **Canchas: repasar accesos y diseño de todas** (v0.76.0: Ríos Tejera rehecho; falta el Colegio Máyex y repasar las demás) (Jonay, 12-oct; v0.66.0: hecha la entrada por puerta en las
       encerradas y el Máyex): revisar una a una con `prueba_canchas.py` (lista y fotos) cuáles son públicas y cuáles de
       colegio, y mejorar su aspecto. Recrear mejor por fuera el **Pabellón Juan Ríos Tejera** (nave blanca, cubierta
       gris, valla morada; fotos en `docs/referencias/rios_tejera/`) y el **Colegio Máyex** (`docs/referencias/colegio_mayex/`).
@@ -194,7 +230,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       Pack de **misiones secundarias** que se desbloquea a la vez que las del alcalde; no hacen falta para acabar el juego
       («solo si eres religioso»), pero dan dinero: mejoras en las iglesias que ya hay (Catedral, La Concepción, Santo
       Domingo, El Cristo…), p. ej. apagar un incendio con la escopeta de agua.
-- [ ] **Economía y armas** (Jonay, 12-oct), junto con las jugueterías:
+- [~] v0.76.0 (rifle de agua, bolitas en las jugueterías, Tab entre puños/pistola/rifle; faltan euros, tabla de economía y patada en 3D) **Economía y armas** (Jonay, 12-oct), junto con las jugueterías:
       - El dinero va en **euros, no dólares** (HUD «$00000350» → euros; textos «+$1500», multas, precios, docs).
       - **Bolitas baratas**; la **escopeta de agua cara**: hacen falta varias misiones para poder comprarla.
       - **Recompensas proporcionadas** (misiones, peleas, baloncesto, fútbol): que no haya munición infinita tras unas
@@ -205,7 +241,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
         otras misiones, entre ellas apagar fuegos en una iglesia del Obispo. Dispara un **chorro en parábola** que avanza
         unos **10 m** en línea recta y cae; donde cae deja un **charquito unos segundos**: ahí apaga si hay fuego o golpea
         si hay una persona. Si el chorro choca con algo (o alguien) en la trayectoria antes de caer, golpea/apaga ahí.
-- [ ] **Jugueterías** (Jonay, 12-oct): recrear varias (mejor las que ya hay en el mapa); allí se compran **bolitas** para
+- [~] v0.76.0 (4 jugueterías con icono y compra con E: rifle y bolitas; falta recrear su fachada/escaparate o interior) **Jugueterías** (Jonay, 12-oct): recrear varias (mejor las que ya hay en el mapa); allí se compran **bolitas** para
       la pistola y otras armas: **escopeta de agua** (chorros de agua; se recarga en **fuentes** repartidas por la ciudad;
       necesaria en misiones como el incendio del Obispado). Por ahora no hay más armas.
 - [x] v0.65.0 **Minijuego de baloncesto 2D tipo NBA Jam** (falta: retos libres en cualquier cancha y controles en el móvil) (Jonay, 12-oct): en las canchas; retar a partidos con tus amigos de la
@@ -359,8 +395,8 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
         sin límite, hasta 48). Pocas líneas.
   - [x] v0.57.0 (medido: −41 MB de memoria JS, −40 MB de geometría; no los 250 MB estimados) **P1.7** Liberar también las posiciones de la ciudad tras subirlas a la GPU (~250 MB), conservándolas solo
         cuando se ejecuta el agente revisor (p. ej. `?revisor=1`).
-  - [ ] **P1.5** (sigue) Mallas sueltas (11.314) → `Acc`/`InstancedMesh`, y menos detalle en la ciudad lejana.
-  - [ ] **P2.1 / P2.2 / P2.5** (siguen) Precalcular la ciudad en el build, modelos en binario, módulos + lint.
+  - [x] v0.77.0 **P1.5** Mallas sueltas → juntadas por material/celda e instanciadas por celda; recorte por distancia (ver arriba).
+  - [~] **P2.1 / P2.2 / P2.5** v0.77.0: lint hecho; coches y personas ya en binario; precalcular la ciudad, `data.json` binario y módulos: ver arriba.
 - [ ] **Auditoría de código v0.49** (`docs/auditorias/INFORME_AUDITORIA_JETA_v0.49.0.md`, APTO CON AVISOS) — por decidir con Jonay:
       ~~P0.a coches de tráfico fuera del pool sin liberar + luces/cascos por coche~~ (hecha en v0.52); ~~P0.b rótulos canvas sin caché~~ (ya cacheados con `sharedText`, comprobado en v0.57);
       aparcados en InstancedMesh; P1.5 mallas sueltas/LOD; mapas de reflejos en segundo plano; P2.1/P2.2/P2.5.

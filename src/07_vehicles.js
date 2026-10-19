@@ -94,7 +94,7 @@ class Car {
     this.T = model ? { ...VTYPES[model.phys], L: model.L, W: model.W, H: model.H, name: model.name } : { ...VTYPES[type] }; this.T.maxV = topSpeedKmh(model, type) / 3.6 * rnd(0.96, 1.04); this.T.acc *= CAR_ACCEL; // same top speed (drag scales with acc), slower pick-up
     // pool (audit P0.2): traffic cars that leave are kept and reused instead of building a new model every time
     const pk = model ? model.id + (model.phys === 'moto' ? ':m' : '') : null; const pooled = pk && CARPOOL[pk] && CARPOOL[pk].length ? CARPOOL[pk].pop() : null; this.poolKey = pk;
-    const m = pooled ? pooled.m : !model ? makeCarMesh(type, this.color) : model.phys === 'moto' ? makeMotoMesh(model, this.color) : makeKenneyMesh(model, this.color);
+    const m = pooled ? pooled.m : !model ? makeCarMesh(type, this.color) : model.phys === 'moto' ? makeMotoMesh(model, this.color) : makeKenneyMesh(model, this.color); m.g.userData.noMerge = true; // v0.77: a car you can drive is never fused (05w_optimiza.js)
     if (pooled) { if (m.paint && !['taxi', 'policia', 'ambulancia'].includes(model.id)) m.paint.color.set(this.color); m.g.visible = true; this.rider = pooled.rider || null; if (this.rider) this.rider.root.visible = false; }
     if (m.moto && !pooled) { this.rider = takeHuman('ped', () => makeHuman({ cap: null, random: true })); seatHuman(this.rider, model); const helm = new THREE.Mesh(shGeo('helmet', () => new THREE.SphereGeometry(0.15, 12, 10)), M(pick([0x111111, 0xf2f2f2, 0xb3261e, 0x1f4e8c]), 0.3, 0.3)); helm.position.y = 0.06; this.rider.head.add(helm); this.rider.helm = helm; m.g.add(this.rider.root); this.rider.root.visible = false; } Object.assign(this, { mesh: m.g, body: m.body, wheels: m.wheels, hl: m.hl, tl: m.tl, bar: m.bar, paint: m.paint }); this._m = m;
     scene.add(this.mesh);
@@ -277,7 +277,7 @@ function manageTraffic() {
 // ---------- parked cars (instanced low-detail, converted to real cars on interaction)
 const PARKED = { slots: [], grid: new Map(), meshes: {} };
 function buildParked() {
-  const types = ['compact', 'sedan', 'suv', 'van'];
+  const types = ['compact', 'sedan', 'suv', 'van']; const T0 = performance.now(), lt = (n) => { if (window.__LOADT) window.__LOADT.push(['   buildParked · ' + n, Math.round(performance.now() - T0)]); }; // v0.77: where the 2 s go
   DATA.R.forEach((rd) => {
     const t = RTN[rd[0]]; if (!['residential', 'tertiary', 'unclassified', 'living_street'].includes(t) || ROADCLASS(rd) === 'paving') return;
     const c = rd[4], w = rd[2], ow = !!(rd[3] & 1);
@@ -299,7 +299,8 @@ function buildParked() {
       }
     }
   });
-  // parked cars: merged per 200 m chunk (one draw call each, culled by distance); paint colour baked per car
+  lt('huecos ' + PARKED.slots.length);
+  // parked cars: one InstancedMesh per model and 800 m cell (v0.77), culled by distance; paint colour per instance
   if (KGEO) for (const s of PARKED.slots) if (!VMODELS[s.type]) { const m = modelForType(s.type); s.type = m ? m.id : 'polo'; }
   PARKED.slots.forEach((s, i) => { const k = Math.floor(s.x / 30) * 1000 + Math.floor(s.z / 30); let l = PARKED.grid.get(k); if (!l) PARKED.grid.set(k, l = []); l.push(i); });
   const glassC = new THREE.Color(0x26313a); const cc = new THREE.Color();
@@ -314,36 +315,35 @@ function buildParked() {
     for (const w of G.wheels) { const g = lowWheel.clone(); g.scale(0.2, wr, wr); g.translate(w.x + (w.left ? 0.12 : -0.12), w.y, w.z); push(g, 0, tire); }
     return (TPL[model.id] = { P: new Float32Array(P), N: new Float32Array(N), C: new Float32Array(C), F: new Uint8Array(F) });
   };
-  const chunks = new Map();
-  PARKED.slots.forEach((s) => { const key = Math.floor(s.x / 200) + ',' + Math.floor(s.z / 200); let c = chunks.get(key); if (!c) chunks.set(key, c = []); c.push(s); });
+  // v0.77 (auditorías: «coches aparcados instanciados»): one geometry per model, used by every parked car of that model in
+  // an 800 m cell (InstancedMesh). Before, every car's triangles were copied into big merged meshes: ~2 s of the load and
+  // hundreds of MB of vertices. The paint is the instance colour, applied only to the vertices flagged as paint (aPaint).
   const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.4, metalness: 0.35 });
-  PARKED.chunks = [];
-  // a chunk's geometry is built from its slots (skipping cars that have been taken); every buffer is released from RAM
-  // once on the GPU (audit P0.1) and the chunk is simply rebuilt when one of its cars drives off
-  function geoOf(list) {
-    let n = 0; for (const s of list) if (s.alive !== false) n += template(VMODELS[s.type]).F.length;
-    const pos = new Float32Array(n * 3), nor = new Int8Array(n * 3), col = new Uint8Array(n * 3); let o = 0;
-    const k8 = (v) => Math.round(Math.min(1, Math.max(0, v)) * 255);
-    for (const s of list) { if (s.alive === false) continue;
-      const T = template(VMODELS[s.type]); cc.set(s.color); const ch = Math.cos(s.h), sh = Math.sin(s.h), y0 = heightAt(s.x, s.z) + 0.17;
-      for (let i = 0; i < T.F.length; i++) { const x = T.P[i * 3], y = T.P[i * 3 + 1], z = T.P[i * 3 + 2]; pos[o * 3] = s.x + x * ch + z * sh; pos[o * 3 + 1] = y0 + y; pos[o * 3 + 2] = s.z - x * sh + z * ch;
-        const nx = T.N[i * 3], nz = T.N[i * 3 + 2]; nor[o * 3] = Math.round((nx * ch + nz * sh) * 127); nor[o * 3 + 1] = Math.round(T.N[i * 3 + 1] * 127); nor[o * 3 + 2] = Math.round((-nx * sh + nz * ch) * 127);
-        if (T.F[i]) { col[o * 3] = k8(T.C[i * 3] * cc.r); col[o * 3 + 1] = k8(T.C[i * 3 + 1] * cc.g); col[o * 3 + 2] = k8(T.C[i * 3 + 2] * cc.b); } else { col[o * 3] = k8(T.C[i * 3]); col[o * 3 + 1] = k8(T.C[i * 3 + 1]); col[o * 3 + 2] = k8(T.C[i * 3 + 2]); }
-        o++; } }
-    const free = function () { this.array = null; }; const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.computeBoundingSphere(); geo.attributes.position.onUpload(free);
-    geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3, true).onUpload(free)); geo.setAttribute('color', new THREE.BufferAttribute(col, 3, true).onUpload(free)); return geo;
+  mat.onBeforeCompile = (sh) => {
+    sh.vertexShader = 'attribute float aPaint;\n' + sh.vertexShader.replace('#include <color_vertex>', THREE.ShaderChunk.color_vertex.replace('vColor.xyz *= instanceColor.xyz;', 'vColor.xyz *= mix(vec3(1.0), instanceColor.xyz, aPaint);'));
+  };
+  mat.customProgramCacheKey = () => 'parkedPaint';
+  const GEO = {};
+  const geoOfModel = (id) => {
+    if (GEO[id]) return GEO[id]; const T = template(VMODELS[id]); const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(T.P, 3)); g.setAttribute('normal', new THREE.BufferAttribute(T.N, 3)); g.setAttribute('color', new THREE.BufferAttribute(T.C, 3));
+    g.setAttribute('aPaint', new THREE.BufferAttribute(new Float32Array(T.F), 1)); g.computeBoundingSphere(); return (GEO[id] = g);
+  };
+  const cells = new Map();
+  for (const s of PARKED.slots) { const key = Math.floor(s.x / 800) + ',' + Math.floor(s.z / 800) + ',' + s.type; let c = cells.get(key); if (!c) cells.set(key, c = []); c.push(s); }
+  PARKED.chunks = []; const o = new THREE.Object3D();
+  for (const list of cells.values()) {
+    const m = new THREE.InstancedMesh(geoOfModel(list[0].type), mat, list.length); let cx = 0, cz = 0;
+    list.forEach((s, i) => { o.position.set(s.x, heightAt(s.x, s.z) + 0.17, s.z); o.rotation.set(0, s.h, 0); o.updateMatrix(); m.setMatrixAt(i, s.alive === false ? HIDE : o.matrix); m.setColorAt(i, cc.set(s.color)); s.inst = m; s.idx = i; cx += s.x; cz += s.z; });
+    m.computeBoundingSphere(); m.name = 'parked'; m.castShadow = true; m.receiveShadow = true; m.matrixAutoUpdate = false; m.userData.noMerge = true; scene.add(m);
+    PARKED.chunks.push({ mesh: m, x: cx / list.length, z: cz / list.length, r: m.boundingSphere.radius });
   }
-  PARKED.geoOf = geoOf;
-  for (const [key, list] of chunks) {
-    let cx = 0, cz = 0; for (const s of list) { cx += s.x; cz += s.z; }
-    const m = new THREE.Mesh(geoOf(list), mat); m.castShadow = true; m.receiveShadow = true; scene.add(m); const ent = { mesh: m, x: cx / list.length, z: cz / list.length, list }; PARKED.chunks.push(ent); for (const s of list) s.chunk = ent;
-  }
+  lt('mallas ' + Object.keys(TPL).length + ' modelos, ' + PARKED.chunks.length + ' grupos');
 }
-function updateParkedLOD() { if (!PARKED.chunks) return; const far = Q.far * 0.55 + 120; for (const c of PARKED.chunks) c.mesh.visible = Math.hypot(c.x - camera.position.x, c.z - camera.position.z) < far; }
+function updateParkedLOD() { if (!PARKED.chunks) return; const far = Q.far * 0.55 + 120; for (const c of PARKED.chunks) c.mesh.visible = Math.hypot(c.x - camera.position.x, c.z - camera.position.z) - (c.r || 0) < far; }
 function parkedNear(x, z, r) { const res = []; const a0 = Math.floor((x - r) / 30), a1 = Math.floor((x + r) / 30), b0 = Math.floor((z - r) / 30), b1 = Math.floor((z + r) / 30); for (let a = a0; a <= a1; a++) for (let b = b0; b <= b1; b++) { const l = PARKED.grid.get(a * 1000 + b); if (l) for (const i of l) { const s = PARKED.slots[i]; if (s.alive && Math.hypot(s.x - x, s.z - z) < r) res.push(s); } } return res; }
 const HIDE = new THREE.Matrix4().makeScale(0, 0, 0);
-function activateParked(s) { s.alive = false; if (s.chunk) { const m = s.chunk.mesh; m.geometry.dispose(); m.geometry = PARKED.geoOf(s.chunk.list); } const c = new Car(null, s.color, s.x, s.z, s.h, VMODELS[s.type]); c.mode = 'physics'; c.driver = null; c.fromParked = true; return c; }
+function activateParked(s) { s.alive = false; if (s.inst) { s.inst.setMatrixAt(s.idx, HIDE); s.inst.instanceMatrix.needsUpdate = true; } /* v0.77: instanced */ const c = new Car(null, s.color, s.x, s.z, s.h, VMODELS[s.type]); c.mode = 'physics'; c.driver = null; c.fromParked = true; return c; }
 
 // ---------- dynamic collisions between cars (and parked cars)
 const CC_ACT = { f: -1, l: [] };

@@ -144,7 +144,7 @@ function adaptRes(now) {
 // "below" the ground; a dark earth cylinder around the camera (top just under the ground level) fills those views
 const UGSKIRT = (() => { const g = new THREE.CylinderGeometry(1, 1, 1, 40, 1, true); g.translate(0, -0.5, 0); const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: 0x2b2219, side: THREE.BackSide, fog: false })); m.frustumCulled = false; m.visible = false; m.renderOrder = -1; scene.add(m); return m; })();
 function updateUnderground() { const g = heightAt(camera.position.x, camera.position.z); const under = camera.position.y < g - 1.2 && !inCut(camera.position.x, camera.position.z, 1.0); /* only inside covered tubes: in an open cutting the brown backdrop showed above the walls where the ground ahead drops (Camino el Vallado) */ UGSKIRT.visible = under; if (under) { UGSKIRT.position.set(camera.position.x, g + 60, camera.position.z); UGSKIRT.scale.set(240, 460, 240); } }
-function render() { const tt = performance.now(); updateUnderground(); renderer.clear(); renderer.render(bgScene, bgCamera); renderer.clearDepth(); renderer.render(scene, camera); pm('render', tt); }
+function render() { const tt = performance.now(); updateUnderground(); updateCityLOD(); renderer.clear(); renderer.render(bgScene, bgCamera); renderer.clearDepth(); renderer.render(scene, camera); pm('render', tt); }
 window.__step = (n, dt = 1 / 30, keys = []) => { keys.forEach((k) => KEYS.add(k)); for (let i = 0; i < n; i++) logic(dt, performance.now()); keys.forEach((k) => KEYS.delete(k)); };
 window.__press = (k) => PRESSED.add(k);
 function logic(dt, now) {
@@ -164,7 +164,7 @@ function logic(dt, now) {
       acc2 += dt; const h = 1 / 90; let n = 0;
       while (acc2 >= h && n < 6) { for (const c of CARS) if (c.mode === 'physics') { if (!c.driver || c.crashed) { c.ctl.thr = 0; c.ctl.brk = c.driver === 'player' ? c.ctl.brk : 1; } c.physics(h); } carCollisions(); tramCollisions(); acc2 -= h; n++; }
       pm('phys', tt); tt = performance.now(); for (const c of CARS) { if (c.mode === 'traffic') updateTraffic(c, dt); c.sync(dt); }
-      pm('traffic', tt); tt = performance.now(); trafficT -= dt; if (trafficT < 0) { trafficT = 0.25; manageTraffic(); updateParkedLOD(); }
+      pm('traffic', tt); tt = performance.now(); trafficT -= dt; if (trafficT < 0) { trafficT = 0.25; manageTraffic(); updateParkedLOD(); updateCityLOD(); }
       pm('manage', tt); tt = performance.now(); updateTram(dt); try { updateAirport(dt); } catch (e) { } updatePeds(dt); pm('peds', tt); tt = performance.now(); WANTED.update(dt); if (GAME.state === 'play') updateCops(dt); MISSIONS.update(dt); pm('miss', tt);
       if (frame % 3 === 0) updateGPS();
     }
@@ -183,7 +183,7 @@ function logic(dt, now) {
       acc2 += dt; const h = 1 / 90; let n = 0;
       while (acc2 >= h && n < 6) { for (const c of CARS) if (c.mode === 'physics') { c.ctl.thr = 0; c.ctl.brk = 1; c.physics(h); } carCollisions(); acc2 -= h; n++; }
       for (const c of CARS) { if (c.mode === 'traffic') updateTraffic(c, dt); c.sync(dt); }
-      trafficT -= dt; if (trafficT < 0) { trafficT = 0.25; manageTraffic(); updateParkedLOD(); }
+      trafficT -= dt; if (trafficT < 0) { trafficT = 0.25; manageTraffic(); updateParkedLOD(); updateCityLOD(); }
       updateTram(dt); updatePeds(dt); if (frame % 2 === 0) updateSun(); envT -= dt; if (envT < 0) { envT = 8; updateEnvironment(); }
       AUDIO.update(dt); HUD.update(dt);
     }
@@ -217,31 +217,33 @@ async function boot() {
   const steps = [
     ['Modelando el relieve de Aguere…', () => { prepUndergroundAreas(); buildTerrain(); }],
     ['Levantando casas del casco histórico…', buildBuildings],
-    ['Asfaltando calles y empedrando peatonales…', () => { buildRoads(); buildMedians(); buildCarParks(); finalizeCuts(); }],
-    ['Colocando la Catedral y la torre de La Concepción…', () => { buildLandmarks(); buildExtraSalud(); }],
+    ['Asfaltando calles y empedrando peatonales…', [buildRoads, buildMedians, buildCarParks, finalizeCuts]],
+    ['Colocando la Catedral y la torre de La Concepción…', [buildLandmarks, buildExtraSalud]],
     ['Pintando aparcamientos y abriendo grandes superficies…', () => { buildParkingLots(); buildBigStores(); }],
     ['Colgando los rótulos de las tiendas…', () => { const n = buildSigns(); console.log('signs', n); console.log('props', JSON.stringify(buildStreetProps())); }],
     ['Abriendo puertas: Catedral, cafetería, hipermercado…', () => { buildInteriorsAll(); }],
-    ['Plantando laureles de Indias…', () => { scatterTrees(); buildPlazasParks(); buildTrees(); }],
+    ['Plantando laureles de Indias…', [scatterTrees, buildPlazasParks, buildTrees]],
     ['Encendiendo farolas…', () => { buildLamps(); buildTramPoles(); buildRoofProps(); buildPlazaProps(); console.log('tram stops', buildTramStops()); console.log('soportales', trinidadArcades()); }],
     ['Marcando campos de fútbol y canchas…', () => { buildSports(); }],
     ['Poniendo señales de STOP y ceda el paso…', () => { buildTrafficSigns(); }],
     ['Uniendo geometría…', finalizeChunks],
+    ['Juntando piezas sueltas…', optimizeCity], // v0.77: ~8.800 sueltas → por material y celda; árboles por celda; distancia según la niebla
     ['Pintando el cielo y el Teide…', buildSky],
-    ['Aparcando coches y poniendo el tranvía…', () => { buildParked(); buildTram(); }],
+    ['Aparcando coches y poniendo el tranvía…', [buildParked, buildTram]],
     ['Dibujando el mapa…', () => { buildMapCanvas(); buildLabels(); }],
     ['Llegando a la Plaza del Adelantado…', () => { initPlayer(); MISSIONS.initMissions(); setupTouch(); FIGHT2D.setupPad(); setupAchaman(); SAVE.setup(); }],
     ['Arrancando el tráfico…', () => { for (let i = 0; i < Q.traffic; i++) { const sp = trafficSpawnPoint(20, Q.far * 0.3 + 40, false); if (sp) { const E = GRAPH.edges[sp[0]]; const busOK = ['primary', 'secondary', 'tertiary'].includes(E.type) && Math.random() < 0.05; const c = busOK ? new Car('bus', null, 0, 0, 0) : new Car(null, null, 0, 0, 0, trafficModel(E.type)); c.personality = rnd(0.85, 1.15); spawnTraffic(c, sp[0], sp[1], sp[2]); } } }],
     ['Preparando a la gente de la calle…', () => { try { for (const f of ['8px "Press Start 2P"', '16px Oswald', '16px Barlow', '16px "Russo One"', '16px Audiowide', '16px Yellowtail']) document.fonts.load(f); } catch (e) { } preloadHumans(Q.peds + 8, 3, 6, { ped: () => newPedHuman(false), can: () => newPedHuman(true), cop: newCopHuman }); }],
     ['Compilando sombreadores…', async () => { precomputeEnv(); updateCamera(0.016); if (renderer.compileAsync) await renderer.compileAsync(scene, camera); else renderer.compile(scene, camera); renderer.compile(bgScene, bgCamera); preloadDone(); }], /* async compile: the page doesn't freeze (audit P2.4) */
   ];
-  for (let i = 0; i < steps.length; i++) { setLoad(steps[i][0], i / steps.length); await nextFrame(); await nextFrame(); try { await steps[i][1](); } catch (e) { console.error(steps[i][0], e); setLoad('Error: ' + e.message, i / steps.length); throw e; } }
+  window.__LOADT = []; // v0.77: how long each loading step takes (sonda_rendimiento.py)
+  for (let i = 0; i < steps.length; i++) { setLoad(steps[i][0], i / steps.length); await nextFrame(); await nextFrame(); const t0 = performance.now(); try { const fs = steps[i][1]; if (Array.isArray(fs)) { for (const f of fs) { const t1 = performance.now(); await f(); window.__LOADT.push([steps[i][0] + ' · ' + f.name, Math.round(performance.now() - t1)]); } } else { await fs(); window.__LOADT.push([steps[i][0], Math.round(performance.now() - t0)]); } } catch (e) { console.error(steps[i][0], e); setLoad('Error: ' + e.message, i / steps.length); throw e; } }
   setLoad('¡Listo!', 1); $('loadblock').style.display = 'none'; $('menubtns').style.display = 'flex';
   GAME.state = 'menu'; last = performance.now(); loop();
   window.__GAME_READY = true;
 }
 boot();
-window.__bg = [bgScene, bgCamera]; window.__dbg = { get RCLIP() { return RCLIP; }, RIFLE, AGUA, FIRES, makeFire, giveRifle, PK2, RIOS, TRI, PERAZA, MINI, KEYS, PRESSED, INPUT, get TCUTS() { return TCUTS; }, s2Human, s2Down, s2DownTick, onCarriagewayEarly, FLIGHT, updateAirport, TF13, TRAM_TRENCH, tramDepth, OBISPADO_TEX: obispadoTex, MALEANTES, startStreetFight, lineRuns, BIGSTORES, SIGN, roadClip, BASKET2D, FUTBOL2D, obispoCampo, TRI, OBISPADO, SPORTS, inAnyBuilding, COURTS, courtGateNear, useCourtGate, DIARIO, inPitch, pitchRects, obispoCourt, LAMPS, TREES, GUIDE, AYTO, HUC, HEALTH, nearestHealth, exitCar, DLG, S2, POOLS: { CARPOOL, HPOOL, SHARED_GEO, VGEO }, SHARED_GEO, MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
-window.__snap = () => { updateUnderground(); bgCamera.position.copy(camera.position); bgCamera.quaternion.copy(camera.quaternion); bgCamera.fov = camera.fov; bgCamera.updateProjectionMatrix(); renderer.clear(); renderer.render(bgScene, bgCamera); renderer.clearDepth(); renderer.render(scene, camera); return renderer.domElement.toDataURL('image/jpeg', 0.85); };
+window.__bg = [bgScene, bgCamera]; window.__dbg = { get RCLIP() { return RCLIP; }, LOD, updateCityLOD, lodShowAll, optimizeCity, unfuse, PARKED, activateParked, parkedNear, RIFLE, AGUA, FIRES, makeFire, giveRifle, PK2, RIOS, TRI, PERAZA, MINI, KEYS, PRESSED, INPUT, get TCUTS() { return TCUTS; }, s2Human, s2Down, s2DownTick, onCarriagewayEarly, FLIGHT, updateAirport, TF13, TRAM_TRENCH, tramDepth, OBISPADO_TEX: obispadoTex, MALEANTES, startStreetFight, lineRuns, BIGSTORES, SIGN, roadClip, BASKET2D, FUTBOL2D, obispoCampo, TRI, OBISPADO, SPORTS, inAnyBuilding, COURTS, courtGateNear, useCourtGate, DIARIO, inPitch, pitchRects, obispoCourt, LAMPS, TREES, GUIDE, AYTO, HUC, HEALTH, nearestHealth, exitCar, DLG, S2, POOLS: { CARPOOL, HPOOL, SHARED_GEO, VGEO }, SHARED_GEO, MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
+window.__snap = () => { updateUnderground(); updateCityLOD(); bgCamera.position.copy(camera.position); bgCamera.quaternion.copy(camera.quaternion); bgCamera.fov = camera.fov; bgCamera.updateProjectionMatrix(); renderer.clear(); renderer.render(bgScene, bgCamera); renderer.clearDepth(); renderer.render(scene, camera); return renderer.domElement.toDataURL('image/jpeg', 0.85); };
 window.__setYaw = (y) => { CAM.yaw = y; CAM.pitch = 0.1; INPUT.lastMouse = performance.now(); };
 window.__hit = (p) => hitPed(p);

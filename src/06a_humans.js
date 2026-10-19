@@ -59,7 +59,7 @@ function skinMaterial(texKey, cloth, sleeve, longPants) {
 }
 function makeHumanSkinned(o = {}) {
   const fem = o.female ?? (o.longHair ? true : Math.random() < 0.5); const B = HUM.bodies[fem ? 'f' : 'm'];
-  const root = new THREE.Group(); const body = new THREE.Group(); root.add(body);
+  const root = new THREE.Group(); root.userData.noMerge = true; /* v0.77: never fused (05w_optimiza.js) */ const body = new THREE.Group(); root.add(body);
   // skeleton (own bones per person)
   const bones = HUM.d.skel.map((s) => { const b = new THREE.Bone(); b.name = s.n; b.position.fromArray(s.t); b.quaternion.fromArray(s.r); return b; });
   HUM.d.skel.forEach((s, i) => { if (s.p >= 0) bones[s.p].add(bones[i]); else body.add(bones[i]); });

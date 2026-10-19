@@ -194,6 +194,13 @@
    [
     "prueba_grandes.py"
    ]
+  ],
+  [
+   "^src/05w_optimiza|^src/(05n_plazas|06a_humans|06_actors)",
+   [
+    "prueba_077.py",
+    "prueba_misiones_guardado.py"
+   ]
   ]
  ]
 }

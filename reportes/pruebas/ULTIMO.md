@@ -1,70 +1,153 @@
-# Pruebas 0.76.0 — 2026-10-19 09:14 — 2/2 OK
+# Pruebas 0.77.0 — 2026-10-19 13:51 — 6/6 OK
 
-Listas: v076r. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 171 s en total.
+Listas: v077d, v077c. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 212 s en total.
 
 | # | Prueba | Resultado | Tiempo |
 |---|---|---|---|
-| 1 | `prueba_076.py` | **OK** | 135 s |
-| 2 | `prueba_trinidad.py` | **OK** | 15 s |
+| 1 | `prueba_misiones.py` | **OK** | 126 s |
+| 2 | `prueba_misiones_guardado.py` | **OK** | 21 s |
+| 3 | `prueba_077.py` | **OK** | 15 s |
+| 4 | `prueba_guardar_cargar.py` | **OK** | 3 s |
+| 5 | `herramientas/sonda_rendimiento.py` | **OK** | 25 s |
+| 6 | `prueba_misiones.py 18 18` | **OK** | 3 s |
 
 ## Detalle
 
-### 1. prueba_076.py — OK
+### 1. prueba_misiones.py — OK
 
 ```
-rifle {'diag': {'h': 0, 'yaw': 0, 'jugador': [-758, -364], 'fuego': [-758, -356.5], 'gota_v': [0, -2.4, 12], 'charcos': [[-0.3, 6.9]], 'apuntando': False, 'mano': [-0.25, 7.9, -0.08]}, 'gotas': 12, 'charcos': 1, 'fuego_apagado': True, 'agua': [100, 93], 'hud': 'RIFLE DE AGUA 100%\nTAB / 1: puños'}
-foto v076_rifle
-armas {'ciclo': ['pistola', 'rifle', 'puños', 'pistola'], 'fuentes': 39, 'lleno': 100, 'jugueterias': ['Juguetes Sabelotodo', 'Juguetes Baobabito', 'Juguetería Lífer', 'Juguetes Somos'], 'cerrada': '', 'abierta': '<kbd>E</kbd> Entrar: Juguetes Sabelotodo (juguetería)'}
-mojado {'persigue': True, 'pelea': True}
-maleantes {'habla': True, 'linea': 'Sastrón (por el móvil): Chopa, ahora que sabes repartir, te cuento un ', 'visto': True}
-misión del rifle en la historia 18
-blanco 1 {'act': 'El rifle de agua', 'jug': True, 'goal': [-621.1913417161826, -300.4619397662556, 2.2]}
-blanco 2 {'paso': 6, 'diana': True}
-foto v076_boca_papa
-blanco fin {'act': None, 'rifleTut': True}
-misiones {'secreta': ['Tostón, de la Secreta', 'Contenedores en llamas', 'El partido amañado', 'Triple en la cancha', 'Al pirómano, agua', 'Operación Gofio Blanco'], 'carreras': ['Duelo nocturno en Los Rodeos', 'Contrarreloj por el casco', 'Gran Premio de La Laguna'], 'obispo': ['Un partido por la Catedral', 'El torneo de la parroquia', 'Un partido por La Concepción', 'El clásico de las cofradías', 'Fuego en la ermita', 'La carrera de los sacristanes', 'Curas contra concejales', 'El ladrón del cepillo'], 'tostón': [1250, 1524]}
-foto v076_secreta
-  empieza ['secreta', 0, 'Tostón, de la Secreta', 'Tostón, de la Secreta', True]
-  empieza ['secreta', 1, 'Contenedores en llamas', 'Contenedores en llamas', True]
-  empieza ['secreta', 2, 'El partido amañado', 'El partido amañado', True]
-  empieza ['secreta', 3, 'Triple en la cancha', 'Triple en la cancha', True]
-  empieza ['secreta', 4, 'Al pirómano, agua', 'Al pirómano, agua', True]
-  empieza ['secreta', 5, 'Operación Gofio Blanco', 'Operación Gofio Blanco', True]
-  empieza ['carreras', 0, 'Duelo nocturno en Los Rodeos', 'Duelo nocturno en Los Rodeos', True]
-  empieza ['carreras', 1, 'Contrarreloj por el casco', 'Contrarreloj por el casco', True]
-  empieza ['carreras', 2, 'Gran Premio de La Laguna', 'Gran Premio de La Laguna', True]
-  empieza ['obispo', 4, 'Fuego en la ermita', 'Fuego en la ermita', True]
-  empieza ['obispo', 5, 'La carrera de los sacristanes', 'La carrera de los sacristanes', True]
-  empieza ['obispo', 6, 'Curas contra concejales', 'Curas contra concejales', True]
-  empieza ['obispo', 7, 'El ladrón del cepillo', 'El ladrón del cepillo', True]
-parkings [{'trinidad_tramos': 7, 'largo': 439, 'fondo': ['-14.2', '-13.2']}, {'sala': 'Parking del Cristo', 'frena': 1, 'de': 12}, {'sala': 'Parking Trinidad', 'frena': 2, 'de': 12}, {'sala': 'Parking Trinidad', 'frena': 1, 'de': 12}]
-foto v076_cristo_escalera_abajo
-foto v076_trinidad_parking
-Ríos Tejera [-1513, -587]
-foto v076_rios_tejera
-foto v076_trinchera_campus
-foto v076_rampa_cristo
-errores JS []
-V076 OK
+[6] Atraco en la farmacia: PASA · dinero +1500 · pasos talk>goto>talk>fight>talk>goto>follow>shot>talk>grab>talk>idle
+[7] Defensores de La Laguna: PASA · dinero +1000 · pasos dlg>idle
+[8] Los bancos del Adelantado: PASA · dinero +900 · pasos talk>goto>talk>fight>shot>talk>idle
+[9] El gofio robado: PASA · dinero +1100 · pasos talk>goto>talk>goto>talk>goto>talk>fight>enter>goto>talk>idle
+[10] El carterista del Cristo: PASA · dinero +600 · pasos talk>goto>chase>talk>fight>idle
+[11] Carrera solidaria del casco: PASA · dinero +700 · pasos talk>goto>idle
+[12] El rally de La Esperanza: PASA · dinero +1200 · pasos talk>car>goto>countdown>goto>idle
+[13] Baches en la Vía de Ronda: PASA · dinero +900 · pasos talk>enter>goto>idle
+[14] Escolta a la guagua del Romero: PASA · dinero +1000 · pasos talk>car>escort>talk>idle
+[15] La guagua de la broma: PASA · dinero +900 · pasos talk>car>escort>talk>idle
+[16] Grafiteros en el tranvía: PASA · dinero +800 · pasos talk>goto>shot>talk>idle
+[17] Noche en el aeropuerto: PASA · dinero +2000 · pasos talk>goto>damage>shot>talk>idle
+[18] El rifle de agua: PASA · dinero +-50 · pasos talk>goto>shop>dlg>goto>talk>douse>goto>douse>goto>douse>talk>goto>shop>talk>soak>talk>idle
+MISIONES OK
 ```
 
-### 2. prueba_trinidad.py — OK
+### 2. prueba_misiones_guardado.py — OK
 
 ```
-widths [6.6]
-invaden []
-aparcamientos [{'name': 'Parking Trinidad', 'x': -113, 'z': 106, 'yF': -13.5}, {'name': 'Parking Trinidad', 'x': -133, 'z': 163, 'yF': -14.2}, {'name': 'Parking Trinidad', 'x': -153, 'z': 221, 'yF': -14.2}, {'name': 'Parking Trinidad', 'x': -173, 'z': 278, 'yF': -14.2}, {'name': 'Parking Trinidad', 'x': -193, 'z': 336, 'yF': -14}, {'name': 'Parking Trinidad', 'x': -213, 'z': 394, 'yF': -13.7}, {'name': 'Parking Trinidad', 'x': -232, 'z': 451, 'yF': -13.2}]
-nuevas 7
-coche {'aparcamiento': 'Parking Trinidad', 'rampa': [-85, 28], 'profundidad': 8.2, 'en_sala': True, 'fin': [-105, 82]}
-coche {'aparcamiento': 'Parking Trinidad', 'rampa': [-244, 524], 'profundidad': 7.3, 'en_sala': True, 'fin': [-228, 471]}
-foto trinidad_rampa_1
-foto trinidad_rampa_1_alto
-foto trinidad_rampa_7
-foto trinidad_rampa_7_alto
-foto trinidad_pedrozerolo
-foto trinidad_pedrozerolo_calle
-errores JS []
-TRINIDAD OK
+a mitad: {"act":"Atraco en la farmacia","m":{"v":3,"story":6,"skip":[],"storyDone":false,"side":0,"sideOpen":false,"obispo":0,"torneo":0,"copa":0,"secreta":0,"carreras":0,"log":{"Atraco en la farmacia":[["Rayco «El Blanco»","«Brrr... Chopa... mmm... la pistola... psss... bolas... de plástico.»",1792414221146],["El Chopa","Ya, Blanco, ya me lo dijiste: aire comprimido, bolas de plástico. Pupa sí, pero no mata.",1792414221161],["Rayco «El Blanco»","«Mmm... radio... ¡brrr!... farmacia... atraco... ¡ahora!»",1792414221183],["Radio de la Local (en el escáner de El Blanco)","Atraco en curso en Guacimara C. Hernandez. Dos individuos. Todas las patrullas ocupadas en las fiestas.",1792414221209],["El Chopa","Nadie va a ir... Vamos nosotros. Una banda que defiende su barrio. ¡Al lío!",1792414221233],["Ladrón con pasamontañas","¿Y tú quién eres, el de la nariz? ¡Esto no va contigo, pibe!",1792414221294],["El Chopa","Suelta la caja de las tiritas y ven p'acá.",1792414221321],["Ladrón (en el suelo)","¡Ay, ay! ¡Vale, vale, me rindo! Pero mi colega ya se va con la caja...",1792414233027]],"Defensores de La Laguna":[["Don Yovoy Gofiérrez","Vecinos, banda, señoras y señores... ejem. Hoy La Laguna está de enhorabuena. Unos chicos del barrio han frustrado un atraco con una pistola de juguete y mucho valor.",1792414162480],["Don Yovoy Gofiérrez","Por eso, con el poder que me da este bigote... digo, este bastón de mando, nombro a «la banda» <b>Defensores de La Laguna</b>: un grupo especial de la Policía Local para los problemas de la ciudad.",1792414162627],["Boca Papa","Señor alcalde, ¿eso trae dietas? Porque yo como mucho.",1792414163031],["Don Yovoy Gofiérrez","Trae responsabilidad, señor Papa. Y un bocadillo en cada ceremonia. Desde hoy podéis detener a malhechores. Eso sí: siempre con la de bolas y sin romper el mobiliario urbano.",1792414163449],["Rayco «El Blanco»","«Mmm... ¡brrr!... ¡a la orden!»<br><i>Saluda militarmente. Se le cae la gorra.</i>",1792414163869],["El Chopa","Gracias, alcalde. Salí del talego para hacer las cosas bien. Esto es exactamente lo que buscaba.",1792414164271],["Don Yovoy Gofiérrez","Pues estad atentos al teléfono. Esta ciudad tiene muchos problemas... y muy poco presupuesto.",1792414164689]],"Los bancos del Adelantado":[["Don Yovoy Gofiérrez","¡Escándalo! Han robado tres bancos de la Plaza del Adelantado. ¡De hierro forjado, del siglo diecinueve! Un vecino vio a dos tipos cargándolos en una furgoneta hacia el polígono.",1792414165419],["Don Yovoy Gofiérrez","Recuperadlos... o por lo menos a los ladrones. Los bancos ya los pagará el seguro. Si no se ríe de mí otra vez.",1792414165429],["Chatarrero","¿Bancos? ¿Qué bancos? Esto es... arte moderno. ¡Pepe, corre!",1792414165484],["Pepe","¡Ay! ¡Que sí, que eran de la plaza! ¡Los devolvemos!",1792414176499]],"El gofio robado":[["Boca Papa","¡Chopa, una tragedia! ¡Han robado toda la reserva de gofio del Molino de La Laguna! Sin gofio no hay escaldón, sin escaldón no hay Boca Papa.",1792414176581],["Boca Papa","Pregunta a los vecinos del casco. Alguien tuvo que ver una furgoneta cargada hasta arriba.",1792414176590],["Vecina del casco","Una furgoneta blanca, mi niño, que olía a gofio tostado que daba gusto. Iba hacia arriba, por la calle de la iglesia.",1792414176616],["Vecino con boina","Esos son los del polígono, los de la nave sin cartel. Venden «harina de millo importada». ¡Importada de nuestro molino!",1792414176645],["El Molinero Falso","¿Gofio? Aquí solo hay «harina de cereal tostado premium». ¿Te vas o te enharino?",1792414176709],["Boca Papa","¡Mi gofio! ¡Huele a gloria! Chopa, esta noche escaldón para toda la banda. Invito yo... bueno, invitas tú.",1792414189165]],"El carterista del Cristo":[["Coco","Chopa, en la Plaza del Cristo hay un carterista trabajando entre los puestos. Rápido de piernas. Yo ya no estoy para carreras... pero tú sí.",1792414189211],["Coco","Cógelo y dale una lección. Como en el gimnasio: guardia alta y paciencia.",1792414189222],["Carterista","¡Vale, vale! ¡Te devuelvo las carteras... si me ganas!",1792414189333]],"Carrera solidaria del casco":[["Don Yovoy Gofiérrez","La carrera solidaria del casco histórico: todo lo recaudado va a la asociación de vecinos. Si el jefe de los Defensores corre, la gente dona más. ¡A pie, eh! Nada de coches.",1792414201550],["Don Yovoy Gofiérrez","Pasa por los controles antes de que se acabe el tiempo. Y sonríe a las cámaras.",1792414201558]],"El rally de La Esperanza":[["El Canarión","¡Chicharrero! Ahora que sois polis de mentirijilla... Hay un pijo de La Esperanza con un deportivo que hace carreras por la Vía de Ronda. Ya ha rozado a tres guaguas.",1792414201765],["El Canarión","Yo le ganaría, pero me tiene manía. Gánale tú y se rinde: palabra de pijo.",1792414201781],["Pijo de La Esperanza","Ugh... vale. Me rindo. Pero no le digáis nada a mi padre, que es concejal.",1792414205310]],"Baches en la Vía de Ronda":[["Don Yovoy Gofiérrez","Defensores, la Vía de Ronda tiene más baches que un queso de cabra. El camión del asfalto lleva tres semanas aparcado porque el conductor está de vacaciones... perpetuas.",1792414205369],["Don Yovoy Gofiérrez","Llévalo por los cinco puntos marcados antes de que cierren la obra. Y no lo vuelques, que es el único que tenemos.",1792414205387]],"Escolta a la guagua del Romero":[["Don Yovoy Gofiérrez","Mañana es la Romería de San Benito y hoy sale la guagua con las carretas, las parrandas y mi suegra. Necesito escolta: si alguien la para, la Romería se queda sin papas.",1792414205631],["Don Yovoy Gofiérrez","Síguela de cerca, sin alejarte, hasta el final del recorrido.",1792414205650],["Suegra del alcalde (por la ventanilla)","¡Ay, qué chico más apañado! ¡Toma, unas papas arrugadas para el camino!",1792414215459]],"La guagua de la broma":[["Boca Papa","¡Chopa! Un bromista de YouTube se ha llevado una guagua vacía de la estación. Dice que va a «hacer contenido». Va por la autopista con los cuatro intermitentes.",1792414215534],["Boca Papa","No hace falta que la rompas: ponte cerca, pítale, y cuando vea que no se libra, para. Sobre todo no la rompas, que luego la pagamos todos.",1792414215559],["Bromista","Vale, vale, ya paro... ¡Hola, mis seguidores! ¡Me ha pillado la Local de los Defensores!",1792414216193]],"Grafiteros en el tranvía":[["Sastrón","¡Un sacrilegio, Chopa! Unos niñatos están pintando el tranvía en la parada de Padre Anchieta. ¡Con spray fosforito! Las tijeras dicen que no combina con nada.",1792414216280],["Sastrón","Corre antes de que acaben. Y llévate la de bolas: son rápidos.",1792414216297],["Grafitero","¡Au! ¡Vale, lo limpiamos, lo limpiamos!",1792414216414]],"Noche en el aeropuerto":[["Rayco «El Blanco»","«Brrr... noche... mmm... aeropuerto... psss... queso... ¡contrabando!»",1792414216516],["Boca Papa (por el móvil)","Lo que quiere decir El Blanco: unos contrabandistas sacan queso de cabra sin registro por las vías de servicio de Los Rodeos. Esta noche. ¡Que es queso nuestro, Chopa!",1792414216534],["Contrabandista","¡Era queso de flor de Guía, de verdad! ¡Bueno, de Tejina! ¡Me rindo!",1792414216650],["Don Yovoy Gofiérrez (por el móvil)","Defensores, lo habéis vuelto a hacer. Mañana tenéis delante del Ayuntamiento vuestro propio coche patrulla, con el nombre de la banda. ¡Y el depósito lleno!",1792414216681]],"El rifle de agua":[["Rayco «El Blanco»","«Brrr... agua... mmm... fuego... psss... juguetería... ¡rifle!»",1792414216788],["El Chopa","¿Que ya venden el rifle de agua en las jugueterías? ¿El eléctrico, el de diez metros de chorro?",1792414216807],["Rayco «El Blanco»","«Mmm... sí... brrr... trescientos cincuenta... psss... fuente... prueba... ¡como las latas!»",1792414216834],["El Chopa","Entendido: lo compro y nos vemos en la plaza de la fuente para probarlo. ¿Y Boca Papa?",1792414216859],["Rayco «El Blanco»","«Psss... siesta.»",1792414216885],["Rayco «El Blanco»","«Brrr... papeles... ¡fuego!... psss... apaga.»",1792414217429],["El Chopa","Fuego de verdad no, Blanco... vale, vale. Rifle fuera: clic derecho apunta, clic izquierdo dispara el chorro.",1792414217445],["Rayco «El Blanco»","«Psss... vacío... brrr... fuente.»",1792414220750],["El Chopa","Se ha quedado seco. A la fuente a llenarlo.",1792414220778],["Rayco «El Blanco»","«Mmm... Boca... brrr... cabeza... ¡diez metros!»",1792414220864],["El Chopa","Despertar a Boca Papa con un chorro en la cabeza desde diez metros. Ese es mi Blanco.",1792414220893],["Boca Papa","¡AAAAH! ¿Quién...? ¡¿CHOPA?! ¡Me has empapado la siesta! ¡Y la camisa de los domingos!",1792414220952],["Rayco «El Blanco»","«Brrr... ¡diez metros!... mmm... ¡bien!»",1792414220973],["El Chopa","Funciona. Diez metros de chorro y cero heridos. Esto lo vamos a usar, Boca.",1792414221005],["Boca Papa","Pues úsalo con otro... Oye, el que te busca es uno de la Secreta, un tal Tostón. Dice que te espera en la Avenida de los Menceyes. Tiene pinta de policía de película mala.",1792414221030]]},"gang":{"formed":false,"name":"","members":[],"defenders":true,"patrol":true,"jugueterias":true,"rifleTut":true},"active":"Atraco en la farmacia"},"blips":2,"lawful":true,"tg":0,"dlg":false,"toast":"Nuevo: el SECRETA te espera en la Avenida de los Menceyes (círculo salmón)"}
+cargada: {'act': None, 'm': {'v': 3, 'story': 6, 'skip': [], 'storyDone': False, 'side': 0, 'sideOpen': False, 'obispo': 0, 'torneo': 0, 'copa': 0, 'secreta': 0, 'carreras': 0, 'log': {'Atraco en la farmacia': [['Rayco «El Blanco»', '«Brrr... Chopa... mmm... la pistola... psss... bolas... de plástico.»', 1792414221146], ['El Chopa', 'Ya, Blanco, ya me lo dijiste: aire comprimido, bolas de plástico. Pupa sí, pero no mata.', 1792414221161], ['Rayco «El Blanco»', '«Mmm... radio... ¡brrr!... farmacia... atraco... ¡ahora!»', 1792414221183], ['Radio de la Local (en el escáner de El Blanco)', 'Atraco en curso en Guacimara C. Hernandez. Dos individuos. Todas las patrullas ocupadas en las fiestas.', 1792414221209], ['El Chopa', 'Nadie va a ir... Vamos nosotros. Una banda que defiende su barrio. ¡Al lío!', 1792414221233], ['Ladrón con pasamontañas', '¿Y tú quién eres, el de la nariz? ¡Esto no va contigo, pibe!', 1792414221294], ['El Chopa', "Suelta la caja de las tiritas y ven p'acá.", 1792414221321], ['Ladrón (en el suelo)', '¡Ay, ay! ¡Vale, vale, me rindo! Pero mi colega ya se va con la caja...', 1792414233027]], 'Defensores de La Laguna': [['Don Yovoy Gofiérrez', 'Vecinos, banda, señoras y señores... ejem. Hoy La Laguna está de enhorabuena. Unos chicos del barrio han frustrado un atraco con una pistola de juguete y mucho valor.', 1792414162480], ['Don Yovoy Gofiérrez', 'Por eso, con el poder que me da este bigote... digo, este bastón de mando, nombro a «la banda» <b>Defensores de La Laguna</b>: un grupo especial de la Policía Local para los problemas de la ciudad.', 1792414162627], ['Boca Papa', 'Señor alcalde, ¿eso trae dietas? Porque yo como mucho.', 1792414163031], ['Don Yovoy Gofiérrez', 'Trae responsabilidad, señor Papa. Y un bocadillo en cada ceremonia. Desde hoy podéis detener a malhechores. Eso sí: siempre con la de bolas y sin romper el mobiliario urbano.', 1792414163449], ['Rayco «El Blanco»', '«Mmm... ¡brrr!... ¡a la orden!»<br><i>Saluda militarmente. Se le cae la gorra.</i>', 1792414163869], ['El Chopa', 'Gracias, alcalde. Salí del talego para hacer las cosas bien. Esto es exactamente lo que buscaba.', 1792414164271], ['Don Yovoy Gofiérrez', 'Pues estad atentos al teléfono. Esta ciudad tiene muchos problemas... y muy poco presupuesto.', 1792414164689]], 'Los bancos del Adelantado': [['Don Yovoy Gofiérrez', '¡Escándalo! Han robado tres bancos de la Plaza del Adelantado. ¡De hierro forjado, del siglo diecinueve! Un vecino vio a dos tipos cargándolos en una furgoneta hacia el polígono.', 1792414165419], ['Don Yovoy Gofiérrez', 'Recuperadlos... o por lo menos a los ladrones. Los bancos ya los pagará el seguro. Si no se ríe de mí otra vez.', 1792414165429], ['Chatarrero', '¿Bancos? ¿Qué bancos? Esto es... arte moderno. ¡Pepe, corre!', 1792414165484], ['Pepe', '¡Ay! ¡Que sí, que eran de la plaza! ¡Los devolvemos!', 1792414176499]], 'El gofio robado': [['Boca Papa', '¡Chopa, una tragedia! ¡Han robado toda la reserva de gofio del Molino de La Laguna! Sin gofio no hay escaldón, sin escaldón no hay Boca Papa.', 1792414176581], ['Boca Papa', 'Pregunta a los vecinos del casco. Alguien tuvo que ver una furgoneta cargada hasta arriba.', 1792414176590], ['Vecina del casco', 'Una furgoneta blanca, mi niño, que olía a gofio tostado que daba gusto. Iba hacia arriba, por la calle de la iglesia.', 1792414176616], ['Vecino con boina', 'Esos son los del polígono, los de la nave sin cartel. Venden «harina de millo importada». ¡Importada de nuestro molino!', 1792414176645], ['El Molinero Falso', '¿Gofio? Aquí solo hay «harina de cereal tostado premium». ¿Te vas o te enharino?', 1792414176709], ['Boca Papa', '¡Mi gofio! ¡Huele a gloria! Chopa, esta noche escaldón para toda la banda. Invito yo... bueno, invitas tú.', 1792414189165]], 'El carterista del Cristo': [['Coco', 'Chopa, en la Plaza del Cristo hay un carterista trabajando entre los puestos. Rápido de piernas. Yo ya no estoy para carreras... pero tú sí.', 1792414189211], ['Coco', 'Cógelo y dale una lección. Como en el gimnasio: guardia alta y paciencia.', 1792414189222], ['Carterista', '¡Vale, vale! ¡Te devuelvo las carteras... si me ganas!', 1792414189333]], 'Carrera solidaria del casco': [['Don Yovoy Gofiérrez', 'La carrera solidaria del casco histórico: todo lo recaudado va a la asociación de vecinos. Si el jefe de los Defensores corre, la gente dona más. ¡A pie, eh! Nada de coches.', 1792414201550], ['Don Yovoy Gofiérrez', 'Pasa por los controles antes de que se acabe el tiempo. Y sonríe a las cámaras.', 1792414201558]], 'El rally de La Esperanza': [['El Canarión', '¡Chicharrero! Ahora que sois polis de mentirijilla... Hay un pijo de La Esperanza con un deportivo que hace carreras por la Vía de Ronda. Ya ha rozado a tres guaguas.', 1792414201765], ['El Canarión', 'Yo le ganaría, pero me tiene manía. Gánale tú y se rinde: palabra de pijo.', 1792414201781], ['Pijo de La Esperanza', 'Ugh... vale. Me rindo. Pero no le digáis nada a mi padre, que es concejal.', 1792414205310]], 'Baches en la Vía de Ronda': [['Don Yovoy Gofiérrez', 'Defensores, la Vía de Ronda tiene más baches que un queso de cabra. El camión del asfalto lleva tres semanas aparcado porque el conductor está de vacaciones... perpetuas.', 1792414205369], ['Don Yovoy Gofiérrez', 'Llévalo por los cinco puntos marcados antes de que cierren la obra. Y no lo vuelques, que es el único que tenemos.', 1792414205387]], 'Escolta a la guagua del Romero': [['Don Yovoy Gofiérrez', 'Mañana es la Romería de San Benito y hoy sale la guagua con las carretas, las parrandas y mi suegra. Necesito escolta: si alguien la para, la Romería se queda sin papas.', 1792414205631], ['Don Yovoy Gofiérrez', 'Síguela de cerca, sin alejarte, hasta el final del recorrido.', 1792414205650], ['Suegra del alcalde (por la ventanilla)', '¡Ay, qué chico más apañado! ¡Toma, unas papas arrugadas para el camino!', 1792414215459]], 'La guagua de la broma': [['Boca Papa', '¡Chopa! Un bromista de YouTube se ha llevado una guagua vacía de la estación. Dice que va a «hacer contenido». Va por la autopista con los cuatro intermitentes.', 1792414215534], ['Boca Papa', 'No hace falta que la rompas: ponte cerca, pítale, y cuando vea que no se libra, para. Sobre todo no la rompas, que luego la pagamos todos.', 1792414215559], ['Bromista', 'Vale, vale, ya paro... ¡Hola, mis seguidores! ¡Me ha pillado la Local de los Defensores!', 1792414216193]], 'Grafiteros en el tranvía': [['Sastrón', '¡Un sacrilegio, Chopa! Unos niñatos están pintando el tranvía en la parada de Padre Anchieta. ¡Con spray fosforito! Las tijeras dicen que no combina con nada.', 1792414216280], ['Sastrón', 'Corre antes de que acaben. Y llévate la de bolas: son rápidos.', 1792414216297], ['Grafitero', '¡Au! ¡Vale, lo limpiamos, lo limpiamos!', 1792414216414]], 'Noche en el aeropuerto': [['Rayco «El Blanco»', '«Brrr... noche... mmm... aeropuerto... psss... queso... ¡contrabando!»', 1792414216516], ['Boca Papa (por el móvil)', 'Lo que quiere decir El Blanco: unos contrabandistas sacan queso de cabra sin registro por las vías de servicio de Los Rodeos. Esta noche. ¡Que es queso nuestro, Chopa!', 1792414216534], ['Contrabandista', '¡Era queso de flor de Guía, de verdad! ¡Bueno, de Tejina! ¡Me rindo!', 1792414216650], ['Don Yovoy Gofiérrez (por el móvil)', 'Defensores, lo habéis vuelto a hacer. Mañana tenéis delante del Ayuntamiento vuestro propio coche patrulla, con el nombre de la banda. ¡Y el depósito lleno!', 1792414216681]], 'El rifle de agua': [['Rayco «El Blanco»', '«Brrr... agua... mmm... fuego... psss... juguetería... ¡rifle!»', 1792414216788], ['El Chopa', '¿Que ya venden el rifle de agua en las jugueterías? ¿El eléctrico, el de diez metros de chorro?', 1792414216807], ['Rayco «El Blanco»', '«Mmm... sí... brrr... trescientos cincuenta... psss... fuente... prueba... ¡como las latas!»', 1792414216834], ['El Chopa', 'Entendido: lo compro y nos vemos en la plaza de la fuente para probarlo. ¿Y Boca Papa?', 1792414216859], ['Rayco «El Blanco»', '«Psss... siesta.»', 1792414216885], ['Rayco «El Blanco»', '«Brrr... papeles... ¡fuego!... psss... apaga.»', 1792414217429], ['El Chopa', 'Fuego de verdad no, Blanco... vale, vale. Rifle fuera: clic derecho apunta, clic izquierdo dispara el chorro.', 1792414217445], ['Rayco «El Blanco»', '«Psss... vacío... brrr... fuente.»', 1792414220750], ['El Chopa', 'Se ha quedado seco. A la fuente a llenarlo.', 1792414220778], ['Rayco «El Blanco»', '«Mmm... Boca... brrr... cabeza... ¡diez metros!»', 1792414220864], ['El Chopa', 'Despertar a Boca Papa con un chorro en la cabeza desde diez metros. Ese es mi Blanco.', 1792414220893], ['Boca Papa', '¡AAAAH! ¿Quién...? ¡¿CHOPA?! ¡Me has empapado la siesta! ¡Y la camisa de los domingos!', 1792414220952], ['Rayco «El Blanco»', '«Brrr... ¡diez metros!... mmm... ¡bien!»', 1792414220973], ['El Chopa', 'Funciona. Diez metros de chorro y cero heridos. Esto lo vamos a usar, Boca.', 1792414221005], ['Boca Papa', 'Pues úsalo con otro... Oye, el que te busca es uno de la Secreta, un tal Tostón. Dice que te espera en la Avenida de los Menceyes. Tiene pinta de policía de película mala.', 1792414221030]]}, 'gang': {'formed': False, 'name': '', 'members': [], 'defenders': True, 'patrol': True, 'jugueterias': True, 'rifleTut': True, 'sastronTut': False, 'basketTut': False, 'futbolTut': False, 'maleIntro': False}, 'active': None}, 'blips': 3, 'lawful': False, 'tg': 0, 'dlg': False, 'toast': 'RADIO: Gofio FM 90.1 · boom bap lagunero (Q: cambiar de emisora)'}
+1 guardar a mitad: OK (coches de misión sueltos: 0)
+tras fallar: {'act': None, 'm': {'v': 3, 'story': 6, 'skip': [], 'storyDone': False, 'side': 0, 'sideOpen': False, 'obispo': 0, 'torneo': 0, 'copa': 0, 'secreta': 0, 'carreras': 0, 'log': {'Atraco en la farmacia': [['Rayco «El Blanco»', '«Brrr... Chopa... mmm... la pistola... psss... bolas... de plástico.»', 1792414238463], ['El Chopa', 'Ya, Blanco, ya me lo dijiste: aire comprimido, bolas de plástico. Pupa sí, pero no mata.', 1792414238474]], 'Defensores de La Laguna': [['Don Yovoy Gofiérrez', 'Vecinos, banda, señoras y señores... ejem. Hoy La Laguna está de enhorabuena. Unos chicos del barrio han frustrado un atraco con una pistola de juguete y mucho valor.', 1792414162480], ['Don Yovoy Gofiérrez', 'Por eso, con el poder que me da este bigote... digo, este bastón de mando, nombro a «la banda» <b>Defensores de La Laguna</b>: un grupo especial de la Policía Local para los problemas de la ciudad.', 1792414162627], ['Boca Papa', 'Señor alcalde, ¿eso trae dietas? Porque yo como mucho.', 1792414163031], ['Don Yovoy Gofiérrez', 'Trae responsabilidad, señor Papa. Y un bocadillo en cada ceremonia. Desde hoy podéis detener a malhechores. Eso sí: siempre con la de bolas y sin romper el mobiliario urbano.', 1792414163449], ['Rayco «El Blanco»', '«Mmm... ¡brrr!... ¡a la orden!»<br><i>Saluda militarmente. Se le cae la gorra.</i>', 1792414163869], ['El Chopa', 'Gracias, alcalde. Salí del talego para hacer las cosas bien. Esto es exactamente lo que buscaba.', 1792414164271], ['Don Yovoy Gofiérrez', 'Pues estad atentos al teléfono. Esta ciudad tiene muchos problemas... y muy poco presupuesto.', 1792414164689]], 'Los bancos del Adelantado': [['Don Yovoy Gofiérrez', '¡Escándalo! Han robado tres bancos de la Plaza del Adelantado. ¡De hierro forjado, del siglo diecinueve! Un vecino vio a dos tipos cargándolos en una furgoneta hacia el polígono.', 1792414165419], ['Don Yovoy Gofiérrez', 'Recuperadlos... o por lo menos a los ladrones. Los bancos ya los pagará el seguro. Si no se ríe de mí otra vez.', 1792414165429], ['Chatarrero', '¿Bancos? ¿Qué bancos? Esto es... arte moderno. ¡Pepe, corre!', 1792414165484], ['Pepe', '¡Ay! ¡Que sí, que eran de la plaza! ¡Los devolvemos!', 1792414176499]], 'El gofio robado': [['Boca Papa', '¡Chopa, una tragedia! ¡Han robado toda la reserva de gofio del Molino de La Laguna! Sin gofio no hay escaldón, sin escaldón no hay Boca Papa.', 1792414176581], ['Boca Papa', 'Pregunta a los vecinos del casco. Alguien tuvo que ver una furgoneta cargada hasta arriba.', 1792414176590], ['Vecina del casco', 'Una furgoneta blanca, mi niño, que olía a gofio tostado que daba gusto. Iba hacia arriba, por la calle de la iglesia.', 1792414176616], ['Vecino con boina', 'Esos son los del polígono, los de la nave sin cartel. Venden «harina de millo importada». ¡Importada de nuestro molino!', 1792414176645], ['El Molinero Falso', '¿Gofio? Aquí solo hay «harina de cereal tostado premium». ¿Te vas o te enharino?', 1792414176709], ['Boca Papa', '¡Mi gofio! ¡Huele a gloria! Chopa, esta noche escaldón para toda la banda. Invito yo... bueno, invitas tú.', 1792414189165]], 'El carterista del Cristo': [['Coco', 'Chopa, en la Plaza del Cristo hay un carterista trabajando entre los puestos. Rápido de piernas. Yo ya no estoy para carreras... pero tú sí.', 1792414189211], ['Coco', 'Cógelo y dale una lección. Como en el gimnasio: guardia alta y paciencia.', 1792414189222], ['Carterista', '¡Vale, vale! ¡Te devuelvo las carteras... si me ganas!', 1792414189333]], 'Carrera solidaria del casco': [['Don Yovoy Gofiérrez', 'La carrera solidaria del casco histórico: todo lo recaudado va a la asociación de vecinos. Si el jefe de los Defensores corre, la gente dona más. ¡A pie, eh! Nada de coches.', 1792414201550], ['Don Yovoy Gofiérrez', 'Pasa por los controles antes de que se acabe el tiempo. Y sonríe a las cámaras.', 1792414201558]], 'El rally de La Esperanza': [['El Canarión', '¡Chicharrero! Ahora que sois polis de mentirijilla... Hay un pijo de La Esperanza con un deportivo que hace carreras por la Vía de Ronda. Ya ha rozado a tres guaguas.', 1792414201765], ['El Canarión', 'Yo le ganaría, pero me tiene manía. Gánale tú y se rinde: palabra de pijo.', 1792414201781], ['Pijo de La Esperanza', 'Ugh... vale. Me rindo. Pero no le digáis nada a mi padre, que es concejal.', 1792414205310]], 'Baches en la Vía de Ronda': [['Don Yovoy Gofiérrez', 'Defensores, la Vía de Ronda tiene más baches que un queso de cabra. El camión del asfalto lleva tres semanas aparcado porque el conductor está de vacaciones... perpetuas.', 1792414205369], ['Don Yovoy Gofiérrez', 'Llévalo por los cinco puntos marcados antes de que cierren la obra. Y no lo vuelques, que es el único que tenemos.', 1792414205387]], 'Escolta a la guagua del Romero': [['Don Yovoy Gofiérrez', 'Mañana es la Romería de San Benito y hoy sale la guagua con las carretas, las parrandas y mi suegra. Necesito escolta: si alguien la para, la Romería se queda sin papas.', 1792414205631], ['Don Yovoy Gofiérrez', 'Síguela de cerca, sin alejarte, hasta el final del recorrido.', 1792414205650], ['Suegra del alcalde (por la ventanilla)', '¡Ay, qué chico más apañado! ¡Toma, unas papas arrugadas para el camino!', 1792414215459]], 'La guagua de la broma': [['Boca Papa', '¡Chopa! Un bromista de YouTube se ha llevado una guagua vacía de la estación. Dice que va a «hacer contenido». Va por la autopista con los cuatro intermitentes.', 1792414215534], ['Boca Papa', 'No hace falta que la rompas: ponte cerca, pítale, y cuando vea que no se libra, para. Sobre todo no la rompas, que luego la pagamos todos.', 1792414215559], ['Bromista', 'Vale, vale, ya paro... ¡Hola, mis seguidores! ¡Me ha pillado la Local de los Defensores!', 1792414216193]], 'Grafiteros en el tranvía': [['Sastrón', '¡Un sacrilegio, Chopa! Unos niñatos están pintando el tranvía en la parada de Padre Anchieta. ¡Con spray fosforito! Las tijeras dicen que no combina con nada.', 1792414216280], ['Sastrón', 'Corre antes de que acaben. Y llévate la de bolas: son rápidos.', 1792414216297], ['Grafitero', '¡Au! ¡Vale, lo limpiamos, lo limpiamos!', 1792414216414]], 'Noche en el aeropuerto': [['Rayco «El Blanco»', '«Brrr... noche... mmm... aeropuerto... psss... queso... ¡contrabando!»', 1792414216516], ['Boca Papa (por el móvil)', 'Lo que quiere decir El Blanco: unos contrabandistas sacan queso de cabra sin registro por las vías de servicio de Los Rodeos. Esta noche. ¡Que es queso nuestro, Chopa!', 1792414216534], ['Contrabandista', '¡Era queso de flor de Guía, de verdad! ¡Bueno, de Tejina! ¡Me rindo!', 1792414216650], ['Don Yovoy Gofiérrez (por el móvil)', 'Defensores, lo habéis vuelto a hacer. Mañana tenéis delante del Ayuntamiento vuestro propio coche patrulla, con el nombre de la banda. ¡Y el depósito lleno!', 1792414216681]], 'El rifle de agua': [['Rayco «El Blanco»', '«Brrr... agua... mmm... fuego... psss... juguetería... ¡rifle!»', 1792414216788], ['El Chopa', '¿Que ya venden el rifle de agua en las jugueterías? ¿El eléctrico, el de diez metros de chorro?', 1792414216807], ['Rayco «El Blanco»', '«Mmm... sí... brrr... trescientos cincuenta... psss... fuente... prueba... ¡como las latas!»', 1792414216834], ['El Chopa', 'Entendido: lo compro y nos vemos en la plaza de la fuente para probarlo. ¿Y Boca Papa?', 1792414216859], ['Rayco «El Blanco»', '«Psss... siesta.»', 1792414216885], ['Rayco «El Blanco»', '«Brrr... papeles... ¡fuego!... psss... apaga.»', 1792414217429], ['El Chopa', 'Fuego de verdad no, Blanco... vale, vale. Rifle fuera: clic derecho apunta, clic izquierdo dispara el chorro.', 1792414217445], ['Rayco «El Blanco»', '«Psss... vacío... brrr... fuente.»', 1792414220750], ['El Chopa', 'Se ha quedado seco. A la fuente a llenarlo.', 1792414220778], ['Rayco «El Blanco»', '«Mmm... Boca... brrr... cabeza... ¡diez metros!»', 1792414220864], ['El Chopa', 'Despertar a Boca Papa con un chorro en la cabeza desde diez metros. Ese es mi Blanco.', 1792414220893], ['Boca Papa', '¡AAAAH! ¿Quién...? ¡¿CHOPA?! ¡Me has empapado la siesta! ¡Y la camisa de los domingos!', 1792414220952], ['Rayco «El Blanco»', '«Brrr... ¡diez metros!... mmm... ¡bien!»', 1792414220973], ['El Chopa', 'Funciona. Diez metros de chorro y cero heridos. Esto lo vamos a usar, Boca.', 1792414221005], ['Boca Papa', 'Pues úsalo con otro... Oye, el que te busca es uno de la Secreta, un tal Tostón. Dice que te espera en la Avenida de los Menceyes. Tiene pinta de policía de película mala.', 1792414221030]]}, 'gang': {'formed': False, 'name': '', 'members': [], 'defenders': True, 'patrol': True, 'jugueterias': True, 'rifleTut': True, 'sastronTut': False, 'basketTut': False, 'futbolTut': False, 'maleIntro': False}, 'active': None}, 'blips': 3, 'lawful': False, 'tg': 0, 'dlg': True, 'toast': 'prueba de reintento'}
+2 reintentar: OK Atraco en la farmacia
+3 partida antigua: OK {'v': 3, 'story': 6, 'skip': [], 'storyDone': False, 'side': 1, 'sideOpen': True, 'obispo': 0, 'torneo': 0, 'copa': 0, 'secreta': 0, 'carreras': 0, 'log': {}, 'gang': {'formed': True, 'name': 'Los Chopas', 'members': ['boca'], 'defenders': False, 'patrol': False, 'jugueterias': False, 'rifleTut': False, 'sastronTut': False, 'basketTut': False, 'futbolTut': False, 'maleIntro': False}, 'active': None}
+4 orden por zonas (partida de antes): OK {'sig': 'Los bancos del Adelantado', 'skip': ['El carterista del Cristo', 'Baches en la Vía de Ronda'], 'sig2': 'Los bancos del Adelantado', 'skip2': ['El carterista del Cristo', 'Baches en la Vía de Ronda']}
+ERRORES JS: []
+CONTINUIDAD OK
 ```
 
-Fotos/archivos nuevos en `tests/shots/`: trinidad_pedrozerolo.jpg, trinidad_pedrozerolo_calle.jpg, trinidad_rampa_1.jpg, trinidad_rampa_1_alto.jpg, trinidad_rampa_7.jpg, trinidad_rampa_7_alto.jpg, v076_boca_papa.jpg, v076_cristo_escalera_abajo.jpg, v076_rampa_cristo.jpg, v076_rifle.jpg, v076_rios_tejera.jpg, v076_secreta.jpg, v076_trinchera_campus.jpg, v076_trinidad_parking.jpg
+### 3. prueba_077.py — OK
+
+```
+juntado {'stats': {'sueltas': 7357, 'juntadas': 6717, 'mallas': 1474, 'ms': 224, 'no': {'con hijos': 532, 'transparente': 330, 'grupo con nombre': 3423, 'varios materiales': 2, 'userData': 103, 'onBeforeRender': 1}, 'ultimoId': 24967}, 'fusion': 1474, 'celdas': 5042, 'lod': 9849, 'peatones_enteros': 12}
+distancia {'cerca': [50, 50], 'lejos': [0, 8909], 'niebla': 520}
+aparcados {'grupos': 1259, 'coches': 9590, 'instanciados': True, 'escala_antes': 1, 'escala_despues': 0, 'color': True, 'shaders_rotos': 0}
+carga total 7638 ms; plazas [388] aparcados [330]
+junta piezas 6717
+foto v077_adelantado_junta
+foto v077_adelantado_suelo_junta
+foto v077_casco_junta
+foto v077_alto_junta
+foto v077_constitucion_junta
+suelta piezas 6717
+foto v077_adelantado_suelta
+foto v077_adelantado_suelo_suelta
+foto v077_casco_suelta
+foto v077_alto_suelta
+foto v077_constitucion_suelta
+errores [] shader []
+PRUEBA 077 OK
+```
+
+### 4. prueba_guardar_cargar.py — OK
+
+```
+saved {"v":1,"t":1792414259207,"label":"test","player":{"x":-211.05099657639772,"z":780.2855881877514,"h":1.8429422173260839,"health":77,"money":1234},"car":{"type":"bus","model":null,"color":2067020,"h":3.0123732081837398,"x":-213.05099657639772,"z":780.2855881877514},"weapon":{"has":true,"ammo":4,"out":
+after {"st":"play","m":{"v":3,"story":3,"skip":["El carterista del Cristo","Baches en la Vía de Ronda"],"storyDone":false,"side":1,"sideOpen":true,"obispo":0,"torneo":0,"copa":0,"secreta":0,"carreras":0,"log":{"Atraco en la farmacia":[["Sastrón (por el móvil)","Chopa, ahora que sabes repartir, te cuento un negocio. La Policía Local tiene una lista de maleantes en busca y captura y paga una recompensa a quien se los entregue.",1792414242734]]},"gang":{"formed":true,"name":"Los Chopas","members":["boca"],"defenders":true,"patrol":false,"jugueterias":false,"rifleTut":false,"sastronTut":true,"basketTut":false,"futbolTut":false,"maleIntro":false},"active":null},"money":1234,"hp":77,"tod":15.5,"car":true,"w":true,"ammo":4,"title":"La firma de la banda"}
+latest 2
+ERR []
+```
+
+### 5. herramientas/sonda_rendimiento.py — OK
+
+```
+      97 mallas    180305 tri  suelta:Head:BufferGeometry:MeshStandardMaterial
+      95 mallas    216152 tri  suelta(después):-:BufferGeometry:MeshStandardMaterial
+      78 mallas       936 tri  suelta(después):-:BoxGeometry:MeshStandardMaterial
+      64 mallas      7446 tri  suelta:-:ExtrudeGeometry:MeshStandardMaterial
+      58 mallas       696 tri  suelta:-:BoxGeometry:MeshBasicMaterial
+      34 mallas     18712 tri  chunk:asphalt
+      32 mallas     26456 tri  chunk:sidewalk
+      28 mallas     23046 tri  chunk:facade
+      27 mallas      4698 tri  chunk:roofFlat
+      27 mallas     17280 tri  chunk:disc
+      25 mallas      5254 tri  chunk:asphaltLines
+      25 mallas        50 tri  suelta(después):obispado:PlaneGeometry:MeshStandardMaterial
+      23 mallas     12254 tri  chunk:footway
+      23 mallas       276 tri  suelta(después):Head:BoxGeometry:MeshStandardMaterial
+      18 mallas        36 tri  suelta:-:PlaneGeometry:MeshBasicMaterial
+      18 mallas      7186 tri  chunk:roofTile
+      18 mallas      2808 tri  chunk:discPave
+      18 mallas      3728 tri  chunk:paving
+      17 mallas     24184 tri  suelta(después):Head:BufferGeometry:MeshStandardMaterial
+      16 mallas     19693 tri  suelta:La Concepción:BufferGeometry:MeshStandardMaterial
+      16 mallas     47190 tri  chunk:trim
+      15 mallas      2112 tri  suelta:-:SphereGeometry:MeshStandardMaterial
+      14 mallas       210 tri  suelta:-:ConeGeometry:MeshStandardMaterial
+      13 mallas       648 tri  suelta(después):-:CylinderGeometry:MeshStandardMaterial
+      12 mallas        24 tri  suelta(después):-:PlaneGeometry:MeshStandardMaterial
+      11 mallas      8200 tri  chunk:stone
+      10 mallas      1920 tri  suelta(después):Head:TorusGeometry:MeshStandardMaterial
+      10 mallas       160 tri  suelta(después):Head:CircleGeometry:MeshStandardMaterial
+       9 mallas     11580 tri  suelta:aeropuerto:BufferGeometry:MeshStandardMaterial
+       9 mallas       367 tri  suelta:Estadio Francisco Peraza:BufferGeometry:MeshStandardMaterial
+       8 mallas        16 tri  suelta:inicio:PlaneGeometry:MeshStandardMaterial
+       8 mallas        94 tri  chunk:sign5
+       8 mallas       384 tri  suelta(después):lowerarm_l:CylinderGeometry:MeshStandardMaterial
+== sueltas grandes (más de 1500 tri): 168
+   [403254, 0, 0, 0, 'BufferGeometry', 'ffffff', '']
+   [33788, 0, 0, 0, 'BufferGeometry', 'ffffff', '']
+   [22704, 0, 0, 0, 'BufferGeometry', '2d3236', 'G(inicio)']
+   [15120, 0, 0, 0, 'BufferGeometry', 'ffffff', '']
+   [12812, 9100, -152, -8, 'BufferGeometry', 'ffffff', 'GG']
+   [12812, 9095, -152, 3, 'BufferGeometry', 'ffffff', 'GG']
+   [12812, 9098, -152, -6, 'BufferGeometry', 'ffffff', 'GG']
+   [12812, 9197, -152, 1, 'BufferGeometry', 'ffffff', 'GG']
+   [12812, 9202, -152, 0, 'BufferGeometry', 'ffffff', 'GG']
+   [12812, 9393, -152, -67, 'BufferGeometry', 'ffffff', 'GG']
+   [12812, 9399, -152, -67, 'BufferGeometry', 'ffffff', 'GG']
+   [12812, 9411, -152, -67, 'BufferGeometry', 'ffffff', 'GG']
+   [12812, 9423, -152, -67, 'BufferGeometry', 'ffffff', 'GG']
+   [12812, 9429, -152, -67, 'BufferGeometry', 'ffffff', 'GG']
+   [12812, 9516, -152, -32, 'BufferGeometry', 'ffffff', 'GG']
+   [12812, 9388, -152, 11, 'BufferGeometry', 'ffffff', 'GG']
+   [12812, 9419, -152, -13, 'BufferGeometry', 'ffffff', 'GG']
+   [12812, 9448, -152, 27, 'BufferGeometry', 'ffffff', 'GG']
+   [12812, 9522, -152, -4, 'BufferGeometry', 'ffffff', 'GG']
+   [12812, 9342, -152, 29, 'BufferGeometry', 'ffffff', 'GG']
+   [12812, 9616, -152, -5, 'BufferGeometry', 'ffffff', 'GG']
+   [12812, 9626, -152, 6, 'BufferGeometry', 'ffffff', 'GG']
+   [12812, 9633, -152, -3, 'BufferGeometry', 'ffffff', 'GG']
+   [12812, 9646, -152, -4, 'BufferGeometry', 'ffffff', 'GG']
+   [12812, 9778, -152, 10, 'BufferGeometry', 'ffffff', 'GG']
+SONDA RENDIMIENTO OK
+```
+
+### 6. prueba_misiones.py 18 18 — OK
+
+```
+[18] El rifle de agua: PASA · dinero +300 · pasos talk>goto>talk>douse>goto>douse>goto>douse>talk>goto>shop>talk>soak>talk>idle
+MISIONES OK
+```
+
+Fotos/archivos nuevos en `tests/shots/`: sonda_rendimiento.txt, v077_adelantado_junta.jpg, v077_adelantado_suelo_junta.jpg, v077_adelantado_suelo_suelta.jpg, v077_adelantado_suelta.jpg, v077_alto_junta.jpg, v077_alto_suelta.jpg, v077_casco_junta.jpg, v077_casco_suelta.jpg, v077_constitucion_junta.jpg, v077_constitucion_suelta.jpg

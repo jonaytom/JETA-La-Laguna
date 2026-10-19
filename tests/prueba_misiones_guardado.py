@@ -26,6 +26,7 @@ async def run(pg):
     await pg.evaluate("__step(5)")
     s = json.loads(await pg.evaluate(ST)); print('cargada:', s)
     left = await pg.evaluate("JSON.stringify(__dbg.CARS.filter(c=>c.mission && !c.dead && c!==__dbg.PLAYER.car).length)")
+    if left != '0': print('sueltos:', await pg.evaluate("JSON.stringify(__dbg.CARS.filter(c=>c.mission && !c.dead && c!==__dbg.PLAYER.car).map(c=>[c.model&&c.model.id, Math.round(c.x), Math.round(c.z), c.mode, !!c.keep]))"))
     c1 = s['act'] is None and s['m']['story'] == i and s['blips'] > 0 and not s['lawful'] and s['tg'] == 0 and left == '0' and await pg.evaluate('window.__missionResumed') == 'Atraco en la farmacia'
     print('1 guardar a mitad:', 'OK' if c1 else 'FALLA', '(coches de misión sueltos: %s)' % left); ok &= c1
     # 2) retry after a failure

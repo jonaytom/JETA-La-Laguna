@@ -20,6 +20,7 @@ const SAVE = (() => {
     T(() => WANTED.reset());
     T(() => { if (DLG.open) DLG.hide(); if (window.__TALK) window.__TALK.cur = null; $('sub').classList.remove('talking'); });
     T(() => MISSIONS.setState(s.missions || {}));
+    T(() => { for (const c of CARS.slice()) if (c.mission && !c.dead && c !== PLAYER.car) c.remove(); }); // v0.77: cars left over from earlier missions go too (no mission is running after loading)
     const P = PLAYER; P.interior = null; P.low = null; P.dead = false; P.down = 0; P.vy = 0; P.onGround = true; P.onDeck = false;
     P.health = clamp(s.player.health || 100, 1, 100); P.money = s.player.money | 0;
     T(() => { const r = COL.resolve(s.player.x, s.player.z, 0.4); P.x = r.x; P.z = r.z; P.h = s.player.h || 0; CAM.yaw = P.h + Math.PI; const lw = lowAt(P.x, P.z, heightAt(P.x, P.z) - 3); P.y = heightAt(P.x, P.z) + 0.2; });

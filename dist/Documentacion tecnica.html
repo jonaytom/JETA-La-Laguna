@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.76.0</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.77.0</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -282,6 +282,10 @@ Ojo con los <code>const</code>/<code>let</code> usados antes de declararse (zona
 <tr>
 <td><code>12k_agua.js</code></td>
 <td>Misiones de la 0.76: el rifle (El Blanco), el Secreta, Obispo 5–8 y las carreras del Canarión.</td>
+</tr>
+<tr>
+<td><code>05w_optimiza.js</code></td>
+<td><strong>Rendimiento (v0.77)</strong>: junta las piezas sueltas por material y celda de 125 m (<code>mergeStatics</code>), parte árboles/farolas/señales instanciados por celda de 250 m (<code>splitInstanced</code>) y recorta por distancia según la niebla (<code>updateCityLOD</code>; copas lejanas con pocos triángulos). <code>userData.noMerge</code> = no juntar (personas, coches, patos).</td>
 </tr>
 <tr>
 <td><code>05v_peraza.js</code></td>
@@ -843,6 +847,26 @@ altura sin enlace y estructuras metidas en carriles. Ver <code>docs/07_pruebas.m
 <li><code>offTramCut</code>: los caminos peatonales no se dibujan sobre la trinchera del tranvía.</li>
 <li>Pabellón Juan Ríos Tejera (<code>riosHall</code> / <code>buildRiosHall</code>, <code>05v_peraza.js</code>): el edificio del área deportiva se hace
   nave blanca con franjas moradas, cubierta gris y linterna central.</li>
+</ul>
+<h2>Rendimiento: piezas juntadas y recorte por distancia (v0.77, <code>05w_optimiza.js</code>)</h2>
+<ul>
+<li>Paso de carga «Juntando piezas sueltas…» (tras <code>finalizeChunks</code>): <code>mergeStatics()</code> recorre la escena y junta las
+  mallas sueltas (bancos, bolardos, piezas de iglesias, gradas…) en <strong>una malla por material y celda de 125 m</strong>
+  (nombre <code>fusion</code>), en coordenadas del mundo; las pequeñas (radio &lt; 2,5 m) van aparte como «detalle». <strong>No junta</strong>: lo
+  oculto al cargar, lo que cuelga de un grupo con nombre, lo transparente, lo que lleva <code>userData</code> o <code>onBeforeRender</code>,
+  y lo marcado con <code>userData.noMerge</code> (personas, coches, motos, patos). Si un objeto nuevo se mueve o se oculta solo,
+  hay que marcarlo <code>noMerge</code> o ponerle nombre a su grupo.</li>
+<li><code>splitInstanced()</code>: las mallas instanciadas grandes del nivel superior (árboles, farolas, postes del tranvía, señales,
+  mobiliario de plazas) se parten por celda de 250 m: antes eran una para toda la ciudad y se pintaban enteras.</li>
+<li><code>updateCityLOD()</code> (al moverse la cámara 12 m; también en <code>__snap</code>): lo que queda más allá de la niebla no se pinta; el
+  detalle (molduras <code>trim</code>, balcones, madera, rótulos de los trozos de ciudad y las piezas pequeñas) solo hasta
+  <code>min(niebla, 230 + niebla/4)</code>; las copas de laurel y de árbol genérico a más de 170 m usan una copa de 20 triángulos.</li>
+<li>Coches aparcados: una <code>InstancedMesh</code> por modelo y celda de 800 m (<code>buildParked</code>), color de pintura por coche
+  (atributo <code>aPaint</code> en el shader); al llevarte uno, su instancia se encoge a 0.</li>
+<li>En las pruebas (<code>navigator.webdriver</code>) se guardan las piezas originales: <code>__dbg.unfuse(true)</code> las vuelve a poner para
+  comparar fotos (<code>prueba_077.py</code>, fotos <code>v077_*_junta</code> / <code>v077_*_suelta</code>).</li>
+<li>Medir: <code>tests/herramientas/sonda_rendimiento.py</code> (llamadas y triángulos ocultando cada grupo, censo de la escena,
+  tiempos de cada paso de la carga; todo en <code>tests/shots/sonda_rendimiento.txt</code>).</li>
 </ul></section>
 <section id="s4"><div class="src">docs/04_personajes_y_vehiculos.md</div><h1>4. Personajes, vehículos, tráfico y colisiones</h1>
 <blockquote>
@@ -1536,8 +1560,13 @@ async def run(pg):
   <code>__dbg.camera</code> y llamar a <code>snap()</code>. Las capturas de pantalla de Playwright (<code>pg.screenshot</code>) suelen agotar el
   tiempo con el juego en marcha; usar <code>snap()</code>.</li>
 </ul>
+<h2>Lint (v0.77)</h2>
+<p><code>build.py</code> pasa antes <code>tools/lint_js.py</code> (Python puro, sin Node): busca <strong>nombres usados que no están declarados en
+ningún archivo</strong> (erratas, funciones borradas) y <strong>nombres declarados dos veces en el nivel superior</strong> de dos archivos
+(el juego es un único módulo: eso es un SyntaxError y no carga nada). Si encuentra algo, el build falla y lo lista
+(<code>archivo:línea nombre</code>). Se puede pasar suelto: <code>python tools/lint_js.py</code>.</p>
 <h2>Comprobación de sintaxis rápida</h2>
-<p><code>build.py</code> no valida el JavaScript. Para encontrar errores sin abrir el navegador:</p>
+<p><code>build.py</code> no comprueba la sintaxis del JavaScript. Para encontrar errores sin abrir el navegador:</p>
 <pre><code class="language-bash">python -c &quot;import re;s=open('dist/test.html',encoding='utf-8').read();open('chk.mjs','w').write(re.findall(r'&lt;script type=\&quot;module\&quot;&gt;(.*?)&lt;/script&gt;',s,re.S)[-1])&quot;
 node --check chk.mjs
 </code></pre></section>
@@ -1779,6 +1808,24 @@ que el cambio no obligue a tocar la lógica del juego.</p>
 <section id="s11"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.77.0 — 2026-10-19 — Rendimiento: ciudad juntada, recorte por distancia y carga más rápida</h2>
+<ul>
+<li><strong>Piezas sueltas juntadas</strong> (auditorías P1.5): las ~5.000 piezas sueltas que no se mueven (bancos, bolardos,
+  papeleras, piezas de iglesias, gradas…) se juntan en una malla por material y celda de 125 m. Personas, coches, patos
+  y lo que se mueve u oculta se quedan como estaban.</li>
+<li><strong>Recorte por distancia según la niebla</strong>: lo que queda detrás de la niebla ya no se pinta; los detalles pequeños
+  (molduras, balcones, rótulos, mobiliario) solo de cerca; las copas de los árboles lejanos con pocos triángulos.
+  Árboles, farolas, postes y señales van por celdas (antes se pintaban enteros para toda la ciudad).
+  En la calle: <strong>de ~5.600 a ~1.800 llamadas de dibujo y de 5,1 a 2,3 millones de triángulos</strong> por fotograma.</li>
+<li><strong>Coches aparcados instanciados</strong>: una geometría por modelo para todos los coches aparcados (pintura por coche).
+  Menos memoria y su paso de la carga pasa de ~1,9 s a ~0,3 s.</li>
+<li><strong>Carga más rápida</strong>: plazas y parques de ~3,2 s a ~0,4 s (rejilla para no comparar cada árbol con cada banco).
+  En total, de ~11,2 s a ~7,8 s en el PC de pruebas.</li>
+<li><strong>Lint</strong> (auditoría P2.5): el build comprueba que no hay nombres sin declarar ni declarados dos veces entre archivos.</li>
+<li>Pruebas: <code>prueba_077.py</code> (fotos del mismo sitio con la ciudad juntada y con las piezas originales);
+  <code>sonda_rendimiento.py</code> mide llamadas, triángulos y cada paso de la carga. El piloto automático de las misiones ya
+  compra el rifle en la juguetería.</li>
+</ul>
 <h2>0.76.0 — 2026-10-19 — Rifle de agua, el Secreta y 14 misiones nuevas</h2>
 <ul>
 <li><strong>Rifle de agua</strong> (estilo rifle eléctrico de juguete, blanco y naranja con depósito transparente): chorro en parábola

@@ -19,6 +19,7 @@ Se lanzan con el arnés de `tests/run_test.py` (servidor en `localhost:8765` sir
 | `foto_caras.py` | Caras de las tallas de cuerpo (morphs). |
 | `foto_movil.py` | HUD en móvil apaisado (se lanza solo, sin `run_test.py`). |
 | `sonda_baloncesto.py [lv] [s]` | Partido automático de baloncesto segundo a segundo: balón, jugadores, marcador; tiros y canastas por equipo. |
+| `sonda_rendimiento.py` | Llamadas de dibujo y triángulos en dos sitios ocultando cada grupo (trozos de ciudad, piezas juntadas, instanciadas, aparcados, sueltas, sombras, gente, coches; «sinLOD» = sin recorte por distancia), censo de mallas y tiempo de cada paso de la carga. Todo en `shots/sonda_rendimiento.txt`. Los ms no valen (sin tarjeta gráfica). |
 | `sonda_trinidad.py` | Av. de La Trinidad: fotos desde arriba y a la altura de los ojos (sitios de las capturas de Jonay), aparcamientos y edificios que pisan la avenida. |
 | `foto_desde_arriba.py vistas.json` | Fotos desde arriba: `[[tx,tz,cx,cz,h],…]`. |
 | `foto_puntos.py puntos.json` | Fotos a la altura de los ojos: `[[x,z,yaw,ri],…]`. |

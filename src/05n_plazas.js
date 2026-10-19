@@ -15,10 +15,17 @@ function flatInset(c, d) {
 function buildPlazasParks() {
   const placed = []; // [x,z,r] keep-out discs (features), used to clear trees and avoid overlaps
   const paths = []; // segments [x1,z1,x2,z2,w]
+  // v0.77: both lists go into a 16 m grid as well (the loops over every tree × every disc took ~3 s of the load)
+  const GC = 16, gk = (a, b) => a * 100003 + b, PGR = new Map(), SGR = new Map();
+  const gAdd = (G, x0, z0, x1, z1, it) => { for (let a = Math.floor(x0 / GC); a <= Math.floor(x1 / GC); a++) for (let b = Math.floor(z0 / GC); b <= Math.floor(z1 / GC); b++) { const k = gk(a, b); let l = G.get(k); if (!l) G.set(k, l = []); l.push(it); } };
+  const gSome = (G, x, z, r, fn) => { for (let a = Math.floor((x - r) / GC); a <= Math.floor((x + r) / GC); a++) for (let b = Math.floor((z - r) / GC); b <= Math.floor((z + r) / GC); b++) { const l = G.get(gk(a, b)); if (l) for (const it of l) if (fn(it)) return true; } return false; };
+  placed.push = function (...its) { for (const p of its) { Array.prototype.push.call(this, p); gAdd(PGR, p[0] - p[2], p[1] - p[2], p[0] + p[2], p[1] + p[2], p); } return this.length; };
+  paths.push = function (...its) { for (const g of its) { Array.prototype.push.call(this, g); const h = g[4] / 2; gAdd(SGR, Math.min(g[0], g[2]) - h, Math.min(g[1], g[3]) - h, Math.max(g[0], g[2]) + h, Math.max(g[1], g[3]) + h, g); } return this.length; };
+  const placedSome = (x, z, r, fn) => gSome(PGR, x, z, r, fn);
   const bench = [], bin = [], bed = [], playground = [], bust = [];
-  const free = (x, z, r) => !COL.nearSeg(x, z, r) && !onCarriagewayEarly(x, z, r * 0.6) && !inAnyBuilding(x, z) && !inPitch(x, z, r) && !placed.some((p) => Math.hypot(p[0] - x, p[1] - z) < p[2] + r);
+  const free = (x, z, r) => !placedSome(x, z, r, (p) => Math.hypot(p[0] - x, p[1] - z) < p[2] + r) && !COL.nearSeg(x, z, r) && !onCarriagewayEarly(x, z, r * 0.6) && !inPitch(x, z, r) && !inAnyBuilding(x, z);
   const addPath = (pts, w = 2.6) => { ribbon(pts, w, 'footway', YOFF.footway + 0.005, 2.4, w / 2.4); for (let i = 0; i < pts.length - 2; i += 2) paths.push([pts[i], pts[i + 1], pts[i + 2], pts[i + 3], w]); };
-  const nearPath = (x, z, m) => paths.some((s) => { const dx = s[2] - s[0], dz = s[3] - s[1], L2 = dx * dx + dz * dz || 1; const t = clamp(((x - s[0]) * dx + (z - s[1]) * dz) / L2, 0, 1); return Math.hypot(x - s[0] - dx * t, z - s[1] - dz * t) < s[4] / 2 + m; });
+  const nearPath = (x, z, m) => gSome(SGR, x, z, m, (s) => { const dx = s[2] - s[0], dz = s[3] - s[1], L2 = dx * dx + dz * dz || 1; const t = clamp(((x - s[0]) * dx + (z - s[1]) * dz) / L2, 0, 1); return Math.hypot(x - s[0] - dx * t, z - s[1] - dz * t) < s[4] / 2 + m; });
   const benchAt = (x, z, faceX, faceZ) => { if (!free(x, z, 0.7)) return false; bench.push([x, z, Math.atan2(faceX - x, faceZ - z)]); placed.push([x, z, 0.9]); return true; };
   const lampAt = (x, z) => { if (!free(x, z, 0.4)) return; LAMPS.push([x, z, 0, true]); placed.push([x, z, 0.5]); };
   const tree = (x, z, type, s) => { if (!free(x, z, 1.0) || nearPath(x, z, 1.2)) return false; TREES.push([x, z, type, s, 1]); placed.push([x, z, type === 0 ? 2.0 : 1.2]); return true; };
@@ -80,7 +87,7 @@ function buildPlazasParks() {
     sides.sort((p, q) => q[0] - p[0]); for (const s of sides.slice(0, ar > 3000 ? 3 : 2)) addPath([cx, cz, s[1], s[2]], 2.4);
     // a small roundel in the middle with a fountain or a big tree
     if (ar > 2500) { const ring = []; for (let i = 0; i <= 18; i++) { const t = i / 18 * Math.PI * 2; ring.push(cx + Math.cos(t) * 5.5, cz + Math.sin(t) * 5.5); } addPath(ring, 2.4);
-      if (ar > 7000 && !PK2.fountains.some((f) => Math.hypot(f[0] - cx, f[1] - cz) < 80) && !placed.some((p) => Math.hypot(p[0] - cx, p[1] - cz) < p[2] + 3)) { stoneFountain(cx, cz, 2.6); placed.push([cx, cz, 3.2]); } }
+      if (ar > 7000 && !PK2.fountains.some((f) => Math.hypot(f[0] - cx, f[1] - cz) < 80) && !placedSome(cx, cz, 3, (p) => Math.hypot(p[0] - cx, p[1] - cz) < p[2] + 3)) { stoneFountain(cx, cz, 2.6); placed.push([cx, cz, 3.2]); } }
     // benches on the loop facing the lawns, lamps
     along(loop.concat(loop.slice(0, 2)), big ? 16 : 13, (x, z, ux, uz) => { const px = x - uz * 2.2, pz = z + ux * 2.2; benchAt(px, pz, x, z) || benchAt(x + uz * 2.2, z - ux * 2.2, x, z); });
     along(loop.concat(loop.slice(0, 2)), 22, (x, z, ux, uz) => lampAt(x + uz * 1.8, z - ux * 1.8), 8);
@@ -103,7 +110,7 @@ function buildPlazasParks() {
     else if (ar > 250 && free(cx, cz, 2)) tree(cx, cz, 0, 1.3);
   }
   // keep paths and features clear of the trees scattered earlier
-  for (let i = TREES.length - 1; i >= 0; i--) { const t = TREES[i]; if (t[4] === 1 && placed.some((p) => p[0] === t[0] && p[1] === t[1])) continue; if (nearPath(t[0], t[1], 1.0) || placed.some((p) => Math.hypot(p[0] - t[0], p[1] - t[1]) < p[2] * 0.8 + 0.6 && !(p[0] === t[0] && p[1] === t[1]))) TREES.splice(i, 1); }
+  for (let i = TREES.length - 1; i >= 0; i--) { const t = TREES[i]; if (t[4] === 1 && placedSome(t[0], t[1], 0, (p) => p[0] === t[0] && p[1] === t[1])) continue; if (nearPath(t[0], t[1], 1.0) || placedSome(t[0], t[1], 0.6, (p) => Math.hypot(p[0] - t[0], p[1] - t[1]) < p[2] * 0.8 + 0.6 && !(p[0] === t[0] && p[1] === t[1]))) TREES.splice(i, 1); }
   buildParkProps(bench, bin, bed, playground, bust);
   console.log('plazas/parks: paths', paths.length, 'benches', bench.length, 'beds', bed.length, 'playgrounds', playground.length, 'fountains', PK2.fountains.length);
 }
@@ -214,7 +221,7 @@ function duckPond(x, z, rx, rz) {
   TREES.push([x + rx * 0.35, z, 1, 0.8, 1]);
   // ducks: body + head + beak, white or mallard-brown; swim slowly round
   const ducks = []; const body = M(0xf4f1ea, 0.7), brown = M(0x7a5a3a, 0.7), green = M(0x1f5e3a, 0.4), beak = M(0xf08c00, 0.6);
-  for (let i = 0; i < 7; i++) { const d = new THREE.Group(); const mal = i % 2 === 0; const b = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), mal ? brown : body); b.scale.set(1, 0.7, 1.5); d.add(b);
+  for (let i = 0; i < 7; i++) { const d = new THREE.Group(); d.userData.noMerge = true; const mal = i % 2 === 0; const b = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), mal ? brown : body); b.scale.set(1, 0.7, 1.5); d.add(b);
     const h = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 6), mal ? green : body); h.position.set(0, 0.2, 0.25); d.add(h); const bk = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.14, 6), beak); bk.rotation.x = Math.PI / 2; bk.position.set(0, 0.18, 0.4); d.add(bk);
     d.position.y = 0.38; g.add(d); ducks.push({ d, a: Math.random() * 6.28, r: 0.45 + Math.random() * 0.35, sp: (0.08 + Math.random() * 0.1) * (Math.random() < 0.5 ? 1 : -1), ph: Math.random() * 6 }); }
   wt.onBeforeRender = () => { const t = performance.now() / 1000; for (const k of ducks) { const a = k.a + t * k.sp; const px = Math.cos(a) * rx * k.r, pz = Math.sin(a) * rz * k.r; k.d.position.x = px; k.d.position.z = pz; k.d.position.y = 0.38 + Math.sin(t * 2 + k.ph) * 0.015; k.d.rotation.y = Math.atan2(-Math.sin(a) * rx * Math.sign(k.sp), Math.cos(a) * rz * Math.sign(k.sp)); } };
