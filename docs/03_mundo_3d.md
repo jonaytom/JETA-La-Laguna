@@ -252,6 +252,28 @@ altura sin enlace y estructuras metidas en carriles. Ver `docs/07_pruebas.md`.
   calle abierta.
 - **Patio del antiguo Cine Aguere** (`atrioList`, en el punto «Aguere Cultural» proyectado sobre el pasaje): agujero
   redondo de 6,3 m al cielo a través del bloque (hueco en la azotea con `triangulateShape`), cristalera curva de dos
-  plantas con la banda «AGÜERITO», mural de una cara encima, suelo rojo y una escalera que baja a la galería de abajo
-  (corte del terreno, peldaños, rejas, columna) tras una barandilla. **No se baja** (de momento es decorado).
-- Prueba: `prueba_078.py` (recorre andando todo el pasaje, fotos dentro y del patio).
+  plantas con la banda «AGÜERITO» y mural de una cara encima.
+- **Dos niveles (v0.78.1)**, en `atrioFrame(a)`:
+  - Ejes: U apunta a Herradores (el lado alto) y psi es el ángulo desde U hacia +N.
+  - `line` y `segs` son la galería baja: desde la boca (psi = π) siguen los trozos de OSM del Pasaje Aguere hasta
+    C. El Juego.
+  - `yU` es la altura del rellano (calle) e `yL` la de la galería baja (la salida a El Juego, unos 5 m más abajo).
+- **Qué hay en el patio**:
+  - Un rellano a nivel de calle con barandilla (COL solo a esa altura).
+  - Dos escaleras curvas: una a cada lado, de phi0 = 1,08 a phi1 = 2,70 rad, radio 5,3 m y ancho 1,6 m, con peldaños de
+    ~0,18 m. Cada una tiene su `TUNNEL_DECKS` con `stairs:true` y un COL con rango de altura en el lado del patio.
+  - El suelo del patio: un deck en disco, `patio:true, capped:true`.
+  - La galería baja: un deck con `ceil`.
+- **Cortes del terreno**: `TCUTS` 9603 es el patio y 9604 la galería donde va poco enterrada.
+- **Colisiones del aro**: el aro está abierto arriba hacia Herradores y abajo en la boca.
+- **Quién construye qué**:
+  - `pasajeCovers()` hace las paredes, el techo, el suelo y las tiendas de la galería baja (`pasajeRun(..., yf, floor)`)
+    bajo edificio o bajo tierra. Pone un bloque donde el techo asomaría al aire y no pone nada en la calle.
+  - `pasajeInterior()` y `pasajeRibbonParts()` (la cinta de OSM en `buildRoads`) se saltan el patio y la galería baja
+    (`inAguereLow`).
+- **Cámara**: `pasajeCeilAt(x, z, y)` usa `PASAJES.zones`, que rellena `pasajeRun`. En un pasaje, `updateCamera` no
+  sube por encima del techo. Antes se metía en el edificio hueco y parecía transparente. Las paredes del pasaje tienen
+  dos caras.
+- Prueba: `prueba_078.py`. Recorre andando todo el pasaje, comprueba la cámara bajo el techo y baja por la escalera de
+  la derecha hasta la salida de El Juego mirando la altura en cada paso. Saca fotos dentro, del patio desde el rellano y
+  desde abajo, de la galería baja y de la salida.

@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.78.0</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.78.1</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -884,9 +884,31 @@ altura sin enlace y estructuras metidas en carriles. Ver <code>docs/07_pruebas.m
   calle abierta.</li>
 <li><strong>Patio del antiguo Cine Aguere</strong> (<code>atrioList</code>, en el punto «Aguere Cultural» proyectado sobre el pasaje): agujero
   redondo de 6,3 m al cielo a través del bloque (hueco en la azotea con <code>triangulateShape</code>), cristalera curva de dos
-  plantas con la banda «AGÜERITO», mural de una cara encima, suelo rojo y una escalera que baja a la galería de abajo
-  (corte del terreno, peldaños, rejas, columna) tras una barandilla. <strong>No se baja</strong> (de momento es decorado).</li>
-<li>Prueba: <code>prueba_078.py</code> (recorre andando todo el pasaje, fotos dentro y del patio).</li>
+  plantas con la banda «AGÜERITO» y mural de una cara encima.</li>
+<li><strong>Dos niveles (v0.78.1)</strong>, en <code>atrioFrame(a)</code>:</li>
+<li>Ejes: U apunta a Herradores (el lado alto) y psi es el ángulo desde U hacia +N.</li>
+<li><code>line</code> y <code>segs</code> son la galería baja: desde la boca (psi = π) siguen los trozos de OSM del Pasaje Aguere hasta
+    C. El Juego.</li>
+<li><code>yU</code> es la altura del rellano (calle) e <code>yL</code> la de la galería baja (la salida a El Juego, unos 5 m más abajo).</li>
+<li><strong>Qué hay en el patio</strong>:</li>
+<li>Un rellano a nivel de calle con barandilla (COL solo a esa altura).</li>
+<li>Dos escaleras curvas: una a cada lado, de phi0 = 1,08 a phi1 = 2,70 rad, radio 5,3 m y ancho 1,6 m, con peldaños de
+    ~0,18 m. Cada una tiene su <code>TUNNEL_DECKS</code> con <code>stairs:true</code> y un COL con rango de altura en el lado del patio.</li>
+<li>El suelo del patio: un deck en disco, <code>patio:true, capped:true</code>.</li>
+<li>La galería baja: un deck con <code>ceil</code>.</li>
+<li><strong>Cortes del terreno</strong>: <code>TCUTS</code> 9603 es el patio y 9604 la galería donde va poco enterrada.</li>
+<li><strong>Colisiones del aro</strong>: el aro está abierto arriba hacia Herradores y abajo en la boca.</li>
+<li><strong>Quién construye qué</strong>:</li>
+<li><code>pasajeCovers()</code> hace las paredes, el techo, el suelo y las tiendas de la galería baja (<code>pasajeRun(..., yf, floor)</code>)
+    bajo edificio o bajo tierra. Pone un bloque donde el techo asomaría al aire y no pone nada en la calle.</li>
+<li><code>pasajeInterior()</code> y <code>pasajeRibbonParts()</code> (la cinta de OSM en <code>buildRoads</code>) se saltan el patio y la galería baja
+    (<code>inAguereLow</code>).</li>
+<li><strong>Cámara</strong>: <code>pasajeCeilAt(x, z, y)</code> usa <code>PASAJES.zones</code>, que rellena <code>pasajeRun</code>. En un pasaje, <code>updateCamera</code> no
+  sube por encima del techo. Antes se metía en el edificio hueco y parecía transparente. Las paredes del pasaje tienen
+  dos caras.</li>
+<li>Prueba: <code>prueba_078.py</code>. Recorre andando todo el pasaje, comprueba la cámara bajo el techo y baja por la escalera de
+  la derecha hasta la salida de El Juego mirando la altura en cada paso. Saca fotos dentro, del patio desde el rellano y
+  desde abajo, de la galería baja y de la salida.</li>
 </ul></section>
 <section id="s4"><div class="src">docs/04_personajes_y_vehiculos.md</div><h1>4. Personajes, vehículos, tráfico y colisiones</h1>
 <blockquote>
@@ -1828,6 +1850,20 @@ que el cambio no obligue a tocar la lógica del juego.</p>
 <section id="s11"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.78.1 — 2026-10-19 — Pasaje Aguere en dos niveles: escaleras curvas y galería baja</h2>
+<ul>
+<li><strong>Patio del Cine Aguere en dos niveles</strong>: desde Herradores se llega al patio a nivel de calle, a un rellano con
+  barandilla. Desde ahí <strong>dos escaleras curvas, una por la izquierda y otra por la derecha</strong>, bajan rodeando el círculo
+  (30 peldaños, unos 5 m) hasta el suelo rojo del patio. Abajo están la boca de la galería con la banda «AGÜERITO» encima
+  y tiendas con rejas, también bajo el rellano.</li>
+<li><strong>Galería baja</strong>: del patio a la calle El Juego, llana, con suelo rojo, tiendas y bares a los lados y techo con luz.
+  Sale a la calle por el hueco de la fachada, sin asomar a la acera.</li>
+<li><strong>Ya no se transparenta</strong>: dentro del pasaje la cámara se queda bajo el techo. Antes subía al hueco del edificio y
+  parecía que no había nada encima. Además, las paredes del pasaje se ven por las dos caras, y el suelo del camino de
+  OSM ya no pasa por el patio ni por la galería de abajo.</li>
+<li>Prueba <code>prueba_078.py</code>: baja andando por la escalera de la derecha hasta la salida de El Juego y comprueba la altura
+  en cada paso y la cámara bajo el techo.</li>
+</ul>
 <h2>0.78.0 — 2026-10-19 — Mapa: el pasaje del Cine Aguere y uniones de puentes</h2>
 <ul>
 <li><strong>Pasaje Teide y Pasaje Aguere</strong>: la galería que va por debajo de los edificios desde la calle Obispo Rey Redondo

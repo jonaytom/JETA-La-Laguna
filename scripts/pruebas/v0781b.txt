@@ -1,0 +1,3 @@
+# v0.78.1: patio del Pasaje Aguere en dos niveles (escaleras curvas, galería baja hasta El Juego)
+prueba_078.py
+prueba_arranque.py

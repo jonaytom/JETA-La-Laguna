@@ -36,4 +36,3 @@ prueba_peralte.py
 prueba_persecuciones.py
 prueba_recorte.py
 prueba_trinidad.py
-herramientas/sonda_conduccion.py p:-495,683 p:2210,3312 p:377,-268 p:820,3494

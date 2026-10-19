@@ -315,7 +315,7 @@ function buildRoads() {
       bridgeDressing(c, w, hf, rd[0] <= 12); continue;
     }
     if (cls === 'asphaltLines') { for (const [s0, s1, ln] of lineRuns(ri, c)) { const pc = subPoly(c, s0, s1); if (pc.length >= 4) ribbon(pc, w, ln ? 'asphaltLines' : 'asphalt', ln ? YOFF.asphaltLines : YOFF.asphalt, ln ? tile : 8, ln ? 1 : w / 8); } }
-    else if (rd[0] >= 13) { for (const pc of offTramCut(c)) ribbon(pc, w, cls, YOFF[cls], tile, w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8)); } // v0.76: no path floating over the tram cutting
+    else if (rd[0] >= 13) { for (const pc0 of offTramCut(c)) for (const pc of pasajeRibbonParts(rd, pc0)) ribbon(pc, w, cls, YOFF[cls], tile, w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8)); } // v0.76: no path floating over the tram cutting
     else ribbon(c, w, cls, YOFF[cls], tile, cls === 'asphaltLines' ? 1 : w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8));
     if (['primary', 'secondary', 'tertiary', 'residential', 'unclassified', 'primary_link', 'secondary_link', 'tertiary_link', 'living_street'].includes(t) && cls !== 'paving')
       for (const sd of [1, -1]) ribbonBand(c, sd * (w / 2 - 0.3), sd * (w / 2 + 2.1), 'sidewalk', YOFF.sidewalk, 2.4, ri); // two kerb-side strips (a full-width slab under the road poked through it on curved slopes)

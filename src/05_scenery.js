@@ -171,7 +171,7 @@ function buildLamps() {
   const modernHead = (() => { const g = new THREE.BoxGeometry(0.35, 0.12, 0.7); g.translate(0, 6.95, 1.5); return g; })();
   const hist = mergeGeos([(() => { const g = new THREE.CylinderGeometry(0.06, 0.13, 3.6, 8); g.translate(0, 1.8, 0); return g; })(), (() => { const g = new THREE.ConeGeometry(0.32, 0.35, 6); g.translate(0, 4.45, 0); return g; })()]);
   const histHead = (() => { const g = new THREE.CylinderGeometry(0.22, 0.14, 0.6, 6); g.translate(0, 3.95, 0); return g; })();
-  for (let i = LAMPS.length - 1; i >= 0; i--) if (inPitch(LAMPS[i][0], LAMPS[i][1], 1.2) || inCut(LAMPS[i][0], LAMPS[i][1], 1.0) || nearTram(LAMPS[i][0], LAMPS[i][1], LAMPS[i][3] ? 4.0 : 5.2)) LAMPS.splice(i, 1); /* modern lamps reach 1.5 m out */ console.log('lamps after cuts and tram', LAMPS.length);
+  for (let i = LAMPS.length - 1; i >= 0; i--) if (inPitch(LAMPS[i][0], LAMPS[i][1], 1.2) || inCut(LAMPS[i][0], LAMPS[i][1], 1.0) || pasajeNear(LAMPS[i][0], LAMPS[i][1]) || nearTram(LAMPS[i][0], LAMPS[i][1], LAMPS[i][3] ? 4.0 : 5.2)) LAMPS.splice(i, 1); /* modern lamps reach 1.5 m out */ console.log('lamps after cuts and tram', LAMPS.length);
   const groups = [LAMPS.filter((l) => !l[3]), LAMPS.filter((l) => l[3])];
   [[modern, modernHead, poleMat], [hist, histHead, histMat]].forEach(([pg, hg, pm], gi) => {
     const L = groups[gi]; if (!L.length) return;

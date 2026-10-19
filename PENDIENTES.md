@@ -5,7 +5,75 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 
 ## Por revisar con Jonay
 
-- [ ] **Auditoría 0.78.0** (APTO CON AVISOS, vs la última medida de la 0.77): pintar 21,5 → 31 ms (+44 %), arranque
+- [ ] **Auditoría v0.78.1** (19-oct 19:17, APTO CON AVISOS):
+  - Un obstáculo nuevo en la calzada: árbol, farola o poste en Calle Juan de Vera (X −149, Z −235).
+  - Pintar un fotograma: 21,2 → 31,8 ms. En la 0.78.0 también salió 31 y en la segunda pasada 21,2: probablemente
+    ruido. Repetir.
+  - El arranque sube de 8,2 a 9,4 s.
+- [ ] **PAQUETE «RECREATIVAS Y MINIJUEGOS» (Jonay, 19-oct: «para acometer YA», plan v0.79 → v0.84)**:
+  - **Armas**: el rifle de agua atraviesa el brazo, y al apuntar también se ve mal. La pistola está bien: orientar el
+    rifle igual y ponerlo bien en la mano (capturas en X 189 Z 7).
+  - **Minimapa**: los puntos de misión no pueden quedar bajo las letras (el punto azul tapado por los nombres de calles
+    y sitios). Pintarlos encima.
+  - **Fútbol**:
+    - El portero hace palomitas para parar algunos tiros.
+    - Tras un gol saca de centro con el pie el que lo recibió. El rival no puede quitarle la pelota hasta que la toca,
+      y debe guardar distancia hasta que la pasa o corre con ella (como en el saque de banda).
+    - Tiro: cerca de la portería, si mantienes mucho el botón, el balón se va por encima. Hay que buscar la fuerza
+      buena para cada distancia. Desde muy lejos (bastante fuera del área, casi en el medio campo) sí se puede tirar
+      a tope.
+    - Doble pulsación de Espacio = regate.
+  - **Basket**:
+    - El rival hace combos de mates, más cuanto mejor es. No se le ve el combo y también puede fallarlo.
+    - Cada mate de combo tiene su animación espectacular. Con puños: el **360** y el **windmill/tomahawk**. Con
+      patada: el **de espaldas abriendo las piernas y bajando el balón primero**, y el **entre las piernas de frente**
+      (pasa el balón entre las piernas en el salto).
+    - Los pases largos van en parábola (ahora van rectísimos).
+  - **Recreativas 2D estilo años 80**:
+    - Puntos mientras juegas, récord en la máquina con 3 iniciales y niveles cada vez más difíciles.
+    - **Se desbloquean cuando se desbloquea el alcalde**: te llama el Blanco y te explica todo.
+    - **Casa del Blanco**: **Bencomo, Acentejo's Revenge** (el del guanche), gratis. Cambio de orden de Jonay: el tipo
+      Metal Slug pasa a ser de pago. La primera vez te invita a su casa. Luego vas
+      cuando quieras (no es misión ni obligatorio) y le pides jugar. Él te cuenta lo de los bares y las jugueterías.
+    - **Bares y cafeterías** (donde se compra comida ahora; se podrá entrar): máquinas de pago con el de naves tipo
+      R-Type/Nemesis.
+    - **Jugueterías**: de pago, el shooter tipo Metal Slug.
+    - **El juego del guanche** (casa de El Blanco): plataformas tipo Mario/Sonic/Prehistorik.
+      - Título: **«Bencomo, Acentejo's Revenge»**. Bencomo es el mencey de Taoro, líder de la resistencia. Acentejo es
+        la Matanza de Acentejo (mayo de 1494), la emboscada guanche a las tropas de Alonso Fernández de Lugo en el
+        barranco. Es la «venganza» de los videojuegos clásicos.
+      - El guanche salta con la **vara del salto del pastor** y también golpea con ella.
+      - Ambientado en la conquista de Tenerife: la **Matanza de Acentejo**.
+      - Enemigos: conquistadores de varios tipos que van saliendo, y perros y cosas así de la época.
+      - Tono satírico y caricaturesco, con elementos reales de la cultura guanche:
+        - **Salto del pastor**: la vara (asta) que usaban para cruzar barrancos y riscos.
+        - Varazos con el **banot**: lanza de madera con la punta endurecida al fuego.
+        - Comida: el plátano llegó después, así que quizá **gofio en vez de plátanos** (también comían cabra y
+          cebada).
+    - Otro beat'em up tipo Golden Axe.
+  - **Inmobiliaria y pisito**:
+    - En la inmobiliaria se alquila tu pisito: una casita chula cerca del Pasaje Teide.
+    - En el piso, una consola comprada en la juguetería (vale una pasta). Los juegos se compran también en la
+      juguetería y en casa se juegan gratis. Al encenderla sale un menú con los juegos que tengas.
+- [ ] **Campos de fútbol y canchas vallados** (Jonay, 19-oct, captura en X 485 Z 728 y Street View de C. Arturo Vergara
+      Rodríguez 2, La Verdellada): deben tener muro y valla alta alrededor con uno o dos accesos. Ahora están abiertos.
+- [ ] **Camino el Vallado / San Honorato, boca del túnel** (Jonay, 19-oct, capturas en X −959 Z 108 y X −982 Z 119): «sigue
+      siendo una locura, hay demasiadas cosas cruzándose» (líneas de carril, muros y losas en la boca). Debería ser **un
+      túnel simple** bajo la TF-5 / Av. de la Candelaria, junto a la rotonda de la gasolinera de San Benito (Street View).
+- [ ] **Agente revisor v0.78.0** (19-oct 16:02, `reportes/revision_v0.78.0_2026-10-19_1602.md`, con capturas): **38 avisos
+      (eran 68): 36 arreglados, 14 nuevos, 24 siguen.** Confirma arreglados: Vía de Ronda X 377 Z −268, Travesía
+      Andenes X 820 Z 3494, rampa X −495 Z 683, Pasaje Teide, y casi todo lo de San Lázaro / aeropuerto oeste.
+      Nuevos para mirar: enlace de autopista X 2210 Z 3588 (atasco y salto de 1,4 m, el coche 1,6 m por encima),
+      enlace X 720 Z 3389 (coche 1,9 m por debajo, salto −1,8 m), servicio X 946 Z 2849 (2,5 m por encima), Camino Las
+      Estaciones X 516 Z −332 (asfalto flotando 1 m), Camino Madre del Agua X 363 Z −1250 (se sale), Plaza de los
+      Remedios X −174 Z −137 (se hunde 0,46 m en algo de madera), Camino La Rúa X 543 Z −909 y servicio X −853 Z 58
+      (edificio en la calle), caminos a pie atascados X 674 Z 3460, X −759 Z 512, X −3052 Z 39. Siguen: zona oeste del
+      aeropuerto (Carretera General del Norte X −3254 Z −271, enlaces, caminos X −3040…−3162), Heraclio Sánchez X −86
+      Z 232, Pista Militar San Roque X 481 Z −307.
+- [ ] **Persecuciones en coche demasiado fáciles** (Jonay, 19-oct, apunte): los coches enemigos de las misiones frenan
+      demasiado en las curvas y no corren lo que deberían; que sea un poco más difícil (menos frenada en curva, más
+      velocidad punta). (El cambio de la 0.78 en las curvas fue solo del conductor de la prueba, no del juego.)
+- [x] (segunda pasada de Jonay, 19-oct 15:59: pintar 21,2 ms, arranque 8,2 s, todo lo demás igual: era ruido de la medida) **Auditoría 0.78.0** (APTO CON AVISOS, vs la última medida de la 0.77): pintar 21,5 → 31 ms (+44 %), arranque
       7,8 → 9,1 s; llamadas 811 → 803, triángulos y memoria casi iguales (+0,7 MB de geometría por los pasajes). Las
       cuatro pasadas de la 0.77 dieron 28,7 / 31,2 / 30 / 29,8 ms, así que el 21,5 parece la medida rara: volver a medir.
       Sin fugas. Pruebas 39/39.
@@ -470,6 +538,23 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 - [x] v0.50.0 Fusionar geometría de fuentes.
 
 ## Hecho
+
+- [x] **(v0.78.1) Pasaje Aguere: dos niveles y escaleras curvas** (Jonay, 19-oct, con captura en X −178 Z −33): desde Herradores se
+      llega al patio a nivel de calle; en el patio hay **dos escaleras que bajan rodeando el círculo, una por la izquierda
+      y otra por la derecha**, hasta la galería de abajo, y desde ahí es **llano hasta la salida de la calle El Juego**
+      (unos 4 m más baja). Ahora el pasaje baja poco a poco por la pendiente y la escalera es un hueco recto con
+      barandilla que no se baja. Además **se transparenta algo en el túnel**: todo el pasaje va bajo edificio y solo el
+      patio de la escalera redonda tiene cielo. Captura de Jonay en X −188 Z −14 (el hueco entre los dos trozos de OSM
+      del Pasaje Aguere, hacia El Juego): la galería se ve **por arriba, sin edificio encima** (paredes con los rótulos y
+      suelo al aire), con un remiendo de suelo claro alrededor; ahí falta el bloque encima (o el edificio grande de OSM
+      que la contiene no se está dibujando: mirar el n.º 5227 de `data.json`, 18,6 m, de El Juego a Herradores).
+      **Entrada/salida de la calle El Juego** (captura de Jonay en X −211 Z 58): el hueco de la fachada es más ancho que
+      la galería y a un lado se ve «transparente»: las paredes de dentro del pasaje son de una sola cara (miran hacia
+      dentro) y desde fuera, de lado, no se ven; hacer el hueco del ancho de la galería, con jambas, y las paredes de
+      dos caras (o con grosor). Revisar las otras bocas (Herradores, Obispo Rey Redondo). En la captura también se ve
+      un paño oscuro inclinado en el borde del patio (pared del aro que no casa con el bloque).
+      → Hecho en v0.78.1: rellano, dos escaleras curvas, suelo del patio y galería baja llana hasta El Juego; cámara bajo
+      el techo del pasaje, paredes de dos caras, sin la cinta de OSM en el patio, galería sin asomar a la calle.
 
 - [x] v0.52.0 — Sin fuga de los coches del tráfico (P0.a): piezas compartidas, se libera lo propio al descartar, motoristas del grupo de peatones.
 - [x] v0.51.0 — Calles superpuestas a distinta altura, isletas de rotonda en cuesta, inicio de trincheras, rampas de garaje.

@@ -175,6 +175,7 @@ function updateCamera(dt) {
     cy = Math.max(cy, low.y + 0.8); if (low.covered) cy = Math.min(cy, low.y + (low.ceil || 4.6));
   } else cy = Math.max(cy, PLAYER.interior ? PLAYER.interior.floor + 0.5 : heightAt(cx, cz) + 0.6);
   if (PLAYER.interior) { cy = Math.min(cy, PLAYER.interior.ceil - 0.3); }
+  else if (!PLAYER.car) { const pc = pasajeCeilAt(tx, tz, PLAYER.y); if (pc !== null) cy = Math.min(cy, pc - 0.3); } // v0.78.1: under a passage (Teide, Aguere) the camera stays under its roof (it went up into the hollow building: it looked see-through)
   if (PLAYER.onDeck) cy = Math.max(cy, PLAYER.y + 1.2);
   if (PLAYER.car && PLAYER.car.onDeck) cy = Math.max(cy, PLAYER.car.y + 1.0);
   CAM.pos.set(cx, cy, cz);

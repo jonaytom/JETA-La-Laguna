@@ -3,6 +3,19 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.78.1 — 2026-10-19 — Pasaje Aguere en dos niveles: escaleras curvas y galería baja
+- **Patio del Cine Aguere en dos niveles**: desde Herradores se llega al patio a nivel de calle, a un rellano con
+  barandilla. Desde ahí **dos escaleras curvas, una por la izquierda y otra por la derecha**, bajan rodeando el círculo
+  (30 peldaños, unos 5 m) hasta el suelo rojo del patio. Abajo están la boca de la galería con la banda «AGÜERITO» encima
+  y tiendas con rejas, también bajo el rellano.
+- **Galería baja**: del patio a la calle El Juego, llana, con suelo rojo, tiendas y bares a los lados y techo con luz.
+  Sale a la calle por el hueco de la fachada, sin asomar a la acera.
+- **Ya no se transparenta**: dentro del pasaje la cámara se queda bajo el techo. Antes subía al hueco del edificio y
+  parecía que no había nada encima. Además, las paredes del pasaje se ven por las dos caras, y el suelo del camino de
+  OSM ya no pasa por el patio ni por la galería de abajo.
+- Prueba `prueba_078.py`: baja andando por la escalera de la derecha hasta la salida de El Juego y comprueba la altura
+  en cada paso y la cámara bajo el techo.
+
 ## 0.78.0 — 2026-10-19 — Mapa: el pasaje del Cine Aguere y uniones de puentes
 - **Pasaje Teide y Pasaje Aguere**: la galería que va por debajo de los edificios desde la calle Obispo Rey Redondo
   (junto al «Desencuentro»), cruza Herradores y sale a la calle El Juego, con tiendas y bares parodia a los dos lados
