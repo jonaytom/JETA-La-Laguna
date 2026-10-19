@@ -12,7 +12,8 @@ JS = r"""
   const car=new d.Car('compact',0xff0000,pts[0][0],pts[0][1],h); car.mode='physics'; car.driver='test'; car.y=y0+0.3; if(!d.CARS.includes(car)) d.CARS.push(car);
   let wp=1, maxDy=0, stuckT=0, t=0, prog=0;
   const ctl=()=>{ while(wp<pts.length-1 && Math.hypot(pts[wp][0]-car.x,pts[wp][1]-car.z)<8) wp++; const g=pts[wp]; const want=Math.atan2(g[0]-car.x,g[1]-car.z); let da=want-car.h; while(da>Math.PI)da-=2*Math.PI; while(da<-Math.PI)da+=2*Math.PI;
-    car.ctl={thr: car.speed<13?0.8:0.2, brk:0, steer:Math.max(-1,Math.min(1,da*2)), hb:0}; };
+    let vmax=13; if (wp<pts.length-1) { const n=pts[wp+1]; const a1=Math.atan2(g[0]-pts[wp-1][0],g[1]-pts[wp-1][1]), a2=Math.atan2(n[0]-g[0],n[1]-g[1]); let tu=Math.abs(a2-a1); if (tu>Math.PI) tu=2*Math.PI-tu; const dg=Math.hypot(g[0]-car.x,g[1]-car.z); if (tu>0.6 && dg<30) vmax=tu>1.2?6:9; } /* v0.78: slow down for sharp bends (like a driver would) */
+    car.ctl={thr: car.speed<vmax?0.8:0, brk: car.speed>vmax+2?0.6:0, steer:Math.max(-1,Math.min(1,da*2)), hb:0}; P.x=car.x; P.z=car.z; /* v0.78: the player goes along: cars farther than ~300 m from him stop being simulated (the 3 «tramos que fallan» were only that) */ };
   for (let k=0;k<30*Math.max(40, L/8+15);k++){ /* time limit from the length (a 800 m motorway didn't fit in 40 s) */ ctl(); if (k%15===0) for (const o of d.CARS) if (o!==car && o.driver && o.driver!=='player' && o.driver!=='test' && Math.hypot(o.x-car.x,o.z-car.z)<60 && o.remove) o.remove(); /* random traffic out of the way: this test measures the road */ __step(1,1/30); t+=1/30; // progress = distance to end
     const de=Math.hypot(pts[pts.length-1][0]-car.x,pts[pts.length-1][1]-car.z); if (de<6) { break; }
     if (car.speed<1) stuckT+=1/30; else stuckT=0; if (stuckT>4) break; }

@@ -1,0 +1,2 @@
+herramientas/sonda_conduccion.py p:2210,3312 p:377,-268 3521
+herramientas/sonda_perfil.py 400 -293 360 -250

@@ -22,6 +22,14 @@ const LANDMARKS = [
   { re: /Antigua Iglesia de San Agustín/, atlas: 5, col: '#cfc8bb', H: 12, noRoof: true, deco: ['ruins'], label: 'Ruinas de San Agustín' },
   { re: /Dolores/, atlas: 6, col: '#f4f1e8', H: 8.5, deco: ['espadana'] },
   { re: /Casa Peraza de Ayala|Casa Bigot|Casa Casabuena|Casa Franco de Castilla|Casa de los Marqueses/, hip: true, atlas: 9, quoin: BASALT, deco: ['portal:grey'] },
+  // v0.78: the rest of the callejero's list (docs/referencias/callejero/edificios.md), so they can be used in missions
+  { re: /^Casa de la Alhóndiga$/, hip: true, atlas: 9, col: '#e9e1cf', H: 9, quoin: BASALT, deco: ['portal:grey'], label: 'Casa de la Alhóndiga' },
+  { re: /^Casa Riquel$/, hip: true, atlas: 9, col: '#f1ead9', H: 9, quoin: BASALT, deco: ['portal:grey'], label: 'Casa Riquel' },
+  { re: /^Casa Mustelier$/, hip: true, atlas: 9, col: '#e3cfa6', H: 9.5, quoin: GSTONE, deco: ['portal:tuff'], label: 'Casa Mustelier' },
+  { re: /^Casa Ossuna$/, hip: true, atlas: 9, col: '#efe6d2', H: 9.5, quoin: BASALT, deco: ['portal:grey', 'cornice'], label: 'Casa de Ossuna' },
+  { re: /^Palacete Rodríguez de Azero$/, hip: true, atlas: 9, col: '#e6d7bf', H: 10.5, quoin: GSTONE, deco: ['portal:grey', 'cornice'], label: 'Palacete Rodríguez de Azero' },
+  { re: /^Capilla de la Cruz Verde$/, atlas: 6, col: '#f4f1e8', H: 6.5, deco: ['espadana'], label: 'Capilla de la Cruz Verde' },
+  { re: /^Capilla Cruz de los Plateros$/, atlas: 6, col: '#f4f1e8', H: 6.5, deco: ['espadana'], label: 'Capilla de la Cruz de los Plateros' },
   { re: /Ciencias Políticas y Sociales/, atlas: 15, col: '#d8d2c6', H: 4.2, noRoof: true, deco: ['pyramid'], label: 'Edificio La Pirámide' },
   { re: /Facultad|Biblioteca General|Pabellón de Gobierno|Instituto de Tecnolog|Instituto Nacional|Instituto de Medicina/, atlas: 15 },
   { re: /Colegio Mayor|Vicerectorado/, atlas: 7, col: '#efe3c4' },
@@ -32,6 +40,9 @@ const LANDMARK_AT = [
   // health centres (Jonay's Google Maps captures): Laguna-Universidad (Av. Trinidad 50), San Benito (C. Benito Pérez Galdós)
   { x: -199, z: 266, r: 9, o: { atlas: 15, col: '#f2f2ee', H: 7.5, deco: ['salud:CENTRO DE SALUD LAGUNA-UNIVERSIDAD'], label: 'Centro de Salud Laguna-Universidad' } },
   { x: -960, z: -133, r: 9, o: { atlas: 15, col: '#f2f2ee', deco: ['salud:CENTRO DE SALUD SAN BENITO'], label: 'Centro de Salud San Benito' } },
+  { x: -210, z: -220, r: 9, o: { hip: true, atlas: 9, col: '#efe3c9', quoin: BASALT, deco: ['portal:grey'], label: 'Casa Museo Los Sabandeños' } }, // v0.78: callejero n.º 23 (OSM: museum point)
+  { x: 33, z: -212, r: 9, o: { hip: true, atlas: 9, col: '#f2ede2', quoin: GSTONE, deco: ['portal:grey'], label: 'Fundación Cristino de Vera' } }, // n.º 29
+  { x: 2097, z: 1968, r: 16, o: { atlas: 15, col: '#f4f6f8', deco: ['salud:QUIRÓFANO SALUD · CLÍNICA'], label: 'Clínica Quirófano Salud' } }, // v0.78: the private clinic by the TF-5 (OSM «Quirón Salud»), parody
   { x: 150, z: -75, r: 12, o: { atlas: 6, col: '#f4f1e8', H: 10, deco: ['celosia'], label: 'Convento de Santa Catalina' } }];
 // Finca España, C. Tacoronte (zona del colega de Jonay): bloques de 3-4 plantas color arena / salmón
 const FINCA_COLS = ['#e8c9a0', '#e6b08f', '#dcc29a', '#eab7a0', '#e9d3b0'];

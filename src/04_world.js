@@ -301,7 +301,7 @@ function buildRoads() {
   for (let ri = 0; ri < DATA.R.length; ri++) { const rd = DATA.R[ri]; DRESS_RI = ri; OBST_RI = (DEP.has(ri) || (rd[3] & 2) || RAISE.has(ri)) && window.__AUDIT ? ri : -1;
     const t = RTN[rd[0]], cls = ROADCLASS(rd), w = rd[2], c = rd[4];
     const tile = cls === 'asphaltLines' ? 12 : cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8;
-    if (DEP.has(ri)) { TUN_RI = ri; tunnelRoad(c, Math.max(w, 2.6), cls, tile, depressedHF(ri), PED_TUN.has(ri) ? { H: 2.9, cover: 3.1 } : {}); TUN_RI = -1; continue; } // tunnels, underpasses and their cuttings
+    if (DEP.has(ri)) { TUN_RI = ri; tunnelRoad(c, Math.max(w, 2.6), cls, tile, depressedHF(ri), PED_TUN.has(ri) ? { H: 2.9, cover: 3.1 } : (TF13.ring.includes(ri) || TF13.tubes.includes(ri) || TF13.app.includes(ri)) ? { wc: [0.47, 0.41, 0.35] } : {}); TUN_RI = -1; continue; } // v0.78: the TF-13 cutting has brown basalt walls (photos) // tunnels, underpasses and their cuttings
     if (RAISE.has(ri) && !(rd[3] & 2)) { // approach embankment of a bridge that had to be lifted for clearance
       const sp = RAISE_SPAN.get(ri), Lr = polyLen(c), parts = [];
       const raised = subPoly(c, sp[0], sp[1]); const hf = (s, x, z) => heightAt(x, z) + raiseOf(ri, s + sp[0]);
@@ -388,7 +388,7 @@ function bridgeDressing(c, w, hf, road) {
         const q = [[px - pw, pz - pw], [px + pw, pz - pw], [px + pw, pz + pw], [px - pw, pz + pw]];
         for (let k = 0; k < 4; k++) { const p = q[k], r = q[(k + 1) % 4]; T.quad([p[0], y0, p[1]], [r[0], y0, r[1]], [r[0], y1, r[1]], [p[0], y1, p[1]], [0, 0], [0, 0], [0, 0], [0, 0], [0.7, 0.69, 0.66], undefined, [(r[1] - p[1]), 0, -(r[0] - p[0])]); }
         COL.addCirc(px, pz, pw * 1.2, y0, y1); } } }
-  BRIDGE_DECKS.push({ type: 'path', pts: pts.map((p) => [p[0], p[1], p[2] + 0.12]), w: w + 0.4, road, bridge: true });
+  BRIDGE_DECKS.push({ ri: DRESS_RI, type: 'path', pts: pts.map((p) => [p[0], p[1], p[2] + 0.12]), w: w + 0.4, road, bridge: true });
 }
 const BRIDGE_DECKS = [];
 function roundaboutIsland(cx, cz, R, w) {
@@ -554,7 +554,16 @@ function subPoly(c, s0, s1) { const out = []; let s = 0;
     if (b >= s0 && a <= s1) { const t0 = L ? clamp((s0 - a) / L, 0, 1) : 0, t1 = L ? clamp((s1 - a) / L, 0, 1) : 1; if (!out.length) out.push(x1 + (x2 - x1) * t0, z1 + (z2 - z1) * t0); out.push(x1 + (x2 - x1) * t1, z1 + (z2 - z1) * t1); }
     s = b; }
   return out.length >= 4 ? out : c.slice(0, 4); }
-const raiseOf = (ri, s) => { const a = RAISE.get(ri); if (!a) return 0; let d = 0; for (const f of a) d = Math.max(d, f(s)); return d; };
+const RAISE_TAPER = new Map();
+// v0.78 («finales de tablero»): a raised road whose end doesn't continue on another raised road or bridge comes down to
+// the street over its last 10 m (Av. Ghandi ended 0.7-0.9 m over the Travesía it meets: cars stopped against the step)
+function raiseTaper(ri) { let t = RAISE_TAPER.get(ri); if (t) return t; const c = DATA.R[ri][4], L = polyLen(c);
+  // another raised road or bridge with a point within 12 m of this end carries on (OSM pieces don't always share the node: motorway link by the HUC)
+  const up = (x, z) => DATA.R.some((rd, rj) => { if (rj === ri || !(RAISE.has(rj) || ((rd[3] & 2) && !AT_GRADE.has(rj)))) return false; const q = rd[4]; for (let i = 0; i < q.length; i += 2) if (Math.abs(q[i] - x) < 12 && Math.abs(q[i + 1] - z) < 12) return true; return false; });
+  t = { L, f0: !up(c[0], c[1]), f1: !up(c[c.length - 2], c[c.length - 1]) }; RAISE_TAPER.set(ri, t); return t; }
+const raiseOf = (ri, s) => { const a = RAISE.get(ri); if (!a) return 0; let d = 0; for (const f of a) d = Math.max(d, f(s)); if (d <= 0) return 0; const T = raiseTaper(ri); let k = Math.min(T.f0 ? s / 10 : 9, T.f1 ? (T.L - s) / 10 : 9);
+  const sp = RAISE_SPAN.get(ri); if (sp && !(DATA.R[ri][3] & 2)) { if (sp[0] > 0.5) k = Math.min(k, (s - sp[0]) / 16); if (sp[1] < T.L - 0.5) k = Math.min(k, (sp[1] - s) / 16); } // and where the raised stretch starts/ends inside the road (Travesía Andenes, Vía de Ronda: a 0.5-0.9 m step)
+  return d * smooth(0, 1, k); };
 const EXTRA_NEED = new Map(), BRIDGE_H = new Map();
 function computeRaisesOnce() {
   DEPSET = new Set([...DEP.keys()].map((ri) => DATA.R[ri]));
@@ -666,7 +675,7 @@ function roadYFn(ri) { const rd = DATA.R[ri], c0 = rd[4];
 function computeRaises() {
   let nb = 0;
   for (let it = 0; it < 5; it++) {
-    RAISE.clear(); RAISE_SPAN.clear(); AT_GRADE.clear(); BRIDGE_H.clear(); nb = computeRaisesOnce(); let changed = 0;
+    RAISE.clear(); RAISE_SPAN.clear(); AT_GRADE.clear(); BRIDGE_H.clear(); RAISE_TAPER.clear(); nb = computeRaisesOnce(); let changed = 0;
     DATA.R.forEach((rd, ri) => { if (!(rd[3] & 2) || DEP.has(ri) || AT_GRADE.has(ri)) return; const yB = roadYFn(ri);
       for (const X of crossingsOf(ri)) { const r2 = DATA.R[X.rj]; if ((r2[3] & 2) || DEP.has(X.rj)) continue; if (!RAISE.has(X.rj)) continue; if (r2[0] > 12 && rd[0] <= 12) continue;
         const clr = r2[0] > 12 ? 3.2 : 5.4; const gap = yB(X.s, X.x, X.z) - roadYFn(X.rj)(X.so, X.x, X.z);
@@ -750,7 +759,7 @@ function tunnelRoad(c, w, cls, tile, hf, opt = {}) {
       else TCUTS.push([a[0], a[1], b[0], b[1], hw + 0.15, gid]);
     }
   }
-  TUNNEL_DECKS.push({ type: 'path', pts: pts.map((p) => [p[0], p[1], p[2] + 0.12]), w: w + 1.0, road: true, tunnel: true, hw: w / 2 + 0.3, tram: cls === 'tram', ceil: opt.H ? opt.H - 0.3 : undefined });
+  TUNNEL_DECKS.push({ ri: TUN_RI, type: 'path', pts: pts.map((p) => [p[0], p[1], p[2] + 0.12]), w: w + 1.0, road: true, tunnel: true, hw: w / 2 + 0.3, tram: cls === 'tram', ceil: opt.H ? opt.H - 0.3 : undefined });
 }
 const underground = (x, z, y) => y < heightAt(x, z) - 1.6; // deep in a tunnel/cutting: surface obstacles don't apply
 // open cutting edge for things on the surface: returns push-out vector or null
@@ -763,7 +772,10 @@ function trenchPush(x, z, rad) {
 const sameLevel = (y1, y2) => Math.abs(y1 - y2) < 2.6;
 // ground below the terrain surface (tunnels/cuttings) for something currently at height py
 let TCUTS_READY = false; let DEP_ROWS = null;
-function onSurfaceRoad(x, z) { if (!DEP_ROWS) DEP_ROWS = new Set([...DEP.keys()].map((i) => DATA.R[i])); const rd = ROADSEG.nearest(x, z, (r) => !DEP_ROWS.has(r) && !(r[3] & 6) && r[0] <= 12); return !!rd && !RAISE.has(rd.ri) && rd.d < DATA.R[rd.ri][2] / 2 + 0.3; }
+function onSurfaceRoad(x, z, from = -1) { if (!DEP_ROWS) DEP_ROWS = new Set([...DEP.keys()].map((i) => DATA.R[i])); const rd = ROADSEG.nearest(x, z, (r) => !DEP_ROWS.has(r) && !(r[3] & 6) && r[0] <= 12); if (!rd || RAISE.has(rd.ri) || rd.d >= DATA.R[rd.ri][2] / 2 + 0.3) return false;
+  return !(from >= 0 && roadsMeet(from, rd.ri)); } // v0.78: the street the ramp starts from doesn't count (the car stayed on it and then dropped 1-2 m into the ramp)
+function roadsMeet(a, b) { const ca = DATA.R[a][4], cb = DATA.R[b][4]; const ends = (c) => [K(c[0], c[1]), K(c[c.length - 2], c[c.length - 1])]; const va = new Set(); for (let i = 0; i < ca.length; i += 2) va.add(K(ca[i], ca[i + 1])); const vb = new Set(); for (let i = 0; i < cb.length; i += 2) vb.add(K(cb[i], cb[i + 1]));
+  return ends(cb).some((k) => va.has(k)) || ends(ca).some((k) => vb.has(k)); }
 function lowAt(x, z, py) {
   let best = null;
   for (const d of TUNNEL_DECKS) {
@@ -775,8 +787,9 @@ function lowAt(x, z, py) {
       const px = a[0] + dx * t, pz = a[1] + dz * t, dd = Math.hypot(x - px, z - pz); if (dd > d.w / 2) continue; const y = lerp(a[2], b[2], t); const g = heightAt(x, z);
       if (y > g - 0.2 || py > y + 2.9 || py < y - 2.5) continue;
       if (g - y < 1.6 && !d.ceil && TCUTS_READY && !inCut(x, z, 0.3)) continue;
+      if (!d.hall && TCUTS_READY && py > g - 0.4 && g - y > 1.0 && !inCut(x, z, 0.3)) continue; // v0.78: from the street you only drop into a tunnel where its hole is (a service road over a tube near the HUC dropped cars 2 m into it)
       if (d.ceil && !d.hall && g - y > 0.25 && dd > d.hw - 0.1) continue; // v0.76 (Jonay): beside a car park ramp, under the pavement (the deck is wider than the hole): you sank to the waist and an invisible wall stopped you
-      if (g - y < 1.0 && !d.ceil && ROADS_INDEXED && onSurfaceRoad(x, z)) continue; // a street at ground level covers the shallow trench here: stand on it // shallow end with no hole in the terrain: walk/drive on the ground (no sinking)
+      if (g - y < 1.0 && !d.ceil && ROADS_INDEXED && onSurfaceRoad(x, z, d.ri === undefined ? -1 : d.ri)) continue; // a street at ground level covers the shallow trench here: stand on it // shallow end with no hole in the terrain: walk/drive on the ground (no sinking)
       const k = Math.abs(py - y), kb = best ? Math.abs(py - best.y) : 1e9;
       if (!best || k < kb - 0.3 || (k < kb + 0.3 && dd < best.d)) best = { y, px, pz, d: dd, hw: d.hw, covered: g - y > 6.3 || !!d.ceil, ceil: d.ceil, cap: d.capped && d.hall ? { s: t * Math.sqrt(L2), len: Math.sqrt(L2), ux: dx / Math.sqrt(L2), uz: dz / Math.sqrt(L2), open0: i > 0, open1: i < p.length - 2 /* v0.76: a chain of halls: only its two ends are walls */ } : null }; }
   }
@@ -862,9 +875,10 @@ function buildBuildings() {
     const H = LM && LM.H ? LM.H : h10 / 10; const top = bmax + H; const bot = bmin - 0.6;
     if (name && /Intercambiador/.test(name) && Math.abs(polyArea(pts)) > 5000) { INTER_B = { pts, cx, cz, bmax, top, name }; for (let i = 0; i < n; i++) {} continue; }
     const r = mulberry(seed * 7 + 3);
-    BUILD.push({ pts, cx, cz, top, bmax, style, name, H });
+    const PS = style !== 4 && style !== 5 ? pasajesOf(pts, H) : null; // v0.78: walkways under the building (05x_pasajes.js)
+    BUILD.push({ pts, cx, cz, top, bmax, style, name, H, pasaje: !!PS });
     // collisions
-    for (let i = 0; i < n; i++) { const p = pts[i], q = pts[(i + 1) % n]; COL.addSeg(p[0], p[1], q[0], q[1]); }
+    for (let i = 0; i < n; i++) { const p = pts[i], q = pts[(i + 1) % n]; const cu = PS ? pasajeCuts(p, q, PS) : null; if (cu) pasajeCol(p, q, cu); else COL.addSeg(p[0], p[1], q[0], q[1]); }
     if (CONC_CARVE.pts === pts) { CHURCHES.push({ pts, cx, cz, top, bmin, bmax, H, name, area: Math.abs(polyArea(pts)), custom: true }); continue; } // La Concepción: modelled in 05o_concepcion.js
     if (style === 5) { // greenhouse
       const A = acc(cx, cz, 'glassHouse');
@@ -905,6 +919,7 @@ function buildBuildings() {
       const out = [(q[1] - p[1]) / len, 0, -(q[0] - p[0]) / len];
       const v0 = (bot - bmin) / fh, v1 = (wallTop - bmin) / fh;
       // long street fronts of terraced houses / blocks: split into parcels with their own colour (and facade for houses)
+      const cuts = PS ? pasajeCuts(p, q, PS) : null; if (cuts) { pasajeWall(A, p, q, cuts, bot, wallTop, bmin, fh, nb, col, [atlas, bi % 97], out); continue; }
       const parcel = !LM && !store && (style === 0 || style === 1 || style === 2) && len > (style === 2 ? 24 : 12);
       if (!parcel) { A.quad([p[0], bot, p[1]], [q[0], bot, q[1]], [q[0], wallTop, q[1]], [p[0], wallTop, p[1]], [0, v0], [nb, v0], [nb, v1], [0, v1], col, [atlas, bi % 97], out); continue; }
       const pr = mulberry(seed * 13 + i * 7 + 1); const segL = style === 2 ? 14 + pr() * 10 : 6 + pr() * 6; const k = Math.max(2, Math.round(len / segL));
@@ -917,6 +932,7 @@ function buildBuildings() {
         A.quad([a[0], bot, a[1]], [b[0], bot, b[1]], [b[0], wallTop, b[1]], [a[0], wallTop, a[1]], [0, w0], [nb2, w0], [nb2, w1], [0, w1], c2, [at, (bi + j * 31) % 97], out);
       }
     }
+    if (PS) pasajeInterior(PS, pts, cx, cz, col);
     if (LM) LMQ.push({ L: LM, pts, top, bmin, bmax, cx, cz, name });
     if (LM && LM.quoin) addQuoins(pts, bot, wallTop, 0.75, LM.quoin);
     if (LM && LM.noRoof) continue;
@@ -937,14 +953,16 @@ function buildBuildings() {
         const v0 = (wallTop - bmin) / fh, v1 = (top - bmin) / fh; A.quad([p[0], wallTop, p[1]], [q[0], wallTop, q[1]], [q[0], top, q[1]], [p[0], top, p[1]], [0, v0], [nb, v0], [nb, v1], [0, v1], col, [atlas, bi % 97], out); }
       pts = atico;
     }
-    const tris = THREE.ShapeUtils.triangulateShape(pts.map((p) => new THREE.Vector2(p[0], p[1])), []);
+    const AH = !hip ? atrioHole(pts) : null; // v0.78: a patio open to the sky through the block (Cine Aguere, 05x_pasajes.js)
+    const tris = THREE.ShapeUtils.triangulateShape(pts.map((p) => new THREE.Vector2(p[0], p[1])), AH ? [AH.hole.map((p) => new THREE.Vector2(p[0], p[1]))] : []); const TP = AH ? pts.concat(AH.hole) : pts;
+    if (AH) buildAtrio(AH.a, top, cx, cz);
     if (hip) {
       hipRoof(pts, cx, cz, top, area, tris);
     } else {
       const R = acc(cx, cz, 'roofFlat');
       const ry = parapet ? top - 0.85 : top;
       const g = 0.7 + r() * 0.2; const rc = [g, g * 0.98, g * 0.95];
-      for (const t of tris) { const a = pts[t[0]], b2 = pts[t[1]], c2 = pts[t[2]]; R.tri([a[0], ry, a[1]], [b2[0], ry, b2[1]], [c2[0], ry, c2[1]], [a[0] / 4, a[1] / 4], [b2[0] / 4, b2[1] / 4], [c2[0] / 4, c2[1] / 4], rc, undefined, [0, 1, 0]); }
+      for (const t of tris) { const a = TP[t[0]], b2 = TP[t[1]], c2 = TP[t[2]]; R.tri([a[0], ry, a[1]], [b2[0], ry, b2[1]], [c2[0], ry, c2[1]], [a[0] / 4, a[1] / 4], [b2[0] / 4, b2[1] / 4], [c2[0] / 4, c2[1] / 4], rc, undefined, [0, 1, 0]); }
       if (parapet) {
         const T = acc(cx, cz, 'trim'); const pc = [col[0] * 0.95, col[1] * 0.95, col[2] * 0.95]; const tc = style === 0 ? [0.45, 0.44, 0.42] : [0.93, 0.92, 0.9];
         for (let i = 0; i < n; i++) {

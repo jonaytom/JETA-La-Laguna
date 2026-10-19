@@ -1,0 +1,7 @@
+# v0.78 mapa: estado de partida
+audit_obstaculos.py
+audit_cruces.py
+audit_hundimiento.py
+prueba_conduccion_tuneles_puentes.py
+prueba_grandes.py
+herramientas/foto_desde_arriba.py vistas078.json

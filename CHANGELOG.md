@@ -3,6 +3,31 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.78.0 — 2026-10-19 — Mapa: el pasaje del Cine Aguere y uniones de puentes
+- **Pasaje Teide y Pasaje Aguere**: la galería que va por debajo de los edificios desde la calle Obispo Rey Redondo
+  (junto al «Desencuentro»), cruza Herradores y sale a la calle El Juego, con tiendas y bares parodia a los dos lados
+  (Bar El Guanchito, Zapatería Teidefinitivo, Cafetería Aguerita, Móviles Guanchófono…), techo con luz y los edificios
+  encima (donde el mapa de OSM la dejaba al aire, ahora hay un bloque encima). Se recorre andando de punta a punta.
+- **Patio del antiguo Cine Aguere**: a mitad del pasaje, el agujero redondo al cielo con la cristalera curva de dos
+  plantas, la banda negra con el rótulo «AGÜERITO», una cara enorme pintada en la pared de arriba, suelo rojo y la
+  escalera que baja a la galería de abajo (rejas, columna) tras la barandilla (todavía no se baja).
+- Otros pasajes bajo edificios (el de La Concepción y algunos más): hueco en la fachada y se pasa por debajo.
+- **Finales de tablero y rampas**: los tramos elevados bajan a la calle donde terminan (Travesía Enlace Andenes del
+  Sobradillo / Av. Ghandi, Vía de Ronda); una calle a nivel junto a un terraplén bajo ya no sube al coche encima; desde
+  la calle solo se cae a un túnel donde está su boca; la rampa de servicio junto a la Av. Astrofísico Francisco Sánchez
+  ya no tiene el escalón de 1,2 m.
+- **Prueba de conducción**: los «tramos que fallan» (Autopista del Norte ×2, Camino La Rúa, Camino La Hornera) eran
+  de la propia prueba (el coche se alejaba más de 300 m del jugador y dejaba de moverse; tomaba las curvas cerradas a
+  80 km/h): ahora pasan los 112 tramos.
+- **Callejero**: Casa de la Alhóndiga, Casa Riquel, Casa Mustelier, Casa de Ossuna, Palacete Rodríguez de Azero, las
+  capillas de la Cruz Verde y de los Plateros, la Casa Museo Los Sabandeños y la Fundación Cristino de Vera con su
+  fachada histórica y su nombre en el mapa (para usarlas en misiones).
+- **Salud**: la clínica privada junto a la TF-5 («Clínica Quirófano Salud», parodia) cuenta como centro de salud.
+- Aeropuerto: la marquesina de la terminal llega por encima del carril de dejar pasajeros, con columnas en la acera.
+- TF-13: los muros de la trinchera son de piedra oscura (basalto), como en las fotos.
+- Herramientas: `sonda_conduccion.py` (traza de un coche por las calles de un punto) y `sonda_perfil.py` (escalones de
+  la calzada entre dos puntos).
+
 ## 0.77.0 — 2026-10-19 — Rendimiento: ciudad juntada, recorte por distancia y carga más rápida
 - **Piezas sueltas juntadas** (auditorías P1.5): las ~5.000 piezas sueltas que no se mueven (bancos, bolardos,
   papeleras, piezas de iglesias, gradas…) se juntan en una malla por material y celda de 125 m. Personas, coches, patos

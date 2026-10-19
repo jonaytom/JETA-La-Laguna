@@ -239,3 +239,19 @@ altura sin enlace y estructuras metidas en carriles. Ver `docs/07_pruebas.md`.
   comparar fotos (`prueba_077.py`, fotos `v077_*_junta` / `v077_*_suelta`).
 - Medir: `tests/herramientas/sonda_rendimiento.py` (llamadas y triángulos ocultando cada grupo, censo de la escena,
   tiempos de cada paso de la carga; todo en `tests/shots/sonda_rendimiento.txt`).
+
+## Pasajes bajo los edificios (v0.78, `05x_pasajes.js`)
+
+- Caminos peatonales de OSM con `tunnel=yes/building_passage` (bandera 4) que cruzan edificios: el edificio se levanta
+  encima. `pasajesOf()` (en `buildBuildings`) busca los tramos que pasan por la planta; las fachadas tienen un hueco de
+  3,5 m (`pasajeWall`), las colisiones dejan pasar (`pasajeCol`) y dentro hay paredes, techo con tira de luz y
+  colisiones laterales (`pasajeRun`). Solo si el edificio mide ≥ 5,2 m.
+- **Pasaje Teide y Pasaje Aguere** (de C. Obispo Rey Redondo, junto al «Desencuentro», cruzando Herradores, hasta C. El
+  Juego): galería de ~3,8 m con tiendas y bares parodia a los dos lados (`PASAJE_TIENDAS`). Donde OSM no pone edificio
+  encima, `pasajeCovers()` (tras `buildBuildings`) levanta un bloque de 3 plantas sobre la galería, salvo donde cruza una
+  calle abierta.
+- **Patio del antiguo Cine Aguere** (`atrioList`, en el punto «Aguere Cultural» proyectado sobre el pasaje): agujero
+  redondo de 6,3 m al cielo a través del bloque (hueco en la azotea con `triangulateShape`), cristalera curva de dos
+  plantas con la banda «AGÜERITO», mural de una cara encima, suelo rojo y una escalera que baja a la galería de abajo
+  (corte del terreno, peldaños, rejas, columna) tras una barandilla. **No se baja** (de momento es decorado).
+- Prueba: `prueba_078.py` (recorre andando todo el pasaje, fotos dentro y del patio).

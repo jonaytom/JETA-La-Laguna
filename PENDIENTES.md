@@ -5,6 +5,10 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 
 ## Por revisar con Jonay
 
+- [ ] **Auditoría 0.78.0** (APTO CON AVISOS, vs la última medida de la 0.77): pintar 21,5 → 31 ms (+44 %), arranque
+      7,8 → 9,1 s; llamadas 811 → 803, triángulos y memoria casi iguales (+0,7 MB de geometría por los pasajes). Las
+      cuatro pasadas de la 0.77 dieron 28,7 / 31,2 / 30 / 29,8 ms, así que el 21,5 parece la medida rara: volver a medir.
+      Sin fugas. Pruebas 39/39.
 - [ ] **Baloncesto 2D: 3 contra 3 y control al recibir** (Jonay, 19-oct, apunte): que sea **3x3** (ahora 2x2). Al pasar,
       **el que recibe el balón pasa a ser el tuyo** automáticamente; ahora hay que volver a pulsar pasar en medio del pase
       para quedarte con el control del receptor.
@@ -113,7 +117,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       ser un bloque de viviendas con la tienda en la planta baja (cartel en la fachada, no arriba).
 - [x] v0.67.0 **Fútbol tipo Sensible Soccer** para las misiones del Obispo (segunda pasada).
 
-- [ ] **Prueba de conducción: tramos que fallan** (v0.65.0, pruebas en el PC de Jonay): Camino La Rúa (308, choca en una
+- [x] v0.78.0 (eran de la prueba: el coche a más de 300 m del jugador dejaba de moverse y tomaba las curvas cerradas a 80 km/h; 112/112) **Prueba de conducción: tramos que fallan** (v0.65.0, pruebas en el PC de Jonay): Camino La Rúa (308, choca en una
       curva X 543 Z −909), Autopista del Norte (1287 X 43 Z 1155 y 2295 X −386 Z 678, se para) y, nuevo, **Camino La
       Hornera** (1667, X 1220 Z 2533: el coche cae, y −123). Fotos `tests/shots/df_*.jpg`.
 
@@ -171,7 +175,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       (X −217 Z −305 / X −298 Z −259); Concepción (Boca Papa) a 220 m; Ayuntamiento (alcalde) a 950 m. El orden salta:
       Defensores (Ayto.) → Cristo (Coco) → Vía de Ronda (Ayto., hasta 1,5 km) → rally (Trinidad) → Ayto. → Grafiteros
       (Coco/Sastrón → Mantecas, 3,5 km) → guagua (Concepción) → Ayto. → … → aeropuerto (3 km). Proponer tandas por zona.
-- [ ] **Pasaje Teide y Pasaje Aguere** (Jonay, 13-oct, a raíz del agente revisor): son túneles peatonales que atraviesan
+- [x] v0.78.0 (galería entera con tiendas y bares, bloque encima donde OSM la dejaba al aire, patio del Cine Aguere con cristalera, mural y escalera; **falta poder bajar** a la galería de abajo) **Pasaje Teide y Pasaje Aguere** (Jonay, 13-oct, a raíz del agente revisor): son túneles peatonales que atraviesan
       edificios por debajo, con alguna tienda y bares dentro. El revisor los da como «edificio que tapa el camino»
       (X −176 Z −66 y X −212 Z 54): no hay que quitar el edificio, sino hacer el paso por debajo (hueco en la planta baja,
       techo, luz) con tiendas y bares parodia a los lados.
@@ -258,7 +262,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       títulos, docs y partidas guardadas.
 - [x] v0.61.0 **Intro: el texto de que El Chopa sale de prisión dura muy poco** (Jonay, 12-oct): dejarlo más tiempo en pantalla
       (o que avance al pulsar).
-- [~] v0.72.0 (PDF en `docs/referencias/callejero/`; Bencomo, Juan de Vera, Rodríguez Moure y Ascanio y Nieves pasan a calles con coches; la hoja 2 trae la ficha de 36 edificios para misiones) **Callejero oficial en PDF** (Jonay, 12-oct): https://turismo.aytolalaguna.es/wp-content/uploads/2019/11/Callejero-La-Laguna-c.pdf
+- [~] v0.78.0 (9 edificios más de la ficha con fachada y nombre: Alhóndiga, Riquel, Mustelier, Ossuna, Rodríguez de Azero, Cruz Verde, Plateros, Sabandeños, Cristino de Vera; sin situar: Dominicas, Oque Botino, Jesuitas, Casa Linares, Van Den Heede; lista en `docs/referencias/callejero/edificios.md`) v0.72.0 (PDF en `docs/referencias/callejero/`; Bencomo, Juan de Vera, Rodríguez Moure y Ascanio y Nieves pasan a calles con coches; la hoja 2 trae la ficha de 36 edificios para misiones) **Callejero oficial en PDF** (Jonay, 12-oct): https://turismo.aytolalaguna.es/wp-content/uploads/2019/11/Callejero-La-Laguna-c.pdf
       Sirve para definir bien las **zonas peatonales** (las del empedrado; ahora hay calles donde se pasa en coche y el
       juego dice que son peatonales), tiene **información de edificios** para misiones y un dibujo en 3D bastante fiel de
       los edificios del casco. Bajarlo a `docs/referencias/` y usarlo en una tanda de mapa.
@@ -283,7 +287,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       Corregidor (fachada amarilla) y detrás la Casa de la Alhóndiga; enfrente Iglesia de Las Catalinas.
 - [x] v0.56.0 **Morph «gordo»: labios y boca demasiado gruesos** (Jonay): la deformación de los cuerpos gordos (tallas
       gordo / extra / súper) hincha también la boca. Limitar el morph en la cara (cabeza: solo papada y mejillas).
-- [~] v0.58.0 **Centros de salud y hospital** (hecho: HUC con torre y helipuerto, EAA verde, Urgencias; centros de salud
+- [x] v0.78.0 (La Cuesta y Taco ya estaban desde la v0.59; añadida la clínica privada junto a la TF-5, «Quirófano Salud») v0.58.0 **Centros de salud y hospital** (hecho: HUC con torre y helipuerto, EAA verde, Urgencias; centros de salud
       La Laguna y San Benito; reaparecer en el más cercano). v0.58.1: Laguna-Universidad, San Benito (recolocado) y Finca España con las capturas de Jonay. **La Cuesta**
       (C. Rector José Escobedo 6, X 3223 Z 1956) queda fuera del mapa: Jonay pide ampliar el mapa con ≥100 m alrededor
       (12-oct). Script `scripts/descargar_zonas.bat` (La Cuesta y Taco) (lo lanza Jonay: OSM + relieve) → integrar con `tools/merge_zona.py`. Original (Jonay): recrearlos; al morir apareces en el centro de salud más cercano. Buscar
@@ -351,7 +355,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 - [x] v0.54.0 **Modo móvil** (Jonay, captura): el minimapa se mezcla con las estrellas y tapa los botones ENTRAR / CORRER y
       las coordenadas. Reubicar y dimensionar HUD, minimapa, textos y botones para que sea jugable en el móvil.
 
-- [~] v0.55.0 **Uniones de túneles y puentes con la vía normal** (hecho: Vallado y boca de la Vía de Ronda; quedan rampas de servicio X −495 Z 683 y X 2210 Z 3312, finales de tablero X 377 Z −268 y X 820 Z 3494) (Jonay, 7-oct): salida del túnel de Camino el Vallado
+- [~] v0.78.0 (tramos elevados que bajan a la calle donde acaban: Travesía Andenes/Av. Ghandi X 820 Z 3494 y Vía de Ronda X 377 Z −268; rampa X −495 Z 683 de 1,2 m a 0,4 m; queda la **rampa del HUC X 2210 Z 3312**: la boca de la rampa empieza 2 m honda justo donde la cruza la calle de servicio, y el coche cae dentro: hay que acortar la rampa o mover el cruce) v0.55.0 **Uniones de túneles y puentes con la vía normal** (hecho: Vallado y boca de la Vía de Ronda) (Jonay, 7-oct): salida del túnel de Camino el Vallado
       (X −942 Z 86 / X −928 Z 64): la losa de arriba se superpone a la salida y no deja salir, y por las paredes
       laterales se ve a través (no debería verse el exterior a través de las paredes del túnel). Vía de Ronda
       (X 388 Z 1499): en la boca confluyen calles y los coches se hunden/chocan. Revisar todas las uniones.
@@ -360,22 +364,22 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
       Carretera de San Miguel de Geneto): revisar dónde se queda parado el personaje.
 - [x] v0.54.0 **Freno de mano** (Jonay): al accionarlo debe bloquear las ruedas traseras: frena, derrapa un poco y gira más
       cerrado, como en la realidad. Revisar cómo hacerlo y proponerlo.
-- [~] v0.73.0 (ramales de un sentido sin línea central) v0.70.0 (sin líneas donde una calle está dentro de otra: cruces, incorporaciones, glorietas; mirar las fotos `faciles_*`) **Marcas viales** (apunte de Jonay): con los puentes y cruces hay líneas que se cruzan por todas partes; también
+- [~] v0.78.0 (repasado con fotos de glorietas, enlaces y la Autopista del Norte: las rayas en las entradas de las glorietas son las de ceda el paso, están bien; no se ve nada cruzado) v0.73.0 (ramales de un sentido sin línea central) v0.70.0 (sin líneas donde una calle está dentro de otra: cruces, incorporaciones, glorietas; mirar las fotos `faciles_*`) **Marcas viales** (apunte de Jonay): con los puentes y cruces hay líneas que se cruzan por todas partes; también
       en salidas e incorporaciones (autopista, Vía de Ronda) y en las glorietas.
 - [x] v0.57.0 **Árboles y farolas sobre la vía del tranvía** (115 árboles y las farolas a menos de 4–5 m del eje) (Jonay, captura en una glorieta junto al tranvía).
 
 
-- [ ] Repasar con las fotos del aeropuerto la zona ya hecha alrededor (San Benito, El Coromoto, autopista TF-5). v0.72.0: visto en las fotos que la TF-5 pasa en trinchera bajo la Rotonda Sempiterno y bajo el puente de Cam. San Lázaro; queda por comparar en el juego.
+- [~] v0.78.0 (comparado: la TF-5 pasa **a nivel** bajo el puente de Cam. San Lázaro; en la realidad va en trinchera: hundirla es un cambio grande, por decidir) Repasar con las fotos del aeropuerto la zona ya hecha alrededor (San Benito, El Coromoto, autopista TF-5). v0.72.0: visto en las fotos que la TF-5 pasa en trinchera bajo la Rotonda Sempiterno y bajo el puente de Cam. San Lázaro; queda por comparar en el juego.
 
-- [~] v0.72.0 (rotonda partida en trinchera con dos túneles de bóveda bajo la TF-5, accesos en rampa, chalets de Guajara; mirar las fotos `grandes_tf13_*`) **TF-13 / Cam. San Bartolomé de Geneto / Urbanización Guajara** (junto a la TF-5, Museo de la Ciencia y el
+- [~] v0.78.0 (muros de la trinchera de basalto oscuro) v0.72.0 (rotonda partida en trinchera con dos túneles de bóveda bajo la TF-5, accesos en rampa, chalets de Guajara; mirar las fotos `grandes_tf13_*`) **TF-13 / Cam. San Bartolomé de Geneto / Urbanización Guajara** (junto a la TF-5, Museo de la Ciencia y el
       Cosmos): la zona está «fatal». Real: la TF-13 baja en trinchera con muros de piedra y pasa bajo la TF-5 por dos
       túneles de bóveda que salen a una rotonda partida; vía de servicio «C. dos Autopista Parl.», Cam. San Bartolomé
       de Geneto en curva, Urb. Guajara (chalets de tejado rojo), Plaza Drago de Antares, C. Lira / Hércules / Habaneras,
       Cam. La Hornera con el Museo de la Ciencia y el IAC. Fotos en `docs/referencias/tf13_geneto/`.
 
-- [~] v0.72.0 (rotonda-cúpula, depósitos, naves con carteles, P, valla y aviones despegando/aterrizando hechos; mirar fotos `grandes_aeropuerto_*`) Aeropuerto: afinar con las fotos (rotonda-cúpula, depósitos de combustible, naves SEUR/ITV/Binter, P de
+- [~] v0.78.0 (marquesina grande de la terminal sobre el carril de dejar pasajeros) v0.72.0 (rotonda-cúpula, depósitos, naves con carteles, P, valla y aviones despegando/aterrizando hechos; mirar fotos `grandes_aeropuerto_*`) Aeropuerto: afinar con las fotos (rotonda-cúpula, depósitos de combustible, naves SEUR/ITV/Binter, P de
       parking con rótulos, valla perimetral) y aviones despegando/aterrizando de vez en cuando.
-- [~] Prueba de conducción de túneles/puentes (v0.61): el enlace X −386 Z 678 ya pasa; la Autopista del Norte
+- [x] v0.78.0 Prueba de conducción de túneles/puentes (v0.61): el enlace X −386 Z 678 ya pasa; la Autopista del Norte
       (X 44 Z 1156) se para por tráfico en la prueba (en línea recta pasa a 18 m/s); el Camino La Rúa (X 543 Z −909) choca
       en una esquina: sin investigar. Quedan también las uniones: rampas X −495 Z 683 y X 2210 Z 3312, finales de tablero
       X 377 Z −268 y X 820 Z 3494.
@@ -462,7 +466,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 ## Pendientes anteriores
 
 - [x] v0.50.0 Túneles raros por dentro (fondo de tierra bajo el suelo) y atasco junto al túnel gemelo (X 1800, Z 3160).
-- [~] Auditoría de obstáculos: 200 avisos (sube en el aeropuerto, ver arriba); conducción túneles/puentes: 3 de 97.
+- [x] v0.78.0 (0 obstáculos, 0 hundidos; conducción 112/112) Auditoría de obstáculos: 200 avisos (sube en el aeropuerto, ver arriba); conducción túneles/puentes: 3 de 97.
 - [x] v0.50.0 Fusionar geometría de fuentes.
 
 ## Hecho

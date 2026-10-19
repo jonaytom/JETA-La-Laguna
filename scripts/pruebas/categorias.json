@@ -201,6 +201,15 @@
     "prueba_077.py",
     "prueba_misiones_guardado.py"
    ]
+  ],
+  [
+   "^src/05x_pasajes|^src/04_world|^src/05f_anchieta",
+   [
+    "prueba_078.py",
+    "prueba_conduccion_tuneles_puentes.py",
+    "prueba_parking_cristo.py",
+    "prueba_trinidad.py"
+   ]
   ]
  ]
 }

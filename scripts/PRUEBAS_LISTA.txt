@@ -1,6 +1,6 @@
 # Pruebas de ESTA versión (scripts\PRUEBAS.bat las junta con las de lo cambiado).
-# v0.77.0: rendimiento (piezas juntadas, recorte por distancia, aparcados instanciados, carga más rápida, lint)
-prueba_077.py
-prueba_misiones_guardado.py
-prueba_guardar_cargar.py
-herramientas/sonda_rendimiento.py
+# v0.78.0: mapa (pasajes Teide/Aguere y patio del Cine Aguere, uniones de tableros y rampas, prueba de conducción)
+prueba_078.py
+prueba_conduccion_tuneles_puentes.py
+prueba_grandes.py
+herramientas/sonda_conduccion.py p:-495,683 p:2210,3312 p:377,-268 p:820,3494

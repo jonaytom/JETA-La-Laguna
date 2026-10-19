@@ -12,7 +12,7 @@ function deckAt(x, z, py, roadOnly = false, slack = 0) { // slack: extra step al
         const px = a[0] + dx * t, pz = a[1] + dz * t; if (Math.hypot(x - px, z - pz) > d.w / 2) continue; const y = lerp(a[2], b[2], t);
         if (d.bridge) { const dd = Math.hypot(x - px, z - pz); if (dd < nd - 0.01) { nd = dd; ny = y; nk = Math.abs(b[2] - a[2]) / Math.sqrt(L2); } continue; } // road decks: height of the nearest segment (on tight curves of steep ramps the max over segments picked a point further up the ramp: car "flying")
         if (py > y - 1.6) best = Math.max(best, y); }
-      if (nd < 1e9 && (py > ny - 1.6 - slack * nk || ny - heightAt(x, z) < 3.2)) best = Math.max(best, ny); // low decks/embankments are solid: nobody fits below them
+      if (nd < 1e9 && (py > ny - 1.6 - slack * nk || (ny - heightAt(x, z) < 3.2 && !(ny - heightAt(x, z) < 1.4 && typeof onSurfaceRoad === 'function' && onSurfaceRoad(x, z))))) best = Math.max(best, ny); // v0.78: a street at ground level beside a low embankment (Travesía Andenes / Av. Ghandi) stays on the ground // low decks/embankments are solid: nobody fits below them
     } else if (d.type === 'box') { if (Math.abs(x - d.x) < d.hw && Math.abs(z - d.z) < d.hd && py > d.y - 1.5) best = Math.max(best, d.y); }
   }
   return best;

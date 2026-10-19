@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.77.0</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.78.0</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -282,6 +282,10 @@ Ojo con los <code>const</code>/<code>let</code> usados antes de declararse (zona
 <tr>
 <td><code>12k_agua.js</code></td>
 <td>Misiones de la 0.76: el rifle (El Blanco), el Secreta, Obispo 5–8 y las carreras del Canarión.</td>
+</tr>
+<tr>
+<td><code>05x_pasajes.js</code></td>
+<td><strong>Pasajes bajo los edificios (v0.78)</strong>: caminos peatonales con <code>tunnel=building_passage</code> (Pasaje Teide y Aguere, el de La Concepción…): hueco en la fachada, paredes, techo con luz, tiendas y bares; bloque encima donde OSM los deja al aire; el patio del antiguo Cine Aguere (agujero al cielo, cristalera curva, mural, escalera que baja).</td>
 </tr>
 <tr>
 <td><code>05w_optimiza.js</code></td>
@@ -867,6 +871,22 @@ altura sin enlace y estructuras metidas en carriles. Ver <code>docs/07_pruebas.m
   comparar fotos (<code>prueba_077.py</code>, fotos <code>v077_*_junta</code> / <code>v077_*_suelta</code>).</li>
 <li>Medir: <code>tests/herramientas/sonda_rendimiento.py</code> (llamadas y triángulos ocultando cada grupo, censo de la escena,
   tiempos de cada paso de la carga; todo en <code>tests/shots/sonda_rendimiento.txt</code>).</li>
+</ul>
+<h2>Pasajes bajo los edificios (v0.78, <code>05x_pasajes.js</code>)</h2>
+<ul>
+<li>Caminos peatonales de OSM con <code>tunnel=yes/building_passage</code> (bandera 4) que cruzan edificios: el edificio se levanta
+  encima. <code>pasajesOf()</code> (en <code>buildBuildings</code>) busca los tramos que pasan por la planta; las fachadas tienen un hueco de
+  3,5 m (<code>pasajeWall</code>), las colisiones dejan pasar (<code>pasajeCol</code>) y dentro hay paredes, techo con tira de luz y
+  colisiones laterales (<code>pasajeRun</code>). Solo si el edificio mide ≥ 5,2 m.</li>
+<li><strong>Pasaje Teide y Pasaje Aguere</strong> (de C. Obispo Rey Redondo, junto al «Desencuentro», cruzando Herradores, hasta C. El
+  Juego): galería de ~3,8 m con tiendas y bares parodia a los dos lados (<code>PASAJE_TIENDAS</code>). Donde OSM no pone edificio
+  encima, <code>pasajeCovers()</code> (tras <code>buildBuildings</code>) levanta un bloque de 3 plantas sobre la galería, salvo donde cruza una
+  calle abierta.</li>
+<li><strong>Patio del antiguo Cine Aguere</strong> (<code>atrioList</code>, en el punto «Aguere Cultural» proyectado sobre el pasaje): agujero
+  redondo de 6,3 m al cielo a través del bloque (hueco en la azotea con <code>triangulateShape</code>), cristalera curva de dos
+  plantas con la banda «AGÜERITO», mural de una cara encima, suelo rojo y una escalera que baja a la galería de abajo
+  (corte del terreno, peldaños, rejas, columna) tras una barandilla. <strong>No se baja</strong> (de momento es decorado).</li>
+<li>Prueba: <code>prueba_078.py</code> (recorre andando todo el pasaje, fotos dentro y del patio).</li>
 </ul></section>
 <section id="s4"><div class="src">docs/04_personajes_y_vehiculos.md</div><h1>4. Personajes, vehículos, tráfico y colisiones</h1>
 <blockquote>
@@ -1808,6 +1828,32 @@ que el cambio no obligue a tocar la lógica del juego.</p>
 <section id="s11"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.78.0 — 2026-10-19 — Mapa: el pasaje del Cine Aguere y uniones de puentes</h2>
+<ul>
+<li><strong>Pasaje Teide y Pasaje Aguere</strong>: la galería que va por debajo de los edificios desde la calle Obispo Rey Redondo
+  (junto al «Desencuentro»), cruza Herradores y sale a la calle El Juego, con tiendas y bares parodia a los dos lados
+  (Bar El Guanchito, Zapatería Teidefinitivo, Cafetería Aguerita, Móviles Guanchófono…), techo con luz y los edificios
+  encima (donde el mapa de OSM la dejaba al aire, ahora hay un bloque encima). Se recorre andando de punta a punta.</li>
+<li><strong>Patio del antiguo Cine Aguere</strong>: a mitad del pasaje, el agujero redondo al cielo con la cristalera curva de dos
+  plantas, la banda negra con el rótulo «AGÜERITO», una cara enorme pintada en la pared de arriba, suelo rojo y la
+  escalera que baja a la galería de abajo (rejas, columna) tras la barandilla (todavía no se baja).</li>
+<li>Otros pasajes bajo edificios (el de La Concepción y algunos más): hueco en la fachada y se pasa por debajo.</li>
+<li><strong>Finales de tablero y rampas</strong>: los tramos elevados bajan a la calle donde terminan (Travesía Enlace Andenes del
+  Sobradillo / Av. Ghandi, Vía de Ronda); una calle a nivel junto a un terraplén bajo ya no sube al coche encima; desde
+  la calle solo se cae a un túnel donde está su boca; la rampa de servicio junto a la Av. Astrofísico Francisco Sánchez
+  ya no tiene el escalón de 1,2 m.</li>
+<li><strong>Prueba de conducción</strong>: los «tramos que fallan» (Autopista del Norte ×2, Camino La Rúa, Camino La Hornera) eran
+  de la propia prueba (el coche se alejaba más de 300 m del jugador y dejaba de moverse; tomaba las curvas cerradas a
+  80 km/h): ahora pasan los 112 tramos.</li>
+<li><strong>Callejero</strong>: Casa de la Alhóndiga, Casa Riquel, Casa Mustelier, Casa de Ossuna, Palacete Rodríguez de Azero, las
+  capillas de la Cruz Verde y de los Plateros, la Casa Museo Los Sabandeños y la Fundación Cristino de Vera con su
+  fachada histórica y su nombre en el mapa (para usarlas en misiones).</li>
+<li><strong>Salud</strong>: la clínica privada junto a la TF-5 («Clínica Quirófano Salud», parodia) cuenta como centro de salud.</li>
+<li>Aeropuerto: la marquesina de la terminal llega por encima del carril de dejar pasajeros, con columnas en la acera.</li>
+<li>TF-13: los muros de la trinchera son de piedra oscura (basalto), como en las fotos.</li>
+<li>Herramientas: <code>sonda_conduccion.py</code> (traza de un coche por las calles de un punto) y <code>sonda_perfil.py</code> (escalones de
+  la calzada entre dos puntos).</li>
+</ul>
 <h2>0.77.0 — 2026-10-19 — Rendimiento: ciudad juntada, recorte por distancia y carga más rápida</h2>
 <ul>
 <li><strong>Piezas sueltas juntadas</strong> (auditorías P1.5): las ~5.000 piezas sueltas que no se mueven (bancos, bolardos,
@@ -1816,15 +1862,19 @@ el título de la entrada más reciente como mensaje del commit.</p>
 <li><strong>Recorte por distancia según la niebla</strong>: lo que queda detrás de la niebla ya no se pinta; los detalles pequeños
   (molduras, balcones, rótulos, mobiliario) solo de cerca; las copas de los árboles lejanos con pocos triángulos.
   Árboles, farolas, postes y señales van por celdas (antes se pintaban enteros para toda la ciudad).
-  En la calle: <strong>de ~5.600 a ~1.800 llamadas de dibujo y de 5,1 a 2,3 millones de triángulos</strong> por fotograma.</li>
+  En la calle: <strong>de ~5.600 a ~1.900 llamadas de dibujo y de 5,1 a 3,5 millones de triángulos</strong> por fotograma; en el
+  auditor (con tarjeta gráfica) pintar un fotograma pasa de 47,8 a 29,8 ms y el arranque de 13,2 a 8,4 s.</li>
 <li><strong>Coches aparcados instanciados</strong>: una geometría por modelo para todos los coches aparcados (pintura por coche).
-  Menos memoria y su paso de la carga pasa de ~1,9 s a ~0,3 s.</li>
+  Su paso de la carga pasa de ~1,9 s a ~0,3 s y la geometría en memoria baja (38 → 36 MB).</li>
 <li><strong>Carga más rápida</strong>: plazas y parques de ~3,2 s a ~0,4 s (rejilla para no comparar cada árbol con cada banco).
-  En total, de ~11,2 s a ~7,8 s en el PC de pruebas.</li>
+  En total, de ~11,2 s a ~7,6 s en el PC de pruebas.</li>
 <li><strong>Lint</strong> (auditoría P2.5): el build comprueba que no hay nombres sin declarar ni declarados dos veces entre archivos.</li>
 <li>Pruebas: <code>prueba_077.py</code> (fotos del mismo sitio con la ciudad juntada y con las piezas originales);
   <code>sonda_rendimiento.py</code> mide llamadas, triángulos y cada paso de la carga. El piloto automático de las misiones ya
-  compra el rifle en la juguetería.</li>
+  compra el rifle, apaga los fuegos y moja a Boca Papa.</li>
+<li>Al cargar una partida se quitan los coches que quedaban de misiones anteriores, y el coche del Canarión deja de
+  contar como coche de misión al acabar la carrera.</li>
+<li>Las pruebas ya no suenan (voz del sistema y sonido del juego en silencio).</li>
 </ul>
 <h2>0.76.0 — 2026-10-19 — Rifle de agua, el Secreta y 14 misiones nuevas</h2>
 <ul>

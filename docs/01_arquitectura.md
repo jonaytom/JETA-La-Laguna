@@ -59,6 +59,7 @@ entrada de todos los datos.
 | `09ea_minijuegos.js` | `MINI`: teclas, sonidos, voz, textos y marcador comunes a los minijuegos 2D. |
 | `09i_agua.js` | Rifle de agua: chorro de gotas, charcos, fuegos (`makeFire`), fuentes, jugueterías, peatones mojados que te persiguen. |
 | `12k_agua.js` | Misiones de la 0.76: el rifle (El Blanco), el Secreta, Obispo 5–8 y las carreras del Canarión. |
+| `05x_pasajes.js` | **Pasajes bajo los edificios (v0.78)**: caminos peatonales con `tunnel=building_passage` (Pasaje Teide y Aguere, el de La Concepción…): hueco en la fachada, paredes, techo con luz, tiendas y bares; bloque encima donde OSM los deja al aire; el patio del antiguo Cine Aguere (agujero al cielo, cristalera curva, mural, escalera que baja). |
 | `05w_optimiza.js` | **Rendimiento (v0.77)**: junta las piezas sueltas por material y celda de 125 m (`mergeStatics`), parte árboles/farolas/señales instanciados por celda de 250 m (`splitInstanced`) y recorta por distancia según la niebla (`updateCityLOD`; copas lejanas con pocos triángulos). `userData.noMerge` = no juntar (personas, coches, patos). |
 | `05v_peraza.js` | Estadio Municipal Francisco Peraza: gradas en pendiente, tribuna con techo, puerta y taquilla (final de la Copa Laguna). |
 | `05u_trinidad.js` | Avenida de La Trinidad: anchos, edificios recortados, casas en solares, aparcamientos Indigo, Pedro Zerolo, soportales. |

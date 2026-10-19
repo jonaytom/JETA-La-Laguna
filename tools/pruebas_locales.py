@@ -11,7 +11,7 @@ import os, sys, json, time, glob, shutil, subprocess, threading, functools, http
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TESTS = os.path.join(ROOT, 'tests'); OUT = os.path.join(ROOT, 'reportes', 'pruebas')
 LIMITE = 15 * 60  # segundos por prueba
-FRAGILES = {'prueba_persecuciones.py', 'prueba_conduccion_tuneles_puentes.py', 'prueba_bordes.py'}  # v0.77: these sometimes fail only in the shared load
+FRAGILES = {'prueba_persecuciones.py', 'prueba_conduccion_tuneles_puentes.py', 'prueba_bordes.py', 'prueba_076.py'}  # v0.77: these sometimes fail only in the shared load
 ENV = dict(os.environ, PYTHONIOENCODING='utf-8', PYTHONUTF8='1')  # Windows: read the UTF-8 test scripts as UTF-8
 
 

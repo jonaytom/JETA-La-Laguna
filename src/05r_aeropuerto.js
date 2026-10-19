@@ -52,9 +52,9 @@ function buildAirport() {
       B.quad(glass, [p[0] + ox * 0.05, g0 + 6.0, p[1] + oz * 0.05], [q[0] + ox * 0.05, g0 + 6.0, q[1] + oz * 0.05], [q[0] + ox * 0.05, g0 + 10.6, q[1] + oz * 0.05], [p[0] + ox * 0.05, g0 + 10.6, p[1] + oz * 0.05]);
       COL.addSeg(p[0], p[1], q[0], q[1]); }
     { const tris = THREE.ShapeUtils.triangulateShape(P.map((p) => new THREE.Vector2(p[0], p[1])), []); const R0 = B; for (const t of tris) { const a = P[t[0]], b2 = P[t[1]], c2 = P[t[2]]; R0.quad(white, [a[0], g0 + Hh, a[1]], [c2[0], g0 + Hh, c2[1]], [b2[0], g0 + Hh, b2[1]], [b2[0], g0 + Hh, b2[1]]); } }
-    if (best) { const { p, q, L, ox, oz } = best; const D = 9, y1 = g0 + 11.2; const fr = cFrame(best.mx, 0, best.mz, Math.atan2(ox, oz));
+    if (best) { const { p, q, L, ox, oz } = best; const D = 16, y1 = g0 + 11.2; /* v0.78: the big canopy reaches over the drop-off lane (photos) */ const fr = cFrame(best.mx, 0, best.mz, Math.atan2(ox, oz));
       B.geo(cBox(L + 6, 0.6, D), white, fr(0, y1, D / 2)); B.geo(cBox(L + 6.2, 1.1, 0.3), green, fr(0, y1 + 0.1, D + 0.1));
-      for (let x = -L / 2 + 4; x <= L / 2 - 4; x += 12) { B.geo(new THREE.CylinderGeometry(0.35, 0.35, y1 - g0, 10), steel, fr(x, g0 + (y1 - g0) / 2, D - 1)); COL.addCirc(best.mx + ox * (D - 1) + oz * x, best.mz + oz * (D - 1) - ox * x, 0.4); }
+      for (let x = -L / 2 + 4; x <= L / 2 - 4; x += 12) { B.geo(new THREE.CylinderGeometry(0.35, 0.35, y1 - g0, 10), steel, fr(x, g0 + (y1 - g0) / 2, 7.5)); COL.addCirc(best.mx + ox * 7.5 + oz * x, best.mz + oz * 7.5 - ox * x, 0.4); }
       const sg = bigSign('TENERIFE NORTE · CIUDAD DE LA LAGUNA', Math.min(L * 0.7, 60), 2.6, '#1f8a4c', '#ffffff'); sg.position.set(best.mx + ox * (D + 0.3), y1 + 2.2, best.mz + oz * (D + 0.3)); sg.rotation.y = Math.atan2(ox, oz); root.add(sg);
       AIRPORT.door = { x: best.mx + ox * 2, z: best.mz + oz * 2 }; }
     LABELS.push(['Aeropuerto Tenerife Norte', cx, cz, 1]); AIRPORT.terminal = { cx, cz, g0 }; }
