@@ -7,11 +7,11 @@ async def run(pg):
     await pg.evaluate("HTMLCanvasElement.prototype.requestPointerLock = function(){}")
     await pg.evaluate("(()=>{document.getElementById('menu').style.display='none'; window.__manual=true; __dbg.GAME.state='play'; __dbg.GAME.lock=()=>{}; __dbg.GAME.tod=12; __step(3);})()")
     r = json.loads(await pg.evaluate("""JSON.stringify((()=>{ const d=__dbg, M=d.MALEANTES, out={};
-      window.GANG.sastronTut=false; M._st.t=0; __step(30, 1/30); out.sin_saber=!!M._st.cur;
-      window.GANG.sastronTut=true; for (let i=0;i<40 && !M._st.cur;i++){ M._st.t=0; __step(10, 1/30); }
+      window.GANG.sastronTut=false; window.GANG.maleIntro=false; M._st.t=0; __step(30, 1/30); out.sin_saber=!!M._st.cur;
+      window.GANG.sastronTut=true; window.GANG.maleIntro=true; for (let i=0;i<40 && !M._st.cur;i++){ M._st.t=0; __step(10, 1/30); }
       const p=M._st.cur; out.sale=!!p; if(!p) return out;
       out.maleante={...p.maleante, d:Math.round(Math.hypot(p.x-d.PLAYER.x,p.z-d.PLAYER.z))};
-      out.en_minimapa=d.MISSIONS.blips().some(b=>b[2]==='#c6ff00');
+      out.en_minimapa=d.MISSIONS.blips().some(b=>b[2]===M.COL && b[3]==='tri');
       d.PLAYER.x=p.x+1; d.PLAYER.z=p.z; const w0=d.WANTED.level, m0=d.PLAYER.money;
       out.pelea=d.startStreetFight(p); const st=d.FIGHT2D._st(); out.rival=st?{name:st.b.name, lv:st.b.ai.lv, deal:st.b.deal, recv:st.b.recv}:null;
       d.FIGHT2D._abort(); M.result(p, true); out.cobra=d.PLAYER.money-m0; out.delito=d.WANTED.level>w0; out.queda=!!M._st.cur;

@@ -204,3 +204,18 @@ altura sin enlace y estructuras metidas en carriles. Ver `docs/07_pruebas.md`.
   atletismo hasta el fondo (filas azules y escalones grises, `perazaSeatTex`), con muro trasero y, en la más grande (la
   tribuna este), techo sobre pilares. Puerta en la calle más cercana con el nombre del estadio y una taquilla
   (`PERAZA.door`). Las gradas genéricas de `buildSports` no se ponen en este estadio.
+
+## Parkings (v0.76)
+
+- `buildHall(F, uc, L, yF, name, gaps, holes, {y1, density, deck})`: la sala puede tener pendiente (`y1`), deja el techo
+  abierto sobre las escaleras (`stairHole`) y funde las piezas sin textura en una malla por material. Un solo
+  `TUNNEL_DECK` del ancho de la sala (antes cinco franjas: el recorte de la elegida frenaba en el carril).
+- La Trinidad (`trinidadParking`): una cadena de salas de ~60 m por el eje de la avenida desde la rampa de arriba hasta
+  la de Trinidad Centro, 7 m bajo el suelo más bajo, pendiente ≤ 6 %, un deck con varios tramos (`cap.open0/open1`:
+  solo los extremos son pared para los coches).
+- `lowAt`: en rampas y túneles con techo, el borde exterior del deck (más allá de `hw − 0,1`) ya no cuenta si hay
+  suelo encima (te hundías en la acera junto a la rampa del Cristo y una pared invisible te paraba).
+- `offTramCut`: los caminos peatonales no se dibujan sobre la trinchera del tranvía.
+- Pabellón Juan Ríos Tejera (`riosHall` / `buildRiosHall`, `05v_peraza.js`): el edificio del área deportiva se hace
+  nave blanca con franjas moradas, cubierta gris y linterna central.
+

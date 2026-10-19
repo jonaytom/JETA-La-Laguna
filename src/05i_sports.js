@@ -118,6 +118,7 @@ function buildSports() {
     SPORTS.pitches.push({ cx, cz, kind, F, len, wid });
   }
   try { buildPeraza(); } catch (e) { console.error('peraza', e); } // v0.75
+  try { buildRiosHall(); } catch (e) { console.error('rios tejera', e); } // v0.76
 }
 // indoor halls: buildings named Pabellón / Polideportivo or sitting inside a sports complex
 function buildSportsHalls() {

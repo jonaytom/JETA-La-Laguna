@@ -3,6 +3,28 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.76.0 — 2026-10-19 — Rifle de agua, el Secreta y 14 misiones nuevas
+- **Rifle de agua** (estilo rifle eléctrico de juguete, blanco y naranja con depósito transparente): chorro en parábola
+  de unos 10 m que deja charquitos, apaga fuegos y empapa a la gente; se llena en las fuentes (E) y se vende en las
+  **jugueterías** (Juguetes Sabelotodo, Baobabito, Lífer), que también venden bolitas para la pistola. Tab cambia entre
+  puños, pistola y rifle (1 / 2 / 3). **El que mojas te persigue y, si te pilla, hay pelea.**
+- **Historia: «El rifle de agua»** (El Blanco): abre las jugueterías; lo compras y lo pruebas en una plaza con fuente:
+  apagas los papeles que quema El Blanco, recargas en la fuente y le mojas la cabeza a Boca Papa, que duerme al lado,
+  desde 10 m.
+- **El Secreta**: el inspector Fulgencio Tostón (Avenida de los Menceyes), seis misiones: seguir un coche sin que te
+  vea, contenedores en llamas y el pirómano, el partido amañado, triple en la cancha y la huida, mojar al pirómano y la
+  Operación Gofio Blanco (carrera, pelea, pistola, fuego y persecución).
+- **El Obispo**: fuego en una iglesia, la carrera de los sacristanes (a pie), curas contra concejales (fútbol) y el
+  ladrón del cepillo.
+- **Carreras del Canarión**: duelo nocturno en la pista de Los Rodeos, contrarreloj por el casco y el Gran Premio.
+- **Maleantes**: Sastrón te los explica por teléfono al aprender a pelear; salen como triángulos rojos.
+- **Parkings**: el techo ya no corta las escaleras (ni se ve una pared a media escalera desde la plaza, ni el personaje
+  hundido); se anda por todo el ancho de la sala (tope invisible en el carril); junto a las rampas ya no te hundes en
+  la acera ni te frena una pared invisible. **La Trinidad: un solo parking de ~420 m bajo toda la avenida**, más hondo,
+  con la pendiente de la calle, rampas en los dos extremos y escaleras a las dos aceras.
+- **Pabellón Juan Ríos Tejera** rehecho: nave baja blanca con franjas moradas y cubierta gris (era un bloque de pisos).
+- **Tranvía junto al Campus Central**: ya no hay aceras flotando sobre la trinchera.
+
 ## 0.75.0 — 2026-10-13 — Copa Laguna, reglas del portero y flechas de misión
 - **Copa Laguna**: torneo de fútbol como el Torneo Lagunero (se abre tras el primer partido de fútbol del Obispo): cuatro
   campos por la ciudad, cada rival más fuerte (Atlético Gofio de Geneto, Unión Perenquén, Deportivo Papas Arrugadas,

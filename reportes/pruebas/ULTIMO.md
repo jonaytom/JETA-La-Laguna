@@ -1,60 +1,70 @@
-# Pruebas 0.75.0 — 2026-10-13 14:56 — 3/3 OK
+# Pruebas 0.76.0 — 2026-10-19 09:14 — 2/2 OK
 
-Listas: v075. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 151 s en total.
+Listas: v076r. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 171 s en total.
 
 | # | Prueba | Resultado | Tiempo |
 |---|---|---|---|
-| 1 | `prueba_075.py` | **OK** | 108 s |
-| 2 | `prueba_diario.py` | **OK** | 0 s |
-| 3 | `prueba_misiones_guardado.py` | **OK** | 23 s |
+| 1 | `prueba_076.py` | **OK** | 135 s |
+| 2 | `prueba_trinidad.py` | **OK** | 15 s |
 
 ## Detalle
 
-### 1. prueba_075.py — OK
+### 1. prueba_076.py — OK
 
 ```
-flecha {'persecucion': '#ff3b30', 'carrera': '#f5b72e'}
-ruta adelantada {'a_pie': {'siguientes': 2, 'ruta': 7}, 'con_recorrido': {'siguientes': 2, 'ruta': 21}, 'ultimo': 0}
-teclas {'dentro': False, 'despues': False, 'tactil': 0, 'estado': 'play'}
-foto v075_portero
-foto v075_saque_banda
-futbol portero {'portero_mano': True, 'distancia': 3.5, 'falta': '¡FALTA AL PORTERO!', 'sigue_suya': True, 'portero_en_su_area': 2}
-futbol banda {'saque': 'banda', 'saca': 0, 'no_corre': True, 'con_mano': True, 'rival_mas_cerca': 14.43}
-diario {'primera': ['Segundo', 'Charlas sueltas'], 'n': 2}
-copa {'copa': ['Copa Laguna 1/5', 'Copa Laguna 2/5', 'Copa Laguna 3/5', 'Copa Laguna 4/5', 'Copa Laguna: la final'], 'estadio': {'ok': True, 'gradas': 4, 'puerta': [-377, -1023], 'calle': 'Avenida de José Tabares Bartlet'}, 'final': {'final': True, 'label': 'Estadio Francisco Peraza'}}
-foto v075_peraza_alto
-foto v075_peraza_campo
-foto v075_peraza_grada_oeste
-foto v075_peraza_puerta
+rifle {'diag': {'h': 0, 'yaw': 0, 'jugador': [-758, -364], 'fuego': [-758, -356.5], 'gota_v': [0, -2.4, 12], 'charcos': [[-0.3, 6.9]], 'apuntando': False, 'mano': [-0.25, 7.9, -0.08]}, 'gotas': 12, 'charcos': 1, 'fuego_apagado': True, 'agua': [100, 93], 'hud': 'RIFLE DE AGUA 100%\nTAB / 1: puños'}
+foto v076_rifle
+armas {'ciclo': ['pistola', 'rifle', 'puños', 'pistola'], 'fuentes': 39, 'lleno': 100, 'jugueterias': ['Juguetes Sabelotodo', 'Juguetes Baobabito', 'Juguetería Lífer', 'Juguetes Somos'], 'cerrada': '', 'abierta': '<kbd>E</kbd> Entrar: Juguetes Sabelotodo (juguetería)'}
+mojado {'persigue': True, 'pelea': True}
+maleantes {'habla': True, 'linea': 'Sastrón (por el móvil): Chopa, ahora que sabes repartir, te cuento un ', 'visto': True}
+misión del rifle en la historia 18
+blanco 1 {'act': 'El rifle de agua', 'jug': True, 'goal': [-621.1913417161826, -300.4619397662556, 2.2]}
+blanco 2 {'paso': 6, 'diana': True}
+foto v076_boca_papa
+blanco fin {'act': None, 'rifleTut': True}
+misiones {'secreta': ['Tostón, de la Secreta', 'Contenedores en llamas', 'El partido amañado', 'Triple en la cancha', 'Al pirómano, agua', 'Operación Gofio Blanco'], 'carreras': ['Duelo nocturno en Los Rodeos', 'Contrarreloj por el casco', 'Gran Premio de La Laguna'], 'obispo': ['Un partido por la Catedral', 'El torneo de la parroquia', 'Un partido por La Concepción', 'El clásico de las cofradías', 'Fuego en la ermita', 'La carrera de los sacristanes', 'Curas contra concejales', 'El ladrón del cepillo'], 'tostón': [1250, 1524]}
+foto v076_secreta
+  empieza ['secreta', 0, 'Tostón, de la Secreta', 'Tostón, de la Secreta', True]
+  empieza ['secreta', 1, 'Contenedores en llamas', 'Contenedores en llamas', True]
+  empieza ['secreta', 2, 'El partido amañado', 'El partido amañado', True]
+  empieza ['secreta', 3, 'Triple en la cancha', 'Triple en la cancha', True]
+  empieza ['secreta', 4, 'Al pirómano, agua', 'Al pirómano, agua', True]
+  empieza ['secreta', 5, 'Operación Gofio Blanco', 'Operación Gofio Blanco', True]
+  empieza ['carreras', 0, 'Duelo nocturno en Los Rodeos', 'Duelo nocturno en Los Rodeos', True]
+  empieza ['carreras', 1, 'Contrarreloj por el casco', 'Contrarreloj por el casco', True]
+  empieza ['carreras', 2, 'Gran Premio de La Laguna', 'Gran Premio de La Laguna', True]
+  empieza ['obispo', 4, 'Fuego en la ermita', 'Fuego en la ermita', True]
+  empieza ['obispo', 5, 'La carrera de los sacristanes', 'La carrera de los sacristanes', True]
+  empieza ['obispo', 6, 'Curas contra concejales', 'Curas contra concejales', True]
+  empieza ['obispo', 7, 'El ladrón del cepillo', 'El ladrón del cepillo', True]
+parkings [{'trinidad_tramos': 7, 'largo': 439, 'fondo': ['-14.2', '-13.2']}, {'sala': 'Parking del Cristo', 'frena': 1, 'de': 12}, {'sala': 'Parking Trinidad', 'frena': 2, 'de': 12}, {'sala': 'Parking Trinidad', 'frena': 1, 'de': 12}]
+foto v076_cristo_escalera_abajo
+foto v076_trinidad_parking
+Ríos Tejera [-1513, -587]
+foto v076_rios_tejera
+foto v076_trinchera_campus
+foto v076_rampa_cristo
 errores JS []
-V075 OK
+V076 OK
 ```
 
-### 2. prueba_diario.py — OK
+### 2. prueba_trinidad.py — OK
 
 ```
-activa Una botella para Coco
-abierto True misiones 35
-detalle Una botella para Coco | Historia · Te la da Coco · En curso | ➜ Busca a Coco junto a el Teatro Leal | De lo más reciente a lo primero |  | Coco: Mira, yo no hablo con la garganta seca. Tráeme una botella de Ron Arrecostao de Café Brasilito, la que tiene la puerta abierta. Y de las grandes. |  | Coco
-lineas guardadas 3
-historia tras reiniciar 0
-cerrado True estado play
+widths [6.6]
+invaden []
+aparcamientos [{'name': 'Parking Trinidad', 'x': -113, 'z': 106, 'yF': -13.5}, {'name': 'Parking Trinidad', 'x': -133, 'z': 163, 'yF': -14.2}, {'name': 'Parking Trinidad', 'x': -153, 'z': 221, 'yF': -14.2}, {'name': 'Parking Trinidad', 'x': -173, 'z': 278, 'yF': -14.2}, {'name': 'Parking Trinidad', 'x': -193, 'z': 336, 'yF': -14}, {'name': 'Parking Trinidad', 'x': -213, 'z': 394, 'yF': -13.7}, {'name': 'Parking Trinidad', 'x': -232, 'z': 451, 'yF': -13.2}]
+nuevas 7
+coche {'aparcamiento': 'Parking Trinidad', 'rampa': [-85, 28], 'profundidad': 8.2, 'en_sala': True, 'fin': [-105, 82]}
+coche {'aparcamiento': 'Parking Trinidad', 'rampa': [-244, 524], 'profundidad': 7.3, 'en_sala': True, 'fin': [-228, 471]}
+foto trinidad_rampa_1
+foto trinidad_rampa_1_alto
+foto trinidad_rampa_7
+foto trinidad_rampa_7_alto
+foto trinidad_pedrozerolo
+foto trinidad_pedrozerolo_calle
 errores JS []
-DIARIO OK
+TRINIDAD OK
 ```
 
-### 3. prueba_misiones_guardado.py — OK
-
-```
-a mitad: {"act":"Atraco en la farmacia","m":{"v":3,"story":6,"skip":[],"storyDone":false,"side":0,"sideOpen":false,"obispo":0,"torneo":0,"copa":0,"log":{"Charlas sueltas":[["Primero","hola",1791899735092],["Segundo","adiós",1791899735093]],"Atraco en la farmacia":[["Rayco «El Blanco»","«Brrr... Chopa... mmm... la pistola... psss... bolas... de plástico.»",1791899746111],["El Chopa","Ya, Blanco, ya me lo dijiste: aire comprimido, bolas de plástico. Pupa sí, pero no mata.",1791899746190],["Rayco «El Blanco»","«Mmm... radio... ¡brrr!... farmacia... atraco... ¡ahora!»",1791899746216],["Radio de la Local (en el escáner de El Blanco)","Atraco en curso en Guacimara C. Hernandez. Dos individuos. Todas las patrullas ocupadas en las fiestas.",1791899746238],["El Chopa","Nadie va a ir... Vamos nosotros. Una banda que defiende su barrio. ¡Al lío!",1791899746261],["Ladrón con pasamontañas","¿Y tú quién eres, el de la nariz? ¡Esto no va contigo, pibe!",1791899746329],["El Chopa","Suelta la caja de las tiritas y ven p'acá.",1791899746351],["Ladrón (en el suelo)","¡Ay, ay! ¡Vale, vale, me rindo! Pero mi colega ya se va con la caja...",1791899759914]]},"gang":{"formed":false,"name":"","members":[],"sastronTut":false,"defenders":false,"patrol":false,"basketTut":false,"futbolTut":false},"active":"Atraco en la farmacia"},"blips":2,"lawful":true,"tg":0,"dlg":false,"toast":"Reiniciado desde «Vuelta al barrio»"}
-cargada: {'act': None, 'm': {'v': 3, 'story': 6, 'skip': [], 'storyDone': False, 'side': 0, 'sideOpen': False, 'obispo': 0, 'torneo': 0, 'copa': 0, 'log': {'Charlas sueltas': [['Primero', 'hola', 1791899735092], ['Segundo', 'adiós', 1791899735093]], 'Atraco en la farmacia': [['Rayco «El Blanco»', '«Brrr... Chopa... mmm... la pistola... psss... bolas... de plástico.»', 1791899746111], ['El Chopa', 'Ya, Blanco, ya me lo dijiste: aire comprimido, bolas de plástico. Pupa sí, pero no mata.', 1791899746190], ['Rayco «El Blanco»', '«Mmm... radio... ¡brrr!... farmacia... atraco... ¡ahora!»', 1791899746216], ['Radio de la Local (en el escáner de El Blanco)', 'Atraco en curso en Guacimara C. Hernandez. Dos individuos. Todas las patrullas ocupadas en las fiestas.', 1791899746238], ['El Chopa', 'Nadie va a ir... Vamos nosotros. Una banda que defiende su barrio. ¡Al lío!', 1791899746261], ['Ladrón con pasamontañas', '¿Y tú quién eres, el de la nariz? ¡Esto no va contigo, pibe!', 1791899746329], ['El Chopa', "Suelta la caja de las tiritas y ven p'acá.", 1791899746351], ['Ladrón (en el suelo)', '¡Ay, ay! ¡Vale, vale, me rindo! Pero mi colega ya se va con la caja...', 1791899759914]]}, 'gang': {'formed': False, 'name': '', 'members': [], 'sastronTut': False, 'defenders': False, 'patrol': False, 'basketTut': False, 'futbolTut': False}, 'active': None}, 'blips': 2, 'lawful': False, 'tg': 0, 'dlg': False, 'toast': 'RADIO: Gofio FM 90.1 · boom bap lagunero (Q: cambiar de emisora)'}
-1 guardar a mitad: OK (coches de misión sueltos: 0)
-tras fallar: {'act': None, 'm': {'v': 3, 'story': 6, 'skip': [], 'storyDone': False, 'side': 0, 'sideOpen': False, 'obispo': 0, 'torneo': 0, 'copa': 0, 'log': {'Charlas sueltas': [['Primero', 'hola', 1791899735092], ['Segundo', 'adiós', 1791899735093]], 'Atraco en la farmacia': [['Rayco «El Blanco»', '«Brrr... Chopa... mmm... la pistola... psss... bolas... de plástico.»', 1791899765204], ['El Chopa', 'Ya, Blanco, ya me lo dijiste: aire comprimido, bolas de plástico. Pupa sí, pero no mata.', 1791899765217]]}, 'gang': {'formed': False, 'name': '', 'members': [], 'sastronTut': False, 'defenders': False, 'patrol': False, 'basketTut': False, 'futbolTut': False}, 'active': None}, 'blips': 2, 'lawful': False, 'tg': 0, 'dlg': True, 'toast': 'prueba de reintento'}
-2 reintentar: OK Atraco en la farmacia
-3 partida antigua: OK {'v': 3, 'story': 6, 'skip': [], 'storyDone': False, 'side': 1, 'sideOpen': True, 'obispo': 0, 'torneo': 0, 'copa': 0, 'log': {}, 'gang': {'formed': True, 'name': 'Los Chopas', 'members': ['boca'], 'sastronTut': False, 'defenders': False, 'patrol': False, 'basketTut': False, 'futbolTut': False}, 'active': None}
-4 orden por zonas (partida de antes): OK {'sig': 'Los bancos del Adelantado', 'skip': ['El carterista del Cristo', 'Baches en la Vía de Ronda'], 'sig2': 'Los bancos del Adelantado', 'skip2': ['El carterista del Cristo', 'Baches en la Vía de Ronda']}
-ERRORES JS: []
-CONTINUIDAD OK
-```
-
-Fotos/archivos nuevos en `tests/shots/`: v075_peraza_alto.jpg, v075_peraza_campo.jpg, v075_peraza_grada_oeste.jpg, v075_peraza_puerta.jpg, v075_portero.jpg, v075_saque_banda.jpg
+Fotos/archivos nuevos en `tests/shots/`: trinidad_pedrozerolo.jpg, trinidad_pedrozerolo_calle.jpg, trinidad_rampa_1.jpg, trinidad_rampa_1_alto.jpg, trinidad_rampa_7.jpg, trinidad_rampa_7_alto.jpg, v076_boca_papa.jpg, v076_cristo_escalera_abajo.jpg, v076_rampa_cristo.jpg, v076_rifle.jpg, v076_rios_tejera.jpg, v076_secreta.jpg, v076_trinchera_campus.jpg, v076_trinidad_parking.jpg

@@ -205,7 +205,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="tb" id="tbS">CORRER</div>
 <div class="tb" id="tbM">MAPA</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">v0.75.0</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">v0.76.0</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -1186,6 +1186,7 @@ function buildRoads() {
       bridgeDressing(c, w, hf, rd[0] <= 12); continue;
     }
     if (cls === 'asphaltLines') { for (const [s0, s1, ln] of lineRuns(ri, c)) { const pc = subPoly(c, s0, s1); if (pc.length >= 4) ribbon(pc, w, ln ? 'asphaltLines' : 'asphalt', ln ? YOFF.asphaltLines : YOFF.asphalt, ln ? tile : 8, ln ? 1 : w / 8); } }
+    else if (rd[0] >= 13) { for (const pc of offTramCut(c)) ribbon(pc, w, cls, YOFF[cls], tile, w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8)); } // v0.76: no path floating over the tram cutting
     else ribbon(c, w, cls, YOFF[cls], tile, cls === 'asphaltLines' ? 1 : w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8));
     if (['primary', 'secondary', 'tertiary', 'residential', 'unclassified', 'primary_link', 'secondary_link', 'tertiary_link', 'living_street'].includes(t) && cls !== 'paving')
       for (const sd of [1, -1]) ribbonBand(c, sd * (w / 2 - 0.3), sd * (w / 2 + 2.1), 'sidewalk', YOFF.sidewalk, 2.4, ri); // two kerb-side strips (a full-width slab under the road poked through it on curved slopes)
@@ -1569,6 +1570,16 @@ function twinWall(x, z, y0, y1) {
 // a covered box only where a street crosses over it. Grades ≤ 8 %.
 const TRAM_TRENCH = { s0: 455, s1: 540, s2: 670, s3: 752, D: 6.4 };
 let TRAM_TP = null; // points of the cutting (every 3 m) for tramTrenchAt
+// v0.76 (Jonay, Campus Central): the pieces of a footpath that are not over the tram cutting (OSM crossings over the
+// tracks were drawn at street level, floating over the cutting like a slab of pavement)
+let TRAM_BB = null;
+function offTramCut(c) { if (!TRAM_BB) { tramTrenchAt(0, 0, 0); TRAM_BB = [1e9, 1e9, -1e9, -1e9]; for (let i = 0; i < TRAM_TP.length; i += 2) { TRAM_BB[0] = Math.min(TRAM_BB[0], TRAM_TP[i] - 6); TRAM_BB[1] = Math.min(TRAM_BB[1], TRAM_TP[i + 1] - 6); TRAM_BB[2] = Math.max(TRAM_BB[2], TRAM_TP[i] + 6); TRAM_BB[3] = Math.max(TRAM_BB[3], TRAM_TP[i + 1] + 6); } }
+  let hit = false; for (let i = 0; i < c.length && !hit; i += 2) hit = c[i] > TRAM_BB[0] && c[i] < TRAM_BB[2] && c[i + 1] > TRAM_BB[1] && c[i + 1] < TRAM_BB[3]; if (!hit) return [c];
+  const L = polyLen(c); if (L < 0.5) return [c]; const out = []; let a = null;
+  for (let s = 0; s <= L + 0.01; s += 1) { const q = Math.min(s, L), p = subPoly(c, q, q + 0.01), x = p[0], z = p[1]; const bad = TRAM_TRENCH.D > 0 && tramTrenchAt(x, z, 4.4) && tramDepthAt(x, z) > 0.5;
+    if (!bad && a === null) a = q; if ((bad || q >= L) && a !== null) { const b = bad ? Math.max(a, q - 1) : L; if (b - a > 0.5) out.push(subPoly(c, a, b)); a = null; } }
+  return out.length === 1 && out[0].length === c.length ? [c] : out; }
+function tramDepthAt(x, z) { const c = DATA.T; let best = 1e9, bs = 0, acc = 0; for (let i = 0; i + 3 < c.length; i += 2) { const ax = c[i], az = c[i + 1], dx = c[i + 2] - ax, dz = c[i + 3] - az, L2 = dx * dx + dz * dz || 1, L = Math.sqrt(L2); const t = clamp(((x - ax) * dx + (z - az) * dz) / L2, 0, 1); const d = Math.hypot(x - ax - dx * t, z - az - dz * t); if (d < best) { best = d; bs = acc + t * L; } acc += L; } return tramDepth(bs); }
 function tramTrenchAt(x, z, r) { if (!TRAM_TP) { TRAM_TP = []; const c = DATA.T; if (c.length > 3) { const sub = subPoly(c, TRAM_TRENCH.s0, TRAM_TRENCH.s3); for (let i = 0; i + 3 < sub.length; i += 2) { const L = Math.hypot(sub[i + 2] - sub[i], sub[i + 3] - sub[i + 1]); for (let u = 0; u < L; u += 3) TRAM_TP.push(sub[i] + (sub[i + 2] - sub[i]) * u / L, sub[i + 1] + (sub[i + 3] - sub[i + 1]) * u / L); } } }
   for (let i = 0; i < TRAM_TP.length; i += 2) if (Math.abs(TRAM_TP[i] - x) < r && Math.abs(TRAM_TP[i + 1] - z) < r && Math.hypot(TRAM_TP[i] - x, TRAM_TP[i + 1] - z) < r) return true; return false; }
 function tramDepth(s) { const T = TRAM_TRENCH; if (s <= T.s0 || s >= T.s3) return 0; const k = s < T.s1 ? (s - T.s0) / (T.s1 - T.s0) : s > T.s2 ? (T.s3 - s) / (T.s3 - T.s2) : 1; return T.D * k * k * (3 - 2 * k); }
@@ -1635,9 +1646,10 @@ function lowAt(x, z, py) {
       const px = a[0] + dx * t, pz = a[1] + dz * t, dd = Math.hypot(x - px, z - pz); if (dd > d.w / 2) continue; const y = lerp(a[2], b[2], t); const g = heightAt(x, z);
       if (y > g - 0.2 || py > y + 2.9 || py < y - 2.5) continue;
       if (g - y < 1.6 && !d.ceil && TCUTS_READY && !inCut(x, z, 0.3)) continue;
+      if (d.ceil && !d.hall && g - y > 0.25 && dd > d.hw - 0.1) continue; // v0.76 (Jonay): beside a car park ramp, under the pavement (the deck is wider than the hole): you sank to the waist and an invisible wall stopped you
       if (g - y < 1.0 && !d.ceil && ROADS_INDEXED && onSurfaceRoad(x, z)) continue; // a street at ground level covers the shallow trench here: stand on it // shallow end with no hole in the terrain: walk/drive on the ground (no sinking)
       const k = Math.abs(py - y), kb = best ? Math.abs(py - best.y) : 1e9;
-      if (!best || k < kb - 0.3 || (k < kb + 0.3 && dd < best.d)) best = { y, px, pz, d: dd, hw: d.hw, covered: g - y > 6.3 || !!d.ceil, ceil: d.ceil, cap: d.capped && d.hall ? { s: t * Math.sqrt(L2), len: Math.sqrt(L2), ux: dx / Math.sqrt(L2), uz: dz / Math.sqrt(L2) } : null }; }
+      if (!best || k < kb - 0.3 || (k < kb + 0.3 && dd < best.d)) best = { y, px, pz, d: dd, hw: d.hw, covered: g - y > 6.3 || !!d.ceil, ceil: d.ceil, cap: d.capped && d.hall ? { s: t * Math.sqrt(L2), len: Math.sqrt(L2), ux: dx / Math.sqrt(L2), uz: dz / Math.sqrt(L2), open0: i > 0, open1: i < p.length - 2 /* v0.76: a chain of halls: only its two ends are walls */ } : null }; }
   }
   return best;
 }
@@ -1709,7 +1721,7 @@ function buildBuildings() {
     let pts = []; for (let i = 0; i < c.length; i += 2) pts.push([c[i], c[i + 1]]);
     let n = pts.length; if (n < 3) continue;
     if (isTramStopBuilding(nameIdx, pts)) continue; // drawn as proper tram stops
-    { let qx = 0, qz = 0; for (const p of pts) { qx += p[0]; qz += p[1]; } if (perazaStand(style, insetPoly(pts, 0.4), qx / n, qz / n)) continue; } // v0.75: the stands of the Estadio Francisco Peraza (05v_peraza.js)
+    { let qx = 0, qz = 0; for (const p of pts) { qx += p[0]; qz += p[1]; } if (perazaStand(style, insetPoly(pts, 0.4), qx / n, qz / n) || riosHall(insetPoly(pts, 0.6), qx / n, qz / n)) continue; } // v0.75: the stands of the Estadio Francisco Peraza (05v_peraza.js)
     pts = insetPoly(pts, style === 4 ? 0.3 : 0.75);
     if (style !== 4) { const t = roadClip(streetTrim(pts)); if (t !== pts) { pts = t; n = pts.length; const o = []; for (let i = 0; i < c.length; i += 2) o.push([c[i], c[i + 1]]); const t2 = roadClip(streetTrim(o)); if (t2 !== o) b[6] = t2.flat(); } } // v0.68–0.69: off the carriageways (04b_recorte.js; the Av. de La Trinidad with its pavement); DATA.B too, for inAnyBuilding
     if (style === 4 && nameIdx >= 0 && /Concepción/.test(STR[nameIdx])) { pts = carveConcTower(pts); n = pts.length; }
@@ -2671,6 +2683,7 @@ function buildStreetProps() {
   for (const [x, z] of lists.fount) {
     const g = new THREE.Group(); const y = heightAt(x, z) + 0.13;
     addMesh(g, new THREE.CylinderGeometry(2.2, 2.3, 0.6, 8), greyStone, 0, 0.3, 0);
+    PK2.fountains.push([x, z]); // v0.76: the water rifle is filled here too
     const wtr = new THREE.Mesh(new THREE.CircleGeometry(2.0, 8), new THREE.MeshStandardMaterial({ color: 0x3f7f95, roughness: 0.05, metalness: 0.2 })); wtr.rotation.x = -Math.PI / 2; wtr.position.y = 0.55; g.add(wtr);
     addMesh(g, new THREE.CylinderGeometry(0.3, 0.45, 1.8, 8), greyStone, 0, 1.2, 0);
     addMesh(g, new THREE.CylinderGeometry(0.8, 0.25, 0.3, 12), greyStone, 0, 2.1, 0);
@@ -3187,6 +3200,7 @@ function buildSports() {
     SPORTS.pitches.push({ cx, cz, kind, F, len, wid });
   }
   try { buildPeraza(); } catch (e) { console.error('peraza', e); } // v0.75
+  try { buildRiosHall(); } catch (e) { console.error('rios tejera', e); } // v0.76
 }
 // indoor halls: buildings named Pabellón / Polideportivo or sitting inside a sports complex
 function buildSportsHalls() {
@@ -3558,44 +3572,62 @@ function pkMats() {
   return PK;
 }
 function pkSignTex(text, bg = '#1d4f9c', fg = '#fff', w = 512, h = 128) { const c = mkCanvas(w, h), x = c.getContext('2d'); x.fillStyle = bg; x.fillRect(0, 0, w, h); x.fillStyle = fg; x.font = `700 ${Math.round(h * 0.55)}px Oswald, sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(text, w / 2, h / 2 + 2); return canvasTex(c, { repeat: false }); }
-// hall: centre, axis u (length L) and v (width W = 31: bays | lane | double bays | lane | bays), floor height yF
-function buildHall(F, uc, L, yF, name, gaps) {
+// hall: centre, axis u (length L) and v (width W = 31: bays | lane | double bays | lane | bays), floor height yF at the
+// u- end. o (v0.76): y1 = floor height at the u+ end (a sloping hall: the long one of La Trinidad follows the avenue),
+// density = share of bays with a parked car, deck = false when the caller lays one deck along a chain of halls
+function buildHall(F, uc, L, yF, name, gaps, holes = [], o = {}) { // holes: [u0, u1, v0, v1] (hall frame) left open in the ceiling over the stairwells (v0.76)
   const M_ = pkMats(); const g = new THREE.Group(); const W = 31, H = 3.4, hl = L / 2, hw = W / 2;
+  const y1 = o.y1 ?? yF, yAt = (u) => yF + (y1 - yF) * clamp((u + hl) / L, 0, 1), tilt = Math.atan2(y1 - yF, L), dens = o.density ?? 0.45;
   const P = (u, v) => F.W(uc + u, v); const ang = Math.atan2(F.ux, F.uz); // rotation.y so that local z = u
   const place = (mesh, u, y, v, rotY = 0) => { const [x, z] = P(u, v); mesh.position.set(x, y, z); mesh.rotation.y = ang + rotY; g.add(mesh); return mesh; };
+  const tilted = (mesh) => { if (tilt) mesh.rotation.set(-tilt, mesh.rotation.y, 0, 'YXZ'); return mesh; }; // follows the slope along u
   // floor + ceiling
-  const fl = new THREE.Mesh(new THREE.PlaneGeometry(W, L), M_.floor); fl.rotation.x = -Math.PI / 2; const fg = new THREE.Group(); fg.add(fl); place(fg, 0, yF + 0.12, 0);
-  const ce = new THREE.Mesh(new THREE.PlaneGeometry(W, L), M_.ceil); ce.rotation.x = Math.PI / 2; const cg = new THREE.Group(); cg.add(ce); place(cg, 0, yF + 0.12 + H, 0);
+  const fl = new THREE.Mesh(new THREE.PlaneGeometry(W, L / Math.cos(tilt)), M_.floor); fl.rotation.x = -Math.PI / 2; const fg = new THREE.Group(); fg.add(fl); tilted(place(fg, 0, yAt(0) + 0.12, 0));
+  // v0.76 (Jonay): the ceiling in tiles, leaving open the shafts of the stairs (the slab used to cut the stairs in two:
+  // a wall half way down seen from the plaza, and seen from above, a «floor» that hid the player up to the chest)
+  { const us = [-hl, hl], vs = [-hw, hw]; for (const h of holes) { us.push(clamp(h[0], -hl, hl), clamp(h[1], -hl, hl)); vs.push(clamp(h[2], -hw, hw), clamp(h[3], -hw, hw)); }
+    const su = [...new Set(us)].sort((a, b) => a - b), sv = [...new Set(vs)].sort((a, b) => a - b);
+    for (let i = 0; i + 1 < su.length; i++) for (let j = 0; j + 1 < sv.length; j++) { const u0 = su[i], u1 = su[i + 1], v0 = sv[j], v1 = sv[j + 1]; if (u1 - u0 < 0.01 || v1 - v0 < 0.01) continue; const um = (u0 + u1) / 2, vm = (v0 + v1) / 2;
+      if (holes.some((h) => um > h[0] && um < h[1] && vm > h[2] && vm < h[3])) continue;
+      const ce = new THREE.Mesh(new THREE.PlaneGeometry(v1 - v0, (u1 - u0) / Math.cos(tilt)), M_.ceil); ce.rotation.x = Math.PI / 2; const cg = new THREE.Group(); cg.add(ce); tilted(place(cg, um, yAt(um) + 0.12 + H, vm)); } }
   // walls with gaps [side ('u+','u-','v+','v-'), centre, width]
-  const wallSeg = (side, a, b) => { if (b - a < 0.05) return; const len = b - a, mid = (a + b) / 2; const m = new THREE.Mesh(new THREE.BoxGeometry(side[0] === 'u' ? len : 0.3, H, side[0] === 'u' ? 0.3 : len), M_.wall);
-    if (side === 'v+') place(m, mid, yF + 0.12 + H / 2, hw); else if (side === 'v-') place(m, mid, yF + 0.12 + H / 2, -hw); else if (side === 'u+') place(m, hl, yF + 0.12 + H / 2, mid); else place(m, -hl, yF + 0.12 + H / 2, mid);
+  const wallSeg = (side, a, b) => { if (b - a < 0.05) return; const len = b - a, mid = (a + b) / 2; const alongU = side[0] === 'v'; const m = new THREE.Mesh(new THREE.BoxGeometry(side[0] === 'u' ? len : 0.3, H, side[0] === 'u' ? 0.3 : len / Math.cos(tilt)), M_.wall);
+    const um = side === 'u+' ? hl : side === 'u-' ? -hl : mid; const yb = yAt(um) + 0.12;
+    if (side === 'v+') place(m, mid, yb + H / 2, hw); else if (side === 'v-') place(m, mid, yb + H / 2, -hw); else if (side === 'u+') place(m, hl, yb + H / 2, mid); else place(m, -hl, yb + H / 2, mid);
+    if (alongU) tilted(m);
     // yellow-black band at bumper height
-    const st = new THREE.Mesh(new THREE.BoxGeometry(side[0] === 'u' ? len : 0.32, 0.3, side[0] === 'u' ? 0.32 : len), M_.stripe); st.position.copy(m.position); st.position.y = yF + 0.12 + 0.55; st.rotation.y = m.rotation.y; g.add(st); };
+    const st = new THREE.Mesh(new THREE.BoxGeometry(side[0] === 'u' ? len : 0.32, 0.3, side[0] === 'u' ? 0.32 : len / Math.cos(tilt)), M_.stripe); st.position.copy(m.position); st.position.y = yb + 0.55; st.rotation.copy(m.rotation); g.add(st); };
   for (const side of ['v+', 'v-', 'u+', 'u-']) { const ext = side[0] === 'v' ? hl : hw; const gs = gaps.filter((q) => q[0] === side).map((q) => [q[1] - q[2] / 2, q[1] + q[2] / 2]).sort((p, q) => p[0] - q[0]); let a = -ext; for (const [s, e] of gs) { wallSeg(side, a, s); a = e; } wallSeg(side, a, ext); }
   // bays: rows at v in [-15.5,-10.5], [-4, 0], [0, 4], [10.5, 15.5]; lanes at v = ±7.25 and cross lanes at both ends (7 m)
-  const bayW = 2.5, rows = [[-13, 1], [-2, -1], [2, 1], [13, -1]]; const uStart = -hl + 7.5, uEnd = hl - 7.5; const lines = []; let nCars = 0;
+  const openU = (s) => gaps.some((q) => q[0] === s && q[2] >= W - 0.5); // an end opening onto the next hall of a chain: bays and columns run on
+  const bayW = 2.5, rows = [[-13, 1], [-2, -1], [2, 1], [13, -1]]; const uStart = -hl + (openU('u-') ? 1.5 : 7.5), uEnd = hl - (openU('u+') ? 1.5 : 7.5); const lines = []; let nCars = 0;
   for (const [vc, face] of rows) for (let u = uStart; u <= uEnd + 0.01; u += bayW) {
     lines.push([u, vc]); if (u + bayW > uEnd + 0.01) continue;
-    if (Math.random() < 0.45) { const m = makeCarMesh(pick(['compact', 'sedan', 'suv', 'compact']), pickColor()); const gg = m.g || m; const [x, z] = P(u + bayW / 2, vc); gg.position.set(x, yF + 0.12, z); gg.rotation.y = ang + (face > 0 ? Math.PI / 2 : -Math.PI / 2); gg.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = false; } }); g.add(gg); nCars++;
-      for (const k of [-1.3, 0, 1.3]) { const [px, pz] = P(u + bayW / 2, vc + k); UGC.push([px, pz, 0.95, yF, gg]); } }
+    if (holes.some((h) => u + bayW > h[0] - 2 && u < h[1] + 2 && vc + 2.6 > h[2] && vc - 2.6 < h[3])) continue; // nobody parks under a stairwell
+    if (Math.random() < dens) { const m = makeCarMesh(pick(['compact', 'sedan', 'suv', 'compact']), pickColor()); const gg = m.g || m; const [x, z] = P(u + bayW / 2, vc); const yy = yAt(u + bayW / 2); gg.position.set(x, yy + 0.12, z); gg.rotation.y = ang + (face > 0 ? Math.PI / 2 : -Math.PI / 2); gg.userData.car = true; gg.traverse((q) => { if (q.isMesh) { q.castShadow = false; q.receiveShadow = false; } }); g.add(gg); nCars++;
+      for (const k of [-1.3, 0, 1.3]) { const [px, pz] = P(u + bayW / 2, vc + k); UGC.push([px, pz, 0.95, yy, gg]); } }
   }
-  for (const [u, vc] of lines) { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 5), M_.line); m.rotation.x = -Math.PI / 2; const q = new THREE.Group(); q.add(m); place(q, u, yF + 0.135, vc); q.rotation.y = ang + Math.PI / 2; }
+  for (const [u, vc] of lines) { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 5), M_.line); m.rotation.x = -Math.PI / 2; const q = new THREE.Group(); q.add(m); place(q, u, yAt(u) + 0.135, vc); q.rotation.y = ang + Math.PI / 2; }
   // lane arrows and centre dashes
-  for (const vl of [-7.25, 7.25]) for (let u = -hl + 4; u < hl - 4; u += 6) { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 2.6), M_.line); m.rotation.x = -Math.PI / 2; const q = new THREE.Group(); q.add(m); place(q, u, yF + 0.135, vl); }
+  for (const vl of [-7.25, 7.25]) for (let u = -hl + 4; u < hl - 4; u += 6) { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 2.6), M_.line); m.rotation.x = -Math.PI / 2; const q = new THREE.Group(); q.add(m); tilted(place(q, u, yAt(u) + 0.135, vl)); }
   // columns (between back-to-back bays) and light strips over the lanes
-  for (let u = uStart; u <= uEnd; u += bayW * 3) { const c = new THREE.Mesh(new THREE.BoxGeometry(0.55, H, 0.55), M_.col); place(c, u, yF + 0.12 + H / 2, 0); const [x, z] = P(u, 0); UGC.push([x, z, 0.4, yF]);
-    for (const vc of [-10.4, 10.4]) { const c2 = new THREE.Mesh(new THREE.BoxGeometry(0.5, H, 0.5), M_.col); place(c2, u, yF + 0.12 + H / 2, vc); const [x2, z2] = P(u, vc); UGC.push([x2, z2, 0.35, yF]); } }
-  for (const vl of [-7.25, 7.25]) for (let u = -hl + 3; u < hl - 3; u += 5) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.06, 1.6), M_.light); place(l, u, yF + 0.12 + H - 0.05, vl); }
+  for (let u = uStart; u <= uEnd; u += bayW * 3) { const yb = yAt(u) + 0.12; const c = new THREE.Mesh(new THREE.BoxGeometry(0.55, H, 0.55), M_.col); place(c, u, yb + H / 2, 0); const [x, z] = P(u, 0); UGC.push([x, z, 0.4, yAt(u)]);
+    for (const vc of [-10.4, 10.4]) { if (holes.some((h) => u > h[0] - 0.5 && u < h[1] + 0.5 && vc > h[2] - 0.5 && vc < h[3] + 0.5)) continue; const c2 = new THREE.Mesh(new THREE.BoxGeometry(0.5, H, 0.5), M_.col); place(c2, u, yb + H / 2, vc); const [x2, z2] = P(u, vc); UGC.push([x2, z2, 0.35, yAt(u)]); } }
+  for (const vl of [-7.25, 7.25]) for (let u = -hl + 3; u < hl - 3; u += 5) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.06, 1.6), M_.light); tilted(place(l, u, yAt(u) + 0.12 + H - 0.05, vl)); }
   // signs
   const sP = new THREE.MeshBasicMaterial({ map: pkSignTex('P  -1   ' + name.toUpperCase(), '#1d4f9c', '#fff', 1024, 128) });
-  for (const s of [-1, 1]) { const m = new THREE.Mesh(new THREE.PlaneGeometry(6, 0.75), sP); place(m, s * hl * 0.5, yF + 0.12 + 2.1, -hw + 0.2, -Math.PI / 2); const m2 = new THREE.Mesh(new THREE.PlaneGeometry(6, 0.75), sP); place(m2, s * hl * 0.5, yF + 0.12 + 2.1, hw - 0.2, Math.PI / 2); }
+  for (const s of [-1, 1]) { const u = s * hl * 0.5; const m = new THREE.Mesh(new THREE.PlaneGeometry(6, 0.75), sP); place(m, u, yAt(u) + 0.12 + 2.1, -hw + 0.2, -Math.PI / 2); const m2 = new THREE.Mesh(new THREE.PlaneGeometry(6, 0.75), sP); place(m2, u, yAt(u) + 0.12 + 2.1, hw - 0.2, Math.PI / 2); }
   const sx = new THREE.MeshBasicMaterial({ map: pkSignTex('SALIDA  ►', '#1f8a3c', '#fff') });
-  for (const q of gaps) { const m = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.4), sx); const u = q[0] === 'u+' ? hl - 4 : q[0] === 'u-' ? -hl + 4 : q[1]; const v = q[0][0] === 'u' ? q[1] : (q[0] === 'v+' ? hw - 3 : -hw + 3); place(m, u, yF + 0.12 + H - 0.35, v, q[0] === 'u+' ? 0 : q[0] === 'u-' ? Math.PI : Math.PI / 2); }
+  for (const q of gaps) { if (q[2] >= W - 0.5) continue; const m = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.4), sx); const u = q[0] === 'u+' ? hl - 4 : q[0] === 'u-' ? -hl + 4 : q[1]; const v = q[0][0] === 'u' ? q[1] : (q[0] === 'v+' ? hw - 3 : -hw + 3); place(m, u, yAt(u) + 0.12 + H - 0.35, v, q[0] === 'u+' ? 0 : q[0] === 'u-' ? Math.PI : Math.PI / 2); }
+  // v0.76: the long hall of La Trinidad is ~1200 small pieces: fuse those without a texture into one mesh per material
+  g.updateMatrixWorld(true); const byMat = new Map();
+  g.traverse((m) => { if (!m.isMesh || m.material.map) return; for (let q = m.parent; q && q !== g; q = q.parent) if (q.userData.car) return; if (!byMat.has(m.material)) byMat.set(m.material, []); byMat.get(m.material).push(m); });
+  for (const [mat, list] of byMat) { if (list.length < 2) continue; const mg = mergeGeos(list.map((m) => { const q = m.geometry.clone(); q.applyMatrix4(m.matrixWorld); return q; })); for (const m of list) { m.parent.remove(m); m.geometry.dispose(); } g.add(new THREE.Mesh(mg, mat)); }
   scene.add(g);
-  // drivable floor: five overlapping strips along u, capped at the end walls
-  const strips = [-12.4, -6.2, 0, 6.2, 12.4];
-  for (const v of strips) { const a = P(-hl + 0.4, v), b = P(hl - 0.4, v); const outer = Math.abs(v) > 12; TUNNEL_DECKS.push({ type: 'path', pts: [[a[0], a[1], yF + 0.12], [b[0], b[1], yF + 0.12]], w: 6.6, hw: outer ? hw - Math.abs(v) - 0.15 : 3.6, road: true, tunnel: true, capped: true, ceil: H - 0.2, hall: true }); }
-  return { nCars };
+  // v0.76 (Jonay: «no me deja correr por el carril principal»): one deck as wide as the hall, capped at the end walls.
+  // With five overlapping strips the one picked changed across the lane and its clamp pushed you back to the side
+  if (o.deck !== false) { const a = P(-hl + 0.4, 0), b = P(hl - 0.4, 0); TUNNEL_DECKS.push({ type: 'path', pts: [[a[0], a[1], yAt(-hl + 0.4) + 0.12], [b[0], b[1], yAt(hl - 0.4) + 0.12]], w: W, hw: hw - 0.15, road: true, tunnel: true, capped: true, ceil: H - 0.2, hall: true }); }
+  return { nCars, yAt };
 }
 function rampProfile(Lr, yF) { return (s, x, z) => lerp(heightAt(x, z), yF, smooth(0, 1, (s - 2) / Math.max(4, Lr - 8))); }
 // ramp from (x0,z0) on the surface to (x1,z1) inside the hall, built with the tunnel/cutting machinery
@@ -3608,6 +3640,11 @@ function buildRamp(x0, z0, x1, z1, yF, label, o = {}) { // o: w (width), wc (wal
   const lb = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.45), new THREE.MeshBasicMaterial({ map: pkSignTex(label, '#1d4f9c', '#fff', 512, 96), })); lb.position.set(px, y + 2.2, pz); lb.rotation.y = Math.atan2(-dx, -dz); scene.add(lb); { const lb2 = lb.clone(); lb2.rotation.y += Math.PI; scene.add(lb2); } // v0.62: readable from both sides (DoubleSide showed it mirrored)
   COL.addCirc(px, pz, 0.12);
 }
+const STAIR_OPEN = 0.78; // fraction of the stair under the open shaft (the terrain hole stops 2.5 m before the foot: TCUTS)
+// the ceiling hole of a stairwell, in a hall frame F (u along the hall, uc its centre): [u0, u1, v0, v1]
+function stairHole(F, uc, x0, z0, ux, uz) { const L = 10, toU = (x, z) => (x - F.cx) * F.ux + (z - F.cz) * F.uz - uc, toV = (x, z) => -(x - F.cx) * F.uz + (z - F.cz) * F.ux;
+  const a = [x0 - ux * 0.6, z0 - uz * 0.6], b = [x0 + ux * (L * STAIR_OPEN + 0.3), z0 + uz * (L * STAIR_OPEN + 0.3)], w = 1.35; const ua = [toU(...a), toU(...b)], va = [toV(...a), toV(...b)];
+  return [Math.min(...ua) - (Math.abs(uz * F.ux - ux * F.uz) > 0.5 ? w : 0), Math.max(...ua) + (Math.abs(uz * F.ux - ux * F.uz) > 0.5 ? w : 0), Math.min(...va) - (Math.abs(ux * F.ux + uz * F.uz) > 0.5 ? w : 0), Math.max(...va) + (Math.abs(ux * F.ux + uz * F.uz) > 0.5 ? w : 0)]; }
 // pedestrian stairwell: a glass pavilion on the surface over a stair that goes down into the hall
 function buildStairwell(x0, z0, ux, uz, yF, corr) {
   const M_ = pkMats(); const L = 10, g0 = heightAt(x0, z0); const x1 = x0 + ux * L, z1 = z0 + uz * L; const ang = Math.atan2(ux, uz);
@@ -3629,6 +3666,9 @@ function buildStairwell(x0, z0, ux, uz, yF, corr) {
   const g = new THREE.Group(); g.position.set((x0 + x1) / 2, 0, (z0 + z1) / 2); g.rotation.y = ang;
   const n = Math.ceil((g0 - yF) / 0.18); for (let i = 0; i < n; i++) { const t = (i + 0.5) / n; const st = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.18, L / n + 0.03), M_.col); st.position.set(0, lerp(g0, yF + 0.12, t) - 0.09, -L / 2 + t * L); g.add(st); }
   for (const s of [-1, 1]) { const wl = new THREE.Mesh(new THREE.BoxGeometry(0.15, g0 - yF + 1, L), M_.wall); wl.position.set(s * 1.25, (g0 + yF) / 2, 0); g.add(wl); }
+  // v0.76: the shaft is open up to STAIR_OPEN of its length (where the hole in the ground ends); a lintel closes the gap
+  // between the car park's ceiling and the ground beyond it
+  { const yc = yF + 0.12 + 3.4, hh = g0 - yc; if (hh > 0.2) { const ln = new THREE.Mesh(new THREE.BoxGeometry(2.5, hh, 0.3), M_.wall); ln.position.set(0, yc + hh / 2, -L / 2 + L * STAIR_OPEN + 0.15); g.add(ln); } }
   // pavilion: glass box with a steel roof and a «P» sign
   const gy = g0; const pav = new THREE.Mesh(new THREE.BoxGeometry(3.0, 2.5, L * 0.55), M_.glass); pav.position.set(0, gy + 1.25, -L * 0.2); g.add(pav);
   const roof = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.15, L * 0.6), M_.steel); roof.position.set(0, gy + 2.55, -L * 0.2); g.add(roof);
@@ -3646,11 +3686,12 @@ function buildCarParks() {
     const L = clamp(uLen - 2 * 34, 36, 80); let gmin = 1e9; for (let u = -L / 2; u <= L / 2; u += 6) for (let v = -15; v <= 15; v += 5) { const [x, z] = F2.W(uc + u, v); gmin = Math.min(gmin, heightAt(x, z)); }
     const yF = gmin - 5.4; // deep enough for a tall ramp mouth (cars used to scrape the lintel)
     const gaps = [['u+', 7.25, 8.6], ['u-', -7.25, 8.6], ['v+', -L / 4, 2.6], ['v-', L / 4, 2.6]];
-    const r = buildHall(F2, uc, L, yF, 'Plaza del Cristo', gaps);
+    const SW = [[-L / 4, 13.8, 1], [L / 4, -13.8, -1]].map(([u, v, d]) => { const p = F2.W(uc + u - d * 5, v); return [p[0], p[1], F.ux * d, F.uz * d]; });
+    const r = buildHall(F2, uc, L, yF, 'Plaza del Cristo', gaps, SW.map((q) => stairHole(F2, uc, ...q)));
     // vehicle ramps from both ends of the plaza (one each way, both usable)
     for (const [s, v] of [[1, 7.25], [-1, -7.25]]) { const top = F2.W(uc + s * (L / 2 + 42), v), bot = F2.W(uc + s * (L / 2 - 3.5), v); buildRamp(top[0], top[1], bot[0], bot[1], yF, s > 0 ? 'ENTRADA · SALIDA' : 'PARKING DEL CRISTO'); }
     // stairwells: pavilions over the plaza, stairs going down to the side aisles
-    for (const [u, v, d] of [[-L / 4, 13.8, 1], [L / 4, -13.8, -1]]) { const p = F2.W(uc + u - d * 5, v); buildStairwell(p[0], p[1], F.ux * d, F.uz * d, yF); }
+    for (const q of SW) buildStairwell(q[0], q[1], q[2], q[3], yF);
     CARPARKS.push({ name: 'Parking del Cristo', x: F2.cx, z: F2.cz, F: F2, uc, L, yF });
     // the plaza on top: rows of Indian laurels, benches and lanterns around the edge, open centre for fairs
     const per = []; for (let i = 0; i < c.length; i += 2) per.push([c[i], c[i + 1]]);
@@ -4851,23 +4892,35 @@ function trinidadParking() {
         if (swOk(uu, side * av, du, dv)) { best = { u: uu, v: side * av, du, dv, ue }; break; } }
       if (best) found.push(best); }
     return found; };
-  const buildTriHall = (F, L, rampTop, rampBot, rampV, rampW, name, label, end) => {
-    const yF = depthAt(F, L); const found = stairs(F, L, yF, rampV, end === 'u-' ? -L / 2 + 3.5 : L / 2 - 3.5);
-    const gaps = [[end, rampV, rampW + 1.6]]; for (const f of found) { const vb = f.v + f.dv * 11.5; if (Math.abs(vb) > 14) gaps.push([f.v > 0 ? 'v+' : 'v-', f.ue, 2.6]); }
-    buildHall(F, 0, L, yF, name, gaps);
-    buildRamp(rampTop[0], rampTop[1], rampBot[0], rampBot[1], yF, label, { w: rampW, wc: blue });
-    for (const f of found) { const p = F.W(f.u, f.v); const vb = f.v + f.dv * 11.5; const corr = Math.abs(vb) > 14 ? F.W(f.ue, Math.sign(f.v) * 14.5) : null; const dx = F.ux * f.du - F.uz * f.dv, dz = F.uz * f.du + F.ux * f.dv; buildStairwell(p[0], p[1], dx, dz, yF, corr); }
-    CARPARKS.push({ name: 'Parking ' + name, x: F.cx, z: F.cz, F, uc: 0, L, yF });
-  };
-  // A) «Trinidad Casco Histórico»: the ramp in the middle of the split carriageway at the top, going down the avenue
-  { const h = T.hallA, L = h.L; const F = frame(h.x, h.z, h.ux, h.uz); const top = [T.rampA.x0, T.rampA.z0], bot = F.W(-L / 2 + 3.5, 0);
-    buildTriHall(F, L, top, bot, 0, 4.2, 'Trinidad Casco Histórico', 'TRINIDAD CASCO HISTÓRICO', 'u-'); }
-  // B) «Trinidad Centro» (Av. Trinidad 59): beside the pavement of the carriageway that comes up, above Pedro Zerolo
-  const r = T.rampB; if (r) { const B = T.B, L = 56; const pc = B.at(r.s1 - L / 2 + 3.5); const ux = pc.ux, uz = pc.uz; // the hall axis points down the avenue: its u+ end meets the ramp
-    const off = B.out * 3; const nx = -pc.uz, nz = pc.ux; const F = frame(pc.x + nx * off, pc.z + nz * off, ux, uz);
-    const t0 = B.at(r.s0), t1 = B.at(r.s1); const vR = r.v - off; // the ramp's offset in the hall frame
-    const top = [t0.x + nx * r.v, t0.z + nz * r.v], bot = [t1.x + nx * r.v, t1.z + nz * r.v];
-    buildTriHall(F, L, top, bot, vR, 3.8, 'Trinidad Centro', 'TRINIDAD CENTRO', 'u+');
+  // v0.76 (Jonay): ONE car park under the whole avenue, from below the top ramp («Casco Histórico») down to the
+  // «Trinidad Centro» ramp near Pedro Zerolo (~420 m): a chain of straight halls along the median that slope with the
+  // avenue, open to each other, 7 m under the lowest ground around (the old two halls were 5.4 m down: things showed
+  // through the ceiling). Stairs to both pavements every other hall.
+  const DEPTH = 7.0, r = T.rampB, B = T.B; const t0 = r ? B.at(r.s0) : null, t1 = r ? B.at(r.s1) : null; const nB = t1 ? [-t1.uz, t1.ux] : null;
+  const botB = r ? [t1.x + nB[0] * r.v, t1.z + nB[1] * r.v] : null, topB = r ? [t0.x + nB[0] * r.v, t0.z + nB[1] * r.v] : null;
+  const sA = 72, sE = r ? T.A.proj(B.at(r.s1 + 3.5).x, B.at(r.s1 + 3.5).z).s : 132; const nSeg = Math.max(1, Math.round((sE - sA) / 60));
+  const node = (s) => T.mid(s); const N = []; for (let k = 0; k <= nSeg; k++) { const s = sA + (sE - sA) * k / nSeg; const m = node(s); N.push({ s, x: m.x, z: m.z }); }
+  const gmin = (x, z, ux, uz) => { let g = 1e9; for (let a = -24; a <= 24; a += 6) for (let v = -15.5; v <= 15.5; v += 5.15) g = Math.min(g, heightAt(x + ux * a - uz * v, z + uz * a + ux * v)); return g; };
+  for (let k = 0; k < N.length; k++) { const a = N[Math.max(0, k - 1)], b = N[Math.min(N.length - 1, k + 1)], L = Math.hypot(b.x - a.x, b.z - a.z) || 1; N[k].y = gmin(N[k].x, N[k].z, (b.x - a.x) / L, (b.z - a.z) / L) - DEPTH; }
+  for (let pass = 0; pass < 2; pass++) for (let k = 1; k < N.length; k++) { const d = Math.hypot(N[k].x - N[k - 1].x, N[k].z - N[k - 1].z), lim = d * 0.06; N[k].y = clamp(N[k].y, N[k - 1].y - lim, N[k - 1].y + lim); N[k - 1].y = Math.min(N[k - 1].y, N[k].y + lim); } // never steeper than 6 %, and only ever deeper
+  const segs = []; for (let k = 0; k < nSeg; k++) { const a = N[k], b = N[k + 1]; const L0 = Math.hypot(b.x - a.x, b.z - a.z), ux = (b.x - a.x) / L0, uz = (b.z - a.z) / L0; const e0 = k > 0 ? 1 : 0, e1 = k < nSeg - 1 ? 1 : 0; // internal joints overlap 1 m each side (no slit at the bends)
+    const L = L0 + e0 + e1, F = frame((a.x + b.x) / 2 + ux * (e1 - e0) / 2, (a.z + b.z) / 2 + uz * (e1 - e0) / 2, ux, uz); segs.push({ F, L, y0: a.y - (b.y - a.y) * e0 / L0, y1: b.y + (b.y - a.y) * e1 / L0, k }); }
+  const toV = (F, x, z) => -(x - F.cx) * F.uz + (z - F.cz) * F.ux, toU = (F, x, z) => (x - F.cx) * F.ux + (z - F.cz) * F.uz;
+  const name = 'Trinidad', last = segs.length - 1;
+  for (const sg of segs) { const { F, L } = sg; const first = sg.k === 0, end = sg.k === last;
+    const vR = end && botB ? toV(F, botB[0], botB[1]) : 0;
+    const found = sg.k % 2 === 0 || end ? stairs(F, L, sg.y0, end ? vR : 99, end ? L / 2 - 3.5 : first ? -L / 2 + 3.5 : 999) : [];
+    const gaps = []; if (first) gaps.push(['u-', 0, 4.2 + 1.6]); else gaps.push(['u-', 0, 31]); if (end) { if (botB) gaps.push(['u+', vR, 3.8 + 1.6]); } else gaps.push(['u+', 0, 31]);
+    for (const f of found) { const vb = f.v + f.dv * 11.5; if (Math.abs(vb) > 14) gaps.push([f.v > 0 ? 'v+' : 'v-', f.ue, 2.6]); }
+    const holes = found.map((f) => { const p = F.W(f.u, f.v); return stairHole(F, 0, p[0], p[1], F.ux * f.du - F.uz * f.dv, F.uz * f.du + F.ux * f.dv); });
+    const hr = buildHall(F, 0, L, sg.y0, name, gaps, holes, { y1: sg.y1, deck: false, density: 0.16 });
+    for (const f of found) { const p = F.W(f.u, f.v); const vb = f.v + f.dv * 11.5; const corr = Math.abs(vb) > 14 ? F.W(f.ue, Math.sign(f.v) * 14.5) : null; const dx = F.ux * f.du - F.uz * f.dv, dz = F.uz * f.du + F.ux * f.dv; buildStairwell(p[0], p[1], dx, dz, hr.yAt(corr ? f.ue : f.u + f.du * 10), corr); }
+    if (first) { const bot = F.W(-L / 2 + 3.5, 0); buildRamp(T.rampA.x0, T.rampA.z0, bot[0], bot[1], hr.yAt(-L / 2 + 3.5), 'TRINIDAD CASCO HISTÓRICO', { w: 4.2, wc: blue }); }
+    if (end && botB) buildRamp(topB[0], topB[1], botB[0], botB[1], hr.yAt(toU(F, botB[0], botB[1])), 'TRINIDAD CENTRO', { w: 3.8, wc: blue });
+    CARPARKS.push({ name: 'Parking ' + name, x: F.cx, z: F.cz, F, uc: 0, L, yF: Math.min(sg.y0, sg.y1) }); }
+  // one deck along the whole chain (walls only at its two ends)
+  TUNNEL_DECKS.push({ type: 'path', pts: N.map((p) => [p.x, p.z, p.y + 0.12]), w: 31, hw: 15.35, road: true, tunnel: true, capped: true, ceil: 3.2, hall: true });
+  if (r) { const nx = nB[0], nz = nB[1];
     // the yellow box grid in front of the ramp mouth
     const g0 = B.at(r.s0 + 4), gv = B.out * (B.w / 2 - 1.6); triDecal(g0.x + nx * gv, g0.z + nz * gv, -g0.ux, -g0.uz, 8, 3.2, (x, w, h, k) => yellowBox(x, w, h, k)); }
   // Pedro Zerolo: yellow box grid where the tram crosses between the carriageways, zebra crossings on both carriageways
@@ -4961,6 +5014,44 @@ function buildPeraza() {
   const tc = mkCanvas(256, 64), tx = tc.getContext('2d'); tx.fillStyle = '#1f7a3d'; tx.fillRect(0, 0, 256, 64); tx.fillStyle = '#fff'; tx.font = 'bold 34px sans-serif'; tx.textAlign = 'center'; tx.fillText('TAQUILLA', 128, 44);
   const ts = add(new THREE.PlaneGeometry(1.5, 0.38), new THREE.MeshStandardMaterial({ map: canvasTex(tc, { repeat: false }), roughness: 0.6 }), 4.6, 2.15, -1.78);
   scene.add(g);
+}
+// ============ Pabellón Juan Ríos Tejera (v0.76, Jonay: «parece una casa, no un pabellón») ============
+// OSM has the hall as a plain 16 m, 5-storey building inside the sports area «Pabellón Juan Ríos Tejera»: drawn as a
+// block of brick flats. Here it is the real thing (Street View, C. Leopoldo de la Rosa Olivera 7–8): a long low hall with
+// white walls and purple vertical stripes, a grey metal roof with a raised clerestory along the middle, and the low
+// white wall with the purple gate on the street (riosTejeraInit in 12i_canchas.js puts the gate and the sign).
+const RIOS = { area: undefined, pts: null };
+function riosHall(pts, cx, cz) {
+  if (RIOS.area === undefined) { const a = DATA.A.find((q) => q[1] >= 0 && /Juan R[ií]os Tejera/.test(STR[q[1]])); RIOS.area = a ? a[2] : null; }
+  if (!RIOS.area || RIOS.pts || Math.abs(polyArea(pts)) < 900) return false;
+  if (!pip(cx, cz, RIOS.area)) return false;
+  RIOS.pts = pts; RIOS.cx = cx; RIOS.cz = cz; for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[(i + 1) % pts.length]; COL.addSeg(p[0], p[1], q[0], q[1]); }
+  return true;
+}
+function buildRiosHall() {
+  const pts = RIOS.pts; if (!pts) return; const n = pts.length; const g = pts.map((p) => heightAt(p[0], p[1])); const y0 = Math.min(...g) - 0.5, yT = Math.max(...g) + 8.0;
+  // wall texture: white render with purple vertical stripes every 4 m and a grey plinth
+  const c = mkCanvas(256, 256), x = c.getContext('2d'); x.fillStyle = '#f2f1ec'; x.fillRect(0, 0, 256, 256); x.fillStyle = '#7e3fa0'; x.fillRect(0, 0, 22, 256); x.fillStyle = '#b9b6ae'; x.fillRect(0, 232, 256, 24);
+  x.fillStyle = 'rgba(0,0,0,0.06)'; for (let k = 0; k < 256; k += 32) x.fillRect(0, k, 256, 1);
+  const wt = canvasTex(c); const wallM = new THREE.MeshStandardMaterial({ map: wt, roughness: 0.9 });
+  const pos = [], uv = []; let acc = 0;
+  for (let i = 0; i < n; i++) { const j = (i + 1) % n, p = pts[i], q = pts[j], L = Math.hypot(q[0] - p[0], q[1] - p[1]); const u0 = acc / 4, u1 = (acc + L) / 4; acc += L; const h = yT - y0;
+    pos.push(p[0], y0, p[1], q[0], y0, q[1], q[0], yT, q[1], p[0], y0, p[1], q[0], yT, q[1], p[0], yT, p[1]); uv.push(u0, 0, u1, 0, u1, h / 8, u0, 0, u1, h / 8, u0, h / 8); }
+  const wg = new THREE.BufferGeometry(); wg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); wg.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); wg.computeVertexNormals();
+  const root = new THREE.Group(); root.name = 'Pabellón Juan Ríos Tejera';
+  const walls = new THREE.Mesh(wg, new THREE.MeshStandardMaterial({ map: wt, roughness: 0.9, side: THREE.DoubleSide })); walls.castShadow = walls.receiveShadow = true; root.add(walls);
+  // roof: grey sheet metal over the whole footprint, a purple fascia band, and a raised clerestory along the long axis
+  const tri = THREE.ShapeUtils.triangulateShape(pts.map((p) => new THREE.Vector2(p[0], p[1])), []); const rp = [];
+  for (const [a, b, cc] of tri) for (const k of [a, b, cc]) rp.push(pts[k][0], yT, pts[k][1]);
+  const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.Float32BufferAttribute(rp, 3)); rg.computeVertexNormals();
+  root.add(new THREE.Mesh(rg, M(0x9aa0a6, 0.45, 0.6, { side: THREE.DoubleSide })));
+  const fp = []; for (let i = 0; i < n; i++) { const j = (i + 1) % n, p = pts[i], q = pts[j]; fp.push(p[0], yT - 0.7, p[1], q[0], yT - 0.7, q[1], q[0], yT + 0.15, q[1], p[0], yT - 0.7, p[1], q[0], yT + 0.15, q[1], p[0], yT + 0.15, p[1]); }
+  const fg = new THREE.BufferGeometry(); fg.setAttribute('position', new THREE.Float32BufferAttribute(fp, 3)); fg.computeVertexNormals(); root.add(new THREE.Mesh(fg, M(0x7e3fa0, 0.5, 0.3, { side: THREE.DoubleSide })));
+  const F = axisFrame(pts, RIOS.cx, RIOS.cz); const len = F.u1 - F.u0, wid = F.v1 - F.v0, vm = (F.v0 + F.v1) / 2, um = (F.u0 + F.u1) / 2;
+  const cl = new THREE.Mesh(new THREE.BoxGeometry(wid * 0.45, 2.2, len * 0.8), new THREE.MeshStandardMaterial({ color: 0xf2f1ec, roughness: 0.85 })); const [qx, qz] = F.W(um, vm); cl.position.set(qx, yT + 1.1, qz); cl.rotation.y = F.ang; cl.castShadow = true; root.add(cl);
+  const cr = new THREE.Mesh(new THREE.BoxGeometry(wid * 0.5, 0.25, len * 0.84), M(0x9aa0a6, 0.45, 0.6)); cr.position.set(qx, yT + 2.3, qz); cr.rotation.y = cl.rotation.y; root.add(cr);
+  scene.add(root);
+  BUILD.push({ pts, cx: RIOS.cx, cz: RIOS.cz, top: yT, bmax: Math.max(...g), style: 3, name: 'Pabellón Juan Ríos Tejera', H: yT - Math.max(...g) });
 }
 
 // ============ humans & vehicle meshes ============
@@ -5737,7 +5828,7 @@ class Car {
       if (typeof ugcPush === 'function') { const fx3 = Math.sin(this.h), fz3 = Math.cos(this.h), o3 = this.T.L / 2 - this.T.W / 2; for (const k of [o3, 0, -o3]) { const cx = this.x + fx3 * k, cz = this.z + fz3 * k; const q = ugcPush(cx, cz, this.T.W / 2, this.y); if (q[0] !== cx || q[1] !== cz) { const nx = q[0] - cx, nz = q[1] - cz, nl = Math.hypot(nx, nz) || 1; this.x += nx; this.z += nz; const vn = (this.vx * nx + this.vz * nz) / nl; if (vn < 0) { this.vx -= vn * nx / nl * 1.4; this.vz -= vn * nz / nl * 1.4; if (-vn > 4) this.onImpact(-vn); } } } } }
     if (this.low) { const lw = lowAt(this.x, this.z, this.y); if (lw && lw.cap) { // car park hall: end walls (the car's half length stays inside)
         const half = Math.abs(Math.sin(this.h) * lw.cap.ux + Math.cos(this.h) * lw.cap.uz) * (this.T.L / 2 - this.T.W / 2) + this.T.W / 2, s0 = half - 0.35, s1 = lw.cap.len - half + 0.35; let pen = 0;
-        if (lw.cap.s < s0) pen = lw.cap.s - s0; else if (lw.cap.s > s1) pen = lw.cap.s - s1;
+        if (lw.cap.s < s0 && !lw.cap.open0) pen = lw.cap.s - s0; else if (lw.cap.s > s1 && !lw.cap.open1) pen = lw.cap.s - s1;
         if (pen) { this.x -= lw.cap.ux * pen; this.z -= lw.cap.uz * pen; const vn = (this.vx * lw.cap.ux + this.vz * lw.cap.uz) * Math.sign(pen); if (vn > 0) { this.vx -= lw.cap.ux * Math.sign(pen) * vn * 1.3; this.vz -= lw.cap.uz * Math.sign(pen) * vn * 1.3; if (vn > 4) this.onImpact(vn); } } }
       if (lw && heightAt(this.x, this.z) - lw.y > 1.3) { const lim = Math.max(0.3, lw.hw - this.T.W / 2); if (lw.d > lim && lw.d > 0.01) { const nx = (this.x - lw.px) / lw.d, nz = (this.z - lw.pz) / lw.d, pen = lw.d - lim; this.x -= nx * pen; this.z -= nz * pen; const vn = this.vx * nx + this.vz * nz; if (vn > 0) { this.vx -= vn * nx * 1.3; this.vz -= vn * nz * 1.3; if (vn > 4) this.onImpact(vn); } } } }
   }
@@ -6083,7 +6174,7 @@ function exitCar() {
 function updatePlayer(dt) {
   const gp = INPUT.gp;
   if (PLAYER.dead) return;
-  if (pressed('KeyE') || (gp && gp.down(2))) { const cg = typeof courtGateNear === 'function' ? courtGateNear() : null; if (cg) { useCourtGate(cg); return; } /* v0.66: courts and school doors */ const t = nearestDoor(), f = FOOD.near(); const preferFood = f && (!t || (f.counter && t.exit && Math.hypot(PLAYER.x - f.x, PLAYER.z - f.z) < Math.hypot(PLAYER.x - t.it.exit.x, PLAYER.z - t.it.exit.z))); if (preferFood) { FOOD.open(f); return; } if (t) { useDoor(t); return; } }
+  if (pressed('KeyE') || (gp && gp.down(2))) { if (typeof AGUA !== 'undefined' && AGUA.use()) return; /* v0.76: toy shops, fountains */ const cg = typeof courtGateNear === 'function' ? courtGateNear() : null; if (cg) { useCourtGate(cg); return; } /* v0.66: courts and school doors */ const t = nearestDoor(), f = FOOD.near(); const preferFood = f && (!t || (f.counter && t.exit && Math.hypot(PLAYER.x - f.x, PLAYER.z - f.z) < Math.hypot(PLAYER.x - t.it.exit.x, PLAYER.z - t.it.exit.z))); if (preferFood) { FOOD.open(f); return; } if (t) { useDoor(t); return; } }
   if (pressed('KeyF', 'Enter') || (gp && gp.down(3))) { if (PLAYER.car) exitCar(); else { const t = nearestEnterable(); if (t) enterCar(t); } }
   if (PLAYER.car) {
     const c = PLAYER.car.ctl;
@@ -6291,6 +6382,7 @@ function updatePeds(dt) {
     for (const c of CARS) { if (c.speed < 4 || Math.abs(c.x - p.x) > 7 || Math.abs(c.z - p.z) > 7 || underground(c.x, c.z, c.y)) continue; for (const [cx, cz, cr] of c.circles()) { if (Math.hypot(p.x - cx, p.z - cz) < cr + 0.3) { p.down = 4; p.vx = c.vx * 0.8 + rnd(-2, 2); p.vz = c.vz * 0.8 + rnd(-2, 2); AUDIO.thud(dp); if (c.driver === 'player') { WANTED.crime(1, 'Atropello'); MISSIONS.onEvent('hitped'); } break; } } if (p.down > 0) break; }
     if (p.down > 0) continue;
     if (combatPed(p, dt)) continue;
+    if (p.wetChase > 0 && typeof wetChasePed === 'function' && wetChasePed(p, dt)) continue; // v0.76: soaked with the water rifle, he comes for you
     // danger → flee
     if (PLAYER.car && PLAYER.car.speed > 9 && dp < 12) { p.flee = 5; p.fleeFrom = [PLAYER.x, PLAYER.z]; }
     if (WANTED.level > 0 && dp < 25 && Math.random() < 0.01) { p.flee = 6; p.fleeFrom = [PLAYER.x, PLAYER.z]; }
@@ -6444,9 +6536,11 @@ function ensureGunMesh() {
 let GUN_GEO = null;
 function gunGeos() { if (!GUN_GEO) { GUN_GEO = { slide: new THREE.BoxGeometry(0.035, 0.04, 0.19), handle: new THREE.BoxGeometry(0.03, 0.1, 0.045) }; GUN_GEO.slide.userData.shared = GUN_GEO.handle.userData.shared = true; } return GUN_GEO; }
 function updateWeaponHUD() {
-  const w = $('weap'); if (!w) return; w.style.display = WEAPON.has ? 'block' : 'none'; const tm = document.body.classList.contains('touchmode');
-  if (WEAPON.has) w.innerHTML = WEAPON.out ? `PISTOLA <b>${WEAPON.ammo}</b><small>/${WEAPON.max}</small><br><small style="font-size:12px;opacity:.75">${tm ? 'toca: puños' : CONTROLS.keyName('weap').toUpperCase() + ' / 1: puños'}</small>` : `PUÑOS<br><small style="font-size:12px;opacity:.75">${tm ? 'toca: pistola' : CONTROLS.keyName('weap').toUpperCase() + ' / 2: pistola'}</small>`;
-  const t = document.body.classList.contains('touchmode'); for (const id of ['tbA', 'tbD']) { const b = $(id); if (b) b.style.display = WEAPON.has && WEAPON.out && t ? 'flex' : 'none'; }
+  const w = $('weap'); if (!w) return; const rifle = typeof RIFLE !== 'undefined' && RIFLE.has; w.style.display = WEAPON.has || rifle ? 'block' : 'none'; const tm = document.body.classList.contains('touchmode');
+  if (rifle && RIFLE.out) w.innerHTML = `RIFLE DE AGUA <b>${Math.round(100 * RIFLE.water / RIFLE.max)}%</b><br><small style="font-size:12px;opacity:.75">${tm ? 'toca: cambiar' : CONTROLS.keyName('weap').toUpperCase() + ' / 1: puños' + (WEAPON.has ? ' · 2: pistola' : '')}</small>`;
+  else if (rifle && !WEAPON.has) w.innerHTML = `PUÑOS<br><small style="font-size:12px;opacity:.75">${tm ? 'toca: rifle de agua' : CONTROLS.keyName('weap').toUpperCase() + ' / 3: rifle de agua'}</small>`;
+  else if (WEAPON.has) w.innerHTML = WEAPON.out ? `PISTOLA <b>${WEAPON.ammo}</b><small>/${WEAPON.max}</small><br><small style="font-size:12px;opacity:.75">${tm ? 'toca: puños' : CONTROLS.keyName('weap').toUpperCase() + ' / 1: puños'}</small>` : `PUÑOS<br><small style="font-size:12px;opacity:.75">${tm ? 'toca: pistola' : CONTROLS.keyName('weap').toUpperCase() + ' / 2: pistola'}</small>`;
+  const t = document.body.classList.contains('touchmode'); for (const id of ['tbA', 'tbD']) { const b = $(id); if (b) b.style.display = ((WEAPON.has && WEAPON.out) || (rifle && RIFLE.out)) && t ? 'flex' : 'none'; }
 }
 // ray from the camera through the crosshair; returns the first thing hit
 const _rayO = new THREE.Vector3(), _rayD = new THREE.Vector3(), _aimD = new THREE.Vector3(); // v0.69 (auditor): no new vectors per shot
@@ -6496,8 +6590,8 @@ function aimArm(H, dir) {
 function updateWeapons(dt) {
   weaponSwitchInput();
   if (WEAPON.cd > 0) WEAPON.cd -= dt;
-  if (!canUse()) { WEAPON.aiming = WEAPON.touchAim = false; } else if (WEAPON.touchAim) WEAPON.aiming = true;
-  const xh = $('xhair'); if (xh) xh.style.display = WEAPON.aiming || (canUse() && document.body.classList.contains('touchmode')) ? 'block' : 'none';
+  if (!canUse() && !(typeof rifleUsable === 'function' && rifleUsable())) { WEAPON.aiming = WEAPON.touchAim = false; } else if (WEAPON.touchAim) WEAPON.aiming = true;
+  const xh = $('xhair'); if (xh) xh.style.display = WEAPON.aiming || ((canUse() || rifleUsable()) && document.body.classList.contains('touchmode')) ? 'block' : 'none';
   if (WEAPON.want && canUse()) fireWeapon(); WEAPON.want = false;
   if (WEAPON.has && WEAPON.mesh) {
     WEAPON.mesh.visible = !PLAYER.car && !PLAYER.interior && !!WEAPON.out;
@@ -6539,13 +6633,13 @@ function gripGun(H, mesh, aimDir) {
   mesh.updateMatrixWorld(true);
 }
 // switch between fists and the pistol: Tab toggles, 1 = fists, 2 = pistol, gamepad d-pad left/right, tap the weapon label on phones
-function setWeaponOut(v) { if (!WEAPON.has || WEAPON.out === v) return; WEAPON.out = v; WEAPON.aiming = false; if (WEAPON.mesh) WEAPON.mesh.visible = v; AUDIO.pickup && AUDIO.pickup(); updateWeaponHUD(); HUD.toast(v ? 'Pistola' : 'Puños', '#fff', 1.2); }
+function setWeaponOut(v) { if (v && typeof RIFLE !== 'undefined' && RIFLE.out) AGUA.setRifleOut(false, true); if (!WEAPON.has || WEAPON.out === v) return; WEAPON.out = v; WEAPON.aiming = false; if (WEAPON.mesh) WEAPON.mesh.visible = v; AUDIO.pickup && AUDIO.pickup(); updateWeaponHUD(); HUD.toast(v ? 'Pistola' : 'Puños', '#fff', 1.2); }
 function weaponSwitchInput() {
-  if (GAME.state !== 'play' || !WEAPON.has) return; const gp = INPUT.gp;
-  if (pressed('Tab') || (gp && (gp.down(14) || gp.down(15)))) setWeaponOut(!WEAPON.out);
+  const rifle = typeof RIFLE !== 'undefined' && RIFLE.has; if (GAME.state !== 'play' || (!WEAPON.has && !rifle)) return; const gp = INPUT.gp;
+  if (pressed('Tab') || (gp && (gp.down(14) || gp.down(15)))) { if (rifle) AGUA.cycle(); else setWeaponOut(!WEAPON.out); } // v0.76: fists → pistol → water rifle
   if (pressed('Digit1')) setWeaponOut(false); if (pressed('Digit2')) setWeaponOut(true);
 }
-(() => { const w = document.getElementById('weap'); if (w) { w.style.pointerEvents = 'auto'; w.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); setWeaponOut(!WEAPON.out); }); }
+(() => { const w = document.getElementById('weap'); if (w) { w.style.pointerEvents = 'auto'; w.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); if (typeof RIFLE !== 'undefined' && RIFLE.has) AGUA.cycle(); else setWeaponOut(!WEAPON.out); }); }
   document.addEventListener('keydown', (e) => { if (e.code === 'Tab' && GAME.state === 'play') e.preventDefault(); }, true); })();
 
 // ============ «JETA FIGHTER»: 2D pixel-art street fight, 90s style. Starts when you punch someone ============
@@ -7876,7 +7970,14 @@ const MALEANTES = (() => {
   const NAMES = ['El Perenquén', 'Juanillo Cuchara', 'El Guirre', 'Pepe Machango', 'El Baifo Loco', 'Tito Tolete', 'El Tuerto de Taco', 'Cholo Pantuflas', 'Chicharro Malo', 'El Mojo Picón', 'Paco Jeitazo', 'El Gofio Negro'];
   const LV = [null, { ai: 0.66, deal: 1.25, recv: 0.9, pay: 150 }, { ai: 0.78, deal: 1.5, recv: 0.8, pay: 300 }, { ai: 0.9, deal: 1.8, recv: 0.7, pay: 600 }];
   const st = { cur: null, t: 60, won: 0 };
-  const unlocked = () => !!(window.GANG && window.GANG.sastronTut);
+  // v0.76 (Jonay: «no sé cuándo te dicen lo de los maleantes»): when you have learnt to fight, Sastrón phones you and
+  // explains it; only then do they start to turn up, as red triangles on the minimap
+  const unlocked = () => !!(window.GANG && window.GANG.sastronTut && window.GANG.maleIntro);
+  const COL_ = '#ff1744';
+  function intro() { const G = window.GANG; if (!G || !G.sastronTut || G.maleIntro || st.introT > 0 || MISSIONS.active || GAME.state !== 'play' || (DLG && DLG.open) || (window.__TALK && window.__TALK.cur)) return; st.introT = 1;
+    MISSIONS.kit.talk([['Sastrón (por el móvil)', 'Chopa, ahora que sabes repartir, te cuento un negocio. La Policía Local tiene una lista de maleantes en busca y captura y paga una recompensa a quien se los entregue.'],
+      ['Sastrón (por el móvil)', 'Cuando haya uno cerca te saldrá en el minimapa como un triángulo rojo. Vas, le das una buena tunda (pelea, como siempre) y la recompensa es tuya. Sin delito: es un servicio público.'],
+      [MISSIONS.kit.CH, '¿Y si me gana él?'], ['Sastrón (por el móvil)', 'Sigue marcado un rato: vuelve a por él. Y ojo, que pegan más fuerte que la gente normal y cuanto más nivel, más pagan.']], () => { G.maleIntro = true; st.t = 25; }); }
   function pickPed() {
     let best = null;
     for (const p of PEDS) { if (p.down > 0 || p.fight > 0 || p.canarion || p.fought || !p.H || (p.H.look && p.H.look.female)) continue; const d = Math.hypot(p.x - PLAYER.x, p.z - PLAYER.z); if (d < 45 || d > 120) continue; if (!best || Math.random() < 0.3) best = p; }
@@ -7886,12 +7987,12 @@ const MALEANTES = (() => {
     const p = pickPed(); if (!p) return false;
     const lv = st.won < 2 ? 1 : st.won < 5 ? (Math.random() < 0.6 ? 1 : 2) : 1 + Math.floor(Math.random() * 3);
     p.maleante = { lv, name: NAMES[Math.floor(Math.random() * NAMES.length)], t: 240 }; st.cur = p;
-    HUD.toast(`Se busca: ${p.maleante.name} (nivel ${lv}) · recompensa $${LV[lv].pay}. Está marcado en el minimapa`, '#c6ff00', 6);
+    HUD.toast(`Se busca: ${p.maleante.name} (nivel ${lv}) · recompensa $${LV[lv].pay}. Es el triángulo rojo del minimapa`, COL_, 6);
     return true;
   }
-  function clear(msg) { if (st.cur) { st.cur.maleante = null; st.cur = null; } if (msg) HUD.toast(msg, '#c6ff00', 3); st.t = 90 + Math.random() * 120; }
+  function clear(msg) { if (st.cur) { st.cur.maleante = null; st.cur = null; } if (msg) HUD.toast(msg, COL_, 3); st.t = 90 + Math.random() * 120; }
   function update(dt) {
-    if (!unlocked() || GAME.state !== 'play') return;
+    if (!unlocked()) { intro(); return; } if (GAME.state !== 'play') return;
     const c = st.cur;
     if (c) { c.maleante.t -= dt; if (!PEDS.includes(c) || c.gone) return clear('El maleante se ha escapado'); if (c.maleante.t <= 0) return clear('Has perdido la pista del maleante'); return; }
     if (MISSIONS.active || PLAYER.car && PLAYER.car.speed > 25) return; // never in the middle of a mission
@@ -7899,9 +8000,167 @@ const MALEANTES = (() => {
   }
   // the 2D fight against him (startStreetFight asks for this); the reward is paid on a win
   function fightFor(p) { const m = p.maleante, L = LV[m.lv]; return { name: m.name.toUpperCase(), deal: L.deal, recv: L.recv, lv: L.ai }; }
-  function result(p, won) { if (!p.maleante) return; if (won) { const pay = LV[p.maleante.lv].pay; PLAYER.money += pay; AUDIO.cash(); HUD.toast(`¡${p.maleante.name} capturado! Recompensa +$${pay}`, '#c6ff00', 5); st.won++; clear(); p.paid = true; } else HUD.toast(`${p.maleante.name} te ha dado una paliza. Sigue marcado: puedes volver a por él`, '#ffb3b3', 4); }
-  const blips = () => (st.cur && st.cur.maleante ? [[st.cur.x, st.cur.z, '#c6ff00']] : []);
-  return { update, fightFor, result, blips, _st: st, _spawn: spawn, unlocked };
+  function result(p, won) { if (!p.maleante) return; if (won) { const pay = LV[p.maleante.lv].pay; PLAYER.money += pay; AUDIO.cash(); HUD.toast(`¡${p.maleante.name} capturado! Recompensa +$${pay}`, COL_, 5); st.won++; clear(); p.paid = true; } else HUD.toast(`${p.maleante.name} te ha dado una paliza. Sigue marcado: puedes volver a por él`, '#ffb3b3', 4); }
+  const blips = () => (st.cur && st.cur.maleante ? [[st.cur.x, st.cur.z, COL_, 'tri']] : []);
+  return { update, fightFor, result, blips, _st: st, _spawn: spawn, unlocked, COL: COL_ };
+})();
+
+// ============ Rifle de agua (v0.76, Jonay) ============
+// An electric water rifle like the «SK8 Waterleopard» (~60 cm, 10–12 m of range): white and neon-orange body, a see-
+// through blue tank on top that empties as you shoot. Held like the pistol (same keys: right click / APUNTAR aims,
+// left click / A sprays while held); Tab / 1 / 2 / 3 change between fists, pistol and rifle. The jet is a stream of
+// drops thrown in a parabola: ~10 m when aimed straight; where a drop lands it leaves a little puddle for a few
+// seconds. It puts out fires (FIRES: drops or a puddle on them) and soaks people (RIFLE.targets for missions: a hit on
+// the head counts apart). It is refilled at any fountain (E). It is sold in the toy shops (jugueterías), which open
+// with El Blanco's mission. Wetting people is not a crime.
+const RIFLE = { has: false, out: false, water: 0, max: 100, mesh: null, firing: false, targets: [], onDouse: null, onFireOut: null, lastHit: null };
+const FIRES = [];
+function rifleUsable() { return RIFLE.has && RIFLE.out && !PLAYER.car && !PLAYER.interior && PLAYER.down <= 0 && !PLAYER.dead; }
+function giveRifle(full = true) { RIFLE.has = true; RIFLE.out = true; if (full) RIFLE.water = RIFLE.max; WEAPON.out = false; if (WEAPON.mesh) WEAPON.mesh.visible = false; AGUA.ensureMesh(); updateWeaponHUD(); }
+// a fire on the ground (a pile of papers, a bin, a door…): size ~ metres; hp 1 → 0 under the water; onOut when it dies
+function makeFire(x, z, size = 1, onOut) {
+  const g = new THREE.Group(); const y = Math.max(heightAt(x, z), deckAt(x, z, heightAt(x, z) + 1)) + 0.02; g.position.set(x, y, z);
+  const fl = AGUA.flameMats(); const flames = [];
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.45 * size, 0.55 * size, 0.18, 8), M(0xe9e4d6, 0.9)); base.position.y = 0.09; g.add(base); // the papers
+  for (let k = 0; k < 3; k++) { const m = new THREE.Mesh(AGUA.flameGeo(), fl[k]); m.position.set((k - 1) * 0.18 * size, 0.18, ((k % 2) - 0.5) * 0.2 * size); m.scale.setScalar(size * (k === 1 ? 1.15 : 0.8)); g.add(m); flames.push(m); }
+  scene.add(g); const f = { x, z, y, size, r: 0.55 * size + 0.35, h: 1.4 * size, hp: 1, g, flames, base, onOut, t: Math.random() * 6, out: false }; FIRES.push(f); return f;
+}
+function clearFires() { for (let i = FIRES.length - 1; i >= 0; i--) { const f = FIRES[i]; if (f.free) continue; if (f.g.parent) f.g.parent.remove(f.g); f.base.geometry.dispose(); FIRES.splice(i, 1); } } // free: a fire of no mission (tests)
+function wetChasePed(p, dt) {
+  p.wetChase -= dt; const dx = PLAYER.x - p.x, dz = PLAYER.z - p.z, d = Math.hypot(dx, dz);
+  if (PLAYER.car || PLAYER.dead || PLAYER.interior || d > 40 || p.down > 0 || p.wetChase <= 0) { p.wetChase = 0; if (d > 3) SUB.show('<b>Peatón:</b> ¡Ya te pillaré, chorizo!', 1.8); return false; }
+  p.h += angDiff(p.h, Math.atan2(dx, dz)) * clamp(dt * 8, 0, 1); const mv = d > 1.1 ? 4.9 : 0; p.x += dx / d * mv * dt; p.z += dz / d * mv * dt;
+  const r = COL.resolve(p.x, p.z, 0.3); p.x = r.x; p.z = r.z; animHuman(p.H, dt, mv); p.H.root.position.set(p.x, heightAt(p.x, p.z) + 0.17, p.z); p.H.root.rotation.y = p.h;
+  if (d < 1.25 && GAME.state === 'play' && PLAYER.down <= 0) { p.wetChase = 0; if (typeof startStreetFight === 'function' && startStreetFight(p)) SUB.show('<b>Peatón empapado:</b> ¡Ahora vas a ver lo que es mojarse!', 2.5); else startFight(p); }
+  return true;
+}
+const AGUA = (() => {
+  const N = 110; let inst = null, spawnT = 0, sndT = 0, shopT = 0; const D = []; // drops: [x, y, z, vx, vy, vz, alive]
+  const PUD = []; let pudGeo = null; const tmpM = new THREE.Matrix4(), tmpV = new THREE.Vector3(), aimV = new THREE.Vector3(), handV = new THREE.Vector3(), O3 = new THREE.Vector3(), NEG = new THREE.Vector3(), UP3 = new THREE.Vector3(0, 1, 0);
+  let flameG = null, flameM = null, toyIcon = null; const shops = []; let shopsMade = false;
+  function flameGeo() { if (!flameG) { flameG = new THREE.ConeGeometry(0.28, 1.0, 7); flameG.translate(0, 0.5, 0); flameG.userData.shared = true; } return flameG; }
+  function flameMats() { if (!flameM) flameM = [0xff6a00, 0xffc400, 0xff3d00].map((c) => new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 1.6, transparent: true, opacity: 0.85, depthWrite: false })); return flameM; }
+  // ---------- the rifle
+  function ensureMesh() {
+    if (RIFLE.mesh) { RIFLE.mesh.visible = true; return; }
+    const g = new THREE.Group(), white = M(0xf4f4f0, 0.5), orange = M(0xff6d00, 0.45), dark = M(0x26282c, 0.5, 0.3);
+    const tankM = new THREE.MeshStandardMaterial({ color: 0x7fd3ff, roughness: 0.1, metalness: 0.1, transparent: true, opacity: 0.45, depthWrite: false });
+    const box = (w, h, d, m, x, y, z, rx = 0) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); b.rotation.x = rx; g.add(b); return b; };
+    box(0.055, 0.075, 0.36, white, 0, 0.02, 0.1);              // receiver
+    box(0.05, 0.05, 0.16, orange, 0, 0.005, 0.33);             // handguard
+    const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.12, 8), dark); bar.rotation.x = Math.PI / 2; bar.position.set(0, 0.012, 0.47); g.add(bar);
+    box(0.03, 0.03, 0.03, orange, 0, 0.012, 0.53);             // orange tip (toy)
+    box(0.045, 0.06, 0.16, orange, 0, 0.0, -0.15);             // stock
+    box(0.04, 0.09, 0.05, dark, 0, -0.06, -0.24);              // butt
+    box(0.032, 0.1, 0.045, dark, 0, -0.065, 0.0, -0.25);       // grip
+    box(0.03, 0.06, 0.03, white, 0, -0.03, 0.06);              // trigger guard
+    const tank = box(0.07, 0.08, 0.2, tankM, 0, 0.1, 0.1); const water = box(0.06, 0.07, 0.19, new THREE.MeshStandardMaterial({ color: 0x1e88e5, transparent: true, opacity: 0.8 }), 0, 0.098, 0.1); water.userData.full = 0.07;
+    g.userData.water = water; g.userData.tank = tank; g.scale.setScalar(1.15); RIFLE.mesh = g; scene.add(g);
+  }
+  // ---------- drops and puddles
+  function init() {
+    if (inst) return; const geo = new THREE.SphereGeometry(0.055, 6, 4); geo.userData.shared = true;
+    inst = new THREE.InstancedMesh(geo, new THREE.MeshStandardMaterial({ color: 0x9fd8ff, roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.75, emissive: 0x2a5d7a }), N); inst.count = 0; inst.frustumCulled = false; scene.add(inst);
+    for (let i = 0; i < N; i++) D.push([0, 0, 0, 0, 0, 0, 0]);
+    pudGeo = new THREE.CircleGeometry(1, 14); pudGeo.rotateX(-Math.PI / 2); pudGeo.userData.shared = true;
+    for (let i = 0; i < 14; i++) { const m = new THREE.Mesh(pudGeo, new THREE.MeshStandardMaterial({ color: 0x5e9fc2, roughness: 0.05, metalness: 0.35, transparent: true, opacity: 0, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 })); m.visible = false; m.renderOrder = 3; scene.add(m); PUD.push({ m, t: 0, r: 0.3, x: 0, z: 0 }); }
+  }
+  function puddle(x, z) { // a new puddle, or the one already there grows
+    let p = PUD.find((q) => q.t > 0 && Math.hypot(q.x - x, q.z - z) < q.r + 0.25);
+    if (!p) { p = PUD.reduce((a, b) => (a.t < b.t ? a : b)); p.x = x; p.z = z; p.r = 0.25; }
+    p.t = 4.5; p.r = Math.min(1.1, p.r + 0.05); const g = heightAt(x, z), sf = surfAt(x, z); const y = Math.max(g + 0.19, sf - g < 1.6 ? sf + 0.09 : -1e9); p.m.position.set(p.x, y, p.z); p.m.scale.setScalar(p.r); p.m.visible = true;
+    for (const f of FIRES) if (!f.out && Math.hypot(f.x - p.x, f.z - p.z) < f.r + p.r * 0.6) douseFire(f, 0.03);
+  }
+  function douseFire(f, k) { f.hp -= k; if (f.hp > 0) return; f.out = true; AUDIO.sizzle && AUDIO.sizzle(); for (const m of f.flames) m.visible = false; f.base.material = M(0x2a2622, 0.95); f.outT = 0; if (f.onOut) f.onOut(f); if (RIFLE.onFireOut) RIFLE.onFireOut(f); }
+  // v0.76 (Jonay): whoever you soak comes after you, and if he catches you there is a fight (the 2D one)
+  function wetPed(p) { if (p.wetT > 0.6) { p.wetT = 2.5; return; } p.wetT = 2.5; if (p.down > 0 || p.canarion) return; if (MISSIONS.active) { p.flee = 4; p.fleeFrom = [PLAYER.x, PLAYER.z]; SUB.show('<b>Peatón:</b> ¡Eh! ¡Que me mojas!', 1.6); return; } /* in a mission they just run off */ p.flee = 0; p.fight = 0; p.wetChase = 14;
+    SUB.show('<b>' + pick(['Peatón', 'Un señor', 'Una chica', 'Un chaval']) + ':</b> ' + pick(['¡Eh! ¡Que me mojas! ¡Ven p\'acá!', '¡Niño, que no estamos en carnavales! ¡Te vas a enterar!', '¡Mi pelo! ¡Recién peinado! ¡Te pillo!', '¡Fuchi! ¿Agua de la fuente? ¡Ahora verás!']), 2.2); }
+  function spawnDrop() {
+    const m = RIFLE.mesh; if (!m) return; const d = D.find((q) => !q[6]); if (!d) return;
+    const dir = aimV; if (WEAPON.aiming) camera.getWorldDirection(dir); else dir.set(Math.sin(PLAYER.h), 0, Math.cos(PLAYER.h));
+    const up = (WEAPON.aiming ? 0.22 : 0.13) + (Math.random() - 0.5) * 0.04; /* from the hip the jet lands ~8 m ahead; aimed, ~11 m */ dir.y += up; dir.normalize(); const sp = 13 + Math.random() * 0.8; // ~10–11 m when aimed straight (v0.76: 11.5 m/s only reached ~5 m)
+    tmpV.set(0, 0.012, 0.55).applyMatrix4(m.matrixWorld); d[0] = tmpV.x; d[1] = tmpV.y; d[2] = tmpV.z; d[3] = dir.x * sp + (Math.random() - 0.5) * 0.25; d[4] = dir.y * sp; d[5] = dir.z * sp + (Math.random() - 0.5) * 0.25; d[6] = 2.4;
+  }
+  function hitTargets(d) { // mission targets (Boca Papa's head…) and the people in the street
+    for (const t of RIFLE.targets) { if (t.done) continue; const g = t.y0 !== undefined ? t.y0 : heightAt(t.x, t.z); const dh = Math.hypot(d[0] - t.x, d[2] - t.z); if (dh > (t.r || 0.45) || d[1] < g - 0.1 || d[1] > g + (t.h || 1.8)) continue;
+      const head = t.head !== undefined && Math.abs(d[1] - (g + t.head)) < 0.32 && dh < 0.32; RIFLE.lastHit = t; if (t.onHit) t.onHit(t, head, Math.hypot(PLAYER.x - t.x, PLAYER.z - t.z)); if (RIFLE.onDouse) RIFLE.onDouse(t, head); return true; }
+    for (const p of PEDS) { if (Math.abs(p.x - d[0]) > 0.6 || Math.abs(p.z - d[2]) > 0.6) continue; const g = heightAt(p.x, p.z); if (d[1] < g || d[1] > g + 1.8 || Math.hypot(p.x - d[0], p.z - d[2]) > 0.45) continue; wetPed(p); return true; }
+    return false;
+  }
+  function update(dt) {
+    init(); weaponKeys(); shopT -= dt; if (shopT <= 0) { shopT = 0.5; tickShops(); }
+    const use = rifleUsable();
+    if (RIFLE.mesh) RIFLE.mesh.visible = RIFLE.has && RIFLE.out && !PLAYER.car && !PLAYER.interior;
+    if (!use) RIFLE.firing = false; else if (WEAPON.touchAim) WEAPON.aiming = true;
+    if (use && WEAPON.want) { RIFLE.touchT = 0.5; WEAPON.want = false; } // a tap on the phone's fire button: a short burst
+    if (RIFLE.touchT > 0) RIFLE.touchT -= dt;
+    // hold the rifle: in the right hand, along the aim when aiming, pointing ahead and down when not
+    if (use && RIFLE.mesh && playerHuman) {
+      if (WEAPON.aiming) { PLAYER.h = CAM.yaw; playerHuman.root.rotation.y = PLAYER.h; camera.getWorldDirection(aimV); aimArm(playerHuman, aimV); }
+      const hand = playerHuman.skinned && playerHuman.skeleton.getBoneByName('hand_r'); if (hand) { hand.updateWorldMatrix(true, false); hand.getWorldPosition(handV); } else handV.set(PLAYER.x, PLAYER.y + 1.1, PLAYER.z);
+      const fx = Math.sin(PLAYER.h), fz = Math.cos(PLAYER.h); const dir = WEAPON.aiming ? aimV : tmpV.set(fx, -0.35, fz).normalize();
+      RIFLE.mesh.position.copy(handV); tmpM.lookAt(O3, NEG.copy(dir).negate(), UP3); RIFLE.mesh.quaternion.setFromRotationMatrix(tmpM);
+      if (!WEAPON.aiming) RIFLE.mesh.position.addScaledVector(dir, 0.05); RIFLE.mesh.updateMatrixWorld(true);
+      const wl = RIFLE.mesh.userData.water; const k = clamp(RIFLE.water / RIFLE.max, 0.02, 1); wl.scale.y = k; wl.position.y = 0.098 - 0.07 * (1 - k) / 2;
+    }
+    // spray
+    const spraying = use && (RIFLE.firing || RIFLE.touchT > 0) && RIFLE.water > 0;
+    if (use && (RIFLE.firing || RIFLE.touchT > 0) && RIFLE.water <= 0 && !RIFLE.emptyMsg) { RIFLE.emptyMsg = true; AUDIO.empty && AUDIO.empty(); HUD.toast('Rifle de agua vacío: recárgalo en una fuente (' + CONTROLS.keyName('use').toUpperCase() + ')', '#7fd3ff', 2.5); }
+    if (spraying && !WEAPON.aiming && playerHuman) { PLAYER.h = CAM.yaw; playerHuman.root.rotation.y = PLAYER.h; } // the jet goes where you look (as when aiming)
+    if (spraying) { RIFLE.emptyMsg = false; FIGHT.blockPunch = true; spawnT -= dt; while (spawnT <= 0) { spawnT += 0.04; spawnDrop(); } RIFLE.water = Math.max(0, RIFLE.water - dt * 7.5); sndT -= dt; if (sndT <= 0) { sndT = 0.11; AUDIO.spray && AUDIO.spray(); } if (Math.random() < dt * 4) updateWeaponHUD(); }
+    // drops in flight
+    let n = 0;
+    for (const d of D) { if (!d[6]) continue; d[6] -= dt; const px = d[0], pz = d[2]; d[4] -= 9.8 * dt; d[0] += d[3] * dt; d[1] += d[4] * dt; d[2] += d[5] * dt; d[3] *= 0.995; d[5] *= 0.995;
+      let end = d[6] <= 0; const g = heightAt(d[0], d[2]), sf = surfAt(d[0], d[2]); const fl = Math.max(g, deckAt(d[0], d[2], d[1] + 0.5), sf - g < 1.6 ? sf : -1e9);
+      if (!end) for (const f of FIRES) { if (f.out || Math.abs(f.x - d[0]) > f.r || Math.abs(f.z - d[2]) > f.r) continue; if (Math.hypot(f.x - d[0], f.z - d[2]) < f.r && d[1] < f.y + f.h + 0.6) { douseFire(f, 0.045); puddle(d[0], d[2]); end = true; break; } }
+      if (!end && hitTargets(d)) { end = true; AUDIO.splash && Math.random() < 0.3 && AUDIO.splash(); }
+      if (!end && d[1] <= fl + 0.02) { puddle(d[0], d[2]); end = true; }
+      if (!end && COL.raycast(px, pz, d[0], d[2]) < 1 && d[1] < fl + 3) { puddle(px, pz); end = true; } // against a wall: it runs down to its foot
+      if (end) { d[6] = 0; continue; }
+      tmpM.makeTranslation(d[0], d[1], d[2]); inst.setMatrixAt(n++, tmpM); }
+    inst.count = n; inst.instanceMatrix.needsUpdate = true;
+    for (const p of PUD) { if (p.t <= 0) continue; p.t -= dt; p.m.material.opacity = clamp(p.t / 1.5, 0, 1) * 0.55; if (p.t <= 0) p.m.visible = false; }
+    for (const p of PEDS) if (p.wetT > 0) p.wetT -= dt;
+    // fires: flicker, burn you if you stand in them, the burnt pile goes after a while
+    for (let i = FIRES.length - 1; i >= 0; i--) { const f = FIRES[i]; f.t += dt;
+      if (!f.out) { f.flames.forEach((m, k) => { const s = f.size * (k === 1 ? 1.15 : 0.8) * Math.max(0.25, f.hp); m.scale.set(s * (1 + 0.12 * Math.sin(f.t * 13 + k * 2)), s * (1 + 0.25 * Math.sin(f.t * 9 + k)), s); });
+        if (!PLAYER.car && Math.hypot(PLAYER.x - f.x, PLAYER.z - f.z) < f.r * 0.8 && PLAYER.y < f.y + 1) { PLAYER.health -= dt * 12; if (Math.random() < dt * 2) HUD.toast('¡Quema!', '#ff6a00', 0.8); } }
+      else if ((f.outT += dt) > 40 && !f.keep) { if (f.g.parent) f.g.parent.remove(f.g); f.base.geometry.dispose(); FIRES.splice(i, 1); } }
+  }
+  // ---------- Tab / 1 / 2 / 3: fists, pistol, water rifle
+  function weaponKeys() {
+    if (GAME.state !== 'play' || !RIFLE.has) return;
+    if (pressed('Digit3')) setRifleOut(true);
+    if (pressed('Digit1') && RIFLE.out) { setRifleOut(false, true); HUD.toast('Puños', '#fff', 1.2); } // Digit2 (pistol) hides it in setWeaponOut
+  }
+  function setRifleOut(v, quiet) { if (!RIFLE.has || RIFLE.out === v) return; RIFLE.out = v; RIFLE.firing = false; WEAPON.aiming = false; if (v) { WEAPON.out = false; if (WEAPON.mesh) WEAPON.mesh.visible = false; ensureMesh(); } if (RIFLE.mesh) RIFLE.mesh.visible = v; if (!quiet) { AUDIO.pickup && AUDIO.pickup(); HUD.toast(v ? 'Rifle de agua' : 'Puños', v ? '#7fd3ff' : '#fff', 1.2); } updateWeaponHUD(); }
+  // the order Tab goes round in: fists → pistol (if you have it) → rifle (if you have it) → fists
+  function cycle() { const cur = RIFLE.out ? 2 : WEAPON.out && WEAPON.has ? 1 : 0; for (let k = 1; k <= 3; k++) { const nx = (cur + k) % 3; if (nx === 1 && !WEAPON.has) continue; if (nx === 2 && !RIFLE.has) continue;
+      if (nx === 0) { setRifleOut(false, true); if (WEAPON.has) setWeaponOut(false); else HUD.toast('Puños', '#fff', 1.2); } else if (nx === 1) { setRifleOut(false, true); WEAPON.out = false; setWeaponOut(true); } else setRifleOut(true); updateWeaponHUD(); return; } }
+  // mouse: right = aim, left = spray while held (the pistol's own handlers only work with the pistol out)
+  document.addEventListener('mousedown', (e) => { if (GAME.state !== 'play' || !document.pointerLockElement || !rifleUsable()) return; if (e.button === 2) WEAPON.aiming = true; if (e.button === 0) { RIFLE.firing = true; FIGHT.blockPunch = true; } });
+  document.addEventListener('mouseup', (e) => { if (e.button === 0) RIFLE.firing = false; });
+  // ---------- toy shops and fountains (E)
+  function toyIconTex() { const c = mkCanvas(128, 128), x = c.getContext('2d'); x.fillStyle = '#1e88e5'; x.beginPath(); x.arc(64, 64, 58, 0, 7); x.fill(); x.lineWidth = 8; x.strokeStyle = '#fff'; x.stroke();
+    x.fillStyle = '#fff'; x.beginPath(); x.moveTo(64, 22); x.bezierCurveTo(84, 52, 94, 66, 94, 80); x.arc(64, 80, 30, 0, Math.PI); x.bezierCurveTo(34, 66, 44, 52, 64, 22); x.fill(); return canvasTex(c, { repeat: false }); }
+  function makeShops() { if (shopsMade) return; shopsMade = true; const mat = new THREE.SpriteMaterial({ map: (toyIcon = toyIconTex()), transparent: true });
+    for (const s of DATA.SH || []) { if (!s[3] || !/Juguet/i.test(s[3])) continue; const sp = safeSpot(s[0], s[1], 0.5); const spr = new THREE.Sprite(mat); spr.scale.set(1.1, 1.1, 1); spr.position.set(sp[0], heightAt(sp[0], sp[1]) + 3, sp[1]); spr.visible = false; scene.add(spr); shops.push({ x: sp[0], z: sp[1], name: s[3], spr }); } }
+  const open_ = () => !!(MISSIONS.gang && MISSIONS.gang.jugueterias);
+  function nearShop() { if (PLAYER.car || PLAYER.interior || !open_()) return null; for (const s of shops) if (Math.hypot(PLAYER.x - s.x, PLAYER.z - s.z) < 3.2) return s; return null; }
+  function nearFountain() { if (PLAYER.car || PLAYER.interior || !RIFLE.has) return null; for (const f of PK2.fountains) if (Math.hypot(PLAYER.x - f[0], PLAYER.z - f[1]) < (f[2] || 4.6)) return f; return null; }
+  const PRICE = 350, BALLS = 20;
+  function openShop(s) {
+    const items = []; if (!RIFLE.has) items.push(['rifle', `Rifle de agua «Guepardo SK-9» eléctrico · <b>$${PRICE}</b>`]); else items.push(['fill', 'Llenar el rifle de agua (del grifo de la tienda) · <b>$2</b>']); if (WEAPON.has) items.push(['balls', `Bolsa de bolitas para la pistola (6) · <b>$${BALLS}</b>`]);
+    DLG.show(s.name, 'Juguetería', `Tienes <b>$${PLAYER.money}</b>.${RIFLE.has ? '' : ' En el escaparate: un rifle de agua eléctrico, «diez metros de chorro, depósito transparente».'}`, '¿Qué te llevas?', [...items.map((q) => q[1]), 'Nada, gracias'], (i) => {
+      DLG.hide(); const it = items[i]; if (!it) return; const cost = it[0] === 'rifle' ? PRICE : it[0] === 'balls' ? BALLS : 2;
+      if (PLAYER.money < cost) { AUDIO.fail(); HUD.toast('No te llega el dinero', '#ffb3b3', 2.5); return; } PLAYER.money -= cost; AUDIO.cash && AUDIO.cash();
+      if (it[0] === 'rifle') { giveRifle(true); HUD.toast('¡Rifle de agua! ' + CONTROLS.keyName('weap').toUpperCase() + ' / 3 para sacarlo', '#7fd3ff', 4); MISSIONS.onEvent('bought', 'rifle'); }
+      else if (it[0] === 'balls') { WEAPON.ammo = WEAPON.max; updateWeaponHUD(); HUD.toast('Pistola cargada', '#fff', 2); }
+      else { RIFLE.water = RIFLE.max; updateWeaponHUD(); HUD.toast('Rifle de agua lleno', '#7fd3ff', 2); } }); }
+  function use() { const s = nearShop(); if (s) { openShop(s); return true; } const f = nearFountain(); if (f && RIFLE.water < RIFLE.max - 0.5) { RIFLE.water = RIFLE.max; AUDIO.splash && AUDIO.splash(); updateWeaponHUD(); HUD.toast('Rifle de agua lleno', '#7fd3ff', 2); MISSIONS.onEvent('refill', f); return true; } return false; }
+  function prompt() { const s = nearShop(); if (s) return `${CONTROLS.kbd('use')} Entrar: ${s.name} (juguetería)`; const f = nearFountain(); if (f && RIFLE.water < RIFLE.max - 0.5) return `${CONTROLS.kbd('use')} Llenar el rifle de agua en la fuente`; return ''; }
+  function tickShops() { makeShops(); const o = open_(); for (const s of shops) s.spr.visible = o && Math.abs(s.x - PLAYER.x) < 400 && Math.abs(s.z - PLAYER.z) < 400; }
+  return { update, ensureMesh, flameGeo, flameMats, cycle, setRifleOut, use, prompt, tickShops, get shops() { makeShops(); return shops; }, puddle, douseFire, _drops: D, _pud: PUD };
 })();
 
 // ============ procedural audio ============
@@ -8001,6 +8260,9 @@ const AUDIO = (() => {
       o.connect(bp); bp.connect(g); g.connect(master); o.start(t0 + t); o.stop(t0 + t + len + 0.05); t += len + Math.random() * 0.15; } },
     shot() { burst(0.16, 3200, 0.55); burst(0.45, 160, 0.5); },
     clink() { tone(2600, 0.18, 0.07, 'triangle'); tone(3400, 0.12, 0.05, 'triangle', 0.04); },
+    spray() { burst(0.09, 2600, 0.035, 'bandpass'); }, // v0.76: water rifle
+    sizzle() { burst(0.6, 4200, 0.09, 'bandpass'); burst(0.3, 900, 0.05, 'bandpass'); }, // a fire put out
+    splash() { burst(0.15, 1400, 0.05, 'bandpass'); },
     empty() { tone(900, 0.04, 0.05, 'square'); },
     swing() { burst(0.12, 1800, 0.05, 'bandpass'); },
     cash() { tone(1318, 0.12, 0.06, 'square'); tone(1760, 0.3, 0.05, 'square', 0.1); },
@@ -8462,7 +8724,7 @@ const HUD = (() => {
   function blip(x, z, color, size, shape = 'dot', clampEdge = false) {
     // world -> minimap (already transformed context)
     mx.fillStyle = color; mx.strokeStyle = '#000'; mx.lineWidth = 2 / mmScale;
-    mx.beginPath(); if (shape === 'sq') mx.rect(x - size, z - size, size * 2, size * 2); else mx.arc(x, z, size, 0, 7); mx.fill(); mx.stroke();
+    mx.beginPath(); if (shape === 'sq') mx.rect(x - size, z - size, size * 2, size * 2); else if (shape === 'tri') { mx.save(); mx.translate(x, z); mx.rotate(-(CAM.yaw - Math.PI)); const k = size * 1.35; mx.moveTo(0, -k); mx.lineTo(k * 0.9, k * 0.65); mx.lineTo(-k * 0.9, k * 0.65); mx.closePath(); mx.restore(); } else mx.arc(x, z, size, 0, 7); mx.fill(); mx.stroke();
   }
   let mmScale = 1;
   function drawMinimap() {
@@ -8486,10 +8748,10 @@ const HUD = (() => {
     const fl = Math.floor(performance.now() / 250) % 2;
     for (const c of CARS) if (c.driver === 'police') blip(c.x, c.z, fl ? '#3d7bff' : '#ff3d3d', 6 * s * 1.6);
     // mission markers & waypoint (clamped to edge)
-    const edge = (x, z, col, sz) => { const dx = x - PLAYER.x, dz = z - PLAYER.z; const d = Math.hypot(dx, dz); const maxd = (R * 0.92) / (mmScale / MAP.scale) ; let px = x, pz = z; if (d > maxd * 0.95) { px = PLAYER.x + dx / d * maxd * 0.95; pz = PLAYER.z + dz / d * maxd * 0.95; } blip(px, pz, col, sz); };
+    const edge = (x, z, col, sz, shape) => { const dx = x - PLAYER.x, dz = z - PLAYER.z; const d = Math.hypot(dx, dz); const maxd = (R * 0.92) / (mmScale / MAP.scale) ; let px = x, pz = z; if (d > maxd * 0.95) { px = PLAYER.x + dx / d * maxd * 0.95; pz = PLAYER.z + dz / d * maxd * 0.95; } blip(px, pz, col, sz, shape); };
     for (const it of INTERIORS) for (const d of it.doors) { if (Math.abs(d.x - PLAYER.x) < 400 && Math.abs(d.z - PLAYER.z) < 400) blip(d.x, d.z, '#3ddc97', 6 * s * 1.6, 'sq'); }
     for (const f of FOOD.shops) { if (Math.abs(f.x - PLAYER.x) < 400 && Math.abs(f.z - PLAYER.z) < 400) blip(f.x, f.z, '#e53935', 6 * s * 1.6, 'sq'); }
-    for (const m of MISSIONS.blips()) edge(m[0], m[1], m[2] || '#f5b72e', 9 * s * 1.6);
+    for (const m of MISSIONS.blips()) edge(m[0], m[1], m[2] || '#f5b72e', 9 * s * 1.6, m[3]);
     if (GPS.target) edge(GPS.target[0], GPS.target[1], '#e040fb', 9 * s * 1.6);
     // player arrow
     mx.save(); mx.translate(PLAYER.x, PLAYER.z); mx.rotate(-(PLAYER.car ? PLAYER.car.h : PLAYER.h) + Math.PI); const a = 11 * s * 1.6;
@@ -8544,6 +8806,7 @@ const HUD = (() => {
         { const cg = typeof courtGateNear === 'function' ? courtGateNear() : null; if (cg) pr = courtPrompt(cg); }
         const dr = nearestDoor(); if (dr) pr = dr.exit ? CONTROLS.kbd('use') + ' Salir a la calle' : `${CONTROLS.kbd('use')} Entrar: ${dr.it.name}`;
         { const f = FOOD.near(); if (f && (!dr || (f.counter && dr.exit && Math.hypot(PLAYER.x - f.x, PLAYER.z - f.z) < Math.hypot(PLAYER.x - dr.it.exit.x, PLAYER.z - dr.it.exit.z)))) pr = `${CONTROLS.kbd('use')} ${f.counter ? 'Pedir en la barra' : 'Comprar comida'}: ${f.name}`; }
+        { const ap = typeof AGUA !== 'undefined' ? AGUA.prompt() : ''; if (ap) pr = ap; } // v0.76: toy shops and fountains
         const mp = MISSIONS.prompt(); if (mp) pr = mp;
         if (pr !== lastPrompt) { lastPrompt = pr; const pe = hudEl("prompt"); if (pr) { pe.innerHTML = pr; pe.style.display = 'block'; } else pe.style.display = 'none'; }
       }
@@ -8570,7 +8833,7 @@ const BIGMAP = (() => {
     const dot = (px, pz, c, r) => { x.fillStyle = c; x.strokeStyle = '#000'; x.lineWidth = 2 / k * devicePixelRatio; x.beginPath(); x.arc(px, pz, r / k * devicePixelRatio, 0, 7); x.fill(); x.stroke(); };
     for (const c of CARS) if (c.driver === 'police') dot(c.x, c.z, '#3d7bff', 5);
     for (const f of FOOD.shops) { x.fillStyle = '#e53935'; x.strokeStyle = '#fff'; x.lineWidth = 1.5 / k * devicePixelRatio; const sz = 5 * devicePixelRatio / k; x.fillRect(f.x - sz, f.z - sz, sz * 2, sz * 2); x.strokeRect(f.x - sz, f.z - sz, sz * 2, sz * 2); }
-    for (const m of MISSIONS.blips()) dot(m[0], m[1], m[2] || '#f5b72e', 8);
+    for (const m of MISSIONS.blips()) { if (m[3] === 'tri') { const a = 11 / k * devicePixelRatio; x.fillStyle = m[2]; x.strokeStyle = '#000'; x.lineWidth = 2 / k * devicePixelRatio; x.beginPath(); x.moveTo(m[0], m[1] - a); x.lineTo(m[0] + a * 0.9, m[1] + a * 0.65); x.lineTo(m[0] - a * 0.9, m[1] + a * 0.65); x.closePath(); x.fill(); x.stroke(); } else dot(m[0], m[1], m[2] || '#f5b72e', 8); }
     for (const q of MISSIONS.aheadPts() || []) dot(q[0], q[1], '#46c3ff', 6);
     if (GPS.target) dot(GPS.target[0], GPS.target[1], '#e040fb', 8);
     x.save(); x.translate(PLAYER.x, PLAYER.z); x.rotate(-(PLAYER.car ? PLAYER.car.h : PLAYER.h) + Math.PI); const a = 12 / k * devicePixelRatio; x.fillStyle = '#fff'; x.strokeStyle = '#000'; x.lineWidth = 2 / k * devicePixelRatio; x.beginPath(); x.moveTo(0, -a); x.lineTo(a * 0.7, a * 0.7); x.lineTo(0, a * 0.35); x.lineTo(-a * 0.7, a * 0.7); x.closePath(); x.fill(); x.stroke(); x.restore();
@@ -8662,7 +8925,7 @@ function setupTouch() {
   let lastCar = null; setInterval(() => { const c = !!PLAYER.car; if (c === lastCar) return; lastCar = c; $('tbF').textContent = c ? 'SALIR' : 'ENTRAR'; $('tbJ').innerHTML = c ? 'FRENO<br>MANO' : 'SALTO'; $('tbS').textContent = c ? 'CLAXON' : 'CORRER'; }, 250);
   $('minimapwrap').addEventListener('pointerdown', (e) => { e.stopPropagation(); BIGMAP.toggle(); }); // the minimap itself also opens the big map
   btn('tbA', () => { WEAPON.touchAim = !WEAPON.touchAim; if (!WEAPON.touchAim) WEAPON.aiming = false; $('tbA').style.borderColor = WEAPON.touchAim ? '#3ddc97' : ''; });
-  btn('tbD', () => { if (canUse()) WEAPON.want = true; });
+  btn('tbD', () => { if (canUse()) WEAPON.want = true; else if (typeof rifleUsable === 'function' && rifleUsable()) RIFLE.touchT = 0.7; });
 }
 
 // ============ brújula a los pies hacia los objetivos (v0.60, rehecha a petición de Jonay) ============
@@ -9160,13 +9423,16 @@ const MISSIONS = (() => {
     },
     { title: 'Revancha con el Canarión', who: 'el Canarión', startPos() { return [NPC.canarion.x + 1.4, NPC.canarion.z + 1.4]; }, start() { startRace(this, false); }, update(dt) { raceUpdate(this, dt); } }];
   const OBISPO_LIST = []; // v0.65: the bishop's optional pack (12g_obispo.js), opens with the mayor's missions
+  const SECRETA_LIST = [], CARRERAS_LIST = []; // v0.76: el policía secreta (12k_agua.js) and the Canarión's car races
   const COPA_LIST = []; // v0.75: Copa Laguna de fútbol (12j_campos.js), opens after your first football game
   const TORNEO_LIST = []; // v0.66: Torneo Lagunero de baloncesto (12i_canchas.js), opens after your first basketball game
-  const TRACKS = { story: { list: STORY, idx: 0, beacon: null, color: 0xf5b72e, css: '#f5b72e' }, side: { list: SIDE, idx: 0, beacon: null, color: 0x5ec8ff, css: '#5ec8ff', open: false }, obispo: { list: OBISPO_LIST, idx: 0, beacon: null, color: 0xb388ff, css: '#b388ff' }, torneo: { list: TORNEO_LIST, idx: 0, beacon: null, color: 0xff9f43, css: '#ff9f43' }, copa: { list: COPA_LIST, idx: 0, beacon: null, color: 0x26d07c, css: '#26d07c' } };
+  const TRACKS = { story: { list: STORY, idx: 0, beacon: null, color: 0xf5b72e, css: '#f5b72e' }, side: { list: SIDE, idx: 0, beacon: null, color: 0x5ec8ff, css: '#5ec8ff', open: false }, obispo: { list: OBISPO_LIST, idx: 0, beacon: null, color: 0xb388ff, css: '#b388ff' }, torneo: { list: TORNEO_LIST, idx: 0, beacon: null, color: 0xff9f43, css: '#ff9f43' }, copa: { list: COPA_LIST, idx: 0, beacon: null, color: 0x26d07c, css: '#26d07c' }, secreta: { list: SECRETA_LIST, idx: 0, beacon: null, color: 0xff8a65, css: '#ff8a65' }, carreras: { list: CARRERAS_LIST, idx: 0, beacon: null, color: 0x00e5ff, css: '#00e5ff' } };
+  const storyPast = (title) => { const i = STORY.findIndex((m) => m.title === title); return TRACKS.story.done || STORY_SKIP.has(title) || (i >= 0 && TRACKS.story.idx > i); };
+  const trackOpen = (k) => (k === 'secreta' ? !!GANG.rifleTut : k === 'carreras' ? storyPast('El rally de La Esperanza') : true);
   const obispoOpen = () => { if (!NPC.obispo) return false; const i = STORY.findIndex((m) => m.who === 'Don Yovoy Gofiérrez' || /farmacia/i.test(m.title)); return TRACKS.story.done || (i >= 0 && TRACKS.story.idx >= i); };
   function placeStarts() {
     while (TRACKS.story.idx < STORY.length && STORY_SKIP.has(STORY[TRACKS.story.idx].title)) TRACKS.story.idx++;
-    for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon) { BEACON.free(tr.beacon); tr.beacon = null; } if (active || tr.idx >= tr.list.length) continue; if (k === 'side' && (!tr.open || PLAYER.money >= SASTRON_FEE)) continue; if (k === 'obispo' && !obispoOpen()) continue; if (k === 'torneo' && !GANG.basketTut) continue; if (k === 'copa' && !GANG.futbolTut) continue; const sp = ringClear(...tr.list[tr.idx].startPos(), 1.4); tr.beacon = BEACON.make(sp[0], sp[1], 1.4, 3, tr.color); if (k === 'story' && !active) { const h = tr.list[tr.idx].hint; if (h) setObjective('Siguiente: ' + h()); setWaypoint(sp[0], sp[1], true); } }
+    for (const k in TRACKS) { const tr = TRACKS[k]; if (tr.beacon) { BEACON.free(tr.beacon); tr.beacon = null; } if (active || tr.idx >= tr.list.length) continue; if (k === 'side' && (!tr.open || PLAYER.money >= SASTRON_FEE)) continue; if (k === 'obispo' && !obispoOpen()) continue; if (k === 'torneo' && !GANG.basketTut) continue; if (k === 'copa' && !GANG.futbolTut) continue; if (!trackOpen(k)) continue; { const m = tr.list[tr.idx]; if (m.requires && !m.requires()) continue; } const sp = ringClear(...tr.list[tr.idx].startPos(), 1.4); tr.beacon = BEACON.make(sp[0], sp[1], 1.4, 3, tr.color); if (k === 'story' && !active) { const h = tr.list[tr.idx].hint; if (h) setObjective('Siguiente: ' + h()); setWaypoint(sp[0], sp[1], true); } }
     if (TRACKS.story.idx >= STORY.length && !TRACKS.story.done) { TRACKS.story.done = true; setObjective(null); HUD.big((GANG.name || 'TU BANDA').toUpperCase(), '#f5b72e', 5); HUD.toast('Ya puedes moverte libremente por La Laguna. La historia continuará…', '#f5b72e', 8); }
   }
   // interesting spots of the historic centre: Coco and Sastrón show up near two of them (random every game)
@@ -9183,7 +9449,7 @@ const MISSIONS = (() => {
   // toolkit for the missions defined in other files (12f_story2.js): they are appended to STORY
   const KIT = { talk, chat, goto, clearBeacon, ahead, track(x, z, r = 6) { clearBeacon(); data.goal = [x, z, r]; updateGPS(true); } /* a moving goal (a car to follow): yellow blip + GPS route, no light column */, setObjective, pass, fail, abort, moveNPC, mkNPC, bold, CH, GANG, findRange, isActive: (m) => active === m, get data() { return data; }, setTimer(t) { timer = t; }, get timer() { return timer; } };
   return {
-    kit: KIT, addStory(list) { STORY.push(...list); }, addObispo(list) { OBISPO_LIST.push(...list); }, addTorneo(list) { TORNEO_LIST.push(...list); }, addCopa(list) { COPA_LIST.push(...list); },
+    kit: KIT, addStory(list) { STORY.push(...list); }, addObispo(list) { OBISPO_LIST.push(...list); }, addTorneo(list) { TORNEO_LIST.push(...list); }, addCopa(list) { COPA_LIST.push(...list); }, addSecreta(list) { SECRETA_LIST.push(...list); }, addCarreras(list) { CARRERAS_LIST.push(...list); },
     initMissions() {
       // Rayco «El Blanco», at his parents' door next to the start
       { const b = makeHuman({ skin: 0xf6dcc8, shirt: 0xf4f4f4, pants: 0x9a9a9a, hair: 0x3b2a1e, shoes: 0x333333, scale: 1.09, female: false, thin: true, longPants: true, beard: false, hairStyle: 'Hair_Buzzed', hd: true, sleeve: false, glasses: 'round', belt: false, sole: 0x1a1a1a, shoes: 0x2f3b55, watch: 0x2f3a2a });
@@ -9230,10 +9496,11 @@ const MISSIONS = (() => {
       if (typeof story2Init === 'function') story2Init();
       if (typeof obispoInit === 'function') obispoInit();
       if (typeof canchasInit === 'function') { try { canchasInit(); } catch (e) { console.warn('canchas', e); } }
+      if (typeof secretaInit === 'function') { try { secretaInit(); } catch (e) { console.warn('secreta', e); } } // v0.76
       placeStarts();
     },
     update(dt) {
-      for (const k of ['blanco', 'boca', 'coco', 'sastron', 'canarion', 'alcalde']) { const n = NPC[k]; if (n && n.H) animHuman(n.H, dt, 0); }
+      for (const k of ['blanco', 'boca', 'coco', 'sastron', 'canarion', 'alcalde', 'secreta']) { const n = NPC[k]; if (n && n.H) animHuman(n.H, dt, 0); }
       if (NPC.blanco) NPC.blanco.H.head.rotation.y = Math.sin(performance.now() / 1300) * 0.3;
       FOOD.update(dt); if (typeof story2Tick === 'function') story2Tick(dt);
       BEACON.anim(beacon, dt); for (const k in TRACKS) BEACON.anim(TRACKS[k].beacon, dt);
@@ -9254,8 +9521,8 @@ const MISSIONS = (() => {
     fail(r, noRetry) { if (active) { if (WEAPON.training) takeWeapon(); fail(r, noRetry); } },
     _story: STORY, refresh() { if (!active) placeStarts(); },
     // the mission diary (12h_diario.js): every track, its missions and their state; the log; restart from a mission
-    diary() { const NAMES = { story: 'Historia', side: 'El Canarión', obispo: 'El Obispo', torneo: 'Torneo Lagunero', copa: 'Copa Laguna' };
-      return Object.keys(TRACKS).map((k) => { const tr = TRACKS[k]; const locked = (k === 'obispo' && !obispoOpen()) || (k === 'torneo' && !GANG.basketTut) || (k === 'copa' && !GANG.futbolTut) || (k === 'side' && !tr.open && tr.idx === 0);
+    diary() { const NAMES = { story: 'Historia', side: 'El Canarión', obispo: 'El Obispo', torneo: 'Torneo Lagunero', copa: 'Copa Laguna', secreta: 'El Secreta', carreras: 'Carreras del Canarión' };
+      return Object.keys(TRACKS).map((k) => { const tr = TRACKS[k]; const locked = (k === 'obispo' && !obispoOpen()) || (k === 'torneo' && !GANG.basketTut) || (k === 'copa' && !GANG.futbolTut) || !trackOpen(k) || (k === 'side' && !tr.open && tr.idx === 0);
         return { key: k, name: NAMES[k] || k, css: tr.css, locked, list: tr.list.map((m, i) => ({ title: m.title, who: m.who || '', state: active === m ? 'activa' : i < tr.idx || (k === 'story' && (tr.done || STORY_SKIP.has(m.title))) ? 'hecha' : i === tr.idx ? 'siguiente' : 'pendiente', hint: i === tr.idx && m.hint ? m.hint() : '' })) }; }); },
     log(title) { return (LOG[title] || []).slice().reverse(); }, // newest first
     logAll() { const out = []; for (const k in LOG) for (const q of LOG[k]) out.push([q[0], q[1], q[2] || 0, k]); return out.sort((a, b) => b[2] - a[2]); }, logLine, LOOSE,
@@ -9265,12 +9532,12 @@ const MISSIONS = (() => {
       setObjective(null); placeStarts(); return true; },
     _setIdx(i, track = 'story') { TRACKS[track].idx = i; placeStarts(); },
     // save / load: which missions are done, the gang, tutorial flags (a mission in progress restarts from its beginning)
-    getState() { return { v: 3, story: TRACKS.story.idx, skip: [...STORY_SKIP], storyDone: !!TRACKS.story.done, side: TRACKS.side.idx, sideOpen: !!TRACKS.side.open, obispo: TRACKS.obispo.idx, torneo: TRACKS.torneo.idx, copa: TRACKS.copa.idx, log: LOG, gang: { formed: GANG.formed, name: GANG.name, members: GANG.members.slice(), sastronTut: !!GANG.sastronTut, defenders: !!GANG.defenders, patrol: !!GANG.patrol, basketTut: !!GANG.basketTut, futbolTut: !!GANG.futbolTut }, active: active ? active.title : null }; },
+    getState() { return { v: 3, story: TRACKS.story.idx, skip: [...STORY_SKIP], storyDone: !!TRACKS.story.done, side: TRACKS.side.idx, sideOpen: !!TRACKS.side.open, obispo: TRACKS.obispo.idx, torneo: TRACKS.torneo.idx, copa: TRACKS.copa.idx, secreta: TRACKS.secreta.idx, carreras: TRACKS.carreras.idx, log: LOG, gang: { ...GANG, members: GANG.members.slice() } /* v0.76: every flag of the gang (jugueterías, maleantes, secreta…) */, active: active ? active.title : null }; },
     setState(st) { if (active) { try { if (WEAPON.training) takeWeapon(); } catch (e) { } finish(); }
       TRACKS.story.idx = (st.story | 0) - (!st.v && (st.story | 0) >= 3 ? 1 : 0); /* v1 saves had the Canarión race inside the story */
       STORY_SKIP.clear(); if ((st.v | 0) >= 3) for (const t of st.skip || []) STORY_SKIP.add(t);
-      else { /* v ≤ 2: the index counts in the old order; the first old mission not done is where you go on, the done ones after it in the new order are skipped */ const n = TRACKS.story.idx, done = new Set(STORY_V2.slice(0, n)); let i = 0; while (i < STORY.length && done.has(STORY[i].title)) i++; TRACKS.story.idx = n >= STORY_V2.length ? n : i; for (let j = i; j < STORY.length; j++) if (done.has(STORY[j].title)) STORY_SKIP.add(STORY[j].title); } TRACKS.story.done = !!st.storyDone && TRACKS.story.idx >= STORY.length; /* older saves finished a shorter story: carry on with the new missions */ TRACKS.side.idx = !st.v && (st.story | 0) >= 3 ? 1 : st.side | 0; TRACKS.obispo.idx = st.obispo | 0; TRACKS.torneo.idx = st.torneo | 0; TRACKS.copa.idx = st.copa | 0; for (const k in LOG) delete LOG[k]; Object.assign(LOG, st.log || {}); TRACKS.side.open = !!st.sideOpen;
-      Object.assign(GANG, { formed: !!(st.gang && st.gang.formed), name: (st.gang && st.gang.name) || '', members: (st.gang && st.gang.members) || [], sastronTut: !!(st.gang && st.gang.sastronTut), defenders: !!(st.gang && st.gang.defenders), patrol: !!(st.gang && st.gang.patrol), basketTut: !!(st.gang && st.gang.basketTut), futbolTut: !!(st.gang && st.gang.futbolTut) });
+      else { /* v ≤ 2: the index counts in the old order; the first old mission not done is where you go on, the done ones after it in the new order are skipped */ const n = TRACKS.story.idx, done = new Set(STORY_V2.slice(0, n)); let i = 0; while (i < STORY.length && done.has(STORY[i].title)) i++; TRACKS.story.idx = n >= STORY_V2.length ? n : i; for (let j = i; j < STORY.length; j++) if (done.has(STORY[j].title)) STORY_SKIP.add(STORY[j].title); } TRACKS.story.done = !!st.storyDone && TRACKS.story.idx >= STORY.length; /* older saves finished a shorter story: carry on with the new missions */ TRACKS.side.idx = !st.v && (st.story | 0) >= 3 ? 1 : st.side | 0; TRACKS.obispo.idx = st.obispo | 0; TRACKS.torneo.idx = st.torneo | 0; TRACKS.copa.idx = st.copa | 0; TRACKS.secreta.idx = st.secreta | 0; TRACKS.carreras.idx = st.carreras | 0; for (const k in LOG) delete LOG[k]; Object.assign(LOG, st.log || {}); TRACKS.side.open = !!st.sideOpen;
+      Object.assign(GANG, { formed: !!(st.gang && st.gang.formed), name: (st.gang && st.gang.name) || '', members: (st.gang && st.gang.members) || [], sastronTut: !!(st.gang && st.gang.sastronTut), defenders: !!(st.gang && st.gang.defenders), patrol: !!(st.gang && st.gang.patrol), basketTut: !!(st.gang && st.gang.basketTut), futbolTut: !!(st.gang && st.gang.futbolTut), jugueterias: !!(st.gang && st.gang.jugueterias), maleIntro: !!(st.gang && st.gang.maleIntro), rifleTut: !!(st.gang && st.gang.rifleTut) });
       setObjective(null); placeStarts();
       window.__missionResumed = st.active || null; if (st.active) setTimeout(() => HUD.toast('La misión «' + st.active + '» se guardó a medias: empieza de nuevo en su círculo', '#f5b72e', 6), 3500); /* after the radio hint of the car you load in */ },
     currentTitle() { const tr = TRACKS.story; return tr.idx < tr.list.length ? (tr.list[tr.idx].title || '') : 'Historia completada'; },
@@ -9416,7 +9683,7 @@ const SAVE = (() => {
     if (P.interior && P.lastDoor) { const d = P.lastDoor; x = d.x + d.nx * 2.2; z = d.z + d.nz * 2.2; h = Math.atan2(d.nx, d.nz); } // inside a building: save at its door
     const car = P.car ? { type: P.car.type, model: P.car.model ? P.car.model.id : null, color: P.car.color, h: P.car.h, x: P.car.x, z: P.car.z } : null;
     return { v: VER, t: Date.now(), label: label || '', player: { x, z, h, health: Math.max(1, Math.round(P.health)), money: P.money }, car,
-      weapon: { has: WEAPON.has && !WEAPON.training, ammo: WEAPON.ammo, out: !!WEAPON.out }, tod: GAME.tod, weather: GAME.weather ?? null,
+      weapon: { has: WEAPON.has && !WEAPON.training, ammo: WEAPON.ammo, out: !!WEAPON.out }, rifle: { has: !!RIFLE.has, water: Math.round(RIFLE.water), out: !!RIFLE.out }, tod: GAME.tod, weather: GAME.weather ?? null,
       missions: MISSIONS.getState(), mission: MISSIONS.currentTitle(), radio: MUSIC.station ? MUSIC.station.name : null, radioChanges: MUSIC.changes | 0,
       fights: (() => { try { return +localStorage.getItem('gtall_fights') || 0; } catch (e) { return 0; } })() };
   }
@@ -9431,6 +9698,7 @@ const SAVE = (() => {
     P.health = clamp(s.player.health || 100, 1, 100); P.money = s.player.money | 0;
     T(() => { const r = COL.resolve(s.player.x, s.player.z, 0.4); P.x = r.x; P.z = r.z; P.h = s.player.h || 0; CAM.yaw = P.h + Math.PI; const lw = lowAt(P.x, P.z, heightAt(P.x, P.z) - 3); P.y = heightAt(P.x, P.z) + 0.2; });
     T(() => { if (s.weapon && s.weapon.has) { giveWeapon(s.weapon.ammo ?? 6, false); WEAPON.out = !!s.weapon.out; if (WEAPON.mesh) WEAPON.mesh.visible = WEAPON.out; updateWeaponHUD(); } else takeWeapon(); });
+    T(() => { RIFLE.has = !!(s.rifle && s.rifle.has); RIFLE.water = s.rifle ? s.rifle.water | 0 : 0; RIFLE.out = false; if (RIFLE.has && s.rifle.out && !WEAPON.out) AGUA.setRifleOut(true, true); else if (RIFLE.mesh) RIFLE.mesh.visible = false; updateWeaponHUD(); }); // v0.76
     T(() => { if (typeof s.tod === 'number') { GAME.tod = s.tod; updateSun(); updateEnvironment(true); } });
     T(() => { MUSIC.changes = s.radioChanges | 0; });
     T(() => { if (typeof s.fights === 'number') localStorage.setItem('gtall_fights', String(s.fights)); });
@@ -9504,6 +9772,7 @@ function s2Clear() {
   for (const c of S2.cars) if (!c.dead && c !== PLAYER.car && !c.keep) c.remove(); else if (c.mode === 'race') { c.mode = 'physics'; c.driver = null; c.ctl.brk = 1; } S2.cars.length = 0;
   for (const o of S2.extras) { if (o.parent) o.parent.remove(o); o.traverse((m) => { if (m.geometry && !m.geometry.userData.shared) m.geometry.dispose(); }); } S2.extras.length = 0; S2.marks.length = 0; S2.chase.length = 0; /* props made for one mission (the stolen benches, the arrows) */
   WEAPON.targets = []; WEAPON.onHit = null; WEAPON.onShot = null; WEAPON.lawful = false;
+  if (typeof clearFires === 'function') clearFires(); if (typeof RIFLE !== 'undefined') { RIFLE.targets = []; RIFLE.onDouse = null; RIFLE.onFireOut = null; } // v0.76
 }
 const s2Pass = (title, money) => { s2Clear(); K2().pass(title, money); };
 const s2Fail = (why) => { s2Clear(); K2().fail(why); };
@@ -9592,7 +9861,7 @@ function story2Init() {
   const [x, z] = AYTO.door; H.root.position.set(x, heightAt(x, z) + 0.72, z); H.root.rotation.y = Math.atan2(AYTO.nx, AYTO.nz); scene.add(H.root); NPC.alcalde = { x, z, H, home: [x, z], name: 'Don Yovoy Gofiérrez' }; COL.addCirc(x, z, 0.4);
 }
 // nothing of these missions may survive them (a failure, an abort, loading a game saved halfway…)
-function story2Tick(dt) { if (!MISSIONS.active && (S2.npcs.length || S2.cars.length || S2.extras.length || WEAPON.lawful || WEAPON.onHit)) { s2Clear(); return; }
+function story2Tick(dt) { if (!MISSIONS.active && (S2.npcs.length || S2.cars.length || S2.extras.length || WEAPON.lawful || WEAPON.onHit || FIRES.some((f) => !f.free) || RIFLE.targets.length)) { s2Clear(); return; }
   try { s2DownTick(dt); } catch (e) { }
   for (let i = S2.marks.length - 1; i >= 0; i--) { const k = S2.marks[i], o = k.o; k.t -= dt; const hid = o.H ? !o.H.root.visible || o.down : o.dead;
     if (k.t <= 0 || hid) { if (k.a.parent) k.a.parent.remove(k.a); S2.marks.splice(i, 1); continue; }
@@ -10163,7 +10432,7 @@ function canchasInit() {
 }
 // ---------- the Pabellón Juan Ríos Tejera (C. Leopoldo de la Rosa Olivera): white walls, purple gate, the sign; E = in
 function riosTejeraInit() {
-  let b = findBuilding('Ríos Tejera') || findBuilding('Rios Tejera');
+  let b = findBuilding('Ríos Tejera') || findBuilding('Rios Tejera') || (typeof RIOS !== 'undefined' && RIOS.pts ? { cx: RIOS.cx, cz: RIOS.cz } : null); // v0.76: the hall rebuilt in 05v_peraza.js
   if (!b) { // not named in OSM: the biggest building (a hall of ~40 × 60 m) beside Calle Leopoldo de la Rosa Olivera
     const pts = []; for (const r of DATA.R) if (r[1] >= 0 && STR[r[1]] === 'Calle Leopoldo de la Rosa Olivera') for (let i = 0; i < r[4].length; i += 2) pts.push([r[4][i], r[4][i + 1]]);
     let best = 0; for (const q of BUILD) { if (!q.pts || q.pts.length < 3) continue; let A = 0; for (let i = 0, n = q.pts.length; i < n; i++) { const p1 = q.pts[i], p2 = q.pts[(i + 1) % n]; A += p1[0] * p2[1] - p2[0] * p1[1]; } A = Math.abs(A) / 2;
@@ -10339,6 +10608,297 @@ function useFieldGate(c) {
   });
 }
 
+// ============ v0.76: el rifle de agua, el Secreta, más del Obispo y las carreras del Canarión ============
+// · Historia: «El rifle de agua» (El Blanco): abre las jugueterías; compras el rifle y lo pruebas en una plaza con fuente
+//   como el tutorial de las latas: apagas los papeles que El Blanco va quemando, recargas en la fuente y le mojas la
+//   cabeza a Boca Papa, que duerme al lado, desde 10 m.
+// · El Secreta: el inspector Fulgencio Tostón (gordo, bigote, traje marrón de los 80, muy chapado a la antigua), en la
+//   Avenida de los Menceyes. Seis misiones que mezclan seguir coches, peleas, el rifle, la pistola, fútbol, baloncesto y
+//   persecuciones, cada una más larga que la anterior.
+// · El Obispo: cuatro más (fuego en una iglesia, carrera de sacristanes, curas contra concejales, el ladrón del cepillo).
+// · El Canarión: tres carreras de coches (de noche en la pista de Los Rodeos, contrarreloj por el casco y el Gran Premio).
+const K3 = () => MISSIONS.kit;
+const SECRETA = 'Inspector Fulgencio Tostón';
+const BLANCO = 'Rayco «El Blanco»';
+// ---------- helpers
+function lookOfNpc(k) { return NPC[k] && NPC[k].H && NPC[k].H.look ? { ...NPC[k].H.look } : {}; }
+// fires to put out: each one a red dot on the minimap (so the arrow and the compass find them); cb when all are out
+function k3Fires(spots, size, hp, cb) {
+  let left = spots.length; const list = spots.map(([x, z]) => { const [a, b] = safeSpot(x, z, 0.8); const f = makeFire(a, b, size, () => { f.dead = true; left--; HUD.toast(left ? `¡Fuego apagado! Quedan ${left}` : '¡Todos los fuegos apagados!', '#7fd3ff', 1.6); if (!left && cb) cb(); }); f.hp = hp; s2Chase(f); return f; });
+  return list;
+}
+function k3Ring(x, z, n, r) { const out = []; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + 0.4; out.push([x + Math.sin(a) * r, z + Math.cos(a) * r]); } return out; }
+function k3RifleReady() { if (!RIFLE.has) giveRifle(true); if (RIFLE.water < RIFLE.max * 0.5) RIFLE.water = RIFLE.max; AGUA.setRifleOut(true, true); updateWeaponHUD(); }
+// a street spot about d metres from (x, z), on the pavement side of a real street
+function k3Street(x, z, dMin, dMax) { for (let k = 0; k < 30; k++) { const a = Math.random() * 6.283, d = rnd(dMin, dMax); const s = s2Spot(x + Math.sin(a) * d, z + Math.cos(a) * d); if (worldEdgeDist(s[0], s[1]) > 120 && Math.hypot(s[0] - x, s[1] - z) > dMin * 0.7) return s; } return s2Spot(x + dMin, z); }
+function k3Fountain(x, z) { let best = null, bd = 1e9; for (const f of PK2.fountains) { const d = Math.hypot(f[0] - x, f[1] - z); if (d < bd) { bd = d; best = f; } } return best; }
+// a person who runs along a path and is soaked with the rifle (n hits): he slows down each time
+function k3SoakTarget(n, hits, onDone) { const t = { x: n.x, z: n.z, r: 0.5, h: 1.8, head: 1.6, hits: 0, npc: n, onHit: (tt) => { if (tt.cd > 0) return; tt.cd = 0.6; tt.hits++; AUDIO.splash && AUDIO.splash(); HUD.toast(`¡Empapado! ${tt.hits}/${hits}`, '#7fd3ff', 1); if (tt.hits >= hits) { tt.done = true; onDone(); } }, cd: 0 }; RIFLE.targets.push(t); return t; }
+function k3Track(t, dt) { if (!t) return; t.x = t.npc.x; t.z = t.npc.z; t.y0 = heightAt(t.x, t.z); if (t.cd > 0) t.cd -= dt; }
+
+// =====================================================================================================================
+// HISTORIA: El rifle de agua
+const M_RIFLE = {
+  title: 'El rifle de agua', who: BLANCO,
+  hint() { return b2('El Blanco') + ' tiene algo nuevo en el escáner: un rifle de agua'; }, startPos: startAt('blanco'),
+  start() { const K = K3(); this.st = { step: 0 };
+    K.talk([[BLANCO, '«Brrr... agua... mmm... fuego... psss... juguetería... ¡rifle!»'], [K.CH, '¿Que ya venden el rifle de agua en las jugueterías? ¿El eléctrico, el de diez metros de chorro?'],
+      [BLANCO, '«Mmm... sí... brrr... trescientos cincuenta... psss... fuente... prueba... ¡como las latas!»'], [K.CH, 'Entendido: lo compro y nos vemos en la plaza de la fuente para probarlo. ¿Y Boca Papa?'], [BLANCO, '«Psss... siesta.»']], () => {
+      if (!K.isActive(this)) return; K.GANG.jugueterias = true; HUD.toast('Se abren las JUGUETERÍAS (icono de la gota azul)', '#7fd3ff', 5);
+      if (RIFLE.has) { this.toFountain(); return; } this.st.step = 1; const sh = AGUA.shops.slice().sort((a, b) => Math.hypot(a.x - PLAYER.x, a.z - PLAYER.z) - Math.hypot(b.x - PLAYER.x, b.z - PLAYER.z))[0];
+      if (!sh) { giveRifle(true); this.toFountain(); return; } K.goto(sh.x, sh.z, 2.2, 0x1e88e5); K.setObjective(`Compra el ${b2('rifle de agua')} en ${b2(sh.name)} (${CONTROLS.kbd('use')})`); }); },
+  onEvent(t, tag) { if (t === 'bought' && tag === 'rifle' && this.st && this.st.step === 1) this.toFountain(); if (t === 'refill' && this.st && this.st.step === 5) this.toBoca(); },
+  toFountain() { const K = K3(), S = this.st; const h = NPC.blanco.home || [NPC.blanco.x, NPC.blanco.z]; const f = k3Fountain(h[0], h[1]) || [h[0] + 30, h[1]]; S.f = f; S.step = 2;
+    const [x, z] = safeSpot(f[0] + 5.5, f[1] + 1.5, 0.6); S.p = [x, z]; K.goto(x, z, 3, 0x1e88e5); K.setObjective('Ve a la ' + b2('fuente') + ' donde te espera El Blanco con el rifle'); },
+  update(dt) { const K = K3(), S = this.st; if (!S) return;
+    if (S.step === 2 && s2AtGoal(4) && !PLAYER.car) { S.step = 3; K.clearBeacon(); const f = S.f;
+      S.bl = s2Human(lookOfNpc('blanco'), f[0] + 4, f[1] - 3, [PLAYER.x, PLAYER.z]);
+      const [bx, bz] = safeSpot(f[0] - 7, f[1] + 6, 0.8); S.boca = s2Human(lookOfNpc('boca'), bx, bz); S.boca.H.pose = 'sit'; S.boca.sleep = true;
+      k3RifleReady(); S.n = 0; K.talk([[BLANCO, '«Brrr... papeles... ¡fuego!... psss... apaga.»'], [K.CH, 'Fuego de verdad no, Blanco... vale, vale. Rifle fuera: clic derecho apunta, clic izquierdo dispara el chorro.']], () => { if (K.isActive(this)) this.nextFire(); }); }
+    if (S.boca && S.boca.sleep) { animHuman(S.boca.H, dt, 0); if (Math.random() < dt * 0.25) SUB.show('<b>Boca Papa:</b> Zzzz... papas... arrugadas... zzzz...', 1.6); } },
+  nextFire() { const K = K3(), S = this.st; const f = S.f; S.n++;
+    const spot = [[f[0] + 8, f[1] + 3], [f[0] + 2, f[1] - 8], [f[0] - 6, f[1] - 5]][S.n - 1]; AUDIO.swing && AUDIO.swing();
+    k3Fires([spot], 0.9, 1, () => { if (!K.isActive(this)) return; if (S.n < 3) { SUB.show('<b>El Blanco:</b> «Mmm... ¡bien!... brrr... otro.»', 2); setTimeout(() => { if (K.isActive(this)) this.nextFire(); }, 1600); } else this.empty(); });
+    K.setObjective(`Apaga los papeles que quema El Blanco (${S.n}/3) · chorro: ${CONTROLS.keyName('weap')} / 3 para sacar el rifle`); },
+  empty() { const K = K3(), S = this.st; S.step = 5; RIFLE.water = 0; updateWeaponHUD();
+    K.talk([[BLANCO, '«Psss... vacío... brrr... fuente.»'], [K.CH, 'Se ha quedado seco. A la fuente a llenarlo.']], () => { if (!K.isActive(this)) return; K.goto(S.f[0], S.f[1], 3.5, 0x1e88e5); K.setObjective(`Llena el rifle en la ${b2('fuente')} (${CONTROLS.kbd('use')})`); }); },
+  toBoca() { const K = K3(), S = this.st; S.step = 6; K.clearBeacon(); const b = S.boca;
+    const a = Math.atan2(S.f[0] - b.x, S.f[1] - b.z); const [mx, mz] = safeSpot(b.x + Math.sin(a) * 11, b.z + Math.cos(a) * 11, 0.6);
+    K.talk([[BLANCO, '«Mmm... Boca... brrr... cabeza... ¡diez metros!»'], [K.CH, 'Despertar a Boca Papa con un chorro en la cabeza desde diez metros. Ese es mi Blanco.']], () => { if (!K.isActive(this)) return;
+      K.goto(mx, mz, 1.6, 0x1e88e5); K.setObjective('Ponte en la marca (a 10 m) y mójale la ' + b2('cabeza') + ' a Boca Papa');
+      S.tgt = { x: b.x, z: b.z, y0: heightAt(b.x, b.z), r: 0.55, h: 1.2, head: 0.95, cd: 0, onHit: (t, head, d) => { if (t.cd > 0 || t.done) return; t.cd = 1.2; setTimeout(() => { t.cd = 0; }, 1200);
+        if (!head) { SUB.show('<b>El Blanco:</b> «Brrr... ¡la cabeza!»', 1.8); return; } if (d < 9.3) { SUB.show('<b>El Blanco:</b> «Psss... ¡lejos!... diez metros... mmm.»', 2); return; } t.done = true; this.done(); } };
+      RIFLE.targets = [S.tgt]; }); },
+  done() { const K = K3(), S = this.st; S.step = 7; S.boca.sleep = false; S.boca.H.pose = null;
+    K.talk([['Boca Papa', '¡AAAAH! ¿Quién...? ¡¿CHOPA?! ¡Me has empapado la siesta! ¡Y la camisa de los domingos!'], [BLANCO, '«Brrr... ¡diez metros!... mmm... ¡bien!»'], [K.CH, 'Funciona. Diez metros de chorro y cero heridos. Esto lo vamos a usar, Boca.'],
+      ['Boca Papa', 'Pues úsalo con otro... Oye, el que te busca es uno de la Secreta, un tal Tostón. Dice que te espera en la Avenida de los Menceyes. Tiene pinta de policía de película mala.']], () => {
+      K.GANG.rifleTut = true; s2Pass('Rifle de agua probado', 300); setTimeout(() => HUD.toast('Nuevo: el SECRETA te espera en la Avenida de los Menceyes (círculo salmón)', '#ff8a65', 7), 4000); }); },
+};
+
+// =====================================================================================================================
+// EL SECRETA: el inspector Fulgencio Tostón (Avenida de los Menceyes)
+function secretaInit() {
+  const c = centroidOfNamedWays('Avenida de los Menceyes') || [-600, -150]; const rd = ROADSEG.nearest(c[0], c[1], (r) => r[0] <= 12); let x = c[0], z = c[1];
+  if (rd) { const w = DATA.R[rd.ri][2] || 7, L = Math.hypot(rd.dx, rd.dz) || 1; const nx = -rd.dz / L, nz = rd.dx / L; [x, z] = safeSpot(rd.x + nx * (w / 2 + 2.2), rd.z + nz * (w / 2 + 2.2), 0.6); }
+  const H = makeHuman({ skin: 0xe2b48f, shirt: 0xefe6cf, pants: 0x5b4632, jacket: 0x7a5a3a, shoes: 0x2a1c12, hair: 0x1c1712, hairStyle: 'Hair_SimpleParted', scale: 1.0, female: false, beard: false, build: { normal: 0.2, fat: 1.0 }, longPants: true, sleeve: true, hd: true, glasses: 'sun', watch: 0xd9b44a, sole: 0x111111 });
+  const mo = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.016, 0.02), M(0x1c1712, 0.9)); mo.position.set(0, 0.056, 0.12); H.head.add(mo); // the big moustache
+  H.root.position.set(x, heightAt(x, z) + 0.17, z); scene.add(H.root); NPC.secreta = { x, z, H, home: [x, z], name: SECRETA }; COL.addCirc(x, z, 0.4);
+}
+const startSecreta = () => (NPC.secreta ? [NPC.secreta.x + 1.4, NPC.secreta.z + 1.2] : [-600, -150]);
+const TOSTON = (t) => [SECRETA, t];
+// ---- S1: seguir al sospechoso sin que te vea, y pelea
+const S_SEGUIR = {
+  title: 'Tostón, de la Secreta', who: SECRETA, hint() { return 'Un tal ' + b2('Tostón') + ', de la Secreta, te espera en la ' + b2('Avenida de los Menceyes'); }, startPos: startSecreta,
+  start() { const K = K3(); this.st = { step: 0 };
+    K.talk([TOSTON('Inspector Fulgencio Tostón, de la Secreta. Treinta años en el Cuerpo y ni un día de baja... bueno, alguno. Me han hablado de ti: el de la nariz y la banda de defensores.'), TOSTON('Necesito ojos frescos. Ese Seat gris lleva tres días dando vueltas por el barrio. Síguelo, pero de lejos, que si te ve se nos escapa. Entre veinte y cien metros, como en las películas.'),
+      [K.CH, '¿Y usted no viene?'], TOSTON('Yo coordino. Desde aquí. Con mi bocadillo de pata.')], () => { if (!K.isActive(this)) return;
+      const [x, z, h] = k3Street(PLAYER.x, PLAYER.z, 40, 70); this.st.P = s2Path(s2Route(x, z, 900, 1400)); const a = this.st.P.at(0); this.st.car = s2Car('sedan', 0x8a8f94, a[0], a[1], a[2]); this.st.car.mode = 'race'; this.st.car.driver = 'race'; s2Mark(this.st.car, 10);
+      this.st.step = 1; this.st.close = 0; K.setObjective('Súbete a un coche y sigue al ' + b2('Seat gris') + ' sin acercarte demasiado'); }); },
+  update(dt) { const K = K3(), S = this.st; if (!S || !S.step) return;
+    if (S.step === 1) { const c = S.car; const d = Math.hypot(PLAYER.x - c.x, PLAYER.z - c.z); S.trk = (S.trk || 0) - dt; if (S.trk <= 0) { S.trk = 0.8; K.track(c.x, c.z, 6); }
+      const done = s2DriveCar(c, S.P, dt, 13, (dd) => (dd > 120 ? 0.5 : 1));
+      if (d < 18) { S.close += dt; if (S.close > 2.5) { s2Fail('¡Te ha visto! «Pero qué haces, chaval, que eres más cantoso que un coche de feria»'); return; } K.setObjective(`¡Demasiado cerca! Aléjate (${Math.round(d)} m)`); }
+      else { S.close = Math.max(0, S.close - dt); K.setObjective(`Sigue al ${b2('Seat gris')} · distancia ${Math.round(d)} m (20–100)`); }
+      if (d > 160) { s2Fail('Lo has perdido. Tostón: «Esto en mis tiempos no pasaba»'); return; }
+      if (done) { S.step = 2; c.mode = 'physics'; c.driver = null; c.ctl.brk = 1; const [a, b] = safeSpot(c.x + 2.5, c.z + 1.5, 0.6); S.man = s2Human(THIEF_LOOKS[2], a, b); s2Mark(S.man, 8); K.goto(a, b, 3, 0xff8a65); K.setObjective('El sospechoso se baja. ' + b2('Ve a por él')); } }
+    if (S.step === 2 && !S.man.down && s2Near(S.man.x, S.man.z, 3) && !PLAYER.car) { S.step = 3; K.clearBeacon();
+      K.talk([['Sospechoso', '¿Y tú qué miras? ¡Vete a seguir a tu abuela!']], () => s2Fight(this, 'EL DEL SEAT', S.man.H.look, { npc: S.man, lv: 0.5 }, () => { s2Down(S.man);
+        K.talk([TOSTON('(por el walkie) ¡Bien hecho, chaval! Llevaba un maletero lleno de décimos de lotería falsos. Esto es la Secreta: discreción y mano dura.')], () => s2Pass('Sospechoso del Seat gris detenido', 700)); }, () => s2Fail('Te ha dado una paliza y se ha largado'))); } },
+};
+// ---- S2: contenedores ardiendo + el pirómano a la carrera (pistola)
+const S_CONTENEDORES = {
+  title: 'Contenedores en llamas', who: SECRETA, hint() { return b2('Tostón') + ' tiene un encargo urgente en la Avenida de los Menceyes'; }, startPos: startSecreta,
+  start() { const K = K3(); this.st = { step: 0 };
+    K.talk([TOSTON('Un pirómano está quemando contenedores por el barrio. Cuatro esta noche. Tú con el rifle ese de agua apagas, y luego le das con la pistolita de bolas, que a mí la rodilla ya no me da para correr.'), [K.CH, '¿Y los bomberos?'], TOSTON('Están en un gato subido a un drago. Venga, que se acaba el tiempo.')], () => { if (!K.isActive(this)) return;
+      k3RifleReady(); const [x, z] = k3Street(PLAYER.x, PLAYER.z, 220, 380); this.st.c = [x, z]; this.st.step = 1; K.goto(x, z, 8, 0xff8a65); K.setTimer(100); K.setObjective('Ve a la calle de los ' + b2('contenedores ardiendo')); }); },
+  update(dt) { const K = K3(), S = this.st; if (!S || !S.step) return;
+    if (S.step === 1 && s2AtGoal(25)) { S.step = 2; K.clearBeacon(); K.setTimer(90); k3RifleReady(); k3Fires(k3Ring(S.c[0], S.c[1], 4, 9), 1.3, 1.6, () => this.runner()); K.setObjective('¡Apaga los ' + b2('4 contenedores') + '! (sal del coche, rifle de agua)'); }
+    if (S.step === 3 && !S.n.down) { const end = s2Runner(S.n, S.P, dt, 5.6); s2TrackTarget(S.tg); if (end && !s2Near(S.n.x, S.n.z, 60)) s2Fail('El pirómano se ha escapado'); } },
+  runner() { const K = K3(), S = this.st; if (S.step !== 2) return; S.step = 3; K.setTimer(0); const [a, b] = safeSpot(S.c[0] + 12, S.c[1] + 6, 0.6); S.n = s2Human(THIEF_LOOKS[0], a, b); S.P = s2RunPath(S.n, 180, 300); S.n.blip = true; s2Mark(S.n, 8); s2Armed();
+    S.tg = s2Target(S.n, () => { s2Down(S.n); S.step = 4; K.talk([['Pirómano', '¡Ay! ¡Que era para calentarme las manos!'], TOSTON('(por el walkie) Ya lo recoge una patrulla. Chaval, tú vales para esto.')], () => s2Pass('Pirómano cazado', 900)); });
+    K.setObjective('¡Ahí va el ' + b2('pirómano') + '! Saca la pistola (' + CONTROLS.keyName('weap') + ' / 2) y dale'); },
+};
+// ---- S3: el partido amañado (fútbol) y el corredor de apuestas (pelea)
+const S_AMANO = {
+  title: 'El partido amañado', who: SECRETA, hint() { return b2('Tostón') + ' sospecha de unas apuestas: ve a la Avenida de los Menceyes'; }, startPos: startSecreta,
+  start() { const K = K3(); this.st = { step: 0 };
+    const f = COURTS.filter((c) => c.sport === 'fut' && c.gate === 'court' && !c.final && c.kind !== 'fs').sort((a, b) => Math.hypot(a.cx - PLAYER.x, a.cz - PLAYER.z) - Math.hypot(b.cx - PLAYER.x, b.cz - PLAYER.z))[0];
+    K.talk([TOSTON('Hay una banda de apostadores que amaña los partidos de barrio: pagan a un equipo para que pierda y se forran. Hoy juegan contra el tuyo, porque saben que sois nuevos.'), TOSTON('Ganadles. Si pierden su dinero, el jefe se pondrá nervioso y se delatará. Siempre pasa. Lo vi en una película de Bud Spencer.')], () => {
+      if (!K.isActive(this)) return; if (!f) { K.abort('No encuentro ningún campo de fútbol.'); return; } this.st.c = f; this.st.step = 1; K.goto(f.cx, f.cz, 10, 0xff8a65); K.setObjective('Ve con la banda a ' + b2(f.label) + ' para el partido'); }); },
+  update() { const K = K3(), S = this.st; if (!S || S.step !== 1 || !s2AtGoal(12)) return; if (PLAYER.car) { if (PLAYER.car.speed > 2) return; exitCar(); } S.step = 2; K.clearBeacon(); K.setObjective(null);
+    playFieldGame(S.c, { rivalName: 'APOSTADORES', kit: { shirt: '#2c3e50', shorts: '#f1c40f', socks: '#2c3e50' }, lv: 0.45, time: 160, onEnd: (r) => { if (!K.isActive(this)) return; if (!r.won) { K.fail('Habéis perdido: los apostadores se forran'); return; } this.boss(); } }); },
+  boss() { const K = K3(), S = this.st; const [a, b] = safeSpot(PLAYER.x + 3, PLAYER.z + 2, 0.6); S.b = s2Human(THIEF_LOOKS[1], a, b, [PLAYER.x, PLAYER.z]);
+    K.talk([['Corredor de apuestas', '¡Me habéis arruinado! ¡Tenía cinco mil pavos a que perdíais! ¡Te voy a...!']], () => s2Fight(this, 'EL APOSTADOR', S.b.H.look, { npc: S.b, lv: 0.55 }, () => { s2Down(S.b);
+      K.talk([TOSTON('(llegando sudando) ¡Quieto todo el mundo! ¡Secreta! ...¿Ya está? Bueno. Gran trabajo de equipo. Sobre todo el mío.')], () => s2Pass('Apuestas amañadas desarticuladas', 1200)); }, () => s2Fail('El apostador te ha tumbado y se ha escapado con el dinero'))); },
+};
+// ---- S4: triple en la cancha (baloncesto) y la huida en coche
+const S_CANCHA = {
+  title: 'Triple en la cancha', who: SECRETA, hint() { return b2('Tostón') + ' necesita a alguien que juegue al baloncesto: Avenida de los Menceyes'; }, startPos: startSecreta,
+  start() { const K = K3(); this.st = { step: 0 }; const c = obispoCourt('publica');
+    K.talk([TOSTON('Dos trapicheros mueven mercancía en una cancha. Solo hablan con quien les gana al baloncesto: es su manera de fiarse. Tú y el chico ese, Coco.'), [K.CH, 'Y cuando les ganemos, ¿qué?'], TOSTON('Entonces se pondrán nerviosos y saldrán corriendo. Y tú detrás. Yo te espero con el coche... bueno, sin coche.')], () => {
+      if (!K.isActive(this)) return; if (!c) { K.abort('No encuentro ninguna cancha.'); return; } this.st.c = c; this.st.step = 1; K.goto(c.cx, c.cz, 6, 0xff8a65); K.setObjective('Ve con Coco a ' + b2(c.label)); }); },
+  update(dt) { const K = K3(), S = this.st; if (!S || !S.step) return;
+    if (S.step === 1 && s2AtGoal(7)) { if (PLAYER.car) { if (PLAYER.car.speed > 2) return; exitCar(); } S.step = 2; K.clearBeacon(); K.setObjective(null);
+      playCourtGame(S.c, { rival: pickRivals(S.c.cx + 7).map((l, k) => ({ name: ['EL FLACO', 'EL TOCHO'][k], look: l })), rivalName: 'TRAPICHEROS', lv: 0.5, time: 120, onEnd: (r) => { if (!K.isActive(this)) return; if (!r.won) { K.fail('Os han ganado y no sueltan prenda'); return; } this.flee(); } }); }
+    if (S.step === 3) { const c = S.car; const done = s2DriveCar(c, S.P, dt, 20, (d) => (d > 150 ? 0.6 : d < 25 ? 1.1 : 1)); S.trk = (S.trk || 0) - dt; if (S.trk <= 0) { S.trk = 0.8; K.track(c.x, c.z); }
+      if (Math.hypot(PLAYER.x - c.x, PLAYER.z - c.z) > 330) { s2Fail('Los trapicheros se han escapado'); return; }
+      if (done || c.health < 45) { S.step = 4; c.mode = 'physics'; c.driver = null; c.ctl.brk = 1; K.talk([['Trapichero', '¡Vale, vale! ¡Nos rendimos! ¡Era solo gofio adulterado!'], TOSTON('(por el walkie) Gofio adulterado... Esto es más gordo de lo que pensaba. Buen trabajo, chaval.')], () => s2Pass('Trapicheros detenidos', 1400)); } } },
+  flee() { const K = K3(), S = this.st; S.step = 3; const [x, z, h] = k3Street(PLAYER.x, PLAYER.z, 25, 45); S.P = s2Path(s2Route(x, z, 1000, 1600)); const a = S.P.at(0); S.car = s2Car('compact', 0xd35400, a[0], a[1], a[2]); S.car.mode = 'race'; S.car.driver = 'race'; s2Mark(S.car, 10);
+    HUD.big('¡SE ESCAPAN!', '#ff8a65', 2); K.setObjective('¡Los trapicheros huyen en un ' + b2('coche naranja') + '! Persíguelos y embístelos'); },
+};
+// ---- S5: mojar al pirómano a la carrera (rifle) y apagar lo que deja ardiendo
+const S_MOJAR = {
+  title: 'Al pirómano, agua', who: SECRETA, hint() { return b2('Tostón') + ' ha vuelto a ver al pirómano: Avenida de los Menceyes'; }, startPos: startSecreta,
+  start() { const K = K3(); this.st = { step: 0 };
+    K.talk([TOSTON('El pirómano ha salido bajo fianza. Y ha vuelto a las andadas: está prendiendo fuego a los bancos de la plaza. Esta vez nada de pistola, que su abogado es muy pesado.'), TOSTON('Lo mojas tres veces con ese chisme de agua y se le apaga el mechero y las ganas. Luego apagas lo que haya dejado ardiendo. Tienes poco tiempo.')], () => {
+      if (!K.isActive(this)) return; k3RifleReady(); const [x, z] = k3Street(PLAYER.x, PLAYER.z, 250, 400); this.st.c = [x, z]; this.st.step = 1; K.goto(x, z, 8, 0xff8a65); K.setTimer(110); K.setObjective('Ve a la plaza donde está el ' + b2('pirómano')); }); },
+  update(dt) { const K = K3(), S = this.st; if (!S || !S.step) return;
+    if (S.step === 1 && s2AtGoal(25)) { S.step = 2; K.clearBeacon(); K.setTimer(0); k3RifleReady(); const [a, b] = safeSpot(S.c[0] + 8, S.c[1] + 5, 0.6); S.n = s2Human(THIEF_LOOKS[0], a, b); S.P = s2RunPath(S.n, 220, 340); s2Mark(S.n, 10); s2Chase(S.n);
+      S.fires = k3Fires(k3Ring(S.c[0], S.c[1], 3, 7), 1.0, 1.2, () => { S.firesOut = true; this.check(); }); for (const f of S.fires) { const i = S2.chase.indexOf(f); if (i >= 0) S2.chase.splice(i, 1); } // first the runner: the fires come back on the map when he is caught
+      S.tg = k3SoakTarget(S.n, 3, () => { S.soaked = true; s2Down(S.n); SUB.show('<b>Pirómano:</b> ¡Vale! ¡Me rindo! ¡Estoy empapado hasta los calzoncillos!', 3); for (const f of S.fires) if (!f.out) s2Chase(f); K.setTimer(60); K.setObjective('Ahora apaga los ' + b2('fuegos') + ' que ha dejado'); this.check(); });
+      K.setObjective('¡Ahí va! Persíguelo a pie y ' + b2('mójalo 3 veces') + ' con el rifle (a menos de 10 m)'); }
+    if (S.step === 2 && !S.soaked) { const sp = 5.4 - S.tg.hits * 0.9; const end = s2Runner(S.n, S.P, dt, sp); k3Track(S.tg, dt); if (end && !s2Near(S.n.x, S.n.z, 50)) s2Fail('El pirómano se ha escapado'); } },
+  check() { const S = this.st; if (S.soaked && S.firesOut && S.step === 2) { S.step = 3; K3().setTimer(0); K3().talk([TOSTON('(llegando con un paraguas) ¡Eso es! Mojado y detenido. Esto lo pongo yo en el informe como «operación Chaparrón».')], () => s2Pass('Operación Chaparrón', 1600)); } },
+};
+// ---- S6: Operación Gofio Blanco (todo junto)
+const S_GOFIO = {
+  title: 'Operación Gofio Blanco', who: SECRETA, hint() { return b2('Tostón') + ' prepara la gran redada: Avenida de los Menceyes'; }, startPos: startSecreta,
+  start() { const K = K3(); this.st = { step: 0 };
+    K.talk([TOSTON('Chaval, el gofio adulterado sale de una nave del polígono. Es la Operación Gofio Blanco. Tienes dos minutos para llegar antes de que carguen el camión.'), TOSTON('Habrá un portero grandote, unos cuantos matones y, si se ven perdidos, le pegarán fuego a todo. Llévate el rifle y la pistola. Yo llevo el bigote.'), [K.CH, '¿Y el resto de la Secreta?'], TOSTON('El resto de la Secreta soy yo.')], () => {
+      if (!K.isActive(this)) return; k3RifleReady(); s2Armed(); AGUA.setRifleOut(false, true); const b = BUILD.filter((q) => q.style === 3 && Math.hypot(q.cx - PLAYER.x, q.cz - PLAYER.z) > 500 && Math.hypot(q.cx - PLAYER.x, q.cz - PLAYER.z) < 1300 && worldEdgeDist(q.cx, q.cz) > 150).sort(() => Math.random() - 0.5)[0];
+      const [x, z] = b ? s2Spot(b.cx, b.cz) : k3Street(PLAYER.x, PLAYER.z, 600, 900); this.st.w = [x, z]; this.st.step = 1; K.goto(x, z, 8, 0xff8a65); K.setTimer(120); K.setObjective('¡Corre! Llega a la ' + b2('nave del polígono') + ' antes de que carguen el camión'); }); },
+  update(dt) { const K = K3(), S = this.st; if (!S || !S.step) return;
+    if (S.step === 1 && s2AtGoal(14)) { if (PLAYER.car && PLAYER.car.speed > 3) return; S.step = 2; K.setTimer(0); K.clearBeacon(); const [a, b] = safeSpot(S.w[0] + 3, S.w[1] + 2, 0.6); S.guard = s2Human({ ...THIEF_LOOKS[1], build: { fat: 1 } }, a, b, [PLAYER.x, PLAYER.z]); if (PLAYER.car) exitCar();
+      K.talk([['Portero de la nave', 'Aquí no se entra sin invitación. Y tú tienes cara de no tenerla.']], () => s2Fight(this, 'EL PORTERO', S.guard.H.look, { npc: S.guard, lv: 0.62, deal: 1.1 }, () => { s2Down(S.guard); this.thugs(); }, () => s2Fail('El portero te ha mandado a casa'))); }
+    if (S.step === 3) for (const t of S.tg) if (!t.hit && t.npc) { t.x = t.npc.x; t.z = t.npc.z; t.y = heightAt(t.x, t.z) + 1.1; }
+    if (S.step === 5) { const c = S.car; const done = s2DriveCar(c, S.P, dt, 21, (d) => (d > 150 ? 0.6 : d < 25 ? 1.1 : 1)); S.trk = (S.trk || 0) - dt; if (S.trk <= 0) { S.trk = 0.8; K.track(c.x, c.z); }
+      if (Math.hypot(PLAYER.x - c.x, PLAYER.z - c.z) > 330) { s2Fail('El jefe se ha escapado con el gofio'); return; }
+      if (done || c.health < 40) { S.step = 6; c.mode = 'physics'; c.driver = null; c.ctl.brk = 1; K.talk([['Jefe del gofio', '¡No me detengáis! ¡Yo solo quería que el gofio fuera más blanco!'], TOSTON('(llegando en una guagua) ¡Operación Gofio Blanco, completada! Chaval, si algún día quieres una placa, te la hago yo con una lata.'), [K.CH, 'Con el dinero me vale, inspector.']], () => s2Pass('Operación Gofio Blanco', 3000)); } } },
+  thugs() { const K = K3(), S = this.st; S.step = 3; s2Armed(); const looks = [THIEF_LOOKS[0], THIEF_LOOKS[2], THIEF_LOOKS[1]]; S.tg = [];
+    for (let i = 0; i < 3; i++) { const [a, b] = safeSpot(S.w[0] + Math.sin(i * 2.1) * 12, S.w[1] + Math.cos(i * 2.1) * 12, 0.6); const n = s2Human(looks[i], a, b, [PLAYER.x, PLAYER.z]); s2Chase(n); S.tg.push({ x: a, y: heightAt(a, b) + 1.1, z: b, r: 0.5, hit: false, npc: n }); }
+    WEAPON.targets = S.tg; WEAPON.onHit = (t) => { if (t.npc) s2Down(t.npc); const left = S.tg.filter((q) => !q.hit).length; HUD.toast(left ? `Quedan ${left}` : '¡Todos fuera de combate!', '#fff', 1.4); if (!left) this.fire(); };
+    K.setObjective('Tres matones: ' + b2('pistola') + ' (' + CONTROLS.keyName('weap') + ' / 2), apunta y dispara'); },
+  fire() { const K = K3(), S = this.st; S.step = 4; WEAPON.targets = []; WEAPON.onHit = null; K.talk([['Jefe del gofio (desde dentro)', '¡Si no es mío no es de nadie! ¡Fuego!']], () => { if (!K.isActive(this)) return;
+      k3RifleReady(); k3Fires(k3Ring(S.w[0], S.w[1], 5, 8), 1.4, 1.6, () => this.escape()); K.setTimer(80); K.setObjective('¡Fuego en la nave! Saca el ' + b2('rifle de agua') + ' (3) y apaga los 5 fuegos'); }); },
+  escape() { const K = K3(), S = this.st; if (S.step !== 4) return; S.step = 5; K.setTimer(0); const [x, z, h] = k3Street(S.w[0], S.w[1], 20, 40); S.P = s2Path(s2Route(x, z, 1200, 1800)); const a = S.P.at(0); S.car = s2Car('transit', 0xf4f4f4, a[0], a[1], a[2]); S.car.mode = 'race'; S.car.driver = 'race'; s2Mark(S.car, 10);
+    HUD.big('¡EL JEFE HUYE!', '#ff8a65', 2); K.setObjective('¡El jefe escapa en la ' + b2('furgoneta blanca') + '! Coge un coche y embístela'); },
+};
+
+// =====================================================================================================================
+// EL OBISPO (5–8)
+function churchNear(x, z) { const L = (typeof CHURCHES !== 'undefined' ? CHURCHES : []).filter((c) => c.name && !/Catedral/.test(c.name)); return L.sort((a, b) => Math.hypot(a.cx - x, a.cz - z) - Math.hypot(b.cx - x, b.cz - z))[0] || null; }
+const M_OBISPO_5 = {
+  title: 'Fuego en la ermita', who: OBISPO, requires: () => !!MISSIONS.gang.rifleTut,
+  hint() { return MISSIONS.gang.rifleTut ? 'Monseñor ' + b2('Truchas') + ' te llama con urgencia: ve al ' + b2('Obispado') : 'Para la siguiente misión del Obispo necesitas el ' + b2('rifle de agua') + ' (El Blanco)'; },
+  startPos() { return M_OBISPO_1.startPos(); },
+  start() { const K = K3(); this.st = { step: 0 }; const ch = churchNear(PLAYER.x + 300, PLAYER.z) || churchNear(PLAYER.x, PLAYER.z);
+    K.talk([[OBISPO, '¡Hijo mío, una desgracia! Unos gamberros han prendido fuego a las palmas secas del Domingo de Ramos delante de ' + (ch ? ch.name : 'la ermita') + '. ¡Arde todo el pórtico!'], [OBISPO, 'Los bomberos tardan. Tú tienes ese rifle de agua, ¿no? El Señor proveerá... y la fuente de la plaza, también.'], [K.CH, '¡Voy, Monseñor! Boca, tráeme la toalla.']], () => {
+      if (!K.isActive(this)) return; k3RifleReady(); const c = ch ? [ch.cx, ch.cz] : [PLAYER.x + 300, PLAYER.z]; const d = streetDoor(c[0], c[1]); this.st.c = d ? [d.x - d.nx * 2, d.z - d.nz * 2] : c; this.st.step = 1; K.goto(this.st.c[0], this.st.c[1], 8, 0xb388ff); K.setTimer(120); K.setObjective('Corre a ' + b2(ch ? ch.name : 'la ermita') + ' con el rifle de agua'); }); },
+  update() { const K = K3(), S = this.st; if (!S) return;
+    if (S.step === 1 && s2AtGoal(22)) { S.step = 2; K.clearBeacon(); K.setTimer(150); k3RifleReady(); k3Fires(k3Ring(S.c[0], S.c[1], 6, 7), 1.5, 2.4, () => { S.step = 3; K.setTimer(0); K.talk([[OBISPO + ' (llegando sin aliento)', '¡Milagro! Bueno, milagro y agua del grifo. Hijo mío, Dios y yo te estamos muy agradecidos. Sobre todo yo, que el seguro no cubría las palmas.']], () => s2Pass('La ermita, a salvo', 1100)); });
+      const f = k3Fountain(S.c[0], S.c[1]); K.setObjective('¡Apaga los ' + b2('6 fuegos') + '! Si te quedas sin agua, a la ' + b2('fuente') + (f ? ` (a ${Math.round(Math.hypot(f[0] - S.c[0], f[1] - S.c[1]))} m)` : '')); } },
+};
+// a foot race against a seminarian through the casco: the rival runs the same controls
+const M_OBISPO_6 = {
+  title: 'La carrera de los sacristanes', who: OBISPO, startPos() { return M_OBISPO_1.startPos(); },
+  hint() { return 'Monseñor ' + b2('Truchas') + ' organiza una carrera: ve al ' + b2('Obispado'); },
+  start() { const K = K3(); this.st = { step: 0 };
+    K.talk([[OBISPO, 'Cada año los sacristanes de las parroquias corren por el casco, de iglesia en iglesia. Este año el hermano Tomás, del Seminario, dice que nadie le gana.'], [OBISPO, 'Corre contra él. A pie, ¿eh? Que en coche ya sé que vas fino.'], ['Hermano Tomás', 'Que el Señor te dé piernas, porque las vas a necesitar.']], () => {
+      if (!K.isActive(this)) return; const home = (OBISPADO.ok && (OBISPADO.door || OBISPADO.front)) || [PLAYER.x, PLAYER.z]; const cand = (typeof CHURCHES !== 'undefined' ? CHURCHES : []).map((c) => { const d = streetDoor(c.cx, c.cz); return d ? [d.x, d.z] : null; }).filter((p) => p && Math.hypot(p[0] - home[0], p[1] - home[1]) < 600 && Math.hypot(p[0] - home[0], p[1] - home[1]) > 60);
+      const pts = []; let cur = home; while (pts.length < 4 && cand.length) { cand.sort((p, q) => Math.hypot(p[0] - cur[0], p[1] - cur[1]) - Math.hypot(q[0] - cur[0], q[1] - cur[1])); cur = cand.shift(); if (!pts.some((q) => Math.hypot(q[0] - cur[0], q[1] - cur[1]) < 60)) pts.push(cur); }
+      if (pts.length < 2) for (let i = 0; i < 3; i++) pts.push([home[0] + Math.cos(i * 2.1) * 160, home[1] + Math.sin(i * 2.1) * 160]); pts.push(home);
+      // the rival's path: on foot through the controls
+      const path = [PLAYER.x, PLAYER.z]; let p0 = [PLAYER.x, PLAYER.z]; for (const p of pts) { const r = WALKG.route(p0[0], p0[1], p[0], p[1]); if (r) path.push(...r); path.push(p[0], p[1]); p0 = p; }
+      const [a, b] = safeSpot(PLAYER.x + 1.5, PLAYER.z + 1, 0.5); this.st.rv = s2Human({ skin: 0xe8c0a0, shirt: 0x111111, pants: 0x111111, hair: 0x3a2a1a, hairStyle: 'Hair_Buzzed', longPants: true, hd: true }, a, b); this.st.P = s2Path(path); s2Mark(this.st.rv, 6); s2Chase(this.st.rv);
+      this.st.cps = pts; this.st.cp = 0; this.st.step = 1; ['3', '2', '1'].forEach((t, i) => setTimeout(() => { if (K.isActive(this)) { HUD.big(t, '#fff', 0.8); AUDIO.cash(); } }, i * 1000)); setTimeout(() => { if (!K.isActive(this)) return; HUD.big('¡YA!', '#7fe08a', 1.2); this.st.go = true; this.cp(); }, 3000); }); },
+  cp() { const K = K3(), S = this.st, c = S.cps[S.cp]; const last = S.cp === S.cps.length - 1; K.goto(c[0], c[1], 4, last ? 0xf5b72e : 0x46c3ff); K.ahead(S.cps, S.cp); K.setObjective((last ? b2('¡Meta en el Obispado!') : `Iglesia ${S.cp + 1}/${S.cps.length - 1}`) + ' · ¡a pie, y antes que el hermano Tomás!'); },
+  update(dt) { const K = K3(), S = this.st; if (!S || !S.go || S.step !== 1) return; if (PLAYER.car) { s2Fail('¡En coche no vale! Descalificado'); return; }
+    const done = s2Runner(S.rv, S.P, dt, 5.5); if (done) { s2Fail('El hermano Tomás ha llegado primero. «Ya te lo dije: piernas»'); return; }
+    if (s2AtGoal(4.5)) { AUDIO.cash(); S.cp++; if (S.cp >= S.cps.length) { S.step = 2; K.talk([['Hermano Tomás', '¡Imposible! ¿Tú comes gofio o qué?'], [OBISPO, '¡Bravo, hijo mío! Los sacristanes van a hablar de esto hasta la próxima Semana Santa.']], () => s2Pass('Carrera de los sacristanes ganada', 900)); return; } this.cp(); } },
+};
+const CONCEJALES = [0, 1, 2, 3, 4].map((k) => ({ name: ['EL CONCEJAL', 'TENIENTE AL.', 'URBANISMO', 'FIESTAS', 'HACIENDA'][k], look: { skin: [0xe2b48f, 0xd9a47c, 0xc68a63, 0xe8c0a0, 0xd9a47c][k], shirt: 0xf2f2f2, pants: 0x1d2a44, hair: [0x777777, 0x2b2018, 0x111111, 0xb8860b, 0x555555][k], hairStyle: 'Hair_SimpleParted', longPants: true, hd: true } }));
+const O_FUT_CONCEJALES = { sport: 'fut', rival: CONCEJALES, rivalName: 'CONCEJALES', kit: { shirt: '#f2f2f2', shorts: '#1d2a44', socks: '#1d2a44', stripe: '#1f6fb5' }, time: 170, lv: 0.42, prize: 1000, winWho: OBISPO, winLine: (s) => `¡${s[0]} a ${s[1]}! Los concejales prometen arreglar el tejado de la Catedral. Prometen... ya veremos.`, loseLine: 'Os han ganado los concejales: ni tejado ni nada' };
+const M_OBISPO_7 = {
+  title: 'Curas contra concejales', who: OBISPO, startPos() { return M_OBISPO_1.startPos(); },
+  hint() { return 'Monseñor ' + b2('Truchas') + ' ha retado al Ayuntamiento: ve al ' + b2('Obispado'); },
+  start() { const K = K3(); K.talk([[OBISPO, 'Le he propuesto al alcalde un partido benéfico: el equipo de la diócesis contra los concejales. Si ganamos, arreglan el tejado de la Catedral.'], [OBISPO, 'Mis curas están mayores. Vosotros seréis la diócesis. El Blanco, de portero, con la sotana del padre Anselmo.'], [K.CH, 'Monseñor, ¿esto es legal?'], [OBISPO, 'Hijo, es fútbol.']], () => obispoGame(this, O_FUT_CONCEJALES)); },
+  update() { obispoGameUpdate(this); },
+};
+const M_OBISPO_8 = {
+  title: 'El ladrón del cepillo', who: OBISPO, startPos() { return M_OBISPO_1.startPos(); },
+  hint() { return 'Monseñor ' + b2('Truchas') + ' está muy enfadado: ve al ' + b2('Obispado'); },
+  start() { const K = K3(); this.st = { step: 0 }; const ch = churchNear(PLAYER.x, PLAYER.z - 300) || churchNear(PLAYER.x, PLAYER.z);
+    K.talk([[OBISPO, '¡Se han llevado el cepillo de las limosnas de ' + (ch ? ch.name : 'la parroquia') + '! ¡Con lo de la misa de doce dentro!'], [OBISPO, 'El sacristán dice que el ladrón tiene un coche aparcado al lado. Corre, hijo, que el Señor perdona pero yo no.']], () => {
+      if (!K.isActive(this)) return; s2Armed(); const c = ch ? [ch.cx, ch.cz] : [PLAYER.x, PLAYER.z - 300]; const d = streetDoor(c[0], c[1]); this.st.c = d ? [d.x, d.z] : c; this.st.step = 1; K.goto(this.st.c[0], this.st.c[1], 6, 0xb388ff); K.setTimer(110); K.setObjective('Ve a ' + b2(ch ? ch.name : 'la parroquia')); }); },
+  update(dt) { const K = K3(), S = this.st; if (!S || !S.step) return;
+    if (S.step === 1 && s2AtGoal(14)) { S.step = 2; K.setTimer(0); K.clearBeacon(); const [x, z] = k3Street(S.c[0], S.c[1], 15, 30); S.P = s2Path(s2Route(x, z, 900, 1400)); const a = S.P.at(0); S.car = s2Car('compact', 0x6d4c41, a[0], a[1], a[2]); S.car.mode = 'race'; S.car.driver = 'race'; s2Mark(S.car, 10);
+      HUD.big('¡AHÍ VA!', '#b388ff', 1.6); K.setObjective('¡El ladrón huye en un ' + b2('coche marrón') + '! Persíguelo'); }
+    if (S.step === 2) { const c = S.car; const done = s2DriveCar(c, S.P, dt, 19, (d) => (d > 150 ? 0.6 : d < 25 ? 1.1 : 1)); S.trk = (S.trk || 0) - dt; if (S.trk <= 0) { S.trk = 0.8; K.track(c.x, c.z); }
+      if (Math.hypot(PLAYER.x - c.x, PLAYER.z - c.z) > 320) { s2Fail('El ladrón del cepillo se ha escapado'); return; }
+      if (done || c.health < 45) { S.step = 3; c.mode = 'physics'; c.driver = null; c.ctl.brk = 1; const [a, b] = safeSpot(c.x + 2.5, c.z + 2, 0.6); S.n = s2Human(THIEF_LOOKS[2], a, b); S.P2 = s2RunPath(S.n, 150, 260); S.n.blip = true; s2Mark(S.n, 8);
+        S.tg = s2Target(S.n, () => { s2Down(S.n); S.step = 4; K.talk([['Ladrón del cepillo', '¡Perdón, perdón! ¡Que era para las cuotas del gimnasio!'], [OBISPO + ' (por el móvil)', 'Hijo mío, devuelve el cepillo a su sitio. Y al ladrón, que lo confiese el padre Anselmo: penitencia de tres rosarios y una tarde con la tuna.']], () => s2Pass('Cepillo recuperado', 1300)); });
+        K.setObjective('¡Huye a pie con el cepillo! Dale con la ' + b2('pistola de bolas')); } }
+    if (S.step === 3 && !S.n.down) { const end = s2Runner(S.n, S.P2, dt, 5.8); s2TrackTarget(S.tg); if (S.P2.s > 8 && s2Near(S.n.x, S.n.z, 1.8) && !PLAYER.car) { s2Down(S.n); S.tg.hit = true; WEAPON.onHit && WEAPON.onHit(S.tg); } else if (end && !s2Near(S.n.x, S.n.z, 60)) s2Fail('El ladrón se ha perdido entre las calles'); } },
+};
+
+// =====================================================================================================================
+// LAS CARRERAS DEL CANARIÓN (coches)
+const CAN = 'El Canarión';
+function k3RaceStart(m, P, rivals, cps, top) { // rivals: [{model, color}] start beside you; countdown; cps along P
+  const K = K3(), S = m.st; S.P = P; S.cps = cps; S.cp = 0; S.rv = [];
+  rivals.forEach((r, i) => { const sp = s2Path(P.pts); sp.s = 0; const a = sp.at(0); const side = i % 2 ? -1 : 1; const c = s2Car(r.model, r.color, a[0] + Math.cos(a[2]) * 3.2 * side, a[1] - Math.sin(a[2]) * 3.2 * side, a[2]); c.mode = 'race'; c.driver = 'race'; s2Mark(c, 8); S.rv.push({ c, P: sp, top: r.top || top }); });
+  ['3', '2', '1'].forEach((t, i) => setTimeout(() => { if (K.isActive(m)) { HUD.big(t, '#fff', 0.8); AUDIO.cash(); } }, i * 1000)); setTimeout(() => { if (!K.isActive(m)) return; HUD.big('¡YA!', '#7fe08a', 1.2); S.go = true; k3RaceCp(m); }, 3000);
+}
+function k3RaceCp(m) { const K = K3(), S = m.st, c = S.cps[S.cp]; const last = S.cp === S.cps.length - 1; K.goto(c[0], c[1], 9, last ? 0xf5b72e : 0x46c3ff); K.ahead(S.cps, S.cp, S.P.pts); K.setObjective((last ? b2('¡META!') : `Control ${S.cp + 1}/${S.cps.length - 1}`) + (S.rv.length ? ' · Gana al Canarión' : ' · ¡Contra el reloj!')); }
+function k3RaceUpdate(m, dt, win, lose) {
+  const K = K3(), S = m.st; if (!S || !S.go || S.done) return;
+  for (const r of S.rv) { const d = Math.hypot(PLAYER.x - r.c.x, PLAYER.z - r.c.z); const ahead = r.P.s > S.myS; if (s2DriveCar(r.c, r.P, dt, r.top, () => (ahead ? (d > 160 ? 0.82 : 0.97) : d > 160 ? 1.12 : 1.02))) { S.done = true; lose(); return; } }
+  if (!PLAYER.car) { K.setObjective('¡Vuelve a un coche!'); return; }
+  S.myS = S.cpS ? S.cpS[S.cp] : 0;
+  if (s2AtGoal(10)) { AUDIO.cash(); S.cp++; if (S.cp >= S.cps.length) { S.done = true; win(); return; } k3RaceCp(m); }
+}
+function k3Cps(P, every) { const out = [], cpS = []; for (let s = every; s < P.tot - every * 0.4; s += every) { const q = P.at(s); out.push([q[0], q[1]]); cpS.push(s); } const e = P.at(P.tot); out.push([e[0], e[1]]); cpS.push(P.tot); return [out, cpS]; }
+const C_PISTA = {
+  title: 'Duelo nocturno en Los Rodeos', who: CAN, startPos: startAt('canarion', 2.6),
+  hint() { return 'El ' + b2('Canarión') + ' quiere correr en un sitio con mucho espacio'; },
+  start() { const K = K3(); this.st = { step: 0 };
+    K.talk([['El Canarión', '¡Chicharrero! ¿Sabes dónde no hay curvas, ni guaguas, ni viejas cruzando? En la pista del aeropuerto. De noche. Tres kilómetros de recta.'], [K.CH, 'Eso no puede ser legal.'], ['El Canarión', 'Hoy no hay vuelos, mi niño. Y el de la torre es primo mío. Lleva un coche a la cabecera de la pista: ida hasta el final, vuelta alrededor del cono y a meta. Mil quinientos pavos.']], () => {
+      if (!K.isActive(this)) return; const R = AIRPORT.runway; if (!R) { K.abort('No encuentro la pista del aeropuerto.'); return; } GAME.tod = 23; try { updateSun(); updateEnvironment(true); } catch (e) { }
+      const a = R.at(40); this.st.a = a; this.st.step = 1; K.goto(a[0], a[1], 10, 0x00e5ff); K.setObjective('Lleva un coche a la ' + b2('cabecera de la pista') + ' de Los Rodeos (por los accesos de servicio)'); }); },
+  update(dt) { const K = K3(), S = this.st; if (!S || !S.step) return;
+    if (S.step === 1 && PLAYER.car && s2AtGoal(14) && PLAYER.car.speed < 2) { S.step = 2; K.clearBeacon(); const R = AIRPORT.runway, pts = []; const n = (s, o) => { const q = R.at(s), L = Math.hypot(q[2], q[3]) || 1; return [q[0] + q[3] / L * o, q[1] - q[2] / L * o]; };
+      for (let s = 40; s <= R.tot - 60; s += 25) pts.push(...n(s, 6)); pts.push(...n(R.tot - 40, 0)); for (let s = R.tot - 60; s >= 40; s -= 25) pts.push(...n(s, -6));
+      const P = s2Path(pts); const [cps, cpS] = k3Cps(P, 350); S.cpS = cpS; k3RaceStart(this, P, [{ model: 'guancheGT', color: 0xffd200, top: 44 }], cps, 44); }
+    if (S.step === 2) k3RaceUpdate(this, dt, () => K.talk([['El Canarión', '¡Ños! ¡Me has ganado en mi propia pista! Bueno, en la de AENA. Toma, que lo prometido es deuda.']], () => s2Pass('Ganador en la pista de Los Rodeos', 1500)), () => s2Fail('El Canarión ha llegado primero: «¡En las rectas nadie me gana, chicharrero!»')); },
+};
+const C_CASCO = {
+  title: 'Contrarreloj por el casco', who: CAN, startPos: startAt('canarion', 2.6),
+  hint() { return 'El ' + b2('Canarión') + ' te ha preparado una contrarreloj'; },
+  start() { const K = K3(); this.st = { step: 0 };
+    K.talk([['El Canarión', 'En las rectas cualquiera corre. Lo difícil es el casco: calles estrechas, esquinas de piedra y adoquines. Contrarreloj: tú solo contra el crono.'], ['El Canarión', 'Si rozas mucho, el coche no llega. Mil pavos si lo haces en tiempo.']], () => {
+      if (!K.isActive(this)) return; const h = (typeof PLAZA !== 'undefined' ? [PLAZA.x, PLAZA.z] : [0, 0]); const [x, z] = s2Spot(h[0] + 60, h[1] + 40); const P = s2Path(s2Route(x, z, 1100, 1600)); const [cps, cpS] = k3Cps(P, 200); this.st.P0 = P; this.st.cps0 = cps; this.st.cpS = cpS;
+      this.st.step = 1; K.goto(x, z, 6, 0x00e5ff); K.setObjective('Súbete a un coche y ve a la ' + b2('salida') + ' en el casco'); }); },
+  update(dt) { const K = K3(), S = this.st; if (!S || !S.step) return;
+    if (S.step === 1 && PLAYER.car && s2AtGoal(9) && PLAYER.car.speed < 2) { S.step = 2; K.clearBeacon(); k3RaceStart(this, S.P0, [], S.cps0, 0); setTimeout(() => { if (K.isActive(this)) K.setTimer(Math.round(S.P0.tot / 10.5 + 12)); }, 3000); }
+    if (S.step === 2) { if (PLAYER.car && PLAYER.car.health <= 15) { s2Fail('¡Has destrozado el coche!'); return; } k3RaceUpdate(this, dt, () => { K.setTimer(0); K.talk([['El Canarión', '¡Eso es conducir! Ni un adoquín fuera de su sitio. Bueno, alguno.']], () => s2Pass('Contrarreloj del casco', 1000)); }, () => { }); } },
+};
+const C_GP = {
+  title: 'Gran Premio de La Laguna', who: CAN, startPos: startAt('canarion', 2.6),
+  hint() { return 'El ' + b2('Canarión') + ' organiza el Gran Premio de La Laguna'; },
+  start() { const K = K3(); this.st = { step: 0 };
+    K.talk([['El Canarión', 'Lo gordo: el Gran Premio de La Laguna. Tú, yo y el pijo de La Esperanza, que quiere la revancha. Dos kilómetros y medio por toda la ciudad.'], ['Pijo de La Esperanza', 'Mi padre me ha comprado otro deportivo. Más caro. Prepárate.'], ['El Canarión', 'Tres mil pavos al ganador. Y una foto conmigo, que eso no tiene precio.']], () => {
+      if (!K.isActive(this)) return; const [x, z] = k3Street(PLAYER.x, PLAYER.z, 30, 60); const P = s2Path(s2Route(x, z, 2300, 3000)); const [cps, cpS] = k3Cps(P, 300); this.st.P0 = P; this.st.cps0 = cps; this.st.cpS = cpS;
+      this.st.step = 1; K.goto(x, z, 6, 0x00e5ff); K.setObjective('Súbete a un coche y ve a la ' + b2('parrilla de salida')); }); },
+  update(dt) { const K = K3(), S = this.st; if (!S || !S.step) return;
+    if (S.step === 1 && PLAYER.car && s2AtGoal(9) && PLAYER.car.speed < 2) { S.step = 2; K.clearBeacon(); k3RaceStart(this, S.P0, [{ model: 'guancheGT', color: 0xffd200, top: 31 }, { model: 'guancheGT', color: 0xffffff, top: 30 }], S.cps0, 30); }
+    if (S.step === 2) k3RaceUpdate(this, dt, () => K.talk([['El Canarión', '¡Campeón del Gran Premio! El pijo está llamando a su padre. Toma tus tres mil y la foto.'], ['Pijo de La Esperanza', 'Papáaa...']], () => s2Pass('Campeón del Gran Premio de La Laguna', 3000)), () => s2Fail('Te han ganado el Gran Premio')); },
+};
+
+MISSIONS.addStory([M_RIFLE]);
+MISSIONS.addSecreta([S_SEGUIR, S_CONTENEDORES, S_AMANO, S_CANCHA, S_MOJAR, S_GOFIO]);
+MISSIONS.addObispo([M_OBISPO_5, M_OBISPO_6, M_OBISPO_7, M_OBISPO_8]);
+MISSIONS.addCarreras([C_PISTA, C_CASCO, C_GP]);
+
 // ============ time of day, game loop, menus ============
 const GAME = {
   state: 'loading', tod: 10.0, daySpeed: 1 / 150, // game hours per real second: day 1h = 150 s, night goes faster (see dayRate)
@@ -10509,7 +11069,7 @@ function logic(dt, now) {
       pm('manage', tt); tt = performance.now(); updateTram(dt); try { updateAirport(dt); } catch (e) { } updatePeds(dt); pm('peds', tt); tt = performance.now(); WANTED.update(dt); if (GAME.state === 'play') updateCops(dt); MISSIONS.update(dt); pm('miss', tt);
       if (frame % 3 === 0) updateGPS();
     }
-    updateCamera(dt); updateWeapons(dt); MUSIC.update(); SAVE.update(dt);
+    updateCamera(dt); updateWeapons(dt); try { AGUA.update(dt); } catch (e) { console.warn('agua', e); } MUSIC.update(); SAVE.update(dt);
     if (frame % 2 === 0) updateSun();
     envT -= dt; if (envT < 0) { envT = 8; updateEnvironment(); }
     // player car headlights
@@ -10582,7 +11142,7 @@ async function boot() {
   window.__GAME_READY = true;
 }
 boot();
-window.__bg = [bgScene, bgCamera]; window.__dbg = { get RCLIP() { return RCLIP; }, PERAZA, MINI, KEYS, PRESSED, INPUT, get TCUTS() { return TCUTS; }, s2Human, s2Down, s2DownTick, onCarriagewayEarly, FLIGHT, updateAirport, TF13, TRAM_TRENCH, tramDepth, OBISPADO_TEX: obispadoTex, MALEANTES, startStreetFight, lineRuns, BIGSTORES, SIGN, roadClip, BASKET2D, FUTBOL2D, obispoCampo, TRI, OBISPADO, SPORTS, inAnyBuilding, COURTS, courtGateNear, useCourtGate, DIARIO, inPitch, pitchRects, obispoCourt, LAMPS, TREES, GUIDE, AYTO, HUC, HEALTH, nearestHealth, exitCar, DLG, S2, POOLS: { CARPOOL, HPOOL, SHARED_GEO, VGEO }, SHARED_GEO, MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
+window.__bg = [bgScene, bgCamera]; window.__dbg = { get RCLIP() { return RCLIP; }, RIFLE, AGUA, FIRES, makeFire, giveRifle, PK2, RIOS, TRI, PERAZA, MINI, KEYS, PRESSED, INPUT, get TCUTS() { return TCUTS; }, s2Human, s2Down, s2DownTick, onCarriagewayEarly, FLIGHT, updateAirport, TF13, TRAM_TRENCH, tramDepth, OBISPADO_TEX: obispadoTex, MALEANTES, startStreetFight, lineRuns, BIGSTORES, SIGN, roadClip, BASKET2D, FUTBOL2D, obispoCampo, TRI, OBISPADO, SPORTS, inAnyBuilding, COURTS, courtGateNear, useCourtGate, DIARIO, inPitch, pitchRects, obispoCourt, LAMPS, TREES, GUIDE, AYTO, HUC, HEALTH, nearestHealth, exitCar, DLG, S2, POOLS: { CARPOOL, HPOOL, SHARED_GEO, VGEO }, SHARED_GEO, MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
 window.__snap = () => { updateUnderground(); bgCamera.position.copy(camera.position); bgCamera.quaternion.copy(camera.quaternion); bgCamera.fov = camera.fov; bgCamera.updateProjectionMatrix(); renderer.clear(); renderer.render(bgScene, bgCamera); renderer.clearDepth(); renderer.render(scene, camera); return renderer.domElement.toDataURL('image/jpeg', 0.85); };
 window.__setYaw = (y) => { CAM.yaw = y; CAM.pitch = 0.1; INPUT.lastMouse = performance.now(); };
 window.__hit = (p) => hitPed(p);

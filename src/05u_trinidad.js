@@ -111,23 +111,35 @@ function trinidadParking() {
         if (swOk(uu, side * av, du, dv)) { best = { u: uu, v: side * av, du, dv, ue }; break; } }
       if (best) found.push(best); }
     return found; };
-  const buildTriHall = (F, L, rampTop, rampBot, rampV, rampW, name, label, end) => {
-    const yF = depthAt(F, L); const found = stairs(F, L, yF, rampV, end === 'u-' ? -L / 2 + 3.5 : L / 2 - 3.5);
-    const gaps = [[end, rampV, rampW + 1.6]]; for (const f of found) { const vb = f.v + f.dv * 11.5; if (Math.abs(vb) > 14) gaps.push([f.v > 0 ? 'v+' : 'v-', f.ue, 2.6]); }
-    buildHall(F, 0, L, yF, name, gaps);
-    buildRamp(rampTop[0], rampTop[1], rampBot[0], rampBot[1], yF, label, { w: rampW, wc: blue });
-    for (const f of found) { const p = F.W(f.u, f.v); const vb = f.v + f.dv * 11.5; const corr = Math.abs(vb) > 14 ? F.W(f.ue, Math.sign(f.v) * 14.5) : null; const dx = F.ux * f.du - F.uz * f.dv, dz = F.uz * f.du + F.ux * f.dv; buildStairwell(p[0], p[1], dx, dz, yF, corr); }
-    CARPARKS.push({ name: 'Parking ' + name, x: F.cx, z: F.cz, F, uc: 0, L, yF });
-  };
-  // A) «Trinidad Casco Histórico»: the ramp in the middle of the split carriageway at the top, going down the avenue
-  { const h = T.hallA, L = h.L; const F = frame(h.x, h.z, h.ux, h.uz); const top = [T.rampA.x0, T.rampA.z0], bot = F.W(-L / 2 + 3.5, 0);
-    buildTriHall(F, L, top, bot, 0, 4.2, 'Trinidad Casco Histórico', 'TRINIDAD CASCO HISTÓRICO', 'u-'); }
-  // B) «Trinidad Centro» (Av. Trinidad 59): beside the pavement of the carriageway that comes up, above Pedro Zerolo
-  const r = T.rampB; if (r) { const B = T.B, L = 56; const pc = B.at(r.s1 - L / 2 + 3.5); const ux = pc.ux, uz = pc.uz; // the hall axis points down the avenue: its u+ end meets the ramp
-    const off = B.out * 3; const nx = -pc.uz, nz = pc.ux; const F = frame(pc.x + nx * off, pc.z + nz * off, ux, uz);
-    const t0 = B.at(r.s0), t1 = B.at(r.s1); const vR = r.v - off; // the ramp's offset in the hall frame
-    const top = [t0.x + nx * r.v, t0.z + nz * r.v], bot = [t1.x + nx * r.v, t1.z + nz * r.v];
-    buildTriHall(F, L, top, bot, vR, 3.8, 'Trinidad Centro', 'TRINIDAD CENTRO', 'u+');
+  // v0.76 (Jonay): ONE car park under the whole avenue, from below the top ramp («Casco Histórico») down to the
+  // «Trinidad Centro» ramp near Pedro Zerolo (~420 m): a chain of straight halls along the median that slope with the
+  // avenue, open to each other, 7 m under the lowest ground around (the old two halls were 5.4 m down: things showed
+  // through the ceiling). Stairs to both pavements every other hall.
+  const DEPTH = 7.0, r = T.rampB, B = T.B; const t0 = r ? B.at(r.s0) : null, t1 = r ? B.at(r.s1) : null; const nB = t1 ? [-t1.uz, t1.ux] : null;
+  const botB = r ? [t1.x + nB[0] * r.v, t1.z + nB[1] * r.v] : null, topB = r ? [t0.x + nB[0] * r.v, t0.z + nB[1] * r.v] : null;
+  const sA = 72, sE = r ? T.A.proj(B.at(r.s1 + 3.5).x, B.at(r.s1 + 3.5).z).s : 132; const nSeg = Math.max(1, Math.round((sE - sA) / 60));
+  const node = (s) => T.mid(s); const N = []; for (let k = 0; k <= nSeg; k++) { const s = sA + (sE - sA) * k / nSeg; const m = node(s); N.push({ s, x: m.x, z: m.z }); }
+  const gmin = (x, z, ux, uz) => { let g = 1e9; for (let a = -24; a <= 24; a += 6) for (let v = -15.5; v <= 15.5; v += 5.15) g = Math.min(g, heightAt(x + ux * a - uz * v, z + uz * a + ux * v)); return g; };
+  for (let k = 0; k < N.length; k++) { const a = N[Math.max(0, k - 1)], b = N[Math.min(N.length - 1, k + 1)], L = Math.hypot(b.x - a.x, b.z - a.z) || 1; N[k].y = gmin(N[k].x, N[k].z, (b.x - a.x) / L, (b.z - a.z) / L) - DEPTH; }
+  for (let pass = 0; pass < 2; pass++) for (let k = 1; k < N.length; k++) { const d = Math.hypot(N[k].x - N[k - 1].x, N[k].z - N[k - 1].z), lim = d * 0.06; N[k].y = clamp(N[k].y, N[k - 1].y - lim, N[k - 1].y + lim); N[k - 1].y = Math.min(N[k - 1].y, N[k].y + lim); } // never steeper than 6 %, and only ever deeper
+  const segs = []; for (let k = 0; k < nSeg; k++) { const a = N[k], b = N[k + 1]; const L0 = Math.hypot(b.x - a.x, b.z - a.z), ux = (b.x - a.x) / L0, uz = (b.z - a.z) / L0; const e0 = k > 0 ? 1 : 0, e1 = k < nSeg - 1 ? 1 : 0; // internal joints overlap 1 m each side (no slit at the bends)
+    const L = L0 + e0 + e1, F = frame((a.x + b.x) / 2 + ux * (e1 - e0) / 2, (a.z + b.z) / 2 + uz * (e1 - e0) / 2, ux, uz); segs.push({ F, L, y0: a.y - (b.y - a.y) * e0 / L0, y1: b.y + (b.y - a.y) * e1 / L0, k }); }
+  const toV = (F, x, z) => -(x - F.cx) * F.uz + (z - F.cz) * F.ux, toU = (F, x, z) => (x - F.cx) * F.ux + (z - F.cz) * F.uz;
+  const name = 'Trinidad', last = segs.length - 1;
+  for (const sg of segs) { const { F, L } = sg; const first = sg.k === 0, end = sg.k === last;
+    const vR = end && botB ? toV(F, botB[0], botB[1]) : 0;
+    const found = sg.k % 2 === 0 || end ? stairs(F, L, sg.y0, end ? vR : 99, end ? L / 2 - 3.5 : first ? -L / 2 + 3.5 : 999) : [];
+    const gaps = []; if (first) gaps.push(['u-', 0, 4.2 + 1.6]); else gaps.push(['u-', 0, 31]); if (end) { if (botB) gaps.push(['u+', vR, 3.8 + 1.6]); } else gaps.push(['u+', 0, 31]);
+    for (const f of found) { const vb = f.v + f.dv * 11.5; if (Math.abs(vb) > 14) gaps.push([f.v > 0 ? 'v+' : 'v-', f.ue, 2.6]); }
+    const holes = found.map((f) => { const p = F.W(f.u, f.v); return stairHole(F, 0, p[0], p[1], F.ux * f.du - F.uz * f.dv, F.uz * f.du + F.ux * f.dv); });
+    const hr = buildHall(F, 0, L, sg.y0, name, gaps, holes, { y1: sg.y1, deck: false, density: 0.16 });
+    for (const f of found) { const p = F.W(f.u, f.v); const vb = f.v + f.dv * 11.5; const corr = Math.abs(vb) > 14 ? F.W(f.ue, Math.sign(f.v) * 14.5) : null; const dx = F.ux * f.du - F.uz * f.dv, dz = F.uz * f.du + F.ux * f.dv; buildStairwell(p[0], p[1], dx, dz, hr.yAt(corr ? f.ue : f.u + f.du * 10), corr); }
+    if (first) { const bot = F.W(-L / 2 + 3.5, 0); buildRamp(T.rampA.x0, T.rampA.z0, bot[0], bot[1], hr.yAt(-L / 2 + 3.5), 'TRINIDAD CASCO HISTÓRICO', { w: 4.2, wc: blue }); }
+    if (end && botB) buildRamp(topB[0], topB[1], botB[0], botB[1], hr.yAt(toU(F, botB[0], botB[1])), 'TRINIDAD CENTRO', { w: 3.8, wc: blue });
+    CARPARKS.push({ name: 'Parking ' + name, x: F.cx, z: F.cz, F, uc: 0, L, yF: Math.min(sg.y0, sg.y1) }); }
+  // one deck along the whole chain (walls only at its two ends)
+  TUNNEL_DECKS.push({ type: 'path', pts: N.map((p) => [p.x, p.z, p.y + 0.12]), w: 31, hw: 15.35, road: true, tunnel: true, capped: true, ceil: 3.2, hall: true });
+  if (r) { const nx = nB[0], nz = nB[1];
     // the yellow box grid in front of the ramp mouth
     const g0 = B.at(r.s0 + 4), gv = B.out * (B.w / 2 - 1.6); triDecal(g0.x + nx * gv, g0.z + nz * gv, -g0.ux, -g0.uz, 8, 3.2, (x, w, h, k) => yellowBox(x, w, h, k)); }
   // Pedro Zerolo: yellow box grid where the tram crosses between the carriageways, zebra crossings on both carriageways

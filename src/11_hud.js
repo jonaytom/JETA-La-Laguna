@@ -88,7 +88,7 @@ const HUD = (() => {
   function blip(x, z, color, size, shape = 'dot', clampEdge = false) {
     // world -> minimap (already transformed context)
     mx.fillStyle = color; mx.strokeStyle = '#000'; mx.lineWidth = 2 / mmScale;
-    mx.beginPath(); if (shape === 'sq') mx.rect(x - size, z - size, size * 2, size * 2); else mx.arc(x, z, size, 0, 7); mx.fill(); mx.stroke();
+    mx.beginPath(); if (shape === 'sq') mx.rect(x - size, z - size, size * 2, size * 2); else if (shape === 'tri') { mx.save(); mx.translate(x, z); mx.rotate(-(CAM.yaw - Math.PI)); const k = size * 1.35; mx.moveTo(0, -k); mx.lineTo(k * 0.9, k * 0.65); mx.lineTo(-k * 0.9, k * 0.65); mx.closePath(); mx.restore(); } else mx.arc(x, z, size, 0, 7); mx.fill(); mx.stroke();
   }
   let mmScale = 1;
   function drawMinimap() {
@@ -112,10 +112,10 @@ const HUD = (() => {
     const fl = Math.floor(performance.now() / 250) % 2;
     for (const c of CARS) if (c.driver === 'police') blip(c.x, c.z, fl ? '#3d7bff' : '#ff3d3d', 6 * s * 1.6);
     // mission markers & waypoint (clamped to edge)
-    const edge = (x, z, col, sz) => { const dx = x - PLAYER.x, dz = z - PLAYER.z; const d = Math.hypot(dx, dz); const maxd = (R * 0.92) / (mmScale / MAP.scale) ; let px = x, pz = z; if (d > maxd * 0.95) { px = PLAYER.x + dx / d * maxd * 0.95; pz = PLAYER.z + dz / d * maxd * 0.95; } blip(px, pz, col, sz); };
+    const edge = (x, z, col, sz, shape) => { const dx = x - PLAYER.x, dz = z - PLAYER.z; const d = Math.hypot(dx, dz); const maxd = (R * 0.92) / (mmScale / MAP.scale) ; let px = x, pz = z; if (d > maxd * 0.95) { px = PLAYER.x + dx / d * maxd * 0.95; pz = PLAYER.z + dz / d * maxd * 0.95; } blip(px, pz, col, sz, shape); };
     for (const it of INTERIORS) for (const d of it.doors) { if (Math.abs(d.x - PLAYER.x) < 400 && Math.abs(d.z - PLAYER.z) < 400) blip(d.x, d.z, '#3ddc97', 6 * s * 1.6, 'sq'); }
     for (const f of FOOD.shops) { if (Math.abs(f.x - PLAYER.x) < 400 && Math.abs(f.z - PLAYER.z) < 400) blip(f.x, f.z, '#e53935', 6 * s * 1.6, 'sq'); }
-    for (const m of MISSIONS.blips()) edge(m[0], m[1], m[2] || '#f5b72e', 9 * s * 1.6);
+    for (const m of MISSIONS.blips()) edge(m[0], m[1], m[2] || '#f5b72e', 9 * s * 1.6, m[3]);
     if (GPS.target) edge(GPS.target[0], GPS.target[1], '#e040fb', 9 * s * 1.6);
     // player arrow
     mx.save(); mx.translate(PLAYER.x, PLAYER.z); mx.rotate(-(PLAYER.car ? PLAYER.car.h : PLAYER.h) + Math.PI); const a = 11 * s * 1.6;
@@ -170,6 +170,7 @@ const HUD = (() => {
         { const cg = typeof courtGateNear === 'function' ? courtGateNear() : null; if (cg) pr = courtPrompt(cg); }
         const dr = nearestDoor(); if (dr) pr = dr.exit ? CONTROLS.kbd('use') + ' Salir a la calle' : `${CONTROLS.kbd('use')} Entrar: ${dr.it.name}`;
         { const f = FOOD.near(); if (f && (!dr || (f.counter && dr.exit && Math.hypot(PLAYER.x - f.x, PLAYER.z - f.z) < Math.hypot(PLAYER.x - dr.it.exit.x, PLAYER.z - dr.it.exit.z)))) pr = `${CONTROLS.kbd('use')} ${f.counter ? 'Pedir en la barra' : 'Comprar comida'}: ${f.name}`; }
+        { const ap = typeof AGUA !== 'undefined' ? AGUA.prompt() : ''; if (ap) pr = ap; } // v0.76: toy shops and fountains
         const mp = MISSIONS.prompt(); if (mp) pr = mp;
         if (pr !== lastPrompt) { lastPrompt = pr; const pe = hudEl("prompt"); if (pr) { pe.innerHTML = pr; pe.style.display = 'block'; } else pe.style.display = 'none'; }
       }
@@ -196,7 +197,7 @@ const BIGMAP = (() => {
     const dot = (px, pz, c, r) => { x.fillStyle = c; x.strokeStyle = '#000'; x.lineWidth = 2 / k * devicePixelRatio; x.beginPath(); x.arc(px, pz, r / k * devicePixelRatio, 0, 7); x.fill(); x.stroke(); };
     for (const c of CARS) if (c.driver === 'police') dot(c.x, c.z, '#3d7bff', 5);
     for (const f of FOOD.shops) { x.fillStyle = '#e53935'; x.strokeStyle = '#fff'; x.lineWidth = 1.5 / k * devicePixelRatio; const sz = 5 * devicePixelRatio / k; x.fillRect(f.x - sz, f.z - sz, sz * 2, sz * 2); x.strokeRect(f.x - sz, f.z - sz, sz * 2, sz * 2); }
-    for (const m of MISSIONS.blips()) dot(m[0], m[1], m[2] || '#f5b72e', 8);
+    for (const m of MISSIONS.blips()) { if (m[3] === 'tri') { const a = 11 / k * devicePixelRatio; x.fillStyle = m[2]; x.strokeStyle = '#000'; x.lineWidth = 2 / k * devicePixelRatio; x.beginPath(); x.moveTo(m[0], m[1] - a); x.lineTo(m[0] + a * 0.9, m[1] + a * 0.65); x.lineTo(m[0] - a * 0.9, m[1] + a * 0.65); x.closePath(); x.fill(); x.stroke(); } else dot(m[0], m[1], m[2] || '#f5b72e', 8); }
     for (const q of MISSIONS.aheadPts() || []) dot(q[0], q[1], '#46c3ff', 6);
     if (GPS.target) dot(GPS.target[0], GPS.target[1], '#e040fb', 8);
     x.save(); x.translate(PLAYER.x, PLAYER.z); x.rotate(-(PLAYER.car ? PLAYER.car.h : PLAYER.h) + Math.PI); const a = 12 / k * devicePixelRatio; x.fillStyle = '#fff'; x.strokeStyle = '#000'; x.lineWidth = 2 / k * devicePixelRatio; x.beginPath(); x.moveTo(0, -a); x.lineTo(a * 0.7, a * 0.7); x.lineTo(0, a * 0.35); x.lineTo(-a * 0.7, a * 0.7); x.closePath(); x.fill(); x.stroke(); x.restore();
@@ -288,5 +289,5 @@ function setupTouch() {
   let lastCar = null; setInterval(() => { const c = !!PLAYER.car; if (c === lastCar) return; lastCar = c; $('tbF').textContent = c ? 'SALIR' : 'ENTRAR'; $('tbJ').innerHTML = c ? 'FRENO<br>MANO' : 'SALTO'; $('tbS').textContent = c ? 'CLAXON' : 'CORRER'; }, 250);
   $('minimapwrap').addEventListener('pointerdown', (e) => { e.stopPropagation(); BIGMAP.toggle(); }); // the minimap itself also opens the big map
   btn('tbA', () => { WEAPON.touchAim = !WEAPON.touchAim; if (!WEAPON.touchAim) WEAPON.aiming = false; $('tbA').style.borderColor = WEAPON.touchAim ? '#3ddc97' : ''; });
-  btn('tbD', () => { if (canUse()) WEAPON.want = true; });
+  btn('tbD', () => { if (canUse()) WEAPON.want = true; else if (typeof rifleUsable === 'function' && rifleUsable()) RIFLE.touchT = 0.7; });
 }

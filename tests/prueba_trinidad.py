@@ -17,7 +17,7 @@ async def run(pg):
       const cps=d.CARPARKS.filter(c=>/Trinidad/.test(c.name)).map(c=>({name:c.name,x:Math.round(c.x),z:Math.round(c.z),yF:+c.yF.toFixed(1)}));
       return { widths, invaden: inv, aparcamientos: cps, nuevas: d.TRI ? d.TRI.added : null }; })())"""))
     for k, v in info.items(): print(k, v)
-    ok = info['widths'] == [6.6] and not info['invaden'] and len(info['aparcamientos']) == 2
+    ok = info['widths'] == [6.6] and not info['invaden'] and len(info['aparcamientos']) >= 4  # v0.76: one long car park under the avenue, in sections
     # drive down each Trinidad ramp
     r = json.loads(await pg.evaluate("""JSON.stringify((()=>{const d=__dbg, P=d.PLAYER; const out=[];
       for (const cp of d.CARPARKS.filter(c=>/Trinidad/.test(c.name))) {

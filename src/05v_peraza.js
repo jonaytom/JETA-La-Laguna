@@ -68,3 +68,41 @@ function buildPeraza() {
   const ts = add(new THREE.PlaneGeometry(1.5, 0.38), new THREE.MeshStandardMaterial({ map: canvasTex(tc, { repeat: false }), roughness: 0.6 }), 4.6, 2.15, -1.78);
   scene.add(g);
 }
+// ============ Pabellón Juan Ríos Tejera (v0.76, Jonay: «parece una casa, no un pabellón») ============
+// OSM has the hall as a plain 16 m, 5-storey building inside the sports area «Pabellón Juan Ríos Tejera»: drawn as a
+// block of brick flats. Here it is the real thing (Street View, C. Leopoldo de la Rosa Olivera 7–8): a long low hall with
+// white walls and purple vertical stripes, a grey metal roof with a raised clerestory along the middle, and the low
+// white wall with the purple gate on the street (riosTejeraInit in 12i_canchas.js puts the gate and the sign).
+const RIOS = { area: undefined, pts: null };
+function riosHall(pts, cx, cz) {
+  if (RIOS.area === undefined) { const a = DATA.A.find((q) => q[1] >= 0 && /Juan R[ií]os Tejera/.test(STR[q[1]])); RIOS.area = a ? a[2] : null; }
+  if (!RIOS.area || RIOS.pts || Math.abs(polyArea(pts)) < 900) return false;
+  if (!pip(cx, cz, RIOS.area)) return false;
+  RIOS.pts = pts; RIOS.cx = cx; RIOS.cz = cz; for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[(i + 1) % pts.length]; COL.addSeg(p[0], p[1], q[0], q[1]); }
+  return true;
+}
+function buildRiosHall() {
+  const pts = RIOS.pts; if (!pts) return; const n = pts.length; const g = pts.map((p) => heightAt(p[0], p[1])); const y0 = Math.min(...g) - 0.5, yT = Math.max(...g) + 8.0;
+  // wall texture: white render with purple vertical stripes every 4 m and a grey plinth
+  const c = mkCanvas(256, 256), x = c.getContext('2d'); x.fillStyle = '#f2f1ec'; x.fillRect(0, 0, 256, 256); x.fillStyle = '#7e3fa0'; x.fillRect(0, 0, 22, 256); x.fillStyle = '#b9b6ae'; x.fillRect(0, 232, 256, 24);
+  x.fillStyle = 'rgba(0,0,0,0.06)'; for (let k = 0; k < 256; k += 32) x.fillRect(0, k, 256, 1);
+  const wt = canvasTex(c); const wallM = new THREE.MeshStandardMaterial({ map: wt, roughness: 0.9 });
+  const pos = [], uv = []; let acc = 0;
+  for (let i = 0; i < n; i++) { const j = (i + 1) % n, p = pts[i], q = pts[j], L = Math.hypot(q[0] - p[0], q[1] - p[1]); const u0 = acc / 4, u1 = (acc + L) / 4; acc += L; const h = yT - y0;
+    pos.push(p[0], y0, p[1], q[0], y0, q[1], q[0], yT, q[1], p[0], y0, p[1], q[0], yT, q[1], p[0], yT, p[1]); uv.push(u0, 0, u1, 0, u1, h / 8, u0, 0, u1, h / 8, u0, h / 8); }
+  const wg = new THREE.BufferGeometry(); wg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); wg.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); wg.computeVertexNormals();
+  const root = new THREE.Group(); root.name = 'Pabellón Juan Ríos Tejera';
+  const walls = new THREE.Mesh(wg, new THREE.MeshStandardMaterial({ map: wt, roughness: 0.9, side: THREE.DoubleSide })); walls.castShadow = walls.receiveShadow = true; root.add(walls);
+  // roof: grey sheet metal over the whole footprint, a purple fascia band, and a raised clerestory along the long axis
+  const tri = THREE.ShapeUtils.triangulateShape(pts.map((p) => new THREE.Vector2(p[0], p[1])), []); const rp = [];
+  for (const [a, b, cc] of tri) for (const k of [a, b, cc]) rp.push(pts[k][0], yT, pts[k][1]);
+  const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.Float32BufferAttribute(rp, 3)); rg.computeVertexNormals();
+  root.add(new THREE.Mesh(rg, M(0x9aa0a6, 0.45, 0.6, { side: THREE.DoubleSide })));
+  const fp = []; for (let i = 0; i < n; i++) { const j = (i + 1) % n, p = pts[i], q = pts[j]; fp.push(p[0], yT - 0.7, p[1], q[0], yT - 0.7, q[1], q[0], yT + 0.15, q[1], p[0], yT - 0.7, p[1], q[0], yT + 0.15, q[1], p[0], yT + 0.15, p[1]); }
+  const fg = new THREE.BufferGeometry(); fg.setAttribute('position', new THREE.Float32BufferAttribute(fp, 3)); fg.computeVertexNormals(); root.add(new THREE.Mesh(fg, M(0x7e3fa0, 0.5, 0.3, { side: THREE.DoubleSide })));
+  const F = axisFrame(pts, RIOS.cx, RIOS.cz); const len = F.u1 - F.u0, wid = F.v1 - F.v0, vm = (F.v0 + F.v1) / 2, um = (F.u0 + F.u1) / 2;
+  const cl = new THREE.Mesh(new THREE.BoxGeometry(wid * 0.45, 2.2, len * 0.8), new THREE.MeshStandardMaterial({ color: 0xf2f1ec, roughness: 0.85 })); const [qx, qz] = F.W(um, vm); cl.position.set(qx, yT + 1.1, qz); cl.rotation.y = F.ang; cl.castShadow = true; root.add(cl);
+  const cr = new THREE.Mesh(new THREE.BoxGeometry(wid * 0.5, 0.25, len * 0.84), M(0x9aa0a6, 0.45, 0.6)); cr.position.set(qx, yT + 2.3, qz); cr.rotation.y = cl.rotation.y; root.add(cr);
+  scene.add(root);
+  BUILD.push({ pts, cx: RIOS.cx, cz: RIOS.cz, top: yT, bmax: Math.max(...g), style: 3, name: 'Pabellón Juan Ríos Tejera', H: yT - Math.max(...g) });
+}

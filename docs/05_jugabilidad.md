@@ -270,3 +270,22 @@ Las partidas v1 (con el Canarión dentro de la historia) se convierten al cargar
 - **Diario** (v0.75): cada frase se guarda con su hora; lo dicho justo al acabar una misión (30 s) va a esa misión y lo
   de fuera de misión a «Charlas sueltas». En cada misión salen de la más reciente a la primera, y arriba de la lista está
   «Todas las conversaciones». Volver a jugar una misión deja solo su última partida.
+
+## Rifle de agua y misiones de la 0.76
+
+- `09i_agua.js`: `RIFLE` (`has`, `out`, `water` 0–100, `targets`), `FIRES` y `makeFire(x, z, size, onOut)` (montón de
+  papeles con tres llamas; `hp` 1 → 0 con el agua), `AGUA` (gotas en un `InstancedMesh` de 110, 25/s a ~12 m/s con 10°
+  hacia arriba: ~10 m en recto; 14 charcos que duran 4,5 s y también apagan; gasta 7,5 de agua por segundo). Apunta con
+  clic derecho como la pistola y dispara con el izquierdo mantenido; Tab = `AGUA.cycle()` (puños → pistola → rifle), 1 / 2
+  / 3. Se llena con E en cualquier fuente (`PK2.fountains`, también las del casco). Jugueterías: los comercios de
+  `DATA.SH` con «Juguet» (gota azul; abren con `GANG.jugueterias`): rifle $350, bolitas $20.
+- Mojar a un peatón (fuera de misión): `p.wetChase` 14 s → `wetChasePed` lo hace correr hacia ti (4,9 m/s) y al
+  pillarte empieza la pelea 2D (`startStreetFight`). En misión solo se aparta.
+- Maleantes: `GANG.maleIntro` (Sastrón llama al tener `sastronTut`); en los mapas son triángulos rojos (`#ff1744`,
+  forma `tri` del cuarto valor de `MISSIONS.blips()`).
+- `12k_agua.js`: «El rifle de agua» (historia, tras el aeropuerto; da `GANG.rifleTut`), pista `secreta` (salmón
+  `#ff8a65`, abre con `rifleTut`; NPC `NPC.secreta` en la Avenida de los Menceyes, `secretaInit`), cuatro del Obispo
+  (la 5 pide el rifle: campo `requires()` de una misión) y pista `carreras` (cian `#00e5ff`, abre tras el rally).
+  Ayudas: `k3Fires` (fuegos marcados en rojo en el mapa), `k3SoakTarget` (mojar a alguien N veces), `k3RaceStart` /
+  `k3RaceUpdate` (carrera con rivales en `s2DriveCar`, controles y ruta adelantada).
+

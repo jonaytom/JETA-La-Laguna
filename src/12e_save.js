@@ -9,7 +9,7 @@ const SAVE = (() => {
     if (P.interior && P.lastDoor) { const d = P.lastDoor; x = d.x + d.nx * 2.2; z = d.z + d.nz * 2.2; h = Math.atan2(d.nx, d.nz); } // inside a building: save at its door
     const car = P.car ? { type: P.car.type, model: P.car.model ? P.car.model.id : null, color: P.car.color, h: P.car.h, x: P.car.x, z: P.car.z } : null;
     return { v: VER, t: Date.now(), label: label || '', player: { x, z, h, health: Math.max(1, Math.round(P.health)), money: P.money }, car,
-      weapon: { has: WEAPON.has && !WEAPON.training, ammo: WEAPON.ammo, out: !!WEAPON.out }, tod: GAME.tod, weather: GAME.weather ?? null,
+      weapon: { has: WEAPON.has && !WEAPON.training, ammo: WEAPON.ammo, out: !!WEAPON.out }, rifle: { has: !!RIFLE.has, water: Math.round(RIFLE.water), out: !!RIFLE.out }, tod: GAME.tod, weather: GAME.weather ?? null,
       missions: MISSIONS.getState(), mission: MISSIONS.currentTitle(), radio: MUSIC.station ? MUSIC.station.name : null, radioChanges: MUSIC.changes | 0,
       fights: (() => { try { return +localStorage.getItem('gtall_fights') || 0; } catch (e) { return 0; } })() };
   }
@@ -24,6 +24,7 @@ const SAVE = (() => {
     P.health = clamp(s.player.health || 100, 1, 100); P.money = s.player.money | 0;
     T(() => { const r = COL.resolve(s.player.x, s.player.z, 0.4); P.x = r.x; P.z = r.z; P.h = s.player.h || 0; CAM.yaw = P.h + Math.PI; const lw = lowAt(P.x, P.z, heightAt(P.x, P.z) - 3); P.y = heightAt(P.x, P.z) + 0.2; });
     T(() => { if (s.weapon && s.weapon.has) { giveWeapon(s.weapon.ammo ?? 6, false); WEAPON.out = !!s.weapon.out; if (WEAPON.mesh) WEAPON.mesh.visible = WEAPON.out; updateWeaponHUD(); } else takeWeapon(); });
+    T(() => { RIFLE.has = !!(s.rifle && s.rifle.has); RIFLE.water = s.rifle ? s.rifle.water | 0 : 0; RIFLE.out = false; if (RIFLE.has && s.rifle.out && !WEAPON.out) AGUA.setRifleOut(true, true); else if (RIFLE.mesh) RIFLE.mesh.visible = false; updateWeaponHUD(); }); // v0.76
     T(() => { if (typeof s.tod === 'number') { GAME.tod = s.tod; updateSun(); updateEnvironment(true); } });
     T(() => { MUSIC.changes = s.radioChanges | 0; });
     T(() => { if (typeof s.fights === 'number') localStorage.setItem('gtall_fights', String(s.fights)); });

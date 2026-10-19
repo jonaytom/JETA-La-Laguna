@@ -59,6 +59,7 @@ function updatePeds(dt) {
     for (const c of CARS) { if (c.speed < 4 || Math.abs(c.x - p.x) > 7 || Math.abs(c.z - p.z) > 7 || underground(c.x, c.z, c.y)) continue; for (const [cx, cz, cr] of c.circles()) { if (Math.hypot(p.x - cx, p.z - cz) < cr + 0.3) { p.down = 4; p.vx = c.vx * 0.8 + rnd(-2, 2); p.vz = c.vz * 0.8 + rnd(-2, 2); AUDIO.thud(dp); if (c.driver === 'player') { WANTED.crime(1, 'Atropello'); MISSIONS.onEvent('hitped'); } break; } } if (p.down > 0) break; }
     if (p.down > 0) continue;
     if (combatPed(p, dt)) continue;
+    if (p.wetChase > 0 && typeof wetChasePed === 'function' && wetChasePed(p, dt)) continue; // v0.76: soaked with the water rifle, he comes for you
     // danger → flee
     if (PLAYER.car && PLAYER.car.speed > 9 && dp < 12) { p.flee = 5; p.fleeFrom = [PLAYER.x, PLAYER.z]; }
     if (WANTED.level > 0 && dp < 25 && Math.random() < 0.01) { p.flee = 6; p.fleeFrom = [PLAYER.x, PLAYER.z]; }

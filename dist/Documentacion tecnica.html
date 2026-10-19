@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.75.0</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.76.0</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -274,6 +274,14 @@ Ojo con los <code>const</code>/<code>let</code> usados antes de declararse (zona
 <tr>
 <td><code>09ea_minijuegos.js</code></td>
 <td><code>MINI</code>: teclas, sonidos, voz, textos y marcador comunes a los minijuegos 2D.</td>
+</tr>
+<tr>
+<td><code>09i_agua.js</code></td>
+<td>Rifle de agua: chorro de gotas, charcos, fuegos (<code>makeFire</code>), fuentes, jugueterías, peatones mojados que te persiguen.</td>
+</tr>
+<tr>
+<td><code>12k_agua.js</code></td>
+<td>Misiones de la 0.76: el rifle (El Blanco), el Secreta, Obispo 5–8 y las carreras del Canarión.</td>
 </tr>
 <tr>
 <td><code>05v_peraza.js</code></td>
@@ -821,6 +829,20 @@ altura sin enlace y estructuras metidas en carriles. Ver <code>docs/07_pruebas.m
   atletismo hasta el fondo (filas azules y escalones grises, <code>perazaSeatTex</code>), con muro trasero y, en la más grande (la
   tribuna este), techo sobre pilares. Puerta en la calle más cercana con el nombre del estadio y una taquilla
   (<code>PERAZA.door</code>). Las gradas genéricas de <code>buildSports</code> no se ponen en este estadio.</li>
+</ul>
+<h2>Parkings (v0.76)</h2>
+<ul>
+<li><code>buildHall(F, uc, L, yF, name, gaps, holes, {y1, density, deck})</code>: la sala puede tener pendiente (<code>y1</code>), deja el techo
+  abierto sobre las escaleras (<code>stairHole</code>) y funde las piezas sin textura en una malla por material. Un solo
+  <code>TUNNEL_DECK</code> del ancho de la sala (antes cinco franjas: el recorte de la elegida frenaba en el carril).</li>
+<li>La Trinidad (<code>trinidadParking</code>): una cadena de salas de ~60 m por el eje de la avenida desde la rampa de arriba hasta
+  la de Trinidad Centro, 7 m bajo el suelo más bajo, pendiente ≤ 6 %, un deck con varios tramos (<code>cap.open0/open1</code>:
+  solo los extremos son pared para los coches).</li>
+<li><code>lowAt</code>: en rampas y túneles con techo, el borde exterior del deck (más allá de <code>hw − 0,1</code>) ya no cuenta si hay
+  suelo encima (te hundías en la acera junto a la rampa del Cristo y una pared invisible te paraba).</li>
+<li><code>offTramCut</code>: los caminos peatonales no se dibujan sobre la trinchera del tranvía.</li>
+<li>Pabellón Juan Ríos Tejera (<code>riosHall</code> / <code>buildRiosHall</code>, <code>05v_peraza.js</code>): el edificio del área deportiva se hace
+  nave blanca con franjas moradas, cubierta gris y linterna central.</li>
 </ul></section>
 <section id="s4"><div class="src">docs/04_personajes_y_vehiculos.md</div><h1>4. Personajes, vehículos, tráfico y colisiones</h1>
 <blockquote>
@@ -1198,6 +1220,24 @@ Las partidas v1 (con el Canarión dentro de la historia) se convierten al cargar
 <li><strong>Diario</strong> (v0.75): cada frase se guarda con su hora; lo dicho justo al acabar una misión (30 s) va a esa misión y lo
   de fuera de misión a «Charlas sueltas». En cada misión salen de la más reciente a la primera, y arriba de la lista está
   «Todas las conversaciones». Volver a jugar una misión deja solo su última partida.</li>
+</ul>
+<h2>Rifle de agua y misiones de la 0.76</h2>
+<ul>
+<li><code>09i_agua.js</code>: <code>RIFLE</code> (<code>has</code>, <code>out</code>, <code>water</code> 0–100, <code>targets</code>), <code>FIRES</code> y <code>makeFire(x, z, size, onOut)</code> (montón de
+  papeles con tres llamas; <code>hp</code> 1 → 0 con el agua), <code>AGUA</code> (gotas en un <code>InstancedMesh</code> de 110, 25/s a ~12 m/s con 10°
+  hacia arriba: ~10 m en recto; 14 charcos que duran 4,5 s y también apagan; gasta 7,5 de agua por segundo). Apunta con
+  clic derecho como la pistola y dispara con el izquierdo mantenido; Tab = <code>AGUA.cycle()</code> (puños → pistola → rifle), 1 / 2
+  / 3. Se llena con E en cualquier fuente (<code>PK2.fountains</code>, también las del casco). Jugueterías: los comercios de
+  <code>DATA.SH</code> con «Juguet» (gota azul; abren con <code>GANG.jugueterias</code>): rifle $350, bolitas $20.</li>
+<li>Mojar a un peatón (fuera de misión): <code>p.wetChase</code> 14 s → <code>wetChasePed</code> lo hace correr hacia ti (4,9 m/s) y al
+  pillarte empieza la pelea 2D (<code>startStreetFight</code>). En misión solo se aparta.</li>
+<li>Maleantes: <code>GANG.maleIntro</code> (Sastrón llama al tener <code>sastronTut</code>); en los mapas son triángulos rojos (<code>#ff1744</code>,
+  forma <code>tri</code> del cuarto valor de <code>MISSIONS.blips()</code>).</li>
+<li><code>12k_agua.js</code>: «El rifle de agua» (historia, tras el aeropuerto; da <code>GANG.rifleTut</code>), pista <code>secreta</code> (salmón
+  <code>#ff8a65</code>, abre con <code>rifleTut</code>; NPC <code>NPC.secreta</code> en la Avenida de los Menceyes, <code>secretaInit</code>), cuatro del Obispo
+  (la 5 pide el rifle: campo <code>requires()</code> de una misión) y pista <code>carreras</code> (cian <code>#00e5ff</code>, abre tras el rally).
+  Ayudas: <code>k3Fires</code> (fuegos marcados en rojo en el mapa), <code>k3SoakTarget</code> (mojar a alguien N veces), <code>k3RaceStart</code> /
+  <code>k3RaceUpdate</code> (carrera con rivales en <code>s2DriveCar</code>, controles y ruta adelantada).</li>
 </ul></section>
 <section id="s6"><div class="src">docs/06_audio.md</div><h1>6. Audio y radio procedural</h1>
 <p>Todo el sonido se <strong>sintetiza en tiempo real</strong> con Web Audio: no hay archivos de audio. Es una solución
@@ -1739,6 +1779,29 @@ que el cambio no obligue a tocar la lógica del juego.</p>
 <section id="s11"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.76.0 — 2026-10-19 — Rifle de agua, el Secreta y 14 misiones nuevas</h2>
+<ul>
+<li><strong>Rifle de agua</strong> (estilo rifle eléctrico de juguete, blanco y naranja con depósito transparente): chorro en parábola
+  de unos 10 m que deja charquitos, apaga fuegos y empapa a la gente; se llena en las fuentes (E) y se vende en las
+  <strong>jugueterías</strong> (Juguetes Sabelotodo, Baobabito, Lífer), que también venden bolitas para la pistola. Tab cambia entre
+  puños, pistola y rifle (1 / 2 / 3). <strong>El que mojas te persigue y, si te pilla, hay pelea.</strong></li>
+<li><strong>Historia: «El rifle de agua»</strong> (El Blanco): abre las jugueterías; lo compras y lo pruebas en una plaza con fuente:
+  apagas los papeles que quema El Blanco, recargas en la fuente y le mojas la cabeza a Boca Papa, que duerme al lado,
+  desde 10 m.</li>
+<li><strong>El Secreta</strong>: el inspector Fulgencio Tostón (Avenida de los Menceyes), seis misiones: seguir un coche sin que te
+  vea, contenedores en llamas y el pirómano, el partido amañado, triple en la cancha y la huida, mojar al pirómano y la
+  Operación Gofio Blanco (carrera, pelea, pistola, fuego y persecución).</li>
+<li><strong>El Obispo</strong>: fuego en una iglesia, la carrera de los sacristanes (a pie), curas contra concejales (fútbol) y el
+  ladrón del cepillo.</li>
+<li><strong>Carreras del Canarión</strong>: duelo nocturno en la pista de Los Rodeos, contrarreloj por el casco y el Gran Premio.</li>
+<li><strong>Maleantes</strong>: Sastrón te los explica por teléfono al aprender a pelear; salen como triángulos rojos.</li>
+<li><strong>Parkings</strong>: el techo ya no corta las escaleras (ni se ve una pared a media escalera desde la plaza, ni el personaje
+  hundido); se anda por todo el ancho de la sala (tope invisible en el carril); junto a las rampas ya no te hundes en
+  la acera ni te frena una pared invisible. <strong>La Trinidad: un solo parking de ~420 m bajo toda la avenida</strong>, más hondo,
+  con la pendiente de la calle, rampas en los dos extremos y escaleras a las dos aceras.</li>
+<li><strong>Pabellón Juan Ríos Tejera</strong> rehecho: nave baja blanca con franjas moradas y cubierta gris (era un bloque de pisos).</li>
+<li><strong>Tranvía junto al Campus Central</strong>: ya no hay aceras flotando sobre la trinchera.</li>
+</ul>
 <h2>0.75.0 — 2026-10-13 — Copa Laguna, reglas del portero y flechas de misión</h2>
 <ul>
 <li><strong>Copa Laguna</strong>: torneo de fútbol como el Torneo Lagunero (se abre tras el primer partido de fútbol del Obispo): cuatro

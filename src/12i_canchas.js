@@ -59,7 +59,7 @@ function canchasInit() {
 }
 // ---------- the Pabellón Juan Ríos Tejera (C. Leopoldo de la Rosa Olivera): white walls, purple gate, the sign; E = in
 function riosTejeraInit() {
-  let b = findBuilding('Ríos Tejera') || findBuilding('Rios Tejera');
+  let b = findBuilding('Ríos Tejera') || findBuilding('Rios Tejera') || (typeof RIOS !== 'undefined' && RIOS.pts ? { cx: RIOS.cx, cz: RIOS.cz } : null); // v0.76: the hall rebuilt in 05v_peraza.js
   if (!b) { // not named in OSM: the biggest building (a hall of ~40 × 60 m) beside Calle Leopoldo de la Rosa Olivera
     const pts = []; for (const r of DATA.R) if (r[1] >= 0 && STR[r[1]] === 'Calle Leopoldo de la Rosa Olivera') for (let i = 0; i < r[4].length; i += 2) pts.push([r[4][i], r[4][i + 1]]);
     let best = 0; for (const q of BUILD) { if (!q.pts || q.pts.length < 3) continue; let A = 0; for (let i = 0, n = q.pts.length; i < n; i++) { const p1 = q.pts[i], p2 = q.pts[(i + 1) % n]; A += p1[0] * p2[1] - p2[0] * p1[1]; } A = Math.abs(A) / 2;

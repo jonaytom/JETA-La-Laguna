@@ -95,6 +95,9 @@ const AUDIO = (() => {
       o.connect(bp); bp.connect(g); g.connect(master); o.start(t0 + t); o.stop(t0 + t + len + 0.05); t += len + Math.random() * 0.15; } },
     shot() { burst(0.16, 3200, 0.55); burst(0.45, 160, 0.5); },
     clink() { tone(2600, 0.18, 0.07, 'triangle'); tone(3400, 0.12, 0.05, 'triangle', 0.04); },
+    spray() { burst(0.09, 2600, 0.035, 'bandpass'); }, // v0.76: water rifle
+    sizzle() { burst(0.6, 4200, 0.09, 'bandpass'); burst(0.3, 900, 0.05, 'bandpass'); }, // a fire put out
+    splash() { burst(0.15, 1400, 0.05, 'bandpass'); },
     empty() { tone(900, 0.04, 0.05, 'square'); },
     swing() { burst(0.12, 1800, 0.05, 'bandpass'); },
     cash() { tone(1318, 0.12, 0.06, 'square'); tone(1760, 0.3, 0.05, 'square', 0.1); },

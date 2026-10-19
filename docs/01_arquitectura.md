@@ -57,6 +57,8 @@ entrada de todos los datos.
 | `09d_fight2d.js` | Motor de **pelea 2D pixel-art** (estilo arcade). |
 | `04b_recorte.js` | Recorta los edificios que se meten en una calzada (`roadClip`: cortes rectos, esquinas empujadas). |
 | `09ea_minijuegos.js` | `MINI`: teclas, sonidos, voz, textos y marcador comunes a los minijuegos 2D. |
+| `09i_agua.js` | Rifle de agua: chorro de gotas, charcos, fuegos (`makeFire`), fuentes, jugueterías, peatones mojados que te persiguen. |
+| `12k_agua.js` | Misiones de la 0.76: el rifle (El Blanco), el Secreta, Obispo 5–8 y las carreras del Canarión. |
 | `05v_peraza.js` | Estadio Municipal Francisco Peraza: gradas en pendiente, tribuna con techo, puerta y taquilla (final de la Copa Laguna). |
 | `05u_trinidad.js` | Avenida de La Trinidad: anchos, edificios recortados, casas en solares, aparcamientos Indigo, Pedro Zerolo, soportales. |
 | `09f_basket2d.js` | `BASKET2D`: baloncesto 2D 2 contra 2 (JETA JAM). |

@@ -69,6 +69,7 @@ function buildStreetProps() {
   for (const [x, z] of lists.fount) {
     const g = new THREE.Group(); const y = heightAt(x, z) + 0.13;
     addMesh(g, new THREE.CylinderGeometry(2.2, 2.3, 0.6, 8), greyStone, 0, 0.3, 0);
+    PK2.fountains.push([x, z]); // v0.76: the water rifle is filled here too
     const wtr = new THREE.Mesh(new THREE.CircleGeometry(2.0, 8), new THREE.MeshStandardMaterial({ color: 0x3f7f95, roughness: 0.05, metalness: 0.2 })); wtr.rotation.x = -Math.PI / 2; wtr.position.y = 0.55; g.add(wtr);
     addMesh(g, new THREE.CylinderGeometry(0.3, 0.45, 1.8, 8), greyStone, 0, 1.2, 0);
     addMesh(g, new THREE.CylinderGeometry(0.8, 0.25, 0.3, 12), greyStone, 0, 2.1, 0);

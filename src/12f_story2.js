@@ -14,6 +14,7 @@ function s2Clear() {
   for (const c of S2.cars) if (!c.dead && c !== PLAYER.car && !c.keep) c.remove(); else if (c.mode === 'race') { c.mode = 'physics'; c.driver = null; c.ctl.brk = 1; } S2.cars.length = 0;
   for (const o of S2.extras) { if (o.parent) o.parent.remove(o); o.traverse((m) => { if (m.geometry && !m.geometry.userData.shared) m.geometry.dispose(); }); } S2.extras.length = 0; S2.marks.length = 0; S2.chase.length = 0; /* props made for one mission (the stolen benches, the arrows) */
   WEAPON.targets = []; WEAPON.onHit = null; WEAPON.onShot = null; WEAPON.lawful = false;
+  if (typeof clearFires === 'function') clearFires(); if (typeof RIFLE !== 'undefined') { RIFLE.targets = []; RIFLE.onDouse = null; RIFLE.onFireOut = null; } // v0.76
 }
 const s2Pass = (title, money) => { s2Clear(); K2().pass(title, money); };
 const s2Fail = (why) => { s2Clear(); K2().fail(why); };
@@ -102,7 +103,7 @@ function story2Init() {
   const [x, z] = AYTO.door; H.root.position.set(x, heightAt(x, z) + 0.72, z); H.root.rotation.y = Math.atan2(AYTO.nx, AYTO.nz); scene.add(H.root); NPC.alcalde = { x, z, H, home: [x, z], name: 'Don Yovoy Gofiérrez' }; COL.addCirc(x, z, 0.4);
 }
 // nothing of these missions may survive them (a failure, an abort, loading a game saved halfway…)
-function story2Tick(dt) { if (!MISSIONS.active && (S2.npcs.length || S2.cars.length || S2.extras.length || WEAPON.lawful || WEAPON.onHit)) { s2Clear(); return; }
+function story2Tick(dt) { if (!MISSIONS.active && (S2.npcs.length || S2.cars.length || S2.extras.length || WEAPON.lawful || WEAPON.onHit || FIRES.some((f) => !f.free) || RIFLE.targets.length)) { s2Clear(); return; }
   try { s2DownTick(dt); } catch (e) { }
   for (let i = S2.marks.length - 1; i >= 0; i--) { const k = S2.marks[i], o = k.o; k.t -= dt; const hid = o.H ? !o.H.root.visible || o.down : o.dead;
     if (k.t <= 0 || hid) { if (k.a.parent) k.a.parent.remove(k.a); S2.marks.splice(i, 1); continue; }

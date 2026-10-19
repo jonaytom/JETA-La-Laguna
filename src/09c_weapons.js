@@ -19,9 +19,11 @@ function ensureGunMesh() {
 let GUN_GEO = null;
 function gunGeos() { if (!GUN_GEO) { GUN_GEO = { slide: new THREE.BoxGeometry(0.035, 0.04, 0.19), handle: new THREE.BoxGeometry(0.03, 0.1, 0.045) }; GUN_GEO.slide.userData.shared = GUN_GEO.handle.userData.shared = true; } return GUN_GEO; }
 function updateWeaponHUD() {
-  const w = $('weap'); if (!w) return; w.style.display = WEAPON.has ? 'block' : 'none'; const tm = document.body.classList.contains('touchmode');
-  if (WEAPON.has) w.innerHTML = WEAPON.out ? `PISTOLA <b>${WEAPON.ammo}</b><small>/${WEAPON.max}</small><br><small style="font-size:12px;opacity:.75">${tm ? 'toca: puños' : CONTROLS.keyName('weap').toUpperCase() + ' / 1: puños'}</small>` : `PUÑOS<br><small style="font-size:12px;opacity:.75">${tm ? 'toca: pistola' : CONTROLS.keyName('weap').toUpperCase() + ' / 2: pistola'}</small>`;
-  const t = document.body.classList.contains('touchmode'); for (const id of ['tbA', 'tbD']) { const b = $(id); if (b) b.style.display = WEAPON.has && WEAPON.out && t ? 'flex' : 'none'; }
+  const w = $('weap'); if (!w) return; const rifle = typeof RIFLE !== 'undefined' && RIFLE.has; w.style.display = WEAPON.has || rifle ? 'block' : 'none'; const tm = document.body.classList.contains('touchmode');
+  if (rifle && RIFLE.out) w.innerHTML = `RIFLE DE AGUA <b>${Math.round(100 * RIFLE.water / RIFLE.max)}%</b><br><small style="font-size:12px;opacity:.75">${tm ? 'toca: cambiar' : CONTROLS.keyName('weap').toUpperCase() + ' / 1: puños' + (WEAPON.has ? ' · 2: pistola' : '')}</small>`;
+  else if (rifle && !WEAPON.has) w.innerHTML = `PUÑOS<br><small style="font-size:12px;opacity:.75">${tm ? 'toca: rifle de agua' : CONTROLS.keyName('weap').toUpperCase() + ' / 3: rifle de agua'}</small>`;
+  else if (WEAPON.has) w.innerHTML = WEAPON.out ? `PISTOLA <b>${WEAPON.ammo}</b><small>/${WEAPON.max}</small><br><small style="font-size:12px;opacity:.75">${tm ? 'toca: puños' : CONTROLS.keyName('weap').toUpperCase() + ' / 1: puños'}</small>` : `PUÑOS<br><small style="font-size:12px;opacity:.75">${tm ? 'toca: pistola' : CONTROLS.keyName('weap').toUpperCase() + ' / 2: pistola'}</small>`;
+  const t = document.body.classList.contains('touchmode'); for (const id of ['tbA', 'tbD']) { const b = $(id); if (b) b.style.display = ((WEAPON.has && WEAPON.out) || (rifle && RIFLE.out)) && t ? 'flex' : 'none'; }
 }
 // ray from the camera through the crosshair; returns the first thing hit
 const _rayO = new THREE.Vector3(), _rayD = new THREE.Vector3(), _aimD = new THREE.Vector3(); // v0.69 (auditor): no new vectors per shot
@@ -71,8 +73,8 @@ function aimArm(H, dir) {
 function updateWeapons(dt) {
   weaponSwitchInput();
   if (WEAPON.cd > 0) WEAPON.cd -= dt;
-  if (!canUse()) { WEAPON.aiming = WEAPON.touchAim = false; } else if (WEAPON.touchAim) WEAPON.aiming = true;
-  const xh = $('xhair'); if (xh) xh.style.display = WEAPON.aiming || (canUse() && document.body.classList.contains('touchmode')) ? 'block' : 'none';
+  if (!canUse() && !(typeof rifleUsable === 'function' && rifleUsable())) { WEAPON.aiming = WEAPON.touchAim = false; } else if (WEAPON.touchAim) WEAPON.aiming = true;
+  const xh = $('xhair'); if (xh) xh.style.display = WEAPON.aiming || ((canUse() || rifleUsable()) && document.body.classList.contains('touchmode')) ? 'block' : 'none';
   if (WEAPON.want && canUse()) fireWeapon(); WEAPON.want = false;
   if (WEAPON.has && WEAPON.mesh) {
     WEAPON.mesh.visible = !PLAYER.car && !PLAYER.interior && !!WEAPON.out;
@@ -114,11 +116,11 @@ function gripGun(H, mesh, aimDir) {
   mesh.updateMatrixWorld(true);
 }
 // switch between fists and the pistol: Tab toggles, 1 = fists, 2 = pistol, gamepad d-pad left/right, tap the weapon label on phones
-function setWeaponOut(v) { if (!WEAPON.has || WEAPON.out === v) return; WEAPON.out = v; WEAPON.aiming = false; if (WEAPON.mesh) WEAPON.mesh.visible = v; AUDIO.pickup && AUDIO.pickup(); updateWeaponHUD(); HUD.toast(v ? 'Pistola' : 'Puños', '#fff', 1.2); }
+function setWeaponOut(v) { if (v && typeof RIFLE !== 'undefined' && RIFLE.out) AGUA.setRifleOut(false, true); if (!WEAPON.has || WEAPON.out === v) return; WEAPON.out = v; WEAPON.aiming = false; if (WEAPON.mesh) WEAPON.mesh.visible = v; AUDIO.pickup && AUDIO.pickup(); updateWeaponHUD(); HUD.toast(v ? 'Pistola' : 'Puños', '#fff', 1.2); }
 function weaponSwitchInput() {
-  if (GAME.state !== 'play' || !WEAPON.has) return; const gp = INPUT.gp;
-  if (pressed('Tab') || (gp && (gp.down(14) || gp.down(15)))) setWeaponOut(!WEAPON.out);
+  const rifle = typeof RIFLE !== 'undefined' && RIFLE.has; if (GAME.state !== 'play' || (!WEAPON.has && !rifle)) return; const gp = INPUT.gp;
+  if (pressed('Tab') || (gp && (gp.down(14) || gp.down(15)))) { if (rifle) AGUA.cycle(); else setWeaponOut(!WEAPON.out); } // v0.76: fists → pistol → water rifle
   if (pressed('Digit1')) setWeaponOut(false); if (pressed('Digit2')) setWeaponOut(true);
 }
-(() => { const w = document.getElementById('weap'); if (w) { w.style.pointerEvents = 'auto'; w.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); setWeaponOut(!WEAPON.out); }); }
+(() => { const w = document.getElementById('weap'); if (w) { w.style.pointerEvents = 'auto'; w.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); if (typeof RIFLE !== 'undefined' && RIFLE.has) AGUA.cycle(); else setWeaponOut(!WEAPON.out); }); }
   document.addEventListener('keydown', (e) => { if (e.code === 'Tab' && GAME.state === 'play') e.preventDefault(); }, true); })();

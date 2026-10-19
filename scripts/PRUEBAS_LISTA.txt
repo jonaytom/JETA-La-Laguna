@@ -1,6 +1,8 @@
 # Pruebas de ESTA versión (scripts\PRUEBAS.bat las junta con las de lo cambiado).
-# v0.75.0: Copa Laguna y Estadio Francisco Peraza, reglas del portero y saques, flechas de persecución y carreras, diario
-prueba_075.py
-prueba_futbol.py
+# v0.76.0: rifle de agua, misiones nuevas (Secreta, Obispo, Canarión), parkings, Ríos Tejera
+prueba_076.py
+prueba_maleantes.py
+prueba_misiones_guardado.py
+prueba_guardar_cargar.py
 prueba_diario.py
-prueba_canchas.py
+herramientas/sonda_paso.py

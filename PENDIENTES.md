@@ -5,21 +5,36 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 
 ## Por revisar con Jonay
 
-- [ ] **Maleantes: que quede claro cuándo empiezan** (Jonay, 13-oct, apunte): no se entiende de dónde salen. Que se
+- [x] v0.76.0 **Maleantes: que quede claro cuándo empiezan** (Jonay, 13-oct, apunte): no se entiende de dónde salen. Que se
       presenten al **terminar el tutorial de pelea (Sastrón)**: alguien te lo explica (qué son, recompensa, cómo se ven) y
       en el minimapa salen como **puntos rojos** (ahora son verde lima `#c6ff00`; ojo, el rojo es también el de los
       perseguidos en misión: distinguirlos, p. ej. con otra forma).
-- [ ] **Más misiones del Canarión, de carreras de coches** (Jonay, 13-oct, apunte): p. ej. una carrera **de noche en la
+- [x] v0.76.0 **Más misiones del Canarión, de carreras de coches** (Jonay, 13-oct, apunte): p. ej. una carrera **de noche en la
       pista del aeropuerto de Los Rodeos** (mucho espacio; llegar con los coches hasta allí «será una locura»: pensar el
       acceso, o que empiece fuera y la carrera entre por la valla/el acceso de servicio).
-- [ ] **Pabellón Juan Ríos Tejera: sale un bloque de pisos de ladrillo** (Jonay, 13-oct, con foto en X −1497 Z −598, Calle
+- [x] v0.76.0 **Pabellón Juan Ríos Tejera: sale un bloque de pisos de ladrillo** (Jonay, 13-oct, con foto en X −1497 Z −598, Calle
       Leopoldo de la Rosa Olivera; **0.76**): el juego coge como pabellón el edificio grande equivocado (o el genérico de
       viviendas). El de verdad (Street View, n.º 7–8): nave baja y alargada, **paredes blancas con franjas verticales
       moradas**, cubierta gris de chapa, muro bajo blanco a la calle con la **verja morada** de entrada y palmeras.
-- [ ] **Tranvía en trinchera junto al Campus Central (Av. Ángel Guimerá Jorge, X −197 Z 732): una «acera» cruza por
+- [x] v0.76.0 **Tranvía en trinchera junto al Campus Central (Av. Ángel Guimerá Jorge, X −197 Z 732): una «acera» cruza por
       encima de la vía** (Jonay, 13-oct, con foto; **0.76**): un paso peatonal de OSM se dibuja plano a la altura de la calle,
       flotando sobre la trinchera. O se quita, o se hace pasarela de verdad (barandillas, canto), o va al nivel de la vía.
-- [ ] **v0.76: rifle de agua, jugueterías y 10 misiones nuevas** (Jonay, 13-oct; **se hace en la 0.76**, justo después de
+- [x] v0.76.0 **Parking subterráneo de La Trinidad: mucho más grande y más hondo** (Jonay, 13-oct; **0.76**): en la realidad une
+      los dos lados y **recorre toda la Avenida de La Trinidad por debajo**. Hacerlo un poco **más profundo**: ahora el
+      techo se atraviesa y se ve a través de él.
+- [x] v0.76.0 **Parking subterráneo del Camino de las Peras (X 205 Z −577, casco): no deja andar por el carril central**
+      (Jonay, 13-oct, con foto; **0.76**): solo se puede pasar por un lado; parece una colisión invisible (columna, muro
+      o borde de rampa) en medio del pasillo. Buscarla con `COL` y quitarla o moverla a donde están las columnas.
+      **Pasa también en el de La Trinidad** (Jonay): seguramente es el mismo código de los parkings (`05m_parking.js`).
+- [x] v0.76.0 **Escaleras peatonales de salida de los parkings: el techo del parking corta la escalera** (Jonay, 13-oct, 3 fotos
+      en el **parking de la Plaza del Cristo**, X 167–170 Z −591; **0.76**): desde abajo la escalera sube y se mete en el
+      techo; desde arriba (caseta con la «P» en la plaza) se ve una pared a media escalera, y al pie el personaje sale
+      hundido hasta el pecho. Es la losa del techo de la sala (`buildHall`) que no deja hueco sobre la caja de la escalera
+      (`buildStairwell`, `05m_parking.js`). Abrir el techo encima de cada escalera (como los huecos `gaps` de las rampas) y
+      revisar la altura del suelo al pie. **Lo mismo en los dos de La Trinidad** (usan el mismo código).
+- [ ] **Auditoría 0.75.0** (APTO CON AVISOS; pintar 49,9 → 45,5 ms, arranque 14,1 → 13,7 s, memoria igual, sin fugas):
+      bajan de nota `12h_diario.js` (A → B) y `12j_campos.js` (B → C, por la Copa Laguna: funciones largas). Repasar.
+- [x] v0.76.0 **v0.76: rifle de agua, jugueterías y 10 misiones nuevas** (Jonay, 13-oct; **se hace en la 0.76**, justo después de
       la 0.75). Se llama siempre **«rifle de agua»** (aunque Jonay diga pistola o escopeta).
       - **Siguiente misión del hilo principal**: El Blanco te dice que ya puedes comprar el rifle de agua y se **abren las
         jugueterías**. Una vez comprado, se prueba como el tutorial de las latas: El Blanco **prende fuego a unos papeles**

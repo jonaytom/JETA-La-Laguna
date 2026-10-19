@@ -315,6 +315,7 @@ function buildRoads() {
       bridgeDressing(c, w, hf, rd[0] <= 12); continue;
     }
     if (cls === 'asphaltLines') { for (const [s0, s1, ln] of lineRuns(ri, c)) { const pc = subPoly(c, s0, s1); if (pc.length >= 4) ribbon(pc, w, ln ? 'asphaltLines' : 'asphalt', ln ? YOFF.asphaltLines : YOFF.asphalt, ln ? tile : 8, ln ? 1 : w / 8); } }
+    else if (rd[0] >= 13) { for (const pc of offTramCut(c)) ribbon(pc, w, cls, YOFF[cls], tile, w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8)); } // v0.76: no path floating over the tram cutting
     else ribbon(c, w, cls, YOFF[cls], tile, cls === 'asphaltLines' ? 1 : w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8));
     if (['primary', 'secondary', 'tertiary', 'residential', 'unclassified', 'primary_link', 'secondary_link', 'tertiary_link', 'living_street'].includes(t) && cls !== 'paving')
       for (const sd of [1, -1]) ribbonBand(c, sd * (w / 2 - 0.3), sd * (w / 2 + 2.1), 'sidewalk', YOFF.sidewalk, 2.4, ri); // two kerb-side strips (a full-width slab under the road poked through it on curved slopes)
@@ -698,6 +699,16 @@ function twinWall(x, z, y0, y1) {
 // a covered box only where a street crosses over it. Grades ≤ 8 %.
 const TRAM_TRENCH = { s0: 455, s1: 540, s2: 670, s3: 752, D: 6.4 };
 let TRAM_TP = null; // points of the cutting (every 3 m) for tramTrenchAt
+// v0.76 (Jonay, Campus Central): the pieces of a footpath that are not over the tram cutting (OSM crossings over the
+// tracks were drawn at street level, floating over the cutting like a slab of pavement)
+let TRAM_BB = null;
+function offTramCut(c) { if (!TRAM_BB) { tramTrenchAt(0, 0, 0); TRAM_BB = [1e9, 1e9, -1e9, -1e9]; for (let i = 0; i < TRAM_TP.length; i += 2) { TRAM_BB[0] = Math.min(TRAM_BB[0], TRAM_TP[i] - 6); TRAM_BB[1] = Math.min(TRAM_BB[1], TRAM_TP[i + 1] - 6); TRAM_BB[2] = Math.max(TRAM_BB[2], TRAM_TP[i] + 6); TRAM_BB[3] = Math.max(TRAM_BB[3], TRAM_TP[i + 1] + 6); } }
+  let hit = false; for (let i = 0; i < c.length && !hit; i += 2) hit = c[i] > TRAM_BB[0] && c[i] < TRAM_BB[2] && c[i + 1] > TRAM_BB[1] && c[i + 1] < TRAM_BB[3]; if (!hit) return [c];
+  const L = polyLen(c); if (L < 0.5) return [c]; const out = []; let a = null;
+  for (let s = 0; s <= L + 0.01; s += 1) { const q = Math.min(s, L), p = subPoly(c, q, q + 0.01), x = p[0], z = p[1]; const bad = TRAM_TRENCH.D > 0 && tramTrenchAt(x, z, 4.4) && tramDepthAt(x, z) > 0.5;
+    if (!bad && a === null) a = q; if ((bad || q >= L) && a !== null) { const b = bad ? Math.max(a, q - 1) : L; if (b - a > 0.5) out.push(subPoly(c, a, b)); a = null; } }
+  return out.length === 1 && out[0].length === c.length ? [c] : out; }
+function tramDepthAt(x, z) { const c = DATA.T; let best = 1e9, bs = 0, acc = 0; for (let i = 0; i + 3 < c.length; i += 2) { const ax = c[i], az = c[i + 1], dx = c[i + 2] - ax, dz = c[i + 3] - az, L2 = dx * dx + dz * dz || 1, L = Math.sqrt(L2); const t = clamp(((x - ax) * dx + (z - az) * dz) / L2, 0, 1); const d = Math.hypot(x - ax - dx * t, z - az - dz * t); if (d < best) { best = d; bs = acc + t * L; } acc += L; } return tramDepth(bs); }
 function tramTrenchAt(x, z, r) { if (!TRAM_TP) { TRAM_TP = []; const c = DATA.T; if (c.length > 3) { const sub = subPoly(c, TRAM_TRENCH.s0, TRAM_TRENCH.s3); for (let i = 0; i + 3 < sub.length; i += 2) { const L = Math.hypot(sub[i + 2] - sub[i], sub[i + 3] - sub[i + 1]); for (let u = 0; u < L; u += 3) TRAM_TP.push(sub[i] + (sub[i + 2] - sub[i]) * u / L, sub[i + 1] + (sub[i + 3] - sub[i + 1]) * u / L); } } }
   for (let i = 0; i < TRAM_TP.length; i += 2) if (Math.abs(TRAM_TP[i] - x) < r && Math.abs(TRAM_TP[i + 1] - z) < r && Math.hypot(TRAM_TP[i] - x, TRAM_TP[i + 1] - z) < r) return true; return false; }
 function tramDepth(s) { const T = TRAM_TRENCH; if (s <= T.s0 || s >= T.s3) return 0; const k = s < T.s1 ? (s - T.s0) / (T.s1 - T.s0) : s > T.s2 ? (T.s3 - s) / (T.s3 - T.s2) : 1; return T.D * k * k * (3 - 2 * k); }
@@ -764,9 +775,10 @@ function lowAt(x, z, py) {
       const px = a[0] + dx * t, pz = a[1] + dz * t, dd = Math.hypot(x - px, z - pz); if (dd > d.w / 2) continue; const y = lerp(a[2], b[2], t); const g = heightAt(x, z);
       if (y > g - 0.2 || py > y + 2.9 || py < y - 2.5) continue;
       if (g - y < 1.6 && !d.ceil && TCUTS_READY && !inCut(x, z, 0.3)) continue;
+      if (d.ceil && !d.hall && g - y > 0.25 && dd > d.hw - 0.1) continue; // v0.76 (Jonay): beside a car park ramp, under the pavement (the deck is wider than the hole): you sank to the waist and an invisible wall stopped you
       if (g - y < 1.0 && !d.ceil && ROADS_INDEXED && onSurfaceRoad(x, z)) continue; // a street at ground level covers the shallow trench here: stand on it // shallow end with no hole in the terrain: walk/drive on the ground (no sinking)
       const k = Math.abs(py - y), kb = best ? Math.abs(py - best.y) : 1e9;
-      if (!best || k < kb - 0.3 || (k < kb + 0.3 && dd < best.d)) best = { y, px, pz, d: dd, hw: d.hw, covered: g - y > 6.3 || !!d.ceil, ceil: d.ceil, cap: d.capped && d.hall ? { s: t * Math.sqrt(L2), len: Math.sqrt(L2), ux: dx / Math.sqrt(L2), uz: dz / Math.sqrt(L2) } : null }; }
+      if (!best || k < kb - 0.3 || (k < kb + 0.3 && dd < best.d)) best = { y, px, pz, d: dd, hw: d.hw, covered: g - y > 6.3 || !!d.ceil, ceil: d.ceil, cap: d.capped && d.hall ? { s: t * Math.sqrt(L2), len: Math.sqrt(L2), ux: dx / Math.sqrt(L2), uz: dz / Math.sqrt(L2), open0: i > 0, open1: i < p.length - 2 /* v0.76: a chain of halls: only its two ends are walls */ } : null }; }
   }
   return best;
 }
@@ -838,7 +850,7 @@ function buildBuildings() {
     let pts = []; for (let i = 0; i < c.length; i += 2) pts.push([c[i], c[i + 1]]);
     let n = pts.length; if (n < 3) continue;
     if (isTramStopBuilding(nameIdx, pts)) continue; // drawn as proper tram stops
-    { let qx = 0, qz = 0; for (const p of pts) { qx += p[0]; qz += p[1]; } if (perazaStand(style, insetPoly(pts, 0.4), qx / n, qz / n)) continue; } // v0.75: the stands of the Estadio Francisco Peraza (05v_peraza.js)
+    { let qx = 0, qz = 0; for (const p of pts) { qx += p[0]; qz += p[1]; } if (perazaStand(style, insetPoly(pts, 0.4), qx / n, qz / n) || riosHall(insetPoly(pts, 0.6), qx / n, qz / n)) continue; } // v0.75: the stands of the Estadio Francisco Peraza (05v_peraza.js)
     pts = insetPoly(pts, style === 4 ? 0.3 : 0.75);
     if (style !== 4) { const t = roadClip(streetTrim(pts)); if (t !== pts) { pts = t; n = pts.length; const o = []; for (let i = 0; i < c.length; i += 2) o.push([c[i], c[i + 1]]); const t2 = roadClip(streetTrim(o)); if (t2 !== o) b[6] = t2.flat(); } } // v0.68–0.69: off the carriageways (04b_recorte.js; the Av. de La Trinidad with its pavement); DATA.B too, for inAnyBuilding
     if (style === 4 && nameIdx >= 0 && /Concepción/.test(STR[nameIdx])) { pts = carveConcTower(pts); n = pts.length; }
