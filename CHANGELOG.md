@@ -3,6 +3,48 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.80.0 — 2026-10-19 — Las recreativas: «BENCOMO, Acentejo's Revenge» en casa de El Blanco
+- **Motor de recreativas** (`09j_arcade.js`), común para todas las máquinas que vendrán:
+  - Mueble con marquesina, marco, cristal con reflejo y líneas de barrido.
+  - El ciclo de los 80: pantalla de título, demo jugada sola, tabla de récords, FREE PLAY / INSERT COIN, START,
+    CONTINUE? 9…0 e **iniciales de 3 letras** con ↑↓ y A.
+  - 10 récords por máquina, que se guardan con la partida. Las máquinas traen de serie los de la banda (BLA, COC,
+    SAS…).
+  - **Música chiptune** propia: dos canales cuadrados, uno triangular y ruido, con sonidos de 8 bits.
+  - Las teclas de siempre, y Esc para salir.
+- **«BENCOMO, Acentejo's Revenge»**: plataformas al estilo Mario / Sonic / Prehistorik, satírico pero con elementos
+  reales de la cultura guanche.
+  - **Bencomo**, mencey de Taoro, en la **Matanza de Acentejo** (31 de mayo de 1494).
+  - **Salto del pastor**: corriendo, B clava la vara y salta el doble de alto y mucho más lejos. Con ↑ + B salta
+    parado.
+  - **Pogo**: ↓ en el aire pone la vara hacia abajo para rebotar en las cabezas, y hasta en las tuneras.
+  - **Varazo** con el banot (A), que también devuelve las flechas. **Piedras** con Q.
+  - **Comida**: puñados de gofio (100 = una vida), zurrón de gofio (corazón), queso de cabra (vida) y gofio con miel de
+    palma (invencible).
+  - **Enemigos**: soldados con espada, ballesteros, arcabuceros (la mecha avisa), perros de presa, caballeros a caballo
+    y capitanes con armadura.
+  - **3 fases**:
+    1. **La Costa de Añaza**, con las carabelas al fondo.
+    2. **El Barranco de Acentejo**: los guanches tiran piedras desde arriba (la sombra avisa) y también aplastan a los
+       castellanos.
+    3. **La Emboscada** en la laurisilva, con **Alonso Fernández de Lugo** en su caballo blanco: embiste, lanza tajos y
+       llama refuerzos, y al final **huye herido**, como en la historia.
+  - Pintaderas como puntos de control, tagoror al final de cada fase y bonus de tiempo y vida.
+  - Después empieza la **segunda vuelta**, más rápida y con más enemigos.
+  - Música propia por fase, con aire de tajaraste, y otra para el jefe.
+- **Casa de El Blanco**:
+  - Tras «Defensores de La Laguna», **El Blanco te llama por el móvil**, te invita a jugar a su máquina y te cuenta que
+    habrá máquinas en los bares y juegos en las jugueterías.
+  - La entrada está pegada al edificio (X −772 Z −413) y sale como un cuadrado naranja en el minimapa. Con E subes a
+    jugar gratis cuando quieras. No es una misión.
+- **Fútbol** (Jonay: «si vas corriendo puedes llegar a la puerta sin chutar»): cuando un rival entra en el área con
+  el balón, el portero sale corriendo y se tira a sus pies. Si no ha chutado antes de que llegue, se la quita siempre.
+- El edificio amarillo de Teobaldo Power, donde viven El Blanco y sus padres, se llama ahora **«Edificio Casa del
+  Blanco»** en el mapa, con sus **portales de piedra en arco y cancelas verdes de hierro** (Street View): dos en Teobaldo
+  Power, que es por donde se sube a jugar, y uno en la Calle Adelantado, junto a El Blanco.
+- Prueba nueva `prueba_080.py`: el ciclo de la máquina, los movimientos (salto, salto del pastor, pogo), el recorrido
+  de las fases con el piloto automático, el jefe, CONTINUE y las iniciales, y la casa de El Blanco. Con fotos.
+
 ## 0.79.0 — 2026-10-19 — Rifle a dos manos, palomitas, regates y mates de combo
 - **Rifle de agua con las dos manos**: ya no atraviesa el brazo.
   - Apuntando: la culata al hombro, la mano derecha en la empuñadura con el codo abajo y la izquierda bajo el

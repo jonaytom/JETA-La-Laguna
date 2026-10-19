@@ -7,7 +7,7 @@
 const BLOCK_SPLIT = [[-950, -289], [-1175, -243], [-1086, -255], [-901, -290], [-697, -340], [-1002, -334], [-797, -371], [-711, -310], [-1232, -318], [-879, -378], [-744, -319], [-819, -328]];
 // dressed buildings, matched by centroid (LANDMARK_AT in 05k): colour, height, facade, roof
 const INICIO_DRESS = [
-  { x: -749, z: -430, r: 6, o: { atlas: 2, col: '#e2ad25', H: 13.6, hip: true, quoin: [0.45, 0.28, 0.2], label: 'Edificio amarillo de Teobaldo Power' } },
+  { x: -749, z: -430, r: 6, o: { atlas: 2, col: '#e2ad25', H: 13.6, hip: true, quoin: [0.45, 0.28, 0.2], label: 'Edificio Casa del Blanco' } },
 ];
 const INICIO_SPOTS = [ // applied to the row houses created by the split (nearest parcel to each point)
   { x: -775, z: -364, col: '#e6d8bb', lv: 1, roof: 0 }, // low beige house on the corner (graffiti wall)
@@ -24,6 +24,7 @@ const INICIO_SHOPS = [ // [category, name] parodies for the ground floors uphill
   ['K', 'Caja del Roque'], ['B', 'Bar Los Amigos de Quico'],
 ];
 const INICIO = { parcels: [], spots: [] };
+const YB_DOORS = []; // v0.80: the portals of the Edificio Casa del Blanco (the first one: where you go up to play)
 // empty lots in OSM that are really full of houses (Street View / 3D): row houses along every street front
 const FILL_ZONES = [
   { x0: -1060, x1: -900, z0: -470, z1: -398, name: 'Lucas Vega / Montaraz' },
@@ -117,6 +118,24 @@ function buildInicioDetails() {
       if (!street || L < 12) continue;
       const nb = Math.floor(L / 3.6); for (let f = 1; f <= 3; f++) for (let k = 0; k < nb; k++) { if ((k + f) % 2) continue; const x = (k + 0.5) / nb * L - L / 2; const y = 0.6 + f * 3.25;
         B.geo(cBox(2.6, 0.16, 0.9), ochre, fr(x, y, 0.45)); B.geo(cBox(2.6, 0.06, 0.06), rail, fr(x, y + 1.0, 0.88)); for (let bx = -1.25; bx <= 1.26; bx += 0.125) B.geo(cBox(0.025, 1.0, 0.025), rail, fr(x + bx, y + 0.5, 0.88)); for (const sx of [-1, 1]) B.geo(cBox(0.06, 1.0, 0.9), rail, fr(x + sx * 1.3, y + 0.5, 0.45)); } } }
+  // v0.80 (Jonay, Street View): the portals of the Edificio Casa del Blanco: stone arches with green iron gates and a fan
+  // of bars on top. Two side by side on Teobaldo Power (where you go in to play at El Blanco's) and one on Calle Adelantado
+  if (yb) { const P = yb.pts, n = P.length; const stone = new THREE.MeshStandardMaterial({ color: 0xc9b89a, roughness: 0.9 }), dark = new THREE.MeshStandardMaterial({ color: 0x1c1712, roughness: 1 });
+    const gc = mkCanvas(128, 192), gx = gc.getContext('2d'); gx.strokeStyle = '#1f4a34'; gx.lineWidth = 4; gx.strokeRect(2, 64, 124, 126); for (let i = 8; i < 128; i += 10) { gx.beginPath(); gx.moveTo(i, 64); gx.lineTo(i, 190); gx.stroke(); } gx.fillStyle = '#244f3a'; gx.fillRect(0, 140, 128, 52); gx.fillRect(62, 64, 4, 126);
+    gx.beginPath(); gx.arc(64, 64, 60, Math.PI, 0); gx.stroke(); for (let k = 0; k <= 10; k++) { const a = Math.PI + k / 10 * Math.PI; gx.beginPath(); gx.moveTo(64, 64); gx.lineTo(64 + Math.cos(a) * 60, 64 + Math.sin(a) * 60); gx.stroke(); } gx.beginPath(); gx.arc(64, 64, 18, Math.PI, 0); gx.stroke();
+    const gt = new THREE.CanvasTexture(gc); gt.colorSpace = THREE.SRGBColorSpace; const gm = new THREE.MeshStandardMaterial({ map: gt, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide, roughness: 0.6, metalness: 0.3 });
+    const portal = (fr, x, g0) => { const w = 2.3, hs = 2.35, r = w / 2;
+      B.geo(cBox(w, hs + r, 0.1), dark, fr(x, (hs + r) / 2, -0.02)); // the dark hall behind the gate
+      for (const sx of [-1, 1]) B.geo(cBox(0.42, hs, 0.28), stone, fr(x + sx * (r + 0.21), hs / 2, 0.12)); // jambs
+      for (let k = 0; k < 9; k++) { const a0 = Math.PI * k / 9, a1 = Math.PI * (k + 1) / 9, am = (a0 + a1) / 2, rr = r + 0.21; const L = 2 * rr * Math.sin((a1 - a0) / 2) + 0.06;
+        B.geo(cBox(L, 0.4, 0.28), stone, fr(x - Math.cos(am) * rr, hs + Math.sin(am) * rr, 0.12, 0, 0, Math.PI / 2 - am)); } // the arch, voussoir by voussoir
+      const gate = new THREE.Mesh(new THREE.PlaneGeometry(w, w * 1.5), gm); gate.applyMatrix4(fr(x, hs + r - w * 0.75, 0.04)); root.add(gate); void g0; };
+    const at = (px, pz, xs) => { let best = null; for (let i = 0; i < n; i++) { const p = P[i], q = P[(i + 1) % n]; const L = Math.hypot(q[0] - p[0], q[1] - p[1]); if (L < 4) continue; const t = clamp(((px - p[0]) * (q[0] - p[0]) + (pz - p[1]) * (q[1] - p[1])) / (L * L), 2.5 / L, 1 - 2.5 / L);
+        const cx0 = p[0] + (q[0] - p[0]) * t, cz0 = p[1] + (q[1] - p[1]) * t, d = Math.hypot(px - cx0, pz - cz0); if (!best || d < best.d) best = { d, p, q, L, cx0, cz0 }; }
+      if (!best) return; const { p, q, L } = best; let ox = (q[1] - p[1]) / L, oz = -(q[0] - p[0]) / L; if (inicioPip(P, best.cx0 + ox, best.cz0 + oz)) { ox = -ox; oz = -oz; }
+      const g0 = heightAt(best.cx0 + ox, best.cz0 + oz); const fr = cFrame(best.cx0 + ox * 0.05, g0, best.cz0 + oz * 0.05, Math.atan2(ox, oz)); for (const x of xs) portal(fr, x, g0); YB_DOORS.push([best.cx0 + ox * 1.2, best.cz0 + oz * 1.2]); };
+    at(-772, -413, [-1.45, 1.45]); // Teobaldo Power 1: the double portal
+    at(-754, -362.5, [0]); } // Calle Adelantado, by El Blanco
   // dressed row houses
   for (const sp of INICIO.spots) { const b = BUILD.find((x) => Math.hypot(x.cx - sp.pc.cx, x.cz - sp.pc.cz) < 2.5); if (!b) continue; const P = b.pts, n = P.length;
     for (let i = 0; i < n; i++) { const p = P[i], q = P[(i + 1) % n]; const L = Math.hypot(q[0] - p[0], q[1] - p[1]); if (L < 3) continue; let ox = (q[1] - p[1]) / L, oz = -(q[0] - p[0]) / L; if (inicioPip(P, (p[0] + q[0]) / 2 + ox * 0.5, (p[1] + q[1]) / 2 + oz * 0.5)) { ox = -ox; oz = -oz; }

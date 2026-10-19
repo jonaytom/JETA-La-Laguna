@@ -49,6 +49,10 @@ async def run(pg):
     dr = json.loads(await pg.evaluate("""(()=>{ const F=%s; F.start({ team: %s, rival: %s, time: 90, lv: 0.5 }); const s=F._st(); s.phase='play'; s.sp=null; const me=s.p.find(q=>q.team===0&&q.role==='fwd'); s.ctl=me; F._give(me);
       F._press('vT', true); F._step(2); F._press('vT', false); F._step(3); F._press('vT', true); F._step(1); const d=me.drib>0; F._press('vT', false); F._step(30); const keep=s.ball.owner===me; F._abort(); return JSON.stringify({ regate: d, sigue_con_balon: keep }); })()""" % (F, TEAM, RIV))); print('regate', dr)
     okg = dr['regate']
+    sm = json.loads(await pg.evaluate("""(()=>{ const F=%s; F.start({ team: %s, rival: %s, time: 90, lv: 0.5 }); const s=F._st(); s.phase='play'; s.sp=null; s.fade=0; s.fadeDir=0; const me=s.p.find(q=>q.team===0&&q.role==='fwd'); s.ctl=me;
+      for (const q of s.p) if (q!==me && q.role!=='gk') { q.x = 2; q.y = q.team ? 50 : 52; } me.x=17; me.y=14; F._give(me); F._press('vU', true); F._press('vT', true); let quita=false, t=0; for (let i=0;i<150;i++){ F._step(1); t++; if (s.ball.owner && s.ball.owner.role==='gk') { quita=true; break; } if (s.score[0]>0) break; }
+      F._press('vU', false); F._press('vT', false); const r=JSON.stringify({ portero_la_quita: quita, frames: t, gol: s.score[0] }); F._abort(); return r; })()""" % (F, TEAM, RIV))); print('portero sale a por el balón', sm)
+    okg = okg and sm['portero_la_quita']
     print('FUTBOL saque', okc, 'palomitas', okd, 'fuerza', okp, 'regate', okg); ok = ok and okc and okd and okp and okg
     # ---------- 3) basketball
     B = "__dbg.BASKET2D"; BL = LOOK

@@ -63,7 +63,7 @@ function exitCar() {
 function updatePlayer(dt) {
   const gp = INPUT.gp;
   if (PLAYER.dead) return;
-  if (pressed('KeyE') || (gp && gp.down(2))) { if (typeof AGUA !== 'undefined' && AGUA.use()) return; /* v0.76: toy shops, fountains */ const cg = typeof courtGateNear === 'function' ? courtGateNear() : null; if (cg) { useCourtGate(cg); return; } /* v0.66: courts and school doors */ const t = nearestDoor(), f = FOOD.near(); const preferFood = f && (!t || (f.counter && t.exit && Math.hypot(PLAYER.x - f.x, PLAYER.z - f.z) < Math.hypot(PLAYER.x - t.it.exit.x, PLAYER.z - t.it.exit.z))); if (preferFood) { FOOD.open(f); return; } if (t) { useDoor(t); return; } }
+  if (pressed('KeyE') || (gp && gp.down(2))) { if (typeof AGUA !== 'undefined' && AGUA.use()) return; /* v0.76: toy shops, fountains */ if (typeof RECRE !== 'undefined' && RECRE.use()) return; /* v0.80: El Blanco's arcade */ const cg = typeof courtGateNear === 'function' ? courtGateNear() : null; if (cg) { useCourtGate(cg); return; } /* v0.66: courts and school doors */ const t = nearestDoor(), f = FOOD.near(); const preferFood = f && (!t || (f.counter && t.exit && Math.hypot(PLAYER.x - f.x, PLAYER.z - f.z) < Math.hypot(PLAYER.x - t.it.exit.x, PLAYER.z - t.it.exit.z))); if (preferFood) { FOOD.open(f); return; } if (t) { useDoor(t); return; } }
   if (pressed('KeyF', 'Enter') || (gp && gp.down(3))) { if (PLAYER.car) exitCar(); else { const t = nearestEnterable(); if (t) enterCar(t); } }
   if (PLAYER.car) {
     const c = PLAYER.car.ctl;

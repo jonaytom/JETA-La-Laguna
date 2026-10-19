@@ -4,6 +4,13 @@ Diseño de los minijuegos 2D «de los 80». Jonay: «van a ser el alma del juego
 hacer. Cada juego sale en su propia versión y se prueba entero (una prueba automática lo juega) antes de seguir con el
 siguiente.
 
+## Estado
+
+- **v0.80.0**: el motor (`09j_arcade.js`: `ARCADE.open({ id, key, where, price })`, `ARCADE.GAMES[id]`, y
+  `RECRE` para la casa de El Blanco) y el juego 1, Bencomo (`09k_bencomo.js`, con 3 fases y Lugo como jefe).
+- La llamada de El Blanco se dispara con `GANG.defenders`. Lo guardado está en `GANG.arcade`: `scores`, `invited`,
+  `bought` y `console`.
+
 ## Cómo se desbloquea
 
 - **Cuando se desbloquea el alcalde** (la misión en la que Don Yovoy Gofiérrez recibe a la banda en el Ayuntamiento),

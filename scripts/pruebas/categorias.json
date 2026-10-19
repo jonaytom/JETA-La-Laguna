@@ -218,6 +218,12 @@
     "prueba_futbol.py",
     "prueba_baloncesto.py"
    ]
+  ],
+  [
+   "^src/09j_arcade|^src/09k_bencomo",
+   [
+    "prueba_080.py"
+   ]
   ]
  ]
 }

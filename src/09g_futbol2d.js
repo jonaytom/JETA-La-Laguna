@@ -109,6 +109,10 @@ const FUTBOL2D = (() => {
       if (best) passTo(p, best); else kick(p, p.team === 0 ? -Math.PI / 2 : Math.PI / 2, 16, 6); } return { tx, ty, sp: 0 }; }
     const inBox = Math.abs(b.x - PW / 2) < 9 && Math.abs(b.y - oy) < 9;
     if (!b.owner && inBox && Math.hypot(b.vx, b.vy) < 9 && outfield(p.team).every((q) => D(q, b) > D(p, b) - 0.5)) { tx = b.x; ty = b.y; sp = 6; } // come out for a loose ball
+    // v0.80 (Jonay: running in you reached the goal without shooting and scored easily): a rival with the ball inside the
+    // box → the keeper rushes out and throws himself at his feet; if he hasn't shot by then, the ball is always his
+    if (b.owner && b.owner.team !== p.team && !st.sp && Math.abs(b.x - PW / 2) < 11 && Math.abs(b.y - oy) < 11) { tx = b.x; ty = b.y; sp = 8.6 + 1.6 * p.lv;
+      if (D(p, b) < 1.5 + 0.3 * p.lv) { const v = b.owner; v.kickCD = 0.7; v.drib = 0; give(p); p.hold = 1.3; p.diveT = 0.35; p.diveS = Math.sign(b.x - p.x) || 1; p.vx = p.diveS * 2; p.diveH = 0; banner('¡SE LA QUITA EL PORTERO!', '#9fd7ff', 1.1); snd('kick'); if (st.ev) st.ev.smother = (st.ev.smother || 0) + 1; return { tx: p.x, ty: p.y, sp: 0 }; } }
     if (b.shot && b.shot.team !== p.team && !b.shot.saved && Math.sign(oy - b.y) === Math.sign(b.vy) && Math.abs(b.vy) > 2) { // a shot coming: dive to where it crosses
       const t = (ty - b.y) / b.vy; if (t > 0 && t < 1.6) { tx = clamp(b.x + b.vx * t, PW / 2 - GW / 2 - 1, PW / 2 + GW / 2 + 1); sp = 6.5 + 3 * p.lv; p.dive = 0.4;
         // v0.79: too wide to reach on foot → a full-length dive («palomita») towards where it crosses, at its height

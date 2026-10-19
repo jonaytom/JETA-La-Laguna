@@ -7,10 +7,11 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 
 - [ ] **Auditoría v0.78.1** (19-oct 19:17, APTO CON AVISOS):
   - Un obstáculo nuevo en la calzada: árbol, farola o poste en Calle Juan de Vera (X −149, Z −235).
-  - Pintar un fotograma: 21,2 → 31,8 ms. En la 0.78.0 también salió 31 y en la segunda pasada 21,2: probablemente
-    ruido. Repetir.
+  - Pintar un fotograma: 21,2 → 31,8 ms. Era ruido: en la 0.79.0 salió 23,4.
   - El arranque sube de 8,2 a 9,4 s.
 - [ ] **PAQUETE «RECREATIVAS Y MINIJUEGOS» (Jonay, 19-oct: «para acometer YA», plan v0.79 → v0.84)**:
+  Hecho en v0.80.0: el motor de recreativas y BENCOMO en casa de El Blanco (llamada tras «Defensores»). Falta:
+  naves (bares), Metal Slug (jugueterías), Golden Axe, la inmobiliaria, el pisito y la consola.
   Hecho en v0.79.0: armas (rifle a dos manos), minimapa (puntos encima), fútbol (palomitas, saque de centro, fuerza
   del tiro, regate) y basket (combos de la CPU, 4 mates animados, pases en arco). Falta lo de recreativas en adelante
   (plan en `docs/11_recreativas.md`).
@@ -58,6 +59,23 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
     - En la inmobiliaria se alquila tu pisito: una casita chula cerca del Pasaje Teide.
     - En el piso, una consola comprada en la juguetería (vale una pasta). Los juegos se compran también en la
       juguetería y en casa se juegan gratis. Al encenderla sale un menú con los juegos que tengas.
+- [ ] **Árboles con más detalle y varios modelos** (Jonay, 19-oct, «no para ya»). Muchas copas son un círculo feo. Fotos
+      de Street View de lo que hay en La Laguna:
+      - En la Av. de Lucas Vega:
+        - árboles grandes de hoja compuesta y fina (tipo acacia o jacaranda), con varios troncos que se abren en «V» y
+          una copa irregular hecha de masas sueltas;
+        - árboles de alineación más jóvenes, con un tronco recto y la copa alta, ovalada e irregular.
+      - **Dragos**: el de Lucas Vega 16 y el de la C. San Agustín 3. Tronco grueso que se ramifica en muchos brazos
+        gruesos y la copa en sombrilla de penachos de hojas en punta.
+      - Arbolitos jóvenes en alcorque, de tronco fino (San Agustín 3), con hojas otoñales rojizas.
+      - **Araucarias** altas, en pisos (Obispo Rey Redondo, la plaza junto al Teatro Leal).
+      - Palmeras canarias.
+      - Árboles de plaza de copa ancha y redondeada, pero hecha de grupos y no de un círculo (laureles de Indias).
+      Hay que hacer varios modelos con troncos ramificados y copas de varios grupos de hojas, y usar el de cada sitio.
+- [ ] **REGLA (Jonay, 19-oct): las canchas nunca pueden quedar una sobre otra ni cruzarse**, cada una con su espacio entre
+      ellas. Captura en X −171 Z −462: dos campos y una cancha de baloncesto pisándose (porterías y canastas dentro del
+      otro campo). Revisar `pitchRects` y el dibujo en `SPORTS.pitches`: si se solapan, recolocar, encoger o quitar
+      una, dejando un pasillo entre ellas.
 - [ ] **Campos de fútbol y canchas vallados** (Jonay, 19-oct, captura en X 485 Z 728 y Street View de C. Arturo Vergara
       Rodríguez 2, La Verdellada): deben tener muro y valla alta alrededor con uno o dos accesos. Ahora están abiertos.
 - [ ] **Camino el Vallado / San Honorato, boca del túnel** (Jonay, 19-oct, capturas en X −959 Z 108 y X −982 Z 119): «sigue

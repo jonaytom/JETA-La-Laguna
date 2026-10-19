@@ -115,6 +115,7 @@ const HUD = (() => {
     const edge = (x, z, col, sz, shape) => { const dx = x - PLAYER.x, dz = z - PLAYER.z; const d = Math.hypot(dx, dz); const maxd = (R * 0.92) / (mmScale / MAP.scale) ; let px = x, pz = z; if (d > maxd * 0.95) { px = PLAYER.x + dx / d * maxd * 0.95; pz = PLAYER.z + dz / d * maxd * 0.95; } blip(px, pz, col, sz, shape); };
     for (const it of INTERIORS) for (const d of it.doors) { if (Math.abs(d.x - PLAYER.x) < 400 && Math.abs(d.z - PLAYER.z) < 400) blip(d.x, d.z, '#3ddc97', 6 * s * 1.6, 'sq'); }
     for (const f of FOOD.shops) { if (Math.abs(f.x - PLAYER.x) < 400 && Math.abs(f.z - PLAYER.z) < 400) blip(f.x, f.z, '#e53935', 6 * s * 1.6, 'sq'); }
+    if (typeof RECRE !== 'undefined') for (const b of RECRE.blips()) edge(b[0], b[1], b[2], 7 * s * 1.6, 'sq'); // v0.80: El Blanco's arcade
     for (const m of MISSIONS.blips()) edge(m[0], m[1], m[2] || '#f5b72e', 9 * s * 1.6, m[3]);
     if (GPS.target) edge(GPS.target[0], GPS.target[1], '#e040fb', 9 * s * 1.6);
     // player arrow
@@ -171,6 +172,7 @@ const HUD = (() => {
         const dr = nearestDoor(); if (dr) pr = dr.exit ? CONTROLS.kbd('use') + ' Salir a la calle' : `${CONTROLS.kbd('use')} Entrar: ${dr.it.name}`;
         { const f = FOOD.near(); if (f && (!dr || (f.counter && dr.exit && Math.hypot(PLAYER.x - f.x, PLAYER.z - f.z) < Math.hypot(PLAYER.x - dr.it.exit.x, PLAYER.z - dr.it.exit.z)))) pr = `${CONTROLS.kbd('use')} ${f.counter ? 'Pedir en la barra' : 'Comprar comida'}: ${f.name}`; }
         { const ap = typeof AGUA !== 'undefined' ? AGUA.prompt() : ''; if (ap) pr = ap; } // v0.76: toy shops and fountains
+        { const rp = typeof RECRE !== 'undefined' ? RECRE.prompt() : ''; if (rp) pr = rp; } // v0.80: El Blanco's arcade
         const mp = MISSIONS.prompt(); if (mp) pr = mp;
         if (pr !== lastPrompt) { lastPrompt = pr; const pe = hudEl("prompt"); if (pr) { pe.innerHTML = pr; pe.style.display = 'block'; } else pe.style.display = 'none'; }
       }

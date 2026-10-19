@@ -1,5 +1,4 @@
 # Pruebas de ESTA versión (scripts\PRUEBAS.bat las junta con las de lo cambiado).
-# v0.79.0: rifle a dos manos, mapa, fútbol (palomitas, saque de centro, fuerza, regate), basket (mates de combo, CPU, pases en arco)
-prueba_079.py
-prueba_futbol.py
-prueba_baloncesto.py
+# v0.80.0: recreativas, Bencomo y la casa de El Blanco
+prueba_080.py
+prueba_arranque.py

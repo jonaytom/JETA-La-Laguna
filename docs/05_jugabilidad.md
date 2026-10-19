@@ -228,6 +228,8 @@ Las partidas v1 (con el Canarión dentro de la historia) se convierten al cargar
     círculo hasta que el balón se pasa o el que saca se aleja 1,6 m con él. La CPU espera 0,8 s.
   - **Tiro**: la velocidad es 11 + 9·fuerza y la subida 0,6 + 7,2·(fuerza − 0,35)/0,65. A tope se va por encima desde
     8 m y entra desde unos 22–27 m.
+  - **Portero (v0.80)**: con un rival con balón dentro del área (11 m), sale a 8,6 + 1,6·nivel m/s y, a 1,5 m, se tira a
+    sus pies y se queda el balón siempre.
   - **Regate**: doble Espacio en 0,3 s con el balón (`dribble`). Es un quiebro de 0,45 s hacia el lado contrario al
     rival más cercano, sin entradas ni robos.
 - **Controles** (los de todos los minijuegos): moverse como al andar; A = `E` / clic izq.: con balón, mantener para
