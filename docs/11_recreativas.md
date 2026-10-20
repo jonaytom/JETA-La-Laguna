@@ -10,6 +10,8 @@ siguiente.
   `RECRE` para la casa de El Blanco) y el juego 1, Bencomo (`09k_bencomo.js`, con 3 fases y Lugo como jefe).
 - **v0.81.0**: el juego 2, «Guerra de Naves» (`09l_naves.js`), en cafeterías y tascas (opción en el menú de la barra,
   `FOOD.open`, $1, récords por bar: `bar_<nombre>`).
+- **v0.82.0**: el juego 4, «Guanche Warriors» (`09m_guanche.js`), en las jugueterías (opción en el menú de la
+  tienda, `AGUA.openShop`, $1, récords por tienda: `jug_<nombre>`).
 - **Tamaños (Jonay, 20-oct)**: Guerra de Naves se dibuja a ×1, con la nave pequeña y mucha visión (como la primera
   versión de Bencomo o menos). Guanche Warriors irá con los personajes al tamaño del Bencomo grande que se descartó
   (unos ×2,4 sobre la pantalla de 480×336).
@@ -145,7 +147,7 @@ La consola, al encenderla, muestra un menú con los cartuchos que tienes. Cada j
 - **Enemigos**: soldados de un ejército inventado (parodia, nada real), en varios tipos: el que corre, el del escudo,
   el bazuca, el paracaidista y el de la moto.
 
-## Juego 4 · «GUANCHE WARRIORS» (jugueterías, de pago; beat'em up tipo Golden Axe) — v0.82
+## Juego 4 · «GUANCHE WARRIORS» (jugueterías, de pago; beat'em up tipo Golden Axe) — hecho en v0.82.0, primera versión para pulir
 
 - **Nombre**: «Guanche Warriors» (Jonay, 20-oct). Beat'em up de avance lateral en profundidad, como Golden Axe: no es
   de plataformas.
@@ -168,6 +170,10 @@ La consola, al encenderla, muestra un menú con los cartuchos que tienes. Cada j
   - **Montura**: el **lagarto gigante** (el de El Hierro, que existió de verdad), que da coletazos y escupe.
   - **Enemigos**: los **tibicenas** (los perros demonio de pelo negro y ojos rojos de la leyenda), los secuaces de
     Guayota con garrotes y escudos, unos gigantones y unas brujas.
+  - **Jefes (v0.82.0)**: el Gigantón de Tigaiga (Taoro), la Bruja de Anaga, el Tibicena Mayor (Los Gigantes), los
+    hermanos gigantones en lagarto (Las Cañadas) y Guayota (el Echeyde).
+  - **Pendiente para pulir**: agarres y lanzamientos, la pantalla de bonus aparte (ahora se roba en el campamento),
+    dos jugadores, más animaciones y más detalle en los fondos.
   - **Fases** (más largas cada vez, con su jefe):
     1. **El poblado de Taoro**, en el valle de La Orotava.
     2. **La laurisilva de Anaga**, con niebla.

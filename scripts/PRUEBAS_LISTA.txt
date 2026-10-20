@@ -1,5 +1,4 @@
 # Pruebas de ESTA versión (scripts\PRUEBAS.bat las junta con las de lo cambiado).
-# v0.81.0: Bencomo grande (0.80.1) y «Guerra de Naves» en los bares
-prueba_080.py
-prueba_081.py
+# v0.82.0: «Guanche Warriors» en las jugueterías
+prueba_082.py
 prueba_arranque.py

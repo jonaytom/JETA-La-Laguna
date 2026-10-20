@@ -1,0 +1,5 @@
+# v0.82: «Guanche Warriors» en las jugueterías
+prueba_082.py
+prueba_081.py
+prueba_080.py
+prueba_arranque.py

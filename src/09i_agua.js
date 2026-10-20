@@ -166,9 +166,12 @@ const AGUA = (() => {
   function nearFountain() { if (PLAYER.car || PLAYER.interior || !RIFLE.has) return null; for (const f of PK2.fountains) if (Math.hypot(PLAYER.x - f[0], PLAYER.z - f[1]) < (f[2] || 4.6)) return f; return null; }
   const PRICE = 350, BALLS = 20;
   function openShop(s) {
-    const items = []; if (!RIFLE.has) items.push(['rifle', `Rifle de agua «Guepardo SK-9» eléctrico · <b>$${PRICE}</b>`]); else items.push(['fill', 'Llenar el rifle de agua (del grifo de la tienda) · <b>$2</b>']); if (WEAPON.has) items.push(['balls', `Bolsa de bolitas para la pistola (6) · <b>$${BALLS}</b>`]);
+    const items = []; if (ARCADE.data().invited) items.push(['arc', '🕹 Echar una partida a la máquina: <b>GUANCHE WARRIORS</b> · <b>$1</b> la partida']); // v0.82: the toy shops' machine
+    if (!RIFLE.has) items.push(['rifle', `Rifle de agua «Guepardo SK-9» eléctrico · <b>$${PRICE}</b>`]); else items.push(['fill', 'Llenar el rifle de agua (del grifo de la tienda) · <b>$2</b>']); if (WEAPON.has) items.push(['balls', `Bolsa de bolitas para la pistola (6) · <b>$${BALLS}</b>`]);
     DLG.show(s.name, 'Juguetería', `Tienes <b>$${PLAYER.money}</b>.${RIFLE.has ? '' : ' En el escaparate: un rifle de agua eléctrico, «diez metros de chorro, depósito transparente».'}`, '¿Qué te llevas?', [...items.map((q) => q[1]), 'Nada, gracias'], (i) => {
-      DLG.hide(); const it = items[i]; if (!it) return; const cost = it[0] === 'rifle' ? PRICE : it[0] === 'balls' ? BALLS : 2;
+      DLG.hide(); const it = items[i]; if (!it) return;
+      if (it[0] === 'arc') { ARCADE.open({ id: 'guanche', key: 'jug_' + s.name, where: String(s.name).toUpperCase(), price: 1 }, (r) => { if (r && r.paid) HUD.toast(`Te has dejado $${r.paid} en la máquina`, '#9fd7ff', 3); }); return; }
+      const cost = it[0] === 'rifle' ? PRICE : it[0] === 'balls' ? BALLS : 2;
       if (PLAYER.money < cost) { AUDIO.fail(); HUD.toast('No te llega el dinero', '#ffb3b3', 2.5); return; } PLAYER.money -= cost; AUDIO.cash && AUDIO.cash();
       if (it[0] === 'rifle') { giveRifle(true); HUD.toast('¡Rifle de agua! ' + CONTROLS.keyName('weap').toUpperCase() + ' / 3 para sacarlo', '#7fd3ff', 4); MISSIONS.onEvent('bought', 'rifle'); }
       else if (it[0] === 'balls') { WEAPON.ammo = WEAPON.max; updateWeaponHUD(); HUD.toast('Pistola cargada', '#fff', 2); }

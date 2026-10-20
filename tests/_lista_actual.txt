@@ -1,2 +1,11 @@
+prueba_082.py
+prueba_081.py
 prueba_080.py
 prueba_arranque.py
+audit_obstaculos.py
+audit_cruces.py
+audit_hundimiento.py
+prueba_conduccion_tuneles_puentes.py
+prueba_bordes.py
+prueba_parking_cristo.py
+prueba_aeropuerto.py

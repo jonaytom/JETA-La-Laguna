@@ -18,7 +18,9 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 - [ ] **PAQUETE «RECREATIVAS Y MINIJUEGOS» (Jonay, 19-oct: «para acometer YA», plan v0.79 → v0.84)**:
   Hecho en v0.80.0: el motor de recreativas y BENCOMO en casa de El Blanco (llamada tras «Defensores»).
   Hecho en v0.81.0: **GUERRA DE NAVES** en cafeterías y tascas (primera versión, para pulir).
-  Falta: **GUANCHE WARRIORS** (v0.82), Metal Slug (jugueterías), la inmobiliaria, el pisito y la consola.
+  Hecho en v0.82.0: **GUANCHE WARRIORS** en las jugueterías (primera versión, para pulir).
+  Falta: Metal Slug (jugueterías), la inmobiliaria y los pisos, la consola, Pachanga 3x3 y Play Furbito.
+  Jonay probará todas las máquinas y dirá impresiones.
   - Jonay, 20-oct: los nombres son «Guerra de Naves» (el tipo R-Type) y «Guanche Warriors» (el tipo Golden Axe:
     beat'em up, no plataformas, con varias fases). En Guanche Warriors se elige personaje al empezar:
     - El Mencey: el bárbaro, con garrote canario.

@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.81.0</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.82.0</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -1885,6 +1885,8 @@ siguiente.</p>
   <code>RECRE</code> para la casa de El Blanco) y el juego 1, Bencomo (<code>09k_bencomo.js</code>, con 3 fases y Lugo como jefe).</li>
 <li><strong>v0.81.0</strong>: el juego 2, «Guerra de Naves» (<code>09l_naves.js</code>), en cafeterías y tascas (opción en el menú de la barra,
   <code>FOOD.open</code>, $1, récords por bar: <code>bar_&lt;nombre&gt;</code>).</li>
+<li><strong>v0.82.0</strong>: el juego 4, «Guanche Warriors» (<code>09m_guanche.js</code>), en las jugueterías (opción en el menú de la
+  tienda, <code>AGUA.openShop</code>, $1, récords por tienda: <code>jug_&lt;nombre&gt;</code>).</li>
 <li><strong>Tamaños (Jonay, 20-oct)</strong>: Guerra de Naves se dibuja a ×1, con la nave pequeña y mucha visión (como la primera
   versión de Bencomo o menos). Guanche Warriors irá con los personajes al tamaño del Bencomo grande que se descartó
   (unos ×2,4 sobre la pantalla de 480×336).</li>
@@ -2048,7 +2050,7 @@ siguiente.</p>
 <li><strong>Enemigos</strong>: soldados de un ejército inventado (parodia, nada real), en varios tipos: el que corre, el del escudo,
   el bazuca, el paracaidista y el de la moto.</li>
 </ul>
-<h2>Juego 4 · «GUANCHE WARRIORS» (jugueterías, de pago; beat'em up tipo Golden Axe) — v0.82</h2>
+<h2>Juego 4 · «GUANCHE WARRIORS» (jugueterías, de pago; beat'em up tipo Golden Axe) — hecho en v0.82.0, primera versión para pulir</h2>
 <ul>
 <li><strong>Nombre</strong>: «Guanche Warriors» (Jonay, 20-oct). Beat'em up de avance lateral en profundidad, como Golden Axe: no es
   de plataformas.</li>
@@ -2073,6 +2075,10 @@ siguiente.</p>
 <li><strong>Montura</strong>: el <strong>lagarto gigante</strong> (el de El Hierro, que existió de verdad), que da coletazos y escupe.</li>
 <li><strong>Enemigos</strong>: los <strong>tibicenas</strong> (los perros demonio de pelo negro y ojos rojos de la leyenda), los secuaces de
     Guayota con garrotes y escudos, unos gigantones y unas brujas.</li>
+<li><strong>Jefes (v0.82.0)</strong>: el Gigantón de Tigaiga (Taoro), la Bruja de Anaga, el Tibicena Mayor (Los Gigantes), los
+    hermanos gigantones en lagarto (Las Cañadas) y Guayota (el Echeyde).</li>
+<li><strong>Pendiente para pulir</strong>: agarres y lanzamientos, la pantalla de bonus aparte (ahora se roba en el campamento),
+    dos jugadores, más animaciones y más detalle en los fondos.</li>
 <li><strong>Fases</strong> (más largas cada vez, con su jefe):<ol>
 <li><strong>El poblado de Taoro</strong>, en el valle de La Orotava.</li>
 <li><strong>La laurisilva de Anaga</strong>, con niebla.</li>
@@ -2097,6 +2103,54 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.82.0 — 2026-10-20 — «GUANCHE WARRIORS», la máquina de las jugueterías</h2>
+<ul>
+<li><strong>Recreativa nueva: «GUANCHE WARRIORS»</strong> (<code>09m_guanche.js</code>), un beat'em up tipo Golden Axe: se avanza de lado con
+  profundidad, no es de plataformas. Es la máquina de pago de las <strong>jugueterías</strong>: sale en el menú de la tienda una
+  vez que El Blanco te ha llamado, cuesta $1 la partida y cada tienda tiene su tabla de récords.</li>
+<li><strong>Se elige guerrero al empezar</strong>:<ul>
+<li><strong>El Mencey</strong>: fuerte y lento, con garrote canario. Magia: «Ira de Achamán», un temblor de tierra, hasta 4
+  zurrones.</li>
+<li><strong>El Pastor</strong>: ágil y menos fuerte. La vara llega más lejos y, corriendo, B hace el salto del pastor. Magia:
+  «Viento alisio», remolinos, hasta 5 zurrones.</li>
+<li><strong>La Mirladora</strong>: ágil, menos física y con la magia más fuerte. Magia: «Luz de Magec», rayos de sol, hasta 7
+  zurrones.</li>
+</ul>
+</li>
+<li>Los personajes, <strong>al tamaño del Bencomo grande</strong> (Jonay), dibujados como muñecos de píxeles articulados: andan,
+    corren, saltan, golpean, caen y se levantan.</li>
+<li><strong>Controles de siempre</strong>:<ul>
+<li>A (E / clic izquierdo) pega: combo de 3, y el tercero tumba. Corriendo, embestida; en el aire, golpe desde
+  arriba.</li>
+<li>B (Espacio) salta; junto a un lagarto suelto, lo montas.</li>
+<li>Q / clic derecho lanza la magia, que gasta todos los zurrones que lleves.</li>
+<li>Doble toque ← / → = correr.</li>
+</ul>
+</li>
+<li><strong>Historia</strong>: Guayota ha raptado a Magec, el sol, dentro del Teide.</li>
+<li><strong>5 fases con su jefe</strong>:<ol>
+<li>El poblado de Taoro. Jefe: el Gigantón de Tigaiga.</li>
+<li>La laurisilva de Anaga. Jefa: la Bruja de Anaga.</li>
+<li>Los acantilados de Los Gigantes. Jefe: el Tibicena Mayor.</li>
+<li>Las Cañadas. Jefes: los hermanos gigantones, montados en lagartos.</li>
+<li>Dentro del Echeyde. Jefe: Guayota.
+Entre fase y fase, el campamento de noche: los duendes vienen a robar y, si les pegas, sueltan zurrones de magia
+y comida. Al final, «¡Magec es libre!» y una segunda vuelta más difícil.</li>
+</ol>
+</li>
+<li><strong>Enemigos</strong>:<ul>
+<li>Los secuaces de Guayota, también con escudo.</li>
+<li>Los tibicenas: perros demonio negros que se lanzan.</li>
+<li>Los gigantones: no se paran con golpes flojos.</li>
+<li>Las brujas, que tiran fuego y se teletransportan.</li>
+<li>Los duendes ladrones.</li>
+<li>Los jinetes en el <strong>lagarto gigante de El Hierro</strong>: si tumbas al jinete, el lagarto es tuyo y con A da
+  coletazos.</li>
+</ul>
+</li>
+<li>Música chiptune propia por fase, para el jefe, el campamento y el título.</li>
+<li>El Blanco, al llamar, ya cuenta también lo de las jugueterías.</li>
+</ul>
 <h2>0.81.0 — 2026-10-20 — «GUERRA DE NAVES», la máquina de los bares</h2>
 <ul>
 <li><strong>Recreativa nueva: «GUERRA DE NAVES»</strong> (<code>09l_naves.js</code>), un matamarcianos horizontal tipo R-Type / Nemesis. Es la
@@ -2123,6 +2177,7 @@ Después de la tercera, segunda vuelta más rápida.</li>
     sueltan el módulo, minas y bombas de lava.</li>
 <li>Música chiptune propia por fase, para el jefe y el título; demo, récords y continuar como en Bencomo.</li>
 <li>El Blanco, al llamar, ya cuenta que la máquina está en los bares.</li>
+<li>Bencomo, fase 1: el último barranco largo pasa de 7 a 6 casillas y tiene una pintadera (punto de control) justo antes.</li>
 </ul>
 <h2>0.80.1 — 2026-10-19 — Bencomo más grande y con más detalle; portales sin balcones</h2>
 <ul>

@@ -3,6 +3,45 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.82.0 — 2026-10-20 — «GUANCHE WARRIORS», la máquina de las jugueterías
+- **Recreativa nueva: «GUANCHE WARRIORS»** (`09m_guanche.js`), un beat'em up tipo Golden Axe: se avanza de lado con
+  profundidad, no es de plataformas. Es la máquina de pago de las **jugueterías**: sale en el menú de la tienda una
+  vez que El Blanco te ha llamado, cuesta $1 la partida y cada tienda tiene su tabla de récords.
+  - **Se elige guerrero al empezar**:
+    - **El Mencey**: fuerte y lento, con garrote canario. Magia: «Ira de Achamán», un temblor de tierra, hasta 4
+      zurrones.
+    - **El Pastor**: ágil y menos fuerte. La vara llega más lejos y, corriendo, B hace el salto del pastor. Magia:
+      «Viento alisio», remolinos, hasta 5 zurrones.
+    - **La Mirladora**: ágil, menos física y con la magia más fuerte. Magia: «Luz de Magec», rayos de sol, hasta 7
+      zurrones.
+  - Los personajes, **al tamaño del Bencomo grande** (Jonay), dibujados como muñecos de píxeles articulados: andan,
+    corren, saltan, golpean, caen y se levantan.
+  - **Controles de siempre**:
+    - A (E / clic izquierdo) pega: combo de 3, y el tercero tumba. Corriendo, embestida; en el aire, golpe desde
+      arriba.
+    - B (Espacio) salta; junto a un lagarto suelto, lo montas.
+    - Q / clic derecho lanza la magia, que gasta todos los zurrones que lleves.
+    - Doble toque ← / → = correr.
+  - **Historia**: Guayota ha raptado a Magec, el sol, dentro del Teide.
+  - **5 fases con su jefe**:
+    1. El poblado de Taoro. Jefe: el Gigantón de Tigaiga.
+    2. La laurisilva de Anaga. Jefa: la Bruja de Anaga.
+    3. Los acantilados de Los Gigantes. Jefe: el Tibicena Mayor.
+    4. Las Cañadas. Jefes: los hermanos gigantones, montados en lagartos.
+    5. Dentro del Echeyde. Jefe: Guayota.
+    Entre fase y fase, el campamento de noche: los duendes vienen a robar y, si les pegas, sueltan zurrones de magia
+    y comida. Al final, «¡Magec es libre!» y una segunda vuelta más difícil.
+  - **Enemigos**:
+    - Los secuaces de Guayota, también con escudo.
+    - Los tibicenas: perros demonio negros que se lanzan.
+    - Los gigantones: no se paran con golpes flojos.
+    - Las brujas, que tiran fuego y se teletransportan.
+    - Los duendes ladrones.
+    - Los jinetes en el **lagarto gigante de El Hierro**: si tumbas al jinete, el lagarto es tuyo y con A da
+      coletazos.
+  - Música chiptune propia por fase, para el jefe, el campamento y el título.
+- El Blanco, al llamar, ya cuenta también lo de las jugueterías.
+
 ## 0.81.0 — 2026-10-20 — «GUERRA DE NAVES», la máquina de los bares
 - **Recreativa nueva: «GUERRA DE NAVES»** (`09l_naves.js`), un matamarcianos horizontal tipo R-Type / Nemesis. Es la
   máquina de pago de las **cafeterías y las tascas**: sale en el menú de la barra una vez que El Blanco te ha llamado,

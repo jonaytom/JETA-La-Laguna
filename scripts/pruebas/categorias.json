@@ -230,6 +230,12 @@
    [
     "prueba_081.py"
    ]
+  ],
+  [
+   "^src/09j_arcade|^src/09m_guanche|^src/09i_agua",
+   [
+    "prueba_082.py"
+   ]
   ]
  ]
 }
