@@ -136,7 +136,7 @@ ARCADE.GAMES.guanche = (() => {
   const bgC = {};
   function background(th) { if (bgC[th]) return bgC[th]; let s0 = th.length * 53; const rr = () => { s0 = (s0 * 9301 + 49297) % 233280; return s0 / 233280; }; const L = [];
     const sky = { taoro: ['#0e0a24', '#3a2a5a'], anaga: ['#14202a', '#4a6a6a'], gigantes: ['#0a1430', '#3a4a7a'], canadas: ['#1a0a1a', '#6a2a2a'], teide: ['#1a0402', '#5a1404'] }[th];
-    for (let li = 0; li < 3; li++) { const c = mkCanvas(960, SH), x = c.getContext('2d'); L.push(c);
+    for (let li = 0; li < 3; li++) { const c = mkCanvas(1920, SH * 2), x = c.getContext('2d'); x.scale(2, 2); L.push(c); // v0.82.2: at ×2 (sharper)
       if (li === 0) { const g = x.createLinearGradient(0, 0, 0, SH * 0.7); g.addColorStop(0, sky[0]); g.addColorStop(1, sky[1]); x.fillStyle = g; x.fillRect(0, 0, 960, SH);
         if (th !== 'teide') { for (let i = 0; i < 90; i++) { x.fillStyle = `rgba(255,255,255,${0.2 + rr() * 0.5})`; x.fillRect(rr() * 960, rr() * 150, 1, 1); }
           x.fillStyle = th === 'canadas' ? '#3a1a22' : '#241a3a'; x.beginPath(); x.moveTo(250, 200); x.lineTo(450, 50); x.lineTo(490, 40); x.lineTo(530, 50); x.lineTo(740, 200); x.fill(); // the Teide, dark: no sun
@@ -157,7 +157,7 @@ ARCADE.GAMES.guanche = (() => {
   function laurel(x, tx, y, rr) { x.fillStyle = '#1a1410'; x.fillRect(tx - 3, y - 80, 6, 80); x.fillStyle = rr() < 0.5 ? '#14301e' : '#1a3a24'; for (let i = 0; i < 4; i++) { x.beginPath(); x.ellipse(tx + (rr() - 0.5) * 30, y - 90 - i * 14, 24, 14, 0, 0, 7); x.fill(); } }
   function roque(x, cx0, y, rr) { x.fillStyle = '#3a2420'; x.beginPath(); x.moveTo(cx0 - 20, y); x.lineTo(cx0 - 10, y - 70 - rr() * 30); x.lineTo(cx0 + 4, y - 90 - rr() * 20); x.lineTo(cx0 + 18, y); x.fill(); }
   const flC = {};
-  function floorImg(th) { if (flC[th]) return flC[th]; const c = mkCanvas(960, SH - (GY - 8) * Z), x = c.getContext('2d'), h = c.height; let s0 = th.length * 7; const rr = () => { s0 = (s0 * 9301 + 49297) % 233280; return s0 / 233280; };
+  function floorImg(th) { if (flC[th]) return flC[th]; const h = SH - (GY - 8) * Z, c = mkCanvas(1920, Math.ceil(h * 2)), x = c.getContext('2d'); x.scale(2, 2); /* v0.82.2: at ×2 */ let s0 = th.length * 7; const rr = () => { s0 = (s0 * 9301 + 49297) % 233280; return s0 / 233280; };
     const col = { taoro: ['#5a4430', '#4a3624'], anaga: ['#2e3a22', '#24301a'], gigantes: ['#4a4038', '#3a322a'], canadas: ['#7a6a52', '#5a4a3a'], teide: ['#3a1a10', '#2a100a'] }[th];
     const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, col[1]); g.addColorStop(1, col[0]); x.fillStyle = g; x.fillRect(0, 0, 960, h);
     for (let i = 0; i < 500; i++) { x.fillStyle = rr() < 0.5 ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.07)'; x.fillRect(rr() * 960, rr() * h, 2 + rr() * 4, 1 + rr() * 2); }
@@ -364,8 +364,8 @@ ARCADE.GAMES.guanche = (() => {
     g.draw = (c) => { const bg = background(L ? L.theme : 'taoro'), th = L ? L.theme : 'taoro';
       if (phase === 'select') { drawSelect(c); return; }
       const night = phase === 'camp'; const ox = (shake > 0 ? (Math.random() - 0.5) * 6 : 0);
-      [0.15, 0.4, 0.7].forEach((k, i) => { const o = -Math.round((camX * Z * k) % 960) + ox; c.drawImage(bg[i], o, 0); c.drawImage(bg[i], o + 960, 0); });
-      const fl = floorImg(th), fo = -Math.round((camX * Z) % 960) + ox; c.drawImage(fl, fo, (GY - 8) * Z); c.drawImage(fl, fo + 960, (GY - 8) * Z);
+      [0.15, 0.4, 0.7].forEach((k, i) => { const o = -Math.round((camX * Z * k) % 960) + ox; c.drawImage(bg[i], o, 0, 960, SH); c.drawImage(bg[i], o + 960, 0, 960, SH); });
+      const fl = floorImg(th), fo = -Math.round((camX * Z) % 960) + ox; c.drawImage(fl, fo, (GY - 8) * Z, 960, fl.height / 2); c.drawImage(fl, fo + 960, (GY - 8) * Z, 960, fl.height / 2);
       if (night) { c.fillStyle = 'rgba(0,0,30,0.45)'; c.fillRect(0, 0, SW, SH); }
       c.save(); c.translate(ox, 0); c.scale(Z, Z);
       if (night) { const fx0 = VW / 2, fy = GY + 20; pblob(c, fx0, fy + 2, 10, 2, 'rgba(255,140,40,0.3)'); for (let i = 0; i < 5; i++) pline(c, fx0 - 6 + i * 3, fy, fx0 - 4 + i * 2, fy - 4, 1.2, '#5a3a1a'); pblob(c, fx0, fy - 4 - Math.sin(time * 9), 3, 4 + Math.sin(time * 13), flick() ? '#ffb02a' : '#ff6a1a'); }
@@ -399,7 +399,7 @@ ARCADE.GAMES.guanche = (() => {
       for (let i = 0; i < H.jars; i++) { c.fillStyle = i < p.jars ? '#3a6ad0' : '#1a2440'; c.beginPath(); c.arc(134 + i * 12, 22, 4, 0, 7); c.fill(); }
       A.txt(c, 'VIDAS ' + lives, SW - 8, 4, '#fff', 8, 'right'); const hi = api.hi(); A.txt(c, 'HI ' + String(Math.max(hi, g.score)).padStart(7, '0'), SW - 8, 16, '#ffd400', 8, 'right');
       const bs = E.filter((e) => e.d.boss && e.hp > 0); if (bs.length) { const hp = bs.reduce((a, e) => a + Math.max(0, e.hp), 0), mx = bs.reduce((a, e) => a + e.max, 0); c.fillStyle = '#000'; c.fillRect(100, SH - 22, SW - 200, 8); c.fillStyle = '#e53935'; c.fillRect(101, SH - 21, (SW - 202) * hp / mx, 6); A.txt(c, bs[0].d.boss, SW / 2, SH - 34, '#fff', 6, 'center'); } }
-    function drawSelect(c) { const bg = background('taoro'); c.drawImage(bg[0], 0, 0); c.drawImage(bg[1], 0, 0); c.fillStyle = 'rgba(0,0,0,0.45)'; c.fillRect(0, 0, SW, SH);
+    function drawSelect(c) { const bg = background('taoro'); c.drawImage(bg[0], 0, 0, 960, SH); c.drawImage(bg[1], 0, 0, 960, SH); c.fillStyle = 'rgba(0,0,0,0.45)'; c.fillRect(0, 0, SW, SH);
       A.txt(c, 'ELIGE TU GUERRERO', SW / 2, 16, '#ffd400', 12, 'center');
       HEROES.forEach((H, i) => { const cx0 = 80 + i * 160, on = i === sel; c.fillStyle = on ? 'rgba(255,212,0,0.18)' : 'rgba(0,0,0,0.3)'; c.fillRect(cx0 - 70, 40, 140, 250); if (on) { c.strokeStyle = flick() ? '#ffd400' : '#ff8a3a'; c.lineWidth = 2; c.strokeRect(cx0 - 69, 41, 138, 248); }
         c.save(); c.scale(Z * 1.2, Z * 1.2); const P = on ? cyc(WALK, time * 4) : PO.idle; puppet(c, cx0 / (Z * 1.2), 150 / (Z * 1.2), 1, on && Math.floor(time * 1.5) % 3 === 2 ? PO.smash : P, H.look, null); c.restore();
@@ -413,12 +413,12 @@ ARCADE.GAMES.guanche = (() => {
     return g;
   }
   // ---------- title screen and the backdrop of the hi-score table
-  function drawTitle(c, t) { const bg = background('canadas'); c.drawImage(bg[0], 0, 0); const o = -((t * 8) % 960); c.drawImage(bg[1], o, 0); c.drawImage(bg[1], o + 960, 0); c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(0, 0, SW, SH);
+  function drawTitle(c, t) { const bg = background('canadas'); c.drawImage(bg[0], 0, 0, 960, SH); const o = -((t * 8) % 960); c.drawImage(bg[1], o, 0, 960, SH); c.drawImage(bg[1], o + 960, 0, 960, SH); c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(0, 0, SW, SH);
     c.font = '34px "Press Start 2P", monospace'; c.textAlign = 'center'; c.textBaseline = 'top';
     for (const [s, y] of [['GUANCHE', 26], ['WARRIORS', 68]]) { c.fillStyle = '#1a0a04'; c.fillText(s, SW / 2 + 4, y + 4); const gr = c.createLinearGradient(0, y, 0, y + 34); gr.addColorStop(0, '#ffe08a'); gr.addColorStop(0.5, '#e07a2a'); gr.addColorStop(1, '#8a2a0a'); c.fillStyle = gr; c.fillText(s, SW / 2, y); }
     c.save(); c.scale(Z * 1.3, Z * 1.3); const k = Z * 1.3; HEROES.forEach((H, i) => { const P = Math.floor(t * 1.2 + i) % 3 === 0 ? PO.smash : PO.idle; puppet(c, (SW / 2 + (i - 1) * 110) / k, 230 / k, i === 2 ? -1 : 1, i === 1 ? PO.atk1 : P, H.look, null); }); c.restore(); // (the pole in magic pose crossed the logo)
     A.txt(c, 'GUAYOTA HA RAPTADO A MAGEC, EL SOL', SW / 2, 246, '#fff', 8, 'center'); A.txt(c, 'TRES GUERREROS SUBEN AL ECHEYDE', SW / 2, 260, '#9fd7ff', 8, 'center'); A.txt(c, '© 1496 MENCEYATO DE TAORO', SW / 2, 280, '#9fd7ff', 6, 'center'); }
-  function drawBack(c, t) { const bg = background('teide'); c.drawImage(bg[0], 0, 0); const o = -((t * 10) % 960); c.drawImage(bg[2], o, 0); c.drawImage(bg[2], o + 960, 0); c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, 0, SW, SH); }
+  function drawBack(c, t) { const bg = background('teide'); c.drawImage(bg[0], 0, 0, 960, SH); const o = -((t * 10) % 960); c.drawImage(bg[2], o, 0, 960, SH); c.drawImage(bg[2], o + 960, 0, 960, SH); c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, 0, SW, SH); }
   return { title: 'GUANCHE WARRIORS', sub: 'LA NOCHE DE GUAYOTA', marquee: ['#6a1a0a', '#1a0402'], titleCol: '#ffb04a', baseScore: 90000, music: { title: SONGS.title }, create, drawTitle, drawBack,
     help: (K) => `A GOLPE: ${K('f_punch')}  B SALTO / MONTAR: ${K('f_kick')}  MAGIA / MONEDA: ${K('b_pass')}  ←← →→ CORRER  ESC SALIR` };
 })();

@@ -179,5 +179,6 @@ const AGUA = (() => {
   function use() { const s = nearShop(); if (s) { openShop(s); return true; } const f = nearFountain(); if (f && RIFLE.water < RIFLE.max - 0.5) { RIFLE.water = RIFLE.max; AUDIO.splash && AUDIO.splash(); updateWeaponHUD(); HUD.toast('Rifle de agua lleno', '#7fd3ff', 2); MISSIONS.onEvent('refill', f); return true; } return false; }
   function prompt() { const s = nearShop(); if (s) return `${CONTROLS.kbd('use')} Entrar: ${s.name} (juguetería)`; const f = nearFountain(); if (f && RIFLE.water < RIFLE.max - 0.5) return `${CONTROLS.kbd('use')} Llenar el rifle de agua en la fuente`; return ''; }
   function tickShops() { makeShops(); const o = open_(); for (const s of shops) s.spr.visible = o && Math.abs(s.x - PLAYER.x) < 400 && Math.abs(s.z - PLAYER.z) < 400; }
-  return { update, ensureMesh, flameGeo, flameMats, cycle, setRifleOut, use, prompt, tickShops, get shops() { makeShops(); return shops; }, puddle, douseFire, _drops: D, _pud: PUD };
+  function nearestShop() { makeShops(); let b = null, bd = 1e9; for (const s of shops) { const d = Math.hypot(s.x - PLAYER.x, s.z - PLAYER.z); if (d < bd) { bd = d; b = s; } } return b ? { ...b, d: bd } : null; }
+  return { isOpen: open_, nearestShop, update, ensureMesh, flameGeo, flameMats, cycle, setRifleOut, use, prompt, tickShops, get shops() { makeShops(); return shops; }, puddle, douseFire, _drops: D, _pud: PUD };
 })();

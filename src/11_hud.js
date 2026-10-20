@@ -88,7 +88,7 @@ const HUD = (() => {
   function blip(x, z, color, size, shape = 'dot', clampEdge = false) {
     // world -> minimap (already transformed context)
     mx.fillStyle = color; mx.strokeStyle = '#000'; mx.lineWidth = 2 / mmScale;
-    mx.beginPath(); if (shape === 'sq') mx.rect(x - size, z - size, size * 2, size * 2); else if (shape === 'tri') { mx.save(); mx.translate(x, z); mx.rotate(-(CAM.yaw - Math.PI)); const k = size * 1.35; mx.moveTo(0, -k); mx.lineTo(k * 0.9, k * 0.65); mx.lineTo(-k * 0.9, k * 0.65); mx.closePath(); mx.restore(); } else mx.arc(x, z, size, 0, 7); mx.fill(); mx.stroke();
+    mx.beginPath(); if (shape === 'sq') mx.rect(x - size, z - size, size * 2, size * 2); else if (shape === 'drop') { mx.save(); mx.translate(x, z); mx.rotate(-(CAM.yaw - Math.PI)); const k = size; mx.moveTo(0, -k * 1.7); mx.lineTo(k * 0.82, -k * 0.2); mx.arc(0, k * 0.25, k * 0.95, -0.5, Math.PI + 0.5); mx.closePath(); mx.restore(); } /* v0.82.2: the toy shops */ else if (shape === 'tri') { mx.save(); mx.translate(x, z); mx.rotate(-(CAM.yaw - Math.PI)); const k = size * 1.35; mx.moveTo(0, -k); mx.lineTo(k * 0.9, k * 0.65); mx.lineTo(-k * 0.9, k * 0.65); mx.closePath(); mx.restore(); } else mx.arc(x, z, size, 0, 7); mx.fill(); mx.stroke();
   }
   let mmScale = 1;
   function drawMinimap() {
@@ -116,6 +116,10 @@ const HUD = (() => {
     for (const it of INTERIORS) for (const d of it.doors) { if (Math.abs(d.x - PLAYER.x) < 400 && Math.abs(d.z - PLAYER.z) < 400) blip(d.x, d.z, '#3ddc97', 6 * s * 1.6, 'sq'); }
     for (const f of FOOD.shops) { if (Math.abs(f.x - PLAYER.x) < 400 && Math.abs(f.z - PLAYER.z) < 400) blip(f.x, f.z, '#e53935', 6 * s * 1.6, 'sq'); }
     if (typeof RECRE !== 'undefined') for (const b of RECRE.blips()) edge(b[0], b[1], b[2], 7 * s * 1.6, 'sq'); // v0.80: El Blanco's arcade
+    // v0.82.2 (Jonay: «¿cómo sé dónde hay una juguetería?»): the toy shops (blue drop; the nearest always, at the rim if
+    // far) and the cafés / tascas with the Guerra de Naves machine (a violet ring round their red square)
+    if (typeof AGUA !== 'undefined' && AGUA.isOpen()) { let nb = null, nd = 1e9; for (const t of AGUA.shops) { const d = Math.hypot(t.x - PLAYER.x, t.z - PLAYER.z); if (d < nd) { nd = d; nb = t; } if (d < 400) blip(t.x, t.z, '#1e88e5', 7 * s * 1.6, 'drop'); } if (nb && nd >= 400) edge(nb.x, nb.z, '#1e88e5', 7 * s * 1.6, 'drop'); }
+    if (typeof ARCADE !== 'undefined' && ARCADE.data().invited) for (const f of FOOD.shops) { if ((f.type === 'C' || f.type === 'R') && Math.abs(f.x - PLAYER.x) < 400 && Math.abs(f.z - PLAYER.z) < 400) { mx.strokeStyle = '#b388ff'; mx.lineWidth = 3 * s; mx.beginPath(); mx.arc(f.x, f.z, 11 * s * 1.6, 0, 7); mx.stroke(); } }
     for (const m of MISSIONS.blips()) edge(m[0], m[1], m[2] || '#f5b72e', 9 * s * 1.6, m[3]);
     if (GPS.target) edge(GPS.target[0], GPS.target[1], '#e040fb', 9 * s * 1.6);
     // player arrow
@@ -203,6 +207,8 @@ const BIGMAP = (() => {
     const dot = (px, pz, c, r) => { x.fillStyle = c; x.strokeStyle = '#000'; x.lineWidth = 2 / k * devicePixelRatio; x.beginPath(); x.arc(px, pz, r / k * devicePixelRatio, 0, 7); x.fill(); x.stroke(); };
     for (const c of CARS) if (c.driver === 'police') dot(c.x, c.z, '#3d7bff', 5);
     for (const f of FOOD.shops) { x.fillStyle = '#e53935'; x.strokeStyle = '#fff'; x.lineWidth = 1.5 / k * devicePixelRatio; const sz = 5 * devicePixelRatio / k; x.fillRect(f.x - sz, f.z - sz, sz * 2, sz * 2); x.strokeRect(f.x - sz, f.z - sz, sz * 2, sz * 2); }
+    if (typeof ARCADE !== 'undefined' && ARCADE.data().invited) for (const f of FOOD.shops) if (f.type === 'C' || f.type === 'R') { x.strokeStyle = '#b388ff'; x.lineWidth = 2.5 / k * devicePixelRatio; x.beginPath(); x.arc(f.x, f.z, 10 * devicePixelRatio / k, 0, 7); x.stroke(); } // v0.82.2: the Guerra de Naves bars
+    if (typeof AGUA !== 'undefined' && AGUA.isOpen()) for (const t of AGUA.shops) { const a = 7 * devicePixelRatio / k; x.fillStyle = '#1e88e5'; x.strokeStyle = '#fff'; x.lineWidth = 1.8 / k * devicePixelRatio; x.beginPath(); x.moveTo(t.x, t.z - a * 1.7); x.lineTo(t.x + a * 0.82, t.z - a * 0.2); x.arc(t.x, t.z + a * 0.25, a * 0.95, -0.5, Math.PI + 0.5); x.closePath(); x.fill(); x.stroke(); } // v0.82.2: the toy shops
     for (const m of MISSIONS.blips()) { if (m[3] === 'tri') { const a = 11 / k * devicePixelRatio; x.fillStyle = m[2]; x.strokeStyle = '#000'; x.lineWidth = 2 / k * devicePixelRatio; x.beginPath(); x.moveTo(m[0], m[1] - a); x.lineTo(m[0] + a * 0.9, m[1] + a * 0.65); x.lineTo(m[0] - a * 0.9, m[1] + a * 0.65); x.closePath(); x.fill(); x.stroke(); } else dot(m[0], m[1], m[2] || '#f5b72e', 8); }
     for (const q of MISSIONS.aheadPts() || []) dot(q[0], q[1], '#46c3ff', 6);
     if (GPS.target) dot(GPS.target[0], GPS.target[1], '#e040fb', 8);

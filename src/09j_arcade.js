@@ -8,7 +8,13 @@
 // Keys: the same as every minigame: A = E / left click, B = Espacio, arriba = ↑/W, Q / right click = coin; Esc leaves.
 const ARCADE = (() => {
   const W = 480, H = 336;                    // the board's screen (logical px; v0.80.1: 480×336 — Jonay: 400×280 made Bencomo too big, you saw too little)
-  const CW = 1280, CH = 960, SS = 2.25;      // the cabinet canvas and the screen scale on it
+  const CW = 1280, CH = 960, SS = 2.25;      // the cabinet canvas and the screen scale on it (logical units)
+  // v0.82.2 (Jonay: «parece un filtro, líneas duplicadas… más nítido»): the board's screen is drawn straight at its final
+  // size (before: a 480×336 picture blown up ×2.25 with hard pixels, some rows came out double); the CRT scan lines are
+  // off unless SETTINGS.crt === true
+  // v0.82.2 (Jonay: «los gráficos deben ser a la resolución que se juega»): the canvas takes the size of the window in
+  // real pixels (× devicePixelRatio), so nothing is stretched or shrunk afterwards: one pixel drawn = one pixel shown
+  let KR = 1.5, RS = SS * KR;
   const SX = Math.round((CW - W * SS) / 2), SY = 136;
   const GAMES = {};
   let cv = null, cx = null, scr = null, sx = null, running = false, raf = 0, last = 0, acc = 0;
@@ -93,7 +99,7 @@ const ARCADE = (() => {
     o.connect(g); o.start(t); o.stop(t + d + 0.02); }
   // ---------- the cabinet
   function bezel() { // marquee with the game's title, the black bezel round the tube, the control panel (static: cached)
-    if (M.bz) return M.bz; const c = mkCanvas(CW, CH), x = c.getContext('2d');
+    if (M.bz) return M.bz; const c = mkCanvas(CW * KR, CH * KR), x = c.getContext('2d'); x.scale(KR, KR);
     const wood = x.createLinearGradient(0, 0, CW, 0); wood.addColorStop(0, '#120a06'); wood.addColorStop(0.5, '#2a1a10'); wood.addColorStop(1, '#120a06'); x.fillStyle = wood; x.fillRect(0, 0, CW, CH);
     const mq = x.createLinearGradient(0, 0, 0, 100); mq.addColorStop(0, M.game.marquee ? M.game.marquee[0] : '#3b1d5c'); mq.addColorStop(1, M.game.marquee ? M.game.marquee[1] : '#0d0618'); x.fillStyle = mq; x.fillRect(60, 10, CW - 120, 92);
     x.strokeStyle = '#d9b44a'; x.lineWidth = 4; x.strokeRect(62, 12, CW - 124, 88);
@@ -107,8 +113,8 @@ const ARCADE = (() => {
     x.fillText(M.game.help ? M.game.help(K) : `A: ${K('f_punch')}   B: ${K('f_kick')}   MONEDA: ${K('b_pass')}   SALIR: ESC`, CW / 2, CH - 30);
     return (M.bz = c);
   }
-  let scan = null; function scanlines() { if (scan) return scan; const c = mkCanvas(W * SS, H * SS), x = c.getContext('2d'); x.fillStyle = 'rgba(0,0,0,0.22)'; for (let y = 0; y < H * SS; y += 3.5) x.fillRect(0, Math.round(y) + 2, W * SS, 1); const gl = x.createRadialGradient(W * SS / 2, H * SS / 2, H * SS * 0.3, W * SS / 2, H * SS / 2, W * SS * 0.7); gl.addColorStop(0, 'rgba(0,0,0,0)'); gl.addColorStop(1, 'rgba(0,0,0,0.38)'); x.fillStyle = gl; x.fillRect(0, 0, W * SS, H * SS); return (scan = c); }
-  function present() { cx.setTransform(1, 0, 0, 1, 0, 0); cx.imageSmoothingEnabled = false; cx.drawImage(bezel(), 0, 0); cx.drawImage(scr, SX, SY, W * SS, H * SS); if (SETTINGS.crt !== false) cx.drawImage(scanlines(), SX, SY);
+  let scan = null; function scanlines() { if (scan) return scan; const c = mkCanvas(W * SS * KR, H * SS * KR), x = c.getContext('2d'); x.scale(KR, KR); x.fillStyle = 'rgba(0,0,0,0.22)'; for (let y = 0; y < H * SS; y += 3.5) x.fillRect(0, Math.round(y) + 2, W * SS, 1); const gl = x.createRadialGradient(W * SS / 2, H * SS / 2, H * SS * 0.3, W * SS / 2, H * SS / 2, W * SS * 0.7); gl.addColorStop(0, 'rgba(0,0,0,0)'); gl.addColorStop(1, 'rgba(0,0,0,0.38)'); x.fillStyle = gl; x.fillRect(0, 0, W * SS, H * SS); return (scan = c); }
+  function present() { cx.setTransform(1, 0, 0, 1, 0, 0); cx.imageSmoothingEnabled = false; cx.drawImage(bezel(), 0, 0); cx.drawImage(scr, Math.round(SX * KR), Math.round(SY * KR)); cx.setTransform(KR, 0, 0, KR, 0, 0); if (SETTINGS.crt === true) cx.drawImage(scanlines(), SX, SY, W * SS, H * SS);
     cx.fillStyle = 'rgba(255,255,255,0.035)'; cx.beginPath(); cx.ellipse(SX + W * SS * 0.3, SY + H * SS * 0.18, W * SS * 0.32, H * SS * 0.1, -0.2, 0, 7); cx.fill(); } // the glass's reflection
   // ---------- the 80s cycle
   const free = () => M.price === 0;
@@ -136,7 +142,7 @@ const ARCADE = (() => {
   const demoPad = { held: (v) => !!(G && G.demoKeys && G.demoKeys.held[v]), hit: (v) => !!(G && G.demoKeys && G.demoKeys.hit[v]) };
   // ---------- drawing the screen per mode
   function render() {
-    const g = sx; g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false;
+    const g = sx; g.setTransform(RS, 0, 0, RS, 0, 0); g.imageSmoothingEnabled = false;
     if (st.mode === 'play' || st.mode === 'cont' || st.view === 'demo') { G.draw(g); if (st.view === 'demo') { g.fillStyle = 'rgba(0,0,0,0.35)'; g.fillRect(0, H - 22, W, 22); blinkMsg(g); } }
     else if (st.view === 'scores') { M.game.drawBack ? M.game.drawBack(g, st.t) : (g.fillStyle = '#000', g.fillRect(0, 0, W, H)); drawScores(g); blinkMsg(g); }
     else { M.game.drawTitle(g, st.t); blinkMsg(g); }
@@ -161,12 +167,14 @@ const ARCADE = (() => {
   // ---------- public: open({ id: game id, key: hi-score table id, where: place name, price: $ per credit (0 = free) })
   function open(m, cb) {
     const game = GAMES[m.id]; if (!game || running || (typeof FIGHT2D !== 'undefined' && FIGHT2D.running)) return false;
-    if (!cv) { cv = document.createElement('canvas'); cv.id = 'arcade'; cv.width = CW; cv.height = CH; cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;image-rendering:pixelated;background:#000;z-index:28;display:none'; document.body.appendChild(cv); cx = cv.getContext('2d');
-      scr = mkCanvas(W, H); sx = scr.getContext('2d'); window.addEventListener('keydown', (e) => { if (running && e.code === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } }, true); }
-    M = { ...m, game, key: m.key || m.id, price: m.price ?? 0, bz: null }; onClose = cb || null; running = true;
+    if (!cv) { cv = document.createElement('canvas'); cv.id = 'arcade'; cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;background:#000;z-index:28;display:none'; document.body.appendChild(cv); cx = cv.getContext('2d');
+      scr = mkCanvas(8, 8); sx = scr.getContext('2d'); window.addEventListener('resize', () => { if (running) fit(); }); window.addEventListener('keydown', (e) => { if (running && e.code === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } }, true); }
+    M = { ...m, game, key: m.key || m.id, price: m.price ?? 0, bz: null }; onClose = cb || null; running = true; fit();
     st = { mode: 'attract', view: 'title', t: 0, credits: 0, paid: 0, msgT: 0, hl: null, rank: -1 }; G = null; IN.reset(); document.exitPointerLock?.();
     MINI.show(cv, 'arcade'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); if (game.music && game.music.title) music(game.music.title); return true;
   }
+  function fit() { const dpr = window.devicePixelRatio || 1; const k = Math.max(0.5, Math.min((window.innerWidth || CW) * dpr / CW, (window.innerHeight || CH) * dpr / CH));
+    KR = Math.round(k * 1000) / 1000; RS = SS * KR; cv.width = Math.round(CW * KR); cv.height = Math.round(CH * KR); scr.width = Math.round(W * RS); scr.height = Math.round(H * RS); if (M) M.bz = null; scan = null; }
   function close() { if (!running) return; running = false; cancelAnimationFrame(raf); stopMusic(); MINI.hide(cv, 'arcade', true); const r = { paid: st.paid }; M = null; G = null; if (onClose) onClose(r); }
   return { GAMES, open, close, sprite, hires, draw, txt, sfx, music, stopMusic, data, table, api, get running() { return running; },
     _st: () => st, _game: () => G, _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); } }, _press: IN.press, _render: () => { render(); present(); }, W, H };

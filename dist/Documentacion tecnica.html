@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.82.1</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.82.2</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2103,6 +2103,23 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.82.2 — 2026-10-20 — Las jugueterías y los bares de la máquina, en el mapa</h2>
+<ul>
+<li><strong>Las jugueterías salen en el minimapa y en el mapa grande (M)</strong> con la gota azul, una vez abiertas (Jonay: «¿cómo sé
+  dónde hay una juguetería?»). En el minimapa salen las de alrededor, y la más cercana siempre, en el borde si está
+  lejos.</li>
+<li><strong>Los bares y cafeterías con la máquina de Guerra de Naves</strong> llevan un aro violeta alrededor de su cuadrado rojo, en el
+  minimapa y en el mapa.</li>
+<li><strong>Diario (J)</strong>: en «Lo que sabes», las jugueterías, Guerra de Naves, Guanche Warriors y la máquina de El Blanco dicen
+  cuál te queda más cerca y a cuántos metros. El botón «MARCAR EN EL GPS» te pone la ruta.</li>
+<li><strong>Las máquinas se ven más nítidas y limpias</strong> (Jonay: «parece un filtro, como con líneas duplicadas»):</li>
+<li><strong>A la resolución a la que juegas</strong>: la máquina mide tu ventana en píxeles reales (también con la escala de Windows) y
+    dibuja el mueble y el juego directamente a ese tamaño. Un píxel dibujado es un píxel en pantalla, sin estirar ni
+    encoger. Antes se dibujaba en pequeño (480×336) y se estiraba ×2,25 con píxeles duros, y por eso unas filas
+    salían dobles; luego se estiraba otra vez el mueble a la ventana. Si cambias el tamaño de la ventana, se recalcula.</li>
+<li>Los fondos de Guerra de Naves y de Guanche Warriors están dibujados al doble de resolución.</li>
+<li>Fuera las líneas de barrido de tele de tubo: solo salen si se activa <code>SETTINGS.crt</code>.</li>
+</ul>
 <h2>0.82.1 — 2026-10-20 — El diario cuenta lo que te dicen por el móvil y solo enseña lo que ya puedes hacer</h2>
 <ul>
 <li><strong>Diario (J), sección nueva «Lo que sabes»</strong> (Jonay): todo lo que te cuentan por el móvil, cada cosa con su entrada.

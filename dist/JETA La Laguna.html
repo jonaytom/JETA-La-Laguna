@@ -205,7 +205,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="tb" id="tbS">CORRER</div>
 <div class="tb" id="tbM">MAPA</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">v0.82.1</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">v0.82.2</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -8760,7 +8760,8 @@ const AGUA = (() => {
   function use() { const s = nearShop(); if (s) { openShop(s); return true; } const f = nearFountain(); if (f && RIFLE.water < RIFLE.max - 0.5) { RIFLE.water = RIFLE.max; AUDIO.splash && AUDIO.splash(); updateWeaponHUD(); HUD.toast('Rifle de agua lleno', '#7fd3ff', 2); MISSIONS.onEvent('refill', f); return true; } return false; }
   function prompt() { const s = nearShop(); if (s) return `${CONTROLS.kbd('use')} Entrar: ${s.name} (juguetería)`; const f = nearFountain(); if (f && RIFLE.water < RIFLE.max - 0.5) return `${CONTROLS.kbd('use')} Llenar el rifle de agua en la fuente`; return ''; }
   function tickShops() { makeShops(); const o = open_(); for (const s of shops) s.spr.visible = o && Math.abs(s.x - PLAYER.x) < 400 && Math.abs(s.z - PLAYER.z) < 400; }
-  return { update, ensureMesh, flameGeo, flameMats, cycle, setRifleOut, use, prompt, tickShops, get shops() { makeShops(); return shops; }, puddle, douseFire, _drops: D, _pud: PUD };
+  function nearestShop() { makeShops(); let b = null, bd = 1e9; for (const s of shops) { const d = Math.hypot(s.x - PLAYER.x, s.z - PLAYER.z); if (d < bd) { bd = d; b = s; } } return b ? { ...b, d: bd } : null; }
+  return { isOpen: open_, nearestShop, update, ensureMesh, flameGeo, flameMats, cycle, setRifleOut, use, prompt, tickShops, get shops() { makeShops(); return shops; }, puddle, douseFire, _drops: D, _pud: PUD };
 })();
 
 // ============ RECREATIVAS (v0.80, Jonay: «los minijuegos van a ser el alma del juego… que rememoren lo que teníamos
@@ -8773,7 +8774,13 @@ const AGUA = (() => {
 // Keys: the same as every minigame: A = E / left click, B = Espacio, arriba = ↑/W, Q / right click = coin; Esc leaves.
 const ARCADE = (() => {
   const W = 480, H = 336;                    // the board's screen (logical px; v0.80.1: 480×336 — Jonay: 400×280 made Bencomo too big, you saw too little)
-  const CW = 1280, CH = 960, SS = 2.25;      // the cabinet canvas and the screen scale on it
+  const CW = 1280, CH = 960, SS = 2.25;      // the cabinet canvas and the screen scale on it (logical units)
+  // v0.82.2 (Jonay: «parece un filtro, líneas duplicadas… más nítido»): the board's screen is drawn straight at its final
+  // size (before: a 480×336 picture blown up ×2.25 with hard pixels, some rows came out double); the CRT scan lines are
+  // off unless SETTINGS.crt === true
+  // v0.82.2 (Jonay: «los gráficos deben ser a la resolución que se juega»): the canvas takes the size of the window in
+  // real pixels (× devicePixelRatio), so nothing is stretched or shrunk afterwards: one pixel drawn = one pixel shown
+  let KR = 1.5, RS = SS * KR;
   const SX = Math.round((CW - W * SS) / 2), SY = 136;
   const GAMES = {};
   let cv = null, cx = null, scr = null, sx = null, running = false, raf = 0, last = 0, acc = 0;
@@ -8858,7 +8865,7 @@ const ARCADE = (() => {
     o.connect(g); o.start(t); o.stop(t + d + 0.02); }
   // ---------- the cabinet
   function bezel() { // marquee with the game's title, the black bezel round the tube, the control panel (static: cached)
-    if (M.bz) return M.bz; const c = mkCanvas(CW, CH), x = c.getContext('2d');
+    if (M.bz) return M.bz; const c = mkCanvas(CW * KR, CH * KR), x = c.getContext('2d'); x.scale(KR, KR);
     const wood = x.createLinearGradient(0, 0, CW, 0); wood.addColorStop(0, '#120a06'); wood.addColorStop(0.5, '#2a1a10'); wood.addColorStop(1, '#120a06'); x.fillStyle = wood; x.fillRect(0, 0, CW, CH);
     const mq = x.createLinearGradient(0, 0, 0, 100); mq.addColorStop(0, M.game.marquee ? M.game.marquee[0] : '#3b1d5c'); mq.addColorStop(1, M.game.marquee ? M.game.marquee[1] : '#0d0618'); x.fillStyle = mq; x.fillRect(60, 10, CW - 120, 92);
     x.strokeStyle = '#d9b44a'; x.lineWidth = 4; x.strokeRect(62, 12, CW - 124, 88);
@@ -8872,8 +8879,8 @@ const ARCADE = (() => {
     x.fillText(M.game.help ? M.game.help(K) : `A: ${K('f_punch')}   B: ${K('f_kick')}   MONEDA: ${K('b_pass')}   SALIR: ESC`, CW / 2, CH - 30);
     return (M.bz = c);
   }
-  let scan = null; function scanlines() { if (scan) return scan; const c = mkCanvas(W * SS, H * SS), x = c.getContext('2d'); x.fillStyle = 'rgba(0,0,0,0.22)'; for (let y = 0; y < H * SS; y += 3.5) x.fillRect(0, Math.round(y) + 2, W * SS, 1); const gl = x.createRadialGradient(W * SS / 2, H * SS / 2, H * SS * 0.3, W * SS / 2, H * SS / 2, W * SS * 0.7); gl.addColorStop(0, 'rgba(0,0,0,0)'); gl.addColorStop(1, 'rgba(0,0,0,0.38)'); x.fillStyle = gl; x.fillRect(0, 0, W * SS, H * SS); return (scan = c); }
-  function present() { cx.setTransform(1, 0, 0, 1, 0, 0); cx.imageSmoothingEnabled = false; cx.drawImage(bezel(), 0, 0); cx.drawImage(scr, SX, SY, W * SS, H * SS); if (SETTINGS.crt !== false) cx.drawImage(scanlines(), SX, SY);
+  let scan = null; function scanlines() { if (scan) return scan; const c = mkCanvas(W * SS * KR, H * SS * KR), x = c.getContext('2d'); x.scale(KR, KR); x.fillStyle = 'rgba(0,0,0,0.22)'; for (let y = 0; y < H * SS; y += 3.5) x.fillRect(0, Math.round(y) + 2, W * SS, 1); const gl = x.createRadialGradient(W * SS / 2, H * SS / 2, H * SS * 0.3, W * SS / 2, H * SS / 2, W * SS * 0.7); gl.addColorStop(0, 'rgba(0,0,0,0)'); gl.addColorStop(1, 'rgba(0,0,0,0.38)'); x.fillStyle = gl; x.fillRect(0, 0, W * SS, H * SS); return (scan = c); }
+  function present() { cx.setTransform(1, 0, 0, 1, 0, 0); cx.imageSmoothingEnabled = false; cx.drawImage(bezel(), 0, 0); cx.drawImage(scr, Math.round(SX * KR), Math.round(SY * KR)); cx.setTransform(KR, 0, 0, KR, 0, 0); if (SETTINGS.crt === true) cx.drawImage(scanlines(), SX, SY, W * SS, H * SS);
     cx.fillStyle = 'rgba(255,255,255,0.035)'; cx.beginPath(); cx.ellipse(SX + W * SS * 0.3, SY + H * SS * 0.18, W * SS * 0.32, H * SS * 0.1, -0.2, 0, 7); cx.fill(); } // the glass's reflection
   // ---------- the 80s cycle
   const free = () => M.price === 0;
@@ -8901,7 +8908,7 @@ const ARCADE = (() => {
   const demoPad = { held: (v) => !!(G && G.demoKeys && G.demoKeys.held[v]), hit: (v) => !!(G && G.demoKeys && G.demoKeys.hit[v]) };
   // ---------- drawing the screen per mode
   function render() {
-    const g = sx; g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false;
+    const g = sx; g.setTransform(RS, 0, 0, RS, 0, 0); g.imageSmoothingEnabled = false;
     if (st.mode === 'play' || st.mode === 'cont' || st.view === 'demo') { G.draw(g); if (st.view === 'demo') { g.fillStyle = 'rgba(0,0,0,0.35)'; g.fillRect(0, H - 22, W, 22); blinkMsg(g); } }
     else if (st.view === 'scores') { M.game.drawBack ? M.game.drawBack(g, st.t) : (g.fillStyle = '#000', g.fillRect(0, 0, W, H)); drawScores(g); blinkMsg(g); }
     else { M.game.drawTitle(g, st.t); blinkMsg(g); }
@@ -8926,12 +8933,14 @@ const ARCADE = (() => {
   // ---------- public: open({ id: game id, key: hi-score table id, where: place name, price: $ per credit (0 = free) })
   function open(m, cb) {
     const game = GAMES[m.id]; if (!game || running || (typeof FIGHT2D !== 'undefined' && FIGHT2D.running)) return false;
-    if (!cv) { cv = document.createElement('canvas'); cv.id = 'arcade'; cv.width = CW; cv.height = CH; cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;image-rendering:pixelated;background:#000;z-index:28;display:none'; document.body.appendChild(cv); cx = cv.getContext('2d');
-      scr = mkCanvas(W, H); sx = scr.getContext('2d'); window.addEventListener('keydown', (e) => { if (running && e.code === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } }, true); }
-    M = { ...m, game, key: m.key || m.id, price: m.price ?? 0, bz: null }; onClose = cb || null; running = true;
+    if (!cv) { cv = document.createElement('canvas'); cv.id = 'arcade'; cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;background:#000;z-index:28;display:none'; document.body.appendChild(cv); cx = cv.getContext('2d');
+      scr = mkCanvas(8, 8); sx = scr.getContext('2d'); window.addEventListener('resize', () => { if (running) fit(); }); window.addEventListener('keydown', (e) => { if (running && e.code === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } }, true); }
+    M = { ...m, game, key: m.key || m.id, price: m.price ?? 0, bz: null }; onClose = cb || null; running = true; fit();
     st = { mode: 'attract', view: 'title', t: 0, credits: 0, paid: 0, msgT: 0, hl: null, rank: -1 }; G = null; IN.reset(); document.exitPointerLock?.();
     MINI.show(cv, 'arcade'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); if (game.music && game.music.title) music(game.music.title); return true;
   }
+  function fit() { const dpr = window.devicePixelRatio || 1; const k = Math.max(0.5, Math.min((window.innerWidth || CW) * dpr / CW, (window.innerHeight || CH) * dpr / CH));
+    KR = Math.round(k * 1000) / 1000; RS = SS * KR; cv.width = Math.round(CW * KR); cv.height = Math.round(CH * KR); scr.width = Math.round(W * RS); scr.height = Math.round(H * RS); if (M) M.bz = null; scan = null; }
   function close() { if (!running) return; running = false; cancelAnimationFrame(raf); stopMusic(); MINI.hide(cv, 'arcade', true); const r = { paid: st.paid }; M = null; G = null; if (onClose) onClose(r); }
   return { GAMES, open, close, sprite, hires, draw, txt, sfx, music, stopMusic, data, table, api, get running() { return running; },
     _st: () => st, _game: () => G, _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); } }, _press: IN.press, _render: () => { render(); present(); }, W, H };
@@ -9431,7 +9440,7 @@ ARCADE.GAMES.naves = (() => {
   const bgCache = {};
   function background(theme) {
     if (bgCache[theme]) return bgCache[theme]; const Ls = []; let s = theme.length * 91; const rr = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
-    for (let li = 0; li < 3; li++) { const c = mkCanvas(960, H), x = c.getContext('2d'); Ls.push(c);
+    for (let li = 0; li < 3; li++) { const c = mkCanvas(1920, H * 2), x = c.getContext('2d'); x.scale(2, 2); Ls.push(c); // v0.82.2: at ×2 (sharper)
       if (li === 0) { const gr = x.createLinearGradient(0, 0, 0, H);
         const sky = theme === 'cielo' ? ['#1d3f7a', '#e9a46a'] : theme === 'volcan' ? ['#1a0604', '#5a1408'] : ['#060a24', '#3b4f8a']; gr.addColorStop(0, sky[0]); gr.addColorStop(1, sky[1]); x.fillStyle = gr; x.fillRect(0, 0, 960, H);
         if (theme !== 'volcan') for (let i = 0; i < (theme === 'nubes' ? 140 : 40); i++) { x.fillStyle = `rgba(255,255,255,${0.3 + rr() * 0.6})`; x.fillRect((rr() * 960) | 0, (rr() * H * 0.6) | 0, 1, 1); }
@@ -9641,7 +9650,7 @@ ARCADE.GAMES.naves = (() => {
     // ---------- drawing
     const flick = () => Math.floor(time * 20) % 2 === 0;
     g.draw = (c) => { const bg = background(L.theme);
-      [0.08, 0.3, 0.7].forEach((k, i) => { const off = -Math.round((bgX * k) % 960); c.drawImage(bg[i], off, 0); c.drawImage(bg[i], off + 960, 0); });
+      [0.08, 0.3, 0.7].forEach((k, i) => { const off = -Math.round((bgX * k) % 960); c.drawImage(bg[i], off, 0, 960, H); c.drawImage(bg[i], off + 960, 0, 960, H); });
       drawTerrain(c);
       for (const it of items) { const bob = Math.round(Math.sin(it.t * 5) * 2);
         if (it.k === 'c') { A.draw(c, S('caps', CAPS), it.x - 5, it.y - 3 + bob); }
@@ -9715,14 +9724,14 @@ ARCADE.GAMES.naves = (() => {
     return g;
   }
   // ---------- title screen (attract) and the backdrop of the hi-score table
-  function drawTitle(c, t) { const bg = background('nubes'); const o = -((t * 20) % 960); c.drawImage(bg[0], 0, 0); c.drawImage(bg[2], o, 0); c.drawImage(bg[2], o + 960, 0);
+  function drawTitle(c, t) { const bg = background('nubes'); const o = -((t * 20) % 960); c.drawImage(bg[0], 0, 0, 960, H); c.drawImage(bg[2], o, 0, 960, H); c.drawImage(bg[2], o + 960, 0, 960, H);
     c.fillStyle = 'rgba(0,0,0,0.3)'; c.fillRect(0, 0, W, H);
     c.font = '34px "Press Start 2P", monospace'; c.textAlign = 'center'; c.textBaseline = 'top';
     for (const [s, y] of [['GUERRA', 40], ['DE NAVES', 84]]) { c.fillStyle = '#0b0f1a'; c.fillText(s, W / 2 + 4, y + 4); const gr = c.createLinearGradient(0, y, 0, y + 34); gr.addColorStop(0, '#fff'); gr.addColorStop(0.45, '#9fd7ff'); gr.addColorStop(0.55, '#2f7fe0'); gr.addColorStop(1, '#ffd400'); c.fillStyle = gr; c.fillText(s, W / 2, y); }
     const s = A.hires(A.sprite('nv_ship', SHIP, P)); const sx = ((t * 120) % (W + 200)) - 100; c.drawImage(s.h2, sx, 150, 96, 44); c.fillStyle = Math.floor(t * 20) % 2 ? '#ffd400' : '#ff8a3a'; c.fillRect(sx - 14, 169, 12, 6);
     A.txt(c, 'LA LAGUNA, 1987', W / 2, 216, '#fff', 8, 'center'); A.txt(c, 'LOS INVASORES LLEGAN CON LA BRUMA', W / 2, 230, '#fff', 8, 'center'); A.txt(c, 'SOLO EL AGUERE-1 PUEDE PARARLOS', W / 2, 244, '#9fd7ff', 8, 'center');
     A.txt(c, '© 1987 LAGUNASOFT', W / 2, 270, '#9fd7ff', 6, 'center'); }
-  function drawBack(c, t) { const bg = background('nubes'); c.drawImage(bg[0], 0, 0); const o = -((t * 10) % 960); c.drawImage(bg[1], o, 0); c.drawImage(bg[1], o + 960, 0); c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, 0, W, H); }
+  function drawBack(c, t) { const bg = background('nubes'); c.drawImage(bg[0], 0, 0, 960, H); const o = -((t * 10) % 960); c.drawImage(bg[1], o, 0, 960, H); c.drawImage(bg[1], o + 960, 0, 960, H); c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, 0, W, H); }
   return { title: 'GUERRA DE NAVES', sub: 'AGUERE-1 CONTRA LA INVASIÓN', marquee: ['#10306a', '#04081a'], titleCol: '#9fd7ff', baseScore: 80000, music: { title: SONGS.title }, create, drawTitle, drawBack,
     help: (K) => `A DISPARO (MANTÉN = BEAM): ${K('f_punch')}  B MÓDULO: ${K('f_kick')}  MEJORA/MONEDA: ${K('b_pass')}  ESC SALIR` };
 })();
@@ -9865,7 +9874,7 @@ ARCADE.GAMES.guanche = (() => {
   const bgC = {};
   function background(th) { if (bgC[th]) return bgC[th]; let s0 = th.length * 53; const rr = () => { s0 = (s0 * 9301 + 49297) % 233280; return s0 / 233280; }; const L = [];
     const sky = { taoro: ['#0e0a24', '#3a2a5a'], anaga: ['#14202a', '#4a6a6a'], gigantes: ['#0a1430', '#3a4a7a'], canadas: ['#1a0a1a', '#6a2a2a'], teide: ['#1a0402', '#5a1404'] }[th];
-    for (let li = 0; li < 3; li++) { const c = mkCanvas(960, SH), x = c.getContext('2d'); L.push(c);
+    for (let li = 0; li < 3; li++) { const c = mkCanvas(1920, SH * 2), x = c.getContext('2d'); x.scale(2, 2); L.push(c); // v0.82.2: at ×2 (sharper)
       if (li === 0) { const g = x.createLinearGradient(0, 0, 0, SH * 0.7); g.addColorStop(0, sky[0]); g.addColorStop(1, sky[1]); x.fillStyle = g; x.fillRect(0, 0, 960, SH);
         if (th !== 'teide') { for (let i = 0; i < 90; i++) { x.fillStyle = `rgba(255,255,255,${0.2 + rr() * 0.5})`; x.fillRect(rr() * 960, rr() * 150, 1, 1); }
           x.fillStyle = th === 'canadas' ? '#3a1a22' : '#241a3a'; x.beginPath(); x.moveTo(250, 200); x.lineTo(450, 50); x.lineTo(490, 40); x.lineTo(530, 50); x.lineTo(740, 200); x.fill(); // the Teide, dark: no sun
@@ -9886,7 +9895,7 @@ ARCADE.GAMES.guanche = (() => {
   function laurel(x, tx, y, rr) { x.fillStyle = '#1a1410'; x.fillRect(tx - 3, y - 80, 6, 80); x.fillStyle = rr() < 0.5 ? '#14301e' : '#1a3a24'; for (let i = 0; i < 4; i++) { x.beginPath(); x.ellipse(tx + (rr() - 0.5) * 30, y - 90 - i * 14, 24, 14, 0, 0, 7); x.fill(); } }
   function roque(x, cx0, y, rr) { x.fillStyle = '#3a2420'; x.beginPath(); x.moveTo(cx0 - 20, y); x.lineTo(cx0 - 10, y - 70 - rr() * 30); x.lineTo(cx0 + 4, y - 90 - rr() * 20); x.lineTo(cx0 + 18, y); x.fill(); }
   const flC = {};
-  function floorImg(th) { if (flC[th]) return flC[th]; const c = mkCanvas(960, SH - (GY - 8) * Z), x = c.getContext('2d'), h = c.height; let s0 = th.length * 7; const rr = () => { s0 = (s0 * 9301 + 49297) % 233280; return s0 / 233280; };
+  function floorImg(th) { if (flC[th]) return flC[th]; const h = SH - (GY - 8) * Z, c = mkCanvas(1920, Math.ceil(h * 2)), x = c.getContext('2d'); x.scale(2, 2); /* v0.82.2: at ×2 */ let s0 = th.length * 7; const rr = () => { s0 = (s0 * 9301 + 49297) % 233280; return s0 / 233280; };
     const col = { taoro: ['#5a4430', '#4a3624'], anaga: ['#2e3a22', '#24301a'], gigantes: ['#4a4038', '#3a322a'], canadas: ['#7a6a52', '#5a4a3a'], teide: ['#3a1a10', '#2a100a'] }[th];
     const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, col[1]); g.addColorStop(1, col[0]); x.fillStyle = g; x.fillRect(0, 0, 960, h);
     for (let i = 0; i < 500; i++) { x.fillStyle = rr() < 0.5 ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.07)'; x.fillRect(rr() * 960, rr() * h, 2 + rr() * 4, 1 + rr() * 2); }
@@ -10093,8 +10102,8 @@ ARCADE.GAMES.guanche = (() => {
     g.draw = (c) => { const bg = background(L ? L.theme : 'taoro'), th = L ? L.theme : 'taoro';
       if (phase === 'select') { drawSelect(c); return; }
       const night = phase === 'camp'; const ox = (shake > 0 ? (Math.random() - 0.5) * 6 : 0);
-      [0.15, 0.4, 0.7].forEach((k, i) => { const o = -Math.round((camX * Z * k) % 960) + ox; c.drawImage(bg[i], o, 0); c.drawImage(bg[i], o + 960, 0); });
-      const fl = floorImg(th), fo = -Math.round((camX * Z) % 960) + ox; c.drawImage(fl, fo, (GY - 8) * Z); c.drawImage(fl, fo + 960, (GY - 8) * Z);
+      [0.15, 0.4, 0.7].forEach((k, i) => { const o = -Math.round((camX * Z * k) % 960) + ox; c.drawImage(bg[i], o, 0, 960, SH); c.drawImage(bg[i], o + 960, 0, 960, SH); });
+      const fl = floorImg(th), fo = -Math.round((camX * Z) % 960) + ox; c.drawImage(fl, fo, (GY - 8) * Z, 960, fl.height / 2); c.drawImage(fl, fo + 960, (GY - 8) * Z, 960, fl.height / 2);
       if (night) { c.fillStyle = 'rgba(0,0,30,0.45)'; c.fillRect(0, 0, SW, SH); }
       c.save(); c.translate(ox, 0); c.scale(Z, Z);
       if (night) { const fx0 = VW / 2, fy = GY + 20; pblob(c, fx0, fy + 2, 10, 2, 'rgba(255,140,40,0.3)'); for (let i = 0; i < 5; i++) pline(c, fx0 - 6 + i * 3, fy, fx0 - 4 + i * 2, fy - 4, 1.2, '#5a3a1a'); pblob(c, fx0, fy - 4 - Math.sin(time * 9), 3, 4 + Math.sin(time * 13), flick() ? '#ffb02a' : '#ff6a1a'); }
@@ -10128,7 +10137,7 @@ ARCADE.GAMES.guanche = (() => {
       for (let i = 0; i < H.jars; i++) { c.fillStyle = i < p.jars ? '#3a6ad0' : '#1a2440'; c.beginPath(); c.arc(134 + i * 12, 22, 4, 0, 7); c.fill(); }
       A.txt(c, 'VIDAS ' + lives, SW - 8, 4, '#fff', 8, 'right'); const hi = api.hi(); A.txt(c, 'HI ' + String(Math.max(hi, g.score)).padStart(7, '0'), SW - 8, 16, '#ffd400', 8, 'right');
       const bs = E.filter((e) => e.d.boss && e.hp > 0); if (bs.length) { const hp = bs.reduce((a, e) => a + Math.max(0, e.hp), 0), mx = bs.reduce((a, e) => a + e.max, 0); c.fillStyle = '#000'; c.fillRect(100, SH - 22, SW - 200, 8); c.fillStyle = '#e53935'; c.fillRect(101, SH - 21, (SW - 202) * hp / mx, 6); A.txt(c, bs[0].d.boss, SW / 2, SH - 34, '#fff', 6, 'center'); } }
-    function drawSelect(c) { const bg = background('taoro'); c.drawImage(bg[0], 0, 0); c.drawImage(bg[1], 0, 0); c.fillStyle = 'rgba(0,0,0,0.45)'; c.fillRect(0, 0, SW, SH);
+    function drawSelect(c) { const bg = background('taoro'); c.drawImage(bg[0], 0, 0, 960, SH); c.drawImage(bg[1], 0, 0, 960, SH); c.fillStyle = 'rgba(0,0,0,0.45)'; c.fillRect(0, 0, SW, SH);
       A.txt(c, 'ELIGE TU GUERRERO', SW / 2, 16, '#ffd400', 12, 'center');
       HEROES.forEach((H, i) => { const cx0 = 80 + i * 160, on = i === sel; c.fillStyle = on ? 'rgba(255,212,0,0.18)' : 'rgba(0,0,0,0.3)'; c.fillRect(cx0 - 70, 40, 140, 250); if (on) { c.strokeStyle = flick() ? '#ffd400' : '#ff8a3a'; c.lineWidth = 2; c.strokeRect(cx0 - 69, 41, 138, 248); }
         c.save(); c.scale(Z * 1.2, Z * 1.2); const P = on ? cyc(WALK, time * 4) : PO.idle; puppet(c, cx0 / (Z * 1.2), 150 / (Z * 1.2), 1, on && Math.floor(time * 1.5) % 3 === 2 ? PO.smash : P, H.look, null); c.restore();
@@ -10142,12 +10151,12 @@ ARCADE.GAMES.guanche = (() => {
     return g;
   }
   // ---------- title screen and the backdrop of the hi-score table
-  function drawTitle(c, t) { const bg = background('canadas'); c.drawImage(bg[0], 0, 0); const o = -((t * 8) % 960); c.drawImage(bg[1], o, 0); c.drawImage(bg[1], o + 960, 0); c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(0, 0, SW, SH);
+  function drawTitle(c, t) { const bg = background('canadas'); c.drawImage(bg[0], 0, 0, 960, SH); const o = -((t * 8) % 960); c.drawImage(bg[1], o, 0, 960, SH); c.drawImage(bg[1], o + 960, 0, 960, SH); c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(0, 0, SW, SH);
     c.font = '34px "Press Start 2P", monospace'; c.textAlign = 'center'; c.textBaseline = 'top';
     for (const [s, y] of [['GUANCHE', 26], ['WARRIORS', 68]]) { c.fillStyle = '#1a0a04'; c.fillText(s, SW / 2 + 4, y + 4); const gr = c.createLinearGradient(0, y, 0, y + 34); gr.addColorStop(0, '#ffe08a'); gr.addColorStop(0.5, '#e07a2a'); gr.addColorStop(1, '#8a2a0a'); c.fillStyle = gr; c.fillText(s, SW / 2, y); }
     c.save(); c.scale(Z * 1.3, Z * 1.3); const k = Z * 1.3; HEROES.forEach((H, i) => { const P = Math.floor(t * 1.2 + i) % 3 === 0 ? PO.smash : PO.idle; puppet(c, (SW / 2 + (i - 1) * 110) / k, 230 / k, i === 2 ? -1 : 1, i === 1 ? PO.atk1 : P, H.look, null); }); c.restore(); // (the pole in magic pose crossed the logo)
     A.txt(c, 'GUAYOTA HA RAPTADO A MAGEC, EL SOL', SW / 2, 246, '#fff', 8, 'center'); A.txt(c, 'TRES GUERREROS SUBEN AL ECHEYDE', SW / 2, 260, '#9fd7ff', 8, 'center'); A.txt(c, '© 1496 MENCEYATO DE TAORO', SW / 2, 280, '#9fd7ff', 6, 'center'); }
-  function drawBack(c, t) { const bg = background('teide'); c.drawImage(bg[0], 0, 0); const o = -((t * 10) % 960); c.drawImage(bg[2], o, 0); c.drawImage(bg[2], o + 960, 0); c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, 0, SW, SH); }
+  function drawBack(c, t) { const bg = background('teide'); c.drawImage(bg[0], 0, 0, 960, SH); const o = -((t * 10) % 960); c.drawImage(bg[2], o, 0, 960, SH); c.drawImage(bg[2], o + 960, 0, 960, SH); c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, 0, SW, SH); }
   return { title: 'GUANCHE WARRIORS', sub: 'LA NOCHE DE GUAYOTA', marquee: ['#6a1a0a', '#1a0402'], titleCol: '#ffb04a', baseScore: 90000, music: { title: SONGS.title }, create, drawTitle, drawBack,
     help: (K) => `A GOLPE: ${K('f_punch')}  B SALTO / MONTAR: ${K('f_kick')}  MAGIA / MONEDA: ${K('b_pass')}  ←← →→ CORRER  ESC SALIR` };
 })();
@@ -10713,7 +10722,7 @@ const HUD = (() => {
   function blip(x, z, color, size, shape = 'dot', clampEdge = false) {
     // world -> minimap (already transformed context)
     mx.fillStyle = color; mx.strokeStyle = '#000'; mx.lineWidth = 2 / mmScale;
-    mx.beginPath(); if (shape === 'sq') mx.rect(x - size, z - size, size * 2, size * 2); else if (shape === 'tri') { mx.save(); mx.translate(x, z); mx.rotate(-(CAM.yaw - Math.PI)); const k = size * 1.35; mx.moveTo(0, -k); mx.lineTo(k * 0.9, k * 0.65); mx.lineTo(-k * 0.9, k * 0.65); mx.closePath(); mx.restore(); } else mx.arc(x, z, size, 0, 7); mx.fill(); mx.stroke();
+    mx.beginPath(); if (shape === 'sq') mx.rect(x - size, z - size, size * 2, size * 2); else if (shape === 'drop') { mx.save(); mx.translate(x, z); mx.rotate(-(CAM.yaw - Math.PI)); const k = size; mx.moveTo(0, -k * 1.7); mx.lineTo(k * 0.82, -k * 0.2); mx.arc(0, k * 0.25, k * 0.95, -0.5, Math.PI + 0.5); mx.closePath(); mx.restore(); } /* v0.82.2: the toy shops */ else if (shape === 'tri') { mx.save(); mx.translate(x, z); mx.rotate(-(CAM.yaw - Math.PI)); const k = size * 1.35; mx.moveTo(0, -k); mx.lineTo(k * 0.9, k * 0.65); mx.lineTo(-k * 0.9, k * 0.65); mx.closePath(); mx.restore(); } else mx.arc(x, z, size, 0, 7); mx.fill(); mx.stroke();
   }
   let mmScale = 1;
   function drawMinimap() {
@@ -10741,6 +10750,10 @@ const HUD = (() => {
     for (const it of INTERIORS) for (const d of it.doors) { if (Math.abs(d.x - PLAYER.x) < 400 && Math.abs(d.z - PLAYER.z) < 400) blip(d.x, d.z, '#3ddc97', 6 * s * 1.6, 'sq'); }
     for (const f of FOOD.shops) { if (Math.abs(f.x - PLAYER.x) < 400 && Math.abs(f.z - PLAYER.z) < 400) blip(f.x, f.z, '#e53935', 6 * s * 1.6, 'sq'); }
     if (typeof RECRE !== 'undefined') for (const b of RECRE.blips()) edge(b[0], b[1], b[2], 7 * s * 1.6, 'sq'); // v0.80: El Blanco's arcade
+    // v0.82.2 (Jonay: «¿cómo sé dónde hay una juguetería?»): the toy shops (blue drop; the nearest always, at the rim if
+    // far) and the cafés / tascas with the Guerra de Naves machine (a violet ring round their red square)
+    if (typeof AGUA !== 'undefined' && AGUA.isOpen()) { let nb = null, nd = 1e9; for (const t of AGUA.shops) { const d = Math.hypot(t.x - PLAYER.x, t.z - PLAYER.z); if (d < nd) { nd = d; nb = t; } if (d < 400) blip(t.x, t.z, '#1e88e5', 7 * s * 1.6, 'drop'); } if (nb && nd >= 400) edge(nb.x, nb.z, '#1e88e5', 7 * s * 1.6, 'drop'); }
+    if (typeof ARCADE !== 'undefined' && ARCADE.data().invited) for (const f of FOOD.shops) { if ((f.type === 'C' || f.type === 'R') && Math.abs(f.x - PLAYER.x) < 400 && Math.abs(f.z - PLAYER.z) < 400) { mx.strokeStyle = '#b388ff'; mx.lineWidth = 3 * s; mx.beginPath(); mx.arc(f.x, f.z, 11 * s * 1.6, 0, 7); mx.stroke(); } }
     for (const m of MISSIONS.blips()) edge(m[0], m[1], m[2] || '#f5b72e', 9 * s * 1.6, m[3]);
     if (GPS.target) edge(GPS.target[0], GPS.target[1], '#e040fb', 9 * s * 1.6);
     // player arrow
@@ -10828,6 +10841,8 @@ const BIGMAP = (() => {
     const dot = (px, pz, c, r) => { x.fillStyle = c; x.strokeStyle = '#000'; x.lineWidth = 2 / k * devicePixelRatio; x.beginPath(); x.arc(px, pz, r / k * devicePixelRatio, 0, 7); x.fill(); x.stroke(); };
     for (const c of CARS) if (c.driver === 'police') dot(c.x, c.z, '#3d7bff', 5);
     for (const f of FOOD.shops) { x.fillStyle = '#e53935'; x.strokeStyle = '#fff'; x.lineWidth = 1.5 / k * devicePixelRatio; const sz = 5 * devicePixelRatio / k; x.fillRect(f.x - sz, f.z - sz, sz * 2, sz * 2); x.strokeRect(f.x - sz, f.z - sz, sz * 2, sz * 2); }
+    if (typeof ARCADE !== 'undefined' && ARCADE.data().invited) for (const f of FOOD.shops) if (f.type === 'C' || f.type === 'R') { x.strokeStyle = '#b388ff'; x.lineWidth = 2.5 / k * devicePixelRatio; x.beginPath(); x.arc(f.x, f.z, 10 * devicePixelRatio / k, 0, 7); x.stroke(); } // v0.82.2: the Guerra de Naves bars
+    if (typeof AGUA !== 'undefined' && AGUA.isOpen()) for (const t of AGUA.shops) { const a = 7 * devicePixelRatio / k; x.fillStyle = '#1e88e5'; x.strokeStyle = '#fff'; x.lineWidth = 1.8 / k * devicePixelRatio; x.beginPath(); x.moveTo(t.x, t.z - a * 1.7); x.lineTo(t.x + a * 0.82, t.z - a * 0.2); x.arc(t.x, t.z + a * 0.25, a * 0.95, -0.5, Math.PI + 0.5); x.closePath(); x.fill(); x.stroke(); } // v0.82.2: the toy shops
     for (const m of MISSIONS.blips()) { if (m[3] === 'tri') { const a = 11 / k * devicePixelRatio; x.fillStyle = m[2]; x.strokeStyle = '#000'; x.lineWidth = 2 / k * devicePixelRatio; x.beginPath(); x.moveTo(m[0], m[1] - a); x.lineTo(m[0] + a * 0.9, m[1] + a * 0.65); x.lineTo(m[0] - a * 0.9, m[1] + a * 0.65); x.closePath(); x.fill(); x.stroke(); } else dot(m[0], m[1], m[2] || '#f5b72e', 8); }
     for (const q of MISSIONS.aheadPts() || []) dot(q[0], q[1], '#46c3ff', 6);
     if (GPS.target) dot(GPS.target[0], GPS.target[1], '#e040fb', 8);
@@ -12346,17 +12361,17 @@ const DIARIO = (() => {
     { t: 'Maleantes en busca y captura', on: () => G().maleIntro, who: 'Sastrón, por el móvil', log: 'Maleantes en busca y captura',
       what: 'La Policía Local paga una recompensa por cada maleante que le entregues. Cuando hay uno cerca sale en el minimapa como un <b>triángulo rojo</b>: vas, le das una buena tunda (pelea, como siempre) y cobras. Pegan más fuerte que la gente normal; cuanto más nivel, más pagan ($150, $300 o $600). Si te gana, sigue marcado un rato: vuelve a por él.',
       where: 'Por la calle, cuando sale el triángulo rojo en el minimapa.' },
-    { t: 'La máquina de El Blanco: BENCOMO', on: () => ARC().invited, who: BL, log: REC, rec: ['blanco', 'bencomo'],
+    { t: 'La máquina de El Blanco: BENCOMO', on: () => ARC().invited, who: BL, log: REC, rec: ['blanco', 'bencomo'], near: () => ({ name: 'Casa de El Blanco', x: RECRE.DOOR[0], z: RECRE.DOOR[1], d: Math.hypot(RECRE.DOOR[0] - PLAYER.x, RECRE.DOOR[1] - PLAYER.z) }),
       what: 'Una recreativa de las de antes en su casa: <b>«Bencomo, Acentejo\'s Revenge»</b>, plataformas con el mencey de Taoro contra los castellanos. Gratis y cuando quieras: no es una misión.',
       where: 'Casa de El Blanco: la entrada del Edificio Casa del Blanco, en Teobaldo Power (cuadrado naranja en el minimapa). Pulsa E en la puerta.' },
-    { t: 'GUERRA DE NAVES', on: () => ARC().invited, who: BL, log: REC,
+    { t: 'GUERRA DE NAVES', on: () => ARC().invited, who: BL, log: REC, near: () => nearBar(),
       what: 'La máquina de los bares: un matamarcianos de naves por el cielo de Aguere, el Teide y el mar de nubes. A dispara (mantenlo para el disparo cargado), B lanza y recoge el módulo y Q coge la mejora marcada. <b>$1 la partida</b>; cada bar tiene sus récords.',
-      where: 'En las cafeterías y las tascas: pídela en la barra o en el mostrador (E).' },
-    { t: 'GUANCHE WARRIORS', on: () => ARC().invited && G().jugueterias, who: BL, log: REC,
+      where: 'En las cafeterías y las tascas: en el minimapa y en el mapa (M) llevan un aro violeta alrededor de su cuadrado rojo. Pídela en la barra o en el mostrador (E).' },
+    { t: 'GUANCHE WARRIORS', on: () => ARC().invited && G().jugueterias, who: BL, log: REC, near: () => AGUA.nearestShop(),
       what: 'La máquina de las jugueterías: un beat\'em up contra Guayota. Eliges al Mencey, al Pastor o a la Mirladora. A pega, B salta (y monta el lagarto), Q lanza la magia; doble toque para correr. <b>$1 la partida</b>; cada tienda tiene sus récords.',
-      where: 'En las jugueterías (la gota azul del mapa): pídela en la tienda (E).' },
-    { t: 'Las jugueterías', on: () => G().jugueterias, who: '', log: '',
-      what: 'Venden el <b>rifle de agua</b> «Guepardo SK-9» y las bolitas para la pistola, y te llenan el rifle del grifo.', where: 'Las tiendas con la gota azul en el mapa (E en la puerta).' },
+      where: 'En las jugueterías: la gota azul del minimapa y del mapa (M). Pídela en la tienda (E).' },
+    { t: 'Las jugueterías', on: () => G().jugueterias, who: '', log: '', near: () => AGUA.nearestShop(),
+      what: 'Venden el <b>rifle de agua</b> «Guepardo SK-9» y las bolitas para la pistola, y te llenan el rifle del grifo.', where: 'La gota azul del minimapa y del mapa (M): E en la puerta.' },
     { t: 'Retos en las canchas', on: () => G().basketTut, who: 'El Obispo', log: '',
       what: 'Puedes retar a la gente a un partido de baloncesto en cualquier cancha.', where: 'Cualquier cancha de baloncesto: pulsa E en la puerta o junto a la canasta.' },
     { t: 'Retos en los campos de fútbol', on: () => G().futbolTut, who: 'El Obispo', log: '',
@@ -12364,6 +12379,7 @@ const DIARIO = (() => {
     { t: 'El coche patrulla de la banda', on: () => G().patrol, who: 'El alcalde, por el móvil', log: '',
       what: 'Vuestro propio coche patrulla, con el nombre de la banda y el depósito lleno.', where: 'Delante del Ayuntamiento.' },
   ];
+  function nearBar() { let b = null, bd = 1e9; for (const f of FOOD.shops) { if (f.type !== 'C' && f.type !== 'R') continue; const d = Math.hypot(f.x - PLAYER.x, f.z - PLAYER.z); if (d < bd) { bd = d; b = f; } } return b ? { name: b.name, x: b.x, z: b.z, d: bd } : null; }
   const known = () => SABES.map((f, i) => ({ f, i })).filter(({ f }) => { try { return !!f.on(); } catch (e) { return false; } });
   function render() {
     const tracks = MISSIONS.diary().filter((t) => !t.locked).map((t) => ({ ...t, vis: t.list.map((m, i) => ({ m, i })).filter(({ m }) => m.state !== 'pendiente') })).filter((t) => t.vis.length);
@@ -12385,11 +12401,14 @@ const DIARIO = (() => {
       return; }
     if (sel.k === '__f') { const f = SABES[sel.i]; if (!f || !f.on()) { sel = null; return render(); }
       let rec = ''; if (f.rec && typeof ARCADE !== 'undefined' && ARCADE.GAMES[f.rec[1]]) { const t = ARCADE.table(f.rec[0], ARCADE.GAMES[f.rec[1]]); rec = `<div style="margin:0 0 8px;font:400 15px Barlow,sans-serif">🏆 Récord de la máquina: <b>${esc(t[0][0])}</b> · ${t[0][1]}</div>`; }
+      let nr = '', nq = null; try { nq = f.near ? f.near() : null; } catch (e) { nq = null; }
+      if (nq) nr = `<div style="margin:0 0 8px;font:400 15px Barlow,sans-serif">🧭 La más cerca: <b>${esc(nq.name)}</b>, a ${Math.round(nq.d)} m <button class="btn" id="diaGps" style="font-size:13px;padding:5px 12px;margin-left:8px">MARCAR EN EL GPS</button></div>`;
       det.innerHTML = `<div style="font:400 22px Audiowide,Oswald,sans-serif;color:#9fd7ff">${esc(f.t)}</div>
         <div style="color:#bdb6c9;margin:2px 0 8px;font:400 14px Barlow,sans-serif">${f.who ? 'Te lo contó ' + esc(f.who) : 'Lo que sabes'}</div>
         <div style="margin-bottom:8px;font:400 15px Barlow,sans-serif;line-height:1.35">${f.what}</div>
-        <div style="margin-bottom:8px;font:400 15px Barlow,sans-serif">📍 ${f.where}</div>${rec}
+        <div style="margin-bottom:8px;font:400 15px Barlow,sans-serif">📍 ${f.where}</div>${rec}${nr}
         ${f.log ? convo(MISSIONS.log(f.log), '') : ''}`;
+      const gb = det.querySelector('#diaGps'); if (gb && nq) gb.onclick = () => { setWaypoint(nq.x, nq.z); HUD.toast('Ruta marcada en el GPS: ' + nq.name, '#e040fb', 4); close(); };
       return; }
     const t = tracks.find((q) => q.key === sel.k), m = t && t.list[sel.i]; if (!m || m.state === 'pendiente') { sel = null; return render(); }
     const log = MISSIONS.log(m.title);

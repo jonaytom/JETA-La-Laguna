@@ -238,7 +238,7 @@
    ]
   ],
   [
-   "^src/12h_diario|^src/09h_maleantes",
+   "^src/12h_diario|^src/09h_maleantes|^src/11_hud",
    [
     "prueba_0821.py"
    ]

@@ -3,6 +3,22 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.82.2 — 2026-10-20 — Las jugueterías y los bares de la máquina, en el mapa
+- **Las jugueterías salen en el minimapa y en el mapa grande (M)** con la gota azul, una vez abiertas (Jonay: «¿cómo sé
+  dónde hay una juguetería?»). En el minimapa salen las de alrededor, y la más cercana siempre, en el borde si está
+  lejos.
+- **Los bares y cafeterías con la máquina de Guerra de Naves** llevan un aro violeta alrededor de su cuadrado rojo, en el
+  minimapa y en el mapa.
+- **Diario (J)**: en «Lo que sabes», las jugueterías, Guerra de Naves, Guanche Warriors y la máquina de El Blanco dicen
+  cuál te queda más cerca y a cuántos metros. El botón «MARCAR EN EL GPS» te pone la ruta.
+- **Las máquinas se ven más nítidas y limpias** (Jonay: «parece un filtro, como con líneas duplicadas»):
+  - **A la resolución a la que juegas**: la máquina mide tu ventana en píxeles reales (también con la escala de Windows) y
+    dibuja el mueble y el juego directamente a ese tamaño. Un píxel dibujado es un píxel en pantalla, sin estirar ni
+    encoger. Antes se dibujaba en pequeño (480×336) y se estiraba ×2,25 con píxeles duros, y por eso unas filas
+    salían dobles; luego se estiraba otra vez el mueble a la ventana. Si cambias el tamaño de la ventana, se recalcula.
+  - Los fondos de Guerra de Naves y de Guanche Warriors están dibujados al doble de resolución.
+  - Fuera las líneas de barrido de tele de tubo: solo salen si se activa `SETTINGS.crt`.
+
 ## 0.82.1 — 2026-10-20 — El diario cuenta lo que te dicen por el móvil y solo enseña lo que ya puedes hacer
 - **Diario (J), sección nueva «Lo que sabes»** (Jonay): todo lo que te cuentan por el móvil, cada cosa con su entrada.
   Cada entrada dice quién te lo contó, qué es, dónde está y la conversación. Hay entradas para:

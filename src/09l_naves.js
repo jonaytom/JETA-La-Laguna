@@ -62,7 +62,7 @@ ARCADE.GAMES.naves = (() => {
   const bgCache = {};
   function background(theme) {
     if (bgCache[theme]) return bgCache[theme]; const Ls = []; let s = theme.length * 91; const rr = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
-    for (let li = 0; li < 3; li++) { const c = mkCanvas(960, H), x = c.getContext('2d'); Ls.push(c);
+    for (let li = 0; li < 3; li++) { const c = mkCanvas(1920, H * 2), x = c.getContext('2d'); x.scale(2, 2); Ls.push(c); // v0.82.2: at ×2 (sharper)
       if (li === 0) { const gr = x.createLinearGradient(0, 0, 0, H);
         const sky = theme === 'cielo' ? ['#1d3f7a', '#e9a46a'] : theme === 'volcan' ? ['#1a0604', '#5a1408'] : ['#060a24', '#3b4f8a']; gr.addColorStop(0, sky[0]); gr.addColorStop(1, sky[1]); x.fillStyle = gr; x.fillRect(0, 0, 960, H);
         if (theme !== 'volcan') for (let i = 0; i < (theme === 'nubes' ? 140 : 40); i++) { x.fillStyle = `rgba(255,255,255,${0.3 + rr() * 0.6})`; x.fillRect((rr() * 960) | 0, (rr() * H * 0.6) | 0, 1, 1); }
@@ -272,7 +272,7 @@ ARCADE.GAMES.naves = (() => {
     // ---------- drawing
     const flick = () => Math.floor(time * 20) % 2 === 0;
     g.draw = (c) => { const bg = background(L.theme);
-      [0.08, 0.3, 0.7].forEach((k, i) => { const off = -Math.round((bgX * k) % 960); c.drawImage(bg[i], off, 0); c.drawImage(bg[i], off + 960, 0); });
+      [0.08, 0.3, 0.7].forEach((k, i) => { const off = -Math.round((bgX * k) % 960); c.drawImage(bg[i], off, 0, 960, H); c.drawImage(bg[i], off + 960, 0, 960, H); });
       drawTerrain(c);
       for (const it of items) { const bob = Math.round(Math.sin(it.t * 5) * 2);
         if (it.k === 'c') { A.draw(c, S('caps', CAPS), it.x - 5, it.y - 3 + bob); }
@@ -346,14 +346,14 @@ ARCADE.GAMES.naves = (() => {
     return g;
   }
   // ---------- title screen (attract) and the backdrop of the hi-score table
-  function drawTitle(c, t) { const bg = background('nubes'); const o = -((t * 20) % 960); c.drawImage(bg[0], 0, 0); c.drawImage(bg[2], o, 0); c.drawImage(bg[2], o + 960, 0);
+  function drawTitle(c, t) { const bg = background('nubes'); const o = -((t * 20) % 960); c.drawImage(bg[0], 0, 0, 960, H); c.drawImage(bg[2], o, 0, 960, H); c.drawImage(bg[2], o + 960, 0, 960, H);
     c.fillStyle = 'rgba(0,0,0,0.3)'; c.fillRect(0, 0, W, H);
     c.font = '34px "Press Start 2P", monospace'; c.textAlign = 'center'; c.textBaseline = 'top';
     for (const [s, y] of [['GUERRA', 40], ['DE NAVES', 84]]) { c.fillStyle = '#0b0f1a'; c.fillText(s, W / 2 + 4, y + 4); const gr = c.createLinearGradient(0, y, 0, y + 34); gr.addColorStop(0, '#fff'); gr.addColorStop(0.45, '#9fd7ff'); gr.addColorStop(0.55, '#2f7fe0'); gr.addColorStop(1, '#ffd400'); c.fillStyle = gr; c.fillText(s, W / 2, y); }
     const s = A.hires(A.sprite('nv_ship', SHIP, P)); const sx = ((t * 120) % (W + 200)) - 100; c.drawImage(s.h2, sx, 150, 96, 44); c.fillStyle = Math.floor(t * 20) % 2 ? '#ffd400' : '#ff8a3a'; c.fillRect(sx - 14, 169, 12, 6);
     A.txt(c, 'LA LAGUNA, 1987', W / 2, 216, '#fff', 8, 'center'); A.txt(c, 'LOS INVASORES LLEGAN CON LA BRUMA', W / 2, 230, '#fff', 8, 'center'); A.txt(c, 'SOLO EL AGUERE-1 PUEDE PARARLOS', W / 2, 244, '#9fd7ff', 8, 'center');
     A.txt(c, '© 1987 LAGUNASOFT', W / 2, 270, '#9fd7ff', 6, 'center'); }
-  function drawBack(c, t) { const bg = background('nubes'); c.drawImage(bg[0], 0, 0); const o = -((t * 10) % 960); c.drawImage(bg[1], o, 0); c.drawImage(bg[1], o + 960, 0); c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, 0, W, H); }
+  function drawBack(c, t) { const bg = background('nubes'); c.drawImage(bg[0], 0, 0, 960, H); const o = -((t * 10) % 960); c.drawImage(bg[1], o, 0, 960, H); c.drawImage(bg[1], o + 960, 0, 960, H); c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, 0, W, H); }
   return { title: 'GUERRA DE NAVES', sub: 'AGUERE-1 CONTRA LA INVASIÓN', marquee: ['#10306a', '#04081a'], titleCol: '#9fd7ff', baseScore: 80000, music: { title: SONGS.title }, create, drawTitle, drawBack,
     help: (K) => `A DISPARO (MANTÉN = BEAM): ${K('f_punch')}  B MÓDULO: ${K('f_kick')}  MEJORA/MONEDA: ${K('b_pass')}  ESC SALIR` };
 })();

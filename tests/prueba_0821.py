@@ -35,6 +35,17 @@ async def run(pg):
     ok3 = c['sabes'] and all(x in c['sabidos'] for x in ['Maleantes en busca y captura', 'La máquina de El Blanco: BENCOMO', 'GUERRA DE NAVES', 'GUANCHE WARRIORS', 'Las jugueterías', 'Retos en las canchas']) and 'El coche patrulla de la banda' not in c['sabidos'] \
         and c['detalle_quien'] and c['detalle_donde'] and c['detalle_charla'] and m['maleantes']
     print('SABES', 'OK' if ok3 else 'FALLA'); ok = ok and ok3
+    # 4) v0.82.2: the toy shops on the minimap / big map, the nearest one and «MARCAR EN EL GPS» in the diary
+    g = json.loads(await pg.evaluate("""(()=>{ const d=__dbg; const abierto=d.AGUA.isOpen(); const n=d.AGUA.nearestShop(); __step(3); d.BIGMAP.toggle(); const big=d.BIGMAP.open; d.BIGMAP.toggle(); d.GAME.state='play';
+      d.DIARIO.open(); const items=[...document.querySelectorAll('#diaList .diaItem')].filter(e=>e.dataset.k==='__f'); const it=items.find(e=>e.textContent.includes('Las jugueterías')); if (it) it.click();
+      const D=document.getElementById('diaDet').textContent; const b=document.getElementById('diaGps'); if (b) b.click(); const T=d.GPS.target;
+      return JSON.stringify({ abierto, cercana: n && n.name, metros: n && Math.round(n.d), mapa: big, texto: D.includes('La más cerca'), gps: !!T && !!n && Math.hypot(T[0]-n.x, T[1]-n.z) < 1, cerrado: !d.DIARIO.open_ }); })()"""))
+    print('jugueterías en el mapa', g)
+    await pg.evaluate("(()=>{ __dbg.GAME.state='play'; __dbg.BIGMAP.toggle(); })()"); await pg.wait_for_timeout(300)
+    os.makedirs('shots', exist_ok=True); open('shots/v0822_mapa.jpg', 'wb').write(base64.b64decode((await pg.evaluate("document.getElementById('bmc').toDataURL('image/jpeg', 0.85)")).split(',')[1])); print('foto v0822_mapa')
+    await pg.evaluate("(()=>{ __dbg.BIGMAP.toggle(); __dbg.setWaypoint(null); })()")
+    ok4 = g['abierto'] and g['cercana'] and g['mapa'] and g['texto'] and g['gps'] and g['cerrado']
+    print('MAPA', 'OK' if ok4 else 'FALLA'); ok = ok and ok4
     await pg.evaluate("(()=>{ const k=window.__keep, G=window.GANG; G.maleIntro=k.m; G.sastronTut=k.s; G.jugueterias=k.j; G.basketTut=k.b; G.futbolTut=k.f; G.patrol=k.p; __dbg.ARCADE.data().invited=k.i; })()")
     print('errores', errs[:3]); ok = ok and not errs
     print('PRUEBA 0821', 'OK' if ok else 'FALLA')

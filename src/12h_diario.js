@@ -28,17 +28,17 @@ const DIARIO = (() => {
     { t: 'Maleantes en busca y captura', on: () => G().maleIntro, who: 'Sastrón, por el móvil', log: 'Maleantes en busca y captura',
       what: 'La Policía Local paga una recompensa por cada maleante que le entregues. Cuando hay uno cerca sale en el minimapa como un <b>triángulo rojo</b>: vas, le das una buena tunda (pelea, como siempre) y cobras. Pegan más fuerte que la gente normal; cuanto más nivel, más pagan ($150, $300 o $600). Si te gana, sigue marcado un rato: vuelve a por él.',
       where: 'Por la calle, cuando sale el triángulo rojo en el minimapa.' },
-    { t: 'La máquina de El Blanco: BENCOMO', on: () => ARC().invited, who: BL, log: REC, rec: ['blanco', 'bencomo'],
+    { t: 'La máquina de El Blanco: BENCOMO', on: () => ARC().invited, who: BL, log: REC, rec: ['blanco', 'bencomo'], near: () => ({ name: 'Casa de El Blanco', x: RECRE.DOOR[0], z: RECRE.DOOR[1], d: Math.hypot(RECRE.DOOR[0] - PLAYER.x, RECRE.DOOR[1] - PLAYER.z) }),
       what: 'Una recreativa de las de antes en su casa: <b>«Bencomo, Acentejo\'s Revenge»</b>, plataformas con el mencey de Taoro contra los castellanos. Gratis y cuando quieras: no es una misión.',
       where: 'Casa de El Blanco: la entrada del Edificio Casa del Blanco, en Teobaldo Power (cuadrado naranja en el minimapa). Pulsa E en la puerta.' },
-    { t: 'GUERRA DE NAVES', on: () => ARC().invited, who: BL, log: REC,
+    { t: 'GUERRA DE NAVES', on: () => ARC().invited, who: BL, log: REC, near: () => nearBar(),
       what: 'La máquina de los bares: un matamarcianos de naves por el cielo de Aguere, el Teide y el mar de nubes. A dispara (mantenlo para el disparo cargado), B lanza y recoge el módulo y Q coge la mejora marcada. <b>$1 la partida</b>; cada bar tiene sus récords.',
-      where: 'En las cafeterías y las tascas: pídela en la barra o en el mostrador (E).' },
-    { t: 'GUANCHE WARRIORS', on: () => ARC().invited && G().jugueterias, who: BL, log: REC,
+      where: 'En las cafeterías y las tascas: en el minimapa y en el mapa (M) llevan un aro violeta alrededor de su cuadrado rojo. Pídela en la barra o en el mostrador (E).' },
+    { t: 'GUANCHE WARRIORS', on: () => ARC().invited && G().jugueterias, who: BL, log: REC, near: () => AGUA.nearestShop(),
       what: 'La máquina de las jugueterías: un beat\'em up contra Guayota. Eliges al Mencey, al Pastor o a la Mirladora. A pega, B salta (y monta el lagarto), Q lanza la magia; doble toque para correr. <b>$1 la partida</b>; cada tienda tiene sus récords.',
-      where: 'En las jugueterías (la gota azul del mapa): pídela en la tienda (E).' },
-    { t: 'Las jugueterías', on: () => G().jugueterias, who: '', log: '',
-      what: 'Venden el <b>rifle de agua</b> «Guepardo SK-9» y las bolitas para la pistola, y te llenan el rifle del grifo.', where: 'Las tiendas con la gota azul en el mapa (E en la puerta).' },
+      where: 'En las jugueterías: la gota azul del minimapa y del mapa (M). Pídela en la tienda (E).' },
+    { t: 'Las jugueterías', on: () => G().jugueterias, who: '', log: '', near: () => AGUA.nearestShop(),
+      what: 'Venden el <b>rifle de agua</b> «Guepardo SK-9» y las bolitas para la pistola, y te llenan el rifle del grifo.', where: 'La gota azul del minimapa y del mapa (M): E en la puerta.' },
     { t: 'Retos en las canchas', on: () => G().basketTut, who: 'El Obispo', log: '',
       what: 'Puedes retar a la gente a un partido de baloncesto en cualquier cancha.', where: 'Cualquier cancha de baloncesto: pulsa E en la puerta o junto a la canasta.' },
     { t: 'Retos en los campos de fútbol', on: () => G().futbolTut, who: 'El Obispo', log: '',
@@ -46,6 +46,7 @@ const DIARIO = (() => {
     { t: 'El coche patrulla de la banda', on: () => G().patrol, who: 'El alcalde, por el móvil', log: '',
       what: 'Vuestro propio coche patrulla, con el nombre de la banda y el depósito lleno.', where: 'Delante del Ayuntamiento.' },
   ];
+  function nearBar() { let b = null, bd = 1e9; for (const f of FOOD.shops) { if (f.type !== 'C' && f.type !== 'R') continue; const d = Math.hypot(f.x - PLAYER.x, f.z - PLAYER.z); if (d < bd) { bd = d; b = f; } } return b ? { name: b.name, x: b.x, z: b.z, d: bd } : null; }
   const known = () => SABES.map((f, i) => ({ f, i })).filter(({ f }) => { try { return !!f.on(); } catch (e) { return false; } });
   function render() {
     const tracks = MISSIONS.diary().filter((t) => !t.locked).map((t) => ({ ...t, vis: t.list.map((m, i) => ({ m, i })).filter(({ m }) => m.state !== 'pendiente') })).filter((t) => t.vis.length);
@@ -67,11 +68,14 @@ const DIARIO = (() => {
       return; }
     if (sel.k === '__f') { const f = SABES[sel.i]; if (!f || !f.on()) { sel = null; return render(); }
       let rec = ''; if (f.rec && typeof ARCADE !== 'undefined' && ARCADE.GAMES[f.rec[1]]) { const t = ARCADE.table(f.rec[0], ARCADE.GAMES[f.rec[1]]); rec = `<div style="margin:0 0 8px;font:400 15px Barlow,sans-serif">🏆 Récord de la máquina: <b>${esc(t[0][0])}</b> · ${t[0][1]}</div>`; }
+      let nr = '', nq = null; try { nq = f.near ? f.near() : null; } catch (e) { nq = null; }
+      if (nq) nr = `<div style="margin:0 0 8px;font:400 15px Barlow,sans-serif">🧭 La más cerca: <b>${esc(nq.name)}</b>, a ${Math.round(nq.d)} m <button class="btn" id="diaGps" style="font-size:13px;padding:5px 12px;margin-left:8px">MARCAR EN EL GPS</button></div>`;
       det.innerHTML = `<div style="font:400 22px Audiowide,Oswald,sans-serif;color:#9fd7ff">${esc(f.t)}</div>
         <div style="color:#bdb6c9;margin:2px 0 8px;font:400 14px Barlow,sans-serif">${f.who ? 'Te lo contó ' + esc(f.who) : 'Lo que sabes'}</div>
         <div style="margin-bottom:8px;font:400 15px Barlow,sans-serif;line-height:1.35">${f.what}</div>
-        <div style="margin-bottom:8px;font:400 15px Barlow,sans-serif">📍 ${f.where}</div>${rec}
+        <div style="margin-bottom:8px;font:400 15px Barlow,sans-serif">📍 ${f.where}</div>${rec}${nr}
         ${f.log ? convo(MISSIONS.log(f.log), '') : ''}`;
+      const gb = det.querySelector('#diaGps'); if (gb && nq) gb.onclick = () => { setWaypoint(nq.x, nq.z); HUD.toast('Ruta marcada en el GPS: ' + nq.name, '#e040fb', 4); close(); };
       return; }
     const t = tracks.find((q) => q.key === sel.k), m = t && t.list[sel.i]; if (!m || m.state === 'pendiente') { sel = null; return render(); }
     const log = MISSIONS.log(m.title);

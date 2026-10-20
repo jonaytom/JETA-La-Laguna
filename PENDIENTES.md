@@ -5,8 +5,18 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 
 ## Por revisar con Jonay
 
-- [ ] **Auditoría v0.82.1** (20-oct 17:30, APTO CON AVISOS): pintar un fotograma sube de 31,3 a 34,9 ms y el arranque
-  de 9,1 a 9,9 s. Probablemente es ruido: esta versión solo toca el diario y las máquinas. Mirarlo en la próxima.
+- [ ] **Lint**: dos veces hoy (v0.82.0 y v0.82.2) un comentario `//` puesto a media línea se comió el código que iba
+  detrás, y `lint_js.py` no lo vio. Mejorar la regla: avisar de cualquier `//` seguido de `;` y de más código en la
+  misma línea.
+- [x] (v0.82.2) **¿Dónde hay una juguetería?** (Jonay, 20-oct). Ahora mismo solo se ve el icono de la gota azul flotando sobre la
+  tienda cuando estás a menos de unos 400 m; no salen en el minimapa ni en el mapa grande (M). Propuesta:
+  - Ponerlas en el minimapa y en el mapa grande con la gota azul, una vez abiertas.
+  - Lo mismo para los bares y cafeterías de la máquina de Guerra de Naves.
+  - En el diario, «la más cercana» con el botón de ruta del GPS.
+- [ ] **Auditorías v0.82.1 y v0.82.2** (20-oct, APTO CON AVISOS):
+  - Pintar un fotograma: 31,3 → 34,9 → 35,3 ms. El arranque: 9,1 → 9,9 → 10,0 s. Se repite en dos pasadas, así que
+    no parece ruido. Mirar qué lo sube: la 0.82.1 solo tocó el diario, el jefe de Bencomo y Guanche Warriors.
+  - `12h_diario.js` baja de nota de A a B: las líneas de HTML del diario son muy largas; partirlas.
 - [x] (v0.82.1) **Diario (J): todo lo que te cuentan por el móvil también sale en el diario** (Jonay, 20-oct):
   - Por ejemplo, lo de los maleantes y lo de las recreativas que explica El Blanco: Bencomo en su casa, Guerra de
     Naves en los bares y Guanche Warriors en las jugueterías. También todas las cosas de ese tipo.
