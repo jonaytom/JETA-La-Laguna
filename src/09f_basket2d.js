@@ -416,7 +416,7 @@ const BASKET2D = (() => {
     const hu = st.p.find((q) => q.human); MINI.turbo(cx, H, hu.turbo);
     if (st.tip) { cx.fillStyle = 'rgba(0,0,0,0.7)'; cx.fillRect(40, H - 34, W - 80, 16); txt(st.tip, W / 2, H - 29, 6, '#ffd400'); }
     MINI.banner(cx, st, W, 64, 10);
-    if (st.phase === 'ready') { cx.fillStyle = 'rgba(0,0,0,0.8)'; cx.fillRect(60, 50, W - 120, 132); txt('JETA JAM · 2 CONTRA 2', W / 2, 58, 9, '#ffd400');
+    if (st.phase === 'ready') { cx.fillStyle = 'rgba(0,0,0,0.8)'; cx.fillRect(60, 50, W - 120, 132); txt(`JETA JAM · ${st.p.length >> 1} CONTRA ${st.p.length >> 1}`, W / 2, 58, 9, '#ffd400');
       const rows = [['MOVERSE', `${K_('left')} ${K_('right')} ${K_('fwd')} ${K_('back')}`], ['TIRAR (mantén, suelta en verde)', `clic izq. · ${K_('f_punch')}`], ['PASAR / ROBAR / CAMBIAR', `clic dcho. · ${K_('b_pass')}`], ['TAPÓN (defendiendo)', `clic izq. · ${K_('f_punch')}`], ['CORRER (turbo)', K_('f_kick')], ['COMBO', 'corriendo + tiro a media distancia']];
       MINI.rows(cx, W, rows, 78);
       if (Math.floor(st.time0 * 2) % 2 === 0) txt(`CLIC IZQ. O ${K_('f_punch').toUpperCase()} PARA EMPEZAR`, W / 2, 162, 7, '#7fe08a'); }

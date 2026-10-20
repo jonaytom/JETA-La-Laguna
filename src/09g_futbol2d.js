@@ -347,10 +347,10 @@ const FUTBOL2D = (() => {
     drawRadar();
     if (st.tip) { cx.fillStyle = 'rgba(0,0,0,0.7)'; cx.fillRect(30, H - 46, W - 90, 16); txt(st.tip, (W - 60) / 2, H - 41, 5, '#ffd400'); }
     MINI.banner(cx, st, W, 60, 9);
-    if (st.phase === 'ready') { cx.fillStyle = 'rgba(0,0,0,0.82)'; cx.fillRect(60, 48, W - 120, 140); txt('JETA SOCCER · 5 CONTRA 5', W / 2, 56, 9, '#ffd400');
+    if (st.phase === 'ready') { cx.fillStyle = 'rgba(0,0,0,0.82)'; cx.fillRect(60, 48, W - 120, 150); txt('JETA SOCCER · 5 CONTRA 5', W / 2, 56, 9, '#ffd400');
       const rows = [['MOVERSE', `${K_('left')} ${K_('right')} ${K_('fwd')} ${K_('back')}`], ['CHUTAR (mantén y suelta)', `clic izq. · ${K_('f_punch')}`], ['EFECTO (tras chutar)', `${K_('left')} / ${K_('right')}`], ['PASAR (mantén: más fuerte y bombeado)', `clic dcho. · ${K_('b_pass')}`], ['ENTRADA (sin balón)', `clic izq. · ${K_('f_punch')}`], ['CAMBIAR DE JUGADOR', `clic dcho. · ${K_('b_pass')}`], ['CORRER (turbo)', K_('f_kick')], ['REGATE (con balón)', `${K_('f_kick')} dos veces`]];
       MINI.rows(cx, W, rows, 74);
-      if (Math.floor(st.time0 * 2) % 2 === 0) txt(`CLIC IZQ. O ${K_('f_punch').toUpperCase()} PARA EMPEZAR`, W / 2, 170, 7, '#7fe08a'); }
+      if (Math.floor(st.time0 * 2) % 2 === 0) txt(`CLIC IZQ. O ${K_('f_punch').toUpperCase()} PARA EMPEZAR`, W / 2, 184, 7, '#7fe08a'); }
     if (st.phase === 'end') MINI.endScreen(cx, W, st.score);
     if (st.fade > 0) { cx.fillStyle = `rgba(0,0,0,${st.fade})`; cx.fillRect(0, 0, W, H); }
   }

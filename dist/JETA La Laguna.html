@@ -205,7 +205,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="tb" id="tbS">CORRER</div>
 <div class="tb" id="tbM">MAPA</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">v0.84.0</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">v0.85.0</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -8110,7 +8110,7 @@ const BASKET2D = (() => {
     const hu = st.p.find((q) => q.human); MINI.turbo(cx, H, hu.turbo);
     if (st.tip) { cx.fillStyle = 'rgba(0,0,0,0.7)'; cx.fillRect(40, H - 34, W - 80, 16); txt(st.tip, W / 2, H - 29, 6, '#ffd400'); }
     MINI.banner(cx, st, W, 64, 10);
-    if (st.phase === 'ready') { cx.fillStyle = 'rgba(0,0,0,0.8)'; cx.fillRect(60, 50, W - 120, 132); txt('JETA JAM · 2 CONTRA 2', W / 2, 58, 9, '#ffd400');
+    if (st.phase === 'ready') { cx.fillStyle = 'rgba(0,0,0,0.8)'; cx.fillRect(60, 50, W - 120, 132); txt(`JETA JAM · ${st.p.length >> 1} CONTRA ${st.p.length >> 1}`, W / 2, 58, 9, '#ffd400');
       const rows = [['MOVERSE', `${K_('left')} ${K_('right')} ${K_('fwd')} ${K_('back')}`], ['TIRAR (mantén, suelta en verde)', `clic izq. · ${K_('f_punch')}`], ['PASAR / ROBAR / CAMBIAR', `clic dcho. · ${K_('b_pass')}`], ['TAPÓN (defendiendo)', `clic izq. · ${K_('f_punch')}`], ['CORRER (turbo)', K_('f_kick')], ['COMBO', 'corriendo + tiro a media distancia']];
       MINI.rows(cx, W, rows, 78);
       if (Math.floor(st.time0 * 2) % 2 === 0) txt(`CLIC IZQ. O ${K_('f_punch').toUpperCase()} PARA EMPEZAR`, W / 2, 162, 7, '#7fe08a'); }
@@ -8508,10 +8508,10 @@ const FUTBOL2D = (() => {
     drawRadar();
     if (st.tip) { cx.fillStyle = 'rgba(0,0,0,0.7)'; cx.fillRect(30, H - 46, W - 90, 16); txt(st.tip, (W - 60) / 2, H - 41, 5, '#ffd400'); }
     MINI.banner(cx, st, W, 60, 9);
-    if (st.phase === 'ready') { cx.fillStyle = 'rgba(0,0,0,0.82)'; cx.fillRect(60, 48, W - 120, 140); txt('JETA SOCCER · 5 CONTRA 5', W / 2, 56, 9, '#ffd400');
+    if (st.phase === 'ready') { cx.fillStyle = 'rgba(0,0,0,0.82)'; cx.fillRect(60, 48, W - 120, 150); txt('JETA SOCCER · 5 CONTRA 5', W / 2, 56, 9, '#ffd400');
       const rows = [['MOVERSE', `${K_('left')} ${K_('right')} ${K_('fwd')} ${K_('back')}`], ['CHUTAR (mantén y suelta)', `clic izq. · ${K_('f_punch')}`], ['EFECTO (tras chutar)', `${K_('left')} / ${K_('right')}`], ['PASAR (mantén: más fuerte y bombeado)', `clic dcho. · ${K_('b_pass')}`], ['ENTRADA (sin balón)', `clic izq. · ${K_('f_punch')}`], ['CAMBIAR DE JUGADOR', `clic dcho. · ${K_('b_pass')}`], ['CORRER (turbo)', K_('f_kick')], ['REGATE (con balón)', `${K_('f_kick')} dos veces`]];
       MINI.rows(cx, W, rows, 74);
-      if (Math.floor(st.time0 * 2) % 2 === 0) txt(`CLIC IZQ. O ${K_('f_punch').toUpperCase()} PARA EMPEZAR`, W / 2, 170, 7, '#7fe08a'); }
+      if (Math.floor(st.time0 * 2) % 2 === 0) txt(`CLIC IZQ. O ${K_('f_punch').toUpperCase()} PARA EMPEZAR`, W / 2, 184, 7, '#7fe08a'); }
     if (st.phase === 'end') MINI.endScreen(cx, W, st.score);
     if (st.fade > 0) { cx.fillStyle = `rgba(0,0,0,${st.fade})`; cx.fillRect(0, 0, W, H); }
   }
@@ -8760,7 +8760,7 @@ const AGUA = (() => {
   function openShop(s) {
     const items = []; if (ARCADE.data().invited) items.push(['arc', '🕹 Echar una partida a la máquina: <b>GUANCHE WARRIORS</b> · <b>$1</b> la partida']); // v0.82: the toy shops' machine
     // v0.83: the GOFIO-8 console for the TV at home and its cartridges (once El Blanco has told you about the arcades)
-    const A_ = ARCADE.data(), CART = { bencomo: 90, naves: 120, guanche: 150 };
+    const A_ = ARCADE.data(), CART = { bencomo: 90, naves: 120, guanche: 150, pachanga: 140, furbito: 140 }; // v0.85: + the two sports cartridges
     if (A_.invited && !A_.console) items.push(['console', '🎮 Consola <b>GOFIO-8</b> para la tele de casa · <b>$1.200</b>']);
     if (A_.console) for (const id in CART) if (!A_.bought.includes(id) && ARCADE.GAMES[id]) items.push(['cart_' + id, `💾 Cartucho «${ARCADE.GAMES[id].title}» para la GOFIO-8 · <b>$${CART[id]}</b>`, CART[id], id]);
     if (!RIFLE.has) items.push(['rifle', `Rifle de agua «Guepardo SK-9» eléctrico · <b>$${PRICE}</b>`]); else items.push(['fill', 'Llenar el rifle de agua (del grifo de la tienda) · <b>$2</b>']); if (WEAPON.has) items.push(['balls', `Bolsa de bolitas para la pistola (6) · <b>$${BALLS}</b>`]);
@@ -8768,7 +8768,9 @@ const AGUA = (() => {
       DLG.hide(); const it = items[i]; if (!it) return;
       if (it[0] === 'console' || it[0].startsWith('cart_')) { const cost2 = it[0] === 'console' ? 1200 : it[2]; if (PLAYER.money < cost2) { AUDIO.fail(); HUD.toast('No te llega el dinero: cuesta $' + cost2, '#ffb3b3', 3); return; } PLAYER.money -= cost2; AUDIO.cash && AUDIO.cash();
         if (it[0] === 'console') { A_.console = true; HUD.big('¡GOFIO-8!', '#7fe0ff', 3); HUD.toast(CASA.ownsAny() ? 'La consola ya está en la tele de tu casa. Ahora compra cartuchos aquí.' : 'Tienes la consola… pero te hace falta una casa con tele: la inmobiliaria Pisos Chachi alquila y vende pisos.', '#7fe0ff', 7); }
-        else { A_.bought.push(it[3]); HUD.toast(`Cartucho «${ARCADE.GAMES[it[3]].title}»: ya lo puedes jugar en la GOFIO-8 de tu casa`, '#7fe0ff', 5); }
+        else { A_.bought.push(it[3]); HUD.toast(`Cartucho «${ARCADE.GAMES[it[3]].title}»: ya lo puedes jugar en la GOFIO-8 de tu casa`, '#7fe0ff', 5);
+          // v0.85 (Jonay): with every cartridge bought, the shop tells you you're a «superfriki jugón»: the video game tournament
+          if (!A_.torneo && Object.keys(CART).every((k) => A_.bought.includes(k))) { A_.torneo = true; setTimeout(() => DLG.show(s.name, '¡SUPERFRIKI JUGÓN!', '«¡Ños, mi niño! ¡Te has comprado <b>todos los cartuchos</b>! Eres un <b>superfriki jugón</b> de los de verdad.» El dependiente te da un papelito: <b>el torneo de videojuegos de La Laguna</b>. Para ganarlo hay que batir el récord de todos los juegos de puntos y ganar el mundialito de Pachanga 3x3 y de Play Furbito.', '', ['¡Me apunto!'], () => { DLG.hide(); HUD.big('TORNEO DE VIDEOJUEGOS', '#ffd400', 3.5); }), 600); } }
         SAVE && SAVE.dirty && SAVE.dirty(); return; }
       if (it[0] === 'arc') { ARCADE.open({ id: 'guanche', key: 'jug_' + s.name, where: String(s.name).toUpperCase(), price: 1 }, (r) => { if (r && r.paid) HUD.toast(`Te has dejado $${r.paid} en la máquina`, '#9fd7ff', 3); }); return; }
       const cost = it[0] === 'rifle' ? PRICE : it[0] === 'balls' ? BALLS : 2;
@@ -8935,7 +8937,7 @@ const ARCADE = (() => {
     music: { title: { bpm: 120, div: 4, loop: false, ch: [{ w: 'sq', v: 0.8, n: 'C5 E5 G5 C6 . . . . G5 . C6 . . . . . - . . .' }, { w: 'tri', v: 1, n: 'C3 . G3 . C3 . . . G2 . C3 . . . . .' }] } } };
   function toMenu() { M.game = CONSOLE; M.key = 'consola'; M.bz = null; st.mode = 'menu'; st.view = 'title'; st.t = 0; G = null; stopMusic(); music(CONSOLE.music.title); }
   function menu(dt) { st.t += dt; const L = M.console; if (hit('vU')) { st.sel = (st.sel + L.length - 1) % L.length; sfx('pick'); } if (hit('vD')) { st.sel = (st.sel + 1) % L.length; sfx('pick'); }
-    if ((hit('vS') || hit('vT')) && st.t > 0.4) { const id = L[st.sel], g = GAMES[id]; if (!g) return; M.game = g; M.key = 'casa_' + id; M.where = 'TU CASA'; M.bz = null; sfx('coin'); toAttract(); } }
+    if ((hit('vS') || hit('vT')) && st.t > 0.4) { const id = L[st.sel], g = GAMES[id]; if (!g) return; if (g.external) { sfx('coin'); close(); setTimeout(() => g.external(), 60); return; } /* v0.85: Pachanga 3x3 / Play Furbito leave the cabinet for their own game */ M.game = g; M.key = 'casa_' + id; M.where = 'TU CASA'; M.bz = null; sfx('coin'); toAttract(); } }
   function drawMenu() { const g = sx; g.setTransform(RS, 0, 0, RS, 0, 0); g.imageSmoothingEnabled = false; const t = st.t;
     const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#0a0a24'); gr.addColorStop(1, '#2a1a3a'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
     for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(255,255,255,${0.2 + ((i * 37) % 10) / 20})`; g.fillRect((i * 97 + t * 10) % W, (i * 53) % (H * 0.5), 1, 1); }
@@ -8974,7 +8976,7 @@ const ARCADE = (() => {
   // ---------- loop
   function loop(now) { if (!running) return; raf = requestAnimationFrame(loop); const dt = Math.min(0.1, (now - last) / 1000); last = now; acc += dt;
     while (acc >= 1 / 60) { step(1 / 60); IN.frame(); acc -= 1 / 60; } render(); present(); }
-  function step(dt) { if (st.msgT > 0) st.msgT -= dt; if (st.mode === 'menu') menu(dt); else if (st.mode === 'attract') attract(dt); else if (st.mode === 'play') play(dt); else if (st.mode === 'cont') cont(dt); else if (st.mode === 'name') nameEntry(dt); }
+  function step(dt) { if (!running || !M) return; /* v0.85: nothing after close (a cartridge that leaves the console) */ if (st.msgT > 0) st.msgT -= dt; if (st.mode === 'menu') menu(dt); else if (st.mode === 'attract') attract(dt); else if (st.mode === 'play') play(dt); else if (st.mode === 'cont') cont(dt); else if (st.mode === 'name') nameEntry(dt); }
   const api = { W, H, sprite, draw, txt, sfx, music, stopMusic, hi: () => (M ? table(M.key, M.game)[0][1] : 0), get money() { return PLAYER.money; } };
   // ---------- public: open({ id: game id, key: hi-score table id, where: place name, price: $ per credit (0 = free) })
   function open(m, cb) {
@@ -12514,6 +12516,8 @@ const DIARIO = (() => {
       what: 'Tus pisos: <b>' + '{HOMES}' + '</b>. Dentro: la cama (duermes hasta las 8 y se guarda la partida) y la tele, con la consola si la tienes.', where: 'Con tu cara en el minimapa y en el mapa (M).', icon: 'chopa' },
     { t: 'La consola GOFIO-8', on: () => ARC().console, who: '', log: '', near: () => AGUA.nearestShop(),
       what: 'La consola de la tele de tu casa. Al encenderla sale un menú con tus cartuchos: <b>{CARTS}</b>. Los cartuchos se compran en las jugueterías.', where: 'En la tele de tu casa (E delante de la tele). La juguetería más cercana, abajo.' },
+    { t: 'El torneo de videojuegos', on: () => ARC().torneo, who: 'El dependiente de la juguetería', log: '',
+      what: 'Por comprarte <b>todos los cartuchos</b> eres un superfriki jugón. Para ganar el torneo hay que batir el récord de los juegos de puntos (Bencomo, GUFO y Guanche Warriors) y ganar el mundialito de Pachanga 3x3 y de Play Furbito. Mundialitos ganados: <b>{MUND}</b>.', where: 'En la GOFIO-8 de tu casa.', icon: 'chopa' },
     { t: 'El coche patrulla de la banda', on: () => G().patrol, who: 'El alcalde, por el móvil', log: '',
       what: 'Vuestro propio coche patrulla, con el nombre de la banda y el depósito lleno.', where: 'Delante del Ayuntamiento.' },
   ];
@@ -12543,7 +12547,7 @@ const DIARIO = (() => {
       if (nq) nr = `<div style="margin:0 0 8px;font:400 15px Barlow,sans-serif">🧭 La más cerca: <b>${esc(nq.name)}</b>, a ${Math.round(nq.d)} m <button class="btn" id="diaGps" style="font-size:13px;padding:5px 12px;margin-left:8px">MARCAR EN EL GPS</button></div>`;
       det.innerHTML = `<div style="font:400 22px Audiowide,Oswald,sans-serif;color:#9fd7ff">${esc(f.t)}</div>
         <div style="color:#bdb6c9;margin:2px 0 8px;font:400 14px Barlow,sans-serif">${f.who ? 'Te lo contó ' + esc(f.who) : 'Lo que sabes'}</div>
-        <div style="margin-bottom:8px;font:400 15px Barlow,sans-serif;line-height:1.35">${f.what.replace('{HOMES}', () => (typeof CASA !== 'undefined' ? CASA.PISOS.filter((P) => CASA.has(P.id)).map((P) => P.name + (P.rent ? ' (alquilado ' + Math.max(0, CASA.data().rent.until - CASA.data().day) + ' días más)' : '')).join(', ') : '')).replace('{PISOS}', () => CASA.PISOS.map((P) => `<b>${P.name}</b>: ${P.rent ? '$' + P.rent + ' a la semana' : '$' + P.price.toLocaleString('es-ES')}`).join(' · ')).replace('{CARTS}', () => (ARC().bought || []).filter((id) => ARCADE.GAMES[id]).map((id) => ARCADE.GAMES[id].title).join(', ') || 'ninguno todavía')}</div>
+        <div style="margin-bottom:8px;font:400 15px Barlow,sans-serif;line-height:1.35">${f.what.replace('{HOMES}', () => (typeof CASA !== 'undefined' ? CASA.PISOS.filter((P) => CASA.has(P.id)).map((P) => P.name + (P.rent ? ' (alquilado ' + Math.max(0, CASA.data().rent.until - CASA.data().day) + ' días más)' : '')).join(', ') : '')).replace('{PISOS}', () => CASA.PISOS.map((P) => `<b>${P.name}</b>: ${P.rent ? '$' + P.rent + ' a la semana' : '$' + P.price.toLocaleString('es-ES')}`).join(' · ')).replace('{MUND}', () => { const sp = ARC().sports || {}; return `Pachanga 3x3 ${(sp.pachanga || {}).won || 0} · Play Furbito ${(sp.furbito || {}).won || 0}`; }).replace('{CARTS}', () => (ARC().bought || []).filter((id) => ARCADE.GAMES[id]).map((id) => ARCADE.GAMES[id].title).join(', ') || 'ninguno todavía')}</div>
         <div style="margin-bottom:8px;font:400 15px Barlow,sans-serif">${f.icon && window.__mapIconURL ? `<img src="${window.__mapIconURL(f.icon)}" style="width:22px;height:22px;vertical-align:-6px;margin-right:4px">` : '📍'} ${f.where}</div>${rec}${nr}
         ${f.log ? convo(MISSIONS.log(f.log), '') : ''}`;
       const gb = det.querySelector('#diaGps'); if (gb && nq) gb.onclick = () => { setWaypoint(nq.x, nq.z); HUD.toast('Ruta marcada en el GPS: ' + nq.name, '#e040fb', 4); close(); };
@@ -13216,6 +13220,71 @@ const CASA = (() => {
   return { build, update, prompt, use, blips, data, PISOS, HOMES, homesOwned, has, ownsAny, nameOf, get inmo() { return inmoDoor; }, INMO, WEEK, _open: openInmo };
 })();
 
+// ============ «PACHANGA 3x3» y «PLAY FURBITO» (v0.85, Jonay): los cartuchos de deportes de la GOFIO-8 ============
+// Basados en lo que ya tenemos (el basket 3 contra 3 y el fútbol de las canchas), pero en modo campeonato: al empezar
+// eliges una selección entre 8 países y juegas el mundialito por eliminatorias (cuartos, semifinal y final), cada vez
+// contra uno mejor. Los otros cruces se juegan solos. Las equipaciones de los dos equipos de cada partido no pueden
+// parecerse: si se parecen, el rival sale con la segunda. Estos juegos tienen final: si ganas el mundialito, pones tus
+// iniciales en la tabla de campeones de la consola (y cuenta para el torneo de videojuegos).
+const MUNDIALITO = (() => {
+  const TEAMS = [
+    { id: 'esp', name: 'ESPAÑA', flag: '🇪🇸', home: { shirt: '#c8102e', shorts: '#1d2a6b', socks: '#c8102e', stripe: '#ffc400' }, away: { shirt: '#f2f2f2', shorts: '#f2f2f2', socks: '#f2f2f2', stripe: '#c8102e' }, names: ['PACO', 'JUANMA', 'DANI', 'RAÚL', 'NACHO'], lv: 0.6 },
+    { id: 'bra', name: 'BRASIL', flag: '🇧🇷', home: { shirt: '#ffdf00', shorts: '#1f4fb5', socks: '#f2f2f2', stripe: '#1e9a3a' }, away: { shirt: '#1f4fb5', shorts: '#f2f2f2', socks: '#1f4fb5', stripe: '#ffdf00' }, names: ['JUNINHO', 'ZÉ', 'DIDIZINHO', 'CAFUZÃO', 'PELEZITO'], lv: 0.7 },
+    { id: 'arg', name: 'ARGENTINA', flag: '🇦🇷', home: { shirt: '#75aadb', shorts: '#111111', socks: '#f2f2f2', stripe: '#f2f2f2' }, away: { shirt: '#1d2a6b', shorts: '#1d2a6b', socks: '#1d2a6b', stripe: '#75aadb' }, names: ['EL PIBE', 'CHE', 'TITO', 'EL TANO', 'MARADONITA'], lv: 0.68 },
+    { id: 'ita', name: 'ITALIA', flag: '🇮🇹', home: { shirt: '#1f5fbf', shorts: '#f2f2f2', socks: '#1f5fbf' }, away: { shirt: '#f2f2f2', shorts: '#1f5fbf', socks: '#f2f2f2', stripe: '#1f9a3a' }, names: ['GIGI', 'TOTÓ', 'PIPPO', 'FABIO', 'CANNAVARO II'], lv: 0.62 },
+    { id: 'ale', name: 'ALEMANIA', flag: '🇩🇪', home: { shirt: '#f2f2f2', shorts: '#111111', socks: '#f2f2f2', stripe: '#111111' }, away: { shirt: '#2a2a2a', shorts: '#2a2a2a', socks: '#2a2a2a', stripe: '#d4202a' }, names: ['HANS', 'KLAUS', 'FRITZ', 'DER BOMBER', 'JÜRGEN'], lv: 0.64 },
+    { id: 'fra', name: 'FRANCIA', flag: '🇫🇷', home: { shirt: '#1d2a6b', shorts: '#f2f2f2', socks: '#c8102e' }, away: { shirt: '#f2f2f2', shorts: '#1d2a6b', socks: '#f2f2f2', stripe: '#c8102e' }, names: ['ZIZOU', 'TITÍ', 'PIERRE', 'JEAN-LUC', 'MICHELÍN'], lv: 0.63 },
+    { id: 'por', name: 'PORTUGAL', flag: '🇵🇹', home: { shirt: '#a6192e', shorts: '#1e7a3a', socks: '#a6192e', stripe: '#ffd400' }, away: { shirt: '#f2f2f2', shorts: '#f2f2f2', socks: '#f2f2f2', stripe: '#a6192e' }, names: ['ZEZINHO', 'NANI II', 'BETO', 'EUSEBINHO', 'O BICHO'], lv: 0.58 },
+    { id: 'uru', name: 'URUGUAY', flag: '🇺🇾', home: { shirt: '#5fb3e6', shorts: '#111111', socks: '#111111' }, away: { shirt: '#f2f2f2', shorts: '#5fb3e6', socks: '#f2f2f2', stripe: '#5fb3e6' }, names: ['EL MATADOR', 'CHARRÚA', 'PELADO', 'TATO', 'EL FLACO'], lv: 0.6 }];
+  const ROUNDS = ['CUARTOS DE FINAL', 'SEMIFINAL', 'LA FINAL'];
+  const SPORT = { pachanga: { title: 'PACHANGA 3x3', n: 3, game: 'basket' }, furbito: { title: 'PLAY FURBITO', n: 5, game: 'futbol' } };
+  const rgb = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+  const near = (a, b) => { const p = rgb(a), q = rgb(b); return Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]) < 140; };
+  // the rival's kit: its first one, unless it looks like ours (shirt or shorts): then the second
+  function kits(me, op) { const a = me.home; let b = op.home; if (near(a.shirt, b.shirt)) b = op.away; if (near(a.shirt, b.shirt)) b = { shirt: '#111111', shorts: '#111111', socks: '#111111', stripe: '#ffd400' }; return [a, b]; }
+  const SK = ['#e0ac86', '#8d5a3b', '#c68a5e', '#f1c9a5', '#6b4226'], HR = ['#1a1410', '#6b3e1e', '#d8b56a', '#2a1a10', '#111111'];
+  const num = (h) => parseInt(h.slice(1), 16);
+  function squad(t, kit, n, mine) { const L = []; for (let i = 0; i < n; i++) { const k = (t.id.charCodeAt(0) + i * 3) % 5;
+      L.push({ name: mine && i === 0 ? 'TÚ' : t.names[i % t.names.length], look: { skin: num(SK[k]), hair: num(HR[(k + i) % 5]), shirt: num(kit.shirt), pants: num(kit.shorts), shoes: 0x222222, sole: num(kit.socks || kit.shirt) }, nose: mine && i === 0 }); }
+    return L; }
+  let T = null; // the tournament in course
+  const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  // ---------- choose the country
+  function start(id) { const S = SPORT[id]; if (!S) return false;
+    DLG.show(S.title, 'ELIGE TU SELECCIÓN', 'El mundialito de la GOFIO-8: 8 selecciones, eliminatorias hasta la final. Cada ronda, un rival mejor.', '¿Con quién juegas?',
+      [...TEAMS.map((t) => `${t.flag} <b>${t.name}</b>`), 'Mejor otro día'], (i) => { const me = TEAMS[i]; if (!me) { DLG.hide(); return; }
+        const others = shuffle(TEAMS.filter((t) => t !== me)); T = { id, S, me, round: 0, bracket: [me, ...others], alive: [me, ...others] }; DLG.hide(); next(); });
+    return true; }
+  // the pairs of the round (you always first); the others are played in a moment
+  function pairs() { const A = T.alive, P = []; for (let i = 0; i < A.length; i += 2) P.push([A[i], A[i + 1]]); return P; }
+  function next() { const P = pairs(), my = P[0], op = my[1], R = ROUNDS[T.round];
+    const rest = P.slice(1).map(([a, b]) => `${a.flag} ${a.name} – ${b.name} ${b.flag}`).join('<br>');
+    DLG.show(T.S.title, R, `<b>${my[0].flag} ${my[0].name} contra ${op.name} ${op.flag}</b>${rest ? `<br><br><span style="opacity:.75">Los otros cruces:<br>${rest}</span>` : ''}`, '',
+      ['¡A jugar!', 'Retirarse'], (i) => { DLG.hide(); if (i === 1) { T = null; return; } play(op); }); }
+  function play(op) { const me = T.me, [ka, kb] = kits(me, op), lv = [0.35, 0.55, 0.75][T.round] * (0.85 + op.lv * 0.25), R = ROUNDS[T.round];
+    const onEnd = (r) => setTimeout(() => after(r, op), 400);
+    if (T.S.game === 'basket') BASKET2D.start({ team: squad(me, ka, 3, true), rival: squad(op, kb, 3, false), teamName: me.name, rivalName: op.name, time: T.round === 2 ? 120 : 90, lv, mateLv: 0.62, style: 'pabellon', onEnd });
+    else FUTBOL2D.start({ team: squad(me, ka, 5, true), rival: squad(op, kb, 5, false), teamName: me.name, rivalName: op.name, kit: { ...ka, gk: { shirt: '#f1c40f', shorts: '#222', socks: '#f1c40f' } }, rivalKit: { ...kb, gk: { shirt: '#5ec8ff', shorts: '#222', socks: '#5ec8ff' } }, time: T.round === 2 ? 150 : 120, lv, mateLv: 0.62, onEnd });
+    HUD.toast(`${T.S.title} · ${R}: ${me.name} – ${op.name}`, '#7fe0ff', 3); }
+  function after(r, op) { if (!T) return; const won = !!(r && r.won);
+    if (!won) { DLG.show(T.S.title, '¡ELIMINADOS!', `${op.flag} ${op.name} os deja fuera en ${ROUNDS[T.round].toLowerCase()} (${r.score[0]}–${r.score[1]}). ¡La próxima!`, '', ['Vale'], () => { DLG.hide(); T = null; }); return; }
+    // the other matches: the better team wins more often
+    const P = pairs(); const win = [T.me]; for (const [a, b] of P.slice(1)) win.push(Math.random() < 0.5 + (a.lv - b.lv) * 1.5 ? a : b);
+    T.alive = win; T.round++;
+    if (T.round >= ROUNDS.length) { champion(); return; }
+    DLG.show(T.S.title, '¡A ' + ROUNDS[T.round] + '!', `Ganáis a ${op.name} ${op.flag} (${r.score[0]}–${r.score[1]}).`, '', ['Seguir'], () => { DLG.hide(); next(); }); }
+  function champion() { const a = ARCADE.data(), id = T.id; a.sports = a.sports || {}; const s = a.sports[id] = a.sports[id] || { won: 0 }; s.won++;
+    HUD.big('¡CAMPEONES DEL MUNDIALITO!', '#ffd400', 4); AUDIO.cash && AUDIO.cash();
+    // initials on the champions' table of the console (like the hi-scores)
+    const me = T.me; T = null;
+    DLG.ask(SPORT[id].title, `¡${me.flag} ${me.name}, CAMPEONA DEL MUNDIALITO!`, 'Pon tus iniciales en la tabla de campeones de la GOFIO-8.', 'Tus iniciales', 'AAA', 3, (v) => {
+      const n = v.toUpperCase().replace(/[^A-ZÑ]/g, '').slice(0, 3).padEnd(3, '.'); const key = 'mundial_' + id; a.scores[key] = a.scores[key] || []; a.scores[key].unshift([n, me.name, s.won]); a.scores[key].length = Math.min(10, a.scores[key].length);
+      DLG.hide(); HUD.toast(`${n} · ${me.name}: en la tabla de campeones de ${SPORT[id].title}`, '#ffd400', 5); if (SAVE && SAVE.auto) SAVE.auto('Campeón del mundialito'); }); }
+  // the two cartridges, in the GOFIO-8's menu (they leave the console and start the tournament)
+  for (const id in SPORT) ARCADE.GAMES[id] = { title: SPORT[id].title, sub: id === 'pachanga' ? 'EL MUNDIALITO DE BASKET 3 CONTRA 3' : 'EL MUNDIALITO DE FÚTBOL', marquee: id === 'pachanga' ? ['#c0392b', '#2a0a06'] : ['#1f8f4e', '#06200e'], titleCol: '#fff', external: () => start(id) };
+  return { start, TEAMS, kits, near, _T: () => T, _after: (r) => after(r, pairs()[0][1]), _champion: () => champion() };
+})();
+
 // ============ time of day, game loop, menus ============
 const GAME = {
   state: 'loading', tod: 10.0, daySpeed: 1 / 150, // game hours per real second: day 1h = 150 s, night goes faster (see dayRate)
@@ -13462,7 +13531,7 @@ async function boot() {
   window.__GAME_READY = true;
 }
 boot();
-window.__bg = [bgScene, bgCamera]; window.__dbg = { get RCLIP() { return RCLIP; }, pip, PASAJES, ATRIOS: atrioList, ARCADE, RECRE, CASA, pasajeCeilAt, inAguereLow, LOD, updateCityLOD, lodShowAll, optimizeCity, unfuse, PARKED, activateParked, parkedNear, RIFLE, AGUA, FIRES, makeFire, giveRifle, PK2, RIOS, TRI, PERAZA, MINI, KEYS, PRESSED, INPUT, get TCUTS() { return TCUTS; }, s2Human, s2Down, s2DownTick, onCarriagewayEarly, FLIGHT, updateAirport, TF13, TRAM_TRENCH, tramDepth, OBISPADO_TEX: obispadoTex, MALEANTES, startStreetFight, lineRuns, BIGSTORES, SIGN, roadClip, BASKET2D, FUTBOL2D, obispoCampo, TRI, OBISPADO, SPORTS, inAnyBuilding, COURTS, courtGateNear, useCourtGate, DIARIO, inPitch, pitchRects, obispoCourt, LAMPS, TREES, GUIDE, AYTO, HUC, HEALTH, nearestHealth, exitCar, DLG, S2, POOLS: { CARPOOL, HPOOL, SHARED_GEO, VGEO }, SHARED_GEO, MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
+window.__bg = [bgScene, bgCamera]; window.__dbg = { get RCLIP() { return RCLIP; }, pip, PASAJES, ATRIOS: atrioList, ARCADE, RECRE, CASA, MUNDIALITO, pasajeCeilAt, inAguereLow, LOD, updateCityLOD, lodShowAll, optimizeCity, unfuse, PARKED, activateParked, parkedNear, RIFLE, AGUA, FIRES, makeFire, giveRifle, PK2, RIOS, TRI, PERAZA, MINI, KEYS, PRESSED, INPUT, get TCUTS() { return TCUTS; }, s2Human, s2Down, s2DownTick, onCarriagewayEarly, FLIGHT, updateAirport, TF13, TRAM_TRENCH, tramDepth, OBISPADO_TEX: obispadoTex, MALEANTES, startStreetFight, lineRuns, BIGSTORES, SIGN, roadClip, BASKET2D, FUTBOL2D, obispoCampo, TRI, OBISPADO, SPORTS, inAnyBuilding, COURTS, courtGateNear, useCourtGate, DIARIO, inPitch, pitchRects, obispoCourt, LAMPS, TREES, GUIDE, AYTO, HUC, HEALTH, nearestHealth, exitCar, DLG, S2, POOLS: { CARPOOL, HPOOL, SHARED_GEO, VGEO }, SHARED_GEO, MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
 window.__snap = () => { updateUnderground(); updateCityLOD(); bgCamera.position.copy(camera.position); bgCamera.quaternion.copy(camera.quaternion); bgCamera.fov = camera.fov; bgCamera.updateProjectionMatrix(); renderer.clear(); renderer.render(bgScene, bgCamera); renderer.clearDepth(); renderer.render(scene, camera); return renderer.domElement.toDataURL('image/jpeg', 0.85); };
 window.__setYaw = (y) => { CAM.yaw = y; CAM.pitch = 0.1; INPUT.lastMouse = performance.now(); };
 window.__hit = (p) => hitPed(p);

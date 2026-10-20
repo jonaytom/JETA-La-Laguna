@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.84.0</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.85.0</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2097,8 +2097,9 @@ quitarles los zurrones.</li>
 <li>Hecho: la inmobiliaria Pisos Chachi (Calle Heraclio Sánchez, llama por el móvil), el pisito de Herradores en
   alquiler ($250 por 7 días) y tres pisos en venta ($18.000, $32.000 y $55.000). Dentro: la cama (duermes y se guarda),
   la tele y la consola GOFIO-8 (juguetería, $1.200; cartuchos $90-150) con el menú de cartuchos.</li>
-<li>Pendiente: Pachanga 3x3 y Play Furbito en la consola, en modo campeonato: 8 selecciones y eliminatorias hasta la
-  final.</li>
+<li>Hecho (v0.85): Pachanga 3x3 y Play Furbito ($140 cada uno) en la consola, en modo mundialito: 8 selecciones
+  (<code>src/12m_mundialito.js</code>), cuartos, semifinal y final; las equipaciones no chocan (el rival saca la segunda); el
+  campeón pone iniciales en la tabla <code>mundial_&lt;juego&gt;</code>. Con todos los cartuchos: «¡superfriki jugón!» y el torneo.</li>
 <li><strong>Torneo de videojuegos</strong> (Jonay, 20-oct), cuando tienes todos los cartuchos:</li>
 <li>Superar el récord de cada juego de puntos (Bencomo, Guerra de Naves, Guanche Warriors…).</li>
 <li>Ganar el mundialito de Pachanga 3x3 y de Play Furbito.</li>
@@ -2116,6 +2117,20 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.85.0 — 2026-10-20 — Pachanga 3x3 y Play Furbito: el mundialito en la GOFIO-8</h2>
+<ul>
+<li><strong>Dos cartuchos nuevos de deportes</strong> (Jonay): <strong>PACHANGA 3x3</strong> (el basket 3 contra 3) y <strong>PLAY FURBITO</strong> (el fútbol
+  5 contra 5). Se compran en la juguetería y salen en el menú de la consola.</li>
+<li>Al empezar eliges selección entre <strong>8 países</strong>: España, Brasil, Argentina, Italia, Alemania, Francia, Portugal y
+    Uruguay, cada uno con sus jugadores parodia.</li>
+<li><strong>El mundialito</strong>: cuartos, semifinal y final. Cada ronda el rival es mejor, y los otros cruces se juegan solos.</li>
+<li><strong>Las equipaciones no chocan</strong>: si la camiseta del rival se parece a la tuya, sale con la segunda.</li>
+<li>Si ganas la final, pones tus <strong>iniciales en la tabla de campeones</strong>.</li>
+<li><strong>El superfriki jugón</strong>: cuando tienes todos los cartuchos, en la juguetería te lo dicen y se abre el <strong>torneo de
+  videojuegos</strong> (sale en el diario, con los mundialitos ganados).</li>
+<li>La pantalla de controles del basket decía «2 CONTRA 2»: ahora pone los que juegan. En la del fútbol, «PARA EMPEZAR»
+  ya no se monta sobre la fila del regate.</li>
+</ul>
 <h2>0.84.0 — 2026-10-20 — El baloncesto pasa a 3 contra 3</h2>
 <ul>
 <li><strong>El basket de las canchas es ahora 3 contra 3</strong> (Jonay), el paso previo a Pachanga 3x3 en la consola:</li>

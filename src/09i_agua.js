@@ -168,7 +168,7 @@ const AGUA = (() => {
   function openShop(s) {
     const items = []; if (ARCADE.data().invited) items.push(['arc', '🕹 Echar una partida a la máquina: <b>GUANCHE WARRIORS</b> · <b>$1</b> la partida']); // v0.82: the toy shops' machine
     // v0.83: the GOFIO-8 console for the TV at home and its cartridges (once El Blanco has told you about the arcades)
-    const A_ = ARCADE.data(), CART = { bencomo: 90, naves: 120, guanche: 150 };
+    const A_ = ARCADE.data(), CART = { bencomo: 90, naves: 120, guanche: 150, pachanga: 140, furbito: 140 }; // v0.85: + the two sports cartridges
     if (A_.invited && !A_.console) items.push(['console', '🎮 Consola <b>GOFIO-8</b> para la tele de casa · <b>$1.200</b>']);
     if (A_.console) for (const id in CART) if (!A_.bought.includes(id) && ARCADE.GAMES[id]) items.push(['cart_' + id, `💾 Cartucho «${ARCADE.GAMES[id].title}» para la GOFIO-8 · <b>$${CART[id]}</b>`, CART[id], id]);
     if (!RIFLE.has) items.push(['rifle', `Rifle de agua «Guepardo SK-9» eléctrico · <b>$${PRICE}</b>`]); else items.push(['fill', 'Llenar el rifle de agua (del grifo de la tienda) · <b>$2</b>']); if (WEAPON.has) items.push(['balls', `Bolsa de bolitas para la pistola (6) · <b>$${BALLS}</b>`]);
@@ -176,7 +176,9 @@ const AGUA = (() => {
       DLG.hide(); const it = items[i]; if (!it) return;
       if (it[0] === 'console' || it[0].startsWith('cart_')) { const cost2 = it[0] === 'console' ? 1200 : it[2]; if (PLAYER.money < cost2) { AUDIO.fail(); HUD.toast('No te llega el dinero: cuesta $' + cost2, '#ffb3b3', 3); return; } PLAYER.money -= cost2; AUDIO.cash && AUDIO.cash();
         if (it[0] === 'console') { A_.console = true; HUD.big('¡GOFIO-8!', '#7fe0ff', 3); HUD.toast(CASA.ownsAny() ? 'La consola ya está en la tele de tu casa. Ahora compra cartuchos aquí.' : 'Tienes la consola… pero te hace falta una casa con tele: la inmobiliaria Pisos Chachi alquila y vende pisos.', '#7fe0ff', 7); }
-        else { A_.bought.push(it[3]); HUD.toast(`Cartucho «${ARCADE.GAMES[it[3]].title}»: ya lo puedes jugar en la GOFIO-8 de tu casa`, '#7fe0ff', 5); }
+        else { A_.bought.push(it[3]); HUD.toast(`Cartucho «${ARCADE.GAMES[it[3]].title}»: ya lo puedes jugar en la GOFIO-8 de tu casa`, '#7fe0ff', 5);
+          // v0.85 (Jonay): with every cartridge bought, the shop tells you you're a «superfriki jugón»: the video game tournament
+          if (!A_.torneo && Object.keys(CART).every((k) => A_.bought.includes(k))) { A_.torneo = true; setTimeout(() => DLG.show(s.name, '¡SUPERFRIKI JUGÓN!', '«¡Ños, mi niño! ¡Te has comprado <b>todos los cartuchos</b>! Eres un <b>superfriki jugón</b> de los de verdad.» El dependiente te da un papelito: <b>el torneo de videojuegos de La Laguna</b>. Para ganarlo hay que batir el récord de todos los juegos de puntos y ganar el mundialito de Pachanga 3x3 y de Play Furbito.', '', ['¡Me apunto!'], () => { DLG.hide(); HUD.big('TORNEO DE VIDEOJUEGOS', '#ffd400', 3.5); }), 600); } }
         SAVE && SAVE.dirty && SAVE.dirty(); return; }
       if (it[0] === 'arc') { ARCADE.open({ id: 'guanche', key: 'jug_' + s.name, where: String(s.name).toUpperCase(), price: 1 }, (r) => { if (r && r.paid) HUD.toast(`Te has dejado $${r.paid} en la máquina`, '#9fd7ff', 3); }); return; }
       const cost = it[0] === 'rifle' ? PRICE : it[0] === 'balls' ? BALLS : 2;

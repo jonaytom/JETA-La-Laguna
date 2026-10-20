@@ -150,7 +150,7 @@ const ARCADE = (() => {
     music: { title: { bpm: 120, div: 4, loop: false, ch: [{ w: 'sq', v: 0.8, n: 'C5 E5 G5 C6 . . . . G5 . C6 . . . . . - . . .' }, { w: 'tri', v: 1, n: 'C3 . G3 . C3 . . . G2 . C3 . . . . .' }] } } };
   function toMenu() { M.game = CONSOLE; M.key = 'consola'; M.bz = null; st.mode = 'menu'; st.view = 'title'; st.t = 0; G = null; stopMusic(); music(CONSOLE.music.title); }
   function menu(dt) { st.t += dt; const L = M.console; if (hit('vU')) { st.sel = (st.sel + L.length - 1) % L.length; sfx('pick'); } if (hit('vD')) { st.sel = (st.sel + 1) % L.length; sfx('pick'); }
-    if ((hit('vS') || hit('vT')) && st.t > 0.4) { const id = L[st.sel], g = GAMES[id]; if (!g) return; M.game = g; M.key = 'casa_' + id; M.where = 'TU CASA'; M.bz = null; sfx('coin'); toAttract(); } }
+    if ((hit('vS') || hit('vT')) && st.t > 0.4) { const id = L[st.sel], g = GAMES[id]; if (!g) return; if (g.external) { sfx('coin'); close(); setTimeout(() => g.external(), 60); return; } /* v0.85: Pachanga 3x3 / Play Furbito leave the cabinet for their own game */ M.game = g; M.key = 'casa_' + id; M.where = 'TU CASA'; M.bz = null; sfx('coin'); toAttract(); } }
   function drawMenu() { const g = sx; g.setTransform(RS, 0, 0, RS, 0, 0); g.imageSmoothingEnabled = false; const t = st.t;
     const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#0a0a24'); gr.addColorStop(1, '#2a1a3a'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
     for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(255,255,255,${0.2 + ((i * 37) % 10) / 20})`; g.fillRect((i * 97 + t * 10) % W, (i * 53) % (H * 0.5), 1, 1); }
@@ -189,7 +189,7 @@ const ARCADE = (() => {
   // ---------- loop
   function loop(now) { if (!running) return; raf = requestAnimationFrame(loop); const dt = Math.min(0.1, (now - last) / 1000); last = now; acc += dt;
     while (acc >= 1 / 60) { step(1 / 60); IN.frame(); acc -= 1 / 60; } render(); present(); }
-  function step(dt) { if (st.msgT > 0) st.msgT -= dt; if (st.mode === 'menu') menu(dt); else if (st.mode === 'attract') attract(dt); else if (st.mode === 'play') play(dt); else if (st.mode === 'cont') cont(dt); else if (st.mode === 'name') nameEntry(dt); }
+  function step(dt) { if (!running || !M) return; /* v0.85: nothing after close (a cartridge that leaves the console) */ if (st.msgT > 0) st.msgT -= dt; if (st.mode === 'menu') menu(dt); else if (st.mode === 'attract') attract(dt); else if (st.mode === 'play') play(dt); else if (st.mode === 'cont') cont(dt); else if (st.mode === 'name') nameEntry(dt); }
   const api = { W, H, sprite, draw, txt, sfx, music, stopMusic, hi: () => (M ? table(M.key, M.game)[0][1] : 0), get money() { return PLAYER.money; } };
   // ---------- public: open({ id: game id, key: hi-score table id, where: place name, price: $ per credit (0 = free) })
   function open(m, cb) {

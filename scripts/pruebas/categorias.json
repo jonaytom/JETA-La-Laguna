@@ -249,6 +249,12 @@
    [
     "prueba_083.py"
    ]
+  ],
+  [
+   "^src/12m_mundialito|^src/09i_agua|^src/09j_arcade",
+   [
+    "prueba_085.py"
+   ]
   ]
  ]
 }

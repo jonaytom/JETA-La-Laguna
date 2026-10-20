@@ -5,6 +5,16 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 
 ## Por revisar con Jonay
 
+- [ ] **Esc en la consola** (Jonay, 20-oct): ahora Esc sale del juego y además abre el menú de opciones del juego
+  principal. Debe ser: la primera pulsación vuelve al menú de cartuchos de la GOFIO-8, la segunda sale al mundo 3D, y
+  nunca se abre el menú de opciones.
+- [ ] **Pausa con la P en TODOS los minijuegos** (Jonay, 20-oct): la P pausa (cartel «PAUSA», música y reloj
+  parados) y otra pulsación reanuda. Basket, fútbol, pelea 2D, Bencomo, GUFO, Guanche Warriors y los que vengan.
+
+- [ ] **Basket y fútbol: más efectos del público que música** (Jonay, 20-oct). En el basket, el típico **organillo**
+  de pabellón (las ráfagas de «¡de-fen-sa!», el «charge»); en el fútbol, el **rugido del público**: el murmullo de
+  fondo, el «¡uuuh!» en las ocasiones y el furor con los goles. Vale para las canchas y para Pachanga / Play Furbito.
+
 - [ ] **Más efectos de sonido en los minijuegos en general** (Jonay, 20-oct): la música con menos protagonismo y las
   melodías más largas, con varios estribillos que se alternan. Hecho en v0.84.0 para las 3 máquinas. Falta lo mismo
   en el basket, el fútbol y la pelea 2D: más efectos (pasos, roces, el público, el balón) y música menos repetitiva.
@@ -107,8 +117,9 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
   Hecho en v0.82.0: **GUANCHE WARRIORS** en las jugueterías (primera versión, para pulir).
   Hecho en v0.83.0: la inmobiliaria, los pisos y la consola GOFIO-8 con su menú de cartuchos.
   Hecho en v0.84.0: el basket a 3 contra 3.
-  Falta: Pachanga 3x3 y Play Furbito en la consola (campeonato por países) y
-  el tipo Metal Slug.
+  Hecho en v0.85.0: Pachanga 3x3 y Play Furbito (el mundialito de 8 selecciones), el «superfriki jugón» y la
+  apertura del torneo.
+  Falta: el tipo Metal Slug, y la lógica del torneo (comprobar los récords batidos) con su premio.
   - Jonay, 20-oct: Pachanga 3x3 y Play Furbito también se compran en la juguetería como cartuchos. Están basados en lo
     que ya tenemos: al empezar eliges país entre **8 selecciones** y se juega por eliminatorias hasta la final.
   - **El torneo de videojuegos** (Jonay, 20-oct): se desbloquea cuando te has comprado **todos** los cartuchos, también

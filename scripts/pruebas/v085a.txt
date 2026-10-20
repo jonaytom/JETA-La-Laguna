@@ -1,0 +1,8 @@
+# v0.85: Pachanga 3x3 y Play Furbito, el mundialito de la GOFIO-8
+prueba_085.py
+prueba_084.py
+prueba_baloncesto.py
+prueba_futbol.py
+prueba_083.py
+prueba_0821.py
+prueba_arranque.py

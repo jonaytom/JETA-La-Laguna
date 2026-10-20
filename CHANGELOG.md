@@ -3,6 +3,19 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.85.0 — 2026-10-20 — Pachanga 3x3 y Play Furbito: el mundialito en la GOFIO-8
+- **Dos cartuchos nuevos de deportes** (Jonay): **PACHANGA 3x3** (el basket 3 contra 3) y **PLAY FURBITO** (el fútbol
+  5 contra 5). Se compran en la juguetería y salen en el menú de la consola.
+  - Al empezar eliges selección entre **8 países**: España, Brasil, Argentina, Italia, Alemania, Francia, Portugal y
+    Uruguay, cada uno con sus jugadores parodia.
+  - **El mundialito**: cuartos, semifinal y final. Cada ronda el rival es mejor, y los otros cruces se juegan solos.
+  - **Las equipaciones no chocan**: si la camiseta del rival se parece a la tuya, sale con la segunda.
+  - Si ganas la final, pones tus **iniciales en la tabla de campeones**.
+- **El superfriki jugón**: cuando tienes todos los cartuchos, en la juguetería te lo dicen y se abre el **torneo de
+  videojuegos** (sale en el diario, con los mundialitos ganados).
+- La pantalla de controles del basket decía «2 CONTRA 2»: ahora pone los que juegan. En la del fútbol, «PARA EMPEZAR»
+  ya no se monta sobre la fila del regate.
+
 ## 0.84.0 — 2026-10-20 — El baloncesto pasa a 3 contra 3
 - **El basket de las canchas es ahora 3 contra 3** (Jonay), el paso previo a Pachanga 3x3 en la consola:
   - Juegas con Coco y **El Blanco**. Si un partido viene con equipos de dos (los rivales de las misiones), se completa
