@@ -158,7 +158,7 @@ const AGUA = (() => {
   document.addEventListener('mouseup', (e) => { if (e.button === 0) RIFLE.firing = false; });
   // ---------- toy shops and fountains (E)
   function toyIconTex() { const c = mkCanvas(128, 128), x = c.getContext('2d'); x.fillStyle = '#1e88e5'; x.beginPath(); x.arc(64, 64, 58, 0, 7); x.fill(); x.lineWidth = 8; x.strokeStyle = '#fff'; x.stroke();
-    x.translate(64, 70); if (window.__toyBear) window.__toyBear(x, 30, 4); return canvasTex(c, { repeat: false }); } // v0.83: a teddy bear (Jonay: the drop didn't say «toy shop»)
+    x.translate(64, 70); if (window.__toyBear) window.__toyBear(x, 30, 4); return canvasTex(c, { repeat: false }); } // a little robot (Jonay: not a drop, not a teddy bear)
   function makeShops() { if (shopsMade) return; shopsMade = true; const mat = new THREE.SpriteMaterial({ map: (toyIcon = toyIconTex()), transparent: true });
     for (const s of DATA.SH || []) { if (!s[3] || !/Juguet/i.test(s[3])) continue; const sp = safeSpot(s[0], s[1], 0.5); const spr = new THREE.Sprite(mat); spr.scale.set(1.1, 1.1, 1); spr.position.set(sp[0], heightAt(sp[0], sp[1]) + 3, sp[1]); spr.visible = false; scene.add(spr); shops.push({ x: sp[0], z: sp[1], name: s[3], spr }); } }
   const open_ = () => !!(MISSIONS.gang && MISSIONS.gang.jugueterias);

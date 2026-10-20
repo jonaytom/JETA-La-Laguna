@@ -5,7 +5,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 
 ## Por revisar con Jonay
 
-- [ ] **Guanche Warriors, golpes nuevos** (Jonay, 20-oct):
+- [x] (v0.83.2) **Guanche Warriors, golpes nuevos** (Jonay, 20-oct):
   - **Atacar corriendo**: un salto hacia delante con una patada, en vez de la embestida.
   - **Los lagartos tienen que atacar**:
     - Mordiscos, alargando el cuello.
@@ -54,6 +54,8 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
   Hecho en v0.83.0: la inmobiliaria, los pisos y la consola GOFIO-8 con su menú de cartuchos.
   Falta: el basket a 3x3 (v0.84, lo siguiente), Pachanga 3x3 y Play Furbito en la consola (campeonato por países) y
   el tipo Metal Slug.
+  - Jonay, 20-oct: Pachanga 3x3 y Play Furbito también se compran en la juguetería como cartuchos. Están basados en lo
+    que ya tenemos: al empezar eliges país entre **8 selecciones** y se juega por eliminatorias hasta la final.
   Jonay probará todas las máquinas y dirá impresiones.
   - Jonay, 20-oct: los nombres son «Guerra de Naves» (el tipo R-Type) y «Guanche Warriors» (el tipo Golden Axe:
     beat'em up, no plataformas, con varias fases). En Guanche Warriors se elige personaje al empezar:

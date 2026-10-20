@@ -117,10 +117,14 @@ ARCADE.GAMES.bencomo = (() => {
     else if (k === 3) { x.fillStyle = t.plat; x.fillRect(0, 0, T, 5); x.fillStyle = 'rgba(255,255,255,0.18)'; x.fillRect(0, 0, T, 1); x.fillStyle = 'rgba(0,0,0,0.35)'; x.fillRect(0, 4, T, 1); x.fillRect(5, 1, 1, 3); x.fillRect(12, 1, 1, 3); }
     else if (k === 4) { x.fillStyle = '#6d6a63'; x.fillRect(0, 0, T, T); x.fillStyle = '#8d8a82'; x.fillRect(1, 1, T - 2, 2); x.fillStyle = '#4d4a44'; x.fillRect(0, T - 2, T, 2); x.fillRect(T - 2, 0, 2, T); }
     else if (k === 5) { const g = '#3f8f3a', gl = '#62b04f'; x.fillStyle = g; x.beginPath(); x.ellipse(8, 10, 6, 6, 0, 0, 7); x.fill(); x.beginPath(); x.ellipse(4, 4, 3.5, 4, -0.4, 0, 7); x.fill(); x.beginPath(); x.ellipse(12, 3, 3.5, 4, 0.4, 0, 7); x.fill();
-      x.fillStyle = gl; x.fillRect(6, 7, 2, 2); x.fillRect(3, 2, 1, 2); x.fillRect(11, 1, 1, 2); x.fillStyle = '#e8e2a0'; for (const [a, b] of [[2, 8], [14, 9], [8, 4], [5, 13], [11, 13], [1, 3], [15, 2]]) x.fillRect(a, b, 1, 1); x.fillStyle = '#c0264a'; x.fillRect(4, 0, 2, 1); x.fillRect(12, 0, 2, 1); } // tunera with its figs
+      x.fillStyle = gl; x.fillRect(6, 7, 2, 2); x.fillRect(3, 2, 1, 2); x.fillRect(11, 1, 1, 2); x.fillStyle = '#e8e2a0'; for (const [a, b] of [[2, 8], [14, 9], [8, 4], [5, 13], [11, 13], [1, 3], [15, 2]]) x.fillRect(a, b, 1, 1); x.fillStyle = '#c0264a'; x.fillRect(4, 0, 2, 1); x.fillRect(12, 0, 2, 1);
+      x.strokeStyle = '#123814'; x.lineWidth = 0.7; for (const [ex, ey, rx, ry, a] of [[8, 10, 6, 6, 0], [4, 4, 3.5, 4, -0.4], [12, 3, 3.5, 4, 0.4]]) { x.beginPath(); x.ellipse(ex, ey, rx, ry, a, 0, 7); x.stroke(); } } // tunera with its figs; v0.83.2 (Jonay: «parece inofensivo, se ve poco»): a soft dark outline
     x.setTransform(1, 0, 0, 1, 0, 0); const n = T * 2; // the fine detail of the ×2 tile: grains, cracks, grass blades
     if (k === 1 || k === 2) { for (let i = 0; i < 70; i++) { const a = (rr() * n) | 0, b = (k === 1 ? 9 : 0) + ((rr() * (n - (k === 1 ? 9 : 0))) | 0); x.fillStyle = rr() < 0.5 ? 'rgba(0,0,0,0.22)' : 'rgba(255,255,255,0.12)'; x.fillRect(a, b, 1, 1); }
       x.fillStyle = 'rgba(0,0,0,0.3)'; x.fillRect((rr() * n) | 0, 14 + ((rr() * 14) | 0), 5, 1); if (k === 1) { x.fillStyle = t.top2; for (let i = 0; i < n; i += 3) x.fillRect(i + ((rr() * 2) | 0), 0, 1, 1 + ((rr() * 3) | 0)); x.fillStyle = 'rgba(255,255,255,0.25)'; for (let i = 0; i < 8; i++) x.fillRect((rr() * n) | 0, 1 + ((rr() * 5) | 0), 1, 1); } }
+    if (k === 5) { let q = 11; const r5 = () => { q = (q * 9301 + 49297) % 233280; return q / 233280; }; // the spines: pale little needles all over the pads, and red prickly pears
+      for (const [ex, ey, rx, ry] of [[16, 20, 11, 11], [8, 8, 6, 7], [24, 6, 6, 7]]) for (let i = 0; i < 9; i++) { const a = r5() * 6.283, d = 0.35 + r5() * 0.6, sx = ex + Math.cos(a) * rx * d, sy = ey + Math.sin(a) * ry * d; x.fillStyle = '#fff6c8'; x.fillRect(sx, sy, 1, 1); x.fillRect(sx + Math.cos(a) * 1.6, sy + Math.sin(a) * 1.6, 1, 1); }
+      x.fillStyle = '#d4204a'; for (const [fx, fy] of [[7, 0], [23, 0], [30, 14]]) { x.fillRect(fx, fy, 3, 3); x.fillStyle = '#ff7090'; x.fillRect(fx, fy, 1, 1); x.fillStyle = '#d4204a'; } }
     if (k === 3) { x.fillStyle = 'rgba(0,0,0,0.25)'; for (let i = 0; i < n; i += 4) x.fillRect(i, 3, 2, 1); x.fillStyle = 'rgba(255,255,255,0.18)'; x.fillRect(0, 1, n, 1); }
     return (tileCache[key] = c);
   }
@@ -263,6 +267,7 @@ ARCADE.GAMES.bencomo = (() => {
         else { e.vx = e.face * 170 * s; if (e.x < e.x0 - 60 || e.x > e.x1 + 60 || wallAhead(e, e.face) || !groundAhead(e, e.face)) { e.st = 'walk'; e.face = -e.face; } } }
       if (e.k === 'L') { bossAI(e, dt); if (e.st === 'flee') { e.x += e.vx * dt; e.t2 = (e.t2 || 0) + dt; if (e.t2 > 3.5) { e.dead = true; phase = 'clear'; phaseT = 6; api.stopMusic(); api.sfx('clear'); } return; } } // fleeing: off he goes, through anything
       e.vy += 900 * dt; e.vy = Math.min(e.vy, 500); e.hitWall = 0; moveBody(e, dt); if (e.y > ROWS * T + 40) e.dead = true;
+      e.cactT = Math.max(0, (e.cactT || 0) - dt); if (e.k !== 'L' && !e.cactT && (tAt(e.x, e.y + 1) === 5 || tAt(e.x, e.y - 4) === 5 || tAt(e.x + e.face * (e.w / 2 + 1), e.y - 4) === 5)) { e.cactT = 0.6; hitE(e, 1); if (!e.dead) { e.face = -e.face; e.vy = -150; } } // v0.83.2 (Jonay): the tuneras prick the Castilians too
       // touching Bencomo
       if (!p.dead && Math.abs(p.x - e.x) < (e.w + 10) / 2 && p.y > e.y - e.h && p.y - p.h < e.y) {
         if ((p.pogo || p.power > 0) && p.vy > 0 && p.y < e.y - e.h + 10) { hitE(e, p.pogo ? 2 : 3, true); p.vy = -340; api.sfx('jump'); }

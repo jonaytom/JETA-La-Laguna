@@ -82,7 +82,10 @@ const ARCADE = (() => {
       case 'jump': o.type = 'square'; o.frequency.setValueAtTime(260, t); o.frequency.exponentialRampToValueAtTime(620, t + 0.12); env(0.35, 0.14); break;
       case 'vault': o.type = 'square'; o.frequency.setValueAtTime(180, t); o.frequency.exponentialRampToValueAtTime(900, t + 0.28); env(0.4, 0.3); break;
       case 'hit': o.type = 'square'; o.frequency.setValueAtTime(420, t); o.frequency.exponentialRampToValueAtTime(90, t + 0.1); env(0.5, 0.12); break;
-      case 'pew': o.type = 'square'; o.frequency.setValueAtTime(1300, t); o.frequency.exponentialRampToValueAtTime(320, t + 0.07); env(0.16, 0.08); break; // v0.81: the ship's shot
+      case 'pew': o.type = 'triangle'; o.frequency.setValueAtTime(1500, t); o.frequency.exponentialRampToValueAtTime(520, t + 0.06); env(0.12, 0.07); break; // the ship's shot (v0.83.2: softer)
+      case 'zap': o.type = 'sawtooth'; o.frequency.setValueAtTime(2200, t); o.frequency.exponentialRampToValueAtTime(900, t + 0.12); env(0.06, 0.13); break; // the laser
+      case 'tic': o.type = 'triangle'; o.frequency.setValueAtTime(2400, t); o.frequency.exponentialRampToValueAtTime(1500, t + 0.04); env(0.1, 0.05); break; // a hit that doesn't kill
+      case 'pop': { const s2 = ctx.createBufferSource(); s2.buffer = AUDIO.noise; const f2 = ctx.createBiquadFilter(); f2.type = 'bandpass'; f2.frequency.value = 900; s2.connect(f2); f2.connect(g); env(0.35, 0.22); s2.start(t); s2.stop(t + 0.25); return; } // a small ship blows up
       case 'swing': o.type = 'triangle'; o.frequency.setValueAtTime(700, t); o.frequency.exponentialRampToValueAtTime(200, t + 0.08); env(0.3, 0.09); break;
       case 'coin': o.type = 'square'; o.frequency.setValueAtTime(988, t); o.frequency.setValueAtTime(1319, t + 0.07); env(0.35, 0.28); break;
       case 'pick': o.type = 'square'; o.frequency.setValueAtTime(1046, t); o.frequency.setValueAtTime(1568, t + 0.05); env(0.25, 0.1); break;

@@ -85,15 +85,27 @@ const HUD = (() => {
   const mm = $('minimap'), mx = mm.getContext('2d');
   let locPend = '', locPendN = 0, locLast = '', locT = 0, vehT = 0, toastT = 0, subT = 0, bigT = 0;
   const starsEl = $('stars'); starsEl.innerHTML = '<span>★</span>'.repeat(5);
-  // v0.83 (Jonay: «la gota no, es una juguetería: juguetes, muñecos…»): the teddy bear of the toy shops, at (0,0)
-  function toyBear(g, k, lw) { g.lineWidth = lw; g.strokeStyle = '#000'; g.fillStyle = '#c8823a'; for (const sx of [-0.78, 0.78]) { g.beginPath(); g.arc(sx * k, -0.78 * k, 0.48 * k, 0, 7); g.fill(); g.stroke(); }
-    g.beginPath(); g.arc(0, 0, k, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#f1d3a8'; g.beginPath(); g.ellipse(0, 0.35 * k, 0.5 * k, 0.36 * k, 0, 0, 7); g.fill();
-    g.fillStyle = '#1a0f08'; for (const sx of [-0.38, 0.38]) { g.beginPath(); g.arc(sx * k, -0.2 * k, 0.13 * k, 0, 7); g.fill(); } g.beginPath(); g.arc(0, 0.22 * k, 0.14 * k, 0, 7); g.fill(); }
+  // v0.83.2 (Jonay: ni la gota ni el osito: «mejor un robot»): the toy shops' mark, a little tin robot, at (0,0)
+  function toyBear(g, k, lw) { g.lineWidth = lw; g.strokeStyle = '#000';
+    g.beginPath(); g.moveTo(0, -0.75 * k); g.lineTo(0, -1.25 * k); g.stroke(); g.fillStyle = '#ff3a2a'; g.beginPath(); g.arc(0, -1.35 * k, 0.24 * k, 0, 7); g.fill(); g.stroke(); // antenna
+    g.fillStyle = '#9fb4c8'; for (const sx of [-1, 1]) { g.fillRect(sx * 0.95 * k - 0.15 * k, -0.25 * k, 0.3 * k, 0.5 * k); g.strokeRect(sx * 0.95 * k - 0.15 * k, -0.25 * k, 0.3 * k, 0.5 * k); } // ears
+    g.fillStyle = '#c9d6e3'; g.beginPath(); g.roundRect(-0.85 * k, -0.8 * k, 1.7 * k, 1.5 * k, 0.25 * k); g.fill(); g.stroke(); // head
+    g.fillStyle = '#ffd400'; for (const sx of [-0.4, 0.4]) { g.beginPath(); g.arc(sx * k, -0.22 * k, 0.2 * k, 0, 7); g.fill(); } // eyes
+    g.fillStyle = '#3a4a5a'; g.fillRect(-0.45 * k, 0.25 * k, 0.9 * k, 0.22 * k); g.fillStyle = '#c9d6e3'; for (let i = -1; i <= 1; i++) g.fillRect(i * 0.25 * k - 0.04 * k, 0.25 * k, 0.08 * k, 0.22 * k); } // mouth grille
   window.__toyBear = toyBear;
+  // v0.83.2 (Jonay): the estate agency = a little house; your home = El Chopa's face
+  function houseIcon(g, k, lw) { g.lineWidth = lw; g.strokeStyle = '#000'; g.fillStyle = '#ffb300'; g.beginPath(); g.moveTo(0, -1.2 * k); g.lineTo(1.1 * k, -0.15 * k); g.lineTo(0.8 * k, -0.15 * k); g.lineTo(0.8 * k, 0.95 * k); g.lineTo(-0.8 * k, 0.95 * k); g.lineTo(-0.8 * k, -0.15 * k); g.lineTo(-1.1 * k, -0.15 * k); g.closePath(); g.fill(); g.stroke();
+    g.fillStyle = '#7a3a10'; g.fillRect(-0.22 * k, 0.3 * k, 0.44 * k, 0.65 * k); g.fillStyle = '#fff6c0'; g.fillRect(0.35 * k, 0.05 * k, 0.3 * k, 0.28 * k); g.fillRect(-0.65 * k, 0.05 * k, 0.3 * k, 0.28 * k); }
+  function chopaIcon(g, k, lw) { g.lineWidth = lw; g.strokeStyle = '#000'; g.fillStyle = '#7fe08a'; g.beginPath(); g.arc(0, 0, 1.2 * k, 0, 7); g.fill(); g.stroke(); // the green ring: home
+    g.fillStyle = '#d9a47c'; g.beginPath(); g.arc(0, 0.05 * k, 0.9 * k, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#1a1410'; g.beginPath(); g.arc(0, -0.15 * k, 0.9 * k, Math.PI * 1.08, Math.PI * 1.92); g.closePath(); g.fill(); // hair
+    g.fillRect(-0.62 * k, -0.62 * k, 1.24 * k, 0.28 * k); g.fillStyle = '#1a0f08'; for (const sx of [-0.33, 0.33]) { g.beginPath(); g.arc(sx * k, 0.02 * k, 0.11 * k, 0, 7); g.fill(); }
+    g.strokeStyle = '#1a0f08'; g.lineWidth = lw * 1.2; g.beginPath(); g.arc(0, 0.25 * k, 0.38 * k, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke(); }
+  const ICONS = { toy: toyBear, house: houseIcon, chopa: chopaIcon }; window.__mapIcon = (kind, g, k, lw) => ICONS[kind] && ICONS[kind](g, k, lw);
+  const ICON_URL = {}; window.__mapIconURL = (kind) => { if (ICON_URL[kind]) return ICON_URL[kind]; const c = mkCanvas(40, 40), x = c.getContext('2d'); x.translate(20, 22); ICONS[kind](x, 13, 2); return (ICON_URL[kind] = c.toDataURL()); };
   function blip(x, z, color, size, shape = 'dot', clampEdge = false) {
     // world -> minimap (already transformed context)
     mx.fillStyle = color; mx.strokeStyle = '#000'; mx.lineWidth = 2 / mmScale;
-    mx.beginPath(); if (shape === 'sq') mx.rect(x - size, z - size, size * 2, size * 2); else if (shape === 'toy') { mx.save(); mx.translate(x, z); mx.rotate(-(CAM.yaw - Math.PI)); toyBear(mx, size, 2 / mmScale); mx.restore(); return; } /* v0.83: the toy shops, a teddy bear (Jonay: not a drop) */ else if (shape === 'tri') { mx.save(); mx.translate(x, z); mx.rotate(-(CAM.yaw - Math.PI)); const k = size * 1.35; mx.moveTo(0, -k); mx.lineTo(k * 0.9, k * 0.65); mx.lineTo(-k * 0.9, k * 0.65); mx.closePath(); mx.restore(); } else mx.arc(x, z, size, 0, 7); mx.fill(); mx.stroke();
+    mx.beginPath(); if (shape === 'sq') mx.rect(x - size, z - size, size * 2, size * 2); else if (shape === 'toy' || shape === 'house' || shape === 'chopa') { mx.save(); mx.translate(x, z); mx.rotate(-(CAM.yaw - Math.PI)); ICONS[shape](mx, size, 2 / mmScale); mx.restore(); return; } /* the toy shops: a little robot */ else if (shape === 'tri') { mx.save(); mx.translate(x, z); mx.rotate(-(CAM.yaw - Math.PI)); const k = size * 1.35; mx.moveTo(0, -k); mx.lineTo(k * 0.9, k * 0.65); mx.lineTo(-k * 0.9, k * 0.65); mx.closePath(); mx.restore(); } else mx.arc(x, z, size, 0, 7); mx.fill(); mx.stroke();
   }
   let mmScale = 1;
   function drawMinimap() {
@@ -121,7 +133,7 @@ const HUD = (() => {
     for (const it of INTERIORS) for (const d of it.doors) { if (Math.abs(d.x - PLAYER.x) < 400 && Math.abs(d.z - PLAYER.z) < 400) blip(d.x, d.z, '#3ddc97', 6 * s * 1.6, 'sq'); }
     for (const f of FOOD.shops) { if (Math.abs(f.x - PLAYER.x) < 400 && Math.abs(f.z - PLAYER.z) < 400) blip(f.x, f.z, '#e53935', 6 * s * 1.6, 'sq'); }
     if (typeof RECRE !== 'undefined') for (const b of RECRE.blips()) edge(b[0], b[1], b[2], 7 * s * 1.6, 'sq'); // v0.80: El Blanco's arcade
-    if (typeof CASA !== 'undefined') for (const b of CASA.blips()) edge(b[0], b[1], b[2], 7 * s * 1.6, 'sq'); // v0.83: the estate agency and your homes
+    if (typeof CASA !== 'undefined') for (const b of CASA.blips()) edge(b[0], b[1], b[2], 8 * s * 1.6, b[3]); // v0.83: the estate agency (a little house) and your homes (El Chopa's face)
     // v0.82.2 (Jonay: «¿cómo sé dónde hay una juguetería?»): the toy shops (blue drop; the nearest always, at the rim if
     // far) and the cafés / tascas with the Guerra de Naves machine (a violet ring round their red square)
     if (typeof AGUA !== 'undefined' && AGUA.isOpen()) { let nb = null, nd = 1e9; for (const t of AGUA.shops) { const d = Math.hypot(t.x - PLAYER.x, t.z - PLAYER.z); if (d < nd) { nd = d; nb = t; } if (d < 400) blip(t.x, t.z, '#c8823a', 7 * s * 1.6, 'toy'); } if (nb && nd >= 400) edge(nb.x, nb.z, '#c8823a', 7 * s * 1.6, 'toy'); }
@@ -206,9 +218,10 @@ const BIGMAP = (() => {
     const out = [it('dot', '#fff', 'Tú'), it('dot', '#f5b72e', 'Misión'), it('dot', '#e040fb', 'Destino (GPS)'), it('sq', '#e53935', 'Comida'), it('dot', '#3d7bff', 'Policía')];
     if (G.maleIntro) out.push(it('tri', '#ff1744', 'Maleante'));
     if (A.invited) { out.push(it('sq', '#ffb347', 'Casa de El Blanco')); out.push(it('ring', '#b388ff', 'Bar con «Guerra de Naves»')); }
-    if (G.jugueterias) out.push(`<span style="white-space:nowrap;margin-right:12px">🧸 Juguetería</span>`);
-    if (C.intro) out.push(it('sq', '#ffb300', 'Inmobiliaria Pisos Chachi'));
-    if (typeof CASA !== 'undefined' && CASA.ownsAny()) out.push(it('sq', '#7fe08a', 'Tu casa'));
+    const ic = (kind, txt) => `<span style="white-space:nowrap;margin-right:12px"><img src="${window.__mapIconURL(kind)}" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px">${txt}</span>`;
+    if (G.jugueterias) out.push(ic('toy', 'Juguetería'));
+    if (C.intro) out.push(ic('house', 'Inmobiliaria Pisos Chachi'));
+    if (typeof CASA !== 'undefined' && CASA.ownsAny()) out.push(ic('chopa', 'Tu casa'));
     L.innerHTML = out.join(''); }
   const el = $('bigmap'), cv = $('bmc'), x = cv.getContext('2d'); let open = false, cx = 0, cz = 0, zoom = 0.5, drag = null, moved = false;
   function draw() {
@@ -227,8 +240,8 @@ const BIGMAP = (() => {
     for (const f of FOOD.shops) { x.fillStyle = '#e53935'; x.strokeStyle = '#fff'; x.lineWidth = 1.5 / k * devicePixelRatio; const sz = 5 * devicePixelRatio / k; x.fillRect(f.x - sz, f.z - sz, sz * 2, sz * 2); x.strokeRect(f.x - sz, f.z - sz, sz * 2, sz * 2); }
     if (typeof ARCADE !== 'undefined' && ARCADE.data().invited) for (const f of FOOD.shops) if (f.type === 'C' || f.type === 'R') { x.strokeStyle = '#b388ff'; x.lineWidth = 2.5 / k * devicePixelRatio; x.beginPath(); x.arc(f.x, f.z, 10 * devicePixelRatio / k, 0, 7); x.stroke(); } // v0.82.2: the Guerra de Naves bars
     { const sqm = (bx, bz, col) => { const sz = 6 * devicePixelRatio / k; x.fillStyle = col; x.strokeStyle = '#000'; x.lineWidth = 2 / k * devicePixelRatio; x.fillRect(bx - sz, bz - sz, sz * 2, sz * 2); x.strokeRect(bx - sz, bz - sz, sz * 2, sz * 2); };
-      if (typeof RECRE !== 'undefined') for (const b of RECRE.blips()) sqm(b[0], b[1], b[2]); if (typeof CASA !== 'undefined') for (const b of CASA.blips()) sqm(b[0], b[1], b[2]); } // v0.83: El Blanco's, the estate agency, your homes
-    if (typeof AGUA !== 'undefined' && AGUA.isOpen()) for (const t of AGUA.shops) { x.save(); x.translate(t.x, t.z); window.__toyBear(x, 7 * devicePixelRatio / k, 1.8 / k * devicePixelRatio); x.restore(); } // v0.83: the toy shops (teddy bear)
+      if (typeof RECRE !== 'undefined') for (const b of RECRE.blips()) sqm(b[0], b[1], b[2]); if (typeof CASA !== 'undefined') for (const b of CASA.blips()) { x.save(); x.translate(b[0], b[1]); window.__mapIcon(b[3], x, 8 * devicePixelRatio / k, 1.8 / k * devicePixelRatio); x.restore(); } } // v0.83: El Blanco's, the estate agency, your homes
+    if (typeof AGUA !== 'undefined' && AGUA.isOpen()) for (const t of AGUA.shops) { x.save(); x.translate(t.x, t.z); window.__toyBear(x, 7 * devicePixelRatio / k, 1.8 / k * devicePixelRatio); x.restore(); } // the toy shops (a little robot)
     for (const m of MISSIONS.blips()) { if (m[3] === 'tri') { const a = 11 / k * devicePixelRatio; x.fillStyle = m[2]; x.strokeStyle = '#000'; x.lineWidth = 2 / k * devicePixelRatio; x.beginPath(); x.moveTo(m[0], m[1] - a); x.lineTo(m[0] + a * 0.9, m[1] + a * 0.65); x.lineTo(m[0] - a * 0.9, m[1] + a * 0.65); x.closePath(); x.fill(); x.stroke(); } else dot(m[0], m[1], m[2] || '#f5b72e', 8); }
     for (const q of MISSIONS.aheadPts() || []) dot(q[0], q[1], '#46c3ff', 6);
     if (GPS.target) dot(GPS.target[0], GPS.target[1], '#e040fb', 8);

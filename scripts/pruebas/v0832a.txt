@@ -1,0 +1,7 @@
+# v0.83.2: iconos, golpes nuevos de Guanche Warriors, tuneras, sonidos de naves
+prueba_082.py
+prueba_081.py
+prueba_080.py
+prueba_083.py
+prueba_0821.py
+prueba_arranque.py

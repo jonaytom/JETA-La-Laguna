@@ -3,6 +3,31 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.83.2 — 2026-10-20 — Iconos nuevos en el mapa y golpes nuevos en Guanche Warriors
+- **Iconos del mapa** (Jonay), en el minimapa, en el mapa grande (M), en la leyenda y en el diario (J):
+  - Las jugueterías: **un robot**, en vez de la gota o el osito.
+  - La inmobiliaria Pisos Chachi: **una casita** naranja.
+  - Tu casa: **la cara del Chopa**.
+  La leyenda dibuja los mismos iconos que el mapa, y en el diario cada entrada lleva el suyo y dice cuál buscar.
+- **Guanche Warriors** (Jonay):
+  - **Atacar corriendo**: un salto hacia delante con una patada voladora que tumba.
+  - **El remate por detrás**: tras el segundo golpe del combo el enemigo se queda aturdido un momento. Si ahí saltas
+    (B), el guerrero hace una pirueta por encima y le golpea por la espalda, y lo tumba («¡POR DETRÁS!», +300).
+  - **Los lagartos atacan**:
+    - Muerden alargando el cuello, con las fauces abiertas.
+    - En carrera dan un salto y un coletazo a los dos lados.
+    Lo hacen los de los jinetes enemigos y el tuyo: A muerde y, corriendo, A salta y da el coletazo.
+  - **Botín**: de vez en cuando los enemigos sueltan un zurrón de magia (para recargar a mitad de fase, no solo con los
+    duendes) y algunos sueltan comida.
+- **Tu casa, por dentro** (Jonay: «al entrar se debe ver el salón comedor»): entras al salón-comedor, con el sofá y
+  un sillón mirando a la tele, la mesa del comedor con dos sillas y un frutero. En los pisos grandes hay además una
+  librería. El pisito de Herradores es un poco más hondo, para que al entrar lo veas todo de frente.
+- **Bencomo: las tuneras se ven peligrosas y pinchan a todos** (Jonay):
+  - Tienen un contorno oscuro suave, espinas claras por todas las palas e higos picones rojos.
+  - Ahora también pinchan a los castellanos que las tocan: se llevan un golpe y se dan la vuelta.
+- **Guerra de Naves: sonidos suaves** (Jonay): el disparo, el láser (un zumbido propio), un «tic» cuando le das a una
+  nave sin destruirla (también al ojo del jefe) y una explosión pequeña para las naves pequeñas.
+
 ## 0.83.1 — 2026-10-20 — La entrada de casa de El Blanco, marcada con su cilindro de luz
 - **La entrada de casa de El Blanco** (Teobaldo Power) se marca como los otros sitios: un cilindro de luz
   transparente, en naranja (Jonay). La puerta de la inmobiliaria Pisos Chachi lleva también el suyo, en ámbar.

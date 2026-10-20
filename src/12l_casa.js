@@ -8,7 +8,7 @@
 const CASA = (() => {
   const INMO = { name: 'Inmobiliaria Pisos Chachi', street: 'Calle Heraclio Sánchez', f: 0.3, side: 1 };
   const PISOS = [
-    { id: 'herradores', name: 'El pisito de Herradores', street: 'Calle Herradores', f: 0.42, side: -1, rent: 250, w: 7, d: 6, sub: 'Al lado del Pasaje Teide. Pequeñito pero chulo: cama, sofá, tele y una cocina de juguete.' },
+    { id: 'herradores', name: 'El pisito de Herradores', street: 'Calle Herradores', f: 0.42, side: -1, rent: 250, w: 8, d: 7, sub: 'Al lado del Pasaje Teide. Pequeñito pero chulo: cama, sofá, tele y una cocina de juguete.' },
     { id: 'sanagustin', name: 'Piso en la Calle San Agustín', street: 'Calle San Agustín', f: 0.55, side: 1, price: 18000, w: 9, d: 7, sub: 'En pleno casco: techos altos, balcón de madera y vecinas que lo saben todo.' },
     { id: 'viana', name: 'Casa en la Calle Viana', street: 'Calle Viana', f: 0.5, side: -1, price: 32000, w: 11, d: 8, sub: 'Casa terrera de las de antes, con patio. Para la banda entera.' },
     { id: 'adelantado', name: 'Ático en la Plaza del Adelantado', street: 'Plaza del Adelantado', f: 0.3, side: 1, price: 55000, w: 13, d: 9, sub: 'Vistas al Ayuntamiento y a la plaza. Para los Defensores de La Laguna que han triunfado.' }];
@@ -46,7 +46,11 @@ const CASA = (() => {
     const tvX = 0, tvZ = hd - 0.45; box(2.2, 0.5, 0.6, 0x3a2a1e, tvX, 0.35, tvZ); // TV stand
     const tv = box(1.8, 1.05, 0.12, 0x111111, tvX, 1.25, tvZ + 0.05); const scr = new THREE.Mesh(new THREE.PlaneGeometry(1.62, 0.9), new THREE.MeshBasicMaterial({ color: 0x1a2a3a })); scr.position.set(tvX, 1.25, tvZ - 0.02); scr.rotation.y = Math.PI; g.add(scr); void tv;
     const con = box(0.5, 0.1, 0.35, 0x2a2a30, tvX + 0.5, 0.66, tvZ - 0.05); const led = box(0.05, 0.03, 0.02, 0xff3a1a, tvX + 0.65, 0.68, tvZ - 0.23, { emissive: 0xff3a1a, emissiveIntensity: 1.5 });
-    const sofaZ = tvZ - 3.2; box(2.4, 0.45, 0.9, 0x8a2a2a, tvX, 0.35, sofaZ); box(2.4, 0.7, 0.25, 0x7a2222, tvX, 0.75, sofaZ - 0.4); for (const sx of [-1.25, 1.25]) box(0.25, 0.6, 0.9, 0x7a2222, tvX + sx, 0.5, sofaZ);
+    // v0.83.2 (Jonay): you come into the living-dining room: the sofa and an armchair facing the TV, the dining table
+    const sofaZ = tvZ - 2.6; box(2.4, 0.45, 0.9, 0x8a2a2a, tvX, 0.35, sofaZ); box(2.4, 0.7, 0.25, 0x7a2222, tvX, 0.75, sofaZ - 0.4); for (const sx of [-1.25, 1.25]) box(0.25, 0.6, 0.9, 0x7a2222, tvX + sx, 0.5, sofaZ);
+    { const ax = tvX + 2.1, az = sofaZ + 0.5; box(0.95, 0.45, 0.9, 0x2a5a8a, ax, 0.35, az); box(0.25, 0.75, 0.9, 0x234a72, ax + 0.4, 0.75, az); for (const sz of [-0.42, 0.42]) box(0.95, 0.55, 0.15, 0x234a72, ax, 0.5, az + sz); COL.addCirc(r.x0 + ax, r.z0 + az, 0.55); } // the armchair
+    { const tx = -hw + 1.5, tz = -hd + 1.7; box(1.3, 0.06, 0.9, 0x6b4226, tx, 0.78, tz); for (const [lx, lz] of [[-0.55, -0.35], [0.55, -0.35], [-0.55, 0.35], [0.55, 0.35]]) box(0.06, 0.75, 0.06, 0x4a2c18, tx + lx, 0.4, tz + lz);
+      for (const sz of [-0.75, 0.75]) { box(0.45, 0.06, 0.45, 0x8a5a34, tx, 0.48, tz + sz); box(0.45, 0.5, 0.06, 0x8a5a34, tx, 0.75, tz + sz * 1.25); } box(0.3, 0.12, 0.3, 0xe8e2d0, tx, 0.87, tz); COL.addCirc(r.x0 + tx, r.z0 + tz, 0.9); } // the dining table, two chairs, a fruit bowl
     COL.addSeg(r.x0 + tvX - 1.3, r.z0 + sofaZ - 0.5, r.x0 + tvX + 1.3, r.z0 + sofaZ - 0.5); COL.addSeg(r.x0 + tvX - 1.3, r.z0 + sofaZ + 0.4, r.x0 + tvX + 1.3, r.z0 + sofaZ + 0.4);
     COL.addSeg(r.x0 + tvX - 1.1, r.z0 + tvZ - 0.3, r.x0 + tvX + 1.1, r.z0 + tvZ - 0.3);
     const rug = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.6), M(0x2a6a8a)); rug.rotation.x = -Math.PI / 2; rug.position.set(tvX, 0.15, (tvZ + sofaZ) / 2); g.add(rug);
@@ -59,7 +63,7 @@ const CASA = (() => {
     box(0.06, 1.6, 0.06, 0x2a2a2a, tvX - 1.9, 0.9, tvZ - 0.5); const lamp = box(0.5, 0.35, 0.5, 0xfff0c0, tvX - 1.9, 1.8, tvZ - 0.5, { emissive: 0xffd28a, emissiveIntensity: 1.2 }); void lamp;
     const post = textPlane(P.id === 'herradores' ? '¡BENCOMO!' : 'GUANCHE WARRIORS', 1.4, 0.5, '#6b2a10', '#f2c46a', 'bold 34px Arial'); post.position.set(-hw + 0.05, 2.1, 0); post.rotation.y = Math.PI / 2; g.add(post);
     const win = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(3, w * 0.3), 1.3), new THREE.MeshBasicMaterial({ color: 0x8ab8e0 })); win.position.set(hw * 0.45, 1.9, hd - 0.04); win.rotation.y = Math.PI; g.add(win);
-    if (w >= 11) { box(1.6, 0.75, 1.0, 0x6b4226, -hw + 2.2, 0.45, -hd + 2.6); for (const sx of [-0.7, 0.7]) box(0.45, 0.45, 0.45, 0x5a3a22, -hw + 2.2 + sx, 0.3, -hd + 1.8); } // a table for the gang
+    if (w >= 11) { box(1.4, 1.9, 0.4, 0x5a3a22, hw - 0.4, 0.95, -hd + 1.4); for (let i = 0; i < 3; i++) box(1.2, 0.04, 0.35, 0x3a2a1e, hw - 0.4, 0.5 + i * 0.55, -hd + 1.4); } // a bookcase in the bigger homes
     const md = { x: 0, z: -hd + 0.05, rot: 0, h: 0, ix: 0, iz: -hd + 2.2 };
     const ex = exitDoor(r, md.x, md.z, md.rot);
     const def = { id: 'casa_' + P.id, name: P.name, door, spawn: { x: r.x0 + md.ix, z: r.z0 + md.iz, h: md.h }, exit: ex, ceil: r.y0 + 3.0, floor: r.y0 + 0.13, home: P.id, noLabel: true, locked: () => !has(P.id) };
@@ -79,7 +83,7 @@ const CASA = (() => {
     MISSIONS.kit.talk([[PC, '¡Hola, hola! ¿Hablo con el famoso Chopa de los Defensores de La Laguna? Le llamo de <b>Inmobiliaria Pisos Chachi</b>. ¿Sigue durmiendo en el sofá de su madre?'],
       [PC, 'Tenemos el <b>pisito de Herradores</b>, al ladito del Pasaje Teide, en alquiler por semanas. Y para los que van sobrados: pisos en San Agustín, en Viana y un ático en el Adelantado. ¡Caros, pero chachis!'],
       [MISSIONS.kit.CH, '¿Y tiene tele? Que me quiero comprar la consola de la juguetería.'], [PC, '¡Tele tienen todos! Pásese por la oficina, en la ' + INMO.street + '. Está en el mapa.']],
-    () => { c.intro = true; HUD.toast('Pisos Chachi: la inmobiliaria está en el mapa (cuadrado naranja) · lo tienes en el diario (J)', COL_INMO, 6); }, 'La inmobiliaria'); }
+    () => { c.intro = true; HUD.toast('Pisos Chachi: la inmobiliaria está en el mapa (la casita naranja) · lo tienes en el diario (J)', COL_INMO, 6); }, 'La inmobiliaria'); }
   const nameOf = (id) => (PISOS.find((p) => p.id === id) || {}).name || id;
   // ---------- E near the estate agency, inside your home (the TV, the bed)
   function nearInmo() { if (!inmoDoor || !data().intro || PLAYER.car || PLAYER.interior) return false; return Math.hypot(PLAYER.x - inmoDoor.x, PLAYER.z - inmoDoor.z) < 3.4; }
@@ -105,10 +109,10 @@ const CASA = (() => {
         if (i === 2) { openInmo(); return; } if (i === 1) { DLG.hide(); gps(P); return; }
         if (PLAYER.money < cost) { AUDIO.fail(); DLG.show(INMO.name, 'No te llega', `Mi niño, esto cuesta <b>$${cost.toLocaleString('es-ES')}</b> y tienes <b>$${PLAYER.money.toLocaleString('es-ES')}</b>. ¡Vuelva cuando lo tenga, que aquí no se fía!`, '', ['Vale'], () => DLG.hide()); return; }
         PLAYER.money -= cost; AUDIO.cash && AUDIO.cash(); if (P.rent) c.rent = { id: P.id, until: (rentMine ? c.rent.until : c.day) + WEEK }; else c.owned.push(P.id);
-        DLG.hide(); HUD.big(P.rent ? '¡PISO ALQUILADO!' : '¡CASA NUEVA!', COL_HOME, 3.5); HUD.toast(`${P.name}: ya puedes entrar (cuadrado verde en el mapa). Dentro: la cama y la tele.`, COL_HOME, 6); gps(P); SAVE && SAVE.auto && SAVE.auto('Casa nueva'); }); }
+        DLG.hide(); HUD.big(P.rent ? '¡PISO ALQUILADO!' : '¡CASA NUEVA!', COL_HOME, 3.5); HUD.toast(`${P.name}: ya puedes entrar (en el mapa, con tu cara). Dentro: la cama y la tele.`, COL_HOME, 6); gps(P); SAVE && SAVE.auto && SAVE.auto('Casa nueva'); }); }
   function gps(P) { const H = HOMES[P.id]; if (!H) return; setWaypoint(H.door.x, H.door.z); HUD.toast('Ruta marcada: ' + P.name, '#e040fb', 3); }
   // ---------- map markers: the agency (once it has phoned you), your homes
-  function blips() { const b = []; if (inmoDoor && data().intro) b.push([inmoDoor.x, inmoDoor.z, COL_INMO]); for (const id in HOMES) if (has(id)) b.push([HOMES[id].door.x, HOMES[id].door.z, COL_HOME]); return b; }
+  function blips() { const b = []; if (inmoDoor && data().intro) b.push([inmoDoor.x, inmoDoor.z, COL_INMO, 'house']); for (const id in HOMES) if (has(id)) b.push([HOMES[id].door.x, HOMES[id].door.z, COL_HOME, 'chopa']); return b; } // v0.83.2: icons (a little house; El Chopa's face)
   function homesOwned() { return PISOS.filter((P) => HOMES[P.id] && has(P.id)).map((P) => ({ name: P.name, x: HOMES[P.id].door.x, z: HOMES[P.id].door.z })); }
   return { build, update, prompt, use, blips, data, PISOS, HOMES, homesOwned, has, ownsAny, nameOf, get inmo() { return inmoDoor; }, INMO, WEEK, _open: openInmo };
 })();

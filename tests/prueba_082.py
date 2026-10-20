@@ -44,10 +44,21 @@ async def run(pg):
       return JSON.stringify({ estado: st, zurrones: p.jars, tocados: g._E.filter(e=>e.st==='fall'||e.st==='down'||e.hp<=0).length, enemigos: hp0.length }); })()""" % A)); print('magia', mg)
     await foto(pg, 'v082_magia')
     lz = json.loads(await pg.evaluate("""(()=>{ const A=%s, g=A._game(), p=g._p; const P=(v)=>{ A._press(v,true); A._step(1); A._press(v,false); A._step(1); }; A._step(90); p.st='idle'; p.h=0; p.vh=0;
-      g._liz.push({ x: p.x+4, z: p.z, vx: 0, vz: 0, face: 1, anim: 0, whip: 0, rider: null, free: true, gone: 0, drops: 0 }); P('vT'); const monta=!!p.mount; P('vS'); const cola=p.st; A._step(30); return JSON.stringify({ monta, cola }); })()""" % A)); print('lagarto', lz)
+      g._liz.push({ x: p.x+4, z: p.z, vx: 0, vz: 0, face: 1, anim: 0, whip: 0, rider: null, free: true, gone: 0, drops: 0 }); P('vT'); const monta=!!p.mount; P('vS'); const cola=p.st, mordisco=(p.mount && p.mount.bite) > 0; A._step(30);
+      // running on the lizard: a leap and the tail
+      A._press('vR', true); A._step(1); A._press('vR', false); A._step(3); A._press('vR', true); A._step(6); P('vS'); const salto=p.st, x0=p.x; A._step(20); A._press('vR', false); const avanza=p.x-x0; A._step(20);
+      P('vT'); A._step(40); return JSON.stringify({ monta, cola, mordisco, salto, avanza: Math.round(avanza) }); })()""" % A)); print('lagarto', lz)
+    gw = json.loads(await pg.evaluate("""(()=>{ const A=%s, g=A._game(), p=g._p; const P=(v)=>{ A._press(v,true); A._step(1); A._press(v,false); A._step(1); }; p.mount=null; p.st='idle'; p.h=0; p.vh=0; A._step(5);
+      // the running attack: a flying kick
+      A._press('vR', true); A._step(1); A._press('vR', false); A._step(3); A._press('vR', true); A._step(8); P('vS'); const kst=p.st; let kh=0; for (let i=0;i<20;i++){ A._step(1); kh=Math.max(kh,p.h); } A._press('vR', false); A._step(30);
+      // the somersault over a dazed enemy
+      const e=g._E.find(q=>q.hp>2 && !q.d.boss && q.k!=='D' && !q.mount) || g._spawn('S', p.x+14, p.z); let flip=null;
+      if (e) { p.st='idle'; p.h=0; p.face=1; e.x=p.x+14; e.z=p.z; e.h=0; e.st='hurt'; e.stun=true; e.stT=0.8; e.inv=0; const hp0=e.hp; P('vT'); const st1=p.st; let top=0; for (let i=0;i<34;i++){ A._step(1); top=Math.max(top,p.h); }
+        flip={ estado: st1, alto: Math.round(top), detras: (p.x-e.x)*1 > 0 || e.st==='fall', tumbado: ['fall','down','dead','getup'].includes(e.st), dano: +(hp0-e.hp).toFixed(1) }; }
+      return JSON.stringify({ patada: kst, alto_patada: Math.round(kh), flip }); })()""" % A)); print('golpes nuevos', gw)
     await foto(pg, 'v082_lagarto')
     ok2 = c['anda'] > 30 and c['alto'] > 15 and c['corre'] == 'run' and c['pelea'] and c['combo'] and c['combo']['vida'] < c['combo']['max'] and c['combo']['estado'] in ('fall', 'down', 'dead', 'getup') \
-        and mg['zurrones'] == 0 and (mg['tocados'] > 0 or mg['enemigos'] == 0) and lz['monta'] and lz['cola'] == 'whip'
+        and mg['zurrones'] == 0 and (mg['tocados'] > 0 or mg['enemigos'] == 0) and lz['monta'] and lz['cola'] == 'bite' and lz['mordisco'] and lz['salto'] == 'whip' and lz['avanza'] > 15 and gw['patada'] == 'dash' and gw['alto_patada'] > 5 and gw['flip'] and gw['flip']['estado'] == 'flip' and gw['flip']['alto'] > 10 and gw['flip']['tumbado']
     print('CONTROLES', 'OK' if ok2 else 'FALLA'); ok = ok and ok2
     # photos of each stage (the game in play, invincible, walking into the first fight)
     for n in range(5):

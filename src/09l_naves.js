@@ -151,7 +151,7 @@ ARCADE.GAMES.naves = (() => {
       if (mod.have) { if (mod.st === 'front') { for (const a of [-0.35, 0, 0.35]) shots.push({ k: 'red', x: mod.x + 8, y: mod.y, vx: Math.cos(a) * 420, vy: Math.sin(a) * 420, dmg: 1, r: 4 }); }
         else if (mod.st === 'back') { for (const a of [-0.25, 0.25]) shots.push({ k: 'red', x: mod.x - 8, y: mod.y, vx: -Math.cos(a) * 420, vy: Math.sin(a) * 420, dmg: 1, r: 4 }); }
         else shots.push({ k: 'red', x: mod.x + 8, y: mod.y, vx: 420, vy: 0, dmg: 1, r: 4 }); }
-      api.sfx('pew'); }
+      api.sfx(p.laser ? 'zap' : 'pew'); }
     function beam(c) { const lvl = c >= 1 ? 2 : 1; shots.push({ k: 'beam', x: p.x + 20, y: p.y, vx: 600, vy: 0, dmg: lvl === 2 ? 9 : 4, r: lvl === 2 ? 13 : 8, lvl, hits: new Set() }); api.sfx('vault'); }
     function power(i) { const can = [p.spd < 4, !p.missile, !p.dbl, !p.laser, p.opts < 2, p.shield <= 0][i]; if (!can) { api.sfx('hurt'); return; }
       if (i === 0) p.spd++; if (i === 1) p.missile = true; if (i === 2) { p.dbl = true; p.laser = false; } if (i === 3) { p.laser = true; p.dbl = false; } if (i === 4) p.opts++; if (i === 5) p.shield = 6;
@@ -180,8 +180,8 @@ ARCADE.GAMES.naves = (() => {
       for (const e of foes) if (!e.dead && Math.hypot(e.x - mod.x, e.y - mod.y) < e.r + 9) damage(e, 10 * dt);
       if (boss && !boss.dying) for (const q of boss.parts) if (q.weak && q.open && Math.hypot(q.x - mod.x, q.y - mod.y) < q.r + 9) bossHit(6 * dt); }
     // ---------- enemies
-    function damage(e, n) { if (e.dead) return; e.hp -= n; e.fl = 0.08; if (e.hp <= 0) kill(e); }
-    function kill(e) { e.dead = true; addScore(e.pts, e.x, e.y); boom(e.x, e.y, e.r); api.sfx(e.r > 15 ? 'boom' : 'hit');
+    let ticT = 0; function damage(e, n) { if (e.dead) return; e.hp -= n; e.fl = 0.08; if (e.hp <= 0) kill(e); else if (time - ticT > 0.06) { ticT = time; api.sfx('tic'); } } // v0.83.2 (Jonay): a soft sound when you hit
+    function kill(e) { e.dead = true; addScore(e.pts, e.x, e.y); boom(e.x, e.y, e.r); api.sfx(e.r > 15 ? 'boom' : 'pop');
       if (e.gid !== undefined) { const gr = groups[e.gid]; gr.killed++; if (gr.killed >= gr.n) { items.push({ k: 'c', x: e.x, y: e.y, t: 0 }); addScore(500, e.x, e.y - 12); } }
       if (e.k === 'b') { items.push({ k: 'c', x: e.x - 10, y: e.y - 12, t: 0 }, { k: 'c', x: e.x + 10, y: e.y + 12, t: 1 }); if (e.drop) items.push({ k: e.drop, x: e.x, y: e.y, t: 0 }); }
       if (e.k === 'h' && rnd() < 0.3) items.push({ k: 'c', x: e.x, y: e.y, t: 0 });
@@ -231,7 +231,7 @@ ARCADE.GAMES.naves = (() => {
         if (s.k !== 'mis') { const t = terr(s.x); if (s.y < t.c || s.y > t.f) { if (!(s.k === 'beam' && s.lvl === 2)) s.dead = true; fx.push({ k: 'spark', t: 0.2, x: s.x, y: s.y }); continue; } }
         for (const e of foes) { if (e.dead || (s.hits && s.hits.has(e))) continue; if (Math.hypot(e.x - s.x, e.y - s.y) < e.r + s.r) { if (s.hits) s.hits.add(e); damage(e, s.dmg); if (!e.dead && !(s.k === 'beam' && s.lvl === 2)) { s.dead = true; break; } if (!s.hits) { s.dead = true; break; } } }
         if (s.dead || !boss || boss.dying) continue;
-        for (const q of boss.parts) if (Math.hypot(q.x - s.x, q.y - s.y) < q.r + s.r) { if (q.weak && q.open) { if (s.hits && s.hits.has(boss)) break; if (s.hits) s.hits.add(boss); bossHit(s.dmg); fx.push({ k: 'spark', t: 0.2, x: s.x, y: s.y }); if (!(s.k === 'beam')) s.dead = true; }
+        for (const q of boss.parts) if (Math.hypot(q.x - s.x, q.y - s.y) < q.r + s.r) { if (q.weak && q.open) { if (s.hits && s.hits.has(boss)) break; if (s.hits) s.hits.add(boss); bossHit(s.dmg); if (time - ticT > 0.06) { ticT = time; api.sfx('tic'); } fx.push({ k: 'spark', t: 0.2, x: s.x, y: s.y }); if (!(s.k === 'beam')) s.dead = true; }
           else { s.dead = true; fx.push({ k: 'tink', t: 0.15, x: s.x, y: s.y }); } break; } }
       for (let i = shots.length - 1; i >= 0; i--) if (shots[i].dead) shots.splice(i, 1);
       for (const b of bul) { b.x += b.vx * dt; b.y += b.vy * dt; if (b.x < -10 || b.x > W + 10 || b.y < 0 || b.y > H) b.dead = true;
