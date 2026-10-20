@@ -3,6 +3,23 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.82.1 — 2026-10-20 — El diario cuenta lo que te dicen por el móvil y solo enseña lo que ya puedes hacer
+- **Diario (J), sección nueva «Lo que sabes»** (Jonay): todo lo que te cuentan por el móvil, cada cosa con su entrada.
+  Cada entrada dice quién te lo contó, qué es, dónde está y la conversación. Hay entradas para:
+  - Los maleantes en busca y captura.
+  - La máquina de El Blanco (Bencomo, con el récord de la máquina).
+  - Guerra de Naves en los bares y Guanche Warriors en las jugueterías.
+  - Las jugueterías.
+  - Los retos en las canchas y en los campos de fútbol.
+  - El coche patrulla de la banda.
+- **Lo que aún no es accesible no se ve**: se acabaron el «(aún no)» y las misiones pendientes con su nombre. El
+  diario va apareciendo según se abren las cosas: solo se ven las misiones hechas, la que está en curso y la
+  siguiente de cada historia abierta.
+- Las llamadas que abren algo guardan su conversación en la entrada de esa cosa, no en «Charlas sueltas».
+- **Bencomo: la pelea final con Lugo cabe en una pantalla** (Jonay: se salía de la pantalla): la cámara se queda quieta
+  y Lugo carga de un borde a otro sin salirse.
+- Guanche Warriors: a los enemigos grandes se les alcanza un poco antes según su tamaño.
+
 ## 0.82.0 — 2026-10-20 — «GUANCHE WARRIORS», la máquina de las jugueterías
 - **Recreativa nueva: «GUANCHE WARRIORS»** (`09m_guanche.js`), un beat'em up tipo Golden Axe: se avanza de lado con
   profundidad, no es de plataformas. Es la máquina de pago de las **jugueterías**: sale en el menú de la tienda una

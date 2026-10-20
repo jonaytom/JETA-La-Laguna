@@ -46,10 +46,10 @@ async def run(pg):
         out.push({ fase: n+1, avance: +(maxx/(L.w*16)).toFixed(2), caidas: deaths, pasada: g._stage()!==n || g._phase()==='clear', donde: [Math.round(p.x), Math.round(p.y), col], alturas: tops }); } return JSON.stringify(out); })()""" % A)); print('recorrido', trav)
     ok3 = all(t['avance'] > 0.85 for t in trav); print('FASES', 'OK' if ok3 else 'FALLA'); ok = ok and ok3
     # 4) the boss
-    bs = json.loads(await pg.evaluate("""(()=>{ const A=%s, g=A._game(); g._load(2); const p=g._p, b=g._boss(); p.x=b.x-180; p.y=b.y; for (let i=0;i<60;i++) A._step(1); const st1=b.st; b.hp=1; p.x=b.x-(b.face>0?-14:14); p.y=b.y; p.face=Math.sign(b.x-p.x); p.inv=5; b.hurt=0;
-      A._press('vS', true); A._step(2); A._press('vS', false); for (let i=0;i<60*8;i++) { A._step(1); if (g._phase()==='clear') break; } const huye=g._phase()==='clear'; for (let i=0;i<60*8;i++) A._step(1); return JSON.stringify({ empieza: st1, huye, fase: g._stage() }); })()""" % A)); print('jefe', bs)
+    bs = json.loads(await pg.evaluate("""(()=>{ const A=%s, g=A._game(); g._load(2); const p=g._p, b=g._boss(); p.x=b.x-180; p.y=b.y; for (let i=0;i<60;i++) A._step(1); const st1=b.st; const lk=g._L().lock; const arena=lk ? Math.round(lk[1]-lk[0]) : 0, dentro=lk ? (b.x0>=lk[0] && b.x1<=lk[1]) : false; b.hp=1; p.x=b.x-(b.face>0?-14:14); p.y=b.y; p.face=Math.sign(b.x-p.x); p.inv=5; b.hurt=0;
+      A._press('vS', true); A._step(2); A._press('vS', false); for (let i=0;i<60*8;i++) { A._step(1); if (g._phase()==='clear') break; } const huye=g._phase()==='clear'; for (let i=0;i<60*8;i++) A._step(1); return JSON.stringify({ empieza: st1, huye, fase: g._stage(), arena, dentro }); })()""" % A)); print('jefe', bs)
     await foto(pg, 'v080_vuelta2')
-    ok4 = bs['huye'] and bs['fase'] == 3; print('JEFE', 'OK' if ok4 else 'FALLA'); ok = ok and ok4
+    ok4 = bs['huye'] and bs['fase'] == 3 and bs['arena'] == 240 and bs['dentro']; print('JEFE', 'OK' if ok4 else 'FALLA'); ok = ok and ok4
     # 5) game over → continue countdown → initials → table
     hs = json.loads(await pg.evaluate("""(()=>{ const A=%s, g=A._game(); g.score=987650; g._lives(0); const p=g._p; p.inv=0; p.power=0; p.y=900; for (let i=0;i<60*4;i++) A._step(1); const m1=A._st().mode; for (let i=0;i<60*12;i++) A._step(1); const m2=A._st().mode;
       const P=(v)=>{ A._press(v,true); A._step(1); A._press(v,false); A._step(1); }; P('vU'); P('vS'); P('vU'); P('vU'); P('vS'); P('vS'); const t=A.table('prueba', A.GAMES.bencomo); return JSON.stringify({ m1, m2, top: t[0], modo: A._st().mode }); })()""" % A)); print('fin de partida', hs)

@@ -276,7 +276,7 @@ ARCADE.GAMES.bencomo = (() => {
       if (e.k !== 'L' && e.k !== 'C') { e.vy = -120; } if (e.hp <= 0 && e.k !== 'L') { e.dead = true; addScore(e.pts * (stomp ? 2 : 1), e.x, e.y - e.h); addFx('ko', e.x, e.y, e); } }
     function bossAI(e, dt) { // Alonso Fernández de Lugo on his white horse
       const dx = p.x - e.x;
-      if (e.st === 'wait') { e.vx = 0; if (Math.abs(dx) < 200) { e.st = 'speech'; e.t = 0; L.lock = [e.x0 - 40, e.x1 + 40]; api.music(SONGS.boss); banner = ['¡ALONSO FERNÁNDEZ DE LUGO!', 'EL ADELANTADO'], bannerT = 2.6; } return; }
+      if (e.st === 'wait') { e.vx = 0; if (Math.abs(dx) < 200) { e.st = 'speech'; e.t = 0; const cx = clamp(e.x - W * 0.62, 0, L.w * T - W); L.lock = [cx, cx + W]; e.x0 = cx + 26; e.x1 = cx + W - 26; /* v0.82.1 (Jonay): the last fight fits in one screen, no scrolling */ api.music(SONGS.boss); banner = ['¡ALONSO FERNÁNDEZ DE LUGO!', 'EL ADELANTADO'], bannerT = 2.6; } return; }
       if (e.st === 'speech') { e.vx = 0; e.face = Math.sign(dx) || -1; if (e.t > 2.2) { e.st = 'charge'; e.t = 0; } return; }
       if (e.st === 'flee') { e.vx = 220; e.face = 1; e.y -= 0; if (e.x > camX + W + 60) { e.dead = true; phase = 'clear'; phaseT = 6; api.stopMusic(); api.sfx('clear'); } return; }
       const rage = e.hp < e.max / 2 ? 1.35 : 1;
@@ -326,7 +326,7 @@ ARCADE.GAMES.bencomo = (() => {
       for (const f of fx) { f.t -= dt; if (f.k === 'pts') f.y -= 20 * dt; if (f.k === 'ko') { f.vy += 600 * dt; f.y += f.vy * dt; } } fx = fx.filter((f) => f.t > 0);
       // camera: ahead of Bencomo, never back (like the old ones); in the boss's arena it stays
       camY = lerp(camY, clamp(p.y - VH * 0.64, 0, ROWS * T - VH), 0.15);
-      const tx = clamp(p.x - W * 0.38 + p.face * 20, 0, L.w * T - W); camX = Math.max(camX, lerp(camX, tx, 0.12)); if (L.lock) camX = clamp(camX, L.lock[0], L.lock[1] - W);
+      const tx = clamp(p.x - W * 0.38 + p.face * 20, 0, L.w * T - W); camX = Math.max(camX, lerp(camX, tx, 0.12)); if (L.lock) { camX = lerp(camX, L.lock[0], 0.12); if (p.x > L.lock[1] - 6) { p.x = L.lock[1] - 6; p.vx = Math.min(0, p.vx); } }
     };
     // ---------- drawing
     const flick = () => Math.floor(time * 20) % 2 === 0;

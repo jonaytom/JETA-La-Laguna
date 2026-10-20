@@ -13,7 +13,7 @@ const MALEANTES = (() => {
   function intro() { const G = window.GANG; if (!G || !G.sastronTut || G.maleIntro || st.introT > 0 || MISSIONS.active || GAME.state !== 'play' || (DLG && DLG.open) || (window.__TALK && window.__TALK.cur)) return; st.introT = 1;
     MISSIONS.kit.talk([['Sastrón (por el móvil)', 'Chopa, ahora que sabes repartir, te cuento un negocio. La Policía Local tiene una lista de maleantes en busca y captura y paga una recompensa a quien se los entregue.'],
       ['Sastrón (por el móvil)', 'Cuando haya uno cerca te saldrá en el minimapa como un triángulo rojo. Vas, le das una buena tunda (pelea, como siempre) y la recompensa es tuya. Sin delito: es un servicio público.'],
-      [MISSIONS.kit.CH, '¿Y si me gana él?'], ['Sastrón (por el móvil)', 'Sigue marcado un rato: vuelve a por él. Y ojo, que pegan más fuerte que la gente normal y cuanto más nivel, más pagan.']], () => { G.maleIntro = true; st.t = 25; }); }
+      [MISSIONS.kit.CH, '¿Y si me gana él?'], ['Sastrón (por el móvil)', 'Sigue marcado un rato: vuelve a por él. Y ojo, que pegan más fuerte que la gente normal y cuanto más nivel, más pagan.']], () => { G.maleIntro = true; st.t = 25; }, 'Maleantes en busca y captura'); }
   function pickPed() {
     let best = null;
     for (const p of PEDS) { if (p.down > 0 || p.fight > 0 || p.canarion || p.fought || !p.H || (p.H.look && p.H.look.female)) continue; const d = Math.hypot(p.x - PLAYER.x, p.z - PLAYER.z); if (d < 45 || d > 120) continue; if (!best || Math.random() < 0.3) best = p; }

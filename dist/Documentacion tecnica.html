@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.82.0</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.82.1</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2103,6 +2103,24 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.82.1 — 2026-10-20 — El diario cuenta lo que te dicen por el móvil y solo enseña lo que ya puedes hacer</h2>
+<ul>
+<li><strong>Diario (J), sección nueva «Lo que sabes»</strong> (Jonay): todo lo que te cuentan por el móvil, cada cosa con su entrada.
+  Cada entrada dice quién te lo contó, qué es, dónde está y la conversación. Hay entradas para:</li>
+<li>Los maleantes en busca y captura.</li>
+<li>La máquina de El Blanco (Bencomo, con el récord de la máquina).</li>
+<li>Guerra de Naves en los bares y Guanche Warriors en las jugueterías.</li>
+<li>Las jugueterías.</li>
+<li>Los retos en las canchas y en los campos de fútbol.</li>
+<li>El coche patrulla de la banda.</li>
+<li><strong>Lo que aún no es accesible no se ve</strong>: se acabaron el «(aún no)» y las misiones pendientes con su nombre. El
+  diario va apareciendo según se abren las cosas: solo se ven las misiones hechas, la que está en curso y la
+  siguiente de cada historia abierta.</li>
+<li>Las llamadas que abren algo guardan su conversación en la entrada de esa cosa, no en «Charlas sueltas».</li>
+<li><strong>Bencomo: la pelea final con Lugo cabe en una pantalla</strong> (Jonay: se salía de la pantalla): la cámara se queda quieta
+  y Lugo carga de un borde a otro sin salirse.</li>
+<li>Guanche Warriors: a los enemigos grandes se les alcanza un poco antes según su tamaño.</li>
+</ul>
 <h2>0.82.0 — 2026-10-20 — «GUANCHE WARRIORS», la máquina de las jugueterías</h2>
 <ul>
 <li><strong>Recreativa nueva: «GUANCHE WARRIORS»</strong> (<code>09m_guanche.js</code>), un beat'em up tipo Golden Axe: se avanza de lado con

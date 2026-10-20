@@ -112,7 +112,7 @@ const MISSIONS = (() => {
   // newest first; what is said just after a mission ends (its closing lines) still goes to it, and talk outside any
   // mission goes to «Charlas sueltas». A mission played again keeps only its latest run.
   const LOG = {}; let lastTitle = null, lastT = 0, stamp = 0; const LOOSE = 'Charlas sueltas';
-  const logLine = (who, t) => { if (!t) return; const title = active ? active.title : lastTitle && performance.now() - lastT < 30000 ? lastTitle : LOOSE;
+  const logLine = (who, t, forced) => { if (!t) return; const title = forced ? forced : active ? active.title : lastTitle && performance.now() - lastT < 30000 ? lastTitle : LOOSE;
     const L = LOG[title] || (LOG[title] = []); stamp = Math.max(Date.now(), stamp + 1); L.push([who || '', String(t), stamp]); /* strictly increasing: two lines in the same ms keep their order */ if (L.length > 120) L.splice(0, L.length - 120); };
   const GANG = { formed: false, name: '', members: [] }; window.GANG = GANG;
   const SASTRON_FEE = 2500;
@@ -120,8 +120,10 @@ const MISSIONS = (() => {
   const bold = (s) => `<b>${s}</b>`;
   const CH = 'El Chopa';
   // spoken lines as subtitles: each one stays until you click / tap / press Space or Enter
-  const talk = (lines, cb) => { const my = {}; TALK.cur = my; let i = 0, tm = 0;
-    const next = () => { if (TALK.cur !== my) return; clearTimeout(tm); if (i >= lines.length) { TALK.cur = null; $('sub').classList.remove('talking'); HUD.sub('', 0.01); cb && cb(); return; } const [who, t, d = 8.8] = lines[i++]; logLine(who, t);
+  // v0.82.1: talk(lines, cb, title): a title files the lines under that entry of the diary (the phone calls that open
+  // something: the maleantes, the arcades…) instead of the mission in course or «Charlas sueltas»
+  const talk = (lines, cb, title) => { const my = {}; TALK.cur = my; let i = 0, tm = 0;
+    const next = () => { if (TALK.cur !== my) return; clearTimeout(tm); if (i >= lines.length) { TALK.cur = null; $('sub').classList.remove('talking'); HUD.sub('', 0.01); cb && cb(); return; } const [who, t, d = 8.8] = lines[i++]; logLine(who, t, title);
       SUB.show(`${who ? bold(who + ':') + ' ' : ''}${t} <span class="subnext">▶ ${document.body.classList.contains('touchmode') ? 'toca para seguir' : 'clic / Espacio'}</span>`, 99999); $('sub').classList.add('talking'); }; // lines only move on with a click / tap / Space / Enter
     my.next = next; next(); };
   const setObjective = (t) => { const o = $('objective'); if (!t) { o.style.display = 'none'; return; } o.style.display = 'block'; o.innerHTML = t + (timer > 0 ? `<span class="t" id="mtimer"></span>` : ''); };

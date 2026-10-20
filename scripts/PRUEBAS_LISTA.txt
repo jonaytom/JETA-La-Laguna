@@ -1,4 +1,4 @@
 # Pruebas de ESTA versión (scripts\PRUEBAS.bat las junta con las de lo cambiado).
-# v0.82.0: «Guanche Warriors» en las jugueterías
-prueba_082.py
+# v0.82.1: el diario (J) con lo que te cuentan por el móvil
+prueba_0821.py
 prueba_arranque.py

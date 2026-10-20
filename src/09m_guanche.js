@@ -275,7 +275,7 @@ ARCADE.GAMES.guanche = (() => {
       if (k > 0.35 && k < 0.75) { const reach = st === 'whip' ? 30 : st === 'dash' ? H.reach + 4 : H.reach, dmg = st === 'whip' ? 3 : st === 'dash' ? H.dmg[2] : st === 'jatk' ? H.dmg[2] + (p.vault ? 2 : 0) : H.dmg[p.combo - 1];
         const kind = st === 'whip' || st === 'dash' || st === 'jatk' || p.combo === 3 ? 'knock' : 'light';
         for (const e of E) { if (p.hitDone.has(e) || e.st === 'dead') continue; const ddx = (e.x - p.x) * (st === 'whip' ? Math.sign(e.x - p.x) || 1 : p.face);
-          if (ddx > -4 && ddx < reach + (e.d.boss ? 6 : 0) && Math.abs(e.z - p.z) < 8 && e.h < 14 + p.h) { p.hitDone.add(e); if (hit(p, e, dmg * (1 + 0.1 * loopN), kind)) { if (e.hp <= 0) killed(e); } } } }
+          if (ddx > -4 && ddx < reach + (e.d.boss ? 6 : 0) + ((e.look && e.look.s) || 1) * 4 - 4 && Math.abs(e.z - p.z) < 8 && e.h < 14 + p.h) { p.hitDone.add(e); if (hit(p, e, dmg * (1 + 0.1 * loopN), kind)) { if (e.hp <= 0) killed(e); } } } }
       if (p.stT <= 0 && st !== 'jatk') p.st = 'idle'; }
     function killed(e) { if (e.scored) return; e.scored = true; g.score += e.d.pts; fx.push({ k: 'pts', t: 0.9, x: e.x, y: GY + e.z - 34, s: String(e.d.pts) }); }
     function castSpell() { const H = p.hero, lvl = Math.min(p.jars, H.jars); p.jars = 0; spellFx = { k: H.id, t: 1.4, lvl }; shake = H.id === 'mencey' ? 0.9 : 0.3; api.sfx('boom');
@@ -325,7 +325,7 @@ ARCADE.GAMES.guanche = (() => {
       for (const e of E) if (e.st !== 'dead' && e.hp > 0 && e.k !== 'D' && e.x > camX - 30 && e.x < camX + VW + 30) { const d = Math.abs(e.x - p.x) + Math.abs(e.z - p.z) * 2; if (d < bd) { bd = d; best = e; } }
       if (!best) { k.held.vR = true; if (p.z < 18) k.held.vD = true; else if (p.z > 26) k.held.vU = true; return; }
       const want = best.x - Math.sign(best.x - p.x || 1) * Math.min(p.hero.reach - 6, 13); if (Math.abs(p.x - want) > 3) k.held[p.x < want ? 'vR' : 'vL'] = true; if (Math.abs(best.z - p.z) > 3) k.held[best.z > p.z ? 'vD' : 'vU'] = true;
-      if (Math.abs(p.x - want) < 8 && Math.abs(best.z - p.z) < 5) { p.face = Math.sign(best.x - p.x) || p.face; if (p.st === 'idle' || p.st === 'walk') k.hit.vS = true; }
+      if (Math.abs(p.x - want) < 4 && Math.abs(best.z - p.z) < 5) { p.face = Math.sign(best.x - p.x) || p.face; if (p.st === 'idle' || p.st === 'walk') k.hit.vS = true; }
       const close = E.filter((e) => e.st !== 'dead' && e.hp > 0 && Math.abs(e.x - p.x) < 80).length; if (p.jars >= 2 && (close >= 3 || (best.d.boss && p.jars >= 3))) k.hit.vP = true; }
     // ---------- step
     g.update = (dt, pad) => { time += dt; if (bannerT > 0) bannerT -= dt; shake = Math.max(0, shake - dt); if (spellFx) { spellFx.t -= dt; if (spellFx.t <= 0) spellFx = null; }

@@ -5,6 +5,14 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 
 ## Por revisar con Jonay
 
+- [ ] **Auditoría v0.82.1** (20-oct 17:30, APTO CON AVISOS): pintar un fotograma sube de 31,3 a 34,9 ms y el arranque
+  de 9,1 a 9,9 s. Probablemente es ruido: esta versión solo toca el diario y las máquinas. Mirarlo en la próxima.
+- [x] (v0.82.1) **Diario (J): todo lo que te cuentan por el móvil también sale en el diario** (Jonay, 20-oct):
+  - Por ejemplo, lo de los maleantes y lo de las recreativas que explica El Blanco: Bencomo en su casa, Guerra de
+    Naves en los bares y Guanche Warriors en las jugueterías. También todas las cosas de ese tipo.
+  - **Lo que todavía no es accesible no se ve.** Nada de «aún no» ni de entradas pendientes con nombre: el diario se
+    va descubriendo según puedes acceder a las cosas.
+  - Cada cosa del móvil, con su entrada: quién te lo dijo, qué es y dónde está.
 - [ ] **Auditoría v0.81.0** (20-oct 16:19, APTO CON AVISOS):
   - 2 avisos nuevos del análisis estático: `05o_concepcion.js:72-73`, `cFrame()` crea objetos de three.js.
   - El agente revisor de jugabilidad (v0.78.0) tiene 14 avisos nuevos.
