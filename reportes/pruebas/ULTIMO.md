@@ -1,10 +1,10 @@
-# Pruebas 0.80.0 — 2026-10-19 20:36 — 2/2 OK
+# Pruebas 0.81.0 — 2026-10-20 16:19 — 2/2 OK
 
-Listas: v080a. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 82 s en total.
+Listas: v080a. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 84 s en total.
 
 | # | Prueba | Resultado | Tiempo |
 |---|---|---|---|
-| 1 | `prueba_080.py` | **OK** | 63 s |
+| 1 | `prueba_080.py` | **OK** | 66 s |
 | 2 | `prueba_arranque.py` | **OK** | 0 s |
 
 ## Detalle
@@ -21,11 +21,12 @@ foto v080_records
 modo play
 foto v080_fase1
 CICLO OK
-movimientos {'anda': 156, 'salto': 57, 'salto_pastor': 109, 'avance_pertiga': 287}
+movimientos {'anda': 156, 'salto': 57, 'salto_pastor': 109, 'avance_pertiga': 277}
 pogo {'pogo_mata': True, 'rebote': True}
+agachado contra el perro {'agachado': True, 'perro_muerto': True}
 foto v080_salto
 MOVIMIENTOS OK
-recorrido [{'fase': 1, 'avance': 0.99, 'caidas': 0, 'pasada': True, 'donde': [3209, 176, 200], 'alturas': [3, 3, 3, 3, 3, -1, -1, -1, -1]}, {'fase': 2, 'avance': 0.98, 'caidas': 1, 'pasada': True, 'donde': [3320, 160, 207], 'alturas': [4, 4, 4, 4, 4, 4, -1, -1, -1]}]
+recorrido [{'fase': 1, 'avance': 0.99, 'caidas': 0, 'pasada': True, 'donde': [3193, 176, 199], 'alturas': [3, 3, 3, 3, 3, -1, -1, -1, -1]}, {'fase': 2, 'avance': 0.98, 'caidas': 1, 'pasada': True, 'donde': [3321, 160, 207], 'alturas': [4, 4, 4, 4, 4, 4, -1, -1, -1]}]
 FASES OK
 jefe {'empieza': 'speech', 'huye': True, 'fase': 3}
 foto v080_vuelta2
@@ -45,7 +46,7 @@ PRUEBA 080 OK
 ### 2. prueba_arranque.py — OK
 
 ```
-30 pasos (ms): {'mediana': 27, 'peor': 37, 'estado': 'play'}
+30 pasos (ms): {'mediana': 27, 'peor': 36, 'estado': 'play'}
 errores JS []
 ARRANQUE OK
 ```

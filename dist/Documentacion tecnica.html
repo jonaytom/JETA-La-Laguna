@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.80.0</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.81.0</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -1883,6 +1883,11 @@ siguiente.</p>
 <ul>
 <li><strong>v0.80.0</strong>: el motor (<code>09j_arcade.js</code>: <code>ARCADE.open({ id, key, where, price })</code>, <code>ARCADE.GAMES[id]</code>, y
   <code>RECRE</code> para la casa de El Blanco) y el juego 1, Bencomo (<code>09k_bencomo.js</code>, con 3 fases y Lugo como jefe).</li>
+<li><strong>v0.81.0</strong>: el juego 2, «Guerra de Naves» (<code>09l_naves.js</code>), en cafeterías y tascas (opción en el menú de la barra,
+  <code>FOOD.open</code>, $1, récords por bar: <code>bar_&lt;nombre&gt;</code>).</li>
+<li><strong>Tamaños (Jonay, 20-oct)</strong>: Guerra de Naves se dibuja a ×1, con la nave pequeña y mucha visión (como la primera
+  versión de Bencomo o menos). Guanche Warriors irá con los personajes al tamaño del Bencomo grande que se descartó
+  (unos ×2,4 sobre la pantalla de 480×336).</li>
 <li>La llamada de El Blanco se dispara con <code>GANG.defenders</code>. Lo guardado está en <code>GANG.arcade</code>: <code>scores</code>, <code>invited</code>,
   <code>bought</code> y <code>console</code>.</li>
 </ul>
@@ -1912,7 +1917,7 @@ siguiente.</p>
 </tr>
 <tr>
 <td>Bares y cafeterías (donde ya se compra comida; ahora se entra)</td>
-<td>Naves tipo R-Type / Nemesis</td>
+<td><strong>Guerra de Naves</strong> (tipo R-Type / Nemesis)</td>
 <td>una moneda por partida</td>
 </tr>
 <tr>
@@ -1921,18 +1926,30 @@ siguiente.</p>
 <td>una moneda por partida</td>
 </tr>
 <tr>
-<td>¿bares / jugueterías?</td>
-<td>Beat'em up tipo Golden Axe</td>
-<td>por decidir con Jonay</td>
+<td>Jugueterías (Jonay, 20-oct)</td>
+<td><strong>Guanche Warriors</strong> (beat'em up tipo Golden Axe)</td>
+<td>una moneda por partida</td>
 </tr>
 <tr>
-<td><strong>Tu pisito</strong> (la consola, comprada en la juguetería, cara)</td>
-<td>todos los que hayas comprado en la juguetería</td>
+<td><strong>Tu piso</strong> (la consola, comprada en la juguetería, cara)</td>
+<td>todos los que hayas comprado en la juguetería, también <strong>Pachanga 3x3</strong> y <strong>Play Furbito</strong></td>
 <td>gratis</td>
 </tr>
 </tbody>
 </table>
-<p>La consola, al encenderla, muestra un menú con los cartuchos que tienes. Cada juego se compra aparte en la juguetería.</p>
+<p>La consola, al encenderla, muestra un menú con los cartuchos que tienes. Cada juego se compra aparte en la juguetería,
+<strong>todos</strong> (Jonay, 20-oct): Bencomo, Guerra de Naves, Guanche Warriors, el tipo Metal Slug, Pachanga 3x3 y Play Furbito.</p>
+<h3>Los deportes en la consola (Jonay, 20-oct)</h3>
+<ul>
+<li><strong>«Pachanga 3x3»</strong>: el baloncesto de las canchas, pero <strong>3 contra 3</strong> (hay que pasar el basket a 3x3, también en
+  la cancha).</li>
+<li><strong>«Play Furbito»</strong>: el fútbol de las canchas.</li>
+<li>Los dos se juegan <strong>por fases, como un campeonato</strong>:</li>
+<li>Al principio eliges un país y te sale su equipo.</li>
+<li>Se van eliminando hasta la final (eliminatorias).</li>
+<li>Los colores de las equipaciones de los dos equipos de cada partido <strong>no pueden coincidir</strong> (segunda equipación si
+    se parecen).</li>
+</ul>
 <h2>Lo común a todas las máquinas (<code>09j_arcade.js</code>, un motor para todos)</h2>
 <ul>
 <li><strong>Pantalla de máquina</strong>: lienzo de 320×224 (resolución de las placas de los 80) escalado en píxeles enteros, con
@@ -2000,17 +2017,21 @@ siguiente.</p>
   Jefe final: Alonso Fernández de Lugo en caricatura, que se escapa a caballo herido, como en la historia.</li>
 <li><strong>Música</strong>: chiptune con aire de tajaraste y de tambor y flauta canarios.</li>
 </ul>
-<h2>Juego 2 · Naves tipo R-Type / Nemesis (bares, de pago) — v0.82</h2>
+<h2>Juego 2 · «GUERRA DE NAVES» (bares, de pago) — hecho en v0.81.0, primera versión para pulir</h2>
 <ul>
-<li><strong>Nombre provisional</strong>: «R-TEIDE».</li>
+<li><strong>Nombre</strong>: «Guerra de Naves» (Jonay, 20-oct). Matamarcianos horizontal tipo R-Type / Nemesis.</li>
 <li><strong>La nave</strong>:</li>
 <li>Disparo normal, y disparo cargado si mantienes A.</li>
 <li>Un <strong>módulo</strong> que se pega delante o detrás, o se lanza (como la Force de R-Type), con B.</li>
 <li>Barra de mejoras al estilo Nemesis: recoges cápsulas y eliges velocidad, misil, doble, láser, opción o escudo.</li>
-<li><strong>Fases</strong>: el cielo de La Laguna con nubes y el Teide al fondo, el interior del volcán con lava, una base alienígena
-  bajo el mar de nubes y la colmena. Jefes enormes que ocupan media pantalla.</li>
+<li><strong>Fases</strong> (v0.81.0: 3, cada una con su jefe):
+  1. El cielo de Aguere. Jefe: la nave nodriza (el ojo se abre 2 s de cada 4).
+  2. Las entrañas del Teide. Jefe: la sierpe de lava (solo la cabeza recibe daño).
+  3. El mar de nubes y la colmena. Jefe: la reina (el ojo, con su láser).
+  Pendiente para pulir: una cuarta fase (la colmena por dentro), jefes más grandes y con más partes, más tipos de
+  enemigo y sprites más trabajados.</li>
 </ul>
-<h2>Juego 3 · Shooter tipo Metal Slug (jugueterías, de pago) — v0.83</h2>
+<h2>Juego 3 · Shooter tipo Metal Slug (jugueterías, de pago) — v0.83 (después de Guanche Warriors)</h2>
 <ul>
 <li><strong>Nombre provisional</strong>: «BLANCO COMMANDO» (el favorito de El Blanco, que es exmilitar).</li>
 <li><strong>Personaje</strong>: un soldado pequeño y cabezón al estilo Metal Slug, que corre, salta y dispara en 8 direcciones.</li>
@@ -2027,24 +2048,101 @@ siguiente.</p>
 <li><strong>Enemigos</strong>: soldados de un ejército inventado (parodia, nada real), en varios tipos: el que corre, el del escudo,
   el bazuca, el paracaidista y el de la moto.</li>
 </ul>
-<h2>Juego 4 · Beat'em up tipo Golden Axe — v0.84</h2>
+<h2>Juego 4 · «GUANCHE WARRIORS» (jugueterías, de pago; beat'em up tipo Golden Axe) — v0.82</h2>
 <ul>
-<li><strong>Nombre provisional</strong>: «LA FURIA DE GUAYOTA». Fantasía canaria: guerreros que pelean contra los tibicenas (los
-  perros demonio) y contra Guayota, el demonio del Teide.</li>
-<li><strong>Jugabilidad</strong>:</li>
-<li>Tres personajes a elegir, cada uno con su magia.</li>
-<li>Hay que pegar en profundidad (arriba y abajo de la calle) y montar en bestias.</li>
-<li>Los duendecillos roban las pociones.</li>
+<li><strong>Nombre</strong>: «Guanche Warriors» (Jonay, 20-oct). Beat'em up de avance lateral en profundidad, como Golden Axe: no es
+  de plataformas.</li>
+<li><strong>Se eligen 3 personajes al empezar</strong> (Jonay):</li>
+<li><strong>El Mencey</strong>: el bárbaro. Fuerte y lento, pega con un <strong>garrote canario</strong>, golpes que tumban y agarres.</li>
+<li><strong>El Pastor</strong>: más ágil y menos fuerte. Con la vara de pastor llega más lejos, salta más y tiene ataques saltando
+    (el salto del pastor).</li>
+<li><strong>La Mirladora</strong>: una chica que hace <strong>magia</strong>. Menos física pero ágil, y es la que tiene la magia más fuerte.</li>
+<li><strong>Propuesta para cerrar con Jonay</strong>:</li>
+<li><strong>Historia</strong>, sacada del mito guanche real: <strong>Guayota</strong>, el demonio que vive dentro del Teide (Echeyde), ha raptado
+    a <strong>Magec</strong>, el sol, y lo tiene encerrado en el volcán. La isla está a oscuras. Los tres guerreros suben hasta el
+    Teide para liberarlo, como en la leyenda en la que Achamán lo rescata.</li>
+<li><strong>Controles</strong>: A pega (combo de 3 golpes; corriendo, embestida), B salta (A en el aire, golpe saltando) y Q lanza
+    la magia. Se mueve en 8 direcciones por la calle, también arriba y abajo.</li>
+<li><strong>Magia</strong>: se gasta con <strong>zurrones de magia</strong>, que sueltan unos <strong>duendes ladrones</strong> a los que hay que perseguir
+    y pegar, como los de Golden Axe.<ul>
+<li>El Mencey: la «Ira de Achamán», un temblor de tierra.</li>
+<li>El Pastor: el «Viento alisio», un remolino.</li>
+<li>La Mirladora: la «Luz de Magec», rayos de sol. Es la más fuerte y tiene más niveles.</li>
 </ul>
-<h2>La inmobiliaria y el pisito — v0.84</h2>
+</li>
+<li><strong>Montura</strong>: el <strong>lagarto gigante</strong> (el de El Hierro, que existió de verdad), que da coletazos y escupe.</li>
+<li><strong>Enemigos</strong>: los <strong>tibicenas</strong> (los perros demonio de pelo negro y ojos rojos de la leyenda), los secuaces de
+    Guayota con garrotes y escudos, unos gigantones y unas brujas.</li>
+<li><strong>Fases</strong> (más largas cada vez, con su jefe):<ol>
+<li><strong>El poblado de Taoro</strong>, en el valle de La Orotava.</li>
+<li><strong>La laurisilva de Anaga</strong>, con niebla.</li>
+<li><strong>Los acantilados de Los Gigantes</strong>, al borde del mar.</li>
+<li><strong>Las Cañadas</strong>, con lava y piedra pómez.</li>
+<li><strong>Dentro del Teide</strong>, con <strong>Guayota</strong> de jefe final.
+Entre fase y fase, el campamento de noche y la pantalla de bonus, en la que se apalea a los duendes para
+quitarles los zurrones.</li>
+</ol>
+</li>
+<li><strong>Música</strong>: chiptune épico con tambor y flauta canarios. La de cada fase es distinta y más larga, sin repetirse
+    tanto.</li>
+</ul>
+<h2>La inmobiliaria y los pisos — v0.84</h2>
 <ul>
-<li><strong>La inmobiliaria</strong> (parodia) alquila <strong>tu pisito</strong>: una casita chula cerca del Pasaje Teide.</li>
-<li>Pagas el alquiler cada cierto tiempo. Dentro está la cama (guardar la partida), el sofá y la tele.</li>
-<li>La <strong>consola</strong> (cara) se compra en la juguetería y se instala en la tele del pisito.</li>
+<li><strong>La inmobiliaria</strong> (parodia) alquila el <strong>pisito</strong> (una casita chula cerca del Pasaje Teide) y, mejor aún (Jonay,
+  20-oct), <strong>vende varios pisos</strong>: eliges el que te permita tu dinero, y los pisos son caros.</li>
+<li>Dentro: la cama (guardar la partida), el sofá y la tele.</li>
+<li>La <strong>consola</strong> (cara) se compra en la juguetería y se instala en la tele de tu casa. Con ella se juega a todos los
+  minijuegos que tengas.</li>
 </ul></section>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.81.0 — 2026-10-20 — «GUERRA DE NAVES», la máquina de los bares</h2>
+<ul>
+<li><strong>Recreativa nueva: «GUERRA DE NAVES»</strong> (<code>09l_naves.js</code>), un matamarcianos horizontal tipo R-Type / Nemesis. Es la
+  máquina de pago de las <strong>cafeterías y las tascas</strong>: sale en el menú de la barra una vez que El Blanco te ha llamado,
+  cuesta $1 la partida y cada bar tiene su propia tabla de récords.</li>
+<li>La nave (el AGUERE-1) se ve <strong>pequeña, a ×1</strong> (Jonay: hace falta espacio para ver venir las cosas).</li>
+<li><strong>Controles de siempre</strong>:<ul>
+<li>A (E / clic izquierdo) dispara; si lo mantienes y lo sueltas, sale el <strong>BEAM cargado</strong>, en dos niveles.</li>
+<li>B (Espacio) maneja el <strong>MÓDULO</strong>, como la Force de R-Type: se pega delante o detrás, B lo lanza y B lo recoge.
+  Para las balas pequeñas y daña lo que toca.</li>
+<li>Q / clic derecho coge la mejora marcada en la <strong>barra estilo Nemesis</strong>: VELOC, MISIL, DOBLE, LÁSER, OPCIÓN y
+  ESCUDO. Cada cápsula mueve la marca una casilla.</li>
+</ul>
+</li>
+<li><strong>3 fases con su jefe</strong>:<ol>
+<li>El cielo de Aguere, con los tejados de La Laguna y el Teide al fondo. Jefe: la nave nodriza, a la que hay que
+   darle en el ojo cuando lo abre.</li>
+<li>Las entrañas del Teide: cueva de lava con torretas, bombas de lava y pasos estrechos. Jefe: la sierpe de lava.</li>
+<li>El mar de nubes: la colmena. Jefe: la reina, con su láser del ojo.
+Después de la tercera, segunda vuelta más rápida.</li>
+</ol>
+</li>
+<li>Enemigos: escuadrillas (si las tumbas enteras, sueltan cápsula), palomitas, kamikazes, torretas, cargueros que
+    sueltan el módulo, minas y bombas de lava.</li>
+<li>Música chiptune propia por fase, para el jefe y el título; demo, récords y continuar como en Bencomo.</li>
+<li>El Blanco, al llamar, ya cuenta que la máquina está en los bares.</li>
+</ul>
+<h2>0.80.1 — 2026-10-19 — Bencomo más grande y con más detalle; portales sin balcones</h2>
+<ul>
+<li><strong>BENCOMO se ve más grande y con más resolución</strong> (Jonay: «el pj al menos un 50 % más grande»):</li>
+<li>La pantalla de la máquina pasa a 480×336 y el mundo se dibuja a ×2. Bencomo, los enemigos y el escenario se ven un
+    33 % más grandes que en la v0.80.0. Es un punto intermedio: al 60 % se veía demasiado poco de la fase.</li>
+<li>La cámara sigue también en altura, como en Mario o Sonic.</li>
+<li>Los sprites salen a doble resolución (escalado scale2x del pixel art, con diagonales redondeadas, contorno fino y
+    luz en los bordes de arriba).</li>
+<li>Las baldosas, la hierba, la roca y los fondos (mar, carabelas, barranco, laurisilva, el Teide) se dibujan a doble
+    detalle.</li>
+<li>La pantalla de título es nueva y la tabla de récords está recolocada.</li>
+<li><strong>Música folclórica canaria en la fase 2</strong> (el Barranco de Acentejo): una isa en 3/4 con castañuelas, un punteo
+    como de timple y el bajo de guitarra. Cada fase tiene su música: la costa, el barranco, la emboscada y el jefe. Todas son ahora más largas y menos
+    repetitivas, con una parte A, una parte B y sus variaciones, y en la costa entra una segunda voz.</li>
+<li><strong>Agacharse</strong> (↓ en el suelo): Bencomo pega bajo con el banot para darle a los perros, y agachado esquiva las
+    flechas y los balazos.</li>
+<li><strong>Portales del Edificio Casa del Blanco</strong>: ya no los atraviesa un balcón, y alrededor de los arcos la pared es lisa,
+  sin ventanas (Street View).</li>
+</ul>
 <h2>0.80.0 — 2026-10-19 — Las recreativas: «BENCOMO, Acentejo's Revenge» en casa de El Blanco</h2>
 <ul>
 <li><strong>Motor de recreativas</strong> (<code>09j_arcade.js</code>), común para todas las máquinas que vendrán:</li>

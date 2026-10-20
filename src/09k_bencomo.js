@@ -12,7 +12,10 @@
 //    horseback, armoured captains; at Acentejo the Guanches roll stones down on them; the last boss is Lugo himself,
 //    who flees wounded as in history. After the last stage the loop starts again, faster and with more enemies.
 ARCADE.GAMES.bencomo = (() => {
-  const A = ARCADE, W = A.W, H = A.H, T = 16, ROWS = 14;
+  // v0.80.1 (Jonay: «el pj al menos un 50 % más grande… con algo más de resolución»): the board's screen is 400×280 and
+  // the world is drawn at ×2 (W × H here = the world view, 200×140 of a 224-high stage: the camera also follows in
+  // height), with the sprites, tiles and backgrounds at double resolution (scale2x of the pixel art + outline + light)
+  const A = ARCADE, SW = A.W, SH = A.H, Z = 2, W = SW / Z, H = 224, VH = SH / Z, T = 16, ROWS = 14;
   // ---------- palette and sprites (facing right; flipped copies for the left)
   const P = { k: '#1a1008', h: '#140d09', b: '#c27b46', d: '#8c4f27', w: '#f4efe6', c: '#7a4a22', C: '#b8823f', s: '#3a2414', e: '#2a1a10',
     m: '#cfd3d9', M: '#7d838c', y: '#e3b23c', R: '#b3271d', n: '#2b2f6b', l: '#6b4422', L: '#3d2614', D: '#8b5a2b', o: '#5e3a1a', g: '#e8e2d0', G: '#9a9488', f: '#d22', F: '#f6c12b', x: '#111' };
@@ -29,6 +32,7 @@ ARCADE.GAMES.bencomo = (() => {
     run2: ['...cCccccCc.....', '...cccccccc.....', '.....bbbb.......', '.....bbbb.......', '....bd.bd.......', '....bd.bd.......', '...sss.sss......', '................'],
     run3: ['...cCccccCc.....', '...cccccccc.....', '....bb..bb......', '...bb....bb.....', '...bd.....bd....', '..bd.......bd...', '.sss.......sss..', '................'],
     jump: ['...cCccccCc.....', '...cccccccc.....', '...bbbbbbbbb....', '..bd.....bbb....', '..bd.......bd...', '..sss......sss..', '................', '................'],
+    crouch: ['...cCccccCc.....', '..bbbbcccbbbb...', '..bd.......bd...', '.sss.......sss..'], // v0.80.1: crouched (to hit the dogs)
     pogo: ['...cCccccCc.....', '...cccccccc.....', '....bbbbbb......', '....bbbbbb......', '.....bddb.......', '.....ssss.......', '................', '................'],
   };
   const bencomo = (up, leg) => S('ben_' + up + '_' + leg, [...UP[up], ...LEG[leg]]);
@@ -75,7 +79,7 @@ ARCADE.GAMES.bencomo = (() => {
     b.flat(16, 3, '...@...o.o.o....').flat(8, 3, '..S.....').gap(3, '.o.').flat(10, 3, 'o.o.o.....').plat(6, 4, 3, 'oooo');
     b.flat(6, 3, '..D...').flat(4, 4).flat(4, 5, '.o.o').flat(6, 3, '...S..').cactus(2).gap(6, '.ooooo').flat(12, 3, '..r....S....');
     b.flat(8, 3, '...G....').plat(6, 3, 4, '.oo').plat(3, 3, 6, 'ooo').flat(6, 3, '....B.').gap(5, '.ooo.').flat(5, 4).flat(5, 6, '..o..').flat(8, 3, '.D...o.o');
-    b.flat(4, 3).cactus(1).flat(6, 3, '..S...').gap(7, '..ooo..').flat(10, 3, '.P...S..o.').flat(8, 3, '...B....').plat(4, 4, 4, 'oooo');
+    b.flat(4, 3).cactus(1).flat(6, 3, 'P..S..').gap(6, '.ooo..') /* v0.81: 7 → 6 wide, with a checkpoint before it (the pole fell just short) */.flat(10, 3, '.P...S..o.').flat(8, 3, '...B....').plat(4, 4, 4, 'oooo');
     b.flat(6, 3, '..D...').flat(10, 5, '....Q.....').gap(4, '.oo.').flat(4, 5).flat(6, 3, '..S.S.').flat(4, 3).cactus(3).flat(3, 3).gap(5, 'ooooo').flat(14, 3, '...o.o.o...E..');
     return b.done('LA COSTA DE AÑAZA', 'Los castellanos han desembarcado');
   }
@@ -105,7 +109,7 @@ ARCADE.GAMES.bencomo = (() => {
   };
   const tileCache = {};
   function tileImg(theme, k) {
-    const key = theme + k; if (tileCache[key]) return tileCache[key]; const t = TH[theme], c = mkCanvas(T, T), x = c.getContext('2d');
+    const key = theme + k; if (tileCache[key]) return tileCache[key]; const t = TH[theme], c = mkCanvas(T * 2, T * 2), x = c.getContext('2d'); x.scale(2, 2); // drawn at ×2, then fine detail
     let s = (k * 977 + theme.length * 131) % 233280; const rr = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
     if (k === 1 || k === 2) { x.fillStyle = t.rock; x.fillRect(0, 0, T, T); for (let i = 0; i < 26; i++) { x.fillStyle = rr() < 0.5 ? t.rock2 : 'rgba(255,255,255,0.08)'; x.fillRect((rr() * T) | 0, (rr() * T) | 0, 2, 1); }
       x.fillStyle = t.rock2; x.fillRect(0, 7, 6, 1); x.fillRect(9, 12, 7, 1); x.fillRect(5, 3, 1, 4);
@@ -114,13 +118,17 @@ ARCADE.GAMES.bencomo = (() => {
     else if (k === 4) { x.fillStyle = '#6d6a63'; x.fillRect(0, 0, T, T); x.fillStyle = '#8d8a82'; x.fillRect(1, 1, T - 2, 2); x.fillStyle = '#4d4a44'; x.fillRect(0, T - 2, T, 2); x.fillRect(T - 2, 0, 2, T); }
     else if (k === 5) { const g = '#3f8f3a', gl = '#62b04f'; x.fillStyle = g; x.beginPath(); x.ellipse(8, 10, 6, 6, 0, 0, 7); x.fill(); x.beginPath(); x.ellipse(4, 4, 3.5, 4, -0.4, 0, 7); x.fill(); x.beginPath(); x.ellipse(12, 3, 3.5, 4, 0.4, 0, 7); x.fill();
       x.fillStyle = gl; x.fillRect(6, 7, 2, 2); x.fillRect(3, 2, 1, 2); x.fillRect(11, 1, 1, 2); x.fillStyle = '#e8e2a0'; for (const [a, b] of [[2, 8], [14, 9], [8, 4], [5, 13], [11, 13], [1, 3], [15, 2]]) x.fillRect(a, b, 1, 1); x.fillStyle = '#c0264a'; x.fillRect(4, 0, 2, 1); x.fillRect(12, 0, 2, 1); } // tunera with its figs
+    x.setTransform(1, 0, 0, 1, 0, 0); const n = T * 2; // the fine detail of the ×2 tile: grains, cracks, grass blades
+    if (k === 1 || k === 2) { for (let i = 0; i < 70; i++) { const a = (rr() * n) | 0, b = (k === 1 ? 9 : 0) + ((rr() * (n - (k === 1 ? 9 : 0))) | 0); x.fillStyle = rr() < 0.5 ? 'rgba(0,0,0,0.22)' : 'rgba(255,255,255,0.12)'; x.fillRect(a, b, 1, 1); }
+      x.fillStyle = 'rgba(0,0,0,0.3)'; x.fillRect((rr() * n) | 0, 14 + ((rr() * 14) | 0), 5, 1); if (k === 1) { x.fillStyle = t.top2; for (let i = 0; i < n; i += 3) x.fillRect(i + ((rr() * 2) | 0), 0, 1, 1 + ((rr() * 3) | 0)); x.fillStyle = 'rgba(255,255,255,0.25)'; for (let i = 0; i < 8; i++) x.fillRect((rr() * n) | 0, 1 + ((rr() * 5) | 0), 1, 1); } }
+    if (k === 3) { x.fillStyle = 'rgba(0,0,0,0.25)'; for (let i = 0; i < n; i += 4) x.fillRect(i, 3, 2, 1); x.fillStyle = 'rgba(255,255,255,0.18)'; x.fillRect(0, 1, n, 1); }
     return (tileCache[key] = c);
   }
   const bgCache = {};
   function background(theme) { // 3 parallax layers per theme, each a 640-wide strip that repeats
     if (bgCache[theme]) return bgCache[theme]; const L = [];
     let s = theme.length * 77; const rr = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
-    for (let li = 0; li < 3; li++) { const c = mkCanvas(640, H), x = c.getContext('2d'); L.push(c);
+    for (let li = 0; li < 3; li++) { const c = mkCanvas(1280, H * 2), x = c.getContext('2d'); x.scale(2, 2); L.push(c); // ×2: smoother hills, sea and trees
       if (li === 0) { const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, TH[theme].sky[0]); g.addColorStop(1, TH[theme].sky[1]); x.fillStyle = g; x.fillRect(0, 0, 640, H);
         if (theme === 'costa') { x.fillStyle = '#fff6c8'; x.beginPath(); x.arc(470, 46, 16, 0, 7); x.fill(); x.fillStyle = '#3d7fb8'; x.fillRect(0, 128, 640, H - 128); x.fillStyle = 'rgba(255,255,255,0.35)'; for (let i = 0; i < 90; i++) x.fillRect((rr() * 640) | 0, 130 + ((rr() * 70) | 0), 3 + ((rr() * 4) | 0), 1); }
         if (theme === 'barranco') { x.fillStyle = '#fff1c2'; x.beginPath(); x.arc(150, 70, 22, 0, 7); x.fill(); }
@@ -146,19 +154,22 @@ ARCADE.GAMES.bencomo = (() => {
       { w: 'tri', v: 1, n: 'E2 . . B2 . . E2 . . B2 . . D2 . . A2 . . E2 . . B2 . . A2 . . E3 . . G2 . . D3 . . E2 . . B2 . . E2 . . - . .' },
       { w: 'noise', v: 0.8, n: 'k - h s - h k - h s - h k - h s - h k k h s - h k - h s - h k - h s - h k - h s - h k k h s s s' }] },
     costa: { bpm: 150, div: 3, ch: [
-      { w: 'sq', v: 0.8, n: 'A4 . C5 E5 . C5 D5 . B4 C5 . A4 G4 . A4 B4 . G4 A4 . . - . . A4 . C5 E5 . G5 F5 . E5 D5 . C5 B4 . C5 D5 . B4 A4 . . . . .' },
+      { w: 'sq', v: 0.8, n: 'A4 . C5 E5 . C5 D5 . B4 C5 . A4 G4 . A4 B4 . G4 A4 . . - . . A4 . C5 E5 . G5 F5 . E5 D5 . C5 B4 . C5 D5 . B4 A4 . . . . . F5 . E5 D5 . C5 D5 . E5 F5 . . G5 . F5 E5 . D5 E5 . . - . . C5 . D5 E5 . G5 A5 . G5 E5 . D5 C5 . B4 A4 . G#4 A4 . . . . .' },
+      { w: 'sq', v: 0.3, legato: 0.6, n: '- . . - . . - . . - . . - . . - . . - . . - . . - . . - . . - . . - . . - . . - . . - . . - . . E4 . . A4 . . C5 . . A4 . . E4 . . G4 . . B4 . . G4 . . F4 . . A4 . . C5 . . A4 . . E4 . . G#4 . . B4 . . E5 . .' }, // a second voice in the second half (v0.80.1: less repetitive)
       { w: 'tri', v: 1, n: 'A2 . . E3 . . A2 . . E3 . . G2 . . D3 . . A2 . . E3 . . F2 . . C3 . . D2 . . A2 . . E2 . . B2 . . A2 . . E2 . .' },
       { w: 'noise', v: 0.7, n: 'k - h s - h k - h s - h k - h s - h k h h s - h' }] },
-    barranco: { bpm: 160, div: 3, ch: [
-      { w: 'sq', v: 0.8, n: 'D5 . D5 C5 . A4 C5 . A4 G4 . F4 G4 . A4 . . - D5 . F5 E5 . D5 C5 . A4 G4 . A4 D4 . . . . -' },
-      { w: 'tri', v: 1, n: 'D2 . . A2 . . D2 . . A2 . . C2 . . G2 . . D2 . . A2 . . A1 . . E2 . . D2 . . A2 . .' },
-      { w: 'noise', v: 0.8, n: 'k - k s - h k - h s - h k - k s - h k h h s s h' }] },
+    // stage 2 (Jonay): Canarian folk, an isa in 3/4 with castanets (timple-like square, guitar bass, castanets)
+    barranco: { bpm: 172, div: 3, ch: [
+      { w: 'sq', v: 0.8, n: 'A4 . . F#4 G4 A4 B4 . A4 G4 . F#4 E4 . . F#4 G4 A4 G4 . . F#4 . E4 D4 . . E4 F#4 G4 F#4 . E4 D4 . . A4 . . F#4 G4 A4 D5 . C#5 B4 . A4 G4 . . B4 . D5 C#5 . B4 A4 . . F#4 . A4 D5 . . C#5 . B4 A4 . . B4 . . A4 G4 F#4 E4 . F#4 G4 . . A4 . . F#4 E4 C#4 D4 . . - . . F#5 . . E5 D5 . E5 F#5 . G5 . . F#5 E5 . D5 C#5 . B4 . . A4 . . G4 . . B4 A4 G4 F#4 . . E4 . . A4 B4 C#5 D5 . . . . . - . .' },
+      { w: 'sq', v: 0.35, legato: 0.5, n: 'D4 F#4 A4 D4 F#4 A4 A3 C#4 E4 A3 C#4 E4 A3 C#4 E4 A3 C#4 E4 D4 F#4 A4 D4 F#4 A4 D4 F#4 A4 D4 F#4 A4 G3 B3 D4 G3 B3 D4 A3 C#4 E4 A3 C#4 E4 D4 F#4 A4 D4 F#4 A4' },
+      { w: 'tri', v: 1, n: 'D2 . . A2 . . A1 . . E2 . . A1 . . E2 . . D2 . . A2 . . D2 . . A2 . . G1 . . D2 . . A1 . . E2 . . D2 . . A2 . .' },
+      { w: 'noise', v: 0.9, n: 'k r c c r c k r c c r c k r c c r c k r c r r r' }] },
     monte: { bpm: 140, div: 3, ch: [
-      { w: 'sq', v: 0.75, n: 'E5 . B4 G4 . B4 E5 . F#5 G5 . F#5 E5 . B4 G4 . E4 F#4 . G4 A4 . B4 A4 . . - . . C5 . G4 E4 . G4 C5 . D5 E5 . D5 C5 . B4 A4 . F#4 G4 . . . . .' },
+      { w: 'sq', v: 0.75, n: 'E5 . B4 G4 . B4 E5 . F#5 G5 . F#5 E5 . B4 G4 . E4 F#4 . G4 A4 . B4 A4 . . - . . C5 . G4 E4 . G4 C5 . D5 E5 . D5 C5 . B4 A4 . F#4 G4 . . . . . G4 . A4 B4 . . D5 . C5 B4 . A4 G4 . F#4 E4 . . F#4 . G4 A4 . B4 C5 . B4 A4 . G4 F#4 . G4 A4 . B4 E4 . . . . . - . . - . .' },
       { w: 'tri', v: 1, n: 'E2 . . B2 . . E2 . . B2 . . E2 . . B2 . . D2 . . A2 . . D2 . . A2 . . C2 . . G2 . . C2 . . G2 . . B1 . . F#2 . . B1 . . F#2 . .' },
       { w: 'noise', v: 0.7, n: 'k - h s - h k - h s - h' }] },
     boss: { bpm: 176, div: 4, ch: [
-      { w: 'sq', v: 0.85, n: 'E5 E5 - E5 D#5 - E5 - G5 - E5 - D5 - B4 - E5 E5 - E5 D#5 - E5 - A5 - G5 - F#5 - D#5 -' },
+      { w: 'sq', v: 0.85, n: 'E5 E5 - E5 D#5 - E5 - G5 - E5 - D5 - B4 - E5 E5 - E5 D#5 - E5 - A5 - G5 - F#5 - D#5 - C5 C5 - C5 B4 - C5 - E5 - C5 - B4 - G4 - A4 A4 - A4 B4 - C5 - D#5 - E5 - F#5 - B5 -' },
       { w: 'tri', v: 1, n: 'E2 E3 E2 E3 E2 E3 E2 E3 C2 C3 C2 C3 B1 B2 B1 B2' },
       { w: 'noise', v: 0.9, n: 'k h s h k k s h k h s h k k s s' }] },
     clear: { bpm: 150, div: 4, loop: false, ch: [{ w: 'sq', v: 0.9, n: 'C5 E5 G5 C6 . . G5 . C6 . . . . . . .' }, { w: 'tri', v: 1, n: 'C3 . G3 . C3 . G3 . C3 . . . . . . .' }] },
@@ -166,7 +177,7 @@ ARCADE.GAMES.bencomo = (() => {
   // ---------- the game
   function create(api, opt) {
     const loop0 = opt.loop || 0; const g = { score: 0, over: false, demoKeys: { held: {}, hit: {} } };
-    let lives = 3, stageN = 0, loopN = loop0, gofio = 0, L = null, tiles = null, camX = 0, time = 0, phase = 'intro', phaseT = 0, fx = [], banner = null, bannerT = 0, boss = null;
+    let lives = 3, stageN = 0, loopN = loop0, gofio = 0, L = null, tiles = null, camX = 0, camY = 84, time = 0, phase = 'intro', phaseT = 0, fx = [], banner = null, bannerT = 0, boss = null;
     const p = { x: 0, y: 0, vx: 0, vy: 0, face: 1, hp: 3, inv: 0, atk: 0, atkCD: 0, vault: 0, pogo: false, onG: false, coy: 0, buf: 0, power: 0, stones: 3, anim: 0, dead: 0, cp: null, hurtT: 0 };
     const E = []; const shots = []; const rocks = []; const items = [];
     const spd = () => 1 + 0.22 * loopN;
@@ -179,7 +190,7 @@ ARCADE.GAMES.bencomo = (() => {
         else if (ch === 'R') L.rocks = true;
         else items.push({ k: ch, x, y: ch === 'o' ? y - 6 : y, t: Math.random() * 6, got: false }); }
       if (loopN > 0) for (const [ch, cx0, ry] of L.ents) if ('SD'.includes(ch) && Math.random() < 0.6 + 0.2 * loopN) spawn(ch === 'S' ? 'D' : 'S', cx0 * T + T / 2 + 40, (ry + 1) * T); // more on every loop
-      p.vx = p.vy = 0; p.hp = 3; p.inv = 1.2; p.vault = 0; p.dead = 0; camX = clamp(p.x - W * 0.35, 0, L.w * T - W);
+      p.vx = p.vy = 0; p.hp = 3; p.inv = 1.2; p.vault = 0; p.dead = 0; camX = clamp(p.x - W * 0.35, 0, L.w * T - W); camY = clamp(p.y - VH * 0.64, 0, ROWS * T - VH);
       phase = 'intro'; phaseT = 2.6; if (!opt.demo) api.music(SONGS[TH[L.theme].music]); }
     function spawn(k, x, y) { const base = { k, x, y, vx: 0, vy: 0, face: -1, hp: 1, t: Math.random(), st: 'walk', cd: 1 + Math.random() * 2, w: 12, h: 22, onG: false, pts: 100 };
       if (k === 'B') Object.assign(base, { hp: 1, pts: 150, st: 'idle' }); if (k === 'A') Object.assign(base, { hp: 2, pts: 250 }); if (k === 'D') Object.assign(base, { w: 18, h: 10, pts: 150, st: 'sleep' });
@@ -208,11 +219,13 @@ ARCADE.GAMES.bencomo = (() => {
       const run = pad.held('vR') ? 1 : pad.held('vL') ? -1 : 0, down = pad.held('vD'), upK = pad.held('vU');
       p.inv = Math.max(0, p.inv - dt); p.hurtT = Math.max(0, p.hurtT - dt); p.power = Math.max(0, p.power - dt); p.atkCD = Math.max(0, p.atkCD - dt); p.atk = Math.max(0, p.atk - dt);
       if (pad.hit('vT')) p.buf = 0.12; else p.buf = Math.max(0, p.buf - dt); p.coy = p.onG ? 0.09 : Math.max(0, p.coy - dt);
+      p.crouch = p.onG && down && p.vault <= 0 && !p.dead; // ↓ on the ground: crouched (A hits low: the dogs)
       const top = p.power > 0 ? 150 : 118, acc = p.onG ? 900 : 560;
       if (p.vault > 0) { // the pole planted ahead: the body swings up over it, then flies
         p.vault -= dt; p.vx = p.face * 40; p.vy = -60; if (p.vault <= 0) { p.vy = upK && Math.abs(p.vaultV) < 60 ? -430 : -400; p.vx = p.face * (Math.abs(p.vaultV) < 60 ? 70 : 185); p.flying = true; api.sfx('vault'); addFx('dust', p.x, p.y); } }
       else {
-        if (run) { p.vx += run * acc * dt; p.face = run; } else { const fr = p.onG ? 1100 : 160; p.vx -= Math.sign(p.vx) * Math.min(Math.abs(p.vx), fr * dt); }
+        if (run && p.crouch) { p.face = run; p.vx -= Math.sign(p.vx) * Math.min(Math.abs(p.vx), 1100 * dt); }
+        else if (run) { p.vx += run * acc * dt; p.face = run; } else { const fr = p.onG ? 1100 : 160; p.vx -= Math.sign(p.vx) * Math.min(Math.abs(p.vx), fr * dt); }
         if (!p.flying) p.vx = clamp(p.vx, -top, top); else p.vx = clamp(p.vx, -200, 200);
         // B: a jump; running fast (or ↑ + B standing) the SALTO DEL PASTOR with the pole
         if (p.buf > 0 && p.onG && down && tAt(p.x, p.y + 2) === 3) { p.buf = 0; p.dropT = 0.25; p.y += 3; p.onG = false; } // ↓ + B on a ledge: drop through it
@@ -227,7 +240,7 @@ ARCADE.GAMES.bencomo = (() => {
       if (pad.hit('vS') && p.atkCD <= 0) { p.atk = 0.2; p.atkCD = 0.3; api.sfx('swing'); }
       if (pad.hit('vP') && p.stones > 0) { p.stones--; shots.push({ k: 'stone', x: p.x + p.face * 8, y: p.y - 16, vx: p.face * 230 + p.vx * 0.3, vy: -140, mine: true, t: 2 }); api.sfx('swing'); }
       p.vy += (p.vy < 0 && pad.held('vT') ? 760 : 980) * dt; p.vy = Math.min(p.vy, 520);
-      const wasG = p.onG; p.w = 10; p.h = 22; moveBody(p, dt); if (p.onG) { p.flying = false; if (!wasG) addFx('dust', p.x, p.y); }
+      const wasG = p.onG; p.w = 10; p.h = p.crouch ? 15 : 22; moveBody(p, dt); if (p.onG) { p.flying = false; if (!wasG) addFx('dust', p.x, p.y); }
       if (p.x < camX + 6) { p.x = camX + 6; p.vx = Math.max(0, p.vx); } if (p.x > L.w * T - 6) p.x = L.w * T - 6;
       p.anim += dt * (Math.abs(p.vx) / 30 + (p.onG ? 0 : 0));
       // hazards: tuneras (pogo on them = a bounce), the sea, falling off
@@ -245,18 +258,18 @@ ARCADE.GAMES.bencomo = (() => {
       if (e.k === 'B') { e.face = Math.sign(dx) || -1; e.vx = 0; e.cd -= dt; if (adx < 230 && sameY && e.cd <= 0) { e.cd = 2.4 / s; e.aim = 0.3; } if (e.aim > 0) { e.aim -= dt; if (e.aim <= 0) { shots.push({ k: 'bolt', x: e.x + e.face * 10, y: e.y - 14, vx: e.face * 150 * s, vy: 0, t: 3 }); api.sfx('swing'); } } }
       if (e.k === 'A') { if (e.aim > 0) { e.vx = 0; e.aim -= dt; if (e.aim <= 0) { shots.push({ k: 'ball', x: e.x + e.face * 16, y: e.y - 15, vx: e.face * 250 * s, vy: 0, t: 2 }); addFx('smoke', e.x + e.face * 18, e.y - 16); api.sfx('shot'); e.cd = 3.2 / s; } }
         else { e.cd -= dt; if (adx < 220 && sameY && e.cd <= 0) { e.face = Math.sign(dx) || -1; e.aim = 0.8; } else { if (!groundAhead(e, e.face) || wallAhead(e, e.face)) e.face = -e.face; e.vx = e.face * 16 * s; } } }
-      if (e.k === 'D') { if (e.st === 'sleep') { e.vx = 0; if (adx < 150 && sameY) { e.st = 'run'; api.sfx('bark'); } } else { e.face = Math.sign(dx) || e.face; e.vx = e.face * 150 * s; if (adx < 46 && e.onG && Math.random() < 0.08) { e.vy = -230; } if (!groundAhead(e, e.face) && e.onG) e.vy = -240; } }
+      if (e.k === 'D') { if (e.st === 'sleep') { e.vx = 0; if (adx < 150 && sameY) { e.st = 'run'; api.sfx('bark'); } } else { e.face = Math.sign(dx) || e.face; e.vx = e.face * 150 * s; if (adx < 46 && e.onG && !p.crouch && Math.random() < 0.03) { e.vy = -230; } /* against a crouched Bencomo they stay low (and his low blow gets them) */ if (!groundAhead(e, e.face) && e.onG) e.vy = -240; } }
       if (e.k === 'C') { if (e.st === 'walk') { e.vx = e.face * 45 * s; if (e.x < e.x0) e.face = 1; if (e.x > e.x1) e.face = -1; if (adx < 190 && sameY && Math.sign(dx) === e.face) { e.st = 'charge'; api.sfx('bark'); } }
         else { e.vx = e.face * 170 * s; if (e.x < e.x0 - 60 || e.x > e.x1 + 60 || wallAhead(e, e.face) || !groundAhead(e, e.face)) { e.st = 'walk'; e.face = -e.face; } } }
       if (e.k === 'L') { bossAI(e, dt); if (e.st === 'flee') { e.x += e.vx * dt; e.t2 = (e.t2 || 0) + dt; if (e.t2 > 3.5) { e.dead = true; phase = 'clear'; phaseT = 6; api.stopMusic(); api.sfx('clear'); } return; } } // fleeing: off he goes, through anything
       e.vy += 900 * dt; e.vy = Math.min(e.vy, 500); e.hitWall = 0; moveBody(e, dt); if (e.y > ROWS * T + 40) e.dead = true;
       // touching Bencomo
-      if (!p.dead && Math.abs(p.x - e.x) < (e.w + 10) / 2 && p.y > e.y - e.h && p.y - 22 < e.y) {
+      if (!p.dead && Math.abs(p.x - e.x) < (e.w + 10) / 2 && p.y > e.y - e.h && p.y - p.h < e.y) {
         if ((p.pogo || p.power > 0) && p.vy > 0 && p.y < e.y - e.h + 10) { hitE(e, p.pogo ? 2 : 3, true); p.vy = -340; api.sfx('jump'); }
         else if (p.power > 0) hitE(e, 3);
         else if (!(e.k === 'D' && e.st === 'sleep')) hurt(e.k === 'L' || e.k === 'C' ? 1 : 1, e.x); }
       // the banot
-      if (p.atk > 0.06 && !e.hitBy) { const hx = p.x + p.face * 18; if (Math.abs(hx - e.x) < 14 + e.w / 2 && p.y - 14 > e.y - e.h - 4 && p.y - 14 < e.y + 2) { e.hitBy = true; hitE(e, 1); } }
+      if (p.atk > 0.06 && !e.hitBy) { const hx = p.x + p.face * 18, hy = p.y - (p.crouch ? 5 : 14); if (Math.abs(hx - e.x) < 14 + e.w / 2 && hy > e.y - e.h - 4 && hy < e.y + 2) { e.hitBy = true; hitE(e, 1); } }
       if (p.atk <= 0) e.hitBy = false;
     }
     function hitE(e, n, stomp) { if (e.hurt > 0 && e.k === 'L') return; if (e.k === 'L' && e.st === 'wait') return; e.hp -= n; e.hurt = e.k === 'L' ? 0.5 : 0.15; api.sfx('hit'); addFx('spark', e.x, e.y - e.h / 2); e.vx = 0;
@@ -279,7 +292,7 @@ ARCADE.GAMES.bencomo = (() => {
       for (const s of shots) { s.t -= dt; if (s.k === 'stone') s.vy += 700 * dt; s.x += s.vx * dt; s.y += s.vy * dt;
         if (solid(tAt(s.x, s.y))) s.t = 0;
         if (s.mine) { for (const e of E) if (!e.dead && Math.abs(e.x - s.x) < e.w / 2 + 3 && s.y > e.y - e.h && s.y < e.y) { hitE(e, 1); s.t = 0; break; } }
-        else if (!p.dead && Math.abs(p.x - s.x) < 8 && s.y > p.y - 22 && s.y < p.y) { if (p.atk > 0 && Math.sign(s.x - p.x) === p.face && s.k !== 'wave') { s.vx = -s.vx; s.mine = true; api.sfx('hit'); } else { hurt(1, s.x); s.t = 0; } } }
+        else if (!p.dead && Math.abs(p.x - s.x) < 8 && s.y > p.y - (p.h || 22) && s.y < p.y) { if (p.atk > 0 && Math.sign(s.x - p.x) === p.face && s.k !== 'wave') { s.vx = -s.vx; s.mine = true; api.sfx('hit'); } else { hurt(1, s.x); s.t = 0; } } }
       for (let i = shots.length - 1; i >= 0; i--) if (shots[i].t <= 0 || shots[i].x < camX - 40 || shots[i].x > camX + W + 40) shots.splice(i, 1);
       // Acentejo: the Guanches up on the slopes roll stones down (a shadow first): they crush the Castilians too
       if (L.rocks && !p.dead && Math.random() < dt * (0.55 + 0.15 * loopN)) { const x = p.x + (Math.random() * 2 - 1) * 140; rocks.push({ x, y: -20, vy: 0, warn: 0.7, t: 0 }); }
@@ -312,15 +325,17 @@ ARCADE.GAMES.bencomo = (() => {
       if (boss && boss.dead) boss = null; updateShots(dt);
       for (const f of fx) { f.t -= dt; if (f.k === 'pts') f.y -= 20 * dt; if (f.k === 'ko') { f.vy += 600 * dt; f.y += f.vy * dt; } } fx = fx.filter((f) => f.t > 0);
       // camera: ahead of Bencomo, never back (like the old ones); in the boss's arena it stays
+      camY = lerp(camY, clamp(p.y - VH * 0.64, 0, ROWS * T - VH), 0.15);
       const tx = clamp(p.x - W * 0.38 + p.face * 20, 0, L.w * T - W); camX = Math.max(camX, lerp(camX, tx, 0.12)); if (L.lock) camX = clamp(camX, L.lock[0], L.lock[1] - W);
     };
     // ---------- drawing
     const flick = () => Math.floor(time * 20) % 2 === 0;
-    g.draw = (c) => { const bg = background(L.theme), t = TH[L.theme];
-      [0.1, 0.3, 0.6].forEach((k, i) => { const off = -((camX * k) % 640); c.drawImage(bg[i], Math.round(off), 0); c.drawImage(bg[i], Math.round(off) + 640, 0); });
+    g.draw = (c) => { const bg = background(L.theme), t = TH[L.theme]; c.save(); c.scale(Z, Z); // the world at ×2
+      [0.1, 0.3, 0.6].forEach((k, i) => { const off = -((camX * k) % 640), oy = -Math.round(camY * (0.35 + k)); c.drawImage(bg[i], Math.round(off), oy, 640, 224); c.drawImage(bg[i], Math.round(off) + 640, oy, 640, 224); });
+      c.translate(0, -Math.round(camY * Z) / Z);
       const c0 = Math.floor(camX / T), c1 = Math.min(L.w - 1, c0 + 21);
       for (let ci = c0; ci <= c1; ci++) for (let r = 0; r < ROWS; r++) { const k = tiles[ci][r]; if (!k) continue; const x = Math.round(ci * T - camX), y = r * T;
-        if (k === 6) { c.fillStyle = '#2f6fae'; c.fillRect(x, y + 4, T, T - 4); c.fillStyle = '#7fb8e6'; c.fillRect(x + ((time * 20 + ci * 5) % T), y + 4, 4, 1); } else c.drawImage(tileImg(L.theme, k), x, y); }
+        if (k === 6) { c.fillStyle = '#2f6fae'; c.fillRect(x, y + 4, T, T - 4); c.fillStyle = '#7fb8e6'; c.fillRect(x + ((time * 20 + ci * 5) % T), y + 4, 4, 1); } else c.drawImage(tileImg(L.theme, k), x, y, T, T); }
       void t;
       for (const it of items) { if (it.got && it.k !== 'P' && it.k !== 'E') continue; const x = it.x - camX; if (x < -20 || x > W + 20) continue; const bob = Math.round(Math.sin(it.t * 4) * 1.5);
         if (it.k === 'o') A.draw(c, spr8('gofio', GOFIO), x - 4, it.y - 6 + bob); if (it.k === 'G') A.draw(c, spr8('zurron', ZURRON), x - 5, it.y - 8 + bob); if (it.k === 'Q') A.draw(c, spr8('queso', QUESO, { Y: '#c89a2a' }), x - 5, it.y - 6 + bob);
@@ -335,30 +350,32 @@ ARCADE.GAMES.bencomo = (() => {
       for (const f of fx) { const x = f.x - camX; if (f.k === 'pts') A.txt(c, f.s, x, f.y, '#fff', 6, 'center'); else if (f.k === 'spark') { c.fillStyle = '#fff6a0'; for (let i = 0; i < 6; i++) c.fillRect(x + Math.cos(i) * (1 - f.t / 0.4) * 10, f.y + Math.sin(i * 1.7) * (1 - f.t / 0.4) * 10, 2, 2); }
         else if (f.k === 'dust' || f.k === 'smoke') { c.fillStyle = f.k === 'smoke' ? 'rgba(220,220,220,0.7)' : 'rgba(230,210,170,0.7)'; const k = 1 - f.t / 0.4; c.beginPath(); c.arc(x - 6 * k, f.y - 2, 3 + 3 * k, 0, 7); c.arc(x + 6 * k, f.y - 2, 3 + 3 * k, 0, 7); c.fill(); }
         else if (f.k === 'ko' && f.e) { drawEnemy(c, { ...f.e, y: f.y, dead: false, ko: true }); } }
-      hud(c);
-      if (phase === 'intro') { c.fillStyle = 'rgba(0,0,0,0.7)'; c.fillRect(0, 70, W, 70); A.txt(c, (loopN ? 'VUELTA ' + (loopN + 1) + ' · ' : '') + 'FASE ' + (stageN % STAGES.length + 1), W / 2, 80, '#9fd7ff', 8, 'center'); A.txt(c, L.name, W / 2, 98, '#ffd400', 12, 'center'); A.txt(c, L.sub, W / 2, 122, '#fff', 6, 'center'); }
-      if (phase === 'clear') { c.fillStyle = 'rgba(0,0,0,0.65)'; c.fillRect(0, 60, W, 96); A.txt(c, boss === null && stageN % STAGES.length === STAGES.length - 1 ? '¡ACENTEJO VENGADO!' : '¡FASE SUPERADA!', W / 2, 72, '#ffd400', 12, 'center');
-        if (phaseT < 3) { A.txt(c, 'TIEMPO  ' + Math.max(0, Math.round(300 - time)) * 10, W / 2, 100, '#fff', 8, 'center'); A.txt(c, 'VIDA    ' + p.hp * 500, W / 2, 116, '#fff', 8, 'center'); } }
-      if (bannerT > 0 && banner) { c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(0, 34, W, 34); A.txt(c, banner[0], W / 2, 40, '#ffd400', 8, 'center'); A.txt(c, banner[1], W / 2, 54, '#fff', 6, 'center'); }
+      c.restore(); hud(c);
+      if (phase === 'intro') { c.fillStyle = 'rgba(0,0,0,0.7)'; c.fillRect(0, 96, SW, 80); A.txt(c, (loopN ? 'VUELTA ' + (loopN + 1) + ' · ' : '') + 'FASE ' + (stageN % STAGES.length + 1), SW / 2, 104, '#9fd7ff', 8, 'center'); A.txt(c, L.name, SW / 2, 122, '#ffd400', 14, 'center'); A.txt(c, L.sub, SW / 2, 152, '#fff', 8, 'center'); }
+      if (phase === 'clear') { c.fillStyle = 'rgba(0,0,0,0.65)'; c.fillRect(0, 60, SW, 110); A.txt(c, boss === null && stageN % STAGES.length === STAGES.length - 1 ? '¡ACENTEJO VENGADO!' : '¡FASE SUPERADA!', SW / 2, 72, '#ffd400', 12, 'center');
+        if (phaseT < 3) { A.txt(c, 'TIEMPO  ' + Math.max(0, Math.round(300 - time)) * 10, SW / 2, 100, '#fff', 8, 'center'); A.txt(c, 'VIDA    ' + p.hp * 500, SW / 2, 116, '#fff', 8, 'center'); } }
+      if (bannerT > 0 && banner) { c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(0, 34, SW, 34); A.txt(c, banner[0], SW / 2, 40, '#ffd400', 8, 'center'); A.txt(c, banner[1], SW / 2, 54, '#fff', 6, 'center'); }
     };
     function groundY(x) { for (let r = 0; r < ROWS; r++) { const k = tAt(x, r * T + 1); if (solid(k) || k === 3) return r * T; } return H; }
-    function hud(c) { A.txt(c, '1UP', 8, 6, '#ff6b6b', 8); A.txt(c, String(g.score).padStart(7, '0'), 8, 16, '#fff', 8); const hi = api.hi(); A.txt(c, 'HI', W / 2, 6, '#ffd400', 8, 'center'); A.txt(c, String(Math.max(hi, g.score)).padStart(7, '0'), W / 2, 16, '#fff', 8, 'center');
-      for (let i = 0; i < Math.max(3, p.hp); i++) { const x = W - 70 + i * 12; c.fillStyle = i < p.hp ? '#e53935' : '#442222'; c.fillRect(x, 7, 4, 4); c.fillRect(x + 5, 7, 4, 4); c.fillRect(x + 1, 10, 7, 3); c.fillRect(x + 3, 13, 3, 2); }
-      A.txt(c, 'VIDAS ' + lives, W - 8, 20, '#fff', 6, 'right'); A.draw(c, spr8('gofio', GOFIO), W - 112, 20); A.txt(c, String(gofio), W - 102, 20, '#fff', 6);
+    function hud(c) { A.txt(c, '1UP', 8, 6, '#ff6b6b', 8); A.txt(c, String(g.score).padStart(7, '0'), 8, 16, '#fff', 8); const hi = api.hi(); A.txt(c, 'HI', SW / 2, 6, '#ffd400', 8, 'center'); A.txt(c, String(Math.max(hi, g.score)).padStart(7, '0'), SW / 2, 16, '#fff', 8, 'center');
+      for (let i = 0; i < Math.max(3, p.hp); i++) { const x = SW - 70 + i * 12; c.fillStyle = i < p.hp ? '#e53935' : '#442222'; c.fillRect(x, 7, 4, 4); c.fillRect(x + 5, 7, 4, 4); c.fillRect(x + 1, 10, 7, 3); c.fillRect(x + 3, 13, 3, 2); }
+      A.txt(c, 'VIDAS ' + lives, SW - 8, 20, '#fff', 6, 'right'); A.draw(c, spr8('gofio', GOFIO), SW - 112, 20); A.txt(c, String(gofio), SW - 102, 20, '#fff', 6);
+      if (boss && boss.st !== 'wait' && boss.st !== 'flee' && !boss.dead) { c.fillStyle = '#000'; c.fillRect(80, SH - 16, SW - 160, 8); c.fillStyle = '#e53935'; c.fillRect(81, SH - 15, (SW - 162) * Math.max(0, boss.hp) / boss.max, 6); A.txt(c, 'LUGO', 74, SH - 17, '#fff', 8, 'right'); }
       if (p.stones > 0) { A.draw(c, spr8('piedras', STONES), 8, 28); A.txt(c, '×' + p.stones, 18, 27, '#fff', 6); } }
     function drawBencomo(c) { if (p.inv > 0 && !p.dead && flick() && p.power <= 0) return; const x = Math.round(p.x - camX), y = Math.round(p.y);
       const run = Math.abs(p.vx) > 20 && p.onG; const rf = ['run1', 'run2', 'run3', 'run2'][Math.floor(p.anim) % 4];
       let up = p.atk > 0 ? 'thrust' : p.hurtT > 0 || p.dead ? 'hurt' : p.vault > 0 || (p.flying && p.vy < 0) ? 'up' : 'idle';
-      let leg = p.pogo ? 'pogo' : !p.onG ? 'jump' : run ? rf : 'stand';
+      let leg = p.pogo ? 'pogo' : !p.onG ? 'jump' : p.crouch ? 'crouch' : run ? rf : 'stand';
       const s = bencomo(up, leg), fl = p.face < 0;
       // the pole: planted ahead while vaulting, down like a pogo, else carried
       c.strokeStyle = '#d9b77a'; c.lineWidth = 2; c.beginPath();
       if (p.vault > 0 && p.pole) { c.moveTo(p.pole[0] - camX, p.pole[1]); c.lineTo(x + p.face * 2, y - 26); }
       else if (p.pogo) { c.moveTo(x + p.face * 2, y - 16); c.lineTo(x + p.face * 2, y + 8); }
-      else if (p.atk > 0) { c.moveTo(x - p.face * 6, y - 13); c.lineTo(x + p.face * 26, y - 14); c.stroke(); c.fillStyle = '#5a3a1a'; c.fillRect(x + p.face * 25 - 1, y - 15, 3, 3); c.beginPath(); } // the hardened tip
+      else if (p.atk > 0) { const ay = p.crouch ? 7 : 0; c.moveTo(x - p.face * 6, y - 13 + ay + (p.crouch ? 2 : 0)); c.lineTo(x + p.face * 26, y - 14 + ay + (p.crouch ? 4 : 0)); c.stroke(); c.fillStyle = '#5a3a1a'; c.fillRect(x + p.face * 25 - 1, y - 15 + ay + (p.crouch ? 4 : 0), 3, 3); c.beginPath(); } // the hardened tip (low when crouched)
       else if (p.flying) { c.moveTo(x - p.face * 14, y - 4); c.lineTo(x + p.face * 10, y - 30); }
+      else if (p.crouch) { c.moveTo(x - p.face * 8, y - 2); c.lineTo(x + p.face * 14, y - 14); }
       else { c.moveTo(x + p.face * 4, y + 1); c.lineTo(x + p.face * 9, y - 32); }
-      c.stroke(); A.draw(c, s, x - 8, y - 22 - (p.dead ? 0 : 0), fl); if (p.power > 0) { c.fillStyle = flick() ? 'rgba(255,212,0,0.35)' : 'rgba(255,255,255,0.25)'; c.fillRect(x - 9, y - 23, 18, 23); } }
+      c.stroke(); A.draw(c, s, x - 8, y - s.h, fl); if (p.power > 0) { c.fillStyle = flick() ? 'rgba(255,212,0,0.35)' : 'rgba(255,255,255,0.25)'; c.fillRect(x - 9, y - 23, 18, 23); } }
     function drawEnemy(c, e) { if (e.dead) return; const x = Math.round(e.x - camX), y = Math.round(e.y); if (x < -40 || x > W + 40) return; const fl = e.face < 0, f = Math.floor(e.t * 6) % 2;
       if (e.hurt > 0 && flick() && e.k === 'L') return; if (e.ko) { c.globalAlpha = 0.8; }
       if (e.k === 'S' || e.k === 'K' || e.k === 'B' || e.k === 'A') { const top = e.k === 'K' ? CAP_TOP : e.k === 'B' ? BALL_TOP : e.k === 'A' ? ARC_TOP : SOLD_TOP; const s = soldier(Math.abs(e.vx) > 2 ? f : 0, top, e.k);
@@ -372,23 +389,23 @@ ARCADE.GAMES.bencomo = (() => {
         const rider = soldier(0, big ? CAP_TOP : SOLD_TOP, big ? 'K' : 'S'); A.draw(c, A.sprite('bc_rider' + (big ? 'L' : 'C'), [...(big ? CAP_TOP : SOLD_TOP)], P, 16), x - 8 + (fl ? 2 : -2), y - 30, fl); void rider;
         if (big) { c.fillStyle = '#b3271d'; c.fillRect(x - (fl ? -6 : 12), y - 26, 6, 10); } // the cape
         c.strokeStyle = '#cfd3d9'; c.lineWidth = 1; c.beginPath(); c.moveTo(x + e.face * 4, y - 22); c.lineTo(x + e.face * (big ? 18 : 22), y - (e.st === 'slash' ? 34 : 24)); c.stroke();
-        if (big && e.st !== 'wait' && e.st !== 'flee') { c.fillStyle = '#000'; c.fillRect(60, H - 14, W - 120, 7); c.fillStyle = '#e53935'; c.fillRect(61, H - 13, (W - 122) * Math.max(0, e.hp) / e.max, 5); A.txt(c, 'LUGO', 56, H - 15, '#fff', 6, 'right'); } }
+      }
       c.globalAlpha = 1; }
     load(0); if (opt.demo) phase = 'play';
     Object.assign(g, { _p: p, _E: E, _boss: () => boss, _L: () => L, _phase: () => phase, _load: (n) => { stageN = n; load(n); phase = 'play'; }, _lives: (v) => (v === undefined ? lives : (lives = v)), _stage: () => stageN }); // tests
     return g;
   }
   // ---------- title screen (attract) and the backdrop of the hi-score table
-  function drawTitle(c, t) { const bg = background('barranco'); c.drawImage(bg[0], 0, 0); c.drawImage(bg[1], -((t * 8) % 640), 0); c.drawImage(bg[2], -((t * 20) % 640), 0); c.drawImage(bg[2], -((t * 20) % 640) + 640, 0);
-    c.fillStyle = 'rgba(0,0,0,0.3)'; c.fillRect(0, 0, W, H);
+  function drawTitle(c, t) { const bg = background('barranco'), BW = 800; const lay = (im, sp) => { const o = -((t * sp) % BW); c.drawImage(im, o, 0, BW, SH); c.drawImage(im, o + BW, 0, BW, SH); }; lay(bg[0], 0); lay(bg[1], 8); lay(bg[2], 20);
+    c.fillStyle = 'rgba(0,0,0,0.3)'; c.fillRect(0, 0, SW, SH); c.save(); c.translate(0, Math.round((SH - 280) / 2)); // laid out for 280 high, centred
     // the logo: stone letters
-    const L1 = 'BENCOMO'; c.font = '28px "Press Start 2P", monospace'; c.textAlign = 'center'; c.textBaseline = 'top'; c.fillStyle = '#2a1a10'; c.fillText(L1, W / 2 + 3, 30 + 3); const gr = c.createLinearGradient(0, 30, 0, 58); gr.addColorStop(0, '#f2d38a'); gr.addColorStop(0.5, '#c58a3c'); gr.addColorStop(1, '#7a4a22'); c.fillStyle = gr; c.fillText(L1, W / 2, 30);
-    A.txt(c, "ACENTEJO'S REVENGE", W / 2, 66, '#ff6b4a', 8, 'center');
-    const s = A.sprite('bc_title', [...UP.up, ...LEG.stand], P, 16); c.save(); c.translate(W / 2 - 24, 88); c.scale(3, 3); c.drawImage(s.c, 0, 0); c.restore(); c.strokeStyle = '#d9b77a'; c.lineWidth = 3; c.beginPath(); c.moveTo(W / 2 - 40, 156); c.lineTo(W / 2 + 40, 84); c.stroke();
-    A.txt(c, 'TENERIFE, MAYO DE 1494', W / 2, 162, '#fff', 6, 'center'); A.txt(c, 'EL MENCEY DE TAORO CONTRA LUGO', W / 2, 172, '#fff', 6, 'center');
-    A.txt(c, '© 1494 MENCEYATO DE TAORO', W / 2, 190, '#9fd7ff', 6, 'center'); }
-  function drawBack(c, t) { const bg = background('monte'); c.drawImage(bg[0], 0, 0); c.drawImage(bg[1], -((t * 10) % 640), 0); c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, 0, W, H); }
+    const L1 = 'BENCOMO'; c.font = '36px "Press Start 2P", monospace'; c.textAlign = 'center'; c.textBaseline = 'top'; c.fillStyle = '#2a1a10'; c.fillText(L1, SW / 2 + 4, 34 + 4); const gr = c.createLinearGradient(0, 34, 0, 70); gr.addColorStop(0, '#f2d38a'); gr.addColorStop(0.5, '#c58a3c'); gr.addColorStop(1, '#7a4a22'); c.fillStyle = gr; c.fillText(L1, SW / 2, 34);
+    A.txt(c, "ACENTEJO'S REVENGE", SW / 2, 84, '#ff6b4a', 10, 'center');
+    const s = A.hires(A.sprite('bc_title', [...UP.up, ...LEG.stand], P, 16)); c.strokeStyle = '#d9b77a'; c.lineWidth = 4; c.beginPath(); c.moveTo(SW / 2 - 52, 206); c.lineTo(SW / 2 + 50, 104); c.stroke(); c.drawImage(s.h2, SW / 2 - 40, 108, 80, 110);
+    A.txt(c, 'TENERIFE, MAYO DE 1494', SW / 2, 222, '#fff', 8, 'center'); A.txt(c, 'EL MENCEY DE TAORO CONTRA LUGO', SW / 2, 234, '#fff', 8, 'center');
+    A.txt(c, '© 1494 MENCEYATO DE TAORO', SW / 2, 250, '#9fd7ff', 6, 'center'); c.restore(); }
+  function drawBack(c, t) { const bg = background('monte'), BW = 800; c.drawImage(bg[0], 0, 0, BW, SH); const o = -((t * 10) % BW); c.drawImage(bg[1], o, 0, BW, SH); c.drawImage(bg[1], o + BW, 0, BW, SH); c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, 0, SW, SH); }
   const ART = { title: 'BENCOMO', sub: "ACENTEJO'S REVENGE", marquee: ['#6b2a10', '#1a0a04'], titleCol: '#f2c46a', baseScore: 60000, music: { title: SONGS.title }, create, drawTitle, drawBack,
-    help: (K) => `A GOLPE: ${K('f_punch')}  B SALTO/VARA: ${K('f_kick')}  ↓ EN EL AIRE: POGO  PIEDRA/MONEDA: ${K('b_pass')}  ESC SALIR` };
+    help: (K) => `A GOLPE: ${K('f_punch')}  B SALTO/VARA: ${K('f_kick')}  ↓ AGACHARSE / POGO  PIEDRA/MONEDA: ${K('b_pass')}  ESC SALIR` };
   return ART;
 })();

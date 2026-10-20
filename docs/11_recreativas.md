@@ -8,6 +8,11 @@ siguiente.
 
 - **v0.80.0**: el motor (`09j_arcade.js`: `ARCADE.open({ id, key, where, price })`, `ARCADE.GAMES[id]`, y
   `RECRE` para la casa de El Blanco) y el juego 1, Bencomo (`09k_bencomo.js`, con 3 fases y Lugo como jefe).
+- **v0.81.0**: el juego 2, «Guerra de Naves» (`09l_naves.js`), en cafeterías y tascas (opción en el menú de la barra,
+  `FOOD.open`, $1, récords por bar: `bar_<nombre>`).
+- **Tamaños (Jonay, 20-oct)**: Guerra de Naves se dibuja a ×1, con la nave pequeña y mucha visión (como la primera
+  versión de Bencomo o menos). Guanche Warriors irá con los personajes al tamaño del Bencomo grande que se descartó
+  (unos ×2,4 sobre la pantalla de 480×336).
 - La llamada de El Blanco se dispara con `GANG.defenders`. Lo guardado está en `GANG.arcade`: `scores`, `invited`,
   `bought` y `console`.
 
@@ -25,12 +30,24 @@ siguiente.
 | Sitio | Juego | Precio |
 |---|---|---|
 | Casa de El Blanco (le pides jugar) | **Bencomo, Acentejo's Revenge** (plataformas) | gratis |
-| Bares y cafeterías (donde ya se compra comida; ahora se entra) | Naves tipo R-Type / Nemesis | una moneda por partida |
+| Bares y cafeterías (donde ya se compra comida; ahora se entra) | **Guerra de Naves** (tipo R-Type / Nemesis) | una moneda por partida |
 | Jugueterías | Shooter tipo Metal Slug | una moneda por partida |
-| ¿bares / jugueterías? | Beat'em up tipo Golden Axe | por decidir con Jonay |
-| **Tu pisito** (la consola, comprada en la juguetería, cara) | todos los que hayas comprado en la juguetería | gratis |
+| Jugueterías (Jonay, 20-oct) | **Guanche Warriors** (beat'em up tipo Golden Axe) | una moneda por partida |
+| **Tu piso** (la consola, comprada en la juguetería, cara) | todos los que hayas comprado en la juguetería, también **Pachanga 3x3** y **Play Furbito** | gratis |
 
-La consola, al encenderla, muestra un menú con los cartuchos que tienes. Cada juego se compra aparte en la juguetería.
+La consola, al encenderla, muestra un menú con los cartuchos que tienes. Cada juego se compra aparte en la juguetería,
+**todos** (Jonay, 20-oct): Bencomo, Guerra de Naves, Guanche Warriors, el tipo Metal Slug, Pachanga 3x3 y Play Furbito.
+
+### Los deportes en la consola (Jonay, 20-oct)
+
+- **«Pachanga 3x3»**: el baloncesto de las canchas, pero **3 contra 3** (hay que pasar el basket a 3x3, también en
+  la cancha).
+- **«Play Furbito»**: el fútbol de las canchas.
+- Los dos se juegan **por fases, como un campeonato**:
+  - Al principio eliges un país y te sale su equipo.
+  - Se van eliminando hasta la final (eliminatorias).
+  - Los colores de las equipaciones de los dos equipos de cada partido **no pueden coincidir** (segunda equipación si
+    se parecen).
 
 ## Lo común a todas las máquinas (`09j_arcade.js`, un motor para todos)
 
@@ -97,17 +114,21 @@ La consola, al encenderla, muestra un menú con los cartuchos que tienes. Cada j
   Jefe final: Alonso Fernández de Lugo en caricatura, que se escapa a caballo herido, como en la historia.
 - **Música**: chiptune con aire de tajaraste y de tambor y flauta canarios.
 
-## Juego 2 · Naves tipo R-Type / Nemesis (bares, de pago) — v0.82
+## Juego 2 · «GUERRA DE NAVES» (bares, de pago) — hecho en v0.81.0, primera versión para pulir
 
-- **Nombre provisional**: «R-TEIDE».
+- **Nombre**: «Guerra de Naves» (Jonay, 20-oct). Matamarcianos horizontal tipo R-Type / Nemesis.
 - **La nave**:
   - Disparo normal, y disparo cargado si mantienes A.
   - Un **módulo** que se pega delante o detrás, o se lanza (como la Force de R-Type), con B.
   - Barra de mejoras al estilo Nemesis: recoges cápsulas y eliges velocidad, misil, doble, láser, opción o escudo.
-- **Fases**: el cielo de La Laguna con nubes y el Teide al fondo, el interior del volcán con lava, una base alienígena
-  bajo el mar de nubes y la colmena. Jefes enormes que ocupan media pantalla.
+- **Fases** (v0.81.0: 3, cada una con su jefe):
+  1. El cielo de Aguere. Jefe: la nave nodriza (el ojo se abre 2 s de cada 4).
+  2. Las entrañas del Teide. Jefe: la sierpe de lava (solo la cabeza recibe daño).
+  3. El mar de nubes y la colmena. Jefe: la reina (el ojo, con su láser).
+  Pendiente para pulir: una cuarta fase (la colmena por dentro), jefes más grandes y con más partes, más tipos de
+  enemigo y sprites más trabajados.
 
-## Juego 3 · Shooter tipo Metal Slug (jugueterías, de pago) — v0.83
+## Juego 3 · Shooter tipo Metal Slug (jugueterías, de pago) — v0.83 (después de Guanche Warriors)
 
 - **Nombre provisional**: «BLANCO COMMANDO» (el favorito de El Blanco, que es exmilitar).
 - **Personaje**: un soldado pequeño y cabezón al estilo Metal Slug, que corre, salta y dispara en 8 direcciones.
@@ -124,17 +145,44 @@ La consola, al encenderla, muestra un menú con los cartuchos que tienes. Cada j
 - **Enemigos**: soldados de un ejército inventado (parodia, nada real), en varios tipos: el que corre, el del escudo,
   el bazuca, el paracaidista y el de la moto.
 
-## Juego 4 · Beat'em up tipo Golden Axe — v0.84
+## Juego 4 · «GUANCHE WARRIORS» (jugueterías, de pago; beat'em up tipo Golden Axe) — v0.82
 
-- **Nombre provisional**: «LA FURIA DE GUAYOTA». Fantasía canaria: guerreros que pelean contra los tibicenas (los
-  perros demonio) y contra Guayota, el demonio del Teide.
-- **Jugabilidad**:
-  - Tres personajes a elegir, cada uno con su magia.
-  - Hay que pegar en profundidad (arriba y abajo de la calle) y montar en bestias.
-  - Los duendecillos roban las pociones.
+- **Nombre**: «Guanche Warriors» (Jonay, 20-oct). Beat'em up de avance lateral en profundidad, como Golden Axe: no es
+  de plataformas.
+- **Se eligen 3 personajes al empezar** (Jonay):
+  - **El Mencey**: el bárbaro. Fuerte y lento, pega con un **garrote canario**, golpes que tumban y agarres.
+  - **El Pastor**: más ágil y menos fuerte. Con la vara de pastor llega más lejos, salta más y tiene ataques saltando
+    (el salto del pastor).
+  - **La Mirladora**: una chica que hace **magia**. Menos física pero ágil, y es la que tiene la magia más fuerte.
+- **Propuesta para cerrar con Jonay**:
+  - **Historia**, sacada del mito guanche real: **Guayota**, el demonio que vive dentro del Teide (Echeyde), ha raptado
+    a **Magec**, el sol, y lo tiene encerrado en el volcán. La isla está a oscuras. Los tres guerreros suben hasta el
+    Teide para liberarlo, como en la leyenda en la que Achamán lo rescata.
+  - **Controles**: A pega (combo de 3 golpes; corriendo, embestida), B salta (A en el aire, golpe saltando) y Q lanza
+    la magia. Se mueve en 8 direcciones por la calle, también arriba y abajo.
+  - **Magia**: se gasta con **zurrones de magia**, que sueltan unos **duendes ladrones** a los que hay que perseguir
+    y pegar, como los de Golden Axe.
+    - El Mencey: la «Ira de Achamán», un temblor de tierra.
+    - El Pastor: el «Viento alisio», un remolino.
+    - La Mirladora: la «Luz de Magec», rayos de sol. Es la más fuerte y tiene más niveles.
+  - **Montura**: el **lagarto gigante** (el de El Hierro, que existió de verdad), que da coletazos y escupe.
+  - **Enemigos**: los **tibicenas** (los perros demonio de pelo negro y ojos rojos de la leyenda), los secuaces de
+    Guayota con garrotes y escudos, unos gigantones y unas brujas.
+  - **Fases** (más largas cada vez, con su jefe):
+    1. **El poblado de Taoro**, en el valle de La Orotava.
+    2. **La laurisilva de Anaga**, con niebla.
+    3. **Los acantilados de Los Gigantes**, al borde del mar.
+    4. **Las Cañadas**, con lava y piedra pómez.
+    5. **Dentro del Teide**, con **Guayota** de jefe final.
+    Entre fase y fase, el campamento de noche y la pantalla de bonus, en la que se apalea a los duendes para
+    quitarles los zurrones.
+  - **Música**: chiptune épico con tambor y flauta canarios. La de cada fase es distinta y más larga, sin repetirse
+    tanto.
 
-## La inmobiliaria y el pisito — v0.84
+## La inmobiliaria y los pisos — v0.84
 
-- **La inmobiliaria** (parodia) alquila **tu pisito**: una casita chula cerca del Pasaje Teide.
-- Pagas el alquiler cada cierto tiempo. Dentro está la cama (guardar la partida), el sofá y la tele.
-- La **consola** (cara) se compra en la juguetería y se instala en la tele del pisito.
+- **La inmobiliaria** (parodia) alquila el **pisito** (una casita chula cerca del Pasaje Teide) y, mejor aún (Jonay,
+  20-oct), **vende varios pisos**: eliges el que te permita tu dinero, y los pisos son caros.
+- Dentro: la cama (guardar la partida), el sofá y la tele.
+- La **consola** (cara) se compra en la juguetería y se instala en la tele de tu casa. Con ella se juega a todos los
+  minijuegos que tengas.

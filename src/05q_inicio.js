@@ -109,6 +109,10 @@ function buildInicioDetails() {
   const tileC = M.tile;
   // yellow block: brown stone plinth, balconies with dark railings on the street faces, corner bevel band
   const yb = BUILD.find((b) => Math.hypot(b.cx + 749, b.cz + 430) < 6);
+  // where the portals go (see below): no balcony over them (Jonay)
+  const PORTALS = [[-772, -413, 3.6], [-754, -362.5, 2.0]], portalAt = [];
+  if (yb) for (const [px, pz, hw] of PORTALS) { let best = null; const P = yb.pts; for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length]; const L = Math.hypot(q[0] - p[0], q[1] - p[1]); if (L < 4) continue; const t = clamp(((px - p[0]) * (q[0] - p[0]) + (pz - p[1]) * (q[1] - p[1])) / (L * L), 2.5 / L, 1 - 2.5 / L); const x = p[0] + (q[0] - p[0]) * t, z = p[1] + (q[1] - p[1]) * t, d = Math.hypot(px - x, pz - z); if (!best || d < best.d) best = { d, x, z }; } if (best) portalAt.push([best.x, best.z, hw]); }
+  const underPortal = (x, z) => portalAt.some(([a, b, hw]) => Math.hypot(x - a, z - b) < hw + 1.4);
   if (yb) { const P = yb.pts, n = P.length; const sg = polyArea(P) > 0 ? 1 : -1;
     for (let i = 0; i < n; i++) { const p = P[i], q = P[(i + 1) % n]; const L = Math.hypot(q[0] - p[0], q[1] - p[1]); if (L < 6) continue; let ox = (q[1] - p[1]) / L, oz = -(q[0] - p[0]) / L; if (inicioPip(P, (p[0] + q[0]) / 2 + ox, (p[1] + q[1]) / 2 + oz)) { ox = -ox; oz = -oz; }
       const rd = ROADSEG.nearest((p[0] + q[0]) / 2 + ox * 5, (p[1] + q[1]) / 2 + oz * 5); const street = rd && rd.d < 6;
@@ -116,7 +120,7 @@ function buildInicioDetails() {
       const mid = [(p[0] + q[0]) / 2 + ox * 0.08, (p[1] + q[1]) / 2 + oz * 0.08]; const fr = cFrame(mid[0], g0, mid[1], ang);
       B.geo(cBox(L, 1.3, 0.16, 1.2), plinth, fr(0, 0.3, 0));
       if (!street || L < 12) continue;
-      const nb = Math.floor(L / 3.6); for (let f = 1; f <= 3; f++) for (let k = 0; k < nb; k++) { if ((k + f) % 2) continue; const x = (k + 0.5) / nb * L - L / 2; const y = 0.6 + f * 3.25;
+      const nb = Math.floor(L / 3.6); for (let f = 1; f <= 3; f++) for (let k = 0; k < nb; k++) { if ((k + f) % 2) continue; const x = (k + 0.5) / nb * L - L / 2; const y = 0.6 + f * 3.25; if (f === 1 && underPortal(mid[0] + Math.cos(ang) * x, mid[1] - Math.sin(ang) * x)) continue; // (the frame's x runs along cos/−sin of its angle)
         B.geo(cBox(2.6, 0.16, 0.9), ochre, fr(x, y, 0.45)); B.geo(cBox(2.6, 0.06, 0.06), rail, fr(x, y + 1.0, 0.88)); for (let bx = -1.25; bx <= 1.26; bx += 0.125) B.geo(cBox(0.025, 1.0, 0.025), rail, fr(x + bx, y + 0.5, 0.88)); for (const sx of [-1, 1]) B.geo(cBox(0.06, 1.0, 0.9), rail, fr(x + sx * 1.3, y + 0.5, 0.45)); } } }
   // v0.80 (Jonay, Street View): the portals of the Edificio Casa del Blanco: stone arches with green iron gates and a fan
   // of bars on top. Two side by side on Teobaldo Power (where you go in to play at El Blanco's) and one on Calle Adelantado
@@ -124,7 +128,9 @@ function buildInicioDetails() {
     const gc = mkCanvas(128, 192), gx = gc.getContext('2d'); gx.strokeStyle = '#1f4a34'; gx.lineWidth = 4; gx.strokeRect(2, 64, 124, 126); for (let i = 8; i < 128; i += 10) { gx.beginPath(); gx.moveTo(i, 64); gx.lineTo(i, 190); gx.stroke(); } gx.fillStyle = '#244f3a'; gx.fillRect(0, 140, 128, 52); gx.fillRect(62, 64, 4, 126);
     gx.beginPath(); gx.arc(64, 64, 60, Math.PI, 0); gx.stroke(); for (let k = 0; k <= 10; k++) { const a = Math.PI + k / 10 * Math.PI; gx.beginPath(); gx.moveTo(64, 64); gx.lineTo(64 + Math.cos(a) * 60, 64 + Math.sin(a) * 60); gx.stroke(); } gx.beginPath(); gx.arc(64, 64, 18, Math.PI, 0); gx.stroke();
     const gt = new THREE.CanvasTexture(gc); gt.colorSpace = THREE.SRGBColorSpace; const gm = new THREE.MeshStandardMaterial({ map: gt, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide, roughness: 0.6, metalness: 0.3 });
+    const wallM = new THREE.MeshStandardMaterial({ color: 0xdba92a, roughness: 0.92 });
     const portal = (fr, x, g0) => { const w = 2.3, hs = 2.35, r = w / 2;
+      for (const sx of [-1, 1]) B.geo(cBox(1.2, 5.9, 0.06), wallM, fr(x + sx * (r + 0.42 + 0.6), 2.95, 0.035)); B.geo(cBox(w + 3.24, 2.2, 0.06), wallM, fr(x, hs + r + 1.5, 0.035)); // plain wall round the portal (no windows: Street View)
       B.geo(cBox(w, hs + r, 0.1), dark, fr(x, (hs + r) / 2, -0.02)); // the dark hall behind the gate
       for (const sx of [-1, 1]) B.geo(cBox(0.42, hs, 0.28), stone, fr(x + sx * (r + 0.21), hs / 2, 0.12)); // jambs
       for (let k = 0; k < 9; k++) { const a0 = Math.PI * k / 9, a1 = Math.PI * (k + 1) / 9, am = (a0 + a1) / 2, rr = r + 0.21; const L = 2 * rr * Math.sin((a1 - a0) / 2) + 0.06;

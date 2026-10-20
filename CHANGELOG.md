@@ -3,6 +3,47 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.81.0 — 2026-10-20 — «GUERRA DE NAVES», la máquina de los bares
+- **Recreativa nueva: «GUERRA DE NAVES»** (`09l_naves.js`), un matamarcianos horizontal tipo R-Type / Nemesis. Es la
+  máquina de pago de las **cafeterías y las tascas**: sale en el menú de la barra una vez que El Blanco te ha llamado,
+  cuesta $1 la partida y cada bar tiene su propia tabla de récords.
+  - La nave (el AGUERE-1) se ve **pequeña, a ×1** (Jonay: hace falta espacio para ver venir las cosas).
+  - **Controles de siempre**:
+    - A (E / clic izquierdo) dispara; si lo mantienes y lo sueltas, sale el **BEAM cargado**, en dos niveles.
+    - B (Espacio) maneja el **MÓDULO**, como la Force de R-Type: se pega delante o detrás, B lo lanza y B lo recoge.
+      Para las balas pequeñas y daña lo que toca.
+    - Q / clic derecho coge la mejora marcada en la **barra estilo Nemesis**: VELOC, MISIL, DOBLE, LÁSER, OPCIÓN y
+      ESCUDO. Cada cápsula mueve la marca una casilla.
+  - **3 fases con su jefe**:
+    1. El cielo de Aguere, con los tejados de La Laguna y el Teide al fondo. Jefe: la nave nodriza, a la que hay que
+       darle en el ojo cuando lo abre.
+    2. Las entrañas del Teide: cueva de lava con torretas, bombas de lava y pasos estrechos. Jefe: la sierpe de lava.
+    3. El mar de nubes: la colmena. Jefe: la reina, con su láser del ojo.
+    Después de la tercera, segunda vuelta más rápida.
+  - Enemigos: escuadrillas (si las tumbas enteras, sueltan cápsula), palomitas, kamikazes, torretas, cargueros que
+    sueltan el módulo, minas y bombas de lava.
+  - Música chiptune propia por fase, para el jefe y el título; demo, récords y continuar como en Bencomo.
+- El Blanco, al llamar, ya cuenta que la máquina está en los bares.
+- Bencomo, fase 1: el último barranco largo pasa de 7 a 6 casillas y tiene una pintadera (punto de control) justo antes.
+
+## 0.80.1 — 2026-10-19 — Bencomo más grande y con más detalle; portales sin balcones
+- **BENCOMO se ve más grande y con más resolución** (Jonay: «el pj al menos un 50 % más grande»):
+  - La pantalla de la máquina pasa a 480×336 y el mundo se dibuja a ×2. Bencomo, los enemigos y el escenario se ven un
+    33 % más grandes que en la v0.80.0. Es un punto intermedio: al 60 % se veía demasiado poco de la fase.
+  - La cámara sigue también en altura, como en Mario o Sonic.
+  - Los sprites salen a doble resolución (escalado scale2x del pixel art, con diagonales redondeadas, contorno fino y
+    luz en los bordes de arriba).
+  - Las baldosas, la hierba, la roca y los fondos (mar, carabelas, barranco, laurisilva, el Teide) se dibujan a doble
+    detalle.
+  - La pantalla de título es nueva y la tabla de récords está recolocada.
+  - **Música folclórica canaria en la fase 2** (el Barranco de Acentejo): una isa en 3/4 con castañuelas, un punteo
+    como de timple y el bajo de guitarra. Cada fase tiene su música: la costa, el barranco, la emboscada y el jefe. Todas son ahora más largas y menos
+    repetitivas, con una parte A, una parte B y sus variaciones, y en la costa entra una segunda voz.
+  - **Agacharse** (↓ en el suelo): Bencomo pega bajo con el banot para darle a los perros, y agachado esquiva las
+    flechas y los balazos.
+- **Portales del Edificio Casa del Blanco**: ya no los atraviesa un balcón, y alrededor de los arcos la pared es lisa,
+  sin ventanas (Street View).
+
 ## 0.80.0 — 2026-10-19 — Las recreativas: «BENCOMO, Acentejo's Revenge» en casa de El Blanco
 - **Motor de recreativas** (`09j_arcade.js`), común para todas las máquinas que vendrán:
   - Mueble con marquesina, marco, cristal con reflejo y líneas de barrido.

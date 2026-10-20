@@ -1,4 +1,5 @@
 # Pruebas de ESTA versión (scripts\PRUEBAS.bat las junta con las de lo cambiado).
-# v0.80.0: recreativas, Bencomo y la casa de El Blanco
+# v0.81.0: Bencomo grande (0.80.1) y «Guerra de Naves» en los bares
 prueba_080.py
+prueba_081.py
 prueba_arranque.py

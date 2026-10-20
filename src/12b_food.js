@@ -34,8 +34,12 @@ const FOOD = (() => {
   function open(s) {
     const items = MENU[s.type]; const extra = s.counter && MISSIONS.wantsBottle && MISSIONS.wantsBottle() ? [['Botella de Ron Arrecostao (para Coco)', 25, 0, 'ron']] : [];
     const list = [...extra, ...items];
-    const opts = list.map(([n, p, h]) => `${n} · <b>$${p}</b>${h ? ` · <span style="color:#7fe08a">+${h} salud</span>` : ''}`).concat(['Nada, gracias']);
+    // v0.81: the cafés and the tascas have the «Guerra de Naves» machine (once El Blanco has told you about it); each
+    // bar keeps its own hi-score table, as in real life
+    const arc = (s.type === 'C' || s.type === 'R') && ARCADE.data().invited;
+    const opts = list.map(([n, p, h]) => `${n} · <b>$${p}</b>${h ? ` · <span style="color:#7fe08a">+${h} salud</span>` : ''}`).concat(arc ? ['🕹 Echar una partida a la máquina: <b>GUERRA DE NAVES</b> · <b>$1</b> la partida'] : [], ['Nada, gracias']);
     DLG.show(s.name, LABEL[s.type] || 'Tienda', `Tienes <b>$${PLAYER.money}</b> y tu salud está al <b>${Math.round(PLAYER.health)}%</b>.`, '¿Qué vas a tomar?', opts, (i) => {
+      if (arc && i === list.length) { DLG.hide(); ARCADE.open({ id: 'naves', key: 'bar_' + s.name, where: String(s.name).toUpperCase(), price: 1 }, (r) => { if (r && r.paid) HUD.toast(`Te has dejado $${r.paid} en la máquina`, '#9fd7ff', 3); }); return; }
       if (i >= list.length) { DLG.hide(); return; }
       const [n, p, h, tag] = list[i];
       if (PLAYER.money < p) { AUDIO.fail(); DLG.show(s.name, 'No te llega', 'Mi niño, eso cuesta <b>$' + p + '</b> y no tienes suficiente. Aquí no se fía.', '', ['Vale'], () => DLG.hide()); return; }

@@ -5,13 +5,38 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 
 ## Por revisar con Jonay
 
+- [ ] **Auditoría v0.81.0** (20-oct 16:19, APTO CON AVISOS):
+  - 2 avisos nuevos del análisis estático: `05o_concepcion.js:72-73`, `cFrame()` crea objetos de three.js.
+  - El agente revisor de jugabilidad (v0.78.0) tiene 14 avisos nuevos.
+  - Pintar un fotograma: 29 → 30,9 ms. El arranque: 8,7 → 9,1 s.
+- [ ] **Guerra de Naves, para pulir**: abajo a la derecha, «CREDIT 0» se monta sobre la barra del BEAM y el icono del
+  módulo. También quedan una cuarta fase, jefes más grandes, más enemigos y sprites más trabajados.
 - [ ] **Auditoría v0.78.1** (19-oct 19:17, APTO CON AVISOS):
   - Un obstáculo nuevo en la calzada: árbol, farola o poste en Calle Juan de Vera (X −149, Z −235).
   - Pintar un fotograma: 21,2 → 31,8 ms. Era ruido: en la 0.79.0 salió 23,4.
   - El arranque sube de 8,2 a 9,4 s.
 - [ ] **PAQUETE «RECREATIVAS Y MINIJUEGOS» (Jonay, 19-oct: «para acometer YA», plan v0.79 → v0.84)**:
-  Hecho en v0.80.0: el motor de recreativas y BENCOMO en casa de El Blanco (llamada tras «Defensores»). Falta:
-  naves (bares), Metal Slug (jugueterías), Golden Axe, la inmobiliaria, el pisito y la consola.
+  Hecho en v0.80.0: el motor de recreativas y BENCOMO en casa de El Blanco (llamada tras «Defensores»).
+  Hecho en v0.81.0: **GUERRA DE NAVES** en cafeterías y tascas (primera versión, para pulir).
+  Falta: **GUANCHE WARRIORS** (v0.82), Metal Slug (jugueterías), la inmobiliaria, el pisito y la consola.
+  - Jonay, 20-oct: los nombres son «Guerra de Naves» (el tipo R-Type) y «Guanche Warriors» (el tipo Golden Axe:
+    beat'em up, no plataformas, con varias fases). En Guanche Warriors se elige personaje al empezar:
+    - El Mencey: el bárbaro, con garrote canario.
+    - El Pastor: más ágil y menos fuerte.
+    - La Mirladora: una chica que hace magia; menos física, pero ágil.
+    Propuesta completa en `docs/11_recreativas.md`.
+  - Jonay, 20-oct: controles de siempre (Espacio, clic izquierdo y derecho). Guanche Warriors: personajes al tamaño
+    del Bencomo grande descartado. Naves: pequeño, con mucha visión.
+  - Jonay, 20-oct:
+    - **Guanche Warriors se juega en las jugueterías** (de pago).
+    - En la juguetería se pueden comprar **todos los juegos** y la **consola**, para jugarlos en casa.
+    - **Pisos**: el pisito de alquiler y, mejor aún, **varios pisos en venta**. Eliges el que te permita tu dinero, y
+      los pisos son caros.
+    - En la consola se juega a todos los minijuegos, también a los de las canchas:
+      - **«Pachanga 3x3»**: el basket, que hay que **pasar a 3 contra 3**.
+      - **«Play Furbito»**: el fútbol.
+      - Los dos son por fases: eliges un país al principio, te sale su equipo y hay eliminatorias hasta la final.
+      - Las equipaciones de los dos equipos no pueden coincidir en colores.
   Hecho en v0.79.0: armas (rifle a dos manos), minimapa (puntos encima), fútbol (palomitas, saque de centro, fuerza
   del tiro, regate) y basket (combos de la CPU, 4 mates animados, pases en arco). Falta lo de recreativas en adelante
   (plan en `docs/11_recreativas.md`).
@@ -54,7 +79,7 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
         - Varazos con el **banot**: lanza de madera con la punta endurecida al fuego.
         - Comida: el plátano llegó después, así que quizá **gofio en vez de plátanos** (también comían cabra y
           cebada).
-    - Otro beat'em up tipo Golden Axe.
+    - Otro beat'em up tipo Golden Axe: **Guanche Warriors**.
   - **Inmobiliaria y pisito**:
     - En la inmobiliaria se alquila tu pisito: una casita chula cerca del Pasaje Teide.
     - En el piso, una consola comprada en la juguetería (vale una pasta). Los juegos se compran también en la

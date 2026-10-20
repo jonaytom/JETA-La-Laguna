@@ -34,6 +34,9 @@ async def run(pg):
     pg_ = json.loads(await pg.evaluate("""(()=>{ const A=%s, g=A._game(), p=g._p, E=g._E; const e=E.find(q=>q.k==='S' && q.x>p.x); if (!e) return '{}'; const hp=e.hp; p.x=e.x; p.y=e.y-70; p.vy=0; p.vx=0; e.vx=0; A._press('vD', true); let d=false; for (let i=0;i<60;i++){ A._step(1); if (e.dead) { d=true; break; } } A._press('vD', false); A._step(10);
       return JSON.stringify({ pogo_mata: d, rebote: p.vy<0 || d }); })()""" % A)); print('pogo', pg_)
     ok2 = ok2 and pg_.get('pogo_mata')
+    ag = json.loads(await pg.evaluate("""(()=>{ const A=%s, g=A._game(), p=g._p, E=g._E; const e=E.find(q=>q.k==='D' && !q.dead && q.x>p.x); if (!e) return '{}'; for (let i=0;i<40;i++) { p.x=e.x-16; p.y=e.y; p.vx=0; p.vy=0; A._step(1); } p.face=1; p.inv=9;
+      A._press('vD', true); A._step(3); const agachado=p.crouch; for (let k=0;k<6 && !e.dead;k++){ p.x=e.x-16; p.y=e.y; p.vx=0; p.face=1; A._press('vS', true); A._step(2); A._press('vS', false); for (let i=0;i<16;i++) A._step(1); } A._press('vD', false); A._step(5); return JSON.stringify({ agachado, perro_muerto: !!e.dead }); })()""" % A)); print('agachado contra el perro', ag)
+    ok2 = ok2 and ag.get('agachado') and ag.get('perro_muerto')
     await foto(pg, 'v080_salto')
     print('MOVIMIENTOS', 'OK' if ok2 else 'FALLA'); ok = ok and ok2
     # 3) the stages can be crossed: the demo pilot plays them (invincible) one after another

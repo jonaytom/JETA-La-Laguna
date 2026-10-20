@@ -224,6 +224,12 @@
    [
     "prueba_080.py"
    ]
+  ],
+  [
+   "^src/09j_arcade|^src/09l_naves|^src/12b_food",
+   [
+    "prueba_081.py"
+   ]
   ]
  ]
 }

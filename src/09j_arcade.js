@@ -7,9 +7,9 @@
 // hi-scores saved with the game (GANG.arcade). The games themselves are in their own files (ARCADE.GAMES[id]).
 // Keys: the same as every minigame: A = E / left click, B = Espacio, arriba = ↑/W, Q / right click = coin; Esc leaves.
 const ARCADE = (() => {
-  const W = 320, H = 224;                    // the board's screen (logical px)
-  const CW = 1280, CH = 960, SS = 3.3;       // the cabinet canvas and the screen scale on it
-  const SX = Math.round((CW - W * SS) / 2), SY = 138;
+  const W = 480, H = 336;                    // the board's screen (logical px; v0.80.1: 480×336 — Jonay: 400×280 made Bencomo too big, you saw too little)
+  const CW = 1280, CH = 960, SS = 2.25;      // the cabinet canvas and the screen scale on it
+  const SX = Math.round((CW - W * SS) / 2), SY = 136;
   const GAMES = {};
   let cv = null, cx = null, scr = null, sx = null, running = false, raf = 0, last = 0, acc = 0;
   let M = null, G = null, st = null, onClose = null;
@@ -29,7 +29,23 @@ const ARCADE = (() => {
     const f = mkCanvas(ww, hh), fx = f.getContext('2d'); fx.translate(ww, 0); fx.scale(-1, 1); fx.drawImage(c, 0, 0);
     const s = { c, f, w: ww, h: hh }; SPR.set(key, s); return s;
   }
-  function draw(g, s, x, y, flip, alpha) { if (!s) return; if (alpha !== undefined) g.globalAlpha = alpha; g.drawImage(flip ? s.f : s.c, Math.round(x), Math.round(y)); if (alpha !== undefined) g.globalAlpha = 1; }
+  // double-resolution copy of a sprite (for worlds drawn at ×2): scale2x (EPX) of the pixel art — rounded diagonals
+  // instead of plain doubled pixels —, a thin dark outline and a little light on the top edges
+  function hires(s) { if (s.h2) return s;
+    const w = s.w, h = s.h, src = s.c.getContext('2d').getImageData(0, 0, w, h).data, px = new Uint32Array(src.buffer.slice(0)), W2 = w * 2, H2 = h * 2;
+    const c = mkCanvas(W2, H2), x = c.getContext('2d'), out = x.createImageData(W2, H2), o = new Uint32Array(out.data.buffer);
+    const at = (i, j) => (i < 0 || j < 0 || i >= w || j >= h ? 0 : px[j * w + i]);
+    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { const P0 = at(i, j), A = at(i, j - 1), B = at(i + 1, j), C = at(i - 1, j), D = at(i, j + 1); let e0 = P0, e1 = P0, e2 = P0, e3 = P0;
+      if (C === A && C !== D && A !== B) e0 = A; if (A === B && A !== C && B !== D) e1 = B; if (D === C && D !== B && C !== A) e2 = C; if (B === D && B !== A && D !== C) e3 = D;
+      o[(2 * j) * W2 + 2 * i] = e0; o[(2 * j) * W2 + 2 * i + 1] = e1; o[(2 * j + 1) * W2 + 2 * i] = e2; o[(2 * j + 1) * W2 + 2 * i + 1] = e3; }
+    const d = out.data, op = (k) => d[k * 4 + 3] > 40;
+    for (let j = 0; j < H2; j++) for (let i = 0; i < W2; i++) { const k = j * W2 + i; if (!op(k)) continue; if (j > 0 && !op(k - W2)) { d[k * 4] = Math.min(255, d[k * 4] * 1.18 + 10); d[k * 4 + 1] = Math.min(255, d[k * 4 + 1] * 1.18 + 10); d[k * 4 + 2] = Math.min(255, d[k * 4 + 2] * 1.18 + 10); } }
+    const edge = []; for (let j = 0; j < H2; j++) for (let i = 0; i < W2; i++) { const k = j * W2 + i; if (op(k)) continue; if ((i > 0 && op(k - 1)) || (i < W2 - 1 && op(k + 1)) || (j > 0 && op(k - W2)) || (j < H2 - 1 && op(k + W2))) edge.push(k); }
+    for (const k of edge) { d[k * 4] = 26; d[k * 4 + 1] = 16; d[k * 4 + 2] = 8; d[k * 4 + 3] = 200; }
+    x.putImageData(out, 0, 0); const f = mkCanvas(W2, H2), fx = f.getContext('2d'); fx.translate(W2, 0); fx.scale(-1, 1); fx.drawImage(c, 0, 0); s.h2 = c; s.h2f = f; return s; }
+  function draw(g, s, x, y, flip, alpha) { if (!s) return; if (alpha !== undefined) g.globalAlpha = alpha; const k = g.getTransform().a;
+    if (k >= 2) { hires(s); g.drawImage(flip ? s.h2f : s.h2, Math.round(x * 2) / 2, Math.round(y * 2) / 2, s.w, s.h); } else g.drawImage(flip ? s.f : s.c, Math.round(x), Math.round(y));
+    if (alpha !== undefined) g.globalAlpha = 1; }
   // pixel text (the 8×8 font of every 80s board)
   function txt(g, s, x, y, col = '#fff', size = 8, align = 'left', shadow = true) { g.font = `${size}px "Press Start 2P", monospace`; g.textAlign = align; g.textBaseline = 'top';
     if (shadow) { g.fillStyle = '#000'; g.fillText(s, Math.round(x) + 1, Math.round(y) + 1); } g.fillStyle = col; g.fillText(s, Math.round(x), Math.round(y)); }
@@ -50,6 +66,7 @@ const ARCADE = (() => {
     g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + 0.005); g.gain.setValueAtTime(v * 0.8, t + d * 0.6); g.gain.linearRampToValueAtTime(0.0001, t + d); o.connect(g); g.connect(MUS.out); o.start(t); o.stop(t + d + 0.02); void duty; }
   function drum(ctx, k, t, v) { const s = ctx.createBufferSource(); s.buffer = AUDIO.noise; const f = ctx.createBiquadFilter(), g = ctx.createGain();
     if (k === 'k') { const o = ctx.createOscillator(), og = ctx.createGain(); o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.12); og.gain.setValueAtTime(v * 0.9, t); og.gain.exponentialRampToValueAtTime(0.001, t + 0.14); o.connect(og); og.connect(MUS.out); o.start(t); o.stop(t + 0.16); return; }
+    if (k === 'c' || k === 'r') { const n = k === 'r' ? 3 : 1; for (let i = 0; i < n; i++) { const s2 = ctx.createBufferSource(); s2.buffer = AUDIO.noise; const f2 = ctx.createBiquadFilter(), g2 = ctx.createGain(); f2.type = 'bandpass'; f2.frequency.value = 3200 + i * 400; f2.Q.value = 3; const t2 = t + i * 0.035; g2.gain.setValueAtTime(v * 0.55, t2); g2.gain.exponentialRampToValueAtTime(0.001, t2 + 0.03); s2.connect(f2); f2.connect(g2); g2.connect(MUS.out); s2.start(t2, Math.random()); s2.stop(t2 + 0.05); } return; } // castanets: a click (c) or a roll (r)
     f.type = k === 's' ? 'bandpass' : 'highpass'; f.frequency.value = k === 's' ? 1800 : 7000; g.gain.setValueAtTime(v * (k === 's' ? 0.5 : 0.22), t); g.gain.exponentialRampToValueAtTime(0.001, t + (k === 's' ? 0.12 : 0.04));
     s.connect(f); f.connect(g); g.connect(MUS.out); s.start(t, Math.random()); s.stop(t + 0.15); }
   // sound effects (their own little synth voices)
@@ -59,6 +76,7 @@ const ARCADE = (() => {
       case 'jump': o.type = 'square'; o.frequency.setValueAtTime(260, t); o.frequency.exponentialRampToValueAtTime(620, t + 0.12); env(0.35, 0.14); break;
       case 'vault': o.type = 'square'; o.frequency.setValueAtTime(180, t); o.frequency.exponentialRampToValueAtTime(900, t + 0.28); env(0.4, 0.3); break;
       case 'hit': o.type = 'square'; o.frequency.setValueAtTime(420, t); o.frequency.exponentialRampToValueAtTime(90, t + 0.1); env(0.5, 0.12); break;
+      case 'pew': o.type = 'square'; o.frequency.setValueAtTime(1300, t); o.frequency.exponentialRampToValueAtTime(320, t + 0.07); env(0.16, 0.08); break; // v0.81: the ship's shot
       case 'swing': o.type = 'triangle'; o.frequency.setValueAtTime(700, t); o.frequency.exponentialRampToValueAtTime(200, t + 0.08); env(0.3, 0.09); break;
       case 'coin': o.type = 'square'; o.frequency.setValueAtTime(988, t); o.frequency.setValueAtTime(1319, t + 0.07); env(0.35, 0.28); break;
       case 'pick': o.type = 'square'; o.frequency.setValueAtTime(1046, t); o.frequency.setValueAtTime(1568, t + 0.05); env(0.25, 0.1); break;
@@ -133,8 +151,8 @@ const ARCADE = (() => {
   }
   function blinkMsg(g) { if (Math.floor(performance.now() / 500) % 2) return; const t = free() ? 'PULSA A PARA JUGAR' : st.credits > 0 ? 'PULSA A PARA JUGAR' : 'INSERT COIN  ($' + M.price + ')'; txt(g, t, W / 2, H - 18, '#ffd400', 8, 'center'); }
   function drawScores(g) { const t = table(M.key, M.game); txt(g, 'MEJORES PUNTUACIONES', W / 2, 18, '#ffd400', 8, 'center'); txt(g, M.where || '', W / 2, 30, '#9fd7ff', 8, 'center');
-    t.forEach(([n, s], i) => { const y = 48 + i * 14, hl = st.hl === n && i === st.rank, c = hl && Math.floor(performance.now() / 200) % 2 ? '#ffd400' : ['#ff6b6b', '#ffb347', '#ffd400', '#7fe08a', '#5ec8ff'][i % 5];
-      txt(g, `${String(i + 1).padStart(2, ' ')}`, 70, y, c); txt(g, String(s).padStart(7, '0'), 110, y, c); txt(g, n, 220, y, c); }); }
+    t.forEach(([n, s], i) => { const y = 58 + i * 18, hl = st.hl === n && i === st.rank, c = hl && Math.floor(performance.now() / 200) % 2 ? '#ffd400' : ['#ff6b6b', '#ffb347', '#ffd400', '#7fe08a', '#5ec8ff'][i % 5];
+      txt(g, `${String(i + 1).padStart(2, ' ')}`, W / 2 - 100, y, c); txt(g, String(s).padStart(7, '0'), W / 2 - 50, y, c); txt(g, n, W / 2 + 70, y, c); }); }
   // ---------- loop
   function loop(now) { if (!running) return; raf = requestAnimationFrame(loop); const dt = Math.min(0.1, (now - last) / 1000); last = now; acc += dt;
     while (acc >= 1 / 60) { step(1 / 60); IN.frame(); acc -= 1 / 60; } render(); present(); }
@@ -150,7 +168,7 @@ const ARCADE = (() => {
     MINI.show(cv, 'arcade'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); if (game.music && game.music.title) music(game.music.title); return true;
   }
   function close() { if (!running) return; running = false; cancelAnimationFrame(raf); stopMusic(); MINI.hide(cv, 'arcade', true); const r = { paid: st.paid }; M = null; G = null; if (onClose) onClose(r); }
-  return { GAMES, open, close, sprite, draw, txt, sfx, music, stopMusic, data, table, api, get running() { return running; },
+  return { GAMES, open, close, sprite, hires, draw, txt, sfx, music, stopMusic, data, table, api, get running() { return running; },
     _st: () => st, _game: () => G, _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); } }, _press: IN.press, _render: () => { render(); present(); }, W, H };
 })();
 // ---------- where the machines are (v0.80): El Blanco's, free. When the mayor names the gang «Defensores de La Laguna»
@@ -163,7 +181,7 @@ const RECRE = (() => {
   function update(dt) { const g = G_(); if (!g || !g.defenders || invited() || GAME.state !== 'play' || MISSIONS.active || (DLG && DLG.open) || (window.__TALK && window.__TALK.cur)) { t = 0; return; }
     t += dt; if (t < 20 || t > 1e8) return; t = 1e9; const BL = 'Rayco «El Blanco» (por el móvil)';
     MISSIONS.kit.talk([[BL, '«Mmm... ¡brrr!...» Chopa. Ahora que somos Defensores... tengo una cosa en casa. Una máquina de las de antes, de cuando los recreativos. ¡<b>BENCOMO</b>! El mencey de Taoro repartiendo varazos a los castellanos en Acentejo.'],
-      [BL, 'Vente a mi casa cuando quieras y le das. Gratis, que es mía. Mi madre hace café. Y dicen que van a poner máquinas en los bares y juegos en las jugueterías... ¡mmm, a la orden!'],
+      [BL, 'Vente a mi casa cuando quieras y le das. Gratis, que es mía. Mi madre hace café. Y en las cafeterías y las tascas han puesto la <b>GUERRA DE NAVES</b>, a un duro la partida. Dicen que van a traer juegos a las jugueterías... ¡mmm, a la orden!'],
       [MISSIONS.kit.CH, '¿Bencomo? ¿El del salto del pastor? Esa la pienso pasar entera.']], () => { const a = ARCADE.data(); a.invited = true; HUD.toast('La maquinita de El Blanco: búscala en su casa (cuadrado naranja en el minimapa)', COL_, 6); }); }
   function near() { if (!invited() || PLAYER.car || PLAYER.interior) return null; return Math.hypot(PLAYER.x - DOOR[0], PLAYER.z - DOOR[1]) < 3.4 ? DOOR : null; }
   function use() { if (!near()) return false; ARCADE.open({ id: 'bencomo', key: 'blanco', where: 'CASA DE EL BLANCO', price: 0 }, () => HUD.toast('«Mmm... ¡brrr!» Vuelve cuando quieras, que la máquina no se va.', COL_, 3)); return true; }
