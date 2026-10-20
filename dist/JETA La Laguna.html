@@ -205,7 +205,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="tb" id="tbS">CORRER</div>
 <div class="tb" id="tbM">MAPA</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">v0.83.2</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">v0.84.0</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -7692,7 +7692,7 @@ const MINI = (() => {
   return { input, snd, say, txt, turbo, banner, rows, endScreen, show, hide, clearWorldInput };
 })();
 
-// ============ «JETA JAM»: 2D basketball, 2 vs 2, in the style of the 90s arcade games (v0.65) ============
+// ============ «JETA JAM»: 2D basketball, 3 vs 3 since v0.84 (2 vs 2 before), in the style of the 90s arcade games (v0.65) ============
 // Side view of the court, the same pixel-art sprites as the 2D fight (made from the players' real clothes). You and a
 // friend of the gang against two rivals: turbo, passes, steals, shoves, blocks, dunks and «en llamas» after 3 baskets.
 // Controls (Jonay, simple): HOLD the left mouse button (or E) to shoot and release it while the bar is in the green;
@@ -7704,6 +7704,8 @@ const MINI = (() => {
 // with puño the 360 and the windmill/tomahawk, with patada the back dunk (legs open, the ball down first) and the
 // between-the-legs (front). The CPU does combo dunks too (more the better it is; you don't see its inputs, it can
 // miss). Long passes go in an arc (they went dead straight).
+// v0.84 (Jonay): 3 contra 3 — three a side (Pachanga 3x3 on the console will use it too); a 2-player team from an old
+// caller gets a third (El Blanco with you; a third rival dressed like the others).
 const BASKET2D = (() => {
   // v0.66 (Jonay): a closer view, twice the resolution, the camera scrolls to show the half where the ball is and a bit
   const W = 480, H = 270, R = 4, CL = 28, CW = 15;            // canvas (logical px, drawn at R×) and court (metres)
@@ -7743,8 +7745,8 @@ const BASKET2D = (() => {
   function place(attacking) { // positions after a basket / at the start: «attacking» team brings the ball from its own half
     const A = st.p.filter((q) => q.team === attacking), D = st.p.filter((q) => q.team !== attacking);
     const own = attacking === 0 ? 6 : CL - 6, sgn = attacking === 0 ? 1 : -1;
-    A[0].x = own; A[0].z = 6.5; A[1].x = own + sgn * 4; A[1].z = 11;
-    D[0].x = CL / 2 + sgn * 3; D[0].z = 6; D[1].x = CL / 2 + sgn * 5; D[1].z = 10.5;
+    A[0].x = own; A[0].z = 6.5; A[1].x = own + sgn * 4; A[1].z = 11; if (A[2]) { A[2].x = own + sgn * 3.5; A[2].z = 3; }
+    D[0].x = CL / 2 + sgn * 3; D[0].z = 6; D[1].x = CL / 2 + sgn * 5; D[1].z = 10.5; if (D[2]) { D[2].x = CL / 2 + sgn * 4.5; D[2].z = 3.2; }
     for (const q of st.p) { q.vx = q.vz = q.vy = 0; q.y = 0; q.air = false; q.act = ''; q.down = 0; q.shootHold = false; q.dir = q.team ? -1 : 1; }
     const carrier = A.find((q) => q.human) || A[0]; give(carrier); st.possT = 0;
   }
@@ -7752,7 +7754,8 @@ const BASKET2D = (() => {
   // ---------- court geometry helpers
   const hoopOf = (team) => HOOP[team === 0 ? 1 : 0]; // team 0 attacks the right hoop
   const dist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
-  const mates = (p) => st.p.filter((q) => q !== p && q.team === p.team)[0];
+  const matesAll = (p) => st.p.filter((q) => q !== p && q.team === p.team);
+  const mates = (p) => { const L = matesAll(p); if (L.length < 2) return L[0]; const h = hoopOf(p.team); return L.slice().sort((a, b) => (openness(b) - Math.hypot(h.x - b.x, h.z - b.z) * 0.15) - (openness(a) - Math.hypot(h.x - a.x, h.z - a.z) * 0.15))[0]; }; // the best one to pass to: the most open, nearer the hoop
   const rivals = (p) => st.p.filter((q) => q.team !== p.team);
   function openness(p) { let m = 99; for (const q of rivals(p)) m = Math.min(m, dist(p, q)); return m; }
   function shotChance(p, d) {
@@ -7895,15 +7898,16 @@ const BASKET2D = (() => {
       if (tutMate) { tx = p.x; tz = p.z; run = false; }
       else if (!passive && !p.air) {
         if (guard && mate && openness(mate) > 2.5 && Math.random() < 0.02 + 0.03 * p.lv) pass(p, mate);
+        else if (mate && p.possT > 1.6 && openness(mate) > 2 && Math.random() < 0.012 + 0.012 * p.lv) pass(p, mate); /* v0.84: three a side, they move the ball more */
         else if (d < 3 && p.turbo > 0.3 && Math.random() < 0.05 * p.lv) { p.wantDunk = true; startShot(p); p.wantDunk = false; }
         else if (!st.tut && !p.cTried && d >= 2.6 && d <= 7.4) { p.cTried = true; if (Math.random() < 0.08 + 0.55 * p.lv * p.lv) cpuCombo(p, d); } // v0.79: once per possession, when he gets in range: the good ones fly in with a combo
         else if (d < 9.5 && ((d < p.shootR && (!guard || p.possT > 2.6)) || p.possT > 4.5)) { startShot(p); /* v0.66: never from its own half */ p.aiRel = rnd(-0.12, 0.12) * (1.3 - p.lv); p.shootR = null; }
       }
     } else if (own) { // off the ball: get open on the wing, away from the holder
-      const hd = b.holder || (b.pass && b.pass.to) || p; const side = hd.z < 7.5 ? 1 : -1;
-      tx = h.x - Math.sign(h.x - CL / 2) * 5.5; tz = 7.5 + side * 4;
+      const hd = b.holder || (b.pass && b.pass.to) || p; const side = hd.z < 7.5 ? 1 : -1; const off = matesAll(hd).sort((a, c) => a.idx - c.idx), rank = Math.max(0, off.indexOf(p)); // v0.84: two off the ball: one on the wing, one at the top of the key
+      if (rank === 0) { tx = h.x - Math.sign(h.x - CL / 2) * 5.5; tz = 7.5 + side * 4; } else { tx = h.x - Math.sign(h.x - CL / 2) * 7.5; tz = 7.5 - side * 2.5; }
     } else if (own === false) { // defence: stay between your man and the basket
-      const m = p.mark || rivals(p)[p.idx % 2]; const hd = b.holder;
+      const m = p.mark || rivals(p)[p.idx % rivals(p).length]; const hd = b.holder;
       const k = hd === m ? 1.0 : 2.2; const L = Math.hypot(dh.x - m.x, dh.z - m.z) || 1; tx = m.x + (dh.x - m.x) / L * k; tz = m.z + (dh.z - m.z) / L * k; run = dist(p, m) > 4;
       if (!passive && hd === m && dist(p, m) < 1.2 && Math.random() < dt * (0.1 + 0.7 * p.lv)) steal(p);
       if (!passive && m.air && m.shootHold && dist(p, m) < 1.8 && !p.air && Math.random() < dt * 6 * p.lv) jump(p, 5.4);
@@ -7984,7 +7988,9 @@ const BASKET2D = (() => {
     else if (!st.golden) { st.clock -= dt; if (st.clock <= 0) { st.clock = 0; const b = st.ball; if (b.mode !== 'air') { snd('buzzer');
       if (st.score[0] === st.score[1]) { st.golden = true; banner('¡CANASTA DE ORO!', '#ffd400', 2); say('¡Canasta de oro!'); } else { st.phase = 'end'; st.pt = 3; } } } }
     // marks: the human guards the nearest rival, the teammate the other one
-    const hu = st.p.find((q) => q.human), mt = mates(hu), rv = rivals(hu); if (rv.length === 2) { const n = dist(hu, rv[0]) < dist(hu, rv[1]) ? 0 : 1; hu.mark = rv[n]; mt.mark = rv[1 - n]; rv[0].mark = hu; rv[1].mark = mt; }
+    { const hu = st.p.find((q) => q.human), T0 = [hu, ...matesAll(hu)], T1 = rivals(hu), free = T1.slice(); // v0.84: man to man, the human first takes the nearest
+      for (const q of T0) { let bq = null, bd = 1e9; for (const r of free) { const d = dist(q, r); if (d < bd) { bd = d; bq = r; } } if (bq) { q.mark = bq; free.splice(free.indexOf(bq), 1); } }
+      T1.forEach((r, i) => { r.mark = T0[i % T0.length]; }); }
     for (const p of st.p) stepPlayer(p, dt);
     stepBall(dt);
   }
@@ -8127,14 +8133,19 @@ const BASKET2D = (() => {
     draw();
   }
   // ---------- public
+  // a third player for the teams of two (the old callers): with you, El Blanco; for the rivals, one more in their clothes
+  function fill3(list, mine) { const L = (list || []).slice(0, 3); if (L.length >= 3) return L;
+    if (mine) L.push({ name: 'EL BLANCO', look: typeof NPC !== 'undefined' && NPC.blanco && NPC.blanco.H ? { ...NPC.blanco.H.look } : { skin: 0xc68a5e, shirt: 0x2e6b3a, pants: 0x3a3a3a, hair: 0x2a1a10 } });
+    else { const b = L[0] || { name: 'RIVAL', look: {} }; const SK = [0xe0ac86, 0x8d5a3b, 0xc68a5e, 0xf1c9a5], HR = [0x1a1410, 0x6b3e1e, 0xd8b56a, 0x2a1a10]; L.push({ name: ['EL ZURDO', 'EL RUBIO', 'EL GORDO', 'EL LARGO'][Math.abs(Math.round((b.look && b.look.shirt) || 0)) % 4], look: { ...(b.look || {}), skin: SK[L.length % 4], hair: HR[(L.length + 1) % 4] } }); }
+    return fill3(L, mine); }
   function start(opt) {
     if (running || FIGHT2D.running) return false; running = true; onEnd = opt.onEnd || null;
     if (!cv) { cv = document.createElement('canvas'); cv.id = 'basket2d'; cv.width = W * R; cv.height = H * R; cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;image-rendering:pixelated;background:#000;z-index:28;display:none'; document.body.appendChild(cv); cx = cv.getContext('2d'); }
-    const team = opt.team, riv = opt.rival;
-    st = { p: [mkPlayer({ ...team[0], human: true }, 0, 0), mkPlayer(team[1], 0, 1), mkPlayer(riv[0], 1, 0), mkPlayer(riv[1], 1, 1)], ball: { x: 0, z: 0, y: 0, vx: 0, vz: 0, vy: 0, holder: null, mode: 'held' },
+    const team = fill3(opt.team, true), riv = fill3(opt.rival, false);
+    st = { p: [mkPlayer({ ...team[0], human: true }, 0, 0), mkPlayer(team[1], 0, 1), mkPlayer(team[2], 0, 2), mkPlayer(riv[0], 1, 0), mkPlayer(riv[1], 1, 1), mkPlayer(riv[2], 1, 2)], ball: { x: 0, z: 0, y: 0, vx: 0, vz: 0, vy: 0, holder: null, mode: 'held' },
       score: [0, 0], clock: opt.time || 150, names: [opt.teamName || 'JETA', opt.rivalName || 'RIVALES'], phase: 'ready', pt: 0, time0: 0, bannerT: 0, banner: null, tip: '', ev: {}, golden: false,
       tut: opt.tutorial ? { i: 0, wait: 0 } : null, auto: !!opt.auto, fade: 1, fadeDir: -1, stake: opt.stake || 0, style: opt.style || 'calle' };
-    for (const q of st.p) if (q.team === 1) q.lv = opt.lv ?? 0.5; st.p[1].lv = opt.mateLv ?? 0.6;
+    for (const q of st.p) if (q.team === 1) q.lv = opt.lv ?? 0.5; else if (!q.human) q.lv = opt.mateLv ?? 0.6;
     place(0); updateCam(1); IN.reset(); document.exitPointerLock?.();
     MINI.show(cv, 'basket2d'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); return true;
   }
@@ -8832,10 +8843,10 @@ const ARCADE = (() => {
   // ---------- chiptune: square, square, triangle and noise; songs as strings of notes per channel (one token = one step)
   const NOTE = { C: 0, 'C#': 1, D: 2, 'D#': 3, E: 4, F: 5, 'F#': 6, G: 7, 'G#': 8, A: 9, 'A#': 10, B: 11 };
   const freq = (n) => { const m = /^([A-G]#?)(\d)$/.exec(n); if (!m) return 0; return 440 * Math.pow(2, (NOTE[m[1]] + 12 * (+m[2] + 1) - 69) / 12); };
-  const MUS = { song: null, step: 0, next: 0, timer: 0, out: null, vol: 0.55 };
-  function audio() { const ctx = AUDIO.ctx; if (!ctx || !AUDIO.master) return null; if (!MUS.out) { MUS.out = ctx.createGain(); MUS.out.gain.value = MUS.vol * 0.18; MUS.out.connect(AUDIO.master); } return ctx; }
+  const MUS = { song: null, step: 0, next: 0, timer: 0, out: null, fx: null, vol: 0.55 };
+  function audio() { const ctx = AUDIO.ctx; if (!ctx || !AUDIO.master) return null; if (!MUS.out) { MUS.out = ctx.createGain(); MUS.out.gain.value = MUS.vol * 0.11; MUS.out.connect(AUDIO.master); MUS.fx = ctx.createGain(); MUS.fx.gain.value = MUS.vol * 0.22; MUS.fx.connect(AUDIO.master); } return ctx; } // v0.84 (Jonay: «la música, menos protagonismo»): the music lower, the effects on their own louder bus
   function parse(s) { return s.trim().split(/\s+/); }
-  function music(song) { stopMusic(); const ctx = audio(); if (!ctx || !song) return; MUS.song = { ...song, ch: song.ch.map((c) => ({ ...c, t: parse(c.n) })) }; MUS.step = 0; MUS.next = ctx.currentTime + 0.08;
+  function music(song) { stopMusic(); const ctx = audio(); if (!ctx || !song) return; MUS.song = { ...song, ch: song.ch.map((c) => ({ ...c, t: Array.isArray(c.n) ? (c.form || c.n.map((_, i) => i)).map((i) => parse(c.n[i])).flat() : parse(c.n) })) }; /* v0.84: a channel can be several phrases played in a «form» (A B A C…): longer, less repetitive tunes */ MUS.step = 0; MUS.next = ctx.currentTime + 0.08;
     MUS.timer = setInterval(schedule, 40); schedule(); }
   function stopMusic() { if (MUS.timer) clearInterval(MUS.timer); MUS.timer = 0; MUS.song = null; }
   function schedule() { const ctx = AUDIO.ctx, S = MUS.song; if (!ctx || !S || !running) return; const dt = 60 / S.bpm / (S.div || 4);
@@ -8850,7 +8861,7 @@ const ARCADE = (() => {
     f.type = k === 's' ? 'bandpass' : 'highpass'; f.frequency.value = k === 's' ? 1800 : 7000; g.gain.setValueAtTime(v * (k === 's' ? 0.5 : 0.22), t); g.gain.exponentialRampToValueAtTime(0.001, t + (k === 's' ? 0.12 : 0.04));
     s.connect(f); f.connect(g); g.connect(MUS.out); s.start(t, Math.random()); s.stop(t + 0.15); }
   // sound effects (their own little synth voices)
-  function sfx(kind) { const ctx = audio(); if (!ctx) return; const t = ctx.currentTime, g = ctx.createGain(); g.connect(MUS.out); const o = ctx.createOscillator(); let d = 0.12;
+  function sfx(kind) { const ctx = audio(); if (!ctx) return; const t = ctx.currentTime, g = ctx.createGain(); g.connect(MUS.fx); const o = ctx.createOscillator(); let d = 0.12;
     const env = (v, dd) => { d = dd; g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + dd); };
     switch (kind) {
       case 'jump': o.type = 'square'; o.frequency.setValueAtTime(260, t); o.frequency.exponentialRampToValueAtTime(620, t + 0.12); env(0.35, 0.14); break;
@@ -8858,6 +8869,8 @@ const ARCADE = (() => {
       case 'hit': o.type = 'square'; o.frequency.setValueAtTime(420, t); o.frequency.exponentialRampToValueAtTime(90, t + 0.1); env(0.5, 0.12); break;
       case 'pew': o.type = 'triangle'; o.frequency.setValueAtTime(1500, t); o.frequency.exponentialRampToValueAtTime(520, t + 0.06); env(0.12, 0.07); break; // the ship's shot (v0.83.2: softer)
       case 'zap': o.type = 'sawtooth'; o.frequency.setValueAtTime(2200, t); o.frequency.exponentialRampToValueAtTime(900, t + 0.12); env(0.06, 0.13); break; // the laser
+      case 'bite': o.type = 'square'; o.frequency.setValueAtTime(160, t); o.frequency.exponentialRampToValueAtTime(70, t + 0.12); env(0.4, 0.14); break; // a lizard's bite
+      case 'whoosh': { const s2 = ctx.createBufferSource(); s2.buffer = AUDIO.noise; const f2 = ctx.createBiquadFilter(); f2.type = 'bandpass'; f2.frequency.setValueAtTime(400, t); f2.frequency.exponentialRampToValueAtTime(2400, t + 0.25); s2.connect(f2); f2.connect(g); env(0.25, 0.28); s2.start(t); s2.stop(t + 0.3); return; } // a somersault, a leap
       case 'tic': o.type = 'triangle'; o.frequency.setValueAtTime(2400, t); o.frequency.exponentialRampToValueAtTime(1500, t + 0.04); env(0.1, 0.05); break; // a hit that doesn't kill
       case 'pop': { const s2 = ctx.createBufferSource(); s2.buffer = AUDIO.noise; const f2 = ctx.createBiquadFilter(); f2.type = 'bandpass'; f2.frequency.value = 900; s2.connect(f2); f2.connect(g); env(0.35, 0.22); s2.start(t); s2.stop(t + 0.25); return; } // a small ship blows up
       case 'swing': o.type = 'triangle'; o.frequency.setValueAtTime(700, t); o.frequency.exponentialRampToValueAtTime(200, t + 0.08); env(0.3, 0.09); break;
@@ -8990,7 +9003,7 @@ const RECRE = (() => {
   function update(dt) { beacon(dt); const g = G_(); if (!g || !g.defenders || invited() || GAME.state !== 'play' || MISSIONS.active || (DLG && DLG.open) || (window.__TALK && window.__TALK.cur)) { t = 0; return; }
     t += dt; if (t < 20 || t > 1e8) return; t = 1e9; const BL = 'Rayco «El Blanco» (por el móvil)';
     MISSIONS.kit.talk([[BL, '«Mmm... ¡brrr!...» Chopa. Ahora que somos Defensores... tengo una cosa en casa. Una máquina de las de antes, de cuando los recreativos. ¡<b>BENCOMO</b>! El mencey de Taoro repartiendo varazos a los castellanos en Acentejo.'],
-      [BL, 'Vente a mi casa cuando quieras y le das. Gratis, que es mía. Mi madre hace café. Y en las cafeterías y las tascas han puesto la <b>GUERRA DE NAVES</b>, a un duro la partida. Y en las jugueterías, <b>GUANCHE WARRIORS</b>: el Mencey, el Pastor y la Mirladora contra Guayota... ¡mmm, a la orden!'],
+      [BL, 'Vente a mi casa cuando quieras y le das. Gratis, que es mía. Mi madre hace café. Y en las cafeterías y las tascas han puesto el <b>GUFO</b>, el de las navecitas... ¡jijiji, gufo!, a un duro la partida. Y en las jugueterías, <b>GUANCHE WARRIORS</b>: el Mencey, el Pastor y la Mirladora contra Guayota... ¡mmm, a la orden!'],
       [MISSIONS.kit.CH, '¿Bencomo? ¿El del salto del pastor? Esa la pienso pasar entera.']], () => { const a = ARCADE.data(); a.invited = true; HUD.toast('La maquinita de El Blanco: búscala en su casa (cuadrado naranja en el minimapa) · lo tienes apuntado en el diario (J)', COL_, 6); }, 'Las recreativas'); }
   function near() { if (!invited() || PLAYER.car || PLAYER.interior) return null; return Math.hypot(PLAYER.x - DOOR[0], PLAYER.z - DOOR[1]) < 3.4 ? DOOR : null; }
   function use() { if (!near()) return false; ARCADE.open({ id: 'bencomo', key: 'blanco', where: 'CASA DE EL BLANCO', price: 0 }, () => HUD.toast('«Mmm... ¡brrr!» Vuelve cuando quieras, que la máquina no se va.', COL_, 3)); return true; }
@@ -9179,6 +9192,13 @@ ARCADE.GAMES.bencomo = (() => {
       { w: 'noise', v: 0.9, n: 'k h s h k k s h k h s h k k s s' }] },
     clear: { bpm: 150, div: 4, loop: false, ch: [{ w: 'sq', v: 0.9, n: 'C5 E5 G5 C6 . . G5 . C6 . . . . . . .' }, { w: 'tri', v: 1, n: 'C3 . G3 . C3 . G3 . C3 . . . . . . .' }] },
   };
+  // v0.84 (Jonay: «melodías más largas, varios estribillos que se van alternando»): extra phrases, played A B A (C)
+  { const ALT = {
+      costa: ['E5 . . D5 C5 . B4 . . A4 . . C5 . . E5 . . A5 . G5 F5 . E5 D5 . . . . . E5 . . F5 E5 . D5 . . C5 . . B4 . A4 G#4 . . A4 . . . . .'],
+      monte: ['B4 . . A4 G4 . F#4 . . E4 . . G4 . A4 B4 . . D5 . . C5 B4 . A4 . . . . . E5 . . D5 B4 . G4 . . A4 . B4 E4 . . . . . - . .'],
+      boss: ['B4 B4 - A4 B4 - C5 - D5 - E5 - F#5 - G5 - A5 A5 - G5 F#5 - E5 - D#5 - B4 - E5 - - -'],
+      title: ['A4 . . C5 . . E5 . D5 C5 . A4 G4 . . E4 . . A4 . . B4 . . C5 . B4 A4 . G4 A4 . . . . . - . .'] };
+    for (const k in ALT) { const c = SONGS[k].ch[0]; c.n = [c.n, ...ALT[k]]; c.form = [0, 1, 0, 1]; } }
   // ---------- the game
   function create(api, opt) {
     const loop0 = opt.loop || 0; const g = { score: 0, over: false, demoKeys: { held: {}, hit: {} } };
@@ -9268,7 +9288,6 @@ ARCADE.GAMES.bencomo = (() => {
         else { e.vx = e.face * 170 * s; if (e.x < e.x0 - 60 || e.x > e.x1 + 60 || wallAhead(e, e.face) || !groundAhead(e, e.face)) { e.st = 'walk'; e.face = -e.face; } } }
       if (e.k === 'L') { bossAI(e, dt); if (e.st === 'flee') { e.x += e.vx * dt; e.t2 = (e.t2 || 0) + dt; if (e.t2 > 3.5) { e.dead = true; phase = 'clear'; phaseT = 6; api.stopMusic(); api.sfx('clear'); } return; } } // fleeing: off he goes, through anything
       e.vy += 900 * dt; e.vy = Math.min(e.vy, 500); e.hitWall = 0; moveBody(e, dt); if (e.y > ROWS * T + 40) e.dead = true;
-      e.cactT = Math.max(0, (e.cactT || 0) - dt); if (e.k !== 'L' && !e.cactT && (tAt(e.x, e.y + 1) === 5 || tAt(e.x, e.y - 4) === 5 || tAt(e.x + e.face * (e.w / 2 + 1), e.y - 4) === 5)) { e.cactT = 0.6; hitE(e, 1); if (!e.dead) { e.face = -e.face; e.vy = -150; } } // v0.83.2 (Jonay): the tuneras prick the Castilians too
       // touching Bencomo
       if (!p.dead && Math.abs(p.x - e.x) < (e.w + 10) / 2 && p.y > e.y - e.h && p.y - p.h < e.y) {
         if ((p.pogo || p.power > 0) && p.vy > 0 && p.y < e.y - e.h + 10) { hitE(e, p.pogo ? 2 : 3, true); p.vy = -340; api.sfx('jump'); }
@@ -9416,7 +9435,7 @@ ARCADE.GAMES.bencomo = (() => {
   return ART;
 })();
 
-// ============ «GUERRA DE NAVES» (v0.81): the arcade of the bars and cafés (pay per game) ============
+// ============ «GUFO, AGUERE INVASION» (v0.81 as «Guerra de Naves»; renamed in v0.84): the arcade of the bars and cafés ============
 // Jonay (20-oct): the R-Type / Nemesis-like shoot'em up is called «Guerra de Naves». A horizontal scroller: La Laguna,
 // 1987, and the invaders come in with the mist. The ship (the AGUERE-1) flies over the sky of Aguere, into the bowels of
 // the Teide and up to the hive above the sea of clouds.
@@ -9525,6 +9544,16 @@ ARCADE.GAMES.naves = (() => {
       { w: 'tri', v: 1, n: 'E2 E3 E2 E3 E2 E3 E2 E3 C2 C3 C2 C3 A1 A2 B1 B2' },
       { w: 'noise', v: 0.9, n: 'k h s h k k s h k h s h k k s s' }] },
   };
+  // v0.84 (Jonay: «melodías más largas, varios estribillos que se van alternando»): extra phrases, played A B A C
+  { const ALT = {
+      cielo: ['E5 . D5 . C5 . B4 . A4 . . . C5 . E5 . A5 . G5 . F5 . E5 . D5 . . . - . . . F5 . . . E5 . D5 . C5 . . . B4 . C5 . D5 . E5 . . . . . . . - . . . A4 . B4 . C5 . D5 . E5 . F5 . G5 . A5 . . . G5 . E5 . C5 . B4 . A4 . . . . . . . - . . .',
+        'A4 . . . E4 . . . A4 . B4 . C5 . . . B4 . . . G4 . . . E4 . . . . . . . F4 . . . A4 . . . C5 . B4 . A4 . . . G#4 . . . B4 . . . E5 . . . . . . .'],
+      volcan: ['A4 . . . A#4 . . . A4 . G4 . F4 . . . E4 . F4 . G4 . A4 . . . . . . . D5 . . . C5 . . . A#4 . A4 . G4 . . . A4 . . . F4 . . . D4 . . . . . . .',
+        'D5 . F5 . E5 . D5 . C5 . A4 . C5 . D5 . . . . . A4 . . . G4 . A4 . F4 . E4 . D4 . . . . . . . - . . .'],
+      nubes: ['E5 . . . D5 . . . B4 . . . A4 . B4 . D5 . . . E5 . . . F#5 . . . . . . . G5 . . . F#5 . E5 . D5 . . . C#5 . . . A4 . . . B4 . . . . . . .',
+        'B4 . . . . . . . E5 . . . . . . . D5 . C#5 . B4 . A4 . B4 . . . . . . . G4 . A4 . B4 . D5 . E5 . . . . . . . - . . .'],
+      boss: ['G5 . G5 F#5 G5 . B5 . G5 . F#5 . E5 . D5 . E5 . E5 D5 E5 . G5 . E5 . D5 . B4 . A4 . B4 . C5 . D5 . E5 . F#5 . G5 . A5 . B5 . . . . . . .'] };
+    for (const k in ALT) { const c = SONGS[k].ch[0]; c.n = [c.n, ...ALT[k]]; c.form = ALT[k].length > 1 ? [0, 1, 0, 2] : [0, 1, 0, 1]; } }
   // ---------- the game
   function create(api, opt) {
     const g = { score: 0, over: false, demoKeys: { held: {}, hit: {} } };
@@ -9766,13 +9795,15 @@ ARCADE.GAMES.naves = (() => {
   // ---------- title screen (attract) and the backdrop of the hi-score table
   function drawTitle(c, t) { const bg = background('nubes'); const o = -((t * 20) % 960); c.drawImage(bg[0], 0, 0, 960, H); c.drawImage(bg[2], o, 0, 960, H); c.drawImage(bg[2], o + 960, 0, 960, H);
     c.fillStyle = 'rgba(0,0,0,0.3)'; c.fillRect(0, 0, W, H);
-    c.font = '34px "Press Start 2P", monospace'; c.textAlign = 'center'; c.textBaseline = 'top';
-    for (const [s, y] of [['GUERRA', 40], ['DE NAVES', 84]]) { c.fillStyle = '#0b0f1a'; c.fillText(s, W / 2 + 4, y + 4); const gr = c.createLinearGradient(0, y, 0, y + 34); gr.addColorStop(0, '#fff'); gr.addColorStop(0.45, '#9fd7ff'); gr.addColorStop(0.55, '#2f7fe0'); gr.addColorStop(1, '#ffd400'); c.fillStyle = gr; c.fillText(s, W / 2, y); }
+    // v0.84 (Jonay): «GUFO, Aguere Invasion» — gufo is a fart in Canarian, and also Guanche Unknown Flying Object
+    c.font = '60px "Press Start 2P", monospace'; c.textAlign = 'center'; c.textBaseline = 'top';
+    { const s = 'GUFO', y = 30; c.fillStyle = '#0b0f1a'; c.fillText(s, W / 2 + 5, y + 5); const gr = c.createLinearGradient(0, y, 0, y + 60); gr.addColorStop(0, '#fff'); gr.addColorStop(0.45, '#9fd7ff'); gr.addColorStop(0.55, '#2f7fe0'); gr.addColorStop(1, '#ffd400'); c.fillStyle = gr; c.fillText(s, W / 2, y); }
+    A.txt(c, 'AGUERE INVASION', W / 2, 100, '#ffd400', 16, 'center'); A.txt(c, 'GUANCHE UNKNOWN FLYING OBJECT', W / 2, 124, '#9fd7ff', 6, 'center');
     const s = A.hires(A.sprite('nv_ship', SHIP, P)); const sx = ((t * 120) % (W + 200)) - 100; c.drawImage(s.h2, sx, 150, 96, 44); c.fillStyle = Math.floor(t * 20) % 2 ? '#ffd400' : '#ff8a3a'; c.fillRect(sx - 14, 169, 12, 6);
     A.txt(c, 'LA LAGUNA, 1987', W / 2, 216, '#fff', 8, 'center'); A.txt(c, 'LOS INVASORES LLEGAN CON LA BRUMA', W / 2, 230, '#fff', 8, 'center'); A.txt(c, 'SOLO EL AGUERE-1 PUEDE PARARLOS', W / 2, 244, '#9fd7ff', 8, 'center');
     A.txt(c, '© 1987 LAGUNASOFT', W / 2, 270, '#9fd7ff', 6, 'center'); }
   function drawBack(c, t) { const bg = background('nubes'); c.drawImage(bg[0], 0, 0, 960, H); const o = -((t * 10) % 960); c.drawImage(bg[1], o, 0, 960, H); c.drawImage(bg[1], o + 960, 0, 960, H); c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, 0, W, H); }
-  return { title: 'GUERRA DE NAVES', sub: 'AGUERE-1 CONTRA LA INVASIÓN', marquee: ['#10306a', '#04081a'], titleCol: '#9fd7ff', baseScore: 80000, music: { title: SONGS.title }, create, drawTitle, drawBack,
+  return { title: 'GUFO', sub: 'AGUERE INVASION', marquee: ['#10306a', '#04081a'], titleCol: '#9fd7ff', baseScore: 80000, music: { title: SONGS.title }, create, drawTitle, drawBack,
     help: (K) => `A DISPARO (MANTÉN = BEAM): ${K('f_punch')}  B MÓDULO: ${K('f_kick')}  MEJORA/MONEDA: ${K('b_pass')}  ESC SALIR` };
 })();
 
@@ -9981,6 +10012,15 @@ ARCADE.GAMES.guanche = (() => {
       { w: 'sq', v: 0.55, legato: 0.98, n: 'A4 . . . C5 . . . E5 . . . D5 . C5 . B4 . . . G4 . . . A4 . . . . . . . F4 . . . A4 . . . C5 . . . B4 . A4 . G#4 . . . E4 . . . A4 . . . . . . .' },
       { w: 'tri', v: 1, n: 'A2 . . . E2 . . . F2 . . . C2 . . . D2 . . . A1 . . . E2 . . . E2 . . .' }] },
   };
+  // v0.84 (Jonay: «melodías más largas, varios estribillos que se van alternando»): extra phrases, played A B A B
+  { const ALT = {
+      taoro: ['E5 . . D5 C5 . A4 . G4 . A4 . C5 . . . D5 . E5 . G5 . A5 . G5 . E5 . D5 . . . C5 . . . A4 . . . G4 . E4 . G4 . A4 . . . . . - .'],
+      anaga: ['G4 . . . A4 . . . B4 . . . D5 . C5 . B4 . . . A4 . . . G4 . F#4 . E4 . . . . . . . - . . .'],
+      gigantes: ['D5 . . . B4 . G4 . A4 . B4 . C5 . . . B4 . A4 . G4 . F#4 . G4 . . . . . - . G4 . A4 . B4 . D5 . E5 . D5 . B4 . A4 . G4 . . . . . . .'],
+      canadas: ['G4 . . . G#4 . . . G4 . F4 . D#4 . . . F4 . G4 . G#4 . A#4 . . . G4 . . . . . . . C5 . . . A#4 . G#4 . G4 . F4 . D#4 . . . C4 . . . . . . .'],
+      teide: ['A4 . . . A#4 . . . A4 . . . G4 . . . F4 . . . D#4 . . . D4 . . . . . . . D4 . F4 . G4 . A4 . A#4 . A4 . G4 . F4 . D#4 . . . D4 . . . . . . .'],
+      boss: ['F5 . F5 E5 F5 . A5 . F5 . E5 . D5 . C5 . D5 . D5 C5 D5 . F5 . D5 . C5 . A4 . G4 . A4 . . . A#4 . . . C5 . . . D5 . . . . . . .'] };
+    for (const k in ALT) { const c = SONGS[k].ch[0]; c.n = [c.n, ...ALT[k]]; c.form = [0, 1, 0, 1]; } }
   const THM = { taoro: 'taoro', anaga: 'anaga', gigantes: 'gigantes', canadas: 'canadas', teide: 'teide' };
   // ---------- the game
   function create(api, opt) {
@@ -10049,12 +10089,12 @@ ARCADE.GAMES.guanche = (() => {
       // on the ground
       if (pad.hit('vP') && p.jars > 0 && !ride) { p.st = 'magic'; p.stT = 1.6; p.cast = false; return; }
       if (pad.hit('vT') && !ride) { const st0 = E.find((e) => e.st === 'hurt' && e.stun && e.hp > 0 && Math.abs(e.z - p.z) < 8 && (e.x - p.x) * p.face > -2 && Math.abs(e.x - p.x) < H.reach + 8);
-        if (st0) { p.st = 'flip'; p.fl = { t: 0, from: p.x, to: st0.x + p.face * 14, e: st0 }; st0.stT = Math.max(st0.stT, 0.7); api.sfx('vault'); return; } }
+        if (st0) { p.st = 'flip'; p.fl = { t: 0, from: p.x, to: st0.x + p.face * 14, e: st0 }; st0.stT = Math.max(st0.stT, 0.7); api.sfx('whoosh'); return; } }
       if (pad.hit('vT')) { const fl = !ride && liz.find((q) => q.free && !q.rider && Math.abs(q.x - p.x) < 16 && Math.abs(q.z - p.z) < 9);
         if (fl) { p.mount = fl; fl.rider = p; fl.free = false; api.sfx('pick'); banner = ['¡EL LAGARTO DE EL HIERRO!', 'A: MORDISCO · CORRIENDO: SALTO Y COLETAZO']; bannerT = 2; return; }
         if (ride) { ride.rider = null; ride.free = true; p.mount = null; }
         p.vh = p.run && H.id === 'pastor' ? H.jump * 1.25 : H.jump; p.h = 0.1; p.vx = dx * spd * (p.run ? 1.15 : 0.8); p.st = 'jump'; p.vault = p.run && H.id === 'pastor'; if (p.vault) { p.vx = p.face * 150; api.sfx('vault'); } else api.sfx('jump'); return; }
-      if (pad.hit('vS')) { if (ride) { if (p.run) { p.st = 'whip'; p.stT = 0.45; p.leap = true; ride.hop = 0.45; setTimeout(() => { ride.whip = 0.45; }, 160); } else { p.st = 'bite'; p.stT = 0.4; p.leap = false; ride.bite = 0.4; } p.atkT = 0; p.hitDone.clear(); api.sfx('swing'); p.run = false; return; } // v0.83.2: the lizard bites (neck out) or, running, leaps and lashes its tail
+      if (pad.hit('vS')) { if (ride) { if (p.run) { p.st = 'whip'; p.stT = 0.45; p.leap = true; ride.hop = 0.45; setTimeout(() => { ride.whip = 0.45; }, 160); } else { p.st = 'bite'; p.stT = 0.4; p.leap = false; ride.bite = 0.4; } p.atkT = 0; p.hitDone.clear(); api.sfx(p.st === 'bite' ? 'bite' : 'whoosh'); p.run = false; return; } // v0.83.2: the lizard bites (neck out) or, running, leaps and lashes its tail
         if (p.run) { p.st = 'dash'; p.stT = 0.6; p.atkT = 0; p.hitDone.clear(); p.run = false; p.vh = 120; p.h = 0.1; api.sfx('jump'); return; } // v0.83.2: running = a jump forward and a kick
         p.combo = p.comboT > 0 ? (p.combo % 3) + 1 : 1; p.comboT = 0.6; p.st = 'atk'; p.stT = p.combo === 3 ? 0.5 : 0.28; p.atkT = 0; p.hitDone.clear(); api.sfx('swing'); return; }
       if (dx) p.face = dx; p.x += dx * spd * dt; p.z = clamp(p.z + dz * spd * 0.6 * dt, 0, ZD); p.st = dx || dz ? (p.run ? 'run' : 'walk') : 'idle'; if (!dx) p.run = false;
@@ -10080,7 +10120,7 @@ ARCADE.GAMES.guanche = (() => {
       if (e.st === 'thief') { e.x += -e.face * 0 + (e.dir || (e.dir = e.x < p.x ? 1 : -1)) * spd * dt; e.face = e.dir; if (e.x < camX - 40 || e.x > camX + VW + 40) e.gone = true; return; }
       if (e.k === 'D' && e.st === 'idle') { e.st = 'thief'; e.dir = e.x < p.x ? -1 : 1; e.d = { ...d, spd: 110 }; return; } // got hit: runs away
       const dx = p.x - e.x, dz = p.z - e.z; e.cd -= dt;
-      if (e.st === 'windup') { e.stT -= dt; if (e.stT <= 0) { e.st = 'atk'; e.stT = 0.3; e.hitDone.clear(); api.sfx(d.dog ? 'bark' : 'swing'); if (d.dog) { e.vx = e.face * 160; } if (lz) { e.lzMove = Math.abs(dx) > 30 ? 'leap' : 'bite'; e.whipped = false; e.stT = 0.45; if (e.lzMove === 'leap') { e.vx = e.face * 150; lz.hop = 0.45; } else lz.bite = 0.4; }
+      if (e.st === 'windup') { e.stT -= dt; if (e.stT <= 0) { e.st = 'atk'; e.stT = 0.3; e.hitDone.clear(); api.sfx(d.dog ? 'bark' : 'swing'); if (d.dog) { e.vx = e.face * 160; } if (lz) { e.lzMove = Math.abs(dx) > 30 ? 'leap' : 'bite'; e.whipped = false; e.stT = 0.45; if (e.lzMove === 'leap') { e.vx = e.face * 150; lz.hop = 0.45; api.sfx('whoosh'); } else { lz.bite = 0.4; api.sfx('bite'); } }
           if (d.ranged) { const n = e.k === 'BW' ? 3 : 1; for (let i = 0; i < n; i++) shots.push({ k: 'fire', x: e.x + e.face * 8, z: e.z + (i - (n - 1) / 2) * 12, h: 14, vx: e.face * 100, t: 3, dmg: d.dmg }); }
           if (d.fire && Math.random() < 0.5) for (let i = 0; i < 4; i++) shots.push({ k: 'fire', x: e.x + e.face * (20 + i * 10), z: e.z, h: 18, vx: e.face * 120, t: 2.2, dmg: d.dmg });
           if (d.stomp && Math.random() < 0.45) { shots.push({ k: 'wave', x: e.x, z: e.z, h: 0, vx: 110, t: 1.2, dmg: d.dmg, both: true }); shake = 0.4; api.sfx('boom'); } } return; }
@@ -10098,7 +10138,7 @@ ARCADE.GAMES.guanche = (() => {
       if (dist > 3) { e.x += (mx / dist) * spd * dt; e.z = clamp(e.z + (mz / dist) * spd * 0.6 * dt, 0, ZD); e.st = 'walk'; } else e.st = 'idle';
       e.face = Math.sign(dx) || e.face;
       if (e.x > camX + 4 && e.x < camX + VW - 4) e.inS = true; if (e.inS) e.x = clamp(e.x, camX + 6, camX + VW - 6); // once on the screen they stay on it (no hitting from outside)
-      if (e.cd <= 0 && p.st !== 'dead') { const inR = d.ranged ? Math.abs(dz) < 10 : Math.abs(dx) < (lz ? 60 : d.reach + 6) && Math.abs(dz) < 7; if (inR && (e.engaged || d.ranged)) { e.st = 'windup'; e.stT = d.wind; } }
+      if (e.cd <= 0 && p.st !== 'dead') { const inR = d.ranged ? Math.abs(dz) < 10 : Math.abs(dx) < (lz ? 60 : d.reach + 6) && Math.abs(dz) < 7; if (inR && (e.engaged || d.ranged) && e.x > camX + 4 && e.x < camX + VW - 4) { e.st = 'windup'; e.stT = d.wind; } } /* v0.84: they only attack from inside the screen (Guayota hit you from beyond the edge) */
       // the bosses call for help at half health
       if (d.boss && !e.called && e.hp < e.max / 2) { e.called = true; const k2 = e.k === 'BT' || e.k === 'BY' ? 'T' : 'S'; for (const sd of [-1, 1]) spawn(k2, sd > 0 ? camX + VW + 20 : camX - 20, 10 + Math.random() * 24, { wave: true }); lock.n += 2; }
       if (lz) { lz.x = e.x; lz.z = e.z; lz.face = e.face; lz.vx = mx; lz.vz = mz; } }
@@ -10907,7 +10947,7 @@ const BIGMAP = (() => {
     const it = (shape, col, txt) => { const st = shape === 'sq' ? `background:${col};border-radius:2px` : shape === 'ring' ? `background:#e53935;border-radius:2px;box-shadow:0 0 0 2px #11181a,0 0 0 4px ${col}` : shape === 'tri' ? `background:transparent;width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:11px solid ${col};border-radius:0` : shape === 'drop' ? `background:${col};border-radius:50% 50% 50% 0;transform:rotate(-45deg)` : `background:${col}`; return `<span style="white-space:nowrap;margin-right:12px"><span class="dot" style="${st}"></span>${txt}</span>`; };
     const out = [it('dot', '#fff', 'Tú'), it('dot', '#f5b72e', 'Misión'), it('dot', '#e040fb', 'Destino (GPS)'), it('sq', '#e53935', 'Comida'), it('dot', '#3d7bff', 'Policía')];
     if (G.maleIntro) out.push(it('tri', '#ff1744', 'Maleante'));
-    if (A.invited) { out.push(it('sq', '#ffb347', 'Casa de El Blanco')); out.push(it('ring', '#b388ff', 'Bar con «Guerra de Naves»')); }
+    if (A.invited) { out.push(it('sq', '#ffb347', 'Casa de El Blanco')); out.push(it('ring', '#b388ff', 'Bar con la máquina del GUFO')); }
     const ic = (kind, txt) => `<span style="white-space:nowrap;margin-right:12px"><img src="${window.__mapIconURL(kind)}" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px">${txt}</span>`;
     if (G.jugueterias) out.push(ic('toy', 'Juguetería'));
     if (C.intro) out.push(ic('house', 'Inmobiliaria Pisos Chachi'));
@@ -11687,7 +11727,7 @@ const FOOD = (() => {
     // v0.81: the cafés and the tascas have the «Guerra de Naves» machine (once El Blanco has told you about it); each
     // bar keeps its own hi-score table, as in real life
     const arc = (s.type === 'C' || s.type === 'R') && ARCADE.data().invited;
-    const opts = list.map(([n, p, h]) => `${n} · <b>$${p}</b>${h ? ` · <span style="color:#7fe08a">+${h} salud</span>` : ''}`).concat(arc ? ['🕹 Echar una partida a la máquina: <b>GUERRA DE NAVES</b> · <b>$1</b> la partida'] : [], ['Nada, gracias']);
+    const opts = list.map(([n, p, h]) => `${n} · <b>$${p}</b>${h ? ` · <span style="color:#7fe08a">+${h} salud</span>` : ''}`).concat(arc ? ['🕹 Echar una partida a la máquina: <b>GUFO, AGUERE INVASION</b> · <b>$1</b> la partida'] : [], ['Nada, gracias']);
     DLG.show(s.name, LABEL[s.type] || 'Tienda', `Tienes <b>$${PLAYER.money}</b> y tu salud está al <b>${Math.round(PLAYER.health)}%</b>.`, '¿Qué vas a tomar?', opts, (i) => {
       if (arc && i === list.length) { DLG.hide(); ARCADE.open({ id: 'naves', key: 'bar_' + s.name, where: String(s.name).toUpperCase(), price: 1 }, (r) => { if (r && r.paid) HUD.toast(`Te has dejado $${r.paid} en la máquina`, '#9fd7ff', 3); }); return; }
       if (i >= list.length) { DLG.hide(); return; }
@@ -12455,8 +12495,8 @@ const DIARIO = (() => {
     { t: 'La máquina de El Blanco: BENCOMO', on: () => ARC().invited, who: BL, log: REC, rec: ['blanco', 'bencomo'], near: () => ({ name: 'Casa de El Blanco', x: RECRE.DOOR[0], z: RECRE.DOOR[1], d: Math.hypot(RECRE.DOOR[0] - PLAYER.x, RECRE.DOOR[1] - PLAYER.z) }),
       what: 'Una recreativa de las de antes en su casa: <b>«Bencomo, Acentejo\'s Revenge»</b>, plataformas con el mencey de Taoro contra los castellanos. Gratis y cuando quieras: no es una misión.',
       where: 'Casa de El Blanco: la entrada del Edificio Casa del Blanco, en Teobaldo Power (cuadrado naranja en el minimapa). Pulsa E en la puerta.' },
-    { t: 'GUERRA DE NAVES', on: () => ARC().invited, who: BL, log: REC, near: () => nearBar(),
-      what: 'La máquina de los bares: un matamarcianos de naves por el cielo de Aguere, el Teide y el mar de nubes. A dispara (mantenlo para el disparo cargado), B lanza y recoge el módulo y Q coge la mejora marcada. <b>$1 la partida</b>; cada bar tiene sus récords.',
+    { t: 'GUFO, AGUERE INVASION', on: () => ARC().invited, who: BL, log: REC, near: () => nearBar(),
+      what: 'La máquina de los bares (GUFO: Guanche Unknown Flying Object… y en canario, un pedo): un matamarcianos de naves por el cielo de Aguere, el Teide y el mar de nubes. A dispara (mantenlo para el disparo cargado), B lanza y recoge el módulo y Q coge la mejora marcada. <b>$1 la partida</b>; cada bar tiene sus récords.',
       where: 'En las cafeterías y las tascas: en el minimapa y en el mapa (M) llevan un aro violeta alrededor de su cuadrado rojo. Pídela en la barra o en el mostrador (E).' },
     { t: 'GUANCHE WARRIORS', on: () => ARC().invited && G().jugueterias, who: BL, log: REC, near: () => AGUA.nearestShop(),
       what: 'La máquina de las jugueterías: un beat\'em up contra Guayota. Eliges al Mencey, al Pastor o a la Mirladora. A pega, B salta (y monta el lagarto), Q lanza la magia; doble toque para correr. <b>$1 la partida</b>; cada tienda tiene sus récords.',
@@ -12625,7 +12665,7 @@ const pickRivals = (seed) => { const i = (Math.abs(Math.floor(seed)) % 4) * 2; r
 const cocoLook = () => (NPC.coco && NPC.coco.H ? { ...NPC.coco.H.look } : {});
 function playCourtGame(c, o) { // o: rival, rivalName, lv, time, tutorial, onEnd
   if (PLAYER.car) exitCar();
-  return BASKET2D.start({ team: [{ name: 'EL CHOPA', look: { ...(playerHuman.look || {}) }, nose: true }, { name: 'COCO', look: cocoLook() }], rival: o.rival, teamName: typeof shortName === 'function' ? shortName() : 'JETA', rivalName: o.rivalName, time: o.time || 150, lv: o.lv, mateLv: 0.6, tutorial: !!o.tutorial, style: o.style || c.style || 'calle', onEnd: o.onEnd });
+  return BASKET2D.start({ team: [{ name: 'EL CHOPA', look: { ...(playerHuman.look || {}) }, nose: true }, { name: 'COCO', look: cocoLook() }, { name: 'EL BLANCO', look: NPC.blanco && NPC.blanco.H ? { ...NPC.blanco.H.look } : {} }], /* v0.84: 3 contra 3 */ rival: o.rival, teamName: typeof shortName === 'function' ? shortName() : 'JETA', rivalName: o.rivalName, time: o.time || 150, lv: o.lv, mateLv: 0.6, tutorial: !!o.tutorial, style: o.style || c.style || 'calle', onEnd: o.onEnd });
 }
 function useCourtGate(c) {
   if (c.sport === 'fut') { useFieldGate(c); return; }
@@ -12635,7 +12675,7 @@ function useCourtGate(c) {
   if (!MISSIONS.gang.basketTut) { HUD.toast('Aquí se juega al baloncesto. Primero aprende: Monseñor Truchas, en el Obispado, organiza partidos benéficos.', '#b388ff', 5); return; }
   if (c.final) { HUD.toast('El Pabellón Juan Ríos Tejera solo abre para la final del Torneo Lagunero.', '#ff9f43', 4); return; }
   const prize = 40 * c.level;
-  DLG.show(c.label, 'Partido 2 contra 2', `Los de aquí os retan a ti y a Coco. <b>Nivel ${c.level}/5</b>. Si ganáis: <b>$${prize}</b>.`, '¿Jugáis?', ['Jugar', 'Ahora no'], (i) => {
+  DLG.show(c.label, 'Partido 3 contra 3', `Los de aquí os retan a ti, a Coco y a El Blanco. <b>Nivel ${c.level}/5</b>. Si ganáis: <b>$${prize}</b>.`, '¿Jugáis?', ['Jugar', 'Ahora no'], (i) => {
     DLG.hide(); if (i !== 0) return;
     playCourtGame(c, { rival: pickRivals(c.cx + c.cz).map((l, k) => ({ name: ['EL MÁS ALTO', 'EL PIBE'][k], look: l })), rivalName: (c.street || 'LA CANCHA').replace(/^(Calle|Avenida|Camino|Plaza)\s+(de\s+(la\s+|los\s+|las\s+)?)?/i, '').toUpperCase().slice(0, 11), lv: 0.08 + 0.14 * c.level, time: 120,
       onEnd: (r) => { if (r.won) { PLAYER.money += prize; AUDIO.cash && AUDIO.cash(); HUD.toast(`¡Ganado! +$${prize}`, '#7fe08a', 4); } else HUD.toast('Os han ganado. Vuelve cuando quieras la revancha.', '#ffb3b3', 4); } });

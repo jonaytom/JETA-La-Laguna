@@ -58,10 +58,10 @@ const ARCADE = (() => {
   // ---------- chiptune: square, square, triangle and noise; songs as strings of notes per channel (one token = one step)
   const NOTE = { C: 0, 'C#': 1, D: 2, 'D#': 3, E: 4, F: 5, 'F#': 6, G: 7, 'G#': 8, A: 9, 'A#': 10, B: 11 };
   const freq = (n) => { const m = /^([A-G]#?)(\d)$/.exec(n); if (!m) return 0; return 440 * Math.pow(2, (NOTE[m[1]] + 12 * (+m[2] + 1) - 69) / 12); };
-  const MUS = { song: null, step: 0, next: 0, timer: 0, out: null, vol: 0.55 };
-  function audio() { const ctx = AUDIO.ctx; if (!ctx || !AUDIO.master) return null; if (!MUS.out) { MUS.out = ctx.createGain(); MUS.out.gain.value = MUS.vol * 0.18; MUS.out.connect(AUDIO.master); } return ctx; }
+  const MUS = { song: null, step: 0, next: 0, timer: 0, out: null, fx: null, vol: 0.55 };
+  function audio() { const ctx = AUDIO.ctx; if (!ctx || !AUDIO.master) return null; if (!MUS.out) { MUS.out = ctx.createGain(); MUS.out.gain.value = MUS.vol * 0.11; MUS.out.connect(AUDIO.master); MUS.fx = ctx.createGain(); MUS.fx.gain.value = MUS.vol * 0.22; MUS.fx.connect(AUDIO.master); } return ctx; } // v0.84 (Jonay: «la música, menos protagonismo»): the music lower, the effects on their own louder bus
   function parse(s) { return s.trim().split(/\s+/); }
-  function music(song) { stopMusic(); const ctx = audio(); if (!ctx || !song) return; MUS.song = { ...song, ch: song.ch.map((c) => ({ ...c, t: parse(c.n) })) }; MUS.step = 0; MUS.next = ctx.currentTime + 0.08;
+  function music(song) { stopMusic(); const ctx = audio(); if (!ctx || !song) return; MUS.song = { ...song, ch: song.ch.map((c) => ({ ...c, t: Array.isArray(c.n) ? (c.form || c.n.map((_, i) => i)).map((i) => parse(c.n[i])).flat() : parse(c.n) })) }; /* v0.84: a channel can be several phrases played in a «form» (A B A C…): longer, less repetitive tunes */ MUS.step = 0; MUS.next = ctx.currentTime + 0.08;
     MUS.timer = setInterval(schedule, 40); schedule(); }
   function stopMusic() { if (MUS.timer) clearInterval(MUS.timer); MUS.timer = 0; MUS.song = null; }
   function schedule() { const ctx = AUDIO.ctx, S = MUS.song; if (!ctx || !S || !running) return; const dt = 60 / S.bpm / (S.div || 4);
@@ -76,7 +76,7 @@ const ARCADE = (() => {
     f.type = k === 's' ? 'bandpass' : 'highpass'; f.frequency.value = k === 's' ? 1800 : 7000; g.gain.setValueAtTime(v * (k === 's' ? 0.5 : 0.22), t); g.gain.exponentialRampToValueAtTime(0.001, t + (k === 's' ? 0.12 : 0.04));
     s.connect(f); f.connect(g); g.connect(MUS.out); s.start(t, Math.random()); s.stop(t + 0.15); }
   // sound effects (their own little synth voices)
-  function sfx(kind) { const ctx = audio(); if (!ctx) return; const t = ctx.currentTime, g = ctx.createGain(); g.connect(MUS.out); const o = ctx.createOscillator(); let d = 0.12;
+  function sfx(kind) { const ctx = audio(); if (!ctx) return; const t = ctx.currentTime, g = ctx.createGain(); g.connect(MUS.fx); const o = ctx.createOscillator(); let d = 0.12;
     const env = (v, dd) => { d = dd; g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + dd); };
     switch (kind) {
       case 'jump': o.type = 'square'; o.frequency.setValueAtTime(260, t); o.frequency.exponentialRampToValueAtTime(620, t + 0.12); env(0.35, 0.14); break;
@@ -84,6 +84,8 @@ const ARCADE = (() => {
       case 'hit': o.type = 'square'; o.frequency.setValueAtTime(420, t); o.frequency.exponentialRampToValueAtTime(90, t + 0.1); env(0.5, 0.12); break;
       case 'pew': o.type = 'triangle'; o.frequency.setValueAtTime(1500, t); o.frequency.exponentialRampToValueAtTime(520, t + 0.06); env(0.12, 0.07); break; // the ship's shot (v0.83.2: softer)
       case 'zap': o.type = 'sawtooth'; o.frequency.setValueAtTime(2200, t); o.frequency.exponentialRampToValueAtTime(900, t + 0.12); env(0.06, 0.13); break; // the laser
+      case 'bite': o.type = 'square'; o.frequency.setValueAtTime(160, t); o.frequency.exponentialRampToValueAtTime(70, t + 0.12); env(0.4, 0.14); break; // a lizard's bite
+      case 'whoosh': { const s2 = ctx.createBufferSource(); s2.buffer = AUDIO.noise; const f2 = ctx.createBiquadFilter(); f2.type = 'bandpass'; f2.frequency.setValueAtTime(400, t); f2.frequency.exponentialRampToValueAtTime(2400, t + 0.25); s2.connect(f2); f2.connect(g); env(0.25, 0.28); s2.start(t); s2.stop(t + 0.3); return; } // a somersault, a leap
       case 'tic': o.type = 'triangle'; o.frequency.setValueAtTime(2400, t); o.frequency.exponentialRampToValueAtTime(1500, t + 0.04); env(0.1, 0.05); break; // a hit that doesn't kill
       case 'pop': { const s2 = ctx.createBufferSource(); s2.buffer = AUDIO.noise; const f2 = ctx.createBiquadFilter(); f2.type = 'bandpass'; f2.frequency.value = 900; s2.connect(f2); f2.connect(g); env(0.35, 0.22); s2.start(t); s2.stop(t + 0.25); return; } // a small ship blows up
       case 'swing': o.type = 'triangle'; o.frequency.setValueAtTime(700, t); o.frequency.exponentialRampToValueAtTime(200, t + 0.08); env(0.3, 0.09); break;
@@ -216,7 +218,7 @@ const RECRE = (() => {
   function update(dt) { beacon(dt); const g = G_(); if (!g || !g.defenders || invited() || GAME.state !== 'play' || MISSIONS.active || (DLG && DLG.open) || (window.__TALK && window.__TALK.cur)) { t = 0; return; }
     t += dt; if (t < 20 || t > 1e8) return; t = 1e9; const BL = 'Rayco «El Blanco» (por el móvil)';
     MISSIONS.kit.talk([[BL, '«Mmm... ¡brrr!...» Chopa. Ahora que somos Defensores... tengo una cosa en casa. Una máquina de las de antes, de cuando los recreativos. ¡<b>BENCOMO</b>! El mencey de Taoro repartiendo varazos a los castellanos en Acentejo.'],
-      [BL, 'Vente a mi casa cuando quieras y le das. Gratis, que es mía. Mi madre hace café. Y en las cafeterías y las tascas han puesto la <b>GUERRA DE NAVES</b>, a un duro la partida. Y en las jugueterías, <b>GUANCHE WARRIORS</b>: el Mencey, el Pastor y la Mirladora contra Guayota... ¡mmm, a la orden!'],
+      [BL, 'Vente a mi casa cuando quieras y le das. Gratis, que es mía. Mi madre hace café. Y en las cafeterías y las tascas han puesto el <b>GUFO</b>, el de las navecitas... ¡jijiji, gufo!, a un duro la partida. Y en las jugueterías, <b>GUANCHE WARRIORS</b>: el Mencey, el Pastor y la Mirladora contra Guayota... ¡mmm, a la orden!'],
       [MISSIONS.kit.CH, '¿Bencomo? ¿El del salto del pastor? Esa la pienso pasar entera.']], () => { const a = ARCADE.data(); a.invited = true; HUD.toast('La maquinita de El Blanco: búscala en su casa (cuadrado naranja en el minimapa) · lo tienes apuntado en el diario (J)', COL_, 6); }, 'Las recreativas'); }
   function near() { if (!invited() || PLAYER.car || PLAYER.interior) return null; return Math.hypot(PLAYER.x - DOOR[0], PLAYER.z - DOOR[1]) < 3.4 ? DOOR : null; }
   function use() { if (!near()) return false; ARCADE.open({ id: 'bencomo', key: 'blanco', where: 'CASA DE EL BLANCO', price: 0 }, () => HUD.toast('«Mmm... ¡brrr!» Vuelve cuando quieras, que la máquina no se va.', COL_, 3)); return true; }

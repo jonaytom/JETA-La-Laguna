@@ -190,7 +190,12 @@ La consola, al encenderla, muestra un menú con los cartuchos que tienes. Cada j
 - Hecho: la inmobiliaria Pisos Chachi (Calle Heraclio Sánchez, llama por el móvil), el pisito de Herradores en
   alquiler ($250 por 7 días) y tres pisos en venta ($18.000, $32.000 y $55.000). Dentro: la cama (duermes y se guarda),
   la tele y la consola GOFIO-8 (juguetería, $1.200; cartuchos $90-150) con el menú de cartuchos.
-- Pendiente: Pachanga 3x3 y Play Furbito en la consola, en modo campeonato.
+- Pendiente: Pachanga 3x3 y Play Furbito en la consola, en modo campeonato: 8 selecciones y eliminatorias hasta la
+  final.
+- **Torneo de videojuegos** (Jonay, 20-oct), cuando tienes todos los cartuchos:
+  - Superar el récord de cada juego de puntos (Bencomo, Guerra de Naves, Guanche Warriors…).
+  - Ganar el mundialito de Pachanga 3x3 y de Play Furbito.
+  - Al batir un récord, iniciales en la tabla.
 
 
 - **La inmobiliaria** (parodia) alquila el **pisito** (una casita chula cerca del Pasaje Teide) y, mejor aún (Jonay,

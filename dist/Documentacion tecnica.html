@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.83.2</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.84.0</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2097,8 +2097,13 @@ quitarles los zurrones.</li>
 <li>Hecho: la inmobiliaria Pisos Chachi (Calle Heraclio Sánchez, llama por el móvil), el pisito de Herradores en
   alquiler ($250 por 7 días) y tres pisos en venta ($18.000, $32.000 y $55.000). Dentro: la cama (duermes y se guarda),
   la tele y la consola GOFIO-8 (juguetería, $1.200; cartuchos $90-150) con el menú de cartuchos.</li>
+<li>Pendiente: Pachanga 3x3 y Play Furbito en la consola, en modo campeonato: 8 selecciones y eliminatorias hasta la
+  final.</li>
+<li><strong>Torneo de videojuegos</strong> (Jonay, 20-oct), cuando tienes todos los cartuchos:</li>
+<li>Superar el récord de cada juego de puntos (Bencomo, Guerra de Naves, Guanche Warriors…).</li>
+<li>Ganar el mundialito de Pachanga 3x3 y de Play Furbito.</li>
 <li>
-<p>Pendiente: Pachanga 3x3 y Play Furbito en la consola, en modo campeonato.</p>
+<p>Al batir un récord, iniciales en la tabla.</p>
 </li>
 <li>
 <p><strong>La inmobiliaria</strong> (parodia) alquila el <strong>pisito</strong> (una casita chula cerca del Pasaje Teide) y, mejor aún (Jonay,
@@ -2111,6 +2116,31 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.84.0 — 2026-10-20 — El baloncesto pasa a 3 contra 3</h2>
+<ul>
+<li><strong>El basket de las canchas es ahora 3 contra 3</strong> (Jonay), el paso previo a Pachanga 3x3 en la consola:</li>
+<li>Juegas con Coco y <strong>El Blanco</strong>. Si un partido viene con equipos de dos (los rivales de las misiones), se completa
+    solo con un tercero vestido como los suyos.</li>
+<li><strong>Defensa uno contra uno</strong>: cada uno marca a un rival distinto, y tú te quedas con el que tienes más cerca.</li>
+<li>En ataque, los dos sin balón se abren: uno al ala y otro arriba, en la cabeza de la zona.</li>
+<li>Los pases van al compañero más libre y más cerca del aro.</li>
+<li>El reto de la cancha dice «Partido 3 contra 3».</li>
+<li>La máquina mueve más el balón cuando lleva un rato con él, y el tercer rival tiene mote: El Zurdo, El Rubio…</li>
+<li><strong>«Guerra de Naves» pasa a llamarse «GUFO, AGUERE INVASION»</strong> (Jonay). En canario un gufo es un pedo, y además son
+  las siglas de <em>Guanche Unknown Flying Object</em>. Cambian la pantalla de título (GUFO en grande), la marquesina, la
+  opción de los bares, el diario, la leyenda y la llamada de El Blanco.</li>
+<li><strong>Sonido de las máquinas</strong> (Jonay: «la música, menos protagonismo; más efectos; melodías más largas»):</li>
+<li>La música suena más baja y los efectos van por su propio canal, más alto.</li>
+<li>Las músicas de fase y de jefe de Bencomo, GUFO y Guanche Warriors encadenan varios estribillos (A B A C…), en vez
+    de repetir siempre la misma frase.</li>
+<li>Efectos nuevos en Guanche Warriors: el mordisco del lagarto y el «fiu» de la pirueta y del salto.</li>
+<li>GUFO ya tenía los sonidos suaves del disparo, del láser y del impacto en la 0.83.2; ahora se oyen por encima de
+    la música.</li>
+<li>Guanche Warriors: los enemigos solo atacan cuando ya están dentro de la pantalla (Guayota pegaba desde fuera del
+  borde, sin dejarse alcanzar).</li>
+<li>Bencomo: las tuneras vuelven a no pinchar a los castellanos (Jonay: lo hacía demasiado fácil). Se quedan con el
+  aspecto nuevo.</li>
+</ul>
 <h2>0.83.2 — 2026-10-20 — Iconos nuevos en el mapa y golpes nuevos en Guanche Warriors</h2>
 <ul>
 <li><strong>Iconos del mapa</strong> (Jonay), en el minimapa, en el mapa grande (M), en la leyenda y en el diario (J):</li>
@@ -2133,9 +2163,8 @@ Lo hacen los de los jinetes enemigos y el tuyo: A muerde y, corriendo, A salta y
 <li><strong>Tu casa, por dentro</strong> (Jonay: «al entrar se debe ver el salón comedor»): entras al salón-comedor, con el sofá y
   un sillón mirando a la tele, la mesa del comedor con dos sillas y un frutero. En los pisos grandes hay además una
   librería. El pisito de Herradores es un poco más hondo, para que al entrar lo veas todo de frente.</li>
-<li><strong>Bencomo: las tuneras se ven peligrosas y pinchan a todos</strong> (Jonay):</li>
-<li>Tienen un contorno oscuro suave, espinas claras por todas las palas e higos picones rojos.</li>
-<li>Ahora también pinchan a los castellanos que las tocan: se llevan un golpe y se dan la vuelta.</li>
+<li><strong>Bencomo: las tuneras se ven peligrosas</strong> (Jonay): un contorno oscuro suave, espinas claras por todas las palas e
+  higos picones rojos.</li>
 <li><strong>Guerra de Naves: sonidos suaves</strong> (Jonay): el disparo, el láser (un zumbido propio), un «tic» cuando le das a una
   nave sin destruirla (también al ojo del jefe) y una explosión pequeña para las naves pequeñas.</li>
 </ul>

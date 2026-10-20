@@ -178,6 +178,13 @@ ARCADE.GAMES.bencomo = (() => {
       { w: 'noise', v: 0.9, n: 'k h s h k k s h k h s h k k s s' }] },
     clear: { bpm: 150, div: 4, loop: false, ch: [{ w: 'sq', v: 0.9, n: 'C5 E5 G5 C6 . . G5 . C6 . . . . . . .' }, { w: 'tri', v: 1, n: 'C3 . G3 . C3 . G3 . C3 . . . . . . .' }] },
   };
+  // v0.84 (Jonay: «melodías más largas, varios estribillos que se van alternando»): extra phrases, played A B A (C)
+  { const ALT = {
+      costa: ['E5 . . D5 C5 . B4 . . A4 . . C5 . . E5 . . A5 . G5 F5 . E5 D5 . . . . . E5 . . F5 E5 . D5 . . C5 . . B4 . A4 G#4 . . A4 . . . . .'],
+      monte: ['B4 . . A4 G4 . F#4 . . E4 . . G4 . A4 B4 . . D5 . . C5 B4 . A4 . . . . . E5 . . D5 B4 . G4 . . A4 . B4 E4 . . . . . - . .'],
+      boss: ['B4 B4 - A4 B4 - C5 - D5 - E5 - F#5 - G5 - A5 A5 - G5 F#5 - E5 - D#5 - B4 - E5 - - -'],
+      title: ['A4 . . C5 . . E5 . D5 C5 . A4 G4 . . E4 . . A4 . . B4 . . C5 . B4 A4 . G4 A4 . . . . . - . .'] };
+    for (const k in ALT) { const c = SONGS[k].ch[0]; c.n = [c.n, ...ALT[k]]; c.form = [0, 1, 0, 1]; } }
   // ---------- the game
   function create(api, opt) {
     const loop0 = opt.loop || 0; const g = { score: 0, over: false, demoKeys: { held: {}, hit: {} } };
@@ -267,7 +274,6 @@ ARCADE.GAMES.bencomo = (() => {
         else { e.vx = e.face * 170 * s; if (e.x < e.x0 - 60 || e.x > e.x1 + 60 || wallAhead(e, e.face) || !groundAhead(e, e.face)) { e.st = 'walk'; e.face = -e.face; } } }
       if (e.k === 'L') { bossAI(e, dt); if (e.st === 'flee') { e.x += e.vx * dt; e.t2 = (e.t2 || 0) + dt; if (e.t2 > 3.5) { e.dead = true; phase = 'clear'; phaseT = 6; api.stopMusic(); api.sfx('clear'); } return; } } // fleeing: off he goes, through anything
       e.vy += 900 * dt; e.vy = Math.min(e.vy, 500); e.hitWall = 0; moveBody(e, dt); if (e.y > ROWS * T + 40) e.dead = true;
-      e.cactT = Math.max(0, (e.cactT || 0) - dt); if (e.k !== 'L' && !e.cactT && (tAt(e.x, e.y + 1) === 5 || tAt(e.x, e.y - 4) === 5 || tAt(e.x + e.face * (e.w / 2 + 1), e.y - 4) === 5)) { e.cactT = 0.6; hitE(e, 1); if (!e.dead) { e.face = -e.face; e.vy = -150; } } // v0.83.2 (Jonay): the tuneras prick the Castilians too
       // touching Bencomo
       if (!p.dead && Math.abs(p.x - e.x) < (e.w + 10) / 2 && p.y > e.y - e.h && p.y - p.h < e.y) {
         if ((p.pogo || p.power > 0) && p.vy > 0 && p.y < e.y - e.h + 10) { hitE(e, p.pogo ? 2 : 3, true); p.vy = -340; api.sfx('jump'); }

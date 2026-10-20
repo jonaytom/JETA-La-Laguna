@@ -1,0 +1,10 @@
+# v0.84: basket 3 contra 3, GUFO, sonido de las máquinas
+prueba_084.py
+prueba_baloncesto.py
+prueba_079.py
+prueba_080.py
+prueba_081.py
+prueba_082.py
+prueba_0821.py
+prueba_083.py
+prueba_arranque.py

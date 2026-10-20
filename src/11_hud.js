@@ -217,7 +217,7 @@ const BIGMAP = (() => {
     const it = (shape, col, txt) => { const st = shape === 'sq' ? `background:${col};border-radius:2px` : shape === 'ring' ? `background:#e53935;border-radius:2px;box-shadow:0 0 0 2px #11181a,0 0 0 4px ${col}` : shape === 'tri' ? `background:transparent;width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:11px solid ${col};border-radius:0` : shape === 'drop' ? `background:${col};border-radius:50% 50% 50% 0;transform:rotate(-45deg)` : `background:${col}`; return `<span style="white-space:nowrap;margin-right:12px"><span class="dot" style="${st}"></span>${txt}</span>`; };
     const out = [it('dot', '#fff', 'Tú'), it('dot', '#f5b72e', 'Misión'), it('dot', '#e040fb', 'Destino (GPS)'), it('sq', '#e53935', 'Comida'), it('dot', '#3d7bff', 'Policía')];
     if (G.maleIntro) out.push(it('tri', '#ff1744', 'Maleante'));
-    if (A.invited) { out.push(it('sq', '#ffb347', 'Casa de El Blanco')); out.push(it('ring', '#b388ff', 'Bar con «Guerra de Naves»')); }
+    if (A.invited) { out.push(it('sq', '#ffb347', 'Casa de El Blanco')); out.push(it('ring', '#b388ff', 'Bar con la máquina del GUFO')); }
     const ic = (kind, txt) => `<span style="white-space:nowrap;margin-right:12px"><img src="${window.__mapIconURL(kind)}" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px">${txt}</span>`;
     if (G.jugueterias) out.push(ic('toy', 'Juguetería'));
     if (C.intro) out.push(ic('house', 'Inmobiliaria Pisos Chachi'));

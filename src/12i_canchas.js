@@ -94,7 +94,7 @@ const pickRivals = (seed) => { const i = (Math.abs(Math.floor(seed)) % 4) * 2; r
 const cocoLook = () => (NPC.coco && NPC.coco.H ? { ...NPC.coco.H.look } : {});
 function playCourtGame(c, o) { // o: rival, rivalName, lv, time, tutorial, onEnd
   if (PLAYER.car) exitCar();
-  return BASKET2D.start({ team: [{ name: 'EL CHOPA', look: { ...(playerHuman.look || {}) }, nose: true }, { name: 'COCO', look: cocoLook() }], rival: o.rival, teamName: typeof shortName === 'function' ? shortName() : 'JETA', rivalName: o.rivalName, time: o.time || 150, lv: o.lv, mateLv: 0.6, tutorial: !!o.tutorial, style: o.style || c.style || 'calle', onEnd: o.onEnd });
+  return BASKET2D.start({ team: [{ name: 'EL CHOPA', look: { ...(playerHuman.look || {}) }, nose: true }, { name: 'COCO', look: cocoLook() }, { name: 'EL BLANCO', look: NPC.blanco && NPC.blanco.H ? { ...NPC.blanco.H.look } : {} }], /* v0.84: 3 contra 3 */ rival: o.rival, teamName: typeof shortName === 'function' ? shortName() : 'JETA', rivalName: o.rivalName, time: o.time || 150, lv: o.lv, mateLv: 0.6, tutorial: !!o.tutorial, style: o.style || c.style || 'calle', onEnd: o.onEnd });
 }
 function useCourtGate(c) {
   if (c.sport === 'fut') { useFieldGate(c); return; }
@@ -104,7 +104,7 @@ function useCourtGate(c) {
   if (!MISSIONS.gang.basketTut) { HUD.toast('Aquí se juega al baloncesto. Primero aprende: Monseñor Truchas, en el Obispado, organiza partidos benéficos.', '#b388ff', 5); return; }
   if (c.final) { HUD.toast('El Pabellón Juan Ríos Tejera solo abre para la final del Torneo Lagunero.', '#ff9f43', 4); return; }
   const prize = 40 * c.level;
-  DLG.show(c.label, 'Partido 2 contra 2', `Los de aquí os retan a ti y a Coco. <b>Nivel ${c.level}/5</b>. Si ganáis: <b>$${prize}</b>.`, '¿Jugáis?', ['Jugar', 'Ahora no'], (i) => {
+  DLG.show(c.label, 'Partido 3 contra 3', `Los de aquí os retan a ti, a Coco y a El Blanco. <b>Nivel ${c.level}/5</b>. Si ganáis: <b>$${prize}</b>.`, '¿Jugáis?', ['Jugar', 'Ahora no'], (i) => {
     DLG.hide(); if (i !== 0) return;
     playCourtGame(c, { rival: pickRivals(c.cx + c.cz).map((l, k) => ({ name: ['EL MÁS ALTO', 'EL PIBE'][k], look: l })), rivalName: (c.street || 'LA CANCHA').replace(/^(Calle|Avenida|Camino|Plaza)\s+(de\s+(la\s+|los\s+|las\s+)?)?/i, '').toUpperCase().slice(0, 11), lv: 0.08 + 0.14 * c.level, time: 120,
       onEnd: (r) => { if (r.won) { PLAYER.money += prize; AUDIO.cash && AUDIO.cash(); HUD.toast(`¡Ganado! +$${prize}`, '#7fe08a', 4); } else HUD.toast('Os han ganado. Vuelve cuando quieras la revancha.', '#ffb3b3', 4); } });

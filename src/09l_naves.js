@@ -1,4 +1,4 @@
-// ============ «GUERRA DE NAVES» (v0.81): the arcade of the bars and cafés (pay per game) ============
+// ============ «GUFO, AGUERE INVASION» (v0.81 as «Guerra de Naves»; renamed in v0.84): the arcade of the bars and cafés ============
 // Jonay (20-oct): the R-Type / Nemesis-like shoot'em up is called «Guerra de Naves». A horizontal scroller: La Laguna,
 // 1987, and the invaders come in with the mist. The ship (the AGUERE-1) flies over the sky of Aguere, into the bowels of
 // the Teide and up to the hive above the sea of clouds.
@@ -107,6 +107,16 @@ ARCADE.GAMES.naves = (() => {
       { w: 'tri', v: 1, n: 'E2 E3 E2 E3 E2 E3 E2 E3 C2 C3 C2 C3 A1 A2 B1 B2' },
       { w: 'noise', v: 0.9, n: 'k h s h k k s h k h s h k k s s' }] },
   };
+  // v0.84 (Jonay: «melodías más largas, varios estribillos que se van alternando»): extra phrases, played A B A C
+  { const ALT = {
+      cielo: ['E5 . D5 . C5 . B4 . A4 . . . C5 . E5 . A5 . G5 . F5 . E5 . D5 . . . - . . . F5 . . . E5 . D5 . C5 . . . B4 . C5 . D5 . E5 . . . . . . . - . . . A4 . B4 . C5 . D5 . E5 . F5 . G5 . A5 . . . G5 . E5 . C5 . B4 . A4 . . . . . . . - . . .',
+        'A4 . . . E4 . . . A4 . B4 . C5 . . . B4 . . . G4 . . . E4 . . . . . . . F4 . . . A4 . . . C5 . B4 . A4 . . . G#4 . . . B4 . . . E5 . . . . . . .'],
+      volcan: ['A4 . . . A#4 . . . A4 . G4 . F4 . . . E4 . F4 . G4 . A4 . . . . . . . D5 . . . C5 . . . A#4 . A4 . G4 . . . A4 . . . F4 . . . D4 . . . . . . .',
+        'D5 . F5 . E5 . D5 . C5 . A4 . C5 . D5 . . . . . A4 . . . G4 . A4 . F4 . E4 . D4 . . . . . . . - . . .'],
+      nubes: ['E5 . . . D5 . . . B4 . . . A4 . B4 . D5 . . . E5 . . . F#5 . . . . . . . G5 . . . F#5 . E5 . D5 . . . C#5 . . . A4 . . . B4 . . . . . . .',
+        'B4 . . . . . . . E5 . . . . . . . D5 . C#5 . B4 . A4 . B4 . . . . . . . G4 . A4 . B4 . D5 . E5 . . . . . . . - . . .'],
+      boss: ['G5 . G5 F#5 G5 . B5 . G5 . F#5 . E5 . D5 . E5 . E5 D5 E5 . G5 . E5 . D5 . B4 . A4 . B4 . C5 . D5 . E5 . F#5 . G5 . A5 . B5 . . . . . . .'] };
+    for (const k in ALT) { const c = SONGS[k].ch[0]; c.n = [c.n, ...ALT[k]]; c.form = ALT[k].length > 1 ? [0, 1, 0, 2] : [0, 1, 0, 1]; } }
   // ---------- the game
   function create(api, opt) {
     const g = { score: 0, over: false, demoKeys: { held: {}, hit: {} } };
@@ -348,12 +358,14 @@ ARCADE.GAMES.naves = (() => {
   // ---------- title screen (attract) and the backdrop of the hi-score table
   function drawTitle(c, t) { const bg = background('nubes'); const o = -((t * 20) % 960); c.drawImage(bg[0], 0, 0, 960, H); c.drawImage(bg[2], o, 0, 960, H); c.drawImage(bg[2], o + 960, 0, 960, H);
     c.fillStyle = 'rgba(0,0,0,0.3)'; c.fillRect(0, 0, W, H);
-    c.font = '34px "Press Start 2P", monospace'; c.textAlign = 'center'; c.textBaseline = 'top';
-    for (const [s, y] of [['GUERRA', 40], ['DE NAVES', 84]]) { c.fillStyle = '#0b0f1a'; c.fillText(s, W / 2 + 4, y + 4); const gr = c.createLinearGradient(0, y, 0, y + 34); gr.addColorStop(0, '#fff'); gr.addColorStop(0.45, '#9fd7ff'); gr.addColorStop(0.55, '#2f7fe0'); gr.addColorStop(1, '#ffd400'); c.fillStyle = gr; c.fillText(s, W / 2, y); }
+    // v0.84 (Jonay): «GUFO, Aguere Invasion» — gufo is a fart in Canarian, and also Guanche Unknown Flying Object
+    c.font = '60px "Press Start 2P", monospace'; c.textAlign = 'center'; c.textBaseline = 'top';
+    { const s = 'GUFO', y = 30; c.fillStyle = '#0b0f1a'; c.fillText(s, W / 2 + 5, y + 5); const gr = c.createLinearGradient(0, y, 0, y + 60); gr.addColorStop(0, '#fff'); gr.addColorStop(0.45, '#9fd7ff'); gr.addColorStop(0.55, '#2f7fe0'); gr.addColorStop(1, '#ffd400'); c.fillStyle = gr; c.fillText(s, W / 2, y); }
+    A.txt(c, 'AGUERE INVASION', W / 2, 100, '#ffd400', 16, 'center'); A.txt(c, 'GUANCHE UNKNOWN FLYING OBJECT', W / 2, 124, '#9fd7ff', 6, 'center');
     const s = A.hires(A.sprite('nv_ship', SHIP, P)); const sx = ((t * 120) % (W + 200)) - 100; c.drawImage(s.h2, sx, 150, 96, 44); c.fillStyle = Math.floor(t * 20) % 2 ? '#ffd400' : '#ff8a3a'; c.fillRect(sx - 14, 169, 12, 6);
     A.txt(c, 'LA LAGUNA, 1987', W / 2, 216, '#fff', 8, 'center'); A.txt(c, 'LOS INVASORES LLEGAN CON LA BRUMA', W / 2, 230, '#fff', 8, 'center'); A.txt(c, 'SOLO EL AGUERE-1 PUEDE PARARLOS', W / 2, 244, '#9fd7ff', 8, 'center');
     A.txt(c, '© 1987 LAGUNASOFT', W / 2, 270, '#9fd7ff', 6, 'center'); }
   function drawBack(c, t) { const bg = background('nubes'); c.drawImage(bg[0], 0, 0, 960, H); const o = -((t * 10) % 960); c.drawImage(bg[1], o, 0, 960, H); c.drawImage(bg[1], o + 960, 0, 960, H); c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, 0, W, H); }
-  return { title: 'GUERRA DE NAVES', sub: 'AGUERE-1 CONTRA LA INVASIÓN', marquee: ['#10306a', '#04081a'], titleCol: '#9fd7ff', baseScore: 80000, music: { title: SONGS.title }, create, drawTitle, drawBack,
+  return { title: 'GUFO', sub: 'AGUERE INVASION', marquee: ['#10306a', '#04081a'], titleCol: '#9fd7ff', baseScore: 80000, music: { title: SONGS.title }, create, drawTitle, drawBack,
     help: (K) => `A DISPARO (MANTÉN = BEAM): ${K('f_punch')}  B MÓDULO: ${K('f_kick')}  MEJORA/MONEDA: ${K('b_pass')}  ESC SALIR` };
 })();

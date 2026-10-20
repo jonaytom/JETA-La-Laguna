@@ -14,7 +14,7 @@ async def run(pg):
     A = "__dbg.ARCADE"; ok = True
     # 1) the bar: the machine shows up in the café's menu and opens the bar's own machine
     bar = json.loads(await pg.evaluate("""(()=>{ const d=__dbg; d.ARCADE.data().invited=true; const s=d.FOOD.shops.find(q=>q.type==='C'||q.type==='R'); if(!s) return JSON.stringify({ hay: false });
-      d.FOOD.open(s); const bs=[...document.querySelectorAll('#dlgOpts button')]; const i=bs.findIndex(b=>b.textContent.includes('GUERRA DE NAVES')); if (i>=0) bs[i].click();
+      d.FOOD.open(s); const bs=[...document.querySelectorAll('#dlgOpts button')]; const i=bs.findIndex(b=>b.textContent.includes('GUFO')); if (i>=0) bs[i].click();
       const st=d.ARCADE._st(); return JSON.stringify({ hay: true, bar: s.name, opcion: i, abre: d.ARCADE.running, juego: d.ARCADE._game() ? 'demo' : st && st.mode }); })()""")); print('bar', bar)
     ok1 = bar.get('opcion', -1) >= 0 and bar.get('abre')
     if not bar.get('abre'): await pg.evaluate("%s.open({ id: 'naves', key: 'prueba_naves', where: 'PRUEBA', price: 1 })" % A)

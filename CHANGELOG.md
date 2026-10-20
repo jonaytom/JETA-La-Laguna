@@ -3,6 +3,30 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.84.0 — 2026-10-20 — El baloncesto pasa a 3 contra 3
+- **El basket de las canchas es ahora 3 contra 3** (Jonay), el paso previo a Pachanga 3x3 en la consola:
+  - Juegas con Coco y **El Blanco**. Si un partido viene con equipos de dos (los rivales de las misiones), se completa
+    solo con un tercero vestido como los suyos.
+  - **Defensa uno contra uno**: cada uno marca a un rival distinto, y tú te quedas con el que tienes más cerca.
+  - En ataque, los dos sin balón se abren: uno al ala y otro arriba, en la cabeza de la zona.
+  - Los pases van al compañero más libre y más cerca del aro.
+  - El reto de la cancha dice «Partido 3 contra 3».
+  - La máquina mueve más el balón cuando lleva un rato con él, y el tercer rival tiene mote: El Zurdo, El Rubio…
+- **«Guerra de Naves» pasa a llamarse «GUFO, AGUERE INVASION»** (Jonay). En canario un gufo es un pedo, y además son
+  las siglas de *Guanche Unknown Flying Object*. Cambian la pantalla de título (GUFO en grande), la marquesina, la
+  opción de los bares, el diario, la leyenda y la llamada de El Blanco.
+- **Sonido de las máquinas** (Jonay: «la música, menos protagonismo; más efectos; melodías más largas»):
+  - La música suena más baja y los efectos van por su propio canal, más alto.
+  - Las músicas de fase y de jefe de Bencomo, GUFO y Guanche Warriors encadenan varios estribillos (A B A C…), en vez
+    de repetir siempre la misma frase.
+  - Efectos nuevos en Guanche Warriors: el mordisco del lagarto y el «fiu» de la pirueta y del salto.
+  - GUFO ya tenía los sonidos suaves del disparo, del láser y del impacto en la 0.83.2; ahora se oyen por encima de
+    la música.
+- Guanche Warriors: los enemigos solo atacan cuando ya están dentro de la pantalla (Guayota pegaba desde fuera del
+  borde, sin dejarse alcanzar).
+- Bencomo: las tuneras vuelven a no pinchar a los castellanos (Jonay: lo hacía demasiado fácil). Se quedan con el
+  aspecto nuevo.
+
 ## 0.83.2 — 2026-10-20 — Iconos nuevos en el mapa y golpes nuevos en Guanche Warriors
 - **Iconos del mapa** (Jonay), en el minimapa, en el mapa grande (M), en la leyenda y en el diario (J):
   - Las jugueterías: **un robot**, en vez de la gota o el osito.
@@ -22,9 +46,8 @@ el título de la entrada más reciente como mensaje del commit.
 - **Tu casa, por dentro** (Jonay: «al entrar se debe ver el salón comedor»): entras al salón-comedor, con el sofá y
   un sillón mirando a la tele, la mesa del comedor con dos sillas y un frutero. En los pisos grandes hay además una
   librería. El pisito de Herradores es un poco más hondo, para que al entrar lo veas todo de frente.
-- **Bencomo: las tuneras se ven peligrosas y pinchan a todos** (Jonay):
-  - Tienen un contorno oscuro suave, espinas claras por todas las palas e higos picones rojos.
-  - Ahora también pinchan a los castellanos que las tocan: se llevan un golpe y se dan la vuelta.
+- **Bencomo: las tuneras se ven peligrosas** (Jonay): un contorno oscuro suave, espinas claras por todas las palas e
+  higos picones rojos.
 - **Guerra de Naves: sonidos suaves** (Jonay): el disparo, el láser (un zumbido propio), un «tic» cuando le das a una
   nave sin destruirla (también al ojo del jefe) y una explosión pequeña para las naves pequeñas.
 

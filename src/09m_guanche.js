@@ -203,6 +203,15 @@ ARCADE.GAMES.guanche = (() => {
       { w: 'sq', v: 0.55, legato: 0.98, n: 'A4 . . . C5 . . . E5 . . . D5 . C5 . B4 . . . G4 . . . A4 . . . . . . . F4 . . . A4 . . . C5 . . . B4 . A4 . G#4 . . . E4 . . . A4 . . . . . . .' },
       { w: 'tri', v: 1, n: 'A2 . . . E2 . . . F2 . . . C2 . . . D2 . . . A1 . . . E2 . . . E2 . . .' }] },
   };
+  // v0.84 (Jonay: «melodías más largas, varios estribillos que se van alternando»): extra phrases, played A B A B
+  { const ALT = {
+      taoro: ['E5 . . D5 C5 . A4 . G4 . A4 . C5 . . . D5 . E5 . G5 . A5 . G5 . E5 . D5 . . . C5 . . . A4 . . . G4 . E4 . G4 . A4 . . . . . - .'],
+      anaga: ['G4 . . . A4 . . . B4 . . . D5 . C5 . B4 . . . A4 . . . G4 . F#4 . E4 . . . . . . . - . . .'],
+      gigantes: ['D5 . . . B4 . G4 . A4 . B4 . C5 . . . B4 . A4 . G4 . F#4 . G4 . . . . . - . G4 . A4 . B4 . D5 . E5 . D5 . B4 . A4 . G4 . . . . . . .'],
+      canadas: ['G4 . . . G#4 . . . G4 . F4 . D#4 . . . F4 . G4 . G#4 . A#4 . . . G4 . . . . . . . C5 . . . A#4 . G#4 . G4 . F4 . D#4 . . . C4 . . . . . . .'],
+      teide: ['A4 . . . A#4 . . . A4 . . . G4 . . . F4 . . . D#4 . . . D4 . . . . . . . D4 . F4 . G4 . A4 . A#4 . A4 . G4 . F4 . D#4 . . . D4 . . . . . . .'],
+      boss: ['F5 . F5 E5 F5 . A5 . F5 . E5 . D5 . C5 . D5 . D5 C5 D5 . F5 . D5 . C5 . A4 . G4 . A4 . . . A#4 . . . C5 . . . D5 . . . . . . .'] };
+    for (const k in ALT) { const c = SONGS[k].ch[0]; c.n = [c.n, ...ALT[k]]; c.form = [0, 1, 0, 1]; } }
   const THM = { taoro: 'taoro', anaga: 'anaga', gigantes: 'gigantes', canadas: 'canadas', teide: 'teide' };
   // ---------- the game
   function create(api, opt) {
@@ -271,12 +280,12 @@ ARCADE.GAMES.guanche = (() => {
       // on the ground
       if (pad.hit('vP') && p.jars > 0 && !ride) { p.st = 'magic'; p.stT = 1.6; p.cast = false; return; }
       if (pad.hit('vT') && !ride) { const st0 = E.find((e) => e.st === 'hurt' && e.stun && e.hp > 0 && Math.abs(e.z - p.z) < 8 && (e.x - p.x) * p.face > -2 && Math.abs(e.x - p.x) < H.reach + 8);
-        if (st0) { p.st = 'flip'; p.fl = { t: 0, from: p.x, to: st0.x + p.face * 14, e: st0 }; st0.stT = Math.max(st0.stT, 0.7); api.sfx('vault'); return; } }
+        if (st0) { p.st = 'flip'; p.fl = { t: 0, from: p.x, to: st0.x + p.face * 14, e: st0 }; st0.stT = Math.max(st0.stT, 0.7); api.sfx('whoosh'); return; } }
       if (pad.hit('vT')) { const fl = !ride && liz.find((q) => q.free && !q.rider && Math.abs(q.x - p.x) < 16 && Math.abs(q.z - p.z) < 9);
         if (fl) { p.mount = fl; fl.rider = p; fl.free = false; api.sfx('pick'); banner = ['¡EL LAGARTO DE EL HIERRO!', 'A: MORDISCO · CORRIENDO: SALTO Y COLETAZO']; bannerT = 2; return; }
         if (ride) { ride.rider = null; ride.free = true; p.mount = null; }
         p.vh = p.run && H.id === 'pastor' ? H.jump * 1.25 : H.jump; p.h = 0.1; p.vx = dx * spd * (p.run ? 1.15 : 0.8); p.st = 'jump'; p.vault = p.run && H.id === 'pastor'; if (p.vault) { p.vx = p.face * 150; api.sfx('vault'); } else api.sfx('jump'); return; }
-      if (pad.hit('vS')) { if (ride) { if (p.run) { p.st = 'whip'; p.stT = 0.45; p.leap = true; ride.hop = 0.45; setTimeout(() => { ride.whip = 0.45; }, 160); } else { p.st = 'bite'; p.stT = 0.4; p.leap = false; ride.bite = 0.4; } p.atkT = 0; p.hitDone.clear(); api.sfx('swing'); p.run = false; return; } // v0.83.2: the lizard bites (neck out) or, running, leaps and lashes its tail
+      if (pad.hit('vS')) { if (ride) { if (p.run) { p.st = 'whip'; p.stT = 0.45; p.leap = true; ride.hop = 0.45; setTimeout(() => { ride.whip = 0.45; }, 160); } else { p.st = 'bite'; p.stT = 0.4; p.leap = false; ride.bite = 0.4; } p.atkT = 0; p.hitDone.clear(); api.sfx(p.st === 'bite' ? 'bite' : 'whoosh'); p.run = false; return; } // v0.83.2: the lizard bites (neck out) or, running, leaps and lashes its tail
         if (p.run) { p.st = 'dash'; p.stT = 0.6; p.atkT = 0; p.hitDone.clear(); p.run = false; p.vh = 120; p.h = 0.1; api.sfx('jump'); return; } // v0.83.2: running = a jump forward and a kick
         p.combo = p.comboT > 0 ? (p.combo % 3) + 1 : 1; p.comboT = 0.6; p.st = 'atk'; p.stT = p.combo === 3 ? 0.5 : 0.28; p.atkT = 0; p.hitDone.clear(); api.sfx('swing'); return; }
       if (dx) p.face = dx; p.x += dx * spd * dt; p.z = clamp(p.z + dz * spd * 0.6 * dt, 0, ZD); p.st = dx || dz ? (p.run ? 'run' : 'walk') : 'idle'; if (!dx) p.run = false;
@@ -302,7 +311,7 @@ ARCADE.GAMES.guanche = (() => {
       if (e.st === 'thief') { e.x += -e.face * 0 + (e.dir || (e.dir = e.x < p.x ? 1 : -1)) * spd * dt; e.face = e.dir; if (e.x < camX - 40 || e.x > camX + VW + 40) e.gone = true; return; }
       if (e.k === 'D' && e.st === 'idle') { e.st = 'thief'; e.dir = e.x < p.x ? -1 : 1; e.d = { ...d, spd: 110 }; return; } // got hit: runs away
       const dx = p.x - e.x, dz = p.z - e.z; e.cd -= dt;
-      if (e.st === 'windup') { e.stT -= dt; if (e.stT <= 0) { e.st = 'atk'; e.stT = 0.3; e.hitDone.clear(); api.sfx(d.dog ? 'bark' : 'swing'); if (d.dog) { e.vx = e.face * 160; } if (lz) { e.lzMove = Math.abs(dx) > 30 ? 'leap' : 'bite'; e.whipped = false; e.stT = 0.45; if (e.lzMove === 'leap') { e.vx = e.face * 150; lz.hop = 0.45; } else lz.bite = 0.4; }
+      if (e.st === 'windup') { e.stT -= dt; if (e.stT <= 0) { e.st = 'atk'; e.stT = 0.3; e.hitDone.clear(); api.sfx(d.dog ? 'bark' : 'swing'); if (d.dog) { e.vx = e.face * 160; } if (lz) { e.lzMove = Math.abs(dx) > 30 ? 'leap' : 'bite'; e.whipped = false; e.stT = 0.45; if (e.lzMove === 'leap') { e.vx = e.face * 150; lz.hop = 0.45; api.sfx('whoosh'); } else { lz.bite = 0.4; api.sfx('bite'); } }
           if (d.ranged) { const n = e.k === 'BW' ? 3 : 1; for (let i = 0; i < n; i++) shots.push({ k: 'fire', x: e.x + e.face * 8, z: e.z + (i - (n - 1) / 2) * 12, h: 14, vx: e.face * 100, t: 3, dmg: d.dmg }); }
           if (d.fire && Math.random() < 0.5) for (let i = 0; i < 4; i++) shots.push({ k: 'fire', x: e.x + e.face * (20 + i * 10), z: e.z, h: 18, vx: e.face * 120, t: 2.2, dmg: d.dmg });
           if (d.stomp && Math.random() < 0.45) { shots.push({ k: 'wave', x: e.x, z: e.z, h: 0, vx: 110, t: 1.2, dmg: d.dmg, both: true }); shake = 0.4; api.sfx('boom'); } } return; }
@@ -320,7 +329,7 @@ ARCADE.GAMES.guanche = (() => {
       if (dist > 3) { e.x += (mx / dist) * spd * dt; e.z = clamp(e.z + (mz / dist) * spd * 0.6 * dt, 0, ZD); e.st = 'walk'; } else e.st = 'idle';
       e.face = Math.sign(dx) || e.face;
       if (e.x > camX + 4 && e.x < camX + VW - 4) e.inS = true; if (e.inS) e.x = clamp(e.x, camX + 6, camX + VW - 6); // once on the screen they stay on it (no hitting from outside)
-      if (e.cd <= 0 && p.st !== 'dead') { const inR = d.ranged ? Math.abs(dz) < 10 : Math.abs(dx) < (lz ? 60 : d.reach + 6) && Math.abs(dz) < 7; if (inR && (e.engaged || d.ranged)) { e.st = 'windup'; e.stT = d.wind; } }
+      if (e.cd <= 0 && p.st !== 'dead') { const inR = d.ranged ? Math.abs(dz) < 10 : Math.abs(dx) < (lz ? 60 : d.reach + 6) && Math.abs(dz) < 7; if (inR && (e.engaged || d.ranged) && e.x > camX + 4 && e.x < camX + VW - 4) { e.st = 'windup'; e.stT = d.wind; } } /* v0.84: they only attack from inside the screen (Guayota hit you from beyond the edge) */
       // the bosses call for help at half health
       if (d.boss && !e.called && e.hp < e.max / 2) { e.called = true; const k2 = e.k === 'BT' || e.k === 'BY' ? 'T' : 'S'; for (const sd of [-1, 1]) spawn(k2, sd > 0 ? camX + VW + 20 : camX - 20, 10 + Math.random() * 24, { wave: true }); lock.n += 2; }
       if (lz) { lz.x = e.x; lz.z = e.z; lz.face = e.face; lz.vx = mx; lz.vz = mz; } }

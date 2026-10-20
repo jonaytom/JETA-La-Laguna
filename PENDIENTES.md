@@ -5,6 +5,60 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 
 ## Por revisar con Jonay
 
+- [ ] **Más efectos de sonido en los minijuegos en general** (Jonay, 20-oct): la música con menos protagonismo y las
+  melodías más largas, con varios estribillos que se alternan. Hecho en v0.84.0 para las 3 máquinas. Falta lo mismo
+  en el basket, el fútbol y la pelea 2D: más efectos (pasos, roces, el público, el balón) y música menos repetitiva.
+- [ ] **LOGROS COLECCIONABLES** (Jonay, 20-oct). Las misiones y lo que vas haciendo desbloquean logros, cada uno con su
+  **icono molón** (diseñarlos: pixel art de chapa / medalla, uno por logro).
+  - **Son secretos**: no se ve qué hay que hacer; cuando lo cumples, el juego te lo dice (aviso grande con el icono).
+  - Se ven en una **sección especial que se abre con una tecla**: la vitrina de chapas, con las conseguidas en color
+    y las que faltan como «?».
+  - Por niveles según vas llegando más lejos (bronce / plata / oro del mismo logro).
+  - **Propuesta de lista** (para revisarla juntos):
+    - **Peleas**:
+      - «Cinturón de Gofio»: la primera pelea ganada (el primero que sale, como dice Jonay).
+      - «Puño de Millo»: 10 peleas ganadas.
+      - «El Pelón de Aguere»: 50 peleas ganadas.
+      - «Ni un rasguño»: ganar una pelea sin que te den.
+    - **Maleantes**:
+      - «Placa de Juguete»: el primer maleante entregado.
+      - «Cazarrecompensas»: 10 maleantes entregados.
+      - «Terror del Cristo»: un maleante de nivel 3.
+    - **Conducción**:
+      - «Carné de Chófer»: la primera carrera del Canarión ganada.
+      - «Guagüero Mayor»: 5 carreras ganadas.
+      - «Rey de la Vía de Ronda»: todas las carreras ganadas.
+      - «Chapa y Pintura»: siniestro total de un coche.
+    - **Armas**:
+      - «Bolita de Oro»: 50 latas en el campo de tiro de El Blanco.
+      - «Manguera Loca»: apagar un fuego con el rifle de agua.
+    - **Policía**:
+      - «Más buscado que el Teide»: 5 estrellas.
+      - «Escapista»: perder a la policía con 3 estrellas o más.
+    - **Deportes**:
+      - «Mate de Gofio»: el primer mate de combo.
+      - «Triplista»: 10 triples.
+      - «Campeón Lagunero»: el Torneo Lagunero.
+      - «Copa Laguna»: la copa de fútbol.
+      - «Palomitero»: 5 palomitas del portero.
+    - **Recreativas**: una chapa por juego con su título.
+      - «Venganza de Acentejo»: pasarse Bencomo.
+      - «As de Aguere»: pasarse Guerra de Naves.
+      - «Magec Libre»: pasarse Guanche Warriors.
+      - «Superfriki Jugón»: todos los cartuchos.
+      - «Campeón del Torneo»: el torneo de videojuegos.
+    - **Historia**:
+      - «Defensor de La Laguna».
+      - «Firma de la Banda».
+      - «Coche Patrulla».
+      - Una por cada final de hilo: El Obispo, El Secreta, el Canarión…
+    - **Ciudad**:
+      - «Propietario»: tu primera casa.
+      - «Rico de Aguere»: el ático del Adelantado.
+      - «Barraquito Adicto»: 20 barraquitos.
+      - «Turista»: visitar la Catedral, la Concepción y el Aeropuerto.
+      - «Noctámbulo»: estar en la calle a las 4 de la mañana.
+      - «Gofio en vena»: comer 30 veces.
 - [x] (v0.83.2) **Guanche Warriors, golpes nuevos** (Jonay, 20-oct):
   - **Atacar corriendo**: un salto hacia delante con una patada, en vez de la embestida.
   - **Los lagartos tienen que atacar**:
@@ -52,10 +106,20 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
   Hecho en v0.81.0: **GUERRA DE NAVES** en cafeterías y tascas (primera versión, para pulir).
   Hecho en v0.82.0: **GUANCHE WARRIORS** en las jugueterías (primera versión, para pulir).
   Hecho en v0.83.0: la inmobiliaria, los pisos y la consola GOFIO-8 con su menú de cartuchos.
-  Falta: el basket a 3x3 (v0.84, lo siguiente), Pachanga 3x3 y Play Furbito en la consola (campeonato por países) y
+  Hecho en v0.84.0: el basket a 3 contra 3.
+  Falta: Pachanga 3x3 y Play Furbito en la consola (campeonato por países) y
   el tipo Metal Slug.
   - Jonay, 20-oct: Pachanga 3x3 y Play Furbito también se compran en la juguetería como cartuchos. Están basados en lo
     que ya tenemos: al empezar eliges país entre **8 selecciones** y se juega por eliminatorias hasta la final.
+  - **El torneo de videojuegos** (Jonay, 20-oct): se desbloquea cuando te has comprado **todos** los cartuchos, también
+    Pachanga 3x3 y Play Furbito.
+    - Consiste en superar los récords de todos los juegos.
+    - En Pachanga 3x3 y Play Furbito: ganar las eliminatorias del mundialito, es decir, ganar el juego. Esos tienen fin;
+      los demás van por puntos.
+    - Al batir un récord, el juego te deja poner tus iniciales. Las máquinas ya lo hacen; falta en los dos de deportes
+      y en la consola.
+    - Jonay: cuando lo compras todo, en la juguetería te dicen que eres un «superfriki jugón» y que puedes participar
+      en el torneo. Pendiente: el premio.
   Jonay probará todas las máquinas y dirá impresiones.
   - Jonay, 20-oct: los nombres son «Guerra de Naves» (el tipo R-Type) y «Guanche Warriors» (el tipo Golden Axe:
     beat'em up, no plataformas, con varias fases). En Guanche Warriors se elige personaje al empezar:

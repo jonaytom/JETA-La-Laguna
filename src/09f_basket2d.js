@@ -1,4 +1,4 @@
-// ============ «JETA JAM»: 2D basketball, 2 vs 2, in the style of the 90s arcade games (v0.65) ============
+// ============ «JETA JAM»: 2D basketball, 3 vs 3 since v0.84 (2 vs 2 before), in the style of the 90s arcade games (v0.65) ============
 // Side view of the court, the same pixel-art sprites as the 2D fight (made from the players' real clothes). You and a
 // friend of the gang against two rivals: turbo, passes, steals, shoves, blocks, dunks and «en llamas» after 3 baskets.
 // Controls (Jonay, simple): HOLD the left mouse button (or E) to shoot and release it while the bar is in the green;
@@ -10,6 +10,8 @@
 // with puño the 360 and the windmill/tomahawk, with patada the back dunk (legs open, the ball down first) and the
 // between-the-legs (front). The CPU does combo dunks too (more the better it is; you don't see its inputs, it can
 // miss). Long passes go in an arc (they went dead straight).
+// v0.84 (Jonay): 3 contra 3 — three a side (Pachanga 3x3 on the console will use it too); a 2-player team from an old
+// caller gets a third (El Blanco with you; a third rival dressed like the others).
 const BASKET2D = (() => {
   // v0.66 (Jonay): a closer view, twice the resolution, the camera scrolls to show the half where the ball is and a bit
   const W = 480, H = 270, R = 4, CL = 28, CW = 15;            // canvas (logical px, drawn at R×) and court (metres)
@@ -49,8 +51,8 @@ const BASKET2D = (() => {
   function place(attacking) { // positions after a basket / at the start: «attacking» team brings the ball from its own half
     const A = st.p.filter((q) => q.team === attacking), D = st.p.filter((q) => q.team !== attacking);
     const own = attacking === 0 ? 6 : CL - 6, sgn = attacking === 0 ? 1 : -1;
-    A[0].x = own; A[0].z = 6.5; A[1].x = own + sgn * 4; A[1].z = 11;
-    D[0].x = CL / 2 + sgn * 3; D[0].z = 6; D[1].x = CL / 2 + sgn * 5; D[1].z = 10.5;
+    A[0].x = own; A[0].z = 6.5; A[1].x = own + sgn * 4; A[1].z = 11; if (A[2]) { A[2].x = own + sgn * 3.5; A[2].z = 3; }
+    D[0].x = CL / 2 + sgn * 3; D[0].z = 6; D[1].x = CL / 2 + sgn * 5; D[1].z = 10.5; if (D[2]) { D[2].x = CL / 2 + sgn * 4.5; D[2].z = 3.2; }
     for (const q of st.p) { q.vx = q.vz = q.vy = 0; q.y = 0; q.air = false; q.act = ''; q.down = 0; q.shootHold = false; q.dir = q.team ? -1 : 1; }
     const carrier = A.find((q) => q.human) || A[0]; give(carrier); st.possT = 0;
   }
@@ -58,7 +60,8 @@ const BASKET2D = (() => {
   // ---------- court geometry helpers
   const hoopOf = (team) => HOOP[team === 0 ? 1 : 0]; // team 0 attacks the right hoop
   const dist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
-  const mates = (p) => st.p.filter((q) => q !== p && q.team === p.team)[0];
+  const matesAll = (p) => st.p.filter((q) => q !== p && q.team === p.team);
+  const mates = (p) => { const L = matesAll(p); if (L.length < 2) return L[0]; const h = hoopOf(p.team); return L.slice().sort((a, b) => (openness(b) - Math.hypot(h.x - b.x, h.z - b.z) * 0.15) - (openness(a) - Math.hypot(h.x - a.x, h.z - a.z) * 0.15))[0]; }; // the best one to pass to: the most open, nearer the hoop
   const rivals = (p) => st.p.filter((q) => q.team !== p.team);
   function openness(p) { let m = 99; for (const q of rivals(p)) m = Math.min(m, dist(p, q)); return m; }
   function shotChance(p, d) {
@@ -201,15 +204,16 @@ const BASKET2D = (() => {
       if (tutMate) { tx = p.x; tz = p.z; run = false; }
       else if (!passive && !p.air) {
         if (guard && mate && openness(mate) > 2.5 && Math.random() < 0.02 + 0.03 * p.lv) pass(p, mate);
+        else if (mate && p.possT > 1.6 && openness(mate) > 2 && Math.random() < 0.012 + 0.012 * p.lv) pass(p, mate); /* v0.84: three a side, they move the ball more */
         else if (d < 3 && p.turbo > 0.3 && Math.random() < 0.05 * p.lv) { p.wantDunk = true; startShot(p); p.wantDunk = false; }
         else if (!st.tut && !p.cTried && d >= 2.6 && d <= 7.4) { p.cTried = true; if (Math.random() < 0.08 + 0.55 * p.lv * p.lv) cpuCombo(p, d); } // v0.79: once per possession, when he gets in range: the good ones fly in with a combo
         else if (d < 9.5 && ((d < p.shootR && (!guard || p.possT > 2.6)) || p.possT > 4.5)) { startShot(p); /* v0.66: never from its own half */ p.aiRel = rnd(-0.12, 0.12) * (1.3 - p.lv); p.shootR = null; }
       }
     } else if (own) { // off the ball: get open on the wing, away from the holder
-      const hd = b.holder || (b.pass && b.pass.to) || p; const side = hd.z < 7.5 ? 1 : -1;
-      tx = h.x - Math.sign(h.x - CL / 2) * 5.5; tz = 7.5 + side * 4;
+      const hd = b.holder || (b.pass && b.pass.to) || p; const side = hd.z < 7.5 ? 1 : -1; const off = matesAll(hd).sort((a, c) => a.idx - c.idx), rank = Math.max(0, off.indexOf(p)); // v0.84: two off the ball: one on the wing, one at the top of the key
+      if (rank === 0) { tx = h.x - Math.sign(h.x - CL / 2) * 5.5; tz = 7.5 + side * 4; } else { tx = h.x - Math.sign(h.x - CL / 2) * 7.5; tz = 7.5 - side * 2.5; }
     } else if (own === false) { // defence: stay between your man and the basket
-      const m = p.mark || rivals(p)[p.idx % 2]; const hd = b.holder;
+      const m = p.mark || rivals(p)[p.idx % rivals(p).length]; const hd = b.holder;
       const k = hd === m ? 1.0 : 2.2; const L = Math.hypot(dh.x - m.x, dh.z - m.z) || 1; tx = m.x + (dh.x - m.x) / L * k; tz = m.z + (dh.z - m.z) / L * k; run = dist(p, m) > 4;
       if (!passive && hd === m && dist(p, m) < 1.2 && Math.random() < dt * (0.1 + 0.7 * p.lv)) steal(p);
       if (!passive && m.air && m.shootHold && dist(p, m) < 1.8 && !p.air && Math.random() < dt * 6 * p.lv) jump(p, 5.4);
@@ -290,7 +294,9 @@ const BASKET2D = (() => {
     else if (!st.golden) { st.clock -= dt; if (st.clock <= 0) { st.clock = 0; const b = st.ball; if (b.mode !== 'air') { snd('buzzer');
       if (st.score[0] === st.score[1]) { st.golden = true; banner('¡CANASTA DE ORO!', '#ffd400', 2); say('¡Canasta de oro!'); } else { st.phase = 'end'; st.pt = 3; } } } }
     // marks: the human guards the nearest rival, the teammate the other one
-    const hu = st.p.find((q) => q.human), mt = mates(hu), rv = rivals(hu); if (rv.length === 2) { const n = dist(hu, rv[0]) < dist(hu, rv[1]) ? 0 : 1; hu.mark = rv[n]; mt.mark = rv[1 - n]; rv[0].mark = hu; rv[1].mark = mt; }
+    { const hu = st.p.find((q) => q.human), T0 = [hu, ...matesAll(hu)], T1 = rivals(hu), free = T1.slice(); // v0.84: man to man, the human first takes the nearest
+      for (const q of T0) { let bq = null, bd = 1e9; for (const r of free) { const d = dist(q, r); if (d < bd) { bd = d; bq = r; } } if (bq) { q.mark = bq; free.splice(free.indexOf(bq), 1); } }
+      T1.forEach((r, i) => { r.mark = T0[i % T0.length]; }); }
     for (const p of st.p) stepPlayer(p, dt);
     stepBall(dt);
   }
@@ -433,14 +439,19 @@ const BASKET2D = (() => {
     draw();
   }
   // ---------- public
+  // a third player for the teams of two (the old callers): with you, El Blanco; for the rivals, one more in their clothes
+  function fill3(list, mine) { const L = (list || []).slice(0, 3); if (L.length >= 3) return L;
+    if (mine) L.push({ name: 'EL BLANCO', look: typeof NPC !== 'undefined' && NPC.blanco && NPC.blanco.H ? { ...NPC.blanco.H.look } : { skin: 0xc68a5e, shirt: 0x2e6b3a, pants: 0x3a3a3a, hair: 0x2a1a10 } });
+    else { const b = L[0] || { name: 'RIVAL', look: {} }; const SK = [0xe0ac86, 0x8d5a3b, 0xc68a5e, 0xf1c9a5], HR = [0x1a1410, 0x6b3e1e, 0xd8b56a, 0x2a1a10]; L.push({ name: ['EL ZURDO', 'EL RUBIO', 'EL GORDO', 'EL LARGO'][Math.abs(Math.round((b.look && b.look.shirt) || 0)) % 4], look: { ...(b.look || {}), skin: SK[L.length % 4], hair: HR[(L.length + 1) % 4] } }); }
+    return fill3(L, mine); }
   function start(opt) {
     if (running || FIGHT2D.running) return false; running = true; onEnd = opt.onEnd || null;
     if (!cv) { cv = document.createElement('canvas'); cv.id = 'basket2d'; cv.width = W * R; cv.height = H * R; cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;image-rendering:pixelated;background:#000;z-index:28;display:none'; document.body.appendChild(cv); cx = cv.getContext('2d'); }
-    const team = opt.team, riv = opt.rival;
-    st = { p: [mkPlayer({ ...team[0], human: true }, 0, 0), mkPlayer(team[1], 0, 1), mkPlayer(riv[0], 1, 0), mkPlayer(riv[1], 1, 1)], ball: { x: 0, z: 0, y: 0, vx: 0, vz: 0, vy: 0, holder: null, mode: 'held' },
+    const team = fill3(opt.team, true), riv = fill3(opt.rival, false);
+    st = { p: [mkPlayer({ ...team[0], human: true }, 0, 0), mkPlayer(team[1], 0, 1), mkPlayer(team[2], 0, 2), mkPlayer(riv[0], 1, 0), mkPlayer(riv[1], 1, 1), mkPlayer(riv[2], 1, 2)], ball: { x: 0, z: 0, y: 0, vx: 0, vz: 0, vy: 0, holder: null, mode: 'held' },
       score: [0, 0], clock: opt.time || 150, names: [opt.teamName || 'JETA', opt.rivalName || 'RIVALES'], phase: 'ready', pt: 0, time0: 0, bannerT: 0, banner: null, tip: '', ev: {}, golden: false,
       tut: opt.tutorial ? { i: 0, wait: 0 } : null, auto: !!opt.auto, fade: 1, fadeDir: -1, stake: opt.stake || 0, style: opt.style || 'calle' };
-    for (const q of st.p) if (q.team === 1) q.lv = opt.lv ?? 0.5; st.p[1].lv = opt.mateLv ?? 0.6;
+    for (const q of st.p) if (q.team === 1) q.lv = opt.lv ?? 0.5; else if (!q.human) q.lv = opt.mateLv ?? 0.6;
     place(0); updateCam(1); IN.reset(); document.exitPointerLock?.();
     MINI.show(cv, 'basket2d'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); return true;
   }
