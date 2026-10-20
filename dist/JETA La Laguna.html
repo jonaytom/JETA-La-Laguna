@@ -205,7 +205,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="tb" id="tbS">CORRER</div>
 <div class="tb" id="tbM">MAPA</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">v0.83.0</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">v0.83.1</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -8982,7 +8982,9 @@ const RECRE = (() => {
   let t = 0; const COL_ = '#ffb347'; const DOOR = [-772, -413]; // Jonay: the entrance of the Edificio Casa del Blanco (Teobaldo Power), right by the building
   const G_ = () => window.GANG || null;
   function invited() { const g = G_(); return !!(g && g.arcade && g.arcade.invited); }
-  function update(dt) { const g = G_(); if (!g || !g.defenders || invited() || GAME.state !== 'play' || MISSIONS.active || (DLG && DLG.open) || (window.__TALK && window.__TALK.cur)) { t = 0; return; }
+  // v0.83.1 (Jonay): the entrance marked like the other places, a see-through cylinder of light, orange
+  let bc = null; function beacon(dt) { const on = invited() && !PLAYER.interior; if (on && !bc) bc = BEACON.make(DOOR[0], DOOR[1], 2.6, 7, 0xffb347); if (!on && bc) { BEACON.free(bc); bc = null; } if (bc) BEACON.anim(bc, dt); }
+  function update(dt) { beacon(dt); const g = G_(); if (!g || !g.defenders || invited() || GAME.state !== 'play' || MISSIONS.active || (DLG && DLG.open) || (window.__TALK && window.__TALK.cur)) { t = 0; return; }
     t += dt; if (t < 20 || t > 1e8) return; t = 1e9; const BL = 'Rayco «El Blanco» (por el móvil)';
     MISSIONS.kit.talk([[BL, '«Mmm... ¡brrr!...» Chopa. Ahora que somos Defensores... tengo una cosa en casa. Una máquina de las de antes, de cuando los recreativos. ¡<b>BENCOMO</b>! El mencey de Taoro repartiendo varazos a los castellanos en Acentejo.'],
       [BL, 'Vente a mi casa cuando quieras y le das. Gratis, que es mía. Mi madre hace café. Y en las cafeterías y las tascas han puesto la <b>GUERRA DE NAVES</b>, a un duro la partida. Y en las jugueterías, <b>GUANCHE WARRIORS</b>: el Mencey, el Pastor y la Mirladora contra Guayota... ¡mmm, a la orden!'],
@@ -8991,7 +8993,7 @@ const RECRE = (() => {
   function use() { if (!near()) return false; ARCADE.open({ id: 'bencomo', key: 'blanco', where: 'CASA DE EL BLANCO', price: 0 }, () => HUD.toast('«Mmm... ¡brrr!» Vuelve cuando quieras, que la máquina no se va.', COL_, 3)); return true; }
   function prompt() { return near() ? `${CONTROLS.kbd('use')} Subir a casa de El Blanco a jugar a su máquina: BENCOMO` : ''; }
   function blips() { return invited() ? [[DOOR[0], DOOR[1], COL_]] : []; }
-  return { update, use, prompt, blips, invited, DOOR };
+  return { update, use, prompt, blips, invited, DOOR, _bc: () => bc };
 })();
 
 // ============ «BENCOMO, ACENTEJO'S REVENGE» (v0.80): the arcade at El Blanco's house (free) ============
@@ -13090,7 +13092,8 @@ const CASA = (() => {
     console.log('casas', Object.keys(HOMES).length, 'inmobiliaria', !!inmoDoor); }
   // ---------- the estate agency's phone call (after the arcades: you have money and something to play)
   let callT = 0;
-  function update(dt) { const c = data(); // the days go by (the rent)
+  let bcI = null; function beacons(dt) { const on = !!(inmoDoor && data().intro && !PLAYER.interior); if (on && !bcI) bcI = BEACON.make(inmoDoor.x + inmoDoor.nx * 1.6, inmoDoor.z + inmoDoor.nz * 1.6, 2.4, 7, 0xffb300); if (!on && bcI) { BEACON.free(bcI); bcI = null; } if (bcI) BEACON.anim(bcI, dt); } // v0.83.1: the agency's door, like El Blanco's
+  function update(dt) { beacons(dt); const c = data(); // the days go by (the rent)
     if (typeof GAME.tod === 'number') { if (c.lastTod !== undefined && GAME.tod < c.lastTod - 12) { c.day++; if (c.rent && c.rent.until === c.day) HUD.toast('Se te ha acabado el alquiler de ' + nameOf(c.rent.id) + ': renuévalo en Pisos Chachi', COL_INMO, 6); } c.lastTod = GAME.tod; }
     for (const id in HOMES) { const H = HOMES[id]; const on = !!ARCADE.data().console; H.con.visible = on; H.led.visible = on; }
     if (c.intro || !G().defenders || !ARCADE.data().invited || GAME.state !== 'play' || MISSIONS.active || (DLG && DLG.open) || (window.__TALK && window.__TALK.cur) || !inmoDoor) { callT = 0; return; }

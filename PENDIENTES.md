@@ -11,6 +11,8 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
     - Mordiscos, alargando el cuello.
     - En carrera, un salto con coletazo.
     - Vale para los que montan los enemigos y para el tuyo.
+  - **Botín**: de vez en cuando, con poca probabilidad, los enemigos sueltan pócimas de magia (para recargar a mitad de
+    fase, no solo con los duendes), y algunos sueltan comida.
   - **El remate por detrás**: tras 2 o 3 golpes el enemigo se queda un momento aturdido, antes del remate. Si ahí
     pulsas saltar, el guerrero hace una pirueta por encima, le golpea por la espalda y lo tumba.
 - [ ] **Auditoría v0.83.0** (20-oct 18:35, APTO CON AVISOS):

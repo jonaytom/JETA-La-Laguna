@@ -70,7 +70,8 @@ const CASA = (() => {
     console.log('casas', Object.keys(HOMES).length, 'inmobiliaria', !!inmoDoor); }
   // ---------- the estate agency's phone call (after the arcades: you have money and something to play)
   let callT = 0;
-  function update(dt) { const c = data(); // the days go by (the rent)
+  let bcI = null; function beacons(dt) { const on = !!(inmoDoor && data().intro && !PLAYER.interior); if (on && !bcI) bcI = BEACON.make(inmoDoor.x + inmoDoor.nx * 1.6, inmoDoor.z + inmoDoor.nz * 1.6, 2.4, 7, 0xffb300); if (!on && bcI) { BEACON.free(bcI); bcI = null; } if (bcI) BEACON.anim(bcI, dt); } // v0.83.1: the agency's door, like El Blanco's
+  function update(dt) { beacons(dt); const c = data(); // the days go by (the rent)
     if (typeof GAME.tod === 'number') { if (c.lastTod !== undefined && GAME.tod < c.lastTod - 12) { c.day++; if (c.rent && c.rent.until === c.day) HUD.toast('Se te ha acabado el alquiler de ' + nameOf(c.rent.id) + ': renuévalo en Pisos Chachi', COL_INMO, 6); } c.lastTod = GAME.tod; }
     for (const id in HOMES) { const H = HOMES[id]; const on = !!ARCADE.data().console; H.con.visible = on; H.led.visible = on; }
     if (c.intro || !G().defenders || !ARCADE.data().invited || GAME.state !== 'play' || MISSIONS.active || (DLG && DLG.open) || (window.__TALK && window.__TALK.cur) || !inmoDoor) { callT = 0; return; }

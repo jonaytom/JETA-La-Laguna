@@ -3,6 +3,10 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.83.1 — 2026-10-20 — La entrada de casa de El Blanco, marcada con su cilindro de luz
+- **La entrada de casa de El Blanco** (Teobaldo Power) se marca como los otros sitios: un cilindro de luz
+  transparente, en naranja (Jonay). La puerta de la inmobiliaria Pisos Chachi lleva también el suyo, en ámbar.
+
 ## 0.83.0 — 2026-10-20 — La casa: la inmobiliaria Pisos Chachi, tu piso y la consola GOFIO-8
 - **La inmobiliaria Pisos Chachi** (parodia), en la Calle Heraclio Sánchez. Te llama por el móvil cuando ya eres
   Defensor y El Blanco te ha contado lo de las recreativas. Tiene:

@@ -59,8 +59,8 @@ async def run(pg):
     # 6) El Blanco's call and his house
     bl = json.loads(await pg.evaluate("""(async()=>{ const d=__dbg; const G=d.MISSIONS.getState().gang; return JSON.stringify({ hay_blanco: !!(d.NPC && d.NPC.blanco) }); })()"""))
     six = json.loads(await pg.evaluate("""(()=>{ const d=__dbg, A=d.ARCADE; const a=A.data(); a.invited=true; const D=d.RECRE.DOOR; const P=d.PLAYER; P.x=D[0]+1; P.z=D[1]; __step(2);
-      const pr=d.RECRE.prompt(); const used=d.RECRE.use(); const run=A.running; A.close(); return JSON.stringify({ aviso: pr, abre: used && run, punto: d.RECRE.blips().length }); })()""")); print('casa de El Blanco', bl, six)
-    ok6 = six.get('abre') and six.get('punto') == 1 and 'BENCOMO' in six.get('aviso', '')
+      d.RECRE.update(0.016); const luz=!!d.RECRE._bc(); const pr=d.RECRE.prompt(); const used=d.RECRE.use(); const run=A.running; A.close(); return JSON.stringify({ aviso: pr, abre: used && run, punto: d.RECRE.blips().length, luz }); })()""")); print('casa de El Blanco', bl, six)
+    ok6 = six.get('abre') and six.get('luz') and six.get('punto') == 1 and 'BENCOMO' in six.get('aviso', '')
     for nm, (cx, cz, lx, lz) in {'v080_portal_blanco': (-777.5, -408.5, -768, -416), 'v080_portal_adelantado': (-760, -357, -752, -366)}.items():
         await pg.evaluate("([cx,cz,lx,lz])=>{ const d=__dbg; d.PLAYER.x=cx; d.PLAYER.z=cz+3; __step(3); const y=d.heightAt(cx,cz); d.camera.position.set(cx,y+1.8,cz); d.camera.lookAt(lx, d.heightAt(lx,lz)+2.2, lz); d.camera.updateMatrixWorld(); }", [cx, cz, lx, lz])
         os.makedirs('shots', exist_ok=True); open('shots/' + nm + '.jpg', 'wb').write(base64.b64decode((await pg.evaluate("window.__snap()")).split(',')[1])); print('foto', nm); print('BLANCO', 'OK' if ok6 else 'FALLA'); ok = ok and ok6

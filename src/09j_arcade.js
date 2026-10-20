@@ -208,7 +208,9 @@ const RECRE = (() => {
   let t = 0; const COL_ = '#ffb347'; const DOOR = [-772, -413]; // Jonay: the entrance of the Edificio Casa del Blanco (Teobaldo Power), right by the building
   const G_ = () => window.GANG || null;
   function invited() { const g = G_(); return !!(g && g.arcade && g.arcade.invited); }
-  function update(dt) { const g = G_(); if (!g || !g.defenders || invited() || GAME.state !== 'play' || MISSIONS.active || (DLG && DLG.open) || (window.__TALK && window.__TALK.cur)) { t = 0; return; }
+  // v0.83.1 (Jonay): the entrance marked like the other places, a see-through cylinder of light, orange
+  let bc = null; function beacon(dt) { const on = invited() && !PLAYER.interior; if (on && !bc) bc = BEACON.make(DOOR[0], DOOR[1], 2.6, 7, 0xffb347); if (!on && bc) { BEACON.free(bc); bc = null; } if (bc) BEACON.anim(bc, dt); }
+  function update(dt) { beacon(dt); const g = G_(); if (!g || !g.defenders || invited() || GAME.state !== 'play' || MISSIONS.active || (DLG && DLG.open) || (window.__TALK && window.__TALK.cur)) { t = 0; return; }
     t += dt; if (t < 20 || t > 1e8) return; t = 1e9; const BL = 'Rayco «El Blanco» (por el móvil)';
     MISSIONS.kit.talk([[BL, '«Mmm... ¡brrr!...» Chopa. Ahora que somos Defensores... tengo una cosa en casa. Una máquina de las de antes, de cuando los recreativos. ¡<b>BENCOMO</b>! El mencey de Taoro repartiendo varazos a los castellanos en Acentejo.'],
       [BL, 'Vente a mi casa cuando quieras y le das. Gratis, que es mía. Mi madre hace café. Y en las cafeterías y las tascas han puesto la <b>GUERRA DE NAVES</b>, a un duro la partida. Y en las jugueterías, <b>GUANCHE WARRIORS</b>: el Mencey, el Pastor y la Mirladora contra Guayota... ¡mmm, a la orden!'],
@@ -217,5 +219,5 @@ const RECRE = (() => {
   function use() { if (!near()) return false; ARCADE.open({ id: 'bencomo', key: 'blanco', where: 'CASA DE EL BLANCO', price: 0 }, () => HUD.toast('«Mmm... ¡brrr!» Vuelve cuando quieras, que la máquina no se va.', COL_, 3)); return true; }
   function prompt() { return near() ? `${CONTROLS.kbd('use')} Subir a casa de El Blanco a jugar a su máquina: BENCOMO` : ''; }
   function blips() { return invited() ? [[DOOR[0], DOOR[1], COL_]] : []; }
-  return { update, use, prompt, blips, invited, DOOR };
+  return { update, use, prompt, blips, invited, DOOR, _bc: () => bc };
 })();
