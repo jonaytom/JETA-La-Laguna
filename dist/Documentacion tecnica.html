@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.82.2</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.83.0</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2092,10 +2092,18 @@ quitarles los zurrones.</li>
 <li><strong>Música</strong>: chiptune épico con tambor y flauta canarios. La de cada fase es distinta y más larga, sin repetirse
     tanto.</li>
 </ul>
-<h2>La inmobiliaria y los pisos — v0.84</h2>
+<h2>La inmobiliaria y los pisos — hecho en v0.83.0 (<code>12l_casa.js</code>)</h2>
 <ul>
-<li><strong>La inmobiliaria</strong> (parodia) alquila el <strong>pisito</strong> (una casita chula cerca del Pasaje Teide) y, mejor aún (Jonay,
-  20-oct), <strong>vende varios pisos</strong>: eliges el que te permita tu dinero, y los pisos son caros.</li>
+<li>Hecho: la inmobiliaria Pisos Chachi (Calle Heraclio Sánchez, llama por el móvil), el pisito de Herradores en
+  alquiler ($250 por 7 días) y tres pisos en venta ($18.000, $32.000 y $55.000). Dentro: la cama (duermes y se guarda),
+  la tele y la consola GOFIO-8 (juguetería, $1.200; cartuchos $90-150) con el menú de cartuchos.</li>
+<li>
+<p>Pendiente: Pachanga 3x3 y Play Furbito en la consola, en modo campeonato.</p>
+</li>
+<li>
+<p><strong>La inmobiliaria</strong> (parodia) alquila el <strong>pisito</strong> (una casita chula cerca del Pasaje Teide) y, mejor aún (Jonay,
+  20-oct), <strong>vende varios pisos</strong>: eliges el que te permita tu dinero, y los pisos son caros.</p>
+</li>
 <li>Dentro: la cama (guardar la partida), el sofá y la tele.</li>
 <li>La <strong>consola</strong> (cara) se compra en la juguetería y se instala en la tele de tu casa. Con ella se juega a todos los
   minijuegos que tengas.</li>
@@ -2103,6 +2111,40 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.83.0 — 2026-10-20 — La casa: la inmobiliaria Pisos Chachi, tu piso y la consola GOFIO-8</h2>
+<ul>
+<li><strong>La inmobiliaria Pisos Chachi</strong> (parodia), en la Calle Heraclio Sánchez. Te llama por el móvil cuando ya eres
+  Defensor y El Blanco te ha contado lo de las recreativas. Tiene:</li>
+<li><strong>El pisito de Herradores</strong>, al lado del Pasaje Teide: en alquiler, $250 por semana (7 días del juego). Avisa
+    cuando se acaba y se renueva en la oficina.</li>
+<li>Pisos en venta, caros:<ul>
+<li>Calle San Agustín: $18.000.</li>
+<li>Calle Viana, una casa con patio: $32.000.</li>
+<li>Ático en la Plaza del Adelantado: $55.000.
+  Son edificios de verdad del mapa, con la puerta en la fachada de su calle. Solo se abren cuando son tuyos; antes no
+  se ve ni la puerta.</li>
+</ul>
+</li>
+<li><strong>Dentro de casa</strong>:</li>
+<li>La <strong>cama</strong>: duermes hasta las 8, te pones al 100 % de salud y se guarda la partida.</li>
+<li>El sofá, la tele, una cocinita y, en los pisos grandes, una mesa para la banda.</li>
+<li><strong>La consola GOFIO-8</strong>: se compra en las jugueterías ($1.200) y se instala sola en la tele de tu casa. Los cartuchos
+  también se venden allí:</li>
+<li>Bencomo: $90.</li>
+<li>Guerra de Naves: $120.</li>
+<li>Guanche Warriors: $150.
+  Al encenderla (E delante de la tele) sale <strong>un menú con los cartuchos que tienes</strong>. Se juega gratis y con récords
+  propios de casa; con Q se vuelve al menú.</li>
+<li><strong>Las jugueterías se marcan con un osito de peluche</strong> (Jonay: la gota no decía «juguetería»), en el minimapa, en el
+  mapa y en el icono que flota sobre la tienda.</li>
+<li><strong>La leyenda del mapa grande</strong> dice qué es cada marca y, como el diario, solo enseña lo que ya tienes abierto:
+  maleantes, casa de El Blanco, bares con máquina, jugueterías, inmobiliaria y tu casa. En el mapa grande ya sale
+  también la casa de El Blanco.</li>
+<li><strong>Diario (J)</strong>: entradas nuevas en «Lo que sabes» para la inmobiliaria, tu casa y la consola, con la más cercana y
+  su ruta al GPS.</li>
+<li><strong>Arreglo</strong>: al cargar una partida se perdía lo de las recreativas (los récords, la llamada de El Blanco, lo
+  comprado). Ahora se guarda y se recupera, igual que la casa.</li>
+</ul>
 <h2>0.82.2 — 2026-10-20 — Las jugueterías y los bares de la máquina, en el mapa</h2>
 <ul>
 <li><strong>Las jugueterías salen en el minimapa y en el mapa grande (M)</strong> con la gota azul, una vez abiertas (Jonay: «¿cómo sé

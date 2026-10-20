@@ -158,7 +158,7 @@ const AGUA = (() => {
   document.addEventListener('mouseup', (e) => { if (e.button === 0) RIFLE.firing = false; });
   // ---------- toy shops and fountains (E)
   function toyIconTex() { const c = mkCanvas(128, 128), x = c.getContext('2d'); x.fillStyle = '#1e88e5'; x.beginPath(); x.arc(64, 64, 58, 0, 7); x.fill(); x.lineWidth = 8; x.strokeStyle = '#fff'; x.stroke();
-    x.fillStyle = '#fff'; x.beginPath(); x.moveTo(64, 22); x.bezierCurveTo(84, 52, 94, 66, 94, 80); x.arc(64, 80, 30, 0, Math.PI); x.bezierCurveTo(34, 66, 44, 52, 64, 22); x.fill(); return canvasTex(c, { repeat: false }); }
+    x.translate(64, 70); if (window.__toyBear) window.__toyBear(x, 30, 4); return canvasTex(c, { repeat: false }); } // v0.83: a teddy bear (Jonay: the drop didn't say «toy shop»)
   function makeShops() { if (shopsMade) return; shopsMade = true; const mat = new THREE.SpriteMaterial({ map: (toyIcon = toyIconTex()), transparent: true });
     for (const s of DATA.SH || []) { if (!s[3] || !/Juguet/i.test(s[3])) continue; const sp = safeSpot(s[0], s[1], 0.5); const spr = new THREE.Sprite(mat); spr.scale.set(1.1, 1.1, 1); spr.position.set(sp[0], heightAt(sp[0], sp[1]) + 3, sp[1]); spr.visible = false; scene.add(spr); shops.push({ x: sp[0], z: sp[1], name: s[3], spr }); } }
   const open_ = () => !!(MISSIONS.gang && MISSIONS.gang.jugueterias);
@@ -167,9 +167,17 @@ const AGUA = (() => {
   const PRICE = 350, BALLS = 20;
   function openShop(s) {
     const items = []; if (ARCADE.data().invited) items.push(['arc', '🕹 Echar una partida a la máquina: <b>GUANCHE WARRIORS</b> · <b>$1</b> la partida']); // v0.82: the toy shops' machine
+    // v0.83: the GOFIO-8 console for the TV at home and its cartridges (once El Blanco has told you about the arcades)
+    const A_ = ARCADE.data(), CART = { bencomo: 90, naves: 120, guanche: 150 };
+    if (A_.invited && !A_.console) items.push(['console', '🎮 Consola <b>GOFIO-8</b> para la tele de casa · <b>$1.200</b>']);
+    if (A_.console) for (const id in CART) if (!A_.bought.includes(id) && ARCADE.GAMES[id]) items.push(['cart_' + id, `💾 Cartucho «${ARCADE.GAMES[id].title}» para la GOFIO-8 · <b>$${CART[id]}</b>`, CART[id], id]);
     if (!RIFLE.has) items.push(['rifle', `Rifle de agua «Guepardo SK-9» eléctrico · <b>$${PRICE}</b>`]); else items.push(['fill', 'Llenar el rifle de agua (del grifo de la tienda) · <b>$2</b>']); if (WEAPON.has) items.push(['balls', `Bolsa de bolitas para la pistola (6) · <b>$${BALLS}</b>`]);
     DLG.show(s.name, 'Juguetería', `Tienes <b>$${PLAYER.money}</b>.${RIFLE.has ? '' : ' En el escaparate: un rifle de agua eléctrico, «diez metros de chorro, depósito transparente».'}`, '¿Qué te llevas?', [...items.map((q) => q[1]), 'Nada, gracias'], (i) => {
       DLG.hide(); const it = items[i]; if (!it) return;
+      if (it[0] === 'console' || it[0].startsWith('cart_')) { const cost2 = it[0] === 'console' ? 1200 : it[2]; if (PLAYER.money < cost2) { AUDIO.fail(); HUD.toast('No te llega el dinero: cuesta $' + cost2, '#ffb3b3', 3); return; } PLAYER.money -= cost2; AUDIO.cash && AUDIO.cash();
+        if (it[0] === 'console') { A_.console = true; HUD.big('¡GOFIO-8!', '#7fe0ff', 3); HUD.toast(CASA.ownsAny() ? 'La consola ya está en la tele de tu casa. Ahora compra cartuchos aquí.' : 'Tienes la consola… pero te hace falta una casa con tele: la inmobiliaria Pisos Chachi alquila y vende pisos.', '#7fe0ff', 7); }
+        else { A_.bought.push(it[3]); HUD.toast(`Cartucho «${ARCADE.GAMES[it[3]].title}»: ya lo puedes jugar en la GOFIO-8 de tu casa`, '#7fe0ff', 5); }
+        SAVE && SAVE.dirty && SAVE.dirty(); return; }
       if (it[0] === 'arc') { ARCADE.open({ id: 'guanche', key: 'jug_' + s.name, where: String(s.name).toUpperCase(), price: 1 }, (r) => { if (r && r.paid) HUD.toast(`Te has dejado $${r.paid} en la máquina`, '#9fd7ff', 3); }); return; }
       const cost = it[0] === 'rifle' ? PRICE : it[0] === 'balls' ? BALLS : 2;
       if (PLAYER.money < cost) { AUDIO.fail(); HUD.toast('No te llega el dinero', '#ffb3b3', 2.5); return; } PLAYER.money -= cost; AUDIO.cash && AUDIO.cash();

@@ -5,6 +5,18 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
 
 ## Por revisar con Jonay
 
+- [ ] **Guanche Warriors, golpes nuevos** (Jonay, 20-oct):
+  - **Atacar corriendo**: un salto hacia delante con una patada, en vez de la embestida.
+  - **Los lagartos tienen que atacar**:
+    - Mordiscos, alargando el cuello.
+    - En carrera, un salto con coletazo.
+    - Vale para los que montan los enemigos y para el tuyo.
+  - **El remate por detrás**: tras 2 o 3 golpes el enemigo se queda un momento aturdido, antes del remate. Si ahí
+    pulsas saltar, el guerrero hace una pirueta por encima, le golpea por la espalda y lo tumba.
+- [ ] **Auditoría v0.83.0** (20-oct 18:35, APTO CON AVISOS):
+  - 11 avisos nuevos del análisis estático en `addInterior()` de `05g_interiors.js`, que crea geometría. Solo pasa al
+    construir la ciudad (las casas), no en cada fotograma; aun así se podrían compartir las geometrías de las puertas.
+  - Pintar un fotograma baja a 34 ms.
 - [ ] **Lint**: dos veces hoy (v0.82.0 y v0.82.2) un comentario `//` puesto a media línea se comió el código que iba
   detrás, y `lint_js.py` no lo vio. Mejorar la regla: avisar de cualquier `//` seguido de `;` y de más código en la
   misma línea.
@@ -37,7 +49,9 @@ y no tocar lo mismo dos veces. Al hacer uno, se tacha y se apunta la versión.
   Hecho en v0.80.0: el motor de recreativas y BENCOMO en casa de El Blanco (llamada tras «Defensores»).
   Hecho en v0.81.0: **GUERRA DE NAVES** en cafeterías y tascas (primera versión, para pulir).
   Hecho en v0.82.0: **GUANCHE WARRIORS** en las jugueterías (primera versión, para pulir).
-  Falta: Metal Slug (jugueterías), la inmobiliaria y los pisos, la consola, Pachanga 3x3 y Play Furbito.
+  Hecho en v0.83.0: la inmobiliaria, los pisos y la consola GOFIO-8 con su menú de cartuchos.
+  Falta: el basket a 3x3 (v0.84, lo siguiente), Pachanga 3x3 y Play Furbito en la consola (campeonato por países) y
+  el tipo Metal Slug.
   Jonay probará todas las máquinas y dirá impresiones.
   - Jonay, 20-oct: los nombres son «Guerra de Naves» (el tipo R-Type) y «Guanche Warriors» (el tipo Golden Axe:
     beat'em up, no plataformas, con varias fases). En Guanche Warriors se elige personaje al empezar:

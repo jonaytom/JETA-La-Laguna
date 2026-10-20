@@ -242,6 +242,12 @@
    [
     "prueba_0821.py"
    ]
+  ],
+  [
+   "^src/12l_casa|^src/05g_interiors|^src/09j_arcade|^src/09i_agua|^src/11_hud",
+   [
+    "prueba_083.py"
+   ]
   ]
  ]
 }

@@ -34,7 +34,7 @@ const M_RIFLE = {
   start() { const K = K3(); this.st = { step: 0 };
     K.talk([[BLANCO, '«Brrr... agua... mmm... fuego... psss... juguetería... ¡rifle!»'], [K.CH, '¿Que ya venden el rifle de agua en las jugueterías? ¿El eléctrico, el de diez metros de chorro?'],
       [BLANCO, '«Mmm... sí... brrr... trescientos cincuenta... psss... fuente... prueba... ¡como las latas!»'], [K.CH, 'Entendido: lo compro y nos vemos en la plaza de la fuente para probarlo. ¿Y Boca Papa?'], [BLANCO, '«Psss... siesta.»']], () => {
-      if (!K.isActive(this)) return; K.GANG.jugueterias = true; HUD.toast('Se abren las JUGUETERÍAS (icono de la gota azul)', '#7fd3ff', 5);
+      if (!K.isActive(this)) return; K.GANG.jugueterias = true; HUD.toast('Se abren las JUGUETERÍAS (icono del osito de peluche en el mapa)', '#7fd3ff', 5);
       if (RIFLE.has) { this.toFountain(); return; } this.st.step = 1; const sh = AGUA.shops.slice().sort((a, b) => Math.hypot(a.x - PLAYER.x, a.z - PLAYER.z) - Math.hypot(b.x - PLAYER.x, b.z - PLAYER.z))[0];
       if (!sh) { giveRifle(true); this.toFountain(); return; } K.goto(sh.x, sh.z, 2.2, 0x1e88e5); K.setObjective(`Compra el ${b2('rifle de agua')} en ${b2(sh.name)} (${CONTROLS.kbd('use')})`); }); },
   onEvent(t, tag) { if (t === 'bought' && tag === 'rifle' && this.st && this.st.step === 1) this.toFountain(); if (t === 'refill' && this.st && this.st.step === 5) this.toBoca(); },

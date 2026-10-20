@@ -12,7 +12,7 @@ async def run(pg):
         os.makedirs('shots', exist_ok=True)
         print('(sin foto)', name)  # page.screenshot se cuelga con el juego en marcha
     # 1) a new game: only what is open
-    a = json.loads(await pg.evaluate("""(()=>{ const d=__dbg, G=window.GANG; const keep={ m: G.maleIntro, s: G.sastronTut, j: G.jugueterias, b: G.basketTut, f: G.futbolTut, p: G.patrol, i: d.ARCADE.data().invited }; window.__keep=keep;
+    a = json.loads(await pg.evaluate("""(()=>{ const d=__dbg, G=window.GANG; const keep={ m: G.maleIntro, s: G.sastronTut, j: G.jugueterias, b: G.basketTut, f: G.futbolTut, p: G.patrol, i: d.ARCADE.data().invited, con: d.ARCADE.data().console, casa: G.casa ? JSON.stringify(G.casa) : null }; window.__keep=keep; d.ARCADE.data().console=false; delete G.casa;
       G.maleIntro=false; G.jugueterias=false; G.basketTut=false; G.futbolTut=false; G.patrol=false; d.ARCADE.data().invited=false; d.GAME.state='play'; d.DIARIO.open(); const L=document.getElementById('diaList').textContent;
       return JSON.stringify({ abierto: d.DIARIO.open_, aun_no: /aún no/i.test(L), pendientes: (L.match(/○/g)||[]).length, sabes: L.includes('Lo que sabes'), sabidos: d.DIARIO.known().length }); })()"""))
     print('partida nueva', a); await snap('v0821_diario_nuevo')
@@ -36,7 +36,7 @@ async def run(pg):
         and c['detalle_quien'] and c['detalle_donde'] and c['detalle_charla'] and m['maleantes']
     print('SABES', 'OK' if ok3 else 'FALLA'); ok = ok and ok3
     # 4) v0.82.2: the toy shops on the minimap / big map, the nearest one and «MARCAR EN EL GPS» in the diary
-    g = json.loads(await pg.evaluate("""(()=>{ const d=__dbg; const abierto=d.AGUA.isOpen(); const n=d.AGUA.nearestShop(); __step(3); d.BIGMAP.toggle(); const big=d.BIGMAP.open; d.BIGMAP.toggle(); d.GAME.state='play';
+    g = json.loads(await pg.evaluate("""(()=>{ const d=__dbg; const abierto=d.AGUA.isOpen(); { const s0=d.AGUA.shops[0]; d.PLAYER.x=s0.x+180; d.PLAYER.z=s0.z; __step(1); } const n=d.AGUA.nearestShop(); __step(3); d.BIGMAP.toggle(); const big=d.BIGMAP.open; d.BIGMAP.toggle(); d.GAME.state='play';
       d.DIARIO.open(); const items=[...document.querySelectorAll('#diaList .diaItem')].filter(e=>e.dataset.k==='__f'); const it=items.find(e=>e.textContent.includes('Las jugueterías')); if (it) it.click();
       const D=document.getElementById('diaDet').textContent; const b=document.getElementById('diaGps'); if (b) b.click(); const T=d.GPS.target;
       return JSON.stringify({ abierto, cercana: n && n.name, metros: n && Math.round(n.d), mapa: big, texto: D.includes('La más cerca'), gps: !!T && !!n && Math.hypot(T[0]-n.x, T[1]-n.z) < 1, cerrado: !d.DIARIO.open_ }); })()"""))
@@ -46,6 +46,6 @@ async def run(pg):
     await pg.evaluate("(()=>{ __dbg.BIGMAP.toggle(); __dbg.setWaypoint(null); })()")
     ok4 = g['abierto'] and g['cercana'] and g['mapa'] and g['texto'] and g['gps'] and g['cerrado']
     print('MAPA', 'OK' if ok4 else 'FALLA'); ok = ok and ok4
-    await pg.evaluate("(()=>{ const k=window.__keep, G=window.GANG; G.maleIntro=k.m; G.sastronTut=k.s; G.jugueterias=k.j; G.basketTut=k.b; G.futbolTut=k.f; G.patrol=k.p; __dbg.ARCADE.data().invited=k.i; })()")
+    await pg.evaluate("(()=>{ const k=window.__keep, G=window.GANG; G.maleIntro=k.m; G.sastronTut=k.s; G.jugueterias=k.j; G.basketTut=k.b; G.futbolTut=k.f; G.patrol=k.p; __dbg.ARCADE.data().invited=k.i; __dbg.ARCADE.data().console=k.con; if (k.casa) G.casa=JSON.parse(k.casa); else delete G.casa; })()")
     print('errores', errs[:3]); ok = ok and not errs
     print('PRUEBA 0821', 'OK' if ok else 'FALLA')

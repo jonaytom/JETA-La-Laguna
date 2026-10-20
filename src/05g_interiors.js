@@ -51,8 +51,8 @@ function addInterior(def) {
     const p = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 3), panel); p.position.y = 1.6; g.add(p);
     for (const sx of [-1.3, 1.3]) { const j = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3.3, 0.2), glow); j.position.set(sx, 1.65, 0.05); g.add(j); }
     const l = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.2, 0.2), glow); l.position.set(0, 3.3, 0.05); g.add(l);
-    const ic = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.4), new THREE.MeshBasicMaterial({ map: doorIcon(), transparent: true, depthWrite: false, fog: false })); ic.position.set(d.x + d.nx * 1.2, y + 5.2, d.z + d.nz * 1.2); ic.renderOrder = 5; scene.add(ic); DOORMARKS.push({ m: ic, y: y + 5.2 });
-    scene.add(g); LABELS.push(['Entrar: ' + def.name, d.x, d.z, 4]);
+    const ic = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.4), new THREE.MeshBasicMaterial({ map: doorIcon(), transparent: true, depthWrite: false, fog: false })); ic.position.set(d.x + d.nx * 1.2, y + 5.2, d.z + d.nz * 1.2); ic.renderOrder = 5; scene.add(ic); DOORMARKS.push({ m: ic, y: y + 5.2, it: def, g });
+    scene.add(g); if (!def.noLabel) LABELS.push(['Entrar: ' + def.name, d.x, d.z, 4]); // v0.83: the homes don't say «Entrar» on the map
   }
 }
 
@@ -133,10 +133,10 @@ function buildHyperInterior(doors, name, s) {
 function nearestDoor() {
   const P = PLAYER; if (P.car) return null;
   if (P.interior) { const d = P.interior; return Math.hypot(P.x - d.exit.x, P.z - d.exit.z) < 3 ? { exit: true, it: d } : null; }
-  for (const it of INTERIORS) for (const d of it.doors) if (Math.hypot(P.x - d.x, P.z - d.z) < 3.4) return { exit: false, it, door: d };
+  for (const it of INTERIORS) { if (it.locked && it.locked()) continue; /* v0.83: a home that isn't yours (yet) */ for (const d of it.doors) if (Math.hypot(P.x - d.x, P.z - d.z) < 3.4) return { exit: false, it, door: d }; }
   return null;
 }
-function updateDoorMarks(t) { for (const k of DOORMARKS) { k.m.visible = !PLAYER.interior; k.m.quaternion.copy(camera.quaternion); k.m.position.y = k.y + Math.sin(t * 2.5) * 0.25; } }
+function updateDoorMarks(t) { for (const k of DOORMARKS) { const lk = !!(k.it && k.it.locked && k.it.locked()); k.m.visible = !PLAYER.interior && !lk; if (k.g) k.g.visible = !lk; k.m.quaternion.copy(camera.quaternion); k.m.position.y = k.y + Math.sin(t * 2.5) * 0.25; } }
 function useDoor(t) {
   const P = PLAYER; $('fade').style.opacity = 1; AUDIO.door();
   setTimeout(() => {

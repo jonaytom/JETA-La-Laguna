@@ -185,7 +185,13 @@ La consola, al encenderla, muestra un menú con los cartuchos que tienes. Cada j
   - **Música**: chiptune épico con tambor y flauta canarios. La de cada fase es distinta y más larga, sin repetirse
     tanto.
 
-## La inmobiliaria y los pisos — v0.84
+## La inmobiliaria y los pisos — hecho en v0.83.0 (`12l_casa.js`)
+
+- Hecho: la inmobiliaria Pisos Chachi (Calle Heraclio Sánchez, llama por el móvil), el pisito de Herradores en
+  alquiler ($250 por 7 días) y tres pisos en venta ($18.000, $32.000 y $55.000). Dentro: la cama (duermes y se guarda),
+  la tele y la consola GOFIO-8 (juguetería, $1.200; cartuchos $90-150) con el menú de cartuchos.
+- Pendiente: Pachanga 3x3 y Play Furbito en la consola, en modo campeonato.
+
 
 - **La inmobiliaria** (parodia) alquila el **pisito** (una casita chula cerca del Pasaje Teide) y, mejor aún (Jonay,
   20-oct), **vende varios pisos**: eliges el que te permita tu dinero, y los pisos son caros.

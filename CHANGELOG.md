@@ -3,6 +3,37 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.83.0 — 2026-10-20 — La casa: la inmobiliaria Pisos Chachi, tu piso y la consola GOFIO-8
+- **La inmobiliaria Pisos Chachi** (parodia), en la Calle Heraclio Sánchez. Te llama por el móvil cuando ya eres
+  Defensor y El Blanco te ha contado lo de las recreativas. Tiene:
+  - **El pisito de Herradores**, al lado del Pasaje Teide: en alquiler, $250 por semana (7 días del juego). Avisa
+    cuando se acaba y se renueva en la oficina.
+  - Pisos en venta, caros:
+    - Calle San Agustín: $18.000.
+    - Calle Viana, una casa con patio: $32.000.
+    - Ático en la Plaza del Adelantado: $55.000.
+  Son edificios de verdad del mapa, con la puerta en la fachada de su calle. Solo se abren cuando son tuyos; antes no
+  se ve ni la puerta.
+- **Dentro de casa**:
+  - La **cama**: duermes hasta las 8, te pones al 100 % de salud y se guarda la partida.
+  - El sofá, la tele, una cocinita y, en los pisos grandes, una mesa para la banda.
+- **La consola GOFIO-8**: se compra en las jugueterías ($1.200) y se instala sola en la tele de tu casa. Los cartuchos
+  también se venden allí:
+  - Bencomo: $90.
+  - Guerra de Naves: $120.
+  - Guanche Warriors: $150.
+  Al encenderla (E delante de la tele) sale **un menú con los cartuchos que tienes**. Se juega gratis y con récords
+  propios de casa; con Q se vuelve al menú.
+- **Las jugueterías se marcan con un osito de peluche** (Jonay: la gota no decía «juguetería»), en el minimapa, en el
+  mapa y en el icono que flota sobre la tienda.
+- **La leyenda del mapa grande** dice qué es cada marca y, como el diario, solo enseña lo que ya tienes abierto:
+  maleantes, casa de El Blanco, bares con máquina, jugueterías, inmobiliaria y tu casa. En el mapa grande ya sale
+  también la casa de El Blanco.
+- **Diario (J)**: entradas nuevas en «Lo que sabes» para la inmobiliaria, tu casa y la consola, con la más cercana y
+  su ruta al GPS.
+- **Arreglo**: al cargar una partida se perdía lo de las recreativas (los récords, la llamada de El Blanco, lo
+  comprado). Ahora se guarda y se recupera, igual que la casa.
+
 ## 0.82.2 — 2026-10-20 — Las jugueterías y los bares de la máquina, en el mapa
 - **Las jugueterías salen en el minimapa y en el mapa grande (M)** con la gota azul, una vez abiertas (Jonay: «¿cómo sé
   dónde hay una juguetería?»). En el minimapa salen las de alrededor, y la más cercana siempre, en el borde si está

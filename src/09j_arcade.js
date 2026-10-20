@@ -119,6 +119,7 @@ const ARCADE = (() => {
   // ---------- the 80s cycle
   const free = () => M.price === 0;
   function attract(dt) {
+    if (M.console && hit('vP')) { toMenu(); return; } // the console at home: Q / right click back to the cartridges
     st.t += dt; const per = 26; const ph = st.t % per; // 0–6 title, 6–20 demo, 20–26 hi-scores
     if (ph < 6) st.view = 'title'; else if (ph < 20) { if (st.view !== 'demo') { st.view = 'demo'; G = M.game.create(api, { demo: true, loop: 0 }); } G.update(dt, demoPad); } else st.view = 'scores';
     if (hit('vP') && !free()) coin();
@@ -136,12 +137,33 @@ const ARCADE = (() => {
     if (hit('vU') || hit('vR')) { k = (k + 1) % ABC.length; sfx('pick'); } if (hit('vD') || hit('vL')) { k = (k + ABC.length - 1) % ABC.length; sfx('pick'); } st.name[st.ni] = ABC[k];
     if (hit('vS') || hit('vT')) { st.ni++; sfx('coin'); if (st.ni >= 3) { st.rank = addScore(M.key, M.game, st.name.join(''), G.score); st.mode = 'attract'; st.t = 20; st.view = 'scores'; st.hl = st.name.join(''); SAVE && SAVE.dirty && SAVE.dirty(); } }
     if (st.nT <= 0) { st.rank = addScore(M.key, M.game, st.name.join(''), G.score); toAttract(); } }
+  // ---------- v0.83: the GOFIO-8, the console at home (Jonay: «al iniciar, un menú para elegir el juego entre los que
+  // tienes»): open({ console: [ids] }) starts on this menu; A plays the chosen cartridge (free play, its own hi-scores
+  // «casa_<id>»), Q / right click on its title screen goes back to the menu, Esc switches it off
+  const CONSOLE = { title: 'GOFIO-8', sub: 'LA CONSOLA DE TU CASA', marquee: ['#2a2a3a', '#0a0a12'], titleCol: '#7fe0ff',
+    help: (K) => `↑↓ ELEGIR  A JUGAR: ${K('f_punch')}  MENÚ: ${K('b_pass')}  ESC APAGAR`,
+    music: { title: { bpm: 120, div: 4, loop: false, ch: [{ w: 'sq', v: 0.8, n: 'C5 E5 G5 C6 . . . . G5 . C6 . . . . . - . . .' }, { w: 'tri', v: 1, n: 'C3 . G3 . C3 . . . G2 . C3 . . . . .' }] } } };
+  function toMenu() { M.game = CONSOLE; M.key = 'consola'; M.bz = null; st.mode = 'menu'; st.view = 'title'; st.t = 0; G = null; stopMusic(); music(CONSOLE.music.title); }
+  function menu(dt) { st.t += dt; const L = M.console; if (hit('vU')) { st.sel = (st.sel + L.length - 1) % L.length; sfx('pick'); } if (hit('vD')) { st.sel = (st.sel + 1) % L.length; sfx('pick'); }
+    if ((hit('vS') || hit('vT')) && st.t > 0.4) { const id = L[st.sel], g = GAMES[id]; if (!g) return; M.game = g; M.key = 'casa_' + id; M.where = 'TU CASA'; M.bz = null; sfx('coin'); toAttract(); } }
+  function drawMenu() { const g = sx; g.setTransform(RS, 0, 0, RS, 0, 0); g.imageSmoothingEnabled = false; const t = st.t;
+    const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#0a0a24'); gr.addColorStop(1, '#2a1a3a'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(255,255,255,${0.2 + ((i * 37) % 10) / 20})`; g.fillRect((i * 97 + t * 10) % W, (i * 53) % (H * 0.5), 1, 1); }
+    const k = Math.min(1, t / 0.8); g.save(); g.globalAlpha = k; g.font = '40px "Press Start 2P", monospace'; g.textAlign = 'center'; g.textBaseline = 'top'; g.fillStyle = '#000'; g.fillText('GOFIO-8', W / 2 + 3, 28 + 3 - (1 - k) * 30);
+    const lg = g.createLinearGradient(0, 28, 0, 68); lg.addColorStop(0, '#ffffff'); lg.addColorStop(0.5, '#7fe0ff'); lg.addColorStop(1, '#2f7fe0'); g.fillStyle = lg; g.fillText('GOFIO-8', W / 2, 28 - (1 - k) * 30); g.restore();
+    txt(g, 'ENTERTAINMENT SYSTEM DE AGUERE', W / 2, 76, '#9fd7ff', 8, 'center'); txt(g, 'ELIGE UN CARTUCHO', W / 2, 104, '#ffd400', 8, 'center');
+    M.console.forEach((id, i) => { const gm = GAMES[id], y = 128 + i * 40, on = i === st.sel; g.fillStyle = on ? 'rgba(255,212,0,0.18)' : 'rgba(0,0,0,0.35)'; g.fillRect(70, y - 6, W - 140, 32);
+      if (on) { g.strokeStyle = Math.floor(t * 4) % 2 ? '#ffd400' : '#ff8a3a'; g.lineWidth = 1; g.strokeRect(70.5, y - 5.5, W - 141, 31); txt(g, '▶', 80, y + 4, '#ffd400', 10); }
+      g.fillStyle = (gm && gm.marquee && gm.marquee[0]) || '#333'; g.fillRect(100, y - 2, 30, 24); g.fillStyle = (gm && gm.titleCol) || '#fff'; g.fillRect(104, y + 2, 22, 4);
+      txt(g, gm ? gm.title : id, 142, y, on ? '#ffd400' : '#fff', 10); txt(g, gm && gm.sub ? gm.sub : '', 142, y + 14, '#9fd7ff', 6); });
+    txt(g, '↑↓ ELEGIR   A JUGAR   ESC APAGAR', W / 2, H - 22, '#fff', 8, 'center'); }
   function toAttract() { st.mode = 'attract'; st.t = 0; st.view = 'title'; G = null; if (M.game.music && M.game.music.title) music(M.game.music.title); }
   // virtual pads: the player's, and the demo's (the game gives its own demo pilot)
   const pad = { held: (v) => held(v), hit: (v) => hit(v) };
   const demoPad = { held: (v) => !!(G && G.demoKeys && G.demoKeys.held[v]), hit: (v) => !!(G && G.demoKeys && G.demoKeys.hit[v]) };
   // ---------- drawing the screen per mode
   function render() {
+    if (st.mode === 'menu') { drawMenu(); return; }
     const g = sx; g.setTransform(RS, 0, 0, RS, 0, 0); g.imageSmoothingEnabled = false;
     if (st.mode === 'play' || st.mode === 'cont' || st.view === 'demo') { G.draw(g); if (st.view === 'demo') { g.fillStyle = 'rgba(0,0,0,0.35)'; g.fillRect(0, H - 22, W, 22); blinkMsg(g); } }
     else if (st.view === 'scores') { M.game.drawBack ? M.game.drawBack(g, st.t) : (g.fillStyle = '#000', g.fillRect(0, 0, W, H)); drawScores(g); blinkMsg(g); }
@@ -155,28 +177,28 @@ const ARCADE = (() => {
     if (st.mode !== 'name') txt(g, free() ? 'FREE PLAY' : `CREDIT ${st.credits}`, W - 6, H - 10, '#fff', 8, 'right');
     if (st.msgT > 0) { g.fillStyle = 'rgba(0,0,0,0.8)'; g.fillRect(40, 90, W - 80, 40); txt(g, st.msg[0], W / 2, 98, '#ff6b6b', 8, 'center'); txt(g, st.msg[1], W / 2, 114, '#fff', 8, 'center'); }
   }
-  function blinkMsg(g) { if (Math.floor(performance.now() / 500) % 2) return; const t = free() ? 'PULSA A PARA JUGAR' : st.credits > 0 ? 'PULSA A PARA JUGAR' : 'INSERT COIN  ($' + M.price + ')'; txt(g, t, W / 2, H - 18, '#ffd400', 8, 'center'); }
+  function blinkMsg(g) { if (M.console) txt(g, 'Q: VOLVER AL MENÚ DE LA GOFIO-8', 6, H - 10, '#9fd7ff', 6); if (Math.floor(performance.now() / 500) % 2) return; const t = free() ? 'PULSA A PARA JUGAR' : st.credits > 0 ? 'PULSA A PARA JUGAR' : 'INSERT COIN  ($' + M.price + ')'; txt(g, t, W / 2, H - 18, '#ffd400', 8, 'center'); }
   function drawScores(g) { const t = table(M.key, M.game); txt(g, 'MEJORES PUNTUACIONES', W / 2, 18, '#ffd400', 8, 'center'); txt(g, M.where || '', W / 2, 30, '#9fd7ff', 8, 'center');
     t.forEach(([n, s], i) => { const y = 58 + i * 18, hl = st.hl === n && i === st.rank, c = hl && Math.floor(performance.now() / 200) % 2 ? '#ffd400' : ['#ff6b6b', '#ffb347', '#ffd400', '#7fe08a', '#5ec8ff'][i % 5];
       txt(g, `${String(i + 1).padStart(2, ' ')}`, W / 2 - 100, y, c); txt(g, String(s).padStart(7, '0'), W / 2 - 50, y, c); txt(g, n, W / 2 + 70, y, c); }); }
   // ---------- loop
   function loop(now) { if (!running) return; raf = requestAnimationFrame(loop); const dt = Math.min(0.1, (now - last) / 1000); last = now; acc += dt;
     while (acc >= 1 / 60) { step(1 / 60); IN.frame(); acc -= 1 / 60; } render(); present(); }
-  function step(dt) { if (st.msgT > 0) st.msgT -= dt; if (st.mode === 'attract') attract(dt); else if (st.mode === 'play') play(dt); else if (st.mode === 'cont') cont(dt); else if (st.mode === 'name') nameEntry(dt); }
+  function step(dt) { if (st.msgT > 0) st.msgT -= dt; if (st.mode === 'menu') menu(dt); else if (st.mode === 'attract') attract(dt); else if (st.mode === 'play') play(dt); else if (st.mode === 'cont') cont(dt); else if (st.mode === 'name') nameEntry(dt); }
   const api = { W, H, sprite, draw, txt, sfx, music, stopMusic, hi: () => (M ? table(M.key, M.game)[0][1] : 0), get money() { return PLAYER.money; } };
   // ---------- public: open({ id: game id, key: hi-score table id, where: place name, price: $ per credit (0 = free) })
   function open(m, cb) {
-    const game = GAMES[m.id]; if (!game || running || (typeof FIGHT2D !== 'undefined' && FIGHT2D.running)) return false;
+    const game = m.console ? CONSOLE : GAMES[m.id]; if (!game || running || (typeof FIGHT2D !== 'undefined' && FIGHT2D.running)) return false;
     if (!cv) { cv = document.createElement('canvas'); cv.id = 'arcade'; cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;background:#000;z-index:28;display:none'; document.body.appendChild(cv); cx = cv.getContext('2d');
       scr = mkCanvas(8, 8); sx = scr.getContext('2d'); window.addEventListener('resize', () => { if (running) fit(); }); window.addEventListener('keydown', (e) => { if (running && e.code === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } }, true); }
     M = { ...m, game, key: m.key || m.id, price: m.price ?? 0, bz: null }; onClose = cb || null; running = true; fit();
-    st = { mode: 'attract', view: 'title', t: 0, credits: 0, paid: 0, msgT: 0, hl: null, rank: -1 }; G = null; IN.reset(); document.exitPointerLock?.();
+    st = { mode: m.console ? 'menu' : 'attract', view: 'title', t: 0, credits: 0, paid: 0, msgT: 0, hl: null, rank: -1, sel: 0 }; G = null; IN.reset(); document.exitPointerLock?.();
     MINI.show(cv, 'arcade'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); if (game.music && game.music.title) music(game.music.title); return true;
   }
   function fit() { const dpr = window.devicePixelRatio || 1; const k = Math.max(0.5, Math.min((window.innerWidth || CW) * dpr / CW, (window.innerHeight || CH) * dpr / CH));
     KR = Math.round(k * 1000) / 1000; RS = SS * KR; cv.width = Math.round(CW * KR); cv.height = Math.round(CH * KR); scr.width = Math.round(W * RS); scr.height = Math.round(H * RS); if (M) M.bz = null; scan = null; }
   function close() { if (!running) return; running = false; cancelAnimationFrame(raf); stopMusic(); MINI.hide(cv, 'arcade', true); const r = { paid: st.paid }; M = null; G = null; if (onClose) onClose(r); }
-  return { GAMES, open, close, sprite, hires, draw, txt, sfx, music, stopMusic, data, table, api, get running() { return running; },
+  return { GAMES, CONSOLE, open, close, sprite, hires, draw, txt, sfx, music, stopMusic, data, table, api, get running() { return running; },
     _st: () => st, _game: () => G, _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); } }, _press: IN.press, _render: () => { render(); present(); }, W, H };
 })();
 // ---------- where the machines are (v0.80): El Blanco's, free. When the mayor names the gang «Defensores de La Laguna»

@@ -36,13 +36,20 @@ const DIARIO = (() => {
       where: 'En las cafeterías y las tascas: en el minimapa y en el mapa (M) llevan un aro violeta alrededor de su cuadrado rojo. Pídela en la barra o en el mostrador (E).' },
     { t: 'GUANCHE WARRIORS', on: () => ARC().invited && G().jugueterias, who: BL, log: REC, near: () => AGUA.nearestShop(),
       what: 'La máquina de las jugueterías: un beat\'em up contra Guayota. Eliges al Mencey, al Pastor o a la Mirladora. A pega, B salta (y monta el lagarto), Q lanza la magia; doble toque para correr. <b>$1 la partida</b>; cada tienda tiene sus récords.',
-      where: 'En las jugueterías: la gota azul del minimapa y del mapa (M). Pídela en la tienda (E).' },
+      where: 'En las jugueterías: el osito de peluche del minimapa y del mapa (M). Pídela en la tienda (E).' },
     { t: 'Las jugueterías', on: () => G().jugueterias, who: '', log: '', near: () => AGUA.nearestShop(),
-      what: 'Venden el <b>rifle de agua</b> «Guepardo SK-9» y las bolitas para la pistola, y te llenan el rifle del grifo.', where: 'La gota azul del minimapa y del mapa (M): E en la puerta.' },
+      what: 'Venden el <b>rifle de agua</b> «Guepardo SK-9» y las bolitas para la pistola, y te llenan el rifle del grifo.', where: 'El osito de peluche del minimapa y del mapa (M): E en la puerta.' },
     { t: 'Retos en las canchas', on: () => G().basketTut, who: 'El Obispo', log: '',
       what: 'Puedes retar a la gente a un partido de baloncesto en cualquier cancha.', where: 'Cualquier cancha de baloncesto: pulsa E en la puerta o junto a la canasta.' },
     { t: 'Retos en los campos de fútbol', on: () => G().futbolTut, who: 'El Obispo', log: '',
       what: 'Puedes retar a la gente a un partido de fútbol en cualquier campo.', where: 'Cualquier campo de fútbol: el balón blanco (E).' },
+    { t: 'La inmobiliaria Pisos Chachi', on: () => typeof CASA !== 'undefined' && CASA.data().intro, who: 'Pisos Chachi, por el móvil', log: 'La inmobiliaria', near: () => (CASA.inmo ? { name: CASA.INMO.name, x: CASA.inmo.x, z: CASA.inmo.z, d: Math.hypot(CASA.inmo.x - PLAYER.x, CASA.inmo.z - PLAYER.z) } : null),
+      what: 'Alquilan y venden pisos. {PISOS}. En casa: la cama (duermes y se guarda la partida) y la tele, para la consola.',
+      where: 'En la Calle Heraclio Sánchez: el cuadrado naranja del minimapa y del mapa (M). E en la puerta.' },
+    { t: 'Tu casa', on: () => typeof CASA !== 'undefined' && CASA.ownsAny(), who: '', log: '', near: () => { let b = null; for (const h of CASA.homesOwned()) { const d = Math.hypot(h.x - PLAYER.x, h.z - PLAYER.z); if (!b || d < b.d) b = { ...h, d }; } return b; },
+      what: 'Tus pisos: <b>' + '{HOMES}' + '</b>. Dentro: la cama (duermes hasta las 8 y se guarda la partida) y la tele, con la consola si la tienes.', where: 'El cuadrado verde del minimapa y del mapa (M).' },
+    { t: 'La consola GOFIO-8', on: () => ARC().console, who: '', log: '', near: () => AGUA.nearestShop(),
+      what: 'La consola de la tele de tu casa. Al encenderla sale un menú con tus cartuchos: <b>{CARTS}</b>. Los cartuchos se compran en las jugueterías.', where: 'En la tele de tu casa (E delante de la tele). La juguetería más cercana, abajo.' },
     { t: 'El coche patrulla de la banda', on: () => G().patrol, who: 'El alcalde, por el móvil', log: '',
       what: 'Vuestro propio coche patrulla, con el nombre de la banda y el depósito lleno.', where: 'Delante del Ayuntamiento.' },
   ];
@@ -72,7 +79,7 @@ const DIARIO = (() => {
       if (nq) nr = `<div style="margin:0 0 8px;font:400 15px Barlow,sans-serif">🧭 La más cerca: <b>${esc(nq.name)}</b>, a ${Math.round(nq.d)} m <button class="btn" id="diaGps" style="font-size:13px;padding:5px 12px;margin-left:8px">MARCAR EN EL GPS</button></div>`;
       det.innerHTML = `<div style="font:400 22px Audiowide,Oswald,sans-serif;color:#9fd7ff">${esc(f.t)}</div>
         <div style="color:#bdb6c9;margin:2px 0 8px;font:400 14px Barlow,sans-serif">${f.who ? 'Te lo contó ' + esc(f.who) : 'Lo que sabes'}</div>
-        <div style="margin-bottom:8px;font:400 15px Barlow,sans-serif;line-height:1.35">${f.what}</div>
+        <div style="margin-bottom:8px;font:400 15px Barlow,sans-serif;line-height:1.35">${f.what.replace('{HOMES}', () => (typeof CASA !== 'undefined' ? CASA.PISOS.filter((P) => CASA.has(P.id)).map((P) => P.name + (P.rent ? ' (alquilado ' + Math.max(0, CASA.data().rent.until - CASA.data().day) + ' días más)' : '')).join(', ') : '')).replace('{PISOS}', () => CASA.PISOS.map((P) => `<b>${P.name}</b>: ${P.rent ? '$' + P.rent + ' a la semana' : '$' + P.price.toLocaleString('es-ES')}`).join(' · ')).replace('{CARTS}', () => (ARC().bought || []).filter((id) => ARCADE.GAMES[id]).map((id) => ARCADE.GAMES[id].title).join(', ') || 'ninguno todavía')}</div>
         <div style="margin-bottom:8px;font:400 15px Barlow,sans-serif">📍 ${f.where}</div>${rec}${nr}
         ${f.log ? convo(MISSIONS.log(f.log), '') : ''}`;
       const gb = det.querySelector('#diaGps'); if (gb && nq) gb.onclick = () => { setWaypoint(nq.x, nq.z); HUD.toast('Ruta marcada en el GPS: ' + nq.name, '#e040fb', 4); close(); };
