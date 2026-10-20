@@ -42,16 +42,24 @@ const INT_NPCS = [];
 const DOORMARKS = [];
 let doorIconTex = null;
 function doorIcon() { if (doorIconTex) return doorIconTex; const c = mkCanvas(128, 160), x = c.getContext('2d'); x.fillStyle = 'rgba(0,0,0,0)'; x.clearRect(0, 0, 128, 160); x.fillStyle = '#3ddc97'; x.beginPath(); x.moveTo(24, 70); x.lineTo(104, 70); x.lineTo(64, 128); x.closePath(); x.fill(); x.beginPath(); x.arc(64, 38, 34, 0, 7); x.fill(); x.fillStyle = '#0c2a1c'; x.font = 'bold 44px Arial'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('E', 64, 40); doorIconTex = canvasTex(c, { repeat: false }); return doorIconTex; }
+// v0.85.1 (audit v0.83): every door of every interior shares the same geometries and materials (they were made anew
+// for each house)
+let DOOR_KIT = null;
+function doorKit() { if (DOOR_KIT) return DOOR_KIT; DOOR_KIT = {
+    glow: new THREE.MeshStandardMaterial({ color: 0x3ddc97, emissive: 0x3ddc97, emissiveIntensity: 1.3 }),
+    panel: new THREE.MeshStandardMaterial({ color: 0x14202a, roughness: 0.1, metalness: 0.6, emissive: 0xffd28a, emissiveIntensity: 0.35 }),
+    icon: new THREE.MeshBasicMaterial({ map: doorIcon(), transparent: true, depthWrite: false, fog: false }),
+    gPanel: new THREE.PlaneGeometry(2.4, 3), gJamb: new THREE.BoxGeometry(0.2, 3.3, 0.2), gLintel: new THREE.BoxGeometry(2.8, 0.2, 0.2), gIcon: new THREE.PlaneGeometry(1.1, 1.4) };
+  return DOOR_KIT; }
 function addInterior(def) {
   def.doors = Array.isArray(def.door) ? def.door : [def.door]; def.door = def.doors[0]; INTERIORS.push(def);
-  const glow = new THREE.MeshStandardMaterial({ color: 0x3ddc97, emissive: 0x3ddc97, emissiveIntensity: 1.3 });
-  const panel = new THREE.MeshStandardMaterial({ color: 0x14202a, roughness: 0.1, metalness: 0.6, emissive: 0xffd28a, emissiveIntensity: 0.35 });
+  const K = doorKit(), glow = K.glow, panel = K.panel;
   for (const d of def.doors) {
     const g = new THREE.Group(); const y = heightAt(d.x, d.z); g.position.set(d.x + d.nx * 0.08, y, d.z + d.nz * 0.08); g.rotation.y = Math.atan2(d.nx, d.nz);
-    const p = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 3), panel); p.position.y = 1.6; g.add(p);
-    for (const sx of [-1.3, 1.3]) { const j = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3.3, 0.2), glow); j.position.set(sx, 1.65, 0.05); g.add(j); }
-    const l = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.2, 0.2), glow); l.position.set(0, 3.3, 0.05); g.add(l);
-    const ic = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.4), new THREE.MeshBasicMaterial({ map: doorIcon(), transparent: true, depthWrite: false, fog: false })); ic.position.set(d.x + d.nx * 1.2, y + 5.2, d.z + d.nz * 1.2); ic.renderOrder = 5; scene.add(ic); DOORMARKS.push({ m: ic, y: y + 5.2, it: def, g });
+    const p = new THREE.Mesh(K.gPanel, panel); p.position.y = 1.6; g.add(p);
+    for (const sx of [-1.3, 1.3]) { const j = new THREE.Mesh(K.gJamb, glow); j.position.set(sx, 1.65, 0.05); g.add(j); }
+    const l = new THREE.Mesh(K.gLintel, glow); l.position.set(0, 3.3, 0.05); g.add(l);
+    const ic = new THREE.Mesh(K.gIcon, K.icon); ic.position.set(d.x + d.nx * 1.2, y + 5.2, d.z + d.nz * 1.2); ic.renderOrder = 5; scene.add(ic); DOORMARKS.push({ m: ic, y: y + 5.2, it: def, g });
     scene.add(g); if (!def.noLabel) LABELS.push(['Entrar: ' + def.name, d.x, d.z, 4]); // v0.83: the homes don't say «Entrar» on the map
   }
 }

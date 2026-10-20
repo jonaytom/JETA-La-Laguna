@@ -1,0 +1,11 @@
+# v0.85.1: pendientes rápidos
+prueba_0851.py
+prueba_085.py
+prueba_080.py
+prueba_baloncesto.py
+prueba_084.py
+prueba_canchas.py
+prueba_persecuciones.py
+prueba_obispo.py
+prueba_083.py
+prueba_arranque.py

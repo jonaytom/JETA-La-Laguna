@@ -32,6 +32,14 @@ const SPORTS = { pitches: [], halls: [] };
 // v0.65: the pitches and courts as rectangles, worked out before trees, lamps and street furniture are placed, so none of
 // them ends up in the middle of a game (Jonay). Also fixes the kind of each one (same court every game).
 let PITCH_RECTS = null;
+// v0.85.1 (Jonay's rule: courts never on top of each other or crossing, with room between them): do two courts' rectangles,
+// each grown by m metres, touch? (separating axes: the two axes of each rectangle)
+function rectCorners(P, m) { const F = P.F, C = []; for (const u of [F.u0 - m, F.u1 + m]) for (const v of [F.v0 - m, F.v1 + m]) C.push([P.cx + u * F.ux + v * F.vx, P.cz + u * F.uz + v * F.vz]); return C; }
+function rectsOverlap(A, B, m) { const ca = rectCorners(A, m), cb = rectCorners(B, m);
+  for (const F of [A.F, B.F]) for (const [ax, az] of [[F.ux, F.uz], [F.vx, F.vz]]) { let a0 = 1e9, a1 = -1e9, b0 = 1e9, b1 = -1e9;
+    for (const p of ca) { const d = p[0] * ax + p[1] * az; a0 = Math.min(a0, d); a1 = Math.max(a1, d); } for (const p of cb) { const d = p[0] * ax + p[1] * az; b0 = Math.min(b0, d); b1 = Math.max(b1, d); }
+    if (a1 < b0 || b1 < a0) return false; }
+  return true; }
 function pitchRects() {
   if (PITCH_RECTS) return PITCH_RECTS; PITCH_RECTS = [];
   for (const a of DATA.A) {
@@ -46,7 +54,7 @@ function pitchRects() {
   // v0.66: two courts drawn on top of each other (OSM maps the court and the multi-sport area too, e.g. Colegio Máyex):
   // keep the bigger one only
   PITCH_RECTS.sort((a, b) => b.area - a.area);
-  const keep = []; for (const P of PITCH_RECTS) { const inBig = keep.some((Q) => { const u = (P.cx - Q.cx) * Q.F.ux + (P.cz - Q.cz) * Q.F.uz, v = (P.cx - Q.cx) * Q.F.vx + (P.cz - Q.cz) * Q.F.vz; return u > Q.F.u0 && u < Q.F.u1 && v > Q.F.v0 && v < Q.F.v1; }); if (!inBig) keep.push(P); }
+  const keep = []; for (const P of PITCH_RECTS) { const inBig = keep.some((Q) => { const u = (P.cx - Q.cx) * Q.F.ux + (P.cz - Q.cz) * Q.F.uz, v = (P.cx - Q.cx) * Q.F.vx + (P.cz - Q.cz) * Q.F.vz; return u > Q.F.u0 && u < Q.F.u1 && v > Q.F.v0 && v < Q.F.v1; }); if (!inBig && !keep.some((Q) => rectsOverlap(P, Q, 1.5))) keep.push(P); }
   PITCH_RECTS = keep;
   return PITCH_RECTS;
 }

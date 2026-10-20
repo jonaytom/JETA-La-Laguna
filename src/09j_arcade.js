@@ -195,7 +195,7 @@ const ARCADE = (() => {
   function open(m, cb) {
     const game = m.console ? CONSOLE : GAMES[m.id]; if (!game || running || (typeof FIGHT2D !== 'undefined' && FIGHT2D.running)) return false;
     if (!cv) { cv = document.createElement('canvas'); cv.id = 'arcade'; cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;background:#000;z-index:28;display:none'; document.body.appendChild(cv); cx = cv.getContext('2d');
-      scr = mkCanvas(8, 8); sx = scr.getContext('2d'); window.addEventListener('resize', () => { if (running) fit(); }); window.addEventListener('keydown', (e) => { if (running && e.code === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } }, true); }
+      scr = mkCanvas(8, 8); sx = scr.getContext('2d'); window.addEventListener('resize', () => { if (running) fit(); }); window.addEventListener('keydown', (e) => { if (running && e.code === 'Escape') { e.preventDefault(); e.stopPropagation(); if (e.repeat) return; /* v0.85.1 (Jonay): at home, Esc in a game goes back to the cartridges; Esc in the menu goes out to the 3D world, without the pause menu */ if (M && M.console && st.mode !== 'menu') { sfx('pick'); toMenu(); return; } GAME.noPauseT = performance.now() + 1500; close(); } }, true); }
     M = { ...m, game, key: m.key || m.id, price: m.price ?? 0, bz: null }; onClose = cb || null; running = true; fit();
     st = { mode: m.console ? 'menu' : 'attract', view: 'title', t: 0, credits: 0, paid: 0, msgT: 0, hl: null, rank: -1, sel: 0 }; G = null; IN.reset(); document.exitPointerLock?.();
     MINI.show(cv, 'arcade'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); if (game.music && game.music.title) music(game.music.title); return true;

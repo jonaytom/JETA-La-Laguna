@@ -417,6 +417,6 @@ ARCADE.GAMES.bencomo = (() => {
     A.txt(c, '© 1494 MENCEYATO DE TAORO', SW / 2, 250, '#9fd7ff', 6, 'center'); c.restore(); }
   function drawBack(c, t) { const bg = background('monte'), BW = 800; c.drawImage(bg[0], 0, 0, BW, SH); const o = -((t * 10) % BW); c.drawImage(bg[1], o, 0, BW, SH); c.drawImage(bg[1], o + BW, 0, BW, SH); c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, 0, SW, SH); }
   const ART = { title: 'BENCOMO', sub: "ACENTEJO'S REVENGE", marquee: ['#6b2a10', '#1a0a04'], titleCol: '#f2c46a', baseScore: 60000, music: { title: SONGS.title }, create, drawTitle, drawBack,
-    help: (K) => `A GOLPE: ${K('f_punch')}  B SALTO/VARA: ${K('f_kick')}  ↓ AGACHARSE / POGO  PIEDRA/MONEDA: ${K('b_pass')}  ESC SALIR` };
+    help: (K) => `A GOLPE: ${K('f_punch')}  B SALTO/VARA: ${K('f_kick')}  ↓ AGACHARSE / PICADO PIEDRA/MONEDA: ${K('b_pass')}  ESC SALIR` };
   return ART;
 })();

@@ -5,6 +5,7 @@
 - **Feedback de pruebas**: cuando Jonay comente fallos o mejoras sueltas, NO hacerlos directamente: anotarlos en
   `PENDIENTES.md` y revisarlos juntos después (así no se toca lo mismo dos veces). Solo se hace al momento lo que pida
   expresamente.
+- **PENDIENTES.md va clasificado** (Jonay, 20-oct): ver «Cómo se apuntan los pendientes» más abajo.
 - **Herramientas de prueba**: las que tengan algo de complejidad se guardan en `tests/` (pruebas) o
   `tests/herramientas/` (fotos, sondas; índice en `LEEME.md`) y se reutilizan; no rehacerlas en cada versión.
 - El objetivo principal del juego es recrear bien el mapa real de La Laguna (OpenStreetMap). Comercios: siempre parodias.
@@ -19,6 +20,33 @@
   los puntos `[ ]` pendientes y marcarlos `[x]` en ese mismo archivo al terminarlos (contárselo a Jonay).
 - **Controles de los minijuegos: siempre las mismas teclas** (pelea, baloncesto y los que vengan): botón A = `E` / clic
   izquierdo, botón B = `Espacio`, arriba = `↑`/`W`, clic derecho (o `Q`), y moverse como al andar.
+
+## Cómo se apuntan los pendientes (Jonay, 20-oct)
+
+`PENDIENTES.md` tiene dos partes: **«Pendientes por categoría»** (lo abierto) y **«Hecho»** (lo terminado).
+
+1. **Cada apunte nuevo entra ya clasificado**, en el momento de apuntarlo; nunca se deja suelto arriba para
+   ordenarlo después.
+   - Va en la categoría `###` que toque: cosas parecidas o del mismo módulo (`src/…`).
+   - Si es algo muy nuevo que no encaja en ninguna, se crea una categoría nueva en el sitio que tenga sentido.
+2. **Formato de cada apunte**:
+   `- [ ] <velocidad> **Título corto** (Jonay, <fecha>; capturas o coordenadas X/Z si las hay): qué pasa y qué se
+   quiere.` Los detalles van en subviñetas, con lo que dijo Jonay y las referencias (`docs/referencias/…`, fotos,
+   archivos y funciones afectados).
+3. **Velocidad**, una de tres:
+   - ⚡ **rápido**: unas pocas líneas o un ajuste; cabe en una tanda corta.
+   - ◐ **medio**: una versión normal (código y su prueba).
+   - ● **largo**: varias versiones, un cambio grande o algo por decidir con Jonay.
+4. **Dentro de cada categoría** se ordena de lo más rápido a lo más largo (⚡ → ◐ → ●). Al apuntar uno nuevo, se pone
+   al final de los de su misma velocidad.
+5. **Si ya hay un apunte de lo mismo**, se amplía ese, con la fecha nueva, en vez de crear otro.
+6. **Hecho a medias**: `- [~] <velocidad> vX.Y.Z (lo que ya está) **Título**…`, y en el texto se deja claro qué falta.
+   Se queda en su categoría.
+7. **Terminado**: se cambia a `- [x] vX.Y.Z` (sin la velocidad) y se mueve al principio de «Hecho».
+8. **Los avisos de las auditorías y del agente revisor** van en «Rendimiento, auditorías y código» o en «Agente
+   revisor (avisos de mapa)», también con su velocidad.
+9. **Cuando Jonay pida los pendientes**, se muestran siempre así: por categorías, con la velocidad delante y una
+   línea por apunte.
 
 ## Trabajador local (v0.64.2)
 

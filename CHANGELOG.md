@@ -3,6 +3,19 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.85.1 — 2026-10-20 — Tanda de pendientes rápidos
+- **Esc en la consola** (Jonay): desde un juego vuelves al menú de cartuchos de la GOFIO-8, y desde el menú sales al
+  mundo 3D. Ya no se abre el menú de pausa al salir de una máquina.
+- **Basket**: al pasar, el que recibe el balón pasa a ser el tuyo al momento (antes había que volver a pulsar).
+- **Persecuciones más difíciles** (Jonay): el coche que huye frena menos en las curvas y corre un poco más (un 10 %).
+  Las carreras y los autobuses no cambian.
+- **Canchas**: ninguna puede pisar a otra. Si dos se cruzan o se tocan (con 1,5 m de pasillo), se queda la grande.
+- **Bencomo**: lo de bajar con la vara en el aire se llama «PICADO» (antes «POGO»).
+- Código:
+  - Las puertas de los interiores comparten geometrías y materiales (auditoría v0.83).
+  - La Concepción reutiliza sus objetos de ayuda al construirse (auditoría v0.81).
+  - El build avisa de más comentarios `//` a media línea que se tragan código.
+
 ## 0.85.0 — 2026-10-20 — Pachanga 3x3 y Play Furbito: el mundialito en la GOFIO-8
 - **Dos cartuchos nuevos de deportes** (Jonay): **PACHANGA 3x3** (el basket 3 contra 3) y **PLAY FURBITO** (el fútbol
   5 contra 5). Se compran en la juguetería y salen en el menú de la consola.

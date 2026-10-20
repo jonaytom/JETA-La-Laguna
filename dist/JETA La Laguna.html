@@ -205,7 +205,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="tb" id="tbS">CORRER</div>
 <div class="tb" id="tbM">MAPA</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">v0.85.0</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">v0.85.1</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -2930,16 +2930,24 @@ const INT_NPCS = [];
 const DOORMARKS = [];
 let doorIconTex = null;
 function doorIcon() { if (doorIconTex) return doorIconTex; const c = mkCanvas(128, 160), x = c.getContext('2d'); x.fillStyle = 'rgba(0,0,0,0)'; x.clearRect(0, 0, 128, 160); x.fillStyle = '#3ddc97'; x.beginPath(); x.moveTo(24, 70); x.lineTo(104, 70); x.lineTo(64, 128); x.closePath(); x.fill(); x.beginPath(); x.arc(64, 38, 34, 0, 7); x.fill(); x.fillStyle = '#0c2a1c'; x.font = 'bold 44px Arial'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('E', 64, 40); doorIconTex = canvasTex(c, { repeat: false }); return doorIconTex; }
+// v0.85.1 (audit v0.83): every door of every interior shares the same geometries and materials (they were made anew
+// for each house)
+let DOOR_KIT = null;
+function doorKit() { if (DOOR_KIT) return DOOR_KIT; DOOR_KIT = {
+    glow: new THREE.MeshStandardMaterial({ color: 0x3ddc97, emissive: 0x3ddc97, emissiveIntensity: 1.3 }),
+    panel: new THREE.MeshStandardMaterial({ color: 0x14202a, roughness: 0.1, metalness: 0.6, emissive: 0xffd28a, emissiveIntensity: 0.35 }),
+    icon: new THREE.MeshBasicMaterial({ map: doorIcon(), transparent: true, depthWrite: false, fog: false }),
+    gPanel: new THREE.PlaneGeometry(2.4, 3), gJamb: new THREE.BoxGeometry(0.2, 3.3, 0.2), gLintel: new THREE.BoxGeometry(2.8, 0.2, 0.2), gIcon: new THREE.PlaneGeometry(1.1, 1.4) };
+  return DOOR_KIT; }
 function addInterior(def) {
   def.doors = Array.isArray(def.door) ? def.door : [def.door]; def.door = def.doors[0]; INTERIORS.push(def);
-  const glow = new THREE.MeshStandardMaterial({ color: 0x3ddc97, emissive: 0x3ddc97, emissiveIntensity: 1.3 });
-  const panel = new THREE.MeshStandardMaterial({ color: 0x14202a, roughness: 0.1, metalness: 0.6, emissive: 0xffd28a, emissiveIntensity: 0.35 });
+  const K = doorKit(), glow = K.glow, panel = K.panel;
   for (const d of def.doors) {
     const g = new THREE.Group(); const y = heightAt(d.x, d.z); g.position.set(d.x + d.nx * 0.08, y, d.z + d.nz * 0.08); g.rotation.y = Math.atan2(d.nx, d.nz);
-    const p = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 3), panel); p.position.y = 1.6; g.add(p);
-    for (const sx of [-1.3, 1.3]) { const j = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3.3, 0.2), glow); j.position.set(sx, 1.65, 0.05); g.add(j); }
-    const l = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.2, 0.2), glow); l.position.set(0, 3.3, 0.05); g.add(l);
-    const ic = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.4), new THREE.MeshBasicMaterial({ map: doorIcon(), transparent: true, depthWrite: false, fog: false })); ic.position.set(d.x + d.nx * 1.2, y + 5.2, d.z + d.nz * 1.2); ic.renderOrder = 5; scene.add(ic); DOORMARKS.push({ m: ic, y: y + 5.2, it: def, g });
+    const p = new THREE.Mesh(K.gPanel, panel); p.position.y = 1.6; g.add(p);
+    for (const sx of [-1.3, 1.3]) { const j = new THREE.Mesh(K.gJamb, glow); j.position.set(sx, 1.65, 0.05); g.add(j); }
+    const l = new THREE.Mesh(K.gLintel, glow); l.position.set(0, 3.3, 0.05); g.add(l);
+    const ic = new THREE.Mesh(K.gIcon, K.icon); ic.position.set(d.x + d.nx * 1.2, y + 5.2, d.z + d.nz * 1.2); ic.renderOrder = 5; scene.add(ic); DOORMARKS.push({ m: ic, y: y + 5.2, it: def, g });
     scene.add(g); if (!def.noLabel) LABELS.push(['Entrar: ' + def.name, d.x, d.z, 4]); // v0.83: the homes don't say «Entrar» on the map
   }
 }
@@ -3135,6 +3143,14 @@ const SPORTS = { pitches: [], halls: [] };
 // v0.65: the pitches and courts as rectangles, worked out before trees, lamps and street furniture are placed, so none of
 // them ends up in the middle of a game (Jonay). Also fixes the kind of each one (same court every game).
 let PITCH_RECTS = null;
+// v0.85.1 (Jonay's rule: courts never on top of each other or crossing, with room between them): do two courts' rectangles,
+// each grown by m metres, touch? (separating axes: the two axes of each rectangle)
+function rectCorners(P, m) { const F = P.F, C = []; for (const u of [F.u0 - m, F.u1 + m]) for (const v of [F.v0 - m, F.v1 + m]) C.push([P.cx + u * F.ux + v * F.vx, P.cz + u * F.uz + v * F.vz]); return C; }
+function rectsOverlap(A, B, m) { const ca = rectCorners(A, m), cb = rectCorners(B, m);
+  for (const F of [A.F, B.F]) for (const [ax, az] of [[F.ux, F.uz], [F.vx, F.vz]]) { let a0 = 1e9, a1 = -1e9, b0 = 1e9, b1 = -1e9;
+    for (const p of ca) { const d = p[0] * ax + p[1] * az; a0 = Math.min(a0, d); a1 = Math.max(a1, d); } for (const p of cb) { const d = p[0] * ax + p[1] * az; b0 = Math.min(b0, d); b1 = Math.max(b1, d); }
+    if (a1 < b0 || b1 < a0) return false; }
+  return true; }
 function pitchRects() {
   if (PITCH_RECTS) return PITCH_RECTS; PITCH_RECTS = [];
   for (const a of DATA.A) {
@@ -3149,7 +3165,7 @@ function pitchRects() {
   // v0.66: two courts drawn on top of each other (OSM maps the court and the multi-sport area too, e.g. Colegio Máyex):
   // keep the bigger one only
   PITCH_RECTS.sort((a, b) => b.area - a.area);
-  const keep = []; for (const P of PITCH_RECTS) { const inBig = keep.some((Q) => { const u = (P.cx - Q.cx) * Q.F.ux + (P.cz - Q.cz) * Q.F.uz, v = (P.cx - Q.cx) * Q.F.vx + (P.cz - Q.cz) * Q.F.vz; return u > Q.F.u0 && u < Q.F.u1 && v > Q.F.v0 && v < Q.F.v1; }); if (!inBig) keep.push(P); }
+  const keep = []; for (const P of PITCH_RECTS) { const inBig = keep.some((Q) => { const u = (P.cx - Q.cx) * Q.F.ux + (P.cz - Q.cz) * Q.F.uz, v = (P.cx - Q.cx) * Q.F.vx + (P.cz - Q.cz) * Q.F.vz; return u > Q.F.u0 && u < Q.F.u1 && v > Q.F.v0 && v < Q.F.v1; }); if (!inBig && !keep.some((Q) => rectsOverlap(P, Q, 1.5))) keep.push(P); }
   PITCH_RECTS = keep;
   return PITCH_RECTS;
 }
@@ -4051,8 +4067,12 @@ function concBuckets() {
 // box with UVs in metres (texture tile = s metres)
 function cBox(w, h, d, s = 2.4) { const g = new THREE.BoxGeometry(w, h, d); const uv = g.attributes.uv; const D = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]]; for (let f = 0; f < 6; f++) for (let i = 0; i < 4; i++) { const k = f * 4 + i; uv.setXY(k, uv.getX(k) * D[f][0] / s, uv.getY(k) * D[f][1] / s); } return g; }
 // local frame → world matrix
-function cFrame(ox, oy, oz, ang) { const base = new THREE.Matrix4().makeRotationY(ang).setPosition(ox, oy, oz); const q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1);
-  return (x, y, z, ry = 0, rx = 0, rz = 0, sc = null) => { e.set(rx, ry, rz, 'YXZ'); q.setFromEuler(e); return new THREE.Matrix4().compose(v.set(x, y, z), q, sc ? new THREE.Vector3(...sc) : one).premultiply(base); }; }
+// v0.85.1 (audit v0.81): the helper objects are made once for the whole church, not once per frame of reference
+// (it only runs while the city is being built; each call still returns its own matrix, which the caller keeps)
+const CF_ = { q: null, e: null, v: null, s: null, one: null };
+function cFrame(ox, oy, oz, ang) { if (!CF_.q) { CF_.q = new THREE.Quaternion(); CF_.e = new THREE.Euler(); CF_.v = new THREE.Vector3(); CF_.s = new THREE.Vector3(); CF_.one = new THREE.Vector3(1, 1, 1); }
+  const base = new THREE.Matrix4().makeRotationY(ang).setPosition(ox, oy, oz), { q, e, v, s, one } = CF_;
+  return (x, y, z, ry = 0, rx = 0, rz = 0, sc = null) => { e.set(rx, ry, rz, 'YXZ'); q.setFromEuler(e); return new THREE.Matrix4().compose(v.set(x, y, z), q, sc ? s.set(sc[0], sc[1], sc[2]) : one).premultiply(base); }; }
 // arch-topped shape (w wide, h total height incl. semicircle), base at y=0
 function archShape(w, h, x0 = 0) { const s = new THREE.Shape(), r = w / 2; s.moveTo(x0 - r, 0); s.lineTo(x0 + r, 0); s.lineTo(x0 + r, h - r); s.absarc(x0, h - r, r, 0, Math.PI, false); s.lineTo(x0 - r, 0); return s; }
 function archPath(w, h, x0 = 0, y0 = 0) { const s = new THREE.Path(), r = w / 2; s.moveTo(x0 - r, y0); s.lineTo(x0 + r, y0); s.lineTo(x0 + r, y0 + h - r); s.absarc(x0, y0 + h - r, r, 0, Math.PI, false); s.lineTo(x0 - r, y0); return s; }
@@ -7863,7 +7883,8 @@ const BASKET2D = (() => {
     if (st.ev) st.ev.shot = true;
   }
   function pass(from, to) { const b = st.ball; if (b.holder !== from || !to || to.down > 0) return; b.holder = null; b.mode = 'pass'; b.x = from.x; b.z = from.z; b.y = from.y + 1.3;
-    const L = dist(from, to); b.pass = { to, t: 0, from, T: clamp(0.18 + L * 0.055, 0.22, 0.9), x0: b.x, z0: b.z, y0: b.y, arc: L < 3 ? 0.15 : 0.2 + L * 0.16 }; b.inter = false; if (st.ev && from.human) st.ev.pass = true; } // v0.79: the longer, the higher the arc
+    const L = dist(from, to); b.pass = { to, t: 0, from, T: clamp(0.18 + L * 0.055, 0.22, 0.9), x0: b.x, z0: b.z, y0: b.y, arc: L < 3 ? 0.15 : 0.2 + L * 0.16 }; b.inter = false; if (st.ev && from.human) st.ev.pass = true;
+    if (from.human && to.team === from.team && !st.auto) { from.human = false; from.shootHold = false; to.human = true; st.swapAt = st.time0 + 0.3; } } /* v0.85.1 (Jonay): the one who gets your pass is yours at once */ // v0.79: the longer, the higher the arc
   function steal(p) { const b = st.ball; const v = b.holder; if (!v || v.team === p.team || p.down > 0 || p.stealCD > 0 || (v.air && v.sure)) return; /* a combo dunk in the air can't be stolen */ p.stealCD = 0.5; p.act = 'push'; p.actT = 0;
     if (dist(p, v) > 1.3) return;
     const shove = (p.human ? held('vT') : Math.random() < 0.35 * p.lv) && p.turbo > 0.2;
@@ -8982,7 +9003,7 @@ const ARCADE = (() => {
   function open(m, cb) {
     const game = m.console ? CONSOLE : GAMES[m.id]; if (!game || running || (typeof FIGHT2D !== 'undefined' && FIGHT2D.running)) return false;
     if (!cv) { cv = document.createElement('canvas'); cv.id = 'arcade'; cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;background:#000;z-index:28;display:none'; document.body.appendChild(cv); cx = cv.getContext('2d');
-      scr = mkCanvas(8, 8); sx = scr.getContext('2d'); window.addEventListener('resize', () => { if (running) fit(); }); window.addEventListener('keydown', (e) => { if (running && e.code === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } }, true); }
+      scr = mkCanvas(8, 8); sx = scr.getContext('2d'); window.addEventListener('resize', () => { if (running) fit(); }); window.addEventListener('keydown', (e) => { if (running && e.code === 'Escape') { e.preventDefault(); e.stopPropagation(); if (e.repeat) return; /* v0.85.1 (Jonay): at home, Esc in a game goes back to the cartridges; Esc in the menu goes out to the 3D world, without the pause menu */ if (M && M.console && st.mode !== 'menu') { sfx('pick'); toMenu(); return; } GAME.noPauseT = performance.now() + 1500; close(); } }, true); }
     M = { ...m, game, key: m.key || m.id, price: m.price ?? 0, bz: null }; onClose = cb || null; running = true; fit();
     st = { mode: m.console ? 'menu' : 'attract', view: 'title', t: 0, credits: 0, paid: 0, msgT: 0, hl: null, rank: -1, sel: 0 }; G = null; IN.reset(); document.exitPointerLock?.();
     MINI.show(cv, 'arcade'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); if (game.music && game.music.title) music(game.music.title); return true;
@@ -9433,7 +9454,7 @@ ARCADE.GAMES.bencomo = (() => {
     A.txt(c, '© 1494 MENCEYATO DE TAORO', SW / 2, 250, '#9fd7ff', 6, 'center'); c.restore(); }
   function drawBack(c, t) { const bg = background('monte'), BW = 800; c.drawImage(bg[0], 0, 0, BW, SH); const o = -((t * 10) % BW); c.drawImage(bg[1], o, 0, BW, SH); c.drawImage(bg[1], o + BW, 0, BW, SH); c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, 0, SW, SH); }
   const ART = { title: 'BENCOMO', sub: "ACENTEJO'S REVENGE", marquee: ['#6b2a10', '#1a0a04'], titleCol: '#f2c46a', baseScore: 60000, music: { title: SONGS.title }, create, drawTitle, drawBack,
-    help: (K) => `A GOLPE: ${K('f_punch')}  B SALTO/VARA: ${K('f_kick')}  ↓ AGACHARSE / POGO  PIEDRA/MONEDA: ${K('b_pass')}  ESC SALIR` };
+    help: (K) => `A GOLPE: ${K('f_punch')}  B SALTO/VARA: ${K('f_kick')}  ↓ AGACHARSE / PICADO PIEDRA/MONEDA: ${K('b_pass')}  ESC SALIR` };
   return ART;
 })();
 
@@ -11947,12 +11968,14 @@ function roundedAt(at, s, v, tot) {
   return [lerp(qs[0], (q0[0] + q1[0]) / 2, f), lerp(qs[1], (q0[1] + q1[1]) / 2, f), qs[2] + angDiff(qs[2], qh) * f];
 }
 // car driven along the path (kinematic, like the Canarión's): brakes for bends, keeps a gap to the player
-function s2DriveCar(c, P, dt, top, gapRule) {
+function s2DriveCar(c, P, dt, top, gapRule, chase = false) {
+  // v0.85.1 (Jonay: chases too easy): a car running away from you brakes less in bends and goes a bit faster
+  if (chase) top *= 1.1;
   // v0.70 (Jonay: they turned on the spot): brake for the sharpest bend in the next 12–35 m (further when fast) and
   // drive through it on a rounded line (the middle of the points R m behind and R m ahead) instead of the polyline corner
   const a = P.at(P.s), look = 12 + P.v * 1.2; let bend = 0; for (const d of [look * 0.5, look, look * 1.5]) bend = Math.max(bend, Math.abs(angDiff(a[2], P.at(Math.min(P.tot, P.s + d))[2])));
-  let vt = (bend > 1.0 ? 0.32 : bend > 0.5 ? 0.5 : bend > 0.25 ? 0.72 : 1) * top; if (gapRule) vt *= gapRule(Math.hypot(PLAYER.x - c.x, PLAYER.z - c.z));
-  P.v = lerp(P.v, vt, clamp(dt * (vt < P.v ? 2.5 : 0.8), 0, 1)); P.s = Math.min(P.tot, P.s + P.v * dt);
+  let vt = (chase ? (bend > 1.0 ? 0.42 : bend > 0.5 ? 0.62 : bend > 0.25 ? 0.82 : 1) : (bend > 1.0 ? 0.32 : bend > 0.5 ? 0.5 : bend > 0.25 ? 0.72 : 1)) * top; if (gapRule) vt *= gapRule(Math.hypot(PLAYER.x - c.x, PLAYER.z - c.z));
+  P.v = lerp(P.v, vt, clamp(dt * (vt < P.v ? (chase ? 2.0 : 2.5) : (chase ? 1.0 : 0.8)), 0, 1)); P.s = Math.min(P.tot, P.s + P.v * dt);
   const q = roundedAt(P.at, P.s, P.v, P.tot);
   c.x = q[0] + Math.cos(q[2]) * 1.6; c.z = q[1] - Math.sin(q[2]) * 1.6; c.h += angDiff(c.h, q[2]) * clamp(dt * 4, 0, 1); c.fwdV = P.v; c.vx = Math.sin(q[2]) * P.v; c.vz = Math.cos(q[2]) * P.v;
   return P.s >= P.tot - 1;
@@ -12037,7 +12060,7 @@ const M_FARMACIA = {
         s2Fight(this, 'LADRÓN', S.t1.H.look, { npc: S.t1, lv: 0.45 }, () => this.afterFight(), () => s2Fail('El ladrón te ha tumbado y se han escapado')); }); }
     // the second thief runs to a black car parked beside a «Corola» (the one the player can take) and steals it
     if (S.step === 3) { const end = s2Runner(S.t2, S.Pw, dt, 6.2, 0); if (end || Math.hypot(S.t2.x - S.car.x, S.t2.z - S.car.z) < 2.2) this.steal(); }
-    if (S.step === 4) { const done = s2DriveCar(S.car, S.P, dt, 19, (d) => (d > 160 ? 0.55 : d > 90 ? 0.8 : d < 25 ? 1.12 : 1)); const d = Math.hypot(PLAYER.x - S.car.x, PLAYER.z - S.car.z);
+    if (S.step === 4) { const done = s2DriveCar(S.car, S.P, dt, 19, (d) => (d > 160 ? 0.55 : d > 90 ? 0.8 : d < 25 ? 1.12 : 1), true); const d = Math.hypot(PLAYER.x - S.car.x, PLAYER.z - S.car.z);
       S.trk = (S.trk || 0) - dt; if (S.trk <= 0) { S.trk = 0.8; K.track(S.car.x, S.car.z); }
       if (d > 420) { s2Fail('Has perdido el coche negro'); return; }
       if (done) { S.step = 5; S.car.mode = 'physics'; S.car.driver = null; S.car.ctl.brk = 1; const [a, bb] = [S.car.x + 2, S.car.z]; S.t2.x = a; S.t2.z = bb; S.t2.H.root.visible = true; S.t2.H.root.position.set(a, heightAt(a, bb) + 0.17, bb);
@@ -12260,7 +12283,7 @@ const M_AEROPUERTO = {
   update(dt) { const K = K2(), S = this.st; if (!S || !S.step) return;
     if (S.step === 1 && s2AtGoal(20)) { S.step = 2; K.clearBeacon(); S.P.s = 25; const a = S.P.at(25), x = a[0], z = a[1]; S.van = s2Car('vito', 0x2b2b2b, x, z, a[2]); S.van.mode = 'race'; S.van.driver = 'race'; s2Mark(S.van, 10); S.thief = s2Human(THIEF_LOOKS[0], x, z); S.thief.H.root.visible = false;
       HUD.big('¡PERSECUCIÓN!', '#f5b72e', 2); K.setObjective('¡La ' + b2('furgoneta del queso') + ' arranca! Síguela'); }
-    if (S.step === 2) { const done = s2DriveCar(S.van, S.P, dt, 22, (d) => (d > 110 ? 0.6 : d < 25 ? 1.1 : 1)); if (Math.hypot(PLAYER.x - S.van.x, PLAYER.z - S.van.z) > 280) { s2Fail('La furgoneta del queso se ha escapado'); return; }
+    if (S.step === 2) { const done = s2DriveCar(S.van, S.P, dt, 22, (d) => (d > 110 ? 0.6 : d < 25 ? 1.1 : 1), true); if (Math.hypot(PLAYER.x - S.van.x, PLAYER.z - S.van.z) > 280) { s2Fail('La furgoneta del queso se ha escapado'); return; }
       if (done || S.van.health < 45) { S.step = 3; S.van.mode = 'physics'; S.van.driver = null; S.van.ctl.brk = 1; const [a, b] = safeSpot(S.van.x + 3, S.van.z + 3, 0.6); Object.assign(S.thief, { x: a, z: b }); S.thief.H.root.visible = true; S.P2 = s2RunPath(S.thief, 150, 260); S.thief.blip = true; s2Mark(S.thief, 8); S.tg = s2Target(S.thief, () => this.caught()); K.setObjective('¡Huye a pie! Dale con la ' + b2('pistola de bolas')); } }
     if (S.step === 3 && !S.thief.down) { const end = s2Runner(S.thief, S.P2, dt, 5.8); s2TrackTarget(S.tg); if (S.P2.s > 8 && s2Near(S.thief.x, S.thief.z, 1.8) && !PLAYER.car) this.caught(); else if (end && !s2Near(S.thief.x, S.thief.z, 60)) s2Fail('El contrabandista se ha perdido en la noche'); } },
   caught() { const K = K2(), S = this.st; if (S.step !== 3) return; S.step = 4; s2Down(S.thief);
@@ -12942,7 +12965,7 @@ const S_CANCHA = {
   update(dt) { const K = K3(), S = this.st; if (!S || !S.step) return;
     if (S.step === 1 && s2AtGoal(7)) { if (PLAYER.car) { if (PLAYER.car.speed > 2) return; exitCar(); } S.step = 2; K.clearBeacon(); K.setObjective(null);
       playCourtGame(S.c, { rival: pickRivals(S.c.cx + 7).map((l, k) => ({ name: ['EL FLACO', 'EL TOCHO'][k], look: l })), rivalName: 'TRAPICHEROS', lv: 0.5, time: 120, onEnd: (r) => { if (!K.isActive(this)) return; if (!r.won) { K.fail('Os han ganado y no sueltan prenda'); return; } this.flee(); } }); }
-    if (S.step === 3) { const c = S.car; const done = s2DriveCar(c, S.P, dt, 20, (d) => (d > 150 ? 0.6 : d < 25 ? 1.1 : 1)); S.trk = (S.trk || 0) - dt; if (S.trk <= 0) { S.trk = 0.8; K.track(c.x, c.z); }
+    if (S.step === 3) { const c = S.car; const done = s2DriveCar(c, S.P, dt, 20, (d) => (d > 150 ? 0.6 : d < 25 ? 1.1 : 1), true); S.trk = (S.trk || 0) - dt; if (S.trk <= 0) { S.trk = 0.8; K.track(c.x, c.z); }
       if (Math.hypot(PLAYER.x - c.x, PLAYER.z - c.z) > 330) { s2Fail('Los trapicheros se han escapado'); return; }
       if (done || c.health < 45) { S.step = 4; c.mode = 'physics'; c.driver = null; c.ctl.brk = 1; K.talk([['Trapichero', '¡Vale, vale! ¡Nos rendimos! ¡Era solo gofio adulterado!'], TOSTON('(por el walkie) Gofio adulterado... Esto es más gordo de lo que pensaba. Buen trabajo, chaval.')], () => s2Pass('Trapicheros detenidos', 1400)); } } },
   flee() { const K = K3(), S = this.st; S.step = 3; const [x, z, h] = k3Street(PLAYER.x, PLAYER.z, 25, 45); S.P = s2Path(s2Route(x, z, 1000, 1600)); const a = S.P.at(0); S.car = s2Car('compact', 0xd35400, a[0], a[1], a[2]); S.car.mode = 'race'; S.car.driver = 'race'; s2Mark(S.car, 10);
@@ -12973,7 +12996,7 @@ const S_GOFIO = {
     if (S.step === 1 && s2AtGoal(14)) { if (PLAYER.car && PLAYER.car.speed > 3) return; S.step = 2; K.setTimer(0); K.clearBeacon(); const [a, b] = safeSpot(S.w[0] + 3, S.w[1] + 2, 0.6); S.guard = s2Human({ ...THIEF_LOOKS[1], build: { fat: 1 } }, a, b, [PLAYER.x, PLAYER.z]); if (PLAYER.car) exitCar();
       K.talk([['Portero de la nave', 'Aquí no se entra sin invitación. Y tú tienes cara de no tenerla.']], () => s2Fight(this, 'EL PORTERO', S.guard.H.look, { npc: S.guard, lv: 0.62, deal: 1.1 }, () => { s2Down(S.guard); this.thugs(); }, () => s2Fail('El portero te ha mandado a casa'))); }
     if (S.step === 3) for (const t of S.tg) if (!t.hit && t.npc) { t.x = t.npc.x; t.z = t.npc.z; t.y = heightAt(t.x, t.z) + 1.1; }
-    if (S.step === 5) { const c = S.car; const done = s2DriveCar(c, S.P, dt, 21, (d) => (d > 150 ? 0.6 : d < 25 ? 1.1 : 1)); S.trk = (S.trk || 0) - dt; if (S.trk <= 0) { S.trk = 0.8; K.track(c.x, c.z); }
+    if (S.step === 5) { const c = S.car; const done = s2DriveCar(c, S.P, dt, 21, (d) => (d > 150 ? 0.6 : d < 25 ? 1.1 : 1), true); S.trk = (S.trk || 0) - dt; if (S.trk <= 0) { S.trk = 0.8; K.track(c.x, c.z); }
       if (Math.hypot(PLAYER.x - c.x, PLAYER.z - c.z) > 330) { s2Fail('El jefe se ha escapado con el gofio'); return; }
       if (done || c.health < 40) { S.step = 6; c.mode = 'physics'; c.driver = null; c.ctl.brk = 1; K.talk([['Jefe del gofio', '¡No me detengáis! ¡Yo solo quería que el gofio fuera más blanco!'], TOSTON('(llegando en una guagua) ¡Operación Gofio Blanco, completada! Chaval, si algún día quieres una placa, te la hago yo con una lata.'), [K.CH, 'Con el dinero me vale, inspector.']], () => s2Pass('Operación Gofio Blanco', 3000)); } } },
   thugs() { const K = K3(), S = this.st; S.step = 3; s2Armed(); const looks = [THIEF_LOOKS[0], THIEF_LOOKS[2], THIEF_LOOKS[1]]; S.tg = [];
@@ -13035,7 +13058,7 @@ const M_OBISPO_8 = {
   update(dt) { const K = K3(), S = this.st; if (!S || !S.step) return;
     if (S.step === 1 && s2AtGoal(14)) { S.step = 2; K.setTimer(0); K.clearBeacon(); const [x, z] = k3Street(S.c[0], S.c[1], 15, 30); S.P = s2Path(s2Route(x, z, 900, 1400)); const a = S.P.at(0); S.car = s2Car('compact', 0x6d4c41, a[0], a[1], a[2]); S.car.mode = 'race'; S.car.driver = 'race'; s2Mark(S.car, 10);
       HUD.big('¡AHÍ VA!', '#b388ff', 1.6); K.setObjective('¡El ladrón huye en un ' + b2('coche marrón') + '! Persíguelo'); }
-    if (S.step === 2) { const c = S.car; const done = s2DriveCar(c, S.P, dt, 19, (d) => (d > 150 ? 0.6 : d < 25 ? 1.1 : 1)); S.trk = (S.trk || 0) - dt; if (S.trk <= 0) { S.trk = 0.8; K.track(c.x, c.z); }
+    if (S.step === 2) { const c = S.car; const done = s2DriveCar(c, S.P, dt, 19, (d) => (d > 150 ? 0.6 : d < 25 ? 1.1 : 1), true); S.trk = (S.trk || 0) - dt; if (S.trk <= 0) { S.trk = 0.8; K.track(c.x, c.z); }
       if (Math.hypot(PLAYER.x - c.x, PLAYER.z - c.z) > 320) { s2Fail('El ladrón del cepillo se ha escapado'); return; }
       if (done || c.health < 45) { S.step = 3; c.mode = 'physics'; c.driver = null; c.ctl.brk = 1; const [a, b] = safeSpot(c.x + 2.5, c.z + 2, 0.6); S.n = s2Human(THIEF_LOOKS[2], a, b); S.P2 = s2RunPath(S.n, 150, 260); S.n.blip = true; s2Mark(S.n, 8);
         S.tg = s2Target(S.n, () => { s2Down(S.n); S.step = 4; K.talk([['Ladrón del cepillo', '¡Perdón, perdón! ¡Que era para las cuotas del gimnasio!'], [OBISPO + ' (por el móvil)', 'Hijo mío, devuelve el cepillo a su sitio. Y al ladrón, que lo confiese el padre Anselmo: penitencia de tres rosarios y una tarde con la tuna.']], () => s2Pass('Cepillo recuperado', 1300)); });
@@ -13408,7 +13431,7 @@ function goLandscape() { if (!document.body.classList.contains('touchmode')) ret
 $('rotate').addEventListener('click', goLandscape);
 $('bPlay').addEventListener('click', () => { goLandscape(); AUDIO.init(); $('menu').style.display = 'none'; GAME.state = 'play'; GAME.lock(); HUD.big('AYOZE «EL CHOPA»', '#f5b72e', 4); /* the intro stays until you press the button (it went by too fast) */ setTimeout(() => { if (GAME.state === 'play' && !DLG.open) DLG.show('Ayoze «El Chopa»', 'JETA La Laguna', 'Tres años a la sombra. Hoy, recién salido de la cárcel, el Chopa vuelve a su barrio de La Laguna con una bolsa de plástico y ganas de hacer las cosas bien.<br><br>Habla con <b>Rayco «El Blanco»</b>, en la puerta de casa de sus padres (círculo amarillo).', '', ['¡Vamos!'], () => DLG.hide()); }, 1200); });
 renderer.domElement.addEventListener('click', () => GAME.lock());
-document.addEventListener('pointerlockchange', () => { if (!document.pointerLockElement && GAME.state === 'play' && !BIGMAP.open && !document.body.classList.contains('touchmode')) GAME.pause(true); });
+document.addEventListener('pointerlockchange', () => { if (!document.pointerLockElement && GAME.state === 'play' && !(performance.now() < (GAME.noPauseT || 0)) /* v0.85.1: not right after leaving a machine with Esc */ && !BIGMAP.open && !document.body.classList.contains('touchmode')) GAME.pause(true); });
 
 // ---------- loop
 let last = performance.now(), acc2 = 0, frame = 0, trafficT = 0;
@@ -13531,7 +13554,7 @@ async function boot() {
   window.__GAME_READY = true;
 }
 boot();
-window.__bg = [bgScene, bgCamera]; window.__dbg = { get RCLIP() { return RCLIP; }, pip, PASAJES, ATRIOS: atrioList, ARCADE, RECRE, CASA, MUNDIALITO, pasajeCeilAt, inAguereLow, LOD, updateCityLOD, lodShowAll, optimizeCity, unfuse, PARKED, activateParked, parkedNear, RIFLE, AGUA, FIRES, makeFire, giveRifle, PK2, RIOS, TRI, PERAZA, MINI, KEYS, PRESSED, INPUT, get TCUTS() { return TCUTS; }, s2Human, s2Down, s2DownTick, onCarriagewayEarly, FLIGHT, updateAirport, TF13, TRAM_TRENCH, tramDepth, OBISPADO_TEX: obispadoTex, MALEANTES, startStreetFight, lineRuns, BIGSTORES, SIGN, roadClip, BASKET2D, FUTBOL2D, obispoCampo, TRI, OBISPADO, SPORTS, inAnyBuilding, COURTS, courtGateNear, useCourtGate, DIARIO, inPitch, pitchRects, obispoCourt, LAMPS, TREES, GUIDE, AYTO, HUC, HEALTH, nearestHealth, exitCar, DLG, S2, POOLS: { CARPOOL, HPOOL, SHARED_GEO, VGEO }, SHARED_GEO, MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
+window.__bg = [bgScene, bgCamera]; window.__dbg = { get RCLIP() { return RCLIP; }, pip, PASAJES, ATRIOS: atrioList, ARCADE, RECRE, CASA, MUNDIALITO, s2Path, s2DriveCar, pitchRects, rectsOverlap, STR, pasajeCeilAt, inAguereLow, LOD, updateCityLOD, lodShowAll, optimizeCity, unfuse, PARKED, activateParked, parkedNear, RIFLE, AGUA, FIRES, makeFire, giveRifle, PK2, RIOS, TRI, PERAZA, MINI, KEYS, PRESSED, INPUT, get TCUTS() { return TCUTS; }, s2Human, s2Down, s2DownTick, onCarriagewayEarly, FLIGHT, updateAirport, TF13, TRAM_TRENCH, tramDepth, OBISPADO_TEX: obispadoTex, MALEANTES, startStreetFight, lineRuns, BIGSTORES, SIGN, roadClip, BASKET2D, FUTBOL2D, obispoCampo, TRI, OBISPADO, SPORTS, inAnyBuilding, COURTS, courtGateNear, useCourtGate, DIARIO, inPitch, pitchRects, obispoCourt, LAMPS, TREES, GUIDE, AYTO, HUC, HEALTH, nearestHealth, exitCar, DLG, S2, POOLS: { CARPOOL, HPOOL, SHARED_GEO, VGEO }, SHARED_GEO, MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
 window.__snap = () => { updateUnderground(); updateCityLOD(); bgCamera.position.copy(camera.position); bgCamera.quaternion.copy(camera.quaternion); bgCamera.fov = camera.fov; bgCamera.updateProjectionMatrix(); renderer.clear(); renderer.render(bgScene, bgCamera); renderer.clearDepth(); renderer.render(scene, camera); return renderer.domElement.toDataURL('image/jpeg', 0.85); };
 window.__setYaw = (y) => { CAM.yaw = y; CAM.pitch = 0.1; INPUT.lastMouse = performance.now(); };
 window.__hit = (p) => hitPed(p);

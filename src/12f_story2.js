@@ -40,12 +40,14 @@ function roundedAt(at, s, v, tot) {
   return [lerp(qs[0], (q0[0] + q1[0]) / 2, f), lerp(qs[1], (q0[1] + q1[1]) / 2, f), qs[2] + angDiff(qs[2], qh) * f];
 }
 // car driven along the path (kinematic, like the Canarión's): brakes for bends, keeps a gap to the player
-function s2DriveCar(c, P, dt, top, gapRule) {
+function s2DriveCar(c, P, dt, top, gapRule, chase = false) {
+  // v0.85.1 (Jonay: chases too easy): a car running away from you brakes less in bends and goes a bit faster
+  if (chase) top *= 1.1;
   // v0.70 (Jonay: they turned on the spot): brake for the sharpest bend in the next 12–35 m (further when fast) and
   // drive through it on a rounded line (the middle of the points R m behind and R m ahead) instead of the polyline corner
   const a = P.at(P.s), look = 12 + P.v * 1.2; let bend = 0; for (const d of [look * 0.5, look, look * 1.5]) bend = Math.max(bend, Math.abs(angDiff(a[2], P.at(Math.min(P.tot, P.s + d))[2])));
-  let vt = (bend > 1.0 ? 0.32 : bend > 0.5 ? 0.5 : bend > 0.25 ? 0.72 : 1) * top; if (gapRule) vt *= gapRule(Math.hypot(PLAYER.x - c.x, PLAYER.z - c.z));
-  P.v = lerp(P.v, vt, clamp(dt * (vt < P.v ? 2.5 : 0.8), 0, 1)); P.s = Math.min(P.tot, P.s + P.v * dt);
+  let vt = (chase ? (bend > 1.0 ? 0.42 : bend > 0.5 ? 0.62 : bend > 0.25 ? 0.82 : 1) : (bend > 1.0 ? 0.32 : bend > 0.5 ? 0.5 : bend > 0.25 ? 0.72 : 1)) * top; if (gapRule) vt *= gapRule(Math.hypot(PLAYER.x - c.x, PLAYER.z - c.z));
+  P.v = lerp(P.v, vt, clamp(dt * (vt < P.v ? (chase ? 2.0 : 2.5) : (chase ? 1.0 : 0.8)), 0, 1)); P.s = Math.min(P.tot, P.s + P.v * dt);
   const q = roundedAt(P.at, P.s, P.v, P.tot);
   c.x = q[0] + Math.cos(q[2]) * 1.6; c.z = q[1] - Math.sin(q[2]) * 1.6; c.h += angDiff(c.h, q[2]) * clamp(dt * 4, 0, 1); c.fwdV = P.v; c.vx = Math.sin(q[2]) * P.v; c.vz = Math.cos(q[2]) * P.v;
   return P.s >= P.tot - 1;
@@ -130,7 +132,7 @@ const M_FARMACIA = {
         s2Fight(this, 'LADRÓN', S.t1.H.look, { npc: S.t1, lv: 0.45 }, () => this.afterFight(), () => s2Fail('El ladrón te ha tumbado y se han escapado')); }); }
     // the second thief runs to a black car parked beside a «Corola» (the one the player can take) and steals it
     if (S.step === 3) { const end = s2Runner(S.t2, S.Pw, dt, 6.2, 0); if (end || Math.hypot(S.t2.x - S.car.x, S.t2.z - S.car.z) < 2.2) this.steal(); }
-    if (S.step === 4) { const done = s2DriveCar(S.car, S.P, dt, 19, (d) => (d > 160 ? 0.55 : d > 90 ? 0.8 : d < 25 ? 1.12 : 1)); const d = Math.hypot(PLAYER.x - S.car.x, PLAYER.z - S.car.z);
+    if (S.step === 4) { const done = s2DriveCar(S.car, S.P, dt, 19, (d) => (d > 160 ? 0.55 : d > 90 ? 0.8 : d < 25 ? 1.12 : 1), true); const d = Math.hypot(PLAYER.x - S.car.x, PLAYER.z - S.car.z);
       S.trk = (S.trk || 0) - dt; if (S.trk <= 0) { S.trk = 0.8; K.track(S.car.x, S.car.z); }
       if (d > 420) { s2Fail('Has perdido el coche negro'); return; }
       if (done) { S.step = 5; S.car.mode = 'physics'; S.car.driver = null; S.car.ctl.brk = 1; const [a, bb] = [S.car.x + 2, S.car.z]; S.t2.x = a; S.t2.z = bb; S.t2.H.root.visible = true; S.t2.H.root.position.set(a, heightAt(a, bb) + 0.17, bb);
@@ -353,7 +355,7 @@ const M_AEROPUERTO = {
   update(dt) { const K = K2(), S = this.st; if (!S || !S.step) return;
     if (S.step === 1 && s2AtGoal(20)) { S.step = 2; K.clearBeacon(); S.P.s = 25; const a = S.P.at(25), x = a[0], z = a[1]; S.van = s2Car('vito', 0x2b2b2b, x, z, a[2]); S.van.mode = 'race'; S.van.driver = 'race'; s2Mark(S.van, 10); S.thief = s2Human(THIEF_LOOKS[0], x, z); S.thief.H.root.visible = false;
       HUD.big('¡PERSECUCIÓN!', '#f5b72e', 2); K.setObjective('¡La ' + b2('furgoneta del queso') + ' arranca! Síguela'); }
-    if (S.step === 2) { const done = s2DriveCar(S.van, S.P, dt, 22, (d) => (d > 110 ? 0.6 : d < 25 ? 1.1 : 1)); if (Math.hypot(PLAYER.x - S.van.x, PLAYER.z - S.van.z) > 280) { s2Fail('La furgoneta del queso se ha escapado'); return; }
+    if (S.step === 2) { const done = s2DriveCar(S.van, S.P, dt, 22, (d) => (d > 110 ? 0.6 : d < 25 ? 1.1 : 1), true); if (Math.hypot(PLAYER.x - S.van.x, PLAYER.z - S.van.z) > 280) { s2Fail('La furgoneta del queso se ha escapado'); return; }
       if (done || S.van.health < 45) { S.step = 3; S.van.mode = 'physics'; S.van.driver = null; S.van.ctl.brk = 1; const [a, b] = safeSpot(S.van.x + 3, S.van.z + 3, 0.6); Object.assign(S.thief, { x: a, z: b }); S.thief.H.root.visible = true; S.P2 = s2RunPath(S.thief, 150, 260); S.thief.blip = true; s2Mark(S.thief, 8); S.tg = s2Target(S.thief, () => this.caught()); K.setObjective('¡Huye a pie! Dale con la ' + b2('pistola de bolas')); } }
     if (S.step === 3 && !S.thief.down) { const end = s2Runner(S.thief, S.P2, dt, 5.8); s2TrackTarget(S.tg); if (S.P2.s > 8 && s2Near(S.thief.x, S.thief.z, 1.8) && !PLAYER.car) this.caught(); else if (end && !s2Near(S.thief.x, S.thief.z, 60)) s2Fail('El contrabandista se ha perdido en la noche'); } },
   caught() { const K = K2(), S = this.st; if (S.step !== 3) return; S.step = 4; s2Down(S.thief);

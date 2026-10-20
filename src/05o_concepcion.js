@@ -69,8 +69,12 @@ function concBuckets() {
 // box with UVs in metres (texture tile = s metres)
 function cBox(w, h, d, s = 2.4) { const g = new THREE.BoxGeometry(w, h, d); const uv = g.attributes.uv; const D = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]]; for (let f = 0; f < 6; f++) for (let i = 0; i < 4; i++) { const k = f * 4 + i; uv.setXY(k, uv.getX(k) * D[f][0] / s, uv.getY(k) * D[f][1] / s); } return g; }
 // local frame → world matrix
-function cFrame(ox, oy, oz, ang) { const base = new THREE.Matrix4().makeRotationY(ang).setPosition(ox, oy, oz); const q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1);
-  return (x, y, z, ry = 0, rx = 0, rz = 0, sc = null) => { e.set(rx, ry, rz, 'YXZ'); q.setFromEuler(e); return new THREE.Matrix4().compose(v.set(x, y, z), q, sc ? new THREE.Vector3(...sc) : one).premultiply(base); }; }
+// v0.85.1 (audit v0.81): the helper objects are made once for the whole church, not once per frame of reference
+// (it only runs while the city is being built; each call still returns its own matrix, which the caller keeps)
+const CF_ = { q: null, e: null, v: null, s: null, one: null };
+function cFrame(ox, oy, oz, ang) { if (!CF_.q) { CF_.q = new THREE.Quaternion(); CF_.e = new THREE.Euler(); CF_.v = new THREE.Vector3(); CF_.s = new THREE.Vector3(); CF_.one = new THREE.Vector3(1, 1, 1); }
+  const base = new THREE.Matrix4().makeRotationY(ang).setPosition(ox, oy, oz), { q, e, v, s, one } = CF_;
+  return (x, y, z, ry = 0, rx = 0, rz = 0, sc = null) => { e.set(rx, ry, rz, 'YXZ'); q.setFromEuler(e); return new THREE.Matrix4().compose(v.set(x, y, z), q, sc ? s.set(sc[0], sc[1], sc[2]) : one).premultiply(base); }; }
 // arch-topped shape (w wide, h total height incl. semicircle), base at y=0
 function archShape(w, h, x0 = 0) { const s = new THREE.Shape(), r = w / 2; s.moveTo(x0 - r, 0); s.lineTo(x0 + r, 0); s.lineTo(x0 + r, h - r); s.absarc(x0, h - r, r, 0, Math.PI, false); s.lineTo(x0 - r, 0); return s; }
 function archPath(w, h, x0 = 0, y0 = 0) { const s = new THREE.Path(), r = w / 2; s.moveTo(x0 - r, y0); s.lineTo(x0 + r, y0); s.lineTo(x0 + r, y0 + h - r); s.absarc(x0, y0 + h - r, r, 0, Math.PI, false); s.lineTo(x0 - r, y0); return s; }

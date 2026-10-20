@@ -169,7 +169,8 @@ const BASKET2D = (() => {
     if (st.ev) st.ev.shot = true;
   }
   function pass(from, to) { const b = st.ball; if (b.holder !== from || !to || to.down > 0) return; b.holder = null; b.mode = 'pass'; b.x = from.x; b.z = from.z; b.y = from.y + 1.3;
-    const L = dist(from, to); b.pass = { to, t: 0, from, T: clamp(0.18 + L * 0.055, 0.22, 0.9), x0: b.x, z0: b.z, y0: b.y, arc: L < 3 ? 0.15 : 0.2 + L * 0.16 }; b.inter = false; if (st.ev && from.human) st.ev.pass = true; } // v0.79: the longer, the higher the arc
+    const L = dist(from, to); b.pass = { to, t: 0, from, T: clamp(0.18 + L * 0.055, 0.22, 0.9), x0: b.x, z0: b.z, y0: b.y, arc: L < 3 ? 0.15 : 0.2 + L * 0.16 }; b.inter = false; if (st.ev && from.human) st.ev.pass = true;
+    if (from.human && to.team === from.team && !st.auto) { from.human = false; from.shootHold = false; to.human = true; st.swapAt = st.time0 + 0.3; } } /* v0.85.1 (Jonay): the one who gets your pass is yours at once */ // v0.79: the longer, the higher the arc
   function steal(p) { const b = st.ball; const v = b.holder; if (!v || v.team === p.team || p.down > 0 || p.stealCD > 0 || (v.air && v.sure)) return; /* a combo dunk in the air can't be stolen */ p.stealCD = 0.5; p.act = 'push'; p.actT = 0;
     if (dist(p, v) > 1.3) return;
     const shove = (p.human ? held('vT') : Math.random() < 0.35 * p.lv) && p.turbo > 0.2;

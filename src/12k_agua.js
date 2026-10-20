@@ -130,7 +130,7 @@ const S_CANCHA = {
   update(dt) { const K = K3(), S = this.st; if (!S || !S.step) return;
     if (S.step === 1 && s2AtGoal(7)) { if (PLAYER.car) { if (PLAYER.car.speed > 2) return; exitCar(); } S.step = 2; K.clearBeacon(); K.setObjective(null);
       playCourtGame(S.c, { rival: pickRivals(S.c.cx + 7).map((l, k) => ({ name: ['EL FLACO', 'EL TOCHO'][k], look: l })), rivalName: 'TRAPICHEROS', lv: 0.5, time: 120, onEnd: (r) => { if (!K.isActive(this)) return; if (!r.won) { K.fail('Os han ganado y no sueltan prenda'); return; } this.flee(); } }); }
-    if (S.step === 3) { const c = S.car; const done = s2DriveCar(c, S.P, dt, 20, (d) => (d > 150 ? 0.6 : d < 25 ? 1.1 : 1)); S.trk = (S.trk || 0) - dt; if (S.trk <= 0) { S.trk = 0.8; K.track(c.x, c.z); }
+    if (S.step === 3) { const c = S.car; const done = s2DriveCar(c, S.P, dt, 20, (d) => (d > 150 ? 0.6 : d < 25 ? 1.1 : 1), true); S.trk = (S.trk || 0) - dt; if (S.trk <= 0) { S.trk = 0.8; K.track(c.x, c.z); }
       if (Math.hypot(PLAYER.x - c.x, PLAYER.z - c.z) > 330) { s2Fail('Los trapicheros se han escapado'); return; }
       if (done || c.health < 45) { S.step = 4; c.mode = 'physics'; c.driver = null; c.ctl.brk = 1; K.talk([['Trapichero', '¡Vale, vale! ¡Nos rendimos! ¡Era solo gofio adulterado!'], TOSTON('(por el walkie) Gofio adulterado... Esto es más gordo de lo que pensaba. Buen trabajo, chaval.')], () => s2Pass('Trapicheros detenidos', 1400)); } } },
   flee() { const K = K3(), S = this.st; S.step = 3; const [x, z, h] = k3Street(PLAYER.x, PLAYER.z, 25, 45); S.P = s2Path(s2Route(x, z, 1000, 1600)); const a = S.P.at(0); S.car = s2Car('compact', 0xd35400, a[0], a[1], a[2]); S.car.mode = 'race'; S.car.driver = 'race'; s2Mark(S.car, 10);
@@ -161,7 +161,7 @@ const S_GOFIO = {
     if (S.step === 1 && s2AtGoal(14)) { if (PLAYER.car && PLAYER.car.speed > 3) return; S.step = 2; K.setTimer(0); K.clearBeacon(); const [a, b] = safeSpot(S.w[0] + 3, S.w[1] + 2, 0.6); S.guard = s2Human({ ...THIEF_LOOKS[1], build: { fat: 1 } }, a, b, [PLAYER.x, PLAYER.z]); if (PLAYER.car) exitCar();
       K.talk([['Portero de la nave', 'Aquí no se entra sin invitación. Y tú tienes cara de no tenerla.']], () => s2Fight(this, 'EL PORTERO', S.guard.H.look, { npc: S.guard, lv: 0.62, deal: 1.1 }, () => { s2Down(S.guard); this.thugs(); }, () => s2Fail('El portero te ha mandado a casa'))); }
     if (S.step === 3) for (const t of S.tg) if (!t.hit && t.npc) { t.x = t.npc.x; t.z = t.npc.z; t.y = heightAt(t.x, t.z) + 1.1; }
-    if (S.step === 5) { const c = S.car; const done = s2DriveCar(c, S.P, dt, 21, (d) => (d > 150 ? 0.6 : d < 25 ? 1.1 : 1)); S.trk = (S.trk || 0) - dt; if (S.trk <= 0) { S.trk = 0.8; K.track(c.x, c.z); }
+    if (S.step === 5) { const c = S.car; const done = s2DriveCar(c, S.P, dt, 21, (d) => (d > 150 ? 0.6 : d < 25 ? 1.1 : 1), true); S.trk = (S.trk || 0) - dt; if (S.trk <= 0) { S.trk = 0.8; K.track(c.x, c.z); }
       if (Math.hypot(PLAYER.x - c.x, PLAYER.z - c.z) > 330) { s2Fail('El jefe se ha escapado con el gofio'); return; }
       if (done || c.health < 40) { S.step = 6; c.mode = 'physics'; c.driver = null; c.ctl.brk = 1; K.talk([['Jefe del gofio', '¡No me detengáis! ¡Yo solo quería que el gofio fuera más blanco!'], TOSTON('(llegando en una guagua) ¡Operación Gofio Blanco, completada! Chaval, si algún día quieres una placa, te la hago yo con una lata.'), [K.CH, 'Con el dinero me vale, inspector.']], () => s2Pass('Operación Gofio Blanco', 3000)); } } },
   thugs() { const K = K3(), S = this.st; S.step = 3; s2Armed(); const looks = [THIEF_LOOKS[0], THIEF_LOOKS[2], THIEF_LOOKS[1]]; S.tg = [];
@@ -223,7 +223,7 @@ const M_OBISPO_8 = {
   update(dt) { const K = K3(), S = this.st; if (!S || !S.step) return;
     if (S.step === 1 && s2AtGoal(14)) { S.step = 2; K.setTimer(0); K.clearBeacon(); const [x, z] = k3Street(S.c[0], S.c[1], 15, 30); S.P = s2Path(s2Route(x, z, 900, 1400)); const a = S.P.at(0); S.car = s2Car('compact', 0x6d4c41, a[0], a[1], a[2]); S.car.mode = 'race'; S.car.driver = 'race'; s2Mark(S.car, 10);
       HUD.big('¡AHÍ VA!', '#b388ff', 1.6); K.setObjective('¡El ladrón huye en un ' + b2('coche marrón') + '! Persíguelo'); }
-    if (S.step === 2) { const c = S.car; const done = s2DriveCar(c, S.P, dt, 19, (d) => (d > 150 ? 0.6 : d < 25 ? 1.1 : 1)); S.trk = (S.trk || 0) - dt; if (S.trk <= 0) { S.trk = 0.8; K.track(c.x, c.z); }
+    if (S.step === 2) { const c = S.car; const done = s2DriveCar(c, S.P, dt, 19, (d) => (d > 150 ? 0.6 : d < 25 ? 1.1 : 1), true); S.trk = (S.trk || 0) - dt; if (S.trk <= 0) { S.trk = 0.8; K.track(c.x, c.z); }
       if (Math.hypot(PLAYER.x - c.x, PLAYER.z - c.z) > 320) { s2Fail('El ladrón del cepillo se ha escapado'); return; }
       if (done || c.health < 45) { S.step = 3; c.mode = 'physics'; c.driver = null; c.ctl.brk = 1; const [a, b] = safeSpot(c.x + 2.5, c.z + 2, 0.6); S.n = s2Human(THIEF_LOOKS[2], a, b); S.P2 = s2RunPath(S.n, 150, 260); S.n.blip = true; s2Mark(S.n, 8);
         S.tg = s2Target(S.n, () => { s2Down(S.n); S.step = 4; K.talk([['Ladrón del cepillo', '¡Perdón, perdón! ¡Que era para las cuotas del gimnasio!'], [OBISPO + ' (por el móvil)', 'Hijo mío, devuelve el cepillo a su sitio. Y al ladrón, que lo confiese el padre Anselmo: penitencia de tres rosarios y una tarde con la tuna.']], () => s2Pass('Cepillo recuperado', 1300)); });

@@ -255,6 +255,12 @@
    [
     "prueba_085.py"
    ]
+  ],
+  [
+   "^src/05i_sports|^src/05g_interiors|^src/05o_concepcion|^src/12f_story2|^src/09j_arcade|^src/09f_basket2d",
+   [
+    "prueba_0851.py"
+   ]
   ]
  ]
 }
