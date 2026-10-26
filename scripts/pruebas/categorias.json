@@ -279,6 +279,12 @@
    [
     "prueba_089.py"
    ]
+  ],
+  [
+   "^src/(09eb_pixbasket|09ma_pixguanche|09k_bencomo|09m_guanche|09f_basket2d|09ea_minijuegos|12m_mundialito)",
+   [
+    "prueba_090.py"
+   ]
   ]
  ]
 }

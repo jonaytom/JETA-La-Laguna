@@ -3,6 +3,33 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.90.0 — 2026-10-26 — Jugadores nuevos en el basket y Guanche Guarriors, el público y el saque de fondo
+- **Basket, los jugadores nuevos** (Jonay eligió el «A++ semicabezón 120»): dibujados con la técnica de la propuesta
+  (esqueleto, piezas y sombreado píxel a píxel): cara de perfil con ojo, ceja, nariz, labios y oreja, barba o perilla,
+  pelo corto, afro o rapado, camiseta de tirantes con ribetes y número, pantalón ancho, muñequeras, calcetines y
+  zapatillas de bota. Todas las animaciones (botar, correr, tirar, defender, los cuatro mates del combo, caerse) salen
+  de las mismas poses de antes. La nariz de El Chopa sigue siendo legendaria.
+- **Basket, el saque de fondo** (Jonay: «no puede aparecer en medio de la cancha, debe haber continuidad»): tras una
+  canasta nadie salta a otro sitio. El equipo que la recibe va andando a su línea de fondo, uno coge el balón detrás
+  de la canasta y tiene que pasarlo (A o el clic derecho; la máquina lo saca sola). Sus compañeros vienen a por él y los
+  rivales vuelven.
+- **Guanche Guarriors, los guerreros nuevos** (Jonay eligió el G1): El Magote (antes «el Mencey», mucho más musculoso,
+  con el garrote), El Mencey (antes «el Pastor», como Bencomo, con la vara) y La Mirladora (bikini de piel, melena
+  suelta y su bastón de magia). En la pantalla de elegir, en la del título y jugando; los enemigos siguen como estaban.
+- **Bencomo** (Jonay: «parece que tenga barrigota», «parecen orejas»): el pecho en V, con la cintura estrecha y los
+  brazos separados del cuerpo; con los brazos en alto (el título y el salto con la vara), cada brazo se ve entero
+  del hombro a la mano.
+- **El público** (Jonay: «más que música, efectos del público»):
+  - Basket: el murmullo que sube con la jugada, el «¡uuuh!» al fallar cerca, la ovación y los aplausos con las canastas,
+    el organillo del pabellón (el «charge» y otros), el «¡de-fen-sa!» con los pisotones y el chirrido de las zapatillas.
+  - Fútbol: el rugido de la grada, el «¡uuuh!» de las ocasiones, el furor con los goles, los pitos a las faltas y el
+    bombo de vez en cuando.
+  - Pelea: un corro de mirones que se anima con los golpes fuertes y celebra el K. O.
+- **Auditorías** (Jonay: «aplica lo que recomiendas»):
+  - El fuego de las misiones comparte un solo cilindro para todos (la auditoría 0.76 lo pedía).
+  - Partido en funciones lo que se había hecho largo: las pantallas del mundialito (una por pantalla), la defensa del
+    basket (el clic derecho y las ayudas) y el texto del diario (la frase de 800 caracteres y los textos largos).
+
 ## 0.89.1 — 2026-10-26 — El combo fallado ya no entra
 - **Basket** (Jonay: «al fallar el combo acabo de anotar, eso no puede ser»): el balón que rebota en el aro le caía
   encima al que machacaba, lo volvía a coger en el aire y el mate contaba. Ahora, tras un mate al hierro o un tapón, ese

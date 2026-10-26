@@ -26,16 +26,23 @@ const DIARIO = (() => {
   const BL = 'Rayco «El Blanco», por el móvil', REC = 'Las recreativas';
   const SABES = [
     { t: 'Maleantes en busca y captura', on: () => G().maleIntro, who: 'Sastrón, por el móvil', log: 'Maleantes en busca y captura',
-      what: 'La Policía Local paga una recompensa por cada maleante que le entregues. Cuando hay uno cerca sale en el minimapa como un <b>triángulo rojo</b>: vas, le das una buena tunda (pelea, como siempre) y cobras. Pegan más fuerte que la gente normal; cuanto más nivel, más pagan ($150, $300 o $600). Si te gana, sigue marcado un rato: vuelve a por él.',
+      what: 'La Policía Local paga una recompensa por cada maleante que le entregues. Cuando hay uno cerca sale en el ' +
+            'minimapa como un <b>triángulo rojo</b>: vas, le das una buena tunda (pelea, como siempre) y cobras. Pegan ' +
+            'más fuerte que la gente normal; cuanto más nivel, más pagan ($150, $300 o $600). Si te gana, sigue ' +
+            'marcado un rato: vuelve a por él.',
       where: 'Por la calle, cuando sale el triángulo rojo en el minimapa.' },
     { t: 'La máquina de El Blanco: BENCOMO', on: () => ARC().invited, who: BL, log: REC, rec: ['blanco', 'bencomo'], near: () => ({ name: 'Casa de El Blanco', x: RECRE.DOOR[0], z: RECRE.DOOR[1], d: Math.hypot(RECRE.DOOR[0] - PLAYER.x, RECRE.DOOR[1] - PLAYER.z) }),
       what: 'Una recreativa de las de antes en su casa: <b>«Bencomo, Acentejo\'s Revenge»</b>, plataformas con el mencey de Taoro contra los castellanos. Gratis y cuando quieras: no es una misión.',
       where: 'Casa de El Blanco: la entrada del Edificio Casa del Blanco, en Teobaldo Power (cuadrado naranja en el minimapa). Pulsa E en la puerta.' },
     { t: 'GUFO, AGUERE INVASION', on: () => ARC().invited, who: BL, log: REC, near: () => nearBar(),
-      what: 'La máquina de los bares (GUFO: Guanche Unknown Flying Object… y en canario, un pedo): un matamarcianos de naves por el cielo de Aguere, el Teide y el mar de nubes. A dispara (mantenlo para el disparo cargado), B lanza y recoge el módulo y Q coge la mejora marcada. <b>$1 la partida</b>; cada bar tiene sus récords.',
+      what: 'La máquina de los bares (GUFO: Guanche Unknown Flying Object… y en canario, un pedo): un matamarcianos de ' +
+            'naves por el cielo de Aguere, el Teide y el mar de nubes. A dispara (mantenlo para el disparo cargado), B ' +
+            'lanza y recoge el módulo y Q coge la mejora marcada. <b>$1 la partida</b>; cada bar tiene sus récords.',
       where: 'En las cafeterías y las tascas: en el minimapa y en el mapa (M) llevan un aro violeta alrededor de su cuadrado rojo. Pídela en la barra o en el mostrador (E).' },
     { t: 'GUANCHE GUARRIORS', on: () => ARC().invited && G().jugueterias, who: BL, log: REC, near: () => AGUA.nearestShop(),
-      what: 'La máquina de las jugueterías: un beat\'em up contra Guayota. Eliges al Mencey, al Pastor o a la Mirladora. A pega, B salta (y monta el lagarto), Q lanza la magia; doble toque para correr. <b>$1 la partida</b>; cada tienda tiene sus récords.',
+      what: 'La máquina de las jugueterías: un beat\'em up contra Guayota. Eliges al Magote, al Mencey o a la ' +
+            'Mirladora. A pega, B salta (y monta el lagarto), Q lanza la magia; doble toque para correr. <b>$1 la ' +
+            'partida</b>; cada tienda tiene sus récords.',
       where: 'En las jugueterías: el robot del minimapa y del mapa (M). Pídela en la tienda (E).', icon: 'toy' },
     { t: 'Las jugueterías', on: () => G().jugueterias, who: '', log: '', near: () => AGUA.nearestShop(),
       what: 'Venden el <b>rifle de agua</b> «Guepardo SK-9» y las bolitas para la pistola, y te llenan el rifle del grifo.', where: 'El robot del minimapa y del mapa (M): E en la puerta.', icon: 'toy' },
@@ -49,12 +56,21 @@ const DIARIO = (() => {
     { t: 'Tu casa', on: () => typeof CASA !== 'undefined' && CASA.ownsAny(), who: '', log: '', near: () => { let b = null; for (const h of CASA.homesOwned()) { const d = Math.hypot(h.x - PLAYER.x, h.z - PLAYER.z); if (!b || d < b.d) b = { ...h, d }; } return b; },
       what: 'Tus pisos: <b>' + '{HOMES}' + '</b>. Dentro: la cama (duermes hasta las 8 y se guarda la partida) y la tele, con la consola si la tienes.', where: 'Con tu cara en el minimapa y en el mapa (M).', icon: 'chopa' },
     { t: 'La consola GOFIO-8', on: () => ARC().console, who: '', log: '', near: () => AGUA.nearestShop(),
-      what: 'La consola de la tele de tu casa. Al encenderla sale un menú con tus cartuchos: <b>{CARTS}</b>. Los cartuchos se compran en las jugueterías.', where: 'En la tele de tu casa (E delante de la tele). La juguetería más cercana, abajo.' },
+      what: 'La consola de la tele de tu casa. Al encenderla sale un menú con tus cartuchos: <b>{CARTS}</b>. Los ' +
+            'cartuchos se compran en las jugueterías.', where: 'En la tele de tu casa (E delante de la tele). La juguetería más cercana, abajo.' },
     { t: 'El torneo de videojuegos', on: () => ARC().torneo, who: 'El dependiente de la juguetería', log: '',
-      what: 'Por comprarte <b>todos los cartuchos</b> eres un superfriki jugón. Para ganar el torneo hay que batir el récord de los juegos de puntos (Bencomo, GUFO y Guanche Guarriors) y ganar el mundialito de Pachanga 3x3 y de Play Furbito. Mundialitos ganados: <b>{MUND}</b>.', where: 'En la GOFIO-8 de tu casa.', icon: 'chopa' },
+      what: 'Por comprarte <b>todos los cartuchos</b> eres un superfriki jugón. Para ganar el torneo hay que batir el ' +
+            'récord de los juegos de puntos (Bencomo, GUFO y Guanche Guarriors) y ganar el mundialito de Pachanga 3x3 ' +
+            'y de Play Furbito. Mundialitos ganados: <b>{MUND}</b>.', where: 'En la GOFIO-8 de tu casa.', icon: 'chopa' },
     { t: 'El coche patrulla de la banda', on: () => G().patrol, who: 'El alcalde, por el móvil', log: '',
       what: 'Vuestro propio coche patrulla, con el nombre de la banda y el depósito lleno.', where: 'Delante del Ayuntamiento.' },
   ];
+  // the {HOMES} {PISOS} {MUND} {CARTS} gaps of a fact, filled with what the player has now (v0.90, audit: was one 800-char line)
+  const homesTxt = () => (typeof CASA !== 'undefined' ? CASA.PISOS.filter((P) => CASA.has(P.id)).map((P) => P.name + (P.rent ? ' (alquilado ' + Math.max(0, CASA.data().rent.until - CASA.data().day) + ' días más)' : '')).join(', ') : '');
+  const pisosTxt = () => CASA.PISOS.map((P) => `<b>${P.name}</b>: ${P.rent ? '$' + P.rent + ' a la semana' : '$' + P.price.toLocaleString('es-ES')}`).join(' · ');
+  const mundTxt = () => { const sp = ARC().sports || {}; return `Pachanga 3x3 ${(sp.pachanga || {}).won || 0} · Play Furbito ${(sp.furbito || {}).won || 0}`; };
+  const cartsTxt = () => (ARC().bought || []).filter((id) => ARCADE.GAMES[id]).map((id) => ARCADE.GAMES[id].title).join(', ') || 'ninguno todavía';
+  const fillWhat = (w) => w.replace('{HOMES}', homesTxt).replace('{PISOS}', pisosTxt).replace('{MUND}', mundTxt).replace('{CARTS}', cartsTxt);
   function nearBar() { let b = null, bd = 1e9; for (const f of FOOD.shops) { if (f.type !== 'C' && f.type !== 'R') continue; const d = Math.hypot(f.x - PLAYER.x, f.z - PLAYER.z); if (d < bd) { bd = d; b = f; } } return b ? { name: b.name, x: b.x, z: b.z, d: bd } : null; }
   const known = () => SABES.map((f, i) => ({ f, i })).filter(({ f }) => { try { return !!f.on(); } catch (e) { return false; } });
   function render() {
@@ -81,7 +97,7 @@ const DIARIO = (() => {
       if (nq) nr = `<div style="margin:0 0 8px;font:400 15px Barlow,sans-serif">🧭 La más cerca: <b>${esc(nq.name)}</b>, a ${Math.round(nq.d)} m <button class="btn" id="diaGps" style="font-size:13px;padding:5px 12px;margin-left:8px">MARCAR EN EL GPS</button></div>`;
       det.innerHTML = `<div style="font:400 22px Audiowide,Oswald,sans-serif;color:#9fd7ff">${esc(f.t)}</div>
         <div style="color:#bdb6c9;margin:2px 0 8px;font:400 14px Barlow,sans-serif">${f.who ? 'Te lo contó ' + esc(f.who) : 'Lo que sabes'}</div>
-        <div style="margin-bottom:8px;font:400 15px Barlow,sans-serif;line-height:1.35">${f.what.replace('{HOMES}', () => (typeof CASA !== 'undefined' ? CASA.PISOS.filter((P) => CASA.has(P.id)).map((P) => P.name + (P.rent ? ' (alquilado ' + Math.max(0, CASA.data().rent.until - CASA.data().day) + ' días más)' : '')).join(', ') : '')).replace('{PISOS}', () => CASA.PISOS.map((P) => `<b>${P.name}</b>: ${P.rent ? '$' + P.rent + ' a la semana' : '$' + P.price.toLocaleString('es-ES')}`).join(' · ')).replace('{MUND}', () => { const sp = ARC().sports || {}; return `Pachanga 3x3 ${(sp.pachanga || {}).won || 0} · Play Furbito ${(sp.furbito || {}).won || 0}`; }).replace('{CARTS}', () => (ARC().bought || []).filter((id) => ARCADE.GAMES[id]).map((id) => ARCADE.GAMES[id].title).join(', ') || 'ninguno todavía')}</div>
+        <div style="margin-bottom:8px;font:400 15px Barlow,sans-serif;line-height:1.35">${fillWhat(f.what)}</div>
         <div style="margin-bottom:8px;font:400 15px Barlow,sans-serif">${f.icon && window.__mapIconURL ? `<img src="${window.__mapIconURL(f.icon)}" style="width:22px;height:22px;vertical-align:-6px;margin-right:4px">` : '📍'} ${f.where}</div>${rec}${nr}
         ${f.log ? convo(MISSIONS.log(f.log), '') : ''}`;
       const gb = det.querySelector('#diaGps'); if (gb && nq) gb.onclick = () => { setWaypoint(nq.x, nq.z); HUD.toast('Ruta marcada en el GPS: ' + nq.name, '#e040fb', 4); close(); };

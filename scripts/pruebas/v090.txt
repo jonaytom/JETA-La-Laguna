@@ -1,0 +1,12 @@
+# v0.90: gráficos de basket, Guanche Guarriors y Bencomo, saque de fondo, el público, auditorías
+prueba_090.py
+prueba_089.py
+prueba_baloncesto.py
+prueba_futbol.py
+prueba_082.py
+prueba_085.py
+prueba_pelea_atras.py
+prueba_arranque.py
+prueba_076.py
+prueba_075.py
+prueba_diario.py

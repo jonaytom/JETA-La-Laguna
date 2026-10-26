@@ -205,7 +205,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="tb" id="tbS">CORRER</div>
 <div class="tb" id="tbM">MAPA</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">v0.89.1</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">v0.90.0</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -7384,9 +7384,9 @@ const FIGHT2D = (() => {
     if (blocked) { o.bstun = true; o.hp -= proj ? 1 : (MOVES.jab === M || MOVES.cross === M || MOVES.cpunch === M ? 1 : 2); o.stun = Math.round((M.hs || 16) * 0.5); o.vx = dir * 2.2; spark(o.x - dir * 8, o.y - 50, '#9fd7ff'); AUDIO.thud && AUDIO.thud(30); f.combo = 0; return; }
     o.bstun = false; o.block = false; o.hp -= Math.round((M.dmg || 10) * f.deal * o.recv); o.stun = M.hs || 18; o.mv = null; o.vx = dir * (M.kd ? 3.2 : 2.0); if (M.kd) { o.vy = -3.5; o.y -= 1; }
     f.combo = (o.stunPrev > 0 ? f.combo : 0) + 1; if (st.ev && f === st.a && f.combo >= 3) st.ev.combo = true; o.stunPrev = o.stun; f.chainOk = true; st.comboT = 60; st.comboBy = f;
-    spark(o.x - dir * 6, o.y - (M.lv === 'low' ? 12 : M.lv === 'mid' ? 40 : 58), '#ffe35a'); AUDIO.thud && AUDIO.thud(4); st.shake = 6;
+    spark(o.x - dir * 6, o.y - (M.lv === 'low' ? 12 : M.lv === 'mid' ? 40 : 58), '#ffe35a'); AUDIO.thud && AUDIO.thud(4); st.shake = 6; if (M.kd || f.combo >= 3) cr('ooh', M.kd ? 1 : 0.7); if (CR) CR.tick(0.3, 0.6);
     if (f.combo >= 3 && f.combo % 1 === 0) voice(f.combo >= 5 ? 'Combo brutal' : 'Combo');
-    if (o.hp <= 0) { o.hp = 0; o.ko = true; o.vy = -4; o.vx = dir * 2.5; o.y -= 1; st.koT = 1; st.slow = 50; voice('K. O.'); }
+    if (o.hp <= 0) { o.hp = 0; o.ko = true; o.vy = -4; o.vx = dir * 2.5; o.y -= 1; st.koT = 1; st.slow = 50; voice('K. O.'); cr('roar', 0.8); }
   }
   function spark(x, y, col) { st.fx.push({ x, y, t: 0, col }); }
   // ---------------- voice (Web Speech, English announcer like the arcades)
@@ -7459,6 +7459,7 @@ const FIGHT2D = (() => {
     const ia = live ? playerInput(st.a, st.b) : {}; const ib = live ? aiInput(st.b, st.a) : {};
     if (st.slow > 0) { st.slow--; if (st.slow % 3) { pressedK.clear(); return; } }
     if (live || st.phase === 'ko') { stepFighter(st.a, st.b, ia); stepFighter(st.b, st.a, ib); }
+    if (CR) CR.tick(1 / 60, st.phase === 'ko' ? 0.8 : 0.12); // the onlookers calm down between blows
     if (st.tut && st.phase !== 'ready') st.tut.check(st);
     // push apart, stage bounds
     const dx = st.b.x - st.a.x; if (Math.abs(dx) < 24 * SZ && Math.abs(st.a.y - st.b.y) < 40) { const p = (24 * SZ - Math.abs(dx)) / 2 * Math.sign(dx || 1); st.a.x -= p; st.b.x += p; }
@@ -7524,6 +7525,8 @@ const FIGHT2D = (() => {
   }
   function grab3D() { render(); const c = mkCanvas(W, H); c.getContext('2d').drawImage(renderer.domElement, 0, 0, W, H); return c; }
   // ---------------- public
+  let CR = null; // v0.90: the ring of onlookers (MINI.crowd, made in start: MINI comes later in the bundle)
+  const cr = (n, k) => { if (CR) CR.ev(n, k); };
   function start(opt) { if (!PZ.made) { PZ = MINI.pauser(() => running); PZ.made = true; } PZ.off();
     if (running) return; running = true; onEnd = opt.onEnd || null;
     if (!cv) { cv = $('fight2d'); cv.width = W * R; cv.height = H * R; cx = cv.getContext('2d'); cx.imageSmoothingEnabled = false; }
@@ -7534,9 +7537,9 @@ const FIGHT2D = (() => {
     st.trans = { kind: 'in', t: 0, dur: 0.9, from, tmp: mkCanvas(8, 8), done: null };
     keys.clear(); pressedK.clear(); document.exitPointerLock?.();
     GAME.state = 'fight2d'; document.body.classList.add('fighting'); cv.style.display = 'block'; cv.style.opacity = 0; $('fightPad').style.display = document.body.classList.contains('touchmode') ? 'block' : 'none';
-    AUDIO.thud && AUDIO.thud(1); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop);
+    AUDIO.thud && AUDIO.thud(1); if (CR) CR.stop(); CR = MINI.crowd('calle'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop);
   }
-  function finishFight() {
+  function finishFight() { if (CR) { CR.stop(); CR = null; }
     const won = st.winner === st.a; const res = { won, hpA: st.a.hp, hpB: st.b.hp, rounds: [st.a.wins, st.b.wins] };
     st.trans = { kind: 'out', t: 0, dur: 0.7, done: () => { running = false; cancelAnimationFrame(raf); cv.style.display = 'none'; $('fightPad').style.display = 'none'; document.body.classList.remove('fighting'); MINI.clearWorldInput(); GAME.state = 'play'; GAME.lock(); if (onEnd) onEnd(res); } };
   }
@@ -7545,7 +7548,7 @@ const FIGHT2D = (() => {
     const pad = $('fightPad'); if (!pad) return; const map = { fpL: 'vL', fpR: 'vR', fpU: 'vU', fpD: 'vD', fpP: 'vP', fpK: 'vK', fpB: 'vB' };
     for (const id in map) { const b = $(id); if (!b) continue; const k = map[id]; b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); if (!keys.has(k)) pressedK.add(k); keys.add(k); b.classList.add('on'); }); const up = (e) => { keys.delete(k); b.classList.remove('on'); }; b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up); }
   }
-  function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); if (cv) cv.style.display = 'none'; const fp = $('fightPad'); if (fp) fp.style.display = 'none'; document.body.classList.remove('fighting'); if (GAME.state === 'fight2d') GAME.state = 'play'; } // tests only
+  function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); if (CR) { CR.stop(); CR = null; } if (cv) cv.style.display = 'none'; const fp = $('fightPad'); if (fp) fp.style.display = 'none'; document.body.classList.remove('fighting'); if (GAME.state === 'fight2d') GAME.state = 'play'; } // tests only
   return { start, setupPad, _abort: abort, get running() { return running; }, _st: () => st, POSES, spritesFor, figure: drawFigure, bodyK }; // figure/bodyK: also used by the basketball game (09f)
 })();
 // ---- hooking it to the 3D world: punching a pedestrian starts a (short, one round) fight
@@ -7716,10 +7719,275 @@ const MINI = (() => {
     window.addEventListener('keydown', (e) => { if (!isRunning() || e.code !== 'KeyP' || e.repeat) return; e.preventDefault(); e.stopPropagation(); o.on = !o.on; const ac = AUDIO.ctx; try { if (ac) (o.on ? ac.suspend() : ac.resume()); } catch (er) { } }, true);
     o.off = () => { if (o.on) { o.on = false; try { AUDIO.ctx && AUDIO.ctx.resume(); } catch (er) { } } }; return o; }
   function pauseOverlay(cx, W, H) { cx.fillStyle = 'rgba(0,0,0,0.55)'; cx.fillRect(0, 0, W, H); txt(cx, 'PAUSA', W / 2, H / 2 - 14, 16, '#ffd400'); txt(cx, 'PULSA P PARA SEGUIR', W / 2, H / 2 + 10, 6, '#fff'); }
-  return { input, snd, say, txt, turbo, banner, rows, endScreen, show, hide, clearWorldInput, pauser, pauseOverlay };
+  // ---------- v0.90 (Jonay: «en basket y fútbol, más que música, efectos del público: el organillo, el furor»). The crowd of
+  // a match, all synthesised: the murmur underneath (it rises with the play), the «¡uuuh!» of a near miss, the roar and the
+  // applause of a goal or a basket, the pavilion organ (the «charge», the riffs) and the «¡de-fen-sa!» chant with the
+  // stomps; on the pitch the bombo; in the street fight, a ring of onlookers. One per match: start() / stop().
+  function crowd(kind) { const ctx = AUDIO.ctx, out = AUDIO.master; if (!ctx || !out) return { tick() {}, ev() {}, stop() {} };
+    const C = { basket: { mf: 900, mv: 0.022, ex: 0.05 }, futbol: { mf: 520, mv: 0.03, ex: 0.07 }, calle: { mf: 700, mv: 0.012, ex: 0.03 } }[kind] || { mf: 800, mv: 0.02, ex: 0.05 };
+    const bus = ctx.createGain(); bus.gain.value = 1; bus.connect(out); const nodes = [];
+    // the murmur: looped noise through a voice-like band, slowly breathing
+    const src = ctx.createBufferSource(); src.buffer = AUDIO.noise; src.loop = true; const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = C.mf; bp.Q.value = 0.8;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1800; const mg = ctx.createGain(); mg.gain.value = 0; mg.gain.setTargetAtTime(C.mv, ctx.currentTime, 0.8);
+    const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = 0.23; lg.gain.value = C.mv * 0.35; lfo.connect(lg); lg.connect(mg.gain);
+    src.connect(bp); bp.connect(lp); lp.connect(mg); mg.connect(bus); src.start(); lfo.start(); nodes.push(src, lfo);
+    let exc = 0, dead = false;
+    const T = () => ctx.currentTime;
+    const env = (g, t0, a, peak, hold, rel) => { g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(peak, t0 + a); g.gain.setValueAtTime(peak, t0 + a + hold); g.gain.exponentialRampToValueAtTime(0.0001, t0 + a + hold + rel); };
+    // a crowd of voices singing a vowel (detuned saws through two formants) — «uuuh», «aaah», a syllable of a chant
+    function voices(t0, f0, glide, form, vol, a, hold, rel, n = 7) { const g = ctx.createGain(); env(g, t0, a, vol, hold, rel); const f1 = ctx.createBiquadFilter(), f2 = ctx.createBiquadFilter();
+      f1.type = f2.type = 'bandpass'; f1.frequency.value = form[0]; f2.frequency.value = form[1]; f1.Q.value = 2.5; f2.Q.value = 3; const mixG = ctx.createGain(); mixG.gain.value = 1; f1.connect(mixG); f2.connect(mixG); mixG.connect(g); g.connect(bus);
+      for (let i = 0; i < n; i++) { const o = ctx.createOscillator(); o.type = 'sawtooth'; const f = f0 * (0.82 + Math.random() * 0.4) * (i % 3 === 0 ? 2 : 1); o.frequency.setValueAtTime(f, t0); o.frequency.linearRampToValueAtTime(f * glide, t0 + a + hold + rel); o.connect(f1); o.connect(f2); o.start(t0); o.stop(t0 + a + hold + rel + 0.05); }
+      const ns = ctx.createBufferSource(); ns.buffer = AUDIO.noise; const ng = ctx.createGain(); ng.gain.value = 0.35; ns.connect(ng); ng.connect(f1); ns.start(t0, Math.random()); ns.stop(t0 + a + hold + rel + 0.05); }
+    function burst(t0, freq, type, q, vol, dur) { const s2 = ctx.createBufferSource(); s2.buffer = AUDIO.noise; const f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q; const g = ctx.createGain(); env(g, t0, 0.004, vol, 0, dur); s2.connect(f); f.connect(g); g.connect(bus); s2.start(t0, Math.random() * 1.5); s2.stop(t0 + dur + 0.05); }
+    function thump(t0, f, vol, dur) { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(f * 1.6, t0); o.frequency.exponentialRampToValueAtTime(f, t0 + 0.05); env(g, t0, 0.005, vol, 0, dur); o.connect(g); g.connect(bus); o.start(t0); o.stop(t0 + dur + 0.05); }
+    function claps(t0, dur, dens, vol) { for (let t = 0; t < dur; t += 1 / dens) burst(t0 + t + Math.random() / dens, 1800 + Math.random() * 1400, 'bandpass', 1.2, vol * (1 - (t / dur) * 0.6), 0.03); }
+    // the pavilion organ: drawbars 8' 4' 2 2/3', a little vibrato, short notes
+    function organ(t0, notes, vol = 0.045) { let t = t0; for (const [f, d] of notes) { if (f) { const g = ctx.createGain(); env(g, t, 0.008, vol, d * 0.8, 0.06); g.connect(bus);
+        const vib = ctx.createOscillator(), vg = ctx.createGain(); vib.frequency.value = 6.2; vg.gain.value = f * 0.004; vib.connect(vg);
+        for (const [h, a] of [[1, 0.55], [2, 0.3], [3, 0.18], [4, 0.08]]) { const o = ctx.createOscillator(), og = ctx.createGain(); o.type = 'sine'; o.frequency.value = f * h; vg.connect(o.frequency); og.gain.value = a; o.connect(og); og.connect(g); o.start(t); o.stop(t + d + 0.1); }
+        vib.start(t); vib.stop(t + d + 0.1); } t += d; } return t; }
+    const N = { G4: 392, A4: 440, B4: 494, C5: 523, D5: 587, E5: 659, F5: 698, G5: 784, A5: 880, C6: 1047 };
+    const RIFFS = [[[N.G4, 0.14], [N.C5, 0.14], [N.E5, 0.14], [N.G5, 0.3], [0, 0.08], [N.E5, 0.14], [N.G5, 0.5]], // the «charge»
+      [[N.C5, 0.12], [N.C5, 0.12], [N.D5, 0.12], [N.E5, 0.24], [N.D5, 0.12], [N.C5, 0.12], [N.G4, 0.3]],
+      [[N.E5, 0.1], [N.G5, 0.1], [N.A5, 0.1], [N.G5, 0.1], [N.E5, 0.1], [N.G5, 0.1], [N.A5, 0.2], [N.C6, 0.3]],
+      [[N.G4, 0.16], [N.G4, 0.16], [N.A4, 0.16], [N.B4, 0.16], [N.C5, 0.32], [N.G4, 0.32]]];
+    const api = {
+      // exc 0..1: how hot the play is (the murmur follows it)
+      tick(dt, e = 0) { if (dead) return; exc += (e - exc) * Math.min(1, dt * 1.5); mg.gain.setTargetAtTime(C.mv * (1 + 2.2 * exc), T(), 0.3); },
+      ev(name, k = 1) { if (dead) return; const t0 = T() + 0.02;
+        switch (name) {
+          case 'uuuh': voices(t0, 210, 0.82, [330, 820], C.ex * k, 0.12, 0.35, 0.9); break;                   // so close!
+          case 'ooh': voices(t0, 240, 0.9, [400, 900], C.ex * 0.6 * k, 0.08, 0.15, 0.5, 5); break;             // a steal, a big hit
+          case 'roar': burst(t0, 900, 'bandpass', 0.4, C.ex * 2.4 * k, 3.2); voices(t0, 260, 1.1, [750, 1250], C.ex * 1.3 * k, 0.25, 0.9, 1.6, 9); claps(t0 + 0.4, 2.6, 26, 0.04 * k); break;
+          case 'cheer': burst(t0, 1000, 'bandpass', 0.5, C.ex * 1.2 * k, 1.4); voices(t0, 280, 1.05, [800, 1300], C.ex * 0.7 * k, 0.1, 0.3, 0.8, 6); claps(t0 + 0.2, 1.4, 18, 0.03 * k); break;
+          case 'boo': voices(t0, 150, 0.95, [300, 700], C.ex * 0.7 * k, 0.2, 0.5, 0.8, 6); break;
+          case 'claps': claps(t0, 1.6, 16, 0.03 * k); break;
+          case 'charge': { const t1 = organ(t0, RIFFS[0]); voices(t1, 250, 1.0, [700, 1150], C.ex * 1.1, 0.04, 0.25, 0.5, 8); burst(t1, 1000, 'bandpass', 0.5, C.ex * 0.8, 0.7); break; } // ... «¡charge!»
+          case 'organ': organ(t0, RIFFS[1 + ((Math.random() * (RIFFS.length - 1)) | 0)]); break;
+          case 'defensa': { // «¡de-fen-sa!» + two stomps, twice
+            for (let r = 0; r < 2; r++) { const b = t0 + r * 1.6; voices(b, 200, 1, [500, 1700], C.ex * 0.9, 0.02, 0.1, 0.1, 8); voices(b + 0.24, 210, 1, [480, 1750], C.ex * 1.0, 0.02, 0.16, 0.12, 8); voices(b + 0.52, 190, 0.97, [800, 1200], C.ex * 0.95, 0.02, 0.14, 0.14, 8);
+              thump(b + 0.9, 70, 0.12, 0.18); thump(b + 1.2, 70, 0.12, 0.18); burst(b + 0.9, 220, 'lowpass', 0.7, 0.05, 0.12); burst(b + 1.2, 220, 'lowpass', 0.7, 0.05, 0.12); } break; }
+          case 'bombo': for (const [d, v] of [[0, 1], [0.45, 1], [0.9, 0.8], [1.12, 0.8], [1.35, 1]]) { thump(t0 + d, 58, 0.16 * v * k, 0.3); burst(t0 + d, 160, 'lowpass', 0.7, 0.04 * v * k, 0.15); } claps(t0 + 1.6, 0.6, 10, 0.025); break; // the drum of the stand
+          case 'squeak': { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'square'; o.frequency.setValueAtTime(1900 + Math.random() * 600, t0); o.frequency.linearRampToValueAtTime(2600 + Math.random() * 500, t0 + 0.06); env(g, t0, 0.004, 0.012 * k, 0.03, 0.03); const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 2400; f.Q.value = 4; o.connect(f); f.connect(g); g.connect(bus); o.start(t0); o.stop(t0 + 0.12); break; } // sneakers
+          case 'step': burst(t0, 260, 'lowpass', 0.7, 0.025 * k, 0.05); break;
+          case 'whoosh': burst(t0, 1400, 'bandpass', 1.5, 0.05 * k, 0.12); break;
+          case 'net': burst(t0, 4200, 'highpass', 0.7, 0.07 * k, 0.25); burst(t0 + 0.05, 2600, 'bandpass', 2, 0.04 * k, 0.2); break;
+          default: break; } },
+      stop() { if (dead) return; dead = true; const t = T(); bus.gain.setTargetAtTime(0.0001, t, 0.15); setTimeout(() => { try { nodes.forEach((n) => n.stop()); bus.disconnect(); } catch (e) { } }, 600); } };
+    return api; }
+  return { input, snd, say, txt, turbo, banner, rows, endScreen, show, hide, clearWorldInput, pauser, pauseOverlay, crowd };
 })();
 
-// (vacío: copia sobrante del 09f; se puede borrar)
+// ---------- v0.90 (Jonay eligió el «A++ semicabezón 120», docs/propuestas/sprites_basket.html): los jugadores del basket
+// con el dibujante de la propuesta (esqueleto + piezas + sombreado por píxel), alimentado con las poses de ángulos de la
+// pelea (FIGHT2D.POSES, los EXTRA y los mates del 09f). Cada pose se pasa a articulaciones con la misma cinemática que
+// drawFigure (09d) y el sprite guarda dónde cae el punto (36, 80) de la pelea, así que lo de alrededor (la mano del
+// balón en los mates, la sombra, las flechas) sigue igual.
+const PIXBASKET = (() => {
+  let MK = null, MG = null;
+  function maskCtx(w, h) { if (!MK) { MK = document.createElement('canvas'); MG = MK.getContext('2d', { willReadFrequently: true }); }
+    if (MK.width !== w || MK.height !== h) { MK.width = w; MK.height = h; } return MG; }
+  const hex = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+  const mix = (a, b, t) => [0, 1, 2].map((i) => Math.round(a[i] + (b[i] - a[i]) * t));
+  function tones(base, warm) { const c = hex(base), dk = hex(warm ? '#3e160e' : '#20123a'), hl = hex(warm ? '#ffe9cc' : '#fff4e2');
+    return { b: c, s: mix(c, dk, 0.36), d: mix(c, dk, 0.6), h: mix(c, hl, 0.3) }; }
+  // ---------- one player on a low-resolution canvas ----------
+  // each part is drawn into its own mask (thresholded: no blurred edges), stacked by depth into an id buffer, then shaded
+  // per pixel: light from the top left, shadow on the bottom-right edge of each part, occlusion where a part in front
+  // touches it; then the outline and the small details. Details on a part (the number on the jersey, the face) only paint
+  // the pixels that part still shows, so an arm in front covers the number.
+  function renderPlayer(out, ox, oy, st, pose, kit, pl) {
+    const H = st.H, W = out.width, Hh = out.height, u = H, C = !!st.chibi, BK = C ? 0.58 : st.bodyK || 1, air = (pose.air || 0) * BK;
+    const X = (p) => ox + p[0] * u, Y = (p) => oy - (p[1] + air) * u;
+    let J = pose; const L = st.limb, D = st.detail;
+    // the big-head version (Day of the Tentacle style): the body squashed to ~58 % and the head sat on the neck
+    if (BK < 1) { J = {}; const kx = C ? 0.92 : 0.96; for (const k in pose) J[k] = Array.isArray(pose[k]) && k !== 'hd' ? [pose[k][0] * kx, pose[k][1] * BK] : pose[k]; J.hd = [J.nk[0] + (C ? 0.012 : 0.02) + (pose.look || 0) * -0.01, J.nk[1] + st.head * (C ? 0.88 : 1.02)]; if (C && pose.ball && pose.ball[1] > 0.8) J.ball = [J.wN[0] + 0.03, J.wN[1] + 0.075]; } // the dunk: the ball stays in the hand, above the big head
+    const mats = { skin: [pl.skin, 1], skinF: [pl.skin, 1], ear: [pl.skin, 1], jersey: [kit.jersey, 0], trim: [kit.trim, 0], shorts: [kit.shorts, 0], trimS: [kit.trim, 0],
+      sock: [kit.sock, 0], sockF: [kit.sock, 0], band: [kit.trim, 0], shoe: [kit.shoe, 0], shoeF: [kit.shoe, 0], sole: ['#eeeae2', 0], soleF: ['#eeeae2', 0], stripe: [kit.shoe2, 0], stripeF: [kit.shoe2, 0],
+      wrist: ['#f2f2f2', 0], hair: [pl.hair, 0], beard: [pl.hair, 0], ball: ['#e0701c', 1] };
+    const T = {}; for (const m in mats) { T[m] = tones(mats[m][0], mats[m][1]); if (m.endsWith('F')) for (const k in T[m]) T[m][k] = mix(T[m][k], [24, 12, 30], 0.2); }
+    const ua = 0.06 * L, fa = 0.05 * L, th = 0.09 * L, sh = 0.06 * L, r = st.head;
+    const lerp2 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+    const perp = (a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1; return [-dy / l, dx / l]; };
+    // a limb that tapers from w0 to w1 (round ends)
+    const cap = (a, b, w0, w1) => (g) => { const n = perp(a, b), A = [X(a), Y(a)], B = [X(b), Y(b)], r0 = Math.max(0.6, (w0 * u) / 2), r1 = Math.max(0.6, (w1 * u) / 2);
+      g.beginPath(); g.arc(A[0], A[1], r0, 0, 7); g.fill(); g.beginPath(); g.arc(B[0], B[1], r1, 0, 7); g.fill();
+      g.beginPath(); g.moveTo(A[0] + n[0] * r0, A[1] - n[1] * r0); g.lineTo(B[0] + n[0] * r1, B[1] - n[1] * r1); g.lineTo(B[0] - n[0] * r1, B[1] + n[1] * r1); g.lineTo(A[0] - n[0] * r0, A[1] + n[1] * r0); g.fill(); };
+    const ell = (c, rx, ry, rot = 0) => (g) => { g.beginPath(); g.ellipse(X(c), Y(c), Math.max(0.6, rx * u), Math.max(0.6, ry * u), rot, 0, 7); g.fill(); };
+    const line = (a, b, w) => (g) => { g.lineCap = 'round'; g.lineWidth = Math.max(1, w * u); g.beginPath(); g.moveTo(X(a), Y(a)); g.lineTo(X(b), Y(b)); g.stroke(); };
+    const multi = (...fs) => (g) => fs.forEach((f) => f && f(g));
+    const parts = [];
+    // ---- arm and leg builders (the far ones get the «F» materials)
+    const arm = (s, e, w, far) => { const sk = far ? 'skinF' : 'skin'; const n = perp(s, e), mid = lerp2(s, e, 0.42);
+      parts.push([sk, multi(cap(s, e, ua * (D ? 1.3 : 1), ua * (D ? 0.82 : 1)), D && ell([mid[0] + n[0] * ua * 0.22, mid[1] + n[1] * ua * 0.22], ua * 0.42, ua * 0.32, -Math.atan2(e[1] - s[1], e[0] - s[0])),
+        cap(e, w, fa * (D ? 1.12 : 1), fa * (D ? 0.7 : 1)), D ? ell(w, 0.034 * L, 0.03 * L) : cap(w, w, 0.06 * L, 0.06 * L))]);
+      if (D && !far) parts.push(['wrist', cap(lerp2(w, e, 0.12), lerp2(w, e, 0.3), fa * 0.95, fa * 0.98)]); };
+    const leg = (h, k, a, t, far) => { const sk = far ? 'skinF' : 'skin', so = far ? 'sockF' : 'sock', sho = far ? 'shoeF' : 'shoe', sl = far ? 'soleF' : 'sole', stp = far ? 'stripeF' : 'stripe';
+      const calf = lerp2(k, a, 0.38); parts.push([sk, multi(cap(k, calf, sh * 0.95, sh * (D ? 1.18 : 1)), cap(calf, a, sh * (D ? 1.18 : 1), sh * (D ? 0.62 : 0.9)))]);
+      parts.push([so, cap(lerp2(a, k, 0.02), lerp2(a, k, D ? 0.28 : 0.3), sh * 0.8, sh * 0.86)]);
+      if (D && !far) parts.push(['band', cap(lerp2(a, k, 0.24), lerp2(a, k, 0.27), sh * 0.86, sh * 0.88)]);
+      const heel = lerp2(a, t, -0.18); parts.push([sho, multi(cap(heel, t, 0.064 * L, 0.05 * L), cap(lerp2(a, k, 0.06), heel, 0.06 * L, 0.06 * L))]);
+      if (D) { const n = perp(heel, t); const dn = (p, k2) => [p[0] - n[0] * k2, p[1] - n[1] * k2]; parts.push([sl, line(dn(heel, 0.026 * L), dn(t, 0.022 * L), 0.016 * L)]);
+        parts.push([stp, line(lerp2(heel, t, 0.25), lerp2(heel, t, 0.62), 0.014 * L)]); } };
+    // far side
+    const cxm = (J.sN[0] + J.sF[0]) / 2, Wd = (p, k) => [cxm + (p[0] - cxm) * k, p[1]], SW = D ? 1.5 : 1.3, HW = D ? 1.1 : 1.3;
+    // v3 (Jonay: «los hombros están un poco mal»): the arms hang from the broad shoulders of the V, with the deltoid on them
+    const shN = Wd(J.sN, SW * 0.86), shF = Wd(J.sF, SW * 0.86);
+    arm(shF, J.eF, J.wF, true);
+    leg(J.hF, J.kF, J.aF, J.tF, true);
+    if (pose.ball && pose.ball[0] < 0) parts.push(['ball', ell(J.ball, 0.062, 0.062)]);
+    // torso: a V (broad shoulders, narrow waist), sleeveless with deep armholes
+    const torsoPts = () => { const n = J.nk, sN = J.sN, sF = J.sF, hN = J.hN, hF = J.hF;
+      return [[n[0] - 0.035, n[1] - 0.005], [n[0] + 0.035, n[1] - 0.005], Wd([sN[0] + 0.01, sN[1] - 0.005], SW), Wd([sN[0] - 0.005, sN[1] - 0.1], SW * 0.92), Wd([hN[0] + 0.035, hN[1] + 0.02], HW), Wd([hF[0] - 0.035, hF[1] + 0.02], HW), Wd([sF[0] + 0.005, sF[1] - 0.1], SW * 0.92), Wd([sF[0] - 0.01, sF[1] - 0.005], SW)]; };
+    const TP = torsoPts();
+    parts.push(['skin', multi(cap(J.nk, [J.hd[0] - 0.01, J.hd[1] - 0.03], 0.058, 0.05), ell(shN, ua * 0.78, ua * 0.66), ell(shF, ua * 0.78, ua * 0.66))]); // neck and deltoids
+    parts.push(['jersey', (g) => { g.beginPath(); TP.forEach((p, i) => (i ? g.lineTo(X(p), Y(p)) : g.moveTo(X(p), Y(p)))); g.closePath(); g.fill(); }]);
+    parts.push(['trim', multi(line([J.nk[0] - 0.035, J.nk[1] - 0.005], [J.nk[0] + 0.004, J.nk[1] - 0.065], 0.014), line([J.nk[0] + 0.004, J.nk[1] - 0.065], [J.nk[0] + 0.035, J.nk[1] - 0.005], 0.014),
+      line(TP[2], TP[3], 0.014), line(TP[7], TP[6], 0.012), D && line(TP[3], TP[4], 0.012), D && line(lerp2(TP[4], TP[5], 0), lerp2(TP[4], TP[5], 1), 0.012))]);
+    // shorts: long and baggy, both thighs and the waistband; trims: the outer seam of the near leg and the hems
+    const hemN = lerp2(J.hN, J.kN, 0.92), hemF = lerp2(J.hF, J.kF, 0.92), tw = th * (D ? 1.5 : 1.3);
+    parts.push(['shorts', multi(cap(J.hF, hemF, tw, tw * 0.95), cap(J.hN, hemN, tw, tw * 0.95), line([J.hF[0] - 0.02, J.hF[1] + 0.03], [J.hN[0] + 0.02, J.hN[1] + 0.03], 0.07))]);
+    if (D) { const n = perp(J.hN, J.kN), o = tw * 0.45; const sd = (p) => [p[0] + n[0] * o, p[1] + n[1] * o];
+      const nf = perp(J.hF, J.kF), of = tw * 0.45, hem = (c, nn, oo) => line([c[0] + nn[0] * oo, c[1] + nn[1] * oo], [c[0] - nn[0] * oo, c[1] - nn[1] * oo], 0.014);
+      parts.push(['trimS', multi(line(sd(J.hN), sd(hemN), 0.016), hem(hemN, n, o), hem(hemF, nf, of), line([J.hF[0] - 0.02, J.hF[1] + 0.058], [J.hN[0] + 0.02, J.hN[1] + 0.058], 0.012))]); }
+    // near leg
+    leg(J.hN, J.kN, J.aN, J.tN, false);
+    // head: oval skull, jaw forward, hair, ear
+    const hd = J.hd, lk = pose.look || 0;
+    if (C) parts.push(['skin', multi(ell(hd, r * 0.94, r * 0.98, -lk * 0.3), ell([hd[0] + r * 0.12, hd[1] - r * 0.42], r * 0.74, r * 0.52, -lk * 0.3))]);
+    else parts.push(['skin', multi(ell(hd, r * 0.9, r * 1.04, -lk * 0.4), D && ell([hd[0] + r * 0.32, hd[1] - r * 0.5 + lk * r * 0.2], r * 0.55, r * 0.44, -lk * 0.4))]);
+    parts.push(['hair', (g) => { const cx = X(hd), cy = Y(hd), R = r * u; g.save(); g.translate(cx, cy); g.rotate(lk * (C ? 0.25 : 0.6));
+      if (C || st.face === 'real') { // the hair stays above the brows (the face must be seen) and covers the back of the head
+        g.beginPath(); if (C) { g.rect(-2 * R, -2 * R, 4 * R, 1.72 * R); g.rect(-2 * R, -0.3 * R, 1.5 * R, 0.62 * R); } else { /* a hairline that slopes down behind the ear */ g.moveTo(-2 * R, -2 * R); g.lineTo(2 * R, -2 * R); g.lineTo(2 * R, -0.46 * R); g.lineTo(0.12 * R, -0.46 * R); g.lineTo(-0.5 * R, 0.12 * R); g.lineTo(-2 * R, 0.12 * R); g.closePath(); } g.clip();
+        if (pl.hs === 'afro') { g.beginPath(); g.arc(-0.05 * R, -0.42 * R, 1.08 * R, 0, 7); g.fill(); g.beginPath(); g.arc(-0.4 * R, 0, 0.75 * R, 0, 7); g.fill(); }
+        else if (pl.hs === 'spiky') { g.beginPath(); g.moveTo(-1.0 * R, 0.3 * R); for (let i = 0; i <= 8; i++) { const a = Math.PI * (0.95 + i * 0.13); const k = i % 2 ? 1.0 : 1.38; g.lineTo(Math.cos(a) * R * k, Math.sin(a) * R * k - 0.1 * R); } g.lineTo(0.98 * R, -0.28 * R); g.lineTo(-0.5 * R, -0.28 * R); g.lineTo(-0.55 * R, 0.3 * R); g.closePath(); g.fill(); }
+        else { const k = pl.hs === 'fade' ? 1.0 : 1.04; g.beginPath(); g.arc(-0.03 * R, -0.1 * R, k * R, 0, 7); g.fill(); g.beginPath(); g.arc(-0.45 * R, 0.0, 0.62 * R, 0, 7); g.fill(); }
+        g.restore(); return; }
+      if (pl.hs === 'afro') { g.beginPath(); g.arc(-0.12 * R, -0.3 * R, R * 1.15, Math.PI * 0.85, Math.PI * 2.15); g.fill(); }
+      else if (pl.hs === 'spiky') { g.beginPath(); g.moveTo(-1.0 * R, 0.25 * R); for (let i = 0; i <= 6; i++) { const a = Math.PI * (1.05 + i * 0.16); g.lineTo(Math.cos(a) * R * (i % 2 ? 1.0 : 1.45), Math.sin(a) * R * (i % 2 ? 1.0 : 1.45) - 0.1 * R); } g.lineTo(0.75 * R, -0.3 * R); g.lineTo(0.2 * R, -0.5 * R); g.lineTo(-0.45 * R, 0.05 * R); g.closePath(); g.fill(); }
+      else { const top = pl.hs === 'fade' ? 0.22 : 0.05; g.beginPath(); g.arc(-0.06 * R, -0.1 * R, R * 1.0, Math.PI * (1.0 - top), Math.PI * 1.96); g.lineTo(-0.2 * R, 0.05 * R); g.closePath(); g.fill(); }
+      g.restore(); }]);
+    if (st.face === 'real') parts.push(['skin', pl.bigNose ? multi(ell([hd[0] + r * 1.0, hd[1] - r * 0.2 + lk * r * 0.3], r * 0.34, r * 0.2, 0.35), ell([hd[0] + r * 1.22, hd[1] - r * 0.32 + lk * r * 0.3], r * 0.14, r * 0.16)) : ell([hd[0] + r * 0.9, hd[1] - r * 0.14 + lk * r * 0.3], r * 0.16, r * 0.2)]); // v0.90: El Chopa's nose, legendary as in the fight // the nose sticks out of the profile
+    if (C && pl.beard) parts.push(['beard', (g) => { g.save(); g.beginPath(); g.rect(0, Y([0, hd[1] - r * 0.36]), W, Hh); g.rect(0, Y([0, hd[1] - r * 0.05]), X([hd[0] - r * 0.35, 0]), Hh); g.clip(); ell(hd, r * 1.0, r * 1.04)(g); ell([hd[0] + r * 0.12, hd[1] - r * 0.5], r * 0.8, r * 0.62)(g); g.restore(); }]);
+    if (C) parts.push(['ear', ell([hd[0] - r * 0.6, hd[1] - r * 0.06], r * 0.15, r * 0.22)]);
+    else if (D) parts.push(['ear', ell([hd[0] - r * 0.12, hd[1] - r * 0.08], r * 0.2, r * 0.27)]);
+    // near arm (over the body) and the ball
+    arm(shN, J.eN, J.wN, false);
+    if (pose.ball && pose.ball[0] >= 0) parts.push(['ball', ell(J.ball, 0.062, 0.062)]);
+    // ---- masks → id buffer
+    const N = W * Hh, id = new Int16Array(N).fill(-1); const g = maskCtx(W, Hh);
+    parts.forEach(([m, f], depth) => { g.clearRect(0, 0, W, Hh); g.fillStyle = g.strokeStyle = '#fff'; f(g); const d = g.getImageData(0, 0, W, Hh).data; for (let i = 0; i < N; i++) if (d[i * 4 + 3] > 120) id[i] = depth; });
+    const matOf = parts.map((p) => p[0]); const grp = (m) => m.replace(/F$/, '').replace(/^(ear|wrist)$/, 'skin');
+    const o = out.getContext('2d', { willReadFrequently: true }); const img = o.getImageData(0, 0, W, Hh), px = img.data;
+    const at = (x, y) => (x < 0 || y < 0 || x >= W || y >= Hh ? -1 : id[y * W + x]);
+    const put = (i, c) => { px[i * 4] = c[0]; px[i * 4 + 1] = c[1]; px[i * 4 + 2] = c[2]; px[i * 4 + 3] = 255; };
+    for (let y = 0; y < Hh; y++) for (let x = 0; x < W; x++) { const i = y * W + x, p = id[i]; if (p < 0) continue; const m = matOf[p], tn = T[m];
+      const back = (q) => q < 0 || (q < p && grp(matOf[q]) !== grp(m));
+      let s2 = 0; for (let k = 1; k <= st.sw; k++) if (back(at(x + k, y)) || back(at(x, y + k)) || back(at(x + k, y + k))) s2 = Math.max(s2, st.deep && k === 1 ? 2 : 1);
+      let occ = false; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const q = at(x + dx, y + dy); if (q > p && grp(matOf[q]) !== grp(m)) occ = true; }
+      const hl = !s2 && (back(at(x - 1, y)) || back(at(x, y - 1)));
+      put(i, s2 === 2 ? tn.d : s2 || occ ? tn.s : hl ? tn.h : tn.b); }
+    for (let y = 0; y < Hh; y++) for (let x = 0; x < W; x++) { const i = y * W + x; if (id[i] >= 0) continue; let q = -1;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const t = at(x + dx, y + dy); if (t >= 0) { q = t; break; } }
+      if (q >= 0) put(i, mix(T[matOf[q]].d, [16, 8, 20], 0.35)); }
+    // ---- details at pixel level, only where their part is still visible
+    const idx = (m) => { const s = new Set(); matOf.forEach((mm, k) => { if (mm === m) s.add(k); }); return s; };
+    const JER = idx('jersey'), SKIN = new Set([...idx('skin')]), HEADP = parts.length ? matOf.lastIndexOf('skin', matOf.indexOf('hair')) : -1;
+    const dot = (x, y, c, only) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= W || y >= Hh) return; const q = id[y * W + x]; if (only && !only.has(q)) return; put(y * W + x, c); };
+    const isHead = new Set([HEADP]);
+    const R = Math.max(2, r * u), hx = X(hd), hy = Y(hd), ex = hx + R * 0.42, ey = hy - R * 0.08 + lk * R * 0.45, dk = [20, 10, 14];
+    if (C) face(); else if (st.face === 'real') faceReal(); else if (D) { dot(ex, ey, H >= 90 ? [245, 240, 232] : dk, isHead); if (H >= 90) { dot(ex + 1, ey, dk, isHead); dot(ex + 1, ey + 1, dk, isHead); } // eye
+      const bw = H >= 90 ? 3 : 2; for (let k = 0; k < bw; k++) dot(ex - 1 + k, ey - (H >= 90 ? 2 : 1) - (k === 0 ? 0 : 0), pl.hair === '#c9902e' ? [120, 70, 20] : dk, isHead); // brow
+      dot(hx + R * 0.86, hy + R * 0.12 + lk * R * 0.3, T.skin.d, isHead); if (H >= 90) dot(hx + R * 0.86, hy + R * 0.22 + lk * R * 0.3, T.skin.d, isHead); // nose
+      for (let k = 0; k < (H >= 90 ? 3 : 2); k++) dot(hx + R * 0.5 + k, hy + R * 0.52 + lk * R * 0.3, T.skin.d, isHead); } // mouth
+    else dot(ex, ey, dk, isHead);
+    // the big-head face: drawn pixel by pixel (sharp eyes, brows, nose, a smile, cheeks), over the skin and the beard
+    function face() { const lk = (pose.look || 0) * 0.35; const HEADS = new Set([HEADP, ...idx('beard')]); const f = R * 0.16 + lk * 0; const yE = Math.round(hy + R * 0.0 + lk * R * 0.25);
+      const ew = Math.max(2, Math.round(R * 0.2)), eh = Math.max(2, Math.round(R * 0.24)), wht = [250, 248, 240], ink = [16, 8, 12];
+      const brow = mix(hex(pl.hair), [0, 0, 0], 0.35); const rect = (x, y, w, h, c) => { for (let a = 0; a < w; a++) for (let b = 0; b < h; b++) dot(x + a, y + b, c, HEADS); };
+      // hair and beard: a little texture of strands
+      for (let y = 0; y < Hh; y++) for (let x = 0; x < W; x++) { const q = id[y * W + x]; if (q < 0) continue; const m = matOf[q]; if (m !== 'hair' && m !== 'beard') continue; const hsh = (x * 73856093 ^ y * 19349663) >>> 0; if (hsh % 9 === 0) put(y * W + x, T.hair.d); else if (hsh % 23 === 0) put(y * W + x, T.hair.h); }
+      for (const [cx, w] of [[hx + f + R * 0.3, ew], [hx + f - R * 0.3, ew - 1]]) { const x0 = Math.round(cx - w / 2);
+        rect(x0, yE, w, eh, wht); rect(x0 + w - Math.max(1, Math.ceil(w * 0.55)), yE + (eh > 2 ? 1 : 0), Math.max(1, Math.ceil(w * 0.55)), eh - (eh > 2 ? 1 : 0), ink); // white and the pupil, looking ahead
+        rect(x0, yE - 1, w, 1, ink); // the eyelid
+        const bh = R >= 24 ? 2 : 1, by = yE - 3 - bh; rect(x0 - 1, by, w + 1, bh, brow); dot(x0 + w, by - 1, brow, HEADS); } // the brow (a gap over the lid), a bit angry
+      const nx = Math.round(hx + f + R * 0.12), ny = Math.round(hy + R * 0.3 + lk * R * 0.2); rect(nx, ny, 2, 1, T.skin.d); dot(nx + 2, ny - 1, T.skin.d, HEADS); dot(nx, ny - 1, T.skin.h, HEADS); // nose
+      const my = Math.round(hy + R * 0.55 + lk * R * 0.2), mx0 = Math.round(hx + f - R * 0.18), mx1 = Math.round(hx + f + R * 0.42);
+      if (pl.mouth === 'grin') { rect(mx0, my, mx1 - mx0 + 1, 1, ink); rect(mx0 + 1, my + 1, mx1 - mx0 - 1, Math.max(1, Math.round(R * 0.1)), wht); rect(mx0 + 2, my + 1 + Math.max(1, Math.round(R * 0.1)), mx1 - mx0 - 3, Math.max(1, Math.round(R * 0.08)), [200, 60, 70]);
+        rect(mx0 + 1, my + 1 + Math.max(1, Math.round(R * 0.1)) + Math.max(1, Math.round(R * 0.08)), mx1 - mx0 - 1, 1, ink); dot(mx0 - 1, my - 1, ink, HEADS); dot(mx1 + 1, my - 1, ink, HEADS); }
+      else { rect(mx0 + 1, my, mx1 - mx0 - 1, 1, ink); dot(mx0, my - 1, ink, HEADS); dot(mx1, my - 1, ink, HEADS); rect(mx0 + 2, my + 1, mx1 - mx0 - 3, 1, T.skin.s); }
+      const blush = mix(T.skin.b, [255, 120, 130], 0.4); rect(Math.round(hx + f + R * 0.42), Math.round(hy + R * 0.32), 2, 1, blush); rect(Math.round(hx + f - R * 0.42), Math.round(hy + R * 0.32), 2, 1, blush);
+      const EAR = idx('ear'); for (const e of EAR) { } dot(hx - R * 0.6, hy - R * 0.06 + lk * R * 0.2, T.skin.d, EAR); dot(hx - R * 0.6, hy + R * 0.04 + lk * R * 0.2, T.skin.d, EAR); }
+    // the realistic face, in profile looking ahead, drawn pixel by pixel on the head (it only paints visible skin)
+    function faceReal() { const HEAD = new Set(matOf.map((m, k) => (m === 'skin' && k > matOf.indexOf('shorts') && k < matOf.indexOf('hair') + 3 ? k : -1)).filter((k) => k >= 0)); const lkr = lk * R * 0.35;
+      const ink = [22, 12, 14], pupil = [46, 26, 18], wht = [236, 230, 220], brow = mix(hex(pl.hair), [0, 0, 0], 0.3), lip = mix(T.skin.d, [120, 40, 40], 0.35);
+      const ex = Math.round(hx + R * 0.44), ey = Math.round(hy - R * 0.02 + lkr), big = R >= 8.5;
+      // eye: upper lid, white and pupil (looking ahead), a bit of shadow round it
+      dot(ex - 1, ey, T.skin.s, HEAD); dot(ex, ey, wht, HEAD); dot(ex + 1, ey, pupil, HEAD); if (big) { dot(ex + 1, ey + 1, pupil, HEAD); dot(ex, ey + 1, wht, HEAD); }
+      for (let k = -1; k <= 1; k++) dot(ex + k, ey - 1, ink, HEAD); dot(ex, ey + (big ? 2 : 1), T.skin.s, HEAD); dot(ex + 1, ey + (big ? 2 : 1), T.skin.s, HEAD);
+      // brow: thick, lower at the front (a bit of a frown); the ridge over the eye catches the light
+      for (let k = -1; k <= 1; k++) dot(ex + k, ey - 3, brow, HEAD); dot(ex + 2, ey - 2, brow, HEAD); if (big) for (let k = -1; k <= 1; k++) dot(ex + k, ey - 4, brow, HEAD); dot(ex, ey - 2, T.skin.h, HEAD);
+      // cheekbone and the shadow under it
+      dot(ex - 1, ey + (big ? 3 : 2), T.skin.h, HEAD); dot(ex, ey + (big ? 3 : 2), T.skin.h, HEAD); dot(ex - 2, ey + (big ? 4 : 3), T.skin.s, HEAD); dot(ex - 1, ey + (big ? 5 : 4), T.skin.s, HEAD);
+      // nose: nostril and the shadow below it
+      const nx = Math.round(hx + R * 0.86), ny = Math.round(hy + R * 0.28 + lkr); dot(nx - 1, ny, T.skin.d, HEAD); dot(nx, ny + 1, T.skin.s, HEAD); dot(nx + 1, ny - 2, T.skin.h, HEAD);
+      // mouth: the line between the lips, the lower lip, a corner
+      const my = Math.round(hy + R * 0.56 + lkr), mx = Math.round(hx + R * 0.58); for (let k = 0; k < (big ? 3 : 2); k++) dot(mx + k, my, lip, HEAD); dot(mx - 1, my, T.skin.s, HEAD); for (let k = 0; k < 2; k++) dot(mx + k, my + 1, T.skin.h, HEAD);
+      // ear: the hole and the rim
+      const EAR = idx('ear'), ax = Math.round(hx - R * 0.12), ay = Math.round(hy - R * 0.08 + lkr); dot(ax, ay, T.skin.d, EAR); dot(ax, ay + 1, T.skin.d, EAR); dot(ax - 1, ay - 1, T.skin.h, EAR);
+      // sideburn and beard (the bearded ones: jaw and chin; the others a shadow of stubble on the jaw)
+      const HP = HEADP; for (let y = Math.round(hy - R * 0.4); y <= Math.round(hy + R * 1.1); y++) for (let x = Math.round(hx - R * 0.6); x <= Math.round(hx + R * 1.1); x++) { if (at(x, y) !== HP) continue;
+        const ux = (x - hx) / R, uy = (y - hy - lkr) / R, mouthRow = y === my;
+        if (pl.beard && ux > 0.08 && ux < 0.2 && uy > -0.25 && uy < 0.3) put(y * W + x, mix(hex(pl.hair), T.skin.s, 0.3)); // the sideburn, down to the beard
+        else if (pl.beard && ((uy > 0.42 && ux > -0.28) || (uy > 0.12 && ux > -0.32 && ux < 0.05)) && !((mouthRow || y === my + 1) && ux > 0.42)) { const hs = (x * 73856093 ^ y * 19349663) >>> 0; const bc = mix(hex(pl.hair), T.skin.s, 0.3); put(y * W + x, hs % 6 === 0 ? mix(bc, T.skin.b, 0.35) : hs % 5 === 0 ? T.hair.d : bc); }
+        else if (!pl.beard && uy > 0.66 && ux > -0.2 && ux < 0.55) put(y * W + x, mix(T.skin.b, hex(pl.hair), 0.14)); } }
+    // the number, on the jersey only (the near arm covers it when it passes in front)
+    if (H >= 60) { const DG = { 0: '111101101101111', 1: '010110010010111', 2: '111001111100111', 3: '111001111001111', 4: '101101111001001', 5: '111100111001111', 6: '111100111101111', 7: '111001010010010', 8: '111101111101111', 9: '111101111001111' };
+      const sc = H >= 120 ? 2 : 1, cw = 4 * sc, cx0 = Math.round(X([(J.nk[0] + (J.hN[0] + J.hF[0]) / 2) / 2 + 0.01, 0]) - (pl.num.length * cw) / 2 + 1), cy0 = Math.round(Y([0, J.nk[1] - 0.13]));
+      const on = new Set(); [...pl.num].forEach((ch, k) => { const pat = DG[ch]; for (let b = 0; b < 15; b++) if (pat[b] === '1') for (let a = 0; a < sc; a++) for (let c = 0; c < sc; c++) on.add((cx0 + k * cw + (b % 3) * sc + a) + ',' + (cy0 + ((b / 3) | 0) * sc + c)); });
+      if (D) for (const key of on) { const [x, y] = key.split(',').map(Number); for (const [dx, dy] of [[1, 0], [0, 1], [1, 1]]) if (!on.has((x + dx) + ',' + (y + dy))) dot(x + dx, y + dy, T.jersey.d, JER); }
+      for (const key of on) { const [x, y] = key.split(',').map(Number); dot(x, y, T.trim.h, JER); } }
+    if (pose.ball) { const bx = X(J.ball), by = Y(J.ball), br = 0.062 * u, BALL = idx('ball'); for (let k = -br; k <= br; k++) { dot(bx + k, by, [80, 34, 8], BALL); dot(bx, by + k, [80, 34, 8], BALL); }
+      if (D) { dot(bx - br * 0.45, by - br * 0.5, [255, 200, 150], BALL); dot(bx - br * 0.35, by - br * 0.6, [255, 200, 150], BALL); } }
+    o.putImageData(img, 0, 0);
+    return { hx, hy, R };
+  }
+  // ---------- the style chosen and the link with the fight's units
+  const ST = { H: 121, head: 0.1, limb: 1.08, sw: 2, deep: true, detail: true, outline: 'sel', face: 'real', bodyK: 0.85 };
+  const K = 0.455 / 30;                  // body units per fight unit (hip → ankle: 30 fight units = 0.455 of the body)
+  const Q = ST.H * K;                    // art pixels per fight unit (≈ 1.84: two screen pixels on the court)
+  const BX0 = -44, BX1 = 44, BY0 = -6, BY1 = 92; // the box drawn, in fight units round the hip (x) and from the top (y)
+  // the fight pose (angles) → joints (body units, feet at 0, facing right): same bones as drawFigure
+  function joints(F) { const rad = (a) => (a * Math.PI) / 180, hy = 50 + (F.dy || 0), lean = rad(F.tl || 0);
+    const seg = (o, a, l) => [o[0] + Math.sin(rad(a)) * l, o[1] + Math.cos(rad(a)) * l];
+    const U = (p) => [(p[0] - 36) * K, (80 - p[1]) * K];
+    const neck = [36 + Math.sin(lean) * 22, hy - Math.cos(lean) * 22], sF = [neck[0] + 2, neck[1] + 3], sB = [neck[0] - 2, neck[1] + 3];
+    const eF = seg(sF, F.sF, 11), wF = seg(eF, F.sF + F.eF, 10), eB = seg(sB, F.sB, 11), wB = seg(eB, F.sB + F.eB, 10);
+    const hF = [38, hy], hB = [34, hy], kF = seg(hF, F.hF, 15), fF = seg(kF, F.hF + F.kF, 15), kB = seg(hB, F.hB, 15), fB = seg(kB, F.hB + F.kB, 15);
+    const hd = seg(neck, 180 + (F.tl || 0) + (F.head || 0), 8);
+    const ank = (f) => { const a = U(f); return [a[0], a[1] + 0.045]; }, toe = (a) => [a[0] + 0.085, a[1] - 0.03];
+    const aN = ank(fF), aF = ank(fB);
+    return { hd: U(hd), nk: U(neck), sN: U(sF), eN: U(eF), wN: U(wF), sF: U(sB), eF: U(eB), wF: U(wB),
+      hN: U(hF), kN: U(kF), aN, tN: toe(aN), hF: U(hB), kF: U(kB), aF, tF: toe(aF), look: -(F.head || 0) / 40 }; }
+  // the kit and the face from a look of the game (shirt, pants, shoes, sole, skin, hair, hairStyle, beard)
+  const hx6 = (n, d) => '#' + ((n ?? d) >>> 0).toString(16).padStart(6, '0').slice(-6);
+  const lum = (h) => { const c = hex(h); return (0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2]) / 255; };
+  function kitOf(look) { const jersey = hx6(look.shirt, 0x777777), shorts = hx6(look.pants, 0x333344);
+    const trim = look.trim !== undefined ? hx6(look.trim) : look.sole !== undefined && look.sole !== look.shirt ? hx6(look.sole) : lum(jersey) > 0.62 ? shorts : '#f2efe6';
+    return { jersey, shorts, trim, sock: '#f2f2f2', shoe: hx6(look.shoes, 0x222222), shoe2: trim }; }
+  function plOf(look, num) { const hs = /afro/i.test(look.hairStyle || '') ? 'afro' : /buzz|fade|bald/i.test(look.hairStyle || '') || look.hair === undefined ? 'fade' : 'short';
+    return { skin: hx6(look.skin, 0xd9a47c), hair: hx6(look.hair, 0x222222), hs, beard: !!look.beard, num: String(num), bigNose: !!look.bigNose }; }
+  // one sprite: { c, ax, ay } (ax, ay = the art pixel of the fight's point 36, 80) and q (art pixels per fight unit)
+  function sprite(look, F, num) { const W = Math.ceil((BX1 - BX0) * Q), Hh = Math.ceil((BY1 - BY0) * Q), ax = Math.round(-BX0 * Q), ay = Math.round((80 - BY0) * Q);
+    const c = document.createElement('canvas'); c.width = W; c.height = Hh;
+    renderPlayer(c, ax, ay, ST, joints(F), kitOf(look), plOf(look, num));
+    if (!F.lying) return { c, ax, ay, q: Q };
+    // knocked down: the same figure turned a quarter (head behind), as the fight does, a bit lifted so the back is on the floor
+    const r = document.createElement('canvas'); r.width = Hh; r.height = W; const g = r.getContext('2d'); g.imageSmoothingEnabled = false;
+    g.translate(ay, W - ax); g.rotate(-Math.PI / 2); g.drawImage(c, -ax, -ay); return { c: r, ax: ay, ay: W - ax - Math.round(0.1 * ST.H), q: Q }; }
+  return { sprite, joints, Q, ST };
+})();
 
 // ============ «JETA JAM»: 2D basketball, 3 vs 3 since v0.84 (2 vs 2 before), in the style of the 90s arcade games (v0.65) ============
 // Side view of the court, the same pixel-art sprites as the 2D fight (made from the players' real clothes). You and a
@@ -7753,22 +8021,26 @@ const BASKET2D = (() => {
     dunk: { tl: -6, sF: 175, eF: -5, sB: 120, eB: -20, hF: 40, kF: -60, hB: 10, kB: -40, dy: -4 },
     defend: { tl: 4, sF: 125, eF: -25, sB: 115, eB: -30, hF: 22, kF: -30, hB: -18, kB: -28, dy: 3 },
   };
-  const SPR = new Map();
-  function sprites(look, nose) {
-    const key = JSON.stringify(look) + nose; if (SPR.has(key)) return SPR.get(key);
-    const s = {}, pz = P();
-    for (const k of ['idle0', 'idle1', 'walk0', 'walk1', 'walk2', 'walk3', 'jump', 'jab1', 'ko', 'win']) s[k] = FIGHT2D.figure(look, pz[k], nose);
-    for (let i = 0; i < 4; i++) s['drib' + i] = FIGHT2D.figure(look, { ...pz['walk' + i], sF: 28, eF: -55 }, nose);
-    for (const k in EXTRA) s[k] = FIGHT2D.figure(look, EXTRA[k], nose);
-    SPR.set(key, s); return s;
-  }
+  // v0.90 (Jonay: «A++ semicabezón 120»): the players drawn by PIXBASKET (09eb) from these same poses, made when first
+  // needed and kept per look and number (the same man in two matches is drawn once)
+  const SPR = new Map(), NUMS = [23, 7, 11, 32, 5, 14, 8, 21, 3, 10];
+  function sprites(look, nose, num) { const key = JSON.stringify(look) + nose + num; if (!SPR.has(key)) SPR.set(key, {}); return SPR.get(key); }
+  // the arms of a ball player (not the fight's guard, that put the hands on the hips): hanging when still, swinging
+  // against the legs when running; dribbling, the front hand stays on the ball
+  const ARMS = { idle0: { sF: 14, eF: -28, sB: 10, eB: -22 }, idle1: { sF: 12, eF: -34, sB: 8, eB: -26 },
+    walk0: { sF: -24, eF: -48, sB: 32, eB: -58 }, walk1: { sF: 4, eF: -52, sB: 4, eB: -50 }, walk2: { sF: 32, eF: -58, sB: -24, eB: -48 }, walk3: { sF: 4, eF: -52, sB: 4, eB: -50 } };
+  function poseFor(k) { const pz = P(); if (EXTRA[k]) return EXTRA[k];
+    if (k.startsWith('drib')) { const w = 'walk' + k.slice(4); return { ...pz[w], ...ARMS[w], sF: 28, eF: -55 }; }
+    return ARMS[k] ? { ...pz[k], ...ARMS[k] } : pz[k] || pz.idle0; }
+  function sprOf(p, k) { return p.spr[k] || (p.spr[k] = PIXBASKET.sprite(p.nose ? { ...p.look, bigNose: true } : p.look, poseFor(k), p.num)); }
   // ---------- input (virtual buttons from the player's controls)
   const PZ = MINI.pauser(() => running); const IN = MINI.input(() => running), { press, held, hit, rel } = IN, keys = IN.keys; // v0.69: shared with the other minigames (09ea_minijuegos.js)
   // ---------- little sounds (own nodes on the game's audio context)
   const snd = MINI.snd, say = (t) => MINI.say(t);
+  let CR = null, PAV = false; const cr = (n, k) => { if (CR && (PAV || !/^(organ|charge|defensa)$/.test(n))) CR.ev(n, k); }; // (the organ and the chants only in a pavilion) // v0.90: the crowd of the pavilion (MINI.crowd)
   // ---------- setup
   function mkPlayer(o, team, i) {
-    return { name: o.name, look: o.look || {}, nose: !!o.nose, spr: sprites(o.look || {}, !!o.nose), team, human: !!o.human, x: 0, z: 0, y: 0, vx: 0, vz: 0, vy: 0, dir: team ? -1 : 1, turbo: 1, down: 0, act: '', actT: 0, air: false,
+    return { name: o.name, look: o.look || {}, nose: !!o.nose, num: o.num || NUMS[(team * 3 + i) % NUMS.length], spr: sprites(o.look || {}, !!o.nose, o.num || NUMS[(team * 3 + i) % NUMS.length]), team, human: !!o.human, x: 0, z: 0, y: 0, vx: 0, vz: 0, vy: 0, dir: team ? -1 : 1, turbo: 1, down: 0, act: '', actT: 0, air: false,
       shootHold: false, holdT: 0, streak: 0, fire: false, lv: o.lv ?? 0.5, think: 0, tgt: [0, 0], walkT: Math.random() * 3, idx: i, mark: null, stealCD: 0 };
   }
   function place(attacking) { // positions after a basket / at the start: «attacking» team brings the ball from its own half
@@ -7845,7 +8117,7 @@ const BASKET2D = (() => {
   const DKN = 16; // frames per dunk
   function dunkPose(id, u) { const ks = DK[id].keys; let i = 0; while (i < ks.length - 2 && u > ks[i + 1][0]) i++; const [u0, a] = ks[i], [u1, b] = ks[i + 1]; const t = clamp((u - u0) / ((u1 - u0) || 1), 0, 1), e = t * t * (3 - 2 * t);
     const o = {}; for (const k in a) o[k] = typeof a[k] === 'number' ? a[k] + (b[k] - a[k]) * e : a[k]; return o; }
-  function dunkSprite(p, id, f) { const key = 'dk_' + id + '_' + f; if (!p.spr[key]) p.spr[key] = FIGHT2D.figure(p.look, dunkPose(id, f / (DKN - 1)), p.nose); return p.spr[key]; }
+  function dunkSprite(p, id, f) { const key = 'dk_' + id + '_' + f; if (!p.spr[key]) p.spr[key] = PIXBASKET.sprite(p.nose ? { ...p.look, bigNose: true } : p.look, dunkPose(id, f / (DKN - 1)), p.num); return p.spr[key]; }
   // where a hand is in the sprite (same bones as the fight's drawer: 72×88 units, hip at 36,50+dy)
   function handAt(P, front) { const r = (a) => a * Math.PI / 180, hy = 50 + (P.dy || 0), lean = r(P.tl || 0); const nk = [36 + Math.sin(lean) * 22, hy - Math.cos(lean) * 22];
     const s0 = front ? [nk[0] + 2, nk[1] + 3] : [nk[0] - 2, nk[1] + 3], aS = front ? P.sF : P.sB, aE = front ? P.eF : P.eB;
@@ -7858,7 +8130,7 @@ const BASKET2D = (() => {
     const c = COMBOS[(Math.random() * 4) | 0]; const sg = Math.sign(hoopOf(p.team).x - p.x) || 1;
     const vk = { adelante: [sg > 0 ? 'vR' : 'vL'], atras: [sg > 0 ? 'vL' : 'vR'], abajo: ['vD'], arriba: ['vU'], puno: ['vS'], patada: ['vT', 'vP'] };
     st.combo = { c, i: 0, t: 2.7, by: p, need: c.seq.map((k) => vk[k]), sg, ok: null, d }; st.phase = 'combo'; /* v0.89: 2.7 s (was 3.6, −25 %) */ p.turbo = Math.max(0, p.turbo - 0.2);
-    IN.clearHits(); banner('¡ENTRADA EN COMBO!', '#ffd400', 1.0); snd('crowd');
+    IN.clearHits(); banner('¡ENTRADA EN COMBO!', '#ffd400', 1.0); cr('ooh', 1.2);
   }
   function comboStep(dt) {
     const C = st.combo; if (C.ok !== null) { C.end -= dt; if (C.end <= 0) { st.phase = 'play'; st.combo = null; } return; }
@@ -7900,7 +8172,7 @@ const BASKET2D = (() => {
     if (dist(p, v) > 1.3) return;
     const shove = (p.human ? held('vT') : Math.random() < 0.35 * p.lv) && p.turbo > 0.2;
     if (shove) { p.turbo -= 0.25; v.down = 1.0; v.shootHold = false; b.holder = null; b.mode = 'loose'; b.x = v.x; b.z = v.z; b.y = 1; b.vx = rnd(-2, 2); b.vz = rnd(-2, 2); b.vy = 2; banner('¡EMPUJÓN!', '#ff8a3d'); snd('bounce'); if (st.ev && p.human) st.ev.steal = true; return; }
-    if (Math.random() < (p.human ? 0.55 : 0.06 + p.lv * 0.3)) { give(p); banner('¡ROBO!', '#5ec8ff'); if (st.ev && p.human) st.ev.steal = true; }
+    if (Math.random() < (p.human ? 0.55 : 0.06 + p.lv * 0.3)) { give(p); banner('¡ROBO!', '#5ec8ff'); cr(p.team === 0 ? 'cheer' : 'ooh', 0.6); if (st.ev && p.human) st.ev.steal = true; }
   }
   // ---------- banners & HUD state
   function banner(t, c = '#ffd400', dur = 1.2) { st.banner = { t, c, dur, t0: st.time0 }; st.bannerT = dur; }
@@ -7910,10 +8182,34 @@ const BASKET2D = (() => {
     else if (kind === 'dunk') { banner('¡MATE!', '#ffd400'); say(Math.random() < 0.5 ? '¡Matazo!' : '¡Qué mate!'); }
     else if (pts === 3) { banner('¡TRIPLE!', '#7fe08a'); if (Math.random() < 0.6) say('¡Triple!'); }
     else banner(by.human ? '¡CANASTA!' : 'CANASTA', team === 0 ? '#7fe08a' : '#ff6b6b', 0.9);
-    snd('swish'); snd('crowd'); if (st.ev && by.team === 0) st.ev.score = true; if (st.ev && kind === 'dunk' && by.human) st.ev.dunk = true;
-    st.phase = 'score'; st.pt = 1.3; st.next = 1 - team;
+    snd('swish'); cr('net'); if (team === 0) { cr(kind === 'dunk' || pts === 3 ? 'roar' : 'cheer'); if (Math.random() < 0.5) cr('organ'); } else cr('boo', 0.6); if (st.ev && by.team === 0) st.ev.score = true; if (st.ev && kind === 'dunk' && by.human) st.ev.dunk = true;
+    st.phase = 'score'; st.pt = 1.3; st.next = 1 - team; setInbound(1 - team, hoopOf(team));
     if (st.golden) { st.phase = 'end'; st.pt = 3; }
   }
+  // ---------- v0.90 (Jonay: «saca desde la línea de fondo, tiene que pasarla, no puede aparecer en medio; debe haber
+  // continuidad»): after a basket nobody jumps to a new place. The team that conceded walks to its own baseline, one of
+  // them takes the ball behind the hoop and has to pass it in; his mates come to get it and the others go back.
+  function setInbound(t, hoop) { const left = hoop.x < CL / 2, bx = left ? 0.35 : CL - 0.35, sg = left ? 1 : -1;
+    const A = st.p.filter((q) => q.team === t), D = st.p.filter((q) => q.team !== t);
+    const by = A.slice().sort((a, c) => Math.hypot(a.x - bx, a.z - 5.2) - Math.hypot(c.x - bx, c.z - 5.2))[0];
+    const spots = [[bx + sg * 3.4, 9.6], [bx + sg * 6.8, 3.8], [bx + sg * 9.5, 8.5]], dsp = [[bx + sg * 4.6, 8.4], [bx + sg * 7.8, 4.6], [bx + sg * 11, 7.5]];
+    let i = 0; for (const q of A) q.inbT = q === by ? [bx, 5.2] : spots[i++ % 3]; D.forEach((q, j) => { q.inbT = dsp[j % 3]; });
+    st.inb = { team: t, by, sg, t: 0 }; }
+  function inbWalk(q, dt) { if (!q.inbT || q.air || q.down > 0) return; const dx = q.inbT[0] - q.x, dz = q.inbT[1] - q.z, d = Math.hypot(dx, dz);
+    if (d > 0.15) { const v = Math.min(5.2, d * 4); q.vx = (dx / d) * v; q.vz = (dz / d) * v * 0.85; q.x = clamp(q.x + q.vx * dt, 0.3, CL - 0.3); q.z = clamp(q.z + q.vz * dt, 0.2, CW - 0.2); q.walkT += dt * v * 1.4; q.dir = Math.sign(dx) || q.dir; }
+    else { q.vx = q.vz = 0; q.dir = q.team === st.inb.team ? st.inb.sg : -st.inb.sg; } }
+  function inbStep(dt) { const I = st.inb, q = I.by; stepBall(dt); for (const o of st.p) { if (o.air) stepPlayer(o, dt); else inbWalk(o, dt); }
+    if (st.phase === 'score') { if (st.pt < -4) { q.x = q.inbT[0]; q.z = q.inbT[1]; q.down = 0; } /* stuck (knocked down): there anyway */ if (st.pt <= 0 && Math.hypot(q.x - q.inbT[0], q.z - q.inbT[1]) < 0.3) { give(q); st.phase = 'inbound'; I.t = 0; if (Math.random() < 0.35) cr('organ'); } return; }
+    I.t += dt; q.vx = q.vz = 0; q.dir = I.sg;
+    if ((q.human && !st.auto) ? (hit('vP') || hit('vS') || I.t > 5) : I.t > 0.8) inbPass(); }
+  function inbPass() { const I = st.inb, q = I.by, mates = st.p.filter((o) => o.team === q.team && o !== q && o.down <= 0);
+    const to = mates.sort((a, c) => openness(c) - openness(a))[0]; for (const o of st.p) o.inbT = null; st.inb = null; st.phase = 'play';
+    if (to) pass(q, to); }
+  // v0.89 (Jonay): help defence: when the one with the ball drives to the basket, the nearest other defender leaves his man
+  // and steps into the way, between him and the rim (v0.90, audit: its own function)
+  function helpSpot(p, m, hd, dh) { if (!hd || hd === m || Math.hypot(dh.x - hd.x, dh.z - hd.z) >= 5.2) return null;
+    const helpers = st.p.filter((q) => q.team === p.team && q.mark !== hd && q.down <= 0 && !q.human).sort((a, c) => dist(a, hd) - dist(c, hd)); if (helpers[0] !== p) return null;
+    const L = Math.hypot(dh.x - hd.x, dh.z - hd.z) || 1; return [hd.x + ((dh.x - hd.x) / L) * 1.1, hd.z + ((dh.z - hd.z) / L) * 1.1]; }
   // ---------- AI
   function aiThink(p, dt) {
     const b = st.ball, own = b.holder ? b.holder.team === p.team : b.mode === 'pass' ? b.pass.to.team === p.team : null;
@@ -7941,16 +8237,19 @@ const BASKET2D = (() => {
     } else if (own === false) { // defence: stay between your man and the basket
       const m = p.mark || rivals(p)[p.idx % rivals(p).length]; const hd = b.holder;
       const k = hd === m ? 1.0 : 2.2; const L = Math.hypot(dh.x - m.x, dh.z - m.z) || 1; tx = m.x + (dh.x - m.x) / L * k; tz = m.z + (dh.z - m.z) / L * k; run = dist(p, m) > 4;
-      // v0.89 (Jonay): help defence: when the one with the ball drives to the basket, the nearest other defender leaves
-      // his man and steps into the way, between him and the rim
-      if (hd && hd !== m && Math.hypot(dh.x - hd.x, dh.z - hd.z) < 5.2) { const helpers = st.p.filter((q) => q.team === p.team && q.mark !== hd && q.down <= 0 && !q.human).sort((a, c) => dist(a, hd) - dist(c, hd));
-        if (helpers[0] === p) { const L2 = Math.hypot(dh.x - hd.x, dh.z - hd.z) || 1; tx = hd.x + (dh.x - hd.x) / L2 * 1.1; tz = hd.z + (dh.z - hd.z) / L2 * 1.1; run = true; } }
+      const hp = helpSpot(p, m, hd, dh); if (hp) { tx = hp[0]; tz = hp[1]; run = true; }
       if (!passive && hd === m && dist(p, m) < 1.2 && Math.random() < dt * (0.1 + 0.7 * p.lv)) steal(p);
       if (!passive && m.air && m.shootHold && dist(p, m) < 1.8 && !p.air && Math.random() < dt * 6 * p.lv) jump(p, 5.4);
     }
     if (passive) { tx = p.x; tz = p.z; }
     return { tx, tz, run };
   }
+  // v0.89 (Jonay): defending, right click = take the player nearest the ball; if it is already you, the steal (too far:
+  // a quick lunge at him). v0.90, audit: its own function
+  function defendClick(p, b) { const near = st.p.filter((q) => q.team === p.team && q.down <= 0).sort((a, c) => Math.hypot(a.x - b.x, a.z - b.z) - Math.hypot(c.x - b.x, c.z - b.z))[0];
+    if (near && near !== p && st.time0 >= (st.swapAt || 0)) { youAre(near); IN.consume('vP'); if (st.ev) st.ev.swap = true; return; } // (once: the other is stepped right after and sees the same click)
+    const v = b.holder; if (near !== p || !v || v.team === p.team) return;
+    if (dist(p, v) <= 1.6) steal(p); else { const L = dist(p, v) || 1; p.vx = ((v.x - p.x) / L) * 9; p.vz = ((v.z - p.z) / L) * 7; } }
   // ---------- one step (60 Hz)
   function stepPlayer(p, dt) {
     p.stealCD = Math.max(0, p.stealCD - dt); p.actT += dt; if (p.act === 'push' && p.actT > 0.25) p.act = '';
@@ -7972,10 +8271,7 @@ const BASKET2D = (() => {
       if (hit('vS')) { if (b.holder === p) startShot(p); else if (b.holder === mate && !mate.air) { startShot(mate); mate.aiRel = 0; } else jump(p, 5.4); }
       if (rel('vS') && p.shootHold && p.air) release(p);
       if (hit('vP')) { if (b.holder === p) pass(p, mate); else if (b.holder === mate) pass(mate, p);
-        else { // v0.89 (Jonay): defending, right click = take the player nearest the ball; if it is already you, the steal
-          const near = st.p.filter((q) => q.team === p.team && q.down <= 0).sort((a, c) => Math.hypot(a.x - b.x, a.z - b.z) - Math.hypot(c.x - b.x, c.z - b.z))[0];
-          if (near && near !== p && st.time0 >= (st.swapAt || 0)) { youAre(near); IN.consume('vP'); if (st.ev) st.ev.swap = true; } // (once: the other is stepped right after and sees the same click)
-          else if (near === p && b.holder && b.holder.team !== p.team) { if (dist(p, b.holder) <= 1.6) steal(p); else { const L = dist(p, b.holder) || 1; p.vx = (b.holder.x - p.x) / L * 9; p.vz = (b.holder.z - p.z) / L * 7; } } } } // too far: a quick lunge at him
+        else defendClick(p, b); }
     }
     if (!ctl && p.shootHold && p.air && p.vy < 0.4 + (p.aiRel || 0) * 6) release(p);
     if (p.shootHold) { p.holdT += dt; if (ctl && p.holdT > BAR) release(p); }
@@ -7986,7 +8282,7 @@ const BASKET2D = (() => {
         if (st.ball.holder === p && (p.vy < 0.6 || p.sure) && Math.hypot(h.x - p.x, h.z - p.z) < 0.9) { // slam it
           const blk = !p.sure && rivals(p).find((q) => q.air && q.y > 0.6 && dist(q, p) < 1.0 && Math.random() < (q.human ? 0.5 : 0.35 * q.lv)); const fallo = p.miss || (!p.sure && !p.human && Math.random() > 0.45 + 0.55 * p.lv); p.sure = false; p.miss = false; // v0.66: weak CPU dunkers hit the rim
           const b = st.ball; b.holder = null;
-          st.lastDunk = blk ? 'tapon' : fallo ? 'hierro' : 'mate'; if (blk || fallo) { p.act = ''; p.noGrabT = st.time0 + 0.9; /* v0.89.1 (Jonay): he used to catch his own miss in the air and dunk it */ b.mode = 'loose'; b.x = p.x; b.z = p.z; b.y = RIM; b.vx = -Math.sign(h.x - CL / 2) * 4; b.vz = rnd(-2, 2); b.vy = 2; banner(blk ? '¡TAPÓN!' : '¡AL HIERRO!', '#ff6b6b'); snd('rim'); }
+          st.lastDunk = blk ? 'tapon' : fallo ? 'hierro' : 'mate'; if (blk || fallo) { p.act = ''; p.noGrabT = st.time0 + 0.9; /* v0.89.1 (Jonay): he used to catch his own miss in the air and dunk it */ b.mode = 'loose'; b.x = p.x; b.z = p.z; b.y = RIM; b.vx = -Math.sign(h.x - CL / 2) * 4; b.vz = rnd(-2, 2); b.vy = 2; banner(blk ? '¡TAPÓN!' : '¡AL HIERRO!', '#ff6b6b'); snd('rim'); cr(p.team === 0 ? 'uuuh' : 'cheer', 0.9); }
           else { b.mode = 'net'; b.x = h.x; b.z = h.z; b.y = RIM; b.vx = b.vz = 0; b.vy = -2; score(p.team, 2, p, 'dunk'); }
         } }
       if (p.y <= 0) { p.y = 0; p.vy = 0; p.air = false; p.sure = false; p.miss = false; p.combo = null; if (p.act === 'dunk' || p.act === 'shoot') p.act = ''; if (p.shootHold) { p.landingRelease = true; release(p); } if (st.ev && p.human) st.ev.jump = true; }
@@ -8004,9 +8300,9 @@ const BASKET2D = (() => {
       b.x = lerp(P.x0, tx, u); b.z = lerp(P.z0, tz, u); b.y = lerp(P.y0, to.y + 1.3, u) + 4 * P.arc * u * (1 - u); return; }
     if (b.mode === 'air') { b.t += dt; b.vy -= G * dt; b.x += b.vx * dt; b.z += b.vz * dt; b.y += b.vy * dt;
       if (b.t < 0.3) for (const q of st.p) if (q.team !== b.shot.team && q.air && Math.hypot(q.x - b.x, q.z - b.z) < 0.8 && Math.abs(q.y + 2.3 - b.y) < 0.6 && Math.random() < 0.4 * q.lv + (q.human ? 0.35 : 0)) {
-        b.mode = 'loose'; b.vx = -b.vx * 0.4 + rnd(-1, 1); b.vz = rnd(-2, 2); b.vy = 1.5; banner('¡TAPÓN!', q.team === 0 ? '#7fe08a' : '#ff6b6b'); snd('rim'); if (st.ev && q.human) st.ev.block = true; return; }
+        b.mode = 'loose'; b.vx = -b.vx * 0.4 + rnd(-1, 1); b.vz = rnd(-2, 2); b.vy = 1.5; banner('¡TAPÓN!', q.team === 0 ? '#7fe08a' : '#ff6b6b'); snd('rim'); cr(q.team === 0 ? 'cheer' : 'ooh', 0.8); if (st.ev && q.human) st.ev.block = true; return; }
       if (b.t >= b.T) { const s = b.shot; if (s.make) { b.mode = 'net'; b.x = s.hoop.x; b.z = s.hoop.z; b.y = RIM; b.vx = b.vz = 0; b.vy = -2; score(s.team, s.pts, s.by, s.pts === 3 ? 'three' : 'two'); }
-        else { b.mode = 'loose'; b.vx = -Math.sign(s.hoop.x - CL / 2) * rnd(1, 3.2); b.vz = rnd(-2.2, 2.2); b.vy = rnd(2.5, 4.5); snd('rim'); s.by.streak = 0; } }
+        else { b.mode = 'loose'; b.vx = -Math.sign(s.hoop.x - CL / 2) * rnd(1, 3.2); b.vz = rnd(-2.2, 2.2); b.vy = rnd(2.5, 4.5); snd('rim'); s.by.streak = 0; cr(s.team === 0 ? 'uuuh' : 'claps', s.team === 0 ? 1 : 0.6); } }
       return; }
     if (b.mode === 'net') { b.vy -= G * dt * 0.5; b.y += b.vy * dt; if (b.y < 0.2) { b.y = 0.2; b.vy = 0; } return; }
     // loose ball: bounces, the first player to reach it keeps it
@@ -8018,7 +8314,7 @@ const BASKET2D = (() => {
   function step(dt) {
     st.time0 += dt; if (st.bannerT > 0) st.bannerT -= dt;
     if (st.phase === 'ready') { if (hit('vS') || hit('vP') || st.auto) { st.phase = 'play'; snd('buzzer'); } return; }
-    if (st.phase === 'score') { st.pt -= dt; stepBall(dt); for (const p of st.p) { if (p.air) stepPlayer(p, dt); } if (st.pt <= 0) { if (st.tut && !st.tut.done) st.phase = 'play'; else st.phase = 'play'; place(st.next); } return; }
+    if (st.phase === 'score' || st.phase === 'inbound') { if (st.phase === 'score') st.pt -= dt; if (st.inb) inbStep(dt); else if (st.pt <= 0) { st.phase = 'play'; place(st.next); } return; } // v0.90: the inbound
     if (st.phase === 'end') { st.pt -= dt; if (st.pt <= 0) finish(); return; }
     if (st.phase === 'combo') { comboStep(dt); return; } // everything stops while you do the combo
     // the tutorial: one step at a time, the rivals stand still and the clock doesn't run
@@ -8030,8 +8326,14 @@ const BASKET2D = (() => {
       for (const q of T0) { let bq = null, bd = 1e9; for (const r of free) { const d = dist(q, r); if (d < bd) { bd = d; bq = r; } } if (bq) { q.mark = bq; free.splice(free.indexOf(bq), 1); } }
       T1.forEach((r, i) => { r.mark = T0[i % T0.length]; }); }
     for (const p of st.p) stepPlayer(p, dt);
-    stepBall(dt);
+    stepBall(dt); crowdStep(dt);
   }
+  // v0.90: what the stands do while the ball is alive — the murmur follows the play, «¡de-fen-sa!» when the rivals have it
+  // a while, the organ's «charge» when yours runs at the hoop, the sneakers squeak on the turns
+  function crowdStep(dt) { if (!CR) return; const b = st.ball, h = b.holder; st.crT = (st.crT || 4) - dt;
+    let e = 0.15; if (h) { const d = Math.hypot(hoopOf(h.team).x - h.x, hoopOf(h.team).z - h.z); if (d < 7) e += 0.35; } if (b.mode === 'air') e += 0.4; if (!st.tut && st.clock < 20) e += 0.35; if (st.golden) e += 0.5; CR.tick(dt, Math.min(1, e));
+    if (st.crT <= 0 && h && st.possT > 2.5) { if (h.team === 1) { cr('defensa'); st.crT = 12 + Math.random() * 8; } else if (Math.abs(h.vx) > 4 && Math.sign(h.vx) === Math.sign(hoopOf(0).x - h.x)) { cr('charge'); st.crT = 14 + Math.random() * 10; } }
+    for (const p of st.p) { const sx2 = Math.sign(Math.round(p.vx)); if (p.lastSx && sx2 && sx2 !== p.lastSx && Math.abs(p.vx) > 3 && !p.air && Math.random() < 0.45) cr('squeak', p.human ? 1 : 0.6); if (sx2) p.lastSx = sx2; } }
   // ---------- tutorial (first game against the Obispo's seminarians)
   const K_ = (id) => CONTROLS.keyName(id);
   const TUT = [
@@ -8111,13 +8413,13 @@ const BASKET2D = (() => {
     else if (Math.hypot(p.vx, p.vz) > 0.5) k = (b.holder === p ? 'drib' : 'walk') + (Math.floor(p.walkT * 2.2) % 4); else if (b.holder && b.holder.team !== p.team && b.holder === p.mark) k = 'defend';
     if (st.phase === 'end' && !st.tut) k = (st.score[p.team] > st.score[1 - p.team]) ? 'win' : k;
     const cmb = p.combo && p.act === 'dunk' && DK[p.combo] ? p.combo : null, cu = cmb ? clamp((p.cT || 0) / 0.85, 0, 1) : 0, cf = Math.round(cu * (DKN - 1));
-    const s = cmb ? dunkSprite(p, cmb, cf) : p.spr[k] || p.spr.idle0, sc = (0.37 + p.z * 0.004) * SC; const px = sx(p.x), py = sy(p.z, p.y);
+    const s = cmb ? dunkSprite(p, cmb, cf) : sprOf(p, k), sc = (0.37 + p.z * 0.004) * SC; const px = sx(p.x), py = sy(p.z, p.y);
     if (px < -60 || px > W + 60) { offscreen(p, px); return; }
     cx.fillStyle = 'rgba(0,0,0,0.3)'; cx.beginPath(); cx.ellipse(px, sy(p.z), 7 * SC, 2.2 * SC, 0, 0, 7); cx.fill();
-    const w = (s.width / 2) * sc, h2 = (s.height / 2) * sc; /* the fight sprites are drawn at 2× (v0.66: was divided by this canvas' 4×) */
+    const h2 = 88 * sc; /* v0.90: the fight's 88-unit box, so the ball, the bars and the arrows stay where they were */
     let fx = p.dir < 0 ? -1 : 1; if (cmb && DK[cmb].back) fx = -fx; // turned away from the hoop
     let kx = fx; if (cmb && DK[cmb].spin) { const [a, b] = DK[cmb].spin, t = clamp((cu - a) / (b - a), 0, 1); kx = fx * Math.cos(t * Math.PI * 2); if (Math.abs(kx) < 0.3) kx = 0.3 * Math.sign(kx || 1); } // the 360: the body turns round
-    cx.save(); cx.translate(px, py); cx.scale(kx, 1); cx.drawImage(s, -w / 2, -h2 * 0.98, w, h2); cx.restore(); st.drawn = (st.drawn || 0) + 1;
+    cx.save(); cx.translate(px, py); cx.scale(kx, 1); cx.drawImage(s.c, (-s.ax / s.q) * sc, (80 - s.ay / s.q - 86.24) * sc, (s.c.width / s.q) * sc, (s.c.height / s.q) * sc); cx.restore(); st.drawn = (st.drawn || 0) + 1;
     if (cmb) { const P2 = dunkPose(cmb, cf / (DKN - 1)), hb = ballInDunk(cmb, cu, P2); p.ballScr = [px + (hb[0] - 36) * sc * kx, py - h2 * 0.98 + hb[1] * sc]; // the ball in his hands
       if (cu > 0.2) for (let i = 0; i < 4; i++) { cx.fillStyle = `rgba(255,255,255,${0.12 + 0.05 * i})`; cx.fillRect(px - fx * (10 + i * 5) * SC * 0.4, py - h2 * (0.3 + 0.15 * i), 2 * SC, 1); } } // speed lines
     else p.ballScr = null;
@@ -8186,12 +8488,12 @@ const BASKET2D = (() => {
       tut: opt.tutorial ? { i: 0, wait: 0 } : null, auto: !!opt.auto, fade: 1, fadeDir: -1, stake: opt.stake || 0, style: opt.style || 'calle' };
     for (const q of st.p) if (q.team === 1) q.lv = opt.lv ?? 0.5; else if (!q.human) q.lv = opt.mateLv ?? 0.6;
     place(0); updateCam(1); IN.reset(); document.exitPointerLock?.();
-    MINI.show(cv, 'basket2d'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); return true;
+    MINI.show(cv, 'basket2d'); PAV = st.style === 'pabellon' || inConsole; if (CR) CR.stop(); CR = MINI.crowd(PAV ? 'basket' : 'calle'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); return true;
   }
   function finish() { if (!st || st.fadeDir > 0) return; st.fadeDir = 1; }
-  function close() { running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'basket2d', !inConsole); /* v0.86: back to the GOFIO-8, not to the 3D world */
+  function close() { running = false; cancelAnimationFrame(raf); if (CR) { CR.stop(); CR = null; } MINI.hide(cv, 'basket2d', !inConsole); /* v0.86: back to the GOFIO-8, not to the 3D world */
     const res = { won: st.score[0] > st.score[1], score: st.score.slice() }; if (onEnd) onEnd(res); }
-  function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'basket2d', false); } // tests only
+  function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); if (CR) { CR.stop(); CR = null; } MINI.hide(cv, 'basket2d', false); } // tests only
   // tests: a combo dunk of your own (id from COMBOS), a pass, and drawing a frame
   function _dunk(id) { const p = st.p.find((q) => q.human); give(p); const h = hoopOf(p.team); p.x = h.x - Math.sign(h.x - CL / 2) * 5; p.z = h.z; p.air = false; p.y = 0;
     st.combo = { c: COMBOS.find((c) => c.id === id) || COMBOS[0], i: 0, t: 3, by: p, need: [], sg: 1, ok: null, d: 5 }; comboDone(true); st.phase = 'play'; st.combo = null; return p; }
@@ -8226,6 +8528,7 @@ const FUTBOL2D = (() => {
   const PZ = MINI.pauser(() => running); const IN = MINI.input(() => running), { press, held, hit, rel } = IN, keys = IN.keys; // v0.69: shared with the other minigames (09ea_minijuegos.js)
   // ---------- sounds
   const snd = MINI.snd, say = (t) => MINI.say(t);
+  let CR = null; const cr = (n, k) => { if (CR) CR.ev(n, k); }; // v0.90 (Jonay): the roar of the stands (MINI.crowd)
   // ---------- helpers
   const hx = (n, d = '#888') => (typeof n === 'number' ? '#' + (n >>> 0).toString(16).padStart(6, '0') : typeof n === 'string' ? n : d);
   const D = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -8302,7 +8605,7 @@ const FUTBOL2D = (() => {
     if (st.tut && p.team === 1) { tx = p.x; ty = p.y; run = false; }
     return { tx, ty, run };
   }
-  function tackle(p, v, chance) { if (!v || v.down > 0 || st.sp || v.drib > 0) return; p.kickCD = 0.6; if (Math.random() < chance) { const b = st.ball; b.owner = null; b.vx = (b.x - v.x) * 3 + (p.x < v.x ? 2 : -2); b.vy = (b.y - v.y) * 3; b.vz = 0.5; st.last = p; v.kickCD = 0.7; if (st.ev && p.team === 0 && p === st.ctl) st.ev.tackle = true; } }
+  function tackle(p, v, chance) { if (!v || v.down > 0 || st.sp || v.drib > 0) return; p.kickCD = 0.6; if (Math.random() < chance) { const b = st.ball; b.owner = null; b.vx = (b.x - v.x) * 3 + (p.x < v.x ? 2 : -2); b.vy = (b.y - v.y) * 3; b.vz = 0.5; st.last = p; v.kickCD = 0.7; if (st.ev && p.team === 0 && p === st.ctl) st.ev.tackle = true; cr('ooh', 0.5); } }
   function keeper(p, dt) {
     if (st.tut && p.team === 1) return { tx: p.x, ty: p.y, sp: 0 };
     const b = st.ball, oy = ownY(p.team), sg = p.team === 0 ? -1 : 1; let tx = clamp(PW / 2 + (b.x - PW / 2) * 0.3, PW / 2 - GW / 2 + 0.4, PW / 2 + GW / 2 - 0.4), ty = oy + sg * 1.1, sp = 5.5;
@@ -8320,14 +8623,14 @@ const FUTBOL2D = (() => {
         // v0.79: too wide to reach on foot → a full-length dive («palomita») towards where it crosses, at its height
         const gap = tx - p.x; if (Math.abs(gap) > 1.0 && t < 0.75 && b.z < GH + 0.4 && Math.random() < 0.55 + 0.4 * p.lv) { p.diveT = 0.6; p.diveS = Math.sign(gap); p.vx = p.diveS * clamp(Math.abs(gap) / Math.max(0.25, t) * 1.1, 5, 10.5); p.vy = 0; p.diveH = clamp(b.z + b.vz * t - 4.9 * t * t, 0, GH); snd('swish'); return { tx: p.x, ty: p.y, sp: 0 }; } }
       if (D(p, b) < 1.05 + 0.45 * p.lv && b.z < GH + 0.3) { b.shot.saved = true; const spd = Math.hypot(b.vx, b.vy); const ok = Math.random() < clamp(0.42 + 0.5 * p.lv - (spd - 14) * 0.03, 0.12, 0.92);
-        if (ok) { if (Math.random() < 0.55) { give(p); p.hold = 1.2; banner('¡PARADÓN!', '#9fd7ff', 1); } else { b.vx = (b.x < p.x ? -1 : 1) * rnd(5, 8); b.vy = -b.vy * 0.25; b.vz = 2; st.last = p; banner('¡DESPEJA!', '#9fd7ff', 1); } snd('kick'); } else p.kickCD = 0.5; } }
+        if (ok) { if (Math.random() < 0.55) { give(p); p.hold = 1.2; banner('¡PARADÓN!', '#9fd7ff', 1); cr(p.team === 0 ? 'cheer' : 'uuuh'); } else { b.vx = (b.x < p.x ? -1 : 1) * rnd(5, 8); b.vy = -b.vy * 0.25; b.vz = 2; st.last = p; banner('¡DESPEJA!', '#9fd7ff', 1); } snd('kick'); } else p.kickCD = 0.5; } }
     return { tx, ty, sp };
   }
   // the keeper in the air, stretched out: catches or parries what passes within his reach, then lies down a moment
   function diveStep(p, dt) { p.diveT -= dt; p.x += p.vx * dt; p.vx *= 0.97; const b = st.ball;
     if (b.shot && b.shot.team !== p.team && !b.shot.saved && !b.owner) { const reach = 1.45 + 0.45 * p.lv, dx = b.x - (p.x + p.diveS * 0.5), dy = b.y - p.y;
       if (Math.hypot(dx, dy) < reach && b.z < GH + 0.5) { b.shot.saved = true; const spd = Math.hypot(b.vx, b.vy); const ok = Math.random() < clamp(0.35 + 0.5 * p.lv - (spd - 14) * 0.03, 0.12, 0.85);
-        if (ok) { if (Math.random() < 0.4 && spd < 19) { give(p); p.hold = 1.4; banner('¡PALOMITA!', '#9fd7ff', 1.2); } else { b.vx = p.diveS * rnd(4, 7); b.vy = -b.vy * 0.2; b.vz = 2.5; st.last = p; banner('¡VAYA PALOMITA!', '#9fd7ff', 1.2); } snd('kick'); } } }
+        if (ok) { if (Math.random() < 0.4 && spd < 19) { give(p); p.hold = 1.4; banner('¡PALOMITA!', '#9fd7ff', 1.2); cr(p.team === 0 ? 'cheer' : 'uuuh'); } else { b.vx = p.diveS * rnd(4, 7); b.vy = -b.vy * 0.2; b.vz = 2.5; st.last = p; banner('¡VAYA PALOMITA!', '#9fd7ff', 1.2); } snd('kick'); } } }
     if (p.diveT <= 0) { p.diveT = 0; p.vx = 0; if (st.ball.owner !== p) { p.down = 0.45; p.kickCD = 0.5; } } }
   // ---------- one step
   function stepPlayer(p, dt) {
@@ -8393,7 +8696,8 @@ const FUTBOL2D = (() => {
     for (const t of [0, 1]) { const gy = goalY(t); const crossed = t === 0 ? b.y < 0 : b.y > PL; if (!crossed) continue;
       const inPosts = Math.abs(b.x - PW / 2) < GW / 2;
       if (inPosts && b.z < GH) { goal(t); return; }
-      if (!b.owner && Math.abs(Math.abs(b.x - PW / 2) - GW / 2) < 0.25 && b.z < GH + 0.2) { b.vy = -b.vy * 0.6; b.y = gy + (t === 0 ? 0.1 : -0.1); snd('post'); banner('¡AL PALO!', '#fff', 0.9); return; }
+      if (!b.owner && Math.abs(Math.abs(b.x - PW / 2) - GW / 2) < 0.25 && b.z < GH + 0.2) { b.vy = -b.vy * 0.6; b.y = gy + (t === 0 ? 0.1 : -0.1); snd('post'); banner('¡AL PALO!', '#fff', 0.9); cr('uuuh', 1.2); return; }
+      if (b.shot && Math.abs(b.x - PW / 2) < GW / 2 + 3) cr('uuuh', 0.8); // wide, but close
       outOfPlay('fondo', t); return; }
     if (b.x < 0 || b.x > PW) { outOfPlay('banda'); return; }
     if (b.owner) return;
@@ -8412,7 +8716,7 @@ const FUTBOL2D = (() => {
   }
   function goalKick(team, label) { const k = st.p.find((q) => q.team === team && q.role === 'gk'); k.x = PW / 2; k.y = ownY(team) + (team === 0 ? -2 : 2); k.vx = k.vy = 0; give(k); k.hold = 1.3; st.sp = { p: k, kind: 'gk', t: 0 }; restart(k, label); }
   // a foul on the taker of a restart (a slide into the keeper holding the ball, or into a throw-in): whistle and again
-  function foul(p, v) { const b = st.ball; snd('whistle'); p.slide = 0; p.vx = p.vy = 0; p.down = 0.6; p.kickCD = 1; if (st.ev && p === st.ctl) st.ev.foul = true;
+  function foul(p, v) { const b = st.ball; snd('whistle'); cr('boo', 0.5); p.slide = 0; p.vx = p.vy = 0; p.down = 0.6; p.kickCD = 1; if (st.ev && p === st.ctl) st.ev.foul = true;
     if (v.role === 'gk') { goalKick(v.team, '¡FALTA AL PORTERO!'); return; }
     st.sp.t = 0; give(v); st.sp = st.sp && st.sp.p === v ? st.sp : { p: v, kind: 'banda', t: 0 }; restart(v, '¡FALTA!'); b.vx = b.vy = 0; }
   // nobody of the other team inside the circle round the taker until the ball is played (a slide may still go in: foul)
@@ -8426,7 +8730,7 @@ const FUTBOL2D = (() => {
     const ang = Math.atan2(PL / 2 - tk.y, PW / 2 - tk.x); const q = bestPass(tk, ang); if (q) passTo(tk, q, sp.kind === 'corner' ? 0.5 : 0.2); else kick(tk, ang, 10, 2); }
   function restart(p, label) { st.pause = 0.7; banner(label, '#fff', 0.8); if (p.team === 0 && p.role !== 'gk') st.ctl = p; }
   function goal(t) { st.sp = null; st.score[t]++; st.phase = 'goal'; st.pt = 2.4; st.next = 1 - t; st.ball.owner = null; st.ball.vx *= 0.1; st.ball.vy *= 0.1;
-    banner('¡GOOOOL!', t === 0 ? '#7fe08a' : '#ff6b6b', 2.2); snd('goal'); snd('whistle'); say('¡Gol!'); if (st.ev && t === 0) st.ev.goal = true;
+    banner('¡GOOOOL!', t === 0 ? '#7fe08a' : '#ff6b6b', 2.2); snd('goal'); snd('whistle'); say('¡Gol!'); if (t === 0) { cr('roar', 1.4); setTimeout(() => cr('bombo'), 2600); } else cr('boo'); if (st.ev && t === 0) st.ev.goal = true;
     if (st.golden) { st.phase = 'end'; st.pt = 3; } }
   function step(dt) {
     st.time0 += dt; if (st.bannerT > 0) st.bannerT -= dt;
@@ -8444,6 +8748,8 @@ const FUTBOL2D = (() => {
     else if (st.swT <= 0 && !(b.owner && b.owner.team === 0)) { const n = nearestCtl(false); if (n !== st.ctl && D(n, b) + 2 < D(st.ctl, b) && st.ctl.slide <= 0) { st.ctl = n; } st.swT = 0.25; }
     for (const p of st.p) stepPlayer(p, dt);
     keepAway(); takeRestart(dt);
+    if (CR) { const gd = Math.min(Math.abs(b.y - goalY(0)), Math.abs(b.y - goalY(1))); CR.tick(dt, Math.min(1, 0.12 + (gd < 16 ? 0.45 * (1 - gd / 16) : 0) + (b.shot ? 0.3 : 0) + (st.golden ? 0.4 : 0)));
+      st.crT = (st.crT ?? 8) - dt; if (st.crT <= 0) { cr(Math.random() < 0.6 ? 'bombo' : 'claps', 0.8); st.crT = 18 + Math.random() * 14; } } // the drum of the stand, now and then
     // running into the ball takes it off the rival (you: easily; the CPU only by tackling)
     const me = st.ctl; if (!st.auto && !st.sp && me && b.owner && b.owner.team === 1 && b.owner.role !== 'gk' && me.down <= 0 && me.kickCD <= 0 && !(b.owner.drib > 0) && Math.hypot(b.x - me.x, b.y - me.y) < 0.6 && Math.random() < dt * 2.5) { b.owner.kickCD = 0.6; give(me); if (st.ev) st.ev.tackle = true; }
     stepBall(dt);
@@ -8627,12 +8933,12 @@ const FUTBOL2D = (() => {
     for (let i = 0; i < 5; i++) st.p.push(mkPlayer(t1[i] || { name: 'RIV ' + (i + 1) }, 1, i, k1));
     for (const q of st.p) q.lv = q.team === 1 ? opt.lv ?? 0.5 : opt.mateLv ?? 0.6;
     kickoff(0); st.ctl = st.p.find((q) => q.team === 0 && q.role === 'fwd'); updateCam(1); IN.reset(); document.exitPointerLock?.();
-    MINI.show(cv, 'futbol2d'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); return true;
+    MINI.show(cv, 'futbol2d'); if (CR) CR.stop(); CR = MINI.crowd('futbol'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); return true;
   }
   function finish() { if (!st || st.fadeDir > 0) return; st.fadeDir = 1; }
-  function close() { running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'futbol2d', !inConsole); /* v0.86: back to the GOFIO-8, not to the 3D world */
+  function close() { running = false; cancelAnimationFrame(raf); if (CR) { CR.stop(); CR = null; } MINI.hide(cv, 'futbol2d', !inConsole); /* v0.86: back to the GOFIO-8, not to the 3D world */
     const res = { won: st.score[0] > st.score[1], score: st.score.slice() }; if (onEnd) onEnd(res); }
-  function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'futbol2d', false); } // tests only
+  function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); if (CR) { CR.stop(); CR = null; } MINI.hide(cv, 'futbol2d', false); } // tests only
   return { start, _abort: abort, get running() { return running; }, _st: () => st, _foul: (p, v) => foul(p, v), _give: (p) => give(p), _pz: () => PZ, _out: (k, t) => outOfPlay(k, t), _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); updateCam(); } }, _press: press, _draw: () => draw() };
 })();
 
@@ -8692,14 +8998,15 @@ const FIRES = [];
 function rifleUsable() { return RIFLE.has && RIFLE.out && !PLAYER.car && !PLAYER.interior && PLAYER.down <= 0 && !PLAYER.dead; }
 function giveRifle(full = true) { RIFLE.has = true; RIFLE.out = true; if (full) RIFLE.water = RIFLE.max; WEAPON.out = false; if (WEAPON.mesh) WEAPON.mesh.visible = false; AGUA.ensureMesh(); updateWeaponHUD(); }
 // a fire on the ground (a pile of papers, a bin, a door…): size ~ metres; hp 1 → 0 under the water; onOut when it dies
+let FIRE_BASE = null; const fireBaseGeo = () => FIRE_BASE || (FIRE_BASE = new THREE.CylinderGeometry(0.45, 0.55, 0.18, 8));
 function makeFire(x, z, size = 1, onOut) {
   const g = new THREE.Group(); const y = Math.max(heightAt(x, z), deckAt(x, z, heightAt(x, z) + 1)) + 0.02; g.position.set(x, y, z);
   const fl = AGUA.flameMats(); const flames = [];
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.45 * size, 0.55 * size, 0.18, 8), M(0xe9e4d6, 0.9)); base.position.y = 0.09; g.add(base); // the papers
+  const base = new THREE.Mesh(fireBaseGeo(), M(0xe9e4d6, 0.9)); base.scale.set(size, 1, size); base.position.y = 0.09; g.add(base); // the papers (v0.90, audit 0.76: one shared cylinder, scaled)
   for (let k = 0; k < 3; k++) { const m = new THREE.Mesh(AGUA.flameGeo(), fl[k]); m.position.set((k - 1) * 0.18 * size, 0.18, ((k % 2) - 0.5) * 0.2 * size); m.scale.setScalar(size * (k === 1 ? 1.15 : 0.8)); g.add(m); flames.push(m); }
   scene.add(g); const f = { x, z, y, size, r: 0.55 * size + 0.35, h: 1.4 * size, hp: 1, g, flames, base, onOut, t: Math.random() * 6, out: false }; FIRES.push(f); return f;
 }
-function clearFires() { for (let i = FIRES.length - 1; i >= 0; i--) { const f = FIRES[i]; if (f.free) continue; if (f.g.parent) f.g.parent.remove(f.g); f.base.geometry.dispose(); FIRES.splice(i, 1); } } // free: a fire of no mission (tests)
+function clearFires() { for (let i = FIRES.length - 1; i >= 0; i--) { const f = FIRES[i]; if (f.free) continue; if (f.g.parent) f.g.parent.remove(f.g); FIRES.splice(i, 1); } } // free: a fire of no mission (tests)
 function wetChasePed(p, dt) {
   p.wetChase -= dt; const dx = PLAYER.x - p.x, dz = PLAYER.z - p.z, d = Math.hypot(dx, dz);
   if (PLAYER.car || PLAYER.dead || PLAYER.interior || d > 40 || p.down > 0 || p.wetChase <= 0) { p.wetChase = 0; if (d > 3) SUB.show('<b>Peatón:</b> ¡Ya te pillaré, chorizo!', 1.8); return false; }
@@ -8822,7 +9129,7 @@ const AGUA = (() => {
     for (let i = FIRES.length - 1; i >= 0; i--) { const f = FIRES[i]; f.t += dt;
       if (!f.out) { f.flames.forEach((m, k) => { const s = f.size * (k === 1 ? 1.15 : 0.8) * Math.max(0.25, f.hp); m.scale.set(s * (1 + 0.12 * Math.sin(f.t * 13 + k * 2)), s * (1 + 0.25 * Math.sin(f.t * 9 + k)), s); });
         if (!PLAYER.car && Math.hypot(PLAYER.x - f.x, PLAYER.z - f.z) < f.r * 0.8 && PLAYER.y < f.y + 1) { PLAYER.health -= dt * 12; if (Math.random() < dt * 2) HUD.toast('¡Quema!', '#ff6a00', 0.8); } }
-      else if ((f.outT += dt) > 40 && !f.keep) { if (f.g.parent) f.g.parent.remove(f.g); f.base.geometry.dispose(); FIRES.splice(i, 1); } }
+      else if ((f.outT += dt) > 40 && !f.keep) { if (f.g.parent) f.g.parent.remove(f.g); FIRES.splice(i, 1); } }
   }
   // ---------- Tab / 1 / 2 / 3: fists, pistol, water rifle
   function weaponKeys() {
@@ -9140,10 +9447,10 @@ ARCADE.GAMES.bencomo = (() => {
   // castellanos and the dogs), with the detail of the statues of Candelaria: headband, beard, necklace, the tamarco on
   // the shoulder, bare chest with pecs and abs, the loincloth with its cord, ankle bands and bare feet
   const UP = {
-    idle: ['....hhhhhh......', '...hhhhhhhh.....', '..hhggggggg.....', '..hhhbbbbbb.....', '..hhbbbbbwk.....', '..hhbbbbbbbb....', '..hhhdbbbbb.....', '..hhheeeeee.....', '..hh.eeeeee.....', '..hcC.eeeb......', '..cCbbgbgbbb....', '.bcCbbbdbbbbb...', '.bcCbdbbdbbdb...', '.bcccbdbdbbbb...'],
-    thrust: ['....hhhhhh......', '...hhhhhhhh.....', '..hhggggggg.....', '..hhhbbbbbb.....', '..hhbbbbbwk.....', '..hhbbbbbbbb....', '..hhhdbbbbb.....', '..hhheeeeee.....', '..hh.eeeeee.....', '..hcC.eeeb......', '..cCbbgbgbbbbbbb', '.bcCbbbdbbbbbbb.', '.bcCbdbbdbbd....', '.bcccbdbdbb.....'],
-    up: ['.bb.hhhhhh.bb...', '.bbhhhhhhhhbb...', '..bhhgggggggb...', '..bhhbbbbbb.....', '..hhbbbbbwk.....', '..hhbbbbbbbb....', '..hhhdbbbbb.....', '..hhheeeeee.....', '..hh.eeeeee.....', '..hcC.eeeb......', '..cCbbgbgbb.....', '..cCbbbdbbbb....', '..cCbdbbdbbd....', '..cccbdbdbbb....'],
-    hurt: ['.....hhhhhh.....', '....hhhhhhhh....', '...hhggggggg....', '...hhhbbbbbb....', '...hhbbbbbbk....', '...hhbbbbbbbb...', '...hhhdbbbbb....', '...hhheeeeee....', '...hh.eeeeee....', '..bcC.eeeb......', '.bbCbbgbgbbb....', '.b.Cbbbdbbbbbb..', '...cbdbbdbbd.bb.', '...ccbdbdbbb....'],
+    idle: ['....hhhhhh......', '...hhhhhhhh.....', '..hhggggggg.....', '..hhhbbbbbb.....', '..hhbbbbbwk.....', '..hhbbbbbbbb....', '..hhhdbbbbb.....', '..hhheeeeee.....', '..hh.eeeeee.....', '..hcC.eeeb......', '..cCbbgbgbbb....', '.bcCbdbbbdb.b...', '.bcCbbdbdb.b....', '.bcccbdbd..b....'],
+    thrust: ['....hhhhhh......', '...hhhhhhhh.....', '..hhggggggg.....', '..hhhbbbbbb.....', '..hhbbbbbwk.....', '..hhbbbbbbbb....', '..hhhdbbbbb.....', '..hhheeeeee.....', '..hh.eeeeee.....', '..hcC.eeeb......', '..cCbbgbgbbbbbbb', '.bcCbdbbbdbbbbb.', '.bcCbbdbdb......', '.bcccbdbd.......'],
+    up: ['bb..hhhhhh....bb', '.b.hhhhhhhh..bb.', '.bhhggggggg..b..', '.bhhhbbbbbb..b..', '.bhhbbbbbwk..b..', '.bhhbbbbbbbb.b..', '.bhhhdbbbbb..b..', '.bhhheeeeee.b...', '.bhh.eeeeee.b...', '.bhcC.eeeb.b....', '.bcCbbgbgbbb....', '..cCbdbbbdb.....', '..cCbbdbdb......', '..cccbdbd.......'],
+    hurt: ['.....hhhhhh.....', '....hhhhhhhh....', '...hhggggggg....', '...hhhbbbbbb....', '...hhbbbbbbk....', '...hhbbbbbbbb...', '...hhhdbbbbb....', '...hhheeeeee....', '...hh.eeeeee....', '..bcC.eeeb......', '.bbCbbgbgbbb....', '.b.Cbdbbbdb.bb..', '...cbbdbdb...bb.', '...ccbdbd.......'],
   };
   const LEG = {
     stand: ['..dcccgggggb....', '...cCccccC......', '....ccdcc.......', '....bb..bb......', '....bd..bd......', '....bd..bd......', '....gd..gd......', '...bbb..bbb.....'],
@@ -9915,8 +10222,8 @@ ARCADE.GAMES.naves = (() => {
 // ============ «GUANCHE GUARRIORS» (v0.82): the beat'em up of the toy shops (pay per game) ============
 // Jonay (20-oct): like Golden Axe: a side-scrolling beat'em up with depth (not a platformer), several stages, and at the
 // start you choose one of 3 warriors:
-//  · EL MENCEY: the barbarian, strong and slow, with a Canarian club (garrote canario). Magic: «Ira de Achamán» (4).
-//  · EL PASTOR: more agile, less strong; the shepherd's pole reaches further and jumps more (the salto del pastor:
+//  · EL MAGOTE (v0.90, Jonay; was «el Mencey»; id 'mencey'): the barbarian, strong and slow, with a Canarian club (garrote canario). Magic: «Ira de Achamán» (4).
+//  · EL MENCEY (v0.90, Jonay; was «el Pastor»; id 'pastor'): more agile, less strong; the shepherd's pole reaches further and jumps more (the salto del pastor:
 //    B while running). Magic: «Viento alisio» (5).
 //  · LA MIRLADORA: a girl who does magic: less physical, agile, the strongest magic: «Luz de Magec» (7).
 // Story (from the Guanche myth): Guayota, the demon inside the Teide (Echeyde), has kidnapped Magec, the sun, and the
@@ -10030,8 +10337,8 @@ ARCADE.GAMES.guanche = (() => {
     BY: { s: 2.1, bulk: 9, skin: '#8a1a10', skin2: '#6a120a', cloth: '#1a0804', cloth2: '#ff6a1a', horns: 3, eye: '#ffd400', weapon: 'none' },
   };
   const HEROES = [
-    { id: 'mencey', name: 'EL MENCEY', desc: ['FUERTE Y LENTO', 'GARROTE CANARIO'], look: LK.mencey, hp: 24, spd: 44, dmg: [2, 2, 4], reach: 21, jump: 150, jars: 4, spell: 'IRA DE ACHAMÁN', fuerza: 3, agil: 1, magia: 2 },
-    { id: 'pastor', name: 'EL PASTOR', desc: ['ÁGIL, MENOS FUERTE', 'LA VARA DEL SALTO'], look: LK.pastor, hp: 18, spd: 58, dmg: [1, 1, 3], reach: 26, jump: 180, jars: 5, spell: 'VIENTO ALISIO', fuerza: 2, agil: 3, magia: 2 },
+    { id: 'mencey', name: 'EL MAGOTE', desc: ['FUERTE Y LENTO', 'GARROTE CANARIO'], look: LK.mencey, hp: 24, spd: 44, dmg: [2, 2, 4], reach: 21, jump: 150, jars: 4, spell: 'IRA DE ACHAMÁN', fuerza: 3, agil: 1, magia: 2 },
+    { id: 'pastor', name: 'EL MENCEY', desc: ['ÁGIL, MENOS FUERTE', 'LA VARA DEL SALTO'], look: LK.pastor, hp: 18, spd: 58, dmg: [1, 1, 3], reach: 26, jump: 180, jars: 5, spell: 'VIENTO ALISIO', fuerza: 2, agil: 3, magia: 2 },
     { id: 'mirla', name: 'LA MIRLADORA', desc: ['ÁGIL Y MÁGICA', 'MENOS FÍSICA'], look: LK.mirla, hp: 16, spd: 56, dmg: [1, 1, 2], reach: 17, jump: 165, jars: 7, spell: 'LUZ DE MAGEC', fuerza: 1, agil: 3, magia: 3 }];
   // enemies: hp, speed, reach, damage, wind-up, cooldown, points
   const ED = { S: { hp: 8, spd: 34, reach: 18, dmg: 2, wind: 0.42, cd: 1.3, pts: 300 }, H: { hp: 11, spd: 30, reach: 18, dmg: 2, wind: 0.5, cd: 1.5, pts: 400, shield: true },
@@ -10297,7 +10604,8 @@ ARCADE.GAMES.guanche = (() => {
       if (o.d && o.d.dog) { dog(c, sx, sy, o.face, o, o.s || 1); return; }
       const riding = o.mount, P = riding ? (o.st === 'whip' || o.st === 'atk' ? PO.ride : PO.ride) : poseOf(o);
       const glow = o === p && p.st === 'magic' ? (flick() ? '#fff' : '#ffd400') : null;
-      puppet(c, sx, riding ? sy - 10 - hopOf(riding) : sy, o.face, P, o.look || p.hero.look, glow);
+      if (o === p && PIXGUAN.draw(c, sx, sy, o.face, P, p.hero.id, p.hero.look.s)) { if (glow) pblob(c, sx + o.face * P.hf[0] * p.hero.look.s, sy + P.hf[1] * p.hero.look.s, 2.5, 2.5, glow); } // v0.90: the G1 heroes
+      else puppet(c, sx, riding ? sy - 10 - hopOf(riding) : sy, o.face, P, o.look || p.hero.look, glow);
       if (o.k === 'D' && o.carry) pblob(c, sx - o.face * 3, sy - 12, 3, 3, o.carry === 'J' ? '#3a6ad0' : '#c03a2a');
       if (o.flash > 0) { c.globalAlpha = 0.5; pblob(c, sx, sy - 14, 6, 12, '#fff'); c.globalAlpha = 1; } }
     g.draw = (c) => { const bg = background(L ? L.theme : 'taoro'), th = L ? L.theme : 'taoro';
@@ -10341,7 +10649,7 @@ ARCADE.GAMES.guanche = (() => {
     function drawSelect(c) { const bg = background('taoro'); c.drawImage(bg[0], 0, 0, 960, SH); c.drawImage(bg[1], 0, 0, 960, SH); c.fillStyle = 'rgba(0,0,0,0.45)'; c.fillRect(0, 0, SW, SH);
       A.txt(c, 'ELIGE TU GUERRERO', SW / 2, 16, '#ffd400', 12, 'center');
       HEROES.forEach((H, i) => { const cx0 = 80 + i * 160, on = i === sel; c.fillStyle = on ? 'rgba(255,212,0,0.18)' : 'rgba(0,0,0,0.3)'; c.fillRect(cx0 - 70, 40, 140, 250); if (on) { c.strokeStyle = flick() ? '#ffd400' : '#ff8a3a'; c.lineWidth = 2; c.strokeRect(cx0 - 69, 41, 138, 248); }
-        c.save(); c.scale(Z * 1.2, Z * 1.2); const P = on ? cyc(WALK, time * 4) : PO.idle; puppet(c, cx0 / (Z * 1.2), 150 / (Z * 1.2), 1, on && Math.floor(time * 1.5) % 3 === 2 ? PO.smash : P, H.look, null); c.restore();
+        c.save(); c.scale(Z * 1.2, Z * 1.2); const P = on ? cyc(WALK, time * 4) : PO.idle; PIXGUAN.draw(c, cx0 / (Z * 1.2), 150 / (Z * 1.2), 1, on && Math.floor(time * 1.5) % 3 === 2 ? PO.smash : P, H.id, H.look.s); c.restore();
         A.txt(c, H.name, cx0, 170, on ? '#ffd400' : '#fff', 8, 'center'); A.txt(c, H.desc[0], cx0, 186, '#9fd7ff', 6, 'center'); A.txt(c, H.desc[1], cx0, 196, '#9fd7ff', 6, 'center');
         [['FUERZA', H.fuerza], ['AGILIDAD', H.agil], ['MAGIA', H.magia]].forEach(([n, v], j) => { A.txt(c, n, cx0 - 60, 214 + j * 14, '#fff', 6); for (let b = 0; b < 3; b++) { c.fillStyle = b < v ? '#ffd400' : '#3a3a3a'; c.fillRect(cx0 + 4 + b * 16, 214 + j * 14, 13, 7); } });
         A.txt(c, H.spell, cx0, 260, '#ff8a3a', 6, 'center'); A.txt(c, 'MAGIA: ' + H.jars + ' ZURRONES', cx0, 272, '#aaa', 6, 'center'); });
@@ -10355,11 +10663,214 @@ ARCADE.GAMES.guanche = (() => {
   function drawTitle(c, t) { const bg = background('canadas'); c.drawImage(bg[0], 0, 0, 960, SH); const o = -((t * 8) % 960); c.drawImage(bg[1], o, 0, 960, SH); c.drawImage(bg[1], o + 960, 0, 960, SH); c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(0, 0, SW, SH);
     c.font = '34px "Press Start 2P", monospace'; c.textAlign = 'center'; c.textBaseline = 'top';
     for (const [s, y] of [['GUANCHE', 26], ['GUARRIORS', 68]]) { c.fillStyle = '#1a0a04'; c.fillText(s, SW / 2 + 4, y + 4); const gr = c.createLinearGradient(0, y, 0, y + 34); gr.addColorStop(0, '#ffe08a'); gr.addColorStop(0.5, '#e07a2a'); gr.addColorStop(1, '#8a2a0a'); c.fillStyle = gr; c.fillText(s, SW / 2, y); }
-    c.save(); c.scale(Z * 1.3, Z * 1.3); const k = Z * 1.3; HEROES.forEach((H, i) => { const P = Math.floor(t * 1.2 + i) % 3 === 0 ? PO.smash : PO.idle; puppet(c, (SW / 2 + (i - 1) * 110) / k, 230 / k, i === 2 ? -1 : 1, i === 1 ? PO.atk1 : P, H.look, null); }); c.restore(); // (the pole in magic pose crossed the logo)
+    c.save(); c.scale(Z * 1.3, Z * 1.3); const k = Z * 1.3; HEROES.forEach((H, i) => { const P = Math.floor(t * 1.2 + i) % 3 === 0 ? PO.smash : PO.idle; PIXGUAN.draw(c, (SW / 2 + (i - 1) * 110) / k, 230 / k, i === 2 ? -1 : 1, i === 1 ? PO.atk1 : P, H.id, H.look.s); }); c.restore(); // (the pole in magic pose crossed the logo)
     A.txt(c, 'GUAYOTA HA RAPTADO A MAGEC, EL SOL', SW / 2, 246, '#fff', 8, 'center'); A.txt(c, 'TRES GUERREROS SUBEN AL ECHEYDE', SW / 2, 260, '#9fd7ff', 8, 'center'); A.txt(c, '© 1496 MENCEYATO DE TAORO', SW / 2, 280, '#9fd7ff', 6, 'center'); }
   function drawBack(c, t) { const bg = background('teide'); c.drawImage(bg[0], 0, 0, 960, SH); const o = -((t * 10) % 960); c.drawImage(bg[2], o, 0, 960, SH); c.drawImage(bg[2], o + 960, 0, 960, SH); c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, 0, SW, SH); }
   return { title: 'GUANCHE GUARRIORS', sub: 'LA NOCHE DE GUAYOTA', marquee: ['#6a1a0a', '#1a0402'], titleCol: '#ffb04a', baseScore: 90000, music: { title: SONGS.title }, create, drawTitle, drawBack,
     help: (K) => `A GOLPE: ${K('f_punch')}  B SALTO / MONTAR: ${K('f_kick')}  MAGIA / MONEDA: ${K('b_pass')}  ←← →→ CORRER  ESC SALIR` };
+})();
+
+// ---------- v0.90 (Jonay eligió el G1, docs/propuestas/sprites_guanches.html): los tres guerreros de Guanche Guarriors
+// (el Mencey musculoso, el Pastor como Bencomo y la Mirladora en bikini de piel) con el dibujante de la propuesta. Las
+// poses del juego (PO del 09m: articulaciones en un cuerpo de 28) se pasan a las del dibujante; cada dibujo se guarda
+// (poses redondeadas) y, si el cuerpo va muy tumbado (caído, levantándose), se dibuja de pie y se gira el sprite.
+const PIXGUAN = (() => {
+  let MK = null, MG = null;
+  function maskCtx(w, h) { if (!MK) { MK = document.createElement('canvas'); MG = MK.getContext('2d', { willReadFrequently: true }); }
+    if (MK.width !== w || MK.height !== h) { MK.width = w; MK.height = h; } return MG; }
+  const hex = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+  const mix = (a, b, t) => [0, 1, 2].map((i) => Math.round(a[i] + (b[i] - a[i]) * t));
+  function tones(base, warm, bronze) { const c = hex(base), dk = hex(bronze ? '#1a2418' : warm ? '#3e160e' : '#20123a'), hl = hex(bronze ? '#bfe0b0' : warm ? '#ffe9cc' : '#fff4e2');
+    return { b: c, s: mix(c, dk, 0.36), d: mix(c, dk, 0.6), h: mix(c, hl, bronze ? 0.34 : 0.3) }; }
+  const lerp2 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+  const perp = (a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1; return [-dy / l, dx / l]; };
+  function render(out, ox, oy, st, pose, who) {
+    const H = st.H, W = out.width, Hh = out.height, u = H, BK = st.bodyK || 1, air = (pose.air || 0) * BK, FR = pose.front || 0;
+    const X = (p) => ox + p[0] * u, Y = (p) => oy - (p[1] + air) * u;
+    let J = pose; const L = (st.limb || 1) * (who.slim ? 0.86 : who.buff ? 1.28 : 1), r = st.head * (who.slim ? 0.94 : 1);
+    if (BK < 1) { J = {}; for (const k in pose) { const v = pose[k]; J[k] = !Array.isArray(v) || k === 'hd' ? v : Array.isArray(v[0]) ? v.map((p) => [p[0] * 0.96, p[1] * BK]) : [v[0] * 0.96, v[1] * BK]; }
+      J.hd = pose.flat ? [J.nk[0] + r * 0.9, J.nk[1]] : [J.nk[0] + (FR ? 0 : 0.02), J.nk[1] + r * 1.02]; }
+    const BR = !!who.bronze; const O = who.outfit;
+    const col = (k, d) => who[k] || d;
+    const mats = { skin: [who.skin, 1], skinF: [who.skin, 1], ear: [who.skin, 1], top: [col('top', '#c8102e'), 0], trim: [col('trim', '#ffc400'), 0], bottom: [col('bottom', '#1d2a6b'), 0],
+      sock: [col('sock', '#f2f2f2'), 0], sockF: [col('sock', '#f2f2f2'), 0], shoe: [col('shoe', '#111111'), 0], shoeF: [col('shoe', '#111111'), 0], sole: [col('sole', '#e8e4dc'), 0], soleF: [col('sole', '#e8e4dc'), 0],
+      cloak: [col('cloak', '#7a4a26'), 1], cloakF: [col('cloak', '#7a4a26'), 1], cord: [col('cord', '#d8c8a0'), 0], hair: [who.hair, 0], hairL: [who.hair, 0], beard: [who.hair, 0],
+      wood: [col('wood', '#8a5a2a'), 1], ball: ['#f2f2f2', 0], orb: ['#7fe0ff', 0] };
+    if (BR) for (const k in mats) if (k !== 'ball' && k !== 'orb') mats[k] = [k.startsWith('hair') || k === 'beard' ? '#5a4632' : k.startsWith('cloak') ? '#6e5a3c' : k === 'wood' ? '#4a3a28' : '#8a6a44', 1];
+    if (O === 'basket') mats.ball = ['#e0701c', 1];
+    const T = {}; for (const m in mats) { T[m] = tones(mats[m][0], mats[m][1], BR); if (m.endsWith('F')) for (const k in T[m]) T[m][k] = mix(T[m][k], [24, 12, 30], 0.2); }
+    const ua = 0.06 * L, fa = 0.05 * L, th = 0.09 * L, sh = 0.06 * L;
+    const cap = (a, b, w0, w1) => (g) => { const n = perp(a, b), A = [X(a), Y(a)], B = [X(b), Y(b)], r0 = Math.max(0.6, (w0 * u) / 2), r1 = Math.max(0.6, (w1 * u) / 2);
+      g.beginPath(); g.arc(A[0], A[1], r0, 0, 7); g.fill(); g.beginPath(); g.arc(B[0], B[1], r1, 0, 7); g.fill();
+      g.beginPath(); g.moveTo(A[0] + n[0] * r0, A[1] - n[1] * r0); g.lineTo(B[0] + n[0] * r1, B[1] - n[1] * r1); g.lineTo(B[0] - n[0] * r1, B[1] + n[1] * r1); g.lineTo(A[0] - n[0] * r0, A[1] + n[1] * r0); g.fill(); };
+    const ell = (c, rx, ry, rot = 0) => (g) => { g.beginPath(); g.ellipse(X(c), Y(c), Math.max(0.6, rx * u), Math.max(0.6, ry * u), rot, 0, 7); g.fill(); };
+    const line = (a, b, w) => (g) => { g.lineCap = 'round'; g.lineWidth = Math.max(1, w * u); g.beginPath(); g.moveTo(X(a), Y(a)); g.lineTo(X(b), Y(b)); g.stroke(); };
+    const poly = (pts) => (g) => { g.beginPath(); pts.forEach((p, i) => (i ? g.lineTo(X(p), Y(p)) : g.moveTo(X(p), Y(p)))); g.closePath(); g.fill(); };
+    const multi = (...fs) => (g) => fs.forEach((f) => f && f(g));
+    const parts = [];
+    const cxm = (J.sN[0] + J.sF[0]) / 2, Wd = (p, k) => [cxm + (p[0] - cxm) * k, p[1]], SW = FR ? 1.15 : who.female ? 1.22 : who.buff ? 1.8 : 1.5, HW = FR ? 1.0 : who.female ? 1.32 : 1.1;
+    const shN = Wd(J.sN, SW * 0.86), shF = Wd(J.sF, SW * 0.86);
+    const sleeves = O === 'futbol';
+    const arm = (s, e, w, far) => { const sk = far ? 'skinF' : 'skin'; const n = perp(s, e), mid = lerp2(s, e, 0.42);
+      parts.push([sk, multi(cap(s, e, ua * 1.3, ua * 0.82), ell([mid[0] + n[0] * ua * 0.22, mid[1] + n[1] * ua * 0.22], ua * 0.42, ua * 0.32, -Math.atan2(e[1] - s[1], e[0] - s[0])), cap(e, w, fa * 1.12, fa * 0.7), ell(w, 0.034 * L, 0.03 * L))]);
+      if (sleeves) parts.push(['top', cap(s, lerp2(s, e, 0.55), ua * 1.45, ua * 1.25)]);
+      if ((O === 'guanche' || O === 'bikini') && !far) parts.push(['cord', cap(lerp2(s, e, 0.3), lerp2(s, e, 0.36), ua * 1.12, ua * 1.08)]); // the arm band of the statue
+      if ((O === 'guanche' || O === 'bikini') && !far) parts.push(['cord', cap(lerp2(w, e, 0.1), lerp2(w, e, 0.18), fa * 0.9, fa * 0.92)]); };
+    const leg = (h, k, a, t, far) => { const sk = far ? 'skinF' : 'skin', so = far ? 'sockF' : 'sock', sho = far ? 'shoeF' : 'shoe', sl = far ? 'soleF' : 'sole';
+      const calf = lerp2(k, a, 0.38); parts.push([sk, multi(cap(h, k, th * 1.05, sh * 1.0), cap(k, calf, sh * 0.95, sh * 1.18), cap(calf, a, sh * 1.18, sh * 0.62))]);
+      const heel = lerp2(a, t, -0.18);
+      if (O === 'bikini') { const fb = far ? 'cloakF' : 'cloak'; parts.push([fb, multi(cap(heel, t, 0.056 * L, 0.044 * L), cap(lerp2(a, k, 0.0), heel, 0.06 * L, 0.06 * L), cap(a, lerp2(a, k, 0.45), sh * 1.2, sh * 1.35))]); if (!far) parts.push(['cord', cap(lerp2(a, k, 0.42), lerp2(a, k, 0.46), sh * 1.36, sh * 1.38)]); return; } // fur boots
+      if (O === 'guanche' || O === 'mirladora') { parts.push([sk, multi(cap(heel, t, 0.05 * L, 0.04 * L), cap(lerp2(a, k, 0.05), heel, 0.045 * L, 0.045 * L))]); if (!far) parts.push(['cord', cap(lerp2(a, k, 0.1), lerp2(a, k, 0.14), sh * 0.7, sh * 0.72)]); return; }
+      const sockTop = O === 'futbol' ? 0.86 : 0.28; parts.push([so, cap(lerp2(a, k, 0.02), lerp2(a, k, sockTop), sh * 0.8, sh * (O === 'futbol' ? 1.02 : 0.86))]);
+      if (O === 'futbol' && !far) parts.push(['trim', cap(lerp2(a, k, 0.78), lerp2(a, k, 0.82), sh * 1.02, sh * 1.04)]);
+      parts.push([sho, multi(cap(heel, t, 0.06 * L, 0.046 * L), cap(lerp2(a, k, 0.04), heel, 0.055 * L, 0.055 * L))]);
+      const n = perp(heel, t); const dn = (p, k2) => [p[0] - n[0] * k2, p[1] - n[1] * k2]; parts.push([sl, line(dn(heel, 0.024 * L), dn(t, 0.02 * L), 0.014 * L)]); };
+    // long hair behind the neck (guanches)
+    const hd = J.hd, lk = pose.look || 0;
+    if (who.hs === 'mane') parts.push(['hairL', poly([[hd[0] - r * 1.0, hd[1] + r * 0.45], [hd[0] + r * 0.2, hd[1] + r * 0.55], [hd[0] + r * 0.1, hd[1] - r * 1.4], [J.hF[0] - 0.01, J.hF[1] + 0.03], [J.hF[0] - 0.08, J.hF[1] - 0.02], [J.hF[0] - 0.16, J.hF[1] + 0.04], [hd[0] - r * 1.9, hd[1] - r * 2.4], [hd[0] - r * 1.5, hd[1] - r * 1.2]])]); // loose and wavy, to the waist
+    if (who.hs === 'long') parts.push(['hairL', poly([[hd[0] - r * 0.95, hd[1] + r * 0.2], [hd[0] + r * 0.1, hd[1] + r * 0.4], [hd[0] + r * 0.05, hd[1] - r * 1.9], [hd[0] - r * 1.15, hd[1] - r * 2.1]])]);
+    // the cloak (tamarco) hangs from the far shoulder, behind the body
+    if (who.cloak && O === 'guanche') parts.push(['cloakF', poly([Wd(J.sF, SW), [J.nk[0] + 0.01, J.nk[1] - 0.02], [J.hF[0] - 0.02, J.hF[1] - 0.12], lerp2(J.hF, J.kF, 0.7), [lerp2(J.hF, J.kF, 0.7)[0] - 0.12, lerp2(J.hF, J.kF, 0.7)[1] + 0.05], [Wd(J.sF, SW)[0] - 0.08, J.sF[1] - 0.2]])]);
+    arm(shF, J.eF, J.wF, true);
+    leg(J.hF, J.kF, J.aF, J.tF, true);
+    if (pose.ball && pose.ball[0] < J.hF[0]) parts.push(['ball', ell(pose.ball, 0.055, 0.055)]);
+    // torso: a V; a jersey (basket: tank top; football: with a collar) or bare chest (guanches) or the tamarco dress
+    const TP = [[J.nk[0] - 0.035, J.nk[1] - 0.005], [J.nk[0] + 0.035, J.nk[1] - 0.005], Wd([J.sN[0] + 0.01, J.sN[1] - 0.005], SW), Wd([J.sN[0] - 0.005, J.sN[1] - 0.1], SW * 0.92), Wd([J.hN[0] + 0.035, J.hN[1] + 0.02], HW), Wd([J.hF[0] - 0.035, J.hF[1] + 0.02], HW), Wd([J.sF[0] + 0.005, J.sF[1] - 0.1], SW * 0.92), Wd([J.sF[0] - 0.01, J.sF[1] - 0.005], SW)];
+    parts.push(['skin', multi(cap(J.nk, [hd[0] - 0.01, hd[1] - 0.03], 0.058, 0.05), ell(shN, ua * 0.78, ua * 0.66), ell(shF, ua * 0.78, ua * 0.66))]);
+    if (O === 'bikini') { // v3 (Jonay): a narrow waist and a flat belly, the hips below
+      const wy = (J.sN[1] - 0.1 + J.hN[1]) / 2 + 0.02, wN = Wd([J.hN[0] + 0.02, wy], 0.92), wF = Wd([J.hF[0] - 0.02, wy], 0.92);
+      parts.push(['skin', poly([TP[0], TP[1], TP[2], TP[3], wN, Wd([J.hN[0] + 0.045, J.hN[1] + 0.02], 1.25), Wd([J.hF[0] - 0.045, J.hF[1] + 0.02], 1.25), wF, TP[6], TP[7]])]); }
+    else if (O === 'guanche') parts.push(['skin', poly(TP)]);
+    else if (O === 'mirladora') parts.push(['cloak', poly([TP[0], TP[1], TP[2], TP[3], lerp2(J.hN, J.kN, 0.85), [lerp2(J.hF, J.kF, 0.85)[0] - 0.04, lerp2(J.hF, J.kF, 0.85)[1]], TP[6], TP[7]])]);
+    else parts.push(['top', poly(sleeves ? TP.map((p, i) => (i === 3 || i === 6 ? [p[0], p[1] + 0.06] : p)) : TP)]);
+    if (O === 'basket') parts.push(['trim', multi(line([J.nk[0] - 0.035, J.nk[1] - 0.005], [J.nk[0] + 0.004, J.nk[1] - 0.065], 0.014), line([J.nk[0] + 0.004, J.nk[1] - 0.065], [J.nk[0] + 0.035, J.nk[1] - 0.005], 0.014), line(TP[2], TP[3], 0.014), line(TP[7], TP[6], 0.012))]);
+    if (O === 'futbol') parts.push(['trim', multi(line([J.nk[0] - 0.035, J.nk[1] - 0.005], [J.nk[0] + 0.035, J.nk[1] - 0.005], 0.02), line(TP[4], TP[5], 0.012))]);
+    // bottom: baggy basket shorts, short football shorts, the guanche loincloth with its front flap
+    if (O === 'basket') { const hemN = lerp2(J.hN, J.kN, 0.92), hemF = lerp2(J.hF, J.kF, 0.92), tw = th * 1.5; parts.push(['bottom', multi(cap(J.hF, hemF, tw, tw * 0.95), cap(J.hN, hemN, tw, tw * 0.95), line([J.hF[0] - 0.02, J.hF[1] + 0.03], [J.hN[0] + 0.02, J.hN[1] + 0.03], 0.07))]); }
+    else if (O === 'futbol') { const hemN = lerp2(J.hN, J.kN, 0.5), hemF = lerp2(J.hF, J.kF, 0.5), tw = th * 1.35; parts.push(['bottom', multi(cap(J.hF, hemF, tw, tw * 0.95), cap(J.hN, hemN, tw, tw * 0.95), line([J.hF[0] - 0.02, J.hF[1] + 0.03], [J.hN[0] + 0.02, J.hN[1] + 0.03], 0.07))]); }
+    else if (O === 'guanche') { const fl = lerp2(J.hN, J.kN, 0.5); parts.push(['bottom', multi(cap(J.hF, lerp2(J.hF, J.kF, 0.18), th * 1.25, th * 1.15), cap(J.hN, lerp2(J.hN, J.kN, 0.18), th * 1.25, th * 1.15), line([J.hF[0] - 0.03, J.hF[1] + 0.02], [J.hN[0] + 0.03, J.hN[1] + 0.02], 0.08), poly([[J.hN[0] + 0.04, J.hN[1] - 0.01], [J.hN[0] - 0.05, J.hN[1] - 0.01], [fl[0] - 0.02, fl[1]], [fl[0] + 0.05, fl[1] + 0.02]]))]);
+      parts.push(['cord', line([J.hF[0] - 0.04, J.hF[1] + 0.05], [J.hN[0] + 0.04, J.hN[1] + 0.05], 0.012)]); }
+    if (O === 'bikini') { const yT = J.nk[1] - 0.075, yB = J.nk[1] - 0.13, xa = Wd([J.sF[0], 0], SW * 0.82)[0], xb = Wd([J.sN[0], 0], SW * 0.95)[0];
+      parts.push(['cloak', multi(poly([[xa, yT], [xb, yT], [xb - 0.01, yB], [xa + 0.01, yB]]), ell([xb - 0.04, (yT + yB) / 2 - 0.012], 0.062, 0.055), ell([xb - 0.1, (yT + yB) / 2 - 0.006], 0.05, 0.05), line([xa + 0.03, yT], [J.nk[0] - 0.02, J.nk[1] - 0.01], 0.012), line([xb - 0.03, yT], [J.nk[0] + 0.02, J.nk[1] - 0.01], 0.01))]); // the fur top
+      const fl = lerp2(J.hN, J.kN, 0.28); parts.push(['cloak', multi(cap(J.hF, lerp2(J.hF, J.kF, 0.1), th * 1.2, th * 1.1), cap(J.hN, lerp2(J.hN, J.kN, 0.1), th * 1.2, th * 1.1), line([J.hF[0] - 0.03, J.hF[1] + 0.02], [J.hN[0] + 0.03, J.hN[1] + 0.02], 0.06), poly([[J.hN[0] + 0.03, J.hN[1]], [J.hN[0] - 0.04, J.hN[1]], [fl[0], fl[1]]]))]);
+      parts.push(['cord', line([J.hF[0] - 0.04, J.hF[1] + 0.045], [J.hN[0] + 0.04, J.hN[1] + 0.045], 0.01)]); }
+    leg(J.hN, J.kN, J.aN, J.tN, false);
+    // the strap of the tamarco across the chest (the statue)
+    if (who.cloak && O === 'guanche') parts.push(['cloak', multi(line(Wd(J.sF, SW * 0.9), [J.hN[0] + 0.03, J.hN[1] + 0.08], 0.03), ell(Wd(J.sF, SW * 0.95), 0.05, 0.035))]);
+    // head: oval skull, jaw forward (or a front face), hair, ear, nose
+    const front = FR === 1, backv = FR === -1;
+    if (FR) parts.push(['skin', multi(ell(hd, r * 0.92, r * 1.02), ell([hd[0], hd[1] - r * 0.45], r * 0.66, r * 0.5))]);
+    else parts.push(['skin', multi(ell(hd, r * 0.9, r * 1.04, -lk * 0.4), ell([hd[0] + r * 0.32, hd[1] - r * 0.5 + lk * r * 0.2], r * 0.55, r * 0.44, -lk * 0.4))]);
+    parts.push(['hair', (g) => { const cx = X(hd), cy = Y(hd), R = r * u; g.save(); g.translate(cx, cy); g.rotate(FR ? 0 : lk * 0.6);
+      g.beginPath(); if (backv) g.rect(-2 * R, -2 * R, 4 * R, 2.9 * R); else if (front) g.rect(-2 * R, -2 * R, 4 * R, 1.55 * R); else { g.moveTo(-2 * R, -2 * R); g.lineTo(2 * R, -2 * R); g.lineTo(2 * R, -0.46 * R); g.lineTo(0.12 * R, -0.46 * R); g.lineTo(-0.5 * R, 0.12 * R); g.lineTo(-2 * R, 0.12 * R); g.closePath(); } g.clip();
+      if (who.hs === 'afro') { g.beginPath(); g.arc(0, -0.42 * R, 1.08 * R, 0, 7); g.fill(); }
+      else if (who.hs === 'mane') { g.beginPath(); g.arc(-0.05 * R, -0.12 * R, 1.12 * R, 0, 7); g.fill(); g.beginPath(); g.arc(-0.55 * R, 0.1 * R, 0.75 * R, 0, 7); g.fill(); }
+      else { g.beginPath(); g.arc(FR ? 0 : -0.03 * R, -0.1 * R, (who.hs === 'long' ? 1.08 : 1.03) * R, 0, 7); g.fill(); if (!FR) { g.beginPath(); g.arc(-0.45 * R, 0, 0.62 * R, 0, 7); g.fill(); } }
+      if (front && who.hs === 'long') { g.restore(); g.save(); g.translate(cx, cy); g.fillRect(-1.0 * R, -0.5 * R, 0.25 * R, 1.6 * R); g.fillRect(0.75 * R, -0.5 * R, 0.25 * R, 1.6 * R); }
+      g.restore(); }]);
+    if (!FR) parts.push(['skin', ell([hd[0] + r * 0.9, hd[1] - r * 0.14 + lk * r * 0.3], r * 0.16, r * 0.2)]); // the nose sticks out of the profile
+    if (who.beard === 'long') parts.push(['beard', FR ? ell([hd[0], hd[1] - r * 0.9], r * 0.5, r * 0.45) : ell([hd[0] + r * 0.36, hd[1] - r * 0.92 + lk * r * 0.2], r * 0.36, r * 0.42)]);
+    if (!FR) parts.push(['ear', ell([hd[0] - r * 0.12, hd[1] - r * 0.08], r * 0.2, r * 0.27)]);
+    if (who.hs === 'mane') parts.push(['hair', poly([[hd[0] - r * 0.1, hd[1] - r * 0.3], [hd[0] + r * 0.35, hd[1] - r * 0.6], [shN[0] + 0.01, shN[1] - 0.09], [shN[0] - 0.05, shN[1] - 0.11]])]); // a lock over the shoulder, hair loose
+    // the near arm, over the body, and what it holds
+    arm(shN, J.eN, J.wN, false);
+    if (who.tool === 'banot' && pose.tool) parts.push(['wood', multi(line(pose.tool[0], pose.tool[1], 0.022), (g) => { const t = pose.tool[1], d = [t[0] - pose.tool[0][0], t[1] - pose.tool[0][1]], l = Math.hypot(d[0], d[1]); line(t, [t[0] - d[0] / l * 0.08, t[1] - d[1] / l * 0.08], 0.03)(g); })]);
+    if (who.tool === 'garrote' && pose.tool) { const a = J.wN, d = [pose.tool[1][0] - pose.tool[0][0], pose.tool[1][1] - pose.tool[0][1]], l = Math.hypot(d[0], d[1]); const b = [a[0] + d[0] / l * 0.36, a[1] + d[1] / l * 0.36]; parts.push(['wood', multi(cap(lerp2(a, b, -0.15), b, 0.03, 0.075), ell(b, 0.045, 0.045))]); }
+    if (who.tool === 'vara' && pose.tool) parts.push(['wood', line(pose.tool[0], pose.tool[1], 0.018)]);
+    if (who.tool) parts.push(['skin', ell(J.wN, 0.036 * L, 0.032 * L)]); // the fist over the handle
+    if (pose.orb && (who.outfit === 'mirladora' || who.outfit === 'bikini')) parts.push(['orb', ell(pose.orb, 0.06, 0.06)]);
+    if (who.tool === 'baston' && pose.tool) parts.push(['wood', line(pose.tool[0], pose.tool[1], 0.016)], ['orb', ell(pose.tool[1], 0.045, 0.045)]); // v0.90: in the game she fights with the bastón
+    if (pose.ball && pose.ball[0] >= J.hF[0]) parts.push(['ball', ell(pose.ball, 0.055, 0.055)]);
+    // ---- masks → id buffer
+    const N = W * Hh, id = new Int16Array(N).fill(-1); const g = maskCtx(W, Hh);
+    parts.forEach(([m, f], depth) => { g.clearRect(0, 0, W, Hh); g.fillStyle = g.strokeStyle = '#fff'; f(g); const d = g.getImageData(0, 0, W, Hh).data; for (let i = 0; i < N; i++) if (d[i * 4 + 3] > 120) id[i] = depth; });
+    const matOf = parts.map((p) => p[0]); const grp = (m) => m.replace(/F$/, '').replace(/^(ear)$/, 'skin').replace(/^hairL$/, 'hair');
+    const o = out.getContext('2d', { willReadFrequently: true }); const img = o.getImageData(0, 0, W, Hh), px = img.data;
+    const at = (x, y) => (x < 0 || y < 0 || x >= W || y >= Hh ? -1 : id[y * W + x]);
+    const put = (i, c) => { px[i * 4] = c[0]; px[i * 4 + 1] = c[1]; px[i * 4 + 2] = c[2]; px[i * 4 + 3] = 255; };
+    for (let y = 0; y < Hh; y++) for (let x = 0; x < W; x++) { const i = y * W + x, p = id[i]; if (p < 0) continue; const m = matOf[p], tn = T[m];
+      const back = (q) => q < 0 || (q < p && grp(matOf[q]) !== grp(m));
+      let s2 = 0; for (let k = 1; k <= st.sw; k++) if (back(at(x + k, y)) || back(at(x, y + k)) || back(at(x + k, y + k))) s2 = Math.max(s2, k === 1 ? 2 : 1);
+      let occ = false; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const q = at(x + dx, y + dy); if (q > p && grp(matOf[q]) !== grp(m)) occ = true; }
+      const hl = !s2 && (back(at(x - 1, y)) || back(at(x, y - 1)));
+      put(i, m === 'orb' ? (s2 ? [60, 180, 255] : [210, 250, 255]) : s2 === 2 ? tn.d : s2 || occ ? tn.s : hl ? tn.h : tn.b); }
+    for (let y = 0; y < Hh; y++) for (let x = 0; x < W; x++) { const i = y * W + x; if (id[i] >= 0) continue; let q = -1;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const t = at(x + dx, y + dy); if (t >= 0) { q = t; break; } }
+      if (q >= 0) put(i, matOf[q] === 'orb' ? [120, 220, 255] : mix(T[matOf[q]].d, [16, 8, 20], 0.35)); }
+    // ---- details
+    const idx = (m) => { const s = new Set(); matOf.forEach((mm, k) => { if (mm === m) s.add(k); }); return s; };
+    const dot = (x, y, c, only) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= W || y >= Hh) return; const q = id[y * W + x]; if (only && !only.has(q)) return; put(y * W + x, c); };
+    const HEADP = matOf.lastIndexOf('skin', matOf.indexOf('hair')), HEAD = new Set([HEADP]), R = Math.max(2, r * u), hx = X(hd), hy = Y(hd), big = R >= 8.5;
+    const ink = [22, 12, 14], pupil = [46, 26, 18], wht = BR ? T.skin.h : [236, 230, 220], brow = mix(T.hair.b, [0, 0, 0], 0.3), lip = mix(T.skin.d, [120, 40, 40], BR ? 0 : 0.35);
+    // hair texture (strands)
+    for (let y = 0; y < Hh; y++) for (let x = 0; x < W; x++) { const q = id[y * W + x]; if (q < 0) continue; const m = matOf[q]; if (m !== 'hair' && m !== 'hairL' && m !== 'beard') continue; const hs = (x * 73856093 ^ y * 19349663) >>> 0; if ((x + (y >> 1)) % 3 === 0 && (who.hs === 'long' || who.hs === 'mane')) put(y * W + x, T.hair.d); else if (hs % 9 === 0) put(y * W + x, T.hair.d); else if (hs % 23 === 0) put(y * W + x, T.hair.h); }
+    if (!FR) { // profile face
+      const lkr = lk * R * 0.35, ex = Math.round(hx + R * 0.44), ey = Math.round(hy - R * 0.02 + lkr);
+      dot(ex - 1, ey, T.skin.s, HEAD); dot(ex, ey, wht, HEAD); dot(ex + 1, ey, pupil, HEAD); if (big) { dot(ex + 1, ey + 1, pupil, HEAD); dot(ex, ey + 1, wht, HEAD); }
+      for (let k = -1; k <= 1; k++) dot(ex + k, ey - 1, ink, HEAD); dot(ex, ey + (big ? 2 : 1), T.skin.s, HEAD); dot(ex + 1, ey + (big ? 2 : 1), T.skin.s, HEAD);
+      for (let k = -1; k <= 1; k++) dot(ex + k, ey - 3, brow, HEAD); dot(ex + 2, ey - 2, brow, HEAD); if (big) for (let k = -1; k <= 1; k++) dot(ex + k, ey - 4, brow, HEAD); dot(ex, ey - 2, T.skin.h, HEAD);
+      dot(ex - 1, ey + (big ? 3 : 2), T.skin.h, HEAD); dot(ex, ey + (big ? 3 : 2), T.skin.h, HEAD); dot(ex - 2, ey + (big ? 4 : 3), T.skin.s, HEAD); dot(ex - 1, ey + (big ? 5 : 4), T.skin.s, HEAD);
+      const nx = Math.round(hx + R * 0.86), ny = Math.round(hy + R * 0.28 + lkr); dot(nx - 1, ny, T.skin.d, HEAD); dot(nx, ny + 1, T.skin.s, HEAD); dot(nx + 1, ny - 2, T.skin.h, HEAD);
+      const my = Math.round(hy + R * 0.56 + lkr), mx = Math.round(hx + R * 0.58);
+      // beard on the jaw (the bearded ones), stubble on the others; the long beard part hangs below
+      for (let y = Math.round(hy - R * 0.4); y <= Math.round(hy + R * 1.1); y++) for (let x = Math.round(hx - R * 0.6); x <= Math.round(hx + R * 1.1); x++) { if (at(x, y) !== HEADP) continue; const ux = (x - hx) / R, uy = (y - hy - lkr) / R;
+        if (who.beard && ((uy > 0.38 && ux > -0.28) || (uy > 0.1 && ux > -0.3 && ux < 0.12)) && !((y === my || y === my + 1) && ux > 0.42)) { const hs = (x * 73856093 ^ y * 19349663) >>> 0; const bc = mix(T.hair.b, T.skin.s, 0.25); put(y * W + x, hs % 6 === 0 ? mix(bc, T.skin.b, 0.35) : hs % 5 === 0 ? T.hair.d : bc); }
+        else if (!who.beard && !who.female && uy > 0.66 && ux > -0.2 && ux < 0.55) put(y * W + x, mix(T.skin.b, T.hair.b, 0.14)); }
+      for (let k = 0; k < (big ? 3 : 2); k++) dot(mx + k, my, lip, HEAD); dot(mx - 1, my, T.skin.s, HEAD); for (let k = 0; k < 2; k++) dot(mx + k, my + 1, T.skin.h, HEAD);
+      if (who.female) { dot(ex + 1, ey - 1, ink, HEAD); dot(ex + 2, ey - 1, ink, HEAD); dot(mx, my, [170, 60, 70], HEAD); dot(mx + 1, my, [170, 60, 70], HEAD); } // lashes and lips
+      const EAR = idx('ear'), ax = Math.round(hx - R * 0.12), ay = Math.round(hy - R * 0.08 + lkr); dot(ax, ay, T.skin.d, EAR); dot(ax, ay + 1, T.skin.d, EAR); dot(ax - 1, ay - 1, T.skin.h, EAR);
+      if (who.headband) for (let x = Math.round(hx - R * 1.0); x <= Math.round(hx + R * 0.9); x++) { const y = Math.round(hy - R * 0.5 + (x - hx) * 0.05 + lkr); for (const yy of big ? [y, y + 1] : [y]) { const q = at(x, yy); if (q === HEADP || matOf[q] === 'hair') put(yy * W + x, (x % 4) ? T.cord.b : T.cord.d); } } }
+    else if (front) { // front face: two eyes, brows, nose, mouth
+      const ey = Math.round(hy + R * 0.02); for (const sx of [-1, 1]) { const ex = Math.round(hx + sx * R * 0.34); dot(ex, ey, wht, HEAD); dot(ex + (sx > 0 ? 0 : 1), ey, pupil, HEAD); dot(ex - 1, ey - 1, ink, HEAD); dot(ex, ey - 1, ink, HEAD); dot(ex - 1, ey - 3, brow, HEAD); dot(ex, ey - 3, brow, HEAD); dot(ex + 1, ey - 3, brow, HEAD); }
+      dot(hx, ey + Math.round(R * 0.3), T.skin.d, HEAD); for (let k = -1; k <= 1; k++) dot(hx + k, Math.round(hy + R * 0.58), lip, HEAD); }
+    // the necklace of the statue (beads of shell and bone)
+    if (who.necklace) for (let k = 0; k <= 10; k++) { const t = k / 10, a = Math.PI * (0.15 + t * 0.7); const cx = X(J.nk) + (FR ? 0 : 1), cy = Y(J.nk) + R * 0.35; dot(cx + Math.cos(a) * R * 0.85, cy + Math.sin(a) * R * 0.75, k % 2 ? [236, 224, 200] : [140, 60, 40]); }
+    // muscles on the bare chest: the pecs and the abs
+    if (O === 'guanche') { const SK = idx('skin'); const cx = X([(J.nk[0] + (J.hN[0] + J.hF[0]) / 2) / 2 + (FR ? 0 : 0.02), 0]), y0 = Y([0, J.nk[1] - 0.1]), y1 = Y([0, J.hN[1] + 0.05]);
+      for (let k = -3; k <= 3; k++) dot(cx + k, y0 + Math.abs(k) * 0.3, T.skin.s, SK); if (who.buff) { for (let k = -4; k <= 4; k++) { dot(cx + k, y0 + 1 + Math.abs(k) * 0.4, T.skin.d, SK); dot(cx + k, y0 - 2, T.skin.h, SK); } } for (let y = y0 + 3; y < y1 - 1; y += 3) { dot(cx, y, T.skin.s, SK); dot(cx - 2, y + 1, T.skin.s, SK); dot(cx + 2, y + 1, T.skin.s, SK); } }
+    // the number (basket: chest; football: back, or chest small)
+    if (who.num && (O === 'basket' || O === 'futbol')) { const DG = { 0: '111101101101111', 1: '010110010010111', 2: '111001111100111', 3: '111001111001111', 4: '101101111001001', 5: '111100111001111', 6: '111100111101111', 7: '111001010010010', 8: '111101111101111', 9: '111101111001111' };
+      const TOPS = idx('top'), sc = H >= 120 && (O === 'basket' || backv) ? 2 : 1, cw = 4 * sc; const cx0 = Math.round(X([(J.nk[0] + (J.hN[0] + J.hF[0]) / 2) / 2 + (FR ? 0 : 0.01), 0]) - (who.num.length * cw) / 2 + 1), cy0 = Math.round(Y([0, J.nk[1] - (backv ? 0.1 : 0.13)]));
+      const on = new Set(); [...who.num].forEach((ch, k) => { const pat = DG[ch]; for (let b = 0; b < 15; b++) if (pat[b] === '1') for (let a = 0; a < sc; a++) for (let c = 0; c < sc; c++) on.add((cx0 + k * cw + (b % 3) * sc + a) + ',' + (cy0 + ((b / 3) | 0) * sc + c)); });
+      if (O === 'futbol' && !backv) { /* small number on the chest only on the front view */ }
+      for (const key of on) { const [x, y] = key.split(',').map(Number); for (const [dx, dy] of [[1, 0], [0, 1], [1, 1]]) if (!on.has((x + dx) + ',' + (y + dy))) dot(x + dx, y + dy, T.top.d, TOPS); }
+      for (const key of on) { const [x, y] = key.split(',').map(Number); dot(x, y, T.trim.h, TOPS); } }
+    if (pose.ball && O === 'futbol') { const BALL = idx('ball'), bx = X(pose.ball), by = Y(pose.ball), br = 0.055 * u; for (const [dx, dy] of [[0, 0], [-0.4, -0.4], [0.45, 0.2], [-0.2, 0.5]]) { dot(bx + dx * br, by + dy * br, [30, 30, 36], BALL); dot(bx + dx * br + 1, by + dy * br, [30, 30, 36], BALL); } }
+    o.putImageData(img, 0, 0);
+    return { hx, hy, R };
+  }
+  // ---------- the cast, as approved (G1, 26-oct)
+  const BENCOMO = { outfit: 'guanche', skin: '#9a6a44', hair: '#2a1c14', hs: 'long', beard: 'long', headband: true, necklace: true, cloak: '#7a4a26', bottom: '#a07850', cord: '#d8c8a0', tool: 'banot' };
+  const WHO = { mencey: { ...BENCOMO, tool: 'garrote', skin: '#8a5a38', hair: '#1e1610', cloak: '#5a3a20', buff: true },
+    pastor: { ...BENCOMO, slim: true, skin: '#a8724a', hair: '#3a2416', beard: 'long', tool: 'vara', cloak: '#8a6a44', bottom: '#9a7a52' },
+    mirla: { outfit: 'bikini', female: true, slim: true, skin: '#c08a5e', hair: '#7a4222', hs: 'mane', headband: true, necklace: true, cloak: '#a0703c', cord: '#e8d8b0', tool: 'baston' } };
+  const ST = { H: 100, head: 0.076, sw: 2 }, U = 28.6;          // art px per body unit; game units per body unit
+  const TOOL = { garrote: [-2, 11], vara: [-7, 17], baston: [-4, 9.5] };
+  // the game's pose (y down, feet at 0) → the drawer's joints (y up, body = 1)
+  function joints(P, tool) { const J = (p) => [p[0] / U, -p[1] / U], sh = [P.h[0] + (P.n[0] - P.h[0]) * 0.88, P.h[1] + (P.n[1] - P.h[1]) * 0.88], S = J(sh);
+    const ank = (f) => { const a = J(f); return [a[0], a[1] + 0.035]; }, toe = (a) => [a[0] + 0.085, a[1] - 0.025], aN = ank(P.ff), aF = ank(P.fb), H = J(P.h);
+    const o = { hd: J(P.hd), nk: J(P.n), sN: [S[0] + 0.04, S[1]], eN: J(P.ef), wN: J(P.hf), sF: [S[0] - 0.05, S[1]], eF: J(P.eb), wF: J(P.hb),
+      hN: [H[0] + 0.035, H[1]], kN: J(P.kf), aN, tN: toe(aN), hF: [H[0] - 0.035, H[1]], kF: J(P.kb), aF, tF: toe(aF) };
+    if (tool && TOOL[tool]) { const w = o.wN, d = [Math.cos(P.wa), -Math.sin(P.wa)], [a, b] = TOOL[tool]; o.tool = [[w[0] + (d[0] * a) / U, w[1] + (d[1] * a) / U], [w[0] + (d[0] * b) / U, w[1] + (d[1] * b) / U]]; }
+    return o; }
+  const rot = (p, c, a) => { const x = p[0] - c[0], y = p[1] - c[1], cs = Math.cos(a), sn = Math.sin(a); return [c[0] + x * cs - y * sn, c[1] + x * sn + y * cs]; };
+  const CACHE = new Map(); let made = 0;
+  // one sprite for a hero in a pose: { c, ax, ay, ang } (ax, ay: the feet; ang: how much to turn it when drawn)
+  function sprite(id, P) { const who = WHO[id]; if (!who) return null;
+    const key = id + ':' + Object.keys(P).map((k) => (k === 'wa' ? Math.round(P.wa * 8) : Math.round(P[k][0] * 2) + ',' + Math.round(P[k][1] * 2))).join(';');
+    let s = CACHE.get(key); if (s) return s;
+    if (CACHE.size > 600) CACHE.clear();
+    // how much the body leans (hip → neck); lying down or getting up: drawn upright and turned
+    const ang = Math.atan2(P.n[0] - P.h[0], -(P.n[1] - P.h[1])); let Q = P;
+    if (Math.abs(ang) > 0.7) { Q = {}; for (const k in P) Q[k] = k === 'wa' ? P.wa - ang : rot(P[k], P.h, -ang); const m = Math.max(Q.ff[1], Q.fb[1]); for (const k in Q) if (k !== 'wa') Q[k] = [Q[k][0], Q[k][1] - m]; } // the lowest foot back on the floor
+    const W = Math.round(ST.H * 2.3), Hh = Math.round(ST.H * 1.95), ax = Math.round(ST.H * 1.15), ay = Math.round(ST.H * 1.62);
+    const c = document.createElement('canvas'); c.width = W; c.height = Hh; render(c, ax, ay, ST, joints(Q, who.tool), who); made++;
+    s = { c, ax, ay, ang: Q === P ? 0 : ang, hipP: P.h, hipQ: Q.h }; CACHE.set(key, s); return s; }
+  // draw it where the game draws its puppet: feet at (x, y), «s» = the hero's size, in the game's units
+  function draw(c, x, y, face, P, id, s) { const sp = sprite(id, P); if (!sp) return false; const k = (U * s) / ST.H;
+    c.save(); c.translate(x, y); c.scale(face, 1); if (sp.ang) { c.translate(sp.hipP[0] * s, sp.hipP[1] * s); c.rotate(sp.ang); c.translate(-sp.hipQ[0] * s, -sp.hipQ[1] * s); }
+    c.imageSmoothingEnabled = false; c.drawImage(sp.c, -sp.ax * k, -sp.ay * k, sp.c.width * k, sp.c.height * k); c.restore(); return true; }
+  return { draw, sprite, joints, WHO, made: () => made };
 })();
 
 // ============ procedural audio ============
@@ -12597,16 +13108,23 @@ const DIARIO = (() => {
   const BL = 'Rayco «El Blanco», por el móvil', REC = 'Las recreativas';
   const SABES = [
     { t: 'Maleantes en busca y captura', on: () => G().maleIntro, who: 'Sastrón, por el móvil', log: 'Maleantes en busca y captura',
-      what: 'La Policía Local paga una recompensa por cada maleante que le entregues. Cuando hay uno cerca sale en el minimapa como un <b>triángulo rojo</b>: vas, le das una buena tunda (pelea, como siempre) y cobras. Pegan más fuerte que la gente normal; cuanto más nivel, más pagan ($150, $300 o $600). Si te gana, sigue marcado un rato: vuelve a por él.',
+      what: 'La Policía Local paga una recompensa por cada maleante que le entregues. Cuando hay uno cerca sale en el ' +
+            'minimapa como un <b>triángulo rojo</b>: vas, le das una buena tunda (pelea, como siempre) y cobras. Pegan ' +
+            'más fuerte que la gente normal; cuanto más nivel, más pagan ($150, $300 o $600). Si te gana, sigue ' +
+            'marcado un rato: vuelve a por él.',
       where: 'Por la calle, cuando sale el triángulo rojo en el minimapa.' },
     { t: 'La máquina de El Blanco: BENCOMO', on: () => ARC().invited, who: BL, log: REC, rec: ['blanco', 'bencomo'], near: () => ({ name: 'Casa de El Blanco', x: RECRE.DOOR[0], z: RECRE.DOOR[1], d: Math.hypot(RECRE.DOOR[0] - PLAYER.x, RECRE.DOOR[1] - PLAYER.z) }),
       what: 'Una recreativa de las de antes en su casa: <b>«Bencomo, Acentejo\'s Revenge»</b>, plataformas con el mencey de Taoro contra los castellanos. Gratis y cuando quieras: no es una misión.',
       where: 'Casa de El Blanco: la entrada del Edificio Casa del Blanco, en Teobaldo Power (cuadrado naranja en el minimapa). Pulsa E en la puerta.' },
     { t: 'GUFO, AGUERE INVASION', on: () => ARC().invited, who: BL, log: REC, near: () => nearBar(),
-      what: 'La máquina de los bares (GUFO: Guanche Unknown Flying Object… y en canario, un pedo): un matamarcianos de naves por el cielo de Aguere, el Teide y el mar de nubes. A dispara (mantenlo para el disparo cargado), B lanza y recoge el módulo y Q coge la mejora marcada. <b>$1 la partida</b>; cada bar tiene sus récords.',
+      what: 'La máquina de los bares (GUFO: Guanche Unknown Flying Object… y en canario, un pedo): un matamarcianos de ' +
+            'naves por el cielo de Aguere, el Teide y el mar de nubes. A dispara (mantenlo para el disparo cargado), B ' +
+            'lanza y recoge el módulo y Q coge la mejora marcada. <b>$1 la partida</b>; cada bar tiene sus récords.',
       where: 'En las cafeterías y las tascas: en el minimapa y en el mapa (M) llevan un aro violeta alrededor de su cuadrado rojo. Pídela en la barra o en el mostrador (E).' },
     { t: 'GUANCHE GUARRIORS', on: () => ARC().invited && G().jugueterias, who: BL, log: REC, near: () => AGUA.nearestShop(),
-      what: 'La máquina de las jugueterías: un beat\'em up contra Guayota. Eliges al Mencey, al Pastor o a la Mirladora. A pega, B salta (y monta el lagarto), Q lanza la magia; doble toque para correr. <b>$1 la partida</b>; cada tienda tiene sus récords.',
+      what: 'La máquina de las jugueterías: un beat\'em up contra Guayota. Eliges al Magote, al Mencey o a la ' +
+            'Mirladora. A pega, B salta (y monta el lagarto), Q lanza la magia; doble toque para correr. <b>$1 la ' +
+            'partida</b>; cada tienda tiene sus récords.',
       where: 'En las jugueterías: el robot del minimapa y del mapa (M). Pídela en la tienda (E).', icon: 'toy' },
     { t: 'Las jugueterías', on: () => G().jugueterias, who: '', log: '', near: () => AGUA.nearestShop(),
       what: 'Venden el <b>rifle de agua</b> «Guepardo SK-9» y las bolitas para la pistola, y te llenan el rifle del grifo.', where: 'El robot del minimapa y del mapa (M): E en la puerta.', icon: 'toy' },
@@ -12620,12 +13138,21 @@ const DIARIO = (() => {
     { t: 'Tu casa', on: () => typeof CASA !== 'undefined' && CASA.ownsAny(), who: '', log: '', near: () => { let b = null; for (const h of CASA.homesOwned()) { const d = Math.hypot(h.x - PLAYER.x, h.z - PLAYER.z); if (!b || d < b.d) b = { ...h, d }; } return b; },
       what: 'Tus pisos: <b>' + '{HOMES}' + '</b>. Dentro: la cama (duermes hasta las 8 y se guarda la partida) y la tele, con la consola si la tienes.', where: 'Con tu cara en el minimapa y en el mapa (M).', icon: 'chopa' },
     { t: 'La consola GOFIO-8', on: () => ARC().console, who: '', log: '', near: () => AGUA.nearestShop(),
-      what: 'La consola de la tele de tu casa. Al encenderla sale un menú con tus cartuchos: <b>{CARTS}</b>. Los cartuchos se compran en las jugueterías.', where: 'En la tele de tu casa (E delante de la tele). La juguetería más cercana, abajo.' },
+      what: 'La consola de la tele de tu casa. Al encenderla sale un menú con tus cartuchos: <b>{CARTS}</b>. Los ' +
+            'cartuchos se compran en las jugueterías.', where: 'En la tele de tu casa (E delante de la tele). La juguetería más cercana, abajo.' },
     { t: 'El torneo de videojuegos', on: () => ARC().torneo, who: 'El dependiente de la juguetería', log: '',
-      what: 'Por comprarte <b>todos los cartuchos</b> eres un superfriki jugón. Para ganar el torneo hay que batir el récord de los juegos de puntos (Bencomo, GUFO y Guanche Guarriors) y ganar el mundialito de Pachanga 3x3 y de Play Furbito. Mundialitos ganados: <b>{MUND}</b>.', where: 'En la GOFIO-8 de tu casa.', icon: 'chopa' },
+      what: 'Por comprarte <b>todos los cartuchos</b> eres un superfriki jugón. Para ganar el torneo hay que batir el ' +
+            'récord de los juegos de puntos (Bencomo, GUFO y Guanche Guarriors) y ganar el mundialito de Pachanga 3x3 ' +
+            'y de Play Furbito. Mundialitos ganados: <b>{MUND}</b>.', where: 'En la GOFIO-8 de tu casa.', icon: 'chopa' },
     { t: 'El coche patrulla de la banda', on: () => G().patrol, who: 'El alcalde, por el móvil', log: '',
       what: 'Vuestro propio coche patrulla, con el nombre de la banda y el depósito lleno.', where: 'Delante del Ayuntamiento.' },
   ];
+  // the {HOMES} {PISOS} {MUND} {CARTS} gaps of a fact, filled with what the player has now (v0.90, audit: was one 800-char line)
+  const homesTxt = () => (typeof CASA !== 'undefined' ? CASA.PISOS.filter((P) => CASA.has(P.id)).map((P) => P.name + (P.rent ? ' (alquilado ' + Math.max(0, CASA.data().rent.until - CASA.data().day) + ' días más)' : '')).join(', ') : '');
+  const pisosTxt = () => CASA.PISOS.map((P) => `<b>${P.name}</b>: ${P.rent ? '$' + P.rent + ' a la semana' : '$' + P.price.toLocaleString('es-ES')}`).join(' · ');
+  const mundTxt = () => { const sp = ARC().sports || {}; return `Pachanga 3x3 ${(sp.pachanga || {}).won || 0} · Play Furbito ${(sp.furbito || {}).won || 0}`; };
+  const cartsTxt = () => (ARC().bought || []).filter((id) => ARCADE.GAMES[id]).map((id) => ARCADE.GAMES[id].title).join(', ') || 'ninguno todavía';
+  const fillWhat = (w) => w.replace('{HOMES}', homesTxt).replace('{PISOS}', pisosTxt).replace('{MUND}', mundTxt).replace('{CARTS}', cartsTxt);
   function nearBar() { let b = null, bd = 1e9; for (const f of FOOD.shops) { if (f.type !== 'C' && f.type !== 'R') continue; const d = Math.hypot(f.x - PLAYER.x, f.z - PLAYER.z); if (d < bd) { bd = d; b = f; } } return b ? { name: b.name, x: b.x, z: b.z, d: bd } : null; }
   const known = () => SABES.map((f, i) => ({ f, i })).filter(({ f }) => { try { return !!f.on(); } catch (e) { return false; } });
   function render() {
@@ -12652,7 +13179,7 @@ const DIARIO = (() => {
       if (nq) nr = `<div style="margin:0 0 8px;font:400 15px Barlow,sans-serif">🧭 La más cerca: <b>${esc(nq.name)}</b>, a ${Math.round(nq.d)} m <button class="btn" id="diaGps" style="font-size:13px;padding:5px 12px;margin-left:8px">MARCAR EN EL GPS</button></div>`;
       det.innerHTML = `<div style="font:400 22px Audiowide,Oswald,sans-serif;color:#9fd7ff">${esc(f.t)}</div>
         <div style="color:#bdb6c9;margin:2px 0 8px;font:400 14px Barlow,sans-serif">${f.who ? 'Te lo contó ' + esc(f.who) : 'Lo que sabes'}</div>
-        <div style="margin-bottom:8px;font:400 15px Barlow,sans-serif;line-height:1.35">${f.what.replace('{HOMES}', () => (typeof CASA !== 'undefined' ? CASA.PISOS.filter((P) => CASA.has(P.id)).map((P) => P.name + (P.rent ? ' (alquilado ' + Math.max(0, CASA.data().rent.until - CASA.data().day) + ' días más)' : '')).join(', ') : '')).replace('{PISOS}', () => CASA.PISOS.map((P) => `<b>${P.name}</b>: ${P.rent ? '$' + P.rent + ' a la semana' : '$' + P.price.toLocaleString('es-ES')}`).join(' · ')).replace('{MUND}', () => { const sp = ARC().sports || {}; return `Pachanga 3x3 ${(sp.pachanga || {}).won || 0} · Play Furbito ${(sp.furbito || {}).won || 0}`; }).replace('{CARTS}', () => (ARC().bought || []).filter((id) => ARCADE.GAMES[id]).map((id) => ARCADE.GAMES[id].title).join(', ') || 'ninguno todavía')}</div>
+        <div style="margin-bottom:8px;font:400 15px Barlow,sans-serif;line-height:1.35">${fillWhat(f.what)}</div>
         <div style="margin-bottom:8px;font:400 15px Barlow,sans-serif">${f.icon && window.__mapIconURL ? `<img src="${window.__mapIconURL(f.icon)}" style="width:22px;height:22px;vertical-align:-6px;margin-right:4px">` : '📍'} ${f.where}</div>${rec}${nr}
         ${f.log ? convo(MISSIONS.log(f.log), '') : ''}`;
       const gb = det.querySelector('#diaGps'); if (gb && nq) gb.onclick = () => { setWaypoint(nq.x, nq.z); HUD.toast('Ruta marcada en el GPS: ' + nq.name, '#e040fb', 4); close(); };
@@ -13419,34 +13946,38 @@ const MUNDIALITO = (() => {
     o.go = (v) => { o.v = v; o.t = 0; if (v === 'champ') { sfx('clear'); o.conf = []; for (let i = 0; i < 90; i++) o.conf.push([Math.random() * W, -Math.random() * H, 20 + Math.random() * 40, ['#ffd400', '#ff6b6b', '#7fe0ff', '#7fe08a', '#fff'][i % 5]]); } };
     o.onResume = () => { if (o.v === 'result' && T && T.last) sfx(T.last.w === T.me ? 'clear' : 'die'); };
     SCR = o; T = null;
-    o.update = (dt, pad) => { o.t += dt; const A = pad.hit('vS') || pad.hit('vT'), Q = pad.hit('vP'); if (o.t < 0.35) return;
-      if (o.v === 'pick') { const c = o.sel % 4, r = (o.sel / 4) | 0;
+    // v0.90 (auditoría 0.86: «partir screen() en una función por pantalla»): what each screen does with the buttons…
+    const UPD = {
+      pick(A, Q, pad, dt) { const c = o.sel % 4, r = (o.sel / 4) | 0;
         if (pad.hit('vR')) { o.sel = r * 4 + ((c + 1) % 4); sfx('pick'); } if (pad.hit('vL')) { o.sel = r * 4 + ((c + 3) % 4); sfx('pick'); }
         if (pad.hit('vU') || pad.hit('vD')) { o.sel = (o.sel + 4) % 8; sfx('pick'); }
-        if (A) { newTour(id, TL[o.sel]); sfx('coin'); o.go('round'); } else if (Q) api.toMenu(); return; }
-      if (o.v === 'round') { if (A) { sfx('start'); play(); } else if (Q) { T = null; o.go('pick'); } return; }
-      if (o.v === 'result') { if (!A) return; if (!T || T.last.w !== T.me) { T = null; o.go('pick'); return; } T.round++; if (T.round >= ROUNDS.length) { o.go('champ'); } else o.go('round'); return; }
-      if (o.v === 'champ') { for (const p of o.conf) { p[1] += p[2] * dt; if (p[1] > H) p[1] -= H + 10; } if (A && o.t > 1.2) { o.name = ['A', 'A', 'A']; o.ni = 0; o.go('name'); } return; }
-      if (o.v === 'name') { let k = ABC.indexOf(o.name[o.ni]); if (pad.hit('vU') || pad.hit('vR')) { k = (k + 1) % ABC.length; sfx('pick'); } if (pad.hit('vD') || pad.hit('vL')) { k = (k + ABC.length - 1) % ABC.length; sfx('pick'); } o.name[o.ni] = ABC[k];
-        if (A) { o.ni++; sfx('coin'); if (o.ni >= 3) { o.won = champion(id, T.me, o.name.join('')); o.hl = o.name.join(''); o.go('table'); } } return; }
-      if (o.v === 'table') { if (A || Q) { T = null; o.go('pick'); } } };
+        if (A) { newTour(id, TL[o.sel]); sfx('coin'); o.go('round'); } else if (Q) api.toMenu(); return; },
+      round(A, Q, pad, dt) { if (A) { sfx('start'); play(); } else if (Q) { T = null; o.go('pick'); } return; },
+      result(A, Q, pad, dt) { if (!A) return; if (!T || T.last.w !== T.me) { T = null; o.go('pick'); return; } T.round++; if (T.round >= ROUNDS.length) { o.go('champ'); } else o.go('round'); return; },
+      champ(A, Q, pad, dt) { for (const p of o.conf) { p[1] += p[2] * dt; if (p[1] > H) p[1] -= H + 10; } if (A && o.t > 1.2) { o.name = ['A', 'A', 'A']; o.ni = 0; o.go('name'); } return; },
+      name(A, Q, pad, dt) { let k = ABC.indexOf(o.name[o.ni]); if (pad.hit('vU') || pad.hit('vR')) { k = (k + 1) % ABC.length; sfx('pick'); } if (pad.hit('vD') || pad.hit('vL')) { k = (k + ABC.length - 1) % ABC.length; sfx('pick'); } o.name[o.ni] = ABC[k];
+        if (A) { o.ni++; sfx('coin'); if (o.ni >= 3) { o.won = champion(id, T.me, o.name.join('')); o.hl = o.name.join(''); o.go('table'); } } return; },
+      table(A, Q, pad, dt) { if (A || Q) { T = null; o.go('pick'); } },
+    };
+    o.update = (dt, pad) => { o.t += dt; const A = pad.hit('vS') || pad.hit('vT'), Q = pad.hit('vP'); if (o.t < 0.35) return;
+      const f = UPD[o.v]; if (f) f(A, Q, pad, dt); };
     // ----- drawing
     const bg = (g) => { const gr = g.createLinearGradient(0, 0, 0, H); if (S.game === 'basket') { gr.addColorStop(0, '#1a0e06'); gr.addColorStop(1, '#5a3418'); } else { gr.addColorStop(0, '#04210f'); gr.addColorStop(1, '#0f5a2a'); } g.fillStyle = gr; g.fillRect(0, 0, W, H);
       g.fillStyle = 'rgba(255,255,255,0.05)'; for (let y = 0; y < H; y += 16) g.fillRect(0, y, W, 8); };
     const head = (g, sub) => { txt(g, S.title, W / 2, 10, S.col, 16, 'center'); txt(g, sub, W / 2, 32, '#fff', 8, 'center'); };
     const foot = (g, s) => txt(g, s, W / 2, H - 16, '#9fd7ff', 8, 'center');
     const tag = (g, t, x, y, st) => { flag(g, t.id, x, y, 18, 12); txt(g, t.code, x + 22, y + 2, st === 'win' ? '#ffd400' : st === 'lost' ? '#777' : t === (T && T.me) ? '#7fe0ff' : '#fff', 8); };
-    o.draw = (g) => { bg(g);
-      if (o.v === 'pick') { head(g, 'EL MUNDIALITO · ELIGE TU SELECCIÓN');
+    // …and how each one is drawn
+    const DRAW = {
+      pick(g) { head(g, 'EL MUNDIALITO · ELIGE TU SELECCIÓN');
         TL.forEach((t, i) => { const c = i % 4, r = (i / 4) | 0, x = 18 + c * 113, y = 50 + r * 128, on = i === o.sel;
           g.fillStyle = on ? 'rgba(255,212,0,0.2)' : 'rgba(0,0,0,0.4)'; g.fillRect(x, y, 106, 120);
           if (on) { g.strokeStyle = Math.floor(o.t * 4) % 2 ? '#ffd400' : '#ff8a3a'; g.lineWidth = 2; g.strokeRect(x + 1, y + 1, 104, 118); }
           flag(g, t.id, x + 13, y + 8, 80, 50); txt(g, t.name, x + 53, y + 64, on ? '#ffd400' : '#fff', 8, 'center');
           kitMan(g, t.home, x + 22, y + 76, 1.3, BB); kitMan(g, t.away, x + 62, y + 76, 1.3, BB);
           const st5 = Math.max(1, Math.min(5, Math.round((lvOf(t, S) - 0.48) / 0.06))); for (let k = 0; k < 5; k++) { g.fillStyle = k < st5 ? '#ffd400' : 'rgba(255,255,255,0.18)'; g.fillRect(x + 28 + k * 10, y + 113, 7, 4); } });
-        foot(g, 'FLECHAS ELEGIR   A JUGAR   Q MENÚ'); return; }
-      if (!T && o.v !== 'table') return;
-      if (o.v === 'round' || o.v === 'result') { const R = T.round; head(g, o.v === 'round' ? ROUNDS[R] : 'RESULTADOS · ' + ROUNDS[R]);
+        foot(g, 'FLECHAS ELEGIR   A JUGAR   Q MENÚ'); return; },
+      bracket(g) { const R = T.round; head(g, o.v === 'round' ? ROUNDS[R] : 'RESULTADOS · ' + ROUNDS[R]);
         // the bracket: quarter-finals, semis, final
         const col = [14, 176, 330], rowY = (r, i) => (r === 0 ? 54 + i * 22 + ((i / 2) | 0) * 6 : r === 1 ? 65 + i * 50 : 90 + i * 100);
         const seed = T.hist[0] ? T.hist[0].flatMap((m) => [m.a, m.b]) : (R === 0 ? T.alive : []);
@@ -13462,18 +13993,21 @@ const MUNDIALITO = (() => {
         else { const m = T.last, won = m.w === T.me; g.fillStyle = 'rgba(0,0,0,0.65)'; g.fillRect(40, 250, W - 80, 52);
           txt(g, won ? (T.round === 2 ? '¡CAMPEONES!' : '¡A ' + ROUNDS[T.round + 1] + '!') : '¡ELIMINADOS!', W / 2, 258, won ? '#ffd400' : '#ff6b6b', 12, 'center');
           txt(g, `${m.a.name} ${m.sc[0]} - ${m.sc[1]} ${m.b.name}`, W / 2, 280, '#fff', 8, 'center'); foot(g, 'A SEGUIR'); }
-        return; }
-      if (o.v === 'champ') { for (const p of o.conf) { g.fillStyle = p[3]; g.fillRect(p[0], p[1], 3, 5); }
+        return; },
+      champ(g) { for (const p of o.conf) { g.fillStyle = p[3]; g.fillRect(p[0], p[1], 3, 5); }
         head(g, 'EL MUNDIALITO DE LA GOFIO-8'); flag(g, T.me.id, W / 2 - 60, 70, 120, 76); kitMan(g, T.me.home, W / 2 - 14, 158, 2, BB);
         const k = Math.min(1, o.t * 2); txt(g, '¡CAMPEONES', W / 2, 222, '#ffd400', Math.round(10 + 8 * k), 'center'); txt(g, 'DEL MUNDIALITO!', W / 2, 248, '#ffd400', Math.round(10 + 8 * k), 'center');
-        txt(g, T.me.name, W / 2, 278, '#fff', 12, 'center'); if (o.t > 1.2) foot(g, 'A PONER TUS INICIALES'); return; }
-      if (o.v === 'name') { head(g, '¡CAMPEONES! LA TABLA DE CAMPEONES'); flag(g, T.me.id, W / 2 - 30, 60, 60, 38); txt(g, 'TUS INICIALES', W / 2, 120, '#9fd7ff', 8, 'center');
+        txt(g, T.me.name, W / 2, 278, '#fff', 12, 'center'); if (o.t > 1.2) foot(g, 'A PONER TUS INICIALES'); return; },
+      name(g) { head(g, '¡CAMPEONES! LA TABLA DE CAMPEONES'); flag(g, T.me.id, W / 2 - 30, 60, 60, 38); txt(g, 'TUS INICIALES', W / 2, 120, '#9fd7ff', 8, 'center');
         for (let i = 0; i < 3; i++) { const on = i === o.ni && Math.floor(performance.now() / 250) % 2 === 0; txt(g, o.name[i], W / 2 - 40 + i * 40, 150, i === o.ni ? (on ? '#ffd400' : '#fff') : '#7fe08a', 24, 'center'); }
-        foot(g, '↑↓ LETRA   A SIGUIENTE'); return; }
-      if (o.v === 'table') { head(g, 'TABLA DE CAMPEONES'); const L = ((ARCADE.data().scores || {})['mundial_' + id] || []).slice(0, 10);
+        foot(g, '↑↓ LETRA   A SIGUIENTE'); return; },
+      table(g) { head(g, 'TABLA DE CAMPEONES'); const L = ((ARCADE.data().scores || {})['mundial_' + id] || []).slice(0, 10);
         L.forEach(([n, team, w], i) => { const y = 60 + i * 22, tm = TEAMS.find((q) => q.name === team), hl = i === 0 && n === o.hl && Math.floor(performance.now() / 200) % 2;
           const c = hl ? '#ffd400' : ['#ff6b6b', '#ffb347', '#ffd400', '#7fe08a', '#5ec8ff'][i % 5]; txt(g, String(i + 1).padStart(2, ' '), 70, y, c, 8); txt(g, n, 110, y, c, 8); if (tm) flag(g, tm.id, 170, y - 2, 18, 12); txt(g, team, 196, y, c, 8); });
-        if (!L.length) txt(g, 'TODAVÍA NO HAY CAMPEONES', W / 2, 140, '#fff', 8, 'center'); foot(g, 'A SEGUIR'); } };
+        if (!L.length) txt(g, 'TODAVÍA NO HAY CAMPEONES', W / 2, 140, '#fff', 8, 'center'); foot(g, 'A SEGUIR'); },
+    };
+    o.draw = (g) => { bg(g); if (o.v === 'pick') { DRAW.pick(g); return; } if (!T && o.v !== 'table') return;
+      DRAW[o.v === 'round' || o.v === 'result' ? 'bracket' : o.v](g); };
     return o; }; }
   // the two cartridges, in the GOFIO-8's menu
   const MUS_ = { title: { bpm: 132, div: 4, loop: true, ch: [{ w: 'sq', v: 0.7, n: ['C5 . E5 G5 . E5 C5 . D5 . F5 A5 . F5 D5 .', 'E5 . G5 C6 . G5 E5 . D5 . G5 B5 . . G5 .'], form: [0, 1, 0, 1] }, { w: 'tri', v: 1, n: 'C3 . G2 . C3 . G2 . D3 . A2 . G2 . B2 .' }] } };

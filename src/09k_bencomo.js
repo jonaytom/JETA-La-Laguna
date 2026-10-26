@@ -24,10 +24,10 @@ ARCADE.GAMES.bencomo = (() => {
   // castellanos and the dogs), with the detail of the statues of Candelaria: headband, beard, necklace, the tamarco on
   // the shoulder, bare chest with pecs and abs, the loincloth with its cord, ankle bands and bare feet
   const UP = {
-    idle: ['....hhhhhh......', '...hhhhhhhh.....', '..hhggggggg.....', '..hhhbbbbbb.....', '..hhbbbbbwk.....', '..hhbbbbbbbb....', '..hhhdbbbbb.....', '..hhheeeeee.....', '..hh.eeeeee.....', '..hcC.eeeb......', '..cCbbgbgbbb....', '.bcCbbbdbbbbb...', '.bcCbdbbdbbdb...', '.bcccbdbdbbbb...'],
-    thrust: ['....hhhhhh......', '...hhhhhhhh.....', '..hhggggggg.....', '..hhhbbbbbb.....', '..hhbbbbbwk.....', '..hhbbbbbbbb....', '..hhhdbbbbb.....', '..hhheeeeee.....', '..hh.eeeeee.....', '..hcC.eeeb......', '..cCbbgbgbbbbbbb', '.bcCbbbdbbbbbbb.', '.bcCbdbbdbbd....', '.bcccbdbdbb.....'],
-    up: ['.bb.hhhhhh.bb...', '.bbhhhhhhhhbb...', '..bhhgggggggb...', '..bhhbbbbbb.....', '..hhbbbbbwk.....', '..hhbbbbbbbb....', '..hhhdbbbbb.....', '..hhheeeeee.....', '..hh.eeeeee.....', '..hcC.eeeb......', '..cCbbgbgbb.....', '..cCbbbdbbbb....', '..cCbdbbdbbd....', '..cccbdbdbbb....'],
-    hurt: ['.....hhhhhh.....', '....hhhhhhhh....', '...hhggggggg....', '...hhhbbbbbb....', '...hhbbbbbbk....', '...hhbbbbbbbb...', '...hhhdbbbbb....', '...hhheeeeee....', '...hh.eeeeee....', '..bcC.eeeb......', '.bbCbbgbgbbb....', '.b.Cbbbdbbbbbb..', '...cbdbbdbbd.bb.', '...ccbdbdbbb....'],
+    idle: ['....hhhhhh......', '...hhhhhhhh.....', '..hhggggggg.....', '..hhhbbbbbb.....', '..hhbbbbbwk.....', '..hhbbbbbbbb....', '..hhhdbbbbb.....', '..hhheeeeee.....', '..hh.eeeeee.....', '..hcC.eeeb......', '..cCbbgbgbbb....', '.bcCbdbbbdb.b...', '.bcCbbdbdb.b....', '.bcccbdbd..b....'],
+    thrust: ['....hhhhhh......', '...hhhhhhhh.....', '..hhggggggg.....', '..hhhbbbbbb.....', '..hhbbbbbwk.....', '..hhbbbbbbbb....', '..hhhdbbbbb.....', '..hhheeeeee.....', '..hh.eeeeee.....', '..hcC.eeeb......', '..cCbbgbgbbbbbbb', '.bcCbdbbbdbbbbb.', '.bcCbbdbdb......', '.bcccbdbd.......'],
+    up: ['bb..hhhhhh....bb', '.b.hhhhhhhh..bb.', '.bhhggggggg..b..', '.bhhhbbbbbb..b..', '.bhhbbbbbwk..b..', '.bhhbbbbbbbb.b..', '.bhhhdbbbbb..b..', '.bhhheeeeee.b...', '.bhh.eeeeee.b...', '.bhcC.eeeb.b....', '.bcCbbgbgbbb....', '..cCbdbbbdb.....', '..cCbbdbdb......', '..cccbdbd.......'],
+    hurt: ['.....hhhhhh.....', '....hhhhhhhh....', '...hhggggggg....', '...hhhbbbbbb....', '...hhbbbbbbk....', '...hhbbbbbbbb...', '...hhhdbbbbb....', '...hhheeeeee....', '...hh.eeeeee....', '..bcC.eeeb......', '.bbCbbgbgbbb....', '.b.Cbdbbbdb.bb..', '...cbbdbdb...bb.', '...ccbdbd.......'],
   };
   const LEG = {
     stand: ['..dcccgggggb....', '...cCccccC......', '....ccdcc.......', '....bb..bb......', '....bd..bd......', '....bd..bd......', '....gd..gd......', '...bbb..bbb.....'],

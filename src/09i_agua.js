@@ -11,14 +11,15 @@ const FIRES = [];
 function rifleUsable() { return RIFLE.has && RIFLE.out && !PLAYER.car && !PLAYER.interior && PLAYER.down <= 0 && !PLAYER.dead; }
 function giveRifle(full = true) { RIFLE.has = true; RIFLE.out = true; if (full) RIFLE.water = RIFLE.max; WEAPON.out = false; if (WEAPON.mesh) WEAPON.mesh.visible = false; AGUA.ensureMesh(); updateWeaponHUD(); }
 // a fire on the ground (a pile of papers, a bin, a door…): size ~ metres; hp 1 → 0 under the water; onOut when it dies
+let FIRE_BASE = null; const fireBaseGeo = () => FIRE_BASE || (FIRE_BASE = new THREE.CylinderGeometry(0.45, 0.55, 0.18, 8));
 function makeFire(x, z, size = 1, onOut) {
   const g = new THREE.Group(); const y = Math.max(heightAt(x, z), deckAt(x, z, heightAt(x, z) + 1)) + 0.02; g.position.set(x, y, z);
   const fl = AGUA.flameMats(); const flames = [];
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.45 * size, 0.55 * size, 0.18, 8), M(0xe9e4d6, 0.9)); base.position.y = 0.09; g.add(base); // the papers
+  const base = new THREE.Mesh(fireBaseGeo(), M(0xe9e4d6, 0.9)); base.scale.set(size, 1, size); base.position.y = 0.09; g.add(base); // the papers (v0.90, audit 0.76: one shared cylinder, scaled)
   for (let k = 0; k < 3; k++) { const m = new THREE.Mesh(AGUA.flameGeo(), fl[k]); m.position.set((k - 1) * 0.18 * size, 0.18, ((k % 2) - 0.5) * 0.2 * size); m.scale.setScalar(size * (k === 1 ? 1.15 : 0.8)); g.add(m); flames.push(m); }
   scene.add(g); const f = { x, z, y, size, r: 0.55 * size + 0.35, h: 1.4 * size, hp: 1, g, flames, base, onOut, t: Math.random() * 6, out: false }; FIRES.push(f); return f;
 }
-function clearFires() { for (let i = FIRES.length - 1; i >= 0; i--) { const f = FIRES[i]; if (f.free) continue; if (f.g.parent) f.g.parent.remove(f.g); f.base.geometry.dispose(); FIRES.splice(i, 1); } } // free: a fire of no mission (tests)
+function clearFires() { for (let i = FIRES.length - 1; i >= 0; i--) { const f = FIRES[i]; if (f.free) continue; if (f.g.parent) f.g.parent.remove(f.g); FIRES.splice(i, 1); } } // free: a fire of no mission (tests)
 function wetChasePed(p, dt) {
   p.wetChase -= dt; const dx = PLAYER.x - p.x, dz = PLAYER.z - p.z, d = Math.hypot(dx, dz);
   if (PLAYER.car || PLAYER.dead || PLAYER.interior || d > 40 || p.down > 0 || p.wetChase <= 0) { p.wetChase = 0; if (d > 3) SUB.show('<b>Peatón:</b> ¡Ya te pillaré, chorizo!', 1.8); return false; }
@@ -141,7 +142,7 @@ const AGUA = (() => {
     for (let i = FIRES.length - 1; i >= 0; i--) { const f = FIRES[i]; f.t += dt;
       if (!f.out) { f.flames.forEach((m, k) => { const s = f.size * (k === 1 ? 1.15 : 0.8) * Math.max(0.25, f.hp); m.scale.set(s * (1 + 0.12 * Math.sin(f.t * 13 + k * 2)), s * (1 + 0.25 * Math.sin(f.t * 9 + k)), s); });
         if (!PLAYER.car && Math.hypot(PLAYER.x - f.x, PLAYER.z - f.z) < f.r * 0.8 && PLAYER.y < f.y + 1) { PLAYER.health -= dt * 12; if (Math.random() < dt * 2) HUD.toast('¡Quema!', '#ff6a00', 0.8); } }
-      else if ((f.outT += dt) > 40 && !f.keep) { if (f.g.parent) f.g.parent.remove(f.g); f.base.geometry.dispose(); FIRES.splice(i, 1); } }
+      else if ((f.outT += dt) > 40 && !f.keep) { if (f.g.parent) f.g.parent.remove(f.g); FIRES.splice(i, 1); } }
   }
   // ---------- Tab / 1 / 2 / 3: fists, pistol, water rifle
   function weaponKeys() {

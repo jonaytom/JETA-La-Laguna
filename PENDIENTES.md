@@ -12,12 +12,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Minijuegos: controles, pausa y sonido
 
-- [ ] ◐ **Basket y fútbol: más efectos del público que música** (Jonay, 20-oct). En el basket, el típico **organillo**
-  de pabellón (las ráfagas de «¡de-fen-sa!», el «charge»); en el fútbol, el **rugido del público**: el murmullo de
-  fondo, el «¡uuuh!» en las ocasiones y el furor con los goles. Vale para las canchas y para Pachanga / Play Furbito.
-- [ ] ◐ **Más efectos de sonido en los minijuegos en general** (Jonay, 20-oct): la música con menos protagonismo y las
-  melodías más largas, con varios estribillos que se alternan. Hecho en v0.84.0 para las 3 máquinas. Falta lo mismo
-  en el basket, el fútbol y la pelea 2D: más efectos (pasos, roces, el público, el balón) y música menos repetitiva.
 
 ### Recreativas, consola GOFIO-8 y torneo
 
@@ -112,31 +106,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Gráficos de los minijuegos
 
-- [ ] ● **Bencomo, Guanche Guarriors y el fútbol: personajes nuevos** (Jonay, 26-oct). Los protagonistas basados en
-  las estatuas de los menceyes de la plaza de Candelaria (pelo largo con cinta, barba, collar, tamarco sobre el hombro,
-  taparrabos, descalzos, banot o garrote), y los futbolistas. Propuestas para elegir en
-  `docs/propuestas/sprites_guanches.html` (Artifact «Guanches y futbolistas»):
-  - Bencomo: B1 bronce de Candelaria, B2 mencey a color, B3 mencey semicabezón, B4 semicabezón de bronce.
-  - Guanche Guarriors (Mencey, Pastor, Mirladora): G1 proporción normal, G2 un poco cabezones.
-  - Fútbol: F1 de lado como el basket (cambiar la cámara del fútbol a lateral), F2 desde arriba pero a 48 px de frente
-    y de espalda (acercar la cámara), F3 como ahora (tipo Sensible) con figuras mejoradas.
-  - 26-oct, elecciones de Jonay: **Bencomo = B3** (mencey semicabezón). **Guanche Guarriors = G1**, pero solo le
-    gusta el Mencey: el Pastor más parecido a Bencomo (hecho en la propuesta: pelo largo, barba, tamarco, banot, más
-    fino) y la Mirladora más sexy, en bikini de piel tipo «Vixen» con el pelo largo (hecho: bikini y botas de piel,
-    melena, brazaletes, la magia). **Fútbol: ninguno**; quiere opciones sobre el que tenemos (misma cámara y tamaño):
-    F0 el actual, F1 el actual pulido (luz, contorno, medias, botas, número, cara), F2 pulido y algo cabezón.
-  - 26-oct: Guanche Guarriors G1 aprobado («ahora está bien»), con el **Mencey mucho más musculoso** (hecho en la
-    propuesta). **Bencomo**: el B3 grande desentona con el mundo y los enemigos → propuesta «versión juego»: el sprite
-    de ahora (16 × 22, la paleta de la máquina) con el detalle del B3 (cinta, barba, collar, tamarco al hombro, pecho
-    con pectorales y abdominales, taparrabos con cordón, tobilleras, descalzo). Falta que Jonay lo vea; si vale, hay que
-    redibujar también los demás cuadros (correr, saltar, varazo, agacharse, herido).
-  - 26-oct: fútbol, la entrada con una pierna estirada y la otra doblada, y la palomita con los brazos estirados:
-    hecho en la v0.88.1.
-  - 26-oct: **fútbol F2 elegido e incorporado en la v0.88.0** («lo incorporamos así ya»). Bencomo B3: Jonay pregunta
-    cómo se vería en el juego (en la muestra está mucho más grande): hecha una vista a tamaño real (el de ahora mide 22
-    px, 44 en pantalla; el B3 al mismo tamaño y uno un poco más grande, de 60). Mirladora: pelo castaño, melena suelta,
-    más pecho y menos barriga (hecho en la propuesta).
-- [ ] ● **Repasar el pixel art de los jugadores de todos los minijuegos** (Jonay, 26-oct): no le gustan los personajes
+- [~] ● v0.90.0 (basket: el A++ semicabezón 120 en el juego; fútbol F2 en v0.88) **Repasar el pixel art de los jugadores de todos los minijuegos** (Jonay, 26-oct): no le gustan los personajes
   de ninguno. Se empieza por el basket.
   - Ejemplos que le gustan: póster «Pixel Slam Dunk»; un mate de los Suns; uno de los Raptors; uno de los Lakers
     botando; el «airwalk» de Utah; la cancha callejera estilo anime.
@@ -156,7 +126,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
     propuesta: hombros (los brazos cuelgan del hombro ancho de la V, con el deltoides encima), el pelo del afro ya no
     parece un casco ni tapa los ojos (nacimiento del pelo por encima de las cejas, que baja por detrás de la oreja),
     el rubio con pelo corto en vez de pinchos, las patillas solo en los que llevan barba.
-  - Siguiente: pasarlo al basket (Pachanga y canchas) y luego, con la misma técnica, fútbol, pelea y máquinas. Después, con la misma técnica (esqueleto + piezas +
+  - Hecho en v0.90: pasado al basket (Pachanga y canchas). Falta, con la misma técnica, fútbol, pelea y máquinas. Después, con la misma técnica (esqueleto + piezas +
     sombreado por píxel), el fútbol, la pelea 2D y las máquinas.
 
 ### Logros
@@ -380,36 +350,11 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Rendimiento, auditorías y código
 
-- [ ] ⚡ **Auditoría v0.89.0** (26-oct 11:52, APTO CON AVISOS; pruebas 9/9; pintar 38,2 → 31,3 ms, arranque 10,7 → 8,6 s):
-  `09f_basket2d.js` baja de B a C (las ramas nuevas de defensa y combo en líneas largas). Partir el bloque del clic
-  derecho y la ayuda en defensa en funciones propias.
-- [ ] ⚡ **Auditoría v0.88.1** (26-oct, APTO CON AVISOS): 137 avisos «nuevos» del análisis estático en archivos que no
-  cambiaron (artefacto del auditor al comparar). Revisar que no sea nada real y repetir la comparación.
-- [ ] ⚡ **Auditoría v0.87.1** (26-oct 10:52, APTO CON AVISOS; pruebas 5/5): pintar 31,5 → 43 ms y arranque 9,2 → 11,3 s.
-  La 0.87.1 solo cambia un nombre (Guanche Guarriors): casi seguro que el PC estaba ocupado. Repetir la auditoría.
-- [ ] ⚡ **Auditoría v0.86.0** (26-oct 10:08, APTO CON AVISOS; pruebas 7/7; pintar 35,5 → 31,8 ms, arranque 10,0 → 10,3 s):
-  `12m_mundialito.js` baja de C a D (las pantallas de la consola en funciones largas con líneas densas). Partir
-  `screen()` en una función por pantalla (pick, cuadro, resultado, campeones, iniciales, tabla).
-- [ ] ⚡ **Auditoría v0.85.1** (20-oct 22:09, APTO CON AVISOS; pruebas 10/10; pintar 35,9 → 35,5 ms, arranque 10,2 → 10,0 s):
-  5 avisos «nuevos» del análisis estático en `doorKit()` (`05g_interiors.js:49-52`) y `cFrame()`
-  (`05o_concepcion.js:76`). Son las mismas creaciones de antes, ahora una sola vez: el analizador las ve como nuevas
-  porque cambió el nombre de la función. Falso aviso: marcarlas como «al cargar» si el auditor lo permite.
-- [ ] ◐ **Auditoría v0.85.0** (20-oct 21:25, APTO CON AVISOS, sin avisos nuevos de código): pintar un fotograma
-  32 → 35,9 ms y arranque 9,5 → 10,2 s (sube otra vez como en la 0.82); calidad B (70). Memoria, llamadas y fugas,
-  igual. La 0.85 no toca nada que se pinte en el mundo 3D, así que parece ruido: mirar con `sonda_rendimiento.py` si se
-  repite en la 0.85.1 (va junto con la subida de la 0.82).
-- [ ] ◐ **Auditorías v0.82.1 y v0.82.2** (20-oct, APTO CON AVISOS):
-  - Pintar un fotograma: 31,3 → 34,9 → 35,3 ms. El arranque: 9,1 → 9,9 → 10,0 s. Se repite en dos pasadas, así que
-    no parece ruido. Mirar qué lo sube: la 0.82.1 solo tocó el diario, el jefe de Bencomo y Guanche Guarriors.
-  - `12h_diario.js` baja de nota de A a B: las líneas de HTML del diario son muy largas; partirlas.
-- [ ] ◐ **Auditoría 0.76.0** (APTO CON AVISOS; llamadas 679 → 624, pintar 45,5 → 44,9 ms, arranque 13,7 → 13,0 s,
-      memoria casi igual, sin fugas): `makeFire()` (`09i_agua.js:17`) crea un cilindro nuevo por fuego (compartir la
-      geometría); `12k_agua.js` sale con nota D (misiones en funciones muy largas: partirlas). Sin probar a mano aún:
-      las 14 misiones nuevas solo se han probado hasta que arrancan (la del rifle, entera).
-      Segunda auditoría de la misma 0.76 (19-oct 10:53): sin avisos nuevos; pintar 44,9 → 47,8 ms (ruido entre pasadas),
-      calidad B (71). El agente revisor sigue con los datos de la v0.73 (68 avisos): pasarlo de nuevo cuando Jonay quiera.
+- [ ] ⚡ **prueba_076 a veces falla en «mojado»** (26-oct, v0.90): el peatón empapado no siempre persigue (pasa repetida aparte y falla otras veces, sin tocar ese código). Hacerla fiable: elegir un peatón sin obstáculos delante o apuntarle directamente.
+- [ ] ⚡ **Borrar `src/09f_basket2d-1.js`** (26-oct): una copia sobrante del basket que apareció en el PC (rompía el build por declarar BASKET2D dos veces). La dejé vacía (un comentario); hay que borrarla a mano.
+- [~] ◐ v0.90.0 (el fuego comparte el cilindro) **Auditoría 0.76.0**: queda `12k_agua.js` con nota D (las misiones en funciones muy largas: partirlas).
 - [ ] ◐ **Auditoría 0.75.0** (APTO CON AVISOS; pintar 49,9 → 45,5 ms, arranque 14,1 → 13,7 s, memoria igual, sin fugas):
-      bajan de nota `12h_diario.js` (A → B) y `12j_campos.js` (B → C, por la Copa Laguna: funciones largas). Repasar.
+      bajan de nota `12h_diario.js` (A → B; repasado en v0.90) y `12j_campos.js` (B → C, por la Copa Laguna: funciones largas). Queda el de los campos.
 - [~] ◐ v0.69.0 (recorte general: de los 515 edificios en calzada quedan los que cortan la calle entera o perderían más del 40 %) **Auditoría v0.59.0** (APTO CON AVISOS; memoria 505 → 531 MB y vértices +5 % por las zonas nuevas, sin fugas):
       **76 edificios nuevos invadiendo la calzada** en La Cuesta/Taco (p. ej. Ctra. Gral. La Cuesta-Taco X 2839 Z 2244,
       Ctra. de Valle Tabares X 2502 Z 1648). Lista en `docs/auditorias/mapa_v0.59.0/mapa.md`. Total del mapa: 527.
@@ -483,6 +428,18 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
       consideres, es un extra final».
 
 ## Hecho
+- [x] v0.90.0 **Basket: el saque de fondo tras canasta** (Jonay, 26-oct: «no puede aparecer en medio, debe haber continuidad»).
+- [x] v0.90.0 **Bencomo: barrigota y brazos que parecían orejas** (Jonay, 26-oct): pecho en V y brazos en alto enteros.
+- [x] v0.90.0 **Basket y fútbol: el público** (Jonay, 20-oct): organillo, «¡de-fen-sa!», «¡uuuh!», ovaciones, el bombo y el rugido de la grada.
+- [x] v0.90.0 **Más efectos en basket, fútbol y pelea** (Jonay, 20-oct): el público de cada uno, zapatillas, red, corro de mirones en la pelea.
+- [x] v0.90.0 **Personajes nuevos de Bencomo, Guanche Guarriors y el fútbol** (Jonay, 26-oct): Bencomo «versión juego» (v0.89), fútbol F2 (v0.88), Guanche Guarriors G1 (v0.90; renombrados: El Magote, El Mencey, La Mirladora).
+- [x] v0.90.0 **Auditoría v0.89.0**: la defensa del basket (clic derecho y ayudas) en funciones propias.
+- [x] v0.90.0 **Auditoría v0.88.1**: los 137 avisos eran del comparador; en las de la 0.89 ya no salen.
+- [x] v0.90.0 **Auditoría v0.87.1**: repetida en la 0.89.0/0.89.1: pintar 31,3–32,3 ms y arranque 8,6–9,4 s (era ruido).
+- [x] v0.90.0 **Auditoría v0.86.0**: el mundialito, una función por pantalla (lo que hace con los botones y cómo se dibuja).
+- [x] v0.90.0 **Auditoría v0.85.1**: los avisos de `doorKit()`/`cFrame()` eran falsos (cambio de nombre) y ya no salen.
+- [x] v0.90.0 **Auditoría v0.85.0**: la subida de pintar era ruido (ahora 31–32 ms).
+- [x] v0.90.0 **Auditorías v0.82.1 y v0.82.2**: pintar ha vuelto a 31–32 ms; el diario, partida la línea de 800 caracteres y los textos largos (quedan líneas de HTML de ~250).
 - [x] v0.89.0 **Basket: combos** (Jonay, 26-oct): 25 % menos de tiempo (2,7 s) y, si se falla, vuela igual y el mate da en el hierro.
 - [x] v0.89.0 **Vueltas: más difíciles y más puntos** (Jonay, 26-oct): Bencomo, GUFO y Guanche Guarriors puntúan ×(1 + 0,5·vuelta); GUFO un 5 % más rápido.
 - [x] v0.89.0 **Bencomo: el picado sobre el jinete te golpeaba a ti** (Jonay, 26-oct): ahora vale caer en la mitad de arriba del enemigo.

@@ -1,8 +1,8 @@
 // ============ «GUANCHE GUARRIORS» (v0.82): the beat'em up of the toy shops (pay per game) ============
 // Jonay (20-oct): like Golden Axe: a side-scrolling beat'em up with depth (not a platformer), several stages, and at the
 // start you choose one of 3 warriors:
-//  · EL MENCEY: the barbarian, strong and slow, with a Canarian club (garrote canario). Magic: «Ira de Achamán» (4).
-//  · EL PASTOR: more agile, less strong; the shepherd's pole reaches further and jumps more (the salto del pastor:
+//  · EL MAGOTE (v0.90, Jonay; was «el Mencey»; id 'mencey'): the barbarian, strong and slow, with a Canarian club (garrote canario). Magic: «Ira de Achamán» (4).
+//  · EL MENCEY (v0.90, Jonay; was «el Pastor»; id 'pastor'): more agile, less strong; the shepherd's pole reaches further and jumps more (the salto del pastor:
 //    B while running). Magic: «Viento alisio» (5).
 //  · LA MIRLADORA: a girl who does magic: less physical, agile, the strongest magic: «Luz de Magec» (7).
 // Story (from the Guanche myth): Guayota, the demon inside the Teide (Echeyde), has kidnapped Magec, the sun, and the
@@ -116,8 +116,8 @@ ARCADE.GAMES.guanche = (() => {
     BY: { s: 2.1, bulk: 9, skin: '#8a1a10', skin2: '#6a120a', cloth: '#1a0804', cloth2: '#ff6a1a', horns: 3, eye: '#ffd400', weapon: 'none' },
   };
   const HEROES = [
-    { id: 'mencey', name: 'EL MENCEY', desc: ['FUERTE Y LENTO', 'GARROTE CANARIO'], look: LK.mencey, hp: 24, spd: 44, dmg: [2, 2, 4], reach: 21, jump: 150, jars: 4, spell: 'IRA DE ACHAMÁN', fuerza: 3, agil: 1, magia: 2 },
-    { id: 'pastor', name: 'EL PASTOR', desc: ['ÁGIL, MENOS FUERTE', 'LA VARA DEL SALTO'], look: LK.pastor, hp: 18, spd: 58, dmg: [1, 1, 3], reach: 26, jump: 180, jars: 5, spell: 'VIENTO ALISIO', fuerza: 2, agil: 3, magia: 2 },
+    { id: 'mencey', name: 'EL MAGOTE', desc: ['FUERTE Y LENTO', 'GARROTE CANARIO'], look: LK.mencey, hp: 24, spd: 44, dmg: [2, 2, 4], reach: 21, jump: 150, jars: 4, spell: 'IRA DE ACHAMÁN', fuerza: 3, agil: 1, magia: 2 },
+    { id: 'pastor', name: 'EL MENCEY', desc: ['ÁGIL, MENOS FUERTE', 'LA VARA DEL SALTO'], look: LK.pastor, hp: 18, spd: 58, dmg: [1, 1, 3], reach: 26, jump: 180, jars: 5, spell: 'VIENTO ALISIO', fuerza: 2, agil: 3, magia: 2 },
     { id: 'mirla', name: 'LA MIRLADORA', desc: ['ÁGIL Y MÁGICA', 'MENOS FÍSICA'], look: LK.mirla, hp: 16, spd: 56, dmg: [1, 1, 2], reach: 17, jump: 165, jars: 7, spell: 'LUZ DE MAGEC', fuerza: 1, agil: 3, magia: 3 }];
   // enemies: hp, speed, reach, damage, wind-up, cooldown, points
   const ED = { S: { hp: 8, spd: 34, reach: 18, dmg: 2, wind: 0.42, cd: 1.3, pts: 300 }, H: { hp: 11, spd: 30, reach: 18, dmg: 2, wind: 0.5, cd: 1.5, pts: 400, shield: true },
@@ -383,7 +383,8 @@ ARCADE.GAMES.guanche = (() => {
       if (o.d && o.d.dog) { dog(c, sx, sy, o.face, o, o.s || 1); return; }
       const riding = o.mount, P = riding ? (o.st === 'whip' || o.st === 'atk' ? PO.ride : PO.ride) : poseOf(o);
       const glow = o === p && p.st === 'magic' ? (flick() ? '#fff' : '#ffd400') : null;
-      puppet(c, sx, riding ? sy - 10 - hopOf(riding) : sy, o.face, P, o.look || p.hero.look, glow);
+      if (o === p && PIXGUAN.draw(c, sx, sy, o.face, P, p.hero.id, p.hero.look.s)) { if (glow) pblob(c, sx + o.face * P.hf[0] * p.hero.look.s, sy + P.hf[1] * p.hero.look.s, 2.5, 2.5, glow); } // v0.90: the G1 heroes
+      else puppet(c, sx, riding ? sy - 10 - hopOf(riding) : sy, o.face, P, o.look || p.hero.look, glow);
       if (o.k === 'D' && o.carry) pblob(c, sx - o.face * 3, sy - 12, 3, 3, o.carry === 'J' ? '#3a6ad0' : '#c03a2a');
       if (o.flash > 0) { c.globalAlpha = 0.5; pblob(c, sx, sy - 14, 6, 12, '#fff'); c.globalAlpha = 1; } }
     g.draw = (c) => { const bg = background(L ? L.theme : 'taoro'), th = L ? L.theme : 'taoro';
@@ -427,7 +428,7 @@ ARCADE.GAMES.guanche = (() => {
     function drawSelect(c) { const bg = background('taoro'); c.drawImage(bg[0], 0, 0, 960, SH); c.drawImage(bg[1], 0, 0, 960, SH); c.fillStyle = 'rgba(0,0,0,0.45)'; c.fillRect(0, 0, SW, SH);
       A.txt(c, 'ELIGE TU GUERRERO', SW / 2, 16, '#ffd400', 12, 'center');
       HEROES.forEach((H, i) => { const cx0 = 80 + i * 160, on = i === sel; c.fillStyle = on ? 'rgba(255,212,0,0.18)' : 'rgba(0,0,0,0.3)'; c.fillRect(cx0 - 70, 40, 140, 250); if (on) { c.strokeStyle = flick() ? '#ffd400' : '#ff8a3a'; c.lineWidth = 2; c.strokeRect(cx0 - 69, 41, 138, 248); }
-        c.save(); c.scale(Z * 1.2, Z * 1.2); const P = on ? cyc(WALK, time * 4) : PO.idle; puppet(c, cx0 / (Z * 1.2), 150 / (Z * 1.2), 1, on && Math.floor(time * 1.5) % 3 === 2 ? PO.smash : P, H.look, null); c.restore();
+        c.save(); c.scale(Z * 1.2, Z * 1.2); const P = on ? cyc(WALK, time * 4) : PO.idle; PIXGUAN.draw(c, cx0 / (Z * 1.2), 150 / (Z * 1.2), 1, on && Math.floor(time * 1.5) % 3 === 2 ? PO.smash : P, H.id, H.look.s); c.restore();
         A.txt(c, H.name, cx0, 170, on ? '#ffd400' : '#fff', 8, 'center'); A.txt(c, H.desc[0], cx0, 186, '#9fd7ff', 6, 'center'); A.txt(c, H.desc[1], cx0, 196, '#9fd7ff', 6, 'center');
         [['FUERZA', H.fuerza], ['AGILIDAD', H.agil], ['MAGIA', H.magia]].forEach(([n, v], j) => { A.txt(c, n, cx0 - 60, 214 + j * 14, '#fff', 6); for (let b = 0; b < 3; b++) { c.fillStyle = b < v ? '#ffd400' : '#3a3a3a'; c.fillRect(cx0 + 4 + b * 16, 214 + j * 14, 13, 7); } });
         A.txt(c, H.spell, cx0, 260, '#ff8a3a', 6, 'center'); A.txt(c, 'MAGIA: ' + H.jars + ' ZURRONES', cx0, 272, '#aaa', 6, 'center'); });
@@ -441,7 +442,7 @@ ARCADE.GAMES.guanche = (() => {
   function drawTitle(c, t) { const bg = background('canadas'); c.drawImage(bg[0], 0, 0, 960, SH); const o = -((t * 8) % 960); c.drawImage(bg[1], o, 0, 960, SH); c.drawImage(bg[1], o + 960, 0, 960, SH); c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(0, 0, SW, SH);
     c.font = '34px "Press Start 2P", monospace'; c.textAlign = 'center'; c.textBaseline = 'top';
     for (const [s, y] of [['GUANCHE', 26], ['GUARRIORS', 68]]) { c.fillStyle = '#1a0a04'; c.fillText(s, SW / 2 + 4, y + 4); const gr = c.createLinearGradient(0, y, 0, y + 34); gr.addColorStop(0, '#ffe08a'); gr.addColorStop(0.5, '#e07a2a'); gr.addColorStop(1, '#8a2a0a'); c.fillStyle = gr; c.fillText(s, SW / 2, y); }
-    c.save(); c.scale(Z * 1.3, Z * 1.3); const k = Z * 1.3; HEROES.forEach((H, i) => { const P = Math.floor(t * 1.2 + i) % 3 === 0 ? PO.smash : PO.idle; puppet(c, (SW / 2 + (i - 1) * 110) / k, 230 / k, i === 2 ? -1 : 1, i === 1 ? PO.atk1 : P, H.look, null); }); c.restore(); // (the pole in magic pose crossed the logo)
+    c.save(); c.scale(Z * 1.3, Z * 1.3); const k = Z * 1.3; HEROES.forEach((H, i) => { const P = Math.floor(t * 1.2 + i) % 3 === 0 ? PO.smash : PO.idle; PIXGUAN.draw(c, (SW / 2 + (i - 1) * 110) / k, 230 / k, i === 2 ? -1 : 1, i === 1 ? PO.atk1 : P, H.id, H.look.s); }); c.restore(); // (the pole in magic pose crossed the logo)
     A.txt(c, 'GUAYOTA HA RAPTADO A MAGEC, EL SOL', SW / 2, 246, '#fff', 8, 'center'); A.txt(c, 'TRES GUERREROS SUBEN AL ECHEYDE', SW / 2, 260, '#9fd7ff', 8, 'center'); A.txt(c, '© 1496 MENCEYATO DE TAORO', SW / 2, 280, '#9fd7ff', 6, 'center'); }
   function drawBack(c, t) { const bg = background('teide'); c.drawImage(bg[0], 0, 0, 960, SH); const o = -((t * 10) % 960); c.drawImage(bg[2], o, 0, 960, SH); c.drawImage(bg[2], o + 960, 0, 960, SH); c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, 0, SW, SH); }
   return { title: 'GUANCHE GUARRIORS', sub: 'LA NOCHE DE GUAYOTA', marquee: ['#6a1a0a', '#1a0402'], titleCol: '#ffb04a', baseScore: 90000, music: { title: SONGS.title }, create, drawTitle, drawBack,

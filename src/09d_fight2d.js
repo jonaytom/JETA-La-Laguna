@@ -243,9 +243,9 @@ const FIGHT2D = (() => {
     if (blocked) { o.bstun = true; o.hp -= proj ? 1 : (MOVES.jab === M || MOVES.cross === M || MOVES.cpunch === M ? 1 : 2); o.stun = Math.round((M.hs || 16) * 0.5); o.vx = dir * 2.2; spark(o.x - dir * 8, o.y - 50, '#9fd7ff'); AUDIO.thud && AUDIO.thud(30); f.combo = 0; return; }
     o.bstun = false; o.block = false; o.hp -= Math.round((M.dmg || 10) * f.deal * o.recv); o.stun = M.hs || 18; o.mv = null; o.vx = dir * (M.kd ? 3.2 : 2.0); if (M.kd) { o.vy = -3.5; o.y -= 1; }
     f.combo = (o.stunPrev > 0 ? f.combo : 0) + 1; if (st.ev && f === st.a && f.combo >= 3) st.ev.combo = true; o.stunPrev = o.stun; f.chainOk = true; st.comboT = 60; st.comboBy = f;
-    spark(o.x - dir * 6, o.y - (M.lv === 'low' ? 12 : M.lv === 'mid' ? 40 : 58), '#ffe35a'); AUDIO.thud && AUDIO.thud(4); st.shake = 6;
+    spark(o.x - dir * 6, o.y - (M.lv === 'low' ? 12 : M.lv === 'mid' ? 40 : 58), '#ffe35a'); AUDIO.thud && AUDIO.thud(4); st.shake = 6; if (M.kd || f.combo >= 3) cr('ooh', M.kd ? 1 : 0.7); if (CR) CR.tick(0.3, 0.6);
     if (f.combo >= 3 && f.combo % 1 === 0) voice(f.combo >= 5 ? 'Combo brutal' : 'Combo');
-    if (o.hp <= 0) { o.hp = 0; o.ko = true; o.vy = -4; o.vx = dir * 2.5; o.y -= 1; st.koT = 1; st.slow = 50; voice('K. O.'); }
+    if (o.hp <= 0) { o.hp = 0; o.ko = true; o.vy = -4; o.vx = dir * 2.5; o.y -= 1; st.koT = 1; st.slow = 50; voice('K. O.'); cr('roar', 0.8); }
   }
   function spark(x, y, col) { st.fx.push({ x, y, t: 0, col }); }
   // ---------------- voice (Web Speech, English announcer like the arcades)
@@ -318,6 +318,7 @@ const FIGHT2D = (() => {
     const ia = live ? playerInput(st.a, st.b) : {}; const ib = live ? aiInput(st.b, st.a) : {};
     if (st.slow > 0) { st.slow--; if (st.slow % 3) { pressedK.clear(); return; } }
     if (live || st.phase === 'ko') { stepFighter(st.a, st.b, ia); stepFighter(st.b, st.a, ib); }
+    if (CR) CR.tick(1 / 60, st.phase === 'ko' ? 0.8 : 0.12); // the onlookers calm down between blows
     if (st.tut && st.phase !== 'ready') st.tut.check(st);
     // push apart, stage bounds
     const dx = st.b.x - st.a.x; if (Math.abs(dx) < 24 * SZ && Math.abs(st.a.y - st.b.y) < 40) { const p = (24 * SZ - Math.abs(dx)) / 2 * Math.sign(dx || 1); st.a.x -= p; st.b.x += p; }
@@ -383,6 +384,8 @@ const FIGHT2D = (() => {
   }
   function grab3D() { render(); const c = mkCanvas(W, H); c.getContext('2d').drawImage(renderer.domElement, 0, 0, W, H); return c; }
   // ---------------- public
+  let CR = null; // v0.90: the ring of onlookers (MINI.crowd, made in start: MINI comes later in the bundle)
+  const cr = (n, k) => { if (CR) CR.ev(n, k); };
   function start(opt) { if (!PZ.made) { PZ = MINI.pauser(() => running); PZ.made = true; } PZ.off();
     if (running) return; running = true; onEnd = opt.onEnd || null;
     if (!cv) { cv = $('fight2d'); cv.width = W * R; cv.height = H * R; cx = cv.getContext('2d'); cx.imageSmoothingEnabled = false; }
@@ -393,9 +396,9 @@ const FIGHT2D = (() => {
     st.trans = { kind: 'in', t: 0, dur: 0.9, from, tmp: mkCanvas(8, 8), done: null };
     keys.clear(); pressedK.clear(); document.exitPointerLock?.();
     GAME.state = 'fight2d'; document.body.classList.add('fighting'); cv.style.display = 'block'; cv.style.opacity = 0; $('fightPad').style.display = document.body.classList.contains('touchmode') ? 'block' : 'none';
-    AUDIO.thud && AUDIO.thud(1); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop);
+    AUDIO.thud && AUDIO.thud(1); if (CR) CR.stop(); CR = MINI.crowd('calle'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop);
   }
-  function finishFight() {
+  function finishFight() { if (CR) { CR.stop(); CR = null; }
     const won = st.winner === st.a; const res = { won, hpA: st.a.hp, hpB: st.b.hp, rounds: [st.a.wins, st.b.wins] };
     st.trans = { kind: 'out', t: 0, dur: 0.7, done: () => { running = false; cancelAnimationFrame(raf); cv.style.display = 'none'; $('fightPad').style.display = 'none'; document.body.classList.remove('fighting'); MINI.clearWorldInput(); GAME.state = 'play'; GAME.lock(); if (onEnd) onEnd(res); } };
   }
@@ -404,7 +407,7 @@ const FIGHT2D = (() => {
     const pad = $('fightPad'); if (!pad) return; const map = { fpL: 'vL', fpR: 'vR', fpU: 'vU', fpD: 'vD', fpP: 'vP', fpK: 'vK', fpB: 'vB' };
     for (const id in map) { const b = $(id); if (!b) continue; const k = map[id]; b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); if (!keys.has(k)) pressedK.add(k); keys.add(k); b.classList.add('on'); }); const up = (e) => { keys.delete(k); b.classList.remove('on'); }; b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up); }
   }
-  function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); if (cv) cv.style.display = 'none'; const fp = $('fightPad'); if (fp) fp.style.display = 'none'; document.body.classList.remove('fighting'); if (GAME.state === 'fight2d') GAME.state = 'play'; } // tests only
+  function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); if (CR) { CR.stop(); CR = null; } if (cv) cv.style.display = 'none'; const fp = $('fightPad'); if (fp) fp.style.display = 'none'; document.body.classList.remove('fighting'); if (GAME.state === 'fight2d') GAME.state = 'play'; } // tests only
   return { start, setupPad, _abort: abort, get running() { return running; }, _st: () => st, POSES, spritesFor, figure: drawFigure, bodyK }; // figure/bodyK: also used by the basketball game (09f)
 })();
 // ---- hooking it to the 3D world: punching a pedestrian starts a (short, one round) fight

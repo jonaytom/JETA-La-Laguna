@@ -92,34 +92,38 @@ const MUNDIALITO = (() => {
     o.go = (v) => { o.v = v; o.t = 0; if (v === 'champ') { sfx('clear'); o.conf = []; for (let i = 0; i < 90; i++) o.conf.push([Math.random() * W, -Math.random() * H, 20 + Math.random() * 40, ['#ffd400', '#ff6b6b', '#7fe0ff', '#7fe08a', '#fff'][i % 5]]); } };
     o.onResume = () => { if (o.v === 'result' && T && T.last) sfx(T.last.w === T.me ? 'clear' : 'die'); };
     SCR = o; T = null;
-    o.update = (dt, pad) => { o.t += dt; const A = pad.hit('vS') || pad.hit('vT'), Q = pad.hit('vP'); if (o.t < 0.35) return;
-      if (o.v === 'pick') { const c = o.sel % 4, r = (o.sel / 4) | 0;
+    // v0.90 (auditoría 0.86: «partir screen() en una función por pantalla»): what each screen does with the buttons…
+    const UPD = {
+      pick(A, Q, pad, dt) { const c = o.sel % 4, r = (o.sel / 4) | 0;
         if (pad.hit('vR')) { o.sel = r * 4 + ((c + 1) % 4); sfx('pick'); } if (pad.hit('vL')) { o.sel = r * 4 + ((c + 3) % 4); sfx('pick'); }
         if (pad.hit('vU') || pad.hit('vD')) { o.sel = (o.sel + 4) % 8; sfx('pick'); }
-        if (A) { newTour(id, TL[o.sel]); sfx('coin'); o.go('round'); } else if (Q) api.toMenu(); return; }
-      if (o.v === 'round') { if (A) { sfx('start'); play(); } else if (Q) { T = null; o.go('pick'); } return; }
-      if (o.v === 'result') { if (!A) return; if (!T || T.last.w !== T.me) { T = null; o.go('pick'); return; } T.round++; if (T.round >= ROUNDS.length) { o.go('champ'); } else o.go('round'); return; }
-      if (o.v === 'champ') { for (const p of o.conf) { p[1] += p[2] * dt; if (p[1] > H) p[1] -= H + 10; } if (A && o.t > 1.2) { o.name = ['A', 'A', 'A']; o.ni = 0; o.go('name'); } return; }
-      if (o.v === 'name') { let k = ABC.indexOf(o.name[o.ni]); if (pad.hit('vU') || pad.hit('vR')) { k = (k + 1) % ABC.length; sfx('pick'); } if (pad.hit('vD') || pad.hit('vL')) { k = (k + ABC.length - 1) % ABC.length; sfx('pick'); } o.name[o.ni] = ABC[k];
-        if (A) { o.ni++; sfx('coin'); if (o.ni >= 3) { o.won = champion(id, T.me, o.name.join('')); o.hl = o.name.join(''); o.go('table'); } } return; }
-      if (o.v === 'table') { if (A || Q) { T = null; o.go('pick'); } } };
+        if (A) { newTour(id, TL[o.sel]); sfx('coin'); o.go('round'); } else if (Q) api.toMenu(); return; },
+      round(A, Q, pad, dt) { if (A) { sfx('start'); play(); } else if (Q) { T = null; o.go('pick'); } return; },
+      result(A, Q, pad, dt) { if (!A) return; if (!T || T.last.w !== T.me) { T = null; o.go('pick'); return; } T.round++; if (T.round >= ROUNDS.length) { o.go('champ'); } else o.go('round'); return; },
+      champ(A, Q, pad, dt) { for (const p of o.conf) { p[1] += p[2] * dt; if (p[1] > H) p[1] -= H + 10; } if (A && o.t > 1.2) { o.name = ['A', 'A', 'A']; o.ni = 0; o.go('name'); } return; },
+      name(A, Q, pad, dt) { let k = ABC.indexOf(o.name[o.ni]); if (pad.hit('vU') || pad.hit('vR')) { k = (k + 1) % ABC.length; sfx('pick'); } if (pad.hit('vD') || pad.hit('vL')) { k = (k + ABC.length - 1) % ABC.length; sfx('pick'); } o.name[o.ni] = ABC[k];
+        if (A) { o.ni++; sfx('coin'); if (o.ni >= 3) { o.won = champion(id, T.me, o.name.join('')); o.hl = o.name.join(''); o.go('table'); } } return; },
+      table(A, Q, pad, dt) { if (A || Q) { T = null; o.go('pick'); } },
+    };
+    o.update = (dt, pad) => { o.t += dt; const A = pad.hit('vS') || pad.hit('vT'), Q = pad.hit('vP'); if (o.t < 0.35) return;
+      const f = UPD[o.v]; if (f) f(A, Q, pad, dt); };
     // ----- drawing
     const bg = (g) => { const gr = g.createLinearGradient(0, 0, 0, H); if (S.game === 'basket') { gr.addColorStop(0, '#1a0e06'); gr.addColorStop(1, '#5a3418'); } else { gr.addColorStop(0, '#04210f'); gr.addColorStop(1, '#0f5a2a'); } g.fillStyle = gr; g.fillRect(0, 0, W, H);
       g.fillStyle = 'rgba(255,255,255,0.05)'; for (let y = 0; y < H; y += 16) g.fillRect(0, y, W, 8); };
     const head = (g, sub) => { txt(g, S.title, W / 2, 10, S.col, 16, 'center'); txt(g, sub, W / 2, 32, '#fff', 8, 'center'); };
     const foot = (g, s) => txt(g, s, W / 2, H - 16, '#9fd7ff', 8, 'center');
     const tag = (g, t, x, y, st) => { flag(g, t.id, x, y, 18, 12); txt(g, t.code, x + 22, y + 2, st === 'win' ? '#ffd400' : st === 'lost' ? '#777' : t === (T && T.me) ? '#7fe0ff' : '#fff', 8); };
-    o.draw = (g) => { bg(g);
-      if (o.v === 'pick') { head(g, 'EL MUNDIALITO · ELIGE TU SELECCIÓN');
+    // …and how each one is drawn
+    const DRAW = {
+      pick(g) { head(g, 'EL MUNDIALITO · ELIGE TU SELECCIÓN');
         TL.forEach((t, i) => { const c = i % 4, r = (i / 4) | 0, x = 18 + c * 113, y = 50 + r * 128, on = i === o.sel;
           g.fillStyle = on ? 'rgba(255,212,0,0.2)' : 'rgba(0,0,0,0.4)'; g.fillRect(x, y, 106, 120);
           if (on) { g.strokeStyle = Math.floor(o.t * 4) % 2 ? '#ffd400' : '#ff8a3a'; g.lineWidth = 2; g.strokeRect(x + 1, y + 1, 104, 118); }
           flag(g, t.id, x + 13, y + 8, 80, 50); txt(g, t.name, x + 53, y + 64, on ? '#ffd400' : '#fff', 8, 'center');
           kitMan(g, t.home, x + 22, y + 76, 1.3, BB); kitMan(g, t.away, x + 62, y + 76, 1.3, BB);
           const st5 = Math.max(1, Math.min(5, Math.round((lvOf(t, S) - 0.48) / 0.06))); for (let k = 0; k < 5; k++) { g.fillStyle = k < st5 ? '#ffd400' : 'rgba(255,255,255,0.18)'; g.fillRect(x + 28 + k * 10, y + 113, 7, 4); } });
-        foot(g, 'FLECHAS ELEGIR   A JUGAR   Q MENÚ'); return; }
-      if (!T && o.v !== 'table') return;
-      if (o.v === 'round' || o.v === 'result') { const R = T.round; head(g, o.v === 'round' ? ROUNDS[R] : 'RESULTADOS · ' + ROUNDS[R]);
+        foot(g, 'FLECHAS ELEGIR   A JUGAR   Q MENÚ'); return; },
+      bracket(g) { const R = T.round; head(g, o.v === 'round' ? ROUNDS[R] : 'RESULTADOS · ' + ROUNDS[R]);
         // the bracket: quarter-finals, semis, final
         const col = [14, 176, 330], rowY = (r, i) => (r === 0 ? 54 + i * 22 + ((i / 2) | 0) * 6 : r === 1 ? 65 + i * 50 : 90 + i * 100);
         const seed = T.hist[0] ? T.hist[0].flatMap((m) => [m.a, m.b]) : (R === 0 ? T.alive : []);
@@ -135,18 +139,21 @@ const MUNDIALITO = (() => {
         else { const m = T.last, won = m.w === T.me; g.fillStyle = 'rgba(0,0,0,0.65)'; g.fillRect(40, 250, W - 80, 52);
           txt(g, won ? (T.round === 2 ? '¡CAMPEONES!' : '¡A ' + ROUNDS[T.round + 1] + '!') : '¡ELIMINADOS!', W / 2, 258, won ? '#ffd400' : '#ff6b6b', 12, 'center');
           txt(g, `${m.a.name} ${m.sc[0]} - ${m.sc[1]} ${m.b.name}`, W / 2, 280, '#fff', 8, 'center'); foot(g, 'A SEGUIR'); }
-        return; }
-      if (o.v === 'champ') { for (const p of o.conf) { g.fillStyle = p[3]; g.fillRect(p[0], p[1], 3, 5); }
+        return; },
+      champ(g) { for (const p of o.conf) { g.fillStyle = p[3]; g.fillRect(p[0], p[1], 3, 5); }
         head(g, 'EL MUNDIALITO DE LA GOFIO-8'); flag(g, T.me.id, W / 2 - 60, 70, 120, 76); kitMan(g, T.me.home, W / 2 - 14, 158, 2, BB);
         const k = Math.min(1, o.t * 2); txt(g, '¡CAMPEONES', W / 2, 222, '#ffd400', Math.round(10 + 8 * k), 'center'); txt(g, 'DEL MUNDIALITO!', W / 2, 248, '#ffd400', Math.round(10 + 8 * k), 'center');
-        txt(g, T.me.name, W / 2, 278, '#fff', 12, 'center'); if (o.t > 1.2) foot(g, 'A PONER TUS INICIALES'); return; }
-      if (o.v === 'name') { head(g, '¡CAMPEONES! LA TABLA DE CAMPEONES'); flag(g, T.me.id, W / 2 - 30, 60, 60, 38); txt(g, 'TUS INICIALES', W / 2, 120, '#9fd7ff', 8, 'center');
+        txt(g, T.me.name, W / 2, 278, '#fff', 12, 'center'); if (o.t > 1.2) foot(g, 'A PONER TUS INICIALES'); return; },
+      name(g) { head(g, '¡CAMPEONES! LA TABLA DE CAMPEONES'); flag(g, T.me.id, W / 2 - 30, 60, 60, 38); txt(g, 'TUS INICIALES', W / 2, 120, '#9fd7ff', 8, 'center');
         for (let i = 0; i < 3; i++) { const on = i === o.ni && Math.floor(performance.now() / 250) % 2 === 0; txt(g, o.name[i], W / 2 - 40 + i * 40, 150, i === o.ni ? (on ? '#ffd400' : '#fff') : '#7fe08a', 24, 'center'); }
-        foot(g, '↑↓ LETRA   A SIGUIENTE'); return; }
-      if (o.v === 'table') { head(g, 'TABLA DE CAMPEONES'); const L = ((ARCADE.data().scores || {})['mundial_' + id] || []).slice(0, 10);
+        foot(g, '↑↓ LETRA   A SIGUIENTE'); return; },
+      table(g) { head(g, 'TABLA DE CAMPEONES'); const L = ((ARCADE.data().scores || {})['mundial_' + id] || []).slice(0, 10);
         L.forEach(([n, team, w], i) => { const y = 60 + i * 22, tm = TEAMS.find((q) => q.name === team), hl = i === 0 && n === o.hl && Math.floor(performance.now() / 200) % 2;
           const c = hl ? '#ffd400' : ['#ff6b6b', '#ffb347', '#ffd400', '#7fe08a', '#5ec8ff'][i % 5]; txt(g, String(i + 1).padStart(2, ' '), 70, y, c, 8); txt(g, n, 110, y, c, 8); if (tm) flag(g, tm.id, 170, y - 2, 18, 12); txt(g, team, 196, y, c, 8); });
-        if (!L.length) txt(g, 'TODAVÍA NO HAY CAMPEONES', W / 2, 140, '#fff', 8, 'center'); foot(g, 'A SEGUIR'); } };
+        if (!L.length) txt(g, 'TODAVÍA NO HAY CAMPEONES', W / 2, 140, '#fff', 8, 'center'); foot(g, 'A SEGUIR'); },
+    };
+    o.draw = (g) => { bg(g); if (o.v === 'pick') { DRAW.pick(g); return; } if (!T && o.v !== 'table') return;
+      DRAW[o.v === 'round' || o.v === 'result' ? 'bracket' : o.v](g); };
     return o; }; }
   // the two cartridges, in the GOFIO-8's menu
   const MUS_ = { title: { bpm: 132, div: 4, loop: true, ch: [{ w: 'sq', v: 0.7, n: ['C5 . E5 G5 . E5 C5 . D5 . F5 A5 . F5 D5 .', 'E5 . G5 C6 . G5 E5 . D5 . G5 B5 . . G5 .'], form: [0, 1, 0, 1] }, { w: 'tri', v: 1, n: 'C3 . G2 . C3 . G2 . D3 . A2 . G2 . B2 .' }] } };

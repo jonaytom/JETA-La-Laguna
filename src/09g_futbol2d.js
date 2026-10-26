@@ -26,6 +26,7 @@ const FUTBOL2D = (() => {
   const PZ = MINI.pauser(() => running); const IN = MINI.input(() => running), { press, held, hit, rel } = IN, keys = IN.keys; // v0.69: shared with the other minigames (09ea_minijuegos.js)
   // ---------- sounds
   const snd = MINI.snd, say = (t) => MINI.say(t);
+  let CR = null; const cr = (n, k) => { if (CR) CR.ev(n, k); }; // v0.90 (Jonay): the roar of the stands (MINI.crowd)
   // ---------- helpers
   const hx = (n, d = '#888') => (typeof n === 'number' ? '#' + (n >>> 0).toString(16).padStart(6, '0') : typeof n === 'string' ? n : d);
   const D = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -102,7 +103,7 @@ const FUTBOL2D = (() => {
     if (st.tut && p.team === 1) { tx = p.x; ty = p.y; run = false; }
     return { tx, ty, run };
   }
-  function tackle(p, v, chance) { if (!v || v.down > 0 || st.sp || v.drib > 0) return; p.kickCD = 0.6; if (Math.random() < chance) { const b = st.ball; b.owner = null; b.vx = (b.x - v.x) * 3 + (p.x < v.x ? 2 : -2); b.vy = (b.y - v.y) * 3; b.vz = 0.5; st.last = p; v.kickCD = 0.7; if (st.ev && p.team === 0 && p === st.ctl) st.ev.tackle = true; } }
+  function tackle(p, v, chance) { if (!v || v.down > 0 || st.sp || v.drib > 0) return; p.kickCD = 0.6; if (Math.random() < chance) { const b = st.ball; b.owner = null; b.vx = (b.x - v.x) * 3 + (p.x < v.x ? 2 : -2); b.vy = (b.y - v.y) * 3; b.vz = 0.5; st.last = p; v.kickCD = 0.7; if (st.ev && p.team === 0 && p === st.ctl) st.ev.tackle = true; cr('ooh', 0.5); } }
   function keeper(p, dt) {
     if (st.tut && p.team === 1) return { tx: p.x, ty: p.y, sp: 0 };
     const b = st.ball, oy = ownY(p.team), sg = p.team === 0 ? -1 : 1; let tx = clamp(PW / 2 + (b.x - PW / 2) * 0.3, PW / 2 - GW / 2 + 0.4, PW / 2 + GW / 2 - 0.4), ty = oy + sg * 1.1, sp = 5.5;
@@ -120,14 +121,14 @@ const FUTBOL2D = (() => {
         // v0.79: too wide to reach on foot → a full-length dive («palomita») towards where it crosses, at its height
         const gap = tx - p.x; if (Math.abs(gap) > 1.0 && t < 0.75 && b.z < GH + 0.4 && Math.random() < 0.55 + 0.4 * p.lv) { p.diveT = 0.6; p.diveS = Math.sign(gap); p.vx = p.diveS * clamp(Math.abs(gap) / Math.max(0.25, t) * 1.1, 5, 10.5); p.vy = 0; p.diveH = clamp(b.z + b.vz * t - 4.9 * t * t, 0, GH); snd('swish'); return { tx: p.x, ty: p.y, sp: 0 }; } }
       if (D(p, b) < 1.05 + 0.45 * p.lv && b.z < GH + 0.3) { b.shot.saved = true; const spd = Math.hypot(b.vx, b.vy); const ok = Math.random() < clamp(0.42 + 0.5 * p.lv - (spd - 14) * 0.03, 0.12, 0.92);
-        if (ok) { if (Math.random() < 0.55) { give(p); p.hold = 1.2; banner('¡PARADÓN!', '#9fd7ff', 1); } else { b.vx = (b.x < p.x ? -1 : 1) * rnd(5, 8); b.vy = -b.vy * 0.25; b.vz = 2; st.last = p; banner('¡DESPEJA!', '#9fd7ff', 1); } snd('kick'); } else p.kickCD = 0.5; } }
+        if (ok) { if (Math.random() < 0.55) { give(p); p.hold = 1.2; banner('¡PARADÓN!', '#9fd7ff', 1); cr(p.team === 0 ? 'cheer' : 'uuuh'); } else { b.vx = (b.x < p.x ? -1 : 1) * rnd(5, 8); b.vy = -b.vy * 0.25; b.vz = 2; st.last = p; banner('¡DESPEJA!', '#9fd7ff', 1); } snd('kick'); } else p.kickCD = 0.5; } }
     return { tx, ty, sp };
   }
   // the keeper in the air, stretched out: catches or parries what passes within his reach, then lies down a moment
   function diveStep(p, dt) { p.diveT -= dt; p.x += p.vx * dt; p.vx *= 0.97; const b = st.ball;
     if (b.shot && b.shot.team !== p.team && !b.shot.saved && !b.owner) { const reach = 1.45 + 0.45 * p.lv, dx = b.x - (p.x + p.diveS * 0.5), dy = b.y - p.y;
       if (Math.hypot(dx, dy) < reach && b.z < GH + 0.5) { b.shot.saved = true; const spd = Math.hypot(b.vx, b.vy); const ok = Math.random() < clamp(0.35 + 0.5 * p.lv - (spd - 14) * 0.03, 0.12, 0.85);
-        if (ok) { if (Math.random() < 0.4 && spd < 19) { give(p); p.hold = 1.4; banner('¡PALOMITA!', '#9fd7ff', 1.2); } else { b.vx = p.diveS * rnd(4, 7); b.vy = -b.vy * 0.2; b.vz = 2.5; st.last = p; banner('¡VAYA PALOMITA!', '#9fd7ff', 1.2); } snd('kick'); } } }
+        if (ok) { if (Math.random() < 0.4 && spd < 19) { give(p); p.hold = 1.4; banner('¡PALOMITA!', '#9fd7ff', 1.2); cr(p.team === 0 ? 'cheer' : 'uuuh'); } else { b.vx = p.diveS * rnd(4, 7); b.vy = -b.vy * 0.2; b.vz = 2.5; st.last = p; banner('¡VAYA PALOMITA!', '#9fd7ff', 1.2); } snd('kick'); } } }
     if (p.diveT <= 0) { p.diveT = 0; p.vx = 0; if (st.ball.owner !== p) { p.down = 0.45; p.kickCD = 0.5; } } }
   // ---------- one step
   function stepPlayer(p, dt) {
@@ -193,7 +194,8 @@ const FUTBOL2D = (() => {
     for (const t of [0, 1]) { const gy = goalY(t); const crossed = t === 0 ? b.y < 0 : b.y > PL; if (!crossed) continue;
       const inPosts = Math.abs(b.x - PW / 2) < GW / 2;
       if (inPosts && b.z < GH) { goal(t); return; }
-      if (!b.owner && Math.abs(Math.abs(b.x - PW / 2) - GW / 2) < 0.25 && b.z < GH + 0.2) { b.vy = -b.vy * 0.6; b.y = gy + (t === 0 ? 0.1 : -0.1); snd('post'); banner('¡AL PALO!', '#fff', 0.9); return; }
+      if (!b.owner && Math.abs(Math.abs(b.x - PW / 2) - GW / 2) < 0.25 && b.z < GH + 0.2) { b.vy = -b.vy * 0.6; b.y = gy + (t === 0 ? 0.1 : -0.1); snd('post'); banner('¡AL PALO!', '#fff', 0.9); cr('uuuh', 1.2); return; }
+      if (b.shot && Math.abs(b.x - PW / 2) < GW / 2 + 3) cr('uuuh', 0.8); // wide, but close
       outOfPlay('fondo', t); return; }
     if (b.x < 0 || b.x > PW) { outOfPlay('banda'); return; }
     if (b.owner) return;
@@ -212,7 +214,7 @@ const FUTBOL2D = (() => {
   }
   function goalKick(team, label) { const k = st.p.find((q) => q.team === team && q.role === 'gk'); k.x = PW / 2; k.y = ownY(team) + (team === 0 ? -2 : 2); k.vx = k.vy = 0; give(k); k.hold = 1.3; st.sp = { p: k, kind: 'gk', t: 0 }; restart(k, label); }
   // a foul on the taker of a restart (a slide into the keeper holding the ball, or into a throw-in): whistle and again
-  function foul(p, v) { const b = st.ball; snd('whistle'); p.slide = 0; p.vx = p.vy = 0; p.down = 0.6; p.kickCD = 1; if (st.ev && p === st.ctl) st.ev.foul = true;
+  function foul(p, v) { const b = st.ball; snd('whistle'); cr('boo', 0.5); p.slide = 0; p.vx = p.vy = 0; p.down = 0.6; p.kickCD = 1; if (st.ev && p === st.ctl) st.ev.foul = true;
     if (v.role === 'gk') { goalKick(v.team, '¡FALTA AL PORTERO!'); return; }
     st.sp.t = 0; give(v); st.sp = st.sp && st.sp.p === v ? st.sp : { p: v, kind: 'banda', t: 0 }; restart(v, '¡FALTA!'); b.vx = b.vy = 0; }
   // nobody of the other team inside the circle round the taker until the ball is played (a slide may still go in: foul)
@@ -226,7 +228,7 @@ const FUTBOL2D = (() => {
     const ang = Math.atan2(PL / 2 - tk.y, PW / 2 - tk.x); const q = bestPass(tk, ang); if (q) passTo(tk, q, sp.kind === 'corner' ? 0.5 : 0.2); else kick(tk, ang, 10, 2); }
   function restart(p, label) { st.pause = 0.7; banner(label, '#fff', 0.8); if (p.team === 0 && p.role !== 'gk') st.ctl = p; }
   function goal(t) { st.sp = null; st.score[t]++; st.phase = 'goal'; st.pt = 2.4; st.next = 1 - t; st.ball.owner = null; st.ball.vx *= 0.1; st.ball.vy *= 0.1;
-    banner('¡GOOOOL!', t === 0 ? '#7fe08a' : '#ff6b6b', 2.2); snd('goal'); snd('whistle'); say('¡Gol!'); if (st.ev && t === 0) st.ev.goal = true;
+    banner('¡GOOOOL!', t === 0 ? '#7fe08a' : '#ff6b6b', 2.2); snd('goal'); snd('whistle'); say('¡Gol!'); if (t === 0) { cr('roar', 1.4); setTimeout(() => cr('bombo'), 2600); } else cr('boo'); if (st.ev && t === 0) st.ev.goal = true;
     if (st.golden) { st.phase = 'end'; st.pt = 3; } }
   function step(dt) {
     st.time0 += dt; if (st.bannerT > 0) st.bannerT -= dt;
@@ -244,6 +246,8 @@ const FUTBOL2D = (() => {
     else if (st.swT <= 0 && !(b.owner && b.owner.team === 0)) { const n = nearestCtl(false); if (n !== st.ctl && D(n, b) + 2 < D(st.ctl, b) && st.ctl.slide <= 0) { st.ctl = n; } st.swT = 0.25; }
     for (const p of st.p) stepPlayer(p, dt);
     keepAway(); takeRestart(dt);
+    if (CR) { const gd = Math.min(Math.abs(b.y - goalY(0)), Math.abs(b.y - goalY(1))); CR.tick(dt, Math.min(1, 0.12 + (gd < 16 ? 0.45 * (1 - gd / 16) : 0) + (b.shot ? 0.3 : 0) + (st.golden ? 0.4 : 0)));
+      st.crT = (st.crT ?? 8) - dt; if (st.crT <= 0) { cr(Math.random() < 0.6 ? 'bombo' : 'claps', 0.8); st.crT = 18 + Math.random() * 14; } } // the drum of the stand, now and then
     // running into the ball takes it off the rival (you: easily; the CPU only by tackling)
     const me = st.ctl; if (!st.auto && !st.sp && me && b.owner && b.owner.team === 1 && b.owner.role !== 'gk' && me.down <= 0 && me.kickCD <= 0 && !(b.owner.drib > 0) && Math.hypot(b.x - me.x, b.y - me.y) < 0.6 && Math.random() < dt * 2.5) { b.owner.kickCD = 0.6; give(me); if (st.ev) st.ev.tackle = true; }
     stepBall(dt);
@@ -427,11 +431,11 @@ const FUTBOL2D = (() => {
     for (let i = 0; i < 5; i++) st.p.push(mkPlayer(t1[i] || { name: 'RIV ' + (i + 1) }, 1, i, k1));
     for (const q of st.p) q.lv = q.team === 1 ? opt.lv ?? 0.5 : opt.mateLv ?? 0.6;
     kickoff(0); st.ctl = st.p.find((q) => q.team === 0 && q.role === 'fwd'); updateCam(1); IN.reset(); document.exitPointerLock?.();
-    MINI.show(cv, 'futbol2d'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); return true;
+    MINI.show(cv, 'futbol2d'); if (CR) CR.stop(); CR = MINI.crowd('futbol'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); return true;
   }
   function finish() { if (!st || st.fadeDir > 0) return; st.fadeDir = 1; }
-  function close() { running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'futbol2d', !inConsole); /* v0.86: back to the GOFIO-8, not to the 3D world */
+  function close() { running = false; cancelAnimationFrame(raf); if (CR) { CR.stop(); CR = null; } MINI.hide(cv, 'futbol2d', !inConsole); /* v0.86: back to the GOFIO-8, not to the 3D world */
     const res = { won: st.score[0] > st.score[1], score: st.score.slice() }; if (onEnd) onEnd(res); }
-  function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'futbol2d', false); } // tests only
+  function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); if (CR) { CR.stop(); CR = null; } MINI.hide(cv, 'futbol2d', false); } // tests only
   return { start, _abort: abort, get running() { return running; }, _st: () => st, _foul: (p, v) => foul(p, v), _give: (p) => give(p), _pz: () => PZ, _out: (k, t) => outOfPlay(k, t), _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); updateCam(); } }, _press: press, _draw: () => draw() };
 })();

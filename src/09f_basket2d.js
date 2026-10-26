@@ -30,22 +30,26 @@ const BASKET2D = (() => {
     dunk: { tl: -6, sF: 175, eF: -5, sB: 120, eB: -20, hF: 40, kF: -60, hB: 10, kB: -40, dy: -4 },
     defend: { tl: 4, sF: 125, eF: -25, sB: 115, eB: -30, hF: 22, kF: -30, hB: -18, kB: -28, dy: 3 },
   };
-  const SPR = new Map();
-  function sprites(look, nose) {
-    const key = JSON.stringify(look) + nose; if (SPR.has(key)) return SPR.get(key);
-    const s = {}, pz = P();
-    for (const k of ['idle0', 'idle1', 'walk0', 'walk1', 'walk2', 'walk3', 'jump', 'jab1', 'ko', 'win']) s[k] = FIGHT2D.figure(look, pz[k], nose);
-    for (let i = 0; i < 4; i++) s['drib' + i] = FIGHT2D.figure(look, { ...pz['walk' + i], sF: 28, eF: -55 }, nose);
-    for (const k in EXTRA) s[k] = FIGHT2D.figure(look, EXTRA[k], nose);
-    SPR.set(key, s); return s;
-  }
+  // v0.90 (Jonay: «A++ semicabezón 120»): the players drawn by PIXBASKET (09eb) from these same poses, made when first
+  // needed and kept per look and number (the same man in two matches is drawn once)
+  const SPR = new Map(), NUMS = [23, 7, 11, 32, 5, 14, 8, 21, 3, 10];
+  function sprites(look, nose, num) { const key = JSON.stringify(look) + nose + num; if (!SPR.has(key)) SPR.set(key, {}); return SPR.get(key); }
+  // the arms of a ball player (not the fight's guard, that put the hands on the hips): hanging when still, swinging
+  // against the legs when running; dribbling, the front hand stays on the ball
+  const ARMS = { idle0: { sF: 14, eF: -28, sB: 10, eB: -22 }, idle1: { sF: 12, eF: -34, sB: 8, eB: -26 },
+    walk0: { sF: -24, eF: -48, sB: 32, eB: -58 }, walk1: { sF: 4, eF: -52, sB: 4, eB: -50 }, walk2: { sF: 32, eF: -58, sB: -24, eB: -48 }, walk3: { sF: 4, eF: -52, sB: 4, eB: -50 } };
+  function poseFor(k) { const pz = P(); if (EXTRA[k]) return EXTRA[k];
+    if (k.startsWith('drib')) { const w = 'walk' + k.slice(4); return { ...pz[w], ...ARMS[w], sF: 28, eF: -55 }; }
+    return ARMS[k] ? { ...pz[k], ...ARMS[k] } : pz[k] || pz.idle0; }
+  function sprOf(p, k) { return p.spr[k] || (p.spr[k] = PIXBASKET.sprite(p.nose ? { ...p.look, bigNose: true } : p.look, poseFor(k), p.num)); }
   // ---------- input (virtual buttons from the player's controls)
   const PZ = MINI.pauser(() => running); const IN = MINI.input(() => running), { press, held, hit, rel } = IN, keys = IN.keys; // v0.69: shared with the other minigames (09ea_minijuegos.js)
   // ---------- little sounds (own nodes on the game's audio context)
   const snd = MINI.snd, say = (t) => MINI.say(t);
+  let CR = null, PAV = false; const cr = (n, k) => { if (CR && (PAV || !/^(organ|charge|defensa)$/.test(n))) CR.ev(n, k); }; // (the organ and the chants only in a pavilion) // v0.90: the crowd of the pavilion (MINI.crowd)
   // ---------- setup
   function mkPlayer(o, team, i) {
-    return { name: o.name, look: o.look || {}, nose: !!o.nose, spr: sprites(o.look || {}, !!o.nose), team, human: !!o.human, x: 0, z: 0, y: 0, vx: 0, vz: 0, vy: 0, dir: team ? -1 : 1, turbo: 1, down: 0, act: '', actT: 0, air: false,
+    return { name: o.name, look: o.look || {}, nose: !!o.nose, num: o.num || NUMS[(team * 3 + i) % NUMS.length], spr: sprites(o.look || {}, !!o.nose, o.num || NUMS[(team * 3 + i) % NUMS.length]), team, human: !!o.human, x: 0, z: 0, y: 0, vx: 0, vz: 0, vy: 0, dir: team ? -1 : 1, turbo: 1, down: 0, act: '', actT: 0, air: false,
       shootHold: false, holdT: 0, streak: 0, fire: false, lv: o.lv ?? 0.5, think: 0, tgt: [0, 0], walkT: Math.random() * 3, idx: i, mark: null, stealCD: 0 };
   }
   function place(attacking) { // positions after a basket / at the start: «attacking» team brings the ball from its own half
@@ -122,7 +126,7 @@ const BASKET2D = (() => {
   const DKN = 16; // frames per dunk
   function dunkPose(id, u) { const ks = DK[id].keys; let i = 0; while (i < ks.length - 2 && u > ks[i + 1][0]) i++; const [u0, a] = ks[i], [u1, b] = ks[i + 1]; const t = clamp((u - u0) / ((u1 - u0) || 1), 0, 1), e = t * t * (3 - 2 * t);
     const o = {}; for (const k in a) o[k] = typeof a[k] === 'number' ? a[k] + (b[k] - a[k]) * e : a[k]; return o; }
-  function dunkSprite(p, id, f) { const key = 'dk_' + id + '_' + f; if (!p.spr[key]) p.spr[key] = FIGHT2D.figure(p.look, dunkPose(id, f / (DKN - 1)), p.nose); return p.spr[key]; }
+  function dunkSprite(p, id, f) { const key = 'dk_' + id + '_' + f; if (!p.spr[key]) p.spr[key] = PIXBASKET.sprite(p.nose ? { ...p.look, bigNose: true } : p.look, dunkPose(id, f / (DKN - 1)), p.num); return p.spr[key]; }
   // where a hand is in the sprite (same bones as the fight's drawer: 72×88 units, hip at 36,50+dy)
   function handAt(P, front) { const r = (a) => a * Math.PI / 180, hy = 50 + (P.dy || 0), lean = r(P.tl || 0); const nk = [36 + Math.sin(lean) * 22, hy - Math.cos(lean) * 22];
     const s0 = front ? [nk[0] + 2, nk[1] + 3] : [nk[0] - 2, nk[1] + 3], aS = front ? P.sF : P.sB, aE = front ? P.eF : P.eB;
@@ -135,7 +139,7 @@ const BASKET2D = (() => {
     const c = COMBOS[(Math.random() * 4) | 0]; const sg = Math.sign(hoopOf(p.team).x - p.x) || 1;
     const vk = { adelante: [sg > 0 ? 'vR' : 'vL'], atras: [sg > 0 ? 'vL' : 'vR'], abajo: ['vD'], arriba: ['vU'], puno: ['vS'], patada: ['vT', 'vP'] };
     st.combo = { c, i: 0, t: 2.7, by: p, need: c.seq.map((k) => vk[k]), sg, ok: null, d }; st.phase = 'combo'; /* v0.89: 2.7 s (was 3.6, −25 %) */ p.turbo = Math.max(0, p.turbo - 0.2);
-    IN.clearHits(); banner('¡ENTRADA EN COMBO!', '#ffd400', 1.0); snd('crowd');
+    IN.clearHits(); banner('¡ENTRADA EN COMBO!', '#ffd400', 1.0); cr('ooh', 1.2);
   }
   function comboStep(dt) {
     const C = st.combo; if (C.ok !== null) { C.end -= dt; if (C.end <= 0) { st.phase = 'play'; st.combo = null; } return; }
@@ -177,7 +181,7 @@ const BASKET2D = (() => {
     if (dist(p, v) > 1.3) return;
     const shove = (p.human ? held('vT') : Math.random() < 0.35 * p.lv) && p.turbo > 0.2;
     if (shove) { p.turbo -= 0.25; v.down = 1.0; v.shootHold = false; b.holder = null; b.mode = 'loose'; b.x = v.x; b.z = v.z; b.y = 1; b.vx = rnd(-2, 2); b.vz = rnd(-2, 2); b.vy = 2; banner('¡EMPUJÓN!', '#ff8a3d'); snd('bounce'); if (st.ev && p.human) st.ev.steal = true; return; }
-    if (Math.random() < (p.human ? 0.55 : 0.06 + p.lv * 0.3)) { give(p); banner('¡ROBO!', '#5ec8ff'); if (st.ev && p.human) st.ev.steal = true; }
+    if (Math.random() < (p.human ? 0.55 : 0.06 + p.lv * 0.3)) { give(p); banner('¡ROBO!', '#5ec8ff'); cr(p.team === 0 ? 'cheer' : 'ooh', 0.6); if (st.ev && p.human) st.ev.steal = true; }
   }
   // ---------- banners & HUD state
   function banner(t, c = '#ffd400', dur = 1.2) { st.banner = { t, c, dur, t0: st.time0 }; st.bannerT = dur; }
@@ -187,10 +191,34 @@ const BASKET2D = (() => {
     else if (kind === 'dunk') { banner('¡MATE!', '#ffd400'); say(Math.random() < 0.5 ? '¡Matazo!' : '¡Qué mate!'); }
     else if (pts === 3) { banner('¡TRIPLE!', '#7fe08a'); if (Math.random() < 0.6) say('¡Triple!'); }
     else banner(by.human ? '¡CANASTA!' : 'CANASTA', team === 0 ? '#7fe08a' : '#ff6b6b', 0.9);
-    snd('swish'); snd('crowd'); if (st.ev && by.team === 0) st.ev.score = true; if (st.ev && kind === 'dunk' && by.human) st.ev.dunk = true;
-    st.phase = 'score'; st.pt = 1.3; st.next = 1 - team;
+    snd('swish'); cr('net'); if (team === 0) { cr(kind === 'dunk' || pts === 3 ? 'roar' : 'cheer'); if (Math.random() < 0.5) cr('organ'); } else cr('boo', 0.6); if (st.ev && by.team === 0) st.ev.score = true; if (st.ev && kind === 'dunk' && by.human) st.ev.dunk = true;
+    st.phase = 'score'; st.pt = 1.3; st.next = 1 - team; setInbound(1 - team, hoopOf(team));
     if (st.golden) { st.phase = 'end'; st.pt = 3; }
   }
+  // ---------- v0.90 (Jonay: «saca desde la línea de fondo, tiene que pasarla, no puede aparecer en medio; debe haber
+  // continuidad»): after a basket nobody jumps to a new place. The team that conceded walks to its own baseline, one of
+  // them takes the ball behind the hoop and has to pass it in; his mates come to get it and the others go back.
+  function setInbound(t, hoop) { const left = hoop.x < CL / 2, bx = left ? 0.35 : CL - 0.35, sg = left ? 1 : -1;
+    const A = st.p.filter((q) => q.team === t), D = st.p.filter((q) => q.team !== t);
+    const by = A.slice().sort((a, c) => Math.hypot(a.x - bx, a.z - 5.2) - Math.hypot(c.x - bx, c.z - 5.2))[0];
+    const spots = [[bx + sg * 3.4, 9.6], [bx + sg * 6.8, 3.8], [bx + sg * 9.5, 8.5]], dsp = [[bx + sg * 4.6, 8.4], [bx + sg * 7.8, 4.6], [bx + sg * 11, 7.5]];
+    let i = 0; for (const q of A) q.inbT = q === by ? [bx, 5.2] : spots[i++ % 3]; D.forEach((q, j) => { q.inbT = dsp[j % 3]; });
+    st.inb = { team: t, by, sg, t: 0 }; }
+  function inbWalk(q, dt) { if (!q.inbT || q.air || q.down > 0) return; const dx = q.inbT[0] - q.x, dz = q.inbT[1] - q.z, d = Math.hypot(dx, dz);
+    if (d > 0.15) { const v = Math.min(5.2, d * 4); q.vx = (dx / d) * v; q.vz = (dz / d) * v * 0.85; q.x = clamp(q.x + q.vx * dt, 0.3, CL - 0.3); q.z = clamp(q.z + q.vz * dt, 0.2, CW - 0.2); q.walkT += dt * v * 1.4; q.dir = Math.sign(dx) || q.dir; }
+    else { q.vx = q.vz = 0; q.dir = q.team === st.inb.team ? st.inb.sg : -st.inb.sg; } }
+  function inbStep(dt) { const I = st.inb, q = I.by; stepBall(dt); for (const o of st.p) { if (o.air) stepPlayer(o, dt); else inbWalk(o, dt); }
+    if (st.phase === 'score') { if (st.pt < -4) { q.x = q.inbT[0]; q.z = q.inbT[1]; q.down = 0; } /* stuck (knocked down): there anyway */ if (st.pt <= 0 && Math.hypot(q.x - q.inbT[0], q.z - q.inbT[1]) < 0.3) { give(q); st.phase = 'inbound'; I.t = 0; if (Math.random() < 0.35) cr('organ'); } return; }
+    I.t += dt; q.vx = q.vz = 0; q.dir = I.sg;
+    if ((q.human && !st.auto) ? (hit('vP') || hit('vS') || I.t > 5) : I.t > 0.8) inbPass(); }
+  function inbPass() { const I = st.inb, q = I.by, mates = st.p.filter((o) => o.team === q.team && o !== q && o.down <= 0);
+    const to = mates.sort((a, c) => openness(c) - openness(a))[0]; for (const o of st.p) o.inbT = null; st.inb = null; st.phase = 'play';
+    if (to) pass(q, to); }
+  // v0.89 (Jonay): help defence: when the one with the ball drives to the basket, the nearest other defender leaves his man
+  // and steps into the way, between him and the rim (v0.90, audit: its own function)
+  function helpSpot(p, m, hd, dh) { if (!hd || hd === m || Math.hypot(dh.x - hd.x, dh.z - hd.z) >= 5.2) return null;
+    const helpers = st.p.filter((q) => q.team === p.team && q.mark !== hd && q.down <= 0 && !q.human).sort((a, c) => dist(a, hd) - dist(c, hd)); if (helpers[0] !== p) return null;
+    const L = Math.hypot(dh.x - hd.x, dh.z - hd.z) || 1; return [hd.x + ((dh.x - hd.x) / L) * 1.1, hd.z + ((dh.z - hd.z) / L) * 1.1]; }
   // ---------- AI
   function aiThink(p, dt) {
     const b = st.ball, own = b.holder ? b.holder.team === p.team : b.mode === 'pass' ? b.pass.to.team === p.team : null;
@@ -218,16 +246,19 @@ const BASKET2D = (() => {
     } else if (own === false) { // defence: stay between your man and the basket
       const m = p.mark || rivals(p)[p.idx % rivals(p).length]; const hd = b.holder;
       const k = hd === m ? 1.0 : 2.2; const L = Math.hypot(dh.x - m.x, dh.z - m.z) || 1; tx = m.x + (dh.x - m.x) / L * k; tz = m.z + (dh.z - m.z) / L * k; run = dist(p, m) > 4;
-      // v0.89 (Jonay): help defence: when the one with the ball drives to the basket, the nearest other defender leaves
-      // his man and steps into the way, between him and the rim
-      if (hd && hd !== m && Math.hypot(dh.x - hd.x, dh.z - hd.z) < 5.2) { const helpers = st.p.filter((q) => q.team === p.team && q.mark !== hd && q.down <= 0 && !q.human).sort((a, c) => dist(a, hd) - dist(c, hd));
-        if (helpers[0] === p) { const L2 = Math.hypot(dh.x - hd.x, dh.z - hd.z) || 1; tx = hd.x + (dh.x - hd.x) / L2 * 1.1; tz = hd.z + (dh.z - hd.z) / L2 * 1.1; run = true; } }
+      const hp = helpSpot(p, m, hd, dh); if (hp) { tx = hp[0]; tz = hp[1]; run = true; }
       if (!passive && hd === m && dist(p, m) < 1.2 && Math.random() < dt * (0.1 + 0.7 * p.lv)) steal(p);
       if (!passive && m.air && m.shootHold && dist(p, m) < 1.8 && !p.air && Math.random() < dt * 6 * p.lv) jump(p, 5.4);
     }
     if (passive) { tx = p.x; tz = p.z; }
     return { tx, tz, run };
   }
+  // v0.89 (Jonay): defending, right click = take the player nearest the ball; if it is already you, the steal (too far:
+  // a quick lunge at him). v0.90, audit: its own function
+  function defendClick(p, b) { const near = st.p.filter((q) => q.team === p.team && q.down <= 0).sort((a, c) => Math.hypot(a.x - b.x, a.z - b.z) - Math.hypot(c.x - b.x, c.z - b.z))[0];
+    if (near && near !== p && st.time0 >= (st.swapAt || 0)) { youAre(near); IN.consume('vP'); if (st.ev) st.ev.swap = true; return; } // (once: the other is stepped right after and sees the same click)
+    const v = b.holder; if (near !== p || !v || v.team === p.team) return;
+    if (dist(p, v) <= 1.6) steal(p); else { const L = dist(p, v) || 1; p.vx = ((v.x - p.x) / L) * 9; p.vz = ((v.z - p.z) / L) * 7; } }
   // ---------- one step (60 Hz)
   function stepPlayer(p, dt) {
     p.stealCD = Math.max(0, p.stealCD - dt); p.actT += dt; if (p.act === 'push' && p.actT > 0.25) p.act = '';
@@ -249,10 +280,7 @@ const BASKET2D = (() => {
       if (hit('vS')) { if (b.holder === p) startShot(p); else if (b.holder === mate && !mate.air) { startShot(mate); mate.aiRel = 0; } else jump(p, 5.4); }
       if (rel('vS') && p.shootHold && p.air) release(p);
       if (hit('vP')) { if (b.holder === p) pass(p, mate); else if (b.holder === mate) pass(mate, p);
-        else { // v0.89 (Jonay): defending, right click = take the player nearest the ball; if it is already you, the steal
-          const near = st.p.filter((q) => q.team === p.team && q.down <= 0).sort((a, c) => Math.hypot(a.x - b.x, a.z - b.z) - Math.hypot(c.x - b.x, c.z - b.z))[0];
-          if (near && near !== p && st.time0 >= (st.swapAt || 0)) { youAre(near); IN.consume('vP'); if (st.ev) st.ev.swap = true; } // (once: the other is stepped right after and sees the same click)
-          else if (near === p && b.holder && b.holder.team !== p.team) { if (dist(p, b.holder) <= 1.6) steal(p); else { const L = dist(p, b.holder) || 1; p.vx = (b.holder.x - p.x) / L * 9; p.vz = (b.holder.z - p.z) / L * 7; } } } } // too far: a quick lunge at him
+        else defendClick(p, b); }
     }
     if (!ctl && p.shootHold && p.air && p.vy < 0.4 + (p.aiRel || 0) * 6) release(p);
     if (p.shootHold) { p.holdT += dt; if (ctl && p.holdT > BAR) release(p); }
@@ -263,7 +291,7 @@ const BASKET2D = (() => {
         if (st.ball.holder === p && (p.vy < 0.6 || p.sure) && Math.hypot(h.x - p.x, h.z - p.z) < 0.9) { // slam it
           const blk = !p.sure && rivals(p).find((q) => q.air && q.y > 0.6 && dist(q, p) < 1.0 && Math.random() < (q.human ? 0.5 : 0.35 * q.lv)); const fallo = p.miss || (!p.sure && !p.human && Math.random() > 0.45 + 0.55 * p.lv); p.sure = false; p.miss = false; // v0.66: weak CPU dunkers hit the rim
           const b = st.ball; b.holder = null;
-          st.lastDunk = blk ? 'tapon' : fallo ? 'hierro' : 'mate'; if (blk || fallo) { p.act = ''; p.noGrabT = st.time0 + 0.9; /* v0.89.1 (Jonay): he used to catch his own miss in the air and dunk it */ b.mode = 'loose'; b.x = p.x; b.z = p.z; b.y = RIM; b.vx = -Math.sign(h.x - CL / 2) * 4; b.vz = rnd(-2, 2); b.vy = 2; banner(blk ? '¡TAPÓN!' : '¡AL HIERRO!', '#ff6b6b'); snd('rim'); }
+          st.lastDunk = blk ? 'tapon' : fallo ? 'hierro' : 'mate'; if (blk || fallo) { p.act = ''; p.noGrabT = st.time0 + 0.9; /* v0.89.1 (Jonay): he used to catch his own miss in the air and dunk it */ b.mode = 'loose'; b.x = p.x; b.z = p.z; b.y = RIM; b.vx = -Math.sign(h.x - CL / 2) * 4; b.vz = rnd(-2, 2); b.vy = 2; banner(blk ? '¡TAPÓN!' : '¡AL HIERRO!', '#ff6b6b'); snd('rim'); cr(p.team === 0 ? 'uuuh' : 'cheer', 0.9); }
           else { b.mode = 'net'; b.x = h.x; b.z = h.z; b.y = RIM; b.vx = b.vz = 0; b.vy = -2; score(p.team, 2, p, 'dunk'); }
         } }
       if (p.y <= 0) { p.y = 0; p.vy = 0; p.air = false; p.sure = false; p.miss = false; p.combo = null; if (p.act === 'dunk' || p.act === 'shoot') p.act = ''; if (p.shootHold) { p.landingRelease = true; release(p); } if (st.ev && p.human) st.ev.jump = true; }
@@ -281,9 +309,9 @@ const BASKET2D = (() => {
       b.x = lerp(P.x0, tx, u); b.z = lerp(P.z0, tz, u); b.y = lerp(P.y0, to.y + 1.3, u) + 4 * P.arc * u * (1 - u); return; }
     if (b.mode === 'air') { b.t += dt; b.vy -= G * dt; b.x += b.vx * dt; b.z += b.vz * dt; b.y += b.vy * dt;
       if (b.t < 0.3) for (const q of st.p) if (q.team !== b.shot.team && q.air && Math.hypot(q.x - b.x, q.z - b.z) < 0.8 && Math.abs(q.y + 2.3 - b.y) < 0.6 && Math.random() < 0.4 * q.lv + (q.human ? 0.35 : 0)) {
-        b.mode = 'loose'; b.vx = -b.vx * 0.4 + rnd(-1, 1); b.vz = rnd(-2, 2); b.vy = 1.5; banner('¡TAPÓN!', q.team === 0 ? '#7fe08a' : '#ff6b6b'); snd('rim'); if (st.ev && q.human) st.ev.block = true; return; }
+        b.mode = 'loose'; b.vx = -b.vx * 0.4 + rnd(-1, 1); b.vz = rnd(-2, 2); b.vy = 1.5; banner('¡TAPÓN!', q.team === 0 ? '#7fe08a' : '#ff6b6b'); snd('rim'); cr(q.team === 0 ? 'cheer' : 'ooh', 0.8); if (st.ev && q.human) st.ev.block = true; return; }
       if (b.t >= b.T) { const s = b.shot; if (s.make) { b.mode = 'net'; b.x = s.hoop.x; b.z = s.hoop.z; b.y = RIM; b.vx = b.vz = 0; b.vy = -2; score(s.team, s.pts, s.by, s.pts === 3 ? 'three' : 'two'); }
-        else { b.mode = 'loose'; b.vx = -Math.sign(s.hoop.x - CL / 2) * rnd(1, 3.2); b.vz = rnd(-2.2, 2.2); b.vy = rnd(2.5, 4.5); snd('rim'); s.by.streak = 0; } }
+        else { b.mode = 'loose'; b.vx = -Math.sign(s.hoop.x - CL / 2) * rnd(1, 3.2); b.vz = rnd(-2.2, 2.2); b.vy = rnd(2.5, 4.5); snd('rim'); s.by.streak = 0; cr(s.team === 0 ? 'uuuh' : 'claps', s.team === 0 ? 1 : 0.6); } }
       return; }
     if (b.mode === 'net') { b.vy -= G * dt * 0.5; b.y += b.vy * dt; if (b.y < 0.2) { b.y = 0.2; b.vy = 0; } return; }
     // loose ball: bounces, the first player to reach it keeps it
@@ -295,7 +323,7 @@ const BASKET2D = (() => {
   function step(dt) {
     st.time0 += dt; if (st.bannerT > 0) st.bannerT -= dt;
     if (st.phase === 'ready') { if (hit('vS') || hit('vP') || st.auto) { st.phase = 'play'; snd('buzzer'); } return; }
-    if (st.phase === 'score') { st.pt -= dt; stepBall(dt); for (const p of st.p) { if (p.air) stepPlayer(p, dt); } if (st.pt <= 0) { if (st.tut && !st.tut.done) st.phase = 'play'; else st.phase = 'play'; place(st.next); } return; }
+    if (st.phase === 'score' || st.phase === 'inbound') { if (st.phase === 'score') st.pt -= dt; if (st.inb) inbStep(dt); else if (st.pt <= 0) { st.phase = 'play'; place(st.next); } return; } // v0.90: the inbound
     if (st.phase === 'end') { st.pt -= dt; if (st.pt <= 0) finish(); return; }
     if (st.phase === 'combo') { comboStep(dt); return; } // everything stops while you do the combo
     // the tutorial: one step at a time, the rivals stand still and the clock doesn't run
@@ -307,8 +335,14 @@ const BASKET2D = (() => {
       for (const q of T0) { let bq = null, bd = 1e9; for (const r of free) { const d = dist(q, r); if (d < bd) { bd = d; bq = r; } } if (bq) { q.mark = bq; free.splice(free.indexOf(bq), 1); } }
       T1.forEach((r, i) => { r.mark = T0[i % T0.length]; }); }
     for (const p of st.p) stepPlayer(p, dt);
-    stepBall(dt);
+    stepBall(dt); crowdStep(dt);
   }
+  // v0.90: what the stands do while the ball is alive — the murmur follows the play, «¡de-fen-sa!» when the rivals have it
+  // a while, the organ's «charge» when yours runs at the hoop, the sneakers squeak on the turns
+  function crowdStep(dt) { if (!CR) return; const b = st.ball, h = b.holder; st.crT = (st.crT || 4) - dt;
+    let e = 0.15; if (h) { const d = Math.hypot(hoopOf(h.team).x - h.x, hoopOf(h.team).z - h.z); if (d < 7) e += 0.35; } if (b.mode === 'air') e += 0.4; if (!st.tut && st.clock < 20) e += 0.35; if (st.golden) e += 0.5; CR.tick(dt, Math.min(1, e));
+    if (st.crT <= 0 && h && st.possT > 2.5) { if (h.team === 1) { cr('defensa'); st.crT = 12 + Math.random() * 8; } else if (Math.abs(h.vx) > 4 && Math.sign(h.vx) === Math.sign(hoopOf(0).x - h.x)) { cr('charge'); st.crT = 14 + Math.random() * 10; } }
+    for (const p of st.p) { const sx2 = Math.sign(Math.round(p.vx)); if (p.lastSx && sx2 && sx2 !== p.lastSx && Math.abs(p.vx) > 3 && !p.air && Math.random() < 0.45) cr('squeak', p.human ? 1 : 0.6); if (sx2) p.lastSx = sx2; } }
   // ---------- tutorial (first game against the Obispo's seminarians)
   const K_ = (id) => CONTROLS.keyName(id);
   const TUT = [
@@ -388,13 +422,13 @@ const BASKET2D = (() => {
     else if (Math.hypot(p.vx, p.vz) > 0.5) k = (b.holder === p ? 'drib' : 'walk') + (Math.floor(p.walkT * 2.2) % 4); else if (b.holder && b.holder.team !== p.team && b.holder === p.mark) k = 'defend';
     if (st.phase === 'end' && !st.tut) k = (st.score[p.team] > st.score[1 - p.team]) ? 'win' : k;
     const cmb = p.combo && p.act === 'dunk' && DK[p.combo] ? p.combo : null, cu = cmb ? clamp((p.cT || 0) / 0.85, 0, 1) : 0, cf = Math.round(cu * (DKN - 1));
-    const s = cmb ? dunkSprite(p, cmb, cf) : p.spr[k] || p.spr.idle0, sc = (0.37 + p.z * 0.004) * SC; const px = sx(p.x), py = sy(p.z, p.y);
+    const s = cmb ? dunkSprite(p, cmb, cf) : sprOf(p, k), sc = (0.37 + p.z * 0.004) * SC; const px = sx(p.x), py = sy(p.z, p.y);
     if (px < -60 || px > W + 60) { offscreen(p, px); return; }
     cx.fillStyle = 'rgba(0,0,0,0.3)'; cx.beginPath(); cx.ellipse(px, sy(p.z), 7 * SC, 2.2 * SC, 0, 0, 7); cx.fill();
-    const w = (s.width / 2) * sc, h2 = (s.height / 2) * sc; /* the fight sprites are drawn at 2× (v0.66: was divided by this canvas' 4×) */
+    const h2 = 88 * sc; /* v0.90: the fight's 88-unit box, so the ball, the bars and the arrows stay where they were */
     let fx = p.dir < 0 ? -1 : 1; if (cmb && DK[cmb].back) fx = -fx; // turned away from the hoop
     let kx = fx; if (cmb && DK[cmb].spin) { const [a, b] = DK[cmb].spin, t = clamp((cu - a) / (b - a), 0, 1); kx = fx * Math.cos(t * Math.PI * 2); if (Math.abs(kx) < 0.3) kx = 0.3 * Math.sign(kx || 1); } // the 360: the body turns round
-    cx.save(); cx.translate(px, py); cx.scale(kx, 1); cx.drawImage(s, -w / 2, -h2 * 0.98, w, h2); cx.restore(); st.drawn = (st.drawn || 0) + 1;
+    cx.save(); cx.translate(px, py); cx.scale(kx, 1); cx.drawImage(s.c, (-s.ax / s.q) * sc, (80 - s.ay / s.q - 86.24) * sc, (s.c.width / s.q) * sc, (s.c.height / s.q) * sc); cx.restore(); st.drawn = (st.drawn || 0) + 1;
     if (cmb) { const P2 = dunkPose(cmb, cf / (DKN - 1)), hb = ballInDunk(cmb, cu, P2); p.ballScr = [px + (hb[0] - 36) * sc * kx, py - h2 * 0.98 + hb[1] * sc]; // the ball in his hands
       if (cu > 0.2) for (let i = 0; i < 4; i++) { cx.fillStyle = `rgba(255,255,255,${0.12 + 0.05 * i})`; cx.fillRect(px - fx * (10 + i * 5) * SC * 0.4, py - h2 * (0.3 + 0.15 * i), 2 * SC, 1); } } // speed lines
     else p.ballScr = null;
@@ -463,12 +497,12 @@ const BASKET2D = (() => {
       tut: opt.tutorial ? { i: 0, wait: 0 } : null, auto: !!opt.auto, fade: 1, fadeDir: -1, stake: opt.stake || 0, style: opt.style || 'calle' };
     for (const q of st.p) if (q.team === 1) q.lv = opt.lv ?? 0.5; else if (!q.human) q.lv = opt.mateLv ?? 0.6;
     place(0); updateCam(1); IN.reset(); document.exitPointerLock?.();
-    MINI.show(cv, 'basket2d'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); return true;
+    MINI.show(cv, 'basket2d'); PAV = st.style === 'pabellon' || inConsole; if (CR) CR.stop(); CR = MINI.crowd(PAV ? 'basket' : 'calle'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); return true;
   }
   function finish() { if (!st || st.fadeDir > 0) return; st.fadeDir = 1; }
-  function close() { running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'basket2d', !inConsole); /* v0.86: back to the GOFIO-8, not to the 3D world */
+  function close() { running = false; cancelAnimationFrame(raf); if (CR) { CR.stop(); CR = null; } MINI.hide(cv, 'basket2d', !inConsole); /* v0.86: back to the GOFIO-8, not to the 3D world */
     const res = { won: st.score[0] > st.score[1], score: st.score.slice() }; if (onEnd) onEnd(res); }
-  function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'basket2d', false); } // tests only
+  function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); if (CR) { CR.stop(); CR = null; } MINI.hide(cv, 'basket2d', false); } // tests only
   // tests: a combo dunk of your own (id from COMBOS), a pass, and drawing a frame
   function _dunk(id) { const p = st.p.find((q) => q.human); give(p); const h = hoopOf(p.team); p.x = h.x - Math.sign(h.x - CL / 2) * 5; p.z = h.z; p.air = false; p.y = 0;
     st.combo = { c: COMBOS.find((c) => c.id === id) || COMBOS[0], i: 0, t: 3, by: p, need: [], sg: 1, ok: null, d: 5 }; comboDone(true); st.phase = 'play'; st.combo = null; return p; }

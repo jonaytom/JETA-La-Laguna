@@ -152,8 +152,8 @@ La consola, al encenderla, muestra un menú con los cartuchos que tienes. Cada j
 - **Nombre**: «Guanche Guarriors» (Jonay, 20-oct). Beat'em up de avance lateral en profundidad, como Golden Axe: no es
   de plataformas.
 - **Se eligen 3 personajes al empezar** (Jonay):
-  - **El Mencey**: el bárbaro. Fuerte y lento, pega con un **garrote canario**, golpes que tumban y agarres.
-  - **El Pastor**: más ágil y menos fuerte. Con la vara de pastor llega más lejos, salta más y tiene ataques saltando
+  - **El Magote** (antes «el Mencey»; Jonay, 26-oct): el bárbaro. Fuerte y lento, pega con un **garrote canario**, golpes que tumban y agarres.
+  - **El Mencey** (antes «el Pastor»; Jonay, 26-oct): más ágil y menos fuerte. Con la vara llega más lejos, salta más y tiene ataques saltando
     (el salto del pastor).
   - **La Mirladora**: una chica que hace **magia**. Menos física pero ágil, y es la que tiene la magia más fuerte.
 - **Propuesta para cerrar con Jonay**:
@@ -164,8 +164,8 @@ La consola, al encenderla, muestra un menú con los cartuchos que tienes. Cada j
     la magia. Se mueve en 8 direcciones por la calle, también arriba y abajo.
   - **Magia**: se gasta con **zurrones de magia**, que sueltan unos **duendes ladrones** a los que hay que perseguir
     y pegar, como los de Golden Axe.
-    - El Mencey: la «Ira de Achamán», un temblor de tierra.
-    - El Pastor: el «Viento alisio», un remolino.
+    - El Magote: la «Ira de Achamán», un temblor de tierra.
+    - El Mencey: el «Viento alisio», un remolino.
     - La Mirladora: la «Luz de Magec», rayos de sol. Es la más fuerte y tiene más niveles.
   - **Montura**: el **lagarto gigante** (el de El Hierro, que existió de verdad), que da coletazos y escupe.
   - **Enemigos**: los **tibicenas** (los perros demonio de pelo negro y ojos rojos de la leyenda), los secuaces de
