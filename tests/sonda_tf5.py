@@ -25,6 +25,11 @@ FREE = """([x, z, h, tx, tz]) => { const d = __dbg, P = d.PLAYER; P.x = x; P.z =
   d.camera.position.set(x, g + h, z); d.camera.lookAt(tx, gt + Math.min(h, 3) * 0.5, tz); return { suelo: +g.toFixed(1) }; }"""
 async def run(pg):
     errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
+    # v0.91.1: who builds geometry with NaN (Three only warns on the console): reload with a hook that keeps the stack
+    await pg.add_init_script("""(()=>{ const ce = console.error; window.__NANSTACK = []; window.__NANWATCH = []; console.error = function (...a) { try { if (/NaN/.test(String(a[0]))) window.__NANSTACK.push(new Error().stack.split('\\n').slice(2, 14).join(' | ')); } catch (e) {} return ce.apply(this, a); }; })()""")
+    await pg.reload(wait_until='commit', timeout=120000); await pg.wait_for_function('window.__GAME_READY', timeout=240000); await pg.wait_for_timeout(1000)
+    print('NaN pilas', await pg.evaluate("JSON.stringify(window.__NANSTACK.slice(0, 2))"))
+    print('NaN quads', await pg.evaluate("JSON.stringify(window.__NANWATCH)"))
     await pg.evaluate("(()=>{window.__manual=true; document.getElementById('menu').style.display='none'; __dbg.GAME.state='play'; __dbg.GAME.tod=11; __step(2);})()")
     os.makedirs('shots', exist_ok=True)
     for name, x, ri, dr, off in V:
@@ -45,4 +50,6 @@ async def run(pg):
     print('alturas junto a la barrera', hs)
     nj = [m for m in med if m[0] == 2 and -2500 <= m[1] <= -800 and -300 <= m[2] <= 250]; largo = sum(m[5] for m in nj) * 3
     print('metros de New Jersey en la TF-5', largo)
+    nan = await pg.evaluate("JSON.stringify((window.__NAN || []).slice(0, 15))")
+    print('NaN en lo nuevo', nan)
     print('errores', errs[:3]); print('SONDA TF5', 'OK' if not errs and largo > 900 else 'FALLA')

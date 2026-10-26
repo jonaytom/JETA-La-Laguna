@@ -26,7 +26,7 @@ async def run(pg):
         const cam = d.camera.position; out.push({ a:[+tx.toFixed(1),+tz.toFixed(1)], llega: best<1.6, cerca: near, falta: +best.toFixed(1), y: +(P.y||0).toFixed(2), bajo: !!P.low, camY: +cam.y.toFixed(2), techo: d.pasajeCeilAt ? d.pasajeCeilAt(P.x,P.z,P.y) : null, donde: here, delante: bl }); if (best>=1.6) { P.x=tx; P.z=tz; __step(2); } }
       return out; })())"""
     ruta = [[-144, -115], [-177, -60], [-168, -54]]
-    await pg.evaluate("(R)=>{ const d=__dbg, P=d.PLAYER; if (P.car) d.exitCar(); P.x=R[0][0]; P.z=R[0][1]; __step(2); }", ruta)
+    await pg.evaluate("(R)=>{ const d=__dbg, P=d.PLAYER; if (P.car) d.exitCar(); P.x=R[0][0]; P.z=R[0][1]; P.y=d.heightAt(P.x,P.z)+0.2; P.vy=0; __step(2); }", ruta)  # v0.91.1: on the ground (the test before may leave him high or low)
     w = json.loads(await pg.evaluate(WALK, ruta[1:]))
     print('andando arriba', w); ok = ok and all(p['llega'] for p in w)
     # camera under the roof in the upper corridor (it used to go up into the hollow building)

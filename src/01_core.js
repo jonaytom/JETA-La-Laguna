@@ -96,6 +96,7 @@ const CW_LOCK = new Set(); // the points of the motorway already set apart: the 
   const N = DATA.G.n; for (let i = 0; i < N.length; i += 2) mv(N, i);
   for (const e of DATA.G.e) if (e[6]) for (let i = 0; i < e[6].length; i += 2) mv(e[6], i);
   console.log('carriageways apart: points', disp.size, 'moved', moved);
+  for (const rd of DATA.R) { const c = rd[4]; for (let i = 0; i < c.length; i++) if (!Number.isFinite(c[i])) { (window.__NAN = window.__NAN || []).push(['separar', rd[1] >= 0 ? DATA.S[rd[1]] : '', rd[0], i]); break; } }
 })();
 const $ = (id) => document.getElementById(id);
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -146,6 +147,8 @@ const SEPAR = []; // [ax, az, bx, bz, kind] midline runs for medians (kind: 2 = 
   const N = DATA.G.n; for (let i = 0; i < N.length; i += 2) { const m = mv(N[i], N[i + 1]); if (m) { N[i] = m[0]; N[i + 1] = m[1]; } }
   for (const e of DATA.G.e) { const p = e[6]; for (let i = 0; i < p.length; i += 2) { const m = mv(p[i], p[i + 1]); if (m) { p[i] = m[0]; p[i + 1] = m[1]; } } }
   console.log('carriageways separated: vertices', shifts.size, 'samples', nPairs);
+  for (const rd of DATA.R) { const c = rd[4]; for (let i = 0; i + 3 < c.length; i += 2) if (Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]) < 0.02) { (window.__NAN = window.__NAN || []).push(['tramo de 0 m', rd[1] >= 0 ? DATA.S[rd[1]] : '', rd[0], Math.round(c[i]), Math.round(c[i + 1])]); break; } }
+  for (const rd of DATA.R) { const c = rd[4]; for (let i = 0; i < c.length; i++) if (!Number.isFinite(c[i])) { (window.__NAN = window.__NAN || []).push(['separar2', rd[1] >= 0 ? DATA.S[rd[1]] : '', rd[0], i, c[i - 1], c[i + 1]]); break; } }
 })();
 function mulberry(a) { return function () { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 let rand = mulberry(1234);

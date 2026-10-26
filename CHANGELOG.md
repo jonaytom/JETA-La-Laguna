@@ -3,6 +3,12 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.91.1 — 2026-10-26 — Arreglo de la 0.91: un puente con coordenadas rotas
+- La auditoría de la 0.91.0 salió NO APTO: un puente de la zona de La Cuesta (X 675, Z 3544) quedaba con un tramo de
+  0 m al repartir los puntos nuevos de la autopista, y el pretil se calculaba dividiendo por cero (coordenadas «NaN»).
+  Ahora los tramos de 0 m se saltan, y las medianas también descartan cualquier altura que no sea un número.
+- Los postes azules y los postes de la bionda llevan menos caras (la 0.91.0 subió los vértices un 6 %).
+
 ## 0.91.0 — 2026-10-26 — La TF-5 con los dos sentidos separados
 - **Autopista del Norte (TF-5)** (Jonay, con una foto de Street View junto a San Benito: «separando los sentidos, así
   como la carretera paralela»):
