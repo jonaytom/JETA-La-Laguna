@@ -122,6 +122,15 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   - Guanche Guarriors (Mencey, Pastor, Mirladora): G1 proporción normal, G2 un poco cabezones.
   - Fútbol: F1 de lado como el basket (cambiar la cámara del fútbol a lateral), F2 desde arriba pero a 48 px de frente
     y de espalda (acercar la cámara), F3 como ahora (tipo Sensible) con figuras mejoradas.
+  - 26-oct, elecciones de Jonay: **Bencomo = B3** (mencey semicabezón). **Guanche Guarriors = G1**, pero solo le
+    gusta el Mencey: el Pastor más parecido a Bencomo (hecho en la propuesta: pelo largo, barba, tamarco, banot, más
+    fino) y la Mirladora más sexy, en bikini de piel tipo «Vixen» con el pelo largo (hecho: bikini y botas de piel,
+    melena, brazaletes, la magia). **Fútbol: ninguno**; quiere opciones sobre el que tenemos (misma cámara y tamaño):
+    F0 el actual, F1 el actual pulido (luz, contorno, medias, botas, número, cara), F2 pulido y algo cabezón.
+  - 26-oct: **fútbol F2 elegido e incorporado en la v0.88.0** («lo incorporamos así ya»). Bencomo B3: Jonay pregunta
+    cómo se vería en el juego (en la muestra está mucho más grande): hecha una vista a tamaño real (el de ahora mide 22
+    px, 44 en pantalla; el B3 al mismo tamaño y uno un poco más grande, de 60). Mirladora: pelo castaño, melena suelta,
+    más pecho y menos barriga (hecho en la propuesta).
 - [ ] ● **Repasar el pixel art de los jugadores de todos los minijuegos** (Jonay, 26-oct): no le gustan los personajes
   de ninguno. Se empieza por el basket.
   - Ejemplos que le gustan: póster «Pixel Slam Dunk»; un mate de los Suns; uno de los Raptors; uno de los Lakers
@@ -366,6 +375,8 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Rendimiento, auditorías y código
 
+- [ ] ⚡ **Auditoría v0.87.1** (26-oct 10:52, APTO CON AVISOS; pruebas 5/5): pintar 31,5 → 43 ms y arranque 9,2 → 11,3 s.
+  La 0.87.1 solo cambia un nombre (Guanche Guarriors): casi seguro que el PC estaba ocupado. Repetir la auditoría.
 - [ ] ⚡ **Auditoría v0.86.0** (26-oct 10:08, APTO CON AVISOS; pruebas 7/7; pintar 35,5 → 31,8 ms, arranque 10,0 → 10,3 s):
   `12m_mundialito.js` baja de C a D (las pantallas de la consola en funciones largas con líneas densas). Partir
   `screen()` en una función por pantalla (pick, cuadro, resultado, campeones, iniciales, tabla).

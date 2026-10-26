@@ -3,6 +3,15 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.88.0 — 2026-10-26 — Futbolistas nuevos
+- **Los jugadores del fútbol, redibujados** (Jonay eligió la propuesta «F2»): la misma cámara desde arriba y el mismo
+  tamaño, pero dibujados a la resolución real del partido.
+  - Luz y sombra, contorno de un píxel, rodillas, medias con su raya y botas con suela.
+  - El número en la espalda, ojos, cejas, el pelo con brillo y la cabeza un poco más grande.
+  - La palomita del portero, las entradas y el jugador tirado en el suelo usan el mismo muñeco tumbado.
+  - La flecha y el nombre del jugador que llevas suben un poco, por la cabeza más grande.
+- Vale para Play Furbito y para los partidos de las canchas.
+
 ## 0.87.1 — 2026-10-26 — «Guanche Guarriors»
 - La máquina de las jugueterías se llama **«GUANCHE GUARRIORS»** (Jonay): pantalla de título, marquesina, la opción
   de la juguetería, el diario, el póster del piso y la llamada de El Blanco.

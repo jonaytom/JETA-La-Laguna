@@ -296,31 +296,60 @@ const FUTBOL2D = (() => {
     bgCache = c; return c;
   }
   const sy = (y) => syw(y) - camY;
-  function drawPlayer(p) { // a tiny Sensible Soccer man: shadow, legs (running), shorts, shirt, arms, head seen from above-front
+  // ---------- v0.88 (Jonay: «el F2 está muy bien, lo incorporamos así»): the little man drawn on whole pixels of the real
+  // resolution of the match (R× finer than the logical pixels): light and shadow, a 1-pixel outline, knees, socks with
+  // their band, boots with sole, the number on the back, eyes, brows and the hair with a shine, and a head a bit bigger.
+  // Each pose is made once and kept (by kit, look, view and step of the run).
+  const SPR = new Map();
+  const mixC = (a, b, t) => { const p = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; const A = p(a), B = p(b); return 'rgb(' + [0, 1, 2].map((i) => Math.round(A[i] + (B[i] - A[i]) * t)).join(',') + ')'; };
+  const full = (h) => (h.length === 4 ? '#' + h[1] + h[1] + h[2] + h[2] + h[3] + h[3] : h);
+  const DGT = { 0: '111101101101111', 1: '010110010010111', 2: '111001111100111', 3: '111001111001111', 4: '101101111001001', 5: '111100111001111', 6: '111100111101111', 7: '111001010010010', 8: '111101111101111', 9: '111101111001111' };
+  function manSprite(K, look, view, l, a, num, gk) {
+    const shirt = full(hx(K.shirt, '#c0392b')), shorts = full(hx(K.shorts, '#222222')), socks = full(hx(K.socks, shirt)), sk = full(hx(look.skin, '#d9a47c')), hr = full(hx(look.hair, '#222222'));
+    const light = (h) => { const v = parseInt(h.slice(1), 16); return ((v >> 16) & 255) * 0.3 + ((v >> 8) & 255) * 0.59 + (v & 255) * 0.11 > 150; };
+    const trim = full(hx(K.stripe || K.trim, light(shirt) ? '#1a1a1a' : '#f2f2f2'));
+    const key = [shirt, shorts, socks, trim, sk, hr, view, l, a, num, gk ? 1 : 0].join('|'); let o = SPR.get(key); if (o) return o;
+    const SZ = 80, c = mkCanvas(SZ, SZ), g = c.getContext('2d'), ox = SZ / 2, oy = SZ - 4, hk = 1.3;
+    const Rr = (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(Math.round(ox + x), Math.round(oy + y), Math.max(1, Math.round(w)), Math.max(1, Math.round(h))); };
+    const sh = (h, t) => mixC(h, '#1e1028', t), lt = (h, t) => mixC(h, '#fff6e6', t), side = view === 'side', up = view === 'up';
+    const legs = side ? [[-1 - l, l > 0 ? 0 : -1], [-1 + l, l > 0 ? -1 : 0]] : [[-6, l], [1, -l]];
+    for (const [lx, ly] of legs) { Rr(lx, -14 + ly, 5, 3, sk); Rr(lx + 1, -14 + ly, 1, 3, sh(sk, 0.3)); Rr(lx, -11 + ly, 5, 8, socks); Rr(lx + 4, -11 + ly, 1, 8, sh(socks, 0.35)); Rr(lx, -11 + ly, 5, 2, trim);
+      Rr(lx - (side ? 0 : 0.5), -3 + ly, side ? 7 : 5.5, 3, '#141414'); Rr(lx, -1 + ly, side ? 7 : 5, 1, '#e8e4dc'); Rr(lx + 1, -3 + ly, 2, 1, trim); }
+    const sw = side ? 11 : 14; Rr(-sw / 2, -21, sw, 7, shorts); Rr(sw / 2 - 2, -21, 2, 7, sh(shorts, 0.35)); Rr(-sw / 2, -21, 1, 6, lt(shorts, 0.25)); if (!side) Rr(-0.5, -17, 1, 3, sh(shorts, 0.5)); Rr(-sw / 2, -15, sw, 1, sh(shorts, 0.45));
+    for (const [ax, ay] of side ? [[-2 - a, 0]] : [[-11, a], [8, -a]]) { Rr(ax, -33 + ay, 3, 6, gk ? shirt : sh(shirt, 0.15)); Rr(ax, -27 + ay, 3, 4, sk); Rr(ax + 2, -27 + ay, 1, 4, sh(sk, 0.3)); Rr(ax, -23 + ay, 3, 2, gk ? '#f2f2f2' : sh(sk, 0.15)); }
+    const tw = side ? 12 : 16; Rr(-tw / 2, -34, tw, 13, shirt); Rr(-tw / 2, -34, 1, 12, lt(shirt, 0.3)); Rr(tw / 2 - 3, -34, 3, 13, sh(shirt, 0.3)); Rr(-tw / 2, -22, tw, 1, sh(shirt, 0.45));
+    if (!up && !side) { Rr(-2, -34, 4, 1, trim); Rr(-1, -33, 2, 1, trim); Rr(3, -31, 2, 2, trim); }
+    if (up) { const n = String(num); const x0 = -(n.length * 4) / 2 + 0.5; [...n].forEach((ch, i) => { const pt = DGT[ch]; for (let b = 0; b < 15; b++) if (pt[b] === '1') Rr(x0 + i * 4 + (b % 3), -32 + ((b / 3) | 0), 1, 1, trim); }); }
+    if (side) Rr(-2 - a, -33, 3, 6, sh(shirt, 0.1));
+    Rr(-2, -36, 4, 2, sh(sk, 0.3));
+    const hw = Math.round(11 * hk), hh = Math.round(11 * hk), hx0 = -Math.floor(hw / 2) + (side ? 1 : 0), hy0 = -36 - hh;
+    Rr(hx0, hy0, hw, hh, sk); g.clearRect(Math.round(ox + hx0), Math.round(oy + hy0), 1, 1); g.clearRect(Math.round(ox + hx0 + hw - 1), Math.round(oy + hy0), 1, 1);
+    Rr(hx0 + hw - 2, hy0 + 2, 2, hh - 3, sh(sk, 0.28)); Rr(hx0, hy0 + hh - 1, hw, 1, sh(sk, 0.35));
+    if (up) { Rr(hx0, hy0 - 1, hw, hh - 2, hr); Rr(hx0 + 2, hy0, 3, 2, lt(hr, 0.25)); Rr(hx0 - 1, hy0 + hh - 6, 1, 3, sk); Rr(hx0 + hw, hy0 + hh - 6, 1, 3, sk); }
+    else if (side) { Rr(hx0, hy0 - 1, hw, 4, hr); Rr(hx0, hy0 - 1, 4, hh - 3, hr); Rr(hx0 + 3, hy0, 3, 1, lt(hr, 0.25)); Rr(hx0 + hw, hy0 + 5, 1, 2, sk);
+      Rr(hx0 + hw - 3, hy0 + 5, 1, 2, '#f2eee6'); Rr(hx0 + hw - 2, hy0 + 5, 1, 2, '#1a1010'); Rr(hx0 + hw - 4, hy0 + 3, 3, 1, sh(hr, 0.2)); Rr(hx0 + 3, hy0 + 5, 2, 3, sh(sk, 0.25)); Rr(hx0 + hw - 3, hy0 + 9, 2, 1, sh(sk, 0.45)); }
+    else { Rr(hx0, hy0 - 1, hw, 4, hr); Rr(hx0 - 1, hy0 + 1, 2, 4, hr); Rr(hx0 + hw - 1, hy0 + 1, 2, 4, hr); Rr(hx0 + 3, hy0, 3, 1, lt(hr, 0.25));
+      const ey = hy0 + Math.round(hh * 0.5); for (const ex of [hx0 + Math.round(hw * 0.22), hx0 + Math.round(hw * 0.62)]) { Rr(ex, ey, 2, 2, '#f2eee6'); Rr(ex + 1, ey, 1, 2, '#1a1010'); Rr(ex, ey - 2, 2, 1, sh(hr, 0.2)); }
+      Rr(Math.round(hx0 + hw / 2 - 0.5), ey + 2, 1, 2, sh(sk, 0.3)); Rr(Math.round(hx0 + hw / 2 - 1.5), ey + 5, 3, 1, sh(sk, 0.5)); }
+    const d = g.getImageData(0, 0, SZ, SZ), px = d.data, A = (x, y) => (x < 0 || y < 0 || x >= SZ || y >= SZ ? 0 : px[(y * SZ + x) * 4 + 3]); g.fillStyle = '#14100e';
+    const outl = []; for (let y = 0; y < SZ; y++) for (let x = 0; x < SZ; x++) if (!A(x, y) && (A(x + 1, y) || A(x - 1, y) || A(x, y + 1) || A(x, y - 1))) outl.push(x, y); for (let i = 0; i < outl.length; i += 2) g.fillRect(outl[i], outl[i + 1], 1, 1);
+    o = { c, ox, oy }; if (SPR.size > 600) SPR.clear(); SPR.set(key, o); return o; }
+  // the side man turned over (the dive, a tackle, lying on the grass): head towards s
+  function turned(K, look, p, x, y, s, ang) { const sp = manSprite(K, look, 'side', 0, 0, p.role === 'gk' ? 1 : p.idx + 1, p.role === 'gk'); cx.save(); cx.translate(x, y); cx.rotate(s * ang); if (s < 0) cx.scale(1, -1); cx.drawImage(sp.c, -sp.ox / R, -sp.oy / R + 6, sp.c.width / R, sp.c.height / R); cx.restore(); }
+  function drawPlayer(p) { // the little man seen from above-front (v0.88: the sprite of manSprite), its shadow and the marks of the one you control
     const px = Math.round(sxp(p.x)), py = Math.round(sy(p.y)); if (py < -20 || py > H + 20) return;
-    const K = p.kit, look = p.look, skin = hx(look.skin, '#d9a47c'), hair = hx(look.hair, '#222');
+    const K = p.kit, look = p.look;
     cx.fillStyle = 'rgba(0,0,0,0.3)'; cx.beginPath(); cx.ellipse(px, py, 4, 1.6, 0, 0, 7); cx.fill();
-    if (p.diveT > 0) { // the «palomita»: stretched out sideways in the air, arms first, a shadow below
+    if (p.diveT > 0) { // the «palomita»: the man stretched out sideways in the air, a shadow below
       const s = p.diveS || 1, lift = Math.round(3 + (p.diveH || 0) * S * 0.5 * Math.sin(Math.PI * clamp(1 - p.diveT / 0.6, 0, 1)));
-      cx.fillStyle = 'rgba(0,0,0,0.3)'; cx.beginPath(); cx.ellipse(px, py, 7, 1.6, 0, 0, 7); cx.fill(); const y0 = py - 6 - lift;
-      cx.fillStyle = K.socks; cx.fillRect(px - 8 * s - (s < 0 ? 2 : 0), y0 + 1, 3, 2); cx.fillStyle = K.shorts; cx.fillRect(px - 5 * s - (s < 0 ? 3 : 0), y0, 3, 3);
-      cx.fillStyle = K.shirt; cx.fillRect(px - 2 * s - (s < 0 ? 5 : 0), y0 - 0.5, 5, 4); cx.fillStyle = skin; cx.fillRect(px + 3 * s - (s < 0 ? 3 : 0), y0 - 0.5, 3, 3);
-      cx.fillStyle = '#f2f2f2'; cx.fillRect(px + 6 * s - (s < 0 ? 3 : 0), y0 - 1.5, 3, 1.4); cx.fillRect(px + 6 * s - (s < 0 ? 3 : 0), y0 + 2.2, 3, 1.4); return; } // gloves
-    if (p.down > 0 || p.slide > 0) { // lying / sliding: a horizontal man
-      const s = Math.cos(p.dir) >= 0 ? 1 : -1; cx.fillStyle = K.socks; cx.fillRect(px - 6 * s - (s < 0 ? 3 : 0), py - 3, 3, 2); cx.fillStyle = K.shorts; cx.fillRect(px - 3 * s - (s < 0 ? 3 : 0), py - 4, 3, 3);
-      cx.fillStyle = K.shirt; cx.fillRect(px - (s < 0 ? 4 : 0), py - 5, 4, 4); cx.fillStyle = skin; cx.fillRect(px + 4 * s - (s < 0 ? 3 : 0), py - 5, 3, 3); return; }
-    const ph = Math.sin(p.anim * 2.4), mv = Math.hypot(p.vx, p.vy) > 0.6, l1 = mv ? Math.round(ph * 1.5) : 0;
+      cx.fillStyle = 'rgba(0,0,0,0.3)'; cx.beginPath(); cx.ellipse(px, py, 7, 1.6, 0, 0, 7); cx.fill(); turned(K, look, p, px, py - 4 - lift, s, Math.PI / 2); return; }
+    if (p.down > 0 || p.slide > 0) { const s = Math.cos(p.dir) >= 0 ? 1 : -1; turned(K, look, p, px, py - 2, s, Math.PI / 2.2); return; } // lying / sliding
+    const ph = Math.sin(p.anim * 2.4), mv = Math.hypot(p.vx, p.vy) > 0.6;
     const view = Math.abs(Math.sin(p.dir)) > Math.abs(Math.cos(p.dir)) ? (Math.sin(p.dir) < 0 ? 'up' : 'down') : 'side';
-    cx.fillStyle = K.socks; cx.fillRect(px - 2, py - 4 + l1, 1.5, 4 - l1); cx.fillRect(px + 0.5, py - 4 - l1, 1.5, 4 + l1);
-    cx.fillStyle = '#111'; cx.fillRect(px - 2.2, py - 0.6 + l1 * 0.5, 2, 1); cx.fillRect(px + 0.3, py - 0.6 - l1 * 0.5, 2, 1);
-    cx.fillStyle = K.shorts; cx.fillRect(px - 2.5, py - 6, 5, 2.5);
-    cx.fillStyle = K.shirt; cx.fillRect(px - 3, py - 10.5, 6, 4.8); if (K.stripe) { cx.fillStyle = K.stripe; cx.fillRect(px - 1, py - 10.5, 2, 4.8); }
-    cx.fillStyle = K.sleeve || K.shirt; cx.fillRect(px - 4, py - 10 - l1 * 0.4, 1.2, 3.2); cx.fillRect(px + 2.8, py - 10 + l1 * 0.4, 1.2, 3.2);
-    cx.fillStyle = skin; cx.fillRect(px - 4, py - 7 - l1 * 0.4, 1.2, 1.2); cx.fillRect(px + 2.8, py - 7 + l1 * 0.4, 1.2, 1.2);
-    cx.fillStyle = skin; cx.fillRect(px - 1.8, py - 14, 3.6, 3.6);
-    cx.fillStyle = hair; if (view === 'up') cx.fillRect(px - 1.8, py - 14.3, 3.6, 3.2); else { cx.fillRect(px - 1.8, py - 14.4, 3.6, 1.3); if (view === 'side') cx.fillRect(px - (Math.cos(p.dir) > 0 ? 1.8 : -0.6), py - 14, 1.2, 2.4); }
-    if (view === 'down') { cx.fillStyle = '#111'; cx.fillRect(px - 1, py - 12.4, 0.7, 0.7); cx.fillRect(px + 0.4, py - 12.4, 0.7, 0.7); }
-    if (p === st.ctl && !st.auto) { cx.fillStyle = '#ffd400'; cx.beginPath(); cx.moveTo(px - 3, py - 19); cx.lineTo(px + 3, py - 19); cx.lineTo(px, py - 16); cx.fill(); txt(p.name.slice(0, 10), px, py - 26, 4, '#ffd400'); }
+    const sp = manSprite(K, look, view, mv ? Math.round(ph * 3) : 0, mv ? Math.round(ph * 2) : 0, p.role === 'gk' ? 1 : p.idx + 1, p.role === 'gk');
+    if (view === 'side' && Math.cos(p.dir) < 0) { cx.save(); cx.translate(px, py); cx.scale(-1, 1); cx.drawImage(sp.c, -sp.ox / R, -sp.oy / R, sp.c.width / R, sp.c.height / R); cx.restore(); }
+    else cx.drawImage(sp.c, px - sp.ox / R, py - sp.oy / R, sp.c.width / R, sp.c.height / R);
+    if (p === st.ctl && !st.auto) { cx.fillStyle = '#ffd400'; cx.beginPath(); cx.moveTo(px - 3, py - 22); cx.lineTo(px + 3, py - 22); cx.lineTo(px, py - 19); cx.fill(); txt(p.name.slice(0, 10), px, py - 29, 4, '#ffd400'); } // v0.88: a bit higher (the head is bigger)
     if (p === st.ctl && st.pcharge > 0.14) { const f = st.pcharge / 0.8; cx.fillStyle = 'rgba(0,0,0,0.7)'; cx.fillRect(px - 9, py - 14, 3, 12); cx.fillStyle = '#5ec8ff'; cx.fillRect(px - 8.5, py - 2.5 - 11 * f, 2, 11 * f); }
     if (p === st.ctl && st.charge > 0) { const f = st.charge / 0.8; cx.fillStyle = 'rgba(0,0,0,0.7)'; cx.fillRect(px + 6, py - 14, 3, 12); cx.fillStyle = f > 0.55 ? '#ffd400' : '#7fe08a'; cx.fillRect(px + 6.5, py - 2.5 - 11 * f, 2, 11 * f); }
   }

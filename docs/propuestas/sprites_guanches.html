@@ -28,19 +28,20 @@ canvas { width: 100%; height: auto; image-rendering: pixelated; image-rendering:
 </style>
 
 <div class="wrap">
-  <h1>Bencomo, Guanche Guarriors y el fútbol: propuestas</h1>
+  <h1>Bencomo, Guanche Guarriors y el fútbol: segunda vuelta</h1>
   <p class="intro">Hechos con el mismo método que el jugador de basket que elegiste (el «A++ semicabezón 120»): esqueleto, piezas con músculos, cuatro tonos por color y la cara píxel a píxel. Los guanches están sacados de las estatuas de los menceyes de la plaza de Candelaria: pelo largo con cinta, barba, collar, el tamarco de piel sobre el hombro, taparrabos, descalzos y con su banot o su garrote. Elige uno de cada sección (o mezclas) y lo pulimos.</p>
 
-  <h2 class="sec">1 · Bencomo, el protagonista</h2>
-  <p class="secp">En cada tarjeta: quieto como la estatua, corriendo, el varazo y el salto con la vara. Debajo, la cara de cerca.</p>
+  <h2 class="sec">1 · Bencomo: el elegido (B3)</h2>
+  <p class="secp">Quieto como la estatua, corriendo, el varazo y el salto con la vara. Debajo, la cara de cerca.</p>
   <div class="grid" id="g-bencomo"></div>
+  <div class="grid" id="g-bencomo-juego"></div>
 
   <h2 class="sec">2 · Guanche Guarriors: el Mencey, el Pastor y la Mirladora</h2>
-  <p class="secp">Los tres héroes en las dos versiones que más pegan: proporción normal y un poco cabezones. El Mencey con garrote canario, el Pastor con la vara del salto del pastor y la Mirladora con la magia en la mano.</p>
+  <p class="secp">G1, con los cambios que pediste: el Pastor como Bencomo y la Mirladora en bikini de piel con melena larga.</p>
   <div class="grid" id="g-guarriors"></div>
 
   <h2 class="sec">3 · Los futbolistas de Play Furbito y de las canchas</h2>
-  <p class="secp">El fútbol se ve ahora desde arriba, con el campo en vertical, y los jugadores son muy pequeños. Para que luzcan hay tres caminos; cada uno cambia más o menos el juego.</p>
+  <p class="secp">Partiendo del que tenemos: la misma cámara desde arriba y el mismo tamaño. Arriba de cada tarjeta, ampliado para verlo; debajo, a tamaño real.</p>
   <div class="grid" id="g-futbol"></div>
   <p class="foot">Todos salen del mismo esqueleto: las animaciones (correr, saltar, golpear, chutar) se hacen una vez y valen para cualquier personaje y equipación.</p>
 </div>
@@ -112,17 +113,18 @@ canvas { width: 100%; height: auto; image-rendering: pixelated; image-rendering:
     const poly = (pts) => (g) => { g.beginPath(); pts.forEach((p, i) => (i ? g.lineTo(X(p), Y(p)) : g.moveTo(X(p), Y(p)))); g.closePath(); g.fill(); };
     const multi = (...fs) => (g) => fs.forEach((f) => f && f(g));
     const parts = [];
-    const cxm = (J.sN[0] + J.sF[0]) / 2, Wd = (p, k) => [cxm + (p[0] - cxm) * k, p[1]], SW = FR ? 1.15 : 1.5, HW = FR ? 1.0 : 1.1;
+    const cxm = (J.sN[0] + J.sF[0]) / 2, Wd = (p, k) => [cxm + (p[0] - cxm) * k, p[1]], SW = FR ? 1.15 : who.female ? 1.22 : 1.5, HW = FR ? 1.0 : who.female ? 1.32 : 1.1;
     const shN = Wd(J.sN, SW * 0.86), shF = Wd(J.sF, SW * 0.86);
     const sleeves = O === 'futbol';
     const arm = (s, e, w, far) => { const sk = far ? 'skinF' : 'skin'; const n = perp(s, e), mid = lerp2(s, e, 0.42);
       parts.push([sk, multi(cap(s, e, ua * 1.3, ua * 0.82), ell([mid[0] + n[0] * ua * 0.22, mid[1] + n[1] * ua * 0.22], ua * 0.42, ua * 0.32, -Math.atan2(e[1] - s[1], e[0] - s[0])), cap(e, w, fa * 1.12, fa * 0.7), ell(w, 0.034 * L, 0.03 * L))]);
       if (sleeves) parts.push(['top', cap(s, lerp2(s, e, 0.55), ua * 1.45, ua * 1.25)]);
-      if ((O === 'guanche') && !far) parts.push(['cord', cap(lerp2(s, e, 0.3), lerp2(s, e, 0.36), ua * 1.12, ua * 1.08)]); // the arm band of the statue
-      if (O === 'guanche' && !far) parts.push(['cord', cap(lerp2(w, e, 0.1), lerp2(w, e, 0.18), fa * 0.9, fa * 0.92)]); };
+      if ((O === 'guanche' || O === 'bikini') && !far) parts.push(['cord', cap(lerp2(s, e, 0.3), lerp2(s, e, 0.36), ua * 1.12, ua * 1.08)]); // the arm band of the statue
+      if ((O === 'guanche' || O === 'bikini') && !far) parts.push(['cord', cap(lerp2(w, e, 0.1), lerp2(w, e, 0.18), fa * 0.9, fa * 0.92)]); };
     const leg = (h, k, a, t, far) => { const sk = far ? 'skinF' : 'skin', so = far ? 'sockF' : 'sock', sho = far ? 'shoeF' : 'shoe', sl = far ? 'soleF' : 'sole';
       const calf = lerp2(k, a, 0.38); parts.push([sk, multi(cap(h, k, th * 1.05, sh * 1.0), cap(k, calf, sh * 0.95, sh * 1.18), cap(calf, a, sh * 1.18, sh * 0.62))]);
       const heel = lerp2(a, t, -0.18);
+      if (O === 'bikini') { const fb = far ? 'cloakF' : 'cloak'; parts.push([fb, multi(cap(heel, t, 0.056 * L, 0.044 * L), cap(lerp2(a, k, 0.0), heel, 0.06 * L, 0.06 * L), cap(a, lerp2(a, k, 0.45), sh * 1.2, sh * 1.35))]); if (!far) parts.push(['cord', cap(lerp2(a, k, 0.42), lerp2(a, k, 0.46), sh * 1.36, sh * 1.38)]); return; } // fur boots
       if (O === 'guanche' || O === 'mirladora') { parts.push([sk, multi(cap(heel, t, 0.05 * L, 0.04 * L), cap(lerp2(a, k, 0.05), heel, 0.045 * L, 0.045 * L))]); if (!far) parts.push(['cord', cap(lerp2(a, k, 0.1), lerp2(a, k, 0.14), sh * 0.7, sh * 0.72)]); return; }
       const sockTop = O === 'futbol' ? 0.86 : 0.28; parts.push([so, cap(lerp2(a, k, 0.02), lerp2(a, k, sockTop), sh * 0.8, sh * (O === 'futbol' ? 1.02 : 0.86))]);
       if (O === 'futbol' && !far) parts.push(['trim', cap(lerp2(a, k, 0.78), lerp2(a, k, 0.82), sh * 1.02, sh * 1.04)]);
@@ -130,16 +132,20 @@ canvas { width: 100%; height: auto; image-rendering: pixelated; image-rendering:
       const n = perp(heel, t); const dn = (p, k2) => [p[0] - n[0] * k2, p[1] - n[1] * k2]; parts.push([sl, line(dn(heel, 0.024 * L), dn(t, 0.02 * L), 0.014 * L)]); };
     // long hair behind the neck (guanches)
     const hd = J.hd, lk = pose.look || 0;
+    if (who.hs === 'mane') parts.push(['hairL', poly([[hd[0] - r * 1.0, hd[1] + r * 0.45], [hd[0] + r * 0.2, hd[1] + r * 0.55], [hd[0] + r * 0.1, hd[1] - r * 1.4], [J.hF[0] - 0.01, J.hF[1] + 0.03], [J.hF[0] - 0.08, J.hF[1] - 0.02], [J.hF[0] - 0.16, J.hF[1] + 0.04], [hd[0] - r * 1.9, hd[1] - r * 2.4], [hd[0] - r * 1.5, hd[1] - r * 1.2]])]); // loose and wavy, to the waist
     if (who.hs === 'long') parts.push(['hairL', poly([[hd[0] - r * 0.95, hd[1] + r * 0.2], [hd[0] + r * 0.1, hd[1] + r * 0.4], [hd[0] + r * 0.05, hd[1] - r * 1.9], [hd[0] - r * 1.15, hd[1] - r * 2.1]])]);
     // the cloak (tamarco) hangs from the far shoulder, behind the body
-    if (who.cloak && O !== 'mirladora') parts.push(['cloakF', poly([Wd(J.sF, SW), [J.nk[0] + 0.01, J.nk[1] - 0.02], [J.hF[0] - 0.02, J.hF[1] - 0.12], lerp2(J.hF, J.kF, 0.7), [lerp2(J.hF, J.kF, 0.7)[0] - 0.12, lerp2(J.hF, J.kF, 0.7)[1] + 0.05], [Wd(J.sF, SW)[0] - 0.08, J.sF[1] - 0.2]])]);
+    if (who.cloak && O === 'guanche') parts.push(['cloakF', poly([Wd(J.sF, SW), [J.nk[0] + 0.01, J.nk[1] - 0.02], [J.hF[0] - 0.02, J.hF[1] - 0.12], lerp2(J.hF, J.kF, 0.7), [lerp2(J.hF, J.kF, 0.7)[0] - 0.12, lerp2(J.hF, J.kF, 0.7)[1] + 0.05], [Wd(J.sF, SW)[0] - 0.08, J.sF[1] - 0.2]])]);
     arm(shF, J.eF, J.wF, true);
     leg(J.hF, J.kF, J.aF, J.tF, true);
     if (pose.ball && pose.ball[0] < J.hF[0]) parts.push(['ball', ell(pose.ball, 0.055, 0.055)]);
     // torso: a V; a jersey (basket: tank top; football: with a collar) or bare chest (guanches) or the tamarco dress
     const TP = [[J.nk[0] - 0.035, J.nk[1] - 0.005], [J.nk[0] + 0.035, J.nk[1] - 0.005], Wd([J.sN[0] + 0.01, J.sN[1] - 0.005], SW), Wd([J.sN[0] - 0.005, J.sN[1] - 0.1], SW * 0.92), Wd([J.hN[0] + 0.035, J.hN[1] + 0.02], HW), Wd([J.hF[0] - 0.035, J.hF[1] + 0.02], HW), Wd([J.sF[0] + 0.005, J.sF[1] - 0.1], SW * 0.92), Wd([J.sF[0] - 0.01, J.sF[1] - 0.005], SW)];
     parts.push(['skin', multi(cap(J.nk, [hd[0] - 0.01, hd[1] - 0.03], 0.058, 0.05), ell(shN, ua * 0.78, ua * 0.66), ell(shF, ua * 0.78, ua * 0.66))]);
-    if (O === 'guanche') parts.push(['skin', poly(TP)]);
+    if (O === 'bikini') { // v3 (Jonay): a narrow waist and a flat belly, the hips below
+      const wy = (J.sN[1] - 0.1 + J.hN[1]) / 2 + 0.02, wN = Wd([J.hN[0] + 0.02, wy], 0.92), wF = Wd([J.hF[0] - 0.02, wy], 0.92);
+      parts.push(['skin', poly([TP[0], TP[1], TP[2], TP[3], wN, Wd([J.hN[0] + 0.045, J.hN[1] + 0.02], 1.25), Wd([J.hF[0] - 0.045, J.hF[1] + 0.02], 1.25), wF, TP[6], TP[7]])]); }
+    else if (O === 'guanche') parts.push(['skin', poly(TP)]);
     else if (O === 'mirladora') parts.push(['cloak', poly([TP[0], TP[1], TP[2], TP[3], lerp2(J.hN, J.kN, 0.85), [lerp2(J.hF, J.kF, 0.85)[0] - 0.04, lerp2(J.hF, J.kF, 0.85)[1]], TP[6], TP[7]])]);
     else parts.push(['top', poly(sleeves ? TP.map((p, i) => (i === 3 || i === 6 ? [p[0], p[1] + 0.06] : p)) : TP)]);
     if (O === 'basket') parts.push(['trim', multi(line([J.nk[0] - 0.035, J.nk[1] - 0.005], [J.nk[0] + 0.004, J.nk[1] - 0.065], 0.014), line([J.nk[0] + 0.004, J.nk[1] - 0.065], [J.nk[0] + 0.035, J.nk[1] - 0.005], 0.014), line(TP[2], TP[3], 0.014), line(TP[7], TP[6], 0.012))]);
@@ -149,6 +155,10 @@ canvas { width: 100%; height: auto; image-rendering: pixelated; image-rendering:
     else if (O === 'futbol') { const hemN = lerp2(J.hN, J.kN, 0.5), hemF = lerp2(J.hF, J.kF, 0.5), tw = th * 1.35; parts.push(['bottom', multi(cap(J.hF, hemF, tw, tw * 0.95), cap(J.hN, hemN, tw, tw * 0.95), line([J.hF[0] - 0.02, J.hF[1] + 0.03], [J.hN[0] + 0.02, J.hN[1] + 0.03], 0.07))]); }
     else if (O === 'guanche') { const fl = lerp2(J.hN, J.kN, 0.5); parts.push(['bottom', multi(cap(J.hF, lerp2(J.hF, J.kF, 0.18), th * 1.25, th * 1.15), cap(J.hN, lerp2(J.hN, J.kN, 0.18), th * 1.25, th * 1.15), line([J.hF[0] - 0.03, J.hF[1] + 0.02], [J.hN[0] + 0.03, J.hN[1] + 0.02], 0.08), poly([[J.hN[0] + 0.04, J.hN[1] - 0.01], [J.hN[0] - 0.05, J.hN[1] - 0.01], [fl[0] - 0.02, fl[1]], [fl[0] + 0.05, fl[1] + 0.02]]))]);
       parts.push(['cord', line([J.hF[0] - 0.04, J.hF[1] + 0.05], [J.hN[0] + 0.04, J.hN[1] + 0.05], 0.012)]); }
+    if (O === 'bikini') { const yT = J.nk[1] - 0.075, yB = J.nk[1] - 0.13, xa = Wd([J.sF[0], 0], SW * 0.82)[0], xb = Wd([J.sN[0], 0], SW * 0.95)[0];
+      parts.push(['cloak', multi(poly([[xa, yT], [xb, yT], [xb - 0.01, yB], [xa + 0.01, yB]]), ell([xb - 0.04, (yT + yB) / 2 - 0.012], 0.062, 0.055), ell([xb - 0.1, (yT + yB) / 2 - 0.006], 0.05, 0.05), line([xa + 0.03, yT], [J.nk[0] - 0.02, J.nk[1] - 0.01], 0.012), line([xb - 0.03, yT], [J.nk[0] + 0.02, J.nk[1] - 0.01], 0.01))]); // the fur top
+      const fl = lerp2(J.hN, J.kN, 0.28); parts.push(['cloak', multi(cap(J.hF, lerp2(J.hF, J.kF, 0.1), th * 1.2, th * 1.1), cap(J.hN, lerp2(J.hN, J.kN, 0.1), th * 1.2, th * 1.1), line([J.hF[0] - 0.03, J.hF[1] + 0.02], [J.hN[0] + 0.03, J.hN[1] + 0.02], 0.06), poly([[J.hN[0] + 0.03, J.hN[1]], [J.hN[0] - 0.04, J.hN[1]], [fl[0], fl[1]]]))]);
+      parts.push(['cord', line([J.hF[0] - 0.04, J.hF[1] + 0.045], [J.hN[0] + 0.04, J.hN[1] + 0.045], 0.01)]); }
     leg(J.hN, J.kN, J.aN, J.tN, false);
     // the strap of the tamarco across the chest (the statue)
     if (who.cloak && O === 'guanche') parts.push(['cloak', multi(line(Wd(J.sF, SW * 0.9), [J.hN[0] + 0.03, J.hN[1] + 0.08], 0.03), ell(Wd(J.sF, SW * 0.95), 0.05, 0.035))]);
@@ -159,19 +169,21 @@ canvas { width: 100%; height: auto; image-rendering: pixelated; image-rendering:
     parts.push(['hair', (g) => { const cx = X(hd), cy = Y(hd), R = r * u; g.save(); g.translate(cx, cy); g.rotate(FR ? 0 : lk * 0.6);
       g.beginPath(); if (backv) g.rect(-2 * R, -2 * R, 4 * R, 2.9 * R); else if (front) g.rect(-2 * R, -2 * R, 4 * R, 1.55 * R); else { g.moveTo(-2 * R, -2 * R); g.lineTo(2 * R, -2 * R); g.lineTo(2 * R, -0.46 * R); g.lineTo(0.12 * R, -0.46 * R); g.lineTo(-0.5 * R, 0.12 * R); g.lineTo(-2 * R, 0.12 * R); g.closePath(); } g.clip();
       if (who.hs === 'afro') { g.beginPath(); g.arc(0, -0.42 * R, 1.08 * R, 0, 7); g.fill(); }
+      else if (who.hs === 'mane') { g.beginPath(); g.arc(-0.05 * R, -0.12 * R, 1.12 * R, 0, 7); g.fill(); g.beginPath(); g.arc(-0.55 * R, 0.1 * R, 0.75 * R, 0, 7); g.fill(); }
       else { g.beginPath(); g.arc(FR ? 0 : -0.03 * R, -0.1 * R, (who.hs === 'long' ? 1.08 : 1.03) * R, 0, 7); g.fill(); if (!FR) { g.beginPath(); g.arc(-0.45 * R, 0, 0.62 * R, 0, 7); g.fill(); } }
       if (front && who.hs === 'long') { g.restore(); g.save(); g.translate(cx, cy); g.fillRect(-1.0 * R, -0.5 * R, 0.25 * R, 1.6 * R); g.fillRect(0.75 * R, -0.5 * R, 0.25 * R, 1.6 * R); }
       g.restore(); }]);
     if (!FR) parts.push(['skin', ell([hd[0] + r * 0.9, hd[1] - r * 0.14 + lk * r * 0.3], r * 0.16, r * 0.2)]); // the nose sticks out of the profile
     if (who.beard === 'long') parts.push(['beard', FR ? ell([hd[0], hd[1] - r * 0.9], r * 0.5, r * 0.45) : ell([hd[0] + r * 0.36, hd[1] - r * 0.92 + lk * r * 0.2], r * 0.36, r * 0.42)]);
     if (!FR) parts.push(['ear', ell([hd[0] - r * 0.12, hd[1] - r * 0.08], r * 0.2, r * 0.27)]);
+    if (who.hs === 'mane') parts.push(['hair', poly([[hd[0] - r * 0.1, hd[1] - r * 0.3], [hd[0] + r * 0.35, hd[1] - r * 0.6], [shN[0] + 0.01, shN[1] - 0.09], [shN[0] - 0.05, shN[1] - 0.11]])]); // a lock over the shoulder, hair loose
     // the near arm, over the body, and what it holds
     arm(shN, J.eN, J.wN, false);
     if (who.tool === 'banot' && pose.tool) parts.push(['wood', multi(line(pose.tool[0], pose.tool[1], 0.022), (g) => { const t = pose.tool[1], d = [t[0] - pose.tool[0][0], t[1] - pose.tool[0][1]], l = Math.hypot(d[0], d[1]); line(t, [t[0] - d[0] / l * 0.08, t[1] - d[1] / l * 0.08], 0.03)(g); })]);
     if (who.tool === 'garrote' && pose.tool) { const a = J.wN, d = [pose.tool[1][0] - pose.tool[0][0], pose.tool[1][1] - pose.tool[0][1]], l = Math.hypot(d[0], d[1]); const b = [a[0] + d[0] / l * 0.36, a[1] + d[1] / l * 0.36]; parts.push(['wood', multi(cap(lerp2(a, b, -0.15), b, 0.03, 0.075), ell(b, 0.045, 0.045))]); }
     if (who.tool === 'vara' && pose.tool) parts.push(['wood', line(pose.tool[0], pose.tool[1], 0.018)]);
     if (who.tool) parts.push(['skin', ell(J.wN, 0.036 * L, 0.032 * L)]); // the fist over the handle
-    if (pose.orb && who.outfit === 'mirladora') parts.push(['orb', ell(pose.orb, 0.06, 0.06)]);
+    if (pose.orb && (who.outfit === 'mirladora' || who.outfit === 'bikini')) parts.push(['orb', ell(pose.orb, 0.06, 0.06)]);
     if (pose.ball && pose.ball[0] >= J.hF[0]) parts.push(['ball', ell(pose.ball, 0.055, 0.055)]);
     // ---- masks → id buffer
     const N = W * Hh, id = new Int16Array(N).fill(-1); const mk = document.createElement('canvas'); mk.width = W; mk.height = Hh; const g = mk.getContext('2d');
@@ -195,7 +207,7 @@ canvas { width: 100%; height: auto; image-rendering: pixelated; image-rendering:
     const HEADP = matOf.lastIndexOf('skin', matOf.indexOf('hair')), HEAD = new Set([HEADP]), R = Math.max(2, r * u), hx = X(hd), hy = Y(hd), big = R >= 8.5;
     const ink = [22, 12, 14], pupil = [46, 26, 18], wht = BR ? T.skin.h : [236, 230, 220], brow = mix(T.hair.b, [0, 0, 0], 0.3), lip = mix(T.skin.d, [120, 40, 40], BR ? 0 : 0.35);
     // hair texture (strands)
-    for (let y = 0; y < Hh; y++) for (let x = 0; x < W; x++) { const q = id[y * W + x]; if (q < 0) continue; const m = matOf[q]; if (m !== 'hair' && m !== 'hairL' && m !== 'beard') continue; const hs = (x * 73856093 ^ y * 19349663) >>> 0; if ((x + (y >> 1)) % 3 === 0 && who.hs === 'long') put(y * W + x, T.hair.d); else if (hs % 9 === 0) put(y * W + x, T.hair.d); else if (hs % 23 === 0) put(y * W + x, T.hair.h); }
+    for (let y = 0; y < Hh; y++) for (let x = 0; x < W; x++) { const q = id[y * W + x]; if (q < 0) continue; const m = matOf[q]; if (m !== 'hair' && m !== 'hairL' && m !== 'beard') continue; const hs = (x * 73856093 ^ y * 19349663) >>> 0; if ((x + (y >> 1)) % 3 === 0 && (who.hs === 'long' || who.hs === 'mane')) put(y * W + x, T.hair.d); else if (hs % 9 === 0) put(y * W + x, T.hair.d); else if (hs % 23 === 0) put(y * W + x, T.hair.h); }
     if (!FR) { // profile face
       const lkr = lk * R * 0.35, ex = Math.round(hx + R * 0.44), ey = Math.round(hy - R * 0.02 + lkr);
       dot(ex - 1, ey, T.skin.s, HEAD); dot(ex, ey, wht, HEAD); dot(ex + 1, ey, pupil, HEAD); if (big) { dot(ex + 1, ey + 1, pupil, HEAD); dot(ex, ey + 1, wht, HEAD); }
@@ -248,8 +260,8 @@ canvas { width: 100%; height: auto; image-rendering: pixelated; image-rendering:
   // ---------- the characters ----------
   const BENCOMO = { outfit: 'guanche', skin: '#9a6a44', hair: '#2a1c14', hs: 'long', beard: 'long', headband: true, necklace: true, cloak: '#7a4a26', bottom: '#a07850', cord: '#d8c8a0', tool: 'banot' };
   const MENCEY = { ...BENCOMO, tool: 'garrote', skin: '#8a5a38', hair: '#1e1610', cloak: '#5a3a20' };
-  const PASTOR = { ...BENCOMO, slim: true, skin: '#b07a50', hair: '#4a2e18', beard: false, tool: 'vara', cloak: '#9a7a50', bottom: '#8a6a40' };
-  const MIRLA = { outfit: 'mirladora', female: true, slim: true, skin: '#b8835a', hair: '#1a100c', hs: 'long', headband: true, necklace: true, cloak: '#8a5a30', cord: '#e8d8b0' };
+  const PASTOR = { ...BENCOMO, slim: true, skin: '#a8724a', hair: '#3a2416', beard: 'long', tool: 'vara', cloak: '#8a6a44', bottom: '#9a7a52' }; // v2 (Jonay): like Bencomo
+  const MIRLA = { outfit: 'bikini', female: true, slim: true, skin: '#c08a5e', hair: '#7a4222', hs: 'mane', headband: true, necklace: true, cloak: '#a0703c', cord: '#e8d8b0' }; // v2 (Jonay): a fur bikini, Vixen style, long hair
   // ---------- the cards ----------
   const STYLE = { real: { H: 100, head: 0.076, sw: 2 }, semi: { H: 100, head: 0.1, sw: 2, bodyK: 0.85 }, semi120: { H: 120, head: 0.1, sw: 2, bodyK: 0.85 } };
   const cards = [];
@@ -266,23 +278,96 @@ canvas { width: 100%; height: auto; image-rendering: pixelated; image-rendering:
       (cd.faceWho || [cd.figs[0].who]).forEach((w, i) => { og.fillStyle = '#1b1530'; og.fillRect(0, 0, off.width, off.height); const h = render(off, off.width / 2, Math.round(off.height * 0.84), st, P.estatua, { ...w, tool: null }); fg.drawImage(off, Math.round(h.hx - cell / 2 + h.R * 0.15), Math.round(h.hy - cell / 2 + h.R * 0.25), cell, cell, i * cell, 0, cell, cell); }); } }
   const run = (t) => lerpPose(P.runA, P.runB, (Math.sin(t * Math.PI * 2 * 1.6) + 1) / 2);
   const benFigs = (who) => [{ label: 'QUIETO', pose: P.estatua, who }, { label: 'CORRIENDO', pose: run, who }, { label: 'VARAZO', pose: P.golpe, who }, { label: 'SALTO', pose: P.salto, who }];
-  card('g-bencomo', { tag: 'B1', name: 'Bronce de Candelaria', text: 'Como la estatua tal cual: todo en bronce con la pátina verdosa en las luces. Muy reconocible, pero sin colores.', st: STYLE.real, bg: bgBencomo, figs: benFigs({ ...BENCOMO, bronze: true }) });
-  card('g-bencomo', { tag: 'B2', name: 'Mencey a color', text: 'La misma figura, a color: piel morena, el tamarco de piel de cabra, el taparrabos, la cinta, el collar y las muñequeras de la estatua.', st: STYLE.real, bg: bgBencomo, figs: benFigs(BENCOMO) });
-  card('g-bencomo', { tag: 'B3', name: 'Mencey semicabezón', text: 'Con las proporciones del jugador de basket que elegiste: la cabeza más grande, la cara se lee mejor y casa con el resto del juego.', st: STYLE.semi, bg: bgBencomo, figs: benFigs(BENCOMO) });
-  card('g-bencomo', { tag: 'B4', name: 'Semicabezón de bronce', text: 'El semicabezón con el acabado de estatua. Podría ser un «modo estatua» o el aspecto del jefe final.', st: STYLE.semi, bg: bgBencomo, figs: benFigs({ ...BENCOMO, bronze: true }) });
+  card('g-bencomo', { tag: 'B3 · elegido', name: 'Mencey semicabezón', text: 'El que elegiste para Bencomo: las proporciones del jugador de basket, la cabeza más grande y la cara que se lee bien. Es el que se pasará al juego (con las animaciones de saltar con la vara, varazo, agacharse y el «picado»).', st: STYLE.semi, bg: bgBencomo, figs: benFigs(BENCOMO) });
+  // ---------- Bencomo at the size of the game: the board is 480 × 336, the hero 22 px (44 on the board) ----------
+  const BP = { k: '#1a1008', h: '#140d09', b: '#c27b46', d: '#8c4f27', w: '#f4efe6', c: '#7a4a22', C: '#b8823f', s: '#3a2414', e: '#2a1a10' };
+  const BEN_NOW = ['.....hhhhh......', '....hhhhhhh.....', '...hhhbbbbhh....', '...hhbbbbwk.....', '...hhbbbbbbbb...', '...hhdbbbbbb....', '...hhhhbhhhh....', '....hhhhhhh.....', '.....hdbbd......', '...CccccccC.....', '..bcCccccCcb....', '..bcccccccdb....', '..bbccccccbb....', '...dccccccd.....',
+    '...cCccccCc.....', '...cccccccc.....', '....bb..bb......', '....bb..bb......', '....bd..bd......', '....bd..bd......', '...sss..sss.....', '................'];
+  (() => { const el = document.createElement('section'); el.className = 'card'; el.style.gridColumn = '1 / -1';
+    el.innerHTML = `<header><span class="tag">B3 en el juego</span><h3>A su tamaño de verdad</h3></header><p>Sí: en la muestra está mucho más grande. Esto es la pantalla de Bencomo a tamaño real (480 × 336): a la izquierda el Bencomo de ahora (22 píxeles, 44 en pantalla); luego el B3 a ese mismo tamaño; y a la derecha el B3 un poco más grande (60 en pantalla), que se vería mejor la cara sin tapar tanto la fase.</p>
+      <canvas width="480" height="336" style="max-width:960px" aria-label="Bencomo a tamaño real"></canvas><div class="legend" style="grid-template-columns:repeat(3,1fr);max-width:960px"><span>EL DE AHORA</span><span>B3 · MISMO TAMAÑO</span><span>B3 · UN POCO MÁS GRANDE</span></div>`;
+    document.getElementById('g-bencomo-juego').appendChild(el); const cv = el.querySelector('canvas'), g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
+    const drawIt = (t) => { const fy = 300; const sky = g.createLinearGradient(0, 0, 0, fy); sky.addColorStop(0, '#f7b267'); sky.addColorStop(1, '#f4845f'); g.fillStyle = sky; g.fillRect(0, 0, 480, fy);
+      g.fillStyle = '#7d4e57'; g.beginPath(); g.moveTo(0, 220); for (let x = 0; x <= 480; x += 8) g.lineTo(x, 200 + 18 * Math.sin(x * 0.02) + 8 * Math.sin(x * 0.07)); g.lineTo(480, fy); g.lineTo(0, fy); g.fill();
+      for (let x = 0; x < 480; x += 32) { g.fillStyle = '#6b4a2e'; g.fillRect(x, fy, 32, 36); g.fillStyle = '#8a6440'; g.fillRect(x, fy, 32, 4); g.fillStyle = '#4e3420'; g.fillRect(x + 31, fy, 1, 36); }
+      BEN_NOW.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === '.') return; g.fillStyle = BP[ch]; g.fillRect(70 + x * 2, fy - 44 + y * 2, 2, 2); }));
+      const runP = lerpPose(P.runA, P.runB, (Math.sin(t * Math.PI * 2 * 1.6) + 1) / 2);
+      render(cv, 240, fy, { H: 48, head: 0.1, sw: 1, bodyK: 0.85 }, P.estatua, BENCOMO); render(cv, 300, fy, { H: 48, head: 0.1, sw: 1, bodyK: 0.85 }, runP, BENCOMO);
+      render(cv, 385, fy, { H: 66, head: 0.1, sw: 2, bodyK: 0.85 }, P.estatua, BENCOMO); render(cv, 440, fy, { H: 66, head: 0.1, sw: 2, bodyK: 0.85 }, P.golpe, BENCOMO); };
+    drawIt(0); cards.push({ figs: [{ pose: () => 0 }], st: {}, special: drawIt }); })();
   const trio = [{ label: 'EL MENCEY', pose: P.golpe, who: MENCEY }, { label: 'EL PASTOR', pose: P.salto, who: PASTOR }, { label: 'LA MIRLADORA', pose: P.magia, who: MIRLA }];
-  const trioIdle = [{ label: 'EL MENCEY', pose: P.estatua, who: MENCEY }, { label: 'EL PASTOR', pose: P.estatua, who: PASTOR }, { label: 'LA MIRLADORA', pose: P.estatua, who: MIRLA }];
-  card('g-guarriors', { tag: 'G1', name: 'Proporción normal', text: 'Como guerreros de verdad, en plena pelea. El Mencey es el más ancho; el Pastor, más fino y joven; la Mirladora lleva el tamarco largo y la magia.', st: STYLE.real, bg: bgCave, figs: trio, faceWho: [MENCEY, PASTOR, MIRLA], faceN: 3 });
-  card('g-guarriors', { tag: 'G2', name: 'Un poco cabezones', text: 'Los mismos con las proporciones del basket, de pie como en la pantalla de elegir personaje.', st: STYLE.semi, bg: bgCave, figs: trioIdle, faceWho: [MENCEY, PASTOR, MIRLA], faceN: 3 });
-  // football
-  const ESP = { outfit: 'futbol', skin: '#c68a5e', hair: '#2a1a10', top: '#c8102e', trim: '#ffc400', bottom: '#1d2a6b', sock: '#1d2a6b', shoe: '#111111', num: '9' };
-  const ESP2 = { ...ESP, skin: '#7a4a2c', hair: '#141010', hs: 'afro', num: '10', beard: true };
-  const GK = { ...ESP, top: '#f1c40f', trim: '#222222', bottom: '#222222', sock: '#f1c40f', num: '1' };
-  card('g-futbol', { tag: 'F1', name: 'De lado, como el basket', text: 'El jugador que elegiste con botas, medias y camiseta de manga corta. Para usarlo, el fútbol pasaría a verse de lado (el campo en horizontal y la cámara siguiendo el balón), como en el basket. Es el cambio más grande, pero el que más luce.', st: STYLE.semi120, bg: (c) => bgPitch(c, false), figs: [{ label: 'CORRIENDO', pose: run, who: ESP2 }, { label: 'CHUT', pose: P.chut, who: ESP }, { label: 'CABEZAZO', pose: P.cabezazo, who: ESP2 }, { label: 'PALOMITA', pose: P.portero, who: GK }], faceWho: [ESP, ESP2], faceN: 2 });
-  card('g-futbol', { tag: 'F2', name: 'Desde arriba, más grandes', text: 'El campo sigue en vertical, pero los jugadores se ven de frente o de espalda, a unos 48 píxeles (ahora son unos 15), con la cámara más cerca. Cambia poco el juego: solo hay que acercar la cámara.', st: { H: 48, head: 0.1, sw: 1, bodyK: 0.85 }, slot: 1.1, hk: 1.35, top: true, bg: (c) => bgPitch(c, true), figs: [{ label: 'DE FRENTE', pose: P.frente, who: ESP2 }, { label: 'DE ESPALDA', pose: P.espalda, who: ESP }, { label: 'PORTERO', pose: P.frente, who: GK }, { label: 'RIVAL', pose: P.espalda, who: { ...ESP, top: '#1f5fbf', trim: '#f2f2f2', bottom: '#f2f2f2', sock: '#1f5fbf', num: '7' } }], faces: false });
-  card('g-futbol', { tag: 'F3', name: 'Como ahora, mejorados', text: 'Mismo tamaño y misma cámara de ahora (tipo Sensible Soccer), pero con estas figuras en miniatura: se distinguen la piel, el pelo, el número y las botas. Es el cambio más pequeño.', st: { H: 24, head: 0.11, sw: 1, bodyK: 0.85 }, slot: 1.2, hk: 1.4, top: true, bg: (c) => bgPitch(c, true), figs: [{ label: 'FRENTE', pose: P.frente, who: ESP2 }, { label: 'ESPALDA', pose: P.espalda, who: ESP }, { label: 'PORTERO', pose: P.frente, who: GK }, { label: 'RIVAL', pose: P.espalda, who: { ...ESP, top: '#1f5fbf', trim: '#f2f2f2', bottom: '#f2f2f2', sock: '#1f5fbf', num: '7' } }], faces: false });
+  const trioIdle = [{ label: 'EL MENCEY', pose: P.estatua, who: MENCEY }, { label: 'EL PASTOR', pose: P.estatua, who: PASTOR }, { label: 'LA MIRLADORA', pose: P.magia, who: MIRLA }];
+  card('g-guarriors', { tag: 'G1 · elegido', name: 'En plena pelea', text: 'El Mencey se queda como estaba. El Pastor ahora es como Bencomo (pelo largo con cinta, barba, tamarco y banot), pero más fino y con la vara del salto. La Mirladora va en bikini de piel, como la guerrera de «Vixen», con la melena larga, botas de piel, brazaletes y la magia en la mano.', st: STYLE.real, bg: bgCave, figs: trio, faceWho: [MENCEY, PASTOR, MIRLA], faceN: 3 });
+  card('g-guarriors', { tag: 'G1', name: 'De pie, para elegir personaje', text: 'Los mismos tres quietos, como saldrían en la pantalla de elegir guerrero.', st: STYLE.real, bg: bgCave, figs: trioIdle, faces: false });
+  // ---------- football: the current little man of the game vs three improvements, same camera (from above, pitch vertical) ----------
+  const KITS = [{ shirt: '#c8102e', shorts: '#1d2a6b', socks: '#1d2a6b', trim: '#ffc400', boot2: '#ffc400', look: { skin: '#c68a5e', hair: '#2a1a10' }, num: '9' },
+    { shirt: '#c8102e', shorts: '#1d2a6b', socks: '#1d2a6b', trim: '#ffc400', boot2: '#ffc400', look: { skin: '#7a4a2c', hair: '#141010', afro: true }, num: '10' },
+    { shirt: '#f2f2f2', shorts: '#1f5fbf', socks: '#f2f2f2', trim: '#1f5fbf', boot2: '#1f5fbf', look: { skin: '#efc8a2', hair: '#c9902e' }, num: '7' },
+    { shirt: '#f1c40f', shorts: '#222222', socks: '#f1c40f', trim: '#222222', boot2: '#f2f2f2', look: { skin: '#c68a5e', hair: '#2a1a10' }, num: '1', gk: true }];
+  // the game's own drawPlayer (09g_futbol2d.js), copied as it is: logical pixels drawn at 3×
+  function fbActual(g, px, py, fr, K) { const skin = K.look.skin, hair = K.look.hair; g.save(); g.scale(3, 3); px /= 3; py /= 3;
+    g.fillStyle = 'rgba(0,0,0,0.3)'; g.beginPath(); g.ellipse(px, py, 4, 1.6, 0, 0, 7); g.fill();
+    if (fr.dive) { const s = 1, y0 = py - 6 - 4; g.fillStyle = 'rgba(0,0,0,0.3)'; g.beginPath(); g.ellipse(px, py, 7, 1.6, 0, 0, 7); g.fill(); g.fillStyle = K.socks; g.fillRect(px - 8 * s, y0 + 1, 3, 2); g.fillStyle = K.shorts; g.fillRect(px - 5 * s, y0, 3, 3); g.fillStyle = K.shirt; g.fillRect(px - 2 * s, y0 - 0.5, 5, 4); g.fillStyle = skin; g.fillRect(px + 3 * s, y0 - 0.5, 3, 3); g.fillStyle = '#f2f2f2'; g.fillRect(px + 6 * s, y0 - 1.5, 3, 1.4); g.fillRect(px + 6 * s, y0 + 2.2, 3, 1.4); g.restore(); return; }
+    if (fr.slide) { const s = 1; g.fillStyle = K.socks; g.fillRect(px - 6 * s, py - 3, 3, 2); g.fillStyle = K.shorts; g.fillRect(px - 3 * s, py - 4, 3, 3); g.fillStyle = K.shirt; g.fillRect(px, py - 5, 4, 4); g.fillStyle = skin; g.fillRect(px + 4 * s, py - 5, 3, 3); g.restore(); return; }
+    const l1 = fr.mv ? Math.round(fr.ph * 1.5) : 0, view = fr.view;
+    g.fillStyle = K.socks; g.fillRect(px - 2, py - 4 + l1, 1.5, 4 - l1); g.fillRect(px + 0.5, py - 4 - l1, 1.5, 4 + l1);
+    g.fillStyle = '#111'; g.fillRect(px - 2.2, py - 0.6 + l1 * 0.5, 2, 1); g.fillRect(px + 0.3, py - 0.6 - l1 * 0.5, 2, 1);
+    g.fillStyle = K.shorts; g.fillRect(px - 2.5, py - 6, 5, 2.5); g.fillStyle = K.shirt; g.fillRect(px - 3, py - 10.5, 6, 4.8);
+    g.fillStyle = K.shirt; g.fillRect(px - 4, py - 10 - l1 * 0.4, 1.2, 3.2); g.fillRect(px + 2.8, py - 10 + l1 * 0.4, 1.2, 3.2);
+    g.fillStyle = skin; g.fillRect(px - 4, py - 7 - l1 * 0.4, 1.2, 1.2); g.fillRect(px + 2.8, py - 7 + l1 * 0.4, 1.2, 1.2); g.fillRect(px - 1.8, py - 14, 3.6, 3.6);
+    g.fillStyle = hair; if (view === 'up') g.fillRect(px - 1.8, py - 14.3, 3.6, 3.2); else { g.fillRect(px - 1.8, py - 14.4, 3.6, 1.3); if (view === 'side') g.fillRect(px - 1.8, py - 14, 1.2, 2.4); }
+    if (view === 'down') { g.fillStyle = '#111'; g.fillRect(px - 1, py - 12.4, 0.7, 0.7); g.fillRect(px + 0.4, py - 12.4, 0.7, 0.7); } g.restore(); }
+  // the improved little man: drawn on a grid of whole pixels (k = size of one design unit in pixels of the canvas), then
+  // shaded (light from the top left) and outlined; hk = head size; outline: the colour of the outline or null
+  const DG3 = { 0: '111101101101111', 1: '010110010010111', 2: '111001111100111', 3: '111001111001111', 4: '101101111001001', 5: '111100111001111', 6: '111100111101111', 7: '111001010010010', 8: '111101111101111', 9: '111101111001111' };
+  function fbNew(g, px, py, fr, K, o) { const k = o.k, hk = o.hk || 1; const off = document.createElement('canvas'); const SZ = Math.ceil(80 * k) + 8; off.width = off.height = SZ; const c = off.getContext('2d'); const ox = SZ / 2, oy = SZ - 4;
+    const ids = []; const R = (x, y, w, h, col) => { c.fillStyle = col; c.fillRect(Math.round(ox + x * k), Math.round(oy + y * k), Math.max(1, Math.round(w * k)), Math.max(1, Math.round(h * k))); };
+    const sk = K.look.skin, hr = K.look.hair, sh = (h, t) => 'rgb(' + mix(hex(h), [30, 16, 40], t).join(',') + ')', lt = (h, t) => 'rgb(' + mix(hex(h), [255, 246, 230], t).join(',') + ')';
+    const l = fr.mv ? Math.round(fr.ph * 3) : 0, a = fr.mv ? Math.round(fr.ph * 2) : 0, view = fr.view, side = view === 'side', up = view === 'up';
+    // legs: boots, socks with their band, knees
+    const legs = side ? [[-1 - l, l > 0 ? 0 : -1], [-1 + l, l > 0 ? -1 : 0]] : [[-6, l], [1, -l]];
+    for (const [lx, ly] of legs) { R(lx, -14 + ly, 5, 3, sk); R(lx + 1, -14 + ly, 1, 3, sh(sk, 0.3)); R(lx, -11 + ly, 5, 8, K.socks); R(lx + 4, -11 + ly, 1, 8, sh(K.socks, 0.35)); R(lx, -11 + ly, 5, 2, K.trim);
+      R(lx - (side ? 0 : 0.5), -3 + ly, side ? 7 : 5.5, 3, '#141414'); R(lx, -1 + ly, side ? 7 : 5, 1, '#e8e4dc'); R(lx + 1, -3 + ly, 2, 1, K.boot2); }
+    // shorts
+    const sw = side ? 11 : 14; R(-sw / 2, -21, sw, 7, K.shorts); R(sw / 2 - 2, -21, 2, 7, sh(K.shorts, 0.35)); R(-sw / 2, -21, 1, 6, lt(K.shorts, 0.25)); if (!side) R(-0.5, -17, 1, 3, sh(K.shorts, 0.5)); R(-sw / 2, -15, sw, 1, sh(K.shorts, 0.45));
+    // arms (behind the shirt on the sides), swinging
+    const aw = side ? [[-2 - a, 0]] : [[-11, a], [8, -a]];
+    for (const [ax, ay] of aw) { R(ax, -33 + ay, 3, 6, K.gk ? K.shirt : sh(K.shirt, 0.15)); R(ax, -27 + ay, 3, 4, sk); R(ax + 2, -27 + ay, 1, 4, sh(sk, 0.3)); R(ax, -23 + ay, 3, 2, K.gk ? '#f2f2f2' : sh(sk, 0.15)); }
+    // shirt: light on the left, shadow on the right, collar, number on the back
+    const tw = side ? 12 : 16; R(-tw / 2, -34, tw, 13, K.shirt); R(-tw / 2, -34, 1, 12, lt(K.shirt, 0.3)); R(tw / 2 - 3, -34, 3, 13, sh(K.shirt, 0.3)); R(-tw / 2, -22, tw, 1, sh(K.shirt, 0.45));
+    if (!up && !side) { R(-2, -34, 4, 1, K.trim); R(-1, -33, 2, 1, K.trim); R(3, -31, 2, 2, K.trim); } // collar, badge
+    if (up && k >= 0.9) { const n = String(K.num); const cw = 4; const x0 = -(n.length * cw) / 2 + 0.5; [...n].forEach((ch, i) => { const p = DG3[ch]; for (let b = 0; b < 15; b++) if (p[b] === '1') R(x0 + i * cw + (b % 3), -32 + ((b / 3) | 0), 1, 1, K.trim); }); }
+    if (side) R(-2 - a, -33, 3, 6, sh(K.shirt, 0.1));
+    // neck and head (hk: bigger head)
+    R(-2, -36, 4, 2, sh(sk, 0.3));
+    const hw = Math.round(11 * hk), hh = Math.round(11 * hk), hx0 = -Math.floor(hw / 2) + (side ? 1 : 0), hy0 = -36 - hh;
+    R(hx0, hy0, hw, hh, sk); R(hx0, hy0, 1, 1, 'rgba(0,0,0,0)'); c.clearRect(Math.round(ox + hx0 * k), Math.round(oy + hy0 * k), Math.max(1, Math.round(k)), Math.max(1, Math.round(k))); c.clearRect(Math.round(ox + (hx0 + hw - 1) * k), Math.round(oy + hy0 * k), Math.max(1, Math.round(k)), Math.max(1, Math.round(k)));
+    R(hx0 + hw - 2, hy0 + 2, 2, hh - 3, sh(sk, 0.28)); R(hx0, hy0 + hh - 1, hw, 1, sh(sk, 0.35));
+    const big = K.look.afro ? 2 : 0;
+    if (up) { R(hx0 - big / 2, hy0 - 1 - big, hw + big, hh - 2 + big, hr); R(hx0 + 2, hy0, 3, 2, lt(hr, 0.25)); R(hx0 - 1, hy0 + hh - 6, 1, 3, sk); R(hx0 + hw, hy0 + hh - 6, 1, 3, sk); }
+    else if (side) { R(hx0 - big / 2, hy0 - 1 - big, hw + big, 4 + big, hr); R(hx0 - big / 2, hy0 - 1, 4, hh - 3, hr); R(hx0 + 3, hy0, 3, 1, lt(hr, 0.25)); R(hx0 + hw, hy0 + 5, 1, 2, sk);
+      R(hx0 + hw - 3, hy0 + 5, 1, 2, '#f2eee6'); R(hx0 + hw - 2, hy0 + 5, 1, 2, '#1a1010'); R(hx0 + hw - 4, hy0 + 3, 3, 1, sh(hr, 0.2)); R(hx0 + 3, hy0 + 5, 2, 3, sh(sk, 0.25)); R(hx0 + hw - 3, hy0 + 9, 2, 1, sh(sk, 0.45)); }
+    else { R(hx0 - big / 2, hy0 - 1 - big, hw + big, 4 + big, hr); R(hx0 - 1, hy0 + 1, 2, 4, hr); R(hx0 + hw - 1, hy0 + 1, 2, 4, hr); R(hx0 + 3, hy0, 3, 1, lt(hr, 0.25));
+      const ey = hy0 + Math.round(hh * 0.5); for (const ex of [hx0 + Math.round(hw * 0.22), hx0 + Math.round(hw * 0.62)]) { R(ex, ey, 2, 2, '#f2eee6'); R(ex + 1, ey, 1, 2, '#1a1010'); R(ex, ey - 2, 2, 1, sh(hr, 0.2)); }
+      R(Math.round(hx0 + hw / 2 - 0.5), ey + 2, 1, 2, sh(sk, 0.3)); R(Math.round(hx0 + hw / 2 - 1.5), ey + 4 + (hk > 1 ? 1 : 0), 3, 1, sh(sk, 0.5)); }
+    // outline (1 pixel, the darkest tone) and stick the man onto the pitch
+    if (o.outline) { const d = c.getImageData(0, 0, SZ, SZ), p = d.data, A = (x, y) => (x < 0 || y < 0 || x >= SZ || y >= SZ ? 0 : p[(y * SZ + x) * 4 + 3]); const outl = []; for (let y = 0; y < SZ; y++) for (let x = 0; x < SZ; x++) if (!A(x, y) && (A(x + 1, y) || A(x - 1, y) || A(x, y + 1) || A(x, y - 1))) outl.push(x, y); c.fillStyle = o.outline; for (let i = 0; i < outl.length; i += 2) c.fillRect(outl[i], outl[i + 1], 1, 1); }
+    g.fillStyle = 'rgba(0,0,0,0.3)'; g.beginPath(); g.ellipse(px, py, 12 * k, 4 * k, 0, 0, 7); g.fill();
+    g.save(); g.translate(px, py); if (fr.dive) { g.rotate(-Math.PI / 2); g.translate(14 * k, -10 * k); } if (fr.slide) { g.rotate(-Math.PI / 2.2); g.translate(8 * k, 0); } g.drawImage(off, -ox, -oy); g.restore(); }
+  const FR = (t) => { const ph = Math.sin(t * Math.PI * 2 * 2); return [{ view: 'down', mv: false, ph: 0, label: 'QUIETO', kit: 0 }, { view: 'down', mv: true, ph, label: 'CORRE (FRENTE)', kit: 1 }, { view: 'up', mv: true, ph, label: 'ESPALDA', kit: 0 }, { view: 'side', mv: true, ph, label: 'DE LADO', kit: 2 }, { slide: true, label: 'ENTRADA', kit: 2 }, { dive: true, label: 'PALOMITA', kit: 3 }]; };
+  const fbCards = [];
+  function fbCard(o) { const el = document.createElement('section'); el.className = 'card'; const n = 6, slot = 72, W = slot * n, H = 96;
+    el.innerHTML = `<header><span class="tag">${o.tag}</span><h3>${o.name}</h3></header><p>${o.text}</p><canvas width="${W}" height="${H}" aria-label="${o.name}"></canvas><div class="legend" style="grid-template-columns:repeat(${n},1fr)">${FR(0).map((f) => `<span>${f.label}</span>`).join('')}</div>
+      <p style="font-size:13px">A tamaño real, como se verá en la pantalla del partido:</p><canvas class="real" width="${W}" height="${H}" style="width:${W}px;max-width:100%;image-rendering:pixelated" aria-label="${o.name} a tamaño real"></canvas>`;
+    document.getElementById('g-futbol').appendChild(el); fbCards.push({ ...o, cv: el.querySelector('canvas'), rv: el.querySelector('canvas.real'), slot }); }
+  function fbDraw(cd, t) { for (const cv of [cd.cv, cd.rv]) { const g = cv.getContext('2d'); g.imageSmoothingEnabled = false; for (let y = 0; y < cv.height; y += 12) { g.fillStyle = (y / 12) % 2 ? '#2f8a3a' : '#349640'; g.fillRect(0, y, cv.width, 12); }
+      g.fillStyle = 'rgba(255,255,255,.75)'; g.fillRect(0, 84, cv.width, 2);
+      FR(t).forEach((f, i) => { const x = cd.slot * i + cd.slot / 2, y = 80; cd.draw(g, x, y, f, KITS[f.kit]); }); } }
+  fbCard({ tag: 'F0', name: 'El de ahora', text: 'Tal como está en el juego: unos 15 píxeles de alto, cuadrados de color sin sombras ni contorno. Desde arriba solo se le ve la nuca.', draw: (g, x, y, f, K) => fbActual(g, x, y, f, K) });
+  fbCard({ tag: 'F1', name: 'El de ahora, pulido', text: 'Mismo tamaño y misma cámara, pero dibujado a la resolución real del partido (tres veces más fina): luz y sombra, contorno, rodillas, medias con su raya, botas con suela, el número en la espalda, ojos, cejas y el pelo con su brillo.', draw: (g, x, y, f, K) => fbNew(g, x, y, f, K, { k: 1, hk: 1, outline: '#14100e' }) });
+  fbCard({ tag: 'F2', name: 'Pulido y un poco cabezón', text: 'Como el F1, con la cabeza un poco más grande (como el jugador de basket que elegiste). Se distingue mejor quién es quién: piel, pelo, cara.', draw: (g, x, y, f, K) => fbNew(g, x, y, f, K, { k: 1, hk: 1.3, outline: '#14100e' }) });
   const still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  cards.forEach((cd) => draw(cd, 0));
-  if (!still) { let last = 0; const tick = (now) => { requestAnimationFrame(tick); if (now - last < 90) return; last = now; cards.forEach((cd) => { if (cd.figs.some((f) => typeof f.pose === 'function')) draw(cd, now / 1000); }); }; requestAnimationFrame(tick); }
+  cards.forEach((cd) => (cd.special ? null : draw(cd, 0))); fbCards.forEach((cd) => fbDraw(cd, 0));
+  if (!still) { let last = 0; const tick = (now) => { requestAnimationFrame(tick); if (now - last < 90) return; last = now; cards.forEach((cd) => { if (cd.special) cd.special(now / 1000); else if (cd.figs.some((f) => typeof f.pose === 'function')) draw(cd, now / 1000); }); fbCards.forEach((cd) => fbDraw(cd, now / 1000)); }; requestAnimationFrame(tick); }
 })();
 </script>

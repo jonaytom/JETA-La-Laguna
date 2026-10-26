@@ -1,92 +1,57 @@
-# Pruebas 0.87.1 — 2026-10-26 10:52 — 5/5 OK
+# Pruebas 0.88.0 — 2026-10-26 11:09 — 4/4 OK
 
-Listas: v0871. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 92 s en total.
+Listas: v088. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 93 s en total.
 
 | # | Prueba | Resultado | Tiempo |
 |---|---|---|---|
-| 1 | `prueba_082.py` | **OK** | 67 s |
-| 2 | `prueba_0821.py` | **OK** | 0 s |
-| 3 | `prueba_083.py` | **OK** | 2 s |
-| 4 | `prueba_085.py` | **OK** | 2 s |
-| 5 | `prueba_arranque.py` | **OK** | 1 s |
+| 1 | `prueba_088.py` | **OK** | 64 s |
+| 2 | `prueba_futbol.py` | **OK** | 7 s |
+| 3 | `prueba_085.py` | **OK** | 2 s |
+| 4 | `prueba_arranque.py` | **OK** | 1 s |
 
 ## Detalle
 
-### 1. prueba_082.py — OK
+### 1. prueba_088.py — OK
 
 ```
-juguetería {'hay': True, 'tienda': 'Juguetes Sabelotodo', 'opcion': 0, 'abre': True}
-foto v082_titulo
-vista a los 9 s demo
-foto v082_demo
-foto v082_records
-moneda {'creditos': 1, 'modo': 'play', 'fase': 'select', 'elegido': 1}
-foto v082_elegir
-guerrero {'heroe': 'pastor', 'fase': 'intro'}
-TIENDA OK
-controles {'anda': 39, 'alto': 37, 'corre': 'run', 'pelea': True, 'combo': {'vida': 3, 'max': 8, 'estado': 'fall'}}
-foto v082_pelea
-magia {'estado': 'magic', 'zurrones': 0, 'tocados': 2, 'enemigos': 2}
-foto v082_magia
-lagarto {'monta': True, 'cola': 'bite', 'mordisco': True, 'salto': 'whip', 'avanza': 40}
-golpes nuevos {'patada': 'dash', 'alto_patada': 16, 'flip': {'estado': 'flip', 'alto': 24, 'detras': True, 'tumbado': True, 'dano': 4}}
-foto v082_lagarto
-CONTROLES OK
-foto v082_fase1
-foto v082_fase2
-foto v082_fase3
-foto v082_fase4
-foto v082_fase5
-recorrido [{'estado': {'p': [192, 18, 'walk', 1, 0], 'lock': 0, 'E': [], 'teclas': ['vR']}, 'fase': 1, 'heroe': 'mencey', 'avance': 1, 'jefe': True, 'pasada': True, 'segundos': 78, 'puntos': 9990}, {'estado': {'p': [147, 18, 'walk', 1, 0], 'lock': 0, 'E': [], 'teclas': ['vR']}, 'fase': 2, 'heroe': 'mirla', 'avance': 1, 'jefe': True, 'pasada': True, 'segundos': 140, 'puntos': 12850}, {'estado': {'p': [192, 18, 'walk', 1, 0], 'lock': 0, 'E': [], 'teclas': ['vR']}, 'fase': 3, 'heroe': 'mirla', 'avance': 1, 'jefe': True, 'pasada': True, 'segundos': 161, 'puntos': 13870}, {'estado': {'p': [192, 19, 'walk', 1, 0], 'lock': 0, 'E': [], 'teclas': ['vR']}, 'fase': 4, 'heroe': 'mirla', 'avance': 1, 'jefe': True, 'pasada': True, 'segundos': 179, 'puntos': 16720}, {'estado': {'p': [192, 18, 'walk', 1, 0], 'lock': 0, 'E': [], 'teclas': ['vR']}, 'fase': 5, 'heroe': 'mencey', 'avance': 1, 'jefe': True, 'pasada': True, 'segundos': 133, 'puntos': 25390}]
-FASES OK
-fin de partida {'m1': 'cont', 'm2': 'name'}
-foto v082_records_nuevo
-RECORDS OK
+partido {'ok': True, 'juega': True, 'n': 10, 'marcador': [0, 0]}
+foto v088_futbol
+PARTIDO OK
 errores []
-PRUEBA 082 OK
+PRUEBA 088 OK
 ```
 
-### 2. prueba_0821.py — OK
+### 2. prueba_futbol.py — OK
 
 ```
-partida nueva {'abierto': True, 'aun_no': False, 'pendientes': 0, 'sabes': False, 'sabidos': 0}
-(sin foto) v0821_diario_nuevo
-OCULTO OK
-charla con título {'hecho': True, 'lineas': 1, 'ultima': 'Prueba de la máquina'}
-MOVIL OK
-lo que sabes {'sabes': True, 'sabidos': ['Maleantes en busca y captura', 'La máquina de El Blanco: BENCOMO', 'GUFO, AGUERE INVASION', 'GUANCHE GUARRIORS', 'Las jugueterías', 'Retos en las canchas'], 'detalle_quien': True, 'detalle_donde': True, 'detalle_charla': True}
-(sin foto) v0821_diario_sabes
-maleantes {'maleantes': True}
-(sin foto) v0821_diario_maleantes
-SABES OK
-jugueterías en el mapa {'abierto': True, 'cercana': 'Juguetes Sabelotodo', 'metros': 180, 'mapa': True, 'texto': True, 'gps': True, 'cerrado': True}
-foto v0822_mapa
-MAPA OK
-errores []
-PRUEBA 0821 OK
+foto futbol_partido
+cpu {'ph': 'play', 'sc': [2, 1], 'golden': False}
+resultado {"won":true,"score":[2,1]}
+PARTIDO CPU OK
+partido fácil 1 [5, 0]
+partido fácil 2 [7, 1]
+partido fácil 3 [6, 3]
+equilibrio primer partido [18, 4] OK
+tras moverse 1
+tras correr 2
+tras pasar 3
+tras chutar 4
+tras gol 5 marcador [1,0]
+tutorial completo True
+foto futbol_tutorial
+clic izquierdo {'shot': True}
+clic derecho {'pass': True}
+RATÓN OK
+campos {'campos': 73, 'puertas': 10, 'enEdificio': [], 'obispo': {'id': 'f62', 'label': 'el campo de fútbol', 'kind': 'f7', 'gate': 'court', 'dist': 666}}
+entrada detectada f62
+activa Un partido por La Concepción
+partido en marcha True
+estado obispo 3 futbolTut True
+errores JS []
+FUTBOL OK
 ```
 
-### 3. prueba_083.py — OK
-
-```
-casas {'casas': ['herradores', 'sanagustin', 'viana', 'adelantado'], 'inmo': True, 'cerrada': True, 'puertas': [['herradores', 0, 87], ['sanagustin', -3, -226], ['viana', 89, -246], ['adelantado', 193, 19]]}
-CASAS OK
-inmobiliaria {'aviso': '<kbd>E</kbd> Entrar: Inmobiliaria Pisos Chachi (pisos en alquiler y en venta)', 'alquilado': True, 'dinero': 4750, 'hasta': 7, 'dia': 0}
-ALQUILER OK
-casa por dentro {'dentro': 'herradores', 'sin': '<kbd>E</kbd> La tele · sin consola (la GOFIO-8 se vende en las jugueterías)', 'con': '<kbd>E</kbd> Encender la consola GOFIO-8'}
-foto v083_casa
-foto v083_consola_menu
-consola {'abre': True, 'm0': 'menu'} {'sel': 1, 'm1': 'attract', 'm2': 'menu'}
-CONSOLA OK
-cama {'aviso': '<kbd>E</kbd> Dormir hasta mañana y guardar la partida', 'hora': 8, 'salud': 100, 'dia': 1}
-CAMA OK
-tienda, guardar y leyenda {'fuera': True, 'consola_en_tienda': True, 'kept': {'casa': True, 'consola': True, 'invitado': True, 'cartuchos': 2}, 'ley': 'TúMisiónDestino (GPS)ComidaPolicíaCasa de El BlancoBar con la máquina del GUFOJugueteríaInmobiliaria Pisos ChachiTu casa'}
-TIENDA/GUARDAR/LEYENDA OK
-errores []
-PRUEBA 083 OK
-```
-
-### 4. prueba_085.py — OK
+### 3. prueba_085.py — OK
 
 ```
 consola {'hay': True, 'modo': 'ext', 'abierta': True, 'vista': 'pick', 'estado': 'arcade'}
@@ -112,12 +77,12 @@ errores []
 PRUEBA 085 OK
 ```
 
-### 5. prueba_arranque.py — OK
+### 4. prueba_arranque.py — OK
 
 ```
-30 pasos (ms): {'mediana': 47, 'peor': 102, 'estado': 'play'}
+30 pasos (ms): {'mediana': 40, 'peor': 90, 'estado': 'play'}
 errores JS []
 ARRANQUE OK
 ```
 
-Fotos/archivos nuevos en `tests/shots/`: v0822_mapa.jpg, v082_demo.jpg, v082_elegir.jpg, v082_fase1.jpg, v082_fase2.jpg, v082_fase3.jpg, v082_fase4.jpg, v082_fase5.jpg, v082_lagarto.jpg, v082_magia.jpg, v082_pelea.jpg, v082_records.jpg, v082_records_nuevo.jpg, v082_titulo.jpg, v083_casa.jpg, v083_consola_menu.jpg, v086_campeones.jpg, v086_cuadro.jpg, v086_elige.jpg, v086_furbito.jpg, v086_resultado.jpg, v086_tabla.jpg
+Fotos/archivos nuevos en `tests/shots/`: futbol_partido.jpg, futbol_tutorial.jpg, v086_campeones.jpg, v086_cuadro.jpg, v086_elige.jpg, v086_furbito.jpg, v086_resultado.jpg, v086_tabla.jpg, v088_futbol.png
