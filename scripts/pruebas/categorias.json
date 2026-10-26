@@ -261,6 +261,12 @@
    [
     "prueba_0851.py"
    ]
+  ],
+  [
+   "^src/09f_basket2d|^src/09g_futbol2d|^src/09j_arcade",
+   [
+    "prueba_085.py"
+   ]
   ]
  ]
 }

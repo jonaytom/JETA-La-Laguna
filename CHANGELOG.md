@@ -3,6 +3,18 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.86.0 — 2026-10-26 — El mundialito, entero dentro de la GOFIO-8
+- **Pachanga 3x3 y Play Furbito ya no salen al mundo 3D** (Jonay): todo pasa en la pantalla de la consola.
+  - **Elegir selección**: las 8 banderas, las dos equipaciones de cada país y su nivel. Se elige con las flechas y A.
+  - **El cuadro del mundialito**: cuartos, semis y final, con tu cruce marcado y las dos equipaciones del partido.
+    A juega y Q se retira.
+  - **Los partidos** se juegan en el basket / fútbol 2D con la consola esperando detrás. Al acabar se vuelve a la
+    GOFIO-8, a la pantalla de resultados (el tuyo y los otros cruces), sin pasar por el salón ni por el menú de
+    pausa.
+  - **Campeones**: confeti, las iniciales con las flechas (como en las máquinas) y la tabla de campeones.
+  - **Eliminados**: vuelves a elegir país. Esc vuelve al menú de cartuchos.
+  - La música del mundialito tiene dos frases que se alternan.
+
 ## 0.85.1 — 2026-10-20 — Tanda de pendientes rápidos
 - **Esc en la consola** (Jonay): desde un juego vuelves al menú de cartuchos de la GOFIO-8, y desde el menú sales al
   mundo 3D. Ya no se abre el menú de pausa al salir de una máquina.

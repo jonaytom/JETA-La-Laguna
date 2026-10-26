@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.85.1</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.86.0</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2099,7 +2099,9 @@ quitarles los zurrones.</li>
   la tele y la consola GOFIO-8 (juguetería, $1.200; cartuchos $90-150) con el menú de cartuchos.</li>
 <li>Hecho (v0.85): Pachanga 3x3 y Play Furbito ($140 cada uno) en la consola, en modo mundialito: 8 selecciones
   (<code>src/12m_mundialito.js</code>), cuartos, semifinal y final; las equipaciones no chocan (el rival saca la segunda); el
-  campeón pone iniciales en la tabla <code>mundial_&lt;juego&gt;</code>. Con todos los cartuchos: «¡superfriki jugón!» y el torneo.</li>
+  campeón pone iniciales en la tabla <code>mundial_&lt;juego&gt;</code>. v0.86: todas las pantallas (país, cuadro, resultados, campeones,
+  iniciales) van dentro de la consola (<code>screen</code> en <code>ARCADE.GAMES</code>); los partidos usan <code>ARCADE.api.suspend()</code> y vuelven con
+  <code>ARCADE.resume()</code>. Con todos los cartuchos: «¡superfriki jugón!» y el torneo.</li>
 <li><strong>Torneo de videojuegos</strong> (Jonay, 20-oct), cuando tienes todos los cartuchos:</li>
 <li>Superar el récord de cada juego de puntos (Bencomo, Guerra de Naves, Guanche Warriors…).</li>
 <li>Ganar el mundialito de Pachanga 3x3 y de Play Furbito.</li>
@@ -2117,6 +2119,19 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.86.0 — 2026-10-26 — El mundialito, entero dentro de la GOFIO-8</h2>
+<ul>
+<li><strong>Pachanga 3x3 y Play Furbito ya no salen al mundo 3D</strong> (Jonay): todo pasa en la pantalla de la consola.</li>
+<li><strong>Elegir selección</strong>: las 8 banderas, las dos equipaciones de cada país y su nivel. Se elige con las flechas y A.</li>
+<li><strong>El cuadro del mundialito</strong>: cuartos, semis y final, con tu cruce marcado y las dos equipaciones del partido.
+    A juega y Q se retira.</li>
+<li><strong>Los partidos</strong> se juegan en el basket / fútbol 2D con la consola esperando detrás. Al acabar se vuelve a la
+    GOFIO-8, a la pantalla de resultados (el tuyo y los otros cruces), sin pasar por el salón ni por el menú de
+    pausa.</li>
+<li><strong>Campeones</strong>: confeti, las iniciales con las flechas (como en las máquinas) y la tabla de campeones.</li>
+<li><strong>Eliminados</strong>: vuelves a elegir país. Esc vuelve al menú de cartuchos.</li>
+<li>La música del mundialito tiene dos frases que se alternan.</li>
+</ul>
 <h2>0.85.1 — 2026-10-20 — Tanda de pendientes rápidos</h2>
 <ul>
 <li><strong>Esc en la consola</strong> (Jonay): desde un juego vuelves al menú de cartuchos de la GOFIO-8, y desde el menú sales al

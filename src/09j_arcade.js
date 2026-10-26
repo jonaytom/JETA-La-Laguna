@@ -19,7 +19,8 @@ const ARCADE = (() => {
   const GAMES = {};
   let cv = null, cx = null, scr = null, sx = null, running = false, raf = 0, last = 0, acc = 0;
   let M = null, G = null, st = null, onClose = null;
-  const IN = MINI.input(() => running), { held, hit } = IN;
+  let suspended = false; // v0.86: a cartridge playing its match in the 2D basket / football game (the console waits behind)
+  const IN = MINI.input(() => running && !suspended), { held, hit } = IN;
   // ---------- saved data: hi-scores per machine, what you own
   function data() { const g = window.GANG || (window.__ARC || (window.__ARC = {})); /* GANG is saved with the game */ if (!g.arcade) g.arcade = { scores: {}, bought: [], console: false, invited: false }; return g.arcade; }
   const DEFAULT_NAMES = ['BLA', 'COC', 'SAS', 'BOC', 'CHO', 'AYO', 'GUA', 'TIN', 'YAI', 'MEN'];
@@ -150,7 +151,7 @@ const ARCADE = (() => {
     music: { title: { bpm: 120, div: 4, loop: false, ch: [{ w: 'sq', v: 0.8, n: 'C5 E5 G5 C6 . . . . G5 . C6 . . . . . - . . .' }, { w: 'tri', v: 1, n: 'C3 . G3 . C3 . . . G2 . C3 . . . . .' }] } } };
   function toMenu() { M.game = CONSOLE; M.key = 'consola'; M.bz = null; st.mode = 'menu'; st.view = 'title'; st.t = 0; G = null; stopMusic(); music(CONSOLE.music.title); }
   function menu(dt) { st.t += dt; const L = M.console; if (hit('vU')) { st.sel = (st.sel + L.length - 1) % L.length; sfx('pick'); } if (hit('vD')) { st.sel = (st.sel + 1) % L.length; sfx('pick'); }
-    if ((hit('vS') || hit('vT')) && st.t > 0.4) { const id = L[st.sel], g = GAMES[id]; if (!g) return; if (g.external) { sfx('coin'); close(); setTimeout(() => g.external(), 60); return; } /* v0.85: Pachanga 3x3 / Play Furbito leave the cabinet for their own game */ M.game = g; M.key = 'casa_' + id; M.where = 'TU CASA'; M.bz = null; sfx('coin'); toAttract(); } }
+    if ((hit('vS') || hit('vT')) && st.t > 0.4) { const id = L[st.sel], g = GAMES[id]; if (!g) return; if (g.screen) { M.game = g; M.key = 'casa_' + id; M.bz = null; sfx('coin'); st.mode = 'ext'; st.t = 0; G = g.screen(api); if (g.music && g.music.title) music(g.music.title); else stopMusic(); return; } /* v0.86 (Jonay): Pachanga 3x3 / Play Furbito run all their screens inside the console */ M.game = g; M.key = 'casa_' + id; M.where = 'TU CASA'; M.bz = null; sfx('coin'); toAttract(); } }
   function drawMenu() { const g = sx; g.setTransform(RS, 0, 0, RS, 0, 0); g.imageSmoothingEnabled = false; const t = st.t;
     const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#0a0a24'); gr.addColorStop(1, '#2a1a3a'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
     for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(255,255,255,${0.2 + ((i * 37) % 10) / 20})`; g.fillRect((i * 97 + t * 10) % W, (i * 53) % (H * 0.5), 1, 1); }
@@ -169,6 +170,7 @@ const ARCADE = (() => {
   // ---------- drawing the screen per mode
   function render() {
     if (st.mode === 'menu') { drawMenu(); return; }
+    if (st.mode === 'ext') { const g = sx; g.setTransform(RS, 0, 0, RS, 0, 0); g.imageSmoothingEnabled = false; G.draw(g, st.t); return; }
     const g = sx; g.setTransform(RS, 0, 0, RS, 0, 0); g.imageSmoothingEnabled = false;
     if (st.mode === 'play' || st.mode === 'cont' || st.view === 'demo') { G.draw(g); if (st.view === 'demo') { g.fillStyle = 'rgba(0,0,0,0.35)'; g.fillRect(0, H - 22, W, 22); blinkMsg(g); } }
     else if (st.view === 'scores') { M.game.drawBack ? M.game.drawBack(g, st.t) : (g.fillStyle = '#000', g.fillRect(0, 0, W, H)); drawScores(g); blinkMsg(g); }
@@ -189,21 +191,28 @@ const ARCADE = (() => {
   // ---------- loop
   function loop(now) { if (!running) return; raf = requestAnimationFrame(loop); const dt = Math.min(0.1, (now - last) / 1000); last = now; acc += dt;
     while (acc >= 1 / 60) { step(1 / 60); IN.frame(); acc -= 1 / 60; } render(); present(); }
-  function step(dt) { if (!running || !M) return; /* v0.85: nothing after close (a cartridge that leaves the console) */ if (st.msgT > 0) st.msgT -= dt; if (st.mode === 'menu') menu(dt); else if (st.mode === 'attract') attract(dt); else if (st.mode === 'play') play(dt); else if (st.mode === 'cont') cont(dt); else if (st.mode === 'name') nameEntry(dt); }
-  const api = { W, H, sprite, draw, txt, sfx, music, stopMusic, hi: () => (M ? table(M.key, M.game)[0][1] : 0), get money() { return PLAYER.money; } };
+  function step(dt) { if (!running || !M) return; /* v0.85: nothing after close (a cartridge that leaves the console) */ if (st.msgT > 0) st.msgT -= dt; if (st.mode === 'menu') menu(dt); else if (st.mode === 'attract') attract(dt); else if (st.mode === 'play') play(dt); else if (st.mode === 'cont') cont(dt); else if (st.mode === 'name') nameEntry(dt); else if (st.mode === 'ext') { st.t += dt; G.update(dt, pad); } }
+  const api = { W, H, sprite, draw, txt, sfx, music, stopMusic, hi: () => (M ? table(M.key, M.game)[0][1] : 0), get money() { return PLAYER.money; },
+    suspend, toMenu: () => { if (M && M.console) toMenu(); else close(); } };
+  // v0.86: the console hides and waits while a cartridge plays its match in BASKET2D / FUTBOL2D; resume() brings it back
+  // on the same screen (no 3D world in between, no pointer lock, no pause menu)
+  function suspend(fn) { if (!running || suspended) return false; suspended = true; cancelAnimationFrame(raf); stopMusic(); IN.reset(); cv.style.display = 'none';
+    let ok = false; try { ok = fn() !== false; } catch (e) { console.error('arcade suspend', e); } if (!ok) resume(); return ok; }
+  function resume() { if (!running || !suspended) return; suspended = false; IN.reset(); MINI.show(cv, 'arcade'); document.exitPointerLock?.(); last = performance.now(); acc = 0; cancelAnimationFrame(raf); raf = requestAnimationFrame(loop);
+    if (G && G.onResume) G.onResume(); }
   // ---------- public: open({ id: game id, key: hi-score table id, where: place name, price: $ per credit (0 = free) })
   function open(m, cb) {
     const game = m.console ? CONSOLE : GAMES[m.id]; if (!game || running || (typeof FIGHT2D !== 'undefined' && FIGHT2D.running)) return false;
     if (!cv) { cv = document.createElement('canvas'); cv.id = 'arcade'; cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;background:#000;z-index:28;display:none'; document.body.appendChild(cv); cx = cv.getContext('2d');
-      scr = mkCanvas(8, 8); sx = scr.getContext('2d'); window.addEventListener('resize', () => { if (running) fit(); }); window.addEventListener('keydown', (e) => { if (running && e.code === 'Escape') { e.preventDefault(); e.stopPropagation(); if (e.repeat) return; /* v0.85.1 (Jonay): at home, Esc in a game goes back to the cartridges; Esc in the menu goes out to the 3D world, without the pause menu */ if (M && M.console && st.mode !== 'menu') { sfx('pick'); toMenu(); return; } GAME.noPauseT = performance.now() + 1500; close(); } }, true); }
+      scr = mkCanvas(8, 8); sx = scr.getContext('2d'); window.addEventListener('resize', () => { if (running) fit(); }); window.addEventListener('keydown', (e) => { if (running && !suspended && e.code === 'Escape') { e.preventDefault(); e.stopPropagation(); if (e.repeat) return; /* v0.85.1 (Jonay): at home, Esc in a game goes back to the cartridges; Esc in the menu goes out to the 3D world, without the pause menu */ if (M && M.console && st.mode !== 'menu') { sfx('pick'); toMenu(); return; } GAME.noPauseT = performance.now() + 1500; close(); } }, true); }
     M = { ...m, game, key: m.key || m.id, price: m.price ?? 0, bz: null }; onClose = cb || null; running = true; fit();
     st = { mode: m.console ? 'menu' : 'attract', view: 'title', t: 0, credits: 0, paid: 0, msgT: 0, hl: null, rank: -1, sel: 0 }; G = null; IN.reset(); document.exitPointerLock?.();
     MINI.show(cv, 'arcade'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); if (game.music && game.music.title) music(game.music.title); return true;
   }
   function fit() { const dpr = window.devicePixelRatio || 1; const k = Math.max(0.5, Math.min((window.innerWidth || CW) * dpr / CW, (window.innerHeight || CH) * dpr / CH));
     KR = Math.round(k * 1000) / 1000; RS = SS * KR; cv.width = Math.round(CW * KR); cv.height = Math.round(CH * KR); scr.width = Math.round(W * RS); scr.height = Math.round(H * RS); if (M) M.bz = null; scan = null; }
-  function close() { if (!running) return; running = false; cancelAnimationFrame(raf); stopMusic(); MINI.hide(cv, 'arcade', true); const r = { paid: st.paid }; M = null; G = null; if (onClose) onClose(r); }
-  return { GAMES, CONSOLE, open, close, sprite, hires, draw, txt, sfx, music, stopMusic, data, table, api, get running() { return running; },
+  function close() { if (!running) return; running = false; suspended = false; cancelAnimationFrame(raf); stopMusic(); MINI.hide(cv, 'arcade', true); const r = { paid: st.paid }; M = null; G = null; if (onClose) onClose(r); }
+  return { GAMES, CONSOLE, open, close, resume, get suspended() { return suspended; }, sprite, hires, draw, txt, sfx, music, stopMusic, data, table, api, get running() { return running; },
     _st: () => st, _game: () => G, _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); } }, _press: IN.press, _render: () => { render(); present(); }, W, H };
 })();
 // ---------- where the machines are (v0.80): El Blanco's, free. When the mayor names the gang «Defensores de La Laguna»

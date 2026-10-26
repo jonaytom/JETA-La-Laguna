@@ -333,6 +333,10 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Rendimiento, auditorías y código
 
+- [ ] ⚡ **Auditoría v0.85.1** (20-oct 22:09, APTO CON AVISOS; pruebas 10/10; pintar 35,9 → 35,5 ms, arranque 10,2 → 10,0 s):
+  5 avisos «nuevos» del análisis estático en `doorKit()` (`05g_interiors.js:49-52`) y `cFrame()`
+  (`05o_concepcion.js:76`). Son las mismas creaciones de antes, ahora una sola vez: el analizador las ve como nuevas
+  porque cambió el nombre de la función. Falso aviso: marcarlas como «al cargar» si el auditor lo permite.
 - [ ] ◐ **Auditoría v0.85.0** (20-oct 21:25, APTO CON AVISOS, sin avisos nuevos de código): pintar un fotograma
   32 → 35,9 ms y arranque 9,5 → 10,2 s (sube otra vez como en la 0.82); calidad B (70). Memoria, llamadas y fugas,
   igual. La 0.85 no toca nada que se pinte en el mundo 3D, así que parece ruido: mirar con `sonda_rendimiento.py` si se
@@ -422,6 +426,17 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
       consideres, es un extra final».
 
 ## Hecho
+- [x] v0.86.0 **Pachanga 3x3 y Play Furbito: todo dentro del minijuego** (Jonay, 20-oct). La elección de selección y las
+  pantallas del mundialito no pueden salir al mundo 3D (ahora son ventanas de diálogo del juego principal).
+  - Elegir país en la propia pantalla de la GOFIO-8: banderas y equipaciones de las 8 selecciones, flechas y A para
+    elegir.
+  - Dentro de la consola también:
+    - el cuadro de cruces (cuartos, semifinal, final), «¡Eliminados!» y «¡Campeones!»;
+    - las iniciales en la tabla de campeones, como en las máquinas.
+  - Al acabar cada partido se vuelve a la pantalla de la consola, no al salón. Solo se sale con Esc (dos veces) o al
+    terminar el mundialito.
+  - Toca `12m_mundialito.js` (pantallas propias como juego de `09j_arcade.js`) y el arranque y el final de
+    `BASKET2D` y `FUTBOL2D`.
 - [x] v0.85.1 **Bencomo: «PICADO» en vez de «POGO»** (Jonay, 20-oct): en la ayuda, bajar con la vara en el aire se llama «Picado».
 - [x] v0.85.1 (primera Esc: menú de cartuchos; segunda: al mundo 3D sin pausa) **Esc en la consola** (Jonay, 20-oct): ahora Esc sale del juego y además abre el menú de opciones del juego
   principal. Debe ser: la primera pulsación vuelve al menú de cartuchos de la GOFIO-8, la segunda sale al mundo 3D, y

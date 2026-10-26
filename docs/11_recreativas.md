@@ -192,7 +192,9 @@ La consola, al encenderla, muestra un menú con los cartuchos que tienes. Cada j
   la tele y la consola GOFIO-8 (juguetería, $1.200; cartuchos $90-150) con el menú de cartuchos.
 - Hecho (v0.85): Pachanga 3x3 y Play Furbito ($140 cada uno) en la consola, en modo mundialito: 8 selecciones
   (`src/12m_mundialito.js`), cuartos, semifinal y final; las equipaciones no chocan (el rival saca la segunda); el
-  campeón pone iniciales en la tabla `mundial_<juego>`. Con todos los cartuchos: «¡superfriki jugón!» y el torneo.
+  campeón pone iniciales en la tabla `mundial_<juego>`. v0.86: todas las pantallas (país, cuadro, resultados, campeones,
+  iniciales) van dentro de la consola (`screen` en `ARCADE.GAMES`); los partidos usan `ARCADE.api.suspend()` y vuelven con
+  `ARCADE.resume()`. Con todos los cartuchos: «¡superfriki jugón!» y el torneo.
 - **Torneo de videojuegos** (Jonay, 20-oct), cuando tienes todos los cartuchos:
   - Superar el récord de cada juego de puntos (Bencomo, Guerra de Naves, Guanche Warriors…).
   - Ganar el mundialito de Pachanga 3x3 y de Play Furbito.

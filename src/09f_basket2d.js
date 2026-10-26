@@ -22,7 +22,7 @@ const BASKET2D = (() => {
   const sx = (x) => wx(x) - camX, sy = (z, y = 0) => ZF + z * PZM - y * PYM;
   const X1 = wx(CL);
   const HOOP = [{ x: 1.6, z: 7.5 }, { x: CL - 1.6, z: 7.5 }], RIM = 3.05, G = 9.8, THREE_PT = 6.75;
-  let cv = null, cx = null, running = false, st = null, raf = 0, last = 0, acc = 0, onEnd = null;
+  let inConsole = false; let cv = null, cx = null, running = false, st = null, raf = 0, last = 0, acc = 0, onEnd = null;
   // ---------- sprites (same drawer as the fight; a few extra poses)
   const P = () => FIGHT2D.POSES;
   const EXTRA = {
@@ -446,7 +446,7 @@ const BASKET2D = (() => {
     else { const b = L[0] || { name: 'RIVAL', look: {} }; const SK = [0xe0ac86, 0x8d5a3b, 0xc68a5e, 0xf1c9a5], HR = [0x1a1410, 0x6b3e1e, 0xd8b56a, 0x2a1a10]; L.push({ name: ['EL ZURDO', 'EL RUBIO', 'EL GORDO', 'EL LARGO'][Math.abs(Math.round((b.look && b.look.shirt) || 0)) % 4], look: { ...(b.look || {}), skin: SK[L.length % 4], hair: HR[(L.length + 1) % 4] } }); }
     return fill3(L, mine); }
   function start(opt) {
-    if (running || FIGHT2D.running) return false; running = true; onEnd = opt.onEnd || null;
+    if (running || FIGHT2D.running) return false; running = true; onEnd = opt.onEnd || null; inConsole = !!opt.inConsole;
     if (!cv) { cv = document.createElement('canvas'); cv.id = 'basket2d'; cv.width = W * R; cv.height = H * R; cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;image-rendering:pixelated;background:#000;z-index:28;display:none'; document.body.appendChild(cv); cx = cv.getContext('2d'); }
     const team = fill3(opt.team, true), riv = fill3(opt.rival, false);
     st = { p: [mkPlayer({ ...team[0], human: true }, 0, 0), mkPlayer(team[1], 0, 1), mkPlayer(team[2], 0, 2), mkPlayer(riv[0], 1, 0), mkPlayer(riv[1], 1, 1), mkPlayer(riv[2], 1, 2)], ball: { x: 0, z: 0, y: 0, vx: 0, vz: 0, vy: 0, holder: null, mode: 'held' },
@@ -457,7 +457,7 @@ const BASKET2D = (() => {
     MINI.show(cv, 'basket2d'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); return true;
   }
   function finish() { if (!st || st.fadeDir > 0) return; st.fadeDir = 1; }
-  function close() { running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'basket2d', true);
+  function close() { running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'basket2d', !inConsole); /* v0.86: back to the GOFIO-8, not to the 3D world */
     const res = { won: st.score[0] > st.score[1], score: st.score.slice() }; if (onEnd) onEnd(res); }
   function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'basket2d', false); } // tests only
   // tests: a combo dunk of your own (id from COMBOS), a pass, and drawing a frame

@@ -21,7 +21,7 @@ const FUTBOL2D = (() => {
   const PW = 34, PL = 54, GW = 6, GH = 2.1, MG = 7;          // pitch width / length, goal width / height, margin (m)
   const X0 = Math.round((W - PW * S) / 2), BGH = (PL + 2 * MG) * S, BR = 3;
   const sxp = (x) => X0 + x * S, syw = (y) => (y + MG) * S;  // pitch metres -> background px
-  let cv = null, cx = null, running = false, raf = 0, last = 0, acc = 0, st = null, onEnd = null, camY = 0, bgCache = null;
+  let inConsole = false; let cv = null, cx = null, running = false, raf = 0, last = 0, acc = 0, st = null, onEnd = null, camY = 0, bgCache = null;
   // ---------- input: virtual buttons, the same as the basketball (vS = A, vP = pass, vT = sprint)
   const IN = MINI.input(() => running), { press, held, hit, rel } = IN, keys = IN.keys; // v0.69: shared with the other minigames (09ea_minijuegos.js)
   // ---------- sounds
@@ -366,7 +366,7 @@ const FUTBOL2D = (() => {
   const KIT0 = { shirt: '#1f8f4e', shorts: '#f2f2f2', socks: '#1f8f4e', gk: { shirt: '#f1c40f', shorts: '#222', socks: '#f1c40f' } };
   const KIT1 = { shirt: '#c0392b', shorts: '#222', socks: '#c0392b', gk: { shirt: '#5ec8ff', shorts: '#222', socks: '#5ec8ff' } };
   function start(opt) {
-    if (running || (typeof FIGHT2D !== 'undefined' && FIGHT2D.running) || (typeof BASKET2D !== 'undefined' && BASKET2D.running)) return false; running = true; onEnd = opt.onEnd || null;
+    if (running || (typeof FIGHT2D !== 'undefined' && FIGHT2D.running) || (typeof BASKET2D !== 'undefined' && BASKET2D.running)) return false; running = true; onEnd = opt.onEnd || null; inConsole = !!opt.inConsole;
     if (!cv) { cv = document.createElement('canvas'); cv.id = 'futbol2d'; cv.width = W * R; cv.height = H * R; cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;image-rendering:pixelated;background:#000;z-index:28;display:none'; document.body.appendChild(cv); cx = cv.getContext('2d'); }
     const k0 = { ...KIT0, ...(opt.kit || {}) }, k1 = { ...KIT1, ...(opt.rivalKit || {}) }; k0.gk = { ...KIT0.gk, ...((opt.kit || {}).gk || {}) }; k1.gk = { ...KIT1.gk, ...((opt.rivalKit || {}).gk || {}) };
     const t0 = opt.team || [], t1 = opt.rival || [];
@@ -380,7 +380,7 @@ const FUTBOL2D = (() => {
     MINI.show(cv, 'futbol2d'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); return true;
   }
   function finish() { if (!st || st.fadeDir > 0) return; st.fadeDir = 1; }
-  function close() { running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'futbol2d', true);
+  function close() { running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'futbol2d', !inConsole); /* v0.86: back to the GOFIO-8, not to the 3D world */
     const res = { won: st.score[0] > st.score[1], score: st.score.slice() }; if (onEnd) onEnd(res); }
   function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'futbol2d', false); } // tests only
   return { start, _abort: abort, get running() { return running; }, _st: () => st, _foul: (p, v) => foul(p, v), _give: (p) => give(p), _out: (k, t) => outOfPlay(k, t), _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); updateCam(); } }, _press: press, _draw: () => draw() };
