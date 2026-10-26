@@ -194,7 +194,8 @@ La consola, al encenderla, muestra un menú con los cartuchos que tienes. Cada j
   (`src/12m_mundialito.js`), cuartos, semifinal y final; las equipaciones no chocan (el rival saca la segunda); el
   campeón pone iniciales en la tabla `mundial_<juego>`. v0.86: todas las pantallas (país, cuadro, resultados, campeones,
   iniciales) van dentro de la consola (`screen` en `ARCADE.GAMES`); los partidos usan `ARCADE.api.suspend()` y vuelven con
-  `ARCADE.resume()`. Con todos los cartuchos: «¡superfriki jugón!» y el torneo.
+  `ARCADE.resume()`. v0.87: cada cartucho tiene sus 8 selecciones (`SPORT[id].teams`; basket con EE. UU., Serbia y
+  Lituania) y cada selección un nivel por deporte (`lvB` / `lvF`). Con todos los cartuchos: «¡superfriki jugón!» y el torneo.
 - **Torneo de videojuegos** (Jonay, 20-oct), cuando tienes todos los cartuchos:
   - Superar el récord de cada juego de puntos (Bencomo, Guerra de Naves, Guanche Warriors…).
   - Ganar el mundialito de Pachanga 3x3 y de Play Furbito.

@@ -205,7 +205,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="tb" id="tbS">CORRER</div>
 <div class="tb" id="tbM">MAPA</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">v0.86.0</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">v0.87.0</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -13263,16 +13263,24 @@ const CASA = (() => {
 // en el basket / fútbol 2D con la consola esperando detrás, y al acabar se vuelve a ella.
 const MUNDIALITO = (() => {
   const TEAMS = [
-    { id: 'esp', code: 'ESP', name: 'ESPAÑA', home: { shirt: '#c8102e', shorts: '#1d2a6b', socks: '#c8102e', stripe: '#ffc400' }, away: { shirt: '#f2f2f2', shorts: '#f2f2f2', socks: '#f2f2f2', stripe: '#c8102e' }, names: ['PACO', 'JUANMA', 'DANI', 'RAÚL', 'NACHO'], lv: 0.6 },
-    { id: 'bra', code: 'BRA', name: 'BRASIL', home: { shirt: '#ffdf00', shorts: '#1f4fb5', socks: '#f2f2f2', stripe: '#1e9a3a' }, away: { shirt: '#1f4fb5', shorts: '#f2f2f2', socks: '#1f4fb5', stripe: '#ffdf00' }, names: ['JUNINHO', 'ZÉ', 'DIDIZINHO', 'CAFUZÃO', 'PELEZITO'], lv: 0.7 },
-    { id: 'arg', code: 'ARG', name: 'ARGENTINA', home: { shirt: '#75aadb', shorts: '#111111', socks: '#f2f2f2', stripe: '#f2f2f2' }, away: { shirt: '#1d2a6b', shorts: '#1d2a6b', socks: '#1d2a6b', stripe: '#75aadb' }, names: ['EL PIBE', 'CHE', 'TITO', 'EL TANO', 'MARADONITA'], lv: 0.68 },
-    { id: 'ita', code: 'ITA', name: 'ITALIA', home: { shirt: '#1f5fbf', shorts: '#f2f2f2', socks: '#1f5fbf' }, away: { shirt: '#f2f2f2', shorts: '#1f5fbf', socks: '#f2f2f2', stripe: '#1f9a3a' }, names: ['GIGI', 'TOTÓ', 'PIPPO', 'FABIO', 'CANNAVARO II'], lv: 0.62 },
-    { id: 'ale', code: 'ALE', name: 'ALEMANIA', home: { shirt: '#f2f2f2', shorts: '#111111', socks: '#f2f2f2', stripe: '#111111' }, away: { shirt: '#2a2a2a', shorts: '#2a2a2a', socks: '#2a2a2a', stripe: '#d4202a' }, names: ['HANS', 'KLAUS', 'FRITZ', 'DER BOMBER', 'JÜRGEN'], lv: 0.64 },
-    { id: 'fra', code: 'FRA', name: 'FRANCIA', home: { shirt: '#1d2a6b', shorts: '#f2f2f2', socks: '#c8102e' }, away: { shirt: '#f2f2f2', shorts: '#1d2a6b', socks: '#f2f2f2', stripe: '#c8102e' }, names: ['ZIZOU', 'TITÍ', 'PIERRE', 'JEAN-LUC', 'MICHELÍN'], lv: 0.63 },
-    { id: 'por', code: 'POR', name: 'PORTUGAL', home: { shirt: '#a6192e', shorts: '#1e7a3a', socks: '#a6192e', stripe: '#ffd400' }, away: { shirt: '#f2f2f2', shorts: '#f2f2f2', socks: '#f2f2f2', stripe: '#a6192e' }, names: ['ZEZINHO', 'NANI II', 'BETO', 'EUSEBINHO', 'O BICHO'], lv: 0.58 },
-    { id: 'uru', code: 'URU', name: 'URUGUAY', home: { shirt: '#5fb3e6', shorts: '#111111', socks: '#111111' }, away: { shirt: '#f2f2f2', shorts: '#5fb3e6', socks: '#f2f2f2', stripe: '#5fb3e6' }, names: ['EL MATADOR', 'CHARRÚA', 'PELADO', 'TATO', 'EL FLACO'], lv: 0.6 }];
+    { id: 'esp', code: 'ESP', name: 'ESPAÑA', home: { shirt: '#c8102e', shorts: '#1d2a6b', socks: '#c8102e', stripe: '#ffc400' }, away: { shirt: '#f2f2f2', shorts: '#f2f2f2', socks: '#f2f2f2', stripe: '#c8102e' }, names: ['PACO', 'JUANMA', 'DANI', 'RAÚL', 'NACHO'], lvF: 0.72, lvB: 0.72 },
+    { id: 'bra', code: 'BRA', name: 'BRASIL', home: { shirt: '#ffdf00', shorts: '#1f4fb5', socks: '#f2f2f2', stripe: '#1e9a3a' }, away: { shirt: '#1f4fb5', shorts: '#f2f2f2', socks: '#1f4fb5', stripe: '#ffdf00' }, names: ['JUNINHO', 'ZÉ', 'DIDIZINHO', 'CAFUZÃO', 'PELEZITO'], lvF: 0.7, lvB: 0.56 },
+    { id: 'arg', code: 'ARG', name: 'ARGENTINA', home: { shirt: '#75aadb', shorts: '#111111', socks: '#f2f2f2', stripe: '#f2f2f2' }, away: { shirt: '#1d2a6b', shorts: '#1d2a6b', socks: '#1d2a6b', stripe: '#75aadb' }, names: ['EL PIBE', 'CHE', 'TITO', 'EL TANO', 'MARADONITA'], lvF: 0.71, lvB: 0.64 },
+    { id: 'ita', code: 'ITA', name: 'ITALIA', home: { shirt: '#1f5fbf', shorts: '#f2f2f2', socks: '#1f5fbf' }, away: { shirt: '#f2f2f2', shorts: '#1f5fbf', socks: '#f2f2f2', stripe: '#1f9a3a' }, names: ['GIGI', 'TOTÓ', 'PIPPO', 'FABIO', 'CANNAVARO II'], lvF: 0.62, lvB: 0.6 },
+    { id: 'ale', code: 'ALE', name: 'ALEMANIA', home: { shirt: '#f2f2f2', shorts: '#111111', socks: '#f2f2f2', stripe: '#111111' }, away: { shirt: '#2a2a2a', shorts: '#2a2a2a', socks: '#2a2a2a', stripe: '#d4202a' }, names: ['HANS', 'KLAUS', 'FRITZ', 'DER BOMBER', 'JÜRGEN'], lvF: 0.66, lvB: 0.66 },
+    { id: 'fra', code: 'FRA', name: 'FRANCIA', home: { shirt: '#1d2a6b', shorts: '#f2f2f2', socks: '#c8102e' }, away: { shirt: '#f2f2f2', shorts: '#1d2a6b', socks: '#f2f2f2', stripe: '#c8102e' }, names: ['ZIZOU', 'TITÍ', 'PIERRE', 'JEAN-LUC', 'MICHELÍN'], lvF: 0.7, lvB: 0.68 },
+    { id: 'por', code: 'POR', name: 'PORTUGAL', home: { shirt: '#a6192e', shorts: '#1e7a3a', socks: '#a6192e', stripe: '#ffd400' }, away: { shirt: '#f2f2f2', shorts: '#f2f2f2', socks: '#f2f2f2', stripe: '#a6192e' }, names: ['ZEZINHO', 'NANI II', 'BETO', 'EUSEBINHO', 'O BICHO'], lvF: 0.66, lvB: 0.5 },
+    { id: 'usa', code: 'USA', name: 'EE. UU.', home: { shirt: '#f2f2f2', shorts: '#f2f2f2', socks: '#f2f2f2', stripe: '#1d2a6b' }, away: { shirt: '#1d2a6b', shorts: '#1d2a6b', socks: '#1d2a6b', stripe: '#c8102e' }, names: ['AIR JORDI', 'MAGIC JOHNNY', 'BIG SHAQ', 'DUNKMASTER', 'MR. TRIPLE'], lvF: 0.55, lvB: 0.78 },
+    { id: 'srb', code: 'SRB', name: 'SERBIA', home: { shirt: '#c6363c', shorts: '#c6363c', socks: '#f2f2f2', stripe: '#f2f2f2' }, away: { shirt: '#f2f2f2', shorts: '#f2f2f2', socks: '#f2f2f2', stripe: '#c6363c' }, names: ['JOKICITO', 'BODIROGUITA', 'DIVAC JR.', 'EL TORRE', 'STOJAKITO'], lvF: 0.6, lvB: 0.7 },
+    { id: 'ltu', code: 'LTU', name: 'LITUANIA', home: { shirt: '#fdb913', shorts: '#fdb913', socks: '#f2f2f2', stripe: '#006a44' }, away: { shirt: '#006a44', shorts: '#006a44', socks: '#f2f2f2', stripe: '#fdb913' }, names: ['SABONITO', 'MARCIULITO', 'EL BÁLTICO', 'TITANAS', 'JASIKITO'], lvF: 0.5, lvB: 0.64 },
+    { id: 'uru', code: 'URU', name: 'URUGUAY', home: { shirt: '#5fb3e6', shorts: '#111111', socks: '#111111' }, away: { shirt: '#f2f2f2', shorts: '#5fb3e6', socks: '#f2f2f2', stripe: '#5fb3e6' }, names: ['EL MATADOR', 'CHARRÚA', 'PELADO', 'TATO', 'EL FLACO'], lvF: 0.6, lvB: 0.5 }];
   const ROUNDS = ['CUARTOS DE FINAL', 'SEMIFINAL', 'LA FINAL'];
-  const SPORT = { pachanga: { title: 'PACHANGA 3x3', n: 3, game: 'basket', col: '#ff8a3a' }, furbito: { title: 'PLAY FURBITO', n: 5, game: 'futbol', col: '#7fe08a' } };
+  // v0.87 (Jonay): basket and football have their own 8 teams (in basket: USA, Serbia and Lithuania instead of Uruguay,
+  // Brazil and Portugal) and each team its own level per sport (Spain among the best in both)
+  const SPORT = { pachanga: { title: 'PACHANGA 3x3', n: 3, game: 'basket', col: '#ff8a3a', teams: ['esp', 'usa', 'srb', 'fra', 'ltu', 'arg', 'ale', 'ita'] },
+    furbito: { title: 'PLAY FURBITO', n: 5, game: 'futbol', col: '#7fe08a', teams: ['esp', 'bra', 'arg', 'ita', 'ale', 'fra', 'por', 'uru'] } };
+  const teamsOf = (id) => SPORT[id].teams.map((k) => TEAMS.find((t) => t.id === k));
+  const lvOf = (t, S) => (S.game === 'basket' ? t.lvB : t.lvF);
   const rgb = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
   const near = (a, b) => { const p = rgb(a), q = rgb(b); return Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]) < 140; };
   // the rival's kit: its first one, unless it looks like ours: then the second (and if that one too, all black)
@@ -13296,24 +13304,31 @@ const MUNDIALITO = (() => {
     else if (id === 'ale') H3('#111111', '#d4202a', '#ffc400');
     else if (id === 'fra') V3('#1d3f9a', '#f2f2f2', '#c8102e');
     else if (id === 'por') { R('#1e7a3a', 0, 0, w * 0.4, h); R('#c8102e', w * 0.4, 0, w * 0.6, h); g.fillStyle = '#ffd400'; g.beginPath(); g.arc(x + w * 0.4, y + h / 2, h * 0.2, 0, 7); g.fill(); }
+    else if (id === 'usa') { R('#f2f2f2', 0, 0, w, h); for (let i = 0; i < 7; i += 2) R('#c8102e', 0, (h * i) / 7, w, h / 7 + 0.3); R('#1d2a6b', 0, 0, w * 0.42, h * (4 / 7)); g.fillStyle = '#fff'; for (let a = 0; a < 3; a++) for (let b = 0; b < 2; b++) g.fillRect(x + w * 0.07 + a * w * 0.12, y + h * 0.12 + b * h * 0.25, 1, 1); }
+    else if (id === 'srb') H3('#c6363c', '#0c4076', '#f2f2f2');
+    else if (id === 'ltu') H3('#fdb913', '#006a44', '#c1272d');
     else if (id === 'uru') { R('#f2f2f2', 0, 0, w, h); for (let i = 1; i < 9; i += 2) R('#3f7fd0', 0, (h * i) / 9, w, h / 9 + 0.3); R('#f2f2f2', 0, 0, w * 0.4, h * (5 / 9)); sun(w * 0.2, h * 0.27, h * 0.14); }
     g.strokeStyle = 'rgba(0,0,0,0.6)'; g.lineWidth = 1; g.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1); }
   // a little player in the kit (shirt, stripe, shorts, socks)
-  function kitMan(g, k, x, y, s = 1) { const R = (c, a, b, w, h) => { g.fillStyle = c; g.fillRect(x + a * s, y + b * s, w * s, h * s); };
+  function kitMan(g, k, x, y, s = 1, bb = false) { const R = (c, a, b, w, h) => { g.fillStyle = c; g.fillRect(x + a * s, y + b * s, w * s, h * s); };
+    if (bb) { // v0.87 (Jonay: in Pachanga they looked like football kits): tank top, long baggy shorts, short socks, sneakers
+      R('#c68a5e', 4, 0, 6, 5); R('#c68a5e', 0, 6, 2, 8); R('#c68a5e', 12, 6, 2, 8); R(k.shirt, 2, 5, 10, 10); R(k.stripe || '#fff', 5, 5, 4, 1); R(k.stripe || '#fff', 2, 6, 1, 4); R(k.stripe || '#fff', 11, 6, 1, 4);
+      R(k.shorts, 1, 15, 12, 7); R(k.stripe || '#fff', 1, 15, 1, 7); R(k.stripe || '#fff', 12, 15, 1, 7); R('#c68a5e', 3, 22, 3, 1); R('#c68a5e', 8, 22, 3, 1);
+      R('#f2f2f2', 3, 23, 3, 1); R('#f2f2f2', 8, 23, 3, 1); R('#eeeeee', 2, 24, 5, 2); R('#eeeeee', 7, 24, 5, 2); R(k.stripe || k.shirt, 3, 24, 2, 1); R(k.stripe || k.shirt, 8, 24, 2, 1); return; }
     R('#e0ac86', 4, 0, 6, 5); R(k.shirt, 1, 5, 12, 9); if (k.stripe) R(k.stripe, 1, 9, 12, 2); R(k.shorts, 2, 14, 10, 5); R(k.socks || k.shirt, 3, 19, 3, 4); R(k.socks || k.shirt, 8, 19, 3, 4); R('#222', 2, 23, 4, 2); R('#222', 8, 23, 4, 2); }
   // ---------- the tournament data (one at a time)
   let T = null; // { id, S, me, round, alive, hist: [[{a,b,w,sc}…] per round], last }
-  function newTour(id, me) { const others = shuffle(TEAMS.filter((t) => t !== me)); T = { id, S: SPORT[id], me, round: 0, alive: [me, ...others], hist: [], last: null }; return T; }
+  function newTour(id, me) { const others = shuffle(teamsOf(id).filter((t) => t !== me)); T = { id, S: SPORT[id], me, round: 0, alive: [me, ...others], hist: [], last: null }; return T; }
   function pairs() { const A = T.alive, P = []; for (let i = 0; i < A.length; i += 2) P.push([A[i], A[i + 1]]); return P; }
   // the other matches of the round: the better team wins more often; made-up scores of the right sport
   function fakeScore(win) { const bb = T.S.game === 'basket'; const a = bb ? 14 + ((Math.random() * 10) | 0) : 1 + ((Math.random() * 3) | 0); const b = bb ? Math.max(4, a - 2 - ((Math.random() * 9) | 0)) : Math.max(0, a - 1 - ((Math.random() * 2) | 0)); return win ? [a, b] : [b, a]; }
   function closeRound(r) { const P = pairs(), res = [], win = [];
     P.forEach(([a, b], i) => { if (i === 0) { const w = r.won ? a : b; res.push({ a, b, w, sc: r.score.slice() }); win.push(w); return; }
-      const aw = Math.random() < 0.5 + (a.lv - b.lv) * 1.5; res.push({ a, b, w: aw ? a : b, sc: fakeScore(aw) }); win.push(aw ? a : b); });
+      const aw = Math.random() < 0.5 + (lvOf(a, T.S) - lvOf(b, T.S)) * 1.5; res.push({ a, b, w: aw ? a : b, sc: fakeScore(aw) }); win.push(aw ? a : b); });
     T.hist[T.round] = res; T.last = res[0]; T.alive = win; }
   // ---------- the match: the console waits behind, the 2D game plays it, and we come back to the console
   let SCR = null; // the screen running in the console (for the tests and the match's return)
-  function play() { const me = T.me, op = pairs()[0][1], [ka, kb] = kits(me, op), lv = [0.35, 0.55, 0.75][T.round] * (0.85 + op.lv * 0.25);
+  function play() { const me = T.me, op = pairs()[0][1], [ka, kb] = kits(me, op), lv = [0.35, 0.55, 0.75][T.round] * (0.85 + lvOf(op, T.S) * 0.25);
     const onEnd = (r) => matchEnd(r);
     return ARCADE.api.suspend(() => {
       if (T.S.game === 'basket') return BASKET2D.start({ team: squad(me, ka, 3, true), rival: squad(op, kb, 3, false), teamName: me.name, rivalName: op.name, time: T.round === 2 ? 120 : 90, lv, mateLv: 0.62, style: 'pabellon', inConsole: true, onEnd });
@@ -13326,8 +13341,8 @@ const MUNDIALITO = (() => {
   // ---------- the screens, inside the GOFIO-8 (A = E / left click, Q = right click, arrows to move)
   const ABC = 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ.!♥ ';
   function screen(id) { return (api) => {
-    const { W, H, txt, sfx } = api; const S = SPORT[id];
-    const o = { v: 'pick', t: 0, sel: Math.max(0, TEAMS.indexOf(T && T.id === id ? T.me : TEAMS[0])), name: ['A', 'A', 'A'], ni: 0, conf: [] };
+    const { W, H, txt, sfx } = api; const S = SPORT[id], BB = S.game === 'basket';
+    const TL = teamsOf(id); const o = { v: 'pick', t: 0, sel: Math.max(0, TL.indexOf(T && T.id === id ? T.me : TL[0])), name: ['A', 'A', 'A'], ni: 0, conf: [] };
     o.go = (v) => { o.v = v; o.t = 0; if (v === 'champ') { sfx('clear'); o.conf = []; for (let i = 0; i < 90; i++) o.conf.push([Math.random() * W, -Math.random() * H, 20 + Math.random() * 40, ['#ffd400', '#ff6b6b', '#7fe0ff', '#7fe08a', '#fff'][i % 5]]); } };
     o.onResume = () => { if (o.v === 'result' && T && T.last) sfx(T.last.w === T.me ? 'clear' : 'die'); };
     SCR = o; T = null;
@@ -13335,7 +13350,7 @@ const MUNDIALITO = (() => {
       if (o.v === 'pick') { const c = o.sel % 4, r = (o.sel / 4) | 0;
         if (pad.hit('vR')) { o.sel = r * 4 + ((c + 1) % 4); sfx('pick'); } if (pad.hit('vL')) { o.sel = r * 4 + ((c + 3) % 4); sfx('pick'); }
         if (pad.hit('vU') || pad.hit('vD')) { o.sel = (o.sel + 4) % 8; sfx('pick'); }
-        if (A) { newTour(id, TEAMS[o.sel]); sfx('coin'); o.go('round'); } else if (Q) api.toMenu(); return; }
+        if (A) { newTour(id, TL[o.sel]); sfx('coin'); o.go('round'); } else if (Q) api.toMenu(); return; }
       if (o.v === 'round') { if (A) { sfx('start'); play(); } else if (Q) { T = null; o.go('pick'); } return; }
       if (o.v === 'result') { if (!A) return; if (!T || T.last.w !== T.me) { T = null; o.go('pick'); return; } T.round++; if (T.round >= ROUNDS.length) { o.go('champ'); } else o.go('round'); return; }
       if (o.v === 'champ') { for (const p of o.conf) { p[1] += p[2] * dt; if (p[1] > H) p[1] -= H + 10; } if (A && o.t > 1.2) { o.name = ['A', 'A', 'A']; o.ni = 0; o.go('name'); } return; }
@@ -13350,12 +13365,12 @@ const MUNDIALITO = (() => {
     const tag = (g, t, x, y, st) => { flag(g, t.id, x, y, 18, 12); txt(g, t.code, x + 22, y + 2, st === 'win' ? '#ffd400' : st === 'lost' ? '#777' : t === (T && T.me) ? '#7fe0ff' : '#fff', 8); };
     o.draw = (g) => { bg(g);
       if (o.v === 'pick') { head(g, 'EL MUNDIALITO · ELIGE TU SELECCIÓN');
-        TEAMS.forEach((t, i) => { const c = i % 4, r = (i / 4) | 0, x = 18 + c * 113, y = 50 + r * 128, on = i === o.sel;
+        TL.forEach((t, i) => { const c = i % 4, r = (i / 4) | 0, x = 18 + c * 113, y = 50 + r * 128, on = i === o.sel;
           g.fillStyle = on ? 'rgba(255,212,0,0.2)' : 'rgba(0,0,0,0.4)'; g.fillRect(x, y, 106, 120);
           if (on) { g.strokeStyle = Math.floor(o.t * 4) % 2 ? '#ffd400' : '#ff8a3a'; g.lineWidth = 2; g.strokeRect(x + 1, y + 1, 104, 118); }
           flag(g, t.id, x + 13, y + 8, 80, 50); txt(g, t.name, x + 53, y + 64, on ? '#ffd400' : '#fff', 8, 'center');
-          kitMan(g, t.home, x + 22, y + 76, 1.3); kitMan(g, t.away, x + 62, y + 76, 1.3);
-          const st5 = Math.max(1, Math.min(5, Math.round(3 + (t.lv - 0.62) / 0.04))); for (let k = 0; k < 5; k++) { g.fillStyle = k < st5 ? '#ffd400' : 'rgba(255,255,255,0.18)'; g.fillRect(x + 28 + k * 10, y + 113, 7, 4); } });
+          kitMan(g, t.home, x + 22, y + 76, 1.3, BB); kitMan(g, t.away, x + 62, y + 76, 1.3, BB);
+          const st5 = Math.max(1, Math.min(5, Math.round((lvOf(t, S) - 0.48) / 0.06))); for (let k = 0; k < 5; k++) { g.fillStyle = k < st5 ? '#ffd400' : 'rgba(255,255,255,0.18)'; g.fillRect(x + 28 + k * 10, y + 113, 7, 4); } });
         foot(g, 'FLECHAS ELEGIR   A JUGAR   Q MENÚ'); return; }
       if (!T && o.v !== 'table') return;
       if (o.v === 'round' || o.v === 'result') { const R = T.round; head(g, o.v === 'round' ? ROUNDS[R] : 'RESULTADOS · ' + ROUNDS[R]);
@@ -13368,15 +13383,15 @@ const MUNDIALITO = (() => {
             if (r === R && !M && pairs()[0].includes(t)) { g.fillStyle = 'rgba(127,224,255,0.18)'; g.fillRect(col[r] - 3, y - 3, 128, 18); }
             tag(g, t, col[r], y, stt); if (m) txt(g, String(m.a === t ? m.sc[0] : m.sc[1]), col[r] + 110, y + 2, stt === 'win' ? '#ffd400' : '#777', 8, 'right'); }); }
         if (o.v === 'round') { const [me, op] = pairs()[0], [ka, kb] = kits(me, op);
-          g.fillStyle = 'rgba(0,0,0,0.55)'; g.fillRect(40, 250, W - 80, 52); kitMan(g, ka, 60, 262); flag(g, me.id, 82, 266, 24, 16); txt(g, me.name, 112, 270, '#7fe0ff', 8);
-          txt(g, 'CONTRA', W / 2, 270, '#fff', 8, 'center'); txt(g, op.name, W - 112, 270, '#fff', 8, 'right'); flag(g, op.id, W - 106, 266, 24, 16); kitMan(g, kb, W - 76, 262);
+          g.fillStyle = 'rgba(0,0,0,0.55)'; g.fillRect(40, 250, W - 80, 52); kitMan(g, ka, 60, 262, 1, BB); flag(g, me.id, 82, 266, 24, 16); txt(g, me.name, 112, 270, '#7fe0ff', 8);
+          txt(g, 'CONTRA', W / 2, 270, '#fff', 8, 'center'); txt(g, op.name, W - 112, 270, '#fff', 8, 'right'); flag(g, op.id, W - 106, 266, 24, 16); kitMan(g, kb, W - 76, 262, 1, BB);
           foot(g, Math.floor(o.t * 2) % 2 ? 'A ¡A JUGAR!   Q RETIRARSE' : 'Q RETIRARSE'); }
         else { const m = T.last, won = m.w === T.me; g.fillStyle = 'rgba(0,0,0,0.65)'; g.fillRect(40, 250, W - 80, 52);
           txt(g, won ? (T.round === 2 ? '¡CAMPEONES!' : '¡A ' + ROUNDS[T.round + 1] + '!') : '¡ELIMINADOS!', W / 2, 258, won ? '#ffd400' : '#ff6b6b', 12, 'center');
           txt(g, `${m.a.name} ${m.sc[0]} - ${m.sc[1]} ${m.b.name}`, W / 2, 280, '#fff', 8, 'center'); foot(g, 'A SEGUIR'); }
         return; }
       if (o.v === 'champ') { for (const p of o.conf) { g.fillStyle = p[3]; g.fillRect(p[0], p[1], 3, 5); }
-        head(g, 'EL MUNDIALITO DE LA GOFIO-8'); flag(g, T.me.id, W / 2 - 60, 70, 120, 76); kitMan(g, T.me.home, W / 2 - 14, 158, 2);
+        head(g, 'EL MUNDIALITO DE LA GOFIO-8'); flag(g, T.me.id, W / 2 - 60, 70, 120, 76); kitMan(g, T.me.home, W / 2 - 14, 158, 2, BB);
         const k = Math.min(1, o.t * 2); txt(g, '¡CAMPEONES', W / 2, 222, '#ffd400', Math.round(10 + 8 * k), 'center'); txt(g, 'DEL MUNDIALITO!', W / 2, 248, '#ffd400', Math.round(10 + 8 * k), 'center');
         txt(g, T.me.name, W / 2, 278, '#fff', 12, 'center'); if (o.t > 1.2) foot(g, 'A PONER TUS INICIALES'); return; }
       if (o.v === 'name') { head(g, '¡CAMPEONES! LA TABLA DE CAMPEONES'); flag(g, T.me.id, W / 2 - 30, 60, 60, 38); txt(g, 'TUS INICIALES', W / 2, 120, '#9fd7ff', 8, 'center');
@@ -13391,7 +13406,7 @@ const MUNDIALITO = (() => {
   const MUS_ = { title: { bpm: 132, div: 4, loop: true, ch: [{ w: 'sq', v: 0.7, n: ['C5 . E5 G5 . E5 C5 . D5 . F5 A5 . F5 D5 .', 'E5 . G5 C6 . G5 E5 . D5 . G5 B5 . . G5 .'], form: [0, 1, 0, 1] }, { w: 'tri', v: 1, n: 'C3 . G2 . C3 . G2 . D3 . A2 . G2 . B2 .' }] } };
   for (const id in SPORT) ARCADE.GAMES[id] = { title: SPORT[id].title, sub: id === 'pachanga' ? 'EL MUNDIALITO DE BASKET 3 CONTRA 3' : 'EL MUNDIALITO DE FÚTBOL', marquee: id === 'pachanga' ? ['#c0392b', '#2a0a06'] : ['#1f8f4e', '#06200e'], titleCol: '#fff',
     help: (K) => `FLECHAS ELEGIR  A: ${K('f_punch')}  Q: ${K('b_pass')}  ESC MENÚ`, music: MUS_, screen: screen(id) };
-  return { TEAMS, kits, near, flag, _T: () => T, _scr: () => SCR, _end: (r) => matchEnd(r) };
+  return { TEAMS, kits, near, flag, _teams: (id) => teamsOf(id).map((t) => [t.code, lvOf(t, SPORT[id])]), _T: () => T, _scr: () => SCR, _end: (r) => matchEnd(r) };
 })();
 
 // ============ time of day, game loop, menus ============

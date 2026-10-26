@@ -112,6 +112,31 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
     - En el piso, una consola comprada en la juguetería (vale una pasta). Los juegos se compran también en la
       juguetería y en casa se juegan gratis. Al encenderla sale un menú con los juegos que tengas.
 
+### Gráficos de los minijuegos
+
+- [ ] ● **Repasar el pixel art de los jugadores de todos los minijuegos** (Jonay, 26-oct): no le gustan los personajes
+  de ninguno. Se empieza por el basket.
+  - Ejemplos que le gustan: póster «Pixel Slam Dunk»; un mate de los Suns; uno de los Raptors; uno de los Lakers
+    botando; el «airwalk» de Utah; la cancha callejera estilo anime.
+  - Hay 4 propuestas para elegir en `docs/propuestas/sprites_basket.html` (Artifact «Jugadores de basket: 4 estilos»):
+    A clásico 16 bits, B pixel moderno, C anime callejero, D póster 8 bits.
+  - 26-oct: elige el **A**, pero con más definición («los que te pasé se ven mejores»). Hechas en la misma página:
+    A+ (64 px con detalle), A++ (100 px), A+++ (128 px) y **cabezón tipo Day of the Tentacle** (96 y 128 px,
+    cara píxel a píxel: ojos, cejas, nariz, sonrisa, colorete, barba). Referencia del cabezón: el de los Celtics con
+    barba. Jonay: «las caras deberían ser más nítidas».
+  - Arreglado en la propuesta: al correr, el brazo pasaba por debajo del número (ahora el número solo se pinta
+    donde se ve la camiseta).
+  - 26-oct: elige el **A++** (100 px), pero con las caras más definidas, y si hace falta «un poco más cabezones, no
+    tanto como Maniac Mansion». Hechas en la propuesta: «A++ cara» (cabeza 0,076, cara píxel a píxel: perfil con
+    nariz, ojo con párpado y pupila, ceja, pómulo, labios, oreja, patillas, barba) y «A++ semicabezón» (cabeza 0,10,
+    cuerpo al 85 %), a 100 y a 120 px.
+  - 26-oct: **elegido el «A++ semicabezón 120»** («el mejor que has hecho»; el del 23 se ve bien). Arreglado en la
+    propuesta: hombros (los brazos cuelgan del hombro ancho de la V, con el deltoides encima), el pelo del afro ya no
+    parece un casco ni tapa los ojos (nacimiento del pelo por encima de las cejas, que baja por detrás de la oreja),
+    el rubio con pelo corto en vez de pinchos, las patillas solo en los que llevan barba.
+  - Siguiente: pasarlo al basket (Pachanga y canchas) y luego, con la misma técnica, fútbol, pelea y máquinas. Después, con la misma técnica (esqueleto + piezas +
+    sombreado por píxel), el fútbol, la pelea 2D y las máquinas.
+
 ### Logros
 
 - [ ] ● **LOGROS COLECCIONABLES** (Jonay, 20-oct). Las misiones y lo que vas haciendo desbloquean logros, cada uno con su
@@ -333,6 +358,9 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Rendimiento, auditorías y código
 
+- [ ] ⚡ **Auditoría v0.86.0** (26-oct 10:08, APTO CON AVISOS; pruebas 7/7; pintar 35,5 → 31,8 ms, arranque 10,0 → 10,3 s):
+  `12m_mundialito.js` baja de C a D (las pantallas de la consola en funciones largas con líneas densas). Partir
+  `screen()` en una función por pantalla (pick, cuadro, resultado, campeones, iniciales, tabla).
 - [ ] ⚡ **Auditoría v0.85.1** (20-oct 22:09, APTO CON AVISOS; pruebas 10/10; pintar 35,9 → 35,5 ms, arranque 10,2 → 10,0 s):
   5 avisos «nuevos» del análisis estático en `doorKit()` (`05g_interiors.js:49-52`) y `cFrame()`
   (`05o_concepcion.js:76`). Son las mismas creaciones de antes, ahora una sola vez: el analizador las ve como nuevas
@@ -426,6 +454,18 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
       consideres, es un extra final».
 
 ## Hecho
+- [x] v0.87.0 **Pachanga 3x3: EE. UU., Serbia y Lituania** (Jonay, 26-oct) en vez de Brasil, Portugal y Uruguay (que siguen en Play Furbito).
+- [x] v0.87.0 **Pachanga 3x3: las equipaciones de la pantalla de elegir país parecen de fútbol** (Jonay, 26-oct). En
+  Play Furbito están bien; en el basket tienen que ser de basket: camiseta de tirantes, pantalón largo, calcetín
+  corto y zapatillas (`kitMan()` en `12m_mundialito.js`: una figura por deporte).
+- [x] v0.87.0 **El mundialito: España no puede ser de las flojas** (Jonay, 26-oct): es campeona del mundo de fútbol y en
+  basket ha ganado Europeos y Mundiales. Ahora cada selección tiene un solo nivel para los dos juegos (España 0,60,
+  de las más bajas). Propuesta: un nivel por deporte (`lv` → `lvB` / `lvF` en `12m_mundialito.js`; también cambian
+  las barritas de nivel de la pantalla de elegir país):
+  - Basket: España 0,72 · Francia 0,68 · Argentina 0,66 · Alemania 0,66 · Italia 0,60 · Brasil 0,56 · Portugal 0,50 ·
+    Uruguay 0,50.
+  - Fútbol: España 0,72 · Argentina 0,71 · Francia 0,70 · Brasil 0,70 · Alemania 0,66 · Portugal 0,66 · Italia 0,62 ·
+    Uruguay 0,60.
 - [x] v0.86.0 **Pachanga 3x3 y Play Furbito: todo dentro del minijuego** (Jonay, 20-oct). La elección de selección y las
   pantallas del mundialito no pueden salir al mundo 3D (ahora son ventanas de diálogo del juego principal).
   - Elegir país en la propia pantalla de la GOFIO-8: banderas y equipaciones de las 8 selecciones, flechas y A para

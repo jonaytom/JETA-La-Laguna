@@ -3,6 +3,15 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.87.0 — 2026-10-26 — Selecciones de basket en Pachanga 3x3
+- **Pachanga 3x3 tiene sus propias selecciones** (Jonay): entran **EE. UU., Serbia y Lituania** y salen Brasil,
+  Portugal y Uruguay, que siguen en Play Furbito. Cada una con su bandera, sus dos equipaciones y jugadores parodia.
+- **Un nivel por deporte** (Jonay: «España no puede ser de las más malas»). España es de las mejores en los dos: en
+  basket, solo EE. UU. está por encima; en fútbol, es la primera. Las barritas de nivel de la pantalla de elegir país
+  cambian según el cartucho.
+- **En Pachanga, los muñequitos van de basket** (Jonay: parecían de fútbol): camiseta de tirantes, pantalón largo,
+  calcetín corto y zapatillas. Play Furbito se queda igual.
+
 ## 0.86.0 — 2026-10-26 — El mundialito, entero dentro de la GOFIO-8
 - **Pachanga 3x3 y Play Furbito ya no salen al mundo 3D** (Jonay): todo pasa en la pantalla de la consola.
   - **Elegir selección**: las 8 banderas, las dos equipaciones de cada país y su nivel. Se elige con las flechas y A.

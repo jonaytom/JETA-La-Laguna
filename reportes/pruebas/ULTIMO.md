@@ -1,16 +1,16 @@
-# Pruebas 0.86.0 — 2026-10-26 10:08 — 7/7 OK
+# Pruebas 0.87.0 — 2026-10-26 10:41 — 7/7 OK
 
-Listas: v086. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 122 s en total.
+Listas: v087. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 118 s en total.
 
 | # | Prueba | Resultado | Tiempo |
 |---|---|---|---|
-| 1 | `prueba_085.py` | **OK** | 67 s |
-| 2 | `prueba_0851.py` | **OK** | 9 s |
+| 1 | `prueba_085.py` | **OK** | 65 s |
+| 2 | `prueba_0851.py` | **OK** | 8 s |
 | 3 | `prueba_084.py` | **OK** | 0 s |
 | 4 | `prueba_baloncesto.py` | **OK** | 15 s |
 | 5 | `prueba_futbol.py` | **OK** | 6 s |
 | 6 | `prueba_083.py` | **OK** | 2 s |
-| 7 | `prueba_arranque.py` | **OK** | 1 s |
+| 7 | `prueba_arranque.py` | **OK** | 0 s |
 
 ## Detalle
 
@@ -19,9 +19,10 @@ Listas: v086. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 122 s en total.
 ```
 consola {'hay': True, 'modo': 'ext', 'abierta': True, 'vista': 'pick', 'estado': 'arcade'}
 foto v086_elige
+selecciones {'b': [['ESP', 0.72], ['USA', 0.78], ['SRB', 0.7], ['FRA', 0.68], ['LTU', 0.64], ['ARG', 0.64], ['ALE', 0.66], ['ITA', 0.6]], 'f': [['ESP', 0.72], ['BRA', 0.7], ['ARG', 0.71], ['ITA', 0.62], ['ALE', 0.66], ['FRA', 0.7], ['POR', 0.66], ['URU', 0.6]]}
 ELIGE OK
 foto v086_cuadro
-cuadro {'sel': 0, 'vista': 'round', 'yo': 'ESPAÑA'} partido {'espera': True, 'abierta': True, 'juega': True, 'n': 6, 'mia': 'c8102e', 'rival': 'ffdf00'} equipaciones {'uru': '#f2f2f2', 'choques': []}
+cuadro {'sel': 0, 'vista': 'round', 'yo': 'ESPAÑA'} partido {'espera': True, 'abierta': True, 'juega': True, 'n': 6, 'mia': 'c8102e', 'rival': '1f5fbf'} equipaciones {'uru': '#f2f2f2', 'choques': []}
 PARTIDO OK
 rondas [{'v': 'result', 'r': 0, 'espera': False, 'estado': 'arcade', 'pausa': 'none'}, {'v': 'round', 'r': 1}, {'v': 'result', 'r': 1, 'espera': False, 'estado': 'arcade', 'pausa': 'none'}, {'v': 'result', 'r': 2, 'espera': False, 'estado': 'arcade', 'pausa': 'none'}]
 foto v086_resultado
@@ -29,7 +30,7 @@ foto v086_campeones
 foto v086_tabla
 campeón {'v1': 'champ'} {'v2': 'name', 'v3': 'table', 'tabla': ['JNY', 'ESPAÑA', 1], 'ganados': 1}
 CAMPEON OK
-furbito {'m1': 'menu', 'juega': True, 'n': 10, 'nombres': ['BRASIL', 'URUGUAY'], 'espera': True}
+furbito {'m1': 'menu', 'juega': True, 'n': 10, 'nombres': ['BRASIL', 'ARGENTINA'], 'espera': True}
 foto v086_furbito
 eliminados {'v': 'result', 'gano': False, 'luego': 'pick', 'estado': 'arcade'}
 FURBITO OK
@@ -68,7 +69,7 @@ PRUEBA 0851 OK
 ```
 equipos {'abre': True, 'n': 6, 't0': ['EL CHOPA', 'COCO', 'EL BLANCO'], 't1': ['EL MÁS ALTO', 'EL PIBE', 'EL LARGO']}
 EQUIPOS OK
-partido {'marcador': [10, 4], 'pases': 10, 'con_balon': ['EL CHOPA', 'EL MÁS ALTO', 'EL PIBE', 'COCO', 'EL LARGO', 'EL BLANCO'], 'marcas_distintas': True, 'movidos': [21.7, 16.2, 11.7, 16.8, 18, 17.4]}
+partido {'marcador': [13, 7], 'pases': 8, 'con_balon': ['EL CHOPA', 'EL MÁS ALTO', 'EL PIBE', 'COCO', 'EL BLANCO', 'EL LARGO'], 'marcas_distintas': True, 'movidos': [20.2, 18.1, 16.1, 12.4, 19.2, 11.5]}
 foto v084_basket3x3
 PARTIDO OK
 errores []
@@ -80,13 +81,13 @@ PRUEBA 084 OK
 ```
 foto basket_inicio
 foto basket_partido
-cpu {'ph': 'end', 'sc': [4, 3], 'clock': 0, 'golden': False}
-resultado {"won":true,"score":[4,3]}
+cpu {'ph': 'end', 'sc': [5, 8], 'clock': 0, 'golden': False}
+resultado {"won":false,"score":[5,8]}
 PARTIDO CPU OK
-partido fácil 1 [22, 0]
-partido fácil 2 [24, 0]
-partido fácil 3 [28, 0]
-equilibrio primer partido [74, 0] OK
+partido fácil 1 [23, 0]
+partido fácil 2 [12, 2]
+partido fácil 3 [20, 3]
+equilibrio primer partido [55, 5] OK
 jugadores dibujados 93
 snap baloncesto_tamano
 clic derecho {"ev":{"pass":true},"mode":"pass"}
@@ -112,13 +113,13 @@ BALONCESTO OK
 
 ```
 foto futbol_partido
-cpu {'ph': 'end', 'sc': [0, 1], 'golden': False}
-resultado {"won":false,"score":[0,1]}
+cpu {'ph': 'play', 'sc': [2, 0], 'golden': False}
+resultado {"won":true,"score":[2,0]}
 PARTIDO CPU OK
 partido fácil 1 [6, 0]
-partido fácil 2 [8, 1]
-partido fácil 3 [3, 1]
-equilibrio primer partido [17, 2] OK
+partido fácil 2 [5, 0]
+partido fácil 3 [8, 0]
+equilibrio primer partido [19, 0] OK
 tras moverse 1
 tras correr 2
 tras pasar 3
@@ -161,7 +162,7 @@ PRUEBA 083 OK
 ### 7. prueba_arranque.py — OK
 
 ```
-30 pasos (ms): {'mediana': 33, 'peor': 49, 'estado': 'play'}
+30 pasos (ms): {'mediana': 26, 'peor': 42, 'estado': 'play'}
 errores JS []
 ARRANQUE OK
 ```

@@ -1,4 +1,4 @@
-# v0.85 / v0.86: «PACHANGA 3x3» y «PLAY FURBITO», los cartuchos de deportes de la GOFIO-8. v0.86 (Jonay): todo dentro de
+# v0.85 / v0.86 / v0.87 (basket: EE. UU., Serbia y Lituania en vez de Brasil, Portugal y Uruguay; España de las mejores): «PACHANGA 3x3» y «PLAY FURBITO», los cartuchos de deportes de la GOFIO-8. v0.86 (Jonay): todo dentro de
 # la consola, sin salir al mundo 3D. 1) en el menú, el cartucho abre su pantalla «elige tu selección» en la propia
 # GOFIO-8; 2) con España sale el cuadro (cuartos) y A juega el partido: la consola espera detrás, 3 contra 3, tu
 # equipación y la del rival que no se parece; 3) al acabar se vuelve a la consola (resultados), y ganando cuartos,
@@ -24,6 +24,11 @@ async def run(pg):
           return JSON.stringify({ hay: !!A.GAMES.pachanga.screen && !!A.GAMES.furbito.screen, modo: A._st().mode, abierta: A.running, vista: S() && S().v, estado: __dbg.GAME.state }); })()"""))
         print('consola', a); await foto(pg, 'arcade', 'v086_elige')
         ok1 = a['hay'] and a['modo'] == 'ext' and a['abierta'] and a['vista'] == 'pick' and a['estado'] == 'arcade'
+        eq = json.loads(await pg.evaluate("JSON.stringify({ b: __dbg.MUNDIALITO._teams('pachanga'), f: __dbg.MUNDIALITO._teams('furbito') })"))
+        print('selecciones', eq)
+        cb = [c for c, _ in eq['b']]; cf = [c for c, _ in eq['f']]
+        top = lambda L: sorted(L, key=lambda q: -q[1])
+        ok1 = ok1 and len(cb) == 8 and all(c in cb for c in ('USA', 'SRB', 'LTU')) and not any(c in cb for c in ('BRA', 'POR', 'URU')) and all(c in cf for c in ('BRA', 'POR', 'URU')) and 'ESP' in [c for c, _ in top(eq['b'])[:2]] and top(eq['f'])[0][0] == 'ESP'
         print('ELIGE', 'OK' if ok1 else 'FALLA'); ok = ok and ok1
         # 2) Spain: the bracket, then the match with the console waiting behind
         b = json.loads(await pg.evaluate("(()=>{ " + H + """ P('vR'); Wt(); P('vL'); Wt(); const sel=S().sel; P('vS'); Wt(); const vista=S().v, yo=M._T().me.name; return JSON.stringify({ sel, vista, yo }); })()"""))

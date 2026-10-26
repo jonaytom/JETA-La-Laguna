@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.86.0</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.87.0</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2101,7 +2101,8 @@ quitarles los zurrones.</li>
   (<code>src/12m_mundialito.js</code>), cuartos, semifinal y final; las equipaciones no chocan (el rival saca la segunda); el
   campeón pone iniciales en la tabla <code>mundial_&lt;juego&gt;</code>. v0.86: todas las pantallas (país, cuadro, resultados, campeones,
   iniciales) van dentro de la consola (<code>screen</code> en <code>ARCADE.GAMES</code>); los partidos usan <code>ARCADE.api.suspend()</code> y vuelven con
-  <code>ARCADE.resume()</code>. Con todos los cartuchos: «¡superfriki jugón!» y el torneo.</li>
+  <code>ARCADE.resume()</code>. v0.87: cada cartucho tiene sus 8 selecciones (<code>SPORT[id].teams</code>; basket con EE. UU., Serbia y
+  Lituania) y cada selección un nivel por deporte (<code>lvB</code> / <code>lvF</code>). Con todos los cartuchos: «¡superfriki jugón!» y el torneo.</li>
 <li><strong>Torneo de videojuegos</strong> (Jonay, 20-oct), cuando tienes todos los cartuchos:</li>
 <li>Superar el récord de cada juego de puntos (Bencomo, Guerra de Naves, Guanche Warriors…).</li>
 <li>Ganar el mundialito de Pachanga 3x3 y de Play Furbito.</li>
@@ -2119,6 +2120,16 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.87.0 — 2026-10-26 — Selecciones de basket en Pachanga 3x3</h2>
+<ul>
+<li><strong>Pachanga 3x3 tiene sus propias selecciones</strong> (Jonay): entran <strong>EE. UU., Serbia y Lituania</strong> y salen Brasil,
+  Portugal y Uruguay, que siguen en Play Furbito. Cada una con su bandera, sus dos equipaciones y jugadores parodia.</li>
+<li><strong>Un nivel por deporte</strong> (Jonay: «España no puede ser de las más malas»). España es de las mejores en los dos: en
+  basket, solo EE. UU. está por encima; en fútbol, es la primera. Las barritas de nivel de la pantalla de elegir país
+  cambian según el cartucho.</li>
+<li><strong>En Pachanga, los muñequitos van de basket</strong> (Jonay: parecían de fútbol): camiseta de tirantes, pantalón largo,
+  calcetín corto y zapatillas. Play Furbito se queda igual.</li>
+</ul>
 <h2>0.86.0 — 2026-10-26 — El mundialito, entero dentro de la GOFIO-8</h2>
 <ul>
 <li><strong>Pachanga 3x3 y Play Furbito ya no salen al mundo 3D</strong> (Jonay): todo pasa en la pantalla de la consola.</li>
