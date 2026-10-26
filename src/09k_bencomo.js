@@ -20,20 +20,23 @@ ARCADE.GAMES.bencomo = (() => {
   const P = { k: '#1a1008', h: '#140d09', b: '#c27b46', d: '#8c4f27', w: '#f4efe6', c: '#7a4a22', C: '#b8823f', s: '#3a2414', e: '#2a1a10',
     m: '#cfd3d9', M: '#7d838c', y: '#e3b23c', R: '#b3271d', n: '#2b2f6b', l: '#6b4422', L: '#3d2614', D: '#8b5a2b', o: '#5e3a1a', g: '#e8e2d0', G: '#9a9488', f: '#d22', F: '#f6c12b', x: '#111' };
   const S = (key, rows) => A.sprite('bc_' + key, rows, P, 16);
+  // v0.89 (Jonay: «me gusta el Bencomo nuevo, usa ese»): the same size and palette as before (so he fits with the
+  // castellanos and the dogs), with the detail of the statues of Candelaria: headband, beard, necklace, the tamarco on
+  // the shoulder, bare chest with pecs and abs, the loincloth with its cord, ankle bands and bare feet
   const UP = {
-    idle: ['.....hhhhh......', '....hhhhhhh.....', '...hhhbbbbhh....', '...hhbbbbwk.....', '...hhbbbbbbbb...', '...hhdbbbbbb....', '...hhhhbhhhh....', '....hhhhhhh.....', '.....hdbbd......', '...CccccccC.....', '..bcCccccCcb....', '..bcccccccdb....', '..bbccccccbb....', '...dccccccd.....'],
-    thrust: ['.....hhhhh......', '....hhhhhhh.....', '...hhhbbbbhh....', '...hhbbbbwk.....', '...hhbbbbbbbb...', '...hhdbbbbbb....', '...hhhhbhhhh....', '....hhhhhhh.....', '.....hdbbd......', '...CccccccCbbbb.', '..bcCccccCcbbbbb', '..bcccccccd.....', '...bccccccc.....', '...dccccccd.....'],
-    up: ['.bb..hhhhh..bb..', '.bb.hhhhhhh.bb..', '.bbhhhbbbbhhbb..', '..bhhbbbbwkb....', '..bhhbbbbbbbb...', '..bhhdbbbbbb....', '...hhhhbhhhh....', '....hhhhhhh.....', '.....hdbbd......', '...CccccccC.....', '...cCccccCc.....', '...cccccccd.....', '...cccccccc.....', '...dccccccd.....'],
-    hurt: ['......hhhhh.....', '.....hhhhhhh....', '....hhhbbbbhh...', '....hhbbbbbk....', '....hhbbbbbbbb..', '....hhdbbbbbb...', '....hhhhbhhhh...', '.....hhhhhhh....', '.....hdbbd......', '..bCccccccC.....', '.bbcCccccCcb....', '.b.cccccccdbb...', '...cccccccc.bb..', '...dccccccd.....'],
+    idle: ['....hhhhhh......', '...hhhhhhhh.....', '..hhggggggg.....', '..hhhbbbbbb.....', '..hhbbbbbwk.....', '..hhbbbbbbbb....', '..hhhdbbbbb.....', '..hhheeeeee.....', '..hh.eeeeee.....', '..hcC.eeeb......', '..cCbbgbgbbb....', '.bcCbbbdbbbbb...', '.bcCbdbbdbbdb...', '.bcccbdbdbbbb...'],
+    thrust: ['....hhhhhh......', '...hhhhhhhh.....', '..hhggggggg.....', '..hhhbbbbbb.....', '..hhbbbbbwk.....', '..hhbbbbbbbb....', '..hhhdbbbbb.....', '..hhheeeeee.....', '..hh.eeeeee.....', '..hcC.eeeb......', '..cCbbgbgbbbbbbb', '.bcCbbbdbbbbbbb.', '.bcCbdbbdbbd....', '.bcccbdbdbb.....'],
+    up: ['.bb.hhhhhh.bb...', '.bbhhhhhhhhbb...', '..bhhgggggggb...', '..bhhbbbbbb.....', '..hhbbbbbwk.....', '..hhbbbbbbbb....', '..hhhdbbbbb.....', '..hhheeeeee.....', '..hh.eeeeee.....', '..hcC.eeeb......', '..cCbbgbgbb.....', '..cCbbbdbbbb....', '..cCbdbbdbbd....', '..cccbdbdbbb....'],
+    hurt: ['.....hhhhhh.....', '....hhhhhhhh....', '...hhggggggg....', '...hhhbbbbbb....', '...hhbbbbbbk....', '...hhbbbbbbbb...', '...hhhdbbbbb....', '...hhheeeeee....', '...hh.eeeeee....', '..bcC.eeeb......', '.bbCbbgbgbbb....', '.b.Cbbbdbbbbbb..', '...cbdbbdbbd.bb.', '...ccbdbdbbb....'],
   };
   const LEG = {
-    stand: ['...cCccccCc.....', '...cccccccc.....', '....bb..bb......', '....bb..bb......', '....bd..bd......', '....bd..bd......', '...sss..sss.....', '................'],
-    run1: ['...cCccccCc.....', '...cccccccc.....', '...bb....bb.....', '..bb......bb....', '..bd.......bd...', '.bd.........bd..', '.sss.......sss..', '................'],
-    run2: ['...cCccccCc.....', '...cccccccc.....', '.....bbbb.......', '.....bbbb.......', '....bd.bd.......', '....bd.bd.......', '...sss.sss......', '................'],
-    run3: ['...cCccccCc.....', '...cccccccc.....', '....bb..bb......', '...bb....bb.....', '...bd.....bd....', '..bd.......bd...', '.sss.......sss..', '................'],
-    jump: ['...cCccccCc.....', '...cccccccc.....', '...bbbbbbbbb....', '..bd.....bbb....', '..bd.......bd...', '..sss......sss..', '................', '................'],
-    crouch: ['...cCccccCc.....', '..bbbbcccbbbb...', '..bd.......bd...', '.sss.......sss..'], // v0.80.1: crouched (to hit the dogs)
-    pogo: ['...cCccccCc.....', '...cccccccc.....', '....bbbbbb......', '....bbbbbb......', '.....bddb.......', '.....ssss.......', '................', '................'],
+    stand: ['..dcccgggggb....', '...cCccccC......', '....ccdcc.......', '....bb..bb......', '....bd..bd......', '....bd..bd......', '....gd..gd......', '...bbb..bbb.....'],
+    run1: ['..dcccgggggb....', '...cCccccC......', '...bbcdcbb......', '..bb......bb....', '..bd.......bd...', '.bd.........bd..', '.gd.........gd..', 'bbb.........bbb.'],
+    run2: ['..dcccgggggb....', '...cCccccC......', '.....bbbb.......', '.....bbbb.......', '....bd.bd.......', '....bd.bd.......', '....gd.gd.......', '...bbb.bbb......'],
+    run3: ['..dcccgggggb....', '...cCccccC......', '....bb..bb......', '...bb....bb.....', '...bd.....bd....', '..bd.......bd...', '..gd.......gd...', '.bbb.......bbb..'],
+    jump: ['..dcccgggggb....', '...cCccccC......', '...bbbbbbbbb....', '..bd.....bbb....', '..bd.......bd...', '..gd.......gd...', '.bbb.......bbb..', '................'],
+    crouch: ['...cCccccC......', '..bbbbcccbbbb...', '..gd.......gd...', '.bbb.......bbb..'], // v0.80.1: crouched (to hit the dogs)
+    pogo: ['..dcccgggggb....', '...cCccccC......', '....bbbbbb......', '....bbbbbb......', '.....bddb.......', '.....gddg.......', '................', '................'],
   };
   const bencomo = (up, leg) => S('ben_' + up + '_' + leg, [...UP[up], ...LEG[leg]]);
   // the Castilians: soldiers (morion, breastplate, striped doublet), crossbowman, arquebusier, captain (plume, plate)
@@ -224,7 +227,7 @@ ARCADE.GAMES.bencomo = (() => {
     function die() { if (p.dead) return; p.dead = 1.8; p.vy = -260; p.vx = 0; api.stopMusic(); api.sfx('die'); }
     function respawn() { lives--; if (lives < 0) { g.over = true; lives = 0; return; } const [x, y] = p.cp; p.x = x; p.y = y; p.vx = p.vy = 0; p.hp = 3; p.inv = 2; p.dead = 0; p.vault = 0; camX = clamp(p.x - W * 0.35, 0, L.w * T - W); if (!opt.demo) api.music(boss && boss.st !== 'wait' ? SONGS.boss : SONGS[TH[L.theme].music]); }
     g.continue = () => { g.over = false; lives = 2; g.score = 0; respawn(); lives = 2; };
-    function addScore(n, x, y) { g.score += n; if (x !== undefined) fx.push({ k: 'pts', t: 0.8, x, y, s: String(n) }); }
+    function addScore(n, x, y) { n = Math.round(n * (1 + 0.5 * loopN)); /* v0.89 (Jonay): each loop gives more points */ g.score += n; if (x !== undefined) fx.push({ k: 'pts', t: 0.8, x, y, s: String(n) }); }
     function player(dt, pad) {
       if (p.dead) { p.dead -= dt; p.vy += 700 * dt; p.y += p.vy * dt; if (p.dead <= 0) respawn(); return; }
       const run = pad.held('vR') ? 1 : pad.held('vL') ? -1 : 0, down = pad.held('vD'), upK = pad.held('vU');
@@ -276,7 +279,7 @@ ARCADE.GAMES.bencomo = (() => {
       e.vy += 900 * dt; e.vy = Math.min(e.vy, 500); e.hitWall = 0; moveBody(e, dt); if (e.y > ROWS * T + 40) e.dead = true;
       // touching Bencomo
       if (!p.dead && Math.abs(p.x - e.x) < (e.w + 10) / 2 && p.y > e.y - e.h && p.y - p.h < e.y) {
-        if ((p.pogo || p.power > 0) && p.vy > 0 && p.y < e.y - e.h + 10) { hitE(e, p.pogo ? 2 : 3, true); p.vy = -340; api.sfx('jump'); }
+        if ((p.pogo || p.power > 0) && p.vy > 0 && p.y < e.y - e.h + Math.max(10, e.h * 0.5)) { /* v0.89 (Jonay): the «picado» on the rider of a horse hit you: landing anywhere on the top half counts */ hitE(e, p.pogo ? 2 : 3, true); p.vy = -340; api.sfx('jump'); }
         else if (p.power > 0) hitE(e, 3);
         else if (!(e.k === 'D' && e.st === 'sleep')) hurt(e.k === 'L' || e.k === 'C' ? 1 : 1, e.x); }
       // the banot

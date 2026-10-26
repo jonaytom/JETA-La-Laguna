@@ -334,8 +334,9 @@ const FIGHT2D = (() => {
   }
   function pressedFrame() { }
   function resetRound() { for (const [f, x, d] of [[st.a, 62, 1], [st.b, W - 62, -1]]) Object.assign(f, { x, y: GROUND, vx: 0, vy: 0, dir: d, hp: 100, shown: 100, mv: null, stun: 0, ko: false, combo: 0, buf: [] }); st.proj = []; st.phase = 'intro'; st.pt = 0; st.bannerSize = 16; }
+  let PZ = { on: false, off() {} }; // v0.89: P = pause (made in start(): MINI is defined after this file)
   function loop(now) {
-    if (!running) return; raf = requestAnimationFrame(loop); now = performance.now(); const dt = clamp((now - last) / 1000, 0, 0.1); last = now;
+    if (!running) return; raf = requestAnimationFrame(loop); now = performance.now(); if (PZ.on && st && !st.trans) { last = now; draw(); cx.setTransform(R, 0, 0, R, 0, 0); MINI.pauseOverlay(cx, W, H); return; } const dt = clamp((now - last) / 1000, 0, 0.1); last = now;
     if (st.trans) { st.trans.t += dt; drawTransition(); return; }
     acc += dt; let n = 0; while (acc >= 1 / FPS && n < 4) { tick(); acc -= 1 / FPS; n++; } draw();
   }
@@ -382,7 +383,7 @@ const FIGHT2D = (() => {
   }
   function grab3D() { render(); const c = mkCanvas(W, H); c.getContext('2d').drawImage(renderer.domElement, 0, 0, W, H); return c; }
   // ---------------- public
-  function start(opt) {
+  function start(opt) { if (!PZ.made) { PZ = MINI.pauser(() => running); PZ.made = true; } PZ.off();
     if (running) return; running = true; onEnd = opt.onEnd || null;
     if (!cv) { cv = $('fight2d'); cv.width = W * R; cv.height = H * R; cx = cv.getContext('2d'); cx.imageSmoothingEnabled = false; }
     const from = grab3D();

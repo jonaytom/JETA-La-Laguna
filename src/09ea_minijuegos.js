@@ -46,5 +46,11 @@ const MINI = (() => {
   function clearWorldInput() { KEYS.clear(); PRESSED.clear(); const T = INPUT.touch; T.x = T.y = 0; T.active = false; T.sprint = false; T.jump = false; T.hb = false; PLAYER.speed = 0; }
   function show(cv, state) { clearWorldInput(); GAME.state = state; document.body.classList.add('fighting'); cv.style.display = 'block'; if (AUDIO.init) AUDIO.init(); }
   function hide(cv, state, lock) { clearWorldInput(); if (cv) cv.style.display = 'none'; document.body.classList.remove('fighting'); if (lock) { GAME.state = 'play'; GAME.lock(); } else if (GAME.state === state) GAME.state = 'play'; }
-  return { input, snd, say, txt, turbo, banner, rows, endScreen, show, hide, clearWorldInput };
+  // v0.89 (Jonay: «todos los minijuegos necesitan pausa con la P, que se reanuda al volver a pulsarla»): P toggles the pause
+  // of the minigame that is running (the sound stops too); pauseOverlay() darkens the frame and says PAUSA
+  function pauser(isRunning) { const o = { on: false };
+    window.addEventListener('keydown', (e) => { if (!isRunning() || e.code !== 'KeyP' || e.repeat) return; e.preventDefault(); e.stopPropagation(); o.on = !o.on; const ac = AUDIO.ctx; try { if (ac) (o.on ? ac.suspend() : ac.resume()); } catch (er) { } }, true);
+    o.off = () => { if (o.on) { o.on = false; try { AUDIO.ctx && AUDIO.ctx.resume(); } catch (er) { } } }; return o; }
+  function pauseOverlay(cx, W, H) { cx.fillStyle = 'rgba(0,0,0,0.55)'; cx.fillRect(0, 0, W, H); txt(cx, 'PAUSA', W / 2, H / 2 - 14, 16, '#ffd400'); txt(cx, 'PULSA P PARA SEGUIR', W / 2, H / 2 + 10, 6, '#fff'); }
+  return { input, snd, say, txt, turbo, banner, rows, endScreen, show, hide, clearWorldInput, pauser, pauseOverlay };
 })();

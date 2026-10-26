@@ -3,6 +3,27 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.89.0 — 2026-10-26 — Pausa en los minijuegos, control en el basket y el fútbol, Bencomo nuevo
+- **Pausa con la P en todos los minijuegos** (Jonay): basket, fútbol, la pelea, las máquinas (Bencomo, GUFO, Guanche
+  Guarriors) y la GOFIO-8. Sale «PAUSA», se para el sonido, y otra P sigue.
+- **Basket y fútbol** (Jonay):
+  - El que tiene el balón en tu equipo es siempre el tuyo (en el fútbol ya era así; en el basket, ahora también al
+    coger un rebote o un robo).
+  - **Defendiendo, clic derecho**: pasas a llevar al jugador más cercano al balón. Si ya eres tú, intentas el robo
+    (basket) o la entrada (fútbol); si estás lejos, das un acelerón hacia él.
+  - **Ayudas en defensa**: cuando el rival entra hacia el aro o hacia la portería, otro defensor deja su sitio y le
+    cierra el camino.
+- **Bencomo, el muñeco nuevo** (Jonay: «me gusta, usa ese»): el mismo tamaño y los colores de la máquina, con la
+  cinta, la barba, el collar, el tamarco al hombro, el pecho al aire, el taparrabos con cordón, tobilleras y los pies
+  descalzos. Todos sus cuadros: quieto, correr, saltar, varazo, agachado, picado y herido.
+- **Bencomo**: el picado sobre un caballero a caballo te daba a ti si caías sobre el jinete; ahora cuenta caer en
+  cualquier punto de la mitad de arriba del enemigo.
+- **Vueltas más difíciles y que dan más puntos** (Jonay), en Bencomo, GUFO y Guanche Guarriors: cada vuelta suma
+  la mitad de puntos más que la primera (vuelta 2 ×1,5, vuelta 3 ×2…). El cartel de la vuelta lo dice.
+- **GUFO, un 5 % más rápido** en todo (Jonay: «es muy fácil»).
+- **Basket, combos** (Jonay): hay un 25 % menos de tiempo para meterlo (2,7 s); si fallas una tecla o se acaba el
+  tiempo, el jugador vuela igual con su mate y lo estrella contra el aro, en vez de soltar el balón.
+
 ## 0.88.1 — 2026-10-26 — Entrada y palomita con postura propia
 - **Fútbol** (Jonay): la entrada se hace con una pierna estirada hacia el balón y la otra doblada con la rodilla
   arriba; en la palomita, el portero vuela con los dos brazos estirados por delante y los guantes. Antes era el

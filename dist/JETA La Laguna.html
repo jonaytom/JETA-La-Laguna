@@ -205,7 +205,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="tb" id="tbS">CORRER</div>
 <div class="tb" id="tbM">MAPA</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">v0.88.1</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">v0.89.0</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -7475,8 +7475,9 @@ const FIGHT2D = (() => {
   }
   function pressedFrame() { }
   function resetRound() { for (const [f, x, d] of [[st.a, 62, 1], [st.b, W - 62, -1]]) Object.assign(f, { x, y: GROUND, vx: 0, vy: 0, dir: d, hp: 100, shown: 100, mv: null, stun: 0, ko: false, combo: 0, buf: [] }); st.proj = []; st.phase = 'intro'; st.pt = 0; st.bannerSize = 16; }
+  let PZ = { on: false, off() {} }; // v0.89: P = pause (made in start(): MINI is defined after this file)
   function loop(now) {
-    if (!running) return; raf = requestAnimationFrame(loop); now = performance.now(); const dt = clamp((now - last) / 1000, 0, 0.1); last = now;
+    if (!running) return; raf = requestAnimationFrame(loop); now = performance.now(); if (PZ.on && st && !st.trans) { last = now; draw(); cx.setTransform(R, 0, 0, R, 0, 0); MINI.pauseOverlay(cx, W, H); return; } const dt = clamp((now - last) / 1000, 0, 0.1); last = now;
     if (st.trans) { st.trans.t += dt; drawTransition(); return; }
     acc += dt; let n = 0; while (acc >= 1 / FPS && n < 4) { tick(); acc -= 1 / FPS; n++; } draw();
   }
@@ -7523,7 +7524,7 @@ const FIGHT2D = (() => {
   }
   function grab3D() { render(); const c = mkCanvas(W, H); c.getContext('2d').drawImage(renderer.domElement, 0, 0, W, H); return c; }
   // ---------------- public
-  function start(opt) {
+  function start(opt) { if (!PZ.made) { PZ = MINI.pauser(() => running); PZ.made = true; } PZ.off();
     if (running) return; running = true; onEnd = opt.onEnd || null;
     if (!cv) { cv = $('fight2d'); cv.width = W * R; cv.height = H * R; cx = cv.getContext('2d'); cx.imageSmoothingEnabled = false; }
     const from = grab3D();
@@ -7709,7 +7710,13 @@ const MINI = (() => {
   function clearWorldInput() { KEYS.clear(); PRESSED.clear(); const T = INPUT.touch; T.x = T.y = 0; T.active = false; T.sprint = false; T.jump = false; T.hb = false; PLAYER.speed = 0; }
   function show(cv, state) { clearWorldInput(); GAME.state = state; document.body.classList.add('fighting'); cv.style.display = 'block'; if (AUDIO.init) AUDIO.init(); }
   function hide(cv, state, lock) { clearWorldInput(); if (cv) cv.style.display = 'none'; document.body.classList.remove('fighting'); if (lock) { GAME.state = 'play'; GAME.lock(); } else if (GAME.state === state) GAME.state = 'play'; }
-  return { input, snd, say, txt, turbo, banner, rows, endScreen, show, hide, clearWorldInput };
+  // v0.89 (Jonay: «todos los minijuegos necesitan pausa con la P, que se reanuda al volver a pulsarla»): P toggles the pause
+  // of the minigame that is running (the sound stops too); pauseOverlay() darkens the frame and says PAUSA
+  function pauser(isRunning) { const o = { on: false };
+    window.addEventListener('keydown', (e) => { if (!isRunning() || e.code !== 'KeyP' || e.repeat) return; e.preventDefault(); e.stopPropagation(); o.on = !o.on; const ac = AUDIO.ctx; try { if (ac) (o.on ? ac.suspend() : ac.resume()); } catch (er) { } }, true);
+    o.off = () => { if (o.on) { o.on = false; try { AUDIO.ctx && AUDIO.ctx.resume(); } catch (er) { } } }; return o; }
+  function pauseOverlay(cx, W, H) { cx.fillStyle = 'rgba(0,0,0,0.55)'; cx.fillRect(0, 0, W, H); txt(cx, 'PAUSA', W / 2, H / 2 - 14, 16, '#ffd400'); txt(cx, 'PULSA P PARA SEGUIR', W / 2, H / 2 + 10, 6, '#fff'); }
+  return { input, snd, say, txt, turbo, banner, rows, endScreen, show, hide, clearWorldInput, pauser, pauseOverlay };
 })();
 
 // ============ «JETA JAM»: 2D basketball, 3 vs 3 since v0.84 (2 vs 2 before), in the style of the 90s arcade games (v0.65) ============
@@ -7754,7 +7761,7 @@ const BASKET2D = (() => {
     SPR.set(key, s); return s;
   }
   // ---------- input (virtual buttons from the player's controls)
-  const IN = MINI.input(() => running), { press, held, hit, rel } = IN, keys = IN.keys; // v0.69: shared with the other minigames (09ea_minijuegos.js)
+  const PZ = MINI.pauser(() => running); const IN = MINI.input(() => running), { press, held, hit, rel } = IN, keys = IN.keys; // v0.69: shared with the other minigames (09ea_minijuegos.js)
   // ---------- little sounds (own nodes on the game's audio context)
   const snd = MINI.snd, say = (t) => MINI.say(t);
   // ---------- setup
@@ -7770,7 +7777,8 @@ const BASKET2D = (() => {
     for (const q of st.p) { q.vx = q.vz = q.vy = 0; q.y = 0; q.air = false; q.act = ''; q.down = 0; q.shootHold = false; q.dir = q.team ? -1 : 1; }
     const carrier = A.find((q) => q.human) || A[0]; give(carrier); st.possT = 0;
   }
-  function give(p) { p.cTried = false; const b = st.ball; b.holder = p; b.mode = 'held'; b.shot = null; b.pass = null; st.possT = 0; st.lastTouch = p; }
+  function give(p) { p.cTried = false; const b = st.ball; b.holder = p; b.mode = 'held'; b.x = p.x; b.z = p.z; b.shot = null; b.pass = null; st.possT = 0; st.lastTouch = p; if (st.auto === false && p.team === 0 && !p.human) youAre(p); } // v0.89 (Jonay): the one with the ball is always yours
+  function youAre(q) { for (const o of st.p) if (o.team === 0 && o !== q && o.human) { o.human = false; o.shootHold = false; } q.human = true; st.swapAt = st.time0 + 0.25; }
   // ---------- court geometry helpers
   const hoopOf = (team) => HOOP[team === 0 ? 1 : 0]; // team 0 attacks the right hoop
   const dist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
@@ -7847,7 +7855,7 @@ const BASKET2D = (() => {
   function startCombo(p, d) {
     const c = COMBOS[(Math.random() * 4) | 0]; const sg = Math.sign(hoopOf(p.team).x - p.x) || 1;
     const vk = { adelante: [sg > 0 ? 'vR' : 'vL'], atras: [sg > 0 ? 'vL' : 'vR'], abajo: ['vD'], arriba: ['vU'], puno: ['vS'], patada: ['vT', 'vP'] };
-    st.combo = { c, i: 0, t: 3.6, by: p, need: c.seq.map((k) => vk[k]), sg, ok: null, d }; st.phase = 'combo'; p.turbo = Math.max(0, p.turbo - 0.2);
+    st.combo = { c, i: 0, t: 2.7, by: p, need: c.seq.map((k) => vk[k]), sg, ok: null, d }; st.phase = 'combo'; /* v0.89: 2.7 s (was 3.6, −25 %) */ p.turbo = Math.max(0, p.turbo - 0.2);
     IN.clearHits(); banner('¡ENTRADA EN COMBO!', '#ffd400', 1.0); snd('crowd');
   }
   function comboStep(dt) {
@@ -7862,10 +7870,11 @@ const BASKET2D = (() => {
     comboDone(Math.random() < 0.3 + 0.6 * p.lv - (openness(p) < 1.3 ? 0.15 : 0)); st.phase = ph; st.combo = null; if (st.ev) st.ev.cpuCombo = (st.ev.cpuCombo || 0) + 1; }
   function comboDone(ok) {
     const C = st.combo, p = C.by, h = hoopOf(p.team); C.ok = ok; C.end = 0.5;
-    if (ok) { // the dunk: a long flight to the rim, scored when he gets there (can't be blocked)
-      const T = 0.85; p.act = 'dunk'; p.combo = C.c.id; p.cT = 0; p.air = true; p.y = 0.01; p.vy = G * T * 0.55 + 1.2; p.vx = (h.x - p.x - Math.sign(h.x - p.x) * 0.25) / T; p.vz = (h.z - p.z) / T; p.sure = true;
-      banner('¡' + C.c.name + '!', '#ffd400', 1.6); if (st.ev) st.ev.combo = true; say(C.c.name.charAt(0) + C.c.name.slice(1).toLowerCase());
-    } else { const b = st.ball; b.holder = null; b.mode = 'loose'; b.x = p.x; b.z = p.z; b.y = 1.2; b.vx = rnd(-2, 2); b.vz = rnd(-2, 2); b.vy = 2.5; banner('¡COMBO FALLADO!', '#ff6b6b', 1.2); }
+    // the dunk: a long flight to the rim (can't be blocked). v0.89 (Jonay): a failed combo is still flown, but the slam
+    // hits the iron (p.miss) instead of being cancelled
+    const T = 0.85; p.act = 'dunk'; p.combo = C.c.id; p.cT = 0; p.air = true; p.y = 0.01; p.vy = G * T * 0.55 + 1.2; p.vx = (h.x - p.x - Math.sign(h.x - p.x) * 0.25) / T; p.vz = (h.z - p.z) / T; p.sure = true; p.miss = !ok;
+    if (ok) { banner('¡' + C.c.name + '!', '#ffd400', 1.6); if (st.ev) st.ev.combo = true; say(C.c.name.charAt(0) + C.c.name.slice(1).toLowerCase()); }
+    else { banner('¡COMBO FALLADO!', '#ff6b6b', 1.2); if (st.ev) st.ev.comboMiss = true; }
   }
   // the shot bar: the time the button is held; the green window is the top of the jump
   const GREEN = [0.42, 0.6], BAR = 1.0;
@@ -7930,6 +7939,10 @@ const BASKET2D = (() => {
     } else if (own === false) { // defence: stay between your man and the basket
       const m = p.mark || rivals(p)[p.idx % rivals(p).length]; const hd = b.holder;
       const k = hd === m ? 1.0 : 2.2; const L = Math.hypot(dh.x - m.x, dh.z - m.z) || 1; tx = m.x + (dh.x - m.x) / L * k; tz = m.z + (dh.z - m.z) / L * k; run = dist(p, m) > 4;
+      // v0.89 (Jonay): help defence: when the one with the ball drives to the basket, the nearest other defender leaves
+      // his man and steps into the way, between him and the rim
+      if (hd && hd !== m && Math.hypot(dh.x - hd.x, dh.z - hd.z) < 5.2) { const helpers = st.p.filter((q) => q.team === p.team && q.mark !== hd && q.down <= 0 && !q.human).sort((a, c) => dist(a, hd) - dist(c, hd));
+        if (helpers[0] === p) { const L2 = Math.hypot(dh.x - hd.x, dh.z - hd.z) || 1; tx = hd.x + (dh.x - hd.x) / L2 * 1.1; tz = hd.z + (dh.z - hd.z) / L2 * 1.1; run = true; } }
       if (!passive && hd === m && dist(p, m) < 1.2 && Math.random() < dt * (0.1 + 0.7 * p.lv)) steal(p);
       if (!passive && m.air && m.shootHold && dist(p, m) < 1.8 && !p.air && Math.random() < dt * 6 * p.lv) jump(p, 5.4);
     }
@@ -7957,8 +7970,10 @@ const BASKET2D = (() => {
       if (hit('vS')) { if (b.holder === p) startShot(p); else if (b.holder === mate && !mate.air) { startShot(mate); mate.aiRel = 0; } else jump(p, 5.4); }
       if (rel('vS') && p.shootHold && p.air) release(p);
       if (hit('vP')) { if (b.holder === p) pass(p, mate); else if (b.holder === mate) pass(mate, p);
-        else if (b.holder && b.holder.team !== p.team && dist(p, b.holder) <= 1.4) steal(p);
-        else if (mate && st.time0 > (st.swapAt || 0)) { p.human = false; mate.human = true; p.shootHold = false; st.swapAt = st.time0 + 0.25; IN.consume('vP'); if (st.ev) st.ev.swap = true; } } // (once: the mate is stepped right after and sees the same click) // defending away from the ball: right click = switch to the other defender
+        else { // v0.89 (Jonay): defending, right click = take the player nearest the ball; if it is already you, the steal
+          const near = st.p.filter((q) => q.team === p.team && q.down <= 0).sort((a, c) => Math.hypot(a.x - b.x, a.z - b.z) - Math.hypot(c.x - b.x, c.z - b.z))[0];
+          if (near && near !== p && st.time0 >= (st.swapAt || 0)) { youAre(near); IN.consume('vP'); if (st.ev) st.ev.swap = true; } // (once: the other is stepped right after and sees the same click)
+          else if (near === p && b.holder && b.holder.team !== p.team) { if (dist(p, b.holder) <= 1.6) steal(p); else { const L = dist(p, b.holder) || 1; p.vx = (b.holder.x - p.x) / L * 9; p.vz = (b.holder.z - p.z) / L * 7; } } } } // too far: a quick lunge at him
     }
     if (!ctl && p.shootHold && p.air && p.vy < 0.4 + (p.aiRel || 0) * 6) release(p);
     if (p.shootHold) { p.holdT += dt; if (ctl && p.holdT > BAR) release(p); }
@@ -7967,12 +7982,12 @@ const BASKET2D = (() => {
       p.vy -= G * dt; p.y += p.vy * dt; if (p.combo) p.cT = (p.cT || 0) + dt;
       if (p.act === 'dunk') { const h = hoopOf(p.team); p.dir = Math.sign(h.x - p.x) || p.dir;
         if (st.ball.holder === p && (p.vy < 0.6 || p.sure) && Math.hypot(h.x - p.x, h.z - p.z) < 0.9) { // slam it
-          const blk = !p.sure && rivals(p).find((q) => q.air && q.y > 0.6 && dist(q, p) < 1.0 && Math.random() < (q.human ? 0.5 : 0.35 * q.lv)); const fallo = !p.sure && !p.human && Math.random() > 0.45 + 0.55 * p.lv; p.sure = false; // v0.66: weak CPU dunkers hit the rim
+          const blk = !p.sure && rivals(p).find((q) => q.air && q.y > 0.6 && dist(q, p) < 1.0 && Math.random() < (q.human ? 0.5 : 0.35 * q.lv)); const fallo = p.miss || (!p.sure && !p.human && Math.random() > 0.45 + 0.55 * p.lv); p.sure = false; p.miss = false; // v0.66: weak CPU dunkers hit the rim
           const b = st.ball; b.holder = null;
-          if (blk || fallo) { b.mode = 'loose'; b.x = p.x; b.z = p.z; b.y = RIM; b.vx = -Math.sign(h.x - CL / 2) * 4; b.vz = rnd(-2, 2); b.vy = 2; banner(blk ? '¡TAPÓN!' : '¡AL HIERRO!', '#ff6b6b'); snd('rim'); }
+          st.lastDunk = blk ? 'tapon' : fallo ? 'hierro' : 'mate'; if (blk || fallo) { b.mode = 'loose'; b.x = p.x; b.z = p.z; b.y = RIM; b.vx = -Math.sign(h.x - CL / 2) * 4; b.vz = rnd(-2, 2); b.vy = 2; banner(blk ? '¡TAPÓN!' : '¡AL HIERRO!', '#ff6b6b'); snd('rim'); }
           else { b.mode = 'net'; b.x = h.x; b.z = h.z; b.y = RIM; b.vx = b.vz = 0; b.vy = -2; score(p.team, 2, p, 'dunk'); }
         } }
-      if (p.y <= 0) { p.y = 0; p.vy = 0; p.air = false; p.sure = false; p.combo = null; if (p.act === 'dunk' || p.act === 'shoot') p.act = ''; if (p.shootHold) { p.landingRelease = true; release(p); } if (st.ev && p.human) st.ev.jump = true; }
+      if (p.y <= 0) { p.y = 0; p.vy = 0; p.air = false; p.sure = false; p.miss = false; p.combo = null; if (p.act === 'dunk' || p.act === 'shoot') p.act = ''; if (p.shootHold) { p.landingRelease = true; release(p); } if (st.ev && p.human) st.ev.jump = true; }
     } else if (p.shootHold && ctl && !held('vS')) release(p);
     p.x = clamp(p.x + p.vx * dt, 0.3, CL - 0.3); p.z = clamp(p.z + p.vz * dt, 0.2, CW - 0.2);
     if (p.air || Math.hypot(p.vx, p.vz) > 0.4) p.walkT += dt * Math.hypot(p.vx, p.vz) * 1.4;
@@ -8148,6 +8163,7 @@ const BASKET2D = (() => {
   // ---------- loop
   function loop(now) {
     if (!running) return; raf = requestAnimationFrame(loop);
+    if (PZ.on) { last = now; draw(); cx.setTransform(R, 0, 0, R, 0, 0); MINI.pauseOverlay(cx, W, H); return; } // v0.89: P = pause
     let dt = Math.min(0.1, (now - last) / 1000); last = now; acc += dt;
     while (acc >= 1 / 60) { step(1 / 60); IN.frame(); acc -= 1 / 60; updateCam(); }
     if (st.fadeDir) { st.fade = clamp(st.fade + st.fadeDir * dt * 2.5, 0, 1); if (st.fadeDir < 0 && st.fade === 0) st.fadeDir = 0; if (st.fadeDir > 0 && st.fade === 1) { st.fadeDir = 0; close(); return; } }
@@ -8159,7 +8175,7 @@ const BASKET2D = (() => {
     if (mine) L.push({ name: 'EL BLANCO', look: typeof NPC !== 'undefined' && NPC.blanco && NPC.blanco.H ? { ...NPC.blanco.H.look } : { skin: 0xc68a5e, shirt: 0x2e6b3a, pants: 0x3a3a3a, hair: 0x2a1a10 } });
     else { const b = L[0] || { name: 'RIVAL', look: {} }; const SK = [0xe0ac86, 0x8d5a3b, 0xc68a5e, 0xf1c9a5], HR = [0x1a1410, 0x6b3e1e, 0xd8b56a, 0x2a1a10]; L.push({ name: ['EL ZURDO', 'EL RUBIO', 'EL GORDO', 'EL LARGO'][Math.abs(Math.round((b.look && b.look.shirt) || 0)) % 4], look: { ...(b.look || {}), skin: SK[L.length % 4], hair: HR[(L.length + 1) % 4] } }); }
     return fill3(L, mine); }
-  function start(opt) {
+  function start(opt) { PZ.off();
     if (running || FIGHT2D.running) return false; running = true; onEnd = opt.onEnd || null; inConsole = !!opt.inConsole;
     if (!cv) { cv = document.createElement('canvas'); cv.id = 'basket2d'; cv.width = W * R; cv.height = H * R; cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;image-rendering:pixelated;background:#000;z-index:28;display:none'; document.body.appendChild(cv); cx = cv.getContext('2d'); }
     const team = fill3(opt.team, true), riv = fill3(opt.rival, false);
@@ -8177,7 +8193,7 @@ const BASKET2D = (() => {
   // tests: a combo dunk of your own (id from COMBOS), a pass, and drawing a frame
   function _dunk(id) { const p = st.p.find((q) => q.human); give(p); const h = hoopOf(p.team); p.x = h.x - Math.sign(h.x - CL / 2) * 5; p.z = h.z; p.air = false; p.y = 0;
     st.combo = { c: COMBOS.find((c) => c.id === id) || COMBOS[0], i: 0, t: 3, by: p, need: [], sg: 1, ok: null, d: 5 }; comboDone(true); st.phase = 'play'; st.combo = null; return p; }
-  return { start, _abort: abort, get running() { return running; }, _st: () => st, _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); updateCam(); } }, _press: press, _dunk, _pass: (a, b) => pass(st.p[a], st.p[b]), _draw: () => draw(), COMBOS };
+  return { start, _abort: abort, get running() { return running; }, _st: () => st, _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); updateCam(); } }, _press: press, _dunk, _pass: (a, b) => pass(st.p[a], st.p[b]), _give: (i) => give(st.p[i]), _pz: () => PZ, _combo: (i, d = 5) => startCombo(st.p[i], d), _hoop: (t) => hoopOf(t), _draw: () => draw(), COMBOS };
 })();
 
 // ============ «JETA SOCCER»: 2D football, 5 a side, seen from above like the 90s Sensible Soccer (v0.67) ============
@@ -8205,7 +8221,7 @@ const FUTBOL2D = (() => {
   const sxp = (x) => X0 + x * S, syw = (y) => (y + MG) * S;  // pitch metres -> background px
   let inConsole = false; let cv = null, cx = null, running = false, raf = 0, last = 0, acc = 0, st = null, onEnd = null, camY = 0, bgCache = null;
   // ---------- input: virtual buttons, the same as the basketball (vS = A, vP = pass, vT = sprint)
-  const IN = MINI.input(() => running), { press, held, hit, rel } = IN, keys = IN.keys; // v0.69: shared with the other minigames (09ea_minijuegos.js)
+  const PZ = MINI.pauser(() => running); const IN = MINI.input(() => running), { press, held, hit, rel } = IN, keys = IN.keys; // v0.69: shared with the other minigames (09ea_minijuegos.js)
   // ---------- sounds
   const snd = MINI.snd, say = (t) => MINI.say(t);
   // ---------- helpers
@@ -8233,7 +8249,7 @@ const FUTBOL2D = (() => {
     st.sp = { p: k, kind: 'centro', t: 0, r: 6, x: k.x, y: k.y }; // v0.79: kick-off from the centre: the rivals outside the circle until it is played
     if (team === 0) st.ctl = k;
   }
-  function give(p) { const b = st.ball; b.owner = p; b.z = 0; b.vz = 0; b.curveT = 0; b.shot = null; st.last = p; p.kickCD = 0;
+  function give(p) { const b = st.ball; b.owner = p; b.x = p.x; b.y = p.y; b.z = 0; b.vz = 0; b.curveT = 0; b.shot = null; st.last = p; p.kickCD = 0;
     st.sp = p.role === 'gk' && inOwnBox(p) ? { p, kind: 'gk', t: 0 } : st.sp && st.sp.p === p ? st.sp : null; // in his hands: nobody may come and take it
     if (p.role === 'gk') p.dir = p.team === 0 ? -Math.PI / 2 : Math.PI / 2;
     b.x = p.x + Math.cos(p.dir) * 0.55; b.y = p.y + Math.sin(p.dir) * 0.55; } // the ball goes straight to his feet (a throw-in from outside the line lands inside)
@@ -8276,6 +8292,8 @@ const FUTBOL2D = (() => {
       const near = outfield(p.team).filter((q) => q.down <= 0).sort((a, c) => D(a, b) - D(c, b)); const rank = near.indexOf(p);
       if (p.waitPass > 0 && b.to === p) { tx = b.x; ty = b.y; run = true; }
       else if (rank === 0 || (rank === 1 && own === false && D(p, b) < 8)) { tx = b.x + b.vx * 0.25; ty = b.y + b.vy * 0.25; run = D(p, b) > 3; }
+      else if (own === false && rank <= 2 && Math.abs(goalY(1 - p.team) - b.owner.y) < 18) { // v0.89 (Jonay): help defence: one more closes the way to goal
+        const gy = goalY(1 - p.team); tx = b.owner.x + (PW / 2 - b.owner.x) * 0.35; ty = b.owner.y + (gy - b.owner.y) * 0.35; run = true; }
       else { tx = hx0 + (b.x - PW / 2) * 0.3; ty = clamp(hy0 + push + (p.team === 0 ? 3 : -3), 3, PL - 3); }
       if (own === false && !st.sp && D(p, b) < 1.0 && p.kickCD <= 0 && !st.tut && Math.random() < dt * (0.25 + 1.6 * p.lv)) tackle(p, b.owner, 0.12 + 0.45 * p.lv);
     }
@@ -8349,7 +8367,8 @@ const FUTBOL2D = (() => {
     } else {
       st.charge = 0; st.pcharge = 0;
       if (hit('vS') && p.slide <= 0 && p.kickCD <= 0) { p.slide = 0.55; p.vx = Math.cos(ang) * 8.5; p.vy = Math.sin(ang) * 8.5; p.dir = ang; p.kickCD = 0.9; if (st.ev) st.ev.slide = true; }
-      if (hit('vP')) { const n = nearestCtl(true); if (n && n !== p) { st.ctl = n; if (st.ev) st.ev.swap = true; } }
+      if (hit('vP')) { const n = nearestCtl(false); const bo = st.ball.owner; if (n && n !== p) { st.ctl = n; if (st.ev) st.ev.swap = true; } // v0.89 (Jonay): already the nearest: the tackle
+        else if (bo && bo.team !== p.team && p.kickCD <= 0) { if (D(p, bo) < 1.5) tackle(p, bo, 0.5); else { const L = D(p, bo) || 1; p.vx = (bo.x - p.x) / L * 9; p.vy = (bo.y - p.y) / L * 9; p.kickCD = 0.35; } } }
     }
     if (st.aft > 0) { st.aft -= 1 / 60; const bb = st.ball; if (!bb.owner && bb.kicker === p) { const side = (held('vR') ? 1 : 0) - (held('vL') ? 1 : 0); if (side) { bb.curve = side * (p.team === 0 ? 1 : -1) * 7; bb.curveT = Math.max(bb.curveT, 0.3); } } }
   }
@@ -8585,6 +8604,7 @@ const FUTBOL2D = (() => {
   // ---------- loop
   function loop(now) {
     if (!running) return; raf = requestAnimationFrame(loop);
+    if (PZ.on) { last = now; draw(); cx.setTransform(R, 0, 0, R, 0, 0); MINI.pauseOverlay(cx, W, H); return; } // v0.89: P = pause
     const dt = Math.min(0.1, (now - last) / 1000); last = now; acc += dt;
     while (acc >= 1 / 60) { step(1 / 60); IN.frame(); acc -= 1 / 60; updateCam(); }
     if (st.fadeDir) { st.fade = clamp(st.fade + st.fadeDir * dt * 2.5, 0, 1); if (st.fadeDir < 0 && st.fade === 0) st.fadeDir = 0; if (st.fadeDir > 0 && st.fade === 1) { st.fadeDir = 0; close(); return; } }
@@ -8593,7 +8613,7 @@ const FUTBOL2D = (() => {
   // ---------- public: start({ team: [5 × {name, look}], rival: [5 × …], kit, rivalKit, teamName, rivalName, time, lv, mateLv, tutorial, auto, onEnd })
   const KIT0 = { shirt: '#1f8f4e', shorts: '#f2f2f2', socks: '#1f8f4e', gk: { shirt: '#f1c40f', shorts: '#222', socks: '#f1c40f' } };
   const KIT1 = { shirt: '#c0392b', shorts: '#222', socks: '#c0392b', gk: { shirt: '#5ec8ff', shorts: '#222', socks: '#5ec8ff' } };
-  function start(opt) {
+  function start(opt) { PZ.off();
     if (running || (typeof FIGHT2D !== 'undefined' && FIGHT2D.running) || (typeof BASKET2D !== 'undefined' && BASKET2D.running)) return false; running = true; onEnd = opt.onEnd || null; inConsole = !!opt.inConsole;
     if (!cv) { cv = document.createElement('canvas'); cv.id = 'futbol2d'; cv.width = W * R; cv.height = H * R; cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;image-rendering:pixelated;background:#000;z-index:28;display:none'; document.body.appendChild(cv); cx = cv.getContext('2d'); }
     const k0 = { ...KIT0, ...(opt.kit || {}) }, k1 = { ...KIT1, ...(opt.rivalKit || {}) }; k0.gk = { ...KIT0.gk, ...((opt.kit || {}).gk || {}) }; k1.gk = { ...KIT1.gk, ...((opt.rivalKit || {}).gk || {}) };
@@ -8611,7 +8631,7 @@ const FUTBOL2D = (() => {
   function close() { running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'futbol2d', !inConsole); /* v0.86: back to the GOFIO-8, not to the 3D world */
     const res = { won: st.score[0] > st.score[1], score: st.score.slice() }; if (onEnd) onEnd(res); }
   function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'futbol2d', false); } // tests only
-  return { start, _abort: abort, get running() { return running; }, _st: () => st, _foul: (p, v) => foul(p, v), _give: (p) => give(p), _out: (k, t) => outOfPlay(k, t), _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); updateCam(); } }, _press: press, _draw: () => draw() };
+  return { start, _abort: abort, get running() { return running; }, _st: () => st, _foul: (p, v) => foul(p, v), _give: (p) => give(p), _pz: () => PZ, _out: (k, t) => outOfPlay(k, t), _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); updateCam(); } }, _press: press, _draw: () => draw() };
 })();
 
 // ============ Maleantes en busca y captura (v0.70, Jonay) ============
@@ -9043,7 +9063,9 @@ const ARCADE = (() => {
     t.forEach(([n, s], i) => { const y = 58 + i * 18, hl = st.hl === n && i === st.rank, c = hl && Math.floor(performance.now() / 200) % 2 ? '#ffd400' : ['#ff6b6b', '#ffb347', '#ffd400', '#7fe08a', '#5ec8ff'][i % 5];
       txt(g, `${String(i + 1).padStart(2, ' ')}`, W / 2 - 100, y, c); txt(g, String(s).padStart(7, '0'), W / 2 - 50, y, c); txt(g, n, W / 2 + 70, y, c); }); }
   // ---------- loop
-  function loop(now) { if (!running) return; raf = requestAnimationFrame(loop); const dt = Math.min(0.1, (now - last) / 1000); last = now; acc += dt;
+  const PZ = MINI.pauser(() => running && !suspended); // v0.89: P = pause, in every machine and on the console
+  function loop(now) { if (!running) return; raf = requestAnimationFrame(loop); if (PZ.on) { last = now; render(); present(); cx.setTransform(1, 0, 0, 1, 0, 0); cx.fillStyle = 'rgba(0,0,0,0.55)'; cx.fillRect(SX * KR, SY * KR, W * RS, H * RS); cx.setTransform(KR, 0, 0, KR, 0, 0); txt(cx, 'PAUSA', SX + W * SS / 2, SY + H * SS / 2 - 30, '#ffd400', 36, 'center'); txt(cx, 'PULSA P PARA SEGUIR', SX + W * SS / 2, SY + H * SS / 2 + 20, '#fff', 14, 'center'); return; }
+    const dt = Math.min(0.1, (now - last) / 1000); last = now; acc += dt;
     while (acc >= 1 / 60) { step(1 / 60); IN.frame(); acc -= 1 / 60; } render(); present(); }
   function step(dt) { if (!running || !M) return; /* v0.85: nothing after close (a cartridge that leaves the console) */ if (st.msgT > 0) st.msgT -= dt; if (st.mode === 'menu') menu(dt); else if (st.mode === 'attract') attract(dt); else if (st.mode === 'play') play(dt); else if (st.mode === 'cont') cont(dt); else if (st.mode === 'name') nameEntry(dt); else if (st.mode === 'ext') { st.t += dt; G.update(dt, pad); } }
   const api = { W, H, sprite, draw, txt, sfx, music, stopMusic, hi: () => (M ? table(M.key, M.game)[0][1] : 0), get money() { return PLAYER.money; },
@@ -9065,9 +9087,9 @@ const ARCADE = (() => {
   }
   function fit() { const dpr = window.devicePixelRatio || 1; const k = Math.max(0.5, Math.min((window.innerWidth || CW) * dpr / CW, (window.innerHeight || CH) * dpr / CH));
     KR = Math.round(k * 1000) / 1000; RS = SS * KR; cv.width = Math.round(CW * KR); cv.height = Math.round(CH * KR); scr.width = Math.round(W * RS); scr.height = Math.round(H * RS); if (M) M.bz = null; scan = null; }
-  function close() { if (!running) return; running = false; suspended = false; cancelAnimationFrame(raf); stopMusic(); MINI.hide(cv, 'arcade', true); const r = { paid: st.paid }; M = null; G = null; if (onClose) onClose(r); }
+  function close() { if (!running) return; PZ.off(); running = false; suspended = false; cancelAnimationFrame(raf); stopMusic(); MINI.hide(cv, 'arcade', true); const r = { paid: st.paid }; M = null; G = null; if (onClose) onClose(r); }
   return { GAMES, CONSOLE, open, close, resume, get suspended() { return suspended; }, sprite, hires, draw, txt, sfx, music, stopMusic, data, table, api, get running() { return running; },
-    _st: () => st, _game: () => G, _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); } }, _press: IN.press, _render: () => { render(); present(); }, W, H };
+    _st: () => st, _game: () => G, _pz: () => PZ, _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); } }, _press: IN.press, _render: () => { render(); present(); }, W, H };
 })();
 // ---------- where the machines are (v0.80): El Blanco's, free. When the mayor names the gang «Defensores de La Laguna»
 // (GANG.defenders), El Blanco phones you: he has a machine at home and you can go and play whenever you like (it is not
@@ -9112,20 +9134,23 @@ ARCADE.GAMES.bencomo = (() => {
   const P = { k: '#1a1008', h: '#140d09', b: '#c27b46', d: '#8c4f27', w: '#f4efe6', c: '#7a4a22', C: '#b8823f', s: '#3a2414', e: '#2a1a10',
     m: '#cfd3d9', M: '#7d838c', y: '#e3b23c', R: '#b3271d', n: '#2b2f6b', l: '#6b4422', L: '#3d2614', D: '#8b5a2b', o: '#5e3a1a', g: '#e8e2d0', G: '#9a9488', f: '#d22', F: '#f6c12b', x: '#111' };
   const S = (key, rows) => A.sprite('bc_' + key, rows, P, 16);
+  // v0.89 (Jonay: «me gusta el Bencomo nuevo, usa ese»): the same size and palette as before (so he fits with the
+  // castellanos and the dogs), with the detail of the statues of Candelaria: headband, beard, necklace, the tamarco on
+  // the shoulder, bare chest with pecs and abs, the loincloth with its cord, ankle bands and bare feet
   const UP = {
-    idle: ['.....hhhhh......', '....hhhhhhh.....', '...hhhbbbbhh....', '...hhbbbbwk.....', '...hhbbbbbbbb...', '...hhdbbbbbb....', '...hhhhbhhhh....', '....hhhhhhh.....', '.....hdbbd......', '...CccccccC.....', '..bcCccccCcb....', '..bcccccccdb....', '..bbccccccbb....', '...dccccccd.....'],
-    thrust: ['.....hhhhh......', '....hhhhhhh.....', '...hhhbbbbhh....', '...hhbbbbwk.....', '...hhbbbbbbbb...', '...hhdbbbbbb....', '...hhhhbhhhh....', '....hhhhhhh.....', '.....hdbbd......', '...CccccccCbbbb.', '..bcCccccCcbbbbb', '..bcccccccd.....', '...bccccccc.....', '...dccccccd.....'],
-    up: ['.bb..hhhhh..bb..', '.bb.hhhhhhh.bb..', '.bbhhhbbbbhhbb..', '..bhhbbbbwkb....', '..bhhbbbbbbbb...', '..bhhdbbbbbb....', '...hhhhbhhhh....', '....hhhhhhh.....', '.....hdbbd......', '...CccccccC.....', '...cCccccCc.....', '...cccccccd.....', '...cccccccc.....', '...dccccccd.....'],
-    hurt: ['......hhhhh.....', '.....hhhhhhh....', '....hhhbbbbhh...', '....hhbbbbbk....', '....hhbbbbbbbb..', '....hhdbbbbbb...', '....hhhhbhhhh...', '.....hhhhhhh....', '.....hdbbd......', '..bCccccccC.....', '.bbcCccccCcb....', '.b.cccccccdbb...', '...cccccccc.bb..', '...dccccccd.....'],
+    idle: ['....hhhhhh......', '...hhhhhhhh.....', '..hhggggggg.....', '..hhhbbbbbb.....', '..hhbbbbbwk.....', '..hhbbbbbbbb....', '..hhhdbbbbb.....', '..hhheeeeee.....', '..hh.eeeeee.....', '..hcC.eeeb......', '..cCbbgbgbbb....', '.bcCbbbdbbbbb...', '.bcCbdbbdbbdb...', '.bcccbdbdbbbb...'],
+    thrust: ['....hhhhhh......', '...hhhhhhhh.....', '..hhggggggg.....', '..hhhbbbbbb.....', '..hhbbbbbwk.....', '..hhbbbbbbbb....', '..hhhdbbbbb.....', '..hhheeeeee.....', '..hh.eeeeee.....', '..hcC.eeeb......', '..cCbbgbgbbbbbbb', '.bcCbbbdbbbbbbb.', '.bcCbdbbdbbd....', '.bcccbdbdbb.....'],
+    up: ['.bb.hhhhhh.bb...', '.bbhhhhhhhhbb...', '..bhhgggggggb...', '..bhhbbbbbb.....', '..hhbbbbbwk.....', '..hhbbbbbbbb....', '..hhhdbbbbb.....', '..hhheeeeee.....', '..hh.eeeeee.....', '..hcC.eeeb......', '..cCbbgbgbb.....', '..cCbbbdbbbb....', '..cCbdbbdbbd....', '..cccbdbdbbb....'],
+    hurt: ['.....hhhhhh.....', '....hhhhhhhh....', '...hhggggggg....', '...hhhbbbbbb....', '...hhbbbbbbk....', '...hhbbbbbbbb...', '...hhhdbbbbb....', '...hhheeeeee....', '...hh.eeeeee....', '..bcC.eeeb......', '.bbCbbgbgbbb....', '.b.Cbbbdbbbbbb..', '...cbdbbdbbd.bb.', '...ccbdbdbbb....'],
   };
   const LEG = {
-    stand: ['...cCccccCc.....', '...cccccccc.....', '....bb..bb......', '....bb..bb......', '....bd..bd......', '....bd..bd......', '...sss..sss.....', '................'],
-    run1: ['...cCccccCc.....', '...cccccccc.....', '...bb....bb.....', '..bb......bb....', '..bd.......bd...', '.bd.........bd..', '.sss.......sss..', '................'],
-    run2: ['...cCccccCc.....', '...cccccccc.....', '.....bbbb.......', '.....bbbb.......', '....bd.bd.......', '....bd.bd.......', '...sss.sss......', '................'],
-    run3: ['...cCccccCc.....', '...cccccccc.....', '....bb..bb......', '...bb....bb.....', '...bd.....bd....', '..bd.......bd...', '.sss.......sss..', '................'],
-    jump: ['...cCccccCc.....', '...cccccccc.....', '...bbbbbbbbb....', '..bd.....bbb....', '..bd.......bd...', '..sss......sss..', '................', '................'],
-    crouch: ['...cCccccCc.....', '..bbbbcccbbbb...', '..bd.......bd...', '.sss.......sss..'], // v0.80.1: crouched (to hit the dogs)
-    pogo: ['...cCccccCc.....', '...cccccccc.....', '....bbbbbb......', '....bbbbbb......', '.....bddb.......', '.....ssss.......', '................', '................'],
+    stand: ['..dcccgggggb....', '...cCccccC......', '....ccdcc.......', '....bb..bb......', '....bd..bd......', '....bd..bd......', '....gd..gd......', '...bbb..bbb.....'],
+    run1: ['..dcccgggggb....', '...cCccccC......', '...bbcdcbb......', '..bb......bb....', '..bd.......bd...', '.bd.........bd..', '.gd.........gd..', 'bbb.........bbb.'],
+    run2: ['..dcccgggggb....', '...cCccccC......', '.....bbbb.......', '.....bbbb.......', '....bd.bd.......', '....bd.bd.......', '....gd.gd.......', '...bbb.bbb......'],
+    run3: ['..dcccgggggb....', '...cCccccC......', '....bb..bb......', '...bb....bb.....', '...bd.....bd....', '..bd.......bd...', '..gd.......gd...', '.bbb.......bbb..'],
+    jump: ['..dcccgggggb....', '...cCccccC......', '...bbbbbbbbb....', '..bd.....bbb....', '..bd.......bd...', '..gd.......gd...', '.bbb.......bbb..', '................'],
+    crouch: ['...cCccccC......', '..bbbbcccbbbb...', '..gd.......gd...', '.bbb.......bbb..'], // v0.80.1: crouched (to hit the dogs)
+    pogo: ['..dcccgggggb....', '...cCccccC......', '....bbbbbb......', '....bbbbbb......', '.....bddb.......', '.....gddg.......', '................', '................'],
   };
   const bencomo = (up, leg) => S('ben_' + up + '_' + leg, [...UP[up], ...LEG[leg]]);
   // the Castilians: soldiers (morion, breastplate, striped doublet), crossbowman, arquebusier, captain (plume, plate)
@@ -9316,7 +9341,7 @@ ARCADE.GAMES.bencomo = (() => {
     function die() { if (p.dead) return; p.dead = 1.8; p.vy = -260; p.vx = 0; api.stopMusic(); api.sfx('die'); }
     function respawn() { lives--; if (lives < 0) { g.over = true; lives = 0; return; } const [x, y] = p.cp; p.x = x; p.y = y; p.vx = p.vy = 0; p.hp = 3; p.inv = 2; p.dead = 0; p.vault = 0; camX = clamp(p.x - W * 0.35, 0, L.w * T - W); if (!opt.demo) api.music(boss && boss.st !== 'wait' ? SONGS.boss : SONGS[TH[L.theme].music]); }
     g.continue = () => { g.over = false; lives = 2; g.score = 0; respawn(); lives = 2; };
-    function addScore(n, x, y) { g.score += n; if (x !== undefined) fx.push({ k: 'pts', t: 0.8, x, y, s: String(n) }); }
+    function addScore(n, x, y) { n = Math.round(n * (1 + 0.5 * loopN)); /* v0.89 (Jonay): each loop gives more points */ g.score += n; if (x !== undefined) fx.push({ k: 'pts', t: 0.8, x, y, s: String(n) }); }
     function player(dt, pad) {
       if (p.dead) { p.dead -= dt; p.vy += 700 * dt; p.y += p.vy * dt; if (p.dead <= 0) respawn(); return; }
       const run = pad.held('vR') ? 1 : pad.held('vL') ? -1 : 0, down = pad.held('vD'), upK = pad.held('vU');
@@ -9368,7 +9393,7 @@ ARCADE.GAMES.bencomo = (() => {
       e.vy += 900 * dt; e.vy = Math.min(e.vy, 500); e.hitWall = 0; moveBody(e, dt); if (e.y > ROWS * T + 40) e.dead = true;
       // touching Bencomo
       if (!p.dead && Math.abs(p.x - e.x) < (e.w + 10) / 2 && p.y > e.y - e.h && p.y - p.h < e.y) {
-        if ((p.pogo || p.power > 0) && p.vy > 0 && p.y < e.y - e.h + 10) { hitE(e, p.pogo ? 2 : 3, true); p.vy = -340; api.sfx('jump'); }
+        if ((p.pogo || p.power > 0) && p.vy > 0 && p.y < e.y - e.h + Math.max(10, e.h * 0.5)) { /* v0.89 (Jonay): the «picado» on the rider of a horse hit you: landing anywhere on the top half counts */ hitE(e, p.pogo ? 2 : 3, true); p.vy = -340; api.sfx('jump'); }
         else if (p.power > 0) hitE(e, 3);
         else if (!(e.k === 'D' && e.st === 'sleep')) hurt(e.k === 'L' || e.k === 'C' ? 1 : 1, e.x); }
       // the banot
@@ -9639,7 +9664,7 @@ ARCADE.GAMES.naves = (() => {
     const p = { x: 70, y: H / 2, dead: 0, inv: 0, spd: 0, missile: false, dbl: false, laser: false, opts: 0, shield: 0, cur: -1, charge: 0, mCD: 0, hist: [], tilt: 0 };
     const mod = { have: false, st: 'front', x: 0, y: 0, vx: 0, a: 0 };
     const foes = [], shots = [], bul = [], items = [], groups = {};
-    const sp = () => 1 + 0.25 * loopN;
+    const sp = () => 1.05 * (1 + 0.25 * loopN); // v0.89 (Jonay: too easy): everything 5 % faster
     const terr = (x) => terrain(L.theme, scroll + x, L.len);
     function resetHist() { p.hist.length = 0; for (let i = 0; i < 40; i++) p.hist.push([p.x, p.y]); }
     function load(n) { L = { ...STAGES[n % STAGES.length] }; L.T = L.tl().sort((a, b) => a[0] - b[0]); ti = 0; scroll = 0; vScroll = 0; boss = null; L.bossDone = false;
@@ -9657,7 +9682,7 @@ ARCADE.GAMES.naves = (() => {
       if (k === 'm') for (let i = 0; i < n; i++) foes.push({ k, x: W + 10 + i * 46, y: TOP + 20 + rnd() * (BOT - TOP - 40), vx: -55, hp: 2, r: 8, pts: 80, t: 0 }); }
     function aimed(x, y, s = 150, spread = 0) { const a = Math.atan2(p.y - y, p.x - x) + spread; bul.push({ x, y, vx: Math.cos(a) * s * sp(), vy: Math.sin(a) * s * sp(), r: 3 }); }
     function ring(x, y, n, s) { for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2; bul.push({ x, y, vx: Math.cos(a) * s * sp(), vy: Math.sin(a) * s * sp(), r: 3 }); } }
-    function addScore(n, x, y) { g.score += n; if (x !== undefined) fx.push({ k: 'pts', t: 0.8, x, y, s: String(n) });
+    function addScore(n, x, y) { n = Math.round(n * (1 + 0.5 * loopN)); /* v0.89 (Jonay): each loop gives more points */ g.score += n; if (x !== undefined) fx.push({ k: 'pts', t: 0.8, x, y, s: String(n) });
       if (g.score >= nextLife) { nextLife += 70000; lives++; api.sfx('life'); banner = ['¡VIDA EXTRA!', '']; bannerT = 1.5; } }
     function boom(x, y, r = 10) { fx.push({ k: 'boom', t: 0.5, x, y, r }); for (let i = 0; i < 6; i++) { const a = rnd() * 7; fx.push({ k: 'deb', t: 0.5 + rnd() * 0.3, x, y, vx: Math.cos(a) * 90, vy: Math.sin(a) * 90 }); } }
     // ---------- the ship
@@ -9787,8 +9812,8 @@ ARCADE.GAMES.naves = (() => {
       bgX += Math.max(vScroll, 30) * dt;
       if (phase === 'intro') { phaseT -= dt; p.x = lerp(p.x, 70, Math.min(1, dt * 2.5)); resetHist(); if (phaseT <= 0 || (!opt.demo && pad.hit('vS') && phaseT < 2)) { phase = 'play'; p.x = Math.max(p.x, 40); } return; }
       if (phase === 'clear') { phaseT -= dt; if (phaseT < 3 && !g.tally) { g.tally = true; addScore(5000 * (stageN % 3 + 1)); }
-        if (phaseT <= 0) { g.tally = false; stageN++; if (stageN % STAGES.length === 0) { loopN++; banner = ['¡SEGUNDA VUELTA!', 'MÁS RÁPIDOS Y MÁS']; bannerT = 2.5; } load(stageN); } return; }
-      const target = scroll >= L.len ? 0 : 60 * (1 + 0.1 * loopN); vScroll = lerp(vScroll, target, Math.min(1, dt * 2)); scroll += vScroll * dt;
+        if (phaseT <= 0) { g.tally = false; stageN++; if (stageN % STAGES.length === 0) { loopN++; banner = ['¡VUELTA ' + (loopN + 1) + '!', 'MÁS RÁPIDOS · PUNTOS ×' + String(1 + 0.5 * loopN).replace('.', ',')]; bannerT = 2.5; } load(stageN); } return; }
+      const target = scroll >= L.len ? 0 : 63 * (1 + 0.1 * loopN); vScroll = lerp(vScroll, target, Math.min(1, dt * 2)); scroll += vScroll * dt;
       while (ti < L.T.length && L.T[ti][0] <= scroll) wave(L.T[ti++]);
       if (scroll >= L.len && !boss && !L.bossDone) { L.bossT = (L.bossT || 0) + dt; if (L.bossT > 1.5) spawnBoss(); }
       player(dt, pad); moduleUpd(dt);
@@ -10124,7 +10149,7 @@ ARCADE.GAMES.guanche = (() => {
     function hit(att, t, dmg, kind) { if (t.st === 'down' || t.st === 'dead' || t.st === 'getup' || t.inv > 0) return false;
       if (t === p && g._god) return false;
       if (t.d && t.d.shield && t.st !== 'hurt' && kind !== 'knock' && Math.sign(att.x - t.x) === t.face && Math.random() < 0.6) { api.sfx('swing'); fx.push({ k: 'spark', t: 0.2, x: t.x + t.face * 6, y: GY + t.z - 16, col: '#cfd3d9' }); return true; } // blocked by the shield
-      t.hp -= dmg; api.sfx('hit'); fx.push({ k: 'spark', t: 0.25, x: (att.x + t.x) / 2, y: GY + t.z - t.h - 16 }); if (att === p) g.score += 10;
+      t.hp -= dmg; api.sfx('hit'); fx.push({ k: 'spark', t: 0.25, x: (att.x + t.x) / 2, y: GY + t.z - t.h - 16 }); if (att === p) g.score += Math.round((10) * (1 + 0.5 * loopN));
       if (t.mount) { const m = t.mount; m.rider = null; t.mount = null; m.free = true; m.gone = 0; m.drops++; kind = 'knock'; } // knocked off the lizard
       const heavy = kind === 'knock' || t.hp <= 0 || (kind === 'heavy' && !(t.d && t.d.armor && t.hp > t.max * 0.3));
       if (t.d && t.d.armor && kind === 'light') { t.flash = 0.1; if (t.hp <= 0) fall(t, att); return true; } // armour: light hits don't stop them
@@ -10153,7 +10178,7 @@ ARCADE.GAMES.guanche = (() => {
       // v0.83.2 (Jonay): B on a dazed enemy = a somersault over him and a blow from behind that knocks him down
       if (p.st === 'flip') { const f = p.fl, e = f.e; f.t += dt; const k = Math.min(1, f.t / 0.5); p.x = f.from + (f.to - f.from) * k; p.h = Math.sin(k * Math.PI) * 24; if (e.st === 'hurt') e.stT = Math.max(e.stT, 0.12);
         if (k >= 1) { p.h = 0; p.face = -p.face; p.st = 'atk'; p.combo = 3; p.stT = 0.28; p.atkT = 0.24; p.hitDone.clear(); p.hitDone.add(e);
-          if (hit(p, e, (H.dmg[2] + 1) * (1 + 0.1 * loopN), 'knock')) { g.score += 300; fx.push({ k: 'pts', t: 1, x: e.x, y: GY + e.z - 38, s: '¡POR DETRÁS!' }); if (e.hp <= 0) killed(e); } }
+          if (hit(p, e, (H.dmg[2] + 1) * (1 + 0.1 * loopN), 'knock')) { g.score += Math.round((300) * (1 + 0.5 * loopN)); fx.push({ k: 'pts', t: 1, x: e.x, y: GY + e.z - 38, s: '¡POR DETRÁS!' }); if (e.hp <= 0) killed(e); } }
         clampP(); return; }
       if (p.st === 'atk' || p.st === 'dash' || p.st === 'jatk' || p.st === 'whip' || p.st === 'bite') { attackStep(dt);
         if (p.st === 'dash') { p.x += p.face * H.spd * 1.8 * dt; p.vh -= 420 * dt; p.h = Math.max(0, p.h + p.vh * dt); if (p.h <= 0 && p.atkT > 0.1) { p.h = 0; p.vh = 0; p.st = 'idle'; } clampP(); } // the flying kick
@@ -10177,7 +10202,7 @@ ARCADE.GAMES.guanche = (() => {
         p.combo = p.comboT > 0 ? (p.combo % 3) + 1 : 1; p.comboT = 0.6; p.st = 'atk'; p.stT = p.combo === 3 ? 0.5 : 0.28; p.atkT = 0; p.hitDone.clear(); api.sfx('swing'); return; }
       if (dx) p.face = dx; p.x += dx * spd * dt; p.z = clamp(p.z + dz * spd * 0.6 * dt, 0, ZD); p.st = dx || dz ? (p.run ? 'run' : 'walk') : 'idle'; if (!dx) p.run = false;
       clampP();
-      for (const it of items) if (!it.got && Math.abs(it.x - p.x) < 10 && Math.abs(it.z - p.z) < 7) { it.got = true; if (it.k === 'J') { p.jars = Math.min(H.jars, p.jars + 1); api.sfx('pick'); } else { p.hp = Math.min(H.hp, p.hp + 8); api.sfx('life'); g.score += 200; } } }
+      for (const it of items) if (!it.got && Math.abs(it.x - p.x) < 10 && Math.abs(it.z - p.z) < 7) { it.got = true; if (it.k === 'J') { p.jars = Math.min(H.jars, p.jars + 1); api.sfx('pick'); } else { p.hp = Math.min(H.hp, p.hp + 8); api.sfx('life'); g.score += Math.round((200) * (1 + 0.5 * loopN)); } } }
     function clampP() { const lo = camX + 8, hi = camX + VW - 8; p.x = clamp(p.x, lo, hi); if (p.mount) { p.mount.x = p.x; p.mount.z = p.z; p.mount.face = p.face; } }
     function attackStep(dt) { const H = p.hero; p.atkT += dt; p.stT -= dt; const st = p.st;
       const dur = st === 'atk' ? (p.combo === 3 ? 0.5 : 0.28) : st === 'dash' ? 0.6 : st === 'whip' ? 0.45 : st === 'bite' ? 0.4 : 0.35, k = p.atkT / dur;
@@ -10186,7 +10211,7 @@ ARCADE.GAMES.guanche = (() => {
         for (const e of E) { if (p.hitDone.has(e) || e.st === 'dead') continue; const ddx = (e.x - p.x) * (st === 'whip' ? Math.sign(e.x - p.x) || 1 : p.face);
           if (ddx > -4 && ddx < reach + (e.d.boss ? 6 : 0) + ((e.look && e.look.s) || 1) * 4 - 4 && Math.abs(e.z - p.z) < 8 && e.h < 14 + p.h) { p.hitDone.add(e); if (hit(p, e, dmg * (1 + 0.1 * loopN), kind)) { if (e.hp <= 0) killed(e); } } } }
       if (p.stT <= 0 && st !== 'jatk') p.st = 'idle'; }
-    function killed(e) { if (e.scored) return; e.scored = true; g.score += e.d.pts; fx.push({ k: 'pts', t: 0.9, x: e.x, y: GY + e.z - 34, s: String(e.d.pts) });
+    function killed(e) { if (e.scored) return; e.scored = true; g.score += Math.round((e.d.pts) * (1 + 0.5 * loopN)); fx.push({ k: 'pts', t: 0.9, x: e.x, y: GY + e.z - 34, s: String(e.d.pts) });
       if (e.k !== 'D' && !e.d.boss) { const r = Math.random(); if (r < 0.1) items.push({ k: 'J', x: e.x, z: e.z, t: 0 }); else if (r < 0.18) items.push({ k: 'F', x: e.x + 4, z: e.z, t: 0 }); } } // v0.83.2 (Jonay): now and then a magic pouch or some food
     function castSpell() { const H = p.hero, lvl = Math.min(p.jars, H.jars); p.jars = 0; spellFx = { k: H.id, t: 1.4, lvl }; shake = H.id === 'mencey' ? 0.9 : 0.3; api.sfx('boom');
       const dmg = (H.id === 'mencey' ? 4 : H.id === 'pastor' ? 3.5 : 5) * lvl;
@@ -10244,9 +10269,9 @@ ARCADE.GAMES.guanche = (() => {
       if (opt.demo) { demoPilot(); pad = { held: (v) => !!g.demoKeys.held[v], hit: (v) => !!g.demoKeys.hit[v] }; }
       if (phase === 'select') { if (pad.hit('vR')) { sel = (sel + 1) % 3; api.sfx('pick'); } if (pad.hit('vL')) { sel = (sel + 2) % 3; api.sfx('pick'); } if (pad.hit('vS') || pad.hit('vT')) { choose(sel); api.sfx('start'); load(0); } return; }
       if (phase === 'intro') { phaseT -= dt; if (phaseT <= 0 || (!opt.demo && pad.hit('vS') && phaseT < 2.2)) phase = 'play'; return; }
-      if (phase === 'clear') { phaseT -= dt; if (phaseT < 2.5 && !g.tally) { g.tally = true; g.score += p.hp * 100 + p.jars * 500; }
+      if (phase === 'clear') { phaseT -= dt; if (phaseT < 2.5 && !g.tally) { g.tally = true; g.score += Math.round((p.hp * 100 + p.jars * 500) * (1 + 0.5 * loopN)); }
         if (phaseT <= 0) { g.tally = false; if (stageN % STAGES.length === STAGES.length - 1) { phase = 'ending'; phaseT = 7; if (!opt.demo) api.music(SONGS.title); } else { phase = 'camp'; campT = 11; campN = 0; E.length = 0; items.length = 0; liz.length = 0; camX = 0; p.x = VW / 2 - 20; p.z = 24; p.st = 'idle'; if (!opt.demo) api.music(SONGS.camp); banner = ['EL CAMPAMENTO', '¡QUE NO TE ROBEN LOS DUENDES!']; bannerT = 2.5; } } return; }
-      if (phase === 'ending') { phaseT -= dt; if (phaseT <= 0) { loopN++; stageN++; banner = ['¡SEGUNDA VUELTA!', 'GUAYOTA HA VUELTO']; bannerT = 2.5; load(stageN); } return; }
+      if (phase === 'ending') { phaseT -= dt; if (phaseT <= 0) { loopN++; stageN++; banner = ['¡VUELTA ' + (loopN + 1) + '!', 'GUAYOTA HA VUELTO · PUNTOS ×' + String(1 + 0.5 * loopN).replace('.', ',')]; bannerT = 2.5; load(stageN); } return; }
       if (phase === 'camp') { camp(dt, pad); return; }
       player(dt, pad); for (const e of E) enemy(e, dt); lizards(dt); updShots(dt); drops();
       for (let i = E.length - 1; i >= 0; i--) { const e = E[i]; if ((e.st === 'dead' && e.stT <= 0) || e.gone) { if (e.wave && lock) lock.n--; E.splice(i, 1); } }

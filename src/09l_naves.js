@@ -124,7 +124,7 @@ ARCADE.GAMES.naves = (() => {
     const p = { x: 70, y: H / 2, dead: 0, inv: 0, spd: 0, missile: false, dbl: false, laser: false, opts: 0, shield: 0, cur: -1, charge: 0, mCD: 0, hist: [], tilt: 0 };
     const mod = { have: false, st: 'front', x: 0, y: 0, vx: 0, a: 0 };
     const foes = [], shots = [], bul = [], items = [], groups = {};
-    const sp = () => 1 + 0.25 * loopN;
+    const sp = () => 1.05 * (1 + 0.25 * loopN); // v0.89 (Jonay: too easy): everything 5 % faster
     const terr = (x) => terrain(L.theme, scroll + x, L.len);
     function resetHist() { p.hist.length = 0; for (let i = 0; i < 40; i++) p.hist.push([p.x, p.y]); }
     function load(n) { L = { ...STAGES[n % STAGES.length] }; L.T = L.tl().sort((a, b) => a[0] - b[0]); ti = 0; scroll = 0; vScroll = 0; boss = null; L.bossDone = false;
@@ -142,7 +142,7 @@ ARCADE.GAMES.naves = (() => {
       if (k === 'm') for (let i = 0; i < n; i++) foes.push({ k, x: W + 10 + i * 46, y: TOP + 20 + rnd() * (BOT - TOP - 40), vx: -55, hp: 2, r: 8, pts: 80, t: 0 }); }
     function aimed(x, y, s = 150, spread = 0) { const a = Math.atan2(p.y - y, p.x - x) + spread; bul.push({ x, y, vx: Math.cos(a) * s * sp(), vy: Math.sin(a) * s * sp(), r: 3 }); }
     function ring(x, y, n, s) { for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2; bul.push({ x, y, vx: Math.cos(a) * s * sp(), vy: Math.sin(a) * s * sp(), r: 3 }); } }
-    function addScore(n, x, y) { g.score += n; if (x !== undefined) fx.push({ k: 'pts', t: 0.8, x, y, s: String(n) });
+    function addScore(n, x, y) { n = Math.round(n * (1 + 0.5 * loopN)); /* v0.89 (Jonay): each loop gives more points */ g.score += n; if (x !== undefined) fx.push({ k: 'pts', t: 0.8, x, y, s: String(n) });
       if (g.score >= nextLife) { nextLife += 70000; lives++; api.sfx('life'); banner = ['¡VIDA EXTRA!', '']; bannerT = 1.5; } }
     function boom(x, y, r = 10) { fx.push({ k: 'boom', t: 0.5, x, y, r }); for (let i = 0; i < 6; i++) { const a = rnd() * 7; fx.push({ k: 'deb', t: 0.5 + rnd() * 0.3, x, y, vx: Math.cos(a) * 90, vy: Math.sin(a) * 90 }); } }
     // ---------- the ship
@@ -272,8 +272,8 @@ ARCADE.GAMES.naves = (() => {
       bgX += Math.max(vScroll, 30) * dt;
       if (phase === 'intro') { phaseT -= dt; p.x = lerp(p.x, 70, Math.min(1, dt * 2.5)); resetHist(); if (phaseT <= 0 || (!opt.demo && pad.hit('vS') && phaseT < 2)) { phase = 'play'; p.x = Math.max(p.x, 40); } return; }
       if (phase === 'clear') { phaseT -= dt; if (phaseT < 3 && !g.tally) { g.tally = true; addScore(5000 * (stageN % 3 + 1)); }
-        if (phaseT <= 0) { g.tally = false; stageN++; if (stageN % STAGES.length === 0) { loopN++; banner = ['¡SEGUNDA VUELTA!', 'MÁS RÁPIDOS Y MÁS']; bannerT = 2.5; } load(stageN); } return; }
-      const target = scroll >= L.len ? 0 : 60 * (1 + 0.1 * loopN); vScroll = lerp(vScroll, target, Math.min(1, dt * 2)); scroll += vScroll * dt;
+        if (phaseT <= 0) { g.tally = false; stageN++; if (stageN % STAGES.length === 0) { loopN++; banner = ['¡VUELTA ' + (loopN + 1) + '!', 'MÁS RÁPIDOS · PUNTOS ×' + String(1 + 0.5 * loopN).replace('.', ',')]; bannerT = 2.5; } load(stageN); } return; }
+      const target = scroll >= L.len ? 0 : 63 * (1 + 0.1 * loopN); vScroll = lerp(vScroll, target, Math.min(1, dt * 2)); scroll += vScroll * dt;
       while (ti < L.T.length && L.T[ti][0] <= scroll) wave(L.T[ti++]);
       if (scroll >= L.len && !boss && !L.bossDone) { L.bossT = (L.bossT || 0) + dt; if (L.bossT > 1.5) spawnBoss(); }
       player(dt, pad); moduleUpd(dt);

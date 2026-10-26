@@ -12,8 +12,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Minijuegos: controles, pausa y sonido
 
-- [ ] ◐ **Pausa con la P en TODOS los minijuegos** (Jonay, 20-oct): la P pausa (cartel «PAUSA», música y reloj
-  parados) y otra pulsación reanuda. Basket, fútbol, pelea 2D, Bencomo, GUFO, Guanche Guarriors y los que vengan.
 - [ ] ◐ **Basket y fútbol: más efectos del público que música** (Jonay, 20-oct). En el basket, el típico **organillo**
   de pabellón (las ráfagas de «¡de-fen-sa!», el «charge»); en el fútbol, el **rugido del público**: el murmullo de
   fondo, el «¡uuuh!» en las ocasiones y el furor con los goles. Vale para las canchas y para Pachanga / Play Furbito.
@@ -382,6 +380,8 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Rendimiento, auditorías y código
 
+- [ ] ⚡ **Auditoría v0.88.1** (26-oct, APTO CON AVISOS): 137 avisos «nuevos» del análisis estático en archivos que no
+  cambiaron (artefacto del auditor al comparar). Revisar que no sea nada real y repetir la comparación.
 - [ ] ⚡ **Auditoría v0.87.1** (26-oct 10:52, APTO CON AVISOS; pruebas 5/5): pintar 31,5 → 43 ms y arranque 9,2 → 11,3 s.
   La 0.87.1 solo cambia un nombre (Guanche Guarriors): casi seguro que el PC estaba ocupado. Repetir la auditoría.
 - [ ] ⚡ **Auditoría v0.86.0** (26-oct 10:08, APTO CON AVISOS; pruebas 7/7; pintar 35,5 → 31,8 ms, arranque 10,0 → 10,3 s):
@@ -480,6 +480,14 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
       consideres, es un extra final».
 
 ## Hecho
+- [x] v0.89.0 **Basket: combos** (Jonay, 26-oct): 25 % menos de tiempo (2,7 s) y, si se falla, vuela igual y el mate da en el hierro.
+- [x] v0.89.0 **Vueltas: más difíciles y más puntos** (Jonay, 26-oct): Bencomo, GUFO y Guanche Guarriors puntúan ×(1 + 0,5·vuelta); GUFO un 5 % más rápido.
+- [x] v0.89.0 **Bencomo: el picado sobre el jinete te golpeaba a ti** (Jonay, 26-oct): ahora vale caer en la mitad de arriba del enemigo.
+- [x] v0.89.0 **Basket y fútbol: control y defensa** (Jonay, 26-oct): el que tiene el balón siempre es el tuyo; clic
+  derecho defendiendo = el más cercano al balón (o robo/entrada si ya lo eres); ayudas en defensa hacia el aro/portería.
+- [x] v0.89.0 **Bencomo: el muñeco nuevo** (Jonay, 26-oct: «me gusta, usa ese»): como el de antes, con el detalle del B3.
+- [x] v0.89.0 **Pausa con la P en TODOS los minijuegos** (Jonay, 20-oct): la P pausa (cartel «PAUSA», música y reloj
+  parados) y otra pulsación reanuda. Basket, fútbol, pelea 2D, Bencomo, GUFO, Guanche Guarriors y los que vengan.
 - [x] v0.87.0 **Pachanga 3x3: EE. UU., Serbia y Lituania** (Jonay, 26-oct) en vez de Brasil, Portugal y Uruguay (que siguen en Play Furbito).
 - [x] v0.87.0 **Pachanga 3x3: las equipaciones de la pantalla de elegir país parecen de fútbol** (Jonay, 26-oct). En
   Play Furbito están bien; en el basket tienen que ser de basket: camiseta de tirantes, pantalón largo, calcetín

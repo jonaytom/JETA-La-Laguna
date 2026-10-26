@@ -23,7 +23,7 @@ const FUTBOL2D = (() => {
   const sxp = (x) => X0 + x * S, syw = (y) => (y + MG) * S;  // pitch metres -> background px
   let inConsole = false; let cv = null, cx = null, running = false, raf = 0, last = 0, acc = 0, st = null, onEnd = null, camY = 0, bgCache = null;
   // ---------- input: virtual buttons, the same as the basketball (vS = A, vP = pass, vT = sprint)
-  const IN = MINI.input(() => running), { press, held, hit, rel } = IN, keys = IN.keys; // v0.69: shared with the other minigames (09ea_minijuegos.js)
+  const PZ = MINI.pauser(() => running); const IN = MINI.input(() => running), { press, held, hit, rel } = IN, keys = IN.keys; // v0.69: shared with the other minigames (09ea_minijuegos.js)
   // ---------- sounds
   const snd = MINI.snd, say = (t) => MINI.say(t);
   // ---------- helpers
@@ -51,7 +51,7 @@ const FUTBOL2D = (() => {
     st.sp = { p: k, kind: 'centro', t: 0, r: 6, x: k.x, y: k.y }; // v0.79: kick-off from the centre: the rivals outside the circle until it is played
     if (team === 0) st.ctl = k;
   }
-  function give(p) { const b = st.ball; b.owner = p; b.z = 0; b.vz = 0; b.curveT = 0; b.shot = null; st.last = p; p.kickCD = 0;
+  function give(p) { const b = st.ball; b.owner = p; b.x = p.x; b.y = p.y; b.z = 0; b.vz = 0; b.curveT = 0; b.shot = null; st.last = p; p.kickCD = 0;
     st.sp = p.role === 'gk' && inOwnBox(p) ? { p, kind: 'gk', t: 0 } : st.sp && st.sp.p === p ? st.sp : null; // in his hands: nobody may come and take it
     if (p.role === 'gk') p.dir = p.team === 0 ? -Math.PI / 2 : Math.PI / 2;
     b.x = p.x + Math.cos(p.dir) * 0.55; b.y = p.y + Math.sin(p.dir) * 0.55; } // the ball goes straight to his feet (a throw-in from outside the line lands inside)
@@ -94,6 +94,8 @@ const FUTBOL2D = (() => {
       const near = outfield(p.team).filter((q) => q.down <= 0).sort((a, c) => D(a, b) - D(c, b)); const rank = near.indexOf(p);
       if (p.waitPass > 0 && b.to === p) { tx = b.x; ty = b.y; run = true; }
       else if (rank === 0 || (rank === 1 && own === false && D(p, b) < 8)) { tx = b.x + b.vx * 0.25; ty = b.y + b.vy * 0.25; run = D(p, b) > 3; }
+      else if (own === false && rank <= 2 && Math.abs(goalY(1 - p.team) - b.owner.y) < 18) { // v0.89 (Jonay): help defence: one more closes the way to goal
+        const gy = goalY(1 - p.team); tx = b.owner.x + (PW / 2 - b.owner.x) * 0.35; ty = b.owner.y + (gy - b.owner.y) * 0.35; run = true; }
       else { tx = hx0 + (b.x - PW / 2) * 0.3; ty = clamp(hy0 + push + (p.team === 0 ? 3 : -3), 3, PL - 3); }
       if (own === false && !st.sp && D(p, b) < 1.0 && p.kickCD <= 0 && !st.tut && Math.random() < dt * (0.25 + 1.6 * p.lv)) tackle(p, b.owner, 0.12 + 0.45 * p.lv);
     }
@@ -167,7 +169,8 @@ const FUTBOL2D = (() => {
     } else {
       st.charge = 0; st.pcharge = 0;
       if (hit('vS') && p.slide <= 0 && p.kickCD <= 0) { p.slide = 0.55; p.vx = Math.cos(ang) * 8.5; p.vy = Math.sin(ang) * 8.5; p.dir = ang; p.kickCD = 0.9; if (st.ev) st.ev.slide = true; }
-      if (hit('vP')) { const n = nearestCtl(true); if (n && n !== p) { st.ctl = n; if (st.ev) st.ev.swap = true; } }
+      if (hit('vP')) { const n = nearestCtl(false); const bo = st.ball.owner; if (n && n !== p) { st.ctl = n; if (st.ev) st.ev.swap = true; } // v0.89 (Jonay): already the nearest: the tackle
+        else if (bo && bo.team !== p.team && p.kickCD <= 0) { if (D(p, bo) < 1.5) tackle(p, bo, 0.5); else { const L = D(p, bo) || 1; p.vx = (bo.x - p.x) / L * 9; p.vy = (bo.y - p.y) / L * 9; p.kickCD = 0.35; } } }
     }
     if (st.aft > 0) { st.aft -= 1 / 60; const bb = st.ball; if (!bb.owner && bb.kicker === p) { const side = (held('vR') ? 1 : 0) - (held('vL') ? 1 : 0); if (side) { bb.curve = side * (p.team === 0 ? 1 : -1) * 7; bb.curveT = Math.max(bb.curveT, 0.3); } } }
   }
@@ -403,6 +406,7 @@ const FUTBOL2D = (() => {
   // ---------- loop
   function loop(now) {
     if (!running) return; raf = requestAnimationFrame(loop);
+    if (PZ.on) { last = now; draw(); cx.setTransform(R, 0, 0, R, 0, 0); MINI.pauseOverlay(cx, W, H); return; } // v0.89: P = pause
     const dt = Math.min(0.1, (now - last) / 1000); last = now; acc += dt;
     while (acc >= 1 / 60) { step(1 / 60); IN.frame(); acc -= 1 / 60; updateCam(); }
     if (st.fadeDir) { st.fade = clamp(st.fade + st.fadeDir * dt * 2.5, 0, 1); if (st.fadeDir < 0 && st.fade === 0) st.fadeDir = 0; if (st.fadeDir > 0 && st.fade === 1) { st.fadeDir = 0; close(); return; } }
@@ -411,7 +415,7 @@ const FUTBOL2D = (() => {
   // ---------- public: start({ team: [5 × {name, look}], rival: [5 × …], kit, rivalKit, teamName, rivalName, time, lv, mateLv, tutorial, auto, onEnd })
   const KIT0 = { shirt: '#1f8f4e', shorts: '#f2f2f2', socks: '#1f8f4e', gk: { shirt: '#f1c40f', shorts: '#222', socks: '#f1c40f' } };
   const KIT1 = { shirt: '#c0392b', shorts: '#222', socks: '#c0392b', gk: { shirt: '#5ec8ff', shorts: '#222', socks: '#5ec8ff' } };
-  function start(opt) {
+  function start(opt) { PZ.off();
     if (running || (typeof FIGHT2D !== 'undefined' && FIGHT2D.running) || (typeof BASKET2D !== 'undefined' && BASKET2D.running)) return false; running = true; onEnd = opt.onEnd || null; inConsole = !!opt.inConsole;
     if (!cv) { cv = document.createElement('canvas'); cv.id = 'futbol2d'; cv.width = W * R; cv.height = H * R; cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;image-rendering:pixelated;background:#000;z-index:28;display:none'; document.body.appendChild(cv); cx = cv.getContext('2d'); }
     const k0 = { ...KIT0, ...(opt.kit || {}) }, k1 = { ...KIT1, ...(opt.rivalKit || {}) }; k0.gk = { ...KIT0.gk, ...((opt.kit || {}).gk || {}) }; k1.gk = { ...KIT1.gk, ...((opt.rivalKit || {}).gk || {}) };
@@ -429,5 +433,5 @@ const FUTBOL2D = (() => {
   function close() { running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'futbol2d', !inConsole); /* v0.86: back to the GOFIO-8, not to the 3D world */
     const res = { won: st.score[0] > st.score[1], score: st.score.slice() }; if (onEnd) onEnd(res); }
   function abort() { if (!running) return; running = false; cancelAnimationFrame(raf); MINI.hide(cv, 'futbol2d', false); } // tests only
-  return { start, _abort: abort, get running() { return running; }, _st: () => st, _foul: (p, v) => foul(p, v), _give: (p) => give(p), _out: (k, t) => outOfPlay(k, t), _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); updateCam(); } }, _press: press, _draw: () => draw() };
+  return { start, _abort: abort, get running() { return running; }, _st: () => st, _foul: (p, v) => foul(p, v), _give: (p) => give(p), _pz: () => PZ, _out: (k, t) => outOfPlay(k, t), _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); updateCam(); } }, _press: press, _draw: () => draw() };
 })();

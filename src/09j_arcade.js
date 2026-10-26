@@ -189,7 +189,9 @@ const ARCADE = (() => {
     t.forEach(([n, s], i) => { const y = 58 + i * 18, hl = st.hl === n && i === st.rank, c = hl && Math.floor(performance.now() / 200) % 2 ? '#ffd400' : ['#ff6b6b', '#ffb347', '#ffd400', '#7fe08a', '#5ec8ff'][i % 5];
       txt(g, `${String(i + 1).padStart(2, ' ')}`, W / 2 - 100, y, c); txt(g, String(s).padStart(7, '0'), W / 2 - 50, y, c); txt(g, n, W / 2 + 70, y, c); }); }
   // ---------- loop
-  function loop(now) { if (!running) return; raf = requestAnimationFrame(loop); const dt = Math.min(0.1, (now - last) / 1000); last = now; acc += dt;
+  const PZ = MINI.pauser(() => running && !suspended); // v0.89: P = pause, in every machine and on the console
+  function loop(now) { if (!running) return; raf = requestAnimationFrame(loop); if (PZ.on) { last = now; render(); present(); cx.setTransform(1, 0, 0, 1, 0, 0); cx.fillStyle = 'rgba(0,0,0,0.55)'; cx.fillRect(SX * KR, SY * KR, W * RS, H * RS); cx.setTransform(KR, 0, 0, KR, 0, 0); txt(cx, 'PAUSA', SX + W * SS / 2, SY + H * SS / 2 - 30, '#ffd400', 36, 'center'); txt(cx, 'PULSA P PARA SEGUIR', SX + W * SS / 2, SY + H * SS / 2 + 20, '#fff', 14, 'center'); return; }
+    const dt = Math.min(0.1, (now - last) / 1000); last = now; acc += dt;
     while (acc >= 1 / 60) { step(1 / 60); IN.frame(); acc -= 1 / 60; } render(); present(); }
   function step(dt) { if (!running || !M) return; /* v0.85: nothing after close (a cartridge that leaves the console) */ if (st.msgT > 0) st.msgT -= dt; if (st.mode === 'menu') menu(dt); else if (st.mode === 'attract') attract(dt); else if (st.mode === 'play') play(dt); else if (st.mode === 'cont') cont(dt); else if (st.mode === 'name') nameEntry(dt); else if (st.mode === 'ext') { st.t += dt; G.update(dt, pad); } }
   const api = { W, H, sprite, draw, txt, sfx, music, stopMusic, hi: () => (M ? table(M.key, M.game)[0][1] : 0), get money() { return PLAYER.money; },
@@ -211,9 +213,9 @@ const ARCADE = (() => {
   }
   function fit() { const dpr = window.devicePixelRatio || 1; const k = Math.max(0.5, Math.min((window.innerWidth || CW) * dpr / CW, (window.innerHeight || CH) * dpr / CH));
     KR = Math.round(k * 1000) / 1000; RS = SS * KR; cv.width = Math.round(CW * KR); cv.height = Math.round(CH * KR); scr.width = Math.round(W * RS); scr.height = Math.round(H * RS); if (M) M.bz = null; scan = null; }
-  function close() { if (!running) return; running = false; suspended = false; cancelAnimationFrame(raf); stopMusic(); MINI.hide(cv, 'arcade', true); const r = { paid: st.paid }; M = null; G = null; if (onClose) onClose(r); }
+  function close() { if (!running) return; PZ.off(); running = false; suspended = false; cancelAnimationFrame(raf); stopMusic(); MINI.hide(cv, 'arcade', true); const r = { paid: st.paid }; M = null; G = null; if (onClose) onClose(r); }
   return { GAMES, CONSOLE, open, close, resume, get suspended() { return suspended; }, sprite, hires, draw, txt, sfx, music, stopMusic, data, table, api, get running() { return running; },
-    _st: () => st, _game: () => G, _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); } }, _press: IN.press, _render: () => { render(); present(); }, W, H };
+    _st: () => st, _game: () => G, _pz: () => PZ, _step: (n = 1) => { for (let i = 0; i < n; i++) { step(1 / 60); IN.frame(); } }, _press: IN.press, _render: () => { render(); present(); }, W, H };
 })();
 // ---------- where the machines are (v0.80): El Blanco's, free. When the mayor names the gang «Defensores de La Laguna»
 // (GANG.defenders), El Blanco phones you: he has a machine at home and you can go and play whenever you like (it is not

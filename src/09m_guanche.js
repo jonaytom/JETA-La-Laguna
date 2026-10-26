@@ -237,7 +237,7 @@ ARCADE.GAMES.guanche = (() => {
     function hit(att, t, dmg, kind) { if (t.st === 'down' || t.st === 'dead' || t.st === 'getup' || t.inv > 0) return false;
       if (t === p && g._god) return false;
       if (t.d && t.d.shield && t.st !== 'hurt' && kind !== 'knock' && Math.sign(att.x - t.x) === t.face && Math.random() < 0.6) { api.sfx('swing'); fx.push({ k: 'spark', t: 0.2, x: t.x + t.face * 6, y: GY + t.z - 16, col: '#cfd3d9' }); return true; } // blocked by the shield
-      t.hp -= dmg; api.sfx('hit'); fx.push({ k: 'spark', t: 0.25, x: (att.x + t.x) / 2, y: GY + t.z - t.h - 16 }); if (att === p) g.score += 10;
+      t.hp -= dmg; api.sfx('hit'); fx.push({ k: 'spark', t: 0.25, x: (att.x + t.x) / 2, y: GY + t.z - t.h - 16 }); if (att === p) g.score += Math.round((10) * (1 + 0.5 * loopN));
       if (t.mount) { const m = t.mount; m.rider = null; t.mount = null; m.free = true; m.gone = 0; m.drops++; kind = 'knock'; } // knocked off the lizard
       const heavy = kind === 'knock' || t.hp <= 0 || (kind === 'heavy' && !(t.d && t.d.armor && t.hp > t.max * 0.3));
       if (t.d && t.d.armor && kind === 'light') { t.flash = 0.1; if (t.hp <= 0) fall(t, att); return true; } // armour: light hits don't stop them
@@ -266,7 +266,7 @@ ARCADE.GAMES.guanche = (() => {
       // v0.83.2 (Jonay): B on a dazed enemy = a somersault over him and a blow from behind that knocks him down
       if (p.st === 'flip') { const f = p.fl, e = f.e; f.t += dt; const k = Math.min(1, f.t / 0.5); p.x = f.from + (f.to - f.from) * k; p.h = Math.sin(k * Math.PI) * 24; if (e.st === 'hurt') e.stT = Math.max(e.stT, 0.12);
         if (k >= 1) { p.h = 0; p.face = -p.face; p.st = 'atk'; p.combo = 3; p.stT = 0.28; p.atkT = 0.24; p.hitDone.clear(); p.hitDone.add(e);
-          if (hit(p, e, (H.dmg[2] + 1) * (1 + 0.1 * loopN), 'knock')) { g.score += 300; fx.push({ k: 'pts', t: 1, x: e.x, y: GY + e.z - 38, s: '¡POR DETRÁS!' }); if (e.hp <= 0) killed(e); } }
+          if (hit(p, e, (H.dmg[2] + 1) * (1 + 0.1 * loopN), 'knock')) { g.score += Math.round((300) * (1 + 0.5 * loopN)); fx.push({ k: 'pts', t: 1, x: e.x, y: GY + e.z - 38, s: '¡POR DETRÁS!' }); if (e.hp <= 0) killed(e); } }
         clampP(); return; }
       if (p.st === 'atk' || p.st === 'dash' || p.st === 'jatk' || p.st === 'whip' || p.st === 'bite') { attackStep(dt);
         if (p.st === 'dash') { p.x += p.face * H.spd * 1.8 * dt; p.vh -= 420 * dt; p.h = Math.max(0, p.h + p.vh * dt); if (p.h <= 0 && p.atkT > 0.1) { p.h = 0; p.vh = 0; p.st = 'idle'; } clampP(); } // the flying kick
@@ -290,7 +290,7 @@ ARCADE.GAMES.guanche = (() => {
         p.combo = p.comboT > 0 ? (p.combo % 3) + 1 : 1; p.comboT = 0.6; p.st = 'atk'; p.stT = p.combo === 3 ? 0.5 : 0.28; p.atkT = 0; p.hitDone.clear(); api.sfx('swing'); return; }
       if (dx) p.face = dx; p.x += dx * spd * dt; p.z = clamp(p.z + dz * spd * 0.6 * dt, 0, ZD); p.st = dx || dz ? (p.run ? 'run' : 'walk') : 'idle'; if (!dx) p.run = false;
       clampP();
-      for (const it of items) if (!it.got && Math.abs(it.x - p.x) < 10 && Math.abs(it.z - p.z) < 7) { it.got = true; if (it.k === 'J') { p.jars = Math.min(H.jars, p.jars + 1); api.sfx('pick'); } else { p.hp = Math.min(H.hp, p.hp + 8); api.sfx('life'); g.score += 200; } } }
+      for (const it of items) if (!it.got && Math.abs(it.x - p.x) < 10 && Math.abs(it.z - p.z) < 7) { it.got = true; if (it.k === 'J') { p.jars = Math.min(H.jars, p.jars + 1); api.sfx('pick'); } else { p.hp = Math.min(H.hp, p.hp + 8); api.sfx('life'); g.score += Math.round((200) * (1 + 0.5 * loopN)); } } }
     function clampP() { const lo = camX + 8, hi = camX + VW - 8; p.x = clamp(p.x, lo, hi); if (p.mount) { p.mount.x = p.x; p.mount.z = p.z; p.mount.face = p.face; } }
     function attackStep(dt) { const H = p.hero; p.atkT += dt; p.stT -= dt; const st = p.st;
       const dur = st === 'atk' ? (p.combo === 3 ? 0.5 : 0.28) : st === 'dash' ? 0.6 : st === 'whip' ? 0.45 : st === 'bite' ? 0.4 : 0.35, k = p.atkT / dur;
@@ -299,7 +299,7 @@ ARCADE.GAMES.guanche = (() => {
         for (const e of E) { if (p.hitDone.has(e) || e.st === 'dead') continue; const ddx = (e.x - p.x) * (st === 'whip' ? Math.sign(e.x - p.x) || 1 : p.face);
           if (ddx > -4 && ddx < reach + (e.d.boss ? 6 : 0) + ((e.look && e.look.s) || 1) * 4 - 4 && Math.abs(e.z - p.z) < 8 && e.h < 14 + p.h) { p.hitDone.add(e); if (hit(p, e, dmg * (1 + 0.1 * loopN), kind)) { if (e.hp <= 0) killed(e); } } } }
       if (p.stT <= 0 && st !== 'jatk') p.st = 'idle'; }
-    function killed(e) { if (e.scored) return; e.scored = true; g.score += e.d.pts; fx.push({ k: 'pts', t: 0.9, x: e.x, y: GY + e.z - 34, s: String(e.d.pts) });
+    function killed(e) { if (e.scored) return; e.scored = true; g.score += Math.round((e.d.pts) * (1 + 0.5 * loopN)); fx.push({ k: 'pts', t: 0.9, x: e.x, y: GY + e.z - 34, s: String(e.d.pts) });
       if (e.k !== 'D' && !e.d.boss) { const r = Math.random(); if (r < 0.1) items.push({ k: 'J', x: e.x, z: e.z, t: 0 }); else if (r < 0.18) items.push({ k: 'F', x: e.x + 4, z: e.z, t: 0 }); } } // v0.83.2 (Jonay): now and then a magic pouch or some food
     function castSpell() { const H = p.hero, lvl = Math.min(p.jars, H.jars); p.jars = 0; spellFx = { k: H.id, t: 1.4, lvl }; shake = H.id === 'mencey' ? 0.9 : 0.3; api.sfx('boom');
       const dmg = (H.id === 'mencey' ? 4 : H.id === 'pastor' ? 3.5 : 5) * lvl;
@@ -357,9 +357,9 @@ ARCADE.GAMES.guanche = (() => {
       if (opt.demo) { demoPilot(); pad = { held: (v) => !!g.demoKeys.held[v], hit: (v) => !!g.demoKeys.hit[v] }; }
       if (phase === 'select') { if (pad.hit('vR')) { sel = (sel + 1) % 3; api.sfx('pick'); } if (pad.hit('vL')) { sel = (sel + 2) % 3; api.sfx('pick'); } if (pad.hit('vS') || pad.hit('vT')) { choose(sel); api.sfx('start'); load(0); } return; }
       if (phase === 'intro') { phaseT -= dt; if (phaseT <= 0 || (!opt.demo && pad.hit('vS') && phaseT < 2.2)) phase = 'play'; return; }
-      if (phase === 'clear') { phaseT -= dt; if (phaseT < 2.5 && !g.tally) { g.tally = true; g.score += p.hp * 100 + p.jars * 500; }
+      if (phase === 'clear') { phaseT -= dt; if (phaseT < 2.5 && !g.tally) { g.tally = true; g.score += Math.round((p.hp * 100 + p.jars * 500) * (1 + 0.5 * loopN)); }
         if (phaseT <= 0) { g.tally = false; if (stageN % STAGES.length === STAGES.length - 1) { phase = 'ending'; phaseT = 7; if (!opt.demo) api.music(SONGS.title); } else { phase = 'camp'; campT = 11; campN = 0; E.length = 0; items.length = 0; liz.length = 0; camX = 0; p.x = VW / 2 - 20; p.z = 24; p.st = 'idle'; if (!opt.demo) api.music(SONGS.camp); banner = ['EL CAMPAMENTO', '¡QUE NO TE ROBEN LOS DUENDES!']; bannerT = 2.5; } } return; }
-      if (phase === 'ending') { phaseT -= dt; if (phaseT <= 0) { loopN++; stageN++; banner = ['¡SEGUNDA VUELTA!', 'GUAYOTA HA VUELTO']; bannerT = 2.5; load(stageN); } return; }
+      if (phase === 'ending') { phaseT -= dt; if (phaseT <= 0) { loopN++; stageN++; banner = ['¡VUELTA ' + (loopN + 1) + '!', 'GUAYOTA HA VUELTO · PUNTOS ×' + String(1 + 0.5 * loopN).replace('.', ',')]; bannerT = 2.5; load(stageN); } return; }
       if (phase === 'camp') { camp(dt, pad); return; }
       player(dt, pad); for (const e of E) enemy(e, dt); lizards(dt); updShots(dt); drops();
       for (let i = E.length - 1; i >= 0; i--) { const e = E[i]; if ((e.st === 'dead' && e.stT <= 0) || e.gone) { if (e.wave && lock) lock.n--; E.splice(i, 1); } }

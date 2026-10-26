@@ -273,6 +273,12 @@
    [
     "prueba_088.py"
    ]
+  ],
+  [
+   "^src/09ea_minijuegos|^src/09f_basket2d|^src/09g_futbol2d|^src/09d_fight2d|^src/09j_arcade|^src/09k_bencomo",
+   [
+    "prueba_089.py"
+   ]
   ]
  ]
 }
