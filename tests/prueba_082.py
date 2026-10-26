@@ -1,4 +1,4 @@
-# v0.82: «GUANCHE WARRIORS», la máquina de pago de las jugueterías (beat'em up tipo Golden Axe). 1) en la juguetería
+# v0.82: «GUANCHE GUARRIORS», la máquina de pago de las jugueterías (beat'em up tipo Golden Axe). 1) en la juguetería
 # sale la opción de la máquina y abre la de esa tienda a $1; 2) moneda, START, elegir guerrero (← → y A); 3) controles:
 # andar, saltar, combo de 3 (el tercero tumba), correr con doble toque, magia con Q, montar el lagarto con B y el
 # coletazo con A; 4) el piloto automático (invencible) pasa las 5 fases con su jefe; 5) fin de partida y récords.
@@ -14,7 +14,7 @@ async def run(pg):
     A = "__dbg.ARCADE"; ok = True
     # 1) the toy shop
     tienda = json.loads(await pg.evaluate("""(()=>{ const d=__dbg; d.ARCADE.data().invited=true; d.MISSIONS.gang.jugueterias=true; const shops=d.AGUA.shops; const s=shops[0]; if(!s) return JSON.stringify({ hay:false });
-      d.PLAYER.x=s.x; d.PLAYER.z=s.z; __step(1); d.AGUA.use(); const bs=[...document.querySelectorAll('#dlgOpts button')]; const i=bs.findIndex(b=>b.textContent.includes('GUANCHE WARRIORS')); if (i>=0) bs[i].click();
+      d.PLAYER.x=s.x; d.PLAYER.z=s.z; __step(1); d.AGUA.use(); const bs=[...document.querySelectorAll('#dlgOpts button')]; const i=bs.findIndex(b=>b.textContent.includes('GUANCHE GUARRIORS')); if (i>=0) bs[i].click();
       return JSON.stringify({ hay:true, tienda:s.name, opcion:i, abre:d.ARCADE.running }); })()""")); print('juguetería', tienda)
     ok1 = tienda.get('opcion', -1) >= 0 and tienda.get('abre')
     if not tienda.get('abre'): await pg.evaluate("%s.open({ id: 'guanche', key: 'prueba_gw', where: 'PRUEBA', price: 1 })" % A)

@@ -34,7 +34,7 @@ const DIARIO = (() => {
     { t: 'GUFO, AGUERE INVASION', on: () => ARC().invited, who: BL, log: REC, near: () => nearBar(),
       what: 'La máquina de los bares (GUFO: Guanche Unknown Flying Object… y en canario, un pedo): un matamarcianos de naves por el cielo de Aguere, el Teide y el mar de nubes. A dispara (mantenlo para el disparo cargado), B lanza y recoge el módulo y Q coge la mejora marcada. <b>$1 la partida</b>; cada bar tiene sus récords.',
       where: 'En las cafeterías y las tascas: en el minimapa y en el mapa (M) llevan un aro violeta alrededor de su cuadrado rojo. Pídela en la barra o en el mostrador (E).' },
-    { t: 'GUANCHE WARRIORS', on: () => ARC().invited && G().jugueterias, who: BL, log: REC, near: () => AGUA.nearestShop(),
+    { t: 'GUANCHE GUARRIORS', on: () => ARC().invited && G().jugueterias, who: BL, log: REC, near: () => AGUA.nearestShop(),
       what: 'La máquina de las jugueterías: un beat\'em up contra Guayota. Eliges al Mencey, al Pastor o a la Mirladora. A pega, B salta (y monta el lagarto), Q lanza la magia; doble toque para correr. <b>$1 la partida</b>; cada tienda tiene sus récords.',
       where: 'En las jugueterías: el robot del minimapa y del mapa (M). Pídela en la tienda (E).', icon: 'toy' },
     { t: 'Las jugueterías', on: () => G().jugueterias, who: '', log: '', near: () => AGUA.nearestShop(),
@@ -51,7 +51,7 @@ const DIARIO = (() => {
     { t: 'La consola GOFIO-8', on: () => ARC().console, who: '', log: '', near: () => AGUA.nearestShop(),
       what: 'La consola de la tele de tu casa. Al encenderla sale un menú con tus cartuchos: <b>{CARTS}</b>. Los cartuchos se compran en las jugueterías.', where: 'En la tele de tu casa (E delante de la tele). La juguetería más cercana, abajo.' },
     { t: 'El torneo de videojuegos', on: () => ARC().torneo, who: 'El dependiente de la juguetería', log: '',
-      what: 'Por comprarte <b>todos los cartuchos</b> eres un superfriki jugón. Para ganar el torneo hay que batir el récord de los juegos de puntos (Bencomo, GUFO y Guanche Warriors) y ganar el mundialito de Pachanga 3x3 y de Play Furbito. Mundialitos ganados: <b>{MUND}</b>.', where: 'En la GOFIO-8 de tu casa.', icon: 'chopa' },
+      what: 'Por comprarte <b>todos los cartuchos</b> eres un superfriki jugón. Para ganar el torneo hay que batir el récord de los juegos de puntos (Bencomo, GUFO y Guanche Guarriors) y ganar el mundialito de Pachanga 3x3 y de Play Furbito. Mundialitos ganados: <b>{MUND}</b>.', where: 'En la GOFIO-8 de tu casa.', icon: 'chopa' },
     { t: 'El coche patrulla de la banda', on: () => G().patrol, who: 'El alcalde, por el móvil', log: '',
       what: 'Vuestro propio coche patrulla, con el nombre de la banda y el depósito lleno.', where: 'Delante del Ayuntamiento.' },
   ];

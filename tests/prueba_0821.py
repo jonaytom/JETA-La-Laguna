@@ -32,7 +32,7 @@ async def run(pg):
     m = json.loads(await pg.evaluate("""(()=>{ const items=[...document.querySelectorAll('#diaList .diaItem')].filter(e=>e.dataset.k==='__f'); const it=items.find(e=>e.textContent.includes('Maleantes')); if (it) it.click(); const D=document.getElementById('diaDet').textContent; return JSON.stringify({ maleantes: D.includes('triángulo rojo') && D.includes('Sastrón') }); })()"""))
     print('maleantes', m); await snap('v0821_diario_maleantes')
     await pg.evaluate("__dbg.DIARIO.close()")
-    ok3 = c['sabes'] and all(x in c['sabidos'] for x in ['Maleantes en busca y captura', 'La máquina de El Blanco: BENCOMO', 'GUFO, AGUERE INVASION', 'GUANCHE WARRIORS', 'Las jugueterías', 'Retos en las canchas']) and 'El coche patrulla de la banda' not in c['sabidos'] \
+    ok3 = c['sabes'] and all(x in c['sabidos'] for x in ['Maleantes en busca y captura', 'La máquina de El Blanco: BENCOMO', 'GUFO, AGUERE INVASION', 'GUANCHE GUARRIORS', 'Las jugueterías', 'Retos en las canchas']) and 'El coche patrulla de la banda' not in c['sabidos'] \
         and c['detalle_quien'] and c['detalle_donde'] and c['detalle_charla'] and m['maleantes']
     print('SABES', 'OK' if ok3 else 'FALLA'); ok = ok and ok3
     # 4) v0.82.2: the toy shops on the minimap / big map, the nearest one and «MARCAR EN EL GPS» in the diary

@@ -1,4 +1,4 @@
-// ============ «GUANCHE WARRIORS» (v0.82): the beat'em up of the toy shops (pay per game) ============
+// ============ «GUANCHE GUARRIORS» (v0.82): the beat'em up of the toy shops (pay per game) ============
 // Jonay (20-oct): like Golden Axe: a side-scrolling beat'em up with depth (not a platformer), several stages, and at the
 // start you choose one of 3 warriors:
 //  · EL MENCEY: the barbarian, strong and slow, with a Canarian club (garrote canario). Magic: «Ira de Achamán» (4).
@@ -440,10 +440,10 @@ ARCADE.GAMES.guanche = (() => {
   // ---------- title screen and the backdrop of the hi-score table
   function drawTitle(c, t) { const bg = background('canadas'); c.drawImage(bg[0], 0, 0, 960, SH); const o = -((t * 8) % 960); c.drawImage(bg[1], o, 0, 960, SH); c.drawImage(bg[1], o + 960, 0, 960, SH); c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(0, 0, SW, SH);
     c.font = '34px "Press Start 2P", monospace'; c.textAlign = 'center'; c.textBaseline = 'top';
-    for (const [s, y] of [['GUANCHE', 26], ['WARRIORS', 68]]) { c.fillStyle = '#1a0a04'; c.fillText(s, SW / 2 + 4, y + 4); const gr = c.createLinearGradient(0, y, 0, y + 34); gr.addColorStop(0, '#ffe08a'); gr.addColorStop(0.5, '#e07a2a'); gr.addColorStop(1, '#8a2a0a'); c.fillStyle = gr; c.fillText(s, SW / 2, y); }
+    for (const [s, y] of [['GUANCHE', 26], ['GUARRIORS', 68]]) { c.fillStyle = '#1a0a04'; c.fillText(s, SW / 2 + 4, y + 4); const gr = c.createLinearGradient(0, y, 0, y + 34); gr.addColorStop(0, '#ffe08a'); gr.addColorStop(0.5, '#e07a2a'); gr.addColorStop(1, '#8a2a0a'); c.fillStyle = gr; c.fillText(s, SW / 2, y); }
     c.save(); c.scale(Z * 1.3, Z * 1.3); const k = Z * 1.3; HEROES.forEach((H, i) => { const P = Math.floor(t * 1.2 + i) % 3 === 0 ? PO.smash : PO.idle; puppet(c, (SW / 2 + (i - 1) * 110) / k, 230 / k, i === 2 ? -1 : 1, i === 1 ? PO.atk1 : P, H.look, null); }); c.restore(); // (the pole in magic pose crossed the logo)
     A.txt(c, 'GUAYOTA HA RAPTADO A MAGEC, EL SOL', SW / 2, 246, '#fff', 8, 'center'); A.txt(c, 'TRES GUERREROS SUBEN AL ECHEYDE', SW / 2, 260, '#9fd7ff', 8, 'center'); A.txt(c, '© 1496 MENCEYATO DE TAORO', SW / 2, 280, '#9fd7ff', 6, 'center'); }
   function drawBack(c, t) { const bg = background('teide'); c.drawImage(bg[0], 0, 0, 960, SH); const o = -((t * 10) % 960); c.drawImage(bg[2], o, 0, 960, SH); c.drawImage(bg[2], o + 960, 0, 960, SH); c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, 0, SW, SH); }
-  return { title: 'GUANCHE WARRIORS', sub: 'LA NOCHE DE GUAYOTA', marquee: ['#6a1a0a', '#1a0402'], titleCol: '#ffb04a', baseScore: 90000, music: { title: SONGS.title }, create, drawTitle, drawBack,
+  return { title: 'GUANCHE GUARRIORS', sub: 'LA NOCHE DE GUAYOTA', marquee: ['#6a1a0a', '#1a0402'], titleCol: '#ffb04a', baseScore: 90000, music: { title: SONGS.title }, create, drawTitle, drawBack,
     help: (K) => `A GOLPE: ${K('f_punch')}  B SALTO / MONTAR: ${K('f_kick')}  MAGIA / MONEDA: ${K('b_pass')}  ←← →→ CORRER  ESC SALIR` };
 })();

@@ -205,7 +205,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="tb" id="tbS">CORRER</div>
 <div class="tb" id="tbM">MAPA</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">v0.87.0</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">v0.87.1</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -8779,7 +8779,7 @@ const AGUA = (() => {
   function nearFountain() { if (PLAYER.car || PLAYER.interior || !RIFLE.has) return null; for (const f of PK2.fountains) if (Math.hypot(PLAYER.x - f[0], PLAYER.z - f[1]) < (f[2] || 4.6)) return f; return null; }
   const PRICE = 350, BALLS = 20;
   function openShop(s) {
-    const items = []; if (ARCADE.data().invited) items.push(['arc', '🕹 Echar una partida a la máquina: <b>GUANCHE WARRIORS</b> · <b>$1</b> la partida']); // v0.82: the toy shops' machine
+    const items = []; if (ARCADE.data().invited) items.push(['arc', '🕹 Echar una partida a la máquina: <b>GUANCHE GUARRIORS</b> · <b>$1</b> la partida']); // v0.82: the toy shops' machine
     // v0.83: the GOFIO-8 console for the TV at home and its cartridges (once El Blanco has told you about the arcades)
     const A_ = ARCADE.data(), CART = { bencomo: 90, naves: 120, guanche: 150, pachanga: 140, furbito: 140 }; // v0.85: + the two sports cartridges
     if (A_.invited && !A_.console) items.push(['console', '🎮 Consola <b>GOFIO-8</b> para la tele de casa · <b>$1.200</b>']);
@@ -9035,7 +9035,7 @@ const RECRE = (() => {
   function update(dt) { beacon(dt); const g = G_(); if (!g || !g.defenders || invited() || GAME.state !== 'play' || MISSIONS.active || (DLG && DLG.open) || (window.__TALK && window.__TALK.cur)) { t = 0; return; }
     t += dt; if (t < 20 || t > 1e8) return; t = 1e9; const BL = 'Rayco «El Blanco» (por el móvil)';
     MISSIONS.kit.talk([[BL, '«Mmm... ¡brrr!...» Chopa. Ahora que somos Defensores... tengo una cosa en casa. Una máquina de las de antes, de cuando los recreativos. ¡<b>BENCOMO</b>! El mencey de Taoro repartiendo varazos a los castellanos en Acentejo.'],
-      [BL, 'Vente a mi casa cuando quieras y le das. Gratis, que es mía. Mi madre hace café. Y en las cafeterías y las tascas han puesto el <b>GUFO</b>, el de las navecitas... ¡jijiji, gufo!, a un duro la partida. Y en las jugueterías, <b>GUANCHE WARRIORS</b>: el Mencey, el Pastor y la Mirladora contra Guayota... ¡mmm, a la orden!'],
+      [BL, 'Vente a mi casa cuando quieras y le das. Gratis, que es mía. Mi madre hace café. Y en las cafeterías y las tascas han puesto el <b>GUFO</b>, el de las navecitas... ¡jijiji, gufo!, a un duro la partida. Y en las jugueterías, <b>GUANCHE GUARRIORS</b>: el Mencey, el Pastor y la Mirladora contra Guayota... ¡mmm, a la orden!'],
       [MISSIONS.kit.CH, '¿Bencomo? ¿El del salto del pastor? Esa la pienso pasar entera.']], () => { const a = ARCADE.data(); a.invited = true; HUD.toast('La maquinita de El Blanco: búscala en su casa (cuadrado naranja en el minimapa) · lo tienes apuntado en el diario (J)', COL_, 6); }, 'Las recreativas'); }
   function near() { if (!invited() || PLAYER.car || PLAYER.interior) return null; return Math.hypot(PLAYER.x - DOOR[0], PLAYER.z - DOOR[1]) < 3.4 ? DOOR : null; }
   function use() { if (!near()) return false; ARCADE.open({ id: 'bencomo', key: 'blanco', where: 'CASA DE EL BLANCO', price: 0 }, () => HUD.toast('«Mmm... ¡brrr!» Vuelve cuando quieras, que la máquina no se va.', COL_, 3)); return true; }
@@ -9839,7 +9839,7 @@ ARCADE.GAMES.naves = (() => {
     help: (K) => `A DISPARO (MANTÉN = BEAM): ${K('f_punch')}  B MÓDULO: ${K('f_kick')}  MEJORA/MONEDA: ${K('b_pass')}  ESC SALIR` };
 })();
 
-// ============ «GUANCHE WARRIORS» (v0.82): the beat'em up of the toy shops (pay per game) ============
+// ============ «GUANCHE GUARRIORS» (v0.82): the beat'em up of the toy shops (pay per game) ============
 // Jonay (20-oct): like Golden Axe: a side-scrolling beat'em up with depth (not a platformer), several stages, and at the
 // start you choose one of 3 warriors:
 //  · EL MENCEY: the barbarian, strong and slow, with a Canarian club (garrote canario). Magic: «Ira de Achamán» (4).
@@ -10281,11 +10281,11 @@ ARCADE.GAMES.guanche = (() => {
   // ---------- title screen and the backdrop of the hi-score table
   function drawTitle(c, t) { const bg = background('canadas'); c.drawImage(bg[0], 0, 0, 960, SH); const o = -((t * 8) % 960); c.drawImage(bg[1], o, 0, 960, SH); c.drawImage(bg[1], o + 960, 0, 960, SH); c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(0, 0, SW, SH);
     c.font = '34px "Press Start 2P", monospace'; c.textAlign = 'center'; c.textBaseline = 'top';
-    for (const [s, y] of [['GUANCHE', 26], ['WARRIORS', 68]]) { c.fillStyle = '#1a0a04'; c.fillText(s, SW / 2 + 4, y + 4); const gr = c.createLinearGradient(0, y, 0, y + 34); gr.addColorStop(0, '#ffe08a'); gr.addColorStop(0.5, '#e07a2a'); gr.addColorStop(1, '#8a2a0a'); c.fillStyle = gr; c.fillText(s, SW / 2, y); }
+    for (const [s, y] of [['GUANCHE', 26], ['GUARRIORS', 68]]) { c.fillStyle = '#1a0a04'; c.fillText(s, SW / 2 + 4, y + 4); const gr = c.createLinearGradient(0, y, 0, y + 34); gr.addColorStop(0, '#ffe08a'); gr.addColorStop(0.5, '#e07a2a'); gr.addColorStop(1, '#8a2a0a'); c.fillStyle = gr; c.fillText(s, SW / 2, y); }
     c.save(); c.scale(Z * 1.3, Z * 1.3); const k = Z * 1.3; HEROES.forEach((H, i) => { const P = Math.floor(t * 1.2 + i) % 3 === 0 ? PO.smash : PO.idle; puppet(c, (SW / 2 + (i - 1) * 110) / k, 230 / k, i === 2 ? -1 : 1, i === 1 ? PO.atk1 : P, H.look, null); }); c.restore(); // (the pole in magic pose crossed the logo)
     A.txt(c, 'GUAYOTA HA RAPTADO A MAGEC, EL SOL', SW / 2, 246, '#fff', 8, 'center'); A.txt(c, 'TRES GUERREROS SUBEN AL ECHEYDE', SW / 2, 260, '#9fd7ff', 8, 'center'); A.txt(c, '© 1496 MENCEYATO DE TAORO', SW / 2, 280, '#9fd7ff', 6, 'center'); }
   function drawBack(c, t) { const bg = background('teide'); c.drawImage(bg[0], 0, 0, 960, SH); const o = -((t * 10) % 960); c.drawImage(bg[2], o, 0, 960, SH); c.drawImage(bg[2], o + 960, 0, 960, SH); c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, 0, SW, SH); }
-  return { title: 'GUANCHE WARRIORS', sub: 'LA NOCHE DE GUAYOTA', marquee: ['#6a1a0a', '#1a0402'], titleCol: '#ffb04a', baseScore: 90000, music: { title: SONGS.title }, create, drawTitle, drawBack,
+  return { title: 'GUANCHE GUARRIORS', sub: 'LA NOCHE DE GUAYOTA', marquee: ['#6a1a0a', '#1a0402'], titleCol: '#ffb04a', baseScore: 90000, music: { title: SONGS.title }, create, drawTitle, drawBack,
     help: (K) => `A GOLPE: ${K('f_punch')}  B SALTO / MONTAR: ${K('f_kick')}  MAGIA / MONEDA: ${K('b_pass')}  ←← →→ CORRER  ESC SALIR` };
 })();
 
@@ -12532,7 +12532,7 @@ const DIARIO = (() => {
     { t: 'GUFO, AGUERE INVASION', on: () => ARC().invited, who: BL, log: REC, near: () => nearBar(),
       what: 'La máquina de los bares (GUFO: Guanche Unknown Flying Object… y en canario, un pedo): un matamarcianos de naves por el cielo de Aguere, el Teide y el mar de nubes. A dispara (mantenlo para el disparo cargado), B lanza y recoge el módulo y Q coge la mejora marcada. <b>$1 la partida</b>; cada bar tiene sus récords.',
       where: 'En las cafeterías y las tascas: en el minimapa y en el mapa (M) llevan un aro violeta alrededor de su cuadrado rojo. Pídela en la barra o en el mostrador (E).' },
-    { t: 'GUANCHE WARRIORS', on: () => ARC().invited && G().jugueterias, who: BL, log: REC, near: () => AGUA.nearestShop(),
+    { t: 'GUANCHE GUARRIORS', on: () => ARC().invited && G().jugueterias, who: BL, log: REC, near: () => AGUA.nearestShop(),
       what: 'La máquina de las jugueterías: un beat\'em up contra Guayota. Eliges al Mencey, al Pastor o a la Mirladora. A pega, B salta (y monta el lagarto), Q lanza la magia; doble toque para correr. <b>$1 la partida</b>; cada tienda tiene sus récords.',
       where: 'En las jugueterías: el robot del minimapa y del mapa (M). Pídela en la tienda (E).', icon: 'toy' },
     { t: 'Las jugueterías', on: () => G().jugueterias, who: '', log: '', near: () => AGUA.nearestShop(),
@@ -12549,7 +12549,7 @@ const DIARIO = (() => {
     { t: 'La consola GOFIO-8', on: () => ARC().console, who: '', log: '', near: () => AGUA.nearestShop(),
       what: 'La consola de la tele de tu casa. Al encenderla sale un menú con tus cartuchos: <b>{CARTS}</b>. Los cartuchos se compran en las jugueterías.', where: 'En la tele de tu casa (E delante de la tele). La juguetería más cercana, abajo.' },
     { t: 'El torneo de videojuegos', on: () => ARC().torneo, who: 'El dependiente de la juguetería', log: '',
-      what: 'Por comprarte <b>todos los cartuchos</b> eres un superfriki jugón. Para ganar el torneo hay que batir el récord de los juegos de puntos (Bencomo, GUFO y Guanche Warriors) y ganar el mundialito de Pachanga 3x3 y de Play Furbito. Mundialitos ganados: <b>{MUND}</b>.', where: 'En la GOFIO-8 de tu casa.', icon: 'chopa' },
+      what: 'Por comprarte <b>todos los cartuchos</b> eres un superfriki jugón. Para ganar el torneo hay que batir el récord de los juegos de puntos (Bencomo, GUFO y Guanche Guarriors) y ganar el mundialito de Pachanga 3x3 y de Play Furbito. Mundialitos ganados: <b>{MUND}</b>.', where: 'En la GOFIO-8 de tu casa.', icon: 'chopa' },
     { t: 'El coche patrulla de la banda', on: () => G().patrol, who: 'El alcalde, por el móvil', log: '',
       what: 'Vuestro propio coche patrulla, con el nombre de la banda y el depósito lleno.', where: 'Delante del Ayuntamiento.' },
   ];
@@ -13196,7 +13196,7 @@ const CASA = (() => {
     const kx = hw - 0.5; box(0.8, 0.95, Math.min(3, d - 3), 0xd8d2c6, kx, 0.55, 0); box(0.82, 0.05, Math.min(3, d - 3) + 0.02, 0x2a2a2a, kx, 1.05, 0); box(0.5, 0.35, 0.5, 0xc0c0c0, kx, 1.25, 0.6, { metalness: 0.8, roughness: 0.3 });
     COL.addSeg(r.x0 + kx - 0.45, r.z0 - 1.5, r.x0 + kx - 0.45, r.z0 + 1.5);
     box(0.06, 1.6, 0.06, 0x2a2a2a, tvX - 1.9, 0.9, tvZ - 0.5); const lamp = box(0.5, 0.35, 0.5, 0xfff0c0, tvX - 1.9, 1.8, tvZ - 0.5, { emissive: 0xffd28a, emissiveIntensity: 1.2 }); void lamp;
-    const post = textPlane(P.id === 'herradores' ? '¡BENCOMO!' : 'GUANCHE WARRIORS', 1.4, 0.5, '#6b2a10', '#f2c46a', 'bold 34px Arial'); post.position.set(-hw + 0.05, 2.1, 0); post.rotation.y = Math.PI / 2; g.add(post);
+    const post = textPlane(P.id === 'herradores' ? '¡BENCOMO!' : 'GUANCHE GUARRIORS', 1.4, 0.5, '#6b2a10', '#f2c46a', 'bold 34px Arial'); post.position.set(-hw + 0.05, 2.1, 0); post.rotation.y = Math.PI / 2; g.add(post);
     const win = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(3, w * 0.3), 1.3), new THREE.MeshBasicMaterial({ color: 0x8ab8e0 })); win.position.set(hw * 0.45, 1.9, hd - 0.04); win.rotation.y = Math.PI; g.add(win);
     if (w >= 11) { box(1.4, 1.9, 0.4, 0x5a3a22, hw - 0.4, 0.95, -hd + 1.4); for (let i = 0; i < 3; i++) box(1.2, 0.04, 0.35, 0x3a2a1e, hw - 0.4, 0.5 + i * 0.55, -hd + 1.4); } // a bookcase in the bigger homes
     const md = { x: 0, z: -hd + 0.05, rot: 0, h: 0, ix: 0, iz: -hd + 2.2 };

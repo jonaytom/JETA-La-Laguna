@@ -1,0 +1,6 @@
+# v0.87.1: Guanche Guarriors
+prueba_082.py
+prueba_0821.py
+prueba_083.py
+prueba_085.py
+prueba_arranque.py

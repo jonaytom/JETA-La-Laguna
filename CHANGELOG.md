@@ -3,6 +3,10 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.87.1 — 2026-10-26 — «Guanche Guarriors»
+- La máquina de las jugueterías se llama **«GUANCHE GUARRIORS»** (Jonay): pantalla de título, marquesina, la opción
+  de la juguetería, el diario, el póster del piso y la llamada de El Blanco.
+
 ## 0.87.0 — 2026-10-26 — Selecciones de basket en Pachanga 3x3
 - **Pachanga 3x3 tiene sus propias selecciones** (Jonay): entran **EE. UU., Serbia y Lituania** y salen Brasil,
   Portugal y Uruguay, que siguen en Play Furbito. Cada una con su bandera, sus dos equipaciones y jugadores parodia.

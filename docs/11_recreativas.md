@@ -10,10 +10,10 @@ siguiente.
   `RECRE` para la casa de El Blanco) y el juego 1, Bencomo (`09k_bencomo.js`, con 3 fases y Lugo como jefe).
 - **v0.81.0**: el juego 2, «Guerra de Naves» (`09l_naves.js`), en cafeterías y tascas (opción en el menú de la barra,
   `FOOD.open`, $1, récords por bar: `bar_<nombre>`).
-- **v0.82.0**: el juego 4, «Guanche Warriors» (`09m_guanche.js`), en las jugueterías (opción en el menú de la
+- **v0.82.0**: el juego 4, «Guanche Guarriors» (`09m_guanche.js`), en las jugueterías (opción en el menú de la
   tienda, `AGUA.openShop`, $1, récords por tienda: `jug_<nombre>`).
 - **Tamaños (Jonay, 20-oct)**: Guerra de Naves se dibuja a ×1, con la nave pequeña y mucha visión (como la primera
-  versión de Bencomo o menos). Guanche Warriors irá con los personajes al tamaño del Bencomo grande que se descartó
+  versión de Bencomo o menos). Guanche Guarriors irá con los personajes al tamaño del Bencomo grande que se descartó
   (unos ×2,4 sobre la pantalla de 480×336).
 - La llamada de El Blanco se dispara con `GANG.defenders`. Lo guardado está en `GANG.arcade`: `scores`, `invited`,
   `bought` y `console`.
@@ -34,11 +34,11 @@ siguiente.
 | Casa de El Blanco (le pides jugar) | **Bencomo, Acentejo's Revenge** (plataformas) | gratis |
 | Bares y cafeterías (donde ya se compra comida; ahora se entra) | **Guerra de Naves** (tipo R-Type / Nemesis) | una moneda por partida |
 | Jugueterías | Shooter tipo Metal Slug | una moneda por partida |
-| Jugueterías (Jonay, 20-oct) | **Guanche Warriors** (beat'em up tipo Golden Axe) | una moneda por partida |
+| Jugueterías (Jonay, 20-oct) | **Guanche Guarriors** (beat'em up tipo Golden Axe) | una moneda por partida |
 | **Tu piso** (la consola, comprada en la juguetería, cara) | todos los que hayas comprado en la juguetería, también **Pachanga 3x3** y **Play Furbito** | gratis |
 
 La consola, al encenderla, muestra un menú con los cartuchos que tienes. Cada juego se compra aparte en la juguetería,
-**todos** (Jonay, 20-oct): Bencomo, Guerra de Naves, Guanche Warriors, el tipo Metal Slug, Pachanga 3x3 y Play Furbito.
+**todos** (Jonay, 20-oct): Bencomo, Guerra de Naves, Guanche Guarriors, el tipo Metal Slug, Pachanga 3x3 y Play Furbito.
 
 ### Los deportes en la consola (Jonay, 20-oct)
 
@@ -130,7 +130,7 @@ La consola, al encenderla, muestra un menú con los cartuchos que tienes. Cada j
   Pendiente para pulir: una cuarta fase (la colmena por dentro), jefes más grandes y con más partes, más tipos de
   enemigo y sprites más trabajados.
 
-## Juego 3 · Shooter tipo Metal Slug (jugueterías, de pago) — v0.83 (después de Guanche Warriors)
+## Juego 3 · Shooter tipo Metal Slug (jugueterías, de pago) — v0.83 (después de Guanche Guarriors)
 
 - **Nombre provisional**: «BLANCO COMMANDO» (el favorito de El Blanco, que es exmilitar).
 - **Personaje**: un soldado pequeño y cabezón al estilo Metal Slug, que corre, salta y dispara en 8 direcciones.
@@ -147,9 +147,9 @@ La consola, al encenderla, muestra un menú con los cartuchos que tienes. Cada j
 - **Enemigos**: soldados de un ejército inventado (parodia, nada real), en varios tipos: el que corre, el del escudo,
   el bazuca, el paracaidista y el de la moto.
 
-## Juego 4 · «GUANCHE WARRIORS» (jugueterías, de pago; beat'em up tipo Golden Axe) — hecho en v0.82.0, primera versión para pulir
+## Juego 4 · «GUANCHE GUARRIORS» (jugueterías, de pago; beat'em up tipo Golden Axe) — hecho en v0.82.0, primera versión para pulir
 
-- **Nombre**: «Guanche Warriors» (Jonay, 20-oct). Beat'em up de avance lateral en profundidad, como Golden Axe: no es
+- **Nombre**: «Guanche Guarriors» (Jonay, 20-oct). Beat'em up de avance lateral en profundidad, como Golden Axe: no es
   de plataformas.
 - **Se eligen 3 personajes al empezar** (Jonay):
   - **El Mencey**: el bárbaro. Fuerte y lento, pega con un **garrote canario**, golpes que tumban y agarres.
@@ -197,7 +197,7 @@ La consola, al encenderla, muestra un menú con los cartuchos que tienes. Cada j
   `ARCADE.resume()`. v0.87: cada cartucho tiene sus 8 selecciones (`SPORT[id].teams`; basket con EE. UU., Serbia y
   Lituania) y cada selección un nivel por deporte (`lvB` / `lvF`). Con todos los cartuchos: «¡superfriki jugón!» y el torneo.
 - **Torneo de videojuegos** (Jonay, 20-oct), cuando tienes todos los cartuchos:
-  - Superar el récord de cada juego de puntos (Bencomo, Guerra de Naves, Guanche Warriors…).
+  - Superar el récord de cada juego de puntos (Bencomo, Guerra de Naves, Guanche Guarriors…).
   - Ganar el mundialito de Pachanga 3x3 y de Play Furbito.
   - Al batir un récord, iniciales en la tabla.
 

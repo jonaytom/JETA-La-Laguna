@@ -166,7 +166,7 @@ const AGUA = (() => {
   function nearFountain() { if (PLAYER.car || PLAYER.interior || !RIFLE.has) return null; for (const f of PK2.fountains) if (Math.hypot(PLAYER.x - f[0], PLAYER.z - f[1]) < (f[2] || 4.6)) return f; return null; }
   const PRICE = 350, BALLS = 20;
   function openShop(s) {
-    const items = []; if (ARCADE.data().invited) items.push(['arc', '🕹 Echar una partida a la máquina: <b>GUANCHE WARRIORS</b> · <b>$1</b> la partida']); // v0.82: the toy shops' machine
+    const items = []; if (ARCADE.data().invited) items.push(['arc', '🕹 Echar una partida a la máquina: <b>GUANCHE GUARRIORS</b> · <b>$1</b> la partida']); // v0.82: the toy shops' machine
     // v0.83: the GOFIO-8 console for the TV at home and its cartridges (once El Blanco has told you about the arcades)
     const A_ = ARCADE.data(), CART = { bencomo: 90, naves: 120, guanche: 150, pachanga: 140, furbito: 140 }; // v0.85: + the two sports cartridges
     if (A_.invited && !A_.console) items.push(['console', '🎮 Consola <b>GOFIO-8</b> para la tele de casa · <b>$1.200</b>']);

@@ -13,7 +13,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 ### Minijuegos: controles, pausa y sonido
 
 - [ ] ◐ **Pausa con la P en TODOS los minijuegos** (Jonay, 20-oct): la P pausa (cartel «PAUSA», música y reloj
-  parados) y otra pulsación reanuda. Basket, fútbol, pelea 2D, Bencomo, GUFO, Guanche Warriors y los que vengan.
+  parados) y otra pulsación reanuda. Basket, fútbol, pelea 2D, Bencomo, GUFO, Guanche Guarriors y los que vengan.
 - [ ] ◐ **Basket y fútbol: más efectos del público que música** (Jonay, 20-oct). En el basket, el típico **organillo**
   de pabellón (las ráfagas de «¡de-fen-sa!», el «charge»); en el fútbol, el **rugido del público**: el murmullo de
   fondo, el «¡uuuh!» en las ocasiones y el furor con los goles. Vale para las canchas y para Pachanga / Play Furbito.
@@ -28,7 +28,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 - [ ] ● **PAQUETE «RECREATIVAS Y MINIJUEGOS» (Jonay, 19-oct: «para acometer YA», plan v0.79 → v0.84)**:
   Hecho en v0.80.0: el motor de recreativas y BENCOMO en casa de El Blanco (llamada tras «Defensores»).
   Hecho en v0.81.0: **GUERRA DE NAVES** en cafeterías y tascas (primera versión, para pulir).
-  Hecho en v0.82.0: **GUANCHE WARRIORS** en las jugueterías (primera versión, para pulir).
+  Hecho en v0.82.0: **GUANCHE GUARRIORS** en las jugueterías (primera versión, para pulir).
   Hecho en v0.83.0: la inmobiliaria, los pisos y la consola GOFIO-8 con su menú de cartuchos.
   Hecho en v0.84.0: el basket a 3 contra 3.
   Hecho en v0.85.0: Pachanga 3x3 y Play Furbito (el mundialito de 8 selecciones), el «superfriki jugón» y la
@@ -46,16 +46,16 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
     - Jonay: cuando lo compras todo, en la juguetería te dicen que eres un «superfriki jugón» y que puedes participar
       en el torneo. Pendiente: el premio.
   Jonay probará todas las máquinas y dirá impresiones.
-  - Jonay, 20-oct: los nombres son «Guerra de Naves» (el tipo R-Type) y «Guanche Warriors» (el tipo Golden Axe:
-    beat'em up, no plataformas, con varias fases). En Guanche Warriors se elige personaje al empezar:
+  - Jonay, 20-oct: los nombres son «Guerra de Naves» (el tipo R-Type) y «Guanche Guarriors» (el tipo Golden Axe:
+    beat'em up, no plataformas, con varias fases). En Guanche Guarriors se elige personaje al empezar:
     - El Mencey: el bárbaro, con garrote canario.
     - El Pastor: más ágil y menos fuerte.
     - La Mirladora: una chica que hace magia; menos física, pero ágil.
     Propuesta completa en `docs/11_recreativas.md`.
-  - Jonay, 20-oct: controles de siempre (Espacio, clic izquierdo y derecho). Guanche Warriors: personajes al tamaño
+  - Jonay, 20-oct: controles de siempre (Espacio, clic izquierdo y derecho). Guanche Guarriors: personajes al tamaño
     del Bencomo grande descartado. Naves: pequeño, con mucha visión.
   - Jonay, 20-oct:
-    - **Guanche Warriors se juega en las jugueterías** (de pago).
+    - **Guanche Guarriors se juega en las jugueterías** (de pago).
     - En la juguetería se pueden comprar **todos los juegos** y la **consola**, para jugarlos en casa.
     - **Pisos**: el pisito de alquiler y, mejor aún, **varios pisos en venta**. Eliges el que te permita tu dinero, y
       los pisos son caros.
@@ -106,7 +106,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
         - Varazos con el **banot**: lanza de madera con la punta endurecida al fuego.
         - Comida: el plátano llegó después, así que quizá **gofio en vez de plátanos** (también comían cabra y
           cebada).
-    - Otro beat'em up tipo Golden Axe: **Guanche Warriors**.
+    - Otro beat'em up tipo Golden Axe: **Guanche Guarriors**.
   - **Inmobiliaria y pisito**:
     - En la inmobiliaria se alquila tu pisito: una casita chula cerca del Pasaje Teide.
     - En el piso, una consola comprada en la juguetería (vale una pasta). Los juegos se compran también en la
@@ -114,6 +114,14 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Gráficos de los minijuegos
 
+- [ ] ● **Bencomo, Guanche Guarriors y el fútbol: personajes nuevos** (Jonay, 26-oct). Los protagonistas basados en
+  las estatuas de los menceyes de la plaza de Candelaria (pelo largo con cinta, barba, collar, tamarco sobre el hombro,
+  taparrabos, descalzos, banot o garrote), y los futbolistas. Propuestas para elegir en
+  `docs/propuestas/sprites_guanches.html` (Artifact «Guanches y futbolistas»):
+  - Bencomo: B1 bronce de Candelaria, B2 mencey a color, B3 mencey semicabezón, B4 semicabezón de bronce.
+  - Guanche Guarriors (Mencey, Pastor, Mirladora): G1 proporción normal, G2 un poco cabezones.
+  - Fútbol: F1 de lado como el basket (cambiar la cámara del fútbol a lateral), F2 desde arriba pero a 48 px de frente
+    y de espalda (acercar la cámara), F3 como ahora (tipo Sensible) con figuras mejoradas.
 - [ ] ● **Repasar el pixel art de los jugadores de todos los minijuegos** (Jonay, 26-oct): no le gustan los personajes
   de ninguno. Se empieza por el basket.
   - Ejemplos que le gustan: póster «Pixel Slam Dunk»; un mate de los Suns; uno de los Raptors; uno de los Lakers
@@ -175,7 +183,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
     - **Recreativas**: una chapa por juego con su título.
       - «Venganza de Acentejo»: pasarse Bencomo.
       - «As de Aguere»: pasarse Guerra de Naves.
-      - «Magec Libre»: pasarse Guanche Warriors.
+      - «Magec Libre»: pasarse Guanche Guarriors.
       - «Superfriki Jugón»: todos los cartuchos.
       - «Campeón del Torneo»: el torneo de videojuegos.
     - **Historia**:
@@ -371,7 +379,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   repite en la 0.85.1 (va junto con la subida de la 0.82).
 - [ ] ◐ **Auditorías v0.82.1 y v0.82.2** (20-oct, APTO CON AVISOS):
   - Pintar un fotograma: 31,3 → 34,9 → 35,3 ms. El arranque: 9,1 → 9,9 → 10,0 s. Se repite en dos pasadas, así que
-    no parece ruido. Mirar qué lo sube: la 0.82.1 solo tocó el diario, el jefe de Bencomo y Guanche Warriors.
+    no parece ruido. Mirar qué lo sube: la 0.82.1 solo tocó el diario, el jefe de Bencomo y Guanche Guarriors.
   - `12h_diario.js` baja de nota de A a B: las líneas de HTML del diario son muy largas; partirlas.
 - [ ] ◐ **Auditoría 0.76.0** (APTO CON AVISOS; llamadas 679 → 624, pintar 45,5 → 44,9 ms, arranque 13,7 → 13,0 s,
       memoria casi igual, sin fugas): `makeFire()` (`09i_agua.js:17`) crea un cilindro nuevo por fuego (compartir la
@@ -520,7 +528,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
       Pintar un fotograma 31 → 42 ms en la 2.ª pasada del mismo día con el mismo mapa: probablemente ruido (solo cambió el baloncesto).
       Agente revisor de jugabilidad: 130 avisos, 32 nuevos (ver `reportes/ULTIMO.md` del auditor). No tocar hasta que Jonay lo diga.
 
-- [x] (v0.83.2) **Guanche Warriors, golpes nuevos** (Jonay, 20-oct):
+- [x] (v0.83.2) **Guanche Guarriors, golpes nuevos** (Jonay, 20-oct):
   - **Atacar corriendo**: un salto hacia delante con una patada, en vez de la embestida.
   - **Los lagartos tienen que atacar**:
     - Mordiscos, alargando el cuello.
@@ -537,7 +545,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   - En el diario, «la más cercana» con el botón de ruta del GPS.
 - [x] (v0.82.1) **Diario (J): todo lo que te cuentan por el móvil también sale en el diario** (Jonay, 20-oct):
   - Por ejemplo, lo de los maleantes y lo de las recreativas que explica El Blanco: Bencomo en su casa, Guerra de
-    Naves en los bares y Guanche Warriors en las jugueterías. También todas las cosas de ese tipo.
+    Naves en los bares y Guanche Guarriors en las jugueterías. También todas las cosas de ese tipo.
   - **Lo que todavía no es accesible no se ve.** Nada de «aún no» ni de entradas pendientes con nombre: el diario se
     va descubriendo según puedes acceder a las cosas.
   - Cada cosa del móvil, con su entrada: quién te lo dijo, qué es y dónde está.

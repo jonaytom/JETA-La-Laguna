@@ -1,0 +1,288 @@
+<title>Guanches y futbolistas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow:wght@400;500;700&display=swap">
+<style>
+/* Layout: the same dark gym-at-night look as the basket proposal; three sections (Bencomo, Guanche Guarriors, football),
+   each a grid of cards with one pixel canvas per proposal */
+:root {
+  --bg: #120d16; --panel: #1d1622; --line: #3a2c40; --fg: #f1e9df; --muted: #b7a9b9; --accent: #ff8a3a; --gold: #ffd400; --bronze: #c48a4a;
+  --f-display: "Press Start 2P", "Courier New", monospace; --f-body: "Barlow", "Segoe UI", system-ui, sans-serif;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font: 400 16px/1.5 var(--f-body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 28px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 22px; }
+h1 { font: 400 clamp(15px, 2.6vw, 22px)/1.5 var(--f-display); color: var(--gold); margin: 0; text-wrap: balance; }
+h2.sec { font: 400 clamp(12px, 2vw, 15px)/1.5 var(--f-display); color: var(--bronze); margin: 18px 0 0; text-wrap: balance; }
+.intro, .secp { color: var(--muted); max-width: 72ch; margin: 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 18px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: grid; gap: 10px; min-width: 0; align-content: start; }
+.card header { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.tag { font: 400 12px/1 var(--f-display); color: var(--bg); background: var(--accent); padding: 6px 8px; border-radius: 3px; }
+.card h3 { font: 400 12px/1.4 var(--f-display); margin: 0; color: var(--fg); }
+.card p { margin: 0; color: var(--muted); font-size: 15px; }
+canvas { width: 100%; height: auto; image-rendering: pixelated; image-rendering: crisp-edges; display: block; border-radius: 3px; background: #000; }
+.legend { display: grid; font: 400 9px/1.3 var(--f-display); color: var(--muted); text-align: center; letter-spacing: .04em; }
+.faces { width: auto; height: clamp(110px, 22vw, 180px); max-width: 100%; justify-self: start; }
+.foot { color: var(--muted); font-size: 14px; max-width: 72ch; }
+</style>
+
+<div class="wrap">
+  <h1>Bencomo, Guanche Guarriors y el fútbol: propuestas</h1>
+  <p class="intro">Hechos con el mismo método que el jugador de basket que elegiste (el «A++ semicabezón 120»): esqueleto, piezas con músculos, cuatro tonos por color y la cara píxel a píxel. Los guanches están sacados de las estatuas de los menceyes de la plaza de Candelaria: pelo largo con cinta, barba, collar, el tamarco de piel sobre el hombro, taparrabos, descalzos y con su banot o su garrote. Elige uno de cada sección (o mezclas) y lo pulimos.</p>
+
+  <h2 class="sec">1 · Bencomo, el protagonista</h2>
+  <p class="secp">En cada tarjeta: quieto como la estatua, corriendo, el varazo y el salto con la vara. Debajo, la cara de cerca.</p>
+  <div class="grid" id="g-bencomo"></div>
+
+  <h2 class="sec">2 · Guanche Guarriors: el Mencey, el Pastor y la Mirladora</h2>
+  <p class="secp">Los tres héroes en las dos versiones que más pegan: proporción normal y un poco cabezones. El Mencey con garrote canario, el Pastor con la vara del salto del pastor y la Mirladora con la magia en la mano.</p>
+  <div class="grid" id="g-guarriors"></div>
+
+  <h2 class="sec">3 · Los futbolistas de Play Furbito y de las canchas</h2>
+  <p class="secp">El fútbol se ve ahora desde arriba, con el campo en vertical, y los jugadores son muy pequeños. Para que luzcan hay tres caminos; cada uno cambia más o menos el juego.</p>
+  <div class="grid" id="g-futbol"></div>
+  <p class="foot">Todos salen del mismo esqueleto: las animaciones (correr, saltar, golpear, chutar) se hacen una vez y valen para cualquier personaje y equipación.</p>
+</div>
+
+<script>
+(() => {
+  // ---------- colour helpers ----------
+  const hex = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+  const mix = (a, b, t) => [0, 1, 2].map((i) => Math.round(a[i] + (b[i] - a[i]) * t));
+  function tones(base, warm, bronze) { const c = hex(base), dk = hex(bronze ? '#1a2418' : warm ? '#3e160e' : '#20123a'), hl = hex(bronze ? '#bfe0b0' : warm ? '#ffe9cc' : '#fff4e2');
+    return { b: c, s: mix(c, dk, 0.36), d: mix(c, dk, 0.6), h: mix(c, hl, bronze ? 0.34 : 0.3) }; }
+  const lerp2 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+  const perp = (a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1; return [-dy / l, dx / l]; };
+
+  // ---------- poses (units: body height = 1, feet at y = 0, facing right) ----------
+  const P = {
+    estatua: { hd: [0.01, 0.905], nk: [0, 0.825], sN: [0.05, 0.79], eN: [0.09, 0.64], wN: [0.12, 0.52], sF: [-0.06, 0.79], eF: [-0.11, 0.64], wF: [-0.1, 0.5],
+      hN: [0.03, 0.5], kN: [0.05, 0.27], aN: [0.04, 0.03], tN: [0.12, 0.01], hF: [-0.04, 0.5], kF: [-0.04, 0.27], aF: [-0.06, 0.03], tF: [0.02, 0.01], tool: [[0.12, 0.0], [0.12, 1.16]] },
+    runA: { hd: [0.07, 0.89], nk: [0.05, 0.815], sN: [0.08, 0.78], eN: [-0.02, 0.65], wN: [0.05, 0.56], sF: [-0.02, 0.78], eF: [0.15, 0.67], wF: [0.23, 0.74],
+      hN: [0.05, 0.5], kN: [0.17, 0.31], aN: [0.21, 0.06], tN: [0.29, 0.03], hF: [-0.02, 0.5], kF: [-0.06, 0.3], aF: [-0.2, 0.22], tF: [-0.16, 0.16], tool: [[-0.25, 0.42], [0.35, 0.7]] },
+    runB: { hd: [0.07, 0.92], nk: [0.05, 0.845], sN: [0.08, 0.81], eN: [0.17, 0.7], wN: [0.25, 0.77], sF: [-0.02, 0.81], eF: [-0.04, 0.68], wF: [0.02, 0.58],
+      hN: [0.05, 0.53], kN: [-0.04, 0.33], aN: [-0.18, 0.25], tN: [-0.14, 0.19], hF: [-0.02, 0.53], kF: [0.15, 0.34], aF: [0.2, 0.09], tF: [0.28, 0.06], tool: [[-0.1, 0.55], [0.5, 0.92]] },
+    golpe: { hd: [0.06, 0.88], nk: [0.04, 0.8], sN: [0.08, 0.77], eN: [0.2, 0.8], wN: [0.31, 0.86], sF: [-0.03, 0.77], eF: [-0.12, 0.66], wF: [-0.08, 0.55],
+      hN: [0.04, 0.48], kN: [0.18, 0.28], aN: [0.26, 0.03], tN: [0.34, 0.01], hF: [-0.04, 0.48], kF: [-0.1, 0.27], aF: [-0.22, 0.04], tF: [-0.15, 0.01], tool: [[0.12, 1.02], [0.62, 0.5]] },
+    salto: { hd: [0.05, 0.9], nk: [0.03, 0.82], sN: [0.07, 0.79], eN: [0.12, 0.92], wN: [0.13, 1.03], sF: [-0.04, 0.79], eF: [0.0, 0.92], wF: [0.06, 1.0],
+      hN: [0.03, 0.5], kN: [0.16, 0.42], aN: [0.05, 0.26], tN: [0.12, 0.23], hF: [-0.03, 0.5], kF: [0.1, 0.38], aF: [-0.02, 0.22], tF: [0.05, 0.18], tool: [[-0.3, -0.12], [0.3, 1.22]], air: 0.16 },
+    magia: { hd: [0.03, 0.905], nk: [0.01, 0.825], sN: [0.06, 0.79], eN: [0.18, 0.78], wN: [0.3, 0.84], sF: [-0.05, 0.79], eF: [-0.12, 0.7], wF: [-0.07, 0.62],
+      hN: [0.03, 0.5], kN: [0.08, 0.27], aN: [0.1, 0.03], tN: [0.18, 0.01], hF: [-0.04, 0.5], kF: [-0.06, 0.27], aF: [-0.1, 0.03], tF: [-0.02, 0.01], orb: [0.36, 0.88] },
+    // football
+    chut: { hd: [0.02, 0.9], nk: [0.0, 0.82], sN: [0.04, 0.79], eN: [0.12, 0.7], wN: [0.2, 0.68], sF: [-0.06, 0.79], eF: [-0.16, 0.72], wF: [-0.24, 0.66],
+      hN: [0.03, 0.5], kN: [0.2, 0.36], aN: [0.36, 0.28], tN: [0.44, 0.3], hF: [-0.04, 0.5], kF: [-0.03, 0.27], aF: [-0.06, 0.03], tF: [0.03, 0.01], ball: [0.47, 0.27], look: 0.2 },
+    cabezazo: { hd: [0.06, 0.93], nk: [0.03, 0.85], sN: [0.07, 0.81], eN: [0.14, 0.7], wN: [0.12, 0.6], sF: [-0.05, 0.81], eF: [-0.14, 0.72], wF: [-0.18, 0.64],
+      hN: [0.03, 0.52], kN: [0.12, 0.34], aN: [0.04, 0.12], tN: [0.11, 0.09], hF: [-0.04, 0.52], kF: [-0.1, 0.33], aF: [-0.2, 0.15], tF: [-0.14, 0.11], ball: [0.17, 1.03], look: -0.4, air: 0.12 },
+    portero: { hd: [0.25, 0.42], nk: [0.17, 0.42], sN: [0.15, 0.46], eN: [0.3, 0.55], wN: [0.42, 0.62], sF: [0.15, 0.38], eF: [0.3, 0.42], wF: [0.42, 0.5],
+      hN: [-0.17, 0.4], kN: [-0.33, 0.44], aN: [-0.5, 0.42], tN: [-0.55, 0.47], hF: [-0.17, 0.36], kF: [-0.32, 0.32], aF: [-0.48, 0.3], tF: [-0.53, 0.34], ball: [0.48, 0.58], air: 0.12, flat: true },
+    // front and back (the football pitch is vertical)
+    frente: { hd: [0, 0.905], nk: [0, 0.825], sN: [0.09, 0.79], eN: [0.13, 0.64], wN: [0.13, 0.5], sF: [-0.09, 0.79], eF: [-0.13, 0.64], wF: [-0.13, 0.5],
+      hN: [0.05, 0.5], kN: [0.06, 0.27], aN: [0.06, 0.03], tN: [0.07, 0.0], hF: [-0.05, 0.5], kF: [-0.06, 0.29], aF: [-0.07, 0.06], tF: [-0.08, 0.03], front: 1 },
+    espalda: { hd: [0, 0.905], nk: [0, 0.825], sN: [0.09, 0.79], eN: [0.14, 0.65], wN: [0.13, 0.52], sF: [-0.09, 0.79], eF: [-0.13, 0.64], wF: [-0.12, 0.5],
+      hN: [0.05, 0.5], kN: [0.06, 0.29], aN: [0.07, 0.06], tN: [0.08, 0.03], hF: [-0.05, 0.5], kF: [-0.06, 0.27], aF: [-0.06, 0.03], tF: [-0.07, 0.0], front: -1 } };
+  const lerpPose = (a, b, t) => { const o = {}; for (const k in a) o[k] = Array.isArray(a[k]) && Array.isArray(a[k][0]) ? a[k].map((p, i) => lerp2(p, b[k][i], t)) : Array.isArray(a[k]) ? lerp2(a[k], b[k], t) : a[k]; return o; };
+
+  // ---------- the renderer ----------
+  // Every part goes into its own mask (thresholded, no soft edges), stacked by depth in an id buffer, then shaded per pixel
+  // (light from the top left: shadow on the bottom-right edge of each part, occlusion where a part in front touches it,
+  // a highlight on the top-left edge), outlined in the darkest tone of its colour, and finished with the details (face,
+  // number, muscles, necklace...) painted only where their part is still visible.
+  function render(out, ox, oy, st, pose, who) {
+    const H = st.H, W = out.width, Hh = out.height, u = H, BK = st.bodyK || 1, air = (pose.air || 0) * BK, FR = pose.front || 0;
+    const X = (p) => ox + p[0] * u, Y = (p) => oy - (p[1] + air) * u;
+    let J = pose; const L = (st.limb || 1) * (who.slim ? 0.86 : 1), r = st.head * (who.slim ? 0.94 : 1);
+    if (BK < 1) { J = {}; for (const k in pose) { const v = pose[k]; J[k] = !Array.isArray(v) || k === 'hd' ? v : Array.isArray(v[0]) ? v.map((p) => [p[0] * 0.96, p[1] * BK]) : [v[0] * 0.96, v[1] * BK]; }
+      J.hd = pose.flat ? [J.nk[0] + r * 0.9, J.nk[1]] : [J.nk[0] + (FR ? 0 : 0.02), J.nk[1] + r * 1.02]; }
+    const BR = !!who.bronze; const O = who.outfit;
+    const col = (k, d) => who[k] || d;
+    const mats = { skin: [who.skin, 1], skinF: [who.skin, 1], ear: [who.skin, 1], top: [col('top', '#c8102e'), 0], trim: [col('trim', '#ffc400'), 0], bottom: [col('bottom', '#1d2a6b'), 0],
+      sock: [col('sock', '#f2f2f2'), 0], sockF: [col('sock', '#f2f2f2'), 0], shoe: [col('shoe', '#111111'), 0], shoeF: [col('shoe', '#111111'), 0], sole: [col('sole', '#e8e4dc'), 0], soleF: [col('sole', '#e8e4dc'), 0],
+      cloak: [col('cloak', '#7a4a26'), 1], cloakF: [col('cloak', '#7a4a26'), 1], cord: [col('cord', '#d8c8a0'), 0], hair: [who.hair, 0], hairL: [who.hair, 0], beard: [who.hair, 0],
+      wood: [col('wood', '#8a5a2a'), 1], ball: ['#f2f2f2', 0], orb: ['#7fe0ff', 0] };
+    if (BR) for (const k in mats) if (k !== 'ball' && k !== 'orb') mats[k] = [k.startsWith('hair') || k === 'beard' ? '#5a4632' : k.startsWith('cloak') ? '#6e5a3c' : k === 'wood' ? '#4a3a28' : '#8a6a44', 1];
+    if (O === 'basket') mats.ball = ['#e0701c', 1];
+    const T = {}; for (const m in mats) { T[m] = tones(mats[m][0], mats[m][1], BR); if (m.endsWith('F')) for (const k in T[m]) T[m][k] = mix(T[m][k], [24, 12, 30], 0.2); }
+    const ua = 0.06 * L, fa = 0.05 * L, th = 0.09 * L, sh = 0.06 * L;
+    const cap = (a, b, w0, w1) => (g) => { const n = perp(a, b), A = [X(a), Y(a)], B = [X(b), Y(b)], r0 = Math.max(0.6, (w0 * u) / 2), r1 = Math.max(0.6, (w1 * u) / 2);
+      g.beginPath(); g.arc(A[0], A[1], r0, 0, 7); g.fill(); g.beginPath(); g.arc(B[0], B[1], r1, 0, 7); g.fill();
+      g.beginPath(); g.moveTo(A[0] + n[0] * r0, A[1] - n[1] * r0); g.lineTo(B[0] + n[0] * r1, B[1] - n[1] * r1); g.lineTo(B[0] - n[0] * r1, B[1] + n[1] * r1); g.lineTo(A[0] - n[0] * r0, A[1] + n[1] * r0); g.fill(); };
+    const ell = (c, rx, ry, rot = 0) => (g) => { g.beginPath(); g.ellipse(X(c), Y(c), Math.max(0.6, rx * u), Math.max(0.6, ry * u), rot, 0, 7); g.fill(); };
+    const line = (a, b, w) => (g) => { g.lineCap = 'round'; g.lineWidth = Math.max(1, w * u); g.beginPath(); g.moveTo(X(a), Y(a)); g.lineTo(X(b), Y(b)); g.stroke(); };
+    const poly = (pts) => (g) => { g.beginPath(); pts.forEach((p, i) => (i ? g.lineTo(X(p), Y(p)) : g.moveTo(X(p), Y(p)))); g.closePath(); g.fill(); };
+    const multi = (...fs) => (g) => fs.forEach((f) => f && f(g));
+    const parts = [];
+    const cxm = (J.sN[0] + J.sF[0]) / 2, Wd = (p, k) => [cxm + (p[0] - cxm) * k, p[1]], SW = FR ? 1.15 : 1.5, HW = FR ? 1.0 : 1.1;
+    const shN = Wd(J.sN, SW * 0.86), shF = Wd(J.sF, SW * 0.86);
+    const sleeves = O === 'futbol';
+    const arm = (s, e, w, far) => { const sk = far ? 'skinF' : 'skin'; const n = perp(s, e), mid = lerp2(s, e, 0.42);
+      parts.push([sk, multi(cap(s, e, ua * 1.3, ua * 0.82), ell([mid[0] + n[0] * ua * 0.22, mid[1] + n[1] * ua * 0.22], ua * 0.42, ua * 0.32, -Math.atan2(e[1] - s[1], e[0] - s[0])), cap(e, w, fa * 1.12, fa * 0.7), ell(w, 0.034 * L, 0.03 * L))]);
+      if (sleeves) parts.push(['top', cap(s, lerp2(s, e, 0.55), ua * 1.45, ua * 1.25)]);
+      if ((O === 'guanche') && !far) parts.push(['cord', cap(lerp2(s, e, 0.3), lerp2(s, e, 0.36), ua * 1.12, ua * 1.08)]); // the arm band of the statue
+      if (O === 'guanche' && !far) parts.push(['cord', cap(lerp2(w, e, 0.1), lerp2(w, e, 0.18), fa * 0.9, fa * 0.92)]); };
+    const leg = (h, k, a, t, far) => { const sk = far ? 'skinF' : 'skin', so = far ? 'sockF' : 'sock', sho = far ? 'shoeF' : 'shoe', sl = far ? 'soleF' : 'sole';
+      const calf = lerp2(k, a, 0.38); parts.push([sk, multi(cap(h, k, th * 1.05, sh * 1.0), cap(k, calf, sh * 0.95, sh * 1.18), cap(calf, a, sh * 1.18, sh * 0.62))]);
+      const heel = lerp2(a, t, -0.18);
+      if (O === 'guanche' || O === 'mirladora') { parts.push([sk, multi(cap(heel, t, 0.05 * L, 0.04 * L), cap(lerp2(a, k, 0.05), heel, 0.045 * L, 0.045 * L))]); if (!far) parts.push(['cord', cap(lerp2(a, k, 0.1), lerp2(a, k, 0.14), sh * 0.7, sh * 0.72)]); return; }
+      const sockTop = O === 'futbol' ? 0.86 : 0.28; parts.push([so, cap(lerp2(a, k, 0.02), lerp2(a, k, sockTop), sh * 0.8, sh * (O === 'futbol' ? 1.02 : 0.86))]);
+      if (O === 'futbol' && !far) parts.push(['trim', cap(lerp2(a, k, 0.78), lerp2(a, k, 0.82), sh * 1.02, sh * 1.04)]);
+      parts.push([sho, multi(cap(heel, t, 0.06 * L, 0.046 * L), cap(lerp2(a, k, 0.04), heel, 0.055 * L, 0.055 * L))]);
+      const n = perp(heel, t); const dn = (p, k2) => [p[0] - n[0] * k2, p[1] - n[1] * k2]; parts.push([sl, line(dn(heel, 0.024 * L), dn(t, 0.02 * L), 0.014 * L)]); };
+    // long hair behind the neck (guanches)
+    const hd = J.hd, lk = pose.look || 0;
+    if (who.hs === 'long') parts.push(['hairL', poly([[hd[0] - r * 0.95, hd[1] + r * 0.2], [hd[0] + r * 0.1, hd[1] + r * 0.4], [hd[0] + r * 0.05, hd[1] - r * 1.9], [hd[0] - r * 1.15, hd[1] - r * 2.1]])]);
+    // the cloak (tamarco) hangs from the far shoulder, behind the body
+    if (who.cloak && O !== 'mirladora') parts.push(['cloakF', poly([Wd(J.sF, SW), [J.nk[0] + 0.01, J.nk[1] - 0.02], [J.hF[0] - 0.02, J.hF[1] - 0.12], lerp2(J.hF, J.kF, 0.7), [lerp2(J.hF, J.kF, 0.7)[0] - 0.12, lerp2(J.hF, J.kF, 0.7)[1] + 0.05], [Wd(J.sF, SW)[0] - 0.08, J.sF[1] - 0.2]])]);
+    arm(shF, J.eF, J.wF, true);
+    leg(J.hF, J.kF, J.aF, J.tF, true);
+    if (pose.ball && pose.ball[0] < J.hF[0]) parts.push(['ball', ell(pose.ball, 0.055, 0.055)]);
+    // torso: a V; a jersey (basket: tank top; football: with a collar) or bare chest (guanches) or the tamarco dress
+    const TP = [[J.nk[0] - 0.035, J.nk[1] - 0.005], [J.nk[0] + 0.035, J.nk[1] - 0.005], Wd([J.sN[0] + 0.01, J.sN[1] - 0.005], SW), Wd([J.sN[0] - 0.005, J.sN[1] - 0.1], SW * 0.92), Wd([J.hN[0] + 0.035, J.hN[1] + 0.02], HW), Wd([J.hF[0] - 0.035, J.hF[1] + 0.02], HW), Wd([J.sF[0] + 0.005, J.sF[1] - 0.1], SW * 0.92), Wd([J.sF[0] - 0.01, J.sF[1] - 0.005], SW)];
+    parts.push(['skin', multi(cap(J.nk, [hd[0] - 0.01, hd[1] - 0.03], 0.058, 0.05), ell(shN, ua * 0.78, ua * 0.66), ell(shF, ua * 0.78, ua * 0.66))]);
+    if (O === 'guanche') parts.push(['skin', poly(TP)]);
+    else if (O === 'mirladora') parts.push(['cloak', poly([TP[0], TP[1], TP[2], TP[3], lerp2(J.hN, J.kN, 0.85), [lerp2(J.hF, J.kF, 0.85)[0] - 0.04, lerp2(J.hF, J.kF, 0.85)[1]], TP[6], TP[7]])]);
+    else parts.push(['top', poly(sleeves ? TP.map((p, i) => (i === 3 || i === 6 ? [p[0], p[1] + 0.06] : p)) : TP)]);
+    if (O === 'basket') parts.push(['trim', multi(line([J.nk[0] - 0.035, J.nk[1] - 0.005], [J.nk[0] + 0.004, J.nk[1] - 0.065], 0.014), line([J.nk[0] + 0.004, J.nk[1] - 0.065], [J.nk[0] + 0.035, J.nk[1] - 0.005], 0.014), line(TP[2], TP[3], 0.014), line(TP[7], TP[6], 0.012))]);
+    if (O === 'futbol') parts.push(['trim', multi(line([J.nk[0] - 0.035, J.nk[1] - 0.005], [J.nk[0] + 0.035, J.nk[1] - 0.005], 0.02), line(TP[4], TP[5], 0.012))]);
+    // bottom: baggy basket shorts, short football shorts, the guanche loincloth with its front flap
+    if (O === 'basket') { const hemN = lerp2(J.hN, J.kN, 0.92), hemF = lerp2(J.hF, J.kF, 0.92), tw = th * 1.5; parts.push(['bottom', multi(cap(J.hF, hemF, tw, tw * 0.95), cap(J.hN, hemN, tw, tw * 0.95), line([J.hF[0] - 0.02, J.hF[1] + 0.03], [J.hN[0] + 0.02, J.hN[1] + 0.03], 0.07))]); }
+    else if (O === 'futbol') { const hemN = lerp2(J.hN, J.kN, 0.5), hemF = lerp2(J.hF, J.kF, 0.5), tw = th * 1.35; parts.push(['bottom', multi(cap(J.hF, hemF, tw, tw * 0.95), cap(J.hN, hemN, tw, tw * 0.95), line([J.hF[0] - 0.02, J.hF[1] + 0.03], [J.hN[0] + 0.02, J.hN[1] + 0.03], 0.07))]); }
+    else if (O === 'guanche') { const fl = lerp2(J.hN, J.kN, 0.5); parts.push(['bottom', multi(cap(J.hF, lerp2(J.hF, J.kF, 0.18), th * 1.25, th * 1.15), cap(J.hN, lerp2(J.hN, J.kN, 0.18), th * 1.25, th * 1.15), line([J.hF[0] - 0.03, J.hF[1] + 0.02], [J.hN[0] + 0.03, J.hN[1] + 0.02], 0.08), poly([[J.hN[0] + 0.04, J.hN[1] - 0.01], [J.hN[0] - 0.05, J.hN[1] - 0.01], [fl[0] - 0.02, fl[1]], [fl[0] + 0.05, fl[1] + 0.02]]))]);
+      parts.push(['cord', line([J.hF[0] - 0.04, J.hF[1] + 0.05], [J.hN[0] + 0.04, J.hN[1] + 0.05], 0.012)]); }
+    leg(J.hN, J.kN, J.aN, J.tN, false);
+    // the strap of the tamarco across the chest (the statue)
+    if (who.cloak && O === 'guanche') parts.push(['cloak', multi(line(Wd(J.sF, SW * 0.9), [J.hN[0] + 0.03, J.hN[1] + 0.08], 0.03), ell(Wd(J.sF, SW * 0.95), 0.05, 0.035))]);
+    // head: oval skull, jaw forward (or a front face), hair, ear, nose
+    const front = FR === 1, backv = FR === -1;
+    if (FR) parts.push(['skin', multi(ell(hd, r * 0.92, r * 1.02), ell([hd[0], hd[1] - r * 0.45], r * 0.66, r * 0.5))]);
+    else parts.push(['skin', multi(ell(hd, r * 0.9, r * 1.04, -lk * 0.4), ell([hd[0] + r * 0.32, hd[1] - r * 0.5 + lk * r * 0.2], r * 0.55, r * 0.44, -lk * 0.4))]);
+    parts.push(['hair', (g) => { const cx = X(hd), cy = Y(hd), R = r * u; g.save(); g.translate(cx, cy); g.rotate(FR ? 0 : lk * 0.6);
+      g.beginPath(); if (backv) g.rect(-2 * R, -2 * R, 4 * R, 2.9 * R); else if (front) g.rect(-2 * R, -2 * R, 4 * R, 1.55 * R); else { g.moveTo(-2 * R, -2 * R); g.lineTo(2 * R, -2 * R); g.lineTo(2 * R, -0.46 * R); g.lineTo(0.12 * R, -0.46 * R); g.lineTo(-0.5 * R, 0.12 * R); g.lineTo(-2 * R, 0.12 * R); g.closePath(); } g.clip();
+      if (who.hs === 'afro') { g.beginPath(); g.arc(0, -0.42 * R, 1.08 * R, 0, 7); g.fill(); }
+      else { g.beginPath(); g.arc(FR ? 0 : -0.03 * R, -0.1 * R, (who.hs === 'long' ? 1.08 : 1.03) * R, 0, 7); g.fill(); if (!FR) { g.beginPath(); g.arc(-0.45 * R, 0, 0.62 * R, 0, 7); g.fill(); } }
+      if (front && who.hs === 'long') { g.restore(); g.save(); g.translate(cx, cy); g.fillRect(-1.0 * R, -0.5 * R, 0.25 * R, 1.6 * R); g.fillRect(0.75 * R, -0.5 * R, 0.25 * R, 1.6 * R); }
+      g.restore(); }]);
+    if (!FR) parts.push(['skin', ell([hd[0] + r * 0.9, hd[1] - r * 0.14 + lk * r * 0.3], r * 0.16, r * 0.2)]); // the nose sticks out of the profile
+    if (who.beard === 'long') parts.push(['beard', FR ? ell([hd[0], hd[1] - r * 0.9], r * 0.5, r * 0.45) : ell([hd[0] + r * 0.36, hd[1] - r * 0.92 + lk * r * 0.2], r * 0.36, r * 0.42)]);
+    if (!FR) parts.push(['ear', ell([hd[0] - r * 0.12, hd[1] - r * 0.08], r * 0.2, r * 0.27)]);
+    // the near arm, over the body, and what it holds
+    arm(shN, J.eN, J.wN, false);
+    if (who.tool === 'banot' && pose.tool) parts.push(['wood', multi(line(pose.tool[0], pose.tool[1], 0.022), (g) => { const t = pose.tool[1], d = [t[0] - pose.tool[0][0], t[1] - pose.tool[0][1]], l = Math.hypot(d[0], d[1]); line(t, [t[0] - d[0] / l * 0.08, t[1] - d[1] / l * 0.08], 0.03)(g); })]);
+    if (who.tool === 'garrote' && pose.tool) { const a = J.wN, d = [pose.tool[1][0] - pose.tool[0][0], pose.tool[1][1] - pose.tool[0][1]], l = Math.hypot(d[0], d[1]); const b = [a[0] + d[0] / l * 0.36, a[1] + d[1] / l * 0.36]; parts.push(['wood', multi(cap(lerp2(a, b, -0.15), b, 0.03, 0.075), ell(b, 0.045, 0.045))]); }
+    if (who.tool === 'vara' && pose.tool) parts.push(['wood', line(pose.tool[0], pose.tool[1], 0.018)]);
+    if (who.tool) parts.push(['skin', ell(J.wN, 0.036 * L, 0.032 * L)]); // the fist over the handle
+    if (pose.orb && who.outfit === 'mirladora') parts.push(['orb', ell(pose.orb, 0.06, 0.06)]);
+    if (pose.ball && pose.ball[0] >= J.hF[0]) parts.push(['ball', ell(pose.ball, 0.055, 0.055)]);
+    // ---- masks → id buffer
+    const N = W * Hh, id = new Int16Array(N).fill(-1); const mk = document.createElement('canvas'); mk.width = W; mk.height = Hh; const g = mk.getContext('2d');
+    parts.forEach(([m, f], depth) => { g.clearRect(0, 0, W, Hh); g.fillStyle = g.strokeStyle = '#fff'; f(g); const d = g.getImageData(0, 0, W, Hh).data; for (let i = 0; i < N; i++) if (d[i * 4 + 3] > 120) id[i] = depth; });
+    const matOf = parts.map((p) => p[0]); const grp = (m) => m.replace(/F$/, '').replace(/^(ear)$/, 'skin').replace(/^hairL$/, 'hair');
+    const o = out.getContext('2d'); const img = o.getImageData(0, 0, W, Hh), px = img.data;
+    const at = (x, y) => (x < 0 || y < 0 || x >= W || y >= Hh ? -1 : id[y * W + x]);
+    const put = (i, c) => { px[i * 4] = c[0]; px[i * 4 + 1] = c[1]; px[i * 4 + 2] = c[2]; px[i * 4 + 3] = 255; };
+    for (let y = 0; y < Hh; y++) for (let x = 0; x < W; x++) { const i = y * W + x, p = id[i]; if (p < 0) continue; const m = matOf[p], tn = T[m];
+      const back = (q) => q < 0 || (q < p && grp(matOf[q]) !== grp(m));
+      let s2 = 0; for (let k = 1; k <= st.sw; k++) if (back(at(x + k, y)) || back(at(x, y + k)) || back(at(x + k, y + k))) s2 = Math.max(s2, k === 1 ? 2 : 1);
+      let occ = false; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const q = at(x + dx, y + dy); if (q > p && grp(matOf[q]) !== grp(m)) occ = true; }
+      const hl = !s2 && (back(at(x - 1, y)) || back(at(x, y - 1)));
+      put(i, m === 'orb' ? (s2 ? [60, 180, 255] : [210, 250, 255]) : s2 === 2 ? tn.d : s2 || occ ? tn.s : hl ? tn.h : tn.b); }
+    for (let y = 0; y < Hh; y++) for (let x = 0; x < W; x++) { const i = y * W + x; if (id[i] >= 0) continue; let q = -1;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const t = at(x + dx, y + dy); if (t >= 0) { q = t; break; } }
+      if (q >= 0) put(i, matOf[q] === 'orb' ? [120, 220, 255] : mix(T[matOf[q]].d, [16, 8, 20], 0.35)); }
+    // ---- details
+    const idx = (m) => { const s = new Set(); matOf.forEach((mm, k) => { if (mm === m) s.add(k); }); return s; };
+    const dot = (x, y, c, only) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= W || y >= Hh) return; const q = id[y * W + x]; if (only && !only.has(q)) return; put(y * W + x, c); };
+    const HEADP = matOf.lastIndexOf('skin', matOf.indexOf('hair')), HEAD = new Set([HEADP]), R = Math.max(2, r * u), hx = X(hd), hy = Y(hd), big = R >= 8.5;
+    const ink = [22, 12, 14], pupil = [46, 26, 18], wht = BR ? T.skin.h : [236, 230, 220], brow = mix(T.hair.b, [0, 0, 0], 0.3), lip = mix(T.skin.d, [120, 40, 40], BR ? 0 : 0.35);
+    // hair texture (strands)
+    for (let y = 0; y < Hh; y++) for (let x = 0; x < W; x++) { const q = id[y * W + x]; if (q < 0) continue; const m = matOf[q]; if (m !== 'hair' && m !== 'hairL' && m !== 'beard') continue; const hs = (x * 73856093 ^ y * 19349663) >>> 0; if ((x + (y >> 1)) % 3 === 0 && who.hs === 'long') put(y * W + x, T.hair.d); else if (hs % 9 === 0) put(y * W + x, T.hair.d); else if (hs % 23 === 0) put(y * W + x, T.hair.h); }
+    if (!FR) { // profile face
+      const lkr = lk * R * 0.35, ex = Math.round(hx + R * 0.44), ey = Math.round(hy - R * 0.02 + lkr);
+      dot(ex - 1, ey, T.skin.s, HEAD); dot(ex, ey, wht, HEAD); dot(ex + 1, ey, pupil, HEAD); if (big) { dot(ex + 1, ey + 1, pupil, HEAD); dot(ex, ey + 1, wht, HEAD); }
+      for (let k = -1; k <= 1; k++) dot(ex + k, ey - 1, ink, HEAD); dot(ex, ey + (big ? 2 : 1), T.skin.s, HEAD); dot(ex + 1, ey + (big ? 2 : 1), T.skin.s, HEAD);
+      for (let k = -1; k <= 1; k++) dot(ex + k, ey - 3, brow, HEAD); dot(ex + 2, ey - 2, brow, HEAD); if (big) for (let k = -1; k <= 1; k++) dot(ex + k, ey - 4, brow, HEAD); dot(ex, ey - 2, T.skin.h, HEAD);
+      dot(ex - 1, ey + (big ? 3 : 2), T.skin.h, HEAD); dot(ex, ey + (big ? 3 : 2), T.skin.h, HEAD); dot(ex - 2, ey + (big ? 4 : 3), T.skin.s, HEAD); dot(ex - 1, ey + (big ? 5 : 4), T.skin.s, HEAD);
+      const nx = Math.round(hx + R * 0.86), ny = Math.round(hy + R * 0.28 + lkr); dot(nx - 1, ny, T.skin.d, HEAD); dot(nx, ny + 1, T.skin.s, HEAD); dot(nx + 1, ny - 2, T.skin.h, HEAD);
+      const my = Math.round(hy + R * 0.56 + lkr), mx = Math.round(hx + R * 0.58);
+      // beard on the jaw (the bearded ones), stubble on the others; the long beard part hangs below
+      for (let y = Math.round(hy - R * 0.4); y <= Math.round(hy + R * 1.1); y++) for (let x = Math.round(hx - R * 0.6); x <= Math.round(hx + R * 1.1); x++) { if (at(x, y) !== HEADP) continue; const ux = (x - hx) / R, uy = (y - hy - lkr) / R;
+        if (who.beard && ((uy > 0.38 && ux > -0.28) || (uy > 0.1 && ux > -0.3 && ux < 0.12)) && !((y === my || y === my + 1) && ux > 0.42)) { const hs = (x * 73856093 ^ y * 19349663) >>> 0; const bc = mix(T.hair.b, T.skin.s, 0.25); put(y * W + x, hs % 6 === 0 ? mix(bc, T.skin.b, 0.35) : hs % 5 === 0 ? T.hair.d : bc); }
+        else if (!who.beard && !who.female && uy > 0.66 && ux > -0.2 && ux < 0.55) put(y * W + x, mix(T.skin.b, T.hair.b, 0.14)); }
+      for (let k = 0; k < (big ? 3 : 2); k++) dot(mx + k, my, lip, HEAD); dot(mx - 1, my, T.skin.s, HEAD); for (let k = 0; k < 2; k++) dot(mx + k, my + 1, T.skin.h, HEAD);
+      if (who.female) { dot(ex + 1, ey - 1, ink, HEAD); dot(ex + 2, ey - 1, ink, HEAD); dot(mx, my, [170, 60, 70], HEAD); dot(mx + 1, my, [170, 60, 70], HEAD); } // lashes and lips
+      const EAR = idx('ear'), ax = Math.round(hx - R * 0.12), ay = Math.round(hy - R * 0.08 + lkr); dot(ax, ay, T.skin.d, EAR); dot(ax, ay + 1, T.skin.d, EAR); dot(ax - 1, ay - 1, T.skin.h, EAR);
+      if (who.headband) for (let x = Math.round(hx - R * 1.0); x <= Math.round(hx + R * 0.9); x++) { const y = Math.round(hy - R * 0.5 + (x - hx) * 0.05 + lkr); for (const yy of big ? [y, y + 1] : [y]) { const q = at(x, yy); if (q === HEADP || matOf[q] === 'hair') put(yy * W + x, (x % 4) ? T.cord.b : T.cord.d); } } }
+    else if (front) { // front face: two eyes, brows, nose, mouth
+      const ey = Math.round(hy + R * 0.02); for (const sx of [-1, 1]) { const ex = Math.round(hx + sx * R * 0.34); dot(ex, ey, wht, HEAD); dot(ex + (sx > 0 ? 0 : 1), ey, pupil, HEAD); dot(ex - 1, ey - 1, ink, HEAD); dot(ex, ey - 1, ink, HEAD); dot(ex - 1, ey - 3, brow, HEAD); dot(ex, ey - 3, brow, HEAD); dot(ex + 1, ey - 3, brow, HEAD); }
+      dot(hx, ey + Math.round(R * 0.3), T.skin.d, HEAD); for (let k = -1; k <= 1; k++) dot(hx + k, Math.round(hy + R * 0.58), lip, HEAD); }
+    // the necklace of the statue (beads of shell and bone)
+    if (who.necklace) for (let k = 0; k <= 10; k++) { const t = k / 10, a = Math.PI * (0.15 + t * 0.7); const cx = X(J.nk) + (FR ? 0 : 1), cy = Y(J.nk) + R * 0.35; dot(cx + Math.cos(a) * R * 0.85, cy + Math.sin(a) * R * 0.75, k % 2 ? [236, 224, 200] : [140, 60, 40]); }
+    // muscles on the bare chest: the pecs and the abs
+    if (O === 'guanche') { const SK = idx('skin'); const cx = X([(J.nk[0] + (J.hN[0] + J.hF[0]) / 2) / 2 + (FR ? 0 : 0.02), 0]), y0 = Y([0, J.nk[1] - 0.1]), y1 = Y([0, J.hN[1] + 0.05]);
+      for (let k = -3; k <= 3; k++) dot(cx + k, y0 + Math.abs(k) * 0.3, T.skin.s, SK); for (let y = y0 + 3; y < y1 - 1; y += 3) { dot(cx, y, T.skin.s, SK); dot(cx - 2, y + 1, T.skin.s, SK); dot(cx + 2, y + 1, T.skin.s, SK); } }
+    // the number (basket: chest; football: back, or chest small)
+    if (who.num && (O === 'basket' || O === 'futbol')) { const DG = { 0: '111101101101111', 1: '010110010010111', 2: '111001111100111', 3: '111001111001111', 4: '101101111001001', 5: '111100111001111', 6: '111100111101111', 7: '111001010010010', 8: '111101111101111', 9: '111101111001111' };
+      const TOPS = idx('top'), sc = H >= 120 && (O === 'basket' || backv) ? 2 : 1, cw = 4 * sc; const cx0 = Math.round(X([(J.nk[0] + (J.hN[0] + J.hF[0]) / 2) / 2 + (FR ? 0 : 0.01), 0]) - (who.num.length * cw) / 2 + 1), cy0 = Math.round(Y([0, J.nk[1] - (backv ? 0.1 : 0.13)]));
+      const on = new Set(); [...who.num].forEach((ch, k) => { const pat = DG[ch]; for (let b = 0; b < 15; b++) if (pat[b] === '1') for (let a = 0; a < sc; a++) for (let c = 0; c < sc; c++) on.add((cx0 + k * cw + (b % 3) * sc + a) + ',' + (cy0 + ((b / 3) | 0) * sc + c)); });
+      if (O === 'futbol' && !backv) { /* small number on the chest only on the front view */ }
+      for (const key of on) { const [x, y] = key.split(',').map(Number); for (const [dx, dy] of [[1, 0], [0, 1], [1, 1]]) if (!on.has((x + dx) + ',' + (y + dy))) dot(x + dx, y + dy, T.top.d, TOPS); }
+      for (const key of on) { const [x, y] = key.split(',').map(Number); dot(x, y, T.trim.h, TOPS); } }
+    if (pose.ball && O === 'futbol') { const BALL = idx('ball'), bx = X(pose.ball), by = Y(pose.ball), br = 0.055 * u; for (const [dx, dy] of [[0, 0], [-0.4, -0.4], [0.45, 0.2], [-0.2, 0.5]]) { dot(bx + dx * br, by + dy * br, [30, 30, 36], BALL); dot(bx + dx * br + 1, by + dy * br, [30, 30, 36], BALL); } }
+    o.putImageData(img, 0, 0);
+    return { hx, hy, R };
+  }
+
+  // ---------- backgrounds ----------
+  function bgBencomo(c) { const g = c.getContext('2d'), W = c.width, H = c.height, fy = Math.round(H * 0.84);
+    const sky = g.createLinearGradient(0, 0, 0, fy); sky.addColorStop(0, '#f7b267'); sky.addColorStop(1, '#f4845f'); g.fillStyle = sky; g.fillRect(0, 0, W, fy);
+    g.fillStyle = '#7d4e57'; g.beginPath(); g.moveTo(0, fy * 0.7); for (let x = 0; x <= W; x += 8) g.lineTo(x, fy * (0.62 + 0.08 * Math.sin(x * 0.03) + 0.04 * Math.sin(x * 0.11))); g.lineTo(W, fy); g.lineTo(0, fy); g.fill();
+    g.fillStyle = '#3a2a2e'; g.fillRect(0, fy, W, H - fy); g.fillStyle = '#5a3a2e'; for (let x = 0; x < W; x += 6) g.fillRect(x, fy, 4, 2); g.fillStyle = '#2a1c1e'; for (let x = 3; x < W; x += 9) g.fillRect(x, fy + 4 + (x % 5), 2, 2); return fy; }
+  function bgCave(c) { const g = c.getContext('2d'), W = c.width, H = c.height, fy = Math.round(H * 0.84); g.fillStyle = '#1b1020'; g.fillRect(0, 0, W, H);
+    for (let i = 0; i < 60; i++) { g.fillStyle = ['#2a1830', '#342038', '#22142a'][i % 3]; g.fillRect((i * 97) % W, (i * 53) % fy, 6 + (i % 4) * 3, 3 + (i % 3) * 2); }
+    g.fillStyle = 'rgba(255,90,30,.25)'; g.fillRect(0, fy - 18, W, 18); g.fillStyle = '#3a2420'; g.fillRect(0, fy, W, H - fy); g.fillStyle = '#5a3420'; for (let x = 0; x < W; x += 7) g.fillRect(x, fy, 5, 2); return fy; }
+  function bgPitch(c, top) { const g = c.getContext('2d'), W = c.width, H = c.height; if (top) { for (let y = 0; y < H; y += 8) { g.fillStyle = (y / 8) % 2 ? '#2f8a3a' : '#349640'; g.fillRect(0, y, W, 8); } g.fillStyle = 'rgba(255,255,255,.8)'; g.fillRect(0, Math.round(H / 2), W, 1); return Math.round(H * 0.84); }
+    const fy = Math.round(H * 0.82); g.fillStyle = '#1e2a40'; g.fillRect(0, 0, W, fy * 0.6); for (let y = 2; y < fy * 0.6; y += 3) for (let x = (y * 7) % 5; x < W; x += 4) { g.fillStyle = ['#2a3a5a', '#33456a', '#3c4f74'][(x + y) % 3]; g.fillRect(x, y, 2, 2); }
+    g.fillStyle = '#d0d4dc'; g.fillRect(0, fy * 0.6, W, 3); for (let y = Math.round(fy * 0.6) + 3; y < H; y += 6) { g.fillStyle = ((y / 6) | 0) % 2 ? '#2f8a3a' : '#349640'; g.fillRect(0, y, W, 6); } g.fillStyle = 'rgba(255,255,255,.7)'; g.fillRect(0, fy + 8, W, 1); return fy; }
+  const shadow = (c, x, y, w) => { const g = c.getContext('2d'); g.fillStyle = 'rgba(20,10,10,.4)'; g.beginPath(); g.ellipse(x, y, w, Math.max(1, w * 0.22), 0, 0, 7); g.fill(); };
+
+  // ---------- the characters ----------
+  const BENCOMO = { outfit: 'guanche', skin: '#9a6a44', hair: '#2a1c14', hs: 'long', beard: 'long', headband: true, necklace: true, cloak: '#7a4a26', bottom: '#a07850', cord: '#d8c8a0', tool: 'banot' };
+  const MENCEY = { ...BENCOMO, tool: 'garrote', skin: '#8a5a38', hair: '#1e1610', cloak: '#5a3a20' };
+  const PASTOR = { ...BENCOMO, slim: true, skin: '#b07a50', hair: '#4a2e18', beard: false, tool: 'vara', cloak: '#9a7a50', bottom: '#8a6a40' };
+  const MIRLA = { outfit: 'mirladora', female: true, slim: true, skin: '#b8835a', hair: '#1a100c', hs: 'long', headband: true, necklace: true, cloak: '#8a5a30', cord: '#e8d8b0' };
+  // ---------- the cards ----------
+  const STYLE = { real: { H: 100, head: 0.076, sw: 2 }, semi: { H: 100, head: 0.1, sw: 2, bodyK: 0.85 }, semi120: { H: 120, head: 0.1, sw: 2, bodyK: 0.85 } };
+  const cards = [];
+  function card(gridId, o) { const el = document.createElement('section'); el.className = 'card';
+    const n = o.figs.length, slot = Math.round(o.st.H * (o.slot || 0.82)), W = slot * n, H = Math.round(o.st.H * (o.hk || 1.62));
+    el.innerHTML = `<header><span class="tag">${o.tag}</span><h3>${o.name}</h3></header><p>${o.text}</p>
+      <canvas width="${W}" height="${H}" aria-label="${o.name}"></canvas><div class="legend" style="grid-template-columns:repeat(${n},1fr)">${o.figs.map((f) => `<span>${f.label}</span>`).join('')}</div>
+      ${o.faces === false ? '' : `<canvas class="faces" width="${Math.ceil(o.st.H * o.st.head * 3.4) * (o.faceN || 1)}" height="${Math.ceil(o.st.H * o.st.head * 3.4)}" aria-label="Las caras de cerca"></canvas>`}`;
+    document.getElementById(gridId).appendChild(el); cards.push({ ...o, cv: el.querySelector('canvas'), fc: el.querySelector('canvas.faces'), slot, t: 0 }); }
+  function draw(cd, t) { const { st, cv, slot } = cd; const fy = cd.bg(cv); const heads = [];
+    cd.figs.forEach((f, i) => { const pose = typeof f.pose === 'function' ? f.pose(t) : f.pose; const x = slot * i + slot / 2 - st.H * 0.04; if (!pose.flat && !cd.top) shadow(cv, x, fy, st.H * 0.15); heads.push(render(cv, x, fy, st, pose, f.who)); });
+    if (cd.fc) { const fc = cd.fc, fg = fc.getContext('2d'), cell = fc.height; fg.imageSmoothingEnabled = false; fg.fillStyle = '#1b1530'; fg.fillRect(0, 0, fc.width, fc.height);
+      const off = cd.off || (cd.off = document.createElement('canvas')); off.width = cv.width; off.height = cv.height; const og = off.getContext('2d');
+      (cd.faceWho || [cd.figs[0].who]).forEach((w, i) => { og.fillStyle = '#1b1530'; og.fillRect(0, 0, off.width, off.height); const h = render(off, off.width / 2, Math.round(off.height * 0.84), st, P.estatua, { ...w, tool: null }); fg.drawImage(off, Math.round(h.hx - cell / 2 + h.R * 0.15), Math.round(h.hy - cell / 2 + h.R * 0.25), cell, cell, i * cell, 0, cell, cell); }); } }
+  const run = (t) => lerpPose(P.runA, P.runB, (Math.sin(t * Math.PI * 2 * 1.6) + 1) / 2);
+  const benFigs = (who) => [{ label: 'QUIETO', pose: P.estatua, who }, { label: 'CORRIENDO', pose: run, who }, { label: 'VARAZO', pose: P.golpe, who }, { label: 'SALTO', pose: P.salto, who }];
+  card('g-bencomo', { tag: 'B1', name: 'Bronce de Candelaria', text: 'Como la estatua tal cual: todo en bronce con la pátina verdosa en las luces. Muy reconocible, pero sin colores.', st: STYLE.real, bg: bgBencomo, figs: benFigs({ ...BENCOMO, bronze: true }) });
+  card('g-bencomo', { tag: 'B2', name: 'Mencey a color', text: 'La misma figura, a color: piel morena, el tamarco de piel de cabra, el taparrabos, la cinta, el collar y las muñequeras de la estatua.', st: STYLE.real, bg: bgBencomo, figs: benFigs(BENCOMO) });
+  card('g-bencomo', { tag: 'B3', name: 'Mencey semicabezón', text: 'Con las proporciones del jugador de basket que elegiste: la cabeza más grande, la cara se lee mejor y casa con el resto del juego.', st: STYLE.semi, bg: bgBencomo, figs: benFigs(BENCOMO) });
+  card('g-bencomo', { tag: 'B4', name: 'Semicabezón de bronce', text: 'El semicabezón con el acabado de estatua. Podría ser un «modo estatua» o el aspecto del jefe final.', st: STYLE.semi, bg: bgBencomo, figs: benFigs({ ...BENCOMO, bronze: true }) });
+  const trio = [{ label: 'EL MENCEY', pose: P.golpe, who: MENCEY }, { label: 'EL PASTOR', pose: P.salto, who: PASTOR }, { label: 'LA MIRLADORA', pose: P.magia, who: MIRLA }];
+  const trioIdle = [{ label: 'EL MENCEY', pose: P.estatua, who: MENCEY }, { label: 'EL PASTOR', pose: P.estatua, who: PASTOR }, { label: 'LA MIRLADORA', pose: P.estatua, who: MIRLA }];
+  card('g-guarriors', { tag: 'G1', name: 'Proporción normal', text: 'Como guerreros de verdad, en plena pelea. El Mencey es el más ancho; el Pastor, más fino y joven; la Mirladora lleva el tamarco largo y la magia.', st: STYLE.real, bg: bgCave, figs: trio, faceWho: [MENCEY, PASTOR, MIRLA], faceN: 3 });
+  card('g-guarriors', { tag: 'G2', name: 'Un poco cabezones', text: 'Los mismos con las proporciones del basket, de pie como en la pantalla de elegir personaje.', st: STYLE.semi, bg: bgCave, figs: trioIdle, faceWho: [MENCEY, PASTOR, MIRLA], faceN: 3 });
+  // football
+  const ESP = { outfit: 'futbol', skin: '#c68a5e', hair: '#2a1a10', top: '#c8102e', trim: '#ffc400', bottom: '#1d2a6b', sock: '#1d2a6b', shoe: '#111111', num: '9' };
+  const ESP2 = { ...ESP, skin: '#7a4a2c', hair: '#141010', hs: 'afro', num: '10', beard: true };
+  const GK = { ...ESP, top: '#f1c40f', trim: '#222222', bottom: '#222222', sock: '#f1c40f', num: '1' };
+  card('g-futbol', { tag: 'F1', name: 'De lado, como el basket', text: 'El jugador que elegiste con botas, medias y camiseta de manga corta. Para usarlo, el fútbol pasaría a verse de lado (el campo en horizontal y la cámara siguiendo el balón), como en el basket. Es el cambio más grande, pero el que más luce.', st: STYLE.semi120, bg: (c) => bgPitch(c, false), figs: [{ label: 'CORRIENDO', pose: run, who: ESP2 }, { label: 'CHUT', pose: P.chut, who: ESP }, { label: 'CABEZAZO', pose: P.cabezazo, who: ESP2 }, { label: 'PALOMITA', pose: P.portero, who: GK }], faceWho: [ESP, ESP2], faceN: 2 });
+  card('g-futbol', { tag: 'F2', name: 'Desde arriba, más grandes', text: 'El campo sigue en vertical, pero los jugadores se ven de frente o de espalda, a unos 48 píxeles (ahora son unos 15), con la cámara más cerca. Cambia poco el juego: solo hay que acercar la cámara.', st: { H: 48, head: 0.1, sw: 1, bodyK: 0.85 }, slot: 1.1, hk: 1.35, top: true, bg: (c) => bgPitch(c, true), figs: [{ label: 'DE FRENTE', pose: P.frente, who: ESP2 }, { label: 'DE ESPALDA', pose: P.espalda, who: ESP }, { label: 'PORTERO', pose: P.frente, who: GK }, { label: 'RIVAL', pose: P.espalda, who: { ...ESP, top: '#1f5fbf', trim: '#f2f2f2', bottom: '#f2f2f2', sock: '#1f5fbf', num: '7' } }], faces: false });
+  card('g-futbol', { tag: 'F3', name: 'Como ahora, mejorados', text: 'Mismo tamaño y misma cámara de ahora (tipo Sensible Soccer), pero con estas figuras en miniatura: se distinguen la piel, el pelo, el número y las botas. Es el cambio más pequeño.', st: { H: 24, head: 0.11, sw: 1, bodyK: 0.85 }, slot: 1.2, hk: 1.4, top: true, bg: (c) => bgPitch(c, true), figs: [{ label: 'FRENTE', pose: P.frente, who: ESP2 }, { label: 'ESPALDA', pose: P.espalda, who: ESP }, { label: 'PORTERO', pose: P.frente, who: GK }, { label: 'RIVAL', pose: P.espalda, who: { ...ESP, top: '#1f5fbf', trim: '#f2f2f2', bottom: '#f2f2f2', sock: '#1f5fbf', num: '7' } }], faces: false });
+  const still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  cards.forEach((cd) => draw(cd, 0));
+  if (!still) { let last = 0; const tick = (now) => { requestAnimationFrame(tick); if (now - last < 90) return; last = now; cards.forEach((cd) => { if (cd.figs.some((f) => typeof f.pose === 'function')) draw(cd, now / 1000); }); }; requestAnimationFrame(tick); }
+})();
+</script>

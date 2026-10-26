@@ -61,7 +61,7 @@ const CASA = (() => {
     const kx = hw - 0.5; box(0.8, 0.95, Math.min(3, d - 3), 0xd8d2c6, kx, 0.55, 0); box(0.82, 0.05, Math.min(3, d - 3) + 0.02, 0x2a2a2a, kx, 1.05, 0); box(0.5, 0.35, 0.5, 0xc0c0c0, kx, 1.25, 0.6, { metalness: 0.8, roughness: 0.3 });
     COL.addSeg(r.x0 + kx - 0.45, r.z0 - 1.5, r.x0 + kx - 0.45, r.z0 + 1.5);
     box(0.06, 1.6, 0.06, 0x2a2a2a, tvX - 1.9, 0.9, tvZ - 0.5); const lamp = box(0.5, 0.35, 0.5, 0xfff0c0, tvX - 1.9, 1.8, tvZ - 0.5, { emissive: 0xffd28a, emissiveIntensity: 1.2 }); void lamp;
-    const post = textPlane(P.id === 'herradores' ? '¡BENCOMO!' : 'GUANCHE WARRIORS', 1.4, 0.5, '#6b2a10', '#f2c46a', 'bold 34px Arial'); post.position.set(-hw + 0.05, 2.1, 0); post.rotation.y = Math.PI / 2; g.add(post);
+    const post = textPlane(P.id === 'herradores' ? '¡BENCOMO!' : 'GUANCHE GUARRIORS', 1.4, 0.5, '#6b2a10', '#f2c46a', 'bold 34px Arial'); post.position.set(-hw + 0.05, 2.1, 0); post.rotation.y = Math.PI / 2; g.add(post);
     const win = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(3, w * 0.3), 1.3), new THREE.MeshBasicMaterial({ color: 0x8ab8e0 })); win.position.set(hw * 0.45, 1.9, hd - 0.04); win.rotation.y = Math.PI; g.add(win);
     if (w >= 11) { box(1.4, 1.9, 0.4, 0x5a3a22, hw - 0.4, 0.95, -hd + 1.4); for (let i = 0; i < 3; i++) box(1.2, 0.04, 0.35, 0x3a2a1e, hw - 0.4, 0.5 + i * 0.55, -hd + 1.4); } // a bookcase in the bigger homes
     const md = { x: 0, z: -hd + 0.05, rot: 0, h: 0, ix: 0, iz: -hd + 2.2 };
