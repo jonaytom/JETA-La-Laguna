@@ -92,7 +92,7 @@ canvas { width: 100%; height: auto; image-rendering: pixelated; image-rendering:
   function render(out, ox, oy, st, pose, who) {
     const H = st.H, W = out.width, Hh = out.height, u = H, BK = st.bodyK || 1, air = (pose.air || 0) * BK, FR = pose.front || 0;
     const X = (p) => ox + p[0] * u, Y = (p) => oy - (p[1] + air) * u;
-    let J = pose; const L = (st.limb || 1) * (who.slim ? 0.86 : 1), r = st.head * (who.slim ? 0.94 : 1);
+    let J = pose; const L = (st.limb || 1) * (who.slim ? 0.86 : who.buff ? 1.28 : 1), r = st.head * (who.slim ? 0.94 : 1);
     if (BK < 1) { J = {}; for (const k in pose) { const v = pose[k]; J[k] = !Array.isArray(v) || k === 'hd' ? v : Array.isArray(v[0]) ? v.map((p) => [p[0] * 0.96, p[1] * BK]) : [v[0] * 0.96, v[1] * BK]; }
       J.hd = pose.flat ? [J.nk[0] + r * 0.9, J.nk[1]] : [J.nk[0] + (FR ? 0 : 0.02), J.nk[1] + r * 1.02]; }
     const BR = !!who.bronze; const O = who.outfit;
@@ -113,7 +113,7 @@ canvas { width: 100%; height: auto; image-rendering: pixelated; image-rendering:
     const poly = (pts) => (g) => { g.beginPath(); pts.forEach((p, i) => (i ? g.lineTo(X(p), Y(p)) : g.moveTo(X(p), Y(p)))); g.closePath(); g.fill(); };
     const multi = (...fs) => (g) => fs.forEach((f) => f && f(g));
     const parts = [];
-    const cxm = (J.sN[0] + J.sF[0]) / 2, Wd = (p, k) => [cxm + (p[0] - cxm) * k, p[1]], SW = FR ? 1.15 : who.female ? 1.22 : 1.5, HW = FR ? 1.0 : who.female ? 1.32 : 1.1;
+    const cxm = (J.sN[0] + J.sF[0]) / 2, Wd = (p, k) => [cxm + (p[0] - cxm) * k, p[1]], SW = FR ? 1.15 : who.female ? 1.22 : who.buff ? 1.8 : 1.5, HW = FR ? 1.0 : who.female ? 1.32 : 1.1;
     const shN = Wd(J.sN, SW * 0.86), shF = Wd(J.sF, SW * 0.86);
     const sleeves = O === 'futbol';
     const arm = (s, e, w, far) => { const sk = far ? 'skinF' : 'skin'; const n = perp(s, e), mid = lerp2(s, e, 0.42);
@@ -231,7 +231,7 @@ canvas { width: 100%; height: auto; image-rendering: pixelated; image-rendering:
     if (who.necklace) for (let k = 0; k <= 10; k++) { const t = k / 10, a = Math.PI * (0.15 + t * 0.7); const cx = X(J.nk) + (FR ? 0 : 1), cy = Y(J.nk) + R * 0.35; dot(cx + Math.cos(a) * R * 0.85, cy + Math.sin(a) * R * 0.75, k % 2 ? [236, 224, 200] : [140, 60, 40]); }
     // muscles on the bare chest: the pecs and the abs
     if (O === 'guanche') { const SK = idx('skin'); const cx = X([(J.nk[0] + (J.hN[0] + J.hF[0]) / 2) / 2 + (FR ? 0 : 0.02), 0]), y0 = Y([0, J.nk[1] - 0.1]), y1 = Y([0, J.hN[1] + 0.05]);
-      for (let k = -3; k <= 3; k++) dot(cx + k, y0 + Math.abs(k) * 0.3, T.skin.s, SK); for (let y = y0 + 3; y < y1 - 1; y += 3) { dot(cx, y, T.skin.s, SK); dot(cx - 2, y + 1, T.skin.s, SK); dot(cx + 2, y + 1, T.skin.s, SK); } }
+      for (let k = -3; k <= 3; k++) dot(cx + k, y0 + Math.abs(k) * 0.3, T.skin.s, SK); if (who.buff) { for (let k = -4; k <= 4; k++) { dot(cx + k, y0 + 1 + Math.abs(k) * 0.4, T.skin.d, SK); dot(cx + k, y0 - 2, T.skin.h, SK); } } for (let y = y0 + 3; y < y1 - 1; y += 3) { dot(cx, y, T.skin.s, SK); dot(cx - 2, y + 1, T.skin.s, SK); dot(cx + 2, y + 1, T.skin.s, SK); } }
     // the number (basket: chest; football: back, or chest small)
     if (who.num && (O === 'basket' || O === 'futbol')) { const DG = { 0: '111101101101111', 1: '010110010010111', 2: '111001111100111', 3: '111001111001111', 4: '101101111001001', 5: '111100111001111', 6: '111100111101111', 7: '111001010010010', 8: '111101111101111', 9: '111101111001111' };
       const TOPS = idx('top'), sc = H >= 120 && (O === 'basket' || backv) ? 2 : 1, cw = 4 * sc; const cx0 = Math.round(X([(J.nk[0] + (J.hN[0] + J.hF[0]) / 2) / 2 + (FR ? 0 : 0.01), 0]) - (who.num.length * cw) / 2 + 1), cy0 = Math.round(Y([0, J.nk[1] - (backv ? 0.1 : 0.13)]));
@@ -259,7 +259,7 @@ canvas { width: 100%; height: auto; image-rendering: pixelated; image-rendering:
 
   // ---------- the characters ----------
   const BENCOMO = { outfit: 'guanche', skin: '#9a6a44', hair: '#2a1c14', hs: 'long', beard: 'long', headband: true, necklace: true, cloak: '#7a4a26', bottom: '#a07850', cord: '#d8c8a0', tool: 'banot' };
-  const MENCEY = { ...BENCOMO, tool: 'garrote', skin: '#8a5a38', hair: '#1e1610', cloak: '#5a3a20' };
+  const MENCEY = { ...BENCOMO, tool: 'garrote', skin: '#8a5a38', hair: '#1e1610', cloak: '#5a3a20', buff: true }; // v3 (Jonay): much more muscular
   const PASTOR = { ...BENCOMO, slim: true, skin: '#a8724a', hair: '#3a2416', beard: 'long', tool: 'vara', cloak: '#8a6a44', bottom: '#9a7a52' }; // v2 (Jonay): like Bencomo
   const MIRLA = { outfit: 'bikini', female: true, slim: true, skin: '#c08a5e', hair: '#7a4222', hs: 'mane', headband: true, necklace: true, cloak: '#a0703c', cord: '#e8d8b0' }; // v2 (Jonay): a fur bikini, Vixen style, long hair
   // ---------- the cards ----------
@@ -283,21 +283,31 @@ canvas { width: 100%; height: auto; image-rendering: pixelated; image-rendering:
   const BP = { k: '#1a1008', h: '#140d09', b: '#c27b46', d: '#8c4f27', w: '#f4efe6', c: '#7a4a22', C: '#b8823f', s: '#3a2414', e: '#2a1a10' };
   const BEN_NOW = ['.....hhhhh......', '....hhhhhhh.....', '...hhhbbbbhh....', '...hhbbbbwk.....', '...hhbbbbbbbb...', '...hhdbbbbbb....', '...hhhhbhhhh....', '....hhhhhhh.....', '.....hdbbd......', '...CccccccC.....', '..bcCccccCcb....', '..bcccccccdb....', '..bbccccccbb....', '...dccccccd.....',
     '...cCccccCc.....', '...cccccccc.....', '....bb..bb......', '....bb..bb......', '....bd..bd......', '....bd..bd......', '...sss..sss.....', '................'];
+  // v3 (Jonay: «el B3 desentona con el mundo y los otros enemigos»): a sprite like the one of now (16 px wide, 22 tall,
+  // the same palette as the soldiers and the dogs) with more detail taken from the B3: headband, beard, necklace, the
+  // tamarco on the shoulder, bare chest with the pecs and abs, the loincloth with its cord, ankle bands, bare feet
+  const BP2 = { ...BP, g: '#e8e2d0', G: '#9a9488', m: '#cfd3d9', M: '#7d838c', y: '#e3b23c', R: '#b3271d', n: '#2b2f6b', l: '#6b4422', L: '#3d2614', D: '#8b5a2b', o: '#5e3a1a', x: '#111', f: '#d22' };
+  const BEN_NEW = ['....hhhhhh......', '...hhhhhhhh.....', '..hhggggggg.....', '..hhhbbbbbb.....', '..hhbbbbbwk.....', '..hhbbbbbbbb....', '..hhhdbbbbb.....', '..hhheeeeee.....', '..hh.eeeeee.....', '..hcC.eeeb......', '..cCbbgbgbbb....', '.bcCbbbdbbbbb...', '.bcCbdbbdbbdb...', '.bcccbdbdbbbb...',
+    '..dcccgggggb....', '...cCccccC......', '....ccdcc.......', '....bb..bb......', '....bd..bd......', '....bd..bd......', '....gd..gd......', '...bbb..bbb.....'];
+  const BEN_RUN = [...BEN_NEW.slice(0, 16), '....cdcc........', '...bb....bb.....', '..bd......bd....', '..bd.......bb...', '.gd.........gd..', 'bbb..........bbb'];
+  const SOLD = ['......mmm.......', '....mmmmmmm.....', '...MmmmmmmmM....', '......bbbbw.....', '......bbbbbb....', '......dbbbb.....', '.......bbb......', '.....mmmmmm.....', '....RmMmmmmR....', '...bRmmmmmmRb...', '...bRyRyRyRRb...', '....RyRyRyRR....', '....nnnnnnnn....',
+    '....nn....nn....', '....nn....nn....', '....nn....nn....', '....ll....ll....', '...lll...lll....'];
+  const DOG0 = ['...............oo...', '..............oooo..', '..............oowxo.', '.ooooooooooooooooooo', 'oooDDDDDDDDDDDDoooo.', 'ooDDDDDDDDDDDDDoo...', '.oDDDDDDDDDDDDDo....', '..DDD.......DDD.....', '..DD.........DD.....', '..oo.........oo.....'];
+  const spr = (g, rows, x, y, k, flip) => rows.forEach((row, r) => [...row].forEach((ch, c) => { if (ch === '.') return; g.fillStyle = BP2[ch]; g.fillRect(x + (flip ? row.length - 1 - c : c) * k, y + r * k, k, k); }));
   (() => { const el = document.createElement('section'); el.className = 'card'; el.style.gridColumn = '1 / -1';
-    el.innerHTML = `<header><span class="tag">B3 en el juego</span><h3>A su tamaño de verdad</h3></header><p>Sí: en la muestra está mucho más grande. Esto es la pantalla de Bencomo a tamaño real (480 × 336): a la izquierda el Bencomo de ahora (22 píxeles, 44 en pantalla); luego el B3 a ese mismo tamaño; y a la derecha el B3 un poco más grande (60 en pantalla), que se vería mejor la cara sin tapar tanto la fase.</p>
-      <canvas width="480" height="336" style="max-width:960px" aria-label="Bencomo a tamaño real"></canvas><div class="legend" style="grid-template-columns:repeat(3,1fr);max-width:960px"><span>EL DE AHORA</span><span>B3 · MISMO TAMAÑO</span><span>B3 · UN POCO MÁS GRANDE</span></div>`;
-    document.getElementById('g-bencomo-juego').appendChild(el); const cv = el.querySelector('canvas'), g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
-    const drawIt = (t) => { const fy = 300; const sky = g.createLinearGradient(0, 0, 0, fy); sky.addColorStop(0, '#f7b267'); sky.addColorStop(1, '#f4845f'); g.fillStyle = sky; g.fillRect(0, 0, 480, fy);
-      g.fillStyle = '#7d4e57'; g.beginPath(); g.moveTo(0, 220); for (let x = 0; x <= 480; x += 8) g.lineTo(x, 200 + 18 * Math.sin(x * 0.02) + 8 * Math.sin(x * 0.07)); g.lineTo(480, fy); g.lineTo(0, fy); g.fill();
-      for (let x = 0; x < 480; x += 32) { g.fillStyle = '#6b4a2e'; g.fillRect(x, fy, 32, 36); g.fillStyle = '#8a6440'; g.fillRect(x, fy, 32, 4); g.fillStyle = '#4e3420'; g.fillRect(x + 31, fy, 1, 36); }
-      BEN_NOW.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === '.') return; g.fillStyle = BP[ch]; g.fillRect(70 + x * 2, fy - 44 + y * 2, 2, 2); }));
-      const runP = lerpPose(P.runA, P.runB, (Math.sin(t * Math.PI * 2 * 1.6) + 1) / 2);
-      render(cv, 240, fy, { H: 48, head: 0.1, sw: 1, bodyK: 0.85 }, P.estatua, BENCOMO); render(cv, 300, fy, { H: 48, head: 0.1, sw: 1, bodyK: 0.85 }, runP, BENCOMO);
-      render(cv, 385, fy, { H: 66, head: 0.1, sw: 2, bodyK: 0.85 }, P.estatua, BENCOMO); render(cv, 440, fy, { H: 66, head: 0.1, sw: 2, bodyK: 0.85 }, P.golpe, BENCOMO); };
-    drawIt(0); cards.push({ figs: [{ pose: () => 0 }], st: {}, special: drawIt }); })();
+    el.innerHTML = `<header><span class="tag">Bencomo · versión juego</span><h3>Como el de ahora, con el detalle del B3</h3></header><p>El B3 grande desentona con el resto de la máquina, así que este es el Bencomo de ahora (16 × 22 píxeles, los mismos colores que los castellanos y los perros) con lo del B3: la cinta, la barba, el collar, el tamarco al hombro, el pecho al aire con pectorales y abdominales, el taparrabos con su cordón, las tobilleras y los pies descalzos. Arriba, la pantalla a tamaño real; abajo, ampliado.</p>
+      <canvas width="480" height="336" style="max-width:960px" aria-label="Bencomo con los enemigos, a tamaño real"></canvas><div class="legend" style="grid-template-columns:repeat(4,1fr);max-width:960px"><span>EL DE AHORA</span><span>EL NUEVO</span><span>CORRIENDO</span><span>CASTELLANO Y PERRO</span></div>
+      <canvas class="zoom2" width="160" height="40" style="max-width:960px" aria-label="Ampliado: el de ahora y el nuevo"></canvas><div class="legend" style="grid-template-columns:repeat(3,1fr);max-width:960px"><span>AHORA</span><span>NUEVO</span><span>NUEVO CORRIENDO</span></div>`;
+    document.getElementById('g-bencomo-juego').appendChild(el); const cv = el.querySelector('canvas'), g = cv.getContext('2d'), z = el.querySelector('canvas.zoom2'), zg = z.getContext('2d');
+    const fy = 300; const sky = g.createLinearGradient(0, 0, 0, fy); sky.addColorStop(0, '#f7b267'); sky.addColorStop(1, '#f4845f'); g.fillStyle = sky; g.fillRect(0, 0, 480, fy);
+    g.fillStyle = '#7d4e57'; g.beginPath(); g.moveTo(0, 220); for (let x = 0; x <= 480; x += 8) g.lineTo(x, 200 + 18 * Math.sin(x * 0.02) + 8 * Math.sin(x * 0.07)); g.lineTo(480, fy); g.lineTo(0, fy); g.fill();
+    for (let x = 0; x < 480; x += 32) { g.fillStyle = '#6b4a2e'; g.fillRect(x, fy, 32, 36); g.fillStyle = '#8a6440'; g.fillRect(x, fy, 32, 4); g.fillStyle = '#4e3420'; g.fillRect(x + 31, fy, 1, 36); }
+    spr(g, BEN_NOW, 44, fy - 44, 2); spr(g, BEN_NEW, 164, fy - 44, 2); g.fillStyle = '#5a3a1a'; g.fillRect(192, fy - 64, 2, 64); spr(g, BEN_RUN, 274, fy - 44, 2);
+    spr(g, SOLD, 360, fy - 36, 2, true); spr(g, DOG0, 400, fy - 20, 2, true);
+    zg.fillStyle = '#f4a06a'; zg.fillRect(0, 0, 160, 40); spr(zg, BEN_NOW, 20, 9, 1); spr(zg, BEN_NEW, 72, 9, 1); spr(zg, BEN_RUN, 122, 9, 1); })();
   const trio = [{ label: 'EL MENCEY', pose: P.golpe, who: MENCEY }, { label: 'EL PASTOR', pose: P.salto, who: PASTOR }, { label: 'LA MIRLADORA', pose: P.magia, who: MIRLA }];
   const trioIdle = [{ label: 'EL MENCEY', pose: P.estatua, who: MENCEY }, { label: 'EL PASTOR', pose: P.estatua, who: PASTOR }, { label: 'LA MIRLADORA', pose: P.magia, who: MIRLA }];
-  card('g-guarriors', { tag: 'G1 · elegido', name: 'En plena pelea', text: 'El Mencey se queda como estaba. El Pastor ahora es como Bencomo (pelo largo con cinta, barba, tamarco y banot), pero más fino y con la vara del salto. La Mirladora va en bikini de piel, como la guerrera de «Vixen», con la melena larga, botas de piel, brazaletes y la magia en la mano.', st: STYLE.real, bg: bgCave, figs: trio, faceWho: [MENCEY, PASTOR, MIRLA], faceN: 3 });
+  card('g-guarriors', { tag: 'G1 · elegido', name: 'En plena pelea', text: 'El Mencey, mucho más musculoso: brazos, espalda y pecho más anchos y los pectorales marcados. El Pastor ahora es como Bencomo (pelo largo con cinta, barba, tamarco y banot), pero más fino y con la vara del salto. La Mirladora va en bikini de piel, como la guerrera de «Vixen», con la melena larga, botas de piel, brazaletes y la magia en la mano.', st: STYLE.real, bg: bgCave, figs: trio, faceWho: [MENCEY, PASTOR, MIRLA], faceN: 3 });
   card('g-guarriors', { tag: 'G1', name: 'De pie, para elegir personaje', text: 'Los mismos tres quietos, como saldrían en la pantalla de elegir guerrero.', st: STYLE.real, bg: bgCave, figs: trioIdle, faces: false });
   // ---------- football: the current little man of the game vs three improvements, same camera (from above, pitch vertical) ----------
   const KITS = [{ shirt: '#c8102e', shorts: '#1d2a6b', socks: '#1d2a6b', trim: '#ffc400', boot2: '#ffc400', look: { skin: '#c68a5e', hair: '#2a1a10' }, num: '9' },

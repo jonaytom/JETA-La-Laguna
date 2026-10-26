@@ -1,10 +1,10 @@
-# Pruebas 0.88.0 — 2026-10-26 11:09 — 4/4 OK
+# Pruebas 0.88.1 — 2026-10-26 11:17 — 4/4 OK
 
-Listas: v088. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 93 s en total.
+Listas: v088. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 102 s en total.
 
 | # | Prueba | Resultado | Tiempo |
 |---|---|---|---|
-| 1 | `prueba_088.py` | **OK** | 64 s |
+| 1 | `prueba_088.py` | **OK** | 73 s |
 | 2 | `prueba_futbol.py` | **OK** | 7 s |
 | 3 | `prueba_085.py` | **OK** | 2 s |
 | 4 | `prueba_arranque.py` | **OK** | 1 s |
@@ -25,13 +25,13 @@ PRUEBA 088 OK
 
 ```
 foto futbol_partido
-cpu {'ph': 'play', 'sc': [2, 1], 'golden': False}
-resultado {"won":true,"score":[2,1]}
+cpu {'ph': 'goal', 'sc': [4, 0], 'golden': False}
+resultado {"won":true,"score":[4,0]}
 PARTIDO CPU OK
-partido fácil 1 [5, 0]
-partido fácil 2 [7, 1]
-partido fácil 3 [6, 3]
-equilibrio primer partido [18, 4] OK
+partido fácil 1 [8, 1]
+partido fácil 2 [8, 1]
+partido fácil 3 [9, 1]
+equilibrio primer partido [25, 3] OK
 tras moverse 1
 tras correr 2
 tras pasar 3
@@ -67,7 +67,7 @@ foto v086_campeones
 foto v086_tabla
 campeón {'v1': 'champ'} {'v2': 'name', 'v3': 'table', 'tabla': ['JNY', 'ESPAÑA', 1], 'ganados': 1}
 CAMPEON OK
-furbito {'m1': 'menu', 'juega': True, 'n': 10, 'nombres': ['BRASIL', 'FRANCIA'], 'espera': True}
+furbito {'m1': 'menu', 'juega': True, 'n': 10, 'nombres': ['BRASIL', 'URUGUAY'], 'espera': True}
 foto v086_furbito
 eliminados {'v': 'result', 'gano': False, 'luego': 'pick', 'estado': 'arcade'}
 FURBITO OK
@@ -80,7 +80,7 @@ PRUEBA 085 OK
 ### 4. prueba_arranque.py — OK
 
 ```
-30 pasos (ms): {'mediana': 40, 'peor': 90, 'estado': 'play'}
+30 pasos (ms): {'mediana': 41, 'peor': 106, 'estado': 'play'}
 errores JS []
 ARRANQUE OK
 ```

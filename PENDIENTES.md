@@ -127,6 +127,13 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
     fino) y la Mirladora más sexy, en bikini de piel tipo «Vixen» con el pelo largo (hecho: bikini y botas de piel,
     melena, brazaletes, la magia). **Fútbol: ninguno**; quiere opciones sobre el que tenemos (misma cámara y tamaño):
     F0 el actual, F1 el actual pulido (luz, contorno, medias, botas, número, cara), F2 pulido y algo cabezón.
+  - 26-oct: Guanche Guarriors G1 aprobado («ahora está bien»), con el **Mencey mucho más musculoso** (hecho en la
+    propuesta). **Bencomo**: el B3 grande desentona con el mundo y los enemigos → propuesta «versión juego»: el sprite
+    de ahora (16 × 22, la paleta de la máquina) con el detalle del B3 (cinta, barba, collar, tamarco al hombro, pecho
+    con pectorales y abdominales, taparrabos con cordón, tobilleras, descalzo). Falta que Jonay lo vea; si vale, hay que
+    redibujar también los demás cuadros (correr, saltar, varazo, agacharse, herido).
+  - 26-oct: fútbol, la entrada con una pierna estirada y la otra doblada, y la palomita con los brazos estirados:
+    hecho en la v0.88.1.
   - 26-oct: **fútbol F2 elegido e incorporado en la v0.88.0** («lo incorporamos así ya»). Bencomo B3: Jonay pregunta
     cómo se vería en el juego (en la muestra está mucho más grande): hecha una vista a tamaño real (el de ahora mide 22
     px, 44 en pantalla; el B3 al mismo tamaño y uno un poco más grande, de 60). Mirladora: pelo castaño, melena suelta,

@@ -3,6 +3,11 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.88.1 — 2026-10-26 — Entrada y palomita con postura propia
+- **Fútbol** (Jonay): la entrada se hace con una pierna estirada hacia el balón y la otra doblada con la rodilla
+  arriba; en la palomita, el portero vuela con los dos brazos estirados por delante y los guantes. Antes era el
+  muñeco de pie, tumbado.
+
 ## 0.88.0 — 2026-10-26 — Futbolistas nuevos
 - **Los jugadores del fútbol, redibujados** (Jonay eligió la propuesta «F2»): la misma cámara desde arriba y el mismo
   tamaño, pero dibujados a la resolución real del partido.
