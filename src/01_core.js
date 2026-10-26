@@ -57,6 +57,46 @@ for (const rd of DATA.R) { if (rd[1] >= 0 && CALLEJERO_TRAFICO.test(DATA.S[rd[1]
 for (const rd of DATA.R) { if (rd[0] <= 12) { const c = rd[4], m = (c.length >> 2) << 1; rd[2] = WIDEN2(rd[0], rd[2], rd[3] & 1, c[m], c[m + 1]); } }
 for (const e of DATA.G.e) { const a = e[0] * 2; e[4] = WIDEN2(e[2], e[4], e[3], DATA.G.n[a], DATA.G.n[a + 1]); }
 trinidadWidths(); // v0.68: Av. de La Trinidad, one lane + parking per carriageway (05u_trinidad.js); after the widening
+// v0.91 (Jonay, with a Street View of the TF-5: «separando los sentidos»): OSM gives the motorway as two one-way ways
+// that are often only 7–10 m apart, so the two carriageways (13 m each here) overlapped into one slab with the lines
+// mixed and no room for the barrier. Where they run side by side the points are pushed apart until there are MED
+// metres between their edges; the same points of every other road (slip roads) and of the traffic graph move with them.
+const CW_LOCK = new Set(); // the points of the motorway already set apart: the general separation below leaves them where they are
+(function separateCarriageways() {
+  const MED = 1.4, CELL = 60, isCw = (r) => r[0] <= 2 && (r[3] & 1) && !(r[3] & 4);
+  const L = DATA.R.filter(isCw); if (L.length < 2) return;
+  // the map has few points along the motorway (one every few hundred metres): add one every STEP metres to the
+  // carriageways, and the very same ones to the traffic graph's polylines, so the push holds all along
+  const STEP = 12, ins = new Map(), pk = (ax, az, bx, bz) => ax + ',' + az + '|' + bx + ',' + bz;
+  for (const r of L) { const c = r[4], o = []; for (let i = 0; i < c.length - 2; i += 2) { const ax = c[i], az = c[i + 1], bx = c[i + 2], bz = c[i + 3], n = Math.floor(Math.hypot(bx - ax, bz - az) / STEP);
+      o.push(ax, az); if (n < 2) continue; const mid = []; for (let k = 1; k < n; k++) mid.push(Math.round((ax + ((bx - ax) * k) / n) * 100) / 100, Math.round((az + ((bz - az) * k) / n) * 100) / 100);
+      ins.set(pk(ax, az, bx, bz), mid); o.push(...mid); }
+    o.push(c[c.length - 2], c[c.length - 1]); r[4] = o; }
+  { const N = DATA.G.n; for (const e of DATA.G.e) { const P = [N[e[0] * 2], N[e[0] * 2 + 1], ...(e[6] || []), N[e[1] * 2], N[e[1] * 2 + 1]], out = [];
+      for (let i = 0; i < P.length - 2; i += 2) { if (i) out.push(P[i], P[i + 1]); const f = ins.get(pk(P[i], P[i + 1], P[i + 2], P[i + 3])), b = ins.get(pk(P[i + 2], P[i + 3], P[i], P[i + 1]));
+        if (f) out.push(...f); else if (b) for (let k = b.length - 2; k >= 0; k -= 2) out.push(b[k], b[k + 1]); }
+      if (out.length !== (e[6] || []).length) e[6] = out; } }
+  const G = new Map(), gk = (x, z) => Math.floor(x / CELL) * 100000 + Math.floor(z / CELL);
+  L.forEach((r, li) => { const c = r[4]; for (let i = 0; i < c.length - 2; i += 2) { const x0 = Math.min(c[i], c[i + 2]) - 20, x1 = Math.max(c[i], c[i + 2]) + 20, z0 = Math.min(c[i + 1], c[i + 3]) - 20, z1 = Math.max(c[i + 1], c[i + 3]) + 20;
+    for (let a = Math.floor(x0 / CELL); a <= Math.floor(x1 / CELL); a++) for (let b = Math.floor(z0 / CELL); b <= Math.floor(z1 / CELL); b++) { const k = a * 100000 + b; let l = G.get(k); if (!l) G.set(k, l = []); l.push(li, i); } } });
+  const disp = new Map(); let moved = 0;
+  L.forEach((r, li) => { const c = r[4]; for (let i = 0; i < c.length; i += 2) { const x = c[i], z = c[i + 1];
+    const j0 = Math.max(0, i - 2), j1 = Math.min(c.length - 2, i + 2); let tx = c[j1] - c[j0], tz = c[j1 + 1] - c[j0 + 1]; const tl = Math.hypot(tx, tz) || 1; tx /= tl; tz /= tl;
+    let best = null; const l = G.get(gk(x, z)) || [];
+    for (let q = 0; q < l.length; q += 2) { const lj = l[q], k = l[q + 1]; if (lj === li) continue; const r2 = L[lj], c2 = r2[4];
+      const ax = c2[k], az = c2[k + 1], ex = c2[k + 2] - ax, ez = c2[k + 3] - az, L2 = ex * ex + ez * ez; if (L2 < 1) continue; const Lg = Math.sqrt(L2);
+      if ((ex * tx + ez * tz) / Lg > -0.9) continue; // the other direction, running alongside
+      const t = Math.max(0, Math.min(1, ((x - ax) * ex + (z - az) * ez) / L2)), px = ax + ex * t, pz = az + ez * t, d = Math.hypot(x - px, z - pz), need = (r[2] + r2[2]) / 2 + MED;
+      if (d > 1.5 && d < need && (!best || d < best.d)) best = { d, px, pz, need }; }
+    if (!best) continue; const push = (best.need - best.d) / 2, k = x + ',' + z, o = disp.get(k);
+    if (!o || push > o[2]) disp.set(k, [((x - best.px) / best.d) * push, ((z - best.pz) / best.d) * push, push]); } });
+  if (!disp.size) return;
+  const mv = (arr, i) => { const o = disp.get(arr[i] + ',' + arr[i + 1]); if (!o) return; arr[i] = Math.round((arr[i] + o[0]) * 100) / 100; arr[i + 1] = Math.round((arr[i + 1] + o[1]) * 100) / 100; CW_LOCK.add(arr[i] + ',' + arr[i + 1]); moved++; };
+  for (const rd of DATA.R) { const c = rd[4]; for (let i = 0; i < c.length; i += 2) mv(c, i); }
+  const N = DATA.G.n; for (let i = 0; i < N.length; i += 2) mv(N, i);
+  for (const e of DATA.G.e) if (e[6]) for (let i = 0; i < e[6].length; i += 2) mv(e[6], i);
+  console.log('carriageways apart: points', disp.size, 'moved', moved);
+})();
 const $ = (id) => document.getElementById(id);
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -74,7 +114,7 @@ const SEPAR = []; // [ax, az, bx, bz, kind] midline runs for medians (kind: 2 = 
   const big = (t) => t <= 2; const MED = (ta, tb) => big(ta) && big(tb) ? 2.4 : big(ta) || big(tb) ? 2.6 : 1.4; // (a sunk road beside one at street level gets the same gap: its retaining wall goes there)
   const shifts = new Map(); let nPairs = 0;
   R.forEach((rd, ri) => { if (rd[0] > 10) return; const c = rd[4], n = c.length / 2; if (n < 2) return; const sh = new Array(n).fill(null);
-    for (let v = 0; v < n; v++) { const x = c[v * 2], z = c[v * 2 + 1]; const p = Math.max(0, v - 1), q = Math.min(n - 1, v + 1); let dx = c[q * 2] - c[p * 2], dz = c[q * 2 + 1] - c[p * 2 + 1]; const dl = Math.hypot(dx, dz) || 1; dx /= dl; dz /= dl;
+    for (let v = 0; v < n; v++) { const x = c[v * 2], z = c[v * 2 + 1]; if (CW_LOCK.has(x + ',' + z)) continue; const p = Math.max(0, v - 1), q = Math.min(n - 1, v + 1); let dx = c[q * 2] - c[p * 2], dz = c[q * 2 + 1] - c[p * 2 + 1]; const dl = Math.hypot(dx, dz) || 1; dx /= dl; dz /= dl;
       let best = null; const l = G.get(Math.floor(x / CS) * 100000 + Math.floor(z / CS)) || [];
       for (const k of l) { const g = segs[k]; const rj = g[0]; if (rj === ri) continue; const r2 = R[rj]; if ((r2[3] & 2) !== (rd[3] & 2)) continue; // a bridge and a road below are not side by side
         const ex = g[3] - g[1], ez = g[4] - g[2], L2 = ex * ex + ez * ez || 1, L = Math.sqrt(L2); const t = clamp(((x - g[1]) * ex + (z - g[2]) * ez) / L2, 0, 1); if (t <= 0 || t >= 1) continue;

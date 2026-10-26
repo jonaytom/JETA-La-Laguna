@@ -1129,47 +1129,79 @@ function auditObstacles() {
 }
 // ---- medians: a concrete barrier between the two directions of an autovía (and between an autovía and a road running beside it);
 // a raised kerb island between the carriageways of urban dual roads. Openings are left at junctions.
+const MEDIANS = []; // v0.91: [kind (2 New Jersey, 3 guardrail, 1 island), x0, z0, x1, z1, samples] (tests)
 function buildMedians() {
-  const R = DATA.R; const X = xsegGrid(); let nB = 0, nK = 0;
+  const R = DATA.R; const X = xsegGrid(); let nB = 0, nK = 0, nG = 0;
   const big = (t) => t <= 2;
   // nodes with 3+ ways (junctions) on a grid
   const JG = new Map(); for (const [k, n] of nodeCount) { if (n < 3) continue; const [x, z] = k.split(',').map(Number); const g = Math.floor(x / 30) * 100000 + Math.floor(z / 30); let l = JG.get(g); if (!l) JG.set(g, l = []); l.push(x, z); }
   const nearJ = (x, z, r) => { const a0 = Math.floor(x / 30), b0 = Math.floor(z / 30); for (let a = a0 - 1; a <= a0 + 1; a++) for (let b = b0 - 1; b <= b0 + 1; b++) { const l = JG.get(a * 100000 + b); if (!l) continue; for (let i = 0; i < l.length; i += 2) if (Math.hypot(l[i] - x, l[i + 1] - z) < r) return true; } return false; };
   const runs = new Map();
-  R.forEach((rd, ri) => { if (rd[0] > 10 || (rd[3] & 6) || RAISE.has(ri)) return; const c = rd[4]; let s0 = 0;
+  // v0.91: a road over the median only opens it if it is at the same level (a slip road rising to the San Lázaro bridge
+  // passes over the median without being a bridge in the map, and it used to leave the TF-5 without a barrier there)
+  const crossAtLevel = (cr, y) => { const c = R[cr.ri][4]; let s = 0; for (let i = 0; i < cr.i; i += 2) s += Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]); s += Math.hypot(c[cr.i + 2] - c[cr.i], c[cr.i + 3] - c[cr.i + 1]) * cr.t; const yc = ROADY[cr.ri] ? ROADY[cr.ri](s, cr.x, cr.z) : y; return Math.abs(yc - y) < 1.6; };
+  R.forEach((rd, ri) => { if (rd[0] > 10 || (rd[3] & 6) || (RAISE.has(ri) && !big(rd[0]))) return; const c = rd[4]; let s0 = 0; // v0.91: a motorway that rises towards a bridge also gets its median
     for (let i = 0; i < c.length - 2; i += 2) { const ax = c[i], az = c[i + 1], bx = c[i + 2], bz = c[i + 3], L = Math.hypot(bx - ax, bz - az); if (L < 0.5) { continue; } const ux = (bx - ax) / L, uz = (bz - az) / L;
-      for (let t = 1.5; t < L; t += 3) { const x = ax + ux * t, z = az + uz * t; const l = X.G.get(Math.floor(x / 40) * 10000 + Math.floor(z / 40)); if (!l) continue;
-        let best = null;
-        for (const k of l) { const g = X.segs[k]; const rj = g[0]; if (rj <= ri) continue; const r2 = R[rj]; if (r2[0] > 10 || (r2[3] & 6) || RAISE.has(rj)) continue;
+      for (let t = 1.5; t < L; t += 3) { const x = ax + ux * t, z = az + uz * t; const l = new Set(); { const ca = Math.floor(x / 40), cb = Math.floor(z / 40); for (let a2 = ca - 1; a2 <= ca + 1; a2++) for (let b2 = cb - 1; b2 <= cb + 1; b2++) for (const k of X.G.get(a2 * 10000 + b2) || []) l.add(k); } if (!l.size) continue; // v0.91: the neighbour cells too (the TF-5 runs along a cell edge)
+        // v0.91: every road running alongside (not only the nearest: beside the TF-5 the Calle Espinero hid the median)
+                const cands = new Map();
+        for (const k of l) { const g = X.segs[k]; const rj = g[0]; if (rj <= ri) continue; const r2 = R[rj]; if (r2[0] > 10 || (r2[3] & 6) || (RAISE.has(rj) && !big(r2[0]))) continue;
           const ex = g[3] - g[1], ez = g[4] - g[2], L2 = ex * ex + ez * ez || 1, Lg = Math.sqrt(L2); const tt = ((x - g[1]) * ex + (z - g[2]) * ez) / L2; if (tt < 0 || tt > 1) continue;
-          if (Math.abs((ux * ex + uz * ez) / Lg) < 0.94) continue; const px = g[1] + ex * tt, pz = g[2] + ez * tt, d = Math.hypot(x - px, z - pz); const gap = d - (rd[2] + r2[2]) / 2;
-          if (gap < -0.4 || gap > 6) continue; if (!best || d < best.d) best = { rj, d, gap, px, pz, s2: g[5] + g[6] * tt }; }
-        if (!best) continue; if (nearJ(x, z, 16) || nearJ(best.px, best.pz, 16)) continue;
-        const ya = ROADY[ri](s0 + t, x, z), yb = ROADY[best.rj](best.s2, best.px, best.pz); if (Math.abs(ya - yb) > 0.6) continue;
+          const dot = (ux * ex + uz * ez) / Lg; if (Math.abs(dot) < 0.94) continue; const px = g[1] + ex * tt, pz = g[2] + ez * tt, d = Math.hypot(x - px, z - pz); const gap = d - (rd[2] + r2[2]) / 2;
+          if (gap < -0.4 || gap > 6) continue; const o = cands.get(rj); if (!o || d < o.d) cands.set(rj, { rj, d, gap, px, pz, s2: g[5] + g[6] * tt, dot }); }
+        for (const best of cands.values()) {
+        if (nearJ(x, z, 16) || nearJ(best.px, best.pz, 16)) continue;
+        const kind = big(rd[0]) && big(R[best.rj][0]) ? 2 : big(rd[0]) || big(R[best.rj][0]) ? 3 : 1;
+        const ya = ROADY[ri](s0 + t, x, z), yb = ROADY[best.rj](best.s2, best.px, best.pz); if (Math.abs(ya - yb) > (kind === 1 ? 0.6 : 2.5)) continue; // v0.91: a barrier or a guardrail also on a slope (the two carriageways at different heights)
         const nx = (best.px - x) / best.d, nz = (best.pz - z) / best.d; const off = rd[2] / 2 + Math.max(0, best.gap) / 2; const mx = x + nx * off, mz = z + nz * off;
         // a side road crossing the median here = opening
-        const cross = ROADSEG.nearest(mx, mz, (r) => r !== rd && r !== R[best.rj] && r[0] <= 12 && !(r[3] & 6)); if (cross && cross.d < R[cross.ri][2] / 2 + 0.5) continue;
+        const cross = ROADSEG.nearest(mx, mz, (r) => r !== rd && r !== R[best.rj] && r[0] <= 12 && !(r[3] & 6)); if (cross && cross.d < R[cross.ri][2] / 2 + 0.5 && crossAtLevel(cross, (ya + yb) / 2)) continue;
         if (triRampZone(mx, mz)) continue; // v0.68: the car park ramp in the middle of the Av. de La Trinidad
         if (tramTrenchAt(mx, mz, 7)) continue; // v0.72: no island over the tram cutting
+        // v0.91: the kind: New Jersey between two big roads (the two directions of the TF-5), a steel guardrail between a
+        // big road and a smaller one beside it (the TF-5 and the road that runs along it), a kerb island between small ones
         const key = ri + ':' + best.rj; let run = runs.get(key); if (!run) runs.set(key, run = []);
-        run.push([mx, mz, (ya + yb) / 2, Math.max(0, best.gap), big(rd[0]) || big(R[best.rj][0]) ? 2 : 1, s0 + t]); }
+        run.push([mx, mz, kind === 1 ? (ya + yb) / 2 : Math.max(ya, yb), Math.max(0, best.gap), kind, s0 + t, Math.min(ya, yb)]); } }
       s0 += L; } });
   for (const run of runs.values()) {
     // split into continuous pieces (samples ≤ 4.5 m apart)
     let piece = [];
-    const flush = () => { if (piece.length >= 3) { if (piece[0][4] === 2) { barrier(piece); nB++; } else { island(piece); nK++; } } piece = []; };
+    const flush = () => { if (piece.length >= 3) { const k = piece[0][4]; MEDIANS.push([k, Math.round(piece[0][0]), Math.round(piece[0][1]), Math.round(piece[piece.length - 1][0]), Math.round(piece[piece.length - 1][1]), piece.length]); if (k === 2) { barrier(piece); nB++; } else if (k === 3) { guardrail(piece); nG++; } else { island(piece); nK++; } } piece = []; };
     for (const p of run) { if (piece.length && (Math.hypot(p[0] - piece[piece.length - 1][0], p[1] - piece[piece.length - 1][1]) > 4.5)) flush(); piece.push(p); } flush(); }
-  console.log('medians: barriers', nB, 'islands', nK);
+  console.log('medians: barriers', nB, 'guardrails', nG, 'islands', nK);
   function barrier(P) { // New Jersey profile
-    const T = acc(P[0][0], P[0][1], 'trim'); const col = [0.78, 0.77, 0.74];
+    const T = acc(P[0][0], P[0][1], 'trim'); const col = [0.6, 0.59, 0.56]; // v0.91: darker (it vanished against the asphalt)
     for (let i = 0; i < P.length - 1; i++) { const a = P[i], b = P[i + 1]; const dx = b[0] - a[0], dz = b[1] - a[1], L = Math.hypot(dx, dz) || 1, px = -dz / L, pz = dx / L;
       const prof = [[0.32, 0], [0.24, 0.08], [0.1, 0.33], [0.08, 0.82]];
       for (const sg of [1, -1]) for (let k = 0; k < prof.length - 1; k++) { const [w0, h0] = prof[k], [w1, h1] = prof[k + 1];
         T.quad([a[0] + px * w0 * sg, a[2] + h0, a[1] + pz * w0 * sg], [b[0] + px * w0 * sg, b[2] + h0, b[1] + pz * w0 * sg], [b[0] + px * w1 * sg, b[2] + h1, b[1] + pz * w1 * sg], [a[0] + px * w1 * sg, a[2] + h1, a[1] + pz * w1 * sg], [0, 0], [0, 0], [0, 0], [0, 0], col, undefined, [px * sg, 0.35, pz * sg]); }
       T.quad([a[0] + px * 0.08, a[2] + 0.82, a[1] + pz * 0.08], [b[0] + px * 0.08, b[2] + 0.82, b[1] + pz * 0.08], [b[0] - px * 0.08, b[2] + 0.82, b[1] - pz * 0.08], [a[0] - px * 0.08, a[2] + 0.82, a[1] - pz * 0.08], [0, 0], [0, 0], [0, 0], [0, 0], col, undefined, [0, 1, 0]);
       COL.addSeg(a[0], a[1], b[0], b[1], Math.min(a[2], b[2]) - 0.2, Math.max(a[2], b[2]) + 0.9); }
+    // v0.91: on a slope the barrier stands on the higher carriageway; a concrete face goes down to the lower one
+    for (let i = 0; i < P.length - 1; i++) { const a = P[i], b = P[i + 1]; if (a[2] - a[6] < 0.12 && b[2] - b[6] < 0.12) continue; const dx = b[0] - a[0], dz = b[1] - a[1], L = Math.hypot(dx, dz) || 1, px = -dz / L, pz = dx / L;
+      for (const sg of [1, -1]) T.quad([a[0] + px * 0.32 * sg, a[6] - 0.1, a[1] + pz * 0.32 * sg], [b[0] + px * 0.32 * sg, b[6] - 0.1, b[1] + pz * 0.32 * sg], [b[0] + px * 0.32 * sg, b[2], b[1] + pz * 0.32 * sg], [a[0] + px * 0.32 * sg, a[2], a[1] + pz * 0.32 * sg], [0, 0], [0, 0], [0, 0], [0, 0], col, undefined, [px * sg, 0, pz * sg]); }
+    // v0.91 (the Street View of the TF-5): blue reflective posts on top of the barrier, every ~4 m
+    delineators(T, P, 0.82);
     // end caps sloping to the ground (no blunt ends in front of traffic)
   }
+  // a small blue post with a white reflector, every ~4 m along P, standing on «base» metres above the road
+  function delineators(T, P, base) { const blue = [0.12, 0.33, 0.78], wht = [0.92, 0.93, 0.95]; let acc0 = 0;
+    for (let i = 0; i < P.length - 1; i++) { const a = P[i], b = P[i + 1], L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, ux = (b[0] - a[0]) / L, uz = (b[1] - a[1]) / L;
+      for (let t = (4 - acc0) % 4; t < L; t += 4) { const x = a[0] + ux * t, z = a[1] + uz * t, y = a[2] + (b[2] - a[2]) * (t / L) + base, w = 0.05, px = -uz * w, pz = ux * w, fx = ux * w, fz = uz * w;
+        for (const [h0, h1, c] of [[0, 0.32, blue], [0.32, 0.4, wht], [0.4, 0.48, blue]]) for (const [sx, sz] of [[px, pz], [-px, -pz]]) T.quad([x + sx - fx, y + h0, z + sz - fz], [x + sx + fx, y + h0, z + sz + fz], [x + sx + fx, y + h1, z + sz + fz], [x + sx - fx, y + h1, z + sz - fz], [0, 0], [0, 0], [0, 0], [0, 0], c, undefined, [sx, 0, sz]);
+      }
+      acc0 = (acc0 + L) % 4; } }
+  // v0.91: steel guardrail (W-beam on posts) between the motorway and a smaller road beside it, with the blue posts
+  function guardrail(P) { const T = acc(P[0][0], P[0][1], 'trim'); const steel = [0.66, 0.68, 0.7], dark = [0.36, 0.37, 0.38]; let acc0 = 0;
+    for (let i = 0; i < P.length - 1; i++) { const a = P[i], b = P[i + 1]; const dx = b[0] - a[0], dz = b[1] - a[1], L = Math.hypot(dx, dz) || 1, px = -dz / L, pz = dx / L, ux = dx / L, uz = dz / L;
+      // the beam: a strip 0.32 m tall, both faces, with a darker fold in the middle
+      for (const sg of [1, -1]) for (const [h0, h1, c] of [[0.45, 0.58, steel], [0.58, 0.63, dark], [0.63, 0.77, steel]]) T.quad([a[0] + px * 0.06 * sg, a[2] + h0, a[1] + pz * 0.06 * sg], [b[0] + px * 0.06 * sg, b[2] + h0, b[1] + pz * 0.06 * sg], [b[0] + px * 0.06 * sg, b[2] + h1, b[1] + pz * 0.06 * sg], [a[0] + px * 0.06 * sg, a[2] + h1, a[1] + pz * 0.06 * sg], [0, 0], [0, 0], [0, 0], [0, 0], c, undefined, [px * sg, 0, pz * sg]);
+      // the posts, every 4 m
+      for (let t = (4 - acc0) % 4; t < L; t += 4) { const x = a[0] + ux * t, z = a[1] + uz * t, y = a[2] + (b[2] - a[2]) * (t / L), w = 0.06, qx = px * w, qz = pz * w, fx = ux * w, fz = uz * w;
+        for (const [sx, sz, fx2, fz2] of [[qx, qz, fx, fz], [-qx, -qz, -fx, -fz], [fx, fz, -qx, -qz], [-fx, -fz, qx, qz]]) T.quad([x + sx - fx2, y, z + sz - fz2], [x + sx + fx2, y, z + sz + fz2], [x + sx + fx2, y + 0.75, z + sz + fz2], [x + sx - fx2, y + 0.75, z + sz - fz2], [0, 0], [0, 0], [0, 0], [0, 0], dark, undefined, [sx, 0, sz]); }
+      acc0 = (acc0 + L) % 4;
+      COL.addSeg(a[0], a[1], b[0], b[1], Math.min(a[2], b[2]) - 0.2, Math.max(a[2], b[2]) + 0.8); }
+    delineators(T, P, 0.77); }
   function island(P) { // raised kerb + paving/grass, as wide as the gap (min 0.8 m)
     const T = acc(P[0][0], P[0][1], 'trim'); const kc = [0.8, 0.79, 0.75], top = [0.42, 0.52, 0.36];
     for (let i = 0; i < P.length - 1; i++) { const a = P[i], b = P[i + 1]; const dx = b[0] - a[0], dz = b[1] - a[1], L = Math.hypot(dx, dz) || 1, px = -dz / L, pz = dx / L; const wa = Math.max(0.4, a[3] / 2 - 0.05), wb = Math.max(0.4, b[3] / 2 - 0.05), h = 0.16;

@@ -3,6 +3,20 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.91.0 — 2026-10-26 — La TF-5 con los dos sentidos separados
+- **Autopista del Norte (TF-5)** (Jonay, con una foto de Street View junto a San Benito: «separando los sentidos, así
+  como la carretera paralela»):
+  - Las dos calzadas iban montadas una sobre otra en muchos tramos (en el mapa, los dos sentidos están a 7–10 m y
+    cada calzada mide 13), así que se veía una sola losa con las rayas mezcladas. Ahora se separan al cargar: queda
+    hueco para la mediana en toda la autopista, y los ramales y los coches de la IA se mueven con ellas.
+  - **Mediana de hormigón tipo New Jersey** entre los dos sentidos, con los **postes azules reflectantes** encima,
+    como en la foto. También en las cuestas, donde las dos calzadas van a distinta altura (con su muro hasta la de
+    abajo), y en las subidas a los puentes, que antes se quedaban sin mediana.
+  - **Bionda (guardarraíl de acero)** entre la autopista y la calle que va pegada a ella (la Calle Espinero, la
+    Carretera General…), con sus postes y los postes azules.
+  - Antes la mediana solo se buscaba contra la calle más cercana: junto a la Calle Espinero la tapaba y se quedaba
+    sin mediana entre los sentidos.
+
 ## 0.90.0 — 2026-10-26 — Jugadores nuevos en el basket y Guanche Guarriors, el público y el saque de fondo
 - **Basket, los jugadores nuevos** (Jonay eligió el «A++ semicabezón 120»): dibujados con la técnica de la propuesta
   (esqueleto, piezas y sombreado píxel a píxel): cara de perfil con ojo, ceja, nariz, labios y oreja, barba o perilla,

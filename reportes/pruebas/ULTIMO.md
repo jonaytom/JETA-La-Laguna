@@ -1,27 +1,199 @@
-# Pruebas 0.90.0 — 2026-10-26 15:22 — 10/11 OK
+# Pruebas 0.91.0 — 2026-10-26 16:20 — 11/11 OK
 
-Listas: v090. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 254 s en total.
+Listas: v091. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 195 s en total.
 
 | # | Prueba | Resultado | Tiempo |
 |---|---|---|---|
-| 1 | `prueba_090.py` | **OK** | 64 s |
-| 2 | `prueba_089.py` | **OK** | 1 s |
-| 3 | `prueba_baloncesto.py` | **OK** | 16 s |
-| 4 | `prueba_futbol.py` | **OK** | 7 s |
-| 5 | `prueba_082.py` | **OK** | 1 s |
-| 6 | `prueba_085.py` | **OK** | 1 s |
-| 7 | `prueba_pelea_atras.py` | **OK** | 14 s |
-| 8 | `prueba_arranque.py` | **OK** | 0 s |
-| 9 | `prueba_076.py` | **FALLA** (repetida aparte) | 97 s |
-| 10 | `prueba_075.py` | **OK** | 3 s |
-| 11 | `prueba_diario.py` | **OK** | 0 s |
+| 1 | `sonda_tf5.py` | **OK** | 88 s |
+| 2 | `prueba_conduccion_tuneles_puentes.py` | **OK** | 34 s |
+| 3 | `prueba_bordes.py` | **OK** | 0 s |
+| 4 | `prueba_078.py` | **OK** | 20 s |
+| 5 | `prueba_grandes.py` | **OK** | 12 s |
+| 6 | `prueba_guardar_cargar.py` | **OK** | 3 s |
+| 7 | `prueba_parking_cristo.py` | **OK** | 1 s |
+| 8 | `prueba_pendientes_faciles.py` | **OK** | 5 s |
+| 9 | `prueba_trinidad.py` | **OK** | 8 s |
+| 10 | `prueba_arranque.py` | **OK** | 1 s |
+| 11 | `prueba_090.py` | **OK** | 2 s |
 
 ## Detalle
 
-### 1. prueba_090.py — OK
+### 1. sonda_tf5.py — OK
 
 ```
-saque {'fase': 'score', 'jump': 0.09, 'inb': 'inbound', 'bx': 27.47, 'team': 1, 'luego': 'play', 'ball': 'pass'}
+foto tf5_espinero_e_ojos {'ri': 2480, 'x': -1500, 'z': -108, 'y': 19.6, 'calzadas': [-108, -124]}
+foto tf5_espinero_e_top {'ri': 2480, 'x': -1500, 'z': -108, 'y': 19.6, 'calzadas': [-108, -124]}
+foto tf5_espinero_w_ojos {'ri': 2288, 'x': -1500, 'z': -124, 'y': 19.9, 'calzadas': [-108, -124]}
+foto tf5_espinero_w_top {'ri': 2288, 'x': -1500, 'z': -124, 'y': 19.9, 'calzadas': [-108, -124]}
+foto tf5_sanbenito_ojos {'ri': 2460, 'x': -1100, 'z': 16, 'y': 17, 'calzadas': [16, 1]}
+foto tf5_sanbenito_top {'ri': 2460, 'x': -1100, 'z': 16, 'y': 17, 'calzadas': [16, 1]}
+foto tf5_sanlazaro_ojos {'ri': 2480, 'x': -1700, 'z': -171, 'y': 26.6, 'calzadas': [-171, -186]}
+foto tf5_sanlazaro_top {'ri': 2480, 'x': -1700, 'z': -171, 'y': 26.6, 'calzadas': [-171, -186]}
+foto tf5_oeste_ojos {'ri': 2354, 'x': -2000, 'z': -232, 'y': 33.6, 'calzadas': [-232, -247]}
+foto tf5_oeste_top {'ri': 2354, 'x': -2000, 'z': -232, 'y': 33.6, 'calzadas': [-232, -247]}
+foto tf5_oeste_junto_ojos {'ri': 2354, 'x': -2400, 'z': -214, 'y': 47.1, 'calzadas': [-214, -228]}
+foto tf5_oeste_junto_top {'ri': 2354, 'x': -2400, 'z': -214, 'y': 47.1, 'calzadas': [-214, -228]}
+foto tf5_bionda_cerca {'suelo': 18.1}
+foto tf5_bionda_alto {'suelo': 18.1}
+foto tf5_barrera_cerca {'suelo': 18.1}
+foto tf5_barrera_alto {'suelo': 17.9}
+foto tf5_vallado_boca {'suelo': 7.3}
+foto tf5_vallado_alto {'suelo': 9.2}
+foto tf5_vallado_tunel {'suelo': 6.6}
+foto tf5_huc_rampa {'suelo': -223.4}
+foto tf5_huc_rampa_alto {'suelo': -222.1}
+foto tf5_adelantado_marcos {'suelo': 1.3}
+foto tf5_casco_marcos {'suelo': 0.9}
+medianas 321 new jersey 147 biondas 86
+tf5 x -2500..-800 [[1, -824, 134, -824, 118, 6], [3, -1158, -27, -1130, -17, 11], [3, -1116, -12, -1094, -4, 9], [3, -2023, -257, -1963, -259, 21], [2, -1935, -238, -1841, -220, 34], [2, -802, 186, -823, 156, 12], [2, -846, 141, -863, 122, 9], [3, -2169, -250, -2178, -250, 4], [3, -2183, -250, -2189, -251, 3], [2, -932, 64, -953, 50, 9], [2, -801, 186, -806, 181, 3], [2, -835, 173, -895, 110, 30], [2, -899, 106, -914, 94, 8], [2, -935, 79, -972, 57, 16], [2, -1001, 43, -1020, 35, 8], [2, -1026, 33, -1050, 25, 10], [2, -1083, 14, -1111, 5, 11], [2, -1145, -5, -1722, -186, 200], [2, -2283, -226, -2259, -228, 9], [2, -2235, -229, -1938, -238, 103], [2, -2481, -203, -2472, -203, 4], [2, -1775, -201, -1725, -187, 18], [3, -1054, 48, -1050, 53, 3], [1, -2229, 23, -2232, 35, 5], [1, -2257, 64, -2309, 98, 22]]
+alturas junto a la barrera [[-1442, -98, 18.01, '7.3'], [-1442, -91, 17.88, '0.6'], [-1442, -105, 18.14, '0.8']]
+metros de New Jersey en la TF-5 1452
+errores []
+SONDA TF5 OK
+```
+
+### 2. prueba_conduccion_tuneles_puentes.py — OK
+
+```
+roads 112
+CONOCIDO {'off': 0, 'dy': 0.2, 'col': False, 'low': False, 'ri': 1667, 't': 10, 'name': 'Camino La Hornera', 'L': 126, 'done': False, 'left': 109, 'time': 6.6, 'x': 1220, 'z': 2533, 'y': -123.5}
+snap df_1667
+failed 0 of 112 · conocidos 1
+AVISO: tramos que ya fallaban (PENDIENTES, «Prueba de conducción: tramos que fallan»): Camino La Hornera X 1220 Z 2533
+CONDUCCION OK
+```
+
+### 3. prueba_bordes.py — OK
+
+```
+{"inicio":[-1850,-300],"borde0":158.1,"ahora":[-1850,-300],"borde":158,"calle":25.9,"coche":false,"aviso":"Vuelves a empezar"}
+{"inicio":[500,3950],"borde0":30,"ahora":[500,3950],"borde":30,"calle":10,"coche":false,"aviso":"⚠ Saliendo del mundo — da la vuelta"}
+{"inicio":[1500,700],"borde0":305,"ahora":[1500,700],"borde":305,"calle":10,"coche":false,"aviso":"⚠ Saliendo del mundo — da la vuelta"}
+{"inicio":[-300,1600],"borde0":900,"ahora":[-300,1600],"borde":900,"calle":64.2,"coche":true,"aviso":"RADIO: Gofio FM 90.1 · boom bap lagunero  (Q: cambiar de emisora)"}
+{"inicio":[2350,1500],"borde0":50,"ahora":[2351,1500],"borde":49,"calle":27.4,"coche":true,"aviso":"RADIO: Gofio FM 90.1 · boom bap lagunero  (Q: cambiar de emisora)"}
+{"edificios_en_zonas_quitadas":0}
+```
+
+### 4. prueba_078.py — OK
+
+```
+pasajes {"hechos": [{"name": "", "x": 865.25, "z": 2792, "len": 42.2, "ancho": 2.6, "y": -96.7}, {"name": "", "x": -294.4512195121951, "z": 278.5609756097561, "len": 8, "ancho": 2.6, "y": -8.5}, {"name": "", "x": 1269.3702227296071, "z": 1974.6882962117322, "len": 2.3, "ancho": 2.6, "y": -131.6}, {"name": "", "x": 1244.3843227249386, "z": 1978.8526128791768, "len": 1.8, "ancho": 2.6, "y": -128.9}, {"name": "", "x": 1274.25, "z": 1974, "len": 7.6, "ancho": 2.6, "y": -132.2}, {"name": "", "x": 1279.3652987764171, "z": 1973.3483001359537, "len": 2.7, "ancho": 2.6, "y": -132.8}, {"name": "Pasaje de la Concepción", "x": -436.7251655629139, "z": -274.7069536423841, "len": 21.3, "ancho": 2.6, "y": 4.7}, {"name": "Pasaje de la Concepción", "x": -448.1754966887417, "z": -255.1208609271523, "len": 5.8, "ancho": 2.6, "y": 4.8}, {"name": "Pasaje de la Concepción", "x": -443.0794701986755, "z": -263.8377483443709, "len": 1.6, "ancho": 2.6, "y": 4.8}, {"name": "Pasaje Aguere", "x": -173.24675324675326, "z": -42.522727272727266, "len": 13.8, "ancho": 3.8, "y": 1.8}, {"name": "Pasaje Teide", "x": -160.68602362204723, "z": -87.85728346456693, "len": 52.8, "ancho": 3.8, "y": 3.1}, {"name": "Pasaje Teide", "x": -174.6968503937008, "z": -64.36220472440945, "len": 2, "ancho": 3.8, "y": 2.5}, {"name": "Pasaje Teide", "cubierta": true, "x": -175, "z": -64, "len": 2}, {"name": "Pasaje Teide", "x": -146.6751968503937, "z": -111.35236220472441, "len": 1.5, "ancho": 3.8, "y": 3.7}, {"name": "Pasaje Teide", "cu
+andando arriba [{'a': [-177, -60], 'llega': True, 'cerca': None, 'falta': 0.9, 'y': 2.53, 'bajo': False, 'camY': 5.22, 'techo': None, 'donde': [-176.5, -60.7], 'delante': None}, {'a': [-168, -54], 'llega': True, 'cerca': None, 'falta': 0.8, 'y': 2.5, 'bajo': False, 'camY': 5.19, 'techo': None, 'donde': [-168.6, -54.5], 'delante': None}]
+camara bajo techo [(4.95, 5.2472577337334405)]
+bajando [([-174.9, -38.9], True, 1.79, False, 4.81), ([-176.9, -34.6], True, 1.56, False, 7.12), ([-173.6, -31.4], True, 1.47, False, 9.76), ([-173.5, -30.1], True, 1.43, False, 9.71), ([-173.6, -29.5], True, 1.41, False, 9.69), ([-173.7, -28.9], True, 1.14, True, 9.42), ([-173.9, -28.3], True, 0.61, True, 8.89), ([-174.2, -27.7], True, -0.16, True, 7.74), ([-174.6, -27.2], True, -0.33, True, 7.46), ([-175, -26.7], True, -0.96, True, 7), ([-175.5, -26.3], True, -1.18, True, 6.69), ([-176, -25.9], True, -1.57, True, 6.21), ([-176.6, -25.6], True, -2.03, True, 5.93), ([-177.1, -25.4], True, -2.35, True, 5.48), ([-177.8, -25.2], True, -2.91, True, 4.88), ([-178.4, -25.1], True, -3.17, True, 4.78), ([-178.7, -25.1], True, -3.4, True, 4.46), ([-180.9, -25.8], True, -3.92, True, -0.72), ([-184, -19], True, -3.92, True, -0.82), ([-188, -9], True, -3.92, True, -0.82), ([-217.5, 58.5], True, -3.81, False, 4.47)]
+patio {'x': -179, 'z': -30, 'r': 6.3, 'yU': 1.33, 'yL': -4.02, 'escaleras': 2, 'peldanos': 30, 'galeria_baja': 91.9, 'salida': [-217, 59]} bajada maxima entre puntos 0.77 llega abajo True
+foto v078_teide_entrada
+foto v078_teide_dentro
+foto v078_herradores
+foto v078_patio_suelo
+foto v078_patio_mural
+foto v078_patio_escalera
+foto v078_patio_alto
+foto v078_juego
+foto v0781_juego_cerca
+foto v0781_patio_desde_rellano
+foto v0781_patio_desde_abajo
+foto v0781_escalera_abajo
+foto v0781_galeria_baja
+foto v0781_galeria_hacia_juego
+errores []
+PRUEBA 078 OK
+```
+
+### 5. prueba_grandes.py — OK
+
+```
+obispado {'vanos': 2, 'largo': 17, 'puerta': [-42, -237]}
+tranvia {'prof_600': 6.4, 'prof_400': 0, 'cubierta': 1, 'cortes': 320, 'p520': [-282, 606], 'punto': [-307, 682], 'bajo_suelo': 6.3}
+tf13 {'anillo': 8, 'tuneles': 2, 'accesos': 17, 'anillo_prof': 6, 'tunel_prof': 7.4}
+aeropuerto {'rotonda': True, 'depositos': [-2340, 20], 'naves': ['SEURRO PAQUETERÍA', 'GUANCHAVÍA · HANGAR', 'ITV LOS RODEOS'], 'carteles_p': 2, 'valla_tramos': 670}
+callejero [['Calle Bencomo', True], ['Calle Juan de Vera', True], ['Calle Rodriguez Moure', True], ['Calle Ascanio y Nieves', True]]
+avion {'despega': True, 'pasos': [[-1118, 0, True], [-1149, 0, True], [-1228, 0, True], [-1355, 0, True], [-1529, 0, True], [-1752, 0, True], [-2023, 26, True], [-2315, 70, True], [-2607, 114, True], [-2899, 157, True]]}
+foto grandes_obispado
+foto grandes_tranvia_trinchera
+foto grandes_tranvia_cenital
+foto grandes_tranvia_dentro
+foto grandes_tranvia_alto
+foto grandes_tf13_suelo
+foto grandes_tf13_alto
+foto grandes_guajara
+foto grandes_aeropuerto_terminal
+foto grandes_aeropuerto_naves
+foto grandes_aeropuerto_depositos
+foto grandes_callejero_bencomo
+errores JS []
+GRANDES OK
+```
+
+### 6. prueba_guardar_cargar.py — OK
+
+```
+saved {"v":1,"t":1793031637047,"label":"test","player":{"x":-188.85866389791943,"z":783.1693376318474,"h":-0.2943588859571082,"health":77,"money":1234},"car":{"type":"bus","model":null,"color":2067020,"h":-0.1292194454060533,"x":-190.85866389791943,"z":783.1693376318474},"weapon":{"has":true,"ammo":4,"out
+after {"st":"play","m":{"v":3,"story":3,"skip":[],"storyDone":false,"side":0,"sideOpen":false,"obispo":0,"torneo":0,"copa":0,"secreta":0,"carreras":0,"log":{},"gang":{"formed":false,"name":"","members":[],"casa":{"intro":false,"owned":[],"rent":null,"day":0,"lastTod":12.00111111111111},"arcade":{"scores":{},"bought":[],"console":false,"invited":false},"sastronTut":false,"defenders":false,"patrol":false,"basketTut":false,"futbolTut":false,"jugueterias":false,"maleIntro":false,"rifleTut":false},"active":null},"money":1234,"hp":77,"tod":15.5,"car":true,"w":true,"ammo":4,"title":"La firma de la banda"}
+latest 2
+ERR []
+```
+
+### 7. prueba_parking_cristo.py — OK
+
+```
+{'escalera': [161, -595], 'fin': [144.8, -603.4], 'sobre_suelo': 0.17, 'salio': True, 'stuck': None}
+{'escalera': [219, -597], 'fin': [235.2, -588.3], 'sobre_suelo': 0.17, 'salio': True, 'stuck': None}
+coche {'rampa': [260, -552], 'hueco_min_techo': 2.2, 'profundidad': 5.4, 'en_sala': True, 'fin': [201, -582]}
+coche {'rampa': [120, -640], 'hueco_min_techo': 2.2, 'profundidad': 5.6, 'en_sala': True, 'fin': [179, -609]}
+```
+
+### 8. prueba_pendientes_faciles.py — OK
+
+```
+lineas {'vias': 918, 'con_lineas': 79359, 'lisas': 25057, 'pct_lisas': 24}
+aviones 17
+aviones_en_via []
+telepisa_gran_tienda False
+telepisa [-213, 440]
+telepisa_edificio {'alto': 9.7, 'cx': -237, 'cz': 415}
+edificios [[73, 234, 0], [-909, -408, 0]]
+recortados 4158
+foto faciles_cruce_brasil
+foto faciles_rotonda_alto
+foto faciles_telepisa
+foto faciles_plaza_sancristobal
+foto faciles_aviones
+errores JS []
+FACILES OK
+```
+
+### 9. prueba_trinidad.py — OK
+
+```
+widths [6.6]
+invaden []
+aparcamientos [{'name': 'Parking Trinidad', 'x': -113, 'z': 106, 'yF': -13.5}, {'name': 'Parking Trinidad', 'x': -133, 'z': 163, 'yF': -14.2}, {'name': 'Parking Trinidad', 'x': -153, 'z': 221, 'yF': -14.2}, {'name': 'Parking Trinidad', 'x': -173, 'z': 278, 'yF': -14.2}, {'name': 'Parking Trinidad', 'x': -193, 'z': 336, 'yF': -14}, {'name': 'Parking Trinidad', 'x': -213, 'z': 394, 'yF': -13.7}, {'name': 'Parking Trinidad', 'x': -232, 'z': 451, 'yF': -13.2}]
+nuevas 7
+coche {'aparcamiento': 'Parking Trinidad', 'rampa': [-85, 28], 'profundidad': 8.2, 'en_sala': True, 'fin': [-105, 82]}
+coche {'aparcamiento': 'Parking Trinidad', 'rampa': [-244, 524], 'profundidad': 7.3, 'en_sala': True, 'fin': [-228, 471]}
+foto trinidad_rampa_1
+foto trinidad_rampa_1_alto
+foto trinidad_rampa_7
+foto trinidad_rampa_7_alto
+foto trinidad_pedrozerolo
+foto trinidad_pedrozerolo_calle
+errores JS []
+TRINIDAD OK
+```
+
+### 10. prueba_arranque.py — OK
+
+```
+30 pasos (ms): {'mediana': 34, 'peor': 47, 'estado': 'play'}
+errores JS []
+ARRANQUE OK
+```
+
+### 11. prueba_090.py — OK
+
+```
+saque {'fase': 'score', 'jump': 0.09, 'inb': 'inbound', 'bx': 27.46, 'team': 1, 'luego': 'play', 'ball': 'pass'}
 foto v090_basket
 foto v090_basket_mate
 público function
@@ -40,240 +212,4 @@ errores []
 PRUEBA 090 OK
 ```
 
-### 2. prueba_089.py — OK
-
-```
-pausa basket True False
-basket {'conBalon': True, 'ahora': ['EL CHOPA']}
-ayuda {'moved': [3.9, 3.9, 4.1]}
-combo sin acertar {'t': 2.7, 'vuela': True, 'miss': True, 'sc': 0, 'fase': 'play', 'n': 77, 'suelto': 'held', 'mate': 'hierro'}
-futbol {'ctl': True, 'kickCD': 0.5833333333333333, 'cd0': 0, 'mio': False, 'suelto': True}
-pausa máquina True False
-foto v089_bencomo play
-PAUSA OK
-CONTROL BASKET OK
-ENTRADA FUTBOL OK
-BENCOMO OK
-COMBO SIN ACERTAR OK
-errores []
-PRUEBA 089 OK
-```
-
-### 3. prueba_baloncesto.py — OK
-
-```
-foto basket_inicio
-foto basket_partido
-cpu {'ph': 'end', 'sc': [8, 2], 'clock': 0, 'golden': False}
-resultado {"won":true,"score":[8,2]}
-PARTIDO CPU OK
-partido fácil 1 [17, 2]
-partido fácil 2 [14, 0]
-partido fácil 3 [23, 0]
-equilibrio primer partido [54, 2] OK
-jugadores dibujados 93
-snap baloncesto_tamano
-clic derecho {"ev":{"pass":true},"mode":"pass"}
-clic izquierdo {"ev":{"green":true,"shot":true},"mode":"air"}
-foto basket_zoom
-RATÓN OK
-tras moverse 1
-tras correr 2
-tras pasar 3
-tras recibir 4
-tras tirar 5
-tras combo 6
-foto basket_tutorial
-tutorial 99
-TUTORIAL OK
-cambio de defensor -> EL BLANCO
-fin {"won":true,"score":[9,2]} estado play
-errores JS []
-BALONCESTO OK
-```
-
-### 4. prueba_futbol.py — OK
-
-```
-foto futbol_partido
-cpu {'ph': 'play', 'sc': [3, 0], 'golden': False}
-resultado {"won":true,"score":[3,0]}
-PARTIDO CPU OK
-partido fácil 1 [5, 1]
-partido fácil 2 [10, 0]
-partido fácil 3 [5, 0]
-equilibrio primer partido [20, 1] OK
-tras moverse 1
-tras correr 2
-tras pasar 3
-tras chutar 4
-tras gol 5 marcador [1,0]
-tutorial completo True
-foto futbol_tutorial
-clic izquierdo {'shot': True}
-clic derecho {'pass': True}
-RATÓN OK
-campos {'campos': 73, 'puertas': 10, 'enEdificio': [], 'obispo': {'id': 'f62', 'label': 'el campo de fútbol', 'kind': 'f7', 'gate': 'court', 'dist': 666}}
-entrada detectada f62
-activa Un partido por La Concepción
-partido en marcha True
-estado obispo 3 futbolTut True
-errores JS []
-FUTBOL OK
-```
-
-### 5. prueba_082.py — OK
-
-```
-juguetería {'hay': True, 'tienda': 'Juguetes Sabelotodo', 'opcion': 0, 'abre': True}
-foto v082_titulo
-vista a los 9 s demo
-foto v082_demo
-foto v082_records
-moneda {'creditos': 1, 'modo': 'play', 'fase': 'select', 'elegido': 1}
-foto v082_elegir
-guerrero {'heroe': 'pastor', 'fase': 'intro'}
-TIENDA OK
-controles {'anda': 39, 'alto': 37, 'corre': 'run', 'pelea': True, 'combo': {'vida': 3, 'max': 8, 'estado': 'fall'}}
-foto v082_pelea
-magia {'estado': 'magic', 'zurrones': 0, 'tocados': 2, 'enemigos': 2}
-foto v082_magia
-lagarto {'monta': True, 'cola': 'bite', 'mordisco': True, 'salto': 'whip', 'avanza': 40}
-golpes nuevos {'patada': 'dash', 'alto_patada': 16, 'flip': {'estado': 'flip', 'alto': 24, 'detras': True, 'tumbado': True, 'dano': 4}}
-foto v082_lagarto
-CONTROLES OK
-foto v082_fase1
-foto v082_fase2
-foto v082_fase3
-foto v082_fase4
-foto v082_fase5
-recorrido [{'estado': {'p': [192, 18, 'walk', 1, 0], 'lock': 0, 'E': [], 'teclas': ['vR']}, 'fase': 1, 'heroe': 'mencey', 'avance': 1, 'jefe': True, 'pasada': True, 'segundos': 77, 'puntos': 9990}, {'estado': {'p': [154, 19, 'walk', 1, 0], 'lock': 0, 'E': [], 'teclas': ['vR']}, 'fase': 2, 'heroe': 'pastor', 'avance': 1, 'jefe': True, 'pasada': True, 'segundos': 110, 'puntos': 12180}, {'estado': {'p': [158, 18, 'walk', 1, 0], 'lock': 0, 'E': [], 'teclas': ['vR']}, 'fase': 3, 'heroe': 'mencey', 'avance': 1, 'jefe': True, 'pasada': True, 'segundos': 97, 'puntos': 13960}, {'estado': {'p': [192, 19, 'walk', 1, 0], 'lock': 0, 'E': [], 'teclas': ['vR']}, 'fase': 4, 'heroe': 'pastor', 'avance': 1, 'jefe': True, 'pasada': True, 'segundos': 139, 'puntos': 16170}, {'estado': {'p': [192, 19, 'walk', 1, 0], 'lock': 0, 'E': [], 'teclas': ['vR']}, 'fase': 5, 'heroe': 'pastor', 'avance': 1, 'jefe': True, 'pasada': True, 'segundos': 176, 'puntos': 25640}]
-FASES OK
-fin de partida {'m1': 'cont', 'm2': 'name'}
-foto v082_records_nuevo
-RECORDS OK
-errores []
-PRUEBA 082 OK
-```
-
-### 6. prueba_085.py — OK
-
-```
-consola {'hay': True, 'modo': 'ext', 'abierta': True, 'vista': 'pick', 'estado': 'arcade'}
-foto v086_elige
-selecciones {'b': [['ESP', 0.72], ['USA', 0.78], ['SRB', 0.7], ['FRA', 0.68], ['LTU', 0.64], ['ARG', 0.64], ['ALE', 0.66], ['ITA', 0.6]], 'f': [['ESP', 0.72], ['BRA', 0.7], ['ARG', 0.71], ['ITA', 0.62], ['ALE', 0.66], ['FRA', 0.7], ['POR', 0.66], ['URU', 0.6]]}
-ELIGE OK
-foto v086_cuadro
-cuadro {'sel': 0, 'vista': 'round', 'yo': 'ESPAÑA'} partido {'espera': True, 'abierta': True, 'juega': True, 'n': 6, 'mia': 'c8102e', 'rival': '75aadb'} equipaciones {'uru': '#f2f2f2', 'choques': []}
-PARTIDO OK
-rondas [{'v': 'result', 'r': 0, 'espera': False, 'estado': 'arcade', 'pausa': 'none'}, {'v': 'round', 'r': 1}, {'v': 'result', 'r': 1, 'espera': False, 'estado': 'arcade', 'pausa': 'none'}, {'v': 'result', 'r': 2, 'espera': False, 'estado': 'arcade', 'pausa': 'none'}]
-foto v086_resultado
-foto v086_campeones
-foto v086_tabla
-campeón {'v1': 'champ'} {'v2': 'name', 'v3': 'table', 'tabla': ['JNY', 'ESPAÑA', 1], 'ganados': 1}
-CAMPEON OK
-furbito {'m1': 'menu', 'juega': True, 'n': 10, 'nombres': ['BRASIL', 'ARGENTINA'], 'espera': True}
-foto v086_furbito
-eliminados {'v': 'result', 'gano': False, 'luego': 'pick', 'estado': 'arcade'}
-FURBITO OK
-juguetería {'vende': True} {'torneo': True, 'todos': 5} ¡SUPERFRIKI JUGÓN!
-SUPERFRIKI OK
-errores []
-PRUEBA 085 OK
-```
-
-### 7. prueba_pelea_atras.py — OK
-
-```
-{"sep":133,"fase":"fight"}
-sin ataque, atrás 1 s: se mueve 76.7 px
-{"bloqueado":true,"vida":95}
-snap pelea_tamano
-```
-
-### 8. prueba_arranque.py — OK
-
-```
-30 pasos (ms): {'mediana': 32, 'peor': 45, 'estado': 'play'}
-errores JS []
-ARRANQUE OK
-```
-
-### 9. prueba_076.py — FALLA (repetida aparte)
-
-```
-En la carga compartida falló por:
-V076 FALLA
---- repetida aparte:
-shot ms 2.0
-{"frame":562,"calls":1865,"triangles":4692868,"points":0,"lines":0} calls:1865
-rifle {'diag': {'h': 0, 'yaw': 0, 'jugador': [-758, -364], 'fuego': [-758, -356.5], 'gota_v': [0, -2.9, 12.6], 'charcos': [[0.4, 6.8]], 'apuntando': False, 'mano': [-0.08, 8.16, 0.21]}, 'gotas': 12, 'charcos': 3, 'fuego_apagado': True, 'agua': [100, 93], 'hud': 'RIFLE DE AGUA 94%\nTAB / 1: puños'}
-foto v076_rifle
-armas {'ciclo': ['pistola', 'rifle', 'puños', 'pistola'], 'fuentes': 39, 'lleno': 100, 'jugueterias': ['Juguetes Sabelotodo', 'Juguetes Baobabito', 'Juguetería Lífer', 'Juguetes Somos'], 'cerrada': '', 'abierta': '<kbd>E</kbd> Entrar: Juguetes Sabelotodo (juguetería)'}
-mojado {'persigue': False, 'pelea': False}
-maleantes {'habla': True, 'linea': 'Sastrón (por el móvil): Chopa, ahora que sabes repartir, te cuento un ', 'visto': True}
-misión del rifle en la historia 18
-blanco 1 {'act': 'El rifle de agua', 'jug': True, 'goal': [-621.1913417161826, -300.4619397662556, 2.2]}
-blanco 2 {'paso': 6, 'diana': True}
-foto v076_boca_papa
-blanco fin {'act': None, 'rifleTut': True}
-misiones {'secreta': ['Tostón, de la Secreta', 'Contenedores en llamas', 'El partido amañado', 'Triple en la cancha', 'Al pirómano, agua', 'Operación Gofio Blanco'], 'carreras': ['Duelo nocturno en Los Rodeos', 'Contrarreloj por el casco', 'Gran Premio de La Laguna'], 'obispo': ['Un partido por la Catedral', 'El torneo de la parroquia', 'Un partido por La Concepción', 'El clásico de las cofradías', 'Fuego en la ermita', 'La carrera de los sacristanes', 'Curas contra concejales', 'El ladrón del cepillo'], 'tostón': [1250, 1524]}
-foto v076_secreta
-  empieza ['secreta', 0, 'Tostón, de la Secreta', 'Tostón, de la Secreta', True]
-  empieza ['secreta', 1, 'Contenedores en llamas', 'Contenedores en llamas', True]
-  empieza ['secreta', 2, 'El partido amañado', 'El partido amañado', True]
-  empieza ['secreta', 3, 'Triple en la cancha', 'Triple en la cancha', True]
-  empieza ['secreta', 4, 'Al pirómano, agua', 'Al pirómano, agua', True]
-  empieza ['secreta', 5, 'Operación Gofio Blanco', 'Operación Gofio Blanco', True]
-  empieza ['carreras', 0, 'Duelo nocturno en Los Rodeos', 'Duelo nocturno en Los Rodeos', True]
-  empieza ['carreras', 1, 'Contrarreloj por el casco', 'Contrarreloj por el casco', True]
-  empieza ['carreras', 2, 'Gran Premio de La Laguna', 'Gran Premio de La Laguna', True]
-  empieza ['obispo', 4, 'Fuego en la ermita', 'Fuego en la ermita', True]
-  empieza ['obispo', 5, 'La carrera de los sacristanes', 'La carrera de los sacristanes', True]
-  empieza ['obispo', 6, 'Curas contra concejales', 'Curas contra concejales', True]
-  empieza ['obispo', 7, 'El ladrón del cepillo', 'El ladrón del cepillo', True]
-parkings [{'trinidad_tramos': 7, 'largo': 439, 'fondo': ['-14.2', '-13.2']}, {'sala': 'Parking del Cristo', 'frena': 1, 'de': 12}, {'sala': 'Parking Trinidad', 'frena': 2, 'de': 12}, {'sala': 'Parking Trinidad', 'frena': 1, 'de': 12}]
-foto v076_cristo_escalera_abajo
-foto v076_trinidad_parking
-Ríos Tejera [-1513, -587]
-foto v076_rios_tejera
-foto v076_trinchera_campus
-foto v076_rampa_cristo
-errores JS []
-V076 FALLA
-```
-
-### 10. prueba_075.py — OK
-
-```
-flecha {'persecucion': '#ff3b30', 'carrera': '#f5b72e'}
-ruta adelantada {'a_pie': {'siguientes': 2, 'ruta': 12}, 'con_recorrido': {'siguientes': 2, 'ruta': 21}, 'ultimo': 0}
-teclas {'dentro': False, 'despues': False, 'tactil': 0, 'estado': 'play'}
-foto v075_portero
-foto v075_saque_banda
-futbol portero {'portero_mano': True, 'distancia': 3.5, 'falta': '¡FALTA AL PORTERO!', 'sigue_suya': True, 'portero_en_su_area': 2}
-futbol banda {'saque': 'banda', 'saca': 0, 'no_corre': True, 'con_mano': True, 'rival_mas_cerca': 14.43}
-diario {'primera': ['Segundo', 'El ladrón del cepillo'], 'n': 35}
-copa {'copa': ['Copa Laguna 1/5', 'Copa Laguna 2/5', 'Copa Laguna 3/5', 'Copa Laguna 4/5', 'Copa Laguna: la final'], 'estadio': {'ok': True, 'gradas': 4, 'puerta': [-377, -1023], 'calle': 'Avenida de José Tabares Bartlet'}, 'final': {'final': True, 'label': 'Estadio Francisco Peraza'}}
-foto v075_peraza_alto
-foto v075_peraza_campo
-foto v075_peraza_grada_oeste
-foto v075_peraza_puerta
-errores JS []
-V075 OK
-```
-
-### 11. prueba_diario.py — OK
-
-```
-activa Una botella para Coco
-abierto True misiones 10
-detalle Una botella para Coco | Historia · Te la da Coco · En curso | ➜ Busca a Coco junto a el Teatro Leal | De lo más reciente a lo primero |  | Coco: Mira, yo no hablo con la garganta seca. Tráeme una botella de Ron Arrecostao de Café Brasilito, la que tiene la puerta abierta. Y de las grandes. |  | Coco
-lineas guardadas 3
-historia tras reiniciar 0
-cerrado True estado play
-errores JS []
-DIARIO OK
-```
-
-Fotos/archivos nuevos en `tests/shots/`: baloncesto_tamano.jpg, basket_inicio.jpg, basket_partido.jpg, basket_tutorial.jpg, basket_zoom.jpg, futbol_partido.jpg, futbol_tutorial.jpg, pelea_tamano.jpg, v075_peraza_alto.jpg, v075_peraza_campo.jpg, v075_peraza_grada_oeste.jpg, v075_peraza_puerta.jpg, v075_portero.jpg, v075_saque_banda.jpg, v076_boca_papa.jpg, v076_cristo_escalera_abajo.jpg, v076_rampa_cristo.jpg, v076_rifle.jpg, v076_rios_tejera.jpg, v076_secreta.jpg, v076_trinchera_campus.jpg, v076_trinidad_parking.jpg, v082_demo.jpg, v082_elegir.jpg, v082_fase1.jpg, v082_fase2.jpg, v082_fase3.jpg, v082_fase4.jpg, v082_fase5.jpg, v082_lagarto.jpg, v082_magia.jpg, v082_pelea.jpg, v082_records.jpg, v082_records_nuevo.jpg, v082_titulo.jpg, v086_campeones.jpg, v086_cuadro.jpg, v086_elige.jpg, v086_furbito.jpg, v086_resultado.jpg, v086_tabla.jpg, v089_bencomo.jpg, v090_basket.jpg, v090_basket_mate.jpg, v090_bencomo_titulo.jpg, v090_guanche_elegir.jpg, v090_guanche_mencey.jpg, v090_guanche_mirla.jpg, v090_guanche_pastor.jpg
+Fotos/archivos nuevos en `tests/shots/`: conduccion.json, df_1667.jpg, faciles_aviones.jpg, faciles_cruce_brasil.jpg, faciles_plaza_sancristobal.jpg, faciles_rotonda_alto.jpg, faciles_telepisa.jpg, grandes_aeropuerto_depositos.jpg, grandes_aeropuerto_naves.jpg, grandes_aeropuerto_terminal.jpg, grandes_callejero_bencomo.jpg, grandes_guajara.jpg, grandes_obispado.jpg, grandes_tf13_alto.jpg, grandes_tf13_suelo.jpg, grandes_tranvia_alto.jpg, grandes_tranvia_cenital.jpg, grandes_tranvia_dentro.jpg, grandes_tranvia_trinchera.jpg, tf5_adelantado_marcos.jpg, tf5_barrera_alto.jpg, tf5_barrera_cerca.jpg, tf5_bionda_alto.jpg, tf5_bionda_cerca.jpg, tf5_casco_marcos.jpg, tf5_espinero_e_ojos.jpg, tf5_espinero_e_top.jpg, tf5_espinero_w_ojos.jpg, tf5_espinero_w_top.jpg, tf5_huc_rampa.jpg, tf5_huc_rampa_alto.jpg, tf5_oeste_junto_ojos.jpg, tf5_oeste_junto_top.jpg, tf5_oeste_ojos.jpg, tf5_oeste_top.jpg, tf5_sanbenito_ojos.jpg, tf5_sanbenito_top.jpg, tf5_sanlazaro_ojos.jpg, tf5_sanlazaro_top.jpg, tf5_vallado_alto.jpg, tf5_vallado_boca.jpg, tf5_vallado_tunel.jpg, trinidad_pedrozerolo.jpg, trinidad_pedrozerolo_calle.jpg, trinidad_rampa_1.jpg, trinidad_rampa_1_alto.jpg, trinidad_rampa_7.jpg, trinidad_rampa_7_alto.jpg, v0781_escalera_abajo.jpg, v0781_galeria_baja.jpg, v0781_galeria_hacia_juego.jpg, v0781_juego_cerca.jpg, v0781_patio_desde_abajo.jpg, v0781_patio_desde_rellano.jpg, v078_herradores.jpg, v078_juego.jpg, v078_patio_alto.jpg, v078_patio_escalera.jpg, v078_patio_mural.jpg, v078_patio_suelo.jpg, v078_teide_dentro.jpg, v078_teide_entrada.jpg, v090_basket.jpg, v090_basket_mate.jpg, v090_bencomo_titulo.jpg, v090_guanche_elegir.jpg, v090_guanche_mencey.jpg, v090_guanche_mirla.jpg, v090_guanche_pastor.jpg

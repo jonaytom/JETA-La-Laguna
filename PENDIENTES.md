@@ -350,8 +350,14 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Rendimiento, auditorías y código
 
+- [ ] ⚡ **Auditoría v0.90.0** (26-oct 15:24, APTO CON AVISOS; pintar 22,3 → 32 ms, arranque 8,3 → 9,4 s):
+  - Pintar: la 0.90 no toca el mundo 3D y 32 ms es lo de la 0.89.0 (31,3); el 22,3 de la pasada anterior parece la
+    rara. Repetir la medición.
+  - 1 aviso alto: `09ma_pixguanche.js` render() lee el canvas (getImageData). Solo pasa al crear cada dibujo (se guardan,
+    no en cada fotograma); si molesta, crear los de cada héroe al cargar la máquina.
+  - Notas: `09ea_minijuegos.js` baja de B a C (el público en una función larga); `09eb_pixbasket.js` y
+    `09ma_pixguanche.js` salen con D (el dibujante de la propuesta, copiado tal cual: una función muy larga). Partirlos.
 - [ ] ⚡ **prueba_076 a veces falla en «mojado»** (26-oct, v0.90): el peatón empapado no siempre persigue (pasa repetida aparte y falla otras veces, sin tocar ese código). Hacerla fiable: elegir un peatón sin obstáculos delante o apuntarle directamente.
-- [ ] ⚡ **Borrar `src/09f_basket2d-1.js`** (26-oct): una copia sobrante del basket que apareció en el PC (rompía el build por declarar BASKET2D dos veces). La dejé vacía (un comentario); hay que borrarla a mano.
 - [~] ◐ v0.90.0 (el fuego comparte el cilindro) **Auditoría 0.76.0**: queda `12k_agua.js` con nota D (las misiones en funciones muy largas: partirlas).
 - [ ] ◐ **Auditoría 0.75.0** (APTO CON AVISOS; pintar 49,9 → 45,5 ms, arranque 14,1 → 13,7 s, memoria igual, sin fugas):
       bajan de nota `12h_diario.js` (A → B; repasado en v0.90) y `12j_campos.js` (B → C, por la Copa Laguna: funciones largas). Queda el de los campos.
@@ -428,6 +434,8 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
       consideres, es un extra final».
 
 ## Hecho
+- [x] v0.91.0 **TF-5: los dos sentidos separados** (Jonay, 26-oct, con Street View junto a San Benito): calzadas apartadas al cargar, New Jersey con postes azules entre los sentidos y bionda con la calle de al lado (Espinero, Carretera General).
+- [x] v0.90.0 **Borrada la copia sobrante `src/09f_basket2d-1.js`** (Jonay, 26-oct).
 - [x] v0.90.0 **Basket: el saque de fondo tras canasta** (Jonay, 26-oct: «no puede aparecer en medio, debe haber continuidad»).
 - [x] v0.90.0 **Bencomo: barrigota y brazos que parecían orejas** (Jonay, 26-oct): pecho en V y brazos en alto enteros.
 - [x] v0.90.0 **Basket y fútbol: el público** (Jonay, 20-oct): organillo, «¡de-fen-sa!», «¡uuuh!», ovaciones, el bombo y el rugido de la grada.

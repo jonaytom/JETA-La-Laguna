@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.90.0</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.91.0</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,21 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.91.0 — 2026-10-26 — La TF-5 con los dos sentidos separados</h2>
+<ul>
+<li><strong>Autopista del Norte (TF-5)</strong> (Jonay, con una foto de Street View junto a San Benito: «separando los sentidos, así
+  como la carretera paralela»):</li>
+<li>Las dos calzadas iban montadas una sobre otra en muchos tramos (en el mapa, los dos sentidos están a 7–10 m y
+    cada calzada mide 13), así que se veía una sola losa con las rayas mezcladas. Ahora se separan al cargar: queda
+    hueco para la mediana en toda la autopista, y los ramales y los coches de la IA se mueven con ellas.</li>
+<li><strong>Mediana de hormigón tipo New Jersey</strong> entre los dos sentidos, con los <strong>postes azules reflectantes</strong> encima,
+    como en la foto. También en las cuestas, donde las dos calzadas van a distinta altura (con su muro hasta la de
+    abajo), y en las subidas a los puentes, que antes se quedaban sin mediana.</li>
+<li><strong>Bionda (guardarraíl de acero)</strong> entre la autopista y la calle que va pegada a ella (la Calle Espinero, la
+    Carretera General…), con sus postes y los postes azules.</li>
+<li>Antes la mediana solo se buscaba contra la calle más cercana: junto a la Calle Espinero la tapaba y se quedaba
+    sin mediana entre los sentidos.</li>
+</ul>
 <h2>0.90.0 — 2026-10-26 — Jugadores nuevos en el basket y Guanche Guarriors, el público y el saque de fondo</h2>
 <ul>
 <li><strong>Basket, los jugadores nuevos</strong> (Jonay eligió el «A++ semicabezón 120»): dibujados con la técnica de la propuesta
