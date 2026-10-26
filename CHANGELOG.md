@@ -3,6 +3,11 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.89.1 — 2026-10-26 — El combo fallado ya no entra
+- **Basket** (Jonay: «al fallar el combo acabo de anotar, eso no puede ser»): el balón que rebota en el aro le caía
+  encima al que machacaba, lo volvía a coger en el aire y el mate contaba. Ahora, tras un mate al hierro o un tapón, ese
+  jugador no puede coger el balón hasta casi un segundo después.
+
 ## 0.89.0 — 2026-10-26 — Pausa en los minijuegos, control en el basket y el fútbol, Bencomo nuevo
 - **Pausa con la P en todos los minijuegos** (Jonay): basket, fútbol, la pelea, las máquinas (Bencomo, GUFO, Guanche
   Guarriors) y la GOFIO-8. Sale «PAUSA», se para el sonido, y otra P sigue.

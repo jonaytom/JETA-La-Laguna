@@ -380,6 +380,9 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Rendimiento, auditorías y código
 
+- [ ] ⚡ **Auditoría v0.89.0** (26-oct 11:52, APTO CON AVISOS; pruebas 9/9; pintar 38,2 → 31,3 ms, arranque 10,7 → 8,6 s):
+  `09f_basket2d.js` baja de B a C (las ramas nuevas de defensa y combo en líneas largas). Partir el bloque del clic
+  derecho y la ayuda en defensa en funciones propias.
 - [ ] ⚡ **Auditoría v0.88.1** (26-oct, APTO CON AVISOS): 137 avisos «nuevos» del análisis estático en archivos que no
   cambiaron (artefacto del auditor al comparar). Revisar que no sea nada real y repetir la comparación.
 - [ ] ⚡ **Auditoría v0.87.1** (26-oct 10:52, APTO CON AVISOS; pruebas 5/5): pintar 31,5 → 43 ms y arranque 9,2 → 11,3 s.

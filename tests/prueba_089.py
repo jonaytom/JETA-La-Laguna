@@ -35,7 +35,7 @@ async def run(pg):
         # 7) a failed combo is still flown but hits the iron; combo time 2.7 s
         c = json.loads(await pg.evaluate("""(()=>{ const B=__dbg.BASKET2D, s=B._st(); s.phase='play'; s.combo=null; const p=s.p.find(q=>q.team===0); p.air=false; p.y=0; p.act=''; const h=B._hoop(0); p.x=h.x-Math.sign(h.x-14)*5; p.z=h.z; s.lastDunk=null;
           const sc0=s.score[0]; B._give(s.p.indexOf(p)); B._combo(s.p.indexOf(p), 5); const t=s.combo.t; const mal=s.combo.need[0].includes('vD') ? 'vU' : 'vD';
-          B._press(mal, true); B._step(1); B._press(mal, false); const vuela=p.act==='dunk', miss=!!p.miss; let n=0; while (p.miss && n<120) { B._step(1); n++; }
+          B._press(mal, true); B._step(1); B._press(mal, false); const vuela=p.act==='dunk', miss=!!p.miss; let n=0; while (p.miss && n<120) { B._step(1); n++; } B._step(60);
           return JSON.stringify({ t, vuela, miss, sc: s.score[0]-sc0, fase: s.phase, n, suelto: s.ball.mode, mate: s.lastDunk }); })()"""))
         print('combo sin acertar', c)
         ok7 = abs(c['t'] - 2.7) < 1e-6 and c['vuela'] and c['miss'] and c['sc'] == 0 and c['mate'] == 'hierro'

@@ -1,10 +1,10 @@
-# Pruebas 0.89.0 — 2026-10-26 11:52 — 9/9 OK
+# Pruebas 0.89.1 — 2026-10-26 12:23 — 9/9 OK
 
-Listas: v089. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 126 s en total.
+Listas: v089. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 125 s en total.
 
 | # | Prueba | Resultado | Tiempo |
 |---|---|---|---|
-| 1 | `prueba_089.py` | **OK** | 66 s |
+| 1 | `prueba_089.py` | **OK** | 64 s |
 | 2 | `prueba_baloncesto.py` | **OK** | 15 s |
 | 3 | `prueba_084.py` | **OK** | 0 s |
 | 4 | `prueba_futbol.py` | **OK** | 7 s |
@@ -12,7 +12,7 @@ Listas: v089. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 126 s en total.
 | 6 | `prueba_080.py` | **OK** | 2 s |
 | 7 | `prueba_085.py` | **OK** | 1 s |
 | 8 | `prueba_pelea_atras.py` | **OK** | 14 s |
-| 9 | `prueba_arranque.py` | **OK** | 1 s |
+| 9 | `prueba_arranque.py` | **OK** | 0 s |
 
 ## Detalle
 
@@ -40,14 +40,14 @@ PRUEBA 089 OK
 ```
 foto basket_inicio
 foto basket_partido
-cpu {'ph': 'end', 'sc': [7, 2], 'clock': 0, 'golden': False}
-resultado {"won":true,"score":[7,2]}
+cpu {'ph': 'end', 'sc': [9, 8], 'clock': 0, 'golden': False}
+resultado {"won":true,"score":[9,8]}
 PARTIDO CPU OK
-partido fácil 1 [27, 7]
-partido fácil 2 [18, 0]
-partido fácil 3 [23, 7]
-equilibrio primer partido [68, 14] OK
-jugadores dibujados 93
+partido fácil 1 [18, 3]
+partido fácil 2 [14, 6]
+partido fácil 3 [26, 5]
+equilibrio primer partido [58, 14] OK
+jugadores dibujados 90
 snap baloncesto_tamano
 clic derecho {"ev":{"pass":true},"mode":"pass"}
 clic izquierdo {"ev":{"green":true,"shot":true},"mode":"air"}
@@ -73,7 +73,7 @@ BALONCESTO OK
 ```
 equipos {'abre': True, 'n': 6, 't0': ['EL CHOPA', 'COCO', 'EL BLANCO'], 't1': ['EL MÁS ALTO', 'EL PIBE', 'EL LARGO']}
 EQUIPOS OK
-partido {'marcador': [6, 2], 'pases': 4, 'con_balon': ['EL CHOPA', 'EL PIBE', 'COCO', 'EL LARGO', 'EL MÁS ALTO'], 'marcas_distintas': True, 'movidos': [21.7, 18.6, 12.9, 11.8, 18.8, 17.1]}
+partido {'marcador': [6, 2], 'pases': 6, 'con_balon': ['EL CHOPA', 'COCO', 'EL PIBE', 'EL LARGO', 'EL BLANCO', 'EL MÁS ALTO'], 'marcas_distintas': True, 'movidos': [16.7, 17.8, 19.4, 13.6, 19, 17.8]}
 foto v084_basket3x3
 PARTIDO OK
 errores []
@@ -84,13 +84,13 @@ PRUEBA 084 OK
 
 ```
 foto futbol_partido
-cpu {'ph': 'play', 'sc': [2, 0], 'golden': False}
-resultado {"won":true,"score":[2,0]}
+cpu {'ph': 'play', 'sc': [0, 0], 'golden': True}
+resultado {"won":true,"score":[1,0]}
 PARTIDO CPU OK
-partido fácil 1 [7, 0]
-partido fácil 2 [9, 0]
-partido fácil 3 [7, 0]
-equilibrio primer partido [23, 0] OK
+partido fácil 1 [6, 2]
+partido fácil 2 [5, 2]
+partido fácil 3 [8, 1]
+equilibrio primer partido [19, 5] OK
 tras moverse 1
 tras correr 2
 tras pasar 3
@@ -162,7 +162,7 @@ foto v086_elige
 selecciones {'b': [['ESP', 0.72], ['USA', 0.78], ['SRB', 0.7], ['FRA', 0.68], ['LTU', 0.64], ['ARG', 0.64], ['ALE', 0.66], ['ITA', 0.6]], 'f': [['ESP', 0.72], ['BRA', 0.7], ['ARG', 0.71], ['ITA', 0.62], ['ALE', 0.66], ['FRA', 0.7], ['POR', 0.66], ['URU', 0.6]]}
 ELIGE OK
 foto v086_cuadro
-cuadro {'sel': 0, 'vista': 'round', 'yo': 'ESPAÑA'} partido {'espera': True, 'abierta': True, 'juega': True, 'n': 6, 'mia': 'c8102e', 'rival': '75aadb'} equipaciones {'uru': '#f2f2f2', 'choques': []}
+cuadro {'sel': 0, 'vista': 'round', 'yo': 'ESPAÑA'} partido {'espera': True, 'abierta': True, 'juega': True, 'n': 6, 'mia': 'c8102e', 'rival': 'f2f2f2'} equipaciones {'uru': '#f2f2f2', 'choques': []}
 PARTIDO OK
 rondas [{'v': 'result', 'r': 0, 'espera': False, 'estado': 'arcade', 'pausa': 'none'}, {'v': 'round', 'r': 1}, {'v': 'result', 'r': 1, 'espera': False, 'estado': 'arcade', 'pausa': 'none'}, {'v': 'result', 'r': 2, 'espera': False, 'estado': 'arcade', 'pausa': 'none'}]
 foto v086_resultado
@@ -170,7 +170,7 @@ foto v086_campeones
 foto v086_tabla
 campeón {'v1': 'champ'} {'v2': 'name', 'v3': 'table', 'tabla': ['JNY', 'ESPAÑA', 1], 'ganados': 1}
 CAMPEON OK
-furbito {'m1': 'menu', 'juega': True, 'n': 10, 'nombres': ['BRASIL', 'URUGUAY'], 'espera': True}
+furbito {'m1': 'menu', 'juega': True, 'n': 10, 'nombres': ['BRASIL', 'ALEMANIA'], 'espera': True}
 foto v086_furbito
 eliminados {'v': 'result', 'gano': False, 'luego': 'pick', 'estado': 'arcade'}
 FURBITO OK
@@ -184,7 +184,7 @@ PRUEBA 085 OK
 
 ```
 {"sep":137,"fase":"fight"}
-sin ataque, atrás 1 s: se mueve 78.0 px
+sin ataque, atrás 1 s: se mueve 79.3 px
 {"bloqueado":true,"vida":95}
 snap pelea_tamano
 ```
@@ -192,7 +192,7 @@ snap pelea_tamano
 ### 9. prueba_arranque.py — OK
 
 ```
-30 pasos (ms): {'mediana': 37, 'peor': 68, 'estado': 'play'}
+30 pasos (ms): {'mediana': 33, 'peor': 44, 'estado': 'play'}
 errores JS []
 ARRANQUE OK
 ```

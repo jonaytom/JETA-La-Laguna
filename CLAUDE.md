@@ -54,7 +54,13 @@
 `E:\Claude\GTA La Laguna\repo\cola\<id>.txt` y escribe el resultado en `cola\hecho\<id>.md`. Solo órdenes de una lista
 cerrada (`tools/trabajador.py`): `build`, `pruebas [listas…]` (sin nada = `cambios version`), `prep`, `merge_zona <zona>`, `copiar_html`,
 `publicar <versión>` (escribe `PUBLICAR.txt`: siempre la última), `esperar <s>`. Si no está abierto, pedirle a Jonay que
-lo abra (o que lance el `.bat` que toque). En la nube solo queda lo estrictamente necesario: editar el código (las
+lo abra (o que lance el `.bat` que toque).
+
+**Esperar al trabajador (Jonay, 26-oct: «metes un sleep de 5 min y tardo segundos»)**: nada de esperas largas a
+ciegas. Tras dejar el encargo, mirar `cola\hecho\<id>.md` a los ~20–30 s (un build que falla se escribe al momento);
+si no está, mirar `cola\` (si el `.txt` ya no está, lo ha cogido) y volver a mirar cada ~30–60 s según lo que quede
+(pruebas ≈ 2 min). **Al reenviar un archivo**, copiarlo a una carpeta nueva de `outputs/` (p. ej. `v0890f/`):
+reenviar la misma ruta de antes puede dejar en el PC la copia vieja. En la nube solo queda lo estrictamente necesario: editar el código (las
 herramientas de edición de Claude trabajan aquí) y publicar el Artifact (se sube el `dist/gta-la-laguna.html` que
 compila el PC de Jonay).
 

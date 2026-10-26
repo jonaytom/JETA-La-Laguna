@@ -263,7 +263,7 @@ const BASKET2D = (() => {
         if (st.ball.holder === p && (p.vy < 0.6 || p.sure) && Math.hypot(h.x - p.x, h.z - p.z) < 0.9) { // slam it
           const blk = !p.sure && rivals(p).find((q) => q.air && q.y > 0.6 && dist(q, p) < 1.0 && Math.random() < (q.human ? 0.5 : 0.35 * q.lv)); const fallo = p.miss || (!p.sure && !p.human && Math.random() > 0.45 + 0.55 * p.lv); p.sure = false; p.miss = false; // v0.66: weak CPU dunkers hit the rim
           const b = st.ball; b.holder = null;
-          st.lastDunk = blk ? 'tapon' : fallo ? 'hierro' : 'mate'; if (blk || fallo) { b.mode = 'loose'; b.x = p.x; b.z = p.z; b.y = RIM; b.vx = -Math.sign(h.x - CL / 2) * 4; b.vz = rnd(-2, 2); b.vy = 2; banner(blk ? '¡TAPÓN!' : '¡AL HIERRO!', '#ff6b6b'); snd('rim'); }
+          st.lastDunk = blk ? 'tapon' : fallo ? 'hierro' : 'mate'; if (blk || fallo) { p.act = ''; p.noGrabT = st.time0 + 0.9; /* v0.89.1 (Jonay): he used to catch his own miss in the air and dunk it */ b.mode = 'loose'; b.x = p.x; b.z = p.z; b.y = RIM; b.vx = -Math.sign(h.x - CL / 2) * 4; b.vz = rnd(-2, 2); b.vy = 2; banner(blk ? '¡TAPÓN!' : '¡AL HIERRO!', '#ff6b6b'); snd('rim'); }
           else { b.mode = 'net'; b.x = h.x; b.z = h.z; b.y = RIM; b.vx = b.vz = 0; b.vy = -2; score(p.team, 2, p, 'dunk'); }
         } }
       if (p.y <= 0) { p.y = 0; p.vy = 0; p.air = false; p.sure = false; p.miss = false; p.combo = null; if (p.act === 'dunk' || p.act === 'shoot') p.act = ''; if (p.shootHold) { p.landingRelease = true; release(p); } if (st.ev && p.human) st.ev.jump = true; }
@@ -290,7 +290,7 @@ const BASKET2D = (() => {
     b.vy -= G * dt; b.x += b.vx * dt; b.z += b.vz * dt; b.y += b.vy * dt;
     if (b.y < 0.12) { b.y = 0.12; if (Math.abs(b.vy) > 1) snd('bounce'); b.vy = -b.vy * 0.55; b.vx *= 0.8; b.vz *= 0.8; }
     if (b.x < 0.2 || b.x > CL - 0.2) { b.vx = -b.vx * 0.6; b.x = clamp(b.x, 0.2, CL - 0.2); } if (b.z < 0.1 || b.z > CW - 0.1) { b.vz = -b.vz * 0.6; b.z = clamp(b.z, 0.1, CW - 0.1); }
-    for (const q of st.p) if (q.down <= 0 && Math.hypot(q.x - b.x, q.z - b.z) < 0.7 && b.y < q.y + 2.6) { give(q); if (st.ev && q.human) st.ev.rebound = true; return; }
+    for (const q of st.p) if (q.down <= 0 && st.time0 >= (q.noGrabT || 0) && Math.hypot(q.x - b.x, q.z - b.z) < 0.7 && b.y < q.y + 2.6) { give(q); if (st.ev && q.human) st.ev.rebound = true; return; }
   }
   function step(dt) {
     st.time0 += dt; if (st.bannerT > 0) st.bannerT -= dt;
