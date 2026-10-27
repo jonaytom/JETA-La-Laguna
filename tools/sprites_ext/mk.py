@@ -144,7 +144,7 @@ def with_kicks(back, body, front, fw=80, fh=64, oy=0, hip=51):
         fall.alpha_composite(F4(back)); fall.alpha_composite(legs2); fall.alpha_composite(up4); fall.alpha_composite(F4(front))
     row8 = []
     bb = fall.getbbox(); cx, cy = (bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2
-    r = fall.rotate(-90, resample=Image.NEAREST, center=(cx, cy)); rb = r.getbbox()
+    r = fall.rotate(-105, resample=Image.NEAREST, center=(cx, cy)); rb = r.getbbox()   # (Jonay: 15° less, the head higher)
     f = Image.new('RGBA', (fw, fh)); f.alpha_composite(r, (0, (fh - 6) - rb[3])); row8 = [f, f.copy()]
     rows = full.height // fh; out = Image.new('RGBA', (full.width, fh * 9)); out.paste(full.crop((0, 0, full.width, fh * min(rows, 7))), (0, 0))
     for i, f in enumerate(row7): out.paste(f, (i * fw, 7 * fh))

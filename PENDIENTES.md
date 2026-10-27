@@ -15,6 +15,17 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Recreativas, consola GOFIO-8 y torneo
 
+- [ ] ● **Guanche Guarriors: más fases, enemigos y jefes con los packs nuevos** (Jonay, 27-oct; página «Guanche
+  Guarriors: personajes nuevos»): carpetas nuevas en `assets_externos`.
+  - Guayota, jefe final, basado en **Demon Overlord 2D Pixel Art** (el del hacha pasa a jefe intermedio).
+  - Una fase con las **gorgonas** (craftpix), sin la parte de arriba como La Mirladora (hecho en la propuesta).
+  - Otra fase con **Gollux** de jefe. La **rata** para cuevas. **Free Mythic Monsters**: retratos quietos de frente,
+    solo valen como jefes que flotan/aparecen.
+  - **Perros → el lobo del GIF** que pasó Jonay (sacado fotograma a fotograma: parado, correr, morder, morir, aullar;
+    `tools/sprites_ext/wolf.py`). Falta confirmar de qué pack es y su licencia, y pulir el fondo entre las patas.
+  - Licencias por mirar: Gollux, RAt, Free Mythic Monsters.
+- [ ] ● **Fondos de Guanche Guarriors y de Bencomo a partir de fotos reales** (Jonay, 27-oct): Jonay busca fotos de
+  referencia de cada zona y se pasan a pixel art (capas de paralaje).
 - [ ] ◐ **Guerra de Naves, para pulir**: abajo a la derecha, «CREDIT 0» se monta sobre la barra del BEAM y el icono del
   módulo. También quedan una cuarta fase, jefes más grandes, más enemigos y sprites más trabajados.
 - [ ] ● **PAQUETE «RECREATIVAS Y MINIJUEGOS» (Jonay, 19-oct: «para acometer YA», plan v0.79 → v0.84)**:
@@ -447,6 +458,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Hecho
 
+- [x] v0.97.2 **Guanche Guarriors: patada en carrera 15° menos tumbada** (Jonay, 27-oct).
 - [x] v0.97.0 **Guanche Guarriors: La Mirladora sin bikini y más rubia** (Jonay, 27-oct): pezón rosado; también montada en el lagarto (`tools/sprites_ext/mirla_nat.py`).
 - [x] v0.96 **Propuesta de baloncesto: camisetas de asillas sin pecho al aire, pantalón por la cintura, sin balón dibujado** (Jonay, 27-oct; en la página de propuestas, aún no en el juego).
 - [x] v0.96.3 **Guanche Guarriors: patada en carrera con las piernas de La Mirladora en todos y quieta** (Jonay, 27-oct).

@@ -3,6 +3,9 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.97.2 — 2026-10-27 — Guanche Guarriors: patada en carrera menos plana
+- **Guanche Guarriors** (Jonay): la patada en carrera, 15° menos tumbada, con la cabeza más alta.
+
 ## 0.97.1 — 2026-10-27 — Guanche Guarriors: La Mirladora, pelo y falda
 - **Guanche Guarriors** (Jonay): a La Mirladora le quedaban mechones negros: ahora el pelo va de castaño a rubio. En la
   caída del salto **se le levanta la falda**. El taparrabos es de cuero oscuro (no dorado).
