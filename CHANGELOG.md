@@ -3,6 +3,11 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.99.2 — 2026-10-27 — Patada en carrera: la caída del salto, girada al dibujarla
+- **Guanche Guarriors** (Jonay: «la actual está horrible… el arma se va de la mano»): la fila de la patada en carrera
+  guarda la caída del salto tal cual (sin girar) y el juego la gira 40° al dibujarla, a la resolución de la pantalla:
+  no se pierde ningún píxel y el arma sigue en la mano. Vuelve el escudo de El Magote, como en el ejemplo de Jonay.
+
 ## 0.99.1 — 2026-10-27 — Patada en carrera sin perder calidad
 - **Guanche Guarriors** (Jonay: «ha degradado mucho la calidad, rescatar la caída original y rotarla solo»): la patada
   en carrera es la caída del salto girada con tres cizallas (cada píxel se mueve entero, ninguno se duplica ni se

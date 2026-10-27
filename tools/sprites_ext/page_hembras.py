@@ -62,7 +62,7 @@ def grp(title, sub, keys): return f'<section class="grp"><h2>{title}</h2><p clas
 body = f'''<main><h1>Guanche Guarriors: secuaces hembra</h1>
 <p class="lead">Versiones femeninas de los secuaces, al estilo de La Mirladora: sin la parte de arriba (piel y pezón), el taparrabos de cuero oscuro debajo de faldas distintas y cascos, armas y escudos de los packs. Los botones cambian la animación de todos.</p>
 <div class="anims" role="group" aria-label="Animación"></div>
-{grp('Secuaces hembra (propuesta)', 'Cinco combinaciones con pieles de colores (roja, verde, azul, amarilla y morada); se pueden mezclar piezas de unas con otras. Versión 2: piernas del color del tronco en la patada en carrera, el casco ya se ve en ella, pezón más marcado y botón de la caída del salto.', ['h_espada', 'h_hacha', 'h_demonia', 'h_oro', 'h_lenadora'])}
+{grp('Secuaces hembra (propuesta)', 'Cinco combinaciones con pieles de colores (roja, verde, azul, amarilla y morada); se pueden mezclar piezas de unas con otras. Versión 3: la patada en carrera es la caída del salto tal cual, girada al dibujarla (como en tu ejemplo: no pierde píxeles y el arma sigue en la mano); pezón más marcado, sin braga (piel lisa) y botón de la caída del salto.', ['h_espada', 'h_hacha', 'h_demonia', 'h_oro', 'h_lenadora'])}
 {grp('Para comparar', 'El secuaz de ahora.', ['secuaz'])}
 </main>
 <style>.myth {{ display:flex; flex-wrap:wrap; gap:10px }} .myth img {{ width:128px; height:128px; image-rendering:pixelated; background:radial-gradient(#3a2a1c,#1b140e 70%); border:1px solid var(--line) }}</style>
@@ -78,7 +78,7 @@ const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 function draw() {{
   for (const k in imgs) {{ const cv = document.getElementById("cv-" + k); if (!cv) continue; const c = cv.getContext("2d"), im = imgs[k], M = META[k]; if (!im.complete) continue;
     let r = M.rows[row]; if (!M.n[r]) r = 0; const n = M.n[r] || 1, f = reduce ? 0 : Math.floor(t / 7) % n;
-    c.imageSmoothingEnabled = false; c.clearRect(0, 0, cv.width, cv.height); c.drawImage(im, f * M.fw, r * M.fh, M.fw, M.fh, 0, 0, M.fw * M.scale, M.fh * M.scale); }}
+    c.imageSmoothingEnabled = false; c.clearRect(0, 0, cv.width, cv.height); c.save(); if (r === 8) {{ const X = cv.width / 2, Y = cv.height * 0.55; c.translate(X, Y); c.rotate(40 * Math.PI / 180); c.translate(-X, -Y); }} c.drawImage(im, f * M.fw, r * M.fh, M.fw, M.fh, 0, 0, M.fw * M.scale, M.fh * M.scale); c.restore(); }}   // (the running kick turned here, like in the game)
   t++; requestAnimationFrame(draw); }}
 requestAnimationFrame(draw);
 </script>'''

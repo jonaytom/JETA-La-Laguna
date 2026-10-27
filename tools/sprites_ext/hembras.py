@@ -43,7 +43,13 @@ HWHT = [(120,120,126),(170,170,176),(210,210,216),(236,236,240)]
 SK_SHORT = L('GandalfHardcore 43x Female Clothing/Short Skirt.png')
 V = {}
 def mk_(name, skin_ramp, skirt, hair_n, hair_cols, hat, weapon, shield, nip=None):
-    body = recol_uw(FSn, TAPA)
+    # (Jonay, 27-oct: «la braga coloréala de color piel en todos los frames»): the briefs in the plain skin tones, with no
+    # inner edge, like the top; nothing drawn on it
+    body = FSn.copy(); bp0 = body.load()
+    for y in range(body.height):
+        for x in range(body.width):
+            q = bp0[x, y]
+            if q[3] and q[:3] in SKIN: bp0[x, y] = ((175, 106, 73) if q[:3] == (148, 175, 192) else (154, 92, 73)) + (q[3],)   # (the two middle skin tones: no dark patch)
     if skin_ramp: body = recol_skin(body, skin_ramp)
     if nip:   # (Jonay: «el color del pezón debe resaltar un poco más sobre la piel»): a colour that stands out on each skin
         bp_ = body.load()
@@ -51,11 +57,11 @@ def mk_(name, skin_ramp, skirt, hair_n, hair_cols, hat, weapon, shield, nip=None
             for x in range(body.width):
                 if bp_[x, y][3] and bp_[x, y][:3] == NIP: bp_[x, y] = nip + (255,)
     layers = [body, skirt, hair(FHr(hair_n), hair_cols)] + ([hat] if hat is not None else [])
-    V[name] = with_kicks(shield, compose(layers), weapon, kick_back=False)
+    V[name] = with_kicks(shield, compose(layers), weapon)
 # v0.99.1 (Jonay: «todas las secuaces deben tener color de piel raro: azules, verdes, rojos, amarillos»)
 SKRED = [(104,28,30),(146,42,40),(184,62,52),(214,96,80)]
-SKGRN = [(36,86,48),(54,116,62),(78,148,78),(110,178,98)]
-SKYEL = [(146,112,26),(186,150,38),(220,188,60),(240,218,112)]
+SKGRN = [(44,100,56),(54,116,62),(78,148,78),(110,178,98)]
+SKYEL = [(180,144,40),(186,150,38),(220,188,60),(240,218,112)]
 SKPUR = [(78,48,108),(104,68,138),(134,94,168),(166,128,198)]
 mk_('h_espada', SKRED, tint(SK_SHORT, RED), 6, HBLK, tint(HAT('Guard Helmet'), IRON), tint(HI('Iron Sword'), IRON), tint(SHIELD, BRONZE), (70, 14, 44))
 mk_('h_hacha', SKGRN, long_skirt(LEATHER), 11, HRED, tint(HAT('Viking Helmet with horns'), [(19,19,28),(60,60,66),(110,110,120),(170,170,180),(226,206,170)]), tint(HI('Iron Axe'), IRON), None, (226, 84, 128))

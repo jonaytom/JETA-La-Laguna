@@ -39,7 +39,7 @@ res = {}
 # 1) EL MAGOTE: strong, bearded, club (thicker, darker stick), leather tamarco
 SKM = recolor(SK3.copy(), [(204,141,103),(185,123,103),(162,103,90),(106,65,61)], [(170,106,66),(146,88,56),(118,68,46),(74,40,30)])
 # Jonay: a wooden shield and a hood (the chaperon in goat leather)
-mag = with_kicks(L('GandalfHardcore Back layers s/Male Circle Shield.png'), compose([recol_uw(SKM, TAM), H(10), tint(L('GandalfHardcore 41x Hats/Male Hat/Male Hat6.png'), [(19,19,28),(70,48,30),(112,78,48),(150,108,66),(186,146,96)])]), thicken(STM, [(40,24,14),(78,48,26),(112,72,40),(150,104,62)]), kick_back=False)
+mag = with_kicks(L('GandalfHardcore Back layers s/Male Circle Shield.png'), compose([recol_uw(SKM, TAM), H(10), tint(L('GandalfHardcore 41x Hats/Male Hat/Male Hat6.png'), [(19,19,28),(70,48,30),(112,78,48),(150,108,66),(186,146,96)])]), thicken(STM, [(40,24,14),(78,48,26),(112,72,40),(150,104,62)]))
 res['magote'] = mag
 # 2) EL MENCEY: lean, man-bun, a long vara (the salto del pastor), goatskin cape
 cape = tint(L('GandalfHardcore Back layers s/Cape blue.png'), FUR[:4])

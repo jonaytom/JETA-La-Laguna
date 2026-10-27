@@ -478,7 +478,12 @@ ARCADE.GAMES.guanche = (() => {
       pblob(c, sx, GY + o.z, (o.d && o.d.dog ? 12 : 7) * (o.s || (o.look && o.look.s) || 1), 1.6, 'rgba(0,0,0,0.35)');
       const sk = o === p ? SX_HERO[p.hero.id] : o.k === 'D' && o.carry === 'J' ? 'g_duende_azul' : SX_EN[o.k]; // (the blue cap carries the blue potions)
       if (o.mount && SPRX.ready('lagarto')) return; // drawn sitting on its lizard (drawLiz)
-      if (sk && SPRX.ready(sk)) { const [r, f] = sxAnim(o, sk); SPRX.draw(c, sk, r, f, sx, sy, o.face, sxScale(o));
+      if (sk && SPRX.ready(sk)) { const [r, f] = sxAnim(o, sk);
+        // v0.99.2 (Jonay: «rescatar la caída original y rotarla solo»): the running kick is the falling pose of row 8 turned
+        // 40° here, at the screen's resolution (the leg forward and down, the head up and back; the other way when mirrored)
+        if (r === 8) { const s = sxScale(o), flip = (o.face < 0 ? -1 : 1) !== SPRX.D[sk].dir, a = (flip ? -40 : 40) * Math.PI / 180, cy = sy - 22 * s;
+          c.save(); c.translate(sx, cy); c.rotate(a); c.translate(-sx, -cy); SPRX.draw(c, sk, r, f, sx, sy, o.face, s); c.restore(); }
+        else SPRX.draw(c, sk, r, f, sx, sy, o.face, sxScale(o));
         if (o.d && o.d.dog && (o.st === 'atk' || o.st === 'windup')) { const m = (r === 5 && MOUTH_F[sk] && MOUTH_F[sk][f]) || MOUTH[sk] || MOUTH.g_tibicena; chomp(c, sx + o.face * m[0] * sxScale(o), sy - m[1] * sxScale(o), o.st === 'windup' ? 0 : SPRX.stT(o, time) / 0.3, sxScale(o)); }
         const hs = 44 * sxScale(o); if (o.st === 'hurt' && o.stun) for (let i = 0; i < 3; i++) { const a = time * 6 + i * 2.1; pblob(c, sx + Math.cos(a) * 7, sy - hs + Math.sin(a) * 2, 1.4, 1.4, i % 2 ? '#fff6a0' : '#ffd400'); } // dazed: stars
         if (o === p && (p.chS > 0.5 || p.chP > 0.5)) pblob(c, sx + p.face * 8, sy - hs * 0.55, 3 + Math.sin(time * 30), 3 + Math.sin(time * 30), flick() ? '#fff' : '#ffd400'); // charging the strong blow

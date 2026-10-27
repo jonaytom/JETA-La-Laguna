@@ -202,8 +202,10 @@ def with_kicks(back, body, front, fw=80, fh=64, oy=0, hip=51, kick_back=True):
         fall.alpha_composite(legs2); fall.alpha_composite(up4); fall.alpha_composite(F4(front))
     row8 = []
     bb = fall.getbbox(); cx, cy = (bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2
-    r = shear_rotate(fall, -40, (cx, cy)); rb = r.getbbox()   # (Jonay: it was the wrong way round; the stretched leg forward and down, the head up and back)
-    f = Image.new('RGBA', (fw, fh)); f.alpha_composite(r, (0, (fh - 6) - rb[3])); row8 = [f, f.copy()]
+    # v0.99.2 (Jonay: «la actual está horrible… rescatar la caída original y rotarla solo», «el arma se va de la mano»):
+    # the row keeps the falling pose UNTURNED; the game turns it 40° when it draws it (at the screen's resolution, so
+    # no pixel of the drawing is lost and the weapon stays in the hand)
+    f = fall.copy(); row8 = [f, f.copy()]
     rows = full.height // fh; out = Image.new('RGBA', (full.width, fh * 9)); out.paste(full.crop((0, 0, full.width, fh * min(rows, 7))), (0, 0))
     for i, f in enumerate(row7): out.paste(f, (i * fw, 7 * fh))
     for i, f in enumerate(row8): out.paste(f, (i * fw, 8 * fh))

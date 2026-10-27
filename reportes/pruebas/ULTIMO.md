@@ -1,10 +1,10 @@
-# Pruebas 0.99.1 — 2026-10-27 18:08 — 2/2 OK
+# Pruebas 0.99.2 — 2026-10-27 18:14 — 2/2 OK
 
-Listas: v0991. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 90 s en total.
+Listas: v0992. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 92 s en total.
 
 | # | Prueba | Resultado | Tiempo |
 |---|---|---|---|
-| 1 | `prueba_096.py` | **OK** | 68 s |
+| 1 | `prueba_096.py` | **OK** | 70 s |
 | 2 | `prueba_099.py` | **OK** | 2 s |
 
 ## Detalle
