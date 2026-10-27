@@ -130,7 +130,7 @@ def with_kicks(back, body, front, fw=80, fh=64, oy=0, hip=51):
         bp = bd4.load()
         ml = [(x, y) for y in range(H, fh) for x in range(fw) if bp[x, y][3]]
         fx = [x for x in range(80) if fp[x, 49][3]]; mx = [x for (x, y) in ml if y == H] or [x for (x, y) in ml]
-        dx = round((min(mx) + max(mx)) / 2 - (min(fx) + max(fx)) / 2); dy = H - 49
+        dx = round((min(mx) + max(mx)) / 2 - (min(fx) + max(fx)) / 2) - 1; dy = H - 49   # (-1, Jonay: once turned, the stretched leg 1 px higher)
         lum = lambda c: c[0] * 0.3 + c[1] * 0.59 + c[2] * 0.11; OUT = (19, 19, 28)
         mcols = sorted({bp[x, y][:3] for (x, y) in ml if bp[x, y][:3] != OUT}, key=lum)
         fcols = sorted({fp[x, y][:3] for y in range(49, 64) for x in range(80) if fp[x, y][3] and fp[x, y][:3] != OUT}, key=lum)

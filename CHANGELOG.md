@@ -3,6 +3,10 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.96.4 — 2026-10-27 — Guanche Guarriors: la pierna de la patada en carrera, 1 px más arriba
+- **Guanche Guarriors** (Jonay): en la patada en carrera de todos menos La Mirladora, las piernas 1 píxel más arriba
+  (la estirada quedaba desplazada hacia abajo).
+
 ## 0.96.3 — 2026-10-27 — Guanche Guarriors: patada en carrera con las piernas de La Mirladora
 - **Guanche Guarriors** (Jonay): la patada en carrera lleva en todos los personajes **las piernas de La Mirladora
   cayendo** (una estirada por delante y otra doblada), en el color de piel de cada uno, y ya **no se mueve**: es una

@@ -1,10 +1,10 @@
-# Pruebas 0.96.3 — 2026-10-27 12:33 — 3/3 OK
+# Pruebas 0.96.4 — 2026-10-27 12:38 — 3/3 OK
 
-Listas: v0963. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 85 s en total.
+Listas: v0963. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 83 s en total.
 
 | # | Prueba | Resultado | Tiempo |
 |---|---|---|---|
-| 1 | `prueba_096.py` | **OK** | 64 s |
+| 1 | `prueba_096.py` | **OK** | 61 s |
 | 2 | `prueba_093.py` | **OK** | 1 s |
 | 3 | `prueba_094.py` | **OK** | 1 s |
 
