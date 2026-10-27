@@ -462,6 +462,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Hecho
 
+- [x] v0.99.4 **Baloncesto: jugadores con la camiseta de asillas del pack, hechos a partir del aspecto de cada uno** (Jonay, 27-oct).
 - [x] v0.99.3 **Guanche Guarriors: chicas sobre la base nueva (La Mirladora, la bruja) y cinco secuaces hembra en las oleadas** (Jonay, 27-oct).
 - [x] v0.99.2 **Guanche Guarriors: patada en carrera = la caída original, solo girada (al dibujarla)** (Jonay, 27-oct).
 - [x] v0.99.1 **Guanche Guarriors: patada en carrera sin perder calidad, piernas del color del tronco, sin el escudo tapando la cabeza** (Jonay, 27-oct).

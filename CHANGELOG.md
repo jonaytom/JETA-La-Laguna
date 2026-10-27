@@ -3,6 +3,13 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.99.4 — 2026-10-27 — Baloncesto: jugadores del pack con camiseta de asillas
+- **Baloncesto 2D** (Jonay: «el basket perfecto, aplica ya»): los jugadores se dibujan con el pack GandalfHardcore y su
+  camiseta de asillas (`Basketball_Shirt`), cada uno hecho a partir de su aspecto: piel (la más parecida de cuatro),
+  camiseta y pantalón corto de su color, pelo (corto, afro o con barba) y zapatillas. Capas en `src/09ec_bk_data.js`
+  (`tools/sprites_ext/bk_layers.py`), montaje y fotogramas en `src/09ed_bk_sheets.js`; mientras cargan salen los de
+  antes.
+
 ## 0.99.3 — 2026-10-27 — Las chicas sobre la base nueva y las secuaces
 - **Guanche Guarriors** (Jonay): todas las chicas rehechas sobre su base `Female Skin3_new` con sus colores, ropa y
   armas de antes (`tools/sprites_ext/chicas.py`): La Mirladora (pezones del rosa de la boca), la bruja y, nuevas,

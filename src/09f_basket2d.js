@@ -422,13 +422,16 @@ const BASKET2D = (() => {
     else if (Math.hypot(p.vx, p.vz) > 0.5) k = (b.holder === p ? 'drib' : 'walk') + (Math.floor(p.walkT * 2.2) % 4); else if (b.holder && b.holder.team !== p.team && b.holder === p.mark) k = 'defend';
     if (st.phase === 'end' && !st.tut) k = (st.score[p.team] > st.score[1 - p.team]) ? 'win' : k;
     const cmb = p.combo && p.act === 'dunk' && DK[p.combo] ? p.combo : null, cu = cmb ? clamp((p.cT || 0) / 0.85, 0, 1) : 0, cf = Math.round(cu * (DKN - 1));
-    const s = cmb ? dunkSprite(p, cmb, cf) : sprOf(p, k), sc = (0.37 + p.z * 0.004) * SC; const px = sx(p.x), py = sy(p.z, p.y);
+    const BKS = BKSHEET.ready(), s = BKS ? null : cmb ? dunkSprite(p, cmb, cf) : sprOf(p, k), sc = (0.37 + p.z * 0.004) * SC; const px = sx(p.x), py = sy(p.z, p.y); // v0.99.4: the pack's players (the old ones while it loads)
     if (px < -60 || px > W + 60) { offscreen(p, px); return; }
     cx.fillStyle = 'rgba(0,0,0,0.3)'; cx.beginPath(); cx.ellipse(px, sy(p.z), 7 * SC, 2.2 * SC, 0, 0, 7); cx.fill();
     const h2 = 88 * sc; /* v0.90: the fight's 88-unit box, so the ball, the bars and the arrows stay where they were */
     let fx = p.dir < 0 ? -1 : 1; if (cmb && DK[cmb].back) fx = -fx; // turned away from the hoop
     let kx = fx; if (cmb && DK[cmb].spin) { const [a, b] = DK[cmb].spin, t = clamp((cu - a) / (b - a), 0, 1); kx = fx * Math.cos(t * Math.PI * 2); if (Math.abs(kx) < 0.3) kx = 0.3 * Math.sign(kx || 1); } // the 360: the body turns round
-    cx.save(); cx.translate(px, py); cx.scale(kx, 1); cx.drawImage(s.c, (-s.ax / s.q) * sc, (80 - s.ay / s.q - 86.24) * sc, (s.c.width / s.q) * sc, (s.c.height / s.q) * sc); cx.restore(); st.drawn = (st.drawn || 0) + 1;
+    if (BKS) { const sh = BKSHEET.sheet(p.look), [r, f] = BKSHEET.frame(k, p, st.time0, cmb), q = 1.87 * sc; // (the figure, 46 px tall, as tall as the old 86 units)
+      cx.save(); cx.translate(px, py); cx.scale(-kx, 1); const sm = cx.imageSmoothingEnabled; cx.imageSmoothingEnabled = false; cx.drawImage(sh, f * 80, r * 64, 80, 64, -40 * q, -63 * q, 80 * q, 64 * q); cx.imageSmoothingEnabled = sm; cx.restore(); } // (the sheets face left)
+    else { cx.save(); cx.translate(px, py); cx.scale(kx, 1); cx.drawImage(s.c, (-s.ax / s.q) * sc, (80 - s.ay / s.q - 86.24) * sc, (s.c.width / s.q) * sc, (s.c.height / s.q) * sc); cx.restore(); }
+    st.drawn = (st.drawn || 0) + 1;
     if (cmb) { const P2 = dunkPose(cmb, cf / (DKN - 1)), hb = ballInDunk(cmb, cu, P2); p.ballScr = [px + (hb[0] - 36) * sc * kx, py - h2 * 0.98 + hb[1] * sc]; // the ball in his hands
       if (cu > 0.2) for (let i = 0; i < 4; i++) { cx.fillStyle = `rgba(255,255,255,${0.12 + 0.05 * i})`; cx.fillRect(px - fx * (10 + i * 5) * SC * 0.4, py - h2 * (0.3 + 0.15 * i), 2 * SC, 1); } } // speed lines
     else p.ballScr = null;
@@ -488,7 +491,7 @@ const BASKET2D = (() => {
     if (mine) L.push({ name: 'EL BLANCO', look: typeof NPC !== 'undefined' && NPC.blanco && NPC.blanco.H ? { ...NPC.blanco.H.look } : { skin: 0xc68a5e, shirt: 0x2e6b3a, pants: 0x3a3a3a, hair: 0x2a1a10 } });
     else { const b = L[0] || { name: 'RIVAL', look: {} }; const SK = [0xe0ac86, 0x8d5a3b, 0xc68a5e, 0xf1c9a5], HR = [0x1a1410, 0x6b3e1e, 0xd8b56a, 0x2a1a10]; L.push({ name: ['EL ZURDO', 'EL RUBIO', 'EL GORDO', 'EL LARGO'][Math.abs(Math.round((b.look && b.look.shirt) || 0)) % 4], look: { ...(b.look || {}), skin: SK[L.length % 4], hair: HR[(L.length + 1) % 4] } }); }
     return fill3(L, mine); }
-  function start(opt) { PZ.off();
+  function start(opt) { PZ.off(); BKSHEET.ready(); // (v0.99.4: the layers of the players start loading)
     if (running || FIGHT2D.running) return false; running = true; onEnd = opt.onEnd || null; inConsole = !!opt.inConsole;
     if (!cv) { cv = document.createElement('canvas'); cv.id = 'basket2d'; cv.width = W * R; cv.height = H * R; cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;image-rendering:pixelated;background:#000;z-index:28;display:none'; document.body.appendChild(cv); cx = cv.getContext('2d'); }
     const team = fill3(opt.team, true), riv = fill3(opt.rival, false);

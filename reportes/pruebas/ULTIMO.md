@@ -1,68 +1,54 @@
-# Pruebas 0.99.3 — 2026-10-27 20:35 — 4/4 OK
+# Pruebas 0.99.4 — 2026-10-27 20:38 — 2/2 OK
 
-Listas: v0993. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 93 s en total.
+Listas: v0994. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 105 s en total.
 
 | # | Prueba | Resultado | Tiempo |
 |---|---|---|---|
-| 1 | `prueba_0993.py` | **OK** | 68 s |
-| 2 | `prueba_099.py` | **OK** | 2 s |
-| 3 | `prueba_096.py` | **OK** | 0 s |
-| 4 | `prueba_0952.py` | **OK** | 1 s |
+| 1 | `prueba_0994.py` | **OK** | 70 s |
+| 2 | `prueba_baloncesto.py` | **OK** | 16 s |
 
 ## Detalle
 
-### 1. prueba_0993.py — OK
+### 1. prueba_0994.py — OK
 
 ```
-foto v0993_secuazas {'fem': 6, 'cnt': {'g_sec_roja': 1, 'g_secuaz': 6, 'g_sec_vikinga': 2, 'g_sec_oro': 3, 'mirla': 1}}
-SECUACES HEMBRA Y MIRLADORA DIBUJADAS OK
+foto v0994_basket {'ready': True, 'drawn': 12}
+JUGADORES DEL PACK OK
 errores []
-PRUEBA 0993 OK
+PRUEBA 0994 OK
 ```
 
-### 2. prueba_099.py — OK
+### 2. prueba_baloncesto.py — OK
 
 ```
-foto v099_guanche_0 {'fase': 'EL POBLADO DE TAORO', 'drawn': 1}
-foto v099_guanche_1 {'fase': 'LA LAURISILVA DE ANAGA', 'drawn': 1}
-foto v099_guanche_2 {'fase': 'EL BARRANCO DEL INFIERNO', 'drawn': 1}
-foto v099_guanche_3 {'fase': 'LOS ACANTILADOS DE LOS GIGANTES', 'drawn': 1}
-foto v099_guanche_4 {'fase': 'EL MALPAÍS DE GÜÍMAR', 'drawn': 1}
-foto v099_guanche_5 {'fase': 'LAS CAÑADAS DEL TEIDE', 'drawn': 1}
-foto v099_guanche_6 {'fase': 'DENTRO DEL ECHEYDE', 'drawn': 1}
-foto v099_guayota {'calls': [['g_overlord', 0.8333333333333334], ['mirla', 0.8333333333333334]]}
-GUAYOTA PIXEL A PIXEL OK
-foto v099_bencomo_0 {'drawn': 1}
-foto v099_bencomo_1 {'drawn': 1}
-foto v099_bencomo_2 {'drawn': 1}
-FONDOS GUANCHE OK
-FONDOS BENCOMO OK
-errores []
-PRUEBA 099 OK
+foto basket_inicio
+foto basket_partido
+cpu {'ph': 'end', 'sc': [8, 0], 'clock': 0, 'golden': False}
+resultado {"won":true,"score":[8,0]}
+PARTIDO CPU OK
+partido fácil 1 [25, 0]
+partido fácil 2 [17, 0]
+partido fácil 3 [15, 3]
+equilibrio primer partido [57, 3] OK
+jugadores dibujados 90
+snap baloncesto_tamano
+clic derecho {"ev":{"pass":true},"mode":"pass"}
+clic izquierdo {"ev":{"green":true,"shot":true},"mode":"air"}
+foto basket_zoom
+RATÓN OK
+tras moverse 1
+tras correr 2
+tras pasar 3
+tras recibir 4
+tras tirar 5
+tras combo 6
+foto basket_tutorial
+tutorial 99
+TUTORIAL OK
+cambio de defensor -> EL BLANCO
+fin {"won":true,"score":[9,2]} estado play
+errores JS []
+BALONCESTO OK
 ```
 
-### 3. prueba_096.py — OK
-
-```
-patada fuerte y destello {'flash': 0, 'antes': [], 'skick_en': 0, 'alPulsar': 'idle', 'alSoltar': 'kick', 'golpePulsar': 'idle', 'golpeSoltar': 'atk'}
-foto v096_patada
-foto v096_patada_carrera
-foto v0961_mordisco
-GOLPES AL SOLTAR Y SIN DESTELLO FIJO OK
-errores []
-PRUEBA 096 OK
-```
-
-### 4. prueba_0952.py — OK
-
-```
-campamento {'fase': 'camp', 'montado': False, 'dibujado': 1, 'cargadas': 5}
-foto v0952_campamento
-SE VE EN EL CAMPAMENTO OK
-HOJAS CARGADAS AL ABRIR OK
-foto v0953_bencomo_caballero
-errores []
-PRUEBA 0952 OK
-```
-
-Fotos/archivos nuevos en `tests/shots/`: v0952_campamento.jpg, v0953_bencomo_caballero.jpg, v0961_mordisco.jpg, v096_patada.jpg, v096_patada_carrera.jpg, v0993_secuazas.jpg, v099_bencomo_0.jpg, v099_bencomo_1.jpg, v099_bencomo_2.jpg, v099_guanche_0.jpg, v099_guanche_1.jpg, v099_guanche_2.jpg, v099_guanche_3.jpg, v099_guanche_4.jpg, v099_guanche_5.jpg, v099_guanche_6.jpg, v099_guayota.jpg
+Fotos/archivos nuevos en `tests/shots/`: baloncesto_tamano.jpg, basket_inicio.jpg, basket_partido.jpg, basket_tutorial.jpg, basket_zoom.jpg, v0994_basket.jpg
