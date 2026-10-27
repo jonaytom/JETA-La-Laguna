@@ -119,7 +119,7 @@ ARCADE.GAMES.guanche = (() => {
     GM: { s: 1.05, bulk: 5, skin: '#e3cddf', skin2: '#c090a9', cloth: '#73172d', cloth2: '#3b1725', hair: '#403353', long: 6, eye: '#9052bc', weapon: 'none' },
     BGO: { s: 1.35, bulk: 5.5, skin: '#612721', skin2: '#2d1b1e', cloth: '#403353', cloth2: '#242234', hair: '#ffe9e3', long: 7, eye: '#f8f644', weapon: 'none' },
     RA: { s: 1, bulk: 4, skin: '#3a3a52', skin2: '#2a2a3a', cloth: '#3a3a52', cloth2: '#2a2a3a', eye: '#ff5a5a', weapon: 'none' },
-    BGX: { s: 1.8, bulk: 9, skin: '#5a3a3a', skin2: '#3a2424', cloth: '#3a2424', cloth2: '#2a1a1a', eye: '#ff8a3a', weapon: 'none' },
+    BGX: { s: 1.35, bulk: 9, skin: '#5a3a3a', skin2: '#3a2424', cloth: '#3a2424', cloth2: '#2a1a1a', eye: '#ff8a3a', weapon: 'none' },
   };
   const HEROES = [
     { id: 'mencey', name: 'EL MAGOTE', desc: ['FUERTE Y LENTO', 'GARROTE CANARIO'], look: LK.mencey, hp: 24, spd: 44, dmg: [2, 2, 4], reach: 21, jump: 150, jars: 4, spell: 'IRA DE ACHAMÁN', fuerza: 3, agil: 1, magia: 2 },

@@ -1,6 +1,1 @@
 prueba_098.py
-prueba_082.py
-prueba_093.py
-prueba_094.py
-prueba_096.py
-prueba_0952.py

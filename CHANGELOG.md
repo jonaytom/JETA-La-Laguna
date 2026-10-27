@@ -3,6 +3,9 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.98.1 — 2026-10-27 — Gollux, un poco más pequeño
+- **Guanche Guarriors**: Gollux salía el doble de grande que los héroes y tapaba media pantalla; ahora un 25 % menos.
+
 ## 0.98.0 — 2026-10-27 — Guanche Guarriors: dos fases nuevas y jefes nuevos
 - **Guanche Guarriors** (Jonay): siete fases.
   - **Fase nueva, El Barranco del Infierno** (Adeje, tras Anaga): ratas a montones y, de jefe, **Gollux**, el bicho de
