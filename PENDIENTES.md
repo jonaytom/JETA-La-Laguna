@@ -347,6 +347,9 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Rendimiento, auditorías y código
 
+- [ ] ⚡ **Auditoría v0.92.0** (27-oct 03:25, APTO CON AVISOS; pintar 21 → 30,9 ms, arranque 8,6 → 9,7 s): la 0.92 solo
+  cambia la rampa del Vallado; pintar oscila entre ~21 y ~32 desde la 0.89 (ver la de la 0.90). Repetir la medición y,
+  si se queda en 31, buscar qué lo sube. Revisor de jugabilidad: 38 avisos (14 nuevos, 36 arreglados).
 - [ ] ⚡ **Auditoría v0.90.0** (26-oct 15:24, APTO CON AVISOS; pintar 22,3 → 32 ms, arranque 8,3 → 9,4 s):
   - Pintar: la 0.90 no toca el mundo 3D y 32 ms es lo de la 0.89.0 (31,3); el 22,3 de la pasada anterior parece la
     rara. Repetir la medición.
@@ -416,13 +419,13 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Recursos externos (animaciones, modelos)
 
-- [ ] ◐ **Sprites de itch.io como base para Bencomo, Guanche Guarriors y el basket** (Jonay, 27-oct): GandalfHardcore
-  hombre/mujer y arquero (juego y modificar sí; no redistribuir), Evil Wizard 3 de LuizMelo (CC0), Batareya 500+
-  (estáticos, no redistribuir), Survivors de seartsy (sin licencia en la página) y Spell of Mastery de NancyGold (no se
-  pudo abrir: mirar la licencia del zip).
-  - Plan: Jonay descarga los zip a una carpeta del PC fuera de git (no redistribuir: los originales no van a GitHub).
-    Propuesta con 2–3 personajes rehechos sobre GandalfHardcore (Bencomo, El Magote, un castellano) junto a los de
-    ahora, y elige.
+- [~] ◐ v0.93.0 (Bencomo y Guanche Guarriors hechos) **Sprites de itch.io como base para Bencomo, Guanche Guarriors y el
+  basket** (Jonay, 27-oct): falta el basket. Los dibujos se generan con `tools/sprites_ext/` a partir de
+  `E:\Claude\GTA La Laguna\assets_externos\` (fuera de git) y van a `src/09jy_sprx_data.js`.
+  - Licencias: GandalfHardcore (usar en juegos y modificar; no redistribuir los PNG), Evil Wizard 3 (CC0); falta mirar
+    las de PixelHorse y el caballero de 18studio en sus páginas de itch.io.
+  - Por ver en el juego: el tamaño de Bencomo (1 píxel del dibujo = 1 de la pantalla, algo más pequeño que el de
+    antes) y el de los héroes de Guanche (×2).
 - [ ] ◐ **Assets de coches y motos** (consulta hecha, falta decidir): opciones CC0/CC-BY en
       `docs/referencias/assets_vehiculos.md`.
 - [ ] ● **Mixamo** como fuente de animaciones extra (gratis para juegos; no subir los FBX originales al repo; hay que

@@ -120,6 +120,10 @@ ARCADE.GAMES.guanche = (() => {
     { id: 'pastor', name: 'EL MENCEY', desc: ['ÁGIL, MENOS FUERTE', 'LA VARA DEL SALTO'], look: LK.pastor, hp: 18, spd: 58, dmg: [1, 1, 3], reach: 26, jump: 180, jars: 5, spell: 'VIENTO ALISIO', fuerza: 2, agil: 3, magia: 2 },
     { id: 'mirla', name: 'LA MIRLADORA', desc: ['ÁGIL Y MÁGICA', 'MENOS FÍSICA'], look: LK.mirla, hp: 16, spd: 56, dmg: [1, 1, 2], reach: 17, jump: 165, jars: 7, spell: 'LUZ DE MAGEC', fuerza: 1, agil: 3, magia: 3 }];
   // enemies: hp, speed, reach, damage, wind-up, cooldown, points
+  // v0.93 (Jonay): the new characters drawn from the SPRX sheets (09jy/09jz); the puppets stay as a fallback while loading
+  const SX_HERO = { mencey: 'magote', pastor: 'mencey', mirla: 'mirla' }, SXP = 2 / Z; // one pixel of a sheet = 2 of the screen
+  const SX_BIG = { mencey: 1.2 }; // Jonay: El Magote a 20 % bigger than El Mencey
+  const SX_EN = { S: 'g_secuaz', H: 'g_escudo', G: 'g_giganton', BG: 'g_giganton', BH: 'g_giganton', W: 'g_bruja', BW: 'g_brujamayor', D: 'g_duende', BY: 'g_guayota', T: 'g_tibicena', BT: 'g_tibicena' };
   const ED = { S: { hp: 8, spd: 34, reach: 18, dmg: 2, wind: 0.42, cd: 1.3, pts: 300 }, H: { hp: 11, spd: 30, reach: 18, dmg: 2, wind: 0.5, cd: 1.5, pts: 400, shield: true },
     T: { hp: 6, spd: 72, reach: 18, dmg: 2, wind: 0.32, cd: 1.1, pts: 350, dog: true }, G: { hp: 22, spd: 24, reach: 25, dmg: 4, wind: 0.65, cd: 1.8, pts: 800, armor: true },
     W: { hp: 8, spd: 30, reach: 0, dmg: 2, wind: 0.5, cd: 2.2, pts: 500, ranged: true }, D: { hp: 1, spd: 62, reach: 0, dmg: 0, wind: 0, cd: 9, pts: 100, thief: true },
@@ -261,7 +265,7 @@ ARCADE.GAMES.guanche = (() => {
       // double tap = run
       for (const [v, d] of [['vR', 1], ['vL', -1]]) if (pad.hit(v)) { if (p.tap.d === d && time - p.tap.t < 0.28) p.run = true; p.tap = { d, t: time }; }
       if (!dx || Math.sign(dx) !== p.face) p.run = p.run && dx !== 0 && Math.sign(dx) === p.face;
-      const ride = p.mount, spd = ride ? 50 : H.spd * (p.run ? 1.9 : 1);
+      const ride = p.mount, spd = ride ? (p.run ? 96 : 50) : H.spd * (p.run ? 1.9 : 1); // v0.93 (Jonay): running on the lizard is faster too
       if (p.st === 'magic') { p.stT -= dt; if (p.stT < 0.9 && !p.cast) { p.cast = true; castSpell(); } if (p.stT <= 0) { p.st = 'idle'; p.cast = false; } return; }
       // v0.83.2 (Jonay): B on a dazed enemy = a somersault over him and a blow from behind that knocks him down
       if (p.st === 'flip') { const f = p.fl, e = f.e; f.t += dt; const k = Math.min(1, f.t / 0.5); p.x = f.from + (f.to - f.from) * k; p.h = Math.sin(k * Math.PI) * 24; if (e.st === 'hurt') e.stT = Math.max(e.stT, 0.12);
@@ -378,8 +382,31 @@ ARCADE.GAMES.guanche = (() => {
       if (st === 'hurt') return PO.hurt; if (st === 'fall') return mix(PO.hurt, PO.down, 0.5); if (st === 'down' || st === 'dead') return PO.down; if (st === 'getup') return mix(PO.down, PO.idle, 1 - o.stT / 0.45);
       if (st === 'magic') return PO.magic; return PO.idle; }
     const hopOf = (lz) => (lz.hop > 0 ? Math.sin((1 - lz.hop / 0.45) * Math.PI) * 9 : 0);
+    /** [row, frame] of an actor's sheet for its state (rows: 0 idle, 1 walk, 2 run, 3 jump up, 4 down, 5 attack, 6 death) */
+    function sxAnim(o, k) { const t = SPRX.stT(o, time), st = o.st, F = SPRX.fr, n = SPRX.D[k].n, last = (r) => (n[r] || 1) - 1;
+      if (k === 'g_tibicena') return st === 'walk' || st === 'run' || st === 'atk' || st === 'windup' ? [1, F(k, 1, t, 12)] : [0, F(k, 0, t, 6)];
+      if (st === 'walk') return [1, F(k, 1, t, 10)]; if (st === 'run' || st === 'thief') return [2, F(k, 2, t, 13)];
+      if (st === 'atk') { const dur = o === p ? (p.combo === 3 ? 0.5 : 0.28) : 0.3; return [5, Math.min(last(5), Math.floor(t / dur * (last(5) + 1)))]; }
+      if (st === 'dash') return [5, Math.min(last(5), 3 + Math.floor(t * 14))]; // Jonay: the running attack, the blow forwards
+      if (st === 'windup') return [5, 1]; if (st === 'jatk') return [5, 3];
+      if (st === 'jump' || st === 'flip' || st === 'whip') return t < 0.3 ? [3, F(k, 3, t, 12, false)] : [4, F(k, 4, t - 0.3, 12, false)];
+      if (st === 'hurt') return k === 'g_brujamayor' ? [3, 0] : [6, 1]; if (st === 'fall') return [6, Math.min(last(6) - 1, 1 + Math.floor(t * 14))];
+      if (st === 'down' || st === 'dead') return [6, last(6)]; if (st === 'getup') return [6, Math.max(0, last(6) - Math.floor(t * 20))];
+      if (st === 'magic') return [5, k === 'mirla' ? 4 : 1]; return [0, F(k, 0, t, 6)]; }
+    const sxScale = (o) => (o === p ? SXP * (SX_BIG[p.hero.id] || 1) : SXP * (o.s || (o.look && o.look.s) || 1));
+    /** the lizard: walking, biting, with the hero on it (one sheet each) or an enemy sitting on its back */
+    function drawLiz(c, sx, sy, q) { const mv = Math.abs(q.x - (q._px === undefined ? q.x : q._px)) + Math.abs(q.z - (q._pz === undefined ? q.z : q._pz)) > 0.05; q._px = q.x; q._pz = q.z;
+      const r = q.bite > 0 ? 2 : mv ? 1 : 0, f = r === 2 ? Math.min(5, Math.floor((1 - q.bite / 0.4) * 6)) : SPRX.fr('lagarto', r, time, r ? (q.rider === p && p.run ? 18 : 10) : 5);
+      if (q.rider === p && SPRX.draw(c, 'lz_' + p.hero.id, r, f, sx, sy, q.face, SXP)) return; // (on the lizard all at the lizard's size)
+      if (!SPRX.draw(c, 'lagarto', r, f, sx, sy, q.face, SXP)) { lizard(c, sx, sy, q.face, q); return; }
+      const e = q.rider; if (e && e !== p && SX_EN[e.k]) { const d = SPRX.D.lagarto, s = sxScale(e), seatX = sx + q.face * d.seat[0] * SXP, seatY = sy + d.seat[1] * SXP;
+        SPRX.draw(c, SX_EN[e.k], 0, 0, seatX, seatY + 12 * s, q.face, s, seatY); if (e.flash > 0) { c.globalAlpha = 0.5; pblob(c, seatX, seatY - 12, 6, 10, '#fff'); c.globalAlpha = 1; } } }
     function drawActor(c, o) { const sx = o.x - camX, sy = GY + o.z - o.h; if (sx < -60 || sx > VW + 60) return; if (o.st === 'dead' && flick()) return; if (o.inv > 0 && flick() && o.st !== 'getup') return;
       pblob(c, sx, GY + o.z, (o.d && o.d.dog ? 12 : 7) * (o.s || (o.look && o.look.s) || 1), 1.6, 'rgba(0,0,0,0.35)');
+      const sk = o === p ? SX_HERO[p.hero.id] : SX_EN[o.k];
+      if (o.mount && SPRX.ready('lagarto')) return; // drawn sitting on its lizard (drawLiz)
+      if (sk && SPRX.ready(sk)) { const [r, f] = sxAnim(o, sk); SPRX.draw(c, sk, r, f, sx, sy, o.face, sxScale(o));
+        if (o.flash > 0) { c.globalAlpha = 0.5; pblob(c, sx, sy - 14, 6, 12, '#fff'); c.globalAlpha = 1; } return; }
       if (o.d && o.d.dog) { dog(c, sx, sy, o.face, o, o.s || 1); return; }
       const riding = o.mount, P = riding ? (o.st === 'whip' || o.st === 'atk' ? PO.ride : PO.ride) : poseOf(o);
       const glow = o === p && p.st === 'magic' ? (flick() ? '#fff' : '#ffd400') : null;
@@ -398,7 +425,7 @@ ARCADE.GAMES.guanche = (() => {
       for (const it of items) { if (it.got) continue; it.t += 0.016; const x = it.x - camX, y = GY + it.z; if (x < -10 || x > VW + 10) continue;
         if (it.k === 'J') { pblob(c, x, y - 3, 3, 3, '#2a4aa0'); pblob(c, x, y - 4, 2, 2, '#5a8ae0'); px(c, x - 1, y - 7, 2, 1.5, '#e8dcc0'); } else { pblob(c, x, y - 3, 3.5, 2.6, '#c9a46a'); pblob(c, x - 1, y - 4, 1.5, 1, '#f0e0b0'); } }
       const all = [...E, ...liz.map((q) => ({ isL: true, q, z: q.z, x: q.x })), p].sort((a, b) => a.z - b.z);
-      for (const o of all) { if (o.isL) { const q = o.q, sx = q.x - camX; if (sx < -60 || sx > VW + 60) continue; pblob(c, sx, GY + q.z, 18, 2, 'rgba(0,0,0,0.35)'); lizard(c, sx, GY + q.z - hopOf(q), q.face, q); } else drawActor(c, o); }
+      for (const o of all) { if (o.isL) { const q = o.q, sx = q.x - camX; if (sx < -60 || sx > VW + 60) continue; pblob(c, sx, GY + q.z, 18, 2, 'rgba(0,0,0,0.35)'); drawLiz(c, sx, GY + q.z - hopOf(q), q); } else drawActor(c, o); }
       for (const s of shots) { const x = s.x - camX, y = GY + s.z - s.h; if (s.k === 'fire') { pblob(c, x, y, 4, 3, flick() ? '#ff6a1a' : '#ffd400'); pblob(c, x - Math.sign(s.vx) * 4, y, 2.5, 2, 'rgba(255,90,20,0.6)'); }
         else { c.strokeStyle = 'rgba(255,200,120,0.8)'; c.lineWidth = 1.5; for (const sd of [-1, 1]) { c.beginPath(); c.ellipse(s.x - camX + sd * 0, GY + s.z, s.r || 1, 3, 0, 0, 7); c.stroke(); } } }
       for (const f of fx) { const x = f.x - camX; if (f.k === 'spark') { const k = 1 - f.t / 0.25; c.fillStyle = f.col || '#fff6a0'; for (let i = 0; i < 6; i++) c.fillRect(R2(x + Math.cos(i * 1.05) * (2 + k * 7)), R2(f.y + Math.sin(i * 1.05) * (2 + k * 7)), 1, 1); }
@@ -428,7 +455,8 @@ ARCADE.GAMES.guanche = (() => {
     function drawSelect(c) { const bg = background('taoro'); c.drawImage(bg[0], 0, 0, 960, SH); c.drawImage(bg[1], 0, 0, 960, SH); c.fillStyle = 'rgba(0,0,0,0.45)'; c.fillRect(0, 0, SW, SH);
       A.txt(c, 'ELIGE TU GUERRERO', SW / 2, 16, '#ffd400', 12, 'center');
       HEROES.forEach((H, i) => { const cx0 = 80 + i * 160, on = i === sel; c.fillStyle = on ? 'rgba(255,212,0,0.18)' : 'rgba(0,0,0,0.3)'; c.fillRect(cx0 - 70, 40, 140, 250); if (on) { c.strokeStyle = flick() ? '#ffd400' : '#ff8a3a'; c.lineWidth = 2; c.strokeRect(cx0 - 69, 41, 138, 248); }
-        c.save(); c.scale(Z * 1.2, Z * 1.2); const P = on ? cyc(WALK, time * 4) : PO.idle; PIXGUAN.draw(c, cx0 / (Z * 1.2), 150 / (Z * 1.2), 1, on && Math.floor(time * 1.5) % 3 === 2 ? PO.smash : P, H.id, H.look.s); c.restore();
+        c.save(); c.scale(Z * 1.2, Z * 1.2); const P = on ? cyc(WALK, time * 4) : PO.idle; const hk = SX_HERO[H.id], hr = on ? (Math.floor(time * 1.5) % 3 === 2 ? 5 : 1) : 0;
+        if (!SPRX.draw(c, hk, hr, SPRX.fr(hk, hr, time, hr === 5 ? 12 : 9), cx0 / (Z * 1.2), 150 / (Z * 1.2), 1, 2.4 * (SX_BIG[H.id] || 1) / (Z * 1.2))) PIXGUAN.draw(c, cx0 / (Z * 1.2), 150 / (Z * 1.2), 1, on && Math.floor(time * 1.5) % 3 === 2 ? PO.smash : P, H.id, H.look.s); c.restore();
         A.txt(c, H.name, cx0, 170, on ? '#ffd400' : '#fff', 8, 'center'); A.txt(c, H.desc[0], cx0, 186, '#9fd7ff', 6, 'center'); A.txt(c, H.desc[1], cx0, 196, '#9fd7ff', 6, 'center');
         [['FUERZA', H.fuerza], ['AGILIDAD', H.agil], ['MAGIA', H.magia]].forEach(([n, v], j) => { A.txt(c, n, cx0 - 60, 214 + j * 14, '#fff', 6); for (let b = 0; b < 3; b++) { c.fillStyle = b < v ? '#ffd400' : '#3a3a3a'; c.fillRect(cx0 + 4 + b * 16, 214 + j * 14, 13, 7); } });
         A.txt(c, H.spell, cx0, 260, '#ff8a3a', 6, 'center'); A.txt(c, 'MAGIA: ' + H.jars + ' ZURRONES', cx0, 272, '#aaa', 6, 'center'); });
@@ -442,7 +470,7 @@ ARCADE.GAMES.guanche = (() => {
   function drawTitle(c, t) { const bg = background('canadas'); c.drawImage(bg[0], 0, 0, 960, SH); const o = -((t * 8) % 960); c.drawImage(bg[1], o, 0, 960, SH); c.drawImage(bg[1], o + 960, 0, 960, SH); c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(0, 0, SW, SH);
     c.font = '34px "Press Start 2P", monospace'; c.textAlign = 'center'; c.textBaseline = 'top';
     for (const [s, y] of [['GUANCHE', 26], ['GUARRIORS', 68]]) { c.fillStyle = '#1a0a04'; c.fillText(s, SW / 2 + 4, y + 4); const gr = c.createLinearGradient(0, y, 0, y + 34); gr.addColorStop(0, '#ffe08a'); gr.addColorStop(0.5, '#e07a2a'); gr.addColorStop(1, '#8a2a0a'); c.fillStyle = gr; c.fillText(s, SW / 2, y); }
-    c.save(); c.scale(Z * 1.3, Z * 1.3); const k = Z * 1.3; HEROES.forEach((H, i) => { const P = Math.floor(t * 1.2 + i) % 3 === 0 ? PO.smash : PO.idle; PIXGUAN.draw(c, (SW / 2 + (i - 1) * 110) / k, 230 / k, i === 2 ? -1 : 1, i === 1 ? PO.atk1 : P, H.id, H.look.s); }); c.restore(); // (the pole in magic pose crossed the logo)
+    c.save(); c.scale(Z * 1.3, Z * 1.3); const k = Z * 1.3; HEROES.forEach((H, i) => { const P = Math.floor(t * 1.2 + i) % 3 === 0 ? PO.smash : PO.idle, hk = SX_HERO[H.id], hr = Math.floor(t * 1.2 + i) % 3 === 0 ? 5 : 0; if (!SPRX.draw(c, hk, hr, SPRX.fr(hk, hr, t, hr ? 10 : 6), (SW / 2 + (i - 1) * 110) / k, 230 / k, i === 2 ? -1 : 1, 2.6 * (SX_BIG[H.id] || 1) / k)) PIXGUAN.draw(c, (SW / 2 + (i - 1) * 110) / k, 230 / k, i === 2 ? -1 : 1, i === 1 ? PO.atk1 : P, H.id, H.look.s); }); c.restore(); // (the pole in magic pose crossed the logo)
     A.txt(c, 'GUAYOTA HA RAPTADO A MAGEC, EL SOL', SW / 2, 246, '#fff', 8, 'center'); A.txt(c, 'TRES GUERREROS SUBEN AL ECHEYDE', SW / 2, 260, '#9fd7ff', 8, 'center'); A.txt(c, '© 1496 MENCEYATO DE TAORO', SW / 2, 280, '#9fd7ff', 6, 'center'); }
   function drawBack(c, t) { const bg = background('teide'); c.drawImage(bg[0], 0, 0, 960, SH); const o = -((t * 10) % 960); c.drawImage(bg[2], o, 0, 960, SH); c.drawImage(bg[2], o + 960, 0, 960, SH); c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, 0, SW, SH); }
   return { title: 'GUANCHE GUARRIORS', sub: 'LA NOCHE DE GUAYOTA', marquee: ['#6a1a0a', '#1a0402'], titleCol: '#ffb04a', baseScore: 90000, music: { title: SONGS.title }, create, drawTitle, drawBack,

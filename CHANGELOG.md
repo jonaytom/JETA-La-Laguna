@@ -3,6 +3,24 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.93.0 — 2026-10-27 — Personajes nuevos en Bencomo y Guanche Guarriors
+- **Personajes nuevos** (Jonay: «implementa estos assets nuevos»): los dos juegos de la recreativa usan ahora los
+  dibujos de la página de propuestas, hechos a partir de packs de itch.io (GandalfHardcore, Evil Wizard 3, PixelHorse
+  y el caballero de 18studio) y retocados por nosotros. Cada uno trae sus animaciones: parado, andar, correr, salto,
+  golpe y caída.
+  - **Guanche Guarriors**: El Magote, El Mencey y La Mirladora (el orbe de Magec pegado al bastón; su golpe es un
+    destello y un rayo de luz). Enemigos: los secuaces de Guayota (con y sin escudo), el Gigantón, la Bruja de Anaga,
+    la Bruja Mayor, el duende ladrón (paticorto, barrigón, con gorro de Papá Noel y el saco de las pociones), el
+    tibicena y Guayota con su hacha de obsidiana.
+  - **El lagarto gigante de El Hierro**, nuevo: verde, con cresta y manchas naranjas; anda moviendo las patas en
+    diagonal y muerde estirando el cuello. Montado se ve el héroe sentado encima con la puntita del pie asomando.
+  - **Bencomo**: él mismo (cinta blanca, melena y asta), agachado de rodillas y con el pinchazo bajo para los perros;
+    soldados con morrión, arquero, arcabucero, capitán, perros de presa, caballeros a caballo y Lugo en su caballo
+    negro con armadura plateada y lanza de justa.
+  - Los paquetes originales se quedan en el PC, fuera de git: al juego solo van los dibujos ya montados.
+- **Montado en el lagarto, correr ya es más rápido** (Jonay: «no va más rápido al correr, parece un error»).
+- **El ataque en carrera** de los héroes de Guanche Guarriors usa ahora el golpe hacia delante de su animación.
+
 ## 0.92.0 — 2026-10-27 — La boca del túnel de Camino el Vallado
 - **Camino el Vallado / San Honorato** (Jonay: «sigue siendo una locura, hay demasiadas cosas cruzándose»; debería ser
   un túnel simple bajo la TF-5):

@@ -1,9 +1,3 @@
-sonda_vallado.py
-sonda_tf5.py
-prueba_conduccion_tuneles_puentes.py
-prueba_bordes.py
-prueba_078.py
-prueba_grandes.py
-prueba_pendientes_faciles.py
-prueba_trinidad.py
+prueba_093.py
+prueba_090.py
 prueba_arranque.py

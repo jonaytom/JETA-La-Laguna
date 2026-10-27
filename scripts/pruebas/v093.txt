@@ -1,0 +1,4 @@
+# v0.93: personajes nuevos de Bencomo y Guanche Guarriors (hojas SPRX de los packs externos)
+prueba_093.py
+prueba_090.py
+prueba_arranque.py

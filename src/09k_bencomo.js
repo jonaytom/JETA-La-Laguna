@@ -16,6 +16,9 @@ ARCADE.GAMES.bencomo = (() => {
   // the world is drawn at ×2 (W × H here = the world view, 200×140 of a 224-high stage: the camera also follows in
   // height), with the sprites, tiles and backgrounds at double resolution (scale2x of the pixel art + outline + light)
   const A = ARCADE, SW = A.W, SH = A.H, Z = 2, W = SW / Z, H = 224, VH = SH / Z, T = 16, ROWS = 14;
+  // v0.93 (Jonay): Bencomo and the Castilians from the SPRX sheets (09jy/09jz), one pixel of a sheet = one of the screen;
+  // the old sprites stay as a fallback while the images load
+  const BXP = 1 / Z, BX_EN = { S: 'b_soldado', K: 'b_capitan', B: 'b_arquero', A: 'b_arcabucero', D: 'b_perro', C: 'b_caballero', L: 'b_lugo' };
   // ---------- palette and sprites (facing right; flipped copies for the left)
   const P = { k: '#1a1008', h: '#140d09', b: '#c27b46', d: '#8c4f27', w: '#f4efe6', c: '#7a4a22', C: '#b8823f', s: '#3a2414', e: '#2a1a10',
     m: '#cfd3d9', M: '#7d838c', y: '#e3b23c', R: '#b3271d', n: '#2b2f6b', l: '#6b4422', L: '#3d2614', D: '#8b5a2b', o: '#5e3a1a', g: '#e8e2d0', G: '#9a9488', f: '#d22', F: '#f6c12b', x: '#111' };
@@ -376,7 +379,26 @@ ARCADE.GAMES.bencomo = (() => {
       A.txt(c, 'VIDAS ' + lives, SW - 8, 20, '#fff', 6, 'right'); A.draw(c, spr8('gofio', GOFIO), SW - 112, 20); A.txt(c, String(gofio), SW - 102, 20, '#fff', 6);
       if (boss && boss.st !== 'wait' && boss.st !== 'flee' && !boss.dead) { c.fillStyle = '#000'; c.fillRect(80, SH - 16, SW - 160, 8); c.fillStyle = '#e53935'; c.fillRect(81, SH - 15, (SW - 162) * Math.max(0, boss.hp) / boss.max, 6); A.txt(c, 'LUGO', 74, SH - 17, '#fff', 8, 'right'); }
       if (p.stones > 0) { A.draw(c, spr8('piedras', STONES), 8, 28); A.txt(c, '×' + p.stones, 18, 27, '#fff', 6); } }
+    /** Bencomo from his sheet: rows 0 idle, 2 run, 3 up, 4 down, 5 the blow, 6 hurt/dead, 7 crouched, 8 low thrust; vaulting
+     *  and on the pogo he is drawn without his pole (bencomo_ns) and the game draws the planted pole */
+    function drawBenX(c, x, y) { const run = Math.abs(p.vx) > 20 && p.onG, pole = (p.vault > 0 && p.pole) || p.pogo;
+      const st = p.dead ? 'dead' : p.hurtT > 0 ? 'hurt' : p.atk > 0 ? (p.crouch ? 'catk' : 'atk') : pole ? 'pole' : !p.onG ? (p.vy < 0 ? 'up' : 'down') : p.crouch ? 'crouch' : run ? 'run' : 'idle';
+      if (p._bs !== st) { p._bs = st; p._bt = time; } const t = time - p._bt, F = SPRX.fr;
+      const [r, f] = { idle: [0, F('bencomo', 0, t, 6)], run: [2, F('bencomo', 2, t, 13)], up: [3, F('bencomo', 3, t, 12, false)], down: [4, F('bencomo', 4, t, 12, false)],
+        atk: [5, Math.min(5, Math.floor(t / 0.2 * 6))], catk: [8, Math.min(5, Math.floor(t / 0.2 * 6))], crouch: [7, F('bencomo', 7, t, 6)], hurt: [6, 1], dead: [6, 9], pole: [p.pogo ? 4 : 3, 1] }[st];
+      if (pole) { const a = p.pogo ? [x + p.face * 2, y - 16] : [p.pole[0] - camX, p.pole[1]], b = p.pogo ? [x + p.face * 2, y + 8] : [x + p.face * 2, y - 26];
+        for (const [w, col] of [[3, '#1a1008'], [1.5, '#8c5a2e']]) { c.strokeStyle = col; c.lineWidth = w; c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.stroke(); } }
+      SPRX.draw(c, pole ? 'bencomo_ns' : 'bencomo', r, f, x, y, p.face, BXP);
+      if (p.power > 0) { c.fillStyle = flick() ? 'rgba(255,212,0,0.35)' : 'rgba(255,255,255,0.25)'; c.fillRect(x - 9, y - 23, 18, 23); } }
+    /** [row, frame] of an enemy's sheet */
+    function enAnim(e, k) { const F = SPRX.fr, t = e.t || 0, mv = Math.abs(e.vx) > 2;
+      if (k === 'b_perro') return e.st === 'run' ? [1, F(k, 1, t, 12)] : [0, F(k, 0, t, 6)];
+      if (k === 'b_caballero') return e.ko ? [3, 3] : e.st === 'charge' ? [1, F(k, 1, t, 14)] : [0, F(k, 0, t, mv ? 10 : 5)];
+      if (k === 'b_lugo') return e.st === 'slash' ? [2, Math.min(9, Math.floor(t / 1.1 * 10))] : e.st === 'charge' || e.st === 'flee' ? [1, F(k, 1, t, 12)] : [0, F(k, 0, t, 6)];
+      if (k === 'b_arquero') return e.ko ? [4, 2] : e.aim > 0 ? [1, Math.min(10, Math.floor((0.8 - e.aim) / 0.8 * 11))] : mv ? [2, F(k, 2, t, 10)] : [0, F(k, 0, t, 6)];
+      if (e.ko) return [6, 2]; if (e.k === 'A' && e.aim > 0) return [0, 0]; return mv ? [1, F(k, 1, t, 10)] : [0, F(k, 0, t, 6)]; }
     function drawBencomo(c) { if (p.inv > 0 && !p.dead && flick() && p.power <= 0) return; const x = Math.round(p.x - camX), y = Math.round(p.y);
+      if (SPRX.ready('bencomo')) { drawBenX(c, x, y); return; }
       const run = Math.abs(p.vx) > 20 && p.onG; const rf = ['run1', 'run2', 'run3', 'run2'][Math.floor(p.anim) % 4];
       let up = p.atk > 0 ? 'thrust' : p.hurtT > 0 || p.dead ? 'hurt' : p.vault > 0 || (p.flying && p.vy < 0) ? 'up' : 'idle';
       let leg = p.pogo ? 'pogo' : !p.onG ? 'jump' : p.crouch ? 'crouch' : run ? rf : 'stand';
@@ -392,6 +414,9 @@ ARCADE.GAMES.bencomo = (() => {
       c.stroke(); A.draw(c, s, x - 8, y - s.h, fl); if (p.power > 0) { c.fillStyle = flick() ? 'rgba(255,212,0,0.35)' : 'rgba(255,255,255,0.25)'; c.fillRect(x - 9, y - 23, 18, 23); } }
     function drawEnemy(c, e) { if (e.dead) return; const x = Math.round(e.x - camX), y = Math.round(e.y); if (x < -40 || x > W + 40) return; const fl = e.face < 0, f = Math.floor(e.t * 6) % 2;
       if (e.hurt > 0 && flick() && e.k === 'L') return; if (e.ko) { c.globalAlpha = 0.8; }
+      const ek = BX_EN[e.k]; if (ek && SPRX.ready(ek)) { const [r, fx] = enAnim(e, ek); SPRX.draw(c, ek, r, fx, x, y, e.face, BXP);
+        if (e.k === 'A' && e.aim > 0 && flick()) { c.fillStyle = '#ff9a2a'; c.fillRect(x + e.face * 16, y - 12, 2, 2); } // the match of the arquebus
+        if (e.k === 'K' && e.hp < 3) { c.fillStyle = '#b3271d'; c.fillRect(x - 6, y - 26, 12 * e.hp / 3, 1); } c.globalAlpha = 1; return; }
       if (e.k === 'S' || e.k === 'K' || e.k === 'B' || e.k === 'A') { const top = e.k === 'K' ? CAP_TOP : e.k === 'B' ? BALL_TOP : e.k === 'A' ? ARC_TOP : SOLD_TOP; const s = soldier(Math.abs(e.vx) > 2 ? f : 0, top, e.k);
         A.draw(c, s, x - 8, y - 18, fl); c.strokeStyle = e.k === 'A' ? '#3d2614' : '#cfd3d9'; c.lineWidth = 1; c.beginPath();
         if (e.k === 'S' || e.k === 'K') { c.moveTo(x + e.face * 6, y - 8); c.lineTo(x + e.face * 14, y - 16 - f * 2); } // sword
@@ -406,7 +431,7 @@ ARCADE.GAMES.bencomo = (() => {
       }
       c.globalAlpha = 1; }
     load(0); if (opt.demo) phase = 'play';
-    Object.assign(g, { _p: p, _E: E, _boss: () => boss, _L: () => L, _phase: () => phase, _load: (n) => { stageN = n; load(n); phase = 'play'; }, _lives: (v) => (v === undefined ? lives : (lives = v)), _stage: () => stageN }); // tests
+    Object.assign(g, { _p: p, _E: E, _boss: () => boss, _L: () => L, _phase: () => phase, _load: (n) => { stageN = n; load(n); phase = 'play'; }, _lives: (v) => (v === undefined ? lives : (lives = v)), _stage: () => stageN, _spawn: (k, x, y) => spawn(k, x, y), _cam: () => camX }); // tests
     return g;
   }
   // ---------- title screen (attract) and the backdrop of the hi-score table
@@ -415,7 +440,7 @@ ARCADE.GAMES.bencomo = (() => {
     // the logo: stone letters
     const L1 = 'BENCOMO'; c.font = '36px "Press Start 2P", monospace'; c.textAlign = 'center'; c.textBaseline = 'top'; c.fillStyle = '#2a1a10'; c.fillText(L1, SW / 2 + 4, 34 + 4); const gr = c.createLinearGradient(0, 34, 0, 70); gr.addColorStop(0, '#f2d38a'); gr.addColorStop(0.5, '#c58a3c'); gr.addColorStop(1, '#7a4a22'); c.fillStyle = gr; c.fillText(L1, SW / 2, 34);
     A.txt(c, "ACENTEJO'S REVENGE", SW / 2, 84, '#ff6b4a', 10, 'center');
-    const s = A.hires(A.sprite('bc_title', [...UP.up, ...LEG.stand], P, 16)); c.strokeStyle = '#d9b77a'; c.lineWidth = 4; c.beginPath(); c.moveTo(SW / 2 - 52, 206); c.lineTo(SW / 2 + 50, 104); c.stroke(); c.drawImage(s.h2, SW / 2 - 40, 108, 80, 110);
+    if (!SPRX.draw(c, 'bencomo', 0, 0, SW / 2, 218, 1, 2.6)) { const s = A.hires(A.sprite('bc_title', [...UP.up, ...LEG.stand], P, 16)); c.strokeStyle = '#d9b77a'; c.lineWidth = 4; c.beginPath(); c.moveTo(SW / 2 - 52, 206); c.lineTo(SW / 2 + 50, 104); c.stroke(); c.drawImage(s.h2, SW / 2 - 40, 108, 80, 110); }
     A.txt(c, 'TENERIFE, MAYO DE 1494', SW / 2, 222, '#fff', 8, 'center'); A.txt(c, 'EL MENCEY DE TAORO CONTRA LUGO', SW / 2, 234, '#fff', 8, 'center');
     A.txt(c, '© 1494 MENCEYATO DE TAORO', SW / 2, 250, '#9fd7ff', 6, 'center'); c.restore(); }
   function drawBack(c, t) { const bg = background('monte'), BW = 800; c.drawImage(bg[0], 0, 0, BW, SH); const o = -((t * 10) % BW); c.drawImage(bg[1], o, 0, BW, SH); c.drawImage(bg[1], o + BW, 0, BW, SH); c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, 0, SW, SH); }
