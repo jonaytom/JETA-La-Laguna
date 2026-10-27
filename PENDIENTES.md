@@ -447,6 +447,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Hecho
 
+- [x] v0.95.3 **Bencomo: el caballero a tamaño normal** (Jonay, 27-oct): «el único grande es Lugo».
 - [x] v0.95.2 **Guanche Guarriors: montado en el lagarto, en el campamento no se veía el personaje** (Jonay, 27-oct):
   al entrar en el campamento se borraban los lagartos pero el héroe seguía «montado»; ahora se baja.
 - [x] v0.95.2 **Auditoría v0.90.0, aviso alto de `09ma_pixguanche.js` (getImageData)**: desde la 0.93 ese dibujo solo se

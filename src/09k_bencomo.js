@@ -419,7 +419,7 @@ ARCADE.GAMES.bencomo = (() => {
       c.stroke(); A.draw(c, s, x - 8, y - s.h, fl); if (p.power > 0) { c.fillStyle = flick() ? 'rgba(255,212,0,0.35)' : 'rgba(255,255,255,0.25)'; c.fillRect(x - 9, y - 23, 18, 23); } }
     function drawEnemy(c, e) { if (e.dead) return; const x = Math.round(e.x - camX), y = Math.round(e.y); if (x < -40 || x > W + 40) return; const fl = e.face < 0, f = Math.floor(e.t * 6) % 2;
       if (e.hurt > 0 && flick() && e.k === 'L') return; if (e.ko) { c.globalAlpha = 0.8; }
-      const ek = BX_EN[e.k]; if (ek && SPRX.ready(ek)) { const [r, fx] = enAnim(e, ek); SPRX.draw(c, ek, r, fx, x, y, e.face, BXP);
+      const ek = BX_EN[e.k]; if (ek && SPRX.ready(ek)) { const [r, fx] = enAnim(e, ek); SPRX.draw(c, ek, r, fx, x, y, e.face, BXP * (e.k === 'C' ? 0.75 : 1)); // v0.95.3 (Jonay): the knight at a normal size; only Lugo is big
         if (e.k === 'A' && e.aim > 0 && flick()) { c.fillStyle = '#ff9a2a'; c.fillRect(x + e.face * 16, y - 12, 2, 2); } // the match of the arquebus
         if (e.k === 'K' && e.hp < 3) { c.fillStyle = '#b3271d'; c.fillRect(x - 6, y - 26, 12 * e.hp / 3, 1); } c.globalAlpha = 1; return; }
       if (e.k === 'S' || e.k === 'K' || e.k === 'B' || e.k === 'A') { const top = e.k === 'K' ? CAP_TOP : e.k === 'B' ? BALL_TOP : e.k === 'A' ? ARC_TOP : SOLD_TOP; const s = soldier(Math.abs(e.vx) > 2 ? f : 0, top, e.k);

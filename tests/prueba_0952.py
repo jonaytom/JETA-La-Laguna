@@ -19,6 +19,10 @@ async def run(pg):
         os.makedirs('shots', exist_ok=True); open('shots/v0952_campamento.jpg', 'wb').write(base64.b64decode(d.split(',')[1])); print('foto v0952_campamento')
         okc = r['fase'] == 'camp' and not r['montado'] and r['dibujado'] > 0; okl = r['cargadas'] == 5
         print('SE VE EN EL CAMPAMENTO', 'OK' if okc else 'FALLA'); print('HOJAS CARGADAS AL ABRIR', 'OK' if okl else 'FALLA'); ok = okc and okl
+        # v0.95.3 (Jonay): the knight at a normal size, next to a foot soldier (only Lugo is big). Photo.
+        await pg.evaluate("(()=>{ __dbg.ARCADE.close(); __dbg.ARCADE.open({ id: 'bencomo', key: 'prueba_0953', where: 'PRUEBA', price: 0 }); const A=__dbg.ARCADE; A._step(30); A._st().t=0.5; A._press('vS', true); A._step(1); A._press('vS', false); A._step(30); const gm=A._game(); gm._load(0); A._step(30); })()"); await pg.wait_for_timeout(400)
+        d = await pg.evaluate("(()=>{ const A=__dbg.ARCADE, gm=A._game(), p=gm._p; gm._E.length=0; p.inv=0; p.hurtT=0; const cx=gm._cam(); gm._spawn('C', p.x+90, p.y); gm._spawn('S', p.x+150, p.y); for (const e of gm._E) { e.st='walk'; e.vx=0; } A._render(); return document.getElementById('arcade').toDataURL('image/jpeg', 0.92); })()")
+        open('shots/v0953_bencomo_caballero.jpg', 'wb').write(base64.b64decode(d.split(',')[1])); print('foto v0953_bencomo_caballero')
     finally:
         await pg.evaluate("(()=>{ try { if (__dbg.ARCADE.running) __dbg.ARCADE.close(); } catch (e) {} __dbg.GAME.state='play'; __step(2); })()")
     print('errores', errs[:3]); ok = ok and not errs

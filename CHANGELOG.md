@@ -3,6 +3,9 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.95.3 — 2026-10-27 — Bencomo: el caballero a tamaño normal
+- **Bencomo** (Jonay): el caballero a caballo sale a tamaño normal (un 25 % más pequeño); el único grande es Lugo.
+
 ## 0.95.2 — 2026-10-27 — Arreglos rápidos: el héroe montado en el campamento
 - **Guanche Guarriors** (Jonay): al pasar de fase montado en el lagarto, en el campamento de la hoguera no se veía al
   héroe (se quitaban los lagartos pero él seguía «montado»). Ahora se baja al llegar al campamento.
