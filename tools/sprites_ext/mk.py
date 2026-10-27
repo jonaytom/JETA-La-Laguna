@@ -119,14 +119,33 @@ def with_kicks(back, body, front, fw=80, fh=64, oy=0, hip=51):
     for a in (35, 80, 35):
         f = Image.new('RGBA', (fw, fh)); f.alpha_composite(acc); f.alpha_composite(stay)
         f.alpha_composite(upper); f.alpha_composite(accf); f.alpha_composite(fwd.rotate(-a, resample=Image.NEAREST, center=(px, H - 1))); row7.append(f)   # the kicking leg in front of everything
-    # v0.96 (Jonay): the running kick is the falling pose (row 4: arms up, one leg stretched down) turned ~90° so it
-    # flies flat with the stretched leg in front
-    fall = full.crop((0, 4 * fh, fw, 5 * fh))
+    # v0.96 (Jonay): the running kick is the falling pose (row 4: arms up) turned flat, ALWAYS with La Mirladora's legs
+    # (one stretched, one bent) put on every model in its own skin colours, and STILL (one frame, so it doesn't wobble)
+    def F4(im): return im.crop((0, 4 * fh, fw, 5 * fh)) if im is not None else Image.new('RGBA', (fw, fh))
+    bd4 = F4(body); fall = Image.new('RGBA', (fw, fh))
+    if hip == 49:   # La Mirladora (and the witch): her own legs
+        fall = full.crop((0, 4 * fh, fw, 5 * fh))
+    else:
+        fl = L('GandalfHardcore Character Asset Pack/Character skin colors/Female Skin4.png').crop((0, 4 * 64, 80, 5 * 64)); fp = fl.load()
+        bp = bd4.load()
+        ml = [(x, y) for y in range(H, fh) for x in range(fw) if bp[x, y][3]]
+        fx = [x for x in range(80) if fp[x, 49][3]]; mx = [x for (x, y) in ml if y == H] or [x for (x, y) in ml]
+        dx = round((min(mx) + max(mx)) / 2 - (min(fx) + max(fx)) / 2); dy = H - 49
+        lum = lambda c: c[0] * 0.3 + c[1] * 0.59 + c[2] * 0.11; OUT = (19, 19, 28)
+        mcols = sorted({bp[x, y][:3] for (x, y) in ml if bp[x, y][:3] != OUT}, key=lum)
+        fcols = sorted({fp[x, y][:3] for y in range(49, 64) for x in range(80) if fp[x, y][3] and fp[x, y][:3] != OUT}, key=lum)
+        cmap = {c: mcols[min(len(mcols) - 1, round(i * (len(mcols) - 1) / max(1, len(fcols) - 1)))] for i, c in enumerate(fcols)} if mcols else {}
+        legs2 = Image.new('RGBA', (fw, fh)); lp2 = legs2.load()
+        for y in range(49, 64):
+            for x in range(80):
+                q = fp[x, y]
+                if q[3] and 0 <= x + dx < fw and 0 <= y + dy < fh: lp2[x + dx, y + dy] = (cmap.get(q[:3], q[:3]) + (255,))
+        up4 = Image.new('RGBA', (fw, fh)); up4.paste(bd4.crop((0, 0, fw, H)), (0, 0))
+        fall.alpha_composite(F4(back)); fall.alpha_composite(legs2); fall.alpha_composite(up4); fall.alpha_composite(F4(front))
     row8 = []
-    for a, lift in ((84, 2), (94, 0)):
-        bb = fall.getbbox(); cx, cy = (bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2
-        r = fall.rotate(-a, resample=Image.NEAREST, center=(cx, cy)); rb = r.getbbox()
-        f = Image.new('RGBA', (fw, fh)); f.alpha_composite(r, (0, (fh - 5 - lift) - rb[3])); row8.append(f)
+    bb = fall.getbbox(); cx, cy = (bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2
+    r = fall.rotate(-90, resample=Image.NEAREST, center=(cx, cy)); rb = r.getbbox()
+    f = Image.new('RGBA', (fw, fh)); f.alpha_composite(r, (0, (fh - 6) - rb[3])); row8 = [f, f.copy()]
     rows = full.height // fh; out = Image.new('RGBA', (full.width, fh * 9)); out.paste(full.crop((0, 0, full.width, fh * min(rows, 7))), (0, 0))
     for i, f in enumerate(row7): out.paste(f, (i * fw, 7 * fh))
     for i, f in enumerate(row8): out.paste(f, (i * fw, 8 * fh))

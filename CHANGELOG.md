@@ -3,6 +3,11 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.96.3 — 2026-10-27 — Guanche Guarriors: patada en carrera con las piernas de La Mirladora
+- **Guanche Guarriors** (Jonay): la patada en carrera lleva en todos los personajes **las piernas de La Mirladora
+  cayendo** (una estirada por delante y otra doblada), en el color de piel de cada uno, y ya **no se mueve**: es una
+  sola postura en plano mientras dura el vuelo.
+
 ## 0.96.2 — 2026-10-27 — Fútbol: el portero saca al compañero más cercano
 - **Fútbol** (Jonay): tras una parada el portero ya no saca recto contra el rival que acaba de chutar: pasa al
   compañero más cercano (un poco menos si está marcado), raso o **bombeado si hay un rival en la línea del pase**.
