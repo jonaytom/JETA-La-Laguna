@@ -15,7 +15,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Recreativas, consola GOFIO-8 y torneo
 
-- [ ] ● **Guanche Guarriors: más fases, enemigos y jefes con los packs nuevos** (Jonay, 27-oct; página «Guanche
+- [~] ● v0.98.0 (las dos fases nuevas, Gollux, gorgonas, ratas, lobo y Guayota = Demon Overlord, en el juego; falta confirmar las licencias de Gollux, RAt, Mythic y el lobo, y usar los Mythic Monsters) **Guanche Guarriors: más fases, enemigos y jefes con los packs nuevos** (Jonay, 27-oct; página «Guanche
   Guarriors: personajes nuevos»): carpetas nuevas en `assets_externos`.
   - Guayota, jefe final, basado en **Demon Overlord 2D Pixel Art** (el del hacha pasa a jefe intermedio).
   - Una fase con las **gorgonas** (craftpix), sin la parte de arriba como La Mirladora (hecho en la propuesta).

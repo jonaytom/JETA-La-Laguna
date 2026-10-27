@@ -9,7 +9,22 @@ def strip_rows(files, w, h):
     return s
 D = A + 'Demon Overlord 2D Pixel Art v1.0.0/Godot/demon_overlord_%s.png'
 demon = strip_rows([D % k for k in ['idle', 'walk', 'attack', 'cast', 'hurt', 'death']], 160, 160)
-gol = strip_rows([A + 'Gollux/gollux_%s.png' % k for k in ['idle', 'move', 'attack_A', 'attack_B', 'healing', 'hit']], 128, 128)
+# Gollux: the idle strip has 128 px cells, the rest 384 px cells with the drawing in the middle (Jonay: «hace
+# parpadeo»: they were cut in 128 px and two of every three came out empty); all to 160 px around the body
+def gollux():
+    rows = []
+    for k in ['idle', 'move', 'attack_A', 'attack_B', 'healing', 'hit']:
+        im = Image.open(A + 'Gollux/gollux_%s.png' % k).convert('RGBA'); fr = []
+        if k == 'idle':   # 128 px cells: body at x 35..100 → in the 160 px frame at the same place as the others
+            for c in range(im.width // 128): f = Image.new('RGBA', (160, 128)); f.alpha_composite(im.crop((c*128, 0, c*128 + 128, 128)), (-2, 0)); fr.append(f)
+        else:             # 384 px cells: keep x 136..296
+            for c in range(im.width // 384): fr.append(im.crop((c*384 + 136, 0, c*384 + 296, 128)))
+        rows.append(fr)
+    s = Image.new('RGBA', (160 * max(len(r) for r in rows), 128 * len(rows)))
+    for r, fr in enumerate(rows):
+        for c, f in enumerate(fr): s.alpha_composite(f, (c * 160, r * 128))
+    return s
+gol = gollux()
 rat = strip_rows([A + 'RAt/OutlinedRat/rat-%s-outline.png' % k for k in ['idle', 'run', 'attack', 'hurt', 'death']], 32, 32)
 BTN = ['Parado', 'Andar', 'Correr', 'Golpe', 'Especial', 'Patada', 'Patada en carrera', 'Herida', 'Morir']
 def counts(im, fw, fh):
@@ -25,12 +40,12 @@ S = [  # key, image, fw, fh, scale, rows per button, group, title, where, text
  ('magote', Image.open(G + '/out2/magote.png'), 80, 64, 3, HERO, 'h', 'El Magote', 'héroe', 'Patada en carrera con las piernas de La Mirladora, 15° más levantada (la cabeza más alta).'),
  ('mencey', Image.open(G + '/out2/mencey.png'), 80, 64, 3, HERO, 'h', 'El Mencey', 'héroe', 'Igual: patada en carrera más levantada.'),
  ('mirla', Image.open(G + '/out2/mirla_nat.png'), 112, 80, 3, HERO, 'h', 'La Mirladora', 'heroína · en el juego desde la 0.97', 'Sin bikini, pelo de castaño a rubio, falda que se levanta en la caída.'),
- ('lobo', Image.open(O3 + 'lobo.png'), 103, 53, 3, [0, 1, 1, 2, 4, 2, 1, 0, 3], 'e', 'Lobo (los perros)', 'sustituye a los perros (T) y al tibicena', 'Sacado del GIF fotograma a fotograma: parado, corriendo, mordiendo, muriendo y aullando (Especial). Le quité el fondo y el reflejo del suelo; en algún fotograma queda un trozo de fondo entre las patas que pulo al pasarlo al juego.'),
+ ('lobo', Image.open(O3 + 'lobo.png'), 77, 53, 3, [0, 1, 1, 2, 4, 2, 1, 0, 3], 'e', 'Lobo (los perros)', 'sustituye a los perros (T) y al tibicena', 'Sacado de los tres GIF (negro, marrón y blanco): el fondo es idéntico en los tres, así que el lobo es justo lo que cambia entre ellos, sin restos de fondo. Parado, corriendo, mordiendo, muriendo y aullando (Especial).'),
  ('rata', rat, 32, 32, 6, [0, 1, 1, 2, 2, 2, 1, 3, 4], 'e', 'Rata', 'enemigo pequeño · pack RAt', 'Parado, corre, muerde, herida y muerte. Para las cuevas (las ratas de los barrancos).'),
- ('gorgona1', Image.open(O3 + 'gorgona1.png'), 128, 128, 2, [0, 1, 2, 3, 6, 4, 5, 7, 8], 'g', 'Gorgona verde', 'fase nueva · craftpix (licencia libre)', 'Sin la parte de arriba: el top pasado a su piel, con un pezón en cada pecho (rosa con su borde). Abajo sigue el taparrabos.'),
+ ('gorgona1', Image.open(O3 + 'gorgona1.png'), 128, 128, 2, [0, 1, 2, 3, 6, 4, 5, 7, 8], 'g', 'Gorgona verde', 'fase nueva · craftpix (licencia libre)', 'Sin la parte de arriba: el top pasado a su piel, con un pezón en el centro de cada pecho (rosa con su borde). Abajo sigue el taparrabos.'),
  ('gorgona2', Image.open(O3 + 'gorgona2.png'), 128, 128, 2, [0, 1, 2, 3, 6, 4, 5, 7, 8], 'g', 'Gorgona morada', 'fase nueva', 'Igual, piel lila.'),
  ('gorgona3', Image.open(O3 + 'gorgona3.png'), 128, 128, 2, [0, 1, 2, 3, 6, 4, 5, 7, 8], 'g', 'Gorgona morena', 'fase nueva · jefa de la fase', 'Igual, piel oscura (los pezones van más oscuros que la piel). La propongo como jefa: la de pelo claro es la reina.'),
- ('gollux', gol, 128, 128, 2, [0, 1, 1, 2, 3, 3, 1, 5, 5], 'b', 'Gollux', 'jefe de otra fase', 'Bicho de piedra: anda, dos ataques y se cura (Especial = ataque grande, Patada = curarse). No trae muerte: se haría con la herida y un fundido.'),
+ ('gollux', gol, 160, 128, 2, [0, 1, 1, 2, 3, 3, 1, 5, 5], 'b', 'Gollux', 'jefe de otra fase', 'Bicho de piedra: anda, dos ataques y se cura (Especial = ataque grande, Patada = curarse). No trae muerte: se haría con la herida y un fundido.'),
  ('guayota', demon, 160, 160, 2, [0, 1, 1, 2, 3, 2, 1, 4, 5], 'b', 'Guayota (Demon Overlord)', 'jefe final', 'El demonio del pack, que mira a la derecha: parado, anda, golpe con la espada, conjuro (Especial), herida y muerte. Más grande que todos; el actual con el hacha pasaría a ser un jefe intermedio.'),
 ]
 # Patada en carrera of the heroes is row 8; for Especial the heroes show the jump (row 3)

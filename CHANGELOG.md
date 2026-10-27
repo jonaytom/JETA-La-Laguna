@@ -3,6 +3,18 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.98.0 — 2026-10-27 — Guanche Guarriors: dos fases nuevas y jefes nuevos
+- **Guanche Guarriors** (Jonay): siete fases.
+  - **Fase nueva, El Barranco del Infierno** (Adeje, tras Anaga): ratas a montones y, de jefe, **Gollux**, el bicho de
+    piedra. Fondo de paredes de barranco con bocas de cueva y cardones.
+  - **Fase nueva, El Malpaís de Güímar** (tras Los Gigantes): las **gorgonas** (verde y morada) salen del mar de lava;
+    jefa: **la Reina Gorgona** (la morena de pelo claro). Van sin la parte de arriba, como La Mirladora.
+  - **Guayota** es ahora el **Demon Overlord**, más grande, y antes, en el mismo Echeyde, sale **el Hacha de Guayota**
+    (el Guayota de antes) como lugarteniente.
+  - **Los perros (y el tibicena mayor) son el lobo** negro, con su carrera, su mordisco y su muerte.
+- Pruebas: la 082 recorre las siete fases con el piloto de la demo; prueba nueva 098 (fases nuevas y hojas nuevas
+  dibujadas, con fotos).
+
 ## 0.97.2 — 2026-10-27 — Guanche Guarriors: patada en carrera menos plana
 - **Guanche Guarriors** (Jonay): la patada en carrera, 15° menos tumbada, con la cabeza más alta.
 

@@ -36,16 +36,25 @@ SHEETS = {   # key: (image, fw, fh, dir (1 = drawn facing right), anchor or None
     'b_perro': (load('b_perro.png'), 32, 32, 1, None), 'b_caballero': (load('caballero_capitan.png'), 128, 128, 1, None),
     'b_lugo': (load('lugo_caballo.png'), 128, 128, 1, None),
 }
+# v0.98 (Jonay): the new enemies and bosses of Guanche Guarriors (tools/sprites_ext/newsheets.py)
+NU = json.load(open(O + 'nuevos.json'))
+for k, d in [('g_lobo', 1), ('g_gorgona1', 1), ('g_gorgona2', 1), ('g_gorgona3', 1), ('g_gollux', 1), ('g_rata', 1), ('g_overlord', 1)]:
+    SHEETS[k] = (load(k + '.png'), NU[k][0], NU[k][1], d, None)
+SMALL = set(k for k, _ in [('g_lobo', 1), ('g_gorgona1', 1), ('g_gorgona2', 1), ('g_gorgona3', 1), ('g_gollux', 1), ('g_rata', 1), ('g_overlord', 1)])
 lz = json.load(open(O + 'lagarto3.json'))
 data = {}
 for k, (im, fw, fh, d, anc) in SHEETS.items():
     n = counts(im, fw, fh); ax, ay = anc if anc else feet(im, fw, fh)
-    b = io.BytesIO(); im.crop((0, 0, max(n) * fw, len(n) * fh)).save(b, 'PNG', optimize=True)
+    b = io.BytesIO(); sh = im.crop((0, 0, max(n) * fw, len(n) * fh))
+    if k in SMALL:   # (v0.98: palette PNG, much smaller; exact when the sheet has ≤ 255 colours)
+        a = sh.split()[3].point(lambda v: 255 if v > 127 else 0); q = sh.convert('RGB').quantize(64 if k == 'g_overlord' else 255, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+        q = q.convert('RGBA'); q.putalpha(a); sh = q
+    sh.save(b, 'PNG', optimize=True)
     e = {'fw': fw, 'fh': fh, 'n': n, 'ax': ax, 'ay': ay, 'dir': d, 'src': 'data:image/png;base64,' + base64.b64encode(b.getvalue()).decode()}
     f0 = im.crop((0, 0, fw, fh)); bb0 = f0.getbbox(); p0 = f0.load()
     top = [x for y in range(bb0[1], min(fh, bb0[1] + 6)) for x in range(fw) if p0[x, y][3]]
     hx = sum(top) / len(top); side = 22 if fw >= 64 else 14
-    if k in ('g_tibicena', 'b_perro'): e['por'] = [fw - 20 if d > 0 else 0, max(0, bb0[1] - 2), 20, 16]
+    if k in ('g_tibicena', 'b_perro', 'g_lobo', 'g_rata'): e['por'] = [fw - 20 if d > 0 else 0, max(0, bb0[1] - 2), 20, 16]
     else: e['por'] = [round(hx - side / 2), max(0, bb0[1] - 2), side, side]
     if k == 'lagarto': sx, sy = lz['seats'][0]; e['seat'] = [round(sx - ax, 1), round(sy - ay, 1)]
     data[k] = e

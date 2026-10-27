@@ -61,11 +61,11 @@ async def run(pg):
         and mg['zurrones'] == 0 and (mg['tocados'] > 0 or mg['enemigos'] == 0) and lz['monta'] and lz['cola'] == 'bite' and lz['mordisco'] and lz['salto'] == 'whip' and lz['avanza'] > 15 and gw['patada'] == 'dash' and gw['alto_patada'] > 5 and gw['flip'] and gw['flip']['estado'] == 'flip' and gw['flip']['alto'] > 10 and gw['flip']['tumbado']
     print('CONTROLES', 'OK' if ok2 else 'FALLA'); ok = ok and ok2
     # photos of each stage (the game in play, invincible, walking into the first fight)
-    for n in range(5):
+    for n in range(7):   # (v0.98: seven stages)
         await pg.evaluate("(n)=>{ const A=__dbg.ARCADE, g=A._game(); g._load(n); g._p.inv=999; g._god=true; A._press('vR', true); A._step(60*5); A._press('vR', false); A._step(60*2); }", n); await foto(pg, 'v082_fase%d' % (n + 1))
     await pg.evaluate("(()=>{ __dbg.ARCADE._game()._god=false; })()")
     # 4) the stages can be crossed: the demo pilot plays them (invincible) one after another, boss included
-    trav = json.loads(await pg.evaluate("""(()=>{ const A=%s; const out=[]; for (let n=0;n<5;n++){ const g=A.GAMES.guanche.create(A.api, { demo: true }); g._god=true; g._load(n); let jefe=false, t=0;
+    trav = json.loads(await pg.evaluate("""(()=>{ const A=%s; const out=[]; for (let n=0;n<7;n++){ const g=A.GAMES.guanche.create(A.api, { demo: true }); g._god=true; g._load(n); let jefe=false, t=0;
         for (let i=0;i<60*300;i++){ g.update(1/60, null); if (g._boss()) jefe=true; t=i; if (g._stage()!==n || g._phase()==='clear') break; }
         const P0=g._p, cam=g._cam(); out.push({ estado: { p: [Math.round(P0.x-cam), Math.round(P0.z), P0.st, P0.face, +P0.h.toFixed(1)], lock: g._lock() && g._lock().n, E: g._E.map(e=>[e.k, e.st, +e.hp.toFixed(1), Math.round(e.x-cam), Math.round(e.z), !!e.engaged, !!e.inS, +(e.h||0).toFixed(1), e.face]), teclas: Object.keys(g.demoKeys.held).concat(Object.keys(g.demoKeys.hit).map(k=>'hit:'+k)) }, fase: n+1, heroe: g._p.hero.id, avance: +((g._cam()+200)/g._L().len).toFixed(2), jefe, pasada: g._phase()==='clear' || g._stage()!==n, segundos: Math.round(t/60), puntos: g.score }); } return JSON.stringify(out); })()""" % A)); print('recorrido', trav)
     ok3 = all(t['pasada'] and t['jefe'] for t in trav); print('FASES', 'OK' if ok3 else 'FALLA'); ok = ok and ok3

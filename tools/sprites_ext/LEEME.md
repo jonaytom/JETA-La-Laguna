@@ -18,3 +18,19 @@ bajarse) con la paleta a 28 colores y el azul pasado a carmesí.
 
 Las rutas de los packs están escritas como las ve la nube (`/mnt/user-data/uploads/GTA La Laguna/assets_externos/`);
 para correrlo en el PC basta con cambiar `A` en `mk.py` (y las rutas sueltas de `build2.py`, `lugo_horse.py`, `pack.py`).
+
+## v0.96–0.98
+
+- `mirla_nat.py G` — La Mirladora sin bikini (el sujetador de la piel pasado a piel, pezones), pelo de castaño a rubio,
+  taparrabos de cuero oscuro y la falda que se levanta en la caída. Va antes de `riders.py`.
+- `basket.py G` — propuesta de baloncesto (camisetas de asillas, pantalón corto; aún no en el juego).
+- `wolf2.py negro.gif marron.gif blanco.gif out3/lobo.png` — el lobo de los perros, sacado de los tres GIF de vista
+  previa (el fondo es igual en los tres: el lobo es lo que cambia). `wolf.py` era el primer intento con uno solo.
+- `gorgon.py ASSETS out3` — las tres gorgonas (craftpix) sin la parte de arriba, con pezones.
+- `newsheets.py G` — lobo, gorgonas, Gollux, rata y Demon Overlord al orden de filas del juego (0 parado, 1 andar,
+  2 correr, 3–4 salto, 5 golpe, 6 muerte, 7 patada, 8 patada en carrera), recortados; luego `pack.py`.
+- `page_nuevos.py G` — la página de propuestas «Guanche Guarriors: personajes nuevos».
+
+Licencias de los packs nuevos: Demon Overlord 2D Pixel Art (gratis en juegos, también comerciales; se puede modificar;
+no repartir el pack); gorgonas de craftpix (https://craftpix.net/file-licenses/). Gollux, RAt, Free Mythic Monsters y
+el lobo del GIF: pendiente confirmar.
