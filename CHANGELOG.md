@@ -3,6 +3,12 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.96.1 — 2026-10-27 — Guanche Guarriors: los golpes salen al soltar
+- **Guanche Guarriors** (Jonay): todos los golpes salen **al soltar el botón**: una pulsación corta da el golpe (o la
+  patada) normal y mantenerlo medio segundo da el fuerte. Antes salía primero el normal al pulsar y luego cargaba el
+  fuerte. La patada en carrera, el salto con golpe y el lagarto siguen saliendo al pulsar.
+- El mordisco de los perros, un poco más pegado al hocico.
+
 ## 0.96.0 — 2026-10-27 — Guanche Guarriors: patadas bien dibujadas
 - **Guanche Guarriors** (Jonay, tras probar la 0.95):
   - **La patada** ya no enseña tres piernas: una se queda de apoyo y solo sube la de delante.

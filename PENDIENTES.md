@@ -451,7 +451,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 - [x] v0.96.0 **Guanche Guarriors: la patada enseñaba 3 piernas** (Jonay, 27-oct): ahora una de apoyo y la que sube.
 - [x] v0.96.0 **Guanche Guarriors: patada en carrera con la postura de caída girada** (Jonay, 27-oct; captura de La
   Mirladora cayendo): brazos arriba y la pierna estirada por delante.
-- [x] v0.96.0 **Guanche Guarriors: la patada fuerte sale sola a los 0,5 s mantenida** (Jonay, 27-oct).
+- [x] v0.96.1 **Guanche Guarriors: los golpes salen al soltar** (Jonay, 27-oct): corto = normal, medio segundo mantenido = fuerte (la 0.96.0 hacía salir la patada fuerte sola; Jonay: «el ataque se suelta al soltar el botón»).
 - [x] v0.96.0 **Guanche Guarriors: «escudo» blanco fijo sobre La Mirladora** (Jonay, 27-oct; captura con el Gigantón de
   Tigaiga): era el destello de un golpe, que en el héroe no se apagaba nunca.
 - [x] v0.95.3 **Bencomo: el caballero a tamaño normal** (Jonay, 27-oct): «el único grande es Lugo».
