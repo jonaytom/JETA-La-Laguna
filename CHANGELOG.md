@@ -3,6 +3,19 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.96.0 — 2026-10-27 — Guanche Guarriors: patadas bien dibujadas
+- **Guanche Guarriors** (Jonay, tras probar la 0.95):
+  - **La patada** ya no enseña tres piernas: una se queda de apoyo y solo sube la de delante.
+  - **La patada en carrera** es ahora la postura de caída (brazos arriba y una pierna estirada) girada en plano, con la
+    pierna estirada por delante. En todos los personajes que la usan (héroes y enemigos).
+  - **La patada fuerte** sale sola al mantener el botón derecho medio segundo (sin tener que soltarlo).
+  - **El mordisco de los perros**, más pequeño y en el hocico (se salía del perro).
+  - **El destello blanco** de un golpe se quedaba fijo sobre el héroe (se veía sobre La Mirladora todo el rato, como
+    un escudo); ahora dura lo que debe.
+- El piloto de la demo hace la magia con los dos botones (con uno solo ahora daba patadas y se atascaba con el
+  Gigantón).
+- Prueba nueva 096 (patada fuerte, destello y fotos de las dos patadas y del mordisco).
+
 ## 0.95.3 — 2026-10-27 — Bencomo: el caballero a tamaño normal
 - **Bencomo** (Jonay): el caballero a caballo sale a tamaño normal (un 25 % más pequeño); el único grande es Lugo.
 

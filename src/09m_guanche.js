@@ -269,12 +269,12 @@ ARCADE.GAMES.guanche = (() => {
       if (o.st === 'hurt') { o.stT -= dt; o.x += o.vx * dt; o.vx *= 0.85; if (o !== p) o.h = Math.max(0, (o.h || 0) - 60 * dt); if (o.stT <= 0) o.st = 'idle'; return true; }
       if (o.st === 'dead') { o.stT -= dt; return true; }
       return false; }
-    function player(dt, pad) { p.inv = Math.max(0, p.inv - dt); p.anim += dt * 6; p.comboT = Math.max(0, p.comboT - dt);
+    function player(dt, pad) { p.inv = Math.max(0, p.inv - dt); p.flash = Math.max(0, (p.flash || 0) - dt); /* v0.96 (Jonay): the white flash of a hit stayed on La Mirladora for good */ p.anim += dt * 6; p.comboT = Math.max(0, p.comboT - dt);
       if (p.st === 'dead') { p.stT -= dt; if (p.stT <= 0) die(); return; }
       if (body(p, dt)) { if (p.st === 'dead') { p.stT = 0.6; } return; }
       const H = p.hero, dx = (pad.held('vR') ? 1 : 0) - (pad.held('vL') ? 1 : 0), dz = (pad.held('vD') ? 1 : 0) - (pad.held('vU') ? 1 : 0);
       // v0.95 (Jonay): A held = the strong blow (on release), right button held = the strong parry kick; both = magic
-      for (const [b, ch, q] of [['vS', 'chS', 'strong'], ['vP', 'chP', 'skick']]) { if (pad.hit(b)) p[ch] = 0; else if (p[ch] >= 0) { if (pad.held(b)) p[ch] += dt; else { if (p[ch] > 0.4 && !p.mount) p.q = q; p[ch] = -1; } } }
+      for (const [b, ch, q] of [['vS', 'chS', 'strong'], ['vP', 'chP', 'skick']]) { if (pad.hit(b)) p[ch] = 0; else if (p[ch] >= 0) { if (pad.held(b)) { p[ch] += dt; if (q === 'skick' && p[ch] >= 0.5 && !p.mount && !pad.held('vS')) { p.q = q; p[ch] = -1; } } /* v0.96 (Jonay): the strong kick comes out on its own after half a second held */ else { if (p[ch] > 0.4 && !p.mount) p.q = q; p[ch] = -1; } } }
       if (pad.held('vS') && pad.held('vP') && p.jars > 0 && !p.mount && p.h <= 0 && p.st !== 'magic') { p.st = 'magic'; p.stT = 1.6; p.cast = false; p.chS = p.chP = -1; p.q = null; return; }
       // double tap = run
       for (const [v, d] of [['vR', 1], ['vL', -1]]) if (pad.hit(v)) { if (p.tap.d === d && time - p.tap.t < 0.28) p.run = true; p.tap = { d, t: time }; }
@@ -383,7 +383,7 @@ ARCADE.GAMES.guanche = (() => {
       if (!best) { k.held.vR = true; if (p.z < 18) k.held.vD = true; else if (p.z > 26) k.held.vU = true; return; }
       const want = best.x - Math.sign(best.x - p.x || 1) * Math.min(p.hero.reach - 6, 13); if (Math.abs(p.x - want) > 3) k.held[p.x < want ? 'vR' : 'vL'] = true; if (Math.abs(best.z - p.z) > 3) k.held[best.z > p.z ? 'vD' : 'vU'] = true;
       if (Math.abs(p.x - want) < 4 && Math.abs(best.z - p.z) < 5) { p.face = Math.sign(best.x - p.x) || p.face; if (p.st === 'idle' || p.st === 'walk') k.hit.vS = true; }
-      const close = E.filter((e) => e.st !== 'dead' && e.hp > 0 && Math.abs(e.x - p.x) < 80).length; if (p.jars >= 2 && (close >= 3 || (best.d.boss && p.jars >= 3))) k.hit.vP = true; }
+      const close = E.filter((e) => e.st !== 'dead' && e.hp > 0 && Math.abs(e.x - p.x) < 80).length; if (p.jars >= 2 && (close >= 3 || (best.d.boss && p.jars >= 3))) { k.held.vS = k.held.vP = true; delete k.hit.vS; } } // v0.96: the magic is now both buttons held (vP alone kicks)
     // ---------- step
     let frameN = 0;
     g.update = (dt, pad) => { time += dt; frameN++; if (bannerT > 0) bannerT -= dt; shake = Math.max(0, shake - dt); if (spellFx) { spellFx.t -= dt; if (spellFx.t <= 0) spellFx = null; }
@@ -428,10 +428,11 @@ ARCADE.GAMES.guanche = (() => {
       if (st === 'magic') return [5, k === 'mirla' ? 4 : 1]; return [0, F(k, 0, t, 6)]; }
     const sxScale = (o) => (o === p ? SXP * (SX_BIG[p.hero.id] || 1) : SXP * (o.s || (o.look && o.look.s) || 1) * (o.d && o.d.dog ? 1.6 : 1)); // Jonay: bigger dogs
     /** the bite of the dogs (like the lizard's): jaws with teeth that open and snap shut (k 0 → 1) */
-    function chomp(c, x, y, k, s) { const op = k < 0.5 ? k * 2 : 2 - k * 2, g = (1 + op * 5) * s, w = 9 * s;
+    // v0.96 (Jonay: «se queda fuera del perro y es demasiado grande»): smaller, and on the snout
+    function chomp(c, x, y, k, s) { const op = k < 0.5 ? k * 2 : 2 - k * 2, g = (0.5 + op * 2) * s, w = 5 * s;
       c.fillStyle = '#6e1012'; c.fillRect(x - w / 2, y - g, w, g * 2);
-      for (const sd of [-1, 1]) { c.fillStyle = '#141018'; c.fillRect(x - w / 2 - s, y + sd * g - (sd < 0 ? 2 * s : 0), w + 2 * s, 2 * s);
-        c.fillStyle = '#f4f0e2'; for (let i = 0; i < 4; i++) { const tx = x - w / 2 + (i + 0.5) * w / 4; c.beginPath(); c.moveTo(tx - 1.1 * s, y + sd * g); c.lineTo(tx + 1.1 * s, y + sd * g); c.lineTo(tx, y + sd * (g - 2.4 * s)); c.fill(); } } }
+      for (const sd of [-1, 1]) { c.fillStyle = '#141018'; c.fillRect(x - w / 2 - s * 0.5, y + sd * g - (sd < 0 ? s : 0), w + s, s);
+        c.fillStyle = '#f4f0e2'; for (let i = 0; i < 3; i++) { const tx = x - w / 2 + (i + 0.5) * w / 3; c.beginPath(); c.moveTo(tx - 0.6 * s, y + sd * g); c.lineTo(tx + 0.6 * s, y + sd * g); c.lineTo(tx, y + sd * (g - 1.4 * s)); c.fill(); } } }
     /** the lizard: walking, biting, with the hero on it (one sheet each) or an enemy sitting on its back */
     function drawLiz(c, sx, sy, q) { const mv = Math.abs(q.x - (q._px === undefined ? q.x : q._px)) + Math.abs(q.z - (q._pz === undefined ? q.z : q._pz)) > 0.05; q._px = q.x; q._pz = q.z;
       const r = q.bite > 0 ? 2 : mv ? 1 : 0, f = r === 2 ? Math.min(5, Math.floor((1 - q.bite / 0.4) * 6)) : SPRX.fr('lagarto', r, time, r ? (q.rider === p && p.run ? 18 : 10) : 5);
@@ -444,7 +445,7 @@ ARCADE.GAMES.guanche = (() => {
       const sk = o === p ? SX_HERO[p.hero.id] : o.k === 'D' && o.carry === 'J' ? 'g_duende_azul' : SX_EN[o.k]; // (the blue cap carries the blue potions)
       if (o.mount && SPRX.ready('lagarto')) return; // drawn sitting on its lizard (drawLiz)
       if (sk && SPRX.ready(sk)) { const [r, f] = sxAnim(o, sk); SPRX.draw(c, sk, r, f, sx, sy, o.face, sxScale(o));
-        if (o.d && o.d.dog && (o.st === 'atk' || o.st === 'windup')) chomp(c, sx + o.face * 12 * sxScale(o), sy - 20 * sxScale(o), o.st === 'windup' ? 0 : SPRX.stT(o, time) / 0.3, sxScale(o));
+        if (o.d && o.d.dog && (o.st === 'atk' || o.st === 'windup')) chomp(c, sx + o.face * 15 * sxScale(o), sy - 11 * sxScale(o), o.st === 'windup' ? 0 : SPRX.stT(o, time) / 0.3, sxScale(o));
         const hs = 44 * sxScale(o); if (o.st === 'hurt' && o.stun) for (let i = 0; i < 3; i++) { const a = time * 6 + i * 2.1; pblob(c, sx + Math.cos(a) * 7, sy - hs + Math.sin(a) * 2, 1.4, 1.4, i % 2 ? '#fff6a0' : '#ffd400'); } // dazed: stars
         if (o === p && (p.chS > 0.4 || p.chP > 0.4)) pblob(c, sx + p.face * 8, sy - hs * 0.55, 3 + Math.sin(time * 30), 3 + Math.sin(time * 30), flick() ? '#fff' : '#ffd400'); // charging the strong blow
         if (o !== p && o.st === 'windup' && o.move === 'strong' && flick()) pblob(c, sx + o.face * 8, sy - hs * 0.6, 3, 3, '#ff8a3a');

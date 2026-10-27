@@ -109,15 +109,23 @@ def with_kicks(back, body, front, fw=80, fh=64, oy=0, hip=51):
     acc = Image.new('RGBA', (fw, fh))
     if back is not None: acc.alpha_composite(fr(back, 0, 0))
     accf = fr(front, 0, 0)
+    # v0.96 (Jonay: «se ven 3 piernas»): the legs split at the hip: the back one stays standing and only the front one
+    # (the one on the side the sheet looks to: left) swings up, so there are two legs and not three
+    lp = legs.load(); fwd = Image.new('RGBA', (fw, fh)); stay = Image.new('RGBA', (fw, fh)); fp, sp_ = fwd.load(), stay.load()
+    for y in range(fh):
+        for x in range(fw):
+            if lp[x, y][3]: (fp if x < px else sp_)[x, y] = lp[x, y]
     row7 = []
     for a in (35, 80, 35):
-        f = Image.new('RGBA', (fw, fh)); f.alpha_composite(acc); f.alpha_composite(legs)
-        f.alpha_composite(upper); f.alpha_composite(accf); f.alpha_composite(legs.rotate(-a, resample=Image.NEAREST, center=(px, H - 1))); row7.append(f)   # the kicking leg in front of everything
-    whole = Image.new('RGBA', (fw, fh)); whole.alpha_composite(acc); whole.alpha_composite(b0); whole.alpha_composite(accf)
+        f = Image.new('RGBA', (fw, fh)); f.alpha_composite(acc); f.alpha_composite(stay)
+        f.alpha_composite(upper); f.alpha_composite(accf); f.alpha_composite(fwd.rotate(-a, resample=Image.NEAREST, center=(px, H - 1))); row7.append(f)   # the kicking leg in front of everything
+    # v0.96 (Jonay): the running kick is the falling pose (row 4: arms up, one leg stretched down) turned ~90° so it
+    # flies flat with the stretched leg in front
+    fall = full.crop((0, 4 * fh, fw, 5 * fh))
     row8 = []
-    for a, lift in ((100, 2), (96, 0)):
-        bb = whole.getbbox(); cx, cy = (bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2
-        r = whole.rotate(-a, resample=Image.NEAREST, center=(cx, cy)); rb = r.getbbox()
+    for a, lift in ((84, 2), (94, 0)):
+        bb = fall.getbbox(); cx, cy = (bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2
+        r = fall.rotate(-a, resample=Image.NEAREST, center=(cx, cy)); rb = r.getbbox()
         f = Image.new('RGBA', (fw, fh)); f.alpha_composite(r, (0, (fh - 5 - lift) - rb[3])); row8.append(f)
     rows = full.height // fh; out = Image.new('RGBA', (full.width, fh * 9)); out.paste(full.crop((0, 0, full.width, fh * min(rows, 7))), (0, 0))
     for i, f in enumerate(row7): out.paste(f, (i * fw, 7 * fh))

@@ -447,6 +447,13 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Hecho
 
+- [x] v0.96.0 **Guanche Guarriors: el mordisco de los perros se salía del perro y era muy grande** (Jonay, 27-oct): más pequeño, en el hocico.
+- [x] v0.96.0 **Guanche Guarriors: la patada enseñaba 3 piernas** (Jonay, 27-oct): ahora una de apoyo y la que sube.
+- [x] v0.96.0 **Guanche Guarriors: patada en carrera con la postura de caída girada** (Jonay, 27-oct; captura de La
+  Mirladora cayendo): brazos arriba y la pierna estirada por delante.
+- [x] v0.96.0 **Guanche Guarriors: la patada fuerte sale sola a los 0,5 s mantenida** (Jonay, 27-oct).
+- [x] v0.96.0 **Guanche Guarriors: «escudo» blanco fijo sobre La Mirladora** (Jonay, 27-oct; captura con el Gigantón de
+  Tigaiga): era el destello de un golpe, que en el héroe no se apagaba nunca.
 - [x] v0.95.3 **Bencomo: el caballero a tamaño normal** (Jonay, 27-oct): «el único grande es Lugo».
 - [x] v0.95.2 **Guanche Guarriors: montado en el lagarto, en el campamento no se veía el personaje** (Jonay, 27-oct):
   al entrar en el campamento se borraban los lagartos pero el héroe seguía «montado»; ahora se baja.
