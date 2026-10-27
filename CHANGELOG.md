@@ -3,6 +3,10 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.96.2 — 2026-10-27 — Fútbol: el portero saca al compañero más cercano
+- **Fútbol** (Jonay): tras una parada el portero ya no saca recto contra el rival que acaba de chutar: pasa al
+  compañero más cercano (un poco menos si está marcado), raso o **bombeado si hay un rival en la línea del pase**.
+
 ## 0.96.1 — 2026-10-27 — Guanche Guarriors: los golpes salen al soltar
 - **Guanche Guarriors** (Jonay): todos los golpes salen **al soltar el botón**: una pulsación corta da el golpe (o la
   patada) normal y mantenerlo medio segundo da el fuerte. Antes salía primero el normal al pulsar y luego cargaba el

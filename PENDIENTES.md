@@ -447,6 +447,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Hecho
 
+- [x] v0.96.2 **Fútbol: el portero sacaba recto contra el rival que acababa de chutar** (Jonay, 27-oct): ahora pasa al compañero más cercano, raso o bombeado si hay un rival en la línea.
 - [x] v0.96.0 **Guanche Guarriors: el mordisco de los perros se salía del perro y era muy grande** (Jonay, 27-oct): más pequeño, en el hocico.
 - [x] v0.96.0 **Guanche Guarriors: la patada enseñaba 3 piernas** (Jonay, 27-oct): ahora una de apoyo y la que sube.
 - [x] v0.96.0 **Guanche Guarriors: patada en carrera con la postura de caída girada** (Jonay, 27-oct; captura de La

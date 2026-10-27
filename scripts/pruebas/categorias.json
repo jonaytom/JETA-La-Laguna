@@ -289,7 +289,8 @@
   [
    "^src/(09g_futbol2d|12m_mundialito)",
    [
-    "prueba_095.py"
+    "prueba_095.py",
+    "prueba_0962.py"
    ]
   ],
   [

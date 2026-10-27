@@ -108,9 +108,14 @@ const FUTBOL2D = (() => {
   function keeper(p, dt) {
     if (st.tut && p.team === 1) return { tx: p.x, ty: p.y, sp: 0 };
     const b = st.ball, oy = ownY(p.team), sg = p.team === 0 ? -1 : 1; let tx = clamp(PW / 2 + (b.x - PW / 2) * 0.3, PW / 2 - GW / 2 + 0.4, PW / 2 + GW / 2 - 0.4), ty = oy + sg * 1.1, sp = 5.5;
-    if (b.owner === p) { p.hold -= dt; tx = p.x; ty = p.y; if (p.hold <= 0) { // clear it to the most open mate up the pitch
-      let best = null, bs = -1e9; for (const q of mates(p)) { let free = 99; for (const r of rivals(q)) free = Math.min(free, D(r, q)); const s = Math.min(free, 8) * 2 + Math.abs(q.y - oy) * 0.15; if (s > bs) { bs = s; best = q; } }
-      if (best) passTo(p, best); else kick(p, p.team === 0 ? -Math.PI / 2 : Math.PI / 2, 16, 6); } return { tx, ty, sp: 0 }; }
+    if (b.owner === p) { p.hold -= dt; tx = p.x; ty = p.y; if (p.hold <= 0) {
+      // v0.96.2 (Jonay): to the NEAREST mate (a bit less if he is marked), along the ground or lofted if a rival stands in
+      // the line of the pass; never straight up the pitch at the rival who has just shot
+      let best = null, bs = -1e9; for (const q of mates(p)) { if (q.down > 0) continue; let free = 99; for (const r of rivals(q)) free = Math.min(free, D(r, q)); const s = -D(p, q) + Math.min(free, 5) * 1.2; if (s > bs) { bs = s; best = q; } }
+      if (best) { const ax = best.x - p.x, ay = best.y - p.y, L2 = ax * ax + ay * ay || 1; let cut = false;
+        for (const r of rivals(p)) { const t = clamp(((r.x - p.x) * ax + (r.y - p.y) * ay) / L2, 0, 1); if (t > 0.05 && Math.hypot(p.x + ax * t - r.x, p.y + ay * t - r.y) < 1.8) cut = true; }
+        passTo(p, best, cut ? 0.6 : 0); }
+      else kick(p, p.team === 0 ? -Math.PI / 2 : Math.PI / 2, 16, 6); } return { tx, ty, sp: 0 }; }
     const inBox = Math.abs(b.x - PW / 2) < 9 && Math.abs(b.y - oy) < 9;
     if (!b.owner && inBox && Math.hypot(b.vx, b.vy) < 9 && outfield(p.team).every((q) => D(q, b) > D(p, b) - 0.5)) { tx = b.x; ty = b.y; sp = 6; } // come out for a loose ball
     // v0.80 (Jonay: running in you reached the goal without shooting and scored easily): a rival with the ball inside the
