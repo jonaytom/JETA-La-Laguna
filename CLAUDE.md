@@ -74,8 +74,9 @@ compila el PC de Jonay).
    `scripts/pruebas/categorias.json` + `PRUEBAS_LISTA.txt`, con una sola carga del juego; `pruebas base` o `todas` cuando
    se toque algo general). Leer `cola\hecho\<id>.md` y `reportes\pruebas\ULTIMO.md` (y fotos de
    `tests\shots\` si hace falta). Si algo falla: arreglar y repetir.
-3. Todo OK → encargo `copiar_html` + `publicar <versión>` + `subir_git` (sube a GitHub en el momento; la tarea
-   programada solo corre un par de veces al día) y, **después**, `auditar`; traer `dist\gta-la-laguna.html` (`device_stage_files`) y
+3. Todo OK → encargo `auditar` y, **después**, `copiar_html` + `publicar <versión>` + `subir_git` (sube a GitHub en el
+   momento; la tarea programada solo corre un par de veces al día). **Desde la v0.91.1 la auditoría va antes de publicar**:
+   el trabajador se para si sale NO APTO, así no se sube una versión rota (la 0.91.0 se subió y luego salió NO APTO); traer `dist\gta-la-laguna.html` (`device_stage_files`) y
    publicar el Artifact (https://claude.ai/artifact/TwcMQexTqQsGJWLpUYvcXJ).
 4. **Auditorías**: las pasa Jonay cuando quiere. Al empezar cada tanda, mirar en `C:\Users\Jonay\RevisordeCodigo\resultados_pc\` (antes `resultados\`)
    si hay carpetas nuevas, leer su `VEREDICTO.md`, contárselo y anotar lo nuevo en `PENDIENTES.md`. Las mejoras de los

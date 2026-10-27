@@ -262,9 +262,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
     8–12 m, en polilínea sobre las plazas, y en una foto dos postes con un frontón. No son calles elevadas (ninguna vía
     sube más de 2 m allí) ni objetos sueltos: están dentro de las piezas juntadas de la ciudad. Siguiente paso: sacar
     las fotos sin juntar (`?revisor=1`) ocultando cada material, para saber qué código las dibuja.
-- [ ] ◐ **Camino el Vallado / San Honorato, boca del túnel** (Jonay, 19-oct, capturas en X −959 Z 108 y X −982 Z 119): «sigue
-      siendo una locura, hay demasiadas cosas cruzándose» (líneas de carril, muros y losas en la boca). Debería ser **un
-      túnel simple** bajo la TF-5 / Av. de la Candelaria, junto a la rotonda de la gasolinera de San Benito (Street View).
 - [~] ◐ v0.78.0 (tramos elevados que bajan a la calle donde acaban: Travesía Andenes/Av. Ghandi X 820 Z 3494 y Vía de Ronda X 377 Z −268; rampa X −495 Z 683 de 1,2 m a 0,4 m; queda la **rampa del HUC X 2210 Z 3312**: la boca de la rampa empieza 2 m honda justo donde la cruza la calle de servicio, y el coche cae dentro: hay que acortar la rampa o mover el cruce) v0.55.0 **Uniones de túneles y puentes con la vía normal** (hecho: Vallado y boca de la Vía de Ronda) (Jonay, 7-oct): salida del túnel de Camino el Vallado
       (X −942 Z 86 / X −928 Z 64): la losa de arriba se superpone a la salida y no deja salir, y por las paredes
       laterales se ve a través (no debería verse el exterior a través de las paredes del túnel). Vía de Ronda
@@ -419,6 +416,13 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Recursos externos (animaciones, modelos)
 
+- [ ] ◐ **Sprites de itch.io como base para Bencomo, Guanche Guarriors y el basket** (Jonay, 27-oct): GandalfHardcore
+  hombre/mujer y arquero (juego y modificar sí; no redistribuir), Evil Wizard 3 de LuizMelo (CC0), Batareya 500+
+  (estáticos, no redistribuir), Survivors de seartsy (sin licencia en la página) y Spell of Mastery de NancyGold (no se
+  pudo abrir: mirar la licencia del zip).
+  - Plan: Jonay descarga los zip a una carpeta del PC fuera de git (no redistribuir: los originales no van a GitHub).
+    Propuesta con 2–3 personajes rehechos sobre GandalfHardcore (Bencomo, El Magote, un castellano) junto a los de
+    ahora, y elige.
 - [ ] ◐ **Assets de coches y motos** (consulta hecha, falta decidir): opciones CC0/CC-BY en
       `docs/referencias/assets_vehiculos.md`.
 - [ ] ● **Mixamo** como fuente de animaciones extra (gratis para juegos; no subir los FBX originales al repo; hay que
@@ -434,6 +438,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
       consideres, es un extra final».
 
 ## Hecho
+- [x] v0.92.0 **Camino el Vallado / San Honorato, boca del túnel** (Jonay, 19-oct): la rampa baja por los dos ramales de la Y; una sola trinchera que entra en el túnel.
 - [x] v0.91.0 **TF-5: los dos sentidos separados** (Jonay, 26-oct, con Street View junto a San Benito): calzadas apartadas al cargar, New Jersey con postes azules entre los sentidos y bionda con la calle de al lado (Espinero, Carretera General).
 - [x] v0.90.0 **Borrada la copia sobrante `src/09f_basket2d-1.js`** (Jonay, 26-oct).
 - [x] v0.90.0 **Basket: el saque de fondo tras canasta** (Jonay, 26-oct: «no puede aparecer en medio, debe haber continuidad»).

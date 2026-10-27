@@ -3,6 +3,15 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.92.0 — 2026-10-27 — La boca del túnel de Camino el Vallado
+- **Camino el Vallado / San Honorato** (Jonay: «sigue siendo una locura, hay demasiadas cosas cruzándose»; debería ser
+  un túnel simple bajo la TF-5):
+  - Nada más salir del túnel, la calle se parte en sus dos sentidos camino de la rotonda de la gasolinera de San
+    Benito. La rampa de salida solo bajaba por uno de los dos ramales; el otro se quedaba arriba y en la Y había un
+    escalón con muros y losas cruzados. Ahora la rampa baja por los dos a la vez y la boca es una sola trinchera que
+    entra en el túnel.
+  - La Y ya no cuenta como cruce, así que la rampa no se acorta a la fuerza (era más empinada de lo necesario).
+
 ## 0.91.1 — 2026-10-26 — Arreglo de la 0.91: un puente con coordenadas rotas
 - La auditoría de la 0.91.0 salió NO APTO: un puente de la zona de La Cuesta (X 675, Z 3544) quedaba con un tramo de
   0 m al repartir los puntos nuevos de la autopista, y el pretil se calculaba dividiendo por cero (coordenadas «NaN»).

@@ -5,7 +5,6 @@ let OBST_RI = -1; const OBST = []; let DRESS_RI = -1;
 class Acc {
   constructor() { this.p = []; this.n = []; this.uv = []; this.c = []; this.e = []; }
   tri(a, b, c, ua, ub, uc, col, ex, want) {
-    if (window.__NANWATCH && !(Number.isFinite(a[0] + a[1] + a[2] + b[0] + b[1] + b[2] + c[0] + c[1] + c[2]))) { const W = window.__NANWATCH; if (W.length < 6) W.push([[a, b, c].map((q) => q.map((v) => (Number.isFinite(v) ? Math.round(v) : String(v)))), new Error().stack.split('\n').slice(2, 7).join(' | ')]); } // v0.91.1 (tests)
     // a,b,c = [x,y,z]; want = desired normal direction (optional) -> fix winding
     let ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
     let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
@@ -415,6 +414,9 @@ const DEP = new Map();
 const polyLen = (c) => { let L = 0; for (let i = 2; i < c.length; i += 2) L += Math.hypot(c[i] - c[i - 2], c[i + 1] - c[i - 1]); return L; };
 const PED_TUN = new Set();
 function computeDepressions() {
+  // v0.92: the node where a road splits into its two one-way carriageways (both going on ahead) is not a side junction
+  const twinSplit = (k, from, dx, dz) => { const dl = Math.hypot(dx, dz) || 1; const on = []; for (const cj of ends.get(k) || []) { if (cj === from) continue; const r2 = DATA.R[cj], c2 = r2[4], m = c2.length; if (!(r2[3] & 1) || r2[0] > 12) return false; const st = K(c2[0], c2[1]) === k;
+      const ex = st ? c2[2] - c2[0] : c2[m - 4] - c2[m - 2], ez = st ? c2[3] - c2[1] : c2[m - 3] - c2[m - 1]; if ((ex * dx + ez * dz) / ((Math.hypot(ex, ez) || 1) * dl) < Math.cos(0.75)) return false; on.push(cj); } return on.length === 2; };
   const pedEnds = new Map(); DATA.R.forEach((rd, ri) => { if (rd[0] <= 12) return; const c = rd[4]; for (const k of [K(c[0], c[1]), K(c[c.length - 2], c[c.length - 1])]) { let a = pedEnds.get(k); if (!a) pedEnds.set(k, a = []); a.push(ri); } });
   const ends = new Map(); const addE = (k, ri) => { let a = ends.get(k); if (!a) ends.set(k, a = []); a.push(ri); };
   DATA.R.forEach((rd, ri) => { if (rd[0] > 12) return; const c = rd[4]; addE(K(c[0], c[1]), ri); addE(K(c[c.length - 2], c[c.length - 1]), ri); });
@@ -436,12 +438,16 @@ function computeDepressions() {
       let ox = atStart ? c[0] - c[2] : c[n - 2] - c[n - 4], oz = atStart ? c[1] - c[3] : c[n - 1] - c[n - 3]; let ol = Math.hypot(ox, oz) || 1; ox /= ol; oz /= ol;
       let uOff = 0, prev = ri; const hops = []; let jd = Infinity;
       for (let hop = 0; hop < 4 && uOff < rOut0; hop++) {
-        let best = -1, bd = Math.cos(0.75), bStart = true;
+        let best = -1, bd = Math.cos(0.75), bStart = true, alt = -1, ad = Math.cos(0.75), aStart = true;
         for (const cj of ends.get(K(px, pz)) || []) { if (cj === prev || cj === ri) continue; const r2 = DATA.R[cj]; if (r2[3] & 6) continue; const c2 = r2[4], m = c2.length; const st = c2[0] === px && c2[1] === pz;
-          let dx = st ? c2[2] - c2[0] : c2[m - 4] - c2[m - 2], dz = st ? c2[3] - c2[1] : c2[m - 3] - c2[m - 1]; const dl = Math.hypot(dx, dz) || 1; const dot = (dx * ox + dz * oz) / dl; if (dot > bd) { bd = dot; best = cj; bStart = st; } }
+          let dx = st ? c2[2] - c2[0] : c2[m - 4] - c2[m - 2], dz = st ? c2[3] - c2[1] : c2[m - 3] - c2[m - 1]; const dl = Math.hypot(dx, dz) || 1; const dot = (dx * ox + dz * oz) / dl;
+          if (dot > bd) { if (best >= 0) { alt = best; ad = bd; aStart = bStart; } bd = dot; best = cj; bStart = st; } else if (dot > ad) { alt = cj; ad = dot; aStart = st; } }
         if (best < 0) break; const c2 = DATA.R[best][4], m = c2.length, Lc = polyLen(c2);
-        if (jd === Infinity) { let u = 0; for (let q = 1; q < m / 2; q++) { const i0 = bStart ? (q - 1) * 2 : m - q * 2, i1 = bStart ? q * 2 : m - (q + 1) * 2; u += Math.hypot(c2[i1] - c2[i0], c2[i1 + 1] - c2[i0 + 1]); if ((nodeCount.get(K(c2[i1], c2[i1 + 1])) || 0) >= 3) { jd = uOff + u; break; } } }
-        hops.push({ ri: best, bStart, u0: uOff, Lc });
+        // v0.92 (Jonay, Camino el Vallado): a Y where the road splits into its two one-way carriageways is not a junction:
+        // the ramp goes down both of them alike (only one sank, the other stayed up: a cliff with walls and slabs at the split)
+        const twin = alt >= 0 && (DATA.R[best][3] & 1) && (DATA.R[alt][3] & 1) && !(DATA.R[alt][3] & 6) ? { ri: alt, bStart: aStart, Lc: polyLen(DATA.R[alt][4]) } : null;
+        if (jd === Infinity) { let u = 0; for (let q = 1; q < m / 2; q++) { const i0 = bStart ? (q - 1) * 2 : m - q * 2, i1 = bStart ? q * 2 : m - (q + 1) * 2; u += Math.hypot(c2[i1] - c2[i0], c2[i1 + 1] - c2[i0 + 1]); const nk = K(c2[i1], c2[i1 + 1]); if ((nodeCount.get(nk) || 0) >= 3 && !twinSplit(nk, best, c2[i1] - c2[i0], c2[i1 + 1] - c2[i0 + 1])) { jd = uOff + u; break; } } }
+        hops.push({ ri: best, bStart, u0: uOff, Lc, twin });
         uOff += Lc; prev = best; px = bStart ? c2[m - 2] : c2[0]; pz = bStart ? c2[m - 1] : c2[1];
         ox = bStart ? c2[m - 2] - c2[m - 4] : c2[0] - c2[2]; oz = bStart ? c2[m - 1] - c2[m - 3] : c2[1] - c2[3]; ol = Math.hypot(ox, oz) || 1; ox /= ol; oz /= ol;
       }
@@ -450,7 +456,8 @@ function computeDepressions() {
     const limS = chains[0].lim, limE = chains[1].lim;
     push(ri, (s) => D * Math.min(smooth(0, 1, (s + limS) / (rIn + limS)), smooth(0, 1, (L - s + limE) / (rIn + limE))));
     for (const ch of chains) { const lim = ch.lim, R = rIn + lim;
-      for (const { ri: best, bStart, u0, Lc } of ch.hops) { if (u0 > lim) break; push(best, bStart ? (s) => D * smooth(0, 1, (lim - (u0 + s)) / R) : (s) => D * smooth(0, 1, (lim - (u0 + Lc - s)) / R)); } }
+      for (const { ri: best, bStart, u0, Lc, twin } of ch.hops) { if (u0 > lim) break; push(best, bStart ? (s) => D * smooth(0, 1, (lim - (u0 + s)) / R) : (s) => D * smooth(0, 1, (lim - (u0 + Lc - s)) / R));
+        if (twin) { const T2 = twin; push(T2.ri, T2.bStart ? (s) => D * smooth(0, 1, (lim - (u0 + s)) / R) : (s) => D * smooth(0, 1, (lim - (u0 + T2.Lc - s)) / R)); } } }
   });
   // trench mouths where another street at grade overlaps the carriageway (merges, side streets that run into the ramp,
   // a twin carriageway that stays up): the trench only starts sinking once it is clear of them (Vía de Ronda X 388
@@ -1133,7 +1140,6 @@ function auditObstacles() {
 const MEDIANS = []; // v0.91: [kind (2 New Jersey, 3 guardrail, 1 island), x0, z0, x1, z1, samples] (tests)
 function buildMedians() {
   const R = DATA.R; const X = xsegGrid(); let nB = 0, nK = 0, nG = 0;
-  const nanP = (tag, P) => { for (const p of P) if (p.some((v, k) => k < 7 && v !== undefined && !Number.isFinite(v))) { (window.__NAN = window.__NAN || []).push([tag, p.map((v) => (typeof v === 'number' ? Math.round(v * 10) / 10 : v))]); return; } };
   const big = (t) => t <= 2;
   // nodes with 3+ ways (junctions) on a grid
   const JG = new Map(); for (const [k, n] of nodeCount) { if (n < 3) continue; const [x, z] = k.split(',').map(Number); const g = Math.floor(x / 30) * 100000 + Math.floor(z / 30); let l = JG.get(g); if (!l) JG.set(g, l = []); l.push(x, z); }
@@ -1171,7 +1177,7 @@ function buildMedians() {
     const flush = () => { if (piece.length >= 3) { const k = piece[0][4]; MEDIANS.push([k, Math.round(piece[0][0]), Math.round(piece[0][1]), Math.round(piece[piece.length - 1][0]), Math.round(piece[piece.length - 1][1]), piece.length]); if (k === 2) { barrier(piece); nB++; } else if (k === 3) { guardrail(piece); nG++; } else { island(piece); nK++; } } piece = []; };
     for (const p of run) { if (piece.length && (Math.hypot(p[0] - piece[piece.length - 1][0], p[1] - piece[piece.length - 1][1]) > 4.5)) flush(); piece.push(p); } flush(); }
   console.log('medians: barriers', nB, 'guardrails', nG, 'islands', nK);
-  function barrier(P) { /* New Jersey profile */ nanP('newjersey', P);
+  function barrier(P) { /* New Jersey profile */
     const T = acc(P[0][0], P[0][1], 'trim'); const col = [0.6, 0.59, 0.56]; // v0.91: darker (it vanished against the asphalt)
     for (let i = 0; i < P.length - 1; i++) { const a = P[i], b = P[i + 1]; const dx = b[0] - a[0], dz = b[1] - a[1], L = Math.hypot(dx, dz) || 1, px = -dz / L, pz = dx / L;
       const prof = [[0.32, 0], [0.24, 0.08], [0.1, 0.33], [0.08, 0.82]];
@@ -1193,7 +1199,7 @@ function buildMedians() {
         for (const [dx, dz] of [[ux * w, uz * w], [-uz * w, ux * w]]) T.quad([x - dx, y, z - dz], [x + dx, y, z + dz], [x + dx, y + 0.45, z + dz], [x - dx, y + 0.45, z - dz], [0, 0], [0, 0], [0, 0], [0, 0], blue, undefined, [-dz, 0, dx]); }
       acc0 = (acc0 + L) % 4; } }
   // v0.91: steel guardrail (W-beam on posts) between the motorway and a smaller road beside it, with the blue posts
-  function guardrail(P) { nanP('bionda', P); const T = acc(P[0][0], P[0][1], 'trim'); const steel = [0.66, 0.68, 0.7], dark = [0.36, 0.37, 0.38]; let acc0 = 0;
+  function guardrail(P) { const T = acc(P[0][0], P[0][1], 'trim'); const steel = [0.66, 0.68, 0.7], dark = [0.36, 0.37, 0.38]; let acc0 = 0;
     for (let i = 0; i < P.length - 1; i++) { const a = P[i], b = P[i + 1]; const dx = b[0] - a[0], dz = b[1] - a[1], L = Math.hypot(dx, dz) || 1, px = -dz / L, pz = dx / L, ux = dx / L, uz = dz / L;
       // the beam: a strip 0.32 m tall, both faces, with a darker fold in the middle
       for (const sg of [1, -1]) for (const [h0, h1, c] of [[0.45, 0.58, steel], [0.58, 0.63, dark], [0.63, 0.77, steel]]) T.quad([a[0] + px * 0.06 * sg, a[2] + h0, a[1] + pz * 0.06 * sg], [b[0] + px * 0.06 * sg, b[2] + h0, b[1] + pz * 0.06 * sg], [b[0] + px * 0.06 * sg, b[2] + h1, b[1] + pz * 0.06 * sg], [a[0] + px * 0.06 * sg, a[2] + h1, a[1] + pz * 0.06 * sg], [0, 0], [0, 0], [0, 0], [0, 0], c, undefined, [px * sg, 0, pz * sg]);
@@ -1203,7 +1209,7 @@ function buildMedians() {
       acc0 = (acc0 + L) % 4;
       COL.addSeg(a[0], a[1], b[0], b[1], Math.min(a[2], b[2]) - 0.2, Math.max(a[2], b[2]) + 0.8); }
     delineators(T, P, 0.77); }
-  function island(P) { nanP('isleta', P); // raised kerb + paving/grass, as wide as the gap (min 0.8 m)
+  function island(P) { // raised kerb + paving/grass, as wide as the gap (min 0.8 m)
     const T = acc(P[0][0], P[0][1], 'trim'); const kc = [0.8, 0.79, 0.75], top = [0.42, 0.52, 0.36];
     for (let i = 0; i < P.length - 1; i++) { const a = P[i], b = P[i + 1]; const dx = b[0] - a[0], dz = b[1] - a[1], L = Math.hypot(dx, dz) || 1, px = -dz / L, pz = dx / L; const wa = Math.max(0.4, a[3] / 2 - 0.05), wb = Math.max(0.4, b[3] / 2 - 0.05), h = 0.16;
       T.quad([a[0] + px * wa, a[2] + h, a[1] + pz * wa], [b[0] + px * wb, b[2] + h, b[1] + pz * wb], [b[0] - px * wb, b[2] + h, b[1] - pz * wb], [a[0] - px * wa, a[2] + h, a[1] - pz * wa], [0, 0], [0, 0], [0, 0], [0, 0], a[3] > 1.8 ? top : kc, undefined, [0, 1, 0]);

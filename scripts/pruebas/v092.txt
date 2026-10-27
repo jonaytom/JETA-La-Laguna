@@ -1,0 +1,10 @@
+# v0.92: boca del túnel de Camino el Vallado y líneas de calles paralelas
+sonda_vallado.py
+sonda_tf5.py
+prueba_conduccion_tuneles_puentes.py
+prueba_bordes.py
+prueba_078.py
+prueba_grandes.py
+prueba_pendientes_faciles.py
+prueba_trinidad.py
+prueba_arranque.py
