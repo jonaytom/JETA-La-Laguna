@@ -3,6 +3,11 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.98.2 — 2026-10-27 — Patada en carrera: la pierna abajo y la cabeza arriba
+- **Guanche Guarriors** (Jonay): la patada en carrera estaba girada al revés (la pierna estirada arriba y la cabeza
+  abajo). Ahora es una patada voladora: la pierna estirada hacia delante y abajo, la cabeza arriba y atrás. En todos
+  los personajes (`tools/sprites_ext/mk.py`, giro −40°).
+
 ## 0.98.1 — 2026-10-27 — Gollux, un poco más pequeño
 - **Guanche Guarriors**: Gollux salía el doble de grande que los héroes y tapaba media pantalla; ahora un 25 % menos.
 

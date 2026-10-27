@@ -31,6 +31,9 @@ para correrlo en el PC basta con cambiar `A` en `mk.py` (y las rutas sueltas de 
   2 correr, 3–4 salto, 5 golpe, 6 muerte, 7 patada, 8 patada en carrera), recortados; luego `pack.py`.
 - `page_nuevos.py G` — la página de propuestas «Guanche Guarriors: personajes nuevos».
 
-Licencias de los packs nuevos: Demon Overlord 2D Pixel Art (gratis en juegos, también comerciales; se puede modificar;
-no repartir el pack); gorgonas de craftpix (https://craftpix.net/file-licenses/). Gollux, RAt, Free Mythic Monsters y
-el lobo del GIF: pendiente confirmar.
+Licencias de los packs nuevos (Jonay, 27-oct: todos son gratuitos, descargados de itch.io):
+- Demon Overlord 2D Pixel Art, de Le3cH_z (https://le3ch-z.itch.io/demon-overlord-2d-pixel-art-asset-pack): gratis en
+  juegos, también comerciales; se puede modificar; no repartir el pack suelto.
+- Gorgonas, de Free Game Assets / craftpix
+  (https://free-game-assets.itch.io/free-gorgon-pixel-art-character-sprite-sheets; https://craftpix.net/file-licenses/).
+- Gollux, RAt, Free Mythic Monsters y el lobo: también gratuitos de itch.io (según Jonay).
