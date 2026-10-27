@@ -34,6 +34,33 @@ def topless(sk, fw=112, fh=80):
     return out
 SKFn = topless(SKF)
 HAIRL = [(19,19,28),(150,112,56),(204,166,92),(236,206,128),(250,230,166),(255,244,204)]   # blonder (v0.97, Jonay)
-base = with_kicks(None, compose([recol_uw(SKFn, TAM), tint(pad(L('GandalfHardcore 43x Female Clothing/Short Skirt.png')), TAM), tint(pad(FHr(21)), HAIRL)]), stf, 112, 80, 16, 49)
+# v0.97 (Jonay): the hair by rank of its four greys: what was black, the chestnut of before; the light, the blond
+def hair(im, cols):
+    out = im.copy(); px = out.load(); src = sorted({px[x, y][:3] for y in range(out.height) for x in range(out.width) if px[x, y][3]}, key=lambda c: sum(c))
+    m = {c: cols[min(i, len(cols) - 1)] for i, c in enumerate(src)}
+    for y in range(out.height):
+        for x in range(out.width):
+            q = px[x, y]
+            if q[3]: px[x, y] = m[q[:3]] + (q[3],)
+    return out
+HAIRN = [(92,60,32),(120,84,44),(146,104,56),(204,166,92)]
+# the loincloth in dark goat leather (not golden)
+TAPA = [(40,26,16),(62,40,24),(84,56,34),(104,70,42)]
+# the skirt flies up in the fall of the jump (row 4): turned upside down from the waist
+def lift(sk, fw=112, fh=80, r=4):
+    out = sk.copy(); px = sk.load(); op = out.load()
+    for c in range(sk.width // fw):
+        box = sk.crop((c*fw, r*fh, c*fw+fw, r*fh+fh)).getbbox()
+        if not box: continue
+        for y in range(box[1], box[3]):
+            for x in range(c*fw, c*fw+fw): op[x, r*fh+y] = (0, 0, 0, 0)
+        for y in range(box[1], box[3]):
+            ny = box[1] + 2 - (y - box[1])
+            for x in range(c*fw, c*fw+fw):
+                q = px[x, r*fh+y]
+                if q[3] and 0 <= ny < fh: op[x, r*fh+ny] = q
+    return out
+SKIRT = lift(tint(pad(L('GandalfHardcore 43x Female Clothing/Short Skirt.png')), TAM))
+base = with_kicks(None, compose([recol_uw(SKFn, TAPA), SKIRT, hair(pad(FHr(21)), HAIRN)]), stf, 112, 80, 16, 49)
 save('mirla_nat', cast(orb_far(base, 'mirla', SKF, (120,230,255)), 'mirla', SKF, (120,230,255)), 112, 80)
 print('ok')
