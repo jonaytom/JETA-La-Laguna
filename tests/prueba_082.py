@@ -40,7 +40,7 @@ async def run(pg):
       if (e) { for (let k=0;k<3;k++){ e.x=p.x+12*p.face; e.z=p.z; e.st='idle'; e.cd=99; e.inv=0; P('vS'); A._step(k<2?18:30); } combo={ vida: +e.hp.toFixed(1), max: e.max, estado: e.st }; }
       return JSON.stringify({ anda, alto: +alto.toFixed(0), corre, pelea, combo }); })()""" % A)); print('controles', c)
     await foto(pg, 'v082_pelea')
-    mg = json.loads(await pg.evaluate("""(()=>{ const A=%s, g=A._game(), p=g._p; const P=(v)=>{ A._press(v,true); A._step(1); A._press(v,false); A._step(1); }; A._step(60*2); p.st='idle'; p.h=0; p.jars=4; const hp0=g._E.filter(e=>e.hp>0).map(e=>e.hp); P('vP'); A._step(60); const st=p.st; A._step(1);
+    mg = json.loads(await pg.evaluate("""(()=>{ const A=%s, g=A._game(), p=g._p; const P=(v)=>{ A._press(v,true); A._step(1); A._press(v,false); A._step(1); }; A._step(60*2); p.st='idle'; p.h=0; p.jars=4; const hp0=g._E.filter(e=>e.hp>0).map(e=>e.hp); A._press('vS',true); A._press('vP',true); A._step(2); A._press('vS',false); A._press('vP',false); A._step(60); /* v0.94: magic = both buttons */ const st=p.st; A._step(1);
       return JSON.stringify({ estado: st, zurrones: p.jars, tocados: g._E.filter(e=>e.st==='fall'||e.st==='down'||e.hp<=0).length, enemigos: hp0.length }); })()""" % A)); print('magia', mg)
     await foto(pg, 'v082_magia')
     lz = json.loads(await pg.evaluate("""(()=>{ const A=%s, g=A._game(), p=g._p; const P=(v)=>{ A._press(v,true); A._step(1); A._press(v,false); A._step(1); }; A._step(90); p.st='idle'; p.h=0; p.vh=0;
@@ -50,7 +50,7 @@ async def run(pg):
       P('vT'); A._step(40); return JSON.stringify({ monta, cola, mordisco, salto, avanza: Math.round(avanza) }); })()""" % A)); print('lagarto', lz)
     gw = json.loads(await pg.evaluate("""(()=>{ const A=%s, g=A._game(), p=g._p; const P=(v)=>{ A._press(v,true); A._step(1); A._press(v,false); A._step(1); }; p.mount=null; p.st='idle'; p.h=0; p.vh=0; A._step(5);
       // the running attack: a flying kick
-      A._press('vR', true); A._step(1); A._press('vR', false); A._step(3); A._press('vR', true); A._step(8); P('vS'); const kst=p.st; let kh=0; for (let i=0;i<20;i++){ A._step(1); kh=Math.max(kh,p.h); } A._press('vR', false); A._step(30);
+      A._press('vR', true); A._step(1); A._press('vR', false); A._step(3); A._press('vR', true); A._step(8); P('vP'); const kst=p.st;  /* v0.94: the running kick is on the right button */ let kh=0; for (let i=0;i<20;i++){ A._step(1); kh=Math.max(kh,p.h); } A._press('vR', false); A._step(30);
       // the somersault over a dazed enemy
       const e=g._E.find(q=>q.hp>2 && !q.d.boss && q.k!=='D' && !q.mount) || g._spawn('S', p.x+14, p.z); let flip=null;
       if (e) { p.st='idle'; p.h=0; p.face=1; e.x=p.x+14; e.z=p.z; e.h=0; e.st='hurt'; e.stun=true; e.stT=0.8; e.inv=0; const hp0=e.hp; P('vT'); const st1=p.st; let top=0; for (let i=0;i<34;i++){ A._step(1); top=Math.max(top,p.h); }

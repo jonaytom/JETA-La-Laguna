@@ -3,6 +3,14 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.95.0 — 2026-10-27 — Fútbol: campo más grande y seis por equipo
+- **Fútbol** (Jonay):
+  - **El campo, un 30 % más grande** (44 × 70 m) y **5 jugadores de campo más el portero** por equipo: dos defensas,
+    dos medios y un delantero. La Copa Laguna y el Mundialito ya juegan con seis.
+  - **Cambio de jugador en defensa** (botón derecho): si el más cercano al balón va corriendo por detrás y hay otro
+    defensor por delante del balón a una distancia parecida (hasta 1 m más lejos), coges al de delante, el que tiene
+    el balón viniendo hacia él.
+
 ## 0.94.0 — 2026-10-27 — Guanche Guarriors con patadas y golpes fuertes; retoques de Bencomo
 - **Guanche Guarriors: controles nuevos** (Jonay):
   - **Botón izquierdo (A) mantenido: golpe fuerte**. Mientras lo mantienes brilla la mano; al soltar sale un golpe

@@ -104,45 +104,8 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
     - En el piso, una consola comprada en la juguetería (vale una pasta). Los juegos se compran también en la
       juguetería y en casa se juegan gratis. Al encenderla sale un menú con los juegos que tengas.
 
-### Bencomo (recreativa)
-
-- [ ] ⚡ **La vara en los saltos largos** (Jonay, 27-oct, tras la v0.93): ahora es una línea; debe parecerse a la vara
-  que lleva (con su grosor, color y trazo). Es la vara larga, pero cogida por el medio: sobresale por detrás tanto como
-  por delante (así no gana distancia de ataque).
-- [ ] ◐ **El picado con la vara** (Jonay, 27-oct): usar la pose de agachado, con la vara bien dibujada (como la que
-  lleva) apuntando hacia abajo.
-- [ ] ◐ **Los caballeros castellanos no pegan en estilo** (Jonay, 27-oct): hacerlos como Lugo a caballo (PixelHorse ×2
-  con trazo), pero sin lanza, con espada normal, el caballo con menos armadura y montado por un capitán.
-
-### Guanche Guarriors (recreativa)
-
-- [ ] ⚡ **Más margen vertical para acertar los golpes** (Jonay, 27-oct): ahora parece que estás delante del enemigo
-  pero no le das hasta ponerte casi a su misma altura (profundidad `z`).
-- [ ] ⚡ **El duende ladrón** (Jonay, 27-oct): quitarle la barriga que se le puso; acortarle el tronco 2 píxeles y las
-  piernas otros 2. Un gorro de Papá Noel **azul** para los que llevan pociones azules; los rojos (los que dan comida)
-  siguen con el rojo.
-- [ ] ◐ **Perros más grandes** (Jonay, 27-oct): ahora no dan miedo; el jefe (el tibicena mayor) aún más grande. Que
-  muerdan con un efecto parecido al del lagarto, y los jefes perro usan mucho el ataque en carrera.
-- [ ] ◐ **Retrato del enemigo al que pegas** (Jonay, 27-oct): arriba, con su nivel y su vida; cambia al pegar a otro.
-  Si un golpe da a varios, se queda el más fuerte (si son iguales, uno al azar de los golpeados).
-- [ ] ● **Controles y golpes nuevos** (Jonay, 27-oct):
-  - Botón izquierdo mantenido: **golpe fuerte** (animación algo más lenta, pega más, destello en el golpe).
-  - Botón derecho: **patada a la entrepierna**, que aturde (para luego rematar con golpe en salto). Los enemigos
-    grandes necesitan una **parada fuerte** (botón derecho mantenido) para aturdirlos. Las hechiceras y demás
-    personajes femeninos no se aturden con la patada: solo reciben daño.
-  - **Magia**: botón izquierdo + derecho mantenidos.
-  - **Ataque en carrera** = parada con el botón derecho: el personaje casi en horizontal (girado 80°) con la pierna
-    extendida por arriba, como la caída actual de La Mirladora (captura de Jonay), espejado según vaya a izquierda o
-    derecha. Los otros dos tienen las piernas distintas en la caída: hay que ajustarlos para que lleven la pierna
-    estirada.
-  - **Los enemigos también hacen todos estos ataques**, más cuanto más nivel tengan (no siempre el golpe simple).
-
 ### Fútbol y baloncesto 2D
 
-- [ ] ◐ **Fútbol: cambio de jugador en defensa** (Jonay, 27-oct): con el botón derecho, si el más cercano al balón va
-  corriendo por detrás y hay otro defensor por delante del balón a distancia parecida (hasta 1 m más lejos, con
-  jugadores de ~1,75 m), elegir al de delante: priorizar al defensor hacia el que avanza el balón frente al que se aleja.
-- [ ] ● **Fútbol: campo un 30 % más grande y un jugador de campo más** (Jonay, 27-oct): 5 + portero.
 - [ ] ● **Baloncesto con el kit de personajes de GandalfHardcore** (Jonay, 27-oct, pregunta): diseñar camisetas de
   tirantes por capas y hacer nosotros los combos de mates con las mismas piezas.
 
@@ -318,6 +281,13 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
       túneles de bóveda que salen a una rotonda partida; vía de servicio «C. dos Autopista Parl.», Cam. San Bartolomé
       de Geneto en curva, Urb. Guajara (chalets de tejado rojo), Plaza Drago de Antares, C. Lira / Hércules / Habaneras,
       Cam. La Hornera con el Museo de la Ciencia y el IAC. Fotos en `docs/referencias/tf13_geneto/`.
+- [ ] ● **Ampliar el mapa por el sur, por la Carretera General de La Cuesta, con su tranvía** (Jonay, 27-oct; 10 capturas
+  de Street View en `docs/referencias/la_cuesta_tranvia/`): al menos 300 m más al sur, paralelo a la Carretera General
+  La Cuesta, con el tranvía por el centro (vía sobre césped, postes de catenaria, parada «La Cuesta» con marquesina).
+  Viene saliendo de un túnel (bajo el puente de la autopista, junto al Hospital Universitario) y termina en La Cuesta.
+  - En las fotos: calzada de un carril por sentido a cada lado de la plataforma del tranvía, cruces con «prioridad
+    tranvía», gasolinera DISO (nº 108), naves y el Lidl hacia el final.
+
 
 ### Árboles y vegetación
 
@@ -483,6 +453,38 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
       consideres, es un extra final».
 
 ## Hecho
+
+- [x] v0.95.0 **Fútbol: campo un 30 % más grande y un jugador de campo más** (Jonay, 27-oct): 5 + portero.
+- [x] v0.95.0 **Fútbol: cambio de jugador en defensa** (Jonay, 27-oct): con el botón derecho, si el más cercano al balón va
+  corriendo por detrás y hay otro defensor por delante del balón a distancia parecida (hasta 1 m más lejos, con
+  jugadores de ~1,75 m), elegir al de delante: priorizar al defensor hacia el que avanza el balón frente al que se aleja.
+- [x] v0.94.0 **Controles y golpes nuevos** (Jonay, 27-oct):
+  - Botón izquierdo mantenido: **golpe fuerte** (animación algo más lenta, pega más, destello en el golpe).
+  - Botón derecho: **patada a la entrepierna**, que aturde (para luego rematar con golpe en salto). Los enemigos
+    grandes necesitan una **parada fuerte** (botón derecho mantenido) para aturdirlos. Las hechiceras y demás
+    personajes femeninos no se aturden con la patada: solo reciben daño.
+  - **Magia**: botón izquierdo + derecho mantenidos.
+  - **Ataque en carrera** = parada con el botón derecho: el personaje casi en horizontal (girado 80°) con la pierna
+    extendida por arriba, como la caída actual de La Mirladora (captura de Jonay), espejado según vaya a izquierda o
+    derecha. Los otros dos tienen las piernas distintas en la caída: hay que ajustarlos para que lleven la pierna
+    estirada.
+  - **Los enemigos también hacen todos estos ataques**, más cuanto más nivel tengan (no siempre el golpe simple).
+- [x] v0.94.0 **Retrato del enemigo al que pegas** (Jonay, 27-oct): arriba, con su nivel y su vida; cambia al pegar a otro.
+  Si un golpe da a varios, se queda el más fuerte (si son iguales, uno al azar de los golpeados).
+- [x] v0.94.0 **Perros más grandes** (Jonay, 27-oct): ahora no dan miedo; el jefe (el tibicena mayor) aún más grande. Que
+  muerdan con un efecto parecido al del lagarto, y los jefes perro usan mucho el ataque en carrera.
+- [x] v0.94.0 **El duende ladrón** (Jonay, 27-oct): quitarle la barriga que se le puso; acortarle el tronco 2 píxeles y las
+  piernas otros 2. Un gorro de Papá Noel **azul** para los que llevan pociones azules; los rojos (los que dan comida)
+  siguen con el rojo.
+- [x] v0.94.0 **Más margen vertical para acertar los golpes** (Jonay, 27-oct): ahora parece que estás delante del enemigo
+  pero no le das hasta ponerte casi a su misma altura (profundidad `z`).
+- [x] v0.94.0 **Los caballeros castellanos no pegan en estilo** (Jonay, 27-oct): hacerlos como Lugo a caballo (PixelHorse ×2
+  con trazo), pero sin lanza, con espada normal, el caballo con menos armadura y montado por un capitán.
+- [x] v0.94.0 **El picado con la vara** (Jonay, 27-oct): usar la pose de agachado, con la vara bien dibujada (como la que
+  lleva) apuntando hacia abajo.
+- [x] v0.94.0 **La vara en los saltos largos** (Jonay, 27-oct, tras la v0.93): ahora es una línea; debe parecerse a la vara
+  que lleva (con su grosor, color y trazo). Es la vara larga, pero cogida por el medio: sobresale por detrás tanto como
+  por delante (así no gana distancia de ataque).
 - [x] v0.92.0 **Camino el Vallado / San Honorato, boca del túnel** (Jonay, 19-oct): la rampa baja por los dos ramales de la Y; una sola trinchera que entra en el túnel.
 - [x] v0.91.0 **TF-5: los dos sentidos separados** (Jonay, 26-oct, con Street View junto a San Benito): calzadas apartadas al cargar, New Jersey con postes azules entre los sentidos y bionda con la calle de al lado (Espinero, Carretera General).
 - [x] v0.90.0 **Borrada la copia sobrante `src/09f_basket2d-1.js`** (Jonay, 26-oct).

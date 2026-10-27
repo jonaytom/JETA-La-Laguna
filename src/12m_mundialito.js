@@ -78,7 +78,7 @@ const MUNDIALITO = (() => {
     const onEnd = (r) => matchEnd(r);
     return ARCADE.api.suspend(() => {
       if (T.S.game === 'basket') return BASKET2D.start({ team: squad(me, ka, 3, true), rival: squad(op, kb, 3, false), teamName: me.name, rivalName: op.name, time: T.round === 2 ? 120 : 90, lv, mateLv: 0.62, style: 'pabellon', inConsole: true, onEnd });
-      return FUTBOL2D.start({ team: squad(me, ka, 5, true), rival: squad(op, kb, 5, false), teamName: me.name, rivalName: op.name, kit: { ...ka, gk: { shirt: '#f1c40f', shorts: '#222', socks: '#f1c40f' } }, rivalKit: { ...kb, gk: { shirt: '#5ec8ff', shorts: '#222', socks: '#5ec8ff' } }, time: T.round === 2 ? 150 : 120, lv, mateLv: 0.62, inConsole: true, onEnd }); }); }
+      return FUTBOL2D.start({ team: squad(me, ka, 6, true), rival: squad(op, kb, 6, false), teamName: me.name, rivalName: op.name, kit: { ...ka, gk: { shirt: '#f1c40f', shorts: '#222', socks: '#f1c40f' } }, rivalKit: { ...kb, gk: { shirt: '#5ec8ff', shorts: '#222', socks: '#5ec8ff' } }, time: T.round === 2 ? 150 : 120, lv, mateLv: 0.62, inConsole: true, onEnd }); }); }
   function matchEnd(r) { if (!T) { ARCADE.resume(); return; } closeRound(r && r.score ? r : { won: false, score: [0, 0] }); if (SCR) SCR.go('result'); ARCADE.resume(); }
   // ---------- the champion: the table of the console
   function champion(id, me, ini) { const a = ARCADE.data(); a.sports = a.sports || {}; const s = a.sports[id] = a.sports[id] || { won: 0 }; s.won++;

@@ -59,7 +59,7 @@ async def run(pg):
         await foto(pg, 'futbol2d', 'v086_furbito')
         h = json.loads(await pg.evaluate("(()=>{ " + H + """ __dbg.FUTBOL2D._abort(); M._end({ won: false, score: [0, 2] }); const v=S().v, T0=M._T(), gano=!!(T0 && T0.last && T0.last.w === T0.me); Wt(); P('vS'); Wt(); return JSON.stringify({ v, gano, luego: S().v, estado: __dbg.GAME.state }); })()"""))
         print('eliminados', h)
-        ok4 = g['m1'] == 'menu' and g['juega'] and g['n'] == 10 and g['nombres'][0] == 'BRASIL' and g['espera'] and h['v'] == 'result' and h['gano'] is False and h['luego'] == 'pick' and h['estado'] == 'arcade'
+        ok4 = g['m1'] == 'menu' and g['juega'] and g['n'] == 12 and g['nombres'][0] == 'BRASIL' and g['espera'] and h['v'] == 'result' and h['gano'] is False and h['luego'] == 'pick' and h['estado'] == 'arcade'
         print('FURBITO', 'OK' if ok4 else 'FALLA'); ok = ok and ok4
         await pg.evaluate("(()=>{ __dbg.ARCADE.close(); __dbg.GAME.state='play'; __step(2); })()")
         # 5) the toy shop: the cartridges, and the superfriki

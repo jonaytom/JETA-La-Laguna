@@ -1,0 +1,4 @@
+# v0.95: fútbol más grande, seis por equipo, cambio de jugador en defensa
+prueba_095.py
+prueba_futbol.py
+prueba_arranque.py

@@ -18,7 +18,7 @@
 // rival can't tackle).
 const FUTBOL2D = (() => {
   const W = 480, H = 270, R = 3, S = 8;                     // canvas (logical px, drawn at R×) and px per metre
-  const PW = 34, PL = 54, GW = 6, GH = 2.1, MG = 7;          // pitch width / length, goal width / height, margin (m)
+  const PW = 44, PL = 70, GW = 6, GH = 2.1, MG = 7;          // pitch width / length, goal width / height, margin (m) (v0.94, Jonay: 30 % bigger)
   const X0 = Math.round((W - PW * S) / 2), BGH = (PL + 2 * MG) * S, BR = 3;
   const sxp = (x) => X0 + x * S, syw = (y) => (y + MG) * S;  // pitch metres -> background px
   let inConsole = false; let cv = null, cx = null, running = false, raf = 0, last = 0, acc = 0, st = null, onEnd = null, camY = 0, bgCache = null;
@@ -37,8 +37,9 @@ const FUTBOL2D = (() => {
   const SP_R = 3.5; // the no-approach radius round the taker of a restart
   const inOwnBox = (p) => Math.abs(p.x - PW / 2) < 11 && Math.abs(p.y - ownY(p.team)) < 11;
   function banner(t, c = '#ffd400', dur = 1.4) { st.banner = { t, c, dur }; st.bannerT = dur; }
-  // formation for 5 a side (team 0, own goal at the bottom): keeper, 2 defenders, a midfielder and a striker
-  const FORM = [['gk', PW / 2, PL - 1.2], ['def', PW * 0.3, PL - 13], ['def', PW * 0.7, PL - 13], ['mid', PW * 0.5, PL - 23], ['fwd', PW * 0.5, PL - 33]];
+  // formation (team 0, own goal at the bottom): keeper, 2 defenders, 2 midfielders and a striker (v0.94, Jonay: 5 + keeper;
+  // the sixth is the second midfielder, so the teams of 5 that some places pass still fill the first five places)
+  const FORM = [['gk', PW / 2, PL - 1.2], ['def', PW * 0.3, PL - 17], ['def', PW * 0.7, PL - 17], ['mid', PW * 0.3, PL - 31], ['fwd', PW * 0.5, PL - 45], ['mid', PW * 0.7, PL - 31]];
   const home = (p) => (p.team === 0 ? [p.hx, p.hy] : [PW - p.hx, PL - p.hy]);
   function mkPlayer(o, team, i, kit) {
     const [role, hx0, hy0] = FORM[i];
@@ -170,7 +171,7 @@ const FUTBOL2D = (() => {
     } else {
       st.charge = 0; st.pcharge = 0;
       if (hit('vS') && p.slide <= 0 && p.kickCD <= 0) { p.slide = 0.55; p.vx = Math.cos(ang) * 8.5; p.vy = Math.sin(ang) * 8.5; p.dir = ang; p.kickCD = 0.9; if (st.ev) st.ev.slide = true; }
-      if (hit('vP')) { const n = nearestCtl(false); const bo = st.ball.owner; if (n && n !== p) { st.ctl = n; if (st.ev) st.ev.swap = true; } // v0.89 (Jonay): already the nearest: the tackle
+      if (hit('vP')) { const n = nearestCtl(false, true); const bo = st.ball.owner; if (n && n !== p) { st.ctl = n; if (st.ev) st.ev.swap = true; } // v0.89 (Jonay): already the nearest: the tackle
         else if (bo && bo.team !== p.team && p.kickCD <= 0) { if (D(p, bo) < 1.5) tackle(p, bo, 0.5); else { const L = D(p, bo) || 1; p.vx = (bo.x - p.x) / L * 9; p.vy = (bo.y - p.y) / L * 9; p.kickCD = 0.35; } } }
     }
     if (st.aft > 0) { st.aft -= 1 / 60; const bb = st.ball; if (!bb.owner && bb.kicker === p) { const side = (held('vR') ? 1 : 0) - (held('vL') ? 1 : 0); if (side) { bb.curve = side * (p.team === 0 ? 1 : -1) * 7; bb.curveT = Math.max(bb.curveT, 0.3); } } }
@@ -179,7 +180,14 @@ const FUTBOL2D = (() => {
   function dribble(p, ang) { let r = null, rd = 99; for (const q of rivals(p)) { const d = D(p, q); if (d < rd) { rd = d; r = q; } }
     let side = 1; if (r) { const cr = Math.cos(ang) * (r.y - p.y) - Math.sin(ang) * (r.x - p.x); side = cr > 0 ? -1 : 1; } const a = ang + side * 0.85;
     p.drib = 0.45; p.vx = Math.cos(a) * 9.5; p.vy = Math.sin(a) * 9.5; p.dir = a; p.turbo = Math.max(0, p.turbo - 0.12); snd('swish'); banner('¡REGATE!', '#ffd400', 0.6); if (st.ev) st.ev.dribble = true; }
-  function nearestCtl(force) { const b = st.ball; const c = outfield(0).filter((q) => q.down <= 0).sort((a, d) => D(a, b) - D(d, b)); if (!c.length) return st.ctl;
+  function nearestCtl(force, smart) { const b = st.ball; const c = outfield(0).filter((q) => q.down <= 0).sort((a, d) => D(a, b) - D(d, b)); if (!c.length) return st.ctl;
+    if (smart && !(b.owner && b.owner.team === 0)) {
+      // v0.94 (Jonay): changing player while defending, prefer the defender the ball is coming towards over one it is
+      // running away from, even if he is up to 1 m further (the direction: the carrier's speed, the ball's, or else
+      // towards our goal)
+      const o = b.owner, vx = o ? o.vx : b.vx, vy = o ? o.vy : b.vy; let ax = 0, ay = ownY(0) - b.y; if (Math.hypot(vx, vy) > 0.6) { ax = vx; ay = vy; }
+      const n = Math.hypot(ax, ay) || 1, ahead = (q) => ((q.x - b.x) * ax + (q.y - b.y) * ay) / n > 0;
+      if (!ahead(c[0])) { const f = c.find((q) => ahead(q) && D(q, b) <= D(c[0], b) + 1); if (f) return f; } }
     if (force) return c[0] === st.ctl && c[1] ? c[1] : c[0]; return c[0]; }
   function stepBall(dt) {
     const b = st.ball;
@@ -427,8 +435,8 @@ const FUTBOL2D = (() => {
     st = { p: [], ball: { x: PW / 2, y: PL / 2, z: 0, vx: 0, vy: 0, vz: 0, owner: null, curve: 0, curveT: 0, shot: null }, score: [0, 0], time: opt.time || 180, clock: opt.time || 180,
       names: [opt.teamName || 'JETA', opt.rivalName || 'RIVALES'], phase: 'ready', pt: 0, time0: 0, bannerT: 0, banner: null, tip: '', ev: {}, golden: false, ctl: null, charge: 0, pcharge: 0, aft: 0, pause: 0,
       tut: opt.tutorial ? { i: 0, wait: 0 } : null, sp: null, auto: !!opt.auto, fade: 1, fadeDir: -1 };
-    for (let i = 0; i < 5; i++) st.p.push(mkPlayer(t0[i] || { name: 'JUG ' + (i + 1) }, 0, i, k0));
-    for (let i = 0; i < 5; i++) st.p.push(mkPlayer(t1[i] || { name: 'RIV ' + (i + 1) }, 1, i, k1));
+    for (let i = 0; i < FORM.length; i++) st.p.push(mkPlayer(t0[i] || { name: 'JUG ' + (i + 1) }, 0, i, k0));
+    for (let i = 0; i < FORM.length; i++) st.p.push(mkPlayer(t1[i] || { name: 'RIV ' + (i + 1) }, 1, i, k1));
     for (const q of st.p) q.lv = q.team === 1 ? opt.lv ?? 0.5 : opt.mateLv ?? 0.6;
     kickoff(0); st.ctl = st.p.find((q) => q.team === 0 && q.role === 'fwd'); updateCam(1); IN.reset(); document.exitPointerLock?.();
     MINI.show(cv, 'futbol2d'); if (CR) CR.stop(); CR = MINI.crowd('futbol'); last = performance.now(); acc = 0; raf = requestAnimationFrame(loop); return true;

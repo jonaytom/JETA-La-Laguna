@@ -52,7 +52,7 @@ async def run(pg):
         out.push({ fase: n+1, avance: +(g._scroll()/g._L().len).toFixed(2), jefe, pasada: g._stage()!==n || g._phase()==='clear', segundos: Math.round(t/60), puntos: g.score }); } return JSON.stringify(out); })()""" % A)); print('recorrido', trav)
     ok3 = all(t['pasada'] and t['jefe'] for t in trav); print('FASES', 'OK' if ok3 else 'FALLA'); ok = ok and ok3
     # 4) game over → continue → initials → table
-    hs = json.loads(await pg.evaluate("""(()=>{ const A=%s, g=A._game(); g.score=987650; g._lives(0); const p=g._p; p.inv=0; p.dead=0; g._god=false; g._bul.push({ x:p.x, y:p.y, vx:0, vy:0, r:3 }); for (let i=0;i<60*4;i++) A._step(1); const m1=A._st().mode; for (let i=0;i<60*12;i++) A._step(1); const m2=A._st().mode;
+    hs = json.loads(await pg.evaluate("""(()=>{ const A=%s, g=A._game(); g.score=987650; g._lives(0); const p=g._p; p.inv=0; p.dead=0; g._god=false; for (let i=0;i<60*10 && A._st().mode==='play';i++) { if (i%%30===0 && !p.dead) { p.inv=0; g._bul.push({ x:p.x, y:p.y, vx:0, vy:0, r:3 }); } A._step(1); } const m1=A._st().mode; /* v0.95: until the game ends (it took longer than 4 s now and then) */ for (let i=0;i<60*12;i++) A._step(1); const m2=A._st().mode;
       const P=(v)=>{ A._press(v,true); A._step(1); A._press(v,false); A._step(1); }; P('vU'); P('vS'); P('vU'); P('vU'); P('vS'); P('vS'); return JSON.stringify({ m1, m2, modo: A._st().mode }); })()""" % A)); print('fin de partida', hs)
     await foto(pg, 'v081_records_nuevo')
     ok4 = hs['m1'] == 'cont' and hs['m2'] == 'name'; print('RECORDS', 'OK' if ok4 else 'FALLA'); ok = ok and ok4

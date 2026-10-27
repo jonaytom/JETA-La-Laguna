@@ -17,7 +17,7 @@ async def run(pg):
         await pg.evaluate("__dbg.FUTBOL2D._draw()")
         d = await pg.evaluate("(()=>{ const c=document.getElementById('futbol2d'); return c ? c.toDataURL('image/png') : ''; })()")
         if d: os.makedirs('shots', exist_ok=True); open('shots/v088_futbol.png', 'wb').write(base64.b64decode(d.split(',')[1])); print('foto v088_futbol')
-        ok1 = a['ok'] and a['juega'] and a['n'] == 10
+        ok1 = a['ok'] and a['juega'] and a['n'] == 12  # v0.95: 5 + keeper a side
         print('PARTIDO', 'OK' if ok1 else 'FALLA'); ok = ok and ok1
     finally:
         await pg.evaluate("(()=>{ const d=__dbg; try { if (d.FUTBOL2D.running) d.FUTBOL2D._abort(); } catch (e) {} d.GAME.state='play'; __step(2); })()")

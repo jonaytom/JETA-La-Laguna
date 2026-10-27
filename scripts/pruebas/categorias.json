@@ -287,6 +287,12 @@
    ]
   ],
   [
+   "^src/(09g_futbol2d|12m_mundialito)",
+   [
+    "prueba_095.py"
+   ]
+  ],
+  [
    "^src/(09jy_sprx_data|09jz_sprx|09k_bencomo|09m_guanche)",
    [
     "prueba_093.py",

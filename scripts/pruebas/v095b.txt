@@ -1,0 +1,9 @@
+# v0.95: las que fallaron con el campo nuevo y los controles nuevos
+prueba_095.py
+prueba_079.py
+prueba_085.py
+prueba_088.py
+prueba_082.py
+prueba_081.py
+prueba_futbol.py
+prueba_arranque.py

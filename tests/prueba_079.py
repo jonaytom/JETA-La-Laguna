@@ -41,7 +41,7 @@ async def run(pg):
     okd = dives['frames_en_palomita'] > 0
     # shot power: from 8 m and from 24 m, charged to the top (it fires by itself at the top)
     SHOT = """(D)=>{ const F=%s; F.start({ team: %s, rival: %s, time: 90, lv: 0.0, mateLv: 0.5 }); const s=F._st(); s.phase='play'; s.sp=null; s.fade=0; s.fadeDir=0; const me=s.p.find(q=>q.team===0&&q.role==='fwd'); s.ctl=me;
-      for (const q of s.p) if (q!==me) { q.x = q.team ? 2 : 30; q.y = q.team ? 52 : 50; } const gk=s.p.find(q=>q.team===1&&q.role==='gk'); gk.x=-6; gk.y=3; gk.down=999; me.x=17; me.y=D; me.dir=-Math.PI/2; F._give(me);
+      for (const q of s.p) if (q!==me) { q.x = q.team ? 2 : 40; q.y = q.team ? 66 : 64; } const gk=s.p.find(q=>q.team===1&&q.role==='gk'); gk.x=-6; gk.y=3; gk.down=999; me.x=22; me.y=D; me.dir=-Math.PI/2; F._give(me); /* v0.95: the pitch is 44 wide (the goal at x 22) */
       F._press('vS', true); F._step(60); F._press('vS', false); let maxz=0, zl=null, gol=false; for (let i=0;i<120;i++){ F._step(1); const b=s.ball; if (b.y>0.4) maxz=Math.max(maxz,b.z); if (zl===null && b.y<=0.5) zl=+b.z.toFixed(2); if (s.score[0]>0) { gol=true; break; } } F._abort(); return JSON.stringify({ D, z_en_la_linea: zl, gol }); }""" % (F, TEAM, RIV)
     near = json.loads(await pg.evaluate(SHOT, 8)); far = json.loads(await pg.evaluate(SHOT, 27)); print('tiro a tope de cerca', near, 'de lejos', far)
     okp = (not near['gol']) and far['gol']
@@ -50,7 +50,7 @@ async def run(pg):
       F._press('vT', true); F._step(2); F._press('vT', false); F._step(3); F._press('vT', true); F._step(1); const d=me.drib>0; F._press('vT', false); F._step(30); const keep=s.ball.owner===me; F._abort(); return JSON.stringify({ regate: d, sigue_con_balon: keep }); })()""" % (F, TEAM, RIV))); print('regate', dr)
     okg = dr['regate']
     sm = json.loads(await pg.evaluate("""(()=>{ const F=%s; F.start({ team: %s, rival: %s, time: 90, lv: 0.5 }); const s=F._st(); s.phase='play'; s.sp=null; s.fade=0; s.fadeDir=0; const me=s.p.find(q=>q.team===0&&q.role==='fwd'); s.ctl=me;
-      for (const q of s.p) if (q!==me && q.role!=='gk') { q.x = 2; q.y = q.team ? 50 : 52; } me.x=17; me.y=14; F._give(me); F._press('vU', true); F._press('vT', true); let quita=false, t=0; for (let i=0;i<150;i++){ F._step(1); t++; if (s.ball.owner && s.ball.owner.role==='gk') { quita=true; break; } if (s.score[0]>0) break; }
+      for (const q of s.p) if (q!==me && q.role!=='gk') { q.x = 2; q.y = q.team ? 64 : 66; } me.x=22; me.y=14; F._give(me); F._press('vU', true); F._press('vT', true); let quita=false, t=0; for (let i=0;i<150;i++){ F._step(1); t++; if (s.ball.owner && s.ball.owner.role==='gk') { quita=true; break; } if (s.score[0]>0) break; }
       F._press('vU', false); F._press('vT', false); const r=JSON.stringify({ portero_la_quita: quita, frames: t, gol: s.score[0] }); F._abort(); return r; })()""" % (F, TEAM, RIV))); print('portero sale a por el balón', sm)
     okg = okg and sm['portero_la_quita']
     print('FUTBOL saque', okc, 'palomitas', okd, 'fuerza', okp, 'regate', okg); ok = ok and okc and okd and okp and okg
