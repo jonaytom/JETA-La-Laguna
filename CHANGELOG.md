@@ -3,6 +3,13 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.99.1 — 2026-10-27 — Patada en carrera sin perder calidad
+- **Guanche Guarriors** (Jonay: «ha degradado mucho la calidad, rescatar la caída original y rotarla solo»): la patada
+  en carrera es la caída del salto girada con tres cizallas (cada píxel se mueve entero, ninguno se duplica ni se
+  pierde), en vez de ampliar y reducir.
+  - Las piernas toman el color del tronco (antes cogían tonos de la falda y del taparrabos).
+  - El escudo de la espalda, que en esa postura tapaba la cabeza, ya no sale en la patada (El Magote).
+
 ## 0.99.0 — 2026-10-27 — Fondos dibujados en Guanche Guarriors y Bencomo, Tenique y las Harimaguadas
 - **Fondos nuevos** (Jonay, a partir de sus fotos de cada sitio): ya no son la foto pasada a píxeles; cada fondo está
   dibujado (`tools/fondos/dibujo.py`) con colores planos y el contorno oscuro de los personajes, en capas que se mueven a

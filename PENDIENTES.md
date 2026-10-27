@@ -18,6 +18,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 - [ ] ◐ **Guanche Guarriors: el aura de fuego del lobo como poder del jefe lobo** (Jonay, 27-oct): en el GIF original,
   al aullar sale en el suelo una franja de llamitas rojas que quité al recortarlo (`tools/sprites_ext/wolf2.py`, «red
   bars»). Idea de Jonay: que sea el poder del jefe lobo (BT, fase de Los Gigantes), p. ej. aúlla y quema alrededor.
+- [~] ◐ (propuesta v2: página «Secuaces hembra», `tools/sprites_ext/hembras.py`) **Guanche Guarriors: secuaces hembra al estilo de La Mirladora** (Jonay, 27-oct): sin la parte de arriba, con el taparrabos de cuero oscuro bajo faldas distintas, cascos, armas y escudos de los packs, y pieles de colores (roja, verde, azul, amarilla, morada; Jonay: «no color normal»). Falta meterlas en las oleadas.
 - [ ] ◐ **Guanche Guarriors: ¿de día o de noche?** (27-oct): los fondos nuevos son de día; el campamento sigue oscureciendo. Preguntado dos veces, sin respuesta; si Jonay quiere noche, se añade un tinte por fase.
 - [ ] ● **Guanche Guarriors: repasar los jefes con Jonay antes de seguir** (Jonay, 27-oct): lista de jefes por fase para
   revisarlos uno a uno (aspecto, poderes, ayudantes) antes de meter los fondos nuevos y lo demás.
@@ -462,6 +463,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Hecho
 
+- [x] v0.99.1 **Guanche Guarriors: patada en carrera sin perder calidad, piernas del color del tronco, sin el escudo tapando la cabeza** (Jonay, 27-oct).
 - [x] v0.99.0 **Fondos de Guanche Guarriors y de Bencomo a partir de fotos reales** (Jonay, 27-oct): dibujados a partir de lo que muestran sus fotos (`docs/referencias/fondos_guanche/`, `fondos_bencomo/`), en capas de paralaje; `tools/fondos/`.
 - [x] v0.99.0 **Guanche Guarriors: la mordida del lobo salía en el aire** (Jonay, 27-oct): sigue al hocico fotograma a fotograma.
 - [x] v0.99.0 **Guanche Guarriors: Tenique, la Reina Harimaguada y las Harimaguadas; Guayota más pequeño, con todos sus fotogramas y píxel a píxel; patada en carrera sin perder calidad** (Jonay, 27-oct).

@@ -1,6 +1,32 @@
 import sys, math
 from PIL import Image, ImageDraw
 
+def shear_rotate(im, ang, center):
+    """turns pixel art by ang degrees (counter-clockwise, like PIL) with three shears (Paeth): every pixel moves whole,
+    none is doubled or lost, so the drawing stays as it was (v0.99.1, Jonay: «rescatar la caída original y rotarla solo»)"""
+    import numpy as np
+    a = np.array(im.convert('RGBA')); h, w = a.shape[:2]; P = max(h, w)
+    big = np.zeros((h + 2 * P, w + 2 * P, 4), np.uint8); big[P:P + h, P:P + w] = a
+    cx, cy = center[0] + P, center[1] + P; t = math.radians(-ang); al = -math.tan(t / 2); be = math.sin(t)   # (image y points down: -ang)
+    def shx(b, k):
+        o = np.zeros_like(b)
+        for y in range(b.shape[0]):
+            d = int(round(k * (y - cy)))
+            if d > 0: o[y, d:] = b[y, :-d]
+            elif d < 0: o[y, :d] = b[y, -d:]
+            else: o[y] = b[y]
+        return o
+    def shy(b, k):
+        o = np.zeros_like(b)
+        for x in range(b.shape[1]):
+            d = int(round(k * (x - cx)))
+            if d > 0: o[d:, x] = b[:-d, x]
+            elif d < 0: o[:d, x] = b[-d:, x]
+            else: o[:, x] = b[:, x]
+        return o
+    b = shx(shy(shx(big, al), be), al)
+    return Image.fromarray(b[P:P + h, P:P + w])
+
 def scale2x(a):   # EPX / Scale2x on an RGBA array: doubles a pixel-art image keeping its edges sharp
     import numpy as np
     P = np.pad(a, ((1, 1), (1, 1), (0, 0)), mode='edge'); Bc = P[:-2, 1:-1]; D = P[1:-1, :-2]; F = P[1:-1, 2:]; Hh = P[2:, 1:-1]; E = a
@@ -122,7 +148,7 @@ def compose(layers):
     for l in layers: b.alpha_composite(l)
     return b
 
-def with_kicks(back, body, front, fw=80, fh=64, oy=0, hip=51):
+def with_kicks(back, body, front, fw=80, fh=64, oy=0, hip=51, kick_back=True):
     """v0.95 (Jonay): the whole sheet (back accessories + body + front accessories) plus two rows made from the layers:
     7 = the kick to the crotch (the standing legs stay, a copy of the body's legs swings forwards from the hip: they
         face left), 8 = the running kick (the idle figure turned ~100° so it flies almost flat, feet in front)."""
@@ -158,7 +184,11 @@ def with_kicks(back, body, front, fw=80, fh=64, oy=0, hip=51):
         fx = [x for x in range(80) if fp[x, 49][3]]; mx = [x for (x, y) in ml if y == H] or [x for (x, y) in ml]
         dx = round((min(mx) + max(mx)) / 2 - (min(fx) + max(fx)) / 2) - 1; dy = H - 49   # (-1, Jonay: once turned, the stretched leg 1 px higher)
         lum = lambda c: c[0] * 0.3 + c[1] * 0.59 + c[2] * 0.11; OUT = (19, 19, 28)
-        mcols = sorted({bp[x, y][:3] for (x, y) in ml if bp[x, y][:3] != OUT}, key=lum)
+        # v0.99.1 (Jonay: «el color de las piernas debe ser igual al del tronco»): the legs take the tones of the belly (the
+        # skin just above the hip, in the middle of the body), not of what is below the hip (skirts, loincloths)
+        mxc = round((min(mx) + max(mx)) / 2)
+        mcols = sorted({bp[x, y][:3] for y in range(H - 10, H - 1) for x in range(mxc - 3, mxc + 4) if bp[x, y][3] and bp[x, y][:3] != OUT}, key=lum)
+        if len(mcols) < 2: mcols = sorted({bp[x, y][:3] for (x, y) in ml if bp[x, y][:3] != OUT}, key=lum)
         fcols = sorted({fp[x, y][:3] for y in range(49, 64) for x in range(80) if fp[x, y][3] and fp[x, y][:3] != OUT}, key=lum)
         cmap = {c: mcols[min(len(mcols) - 1, round(i * (len(mcols) - 1) / max(1, len(fcols) - 1)))] for i, c in enumerate(fcols)} if mcols else {}
         legs2 = Image.new('RGBA', (fw, fh)); lp2 = legs2.load()
@@ -167,10 +197,12 @@ def with_kicks(back, body, front, fw=80, fh=64, oy=0, hip=51):
                 q = fp[x, y]
                 if q[3] and 0 <= x + dx < fw and 0 <= y + dy < fh: lp2[x + dx, y + dy] = (cmap.get(q[:3], q[:3]) + (255,))
         up4 = Image.new('RGBA', (fw, fh)); up4.paste(bd4.crop((0, 0, fw, H)), (0, 0))
-        fall.alpha_composite(F4(back)); fall.alpha_composite(legs2); fall.alpha_composite(up4); fall.alpha_composite(F4(front))
+        # (v0.99.1, Jonay: «sin casco»: a shield, raised over the head in this pose, hid the helmet: kick_back=False leaves it out)
+        if kick_back: fall.alpha_composite(F4(back))
+        fall.alpha_composite(legs2); fall.alpha_composite(up4); fall.alpha_composite(F4(front))
     row8 = []
     bb = fall.getbbox(); cx, cy = (bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2
-    r = rotsprite(fall, -40, (cx, cy)); rb = r.getbbox()   # (Jonay: it was the wrong way round; the stretched leg forward and down, the head up and back)
+    r = shear_rotate(fall, -40, (cx, cy)); rb = r.getbbox()   # (Jonay: it was the wrong way round; the stretched leg forward and down, the head up and back)
     f = Image.new('RGBA', (fw, fh)); f.alpha_composite(r, (0, (fh - 6) - rb[3])); row8 = [f, f.copy()]
     rows = full.height // fh; out = Image.new('RGBA', (full.width, fh * 9)); out.paste(full.crop((0, 0, full.width, fh * min(rows, 7))), (0, 0))
     for i, f in enumerate(row7): out.paste(f, (i * fw, 7 * fh))
