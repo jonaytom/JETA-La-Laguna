@@ -3,6 +3,13 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.99.3 — 2026-10-27 — Las chicas sobre la base nueva y las secuaces
+- **Guanche Guarriors** (Jonay): todas las chicas rehechas sobre su base `Female Skin3_new` con sus colores, ropa y
+  armas de antes (`tools/sprites_ext/chicas.py`): La Mirladora (pezones del rosa de la boca), la bruja y, nuevas,
+  **cinco secuaces** (roja, vikinga verde, demonia azul, espada de oro amarilla y leñadora morada; pezones rosa, sin
+  braga). La mitad de los secuaces salen como una de ellas. Los cascos, armas y escudos (dibujados para el cuerpo de
+  hombre) se colocan fotograma a fotograma sobre el de mujer, para que el arma no se salga de la mano.
+
 ## 0.99.2 — 2026-10-27 — Patada en carrera: la caída del salto, girada al dibujarla
 - **Guanche Guarriors** (Jonay: «la actual está horrible… el arma se va de la mano»): la fila de la patada en carrera
   guarda la caída del salto tal cual (sin girar) y el juego la gira 40° al dibujarla, a la resolución de la pantalla:

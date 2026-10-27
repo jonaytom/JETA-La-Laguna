@@ -129,7 +129,8 @@ ARCADE.GAMES.guanche = (() => {
   // v0.93 (Jonay): the new characters drawn from the SPRX sheets (09jy/09jz); the puppets stay as a fallback while loading
   const SX_HERO = { mencey: 'magote', pastor: 'mencey', mirla: 'mirla' }, SXP = 2 / Z; // one pixel of a sheet = 2 of the screen
   const SX_BIG = { mencey: 1.2 }; // Jonay: El Magote a 20 % bigger than El Mencey
-  const FEM = { W: 1, BW: 1, GO: 1, GM: 1, BGO: 1 }; // (the kick doesn't stun them)
+  const FEM = { W: 1, BW: 1, GO: 1, GM: 1, BGO: 1 };
+  const SECF = ['g_sec_roja', 'g_sec_vikinga', 'g_sec_demonia', 'g_sec_oro', 'g_sec_lenadora']; // v0.99.3: the female minions' sheets // (the kick doesn't stun them)
   const EN_NAME = { S: 'SECUAZ', H: 'SECUAZ ESCUDO', G: 'GIGANTÓN', W: 'BRUJA', D: 'DUENDE', T: 'LOBO', GO: 'HARIMAGUADA', GM: 'HARIMAGUADA', RA: 'RATA' }, EN_LVL = { D: 1, RA: 1, T: 2, S: 2, W: 3, H: 3, G: 4, GO: 4, GM: 4, BG: 5, BW: 6, BT: 6, BH: 7, BGO: 7, BGX: 8, BX: 8, BY: 9 };
   const SX_EN = { S: 'g_secuaz', H: 'g_escudo', G: 'g_giganton', BG: 'g_giganton', BH: 'g_giganton', W: 'g_bruja', BW: 'g_brujamayor', D: 'g_duende', BY: 'g_overlord', BX: 'g_guayota', T: 'g_lobo', BT: 'g_lobo',
     GO: 'g_gorgona1', GM: 'g_gorgona2', BGO: 'g_gorgona3', RA: 'g_rata', BGX: 'g_gollux' }; // v0.98 (Jonay): the wolf for the dogs, the gorgons, Gollux, the rats and Guayota as the Demon Overlord
@@ -259,7 +260,7 @@ ARCADE.GAMES.guanche = (() => {
     const E = [], shots = [], items = [], liz = []; let fx = [];
     // v0.95.2: every sheet starts loading when the machine opens (they load on their first draw; meanwhile the old
     // drawings were built, and that is what read the canvas with getImageData — the 0.90 audit warning)
-    for (const k of [...Object.values(SX_HERO), ...Object.values(SX_EN), 'g_duende_azul', 'lagarto', 'lz_mencey', 'lz_pastor', 'lz_mirla']) SPRX.ready(k); for (const k of Object.values(FZ)) FONDOS.get(k); // (v0.99: the backgrounds' images too)
+    for (const k of [...Object.values(SX_HERO), ...Object.values(SX_EN), 'g_duende_azul', 'lagarto', 'lz_mencey', 'lz_pastor', 'lz_mirla', ...SECF]) SPRX.ready(k); for (const k of Object.values(FZ)) FONDOS.get(k); // (v0.99: the backgrounds' images too)
     const p = { hero: HEROES[0], x: 30, z: 22, h: 0, vh: 0, vx: 0, face: 1, hp: 24, st: 'idle', stT: 0, anim: 0, combo: 0, comboT: 0, hitDone: new Set(), jars: 0, inv: 0, tap: { d: 0, t: 0 }, run: false, mount: null };
     const lp = () => 1 + 0.35 * loopN;
     function choose(i) { sel = i; p.hero = HEROES[i]; p.hp = p.hero.hp; p.jars = 0; }
@@ -267,7 +268,9 @@ ARCADE.GAMES.guanche = (() => {
       p.x = 30; p.z = 22; p.h = 0; p.vh = 0; p.vx = 0; p.st = 'idle'; p.inv = 1.5; p.mount = null; phase = 'intro'; phaseT = 2.8; if (!opt.demo) api.music(SONGS[THM[L.theme]]); }
     // ---------- spawning
     function spawn(k, x, z, extra) { const d = ED[k], look = LK[k] || LK.S; const e = { k, x, z, h: 0, vh: 0, vx: 0, face: -1, hp: d.hp * lp(), max: d.hp * lp(), st: 'walk', stT: 0, anim: Math.random() * 4, cd: 0.6 + Math.random(), d, look, side: Math.random() < 0.5 ? -1 : 1, hitDone: new Set(), hits: 0, ...(extra || {}) };
-      if (k === 'BT') e.s = 1.45; if (k === 'T') e.s = 1; E.push(e); return e; }
+      if (k === 'BT') e.s = 1.45; if (k === 'T') e.s = 1;
+      if (k === 'S' && Math.random() < 0.5) { e.sxk = SECF[Math.floor(Math.random() * SECF.length)]; e.fem = true; } // v0.99.3 (Jonay): half the minions are women (five looks)
+      E.push(e); return e; }
     function startWave(w) { const [wx, list, isBoss] = w; lock = { x: wx - VW / 2, n: 0, boss: !!isBoss }; const ks = list.split(' ');
       ks.forEach((k, i) => { const side = i % 2 ? -1 : 1, x = side > 0 ? lock.x + VW + 16 + i * 10 : lock.x - 16 - i * 10, z = 6 + ((i * 13) % 34);
         if (k === 'R') { const lz = { x, z, vx: 0, vz: 0, face: -side, anim: 0, whip: 0, rider: null, gone: 0, drops: 0 }; liz.push(lz); const e = spawn('S', x, z, { wave: true }); e.mount = lz; lz.rider = e; lock.n++; return; }
@@ -279,7 +282,7 @@ ARCADE.GAMES.guanche = (() => {
     function hit(att, t, dmg, kind) { if (t.st === 'down' || t.st === 'dead' || t.st === 'getup' || t.inv > 0) return false;
       if (t === p && g._god) return false;
       // v0.95 (Jonay): the kick to the crotch stuns (the women only take the damage; the big ones need the strong parry)
-      if (kind === 'stun' || kind === 'bigstun') { const fem = t === p ? p.hero.id === 'mirla' : !!FEM[t.k], big = t !== p && ((t.d && (t.d.armor || t.d.boss)) || ((t.look && t.look.s) || 1) >= 1.4);
+      if (kind === 'stun' || kind === 'bigstun') { const fem = t === p ? p.hero.id === 'mirla' : !!FEM[t.k] || !!t.fem, big = t !== p && ((t.d && (t.d.armor || t.d.boss)) || ((t.look && t.look.s) || 1) >= 1.4);
         t.hp -= dmg; api.sfx('hit'); fx.push({ k: 'spark', t: 0.25, x: (att.x + t.x) / 2, y: GY + t.z - t.h - 10 });
         if (t.hp <= 0) { fall(t, att); return true; }
         if (fem || (big && kind === 'stun')) { t.flash = 0.12; if (!big) { t.st = 'hurt'; t.stT = 0.3; t.stun = false; t.vx = Math.sign(t.x - att.x) * 20; } return true; }
@@ -371,7 +374,7 @@ ARCADE.GAMES.guanche = (() => {
       if (e.k === 'D' && e.st === 'idle') { e.st = 'thief'; e.dir = e.x < p.x ? -1 : 1; e.d = { ...d, spd: 110 }; return; } // got hit: runs away
       const dx = p.x - e.x, dz = p.z - e.z; e.cd -= dt;
       // v0.95 (Jonay): the enemies also kick, hit hard and do the running kick, more the higher their level
-      const lv = (EN_LVL[e.k] || 1) + loopN, ek = SX_EN[e.k], canK = !d.ranged && !lz && !d.dog && !!(ek && SPRX.D[ek] && SPRX.D[ek].n.length > 8);
+      const lv = (EN_LVL[e.k] || 1) + loopN, ek = e.sxk || SX_EN[e.k], canK = !d.ranged && !lz && !d.dog && !!(ek && SPRX.D[ek] && SPRX.D[ek].n.length > 8);
       if (e.st === 'edash') { e.stT -= dt; e.x += e.vx * dt; e.vx *= 0.97; if (!d.dog) e.h = Math.sin(Math.min(1, (0.6 - e.stT) / 0.6) * Math.PI) * 6;
         if (!e.hitDone.has(p) && Math.abs(p.x - e.x) < (d.dog ? 18 : 14) * ((e.look && e.look.s) || 1) && Math.abs(dz) < 10 && p.h < 12) { e.hitDone.add(p); hit(e, p, d.dmg + 1 + loopN, 'knock'); if (p.hp <= 0 && p.st !== 'dead') p.st = 'fall'; }
         if (e.stT <= 0) { e.st = 'idle'; e.h = 0; e.cd = d.cd; } return; }
@@ -472,11 +475,11 @@ ARCADE.GAMES.guanche = (() => {
       const r = q.bite > 0 ? 2 : mv ? 1 : 0, f = r === 2 ? Math.min(5, Math.floor((1 - q.bite / 0.4) * 6)) : SPRX.fr('lagarto', r, time, r ? (q.rider === p && p.run ? 18 : 10) : 5);
       if (q.rider === p && SPRX.draw(c, 'lz_' + p.hero.id, r, f, sx, sy, q.face, SXP)) return; // (on the lizard all at the lizard's size)
       if (!SPRX.draw(c, 'lagarto', r, f, sx, sy, q.face, SXP)) { lizard(c, sx, sy, q.face, q); return; }
-      const e = q.rider; if (e && e !== p && SX_EN[e.k]) { const d = SPRX.D.lagarto, s = sxScale(e), seatX = sx + q.face * d.seat[0] * SXP, seatY = sy + d.seat[1] * SXP;
-        SPRX.draw(c, SX_EN[e.k], 0, 0, seatX, seatY + 12 * s, q.face, s, seatY); if (e.flash > 0) { c.globalAlpha = 0.5; pblob(c, seatX, seatY - 12, 6, 10, '#fff'); c.globalAlpha = 1; } } }
+      const e = q.rider; if (e && e !== p && (e.sxk || SX_EN[e.k])) { const d = SPRX.D.lagarto, s = sxScale(e), seatX = sx + q.face * d.seat[0] * SXP, seatY = sy + d.seat[1] * SXP;
+        SPRX.draw(c, e.sxk || SX_EN[e.k], 0, 0, seatX, seatY + 12 * s, q.face, s, seatY); if (e.flash > 0) { c.globalAlpha = 0.5; pblob(c, seatX, seatY - 12, 6, 10, '#fff'); c.globalAlpha = 1; } } }
     function drawActor(c, o) { const sx = o.x - camX, sy = GY + o.z - o.h; if (sx < -60 || sx > VW + 60) return; if (o.st === 'dead' && flick()) return; if (o.inv > 0 && flick() && o.st !== 'getup') return;
       pblob(c, sx, GY + o.z, (o.d && o.d.dog ? 12 : 7) * (o.s || (o.look && o.look.s) || 1), 1.6, 'rgba(0,0,0,0.35)');
-      const sk = o === p ? SX_HERO[p.hero.id] : o.k === 'D' && o.carry === 'J' ? 'g_duende_azul' : SX_EN[o.k]; // (the blue cap carries the blue potions)
+      const sk = o === p ? SX_HERO[p.hero.id] : o.k === 'D' && o.carry === 'J' ? 'g_duende_azul' : o.sxk || SX_EN[o.k]; // (the blue cap carries the blue potions; v0.99.3: o.sxk, a woman minion's sheet)
       if (o.mount && SPRX.ready('lagarto')) return; // drawn sitting on its lizard (drawLiz)
       if (sk && SPRX.ready(sk)) { const [r, f] = sxAnim(o, sk);
         // v0.99.2 (Jonay: «rescatar la caída original y rotarla solo»): the running kick is the falling pose of row 8 turned
@@ -534,11 +537,11 @@ ARCADE.GAMES.guanche = (() => {
       A.txt(c, p.hero.spell, SW / 2, 30, '#fff', 10, 'center'); }
     function hud(c) { const H = p.hero; c.fillStyle = 'rgba(0,0,0,0.5)'; c.fillRect(0, 0, SW, 30);
       if (tgt && !E.includes(tgt)) tgt = null;
-      if (tgt) { const k = tgt.k === 'D' && tgt.carry === 'J' ? 'g_duende_azul' : SX_EN[tgt.k], d = k && SPRX.D[k], bx = 252, by = 2;
+      if (tgt) { const k = tgt.k === 'D' && tgt.carry === 'J' ? 'g_duende_azul' : tgt.sxk || SX_EN[tgt.k], d = k && SPRX.D[k], bx = 252, by = 2;
         c.fillStyle = '#000'; c.fillRect(bx, by, 26, 26); c.strokeStyle = '#ffd400'; c.lineWidth = 1; c.strokeRect(bx + 0.5, by + 0.5, 25, 25);
         if (d && SPRX.ready(k)) { const [px0, py0, pw, ph] = d.por, sc = 24 / Math.max(pw, ph); c.save(); c.beginPath(); c.rect(bx + 1, by + 1, 24, 24); c.clip();
           SPRX.draw(c, k, 0, 0, bx + 1 + (d.ax - px0) * sc + (24 - pw * sc) / 2, by + 1 + (d.ay - py0) * sc, d.dir, sc); c.restore(); }
-        A.txt(c, String(tgt.d.boss || EN_NAME[tgt.k] || tgt.k).slice(0, 16) + ' NV ' + ((EN_LVL[tgt.k] || 1) + loopN), bx + 30, 4, '#fff', 6);
+        A.txt(c, String(tgt.d.boss || (tgt.fem ? 'SECUAZ' : EN_NAME[tgt.k]) || tgt.k).slice(0, 16) + ' NV ' + ((EN_LVL[tgt.k] || 1) + loopN), bx + 30, 4, '#fff', 6);
         c.fillStyle = '#3a0a0a'; c.fillRect(bx + 30, 16, 90, 7); c.fillStyle = '#e53935'; c.fillRect(bx + 30, 16, 90 * Math.max(0, tgt.hp) / tgt.max, 7); }
       A.txt(c, H.name, 8, 4, '#ffd400', 8); A.txt(c, String(g.score).padStart(7, '0'), 8, 16, '#fff', 8);
       const blocks = Math.ceil(H.hp / 2); for (let i = 0; i < blocks; i++) { const on = p.hp > i * 2; c.fillStyle = on ? (p.hp > i * 2 + 1 ? '#3ad04a' : '#d0c03a') : '#2a3a2a'; c.fillRect(130 + i * 9, 6, 7, 8); }

@@ -1,24 +1,23 @@
-# Pruebas 0.99.2 — 2026-10-27 18:14 — 2/2 OK
+# Pruebas 0.99.3 — 2026-10-27 20:35 — 4/4 OK
 
-Listas: v0992. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 92 s en total.
+Listas: v0993. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 93 s en total.
 
 | # | Prueba | Resultado | Tiempo |
 |---|---|---|---|
-| 1 | `prueba_096.py` | **OK** | 70 s |
+| 1 | `prueba_0993.py` | **OK** | 68 s |
 | 2 | `prueba_099.py` | **OK** | 2 s |
+| 3 | `prueba_096.py` | **OK** | 0 s |
+| 4 | `prueba_0952.py` | **OK** | 1 s |
 
 ## Detalle
 
-### 1. prueba_096.py — OK
+### 1. prueba_0993.py — OK
 
 ```
-patada fuerte y destello {'flash': 0, 'antes': [], 'skick_en': 0, 'alPulsar': 'idle', 'alSoltar': 'kick', 'golpePulsar': 'idle', 'golpeSoltar': 'atk'}
-foto v096_patada
-foto v096_patada_carrera
-foto v0961_mordisco
-GOLPES AL SOLTAR Y SIN DESTELLO FIJO OK
+foto v0993_secuazas {'fem': 6, 'cnt': {'g_sec_roja': 1, 'g_secuaz': 6, 'g_sec_vikinga': 2, 'g_sec_oro': 3, 'mirla': 1}}
+SECUACES HEMBRA Y MIRLADORA DIBUJADAS OK
 errores []
-PRUEBA 096 OK
+PRUEBA 0993 OK
 ```
 
 ### 2. prueba_099.py — OK
@@ -42,4 +41,28 @@ errores []
 PRUEBA 099 OK
 ```
 
-Fotos/archivos nuevos en `tests/shots/`: v0961_mordisco.jpg, v096_patada.jpg, v096_patada_carrera.jpg, v099_bencomo_0.jpg, v099_bencomo_1.jpg, v099_bencomo_2.jpg, v099_guanche_0.jpg, v099_guanche_1.jpg, v099_guanche_2.jpg, v099_guanche_3.jpg, v099_guanche_4.jpg, v099_guanche_5.jpg, v099_guanche_6.jpg, v099_guayota.jpg
+### 3. prueba_096.py — OK
+
+```
+patada fuerte y destello {'flash': 0, 'antes': [], 'skick_en': 0, 'alPulsar': 'idle', 'alSoltar': 'kick', 'golpePulsar': 'idle', 'golpeSoltar': 'atk'}
+foto v096_patada
+foto v096_patada_carrera
+foto v0961_mordisco
+GOLPES AL SOLTAR Y SIN DESTELLO FIJO OK
+errores []
+PRUEBA 096 OK
+```
+
+### 4. prueba_0952.py — OK
+
+```
+campamento {'fase': 'camp', 'montado': False, 'dibujado': 1, 'cargadas': 5}
+foto v0952_campamento
+SE VE EN EL CAMPAMENTO OK
+HOJAS CARGADAS AL ABRIR OK
+foto v0953_bencomo_caballero
+errores []
+PRUEBA 0952 OK
+```
+
+Fotos/archivos nuevos en `tests/shots/`: v0952_campamento.jpg, v0953_bencomo_caballero.jpg, v0961_mordisco.jpg, v096_patada.jpg, v096_patada_carrera.jpg, v0993_secuazas.jpg, v099_bencomo_0.jpg, v099_bencomo_1.jpg, v099_bencomo_2.jpg, v099_guanche_0.jpg, v099_guanche_1.jpg, v099_guanche_2.jpg, v099_guanche_3.jpg, v099_guanche_4.jpg, v099_guanche_5.jpg, v099_guanche_6.jpg, v099_guayota.jpg

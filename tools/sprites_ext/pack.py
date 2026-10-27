@@ -22,9 +22,9 @@ bb = Image.new('RGBA', (max(ben.width, gb.width), 64 * 9)); bb.paste(ben, (0, 0)
 bn0 = load('bencomo_ns.png'); bns = Image.new('RGBA', (bn0.width, 64 * 8)); bns.paste(bn0, (0, 0)); bns.paste(load('ben_agachado_ns.png'), (0, 64 * 7))
 SHEETS = {   # key: (image, fw, fh, dir (1 = drawn facing right), anchor or None = the feet of frame 0)
     'magote': (load('magote.png'), 80, 64, -1, (40, 64)), 'mencey': (load('mencey.png'), 80, 64, -1, (40, 64)),
-    'mirla': (load('mirla_nat.png'), 112, 80, -1, (56, 80)),
+    'mirla': (load('n_mirla.png'), 112, 80, -1, (56, 80)),   # v0.99.3 (Jonay): the girls on his new female base (chicas.py)
     'g_secuaz': (load('g_secuaz.png'), 80, 64, -1, (40, 64)), 'g_escudo': (load('g_escudo.png'), 80, 64, -1, (40, 64)),
-    'g_giganton': (load('g_giganton.png'), 80, 64, -1, (40, 64)), 'g_bruja': (load('g_bruja.png'), 112, 80, -1, (56, 80)),
+    'g_giganton': (load('g_giganton.png'), 80, 64, -1, (40, 64)), 'g_bruja': (load('n_bruja.png'), 112, 80, -1, (56, 80)),
     'g_duende': (load('g_duende.png'), 80, 64, -1, (40, 64)), 'g_duende_azul': (load('g_duende_azul.png'), 80, 64, -1, (40, 64)), 'g_guayota': (load('g_guayota.png'), 80, 64, -1, (40, 64)),
     'g_brujamayor': (load('g_brujamayor.png'), 92, 70, 1, None), 'g_tibicena': (load('g_tibicena.png'), 32, 32, 1, None),
     'lagarto': (load('lagarto3.png'), 120, 48, 1, None),
@@ -35,6 +35,10 @@ SHEETS = {   # key: (image, fw, fh, dir (1 = drawn facing right), anchor or None
     'b_arcabucero': (load('b_arcabucero.png'), 80, 64, -1, (40, 64)), 'b_capitan': (load('b_capitan.png'), 80, 64, -1, (40, 64)),
     'b_perro': (load('b_perro.png'), 32, 32, 1, None), 'b_caballero': (load('caballero_capitan.png'), 128, 128, 1, None),
     'b_lugo': (load('lugo_caballo.png'), 128, 128, 1, None),
+    # v0.99.3 (Jonay): the female minions (chicas.py)
+    'g_sec_roja': (load('n_roja.png'), 80, 64, -1, (40, 64)), 'g_sec_vikinga': (load('n_vikinga.png'), 80, 64, -1, (40, 64)),
+    'g_sec_demonia': (load('n_demonia.png'), 80, 64, -1, (40, 64)), 'g_sec_oro': (load('n_oro.png'), 80, 64, -1, (40, 64)),
+    'g_sec_lenadora': (load('n_lenadora.png'), 80, 64, -1, (40, 64)),
 }
 # v0.98 (Jonay): the new enemies and bosses of Guanche Guarriors (tools/sprites_ext/newsheets.py)
 NU = json.load(open(O + 'nuevos.json'))
