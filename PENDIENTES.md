@@ -104,6 +104,48 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
     - En el piso, una consola comprada en la juguetería (vale una pasta). Los juegos se compran también en la
       juguetería y en casa se juegan gratis. Al encenderla sale un menú con los juegos que tengas.
 
+### Bencomo (recreativa)
+
+- [ ] ⚡ **La vara en los saltos largos** (Jonay, 27-oct, tras la v0.93): ahora es una línea; debe parecerse a la vara
+  que lleva (con su grosor, color y trazo). Es la vara larga, pero cogida por el medio: sobresale por detrás tanto como
+  por delante (así no gana distancia de ataque).
+- [ ] ◐ **El picado con la vara** (Jonay, 27-oct): usar la pose de agachado, con la vara bien dibujada (como la que
+  lleva) apuntando hacia abajo.
+- [ ] ◐ **Los caballeros castellanos no pegan en estilo** (Jonay, 27-oct): hacerlos como Lugo a caballo (PixelHorse ×2
+  con trazo), pero sin lanza, con espada normal, el caballo con menos armadura y montado por un capitán.
+
+### Guanche Guarriors (recreativa)
+
+- [ ] ⚡ **Más margen vertical para acertar los golpes** (Jonay, 27-oct): ahora parece que estás delante del enemigo
+  pero no le das hasta ponerte casi a su misma altura (profundidad `z`).
+- [ ] ⚡ **El duende ladrón** (Jonay, 27-oct): quitarle la barriga que se le puso; acortarle el tronco 2 píxeles y las
+  piernas otros 2. Un gorro de Papá Noel **azul** para los que llevan pociones azules; los rojos (los que dan comida)
+  siguen con el rojo.
+- [ ] ◐ **Perros más grandes** (Jonay, 27-oct): ahora no dan miedo; el jefe (el tibicena mayor) aún más grande. Que
+  muerdan con un efecto parecido al del lagarto, y los jefes perro usan mucho el ataque en carrera.
+- [ ] ◐ **Retrato del enemigo al que pegas** (Jonay, 27-oct): arriba, con su nivel y su vida; cambia al pegar a otro.
+  Si un golpe da a varios, se queda el más fuerte (si son iguales, uno al azar de los golpeados).
+- [ ] ● **Controles y golpes nuevos** (Jonay, 27-oct):
+  - Botón izquierdo mantenido: **golpe fuerte** (animación algo más lenta, pega más, destello en el golpe).
+  - Botón derecho: **patada a la entrepierna**, que aturde (para luego rematar con golpe en salto). Los enemigos
+    grandes necesitan una **parada fuerte** (botón derecho mantenido) para aturdirlos. Las hechiceras y demás
+    personajes femeninos no se aturden con la patada: solo reciben daño.
+  - **Magia**: botón izquierdo + derecho mantenidos.
+  - **Ataque en carrera** = parada con el botón derecho: el personaje casi en horizontal (girado 80°) con la pierna
+    extendida por arriba, como la caída actual de La Mirladora (captura de Jonay), espejado según vaya a izquierda o
+    derecha. Los otros dos tienen las piernas distintas en la caída: hay que ajustarlos para que lleven la pierna
+    estirada.
+  - **Los enemigos también hacen todos estos ataques**, más cuanto más nivel tengan (no siempre el golpe simple).
+
+### Fútbol y baloncesto 2D
+
+- [ ] ◐ **Fútbol: cambio de jugador en defensa** (Jonay, 27-oct): con el botón derecho, si el más cercano al balón va
+  corriendo por detrás y hay otro defensor por delante del balón a distancia parecida (hasta 1 m más lejos, con
+  jugadores de ~1,75 m), elegir al de delante: priorizar al defensor hacia el que avanza el balón frente al que se aleja.
+- [ ] ● **Fútbol: campo un 30 % más grande y un jugador de campo más** (Jonay, 27-oct): 5 + portero.
+- [ ] ● **Baloncesto con el kit de personajes de GandalfHardcore** (Jonay, 27-oct, pregunta): diseñar camisetas de
+  tirantes por capas y hacer nosotros los combos de mates con las mismas piezas.
+
 ### Gráficos de los minijuegos
 
 - [~] ● v0.90.0 (basket: el A++ semicabezón 120 en el juego; fútbol F2 en v0.88) **Repasar el pixel art de los jugadores de todos los minijuegos** (Jonay, 26-oct): no le gustan los personajes

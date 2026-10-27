@@ -22,7 +22,7 @@ H = lambda n: L('GandalfHardcore 58x Hair/28x Male Hair/Male Hair%d.png' % n)
 TAM = [(60,38,22),(110,74,44),(150,108,66),(196,160,112)]
 HAIR = tint(H(27), [(19,19,28),(30,26,30),(48,40,42),(70,60,60)])
 b2 = open(G + '/build2.py').read(); exec(b2[b2.index('ENDS = {}'):b2.index('def eyes(')])
-STAFF = pole(STM, 12, 4, [(30,20,14),(92,58,34),(120,84,52),(150,104,62)], key='benc', skin=SK3)
+STAFF = pole(STM, 12, 4, [(30,20,14),(92,58,34),(120,84,52),(150,104,62)], key='benc', skin=SK3, mid=4)
 fr = lambda im, r, c: im.crop((c*80, r*64, c*80+80, r*64+64))
 def hip_of(sk):
     """the last row with tamarco (underwear) pixels and the centre x of that row"""
@@ -52,7 +52,8 @@ def crouch(r, c, staff_mode='keep'):
                 if 0 <= X < 80 and 0 <= Y < 64: px[X, Y] = PAL[ch] + (255,)
     hair = Image.new('RGBA', (80, 64)); hair.alpha_composite(lean(shrink(fr(HAIR, r, c).crop((0, 0, 80, hy + 1)))), (0, DROP))
     st = Image.new('RGBA', (80, 64))
-    if staff_mode == 'keep': st.alpha_composite(fr(STAFF, r, c), (0, DROP))
+    if staff_mode == 'none': pass   # (v0.94) without the pole: the game draws it pointing down for the pogo
+    elif staff_mode == 'keep': st.alpha_composite(fr(STAFF, r, c), (0, DROP))
     else:  # the low thrust: from the hands forward and down to the ground in front
         spx = s.load(); cand = [(x, y) for y in range(44, 56) for x in range(80) if spx[x, y][3] and spx[x, y][:3] != (19,19,28)]
         gx, gy = round(hx) - 6, hy + DROP - 3; ang = math.radians(staff_mode)
@@ -67,7 +68,7 @@ def row(fs):
     return band(im, sk)
 idle = row([crouch(0, c, 258) for c in range(5)])
 atk = row([crouch(0, 0, 258), crouch(0, 1, 220), crouch(0, 2, 168), crouch(0, 3, 158), crouch(0, 4, 158), crouch(0, 0, 210)])
-idle.save(G + '/out2/ben_agachado.png'); atk.save(G + '/out2/ben_golpebajo2.png')
+idle.save(G + '/out2/ben_agachado.png'); row([crouch(0, c, 'none') for c in range(5)]).save(G + '/out2/ben_agachado_ns.png'); atk.save(G + '/out2/ben_golpebajo2.png')
 prev = Image.new('RGBA', (80*7, 64), (60,70,85,255))
 prev.alpha_composite(fr(idle, 0, 0)); [prev.alpha_composite(fr(atk, 0, c), ((c+1)*80, 0)) for c in range(6)]
 prev.resize((prev.width*3, 192), Image.NEAREST).save(G + '/prevD.png')

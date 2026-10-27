@@ -19,20 +19,21 @@ def feet(im, fw, fh):
 # Bencomo: his 7 rows + crouched (7) + low thrust (8)
 ben = load('bencomo.png'); ag = load('ben_agachado.png'); gb = load('ben_golpebajo2.png')
 bb = Image.new('RGBA', (max(ben.width, gb.width), 64 * 9)); bb.paste(ben, (0, 0)); bb.paste(ag, (0, 64 * 7)); bb.paste(gb, (0, 64 * 8))
+bn0 = load('bencomo_ns.png'); bns = Image.new('RGBA', (bn0.width, 64 * 8)); bns.paste(bn0, (0, 0)); bns.paste(load('ben_agachado_ns.png'), (0, 64 * 7))
 SHEETS = {   # key: (image, fw, fh, dir (1 = drawn facing right), anchor or None = the feet of frame 0)
     'magote': (load('magote.png'), 80, 64, -1, (40, 64)), 'mencey': (load('mencey.png'), 80, 64, -1, (40, 64)),
     'mirla': (load('mirla2.png'), 112, 80, -1, (56, 80)),
     'g_secuaz': (load('g_secuaz.png'), 80, 64, -1, (40, 64)), 'g_escudo': (load('g_escudo.png'), 80, 64, -1, (40, 64)),
     'g_giganton': (load('g_giganton.png'), 80, 64, -1, (40, 64)), 'g_bruja': (load('g_bruja.png'), 112, 80, -1, (56, 80)),
-    'g_duende': (load('g_duende.png'), 80, 64, -1, (40, 64)), 'g_guayota': (load('g_guayota.png'), 80, 64, -1, (40, 64)),
+    'g_duende': (load('g_duende.png'), 80, 64, -1, (40, 64)), 'g_duende_azul': (load('g_duende_azul.png'), 80, 64, -1, (40, 64)), 'g_guayota': (load('g_guayota.png'), 80, 64, -1, (40, 64)),
     'g_brujamayor': (load('g_brujamayor.png'), 92, 70, 1, None), 'g_tibicena': (load('g_tibicena.png'), 32, 32, 1, None),
     'lagarto': (load('lagarto3.png'), 120, 48, 1, None),
     'lz_mencey': (load('lagarto_magote.png'), 120, 80, -1, None), 'lz_pastor': (load('lagarto_mencey.png'), 120, 80, -1, None),
     'lz_mirla': (load('lagarto_mirla.png'), 120, 80, -1, None),
-    'bencomo': (bb, 80, 64, -1, (40, 64)), 'bencomo_ns': (load('bencomo_ns.png'), 80, 64, -1, (40, 64)),
+    'bencomo': (bb, 80, 64, -1, (40, 64)), 'bencomo_ns': (bns, 80, 64, -1, (40, 64)),
     'b_soldado': (load('soldado.png'), 80, 64, -1, (40, 64)), 'b_arquero': (Image.open('/mnt/user-data/uploads/GTA La Laguna/assets_externos/GandalfHardcore Archer/GandalfHardcore Archer red sheet.png').convert('RGBA'), 64, 64, 1, None),
     'b_arcabucero': (load('b_arcabucero.png'), 80, 64, -1, (40, 64)), 'b_capitan': (load('b_capitan.png'), 80, 64, -1, (40, 64)),
-    'b_perro': (load('b_perro.png'), 32, 32, 1, None), 'b_caballero': (load('caballero_rojo.png'), 96, 96, -1, None),
+    'b_perro': (load('b_perro.png'), 32, 32, 1, None), 'b_caballero': (load('caballero_capitan.png'), 128, 128, 1, None),
     'b_lugo': (load('lugo_caballo.png'), 128, 128, 1, None),
 }
 lz = json.load(open(O + 'lagarto3.json'))
@@ -41,6 +42,11 @@ for k, (im, fw, fh, d, anc) in SHEETS.items():
     n = counts(im, fw, fh); ax, ay = anc if anc else feet(im, fw, fh)
     b = io.BytesIO(); im.crop((0, 0, max(n) * fw, len(n) * fh)).save(b, 'PNG', optimize=True)
     e = {'fw': fw, 'fh': fh, 'n': n, 'ax': ax, 'ay': ay, 'dir': d, 'src': 'data:image/png;base64,' + base64.b64encode(b.getvalue()).decode()}
+    f0 = im.crop((0, 0, fw, fh)); bb0 = f0.getbbox(); p0 = f0.load()
+    top = [x for y in range(bb0[1], min(fh, bb0[1] + 6)) for x in range(fw) if p0[x, y][3]]
+    hx = sum(top) / len(top); side = 22 if fw >= 64 else 14
+    if k in ('g_tibicena', 'b_perro'): e['por'] = [fw - 20 if d > 0 else 0, max(0, bb0[1] - 2), 20, 16]
+    else: e['por'] = [round(hx - side / 2), max(0, bb0[1] - 2), side, side]
     if k == 'lagarto': sx, sy = lz['seats'][0]; e['seat'] = [round(sx - ax, 1), round(sy - ay, 1)]
     data[k] = e
 lines = ['// ============ SPRX_DATA (v0.93): the sprite sheets made from the external packs (GandalfHardcore, Evil Wizard 3,',

@@ -13,7 +13,7 @@ TAM = [(60,38,22),(110,74,44),(150,108,66),(196,160,112)]
 DARKWOOD = [(30,20,14),(58,38,24),(86,58,36),(120,84,52)]
 IRON = [(40,42,50),(84,88,98),(140,146,156),(200,206,214)]
 ENDS = {}
-def pole(stick, up, down, cols, bow=None, key=None, skin=None, trail_keep=True):
+def pole(stick, up, down, cols, bow=None, key=None, skin=None, trail_keep=True, mid=None):
     """the stick of each frame made longer (and recoloured); bow: a crossbow arc across the far end.
     In the swoosh frames of the attack (the stick hidden inside the trail) the staff keeps the line of the frame
     before, so it doesn't vanish. The ends of each line are kept in ENDS[key] for the orb."""
@@ -33,7 +33,7 @@ def pole(stick, up, down, cols, bow=None, key=None, skin=None, trail_keep=True):
                     cand = [(x, y) for y in range(sb_[1]+9, min(FH, sb_[1]+24)) for x in range(FW) if sp_[x, y][3] and sp_[x, y][:3] != (19,19,28)]
                     if cand: gx, gy = min(cand, key=lambda q: q[0]); gx += 1
             ang = math.radians(188 if n == 1 else 152)   # the strike in front (to the left): level, then down
-            a = (gx + math.cos(ang)*L_*0.72, gy + math.sin(ang)*L_*0.72); b = (gx - math.cos(ang)*L_*0.28, gy - math.sin(ang)*L_*0.28)
+            k_ = 0.5 if mid is not None else 0.72; a = (gx + math.cos(ang)*L_*k_, gy + math.sin(ang)*L_*k_); b = (gx - math.cos(ang)*L_*(1-k_), gy - math.sin(ang)*L_*(1-k_))
             last[1] = n; last[0] = (a0, b0); ends[(r, c)] = (a, b); last[2] = (gx, gy)
             g = Image.new('RGBA', f.size)
             if trail_keep: g.alpha_composite(tint(f.copy(), cols))   # the trail behind, the staff on top
@@ -46,6 +46,15 @@ def pole(stick, up, down, cols, bow=None, key=None, skin=None, trail_keep=True):
             if uy > 0: ux, uy = -ux, -uy
             proj = [(p[0]-mx)*ux + (p[1]-my)*uy for p in pts]; lo, hi = min(proj), max(proj)
             a = (mx+ux*(hi+up), my+uy*(hi+up)); b = (mx+ux*(lo-down), my+uy*(lo-down))
+            if mid is not None and skin is not None:
+                # Jonay (v0.94): the long pole held by the middle: as long behind the hand as in front of it
+                sk_ = skin.crop((c*FW, r*FH, c*FW+FW, r*FH+FH)); sp_ = sk_.load()
+                sp = [(x, y) for y in range(FH) for x in range(FW) if sp_[x, y][3] and sp_[x, y][:3] != (19,19,28)]
+                A0 = (mx+ux*hi, my+uy*hi); B0 = (mx+ux*lo, my+uy*lo)
+                dA = min((q[0]-A0[0])**2 + (q[1]-A0[1])**2 for q in sp) if sp else 0; dB = min((q[0]-B0[0])**2 + (q[1]-B0[1])**2 for q in sp) if sp else 1
+                grip, tip = (A0, B0) if dA <= dB else (B0, A0)
+                vx_, vy_ = tip[0]-grip[0], tip[1]-grip[1]; n_ = math.hypot(vx_, vy_) or 1; vx_, vy_ = vx_/n_, vy_/n_; Lh = n_ + mid
+                b = (grip[0]+vx_*Lh, grip[1]+vy_*Lh); a = (grip[0]-vx_*Lh, grip[1]-vy_*Lh)
         else: return f
         last[0] = (a, b); last[1] = 0; last[2] = ((a[0]+b[0])/2, (a[1]+b[1])/2); ends[(r, c)] = (a, b)
         g = Image.new('RGBA', f.size); d = ImageDraw.Draw(g)
@@ -66,6 +75,7 @@ def orb_far(img, key, skin, col):
         if not sb: continue
         cx, cy = (sb[0]+sb[2])/2, (sb[1]+sb[3])/2 - 4
         x, y = max((a, b), key=lambda p: (p[0]-cx)**2 + (p[1]-cy)**2); X, Y = round(c*FW+x), round(r*FH+y)
+        if not (5 <= y <= FH - 6 and 5 <= x <= FW - 6): continue   # (an orb that would spill into the next cell)
         for rad, al in ((5,50),(4,90),(3,160)): d.ellipse([X-rad, Y-rad, X+rad, Y+rad], fill=col+(al,))
         d.ellipse([X-2, Y-2, X+2, Y+2], fill=(19,19,28,255)); d.ellipse([X-1.5, Y-1.5, X+1.5, Y+1.5], fill=col+(255,)); out.putpixel((X-1, Y-1), (255,255,255,255))
     return out
@@ -120,51 +130,50 @@ def big(on):
 big(True); P_ = pad; SKF = pad(SK('Female Skin4')); STFp = pad(STF)
 stf = pole(STFp, 8, 2, DARKWOOD, key='mirla', skin=SKF, trail_keep=False)
 HAIRL = [(19,19,28),(92,60,32),(146,104,56),(192,148,86),(222,186,118),(240,212,150)]
-base = compose([recol_uw(SKF, TAM), tint(pad(L('GandalfHardcore 43x Female Clothing/Red bikini.png')), TAM), tint(pad(L('GandalfHardcore 43x Female Clothing/Short Skirt.png')), TAM), tint(pad(FHr(21)), HAIRL), stf])
+base = with_kicks(None, compose([recol_uw(SKF, TAM), tint(pad(L('GandalfHardcore 43x Female Clothing/Red bikini.png')), TAM), tint(pad(L('GandalfHardcore 43x Female Clothing/Short Skirt.png')), TAM), tint(pad(FHr(21)), HAIRL)]), stf, 112, 80, 16, 49)
 save('mirla2', cast(orb_far(base, 'mirla', SKF, (120,230,255)), 'mirla', SKF, (120,230,255)), 112, 80); big(False)
 SK3m = SK('Male Skin3')
 cape = tint(L('GandalfHardcore Back layers s/Cape blue.png'), FUR[:4])
-save('mencey', compose([cape, recol_uw(SK3m, TAM), H(12), pole(STM, 14, 6, [(30,20,14),(92,58,34),(120,84,52),(150,104,62)], key='mencey', skin=SK3m)]))
-ben = compose([recol_uw(SK3m, TAM), tint(H(27), [(19,19,28),(30,26,30),(48,40,42),(70,60,60)]), pole(STM, 12, 4, [(30,20,14),(92,58,34),(120,84,52),(150,104,62)], key='bencomo', skin=SK3m)])
+save('mencey', with_kicks(cape, compose([recol_uw(SK3m, TAM), H(12)]), pole(STM, 14, 6, [(30,20,14),(92,58,34),(120,84,52),(150,104,62)], key='mencey', skin=SK3m, mid=5)))
+ben = compose([recol_uw(SK3m, TAM), tint(H(27), [(19,19,28),(30,26,30),(48,40,42),(70,60,60)]), pole(STM, 12, 4, [(30,20,14),(92,58,34),(120,84,52),(150,104,62)], key='bencomo', skin=SK3m, mid=4)])
 save('bencomo', band(ben, SK3m))
 # Bencomo without the pole: for vaulting and the pogo, where the game draws the planted pole itself
 save('bencomo_ns', band(compose([recol_uw(SK3m, TAM), tint(H(27), [(19,19,28),(30,26,30),(48,40,42),(70,60,60)])]), SK3m))
 # ---------- Guanche Guarriors enemies
 dem = tint(L(SP + 'Male Demon skin.png'), [(19,19,28),(48,52,72),(70,76,104),(96,104,134),(130,138,166)])
-save('g_secuaz', eyes(compose([dem, thicken(STM, DARKWOOD)]), L(SP + 'Male Demon skin.png'), (255,58,26)))
+save('g_secuaz', with_kicks(None, dem, thicken(STM, DARKWOOD)))
 horn = tint(L('GandalfHardcore 41x Hats/Male Hat/Viking Helmet with horns.png'), [(19,19,28),(60,52,48),(120,110,96),(214,204,180),(236,230,214)])
-save('g_escudo', compose([L('GandalfHardcore Back layers s/Male Circle Shield.png'), dem, horn, thicken(STM, DARKWOOD)]))
+save('g_escudo', with_kicks(L('GandalfHardcore Back layers s/Male Circle Shield.png'), compose([dem, horn]), thicken(STM, DARKWOOD)))
 orc = tint(L(SP + 'Male Orc skin.png'), [(19,19,28),(70,44,34),(110,74,58),(146,104,80),(178,134,104)])
-save('g_giganton', compose([orc, tint(L(CP + 'Male Clothing/Pants.png'), TAM), horn, thicken(thicken(STM, DARKWOOD), DARKWOOD)]), scale=4)
-big(True); witch = compose([tint(pad(SK('Female Skin2')), [(19,19,28),(120,130,110),(170,180,156),(200,212,186),(222,230,210)]), tint(pad(L('GandalfHardcore 43x Female Clothing/Long dress purple.png')), [(19,19,28),(26,22,34),(44,38,58),(70,62,90)]), tint(pad(FHr(21)), [(19,19,28),(150,150,156),(200,200,206),(232,232,236)]), pole(pad(STF), 10, 2, DARKWOOD, key='bruja', skin=pad(SK('Female Skin2')), trail_keep=False)])
+save('g_giganton', with_kicks(None, compose([orc, tint(L(CP + 'Male Clothing/Pants.png'), TAM), horn]), thicken(thicken(STM, DARKWOOD), DARKWOOD)), scale=4)
+big(True); witch = with_kicks(None, compose([tint(pad(SK('Female Skin2')), [(19,19,28),(120,130,110),(170,180,156),(200,212,186),(222,230,210)]), tint(pad(L('GandalfHardcore 43x Female Clothing/Long dress purple.png')), [(19,19,28),(26,22,34),(44,38,58),(70,62,90)]), tint(pad(FHr(21)), [(19,19,28),(150,150,156),(200,200,206),(232,232,236)])]), pole(pad(STF), 10, 2, DARKWOOD, key='bruja', skin=pad(SK('Female Skin2')), trail_keep=False), 112, 80, 16, 49)
 save('g_bruja', cast(orb_far(witch, 'bruja', pad(SK('Female Skin2')), (90,255,106)), 'bruja', pad(SK('Female Skin2')), (90,255,106)), 112, 80); big(False)
 zom = L(SP + 'Male Zombie skin.png')
 def gnome(im):
-    """Jonay: the thief duende shorter in the legs and with a belly: 5 rows of the legs out, a pot belly in front"""
+    """Jonay: the thief duende short: 7 rows of the legs and 2 of the belly out (v0.94: no pot belly)"""
     out = Image.new('RGBA', im.size)
     for r in range(im.height // 64):
-        for c in range(im.width // 64 * 0 + im.width // 80):
+        for c in range(im.width // 80):
             f = im.crop((c*80, r*64, c*80+80, r*64+64))
             if not f.getbbox(): continue
             if r == 6 and c >= 4: out.paste(f, (c*80, r*64)); continue   # lying on the floor: as it is
             g = Image.new('RGBA', (80, 64)); y2 = 63
             for y in range(63, -1, -1):
-                if y in (52, 54, 56, 58, 60): continue
+                if y in (42, 45, 52, 53, 54, 56, 57, 58, 60): continue
                 g.paste(f.crop((0, y, 80, y + 1)), (0, y2)); y2 -= 1
-            gp = g.load(); SKIN, SK2 = (130,149,108), (104,114,83)
-            for y in range(42, 52):   # the belly, in front (they face left): the torso pushed out up to 3 px
-                w = round(3 * math.sin(math.pi * (y - 41) / 11))
-                xs = [x for x in range(80) if gp[x, y][3]]
-                if not xs or w <= 0: continue
-                x0 = xs[0]
-                for x in range(x0 - w, x0 + 1): gp[x, y] = (SKIN if x > x0 - w else SK2) + (255,)
-                gp[x0 - w - 1, y] = (19,19,28,255)
             out.paste(g, (c*80, r*64))
     return out
 sack = L('GandalfHardcore Back layers s/Backpack.png')   # the sack with the potions on its back
-save('g_duende', gnome(compose([sack, zom, tint(L(CP + 'Male Clothing/Pants.png'), TAM), L('GandalfHardcore 41x Hats/Male Hat/Male Santa hat.png')])), scale=2)   # Jonay: a Father Christmas cap
+save('g_duende', gnome(compose([sack, zom, tint(L(CP + 'Male Clothing/Pants.png'), TAM), L('GandalfHardcore 41x Hats/Male Hat/Male Santa hat.png')])), scale=2)
+# the duendes with blue potions wear a blue cap (Jonay); the red ones carry the food
+santa = L('GandalfHardcore 41x Hats/Male Hat/Male Santa hat.png'); spx = santa.load()
+for y in range(santa.height):
+    for x in range(santa.width):
+        r_, g_, b_, a_ = spx[x, y]
+        if a_ and r_ > g_ + 40 and r_ > b_ + 40: spx[x, y] = (int(r_ * 0.25), int(r_ * 0.45), min(255, int(r_ * 1.05)), a_)
+save('g_duende_azul', gnome(compose([sack, zom, tint(L(CP + 'Male Clothing/Pants.png'), TAM), santa])), scale=2)   # Jonay: a Father Christmas cap
 dev = L(SP + 'Male Devil skin.png')
-save('g_guayota', compose([dev, tint(L(CP + 'Male Clothing/Pants.png'), [(19,19,28),(30,10,6),(60,20,10),(255,106,26)]), tint(L('GandalfHardcore 41x Hats/Male Hat/Viking Helmet with horns.png'), [(19,19,28),(40,8,6),(80,16,10),(130,30,16),(226,206,170)]), tint(L('GandalfHardcore 35x Hand Items/Male Hand/Iron Axe.png'), [(19,19,28),(40,14,12),(90,30,16),(220,100,30),(255,190,90)])]), scale=5)   # Jonay: an axe (obsidian with a lava edge)
+save('g_guayota', with_kicks(None, compose([dev, tint(L(CP + 'Male Clothing/Pants.png'), [(19,19,28),(30,10,6),(60,20,10),(255,106,26)]), tint(L('GandalfHardcore 41x Hats/Male Hat/Viking Helmet with horns.png'), [(19,19,28),(40,8,6),(80,16,10),(130,30,16),(226,206,170)])]), tint(L('GandalfHardcore 35x Hand Items/Male Hand/Iron Axe.png'), [(19,19,28),(40,14,12),(90,30,16),(220,100,30),(255,190,90)])), scale=5)   # Jonay: an axe (obsidian with a lava edge)
 dog = L('GandalfHardcore Pet companion/GandalfHardcore doggy sheet.png')
 tib = tint(dog.copy(), [(10,10,14),(24,22,28),(38,34,42),(56,50,60),(76,68,80)])
 # red eyes: the darkest pixel of the dog's head row in the original sheet is the eye; take the original eye colour

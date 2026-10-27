@@ -95,3 +95,31 @@ def compose(layers):
     b = Image.new('RGBA', layers[0].size)
     for l in layers: b.alpha_composite(l)
     return b
+
+def with_kicks(back, body, front, fw=80, fh=64, oy=0, hip=51):
+    """v0.95 (Jonay): the whole sheet (back accessories + body + front accessories) plus two rows made from the layers:
+    7 = the kick to the crotch (the standing legs stay, a copy of the body's legs swings forwards from the hip: they
+        face left), 8 = the running kick (the idle figure turned ~100° so it flies almost flat, feet in front)."""
+    full = compose([back, body, front]) if back is not None else compose([body, front])
+    H = hip + oy
+    def fr(im, r, c): return im.crop((c*fw, r*fh, c*fw+fw, r*fh+fh))
+    b0 = fr(body, 0, 0); legs = Image.new('RGBA', (fw, fh)); legs.paste(b0.crop((0, H, fw, fh)), (0, H))
+    lb = legs.getbbox(); px = (lb[0] + lb[2]) / 2
+    upper = Image.new('RGBA', (fw, fh)); upper.paste(b0.crop((0, 0, fw, H)), (0, 0))
+    acc = Image.new('RGBA', (fw, fh))
+    if back is not None: acc.alpha_composite(fr(back, 0, 0))
+    accf = fr(front, 0, 0)
+    row7 = []
+    for a in (35, 80, 35):
+        f = Image.new('RGBA', (fw, fh)); f.alpha_composite(acc); f.alpha_composite(legs)
+        f.alpha_composite(upper); f.alpha_composite(accf); f.alpha_composite(legs.rotate(-a, resample=Image.NEAREST, center=(px, H - 1))); row7.append(f)   # the kicking leg in front of everything
+    whole = Image.new('RGBA', (fw, fh)); whole.alpha_composite(acc); whole.alpha_composite(b0); whole.alpha_composite(accf)
+    row8 = []
+    for a, lift in ((100, 2), (96, 0)):
+        bb = whole.getbbox(); cx, cy = (bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2
+        r = whole.rotate(-a, resample=Image.NEAREST, center=(cx, cy)); rb = r.getbbox()
+        f = Image.new('RGBA', (fw, fh)); f.alpha_composite(r, (0, (fh - 5 - lift) - rb[3])); row8.append(f)
+    rows = full.height // fh; out = Image.new('RGBA', (full.width, fh * 9)); out.paste(full.crop((0, 0, full.width, fh * min(rows, 7))), (0, 0))
+    for i, f in enumerate(row7): out.paste(f, (i * fw, 7 * fh))
+    for i, f in enumerate(row8): out.paste(f, (i * fw, 8 * fh))
+    return out

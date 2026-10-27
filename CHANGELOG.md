@@ -3,6 +3,34 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.94.0 — 2026-10-27 — Guanche Guarriors con patadas y golpes fuertes; retoques de Bencomo
+- **Guanche Guarriors: controles nuevos** (Jonay):
+  - **Botón izquierdo (A) mantenido: golpe fuerte**. Mientras lo mantienes brilla la mano; al soltar sale un golpe
+    más lento que pega más, tumba y da un destello.
+  - **Botón derecho: patada a la entrepierna**, que deja aturdido al enemigo (con estrellitas): es el momento de
+    saltarle por encima y rematarlo por la espalda. Las brujas (y La Mirladora) no se aturden: solo reciben el daño.
+    Los grandes (el Gigantón, los jefes) necesitan la **parada fuerte**: el botón derecho mantenido.
+  - **Magia**: los dos botones a la vez.
+  - **Ataque en carrera**: ahora con el botón derecho, una patada volando casi en horizontal, con los pies por delante.
+  - **Los enemigos también** dan golpes fuertes (avisan con un brillo naranja), patadas que aturden y patadas en
+    carrera, más cuanto más nivel tienen. Los perros se lanzan a por ti a la carrera, y el tibicena mayor casi siempre.
+- **Guanche Guarriors, además** (Jonay, tras probar la 0.93):
+  - **Más margen en profundidad para acertar**: antes había que estar casi a la misma altura que el enemigo; ahora
+    llega un poco más arriba y abajo, y algo más con los grandes. Lo mismo para los golpes de los enemigos.
+  - **Retrato del enemigo al que pegas**, arriba, con su nombre, su nivel y su vida; cambia al pegar a otro. Si un
+    golpe da a varios, se queda el más fuerte (entre iguales, uno al azar).
+  - **Los perros**, más grandes (y el tibicena mayor aún más), y muerden con unas fauces con dientes que se cierran,
+    como el lagarto.
+  - **El duende ladrón**, sin barriga y más bajito (2 píxeles menos de tronco y 2 de piernas); los que llevan pociones
+    azules, con el gorro de Papá Noel azul; los rojos, los de la comida.
+  - **La vara de El Mencey, cogida por el medio**: sobresale por detrás tanto como por delante.
+- **Bencomo**:
+  - **La vara**, también cogida por el medio, y en los saltos largos dibujada como la que lleva (con su trazo y su
+    color), no como una línea.
+  - **El picado**: agachado sobre la vara, que apunta hacia abajo.
+  - **Los caballeros**: un capitán castellano con espada sobre un caballo negro como el de Lugo, sin armadura, solo con
+    la gualdrapa roja bajo la silla.
+
 ## 0.93.0 — 2026-10-27 — Personajes nuevos en Bencomo y Guanche Guarriors
 - **Personajes nuevos** (Jonay: «implementa estos assets nuevos»): los dos juegos de la recreativa usan ahora los
   dibujos de la página de propuestas, hechos a partir de packs de itch.io (GandalfHardcore, Evil Wizard 3, PixelHorse
