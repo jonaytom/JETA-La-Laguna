@@ -15,6 +15,12 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Recreativas, consola GOFIO-8 y torneo
 
+- [ ] ◐ **Guanche Guarriors: el aura de fuego del lobo como poder del jefe lobo** (Jonay, 27-oct): en el GIF original,
+  al aullar sale en el suelo una franja de llamitas rojas que quité al recortarlo (`tools/sprites_ext/wolf2.py`, «red
+  bars»). Idea de Jonay: que sea el poder del jefe lobo (BT, fase de Los Gigantes), p. ej. aúlla y quema alrededor.
+- [ ] ◐ **Guanche Guarriors: ¿de día o de noche?** (27-oct): los fondos nuevos son de día; el campamento sigue oscureciendo. Preguntado dos veces, sin respuesta; si Jonay quiere noche, se añade un tinte por fase.
+- [ ] ● **Guanche Guarriors: repasar los jefes con Jonay antes de seguir** (Jonay, 27-oct): lista de jefes por fase para
+  revisarlos uno a uno (aspecto, poderes, ayudantes) antes de meter los fondos nuevos y lo demás.
 - [~] ● v0.98.0 (las dos fases nuevas, Gollux, gorgonas, ratas, lobo y Guayota = Demon Overlord, en el juego; licencias: todos gratuitos de itch.io, Jonay 27-oct; falta usar los Mythic Monsters) **Guanche Guarriors: más fases, enemigos y jefes con los packs nuevos** (Jonay, 27-oct; página «Guanche
   Guarriors: personajes nuevos»): carpetas nuevas en `assets_externos`.
   - Guayota, jefe final, basado en **Demon Overlord 2D Pixel Art** (el del hacha pasa a jefe intermedio).
@@ -24,13 +30,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   - **Perros → el lobo del GIF** que pasó Jonay (sacado fotograma a fotograma: parado, correr, morder, morir, aullar;
     `tools/sprites_ext/wolf.py`). Falta confirmar de qué pack es y su licencia, y pulir el fondo entre las patas.
   - Licencias por mirar: Gollux, RAt, Free Mythic Monsters.
-- [ ] ● **Fondos de Guanche Guarriors y de Bencomo a partir de fotos reales** (Jonay, 27-oct): fotos de referencia de
-  cada zona pasadas a pixel art, en capas de paralaje y con algo de movimiento (nubes, olas, cascada, niebla).
-  - Fotos ya recibidas en `docs/referencias/fondos_guanche/`: `taoro_2-3` (valle de La Orotava, sin casas),
-    `anaga_1-2`, `barranco_1-2` (la cascada), `gigantes_1-3`, `malpais_1-3`, `canadas_1` (= `taoro_1`, el Teide desde
-    Las Cañadas), `echeyde_1-3` (Cueva del Viento).
-  - Bencomo (`docs/referencias/fondos_bencomo/`): `anaza_1` (costa de callaos); Acentejo y el claro, con las de
-    barranco y Anaga.
 - [ ] ◐ **Guerra de Naves, para pulir**: abajo a la derecha, «CREDIT 0» se monta sobre la barra del BEAM y el icono del
   módulo. También quedan una cuarta fase, jefes más grandes, más enemigos y sprites más trabajados.
 - [ ] ● **PAQUETE «RECREATIVAS Y MINIJUEGOS» (Jonay, 19-oct: «para acometer YA», plan v0.79 → v0.84)**:
@@ -463,6 +462,9 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Hecho
 
+- [x] v0.99.0 **Fondos de Guanche Guarriors y de Bencomo a partir de fotos reales** (Jonay, 27-oct): dibujados a partir de lo que muestran sus fotos (`docs/referencias/fondos_guanche/`, `fondos_bencomo/`), en capas de paralaje; `tools/fondos/`.
+- [x] v0.99.0 **Guanche Guarriors: la mordida del lobo salía en el aire** (Jonay, 27-oct): sigue al hocico fotograma a fotograma.
+- [x] v0.99.0 **Guanche Guarriors: Tenique, la Reina Harimaguada y las Harimaguadas; Guayota más pequeño, con todos sus fotogramas y píxel a píxel; patada en carrera sin perder calidad** (Jonay, 27-oct).
 - [x] v0.98.2 **Guanche Guarriors: patada en carrera girada al revés** (Jonay, 27-oct): ahora la pierna estirada va delante y abajo y la cabeza arriba.
 - [x] v0.97.2 **Guanche Guarriors: patada en carrera 15° menos tumbada** (Jonay, 27-oct).
 - [x] v0.97.0 **Guanche Guarriors: La Mirladora sin bikini y más rubia** (Jonay, 27-oct): pezón rosado; también montada en el lagarto (`tools/sprites_ext/mirla_nat.py`).

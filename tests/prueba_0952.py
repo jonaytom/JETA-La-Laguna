@@ -12,7 +12,7 @@ async def run(pg):
         r = json.loads(await pg.evaluate("""(()=>{ const A=__dbg.ARCADE, gm=A._game(), S=__dbg.SPRX; gm._choose(0); gm._god=true; const p=gm._p; A._step(30); gm._E.length=0;
           const lz={ x:p.x+4, z:p.z, vx:0, vz:0, face:1, anim:0, whip:0, rider:null, gone:0, drops:0, free:true }; gm._liz.push(lz); p.mount=lz; lz.rider=p; lz.free=false;
           gm._clear(); A._step(3); p.inv=0; /* (still blinking from the start of the stage) */ const fase=gm._phase(); let n=0; const d0=S.draw; S.draw=function(c,k){ if (k==='magote') n++; return d0.apply(this, arguments); }; A._render(); S.draw=d0;
-          const cargadas=['g_secuaz','g_bruja','g_tibicena','lagarto','lz_mirla'].filter(k=>S.ready(k)).length;
+          const cargadas=['g_secuaz','g_bruja','g_lobo','lagarto','lz_mirla'].filter(k=>S.ready(k)).length;
           return JSON.stringify({ fase, montado: !!p.mount, dibujado: n, cargadas, foto: document.getElementById('arcade').toDataURL('image/jpeg', 0.9) }); })()"""))
         d = r.pop('foto')
         print('campamento', r)

@@ -130,13 +130,16 @@ ARCADE.GAMES.guanche = (() => {
   const SX_HERO = { mencey: 'magote', pastor: 'mencey', mirla: 'mirla' }, SXP = 2 / Z; // one pixel of a sheet = 2 of the screen
   const SX_BIG = { mencey: 1.2 }; // Jonay: El Magote a 20 % bigger than El Mencey
   const FEM = { W: 1, BW: 1, GO: 1, GM: 1, BGO: 1 }; // (the kick doesn't stun them)
-  const EN_NAME = { S: 'SECUAZ', H: 'SECUAZ ESCUDO', G: 'GIGANTÓN', W: 'BRUJA', D: 'DUENDE', T: 'LOBO', GO: 'GORGONA', GM: 'GORGONA', RA: 'RATA' }, EN_LVL = { D: 1, RA: 1, T: 2, S: 2, W: 3, H: 3, G: 4, GO: 4, GM: 4, BG: 5, BW: 6, BT: 6, BH: 7, BGO: 7, BGX: 8, BX: 8, BY: 9 };
+  const EN_NAME = { S: 'SECUAZ', H: 'SECUAZ ESCUDO', G: 'GIGANTÓN', W: 'BRUJA', D: 'DUENDE', T: 'LOBO', GO: 'HARIMAGUADA', GM: 'HARIMAGUADA', RA: 'RATA' }, EN_LVL = { D: 1, RA: 1, T: 2, S: 2, W: 3, H: 3, G: 4, GO: 4, GM: 4, BG: 5, BW: 6, BT: 6, BH: 7, BGO: 7, BGX: 8, BX: 8, BY: 9 };
   const SX_EN = { S: 'g_secuaz', H: 'g_escudo', G: 'g_giganton', BG: 'g_giganton', BH: 'g_giganton', W: 'g_bruja', BW: 'g_brujamayor', D: 'g_duende', BY: 'g_overlord', BX: 'g_guayota', T: 'g_lobo', BT: 'g_lobo',
     GO: 'g_gorgona1', GM: 'g_gorgona2', BGO: 'g_gorgona3', RA: 'g_rata', BGX: 'g_gollux' }; // v0.98 (Jonay): the wolf for the dogs, the gorgons, Gollux, the rats and Guayota as the Demon Overlord
   // v0.98: how big each new sheet is drawn (its figure is taller or shorter than the GandalfHardcore people's ~48 px) and
   // where the mouth of the biters is (for the bite), in sheet pixels from the feet
-  const SX_K = { g_lobo: 0.85, g_gorgona1: 0.64, g_gorgona2: 0.64, g_gorgona3: 0.64, g_gollux: 0.85, g_rata: 1, g_overlord: 0.58 };
+  const SX_K = { g_lobo: 0.85, g_gorgona1: 0.64, g_gorgona2: 0.64, g_gorgona3: 0.64, g_gollux: 0.85, g_rata: 1, g_overlord: 1 / 2.1 }; // (v0.99, Jonay: «Guayota es demasiado grande y pierde calidad»: its sheet made at 5/8 without blur, drawn pixel for pixel: 1 / its look's 2.1)
   const MOUTH = { g_tibicena: [13, 11], g_lobo: [33, 25], g_rata: [13, 9] };
+  // v0.99 (Jonay: «la mordida de los perros sale en el aire»): the wolf's snout moves in its bite, so the jaws follow it
+  // frame by frame (measured on the sheet: [forward, up] from its feet)
+  const MOUTH_F = { g_lobo: [[33, 10], [33, 11], [35, 20], [35, 23], [36, 22], [36, 21], [34, 15], [33, 21], [34, 28], [32, 22], [26, 19], [27, 11], [34, 10], [33, 15]] };
   const ED = { S: { hp: 8, spd: 34, reach: 18, dmg: 2, wind: 0.42, cd: 1.3, pts: 300 }, H: { hp: 11, spd: 30, reach: 18, dmg: 2, wind: 0.5, cd: 1.5, pts: 400, shield: true },
     T: { hp: 6, spd: 72, reach: 18, dmg: 2, wind: 0.32, cd: 1.1, pts: 350, dog: true }, G: { hp: 22, spd: 24, reach: 25, dmg: 4, wind: 0.65, cd: 1.8, pts: 800, armor: true },
     W: { hp: 8, spd: 30, reach: 0, dmg: 2, wind: 0.5, cd: 2.2, pts: 500, ranged: true }, D: { hp: 1, spd: 62, reach: 0, dmg: 0, wind: 0, cd: 9, pts: 100, thief: true },
@@ -144,13 +147,13 @@ ARCADE.GAMES.guanche = (() => {
     BW: { hp: 40, spd: 34, reach: 0, dmg: 3, wind: 0.5, cd: 1.6, pts: 6000, ranged: true, boss: 'LA BRUJA DE ANAGA', teleport: true },
     BT: { hp: 46, spd: 80, reach: 24, dmg: 3, wind: 0.3, cd: 1.0, pts: 7000, dog: true, boss: 'EL TIBICENA MAYOR' },
     BH: { hp: 30, spd: 26, reach: 25, dmg: 4, wind: 0.6, cd: 1.6, pts: 4000, armor: true, boss: 'LOS HERMANOS GIGANTONES' },
-    BY: { hp: 90, spd: 22, reach: 34, dmg: 5, wind: 0.7, cd: 1.5, pts: 20000, armor: true, boss: 'GUAYOTA', stomp: true, fire: true },
+    BY: { hp: 90, spd: 34, reach: 34, dmg: 5, wind: 0.7, cd: 1.5, pts: 20000, armor: true, boss: 'GUAYOTA', stomp: true, fire: true },
     // v0.98 (Jonay): new stages: the gorgons of the malpaís, the rats and Gollux of the ravine, and the old Guayota (the
     // one with the axe) as a lieutenant before the real one
     GO: { hp: 10, spd: 30, reach: 22, dmg: 2, wind: 0.45, cd: 1.4, pts: 450 }, GM: { hp: 10, spd: 32, reach: 22, dmg: 2, wind: 0.42, cd: 1.3, pts: 450 },
     RA: { hp: 3, spd: 78, reach: 12, dmg: 1, wind: 0.25, cd: 1.0, pts: 150, dog: true },
-    BGO: { hp: 52, spd: 32, reach: 28, dmg: 4, wind: 0.5, cd: 1.4, pts: 8000, boss: 'LA REINA GORGONA' },
-    BGX: { hp: 64, spd: 18, reach: 30, dmg: 5, wind: 0.7, cd: 1.7, pts: 9000, armor: true, boss: 'GOLLUX', stomp: true },
+    BGO: { hp: 52, spd: 32, reach: 28, dmg: 4, wind: 0.5, cd: 1.4, pts: 8000, boss: 'LA REINA HARIMAGUADA' },
+    BGX: { hp: 64, spd: 18, reach: 30, dmg: 5, wind: 0.7, cd: 1.7, pts: 9000, armor: true, boss: 'TENIQUE', stomp: true },
     BX: { hp: 44, spd: 22, reach: 30, dmg: 4, wind: 0.6, cd: 1.5, pts: 6000, armor: true, boss: 'EL HACHA DE GUAYOTA', stomp: true } };
   // ---------- stages: fights at set points (the camera stops until everyone is down), then the boss
   const STAGES = [
@@ -160,11 +163,12 @@ ARCADE.GAMES.guanche = (() => {
     { name: 'EL BARRANCO DEL INFIERNO', sub: 'Adeje · las cuevas de las ratas', theme: 'barranco', len: 1500, W: [[240, 'RA RA RA'], [500, 'S RA RA D'], [780, 'H S RA RA'], [1060, 'G RA RA RA D'], [1400, 'BGX RA RA', true]] },
     { name: 'LOS ACANTILADOS DE LOS GIGANTES', sub: 'Al borde del mar, sin vuelta atrás', theme: 'gigantes', len: 1600, W: [[250, 'S H S'], [520, 'G D'], [800, 'R T T'], [1100, 'G S W D'], [1500, 'BT T T', true]] },
     // v0.98 (Jonay): the gorgons come out of the lava sea
-    { name: 'EL MALPAÍS DE GÜÍMAR', sub: 'Las gorgonas salen del mar de lava', theme: 'malpais', len: 1600, W: [[250, 'GO GM'], [520, 'GO S GM D'], [800, 'R GO GM'], [1080, 'GM GO W GO D'], [1500, 'BGO GO GM', true]] },
+    { name: 'EL MALPAÍS DE GÜÍMAR', sub: 'Las harimaguadas salen del mar de lava', theme: 'malpais', len: 1600, W: [[250, 'GO GM'], [520, 'GO S GM D'], [800, 'R GO GM'], [1080, 'GM GO W GO D'], [1500, 'BGO GO GM', true]] },
     { name: 'LAS CAÑADAS DEL TEIDE', sub: 'Piedra pómez, retama y lava', theme: 'canadas', len: 1700, W: [[250, 'G S S'], [520, 'R R'], [820, 'W W H D'], [1120, 'G G T'], [1600, 'BH BH', true]] },
     { name: 'DENTRO DEL ECHEYDE', sub: 'Guayota tiene a Magec', theme: 'teide', len: 1700, W: [[250, 'H H W'], [520, 'G T T D'], [820, 'R G'], [1100, 'BX S'], [1600, 'BY', true]] }]; // v0.98: the old Guayota (the axe) as a lieutenant; the real one is the Demon Overlord
   // ---------- backgrounds (3 layers, 960 × 336 board px) and the floor strip per theme (cached)
   const bgC = {};
+  const FZ = { taoro: 'taoro', anaga: 'anaga', barranco: 'barranco', gigantes: 'gigantes', malpais: 'malpais', canadas: 'canadas', teide: 'echeyde' }; // v0.99: theme → drawn background (FONDOS)
   function background(th) { if (bgC[th]) return bgC[th]; let s0 = th.length * 53; const rr = () => { s0 = (s0 * 9301 + 49297) % 233280; return s0 / 233280; }; const L = [];
     const sky = { taoro: ['#0e0a24', '#3a2a5a'], anaga: ['#14202a', '#4a6a6a'], gigantes: ['#0a1430', '#3a4a7a'], canadas: ['#1a0a1a', '#6a2a2a'], teide: ['#1a0402', '#5a1404'], barranco: ['#0a0a14', '#2e2a3a'], malpais: ['#0a0612', '#40182a'] }[th];
     for (let li = 0; li < 3; li++) { const c = mkCanvas(1920, SH * 2), x = c.getContext('2d'); x.scale(2, 2); L.push(c); // v0.82.2: at ×2 (sharper)
@@ -255,7 +259,7 @@ ARCADE.GAMES.guanche = (() => {
     const E = [], shots = [], items = [], liz = []; let fx = [];
     // v0.95.2: every sheet starts loading when the machine opens (they load on their first draw; meanwhile the old
     // drawings were built, and that is what read the canvas with getImageData — the 0.90 audit warning)
-    for (const k of [...Object.values(SX_HERO), ...Object.values(SX_EN), 'g_duende_azul', 'lagarto', 'lz_mencey', 'lz_pastor', 'lz_mirla']) SPRX.ready(k);
+    for (const k of [...Object.values(SX_HERO), ...Object.values(SX_EN), 'g_duende_azul', 'lagarto', 'lz_mencey', 'lz_pastor', 'lz_mirla']) SPRX.ready(k); for (const k of Object.values(FZ)) FONDOS.get(k); // (v0.99: the backgrounds' images too)
     const p = { hero: HEROES[0], x: 30, z: 22, h: 0, vh: 0, vx: 0, face: 1, hp: 24, st: 'idle', stT: 0, anim: 0, combo: 0, comboT: 0, hitDone: new Set(), jars: 0, inv: 0, tap: { d: 0, t: 0 }, run: false, mount: null };
     const lp = () => 1 + 0.35 * loopN;
     function choose(i) { sel = i; p.hero = HEROES[i]; p.hp = p.hero.hp; p.jars = 0; }
@@ -475,7 +479,7 @@ ARCADE.GAMES.guanche = (() => {
       const sk = o === p ? SX_HERO[p.hero.id] : o.k === 'D' && o.carry === 'J' ? 'g_duende_azul' : SX_EN[o.k]; // (the blue cap carries the blue potions)
       if (o.mount && SPRX.ready('lagarto')) return; // drawn sitting on its lizard (drawLiz)
       if (sk && SPRX.ready(sk)) { const [r, f] = sxAnim(o, sk); SPRX.draw(c, sk, r, f, sx, sy, o.face, sxScale(o));
-        if (o.d && o.d.dog && (o.st === 'atk' || o.st === 'windup')) chomp(c, sx + o.face * (MOUTH[sk] || MOUTH.g_tibicena)[0] * sxScale(o), sy - (MOUTH[sk] || MOUTH.g_tibicena)[1] * sxScale(o), o.st === 'windup' ? 0 : SPRX.stT(o, time) / 0.3, sxScale(o));
+        if (o.d && o.d.dog && (o.st === 'atk' || o.st === 'windup')) { const m = (r === 5 && MOUTH_F[sk] && MOUTH_F[sk][f]) || MOUTH[sk] || MOUTH.g_tibicena; chomp(c, sx + o.face * m[0] * sxScale(o), sy - m[1] * sxScale(o), o.st === 'windup' ? 0 : SPRX.stT(o, time) / 0.3, sxScale(o)); }
         const hs = 44 * sxScale(o); if (o.st === 'hurt' && o.stun) for (let i = 0; i < 3; i++) { const a = time * 6 + i * 2.1; pblob(c, sx + Math.cos(a) * 7, sy - hs + Math.sin(a) * 2, 1.4, 1.4, i % 2 ? '#fff6a0' : '#ffd400'); } // dazed: stars
         if (o === p && (p.chS > 0.5 || p.chP > 0.5)) pblob(c, sx + p.face * 8, sy - hs * 0.55, 3 + Math.sin(time * 30), 3 + Math.sin(time * 30), flick() ? '#fff' : '#ffd400'); // charging the strong blow
         if (o !== p && o.st === 'windup' && o.move === 'strong' && flick()) pblob(c, sx + o.face * 8, sy - hs * 0.6, 3, 3, '#ff8a3a');
@@ -490,7 +494,10 @@ ARCADE.GAMES.guanche = (() => {
     g.draw = (c) => { const bg = background(L ? L.theme : 'taoro'), th = L ? L.theme : 'taoro';
       if (phase === 'select') { drawSelect(c); return; }
       const night = phase === 'camp'; const ox = (shake > 0 ? (Math.random() - 0.5) * 6 : 0);
-      [0.15, 0.4, 0.7].forEach((k, i) => { const o = -Math.round((camX * Z * k) % 960) + ox; c.drawImage(bg[i], o, 0, 960, SH); c.drawImage(bg[i], o + 960, 0, 960, SH); });
+      // v0.99 (Jonay): the backgrounds drawn from his photos, at the sprites' pixel size, the floor row of the drawing on the
+      // floor strip (the old ones while the images load)
+      if (!FONDOS.draw(c, FZ[th], 2, camX * Z, Math.round((GY - 8) * Z - FONDOS.g(FZ[th]) * 2), SW, SH, time, ox)) // (2 screen px per drawing px, like the sprites)
+        [0.15, 0.4, 0.7].forEach((k, i) => { const o = -Math.round((camX * Z * k) % 960) + ox; c.drawImage(bg[i], o, 0, 960, SH); c.drawImage(bg[i], o + 960, 0, 960, SH); });
       const fl = floorImg(th), fo = -Math.round((camX * Z) % 960) + ox; c.drawImage(fl, fo, (GY - 8) * Z, 960, fl.height / 2); c.drawImage(fl, fo + 960, (GY - 8) * Z, 960, fl.height / 2);
       if (night) { c.fillStyle = 'rgba(0,0,30,0.45)'; c.fillRect(0, 0, SW, SH); }
       c.save(); c.translate(ox, 0); c.scale(Z, Z);
@@ -533,7 +540,7 @@ ARCADE.GAMES.guanche = (() => {
       for (let i = 0; i < H.jars; i++) { c.fillStyle = i < p.jars ? '#3a6ad0' : '#1a2440'; c.beginPath(); c.arc(134 + i * 12, 22, 4, 0, 7); c.fill(); }
       A.txt(c, 'VIDAS ' + lives, SW - 8, 4, '#fff', 8, 'right'); const hi = api.hi(); A.txt(c, 'HI ' + String(Math.max(hi, g.score)).padStart(7, '0'), SW - 8, 16, '#ffd400', 8, 'right');
       const bs = E.filter((e) => e.d.boss && e.hp > 0); if (bs.length) { const hp = bs.reduce((a, e) => a + Math.max(0, e.hp), 0), mx = bs.reduce((a, e) => a + e.max, 0); c.fillStyle = '#000'; c.fillRect(100, SH - 22, SW - 200, 8); c.fillStyle = '#e53935'; c.fillRect(101, SH - 21, (SW - 202) * hp / mx, 6); A.txt(c, bs[0].d.boss, SW / 2, SH - 34, '#fff', 6, 'center'); } }
-    function drawSelect(c) { const bg = background('taoro'); c.drawImage(bg[0], 0, 0, 960, SH); c.drawImage(bg[1], 0, 0, 960, SH); c.fillStyle = 'rgba(0,0,0,0.45)'; c.fillRect(0, 0, SW, SH);
+    function drawSelect(c) { const bg = background('taoro'); if (!FONDOS.draw(c, 'taoro', 3, 0, 0, SW, SH, time)) { c.drawImage(bg[0], 0, 0, 960, SH); c.drawImage(bg[1], 0, 0, 960, SH); } c.fillStyle = 'rgba(0,0,0,0.45)'; c.fillRect(0, 0, SW, SH);
       A.txt(c, 'ELIGE TU GUERRERO', SW / 2, 16, '#ffd400', 12, 'center');
       HEROES.forEach((H, i) => { const cx0 = 80 + i * 160, on = i === sel; c.fillStyle = on ? 'rgba(255,212,0,0.18)' : 'rgba(0,0,0,0.3)'; c.fillRect(cx0 - 70, 40, 140, 250); if (on) { c.strokeStyle = flick() ? '#ffd400' : '#ff8a3a'; c.lineWidth = 2; c.strokeRect(cx0 - 69, 41, 138, 248); }
         c.save(); c.scale(Z * 1.2, Z * 1.2); const P = on ? cyc(WALK, time * 4) : PO.idle; const hk = SX_HERO[H.id], hr = on ? (Math.floor(time * 1.5) % 3 === 2 ? 5 : 1) : 0;
@@ -548,12 +555,12 @@ ARCADE.GAMES.guanche = (() => {
     return g;
   }
   // ---------- title screen and the backdrop of the hi-score table
-  function drawTitle(c, t) { const bg = background('canadas'); c.drawImage(bg[0], 0, 0, 960, SH); const o = -((t * 8) % 960); c.drawImage(bg[1], o, 0, 960, SH); c.drawImage(bg[1], o + 960, 0, 960, SH); c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(0, 0, SW, SH);
+  function drawTitle(c, t) { const bg = background('canadas'); if (!FONDOS.draw(c, 'canadas', 3, t * 24, 0, SW, SH, t)) { c.drawImage(bg[0], 0, 0, 960, SH); const o = -((t * 8) % 960); c.drawImage(bg[1], o, 0, 960, SH); c.drawImage(bg[1], o + 960, 0, 960, SH); } c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(0, 0, SW, SH);
     c.font = '34px "Press Start 2P", monospace'; c.textAlign = 'center'; c.textBaseline = 'top';
     for (const [s, y] of [['GUANCHE', 26], ['GUARRIORS', 68]]) { c.fillStyle = '#1a0a04'; c.fillText(s, SW / 2 + 4, y + 4); const gr = c.createLinearGradient(0, y, 0, y + 34); gr.addColorStop(0, '#ffe08a'); gr.addColorStop(0.5, '#e07a2a'); gr.addColorStop(1, '#8a2a0a'); c.fillStyle = gr; c.fillText(s, SW / 2, y); }
     c.save(); c.scale(Z * 1.3, Z * 1.3); const k = Z * 1.3; HEROES.forEach((H, i) => { const P = Math.floor(t * 1.2 + i) % 3 === 0 ? PO.smash : PO.idle, hk = SX_HERO[H.id], hr = Math.floor(t * 1.2 + i) % 3 === 0 ? 5 : 0; if (!SPRX.draw(c, hk, hr, SPRX.fr(hk, hr, t, hr ? 10 : 6), (SW / 2 + (i - 1) * 110) / k, 230 / k, i === 2 ? -1 : 1, 2.6 * (SX_BIG[H.id] || 1) / k)) PIXGUAN.draw(c, (SW / 2 + (i - 1) * 110) / k, 230 / k, i === 2 ? -1 : 1, i === 1 ? PO.atk1 : P, H.id, H.look.s); }); c.restore(); // (the pole in magic pose crossed the logo)
     A.txt(c, 'GUAYOTA HA RAPTADO A MAGEC, EL SOL', SW / 2, 246, '#fff', 8, 'center'); A.txt(c, 'TRES GUERREROS SUBEN AL ECHEYDE', SW / 2, 260, '#9fd7ff', 8, 'center'); A.txt(c, '© 1496 MENCEYATO DE TAORO', SW / 2, 280, '#9fd7ff', 6, 'center'); }
-  function drawBack(c, t) { const bg = background('teide'); c.drawImage(bg[0], 0, 0, 960, SH); const o = -((t * 10) % 960); c.drawImage(bg[2], o, 0, 960, SH); c.drawImage(bg[2], o + 960, 0, 960, SH); c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, 0, SW, SH); }
+  function drawBack(c, t) { const bg = background('teide'); if (!FONDOS.draw(c, 'echeyde', 3, t * 30, 0, SW, SH, t)) { c.drawImage(bg[0], 0, 0, 960, SH); const o = -((t * 10) % 960); c.drawImage(bg[2], o, 0, 960, SH); c.drawImage(bg[2], o + 960, 0, 960, SH); } c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, 0, SW, SH); }
   return { title: 'GUANCHE GUARRIORS', sub: 'LA NOCHE DE GUAYOTA', marquee: ['#6a1a0a', '#1a0402'], titleCol: '#ffb04a', baseScore: 90000, music: { title: SONGS.title }, create, drawTitle, drawBack,
     help: (K) => `GOLPE ${K('f_punch')} (MANT. FUERTE)  SALTO ${K('f_kick')}  PATADA ${K('b_pass')} (MANT. PARADA)  LOS DOS: MAGIA` };
 })();

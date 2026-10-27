@@ -13,7 +13,19 @@ def rows_of(im, fw, fh):
 def strip(path, w, h, off=0, cw=None):
     im = Image.open(path).convert('RGBA'); cw = cw or w
     return [im.crop((c*w + off, 0, c*w + off + cw, h)) for c in range(im.width // w) if im.crop((c*w + off, 0, c*w + off + cw, h)).getbbox()]
-def build(name, src_rows, layout, scale=1.0, one=(3, 4)):
+def mode_resize(f, num, den):
+    """pixel art resized by num/den without blur: ×num pixel by pixel, then each den × den block to the colour most of it
+    has (v0.99, Jonay: «Guayota pierde mucha calidad»: the game then draws it pixel for pixel, like the heroes)"""
+    import numpy as np
+    from collections import Counter
+    a = np.array(f.convert('RGBA').resize((f.width * num, f.height * num), Image.NEAREST)); a[a[..., 3] < 128] = 0
+    h, w = a.shape[0] // den, a.shape[1] // den; out = np.zeros((h, w, 4), np.uint8)
+    for y in range(h):
+        for x in range(w):
+            blk = a[y * den:(y + 1) * den, x * den:(x + 1) * den].reshape(-1, 4); op = blk[blk[:, 3] > 0]
+            if len(op) * 2 >= len(blk): out[y, x] = Counter(map(tuple, op)).most_common(1)[0][0]
+    return Image.fromarray(out)
+def build(name, src_rows, layout, scale=1.0, one=(3, 4), mode=None):
     """src_rows: list of frame lists; layout: the 9 rows as indices into src_rows; the cell cropped to the union box"""
     allf = [f for r in src_rows for f in r]; box = None
     for f in allf:
@@ -29,7 +41,8 @@ def build(name, src_rows, layout, scale=1.0, one=(3, 4)):
     for r, fr in enumerate(rowsf):
         for c, f in enumerate(fr):
             f = f.crop((x0, y0, x1, y1))
-            if scale != 1.0: f = f.resize((fw2, fh2), Image.LANCZOS)
+            if mode: f = mode_resize(f, *mode).crop((0, 0, fw2, fh2))
+            elif scale != 1.0: f = f.resize((fw2, fh2), Image.LANCZOS)
             sheet.alpha_composite(f, (c * fw2, r * fh2))
     sheet.save(O2 + name + '.png'); print(name, fw2, fh2, [len(x) for x in rowsf]); return fw2, fh2
 info = {}
@@ -46,6 +59,6 @@ RT = A + 'RAt/OutlinedRat/rat-%s-outline.png'
 rt = [strip(RT % k, 32, 32) for k in ['idle', 'run', 'attack', 'hurt', 'death']]
 info['g_rata'] = build('g_rata', rt, [0, 1, 1, 0, 0, 2, 4, 2, 1])
 DO = A + 'Demon Overlord 2D Pixel Art v1.0.0/Godot/demon_overlord_%s.png'
-do = [strip(DO % k, 160, 160)[::2] for k in ['idle', 'walk', 'attack', 'cast', 'hurt', 'death']]   # (every other frame: half the weight)
-info['g_overlord'] = build('g_overlord', do, [0, 1, 1, 0, 0, 2, 5, 3], 0.68)   # (8 rows: no running kick, a boss)
+do = [strip(DO % k, 160, 160) for k in ['idle', 'walk', 'attack', 'cast', 'hurt', 'death']]   # (v0.99, Jonay: «las animaciones se ven raro»: all 8 frames, not every other)
+info['g_overlord'] = build('g_overlord', do, [0, 1, 1, 0, 0, 2, 5, 3], 5 / 8, mode=(5, 8))   # (8 rows: no running kick, a boss; v0.99: at 5/8 without blur, drawn pixel for pixel: about 1.35 × a hero)
 import json; json.dump(info, open(O2 + 'nuevos.json', 'w'))

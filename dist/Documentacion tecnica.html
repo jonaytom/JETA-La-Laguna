@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.98.2</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.99.0</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,24 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.99.0 — 2026-10-27 — Fondos dibujados en Guanche Guarriors y Bencomo, Tenique y las Harimaguadas</h2>
+<ul>
+<li><strong>Fondos nuevos</strong> (Jonay, a partir de sus fotos de cada sitio): ya no son la foto pasada a píxeles; cada fondo está
+  dibujado (<code>tools/fondos/dibujo.py</code>) con colores planos y el contorno oscuro de los personajes, en capas que se mueven a
+  distinta velocidad y al mismo tamaño de píxel que los sprites (2 píxeles de pantalla por píxel).</li>
+<li><strong>Guanche Guarriors</strong>, las siete fases: Taoro (el Teide nevado, el mar de nubes, pinos y retamas), la laurisilva de
+    Anaga (con niebla), el Barranco del Infierno (la cascada cae por detrás de las rocas), Los Gigantes, el Malpaís de
+    Güímar, Las Cañadas y el Echeyde (tubo de lava). También la pantalla de título, la de elegir héroe y la de fondo.</li>
+<li><strong>Bencomo</strong>: la costa de Añaza (con las carabelas castellanas), el barranco de Acentejo y el monte de La Emboscada.</li>
+<li>Datos en <code>src/09jw_fondos_data.js</code> (<code>tools/fondos/empaquetar.py</code>); los dibuja <code>src/09jx_fondos.js</code>. Mientras cargan
+    se ven los fondos de antes.</li>
+<li><strong>Guanche Guarriors</strong> (Jonay):</li>
+<li>Gollux se llama <strong>Tenique</strong>; la jefa gorgona es <strong>la Reina Harimaguada</strong> y las gorgonas normales, <strong>Harimaguadas</strong>.</li>
+<li><strong>Guayota</strong> (Demon Overlord): con sus 8 fotogramas por animación (antes la mitad), la hoja reducida a 5/8 sin
+    difuminar y dibujada píxel a píxel como los héroes, más pequeño (≈1,35 veces un héroe) y más rápido.</li>
+<li><strong>La mordida del lobo</strong> ya no sale en el aire: el bocado sigue al hocico fotograma a fotograma.</li>
+<li><strong>Patada en carrera</strong> girada sin perder calidad (como RotSprite: se amplía ×8 con Scale2x, se gira y se reduce).</li>
+</ul>
 <h2>0.98.2 — 2026-10-27 — Patada en carrera: la pierna abajo y la cabeza arriba</h2>
 <ul>
 <li><strong>Guanche Guarriors</strong> (Jonay): la patada en carrera estaba girada al revés (la pierna estirada arriba y la cabeza

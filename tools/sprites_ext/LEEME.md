@@ -37,3 +37,7 @@ Licencias de los packs nuevos (Jonay, 27-oct: todos son gratuitos, descargados d
 - Gorgonas, de Free Game Assets / craftpix
   (https://free-game-assets.itch.io/free-gorgon-pixel-art-character-sprite-sheets; https://craftpix.net/file-licenses/).
 - Gollux, RAt, Free Mythic Monsters y el lobo: también gratuitos de itch.io (según Jonay).
+
+## v0.99
+- `mk.py`: la patada en carrera se gira con `rotsprite()` (×8 con Scale2x, giro, y cada bloque al color mayoritario).
+- `newsheets.py`: Guayota (Demon Overlord) con sus 8 fotogramas, reducido a 5/8 con `mode_resize()` (sin difuminar).

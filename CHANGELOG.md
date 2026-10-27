@@ -3,6 +3,23 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.99.0 — 2026-10-27 — Fondos dibujados en Guanche Guarriors y Bencomo, Tenique y las Harimaguadas
+- **Fondos nuevos** (Jonay, a partir de sus fotos de cada sitio): ya no son la foto pasada a píxeles; cada fondo está
+  dibujado (`tools/fondos/dibujo.py`) con colores planos y el contorno oscuro de los personajes, en capas que se mueven a
+  distinta velocidad y al mismo tamaño de píxel que los sprites (2 píxeles de pantalla por píxel).
+  - **Guanche Guarriors**, las siete fases: Taoro (el Teide nevado, el mar de nubes, pinos y retamas), la laurisilva de
+    Anaga (con niebla), el Barranco del Infierno (la cascada cae por detrás de las rocas), Los Gigantes, el Malpaís de
+    Güímar, Las Cañadas y el Echeyde (tubo de lava). También la pantalla de título, la de elegir héroe y la de fondo.
+  - **Bencomo**: la costa de Añaza (con las carabelas castellanas), el barranco de Acentejo y el monte de La Emboscada.
+  - Datos en `src/09jw_fondos_data.js` (`tools/fondos/empaquetar.py`); los dibuja `src/09jx_fondos.js`. Mientras cargan
+    se ven los fondos de antes.
+- **Guanche Guarriors** (Jonay):
+  - Gollux se llama **Tenique**; la jefa gorgona es **la Reina Harimaguada** y las gorgonas normales, **Harimaguadas**.
+  - **Guayota** (Demon Overlord): con sus 8 fotogramas por animación (antes la mitad), la hoja reducida a 5/8 sin
+    difuminar y dibujada píxel a píxel como los héroes, más pequeño (≈1,35 veces un héroe) y más rápido.
+  - **La mordida del lobo** ya no sale en el aire: el bocado sigue al hocico fotograma a fotograma.
+  - **Patada en carrera** girada sin perder calidad (como RotSprite: se amplía ×8 con Scale2x, se gira y se reduce).
+
 ## 0.98.2 — 2026-10-27 — Patada en carrera: la pierna abajo y la cabeza arriba
 - **Guanche Guarriors** (Jonay): la patada en carrera estaba girada al revés (la pierna estirada arriba y la cabeza
   abajo). Ahora es una patada voladora: la pierna estirada hacia delante y abajo, la cabeza arriba y atrás. En todos

@@ -294,7 +294,7 @@
    ]
   ],
   [
-   "^src/(09jy_sprx_data|09jz_sprx|09k_bencomo|09m_guanche)",
+   "^src/(09jw_fondos_data|09jx_fondos|09jy_sprx_data|09jz_sprx|09k_bencomo|09m_guanche)",
    [
     "prueba_093.py",
     "prueba_094.py",

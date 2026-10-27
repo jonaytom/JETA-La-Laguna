@@ -1,0 +1,6 @@
+# v0.99: fondos dibujados (Guanche Guarriors y Bencomo), Tenique, Harimaguadas, Guayota, mordida del lobo
+prueba_099.py
+prueba_098.py
+prueba_096.py
+prueba_0952.py
+prueba_082.py

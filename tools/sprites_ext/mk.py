@@ -1,5 +1,31 @@
 import sys, math
 from PIL import Image, ImageDraw
+
+def scale2x(a):   # EPX / Scale2x on an RGBA array: doubles a pixel-art image keeping its edges sharp
+    import numpy as np
+    P = np.pad(a, ((1, 1), (1, 1), (0, 0)), mode='edge'); Bc = P[:-2, 1:-1]; D = P[1:-1, :-2]; F = P[1:-1, 2:]; Hh = P[2:, 1:-1]; E = a
+    eq = lambda x, y: (x == y).all(axis=2)
+    c = (~eq(Bc, Hh) & ~eq(D, F))[..., None]
+    e0 = np.where(c & eq(D, Bc)[..., None], D, E); e1 = np.where(c & eq(Bc, F)[..., None], F, E)
+    e2 = np.where(c & eq(D, Hh)[..., None], D, E); e3 = np.where(c & eq(Hh, F)[..., None], F, E)
+    h, w = a.shape[:2]; o = np.zeros((h * 2, w * 2, a.shape[2]), a.dtype)
+    o[0::2, 0::2] = e0; o[0::2, 1::2] = e1; o[1::2, 0::2] = e2; o[1::2, 1::2] = e3; return o
+def rotsprite(im, ang, center):
+    """rotates pixel art without losing its look (like RotSprite): ×8 with Scale2x, turned pixel by pixel, then each
+    8 × 8 block back to the colour most of it has (v0.99, Jonay: «la patada en carrera perdió calidad»)"""
+    import numpy as np
+    from collections import Counter
+    a = np.array(im.convert('RGBA')); a[a[..., 3] == 0] = 0
+    for _ in range(3): a = scale2x(a)
+    big = Image.fromarray(a).rotate(ang, resample=Image.NEAREST, center=(center[0] * 8, center[1] * 8)); b = np.array(big)
+    h, w = im.height, im.width; out = np.zeros((h, w, 4), np.uint8)
+    for y in range(h):
+        for x in range(w):
+            blk = b[y * 8:(y + 1) * 8, x * 8:(x + 1) * 8].reshape(-1, 4)
+            op = blk[blk[:, 3] > 0]
+            if len(op) * 2 < len(blk): continue
+            out[y, x] = Counter(map(tuple, op)).most_common(1)[0][0]
+    return Image.fromarray(out)
 A = '/mnt/user-data/uploads/GTA La Laguna/assets_externos/'
 P = A + 'GandalfHardcore Character Asset Pack/'
 OUT = sys.argv[1]
@@ -144,7 +170,7 @@ def with_kicks(back, body, front, fw=80, fh=64, oy=0, hip=51):
         fall.alpha_composite(F4(back)); fall.alpha_composite(legs2); fall.alpha_composite(up4); fall.alpha_composite(F4(front))
     row8 = []
     bb = fall.getbbox(); cx, cy = (bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2
-    r = fall.rotate(-40, resample=Image.NEAREST, center=(cx, cy)); rb = r.getbbox()   # (Jonay: it was the wrong way round; the stretched leg forward and down, the head up and back)
+    r = rotsprite(fall, -40, (cx, cy)); rb = r.getbbox()   # (Jonay: it was the wrong way round; the stretched leg forward and down, the head up and back)
     f = Image.new('RGBA', (fw, fh)); f.alpha_composite(r, (0, (fh - 6) - rb[3])); row8 = [f, f.copy()]
     rows = full.height // fh; out = Image.new('RGBA', (full.width, fh * 9)); out.paste(full.crop((0, 0, full.width, fh * min(rows, 7))), (0, 0))
     for i, f in enumerate(row7): out.paste(f, (i * fw, 7 * fh))

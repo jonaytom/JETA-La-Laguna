@@ -135,6 +135,10 @@ ARCADE.GAMES.bencomo = (() => {
     return (tileCache[key] = c);
   }
   const bgCache = {};
+  const BZ = { costa: 'anaza', barranco: 'barranco', monte: 'anaga' }; // v0.99: theme → drawn background (FONDOS)
+  let carC = null;
+  /** the Castilian caravels on the sea of Añaza, at half size (a 640-wide strip, waterline at y 20) */
+  function caravels() { if (carC) return carC; carC = mkCanvas(640, 24); const x = carC.getContext('2d'); x.scale(0.5, 0.5); for (const cx0 of [160, 600, 1040]) caravel(x, cx0, 40); return carC; }
   function background(theme) { // 3 parallax layers per theme, each a 640-wide strip that repeats
     if (bgCache[theme]) return bgCache[theme]; const L = [];
     let s = theme.length * 77; const rr = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
@@ -195,7 +199,7 @@ ARCADE.GAMES.bencomo = (() => {
   function create(api, opt) {
     const loop0 = opt.loop || 0; const g = { score: 0, over: false, demoKeys: { held: {}, hit: {} } };
     let lives = 3, stageN = 0, loopN = loop0, gofio = 0, L = null, tiles = null, camX = 0, camY = 84, time = 0, phase = 'intro', phaseT = 0, fx = [], banner = null, bannerT = 0, boss = null;
-    for (const k of ['bencomo', 'bencomo_ns', ...Object.values(BX_EN)]) SPRX.ready(k); // v0.95.2: start loading every sheet now
+    for (const k of ['bencomo', 'bencomo_ns', ...Object.values(BX_EN)]) SPRX.ready(k); for (const k of Object.values(BZ)) FONDOS.get(k); // v0.95.2: start loading every sheet now (v0.99: and the backgrounds)
     const p = { x: 0, y: 0, vx: 0, vy: 0, face: 1, hp: 3, inv: 0, atk: 0, atkCD: 0, vault: 0, pogo: false, onG: false, coy: 0, buf: 0, power: 0, stones: 3, anim: 0, dead: 0, cp: null, hurtT: 0 };
     const E = []; const shots = []; const rocks = []; const items = [];
     const spd = () => 1 + 0.22 * loopN;
@@ -349,7 +353,11 @@ ARCADE.GAMES.bencomo = (() => {
     // ---------- drawing
     const flick = () => Math.floor(time * 20) % 2 === 0;
     g.draw = (c) => { const bg = background(L.theme), t = TH[L.theme]; c.save(); c.scale(Z, Z); // the world at ×2
-      [0.1, 0.3, 0.6].forEach((k, i) => { const off = -((camX * k) % 640), oy = -Math.round(camY * (0.35 + k)); c.drawImage(bg[i], Math.round(off), oy, 640, 224); c.drawImage(bg[i], Math.round(off) + 640, oy, 640, 224); });
+      // v0.99 (Jonay): the backgrounds drawn from his photos (Añaza, the ravine, the laurel forest), at the sprites' pixel
+      // size, the floor row of the drawing on the level's ground; the old ones while the images load
+      const fz = BZ[L.theme], y0 = (ROWS - 4) * T - FONDOS.g(fz), dy = (k) => -Math.round(camY * (0.8 + k * 0.2));
+      if (FONDOS.draw(c, fz, 1, camX, y0, W, VH, time, 0, dy)) { if (L.theme === 'costa') { const cv = caravels(), o = ((camX * 0.05) % 640 + 640) % 640; for (let x = -o; x < W; x += 640) c.drawImage(cv, Math.round(x), y0 + 61 - 20 + dy(0.05)); } }
+      else [0.1, 0.3, 0.6].forEach((k, i) => { const off = -((camX * k) % 640), oy = -Math.round(camY * (0.35 + k)); c.drawImage(bg[i], Math.round(off), oy, 640, 224); c.drawImage(bg[i], Math.round(off) + 640, oy, 640, 224); });
       c.translate(0, -Math.round(camY * Z) / Z);
       const c0 = Math.floor(camX / T), c1 = Math.min(L.w - 1, c0 + 21);
       for (let ci = c0; ci <= c1; ci++) for (let r = 0; r < ROWS; r++) { const k = tiles[ci][r]; if (!k) continue; const x = Math.round(ci * T - camX), y = r * T;
