@@ -276,6 +276,11 @@ function manageTraffic() {
 
 // ---------- parked cars (instanced low-detail, converted to real cars on interaction)
 const PARKED = { slots: [], grid: new Map(), meshes: {} };
+// v0.99.5 (Jonay: «no puede haber coches aparcados en medio de la autopista ni de la Vía de Ronda»): a point on the
+// carriageway (or its edge) of a motorway, a slip road, a trunk or primary road or the Vía de Ronda, at ground level
+// (a bridge or a tunnel of those over or under the street doesn't count)
+const BIGNAMES = new Set(['Vía de Ronda de La Laguna']);
+function onBigRoad(x, z) { const rd = ROADSEG.nearest(x, z, (r) => (r[0] <= 4 || BIGNAMES.has(DATA.S[r[1]])) && !(r[3] & 6)); return !!rd && rd.d < DATA.R[rd.ri][2] / 2 + 1.2; }
 function buildParked() {
   const types = ['compact', 'sedan', 'suv', 'van']; const T0 = performance.now(), lt = (n) => { if (window.__LOADT) window.__LOADT.push(['   buildParked · ' + n, Math.round(performance.now() - T0)]); }; // v0.77: where the 2 s go
   DATA.R.forEach((rd) => {
@@ -293,7 +298,7 @@ function buildParked() {
       for (let s = 9; s < L - 9; s += 6.2) for (const side of sides) {
         if (Math.random() > (isHistoric(x1, z1) ? 0.18 : 0.33)) continue;
         const off = w / 2 - 0.95; const x = x1 + dx * s - dz * off * side, z = z1 + dz * s + dx * off * side;
-        if (COL.nearSeg(x, z, 1.3)) continue;
+        if (COL.nearSeg(x, z, 1.3) || onBigRoad(x, z)) continue; // v0.99.5 (Jonay): never on the motorway, its slip roads or the Vía de Ronda
         const h = Math.atan2(dx, dz) + (side < 0 ? Math.PI : 0);
         const mdl = KGEO ? pickModel((m) => m.phys !== 'truck' && m.phys !== 'moto') : null; PARKED.slots.push({ x, z, h, type: mdl ? mdl.id : pick(types), color: pickColor(), alive: true });
       }

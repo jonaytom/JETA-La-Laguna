@@ -3,6 +3,21 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.99.5 — 2026-10-27 — Marcas viales por carriles y nada de coches aparcados en la autopista
+- **Carreteras** (Jonay: «las marcas viales deben ser coherentes… hay muchas líneas que se cruzan», «no puede haber coches
+  aparcados en medio de la autopista ni de la Vía de Ronda»):
+  - Cada carretera con líneas lleva las de sus carriles, hechas a su anchura (`laneMk` en `src/04_world.js`): una calzada
+    de un sentido (autopista, enlaces, cada sentido de la Vía de Ronda) con sus bordes continuos, el arcén derecho más
+    ancho y discontinuas entre carriles; una de doble sentido con su eje (doble continuo si tiene 4 carriles). Los
+    enlaces de un sentido llevan ya sus líneas de borde.
+  - Una vía cede a otra mayor: sus líneas se cortan en cuanto su calzada toca la de la mayor (un ramal que corre al lado
+    antes de incorporarse, la boca de un cruce); la mayor mantiene las suyas.
+  - Los discos de asfalto de las uniones van ya por debajo de las líneas (cortaban las líneas en círculos).
+  - Ningún coche aparcado sobre la autopista, sus enlaces, las carreteras principales ni la Vía de Ronda (había 86).
+  - Bionda (guardarraíl) a los dos lados de la autopista y de sus enlaces, por fuera del arcén: abierta solo donde se
+    une o toca otra vía (las salidas y entradas, los cruces), en puentes y túneles (tienen sus muros) y donde ya hay
+    mediana. Ya no se puede pasar a la carretera de al lado sin usar las salidas.
+
 ## 0.99.4 — 2026-10-27 — Baloncesto: jugadores del pack con camiseta de asillas
 - **Baloncesto 2D** (Jonay: «el basket perfecto, aplica ya»): los jugadores se dibujan con el pack GandalfHardcore y su
   camiseta de asillas (`Basketball_Shirt`), cada uno hecho a partir de su aspecto: piel (la más parecida de cuatro),

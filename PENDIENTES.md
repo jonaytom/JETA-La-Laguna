@@ -15,6 +15,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Recreativas, consola GOFIO-8 y torneo
 
+- [ ] ◐ **Guanche Guarriors a 640×448, los personajes al 75 %** (Jonay, 27-oct): pantalla propia de la recreativa para este juego (los sprites siguen a 2 píxeles por píxel, se ve más escenario); Bencomo y Guerra de Naves se quedan en 480×336.
 - [ ] ◐ **Guanche Guarriors: el aura de fuego del lobo como poder del jefe lobo** (Jonay, 27-oct): en el GIF original,
   al aullar sale en el suelo una franja de llamitas rojas que quité al recortarlo (`tools/sprites_ext/wolf2.py`, «red
   bars»). Idea de Jonay: que sea el poder del jefe lobo (BT, fase de Los Gigantes), p. ej. aúlla y quema alrededor.
@@ -121,6 +122,8 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Fútbol y baloncesto 2D
 
+- [~] ◐ (propuesta v2: página «Basket: animaciones», `tools/sprites_ext/bk_anim.py`) **Baloncesto: tiro, robo, rebote, tapón y los mates de los combos con el pack** (Jonay, 27-oct): tiro con los dos brazos arriba, sin manos sueltas junto al pantalón, molino con el brazo de la cámara girando 360°, entrepiernas con las piernas abiertas, balón el doble de grande; en el juego los jugadores un 5–10 % más pequeños. Falta meterlo en `09f_basket2d.js` / `09ed_bk_sheets.js` (Jonay: primero las marcas viales).
+  - Jonay, 27-oct (v2): abrir más las piernas en Entrepiernas; el torso va 1–2 px a la izquierda del pantalón en los saltos (tiro, tapón, rebote, mates): alinearlos; los mates acaban con las manos tocando el aro (alargar un poco los brazos si hace falta) y el balón entrando; el balón algo más grande que la cabeza del jugador; en el molino quitar el brazo que queda debajo (salen 3 brazos); en Entrepiernas usar la patada que ya hay (la pierna delantera arriba) dejando la trasera como está; al machacar el aro (no el tablero) se inclina un poco hacia abajo, como si se colgara de él; en los mates salta lo bastante para llegar con las manos: los hombros casi a la altura del aro y la cabeza por encima en lo más alto.
 - [ ] ● **Baloncesto con el kit de personajes de GandalfHardcore** (Jonay, 27-oct, pregunta): diseñar camisetas de
   tirantes por capas y hacer nosotros los combos de mates con las mismas piezas.
 
@@ -275,6 +278,10 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Calles, túneles, puentes, enlaces y aeropuerto
 
+- [ ] ● **Marcas viales, arcenes y medianas de la autopista, la Vía de Ronda y sus enlaces** (Jonay, 27-oct: «las carreteras con cruces son un lío»; lo siguiente tras la 0.99.4):
+  - Revisar todas las marcas del suelo: que sean coherentes y no se crucen líneas que hacen cosas raras, sobre todo en la autopista, la Vía de Ronda y las zonas que las enlazan (la ciudad interior está mejor).
+  - Delimitar bien arcenes y medianas: que no se pueda pasar de la autopista a la carretera paralela sin usar las salidas.
+  - Ningún coche aparcado en medio de la autopista ni de la Vía de Ronda.
 - [ ] ◐ **Para mirar** (visto en las fotos de la 0.77, ya estaba antes): en la Plaza del Adelantado y en el casco hay **marcos
       grises flotando** sobre las fachadas (vigas horizontales a la altura del tejado y algún poste suelto), en
       X 105 Z −45 mirando a la plaza y en X −60 Z −230 mirando a X −10 Z −150. ¿Soportales/pérgolas mal colocados?

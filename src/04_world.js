@@ -100,7 +100,7 @@ const MAT = {};
   MAT.footway = road(TEX.sidewalk, 2);
   MAT.dirt = road(TEX.dirt, 1);
   MAT.tram = road(TEX.tram, 5);
-  MAT.disc = road(TEX.asphalt, 4.5);
+  MAT.disc = road(TEX.asphalt, 3.5); // v0.99.5: under the lines (the discs at the joints of a lined road cut its lines in circles)
   MAT.discPave = road(TEX.paving, 3.5);
 })();
 
@@ -216,14 +216,31 @@ const ROADCLASS = (rd) => {
   if (paved === 2 || t === 'track' || t === 'path') return 'dirt';
   if (t === 'footway' || t === 'steps' || t === 'cycleway') return 'footway';
   if (t === 'pedestrian' || paved === 1) return 'paving';
-  if (rd[0] <= 8 && rd[2] >= 7 && !([1, 4, 6, 8].includes(rd[0]) && (rd[3] & 1))) return 'asphaltLines'; // v0.73: one-way slip roads have no centre line
+  if (rd[0] <= 8 && rd[2] >= 6.5) return 'asphaltLines'; // v0.99.5: every lined road with its own lanes (laneMk); a one-way slip road with its edge lines only
   return 'asphalt';
 };
-const YOFF = { sidewalk: 0.09, dirt: 0.08, footway: 0.1, asphalt: 0.13, paving: 0.13, asphaltLines: 0.15, disc: 0.155, discPave: 0.135, tram: 0.17 };
+const YOFF = { sidewalk: 0.09, dirt: 0.08, footway: 0.1, asphalt: 0.13, paving: 0.13, asphaltLines: 0.15, disc: 0.14, discPave: 0.135, tram: 0.17 }; // v0.99.5: the junction discs under the lines
+// v0.99.5 (Jonay: «las marcas viales deben ser coherentes»): each lined road with the marks of its lanes, made to its
+// width: a one-way carriageway (motorway, slip road, the Vía de Ronda's directions) has its solid edge lines with the
+// wider hard shoulder on the right and dashed lines between its lanes; a two-way road has a centre line (double and
+// solid with 4 lanes) and its lanes. One texture per kind and width, made when first needed; u = 0 is the right side.
+const isLines = (mk) => mk === 'asphaltLines' || mk.startsWith('aL_');
+function laneMk(rd) {
+  const w = rd[2], ow = !!(rd[3] & 1), mot = rd[0] <= 1, n = ow ? clamp(Math.round((w - (mot ? 2.2 : 1.2)) / 3.5), 1, 5) : w >= 12.5 ? 4 : 2;
+  const key = 'aL_' + (ow ? 'o' : 't') + n + '_' + Math.round(w * 10) + (mot ? 'm' : ''); if (MAT[key]) return key;
+  const c = mkCanvas(256, 512), y = c.getContext('2d'); y.drawImage(TEX.asphaltC, 0, 0); y.drawImage(TEX.asphaltC, 0, 256);
+  const px = 256 / w, line = (m, wd, dash) => { const x = Math.round(m * px - wd * px / 2), ww = Math.max(3, Math.round(wd * px)); y.fillStyle = '#ece9e0';
+    if (!dash) y.fillRect(x, 0, ww, 512); else for (let v = 0; v < 512; v += 512 / dash[1]) y.fillRect(x, v + 8, ww, (512 / dash[1]) * dash[0]); };
+  if (ow) { const so = mot ? 1.6 : 0.6, si = mot ? 0.6 : 0.35, lw = (w - so - si) / n;   // right shoulder (u = 0) wider than the left one
+    line(so, 0.18); line(w - si, 0.18); for (let k = 1; k < n; k++) line(so + lw * k, 0.14, mot ? [0.38, 1] : [0.5, 2]); }
+  else { const e = 0.35, half = (w - 2 * e) / 2; line(e, 0.15); line(w - e, 0.15);
+    if (n >= 4) { line(w / 2 - 0.12, 0.1); line(w / 2 + 0.12, 0.1); for (const sd of [-1, 1]) line(w / 2 + sd * half / 2, 0.12, [0.4, 2]); }
+    else line(w / 2, 0.14, [0.5, 4]); }
+  MAT[key] = MAT.asphaltLines.clone(); MAT[key].map = canvasTex(c); YOFF[key] = YOFF.asphaltLines; SURF_MK.add(key); return key; }
 // v0.73 (agente revisor: «se hunde 0,3–1,1 m bajo la superficie visible» on paths and pavements): where a ribbon
 // drawn as a straight chord across its width stands clearly above the terrain (a hollow under a path), remember its
 // height in 3 m cells so people walk on what you see (08_player.js, surfAt)
-const SURF = new Map(), SURF_MK = new Set(['footway', 'paving', 'sidewalk', 'asphalt', 'asphaltLines', 'dirt']);
+const SURF = new Map(), SURF_MK = new Set(['footway', 'paving', 'sidewalk', 'asphalt', 'asphaltLines', 'dirt']); // (+ the lane textures, laneMk)
 function surfMark(x, z, y) { const k = Math.floor(x / 3) * 100003 + Math.floor(z / 3), o = SURF.get(k); if (o === undefined || y > o) SURF.set(k, y); }
 function surfAt(x, z) { const v = SURF.get(Math.floor(x / 3) * 100003 + Math.floor(z / 3)); return v === undefined ? -1e9 : v; }
 function ribbon(pts, w, mk, yoff, tileLen, uSpan = 1, hf = null, blend = false) { /* blend: a sunk road near grade follows the ground across its width (flat on a cross slope it floated ~1 m over the road beside it) */
@@ -248,7 +265,7 @@ function ribbon(pts, w, mk, yoff, tileLen, uSpan = 1, hf = null, blend = false) 
     const lx = p[0] + nx * hw * miter, lz = p[1] + nz * hw * miter, rx = p[0] - nx * hw * miter, rz = p[1] - nz * hw * miter;
     if (hf) { const hy = hf(dist, p[0], p[1]) + yoff; let kl = 0, kr = 0; if (blend) { const g = heightAt(p[0], p[1]), k = smooth(0, 1, 1 - (g - hy + yoff) / 1.2); kl = k * Math.min(0, heightAt(lx, lz) - g); kr = k * Math.min(0, heightAt(rx, rz) - g); } L.push([lx, hy + kl, lz]); R.push([rx, hy + kr, rz]); } else { const hl = heightAt(lx, lz), hr = heightAt(rx, rz); let lift = 0; /* the ribbon is a straight chord across the width: lift it where the 16 m terrain bulges inside (grass poking through the asphalt) */
       if (w > 3) for (const f of [0.25, 0.5, 0.75]) lift = Math.max(lift, heightAt(lx + (rx - lx) * f, lz + (rz - lz) * f) - (hl + (hr - hl) * f));
-      if ((mk === 'asphalt' || mk === 'asphaltLines') && lift > 0.4) lift = 0.4; // v0.73 (agente revisor: a road lifted 0.8 m floated over the one it meets at a junction)
+      if ((mk === 'asphalt' || isLines(mk)) && lift > 0.4) lift = 0.4; // v0.73 (agente revisor: a road lifted 0.8 m floated over the one it meets at a junction)
       L.push([lx, hl + yoff + lift, lz]); R.push([rx, hr + yoff + lift, rz]);
       if (SURF_MK.has(mk)) for (const f of [0.15, 0.5, 0.85]) { const x = lx + (rx - lx) * f, z = lz + (rz - lz) * f, y = hl + (hr - hl) * f + yoff + lift; if (y - heightAt(x, z) > 0.25) surfMark(x, z, y); } } V.push(dist / tileLen);
   }
@@ -299,28 +316,28 @@ function buildRoads() {
   indexRoads(); computeDepressions(); computeRaises();
   for (let ri = 0; ri < DATA.R.length; ri++) ROADY[ri] = roadYFn(ri);
   for (let ri = 0; ri < DATA.R.length; ri++) { const rd = DATA.R[ri]; DRESS_RI = ri; OBST_RI = (DEP.has(ri) || (rd[3] & 2) || RAISE.has(ri)) && window.__AUDIT ? ri : -1;
-    const t = RTN[rd[0]], cls = ROADCLASS(rd), w = rd[2], c = rd[4];
-    const tile = cls === 'asphaltLines' ? 12 : cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8;
+    const t = RTN[rd[0]], cls0 = ROADCLASS(rd), cls = cls0 === 'asphaltLines' ? laneMk(rd) : cls0, w = rd[2], c = rd[4]; // v0.99.5: the lane texture of this road
+    const tile = isLines(cls) ? 12 : cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8;
     if (DEP.has(ri)) { TUN_RI = ri; tunnelRoad(c, Math.max(w, 2.6), cls, tile, depressedHF(ri), PED_TUN.has(ri) ? { H: 2.9, cover: 3.1 } : (TF13.ring.includes(ri) || TF13.tubes.includes(ri) || TF13.app.includes(ri)) ? { wc: [0.47, 0.41, 0.35] } : {}); TUN_RI = -1; continue; } // v0.78: the TF-13 cutting has brown basalt walls (photos) // tunnels, underpasses and their cuttings
     if (RAISE.has(ri) && !(rd[3] & 2)) { // approach embankment of a bridge that had to be lifted for clearance
       const sp = RAISE_SPAN.get(ri), Lr = polyLen(c), parts = [];
       const raised = subPoly(c, sp[0], sp[1]); const hf = (s, x, z) => heightAt(x, z) + raiseOf(ri, s + sp[0]);
-      ribbon(raised, w, cls, YOFF[cls], tile, cls === 'asphaltLines' ? 1 : w / 8, hf); bridgeDressing(raised, w, hf, rd[0] <= 12);
+      ribbon(raised, w, cls, YOFF[cls], tile, isLines(cls) ? 1 : w / 8, hf); bridgeDressing(raised, w, hf, rd[0] <= 12);
       if (sp[0] > 0.5) parts.push(subPoly(c, 0, sp[0])); if (sp[1] < Lr - 0.5) parts.push(subPoly(c, sp[1], Lr));
-      for (const pc of parts) ribbon(pc, w, cls, YOFF[cls], tile, cls === 'asphaltLines' ? 1 : w / 8);
+      for (const pc of parts) ribbon(pc, w, cls, YOFF[cls], tile, isLines(cls) ? 1 : w / 8);
       continue; }
     if ((rd[3] & 2) && !AT_GRADE.has(ri)) { // bridges / overpasses: raised deck with parapets and piers
       if (rd[0] >= 13 && polyMinDist(c, -347.5, 745.4) < 75) continue; // the Padre Anchieta ring and its ramps are modelled separately (OSM footbridge pieces of the ramp blocked it)
-      const hf0 = bridgeProfile(c), hf = RAISE.has(ri) ? (s, x, z) => hf0(s, x, z) + raiseOf(ri, s) : hf0; ribbon(c, w, cls, YOFF[cls], tile, cls === 'asphaltLines' ? 1 : w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8), hf);
+      const hf0 = bridgeProfile(c), hf = RAISE.has(ri) ? (s, x, z) => hf0(s, x, z) + raiseOf(ri, s) : hf0; ribbon(c, w, cls, YOFF[cls], tile, isLines(cls) ? 1 : w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8), hf);
       bridgeDressing(c, w, hf, rd[0] <= 12); continue;
     }
-    if (cls === 'asphaltLines') { for (const [s0, s1, ln] of lineRuns(ri, c)) { const pc = subPoly(c, s0, s1); if (pc.length >= 4) ribbon(pc, w, ln ? 'asphaltLines' : 'asphalt', ln ? YOFF.asphaltLines : YOFF.asphalt, ln ? tile : 8, ln ? 1 : w / 8); } }
+    if (isLines(cls)) { for (const [s0, s1, ln] of lineRuns(ri, c)) { const pc = subPoly(c, s0, s1); if (pc.length >= 4) ribbon(pc, w, ln ? cls : 'asphalt', ln ? YOFF[cls] : YOFF.asphalt, ln ? tile : 8, ln ? 1 : w / 8); } }
     else if (rd[0] >= 13) { for (const pc0 of offTramCut(c)) for (const pc of pasajeRibbonParts(rd, pc0)) ribbon(pc, w, cls, YOFF[cls], tile, w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8)); } // v0.76: no path floating over the tram cutting
-    else ribbon(c, w, cls, YOFF[cls], tile, cls === 'asphaltLines' ? 1 : w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8));
+    else ribbon(c, w, cls, YOFF[cls], tile, isLines(cls) ? 1 : w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8));
     if (['primary', 'secondary', 'tertiary', 'residential', 'unclassified', 'primary_link', 'secondary_link', 'tertiary_link', 'living_street'].includes(t) && cls !== 'paving')
       for (const sd of [1, -1]) ribbonBand(c, sd * (w / 2 - 0.3), sd * (w / 2 + 2.1), 'sidewalk', YOFF.sidewalk, 2.4, ri); // two kerb-side strips (a full-width slab under the road poked through it on curved slopes)
     // junction discs
-    if (cls === 'asphalt' || cls === 'asphaltLines' || cls === 'paving') for (let i = 0; i < c.length; i += 2) {
+    if (cls === 'asphalt' || isLines(cls) || cls === 'paving') for (let i = 0; i < c.length; i += 2) {
       const n = nodeCount.get(K(c[i], c[i + 1])); const end = i === 0 || i === c.length - 2;
       if (n >= 2 || end) disc(c[i], c[i + 1], w / 2 * (n >= 3 ? 1.05 : 1.0), cls === 'paving' ? 'discPave' : 'disc', cls === 'paving' ? YOFF.discPave : YOFF.disc);
     }
@@ -339,10 +356,17 @@ function buildRoads() {
 // road that lie inside another road's carriageway (a junction mouth, a slip road running alongside before it merges, a
 // roundabout) are drawn as plain asphalt; the lines go on where the road is on its own again. Returns [s0, s1, lines].
 function polyAt(c, s) { for (let i = 0; i < c.length - 2; i += 2) { const L = Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]); if (s <= L || i === c.length - 4) { const t = L ? clamp(s / L, 0, 1) : 0; return [c[i] + (c[i + 2] - c[i]) * t, c[i + 1] + (c[i + 3] - c[i + 1]) * t]; } s -= L; } return [c[0], c[1]]; }
+let RIDX = null; // road → its index (lineRuns)
 function lineRuns(ri, c) {
   const L = polyLen(c), out = []; if (L < 1) return [[0, L, true]];
-  const other = (r) => r !== DATA.R[ri] && r[0] <= 12 && !(r[3] & 6);
-  const inOther = (x, z) => { const rd = ROADSEG.nearest(x, z, other); return !!rd && rd.d < DATA.R[rd.ri][2] / 2 + 0.4; };
+  const me = DATA.R[ri], other = (r) => r !== me && r[0] <= 12 && !(r[3] & 6);
+  // v0.99.5 (Jonay: «muchas líneas que se cruzan»): a road gives way to a bigger one (lower class, or as big and wider):
+  // its lines stop as soon as its ribbon touches the bigger road's carriageway (a slip road running alongside before it
+  // merges, a junction mouth), not only when its centre is inside it; the bigger road keeps its lines
+  if (!RIDX) { RIDX = new Map(); DATA.R.forEach((r, i) => RIDX.set(r, i)); }
+  const bigger = (r) => r[0] < me[0] || (r[0] === me[0] && (r[2] > me[2] || (r[2] === me[2] && RIDX.get(r) < ri))); // (two alike: the first one keeps its lines)
+  const inOther = (x, z) => { const rd = ROADSEG.nearest(x, z, (r) => other(r) && bigger(r)); if (rd && rd.d < DATA.R[rd.ri][2] / 2 + me[2] / 2 - 0.2) return true;
+    const r2 = ROADSEG.nearest(x, z, other); return !!r2 && r2.d < DATA.R[r2.ri][2] / 2 + 0.4; };
   const N = Math.max(2, Math.ceil(L / 2)); let cur = null, s0 = 0;
   for (let k = 0; k <= N; k++) { const s = L * k / N, p = polyAt(c, s), ln = !inOther(p[0], p[1]); if (cur === null) cur = ln; else if (ln !== cur) { const m = s - L / N / 2; out.push([s0, m, cur]); s0 = m; cur = ln; } }
   out.push([s0, L, cur]);
@@ -732,7 +756,7 @@ function tramDepth(s) { const T = TRAM_TRENCH; if (s <= T.s0 || s >= T.s3) retur
 // a street crossing over the cutting here (one running alongside it, like the Avenida itself, does not count)
 function tramUnderRoad(x, z, ux, uz) { const rd = ROADSEG.nearest(x, z, (r) => r[0] <= 12 && !(r[3] & 6)); if (!rd || rd.d > DATA.R[rd.ri][2] / 2 + 3.5) return false; const L = Math.hypot(rd.dx, rd.dz) || 1; return Math.abs((rd.dx * ux + rd.dz * uz) / L) < 0.75; }
 function tunnelRoad(c, w, cls, tile, hf, opt = {}) {
-  ribbon(c, w, cls, YOFF[cls], tile, cls === 'asphaltLines' ? 1 : w / 8, hf, true);
+  ribbon(c, w, cls, YOFF[cls], tile, isLines(cls) ? 1 : w / 8, hf, true);
   // covered stretch -> tube with walls, ceiling and lights; open stretch -> cutting with retaining walls
   const T = acc(c[0], c[1], 'tunnel'); const L2 = acc(c[0], c[1], 'tunnelLight'); const W = acc(c[0], c[1], 'trim'); const hw = w / 2 + (opt.H ? 0.6 : 1.0), H = opt.H || 6.0; // roomier tubes and mouths
   const pts = []; let dist = 0;
@@ -1088,7 +1112,7 @@ function finalizeChunks() {
     const a = c[mk]; if (!a.p.length) continue;
     const g = a.geo(mk === 'facade' ? 2 : 0, MAT[mk]); a.p = a.n = a.uv = a.c = a.e = null;
     const m = new THREE.Mesh(g, MAT[mk]);
-    const isRoad = ['asphalt', 'asphaltLines', 'paving', 'sidewalk', 'footway', 'dirt', 'tram', 'disc', 'discPave', 'tunnelLight', 'grass'].includes(mk);
+    const isRoad = isLines(mk) || ['asphalt', 'paving', 'sidewalk', 'footway', 'dirt', 'tram', 'disc', 'discPave', 'tunnelLight', 'grass'].includes(mk);
     m.receiveShadow = true; m.castShadow = !isRoad && mk !== 'glassHouse';
     if (isRoad) m.renderOrder = 1;
     m.matrixAutoUpdate = false; m.name = 'chunk:' + mk; m.userData.chunk = k; scene.add(m); meshes++;
@@ -1176,7 +1200,27 @@ function buildMedians() {
     let piece = [];
     const flush = () => { if (piece.length >= 3) { const k = piece[0][4]; MEDIANS.push([k, Math.round(piece[0][0]), Math.round(piece[0][1]), Math.round(piece[piece.length - 1][0]), Math.round(piece[piece.length - 1][1]), piece.length]); if (k === 2) { barrier(piece); nB++; } else if (k === 3) { guardrail(piece); nG++; } else { island(piece); nK++; } } piece = []; };
     for (const p of run) { if (piece.length && (Math.hypot(p[0] - piece[piece.length - 1][0], p[1] - piece[piece.length - 1][1]) > 4.5)) flush(); piece.push(p); } flush(); }
-  console.log('medians: barriers', nB, 'guardrails', nG, 'islands', nK);
+  // v0.99.5 (Jonay: «delimitar bien los arcenes… para no poder pasar de la autopista a la carretera paralela sin usar las
+  // salidas»): a steel guardrail along both edges of the motorways and their slip roads, outside the hard shoulder, left
+  // open where another road joins or touches it (the slip roads' gores, the junctions), on bridges and in tunnels (they have
+  // their own walls) and where a median already stands
+  const MG = new Set(); for (const run of runs.values()) for (const p of run) MG.add(Math.round(p[0] / 2) * 100000 + Math.round(p[1] / 2));
+  const nearMedian = (x, z) => { const a = Math.round(x / 2), b = Math.round(z / 2); for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) if (MG.has((a + i) * 100000 + b + j)) return true; return false; };
+  let nE = 0;
+  R.forEach((rd, ri) => { if (rd[0] > 1 || (rd[3] & 6) || DEP.has(ri) || RAISE.has(ri)) return; const c = rd[4], w = rd[2];
+    const jn = []; for (let i = 0; i < c.length; i += 2) if ((nodeCount.get(K(c[i], c[i + 1])) || 0) >= 3) jn.push(c[i], c[i + 1]); // (a junction; two ways of the same road meeting is not one)
+    const nearNode = (x, z) => { for (let i = 0; i < jn.length; i += 2) if (Math.hypot(jn[i] - x, jn[i + 1] - z) < Math.max(22, w * 1.6)) return true; return false; };
+    for (const sd of [1, -1]) { let piece = [], s0 = 0;
+      const flush = () => { if (piece.length >= 4) { guardrail(piece); nE++; MEDIANS.push([4, Math.round(piece[0][0]), Math.round(piece[0][1]), Math.round(piece[piece.length - 1][0]), Math.round(piece[piece.length - 1][1]), piece.length]); } piece = []; };
+      for (let i = 0; i < c.length - 2; i += 2) { const ax = c[i], az = c[i + 1], bx = c[i + 2], bz = c[i + 3], L = Math.hypot(bx - ax, bz - az); if (L < 0.5) continue; const ux = (bx - ax) / L, uz = (bz - az) / L, nx = -uz * sd, nz = ux * sd;
+        for (let t = 0; t < L; t += 3) { const cx = ax + ux * t, cz = az + uz * t, x = cx + nx * (w / 2 + 0.45), z = cz + nz * (w / 2 + 0.45);
+          const other = ROADSEG.nearest(x, z, (r) => r !== rd && r[0] <= 12 && !(r[3] & 6));
+          const y = ROADY[ri] ? ROADY[ri](s0 + t, cx, cz) : heightAt(cx, cz);
+          const open = !Number.isFinite(y) || nearNode(cx, cz) || (other && other.d < DATA.R[other.ri][2] / 2 + 1.2) || nearMedian(x, z) || triRampZone(x, z) || tramTrenchAt(x, z, 4);
+          if (open) { flush(); continue; } piece.push([x, z, y, 0, 3, s0 + t, y]); }
+        s0 += L; }
+      flush(); } });
+  console.log('medians: barriers', nB, 'guardrails', nG, 'islands', nK, 'edge guardrails', nE);
   function barrier(P) { /* New Jersey profile */
     const T = acc(P[0][0], P[0][1], 'trim'); const col = [0.6, 0.59, 0.56]; // v0.91: darker (it vanished against the asphalt)
     for (let i = 0; i < P.length - 1; i++) { const a = P[i], b = P[i + 1]; const dx = b[0] - a[0], dz = b[1] - a[1], L = Math.hypot(dx, dz) || 1, px = -dz / L, pz = dx / L;

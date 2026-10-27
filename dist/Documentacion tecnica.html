@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.99.4</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.99.5</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,22 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.99.5 — 2026-10-27 — Marcas viales por carriles y nada de coches aparcados en la autopista</h2>
+<ul>
+<li><strong>Carreteras</strong> (Jonay: «las marcas viales deben ser coherentes… hay muchas líneas que se cruzan», «no puede haber coches
+  aparcados en medio de la autopista ni de la Vía de Ronda»):</li>
+<li>Cada carretera con líneas lleva las de sus carriles, hechas a su anchura (<code>laneMk</code> en <code>src/04_world.js</code>): una calzada
+    de un sentido (autopista, enlaces, cada sentido de la Vía de Ronda) con sus bordes continuos, el arcén derecho más
+    ancho y discontinuas entre carriles; una de doble sentido con su eje (doble continuo si tiene 4 carriles). Los
+    enlaces de un sentido llevan ya sus líneas de borde.</li>
+<li>Una vía cede a otra mayor: sus líneas se cortan en cuanto su calzada toca la de la mayor (un ramal que corre al lado
+    antes de incorporarse, la boca de un cruce); la mayor mantiene las suyas.</li>
+<li>Los discos de asfalto de las uniones van ya por debajo de las líneas (cortaban las líneas en círculos).</li>
+<li>Ningún coche aparcado sobre la autopista, sus enlaces, las carreteras principales ni la Vía de Ronda (había 86).</li>
+<li>Bionda (guardarraíl) a los dos lados de la autopista y de sus enlaces, por fuera del arcén: abierta solo donde se
+    une o toca otra vía (las salidas y entradas, los cruces), en puentes y túneles (tienen sus muros) y donde ya hay
+    mediana. Ya no se puede pasar a la carretera de al lado sin usar las salidas.</li>
+</ul>
 <h2>0.99.4 — 2026-10-27 — Baloncesto: jugadores del pack con camiseta de asillas</h2>
 <ul>
 <li><strong>Baloncesto 2D</strong> (Jonay: «el basket perfecto, aplica ya»): los jugadores se dibujan con el pack GandalfHardcore y su
