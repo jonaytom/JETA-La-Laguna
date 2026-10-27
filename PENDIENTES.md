@@ -447,6 +447,8 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Hecho
 
+- [x] v0.97.0 **Guanche Guarriors: La Mirladora sin bikini y más rubia** (Jonay, 27-oct): pezón rosado; también montada en el lagarto (`tools/sprites_ext/mirla_nat.py`).
+- [x] v0.96 **Propuesta de baloncesto: camisetas de asillas sin pecho al aire, pantalón por la cintura, sin balón dibujado** (Jonay, 27-oct; en la página de propuestas, aún no en el juego).
 - [x] v0.96.3 **Guanche Guarriors: patada en carrera con las piernas de La Mirladora en todos y quieta** (Jonay, 27-oct).
 - [x] v0.96.2 **Fútbol: el portero sacaba recto contra el rival que acababa de chutar** (Jonay, 27-oct): ahora pasa al compañero más cercano, raso o bombeado si hay un rival en la línea.
 - [x] v0.96.0 **Guanche Guarriors: el mordisco de los perros se salía del perro y era muy grande** (Jonay, 27-oct): más pequeño, en el hocico.

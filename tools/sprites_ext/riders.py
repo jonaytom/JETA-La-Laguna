@@ -25,7 +25,7 @@ def hero(path, fw, fh, skin_path=None, pad=0):
             if c[3] and c[:3] not in UW and c[:3] != K and sum(c[:3]) > 250: cols[c[:3]] = cols.get(c[:3], 0) + 1
     skin = max(cols, key=cols.get)
     return f.crop((0, 0, fw, hip)), hip, hx, skin
-H = {'magote': hero(G + '/out/magote.png', 80, 64), 'mencey': hero(G + '/out2/mencey.png', 80, 64), 'mirla': hero(G + '/out2/mirla2.png', 112, 80, '/mnt/user-data/uploads/GTA La Laguna/assets_externos/GandalfHardcore Character Asset Pack/Character skin colors/Female Skin4.png', 16)}
+H = {'magote': hero(G + '/out/magote.png', 80, 64), 'mencey': hero(G + '/out2/mencey.png', 80, 64), 'mirla': hero(G + '/out2/mirla_nat.png', 112, 80, '/mnt/user-data/uploads/GTA La Laguna/assets_externos/GandalfHardcore Character Asset Pack/Character skin colors/Female Skin4.png', 16)}
 CELL = (120, 80)
 for name, (up, hip, hx, skin) in H.items():
     dark = tuple(int(c * 0.72) for c in skin)

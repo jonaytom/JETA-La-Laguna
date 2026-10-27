@@ -22,7 +22,7 @@ bb = Image.new('RGBA', (max(ben.width, gb.width), 64 * 9)); bb.paste(ben, (0, 0)
 bn0 = load('bencomo_ns.png'); bns = Image.new('RGBA', (bn0.width, 64 * 8)); bns.paste(bn0, (0, 0)); bns.paste(load('ben_agachado_ns.png'), (0, 64 * 7))
 SHEETS = {   # key: (image, fw, fh, dir (1 = drawn facing right), anchor or None = the feet of frame 0)
     'magote': (load('magote.png'), 80, 64, -1, (40, 64)), 'mencey': (load('mencey.png'), 80, 64, -1, (40, 64)),
-    'mirla': (load('mirla2.png'), 112, 80, -1, (56, 80)),
+    'mirla': (load('mirla_nat.png'), 112, 80, -1, (56, 80)),
     'g_secuaz': (load('g_secuaz.png'), 80, 64, -1, (40, 64)), 'g_escudo': (load('g_escudo.png'), 80, 64, -1, (40, 64)),
     'g_giganton': (load('g_giganton.png'), 80, 64, -1, (40, 64)), 'g_bruja': (load('g_bruja.png'), 112, 80, -1, (56, 80)),
     'g_duende': (load('g_duende.png'), 80, 64, -1, (40, 64)), 'g_duende_azul': (load('g_duende_azul.png'), 80, 64, -1, (40, 64)), 'g_guayota': (load('g_guayota.png'), 80, 64, -1, (40, 64)),

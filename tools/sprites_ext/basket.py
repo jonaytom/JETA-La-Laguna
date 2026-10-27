@@ -5,33 +5,54 @@ import sys, math
 G = sys.argv[1]; sys.argv = [sys.argv[0], G]; sys.path.insert(0, G)
 from mk import *
 CP = 'GandalfHardcore Character Asset Pack/'
-def jersey(shirt, ramp):
-    """v0.96 (Jonay: «camisetas de asillas»): the shirt without sleeves: an opening of the shirt's shape (eroded and grown
-    back by 5 px) keeps the torso and drops what is thinner than it, the arms; the straps stay on the shoulders"""
+def jersey(shirt, ramp, skin=None):
+    """v0.96 (Jonay: «camisetas de asillas», «pecho descubierto»): the torso is found with an opening of the shirt's
+    shape (eroded and grown back by 5 px: the arms, thinner, go); then, line by line, the shirt is kept from the left
+    to the right edge of that torso (lines without torso take the nearest one), so an arm crossing the chest is covered
+    by the jersey and the shoulders keep both straps; what sticks out sideways (the sleeves) goes"""
     from PIL import ImageFilter
     a = shirt.split()[3].point(lambda v: 255 if v else 0)
-    body = a.filter(ImageFilter.MinFilter(5)).filter(ImageFilter.MaxFilter(5))
-    out = Image.new('RGBA', shirt.size); out.paste(shirt, (0, 0), body)
-    # plus a narrow band along the torso's axis (from the middle of the waist to the middle of the neck), for the frames
-    # where the arms cover the chest and the opening leaves only thin strips of shirt
-    sp = shirt.load(); op = out.load()
+    body = a.filter(ImageFilter.MinFilter(5)).filter(ImageFilter.MaxFilter(5)); bp = body.load()
+    body3 = a.filter(ImageFilter.MinFilter(3)).filter(ImageFilter.MaxFilter(3)); bp3 = body3.load()   # for the frames where the 5 px opening leaves nothing (an arm across the chest)
+    out = Image.new('RGBA', shirt.size); sp = shirt.load(); op = out.load()
     for r in range(shirt.height // 64):
         for c in range(shirt.width // 80):
             ys = [y for y in range(64) if any(sp[c*80+x, r*64+y][3] for x in range(80))]
-            if len(ys) < 6: continue
-            def mid(yy): xs = [x for y in yy for x in range(80) if sp[c*80+x, r*64+y][3]]; return (min(xs) + max(xs)) / 2
-            y0, y1 = min(ys), max(ys); cb = mid(range(y1 - 2, y1 + 1)); ct = mid(range(y0, y0 + 2))
+            if not ys: continue
+            rng = {}
+            for m in (bp, bp3):
+                for y in ys:
+                    xs = [x for x in range(80) if m[c*80+x, r*64+y]]
+                    if xs: rng[y] = (min(xs), max(xs))
+                if len(rng) >= 6: break
+                rng = {}
+            if not rng: continue
             for y in ys:
-                cx = cb + (ct - cb) * (y1 - y) / max(1, y1 - y0)
-                for x in range(80):
-                    if sp[c*80+x, r*64+y][3] and abs(x - cx) <= 3: op[c*80+x, r*64+y] = sp[c*80+x, r*64+y]
-            # v0.96 (Jonay: «un hombro descubierto»): the shoulders (top 4 lines of the shirt) as wide as the chest just
-            # below them, so both straps are there
-            bp = body.load(); xs = [x for y in range(y0 + 4, y0 + 7) for x in range(80) if bp[c*80+x, r*64+y]]
-            if xs:
-                for y in range(y0, y0 + 4):
-                    for x in range(min(xs), max(xs) + 1):
-                        if sp[c*80+x, r*64+y][3]: op[c*80+x, r*64+y] = sp[c*80+x, r*64+y]
+                if y in rng: x0, x1 = rng[y]
+                else: x0, x1 = rng[min(rng, key=lambda k: abs(k - y))]
+                for x in range(x0, x1 + 1):
+                    if sp[c*80+x, r*64+y][3]: op[c*80+x, r*64+y] = sp[c*80+x, r*64+y]
+            # v0.96 (Jonay: «pecho al aire»): the pack's shirt has a deep V neck; a jersey closes it: below the first two
+            # lines, the gaps between the jersey's pixels of each line are filled with the nearest jersey colour
+            y0 = min(ys)
+            # the shoulders and the top of the chest (lines 1–5) as wide as the chest on line 6: the skin there (the
+            # pack's neckline and the bare shoulder) is jersey too
+            if skin is not None:
+                kp = skin.load(); w6 = [x for x in range(80) if op[c*80+x, r*64+y0+6][3]] if y0 + 6 < 64 else []
+                if w6:
+                    for y in range(y0 + 1, y0 + 6):
+                        for x in range(min(w6), max(w6) + 1):
+                            if not op[c*80+x, r*64+y][3] and kp[c*80+x, r*64+y][3] and kp[c*80+x, r*64+y][:3] != (19, 19, 28):
+                                k = [q for q in range(80) if op[c*80+q, r*64+y][3] and op[c*80+q, r*64+y][:3] != (19, 19, 28)]
+                                op[c*80+x, r*64+y] = op[c*80+min(k, key=lambda q: abs(q - x)), r*64+y] if k else sp[c*80+x, r*64+y0+6] if sp[c*80+x, r*64+y0+6][3] else (200, 200, 200, 255)
+            for y in ys:
+                if y < y0 + 2: continue
+                xs = [x for x in range(80) if op[c*80+x, r*64+y][3]]
+                if len(xs) < 2: continue
+                for x in range(min(xs) + 1, max(xs)):
+                    if not op[c*80+x, r*64+y][3]:
+                        k = min(xs, key=lambda q: abs(q - x)); q = op[c*80+k, r*64+y]
+                        op[c*80+x, r*64+y] = q if q[:3] != (19, 19, 28) else sp[c*80+k, r*64+y]
     return tint(out, ramp)
 def shorts(pants, ramp):
     """v0.96 (Jonay: «se ven los calzoncillos», «parecen bajados»): from the waist of each frame (the top of the trousers)
@@ -69,6 +90,6 @@ def no_briefs(sk, ramp):   # v0.96 (Jonay: «se ven los calzoncillos»): the bri
             if q[3] and q[:3] in m: px[x, y] = m[q[:3]] + (q[3],)
     return out
 for name, skin, hair, ramp in players:
-    im = compose([no_briefs(L(CP + 'Character skin colors/%s.png' % skin), ramp), shorts(PA, ramp), jersey(SH, ramp), SHOES, H(hair)])
+    im = compose([no_briefs(L(CP + 'Character skin colors/%s.png' % skin), ramp), shorts(PA, ramp), jersey(SH, ramp, L(CP + 'Character skin colors/%s.png' % skin)), SHOES, H(hair)])
     im.save(G + '/out2/' + name + '.png')   # v0.96 (Jonay): no ball drawn on the sheet (the game draws its own)
 print('ok')

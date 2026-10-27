@@ -3,6 +3,11 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.97.0 — 2026-10-27 — Guanche Guarriors: La Mirladora sin bikini
+- **Guanche Guarriors** (Jonay: «el bikini no existía en esa época»): La Mirladora va sin la parte de arriba del
+  bikini, con el pecho al aire (piel del pack sin el sujetador ni su borde, pezón rosado en cada pecho), y **más rubia**.
+  Abajo sigue el taparrabos de cuero y la falda de flecos. También montada en el lagarto.
+
 ## 0.96.4 — 2026-10-27 — Guanche Guarriors: la pierna de la patada en carrera, 1 px más arriba
 - **Guanche Guarriors** (Jonay): en la patada en carrera de todos menos La Mirladora, las piernas 1 píxel más arriba
   (la estirada quedaba desplazada hacia abajo).
