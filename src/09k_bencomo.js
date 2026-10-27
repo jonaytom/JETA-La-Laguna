@@ -195,6 +195,7 @@ ARCADE.GAMES.bencomo = (() => {
   function create(api, opt) {
     const loop0 = opt.loop || 0; const g = { score: 0, over: false, demoKeys: { held: {}, hit: {} } };
     let lives = 3, stageN = 0, loopN = loop0, gofio = 0, L = null, tiles = null, camX = 0, camY = 84, time = 0, phase = 'intro', phaseT = 0, fx = [], banner = null, bannerT = 0, boss = null;
+    for (const k of ['bencomo', 'bencomo_ns', ...Object.values(BX_EN)]) SPRX.ready(k); // v0.95.2: start loading every sheet now
     const p = { x: 0, y: 0, vx: 0, vy: 0, face: 1, hp: 3, inv: 0, atk: 0, atkCD: 0, vault: 0, pogo: false, onG: false, coy: 0, buf: 0, power: 0, stones: 3, anim: 0, dead: 0, cp: null, hurtT: 0 };
     const E = []; const shots = []; const rocks = []; const items = [];
     const spd = () => 1 + 0.22 * loopN;

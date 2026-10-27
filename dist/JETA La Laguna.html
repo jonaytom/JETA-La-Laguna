@@ -205,7 +205,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="tb" id="tbS">CORRER</div>
 <div class="tb" id="tbM">MAPA</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">v0.95.1</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">v0.95.2</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -9766,6 +9766,7 @@ ARCADE.GAMES.bencomo = (() => {
   function create(api, opt) {
     const loop0 = opt.loop || 0; const g = { score: 0, over: false, demoKeys: { held: {}, hit: {} } };
     let lives = 3, stageN = 0, loopN = loop0, gofio = 0, L = null, tiles = null, camX = 0, camY = 84, time = 0, phase = 'intro', phaseT = 0, fx = [], banner = null, bannerT = 0, boss = null;
+    for (const k of ['bencomo', 'bencomo_ns', ...Object.values(BX_EN)]) SPRX.ready(k); // v0.95.2: start loading every sheet now
     const p = { x: 0, y: 0, vx: 0, vy: 0, face: 1, hp: 3, inv: 0, atk: 0, atkCD: 0, vault: 0, pogo: false, onG: false, coy: 0, buf: 0, power: 0, stones: 3, anim: 0, dead: 0, cp: null, hurtT: 0 };
     const E = []; const shots = []; const rocks = []; const items = [];
     const spd = () => 1 + 0.22 * loopN;
@@ -10622,6 +10623,9 @@ ARCADE.GAMES.guanche = (() => {
     const g = { score: 0, over: false, demoKeys: { held: {}, hit: {} } };
     let lives = 3, stageN = 0, loopN = opt.loop || 0, L = null, camX = 0, time = 0, phase = opt.demo ? 'intro' : 'select', phaseT = 0, banner = null, bannerT = 0, waveI = 0, lock = null, shake = 0, spellFx = null, sel = 0, campT = 0, campN = 0, goT = 0;
     const E = [], shots = [], items = [], liz = []; let fx = [];
+    // v0.95.2: every sheet starts loading when the machine opens (they load on their first draw; meanwhile the old
+    // drawings were built, and that is what read the canvas with getImageData — the 0.90 audit warning)
+    for (const k of [...Object.values(SX_HERO), ...Object.values(SX_EN), 'g_duende_azul', 'lagarto', 'lz_mencey', 'lz_pastor', 'lz_mirla']) SPRX.ready(k);
     const p = { hero: HEROES[0], x: 30, z: 22, h: 0, vh: 0, vx: 0, face: 1, hp: 24, st: 'idle', stT: 0, anim: 0, combo: 0, comboT: 0, hitDone: new Set(), jars: 0, inv: 0, tap: { d: 0, t: 0 }, run: false, mount: null };
     const lp = () => 1 + 0.35 * loopN;
     function choose(i) { sel = i; p.hero = HEROES[i]; p.hp = p.hero.hp; p.jars = 0; }
@@ -10787,7 +10791,7 @@ ARCADE.GAMES.guanche = (() => {
       if (phase === 'select') { if (pad.hit('vR')) { sel = (sel + 1) % 3; api.sfx('pick'); } if (pad.hit('vL')) { sel = (sel + 2) % 3; api.sfx('pick'); } if (pad.hit('vS') || pad.hit('vT')) { choose(sel); api.sfx('start'); load(0); } return; }
       if (phase === 'intro') { phaseT -= dt; if (phaseT <= 0 || (!opt.demo && pad.hit('vS') && phaseT < 2.2)) phase = 'play'; return; }
       if (phase === 'clear') { phaseT -= dt; if (phaseT < 2.5 && !g.tally) { g.tally = true; g.score += Math.round((p.hp * 100 + p.jars * 500) * (1 + 0.5 * loopN)); }
-        if (phaseT <= 0) { g.tally = false; if (stageN % STAGES.length === STAGES.length - 1) { phase = 'ending'; phaseT = 7; if (!opt.demo) api.music(SONGS.title); } else { phase = 'camp'; campT = 11; campN = 0; E.length = 0; items.length = 0; liz.length = 0; camX = 0; p.x = VW / 2 - 20; p.z = 24; p.st = 'idle'; if (!opt.demo) api.music(SONGS.camp); banner = ['EL CAMPAMENTO', '¡QUE NO TE ROBEN LOS DUENDES!']; bannerT = 2.5; } } return; }
+        if (phaseT <= 0) { g.tally = false; if (stageN % STAGES.length === STAGES.length - 1) { phase = 'ending'; phaseT = 7; if (!opt.demo) api.music(SONGS.title); } else { phase = 'camp'; campT = 11; campN = 0; E.length = 0; items.length = 0; liz.length = 0; p.mount = null; /* v0.95.2 (Jonay): off the lizard, or he was not drawn at the camp */ camX = 0; p.x = VW / 2 - 20; p.z = 24; p.st = 'idle'; if (!opt.demo) api.music(SONGS.camp); banner = ['EL CAMPAMENTO', '¡QUE NO TE ROBEN LOS DUENDES!']; bannerT = 2.5; } } return; }
       if (phase === 'ending') { phaseT -= dt; if (phaseT <= 0) { loopN++; stageN++; banner = ['¡VUELTA ' + (loopN + 1) + '!', 'GUAYOTA HA VUELTO · PUNTOS ×' + String(1 + 0.5 * loopN).replace('.', ',')]; bannerT = 2.5; load(stageN); } return; }
       if (phase === 'camp') { camp(dt, pad); return; }
       player(dt, pad); for (const e of E) enemy(e, dt); lizards(dt); updShots(dt); drops();
@@ -10908,7 +10912,7 @@ ARCADE.GAMES.guanche = (() => {
       A.txt(c, '← → ELEGIR    A: ¡A LUCHAR!', SW / 2, 300, '#fff', 8, 'center'); }
     if (opt.demo) { choose(Math.floor(Math.random() * 3)); load(0); phase = 'play'; } else { choose(0); L = STAGES[0]; }
     Object.assign(g, { _p: p, _E: E, _liz: liz, _items: items, _phase: () => phase, _stage: () => stageN, _L: () => L, _lock: () => lock, _cam: () => camX, _choose: (i) => { choose(i); load(stageN); phase = 'play'; },
-      _load: (n) => { stageN = n; load(n); phase = 'play'; }, _lives: (v) => (v === undefined ? lives : (lives = v)), _boss: () => E.find((e) => e.d.boss), _sel: () => sel, _spawn: (k, x, z) => spawn(k, x, z) }); // tests
+      _load: (n) => { stageN = n; load(n); phase = 'play'; }, _lives: (v) => (v === undefined ? lives : (lives = v)), _boss: () => E.find((e) => e.d.boss), _sel: () => sel, _spawn: (k, x, z) => spawn(k, x, z), _clear: () => { phase = 'clear'; phaseT = 0.01; } }); // tests
     return g;
   }
   // ---------- title screen and the backdrop of the hi-score table

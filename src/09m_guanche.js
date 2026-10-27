@@ -224,6 +224,9 @@ ARCADE.GAMES.guanche = (() => {
     const g = { score: 0, over: false, demoKeys: { held: {}, hit: {} } };
     let lives = 3, stageN = 0, loopN = opt.loop || 0, L = null, camX = 0, time = 0, phase = opt.demo ? 'intro' : 'select', phaseT = 0, banner = null, bannerT = 0, waveI = 0, lock = null, shake = 0, spellFx = null, sel = 0, campT = 0, campN = 0, goT = 0;
     const E = [], shots = [], items = [], liz = []; let fx = [];
+    // v0.95.2: every sheet starts loading when the machine opens (they load on their first draw; meanwhile the old
+    // drawings were built, and that is what read the canvas with getImageData — the 0.90 audit warning)
+    for (const k of [...Object.values(SX_HERO), ...Object.values(SX_EN), 'g_duende_azul', 'lagarto', 'lz_mencey', 'lz_pastor', 'lz_mirla']) SPRX.ready(k);
     const p = { hero: HEROES[0], x: 30, z: 22, h: 0, vh: 0, vx: 0, face: 1, hp: 24, st: 'idle', stT: 0, anim: 0, combo: 0, comboT: 0, hitDone: new Set(), jars: 0, inv: 0, tap: { d: 0, t: 0 }, run: false, mount: null };
     const lp = () => 1 + 0.35 * loopN;
     function choose(i) { sel = i; p.hero = HEROES[i]; p.hp = p.hero.hp; p.jars = 0; }
@@ -389,7 +392,7 @@ ARCADE.GAMES.guanche = (() => {
       if (phase === 'select') { if (pad.hit('vR')) { sel = (sel + 1) % 3; api.sfx('pick'); } if (pad.hit('vL')) { sel = (sel + 2) % 3; api.sfx('pick'); } if (pad.hit('vS') || pad.hit('vT')) { choose(sel); api.sfx('start'); load(0); } return; }
       if (phase === 'intro') { phaseT -= dt; if (phaseT <= 0 || (!opt.demo && pad.hit('vS') && phaseT < 2.2)) phase = 'play'; return; }
       if (phase === 'clear') { phaseT -= dt; if (phaseT < 2.5 && !g.tally) { g.tally = true; g.score += Math.round((p.hp * 100 + p.jars * 500) * (1 + 0.5 * loopN)); }
-        if (phaseT <= 0) { g.tally = false; if (stageN % STAGES.length === STAGES.length - 1) { phase = 'ending'; phaseT = 7; if (!opt.demo) api.music(SONGS.title); } else { phase = 'camp'; campT = 11; campN = 0; E.length = 0; items.length = 0; liz.length = 0; camX = 0; p.x = VW / 2 - 20; p.z = 24; p.st = 'idle'; if (!opt.demo) api.music(SONGS.camp); banner = ['EL CAMPAMENTO', '¡QUE NO TE ROBEN LOS DUENDES!']; bannerT = 2.5; } } return; }
+        if (phaseT <= 0) { g.tally = false; if (stageN % STAGES.length === STAGES.length - 1) { phase = 'ending'; phaseT = 7; if (!opt.demo) api.music(SONGS.title); } else { phase = 'camp'; campT = 11; campN = 0; E.length = 0; items.length = 0; liz.length = 0; p.mount = null; /* v0.95.2 (Jonay): off the lizard, or he was not drawn at the camp */ camX = 0; p.x = VW / 2 - 20; p.z = 24; p.st = 'idle'; if (!opt.demo) api.music(SONGS.camp); banner = ['EL CAMPAMENTO', '¡QUE NO TE ROBEN LOS DUENDES!']; bannerT = 2.5; } } return; }
       if (phase === 'ending') { phaseT -= dt; if (phaseT <= 0) { loopN++; stageN++; banner = ['¡VUELTA ' + (loopN + 1) + '!', 'GUAYOTA HA VUELTO · PUNTOS ×' + String(1 + 0.5 * loopN).replace('.', ',')]; bannerT = 2.5; load(stageN); } return; }
       if (phase === 'camp') { camp(dt, pad); return; }
       player(dt, pad); for (const e of E) enemy(e, dt); lizards(dt); updShots(dt); drops();
@@ -510,7 +513,7 @@ ARCADE.GAMES.guanche = (() => {
       A.txt(c, '← → ELEGIR    A: ¡A LUCHAR!', SW / 2, 300, '#fff', 8, 'center'); }
     if (opt.demo) { choose(Math.floor(Math.random() * 3)); load(0); phase = 'play'; } else { choose(0); L = STAGES[0]; }
     Object.assign(g, { _p: p, _E: E, _liz: liz, _items: items, _phase: () => phase, _stage: () => stageN, _L: () => L, _lock: () => lock, _cam: () => camX, _choose: (i) => { choose(i); load(stageN); phase = 'play'; },
-      _load: (n) => { stageN = n; load(n); phase = 'play'; }, _lives: (v) => (v === undefined ? lives : (lives = v)), _boss: () => E.find((e) => e.d.boss), _sel: () => sel, _spawn: (k, x, z) => spawn(k, x, z) }); // tests
+      _load: (n) => { stageN = n; load(n); phase = 'play'; }, _lives: (v) => (v === undefined ? lives : (lives = v)), _boss: () => E.find((e) => e.d.boss), _sel: () => sel, _spawn: (k, x, z) => spawn(k, x, z), _clear: () => { phase = 'clear'; phaseT = 0.01; } }); // tests
     return g;
   }
   // ---------- title screen and the backdrop of the hi-score table

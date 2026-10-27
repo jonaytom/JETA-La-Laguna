@@ -359,17 +359,10 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Rendimiento, auditorías y código
 
-- [ ] ⚡ **Auditoría v0.92.0** (27-oct 03:25, APTO CON AVISOS; pintar 21 → 30,9 ms, arranque 8,6 → 9,7 s): la 0.92 solo
-  cambia la rampa del Vallado; pintar oscila entre ~21 y ~32 desde la 0.89 (ver la de la 0.90). Repetir la medición y,
-  si se queda en 31, buscar qué lo sube. Revisor de jugabilidad: 38 avisos (14 nuevos, 36 arreglados).
-- [ ] ⚡ **Auditoría v0.90.0** (26-oct 15:24, APTO CON AVISOS; pintar 22,3 → 32 ms, arranque 8,3 → 9,4 s):
-  - Pintar: la 0.90 no toca el mundo 3D y 32 ms es lo de la 0.89.0 (31,3); el 22,3 de la pasada anterior parece la
-    rara. Repetir la medición.
-  - 1 aviso alto: `09ma_pixguanche.js` render() lee el canvas (getImageData). Solo pasa al crear cada dibujo (se guardan,
-    no en cada fotograma); si molesta, crear los de cada héroe al cargar la máquina.
-  - Notas: `09ea_minijuegos.js` baja de B a C (el público en una función larga); `09eb_pixbasket.js` y
-    `09ma_pixguanche.js` salen con D (el dibujante de la propuesta, copiado tal cual: una función muy larga). Partirlos.
-- [ ] ⚡ **prueba_076 a veces falla en «mojado»** (26-oct, v0.90): el peatón empapado no siempre persigue (pasa repetida aparte y falla otras veces, sin tocar ese código). Hacerla fiable: elegir un peatón sin obstáculos delante o apuntarle directamente.
+- [ ] ◐ **Pintar ~30 ms desde la 0.89** (auditorías 0.90 y 0.92; repetida en 0.93–0.95.1: 30,9 · 31,3 · 32,8 · 29,6 ·
+  29,7 ms): se queda ahí; los ~21 ms de alguna pasada eran la medida rara. Buscar qué lo subió en la 0.89.
+- [ ] ◐ **Partir funciones largas** (auditoría 0.90): `09ea_minijuegos.js` bajó de B a C (el público en una función
+  larga); `09eb_pixbasket.js` y `09ma_pixguanche.js` salen con D (el dibujante de la propuesta, copiado tal cual).
 - [~] ◐ v0.90.0 (el fuego comparte el cilindro) **Auditoría 0.76.0**: queda `12k_agua.js` con nota D (las misiones en funciones muy largas: partirlas).
 - [ ] ◐ **Auditoría 0.75.0** (APTO CON AVISOS; pintar 49,9 → 45,5 ms, arranque 14,1 → 13,7 s, memoria igual, sin fugas):
       bajan de nota `12h_diario.js` (A → B; repasado en v0.90) y `12j_campos.js` (B → C, por la Copa Laguna: funciones largas). Queda el de los campos.
@@ -454,6 +447,14 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Hecho
 
+- [x] v0.95.2 **Guanche Guarriors: montado en el lagarto, en el campamento no se veía el personaje** (Jonay, 27-oct):
+  al entrar en el campamento se borraban los lagartos pero el héroe seguía «montado»; ahora se baja.
+- [x] v0.95.2 **Auditoría v0.90.0, aviso alto de `09ma_pixguanche.js` (getImageData)**: desde la 0.93 ese dibujo solo se
+  usa mientras cargan las hojas nuevas; ahora todas empiezan a cargar al abrir la máquina (también en Bencomo).
+- [x] v0.95.2 **Auditorías v0.90/v0.92: repetir la medición de pintar**: repetida en cada auditoría desde la 0.93, se
+  queda en ~30 ms (sigue abierto «buscar qué lo subió»).
+- [x] v0.95.2 **prueba_076 a veces fallaba en «mojado»**: el peatón se queda quieto mientras se le moja (se salía del
+  chorro) y te pones a 2,5 m para la pelea.
 - [x] v0.95.0 **Fútbol: campo un 30 % más grande y un jugador de campo más** (Jonay, 27-oct): 5 + portero.
 - [x] v0.95.0 **Fútbol: cambio de jugador en defensa** (Jonay, 27-oct): con el botón derecho, si el más cercano al balón va
   corriendo por detrás y hay otro defensor por delante del balón a distancia parecida (hasta 1 m más lejos, con

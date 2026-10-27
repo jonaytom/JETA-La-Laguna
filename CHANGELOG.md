@@ -3,6 +3,15 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.95.2 — 2026-10-27 — Arreglos rápidos: el héroe montado en el campamento
+- **Guanche Guarriors** (Jonay): al pasar de fase montado en el lagarto, en el campamento de la hoguera no se veía al
+  héroe (se quitaban los lagartos pero él seguía «montado»). Ahora se baja al llegar al campamento.
+- **Bencomo y Guanche Guarriors**: todas las hojas de personajes empiezan a cargarse al abrir la máquina, así no hace
+  falta el dibujo antiguo mientras cargan (era lo que leía el lienzo con getImageData, el aviso alto de la auditoría
+  0.90).
+- Pruebas: la 076 deja quieto al peatón mientras lo mojas (a veces se salía del chorro y la prueba fallaba); prueba
+  nueva 0952 (el campamento montado y las hojas cargadas al abrir).
+
 ## 0.95.1 — 2026-10-27 — Bencomo aparece en el picado
 - **Bencomo**: la primera vez que hacía el picado (o el salto con la vara) no se le veía, solo la vara: su dibujo sin
   la vara se cargaba en ese momento. Ahora se carga desde el principio y, mientras tanto, se usa el de siempre.

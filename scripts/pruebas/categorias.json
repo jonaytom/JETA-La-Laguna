@@ -296,7 +296,8 @@
    "^src/(09jy_sprx_data|09jz_sprx|09k_bencomo|09m_guanche)",
    [
     "prueba_093.py",
-    "prueba_094.py"
+    "prueba_094.py",
+    "prueba_0952.py"
    ]
   ]
  ]

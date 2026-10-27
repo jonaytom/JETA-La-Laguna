@@ -1,0 +1,6 @@
+# v0.95.2: los ⚡ (campamento montado, hojas al abrir, 076)
+prueba_0952.py
+prueba_093.py
+prueba_094.py
+prueba_095.py
+prueba_076.py
