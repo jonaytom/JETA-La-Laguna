@@ -3,6 +3,12 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.95.1 — 2026-10-27 — Bencomo aparece en el picado
+- **Bencomo**: la primera vez que hacía el picado (o el salto con la vara) no se le veía, solo la vara: su dibujo sin
+  la vara se cargaba en ese momento. Ahora se carga desde el principio y, mientras tanto, se usa el de siempre.
+- Pruebas: las fotos de Bencomo de la 0.95 se sacan en el mismo paso que se dibuja (si no, un fotograma del juego le
+  quitaba el picado antes de la foto), y la de los récords de la recreativa de naves espera a que acabe la partida.
+
 ## 0.95.0 — 2026-10-27 — Fútbol: campo más grande y seis por equipo
 - **Fútbol** (Jonay):
   - **El campo, un 30 % más grande** (44 × 70 m) y **5 jugadores de campo más el portero** por equipo: dos defensas,

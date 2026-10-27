@@ -390,7 +390,9 @@ ARCADE.GAMES.bencomo = (() => {
       // by the middle: it sticks out behind the hands as much as in front; on the pogo he crouches with it pointing down
       if (pole) { const hand = p.pogo ? [x - p.face * 3, y - 12] : [x + p.face * 2, y - 24], tip = p.pogo ? [x - p.face * 1, y + 9] : [p.pole[0] - camX, p.pole[1]]; const dx = hand[0] - tip[0], dy = hand[1] - tip[1], L = Math.hypot(dx, dy) || 1, back = p.pogo ? 7 : 6, end = [hand[0] + dx / L * back, hand[1] + dy / L * back];
         for (const [w, col] of [[1.6, '#1a1008'], [0.8, '#5c3a22'], [0.4, '#96683e']]) { c.strokeStyle = col; c.lineWidth = w; c.lineCap = 'round'; c.beginPath(); c.moveTo(tip[0], tip[1]); c.lineTo(end[0], end[1]); c.stroke(); } c.lineCap = 'butt'; }
-      SPRX.draw(c, pole ? 'bencomo_ns' : 'bencomo', p.pogo ? 7 : r, p.pogo ? 0 : f, x, y, p.face, BXP);
+      // v0.95.1: the sheet without the pole is asked for every frame so it is already loaded the first time he vaults or
+      // goes on the pogo (it loads on its first draw and that frame came out without Bencomo); meanwhile, the one with it
+      if (!(SPRX.ready('bencomo_ns') && pole && SPRX.draw(c, 'bencomo_ns', p.pogo ? 7 : r, p.pogo ? 0 : f, x, y, p.face, BXP))) SPRX.draw(c, 'bencomo', p.pogo ? 7 : r, p.pogo ? 0 : f, x, y, p.face, BXP);
       if (p.power > 0) { c.fillStyle = flick() ? 'rgba(255,212,0,0.35)' : 'rgba(255,255,255,0.25)'; c.fillRect(x - 9, y - 23, 18, 23); } }
     /** [row, frame] of an enemy's sheet */
     function enAnim(e, k) { const F = SPRX.fr, t = e.t || 0, mv = Math.abs(e.vx) > 2;

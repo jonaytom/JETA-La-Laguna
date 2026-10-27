@@ -1,11 +1,12 @@
-# Pruebas 0.95.0 — 2026-10-27 11:03 — 2/2 OK
+# Pruebas 0.95.1 — 2026-10-27 11:08 — 3/3 OK
 
-Listas: v095c. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 83 s en total.
+Listas: v0951. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 82 s en total.
 
 | # | Prueba | Resultado | Tiempo |
 |---|---|---|---|
-| 1 | `prueba_095.py` | **OK** | 65 s |
-| 2 | `prueba_081.py` | **OK** | 1 s |
+| 1 | `prueba_095.py` | **OK** | 62 s |
+| 2 | `prueba_094.py` | **OK** | 1 s |
+| 3 | `prueba_093.py` | **OK** | 1 s |
 
 ## Detalle
 
@@ -23,33 +24,41 @@ errores []
 PRUEBA 095 OK
 ```
 
-### 2. prueba_081.py — OK
+### 2. prueba_094.py — OK
 
 ```
-bar {'hay': True, 'bar': 'Mesón Mariluzita', 'opcion': 4, 'abre': True, 'juego': 'attract'}
-foto v081_titulo
-vista a los 9 s demo
-foto v081_demo
-foto v081_records
-moneda {"creditos":1,"modo":"play","dinero":49}
-BAR OK
-controles {'mueve': [71, 71], 'tiro': True, 'beam': True}
-mejoras y módulo {'cursor': 0, 'velocidad': 1, 'cursor2': 1, 'modulo': True, 'st0': 'front', 'lanzado': 'free', 'delante': 105, 'vuelve': 'front'}
-foto v081_jugando
-CONTROLES OK
-foto v081_fase1
-foto v081_jefe1
-foto v081_fase2
-foto v081_jefe2
-foto v081_fase3
-foto v081_jefe3
-recorrido [{'fase': 1, 'avance': 1.01, 'jefe': True, 'pasada': True, 'segundos': 103, 'puntos': 21280}, {'fase': 2, 'avance': 1.01, 'jefe': True, 'pasada': True, 'segundos': 111, 'puntos': 21590}, {'fase': 3, 'avance': 1.01, 'jefe': True, 'pasada': True, 'segundos': 112, 'puntos': 28370}]
-FASES OK
-fin de partida {'m1': 'cont', 'm2': 'name', 'modo': 'attract'}
-foto v081_records_nuevo
-RECORDS OK
+golpe a 10 de profundidad {'hp0': 8, 'hp': 6}
+patadas {'sStun': True, 'wStun': False, 'strongHit': True, 'hp': [21, 12.6], 'bigNo': True}
+foto v094_guanche_retrato
+foto v094_bencomo_salto
+foto v094_bencomo_picado
+PROFUNDIDAD OK
+PATADAS Y GOLPE FUERTE OK
 errores []
-PRUEBA 081 OK
+PRUEBA 094 OK
 ```
 
-Fotos/archivos nuevos en `tests/shots/`: v081_demo.jpg, v081_fase1.jpg, v081_fase2.jpg, v081_fase3.jpg, v081_jefe1.jpg, v081_jefe2.jpg, v081_jefe3.jpg, v081_jugando.jpg, v081_records.jpg, v081_records_nuevo.jpg, v081_titulo.jpg, v095_bencomo_golpebajo.jpg, v095_bencomo_picado.jpg, v095_futbol.jpg
+### 3. prueba_093.py — OK
+
+```
+hojas 25 sin cargar []
+foto v093_guanche_elegir
+foto v093_guanche_magote
+foto v093_guanche_mencey
+foto v093_guanche_mirla
+foto v093_guanche_montado
+lagarto {'walk': 25.000000000000064} {'run': 47.99999999999993, 'running': True}
+foto v093_guanche_jefes
+foto v093_bencomo_titulo
+bencomo dibujado 1
+foto v093_bencomo_castellanos
+foto v093_bencomo_agachado
+foto v093_bencomo_golpebajo
+foto v093_bencomo_lugo
+LAGARTO CORRE OK
+BENCOMO NUEVO OK
+errores []
+PRUEBA 093 OK
+```
+
+Fotos/archivos nuevos en `tests/shots/`: v093_bencomo_agachado.jpg, v093_bencomo_castellanos.jpg, v093_bencomo_golpebajo.jpg, v093_bencomo_lugo.jpg, v093_bencomo_titulo.jpg, v093_guanche_elegir.jpg, v093_guanche_jefes.jpg, v093_guanche_magote.jpg, v093_guanche_mencey.jpg, v093_guanche_mirla.jpg, v093_guanche_montado.jpg, v094_bencomo_picado.jpg, v094_bencomo_salto.jpg, v094_guanche_retrato.jpg, v095_bencomo_golpebajo.jpg, v095_bencomo_picado.jpg, v095_futbol.jpg
