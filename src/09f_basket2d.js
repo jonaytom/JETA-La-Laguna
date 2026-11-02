@@ -49,7 +49,8 @@ const BASKET2D = (() => {
   let CR = null, PAV = false; const cr = (n, k) => { if (CR && (PAV || !/^(organ|charge|defensa)$/.test(n))) CR.ev(n, k); }; // (the organ and the chants only in a pavilion) // v0.90: the crowd of the pavilion (MINI.crowd)
   // ---------- setup
   function mkPlayer(o, team, i) {
-    return { name: o.name, look: o.look || {}, nose: !!o.nose, num: o.num || NUMS[(team * 3 + i) % NUMS.length], spr: sprites(o.look || {}, !!o.nose, o.num || NUMS[(team * 3 + i) % NUMS.length]), team, human: !!o.human, x: 0, z: 0, y: 0, vx: 0, vz: 0, vy: 0, dir: team ? -1 : 1, turbo: 1, down: 0, act: '', actT: 0, air: false,
+    const seed = [...String(o.name || '') + team + i].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7) % 9973; // v0.99.6 (Jonay: «distintos aspectos»): the hair and the size by the player
+    return { name: o.name, look: o.look || {}, seed, size: /LARGO|ALTO/.test(o.name || '') ? 1.06 : /PIBE/.test(o.name || '') ? 0.93 : 0.95 + (seed % 9) * 0.01, nose: !!o.nose, num: o.num || NUMS[(team * 3 + i) % NUMS.length], spr: sprites(o.look || {}, !!o.nose, o.num || NUMS[(team * 3 + i) % NUMS.length]), team, human: !!o.human, x: 0, z: 0, y: 0, vx: 0, vz: 0, vy: 0, dir: team ? -1 : 1, turbo: 1, down: 0, act: '', actT: 0, air: false,
       shootHold: false, holdT: 0, streak: 0, fire: false, lv: o.lv ?? 0.5, think: 0, tgt: [0, 0], walkT: Math.random() * 3, idx: i, mark: null, stealCD: 0 };
   }
   function place(attacking) { // positions after a basket / at the start: «attacking» team brings the ball from its own half
@@ -177,7 +178,7 @@ const BASKET2D = (() => {
   function pass(from, to) { const b = st.ball; if (b.holder !== from || !to || to.down > 0) return; b.holder = null; b.mode = 'pass'; b.x = from.x; b.z = from.z; b.y = from.y + 1.3;
     const L = dist(from, to); b.pass = { to, t: 0, from, T: clamp(0.18 + L * 0.055, 0.22, 0.9), x0: b.x, z0: b.z, y0: b.y, arc: L < 3 ? 0.15 : 0.2 + L * 0.16 }; b.inter = false; if (st.ev && from.human) st.ev.pass = true;
     if (from.human && to.team === from.team && !st.auto) { from.human = false; from.shootHold = false; to.human = true; st.swapAt = st.time0 + 0.3; } } /* v0.85.1 (Jonay): the one who gets your pass is yours at once */ // v0.79: the longer, the higher the arc
-  function steal(p) { const b = st.ball; const v = b.holder; if (!v || v.team === p.team || p.down > 0 || p.stealCD > 0 || (v.air && v.sure)) return; /* a combo dunk in the air can't be stolen */ p.stealCD = 0.5; p.act = 'push'; p.actT = 0;
+  function steal(p) { const b = st.ball; const v = b.holder; if (!v || v.team === p.team || p.down > 0 || p.stealCD > 0 || (v.air && v.sure)) return; /* a combo dunk in the air can't be stolen */ p.stealT = st.time0; /* (v0.99.6: the steal's animation) */ p.stealCD = 0.5; p.act = 'push'; p.actT = 0;
     if (dist(p, v) > 1.3) return;
     const shove = (p.human ? held('vT') : Math.random() < 0.35 * p.lv) && p.turbo > 0.2;
     if (shove) { p.turbo -= 0.25; v.down = 1.0; v.shootHold = false; b.holder = null; b.mode = 'loose'; b.x = v.x; b.z = v.z; b.y = 1; b.vx = rnd(-2, 2); b.vz = rnd(-2, 2); b.vy = 2; banner('¡EMPUJÓN!', '#ff8a3d'); snd('bounce'); if (st.ev && p.human) st.ev.steal = true; return; }
@@ -185,7 +186,7 @@ const BASKET2D = (() => {
   }
   // ---------- banners & HUD state
   function banner(t, c = '#ffd400', dur = 1.2) { st.banner = { t, c, dur, t0: st.time0 }; st.bannerT = dur; }
-  function score(team, pts, by, kind) {
+  function score(team, pts, by, kind) { st.netT = { s: hoopOf(team) === HOOP[1] ? 1 : 0, t: st.time0 }; /* v0.99.6: the net swings */
     st.score[team] += pts; st.lastScore = team; by.streak++; const other = st.p.filter((q) => q.team !== team); other.forEach((q) => { q.streak = 0; q.fire = false; });
     if (by.streak >= 3 && !by.fire) { by.fire = true; banner('¡EN LLAMAS!', '#ff5a1f', 1.8); say('¡Está que arde!'); }
     else if (kind === 'dunk') { banner('¡MATE!', '#ffd400'); say(Math.random() < 0.5 ? '¡Matazo!' : '¡Qué mate!'); }
@@ -414,8 +415,23 @@ const BASKET2D = (() => {
     cx.fillStyle = st.style === 'pabellon' ? '#2f6fb5' : '#2a2d30'; cx.fillRect(rx + sg * 18 * k - 2 * k, base - 52 * k, 4 * k, 52 * k); cx.fillRect(Math.min(rx + sg * 18 * k, rx + sg * 8 * k), base - 50 * k, 10 * k, 3 * k);
     cx.fillStyle = 'rgba(0,0,0,0.25)'; cx.beginPath(); cx.ellipse(rx + sg * 18 * k, base, 8 * k, 2 * k, 0, 0, 7); cx.fill();
     cx.fillStyle = '#f4f4f2'; cx.fillRect(rx + sg * 7 * k - 2 * k, ry - 24 * k, 4 * k, 26 * k); cx.fillStyle = '#e8641c'; cx.fillRect(rx + sg * 7 * k - k, ry - 10 * k, 2 * k, 8 * k);
-    cx.strokeStyle = '#eef'; cx.lineWidth = 0.6 * k; for (let q = -3; q <= 3; q++) { cx.beginPath(); cx.moveTo(rx + q * 1.4 * k, ry); cx.lineTo(rx + q * 0.8 * k, ry + 9 * k); cx.stroke(); }
-    cx.strokeStyle = '#e8641c'; cx.lineWidth = 1.6 * k; cx.beginPath(); cx.ellipse(rx, ry, 4.6 * k, 1.5 * k, 0, 0, 7); cx.stroke(); }
+    // v0.99.6 (Jonay): the net swings when the ball goes through; the rim (not the board) tilts while a dunker hangs from it
+    const nt = st.netT && st.netT.s === s ? st.time0 - st.netT.t : 9, sw = nt < 0.7 ? Math.sin(nt * 22) * 2.2 * k * (1 - nt / 0.7) : 0, nl = nt < 0.25 ? 6.5 : 9;
+    const hg = st.hang && st.hang.s === s && st.time0 - st.hang.t < 0.15, rt = hg ? -sg * 0.2 : 0, ry2 = ry + (hg ? k : 0);
+    cx.strokeStyle = '#eef'; cx.lineWidth = 0.6 * k; for (let q = -3; q <= 3; q++) { cx.beginPath(); cx.moveTo(rx + q * 1.4 * k, ry2 + Math.sin(rt) * q * 1.4 * k); cx.lineTo(rx + q * 0.8 * k + sw, ry2 + nl * k); cx.stroke(); }
+    cx.strokeStyle = '#e8641c'; cx.lineWidth = 1.6 * k; cx.beginPath(); cx.ellipse(rx, ry2, 4.6 * k, 1.5 * k, rt, 0, 7); cx.stroke(); }
+  // v0.99.6 (Jonay, the page «Basket: animaciones»: «perfectas así, aplícalo todo»): which frame of BK_ANIM a state
+  // takes: the dunks (the combos by their name, a plain dunk as the 360 without the turn), the jump shot, the block
+  // (defending) or the rebound, and the steal; hang = how much the slam hand is pulled onto the rim (0–1, -1 none)
+  function animPick(p, k, cmb) { const A = BKSHEET.A, b = st.ball, pk = (m, i, hang = -1) => ({ f: m.frames[clamp(i, 0, m.frames.length - 1)], hang });
+    if (k === 'dunk') { const m = A[cmb] || A.m360, T = cmb ? 0.85 : 0.62, t = cmb ? (p.cT || 0) : p.actT, S = m.slam;
+      if (t < T) { const i = Math.round((t / T) * S); return pk(m, i, i >= S - 2 ? [0.45, 0.8, 1][i - S + 2] : -1); }
+      if (t < T + 0.2) return pk(m, S + (t - T > 0.1 ? 1 : 0), 1);
+      return pk(m, S + 2 + (p.vy < -3 ? 1 : 0)); }
+    if (k === 'shoot') return pk(A.tiro, p.vy > 2.5 ? 2 : p.vy > 1 ? 3 : p.shootHold ? 4 : p.vy > -1.5 ? 5 : p.vy > -3.5 ? 6 : 7);
+    if (k === 'jump') { const m = b.holder && b.holder.team !== p.team ? A.tapon : A.rebote; return pk(m, p.vy > 3 ? 2 : p.vy > 1.2 ? 3 : p.vy > -0.8 ? 4 : p.vy > -2.5 ? 5 : p.vy > -4 ? 6 : 7); }
+    if (p.stealT !== undefined && st.time0 - p.stealT < 0.45 && !p.air && p.down <= 0) return pk(A.robo, 1 + Math.floor((st.time0 - p.stealT) / 0.1));
+    return null; }
   function drawPlayer(p) {
     p.ballScr = null; const b = st.ball; let k = 'idle' + (Math.floor(st.time0 * 2) % 2);
     if (p.down > 0) k = 'ko'; else if (p.act === 'dunk') k = 'dunk'; else if (p.air) k = p.shootHold || b.holder === p ? 'shoot' : 'jump'; else if (p.act === 'push') k = 'jab1';
@@ -428,13 +444,23 @@ const BASKET2D = (() => {
     const h2 = 88 * sc; /* v0.90: the fight's 88-unit box, so the ball, the bars and the arrows stay where they were */
     let fx = p.dir < 0 ? -1 : 1; if (cmb && DK[cmb].back) fx = -fx; // turned away from the hoop
     let kx = fx; if (cmb && DK[cmb].spin) { const [a, b] = DK[cmb].spin, t = clamp((cu - a) / (b - a), 0, 1); kx = fx * Math.cos(t * Math.PI * 2); if (Math.abs(kx) < 0.3) kx = 0.3 * Math.sign(kx || 1); } // the 360: the body turns round
-    if (BKS) { const sh = BKSHEET.sheet(p.look), [r, f] = BKSHEET.frame(k, p, st.time0, cmb), q = 1.87 * sc; // (the figure, 46 px tall, as tall as the old 86 units)
-      cx.save(); cx.translate(px, py); cx.scale(-kx, 1); const sm = cx.imageSmoothingEnabled; cx.imageSmoothingEnabled = false; cx.drawImage(sh, f * 80, r * 64, 80, 64, -40 * q, -63 * q, 80 * q, 64 * q); cx.imageSmoothingEnabled = sm; cx.restore(); } // (the sheets face left)
+    let bkBall = null; // v0.99.6: the new animations (BK_ANIM) and where their ball is
+    if (BKS) { const q = 1.75 * sc * (p.size || 1), ap = animPick(p, k, cmb); let dx = px, dy = py; // (Jonay: «a escala del juego, o un poco menos»: 1.87 → 1.75, and each player his size)
+      const sm = cx.imageSmoothingEnabled; cx.imageSmoothingEnabled = false;
+      if (ap) { const F = ap.f, strip = BKSHEET.anim(p.look, p.seed), to = (bx, by) => [dx + (bx - 40) * q * -kx, dy + (by - 63) * q];
+        if (ap.hang >= 0 && F.ball) { const h = hoopOf(p.team), tx = sx(h.x) - p.dir * 2 * SC, ty = sy(h.z, RIM) - SC, w = ap.hang; // the dunks end with the hands on the rim
+          dx = lerp(px, tx - (F.ball[0] - 40) * q * -kx, w); dy = lerp(py, ty - (F.ball[1] - 63) * q, w); if (w >= 1) st.hang = { s: h === HOOP[1] ? 1 : 0, t: st.time0 }; }
+        cx.save(); cx.translate(dx, dy); cx.scale(-kx, 1); cx.drawImage(strip, F.i * 80, 0, 80, 64, -40 * q, -63 * q, 80 * q, 64 * q);
+        if (F.arm) { const A = F.arm, X = (A.p[0] - 40) * q, Y = (A.p[1] - 63) * q; cx.translate(X, Y); cx.rotate(A.a * Math.PI / 180); cx.translate(-X, -Y); cx.drawImage(strip, A.i * 80, 0, 80, 64, -40 * q, -63 * q, 80 * q, 64 * q); } // (the windmill's arm)
+        cx.restore(); if (F.ball) bkBall = to(F.ball[0], F.ball[1]); }
+      else { const sh = BKSHEET.sheet(p.look, p.seed), [r, f] = BKSHEET.frame(k, p, st.time0, cmb); cx.save(); cx.translate(px, py); cx.scale(-kx, 1); cx.drawImage(sh, f * 80, r * 64, 80, 64, -40 * q, -63 * q, 80 * q, 64 * q); cx.restore(); } // (the sheets face left)
+      cx.imageSmoothingEnabled = sm; }
     else { cx.save(); cx.translate(px, py); cx.scale(kx, 1); cx.drawImage(s.c, (-s.ax / s.q) * sc, (80 - s.ay / s.q - 86.24) * sc, (s.c.width / s.q) * sc, (s.c.height / s.q) * sc); cx.restore(); }
     st.drawn = (st.drawn || 0) + 1;
-    if (cmb) { const P2 = dunkPose(cmb, cf / (DKN - 1)), hb = ballInDunk(cmb, cu, P2); p.ballScr = [px + (hb[0] - 36) * sc * kx, py - h2 * 0.98 + hb[1] * sc]; // the ball in his hands
+    if (bkBall && b.holder === p) p.ballScr = bkBall; // (v0.99.6: in the new animations' hands)
+    if (cmb) { const P2 = dunkPose(cmb, cf / (DKN - 1)), hb = ballInDunk(cmb, cu, P2); if (!bkBall) p.ballScr = [px + (hb[0] - 36) * sc * kx, py - h2 * 0.98 + hb[1] * sc]; // the ball in his hands
       if (cu > 0.2) for (let i = 0; i < 4; i++) { cx.fillStyle = `rgba(255,255,255,${0.12 + 0.05 * i})`; cx.fillRect(px - fx * (10 + i * 5) * SC * 0.4, py - h2 * (0.3 + 0.15 * i), 2 * SC, 1); } } // speed lines
-    else p.ballScr = null;
+    else if (!bkBall) p.ballScr = null;
     if (p.fire) for (let i = 0; i < 3; i++) { cx.fillStyle = ['#ff5a1f', '#ffd400', '#ff8a3d'][i]; cx.fillRect(px - 5 * SC + Math.random() * 10 * SC, py - h2 * 0.98 - 2 - Math.random() * 8 * SC, 2 * SC, 3 * SC); }
     if (p.human && p.shootHold) { // the shot bar: fill while held, green band = release here
       const bx = px + 9 * SC, by = py - h2, bh = 26 * SC; cx.fillStyle = 'rgba(0,0,0,0.7)'; cx.fillRect(bx - 1, by - 1, 4 * SC + 2, bh + 2);
@@ -446,7 +472,7 @@ const BASKET2D = (() => {
   function offscreen(p, px) { // a small arrow at the edge for a player out of the view
     const x0 = px < 0 ? 4 : W - 4, y0 = clamp(sy(p.z, 1), 70, H - 10), sg = px < 0 ? -1 : 1; cx.fillStyle = p.human ? '#ffd400' : p.team === 0 ? '#7fe08a' : '#ff6b6b';
     cx.beginPath(); cx.moveTo(x0, y0); cx.lineTo(x0 - sg * 7, y0 - 5); cx.lineTo(x0 - sg * 7, y0 + 5); cx.fill(); }
-  function drawBall() { const b = st.ball; const hb = b.mode === 'held' && b.holder && b.holder.ballScr; const px = hb ? hb[0] : sx(b.x), py = hb ? hb[1] : sy(b.z, b.y), r = 2.6 * SC;
+  function drawBall() { const b = st.ball; const hb = b.mode === 'held' && b.holder && b.holder.ballScr; const px = hb ? hb[0] : sx(b.x), py = hb ? hb[1] : sy(b.z, b.y), r = 3.2 * SC; /* v0.99.6 (Jonay): a bit bigger than the head */
     cx.fillStyle = 'rgba(0,0,0,0.3)'; cx.beginPath(); cx.ellipse(px, sy(b.z), r, r * 0.4, 0, 0, 7); cx.fill();
     cx.fillStyle = '#e8641c'; cx.beginPath(); cx.arc(px, py, r, 0, 7); cx.fill(); cx.strokeStyle = '#4a1f08'; cx.lineWidth = 0.8; cx.beginPath(); cx.moveTo(px - r, py); cx.lineTo(px + r, py); cx.stroke(); cx.beginPath(); cx.arc(px, py, r, 0, 7); cx.stroke(); }
   function draw() {

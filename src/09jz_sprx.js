@@ -25,5 +25,12 @@ const SPRX = (() => {
   const fr = (k, r, t, fps = 10, loop = true) => { const d = D[k]; if (!d) return 0; const n = d.n[Math.min(r, d.n.length - 1)] || 1, i = Math.floor(t * fps); return loop ? i % n : Math.min(n - 1, i); };
   /** the time an actor has been in its current state (the games keep o.st; this keeps the clock) */
   function stT(o, now) { if (o._sxSt !== o.st) { o._sxSt = o.st; o._sxT = now; } return now - o._sxT; }
-  return { draw, fr, stT, has: (k) => !!D[k], D, ready: (k) => !!(D[k] && img(k)) };
+  /** v0.99.6: the skin colour of a sheet (the commonest bright colour of its shins, frame 0): the leg of a rider */
+  const SKC = {};
+  function skin(k) { if (SKC[k]) return SKC[k]; const d = D[k], im = d && img(k); if (!im) return '#c08a6a';
+    const cv = document.createElement('canvas'); cv.width = d.fw; cv.height = d.fh; const g = cv.getContext('2d'); g.drawImage(im, 0, 0, d.fw, d.fh, 0, 0, d.fw, d.fh);
+    const px = g.getImageData(0, 0, d.fw, d.fh).data, n = {}; let best = null, bn = 0;
+    for (let y = Math.max(0, Math.round(d.ay) - 12); y < Math.round(d.ay) - 2; y++) for (let x = 0; x < d.fw; x++) { const i = (y * d.fw + x) * 4; if (px[i + 3] < 200 || px[i] + px[i + 1] + px[i + 2] < 150) continue; const key = px[i] + ',' + px[i + 1] + ',' + px[i + 2]; n[key] = (n[key] || 0) + 1; if (n[key] > bn) { bn = n[key]; best = key; } }
+    return SKC[k] = best ? 'rgb(' + best + ')' : '#c08a6a'; }
+  return { draw, fr, stT, skin, has: (k) => !!D[k], D, ready: (k) => !!(D[k] && img(k)) };
 })();

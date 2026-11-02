@@ -100,8 +100,10 @@ def onto_female(im):   # a male layer moved frame by frame onto the female body
 def hem(name, ramp, nip, skirt, hair_n, hair_cols, hat, weapon, shield):
     layers = [base3(ramp, nip), skirt, hair(FHr(hair_n), hair_cols)] + ([onto_female(hat)] if hat is not None else [])
     OUT_N[name] = (with_kicks(onto_female(shield), compose(layers), onto_female(weapon)), 80, 64)
-hem('n_roja', SKRED, PINK, tint(SK_SHORT, RED), 6, HBLK, tint(HAT('Guard Helmet'), IRON), tint(HI('Iron Sword'), IRON), tint(SHIELD, BRONZE))
-hem('n_vikinga', SKGRN, PINK, long_skirt(LEATHER), 11, HRED, tint(HAT('Viking Helmet with horns'), [(19,19,28),(60,60,66),(110,110,120),(170,170,180),(226,206,170)]), tint(HI('Iron Axe'), IRON), None)
+hem('n_roja', SKRED, PINK, tint(SK_SHORT, RED), 6, HBLK, None,  # (Jonay, 27-oct: sin casco)
+    tint(HI('Iron Sword'), IRON), tint(SHIELD, BRONZE))
+hem('n_vikinga', SKGRN, PINK, long_skirt(LEATHER), 11, HRED, None,  # (Jonay, 27-oct: sin casco)
+    tint(HI('Iron Axe'), IRON), None)
 hem('n_demonia', DEMON, PINK, tint(SK_SHORT, GREEN), 16, HWHT, tint(HAT('Male Hat6'), BRONZE), thicken(STM, DARKWOOD), tint(SHIELD, LEATHER))
 hem('n_oro', SKYEL, PINK, long_skirt(RED), 26, HBLK, tint(HAT('Male Hat3'), BRONZE), tint(HI('Golden Sword'), BRONZE), None)
 hem('n_lenadora', SKPUR, PINK, tint(SK_SHORT, LEATHER), 31, HAIRN, tint(HAT('Male Hat9'), LEATHER), tint(HI('Wooden Axe'), LEATHER), tint(SHIELD, IRON))

@@ -12,7 +12,7 @@
 // from above), B (Espacio) = jump (on a free lizard: ride it), Q / right click = magic. Double tap ← / → = run.
 // Size (Jonay): the warriors as big as the Bencomo that was too big (the world drawn at ×2.4 on the 480×336 screen).
 ARCADE.GAMES.guanche = (() => {
-  const A = ARCADE, SW = A.W, SH = A.H, Z = 2.4, VW = SW / Z, VH = SH / Z, GY = 92, ZD = 44; // the view: 200 × 140; feet from y 92 (back) to 136 (front)
+  const A = ARCADE, SW = 640, SH = 448, KS = A.W / SW, Z = 2.4, VW = SW / Z, VH = SH / Z, GY = Math.round(VH - 48), ZD = 44; // v0.99.6 (Jonay): its own 640 × 448 screen (drawn at 3/4 on the machine's 480 × 336): the fighters at 75 %, more stage in view; the feet from GY (back) to GY + 44 (front) // the view: 200 × 140; feet from y 92 (back) to 136 (front)
   // ---------- pixel drawing at half world units (the chunky look of the boards, but with a bit more detail)
   const R2 = (v) => Math.round(v * 2) / 2;
   function px(c, x, y, w, h, col) { c.fillStyle = col; c.fillRect(R2(x), R2(y), Math.max(0.5, R2(w)), Math.max(0.5, R2(h))); }
@@ -271,7 +271,7 @@ ARCADE.GAMES.guanche = (() => {
       if (k === 'BT') e.s = 1.45; if (k === 'T') e.s = 1;
       if (k === 'S' && Math.random() < 0.5) { e.sxk = SECF[Math.floor(Math.random() * SECF.length)]; e.fem = true; } // v0.99.3 (Jonay): half the minions are women (five looks)
       E.push(e); return e; }
-    function startWave(w) { const [wx, list, isBoss] = w; lock = { x: wx - VW / 2, n: 0, boss: !!isBoss }; const ks = list.split(' ');
+    function startWave(w) { const [wx, list, isBoss] = w; lock = { x: clamp(wx - VW / 2, 0, L.len - VW), n: 0, boss: !!isBoss }; /* v0.99.6: inside the stage (with the wider view the last fight's box ran past its end and its enemies waited outside) */ const ks = list.split(' ');
       ks.forEach((k, i) => { const side = i % 2 ? -1 : 1, x = side > 0 ? lock.x + VW + 16 + i * 10 : lock.x - 16 - i * 10, z = 6 + ((i * 13) % 34);
         if (k === 'R') { const lz = { x, z, vx: 0, vz: 0, face: -side, anim: 0, whip: 0, rider: null, gone: 0, drops: 0 }; liz.push(lz); const e = spawn('S', x, z, { wave: true }); e.mount = lz; lz.rider = e; lock.n++; return; }
         const e = spawn(k, x, z, { wave: k !== 'D' }); if (k === 'D') e.carry = Math.random() < 0.6 ? 'J' : 'F'; if (k === 'D') e.st = 'thief';
@@ -368,7 +368,7 @@ ARCADE.GAMES.guanche = (() => {
       for (const e of E) { if (e.st === 'dead' || e.x < camX - 10 || e.x > camX + VW + 10) continue; const was = e.inv; e.inv = 0; hit(p, e, e.d.boss ? dmg * 0.6 : dmg, 'knock'); e.inv = was; if (e.hp <= 0) killed(e); } }
     // ---------- enemies
     function enemy(e, dt) { e.anim += dt * 6; e.inv = Math.max(0, (e.inv || 0) - dt); e.flash = Math.max(0, (e.flash || 0) - dt); const d = e.d;
-      if (body(e, dt)) return;
+      if (body(e, dt)) { if (e.inS && e.st !== 'dead') e.x = clamp(e.x, camX + 12, camX + VW - 12); return; } /* v0.99.6: knocked down they stay on the screen too (with the wider view Guayota fell past the edge, out of reach: stage 7 never ended) */
       const lz = e.mount, spd = (lz ? 46 : d.spd) * (1 + 0.15 * loopN);
       if (e.st === 'thief') { e.x += -e.face * 0 + (e.dir || (e.dir = e.x < p.x ? 1 : -1)) * spd * dt; e.face = e.dir; if (e.x < camX - 40 || e.x > camX + VW + 40) e.gone = true; return; }
       if (e.k === 'D' && e.st === 'idle') { e.st = 'thief'; e.dir = e.x < p.x ? -1 : 1; e.d = { ...d, spd: 110 }; return; } // got hit: runs away
@@ -476,7 +476,10 @@ ARCADE.GAMES.guanche = (() => {
       if (q.rider === p && SPRX.draw(c, 'lz_' + p.hero.id, r, f, sx, sy, q.face, SXP)) return; // (on the lizard all at the lizard's size)
       if (!SPRX.draw(c, 'lagarto', r, f, sx, sy, q.face, SXP)) { lizard(c, sx, sy, q.face, q); return; }
       const e = q.rider; if (e && e !== p && (e.sxk || SX_EN[e.k])) { const d = SPRX.D.lagarto, s = sxScale(e), seatX = sx + q.face * d.seat[0] * SXP, seatY = sy + d.seat[1] * SXP;
-        SPRX.draw(c, e.sxk || SX_EN[e.k], 0, 0, seatX, seatY + 12 * s, q.face, s, seatY); if (e.flash > 0) { c.globalAlpha = 0.5; pblob(c, seatX, seatY - 12, 6, 10, '#fff'); c.globalAlpha = 1; } } }
+        SPRX.draw(c, e.sxk || SX_EN[e.k], 0, 0, seatX, seatY + 12 * s, q.face, s, seatY);
+        { /* v0.99.6 (Jonay: «el pie se debe arreglar para que pase por delante como ya hacemos con los héroes»): the near leg bent down the lizard's flank, over it, as on the heroes' lz_ sheets */
+          const col = SPRX.skin(e.sxk || SX_EN[e.k]), fc = q.face, ln = (pts, w, cc) => { c.strokeStyle = cc; c.lineWidth = w * s; c.lineCap = 'butt'; c.lineJoin = 'round'; c.beginPath(); pts.forEach(([u, v], i) => c[i ? 'lineTo' : 'moveTo'](seatX + u * fc * s, seatY + v * s)); c.stroke(); };
+          ln([[0, 0], [6, 4], [5, 10]], 6, '#13131c'); ln([[0, 0], [6, 4], [5, 10]], 4, col); ln([[3, 12], [11, 12]], 4, '#13131c'); ln([[4, 12], [10, 12]], 2, col); } if (e.flash > 0) { c.globalAlpha = 0.5; pblob(c, seatX, seatY - 12, 6, 10, '#fff'); c.globalAlpha = 1; } } }
     function drawActor(c, o) { const sx = o.x - camX, sy = GY + o.z - o.h; if (sx < -60 || sx > VW + 60) return; if (o.st === 'dead' && flick()) return; if (o.inv > 0 && flick() && o.st !== 'getup') return;
       pblob(c, sx, GY + o.z, (o.d && o.d.dog ? 12 : 7) * (o.s || (o.look && o.look.s) || 1), 1.6, 'rgba(0,0,0,0.35)');
       const sk = o === p ? SX_HERO[p.hero.id] : o.k === 'D' && o.carry === 'J' ? 'g_duende_azul' : o.sxk || SX_EN[o.k]; // (the blue cap carries the blue potions; v0.99.3: o.sxk, a woman minion's sheet)
@@ -499,8 +502,8 @@ ARCADE.GAMES.guanche = (() => {
       else puppet(c, sx, riding ? sy - 10 - hopOf(riding) : sy, o.face, P, o.look || p.hero.look, glow);
       if (o.k === 'D' && o.carry) pblob(c, sx - o.face * 3, sy - 12, 3, 3, o.carry === 'J' ? '#3a6ad0' : '#c03a2a');
       if (o.flash > 0) { c.globalAlpha = 0.5; pblob(c, sx, sy - 14, 6, 12, '#fff'); c.globalAlpha = 1; } }
-    g.draw = (c) => { const bg = background(L ? L.theme : 'taoro'), th = L ? L.theme : 'taoro';
-      if (phase === 'select') { drawSelect(c); return; }
+    g.draw = (c) => { if (phase === 'select') { drawSelect(c); return; } c.save(); c.scale(KS, KS); drawGame(c); c.restore(); }; // (the select screen keeps the machine's 480 × 336)
+    function drawGame(c) { const bg = background(L ? L.theme : 'taoro'), th = L ? L.theme : 'taoro';
       const night = phase === 'camp'; const ox = (shake > 0 ? (Math.random() - 0.5) * 6 : 0);
       // v0.99 (Jonay): the backgrounds drawn from his photos, at the sprites' pixel size, the floor row of the drawing on the
       // floor strip (the old ones while the images load)
@@ -548,27 +551,29 @@ ARCADE.GAMES.guanche = (() => {
       for (let i = 0; i < H.jars; i++) { c.fillStyle = i < p.jars ? '#3a6ad0' : '#1a2440'; c.beginPath(); c.arc(134 + i * 12, 22, 4, 0, 7); c.fill(); }
       A.txt(c, 'VIDAS ' + lives, SW - 8, 4, '#fff', 8, 'right'); const hi = api.hi(); A.txt(c, 'HI ' + String(Math.max(hi, g.score)).padStart(7, '0'), SW - 8, 16, '#ffd400', 8, 'right');
       const bs = E.filter((e) => e.d.boss && e.hp > 0); if (bs.length) { const hp = bs.reduce((a, e) => a + Math.max(0, e.hp), 0), mx = bs.reduce((a, e) => a + e.max, 0); c.fillStyle = '#000'; c.fillRect(100, SH - 22, SW - 200, 8); c.fillStyle = '#e53935'; c.fillRect(101, SH - 21, (SW - 202) * hp / mx, 6); A.txt(c, bs[0].d.boss, SW / 2, SH - 34, '#fff', 6, 'center'); } }
-    function drawSelect(c) { const bg = background('taoro'); if (!FONDOS.draw(c, 'taoro', 3, 0, 0, SW, SH, time)) { c.drawImage(bg[0], 0, 0, 960, SH); c.drawImage(bg[1], 0, 0, 960, SH); } c.fillStyle = 'rgba(0,0,0,0.45)'; c.fillRect(0, 0, SW, SH);
-      A.txt(c, 'ELIGE TU GUERRERO', SW / 2, 16, '#ffd400', 12, 'center');
+    function drawSelect(c) { const bg = background('taoro'); if (!FONDOS.draw(c, 'taoro', 3, 0, 0, A.W, A.H, time)) { c.drawImage(bg[0], 0, 0, 960, A.H); c.drawImage(bg[1], 0, 0, 960, A.H); } c.fillStyle = 'rgba(0,0,0,0.45)'; c.fillRect(0, 0, A.W, A.H);
+      A.txt(c, 'ELIGE TU GUERRERO', A.W / 2, 16, '#ffd400', 12, 'center');
       HEROES.forEach((H, i) => { const cx0 = 80 + i * 160, on = i === sel; c.fillStyle = on ? 'rgba(255,212,0,0.18)' : 'rgba(0,0,0,0.3)'; c.fillRect(cx0 - 70, 40, 140, 250); if (on) { c.strokeStyle = flick() ? '#ffd400' : '#ff8a3a'; c.lineWidth = 2; c.strokeRect(cx0 - 69, 41, 138, 248); }
         c.save(); c.scale(Z * 1.2, Z * 1.2); const P = on ? cyc(WALK, time * 4) : PO.idle; const hk = SX_HERO[H.id], hr = on ? (Math.floor(time * 1.5) % 3 === 2 ? 5 : 1) : 0;
         if (!SPRX.draw(c, hk, hr, SPRX.fr(hk, hr, time, hr === 5 ? 12 : 9), cx0 / (Z * 1.2), 150 / (Z * 1.2), 1, 2.4 * (SX_BIG[H.id] || 1) / (Z * 1.2))) PIXGUAN.draw(c, cx0 / (Z * 1.2), 150 / (Z * 1.2), 1, on && Math.floor(time * 1.5) % 3 === 2 ? PO.smash : P, H.id, H.look.s); c.restore();
         A.txt(c, H.name, cx0, 170, on ? '#ffd400' : '#fff', 8, 'center'); A.txt(c, H.desc[0], cx0, 186, '#9fd7ff', 6, 'center'); A.txt(c, H.desc[1], cx0, 196, '#9fd7ff', 6, 'center');
         [['FUERZA', H.fuerza], ['AGILIDAD', H.agil], ['MAGIA', H.magia]].forEach(([n, v], j) => { A.txt(c, n, cx0 - 60, 214 + j * 14, '#fff', 6); for (let b = 0; b < 3; b++) { c.fillStyle = b < v ? '#ffd400' : '#3a3a3a'; c.fillRect(cx0 + 4 + b * 16, 214 + j * 14, 13, 7); } });
         A.txt(c, H.spell, cx0, 260, '#ff8a3a', 6, 'center'); A.txt(c, 'MAGIA: ' + H.jars + ' ZURRONES', cx0, 272, '#aaa', 6, 'center'); });
-      A.txt(c, '← → ELEGIR    A: ¡A LUCHAR!', SW / 2, 300, '#fff', 8, 'center'); }
+      A.txt(c, '← → ELEGIR    A: ¡A LUCHAR!', A.W / 2, 300, '#fff', 8, 'center'); }
     if (opt.demo) { choose(Math.floor(Math.random() * 3)); load(0); phase = 'play'; } else { choose(0); L = STAGES[0]; }
     Object.assign(g, { _p: p, _E: E, _liz: liz, _items: items, _phase: () => phase, _stage: () => stageN, _L: () => L, _lock: () => lock, _cam: () => camX, _choose: (i) => { choose(i); load(stageN); phase = 'play'; },
       _load: (n) => { stageN = n; load(n); phase = 'play'; }, _lives: (v) => (v === undefined ? lives : (lives = v)), _boss: () => E.find((e) => e.d.boss), _sel: () => sel, _spawn: (k, x, z) => spawn(k, x, z), _clear: () => { phase = 'clear'; phaseT = 0.01; } }); // tests
     return g;
   }
   // ---------- title screen and the backdrop of the hi-score table
-  function drawTitle(c, t) { const bg = background('canadas'); if (!FONDOS.draw(c, 'canadas', 3, t * 24, 0, SW, SH, t)) { c.drawImage(bg[0], 0, 0, 960, SH); const o = -((t * 8) % 960); c.drawImage(bg[1], o, 0, 960, SH); c.drawImage(bg[1], o + 960, 0, 960, SH); } c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(0, 0, SW, SH);
+  function drawTitle(c0, t) { const c = c0; c.save(); c.scale(KS, KS); try { drawTitle0(c, t); } finally { c.restore(); } }
+  function drawTitle0(c, t) { const bg = background('canadas'); if (!FONDOS.draw(c, 'canadas', 4, t * 32, 0, SW, SH, t)) { c.drawImage(bg[0], 0, 0, 960, SH); const o = -((t * 8) % 960); c.drawImage(bg[1], o, 0, 960, SH); c.drawImage(bg[1], o + 960, 0, 960, SH); } c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(0, 0, SW, SH);
     c.font = '34px "Press Start 2P", monospace'; c.textAlign = 'center'; c.textBaseline = 'top';
     for (const [s, y] of [['GUANCHE', 26], ['GUARRIORS', 68]]) { c.fillStyle = '#1a0a04'; c.fillText(s, SW / 2 + 4, y + 4); const gr = c.createLinearGradient(0, y, 0, y + 34); gr.addColorStop(0, '#ffe08a'); gr.addColorStop(0.5, '#e07a2a'); gr.addColorStop(1, '#8a2a0a'); c.fillStyle = gr; c.fillText(s, SW / 2, y); }
     c.save(); c.scale(Z * 1.3, Z * 1.3); const k = Z * 1.3; HEROES.forEach((H, i) => { const P = Math.floor(t * 1.2 + i) % 3 === 0 ? PO.smash : PO.idle, hk = SX_HERO[H.id], hr = Math.floor(t * 1.2 + i) % 3 === 0 ? 5 : 0; if (!SPRX.draw(c, hk, hr, SPRX.fr(hk, hr, t, hr ? 10 : 6), (SW / 2 + (i - 1) * 110) / k, 230 / k, i === 2 ? -1 : 1, 2.6 * (SX_BIG[H.id] || 1) / k)) PIXGUAN.draw(c, (SW / 2 + (i - 1) * 110) / k, 230 / k, i === 2 ? -1 : 1, i === 1 ? PO.atk1 : P, H.id, H.look.s); }); c.restore(); // (the pole in magic pose crossed the logo)
     A.txt(c, 'GUAYOTA HA RAPTADO A MAGEC, EL SOL', SW / 2, 246, '#fff', 8, 'center'); A.txt(c, 'TRES GUERREROS SUBEN AL ECHEYDE', SW / 2, 260, '#9fd7ff', 8, 'center'); A.txt(c, '© 1496 MENCEYATO DE TAORO', SW / 2, 280, '#9fd7ff', 6, 'center'); }
-  function drawBack(c, t) { const bg = background('teide'); if (!FONDOS.draw(c, 'echeyde', 3, t * 30, 0, SW, SH, t)) { c.drawImage(bg[0], 0, 0, 960, SH); const o = -((t * 10) % 960); c.drawImage(bg[2], o, 0, 960, SH); c.drawImage(bg[2], o + 960, 0, 960, SH); } c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, 0, SW, SH); }
+  function drawBack(c0, t) { const c = c0; c.save(); c.scale(KS, KS); try { drawBack0(c, t); } finally { c.restore(); } }
+  function drawBack0(c, t) { const bg = background('teide'); if (!FONDOS.draw(c, 'echeyde', 4, t * 40, 0, SW, SH, t)) { c.drawImage(bg[0], 0, 0, 960, SH); const o = -((t * 10) % 960); c.drawImage(bg[2], o, 0, 960, SH); c.drawImage(bg[2], o + 960, 0, 960, SH); } c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, 0, SW, SH); }
   return { title: 'GUANCHE GUARRIORS', sub: 'LA NOCHE DE GUAYOTA', marquee: ['#6a1a0a', '#1a0402'], titleCol: '#ffb04a', baseScore: 90000, music: { title: SONGS.title }, create, drawTitle, drawBack,
     help: (K) => `GOLPE ${K('f_punch')} (MANT. FUERTE)  SALTO ${K('f_kick')}  PATADA ${K('b_pass')} (MANT. PARADA)  LOS DOS: MAGIA` };
 })();

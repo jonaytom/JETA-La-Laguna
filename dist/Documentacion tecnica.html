@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.99.5</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.99.6</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,24 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>0.99.6 — 2026-11-02 — Baloncesto con mates y tapones nuevos, Guanche a 640×448 y pasos inferiores</h2>
+<ul>
+<li><strong>Baloncesto 2D</strong> (Jonay: «perfectas así, aplícalo todo a escala del juego»; «los jugadores deberían ser de distintos
+  aspectos»): las animaciones nuevas en el juego (<code>src/09ecb_bk_anim.js</code>, hecho por <code>tools/sprites_ext/bk_anim.py</code> como
+  un mapa de píxeles que cada jugador monta sobre su propia hoja): tiro en suspensión con los dos brazos, robo, rebote,
+  tapón y los mates de los combos (360, molino con el brazo girando, de espaldas, entrepiernas). Los mates acaban con las
+  manos en el aro, que se inclina mientras se cuelga; la red se mueve al entrar el balón; el balón es algo mayor que la
+  cabeza; los jugadores, un 6 % más pequeños y cada uno con su talla y su pelo (corto, afro, barba o rapado).</li>
+<li><strong>Guanche Guarriors</strong> (Jonay): pantalla propia de 640×448 (dibujada al 75 % en la recreativa); la secuaz roja y la
+  vikinga sin casco; los enemigos montados en lagarto llevan la pierna por delante, como los héroes; un enemigo
+  derribado ya no cae fuera de la pantalla (Guayota quedaba fuera del alcance y la fase 7 no se acababa).</li>
+<li><strong>Carreteras</strong> (Jonay, 15 capturas: «muros en medio de la carretera y salida de túnel con carretera que vuela
+  encima»): los pasos inferiores cortos entre dos cruces cercanos (Ofra, las bocas bajo la TF-5) se hunden solo lo que
+  permite una rampa de ~17 % y la carretera de encima sube en terraplén, con muros hasta el suelo, para dejar 5,4 m
+  libres; los STOP y ceda el paso ya no se pintan en la autopista ni en la vía mayor, sino en la incorporación;
+  carriles de aceleración y deceleración en las entradas y salidas; líneas también en los puentes; las costillas del
+  techo del intercambiador ya no salen sobre la autopista.</li>
+</ul>
 <h2>0.99.5 — 2026-10-27 — Marcas viales por carriles y nada de coches aparcados en la autopista</h2>
 <ul>
 <li><strong>Carreteras</strong> (Jonay: «las marcas viales deben ser coherentes… hay muchas líneas que se cruzan», «no puede haber coches

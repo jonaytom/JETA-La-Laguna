@@ -8,10 +8,10 @@ async def run(pg):
         const big=(r)=> (r[0] <= 4 || S[r[1]] === 'Vía de Ronda de La Laguna') && !(r[3] & 6);
         for (const s of d.PARKED.slots) { const rd=d.ROADSEG.nearest(s.x, s.z, big); if (rd && rd.d < D.R[rd.ri][2]/2 + 0.3) bad++; }
         const kinds=[]; d.scene.traverse((o)=>{ if (o.name && o.name.startsWith('chunk:aL_')) kinds.push(o.name.slice(6)); });
-        const edge = d.MEDIANS.filter((m)=>m[0]===4); return { bad, slots: d.PARKED.slots.length, kinds: [...new Set(kinds)], edge: edge.length, edgeM: Math.round(edge.reduce((a,m)=>a+m[5]*3,0)) }; })())"""))
+        const edge = d.MEDIANS.filter((m)=>m[0]===4); return { bad, slots: d.PARKED.slots.length, kinds: [...new Set(kinds)], edge: edge.length, aux: d.AUX.length, edgeM: Math.round(edge.reduce((a,m)=>a+m[5]*3,0)) }; })())"""))
     print('aparcados sobre carretera grande', r['bad'], 'de', r['slots']); print('texturas de carriles', r['kinds'])
-    print('bionda en los bordes de autopista y enlaces', r['edge'], 'tramos,', r['edgeM'], 'm')
-    ok = r['bad'] == 0 and len(r['kinds']) >= 4 and r['edge'] > 20
+    print('bionda en los bordes de autopista y enlaces', r['edge'], 'tramos,', r['edgeM'], 'm'); print('carriles de aceleración / deceleración', r['aux'])
+    ok = r['bad'] == 0 and len(r['kinds']) >= 4 and r['edge'] > 20 and r['aux'] > 10
     print('SIN COCHES EN LA AUTOPISTA Y CARRILES', 'OK' if ok else 'FALLA')
     print('errores', errs[:3]); ok = ok and not errs
     print('PRUEBA 0995', 'OK' if ok else 'FALLA')

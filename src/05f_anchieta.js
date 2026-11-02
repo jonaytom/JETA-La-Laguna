@@ -143,7 +143,10 @@ function buildIntercambiador(b) {
   const mk = (arr, mat) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3)); g.computeVertexNormals(); const m = new THREE.Mesh(g, mat); m.castShadow = true; m.receiveShadow = true; scene.add(m); };
   mk(roof, new THREE.MeshStandardMaterial({ color: 0xa9afb3, roughness: 0.55, metalness: 0.4, side: THREE.DoubleSide }));
   { const F2 = axisFrame(pts, b.cx, b.cz); const ribM = new THREE.MeshStandardMaterial({ color: 0xe8ecee, roughness: 0.3, metalness: 0.5, emissive: 0xffffff, emissiveIntensity: 0.05 });
-    for (let u = F2.u0 + 4; u < F2.u1 - 2; u += 8) { const [x, z] = F2.W(u, (F2.v0 + F2.v1) / 2); const rib = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.35, F2.v1 - F2.v0 - 4), ribM); rib.position.set(x, y + 0.75, z); rib.rotation.y = F2.ang + Math.PI / 2; scene.add(rib); } }
+    // v0.99.6 (Jonay: «el techo tiene palos blancos raros que se meten por encima de la autopista»): each rib only over
+    // the roof itself (the stretch of its line inside the footprint), not across the whole box of the footprint
+    for (let u = F2.u0 + 4; u < F2.u1 - 2; u += 8) { let a0 = null, a1 = null; for (let v = F2.v0; v <= F2.v1; v += 1) { const [px, pz] = F2.W(u, v); if (pip(px, pz, pts.flat())) { if (a0 === null) a0 = v; a1 = v; } }
+      if (a0 === null || a1 - a0 < 6) continue; const vm = (a0 + a1) / 2, [x, z] = F2.W(u, vm); const rib = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.35, a1 - a0 - 2), ribM); rib.position.set(x, y + 0.75, z); rib.rotation.y = F2.ang + Math.PI / 2; scene.add(rib); } }
   mk(under, new THREE.MeshStandardMaterial({ color: 0xf2f2ef, roughness: 0.8, emissive: 0xffffff, emissiveIntensity: 0.05, side: THREE.DoubleSide }));
   mk(fascia, new THREE.MeshStandardMaterial({ color: 0x1f8a4c, roughness: 0.5, side: THREE.DoubleSide }));
   // columns on a grid inside the footprint

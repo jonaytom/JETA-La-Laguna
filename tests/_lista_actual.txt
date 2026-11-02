@@ -1,1 +1,9 @@
+prueba_0996b.py
+prueba_0994.py
+prueba_baloncesto.py
+prueba_082.py
+prueba_0996.py
 prueba_0995.py
+prueba_0993.py
+prueba_099.py
+prueba_096.py

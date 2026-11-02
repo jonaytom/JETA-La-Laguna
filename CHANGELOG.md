@@ -3,6 +3,23 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.99.6 — 2026-11-02 — Baloncesto con mates y tapones nuevos, Guanche a 640×448 y pasos inferiores
+- **Baloncesto 2D** (Jonay: «perfectas así, aplícalo todo a escala del juego»; «los jugadores deberían ser de distintos
+  aspectos»): las animaciones nuevas en el juego (`src/09ecb_bk_anim.js`, hecho por `tools/sprites_ext/bk_anim.py` como
+  un mapa de píxeles que cada jugador monta sobre su propia hoja): tiro en suspensión con los dos brazos, robo, rebote,
+  tapón y los mates de los combos (360, molino con el brazo girando, de espaldas, entrepiernas). Los mates acaban con las
+  manos en el aro, que se inclina mientras se cuelga; la red se mueve al entrar el balón; el balón es algo mayor que la
+  cabeza; los jugadores, un 6 % más pequeños y cada uno con su talla y su pelo (corto, afro, barba o rapado).
+- **Guanche Guarriors** (Jonay): pantalla propia de 640×448 (dibujada al 75 % en la recreativa); la secuaz roja y la
+  vikinga sin casco; los enemigos montados en lagarto llevan la pierna por delante, como los héroes; un enemigo
+  derribado ya no cae fuera de la pantalla (Guayota quedaba fuera del alcance y la fase 7 no se acababa).
+- **Carreteras** (Jonay, 15 capturas: «muros en medio de la carretera y salida de túnel con carretera que vuela
+  encima»): los pasos inferiores cortos entre dos cruces cercanos (Ofra, las bocas bajo la TF-5) se hunden solo lo que
+  permite una rampa de ~17 % y la carretera de encima sube en terraplén, con muros hasta el suelo, para dejar 5,4 m
+  libres; los STOP y ceda el paso ya no se pintan en la autopista ni en la vía mayor, sino en la incorporación;
+  carriles de aceleración y deceleración en las entradas y salidas; líneas también en los puentes; las costillas del
+  techo del intercambiador ya no salen sobre la autopista.
+
 ## 0.99.5 — 2026-10-27 — Marcas viales por carriles y nada de coches aparcados en la autopista
 - **Carreteras** (Jonay: «las marcas viales deben ser coherentes… hay muchas líneas que se cruzan», «no puede haber coches
   aparcados en medio de la autopista ni de la Vía de Ronda»):

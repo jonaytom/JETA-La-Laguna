@@ -322,13 +322,13 @@ function buildRoads() {
     if (RAISE.has(ri) && !(rd[3] & 2)) { // approach embankment of a bridge that had to be lifted for clearance
       const sp = RAISE_SPAN.get(ri), Lr = polyLen(c), parts = [];
       const raised = subPoly(c, sp[0], sp[1]); const hf = (s, x, z) => heightAt(x, z) + raiseOf(ri, s + sp[0]);
-      ribbon(raised, w, cls, YOFF[cls], tile, isLines(cls) ? 1 : w / 8, hf); bridgeDressing(raised, w, hf, rd[0] <= 12);
+      linedRibbon(ri, raised, w, cls, tile, hf, sp[0]); bridgeDressing(raised, w, hf, rd[0] <= 12, true); // v0.99.6: its lines cut where it meets another road, like at grade
       if (sp[0] > 0.5) parts.push(subPoly(c, 0, sp[0])); if (sp[1] < Lr - 0.5) parts.push(subPoly(c, sp[1], Lr));
       for (const pc of parts) ribbon(pc, w, cls, YOFF[cls], tile, isLines(cls) ? 1 : w / 8);
       continue; }
     if ((rd[3] & 2) && !AT_GRADE.has(ri)) { // bridges / overpasses: raised deck with parapets and piers
       if (rd[0] >= 13 && polyMinDist(c, -347.5, 745.4) < 75) continue; // the Padre Anchieta ring and its ramps are modelled separately (OSM footbridge pieces of the ramp blocked it)
-      const hf0 = bridgeProfile(c), hf = RAISE.has(ri) ? (s, x, z) => hf0(s, x, z) + raiseOf(ri, s) : hf0; ribbon(c, w, cls, YOFF[cls], tile, isLines(cls) ? 1 : w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8), hf);
+      const hf0 = bridgeProfile(c), hf = RAISE.has(ri) ? (s, x, z) => hf0(s, x, z) + raiseOf(ri, s) : hf0; if (isLines(cls)) linedRibbon(ri, c, w, cls, tile, hf, 0); else ribbon(c, w, cls, YOFF[cls], tile, w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8), hf); // v0.99.6: on bridges too
       bridgeDressing(c, w, hf, rd[0] <= 12); continue;
     }
     if (isLines(cls)) { for (const [s0, s1, ln] of lineRuns(ri, c)) { const pc = subPoly(c, s0, s1); if (pc.length >= 4) ribbon(pc, w, ln ? cls : 'asphalt', ln ? YOFF[cls] : YOFF.asphalt, ln ? tile : 8, ln ? 1 : w / 8); } }
@@ -343,6 +343,7 @@ function buildRoads() {
     }
   }
   OBST_RI = -1; DRESS_RI = -1;
+  try { buildAuxLanes(); } catch (e) { console.error('aux lanes', e); }
   try { tf13Portals(); } catch (e) { console.error('tf13 portals', e); }
   for (const r of DATA.RB || []) roundaboutIsland(r[0], r[1], r[2], WIDEN(3, r[3], 1));
   // tram track
@@ -352,23 +353,63 @@ function buildRoads() {
     else ribbon(DATA.T, 7.2, 'tram', YOFF.tram, 6, 1); }
 }
 
+// v0.99.6 (Jonay: «la salida y la incorporación se cortan; debería haber un carril bastante largo que permita
+// incorporarse y abandonar», with a photo of the TF-5): where a slip road leaves or joins a motorway or a trunk road, an
+// extra lane alongside it (on the slip road's side): 140 m after the merge (acceleration lane) or before the split
+// (deceleration lane), the last / first 45 m tapering, with the thick dashed line between it and the main lanes (it
+// covers the main road's solid edge line there) and its own solid outer edge. AUX keeps them for the guardrails.
+const AUX = []; // entries with ri, s0, s1, sd (the side, as the guardrails' sd), w, entry
+function auxTex() { if (MAT.auxLane) return; const c = mkCanvas(128, 512), y = c.getContext('2d'); y.drawImage(TEX.asphaltC, 0, 0, 128, 256); y.drawImage(TEX.asphaltC, 0, 256, 128, 256);
+  y.fillStyle = '#ece9e0'; for (let v = 0; v < 512; v += 256) y.fillRect(16, v + 10, 14, 128); y.fillRect(116, 0, 6, 512); // thick dashes (inner side), solid outer edge
+  MAT.auxLane = MAT.asphaltLines.clone(); MAT.auxLane.map = canvasTex(c); MAT.auxLane.polygonOffsetFactor = -5; MAT.auxLane.polygonOffsetUnits = -10; YOFF.auxLane = 0.16; SURF_MK.add('auxLane'); }
+function buildAuxLanes() {
+  const R = DATA.R, MW = new Map(); // node → [main road index, point index]
+  R.forEach((rd, ri) => { if (!(rd[0] === 0 || rd[0] === 2) || !(rd[3] & 1) || (rd[3] & 4)) return; const c = rd[4]; for (let i = 0; i < c.length; i += 2) { const k = K(c[i], c[i + 1]); let l = MW.get(k); if (!l) MW.set(k, l = []); l.push([ri, i]); } });
+  auxTex(); const LA = 140, TP = 45, AW = 3.6;
+  R.forEach((rd, li) => { if (!(rd[0] === 1 || rd[0] === 3) || !(rd[3] & 1) || (rd[3] & 4)) return; const c = rd[4], n = c.length;
+    for (const entry of [true, false]) { const k = entry ? K(c[n - 2], c[n - 1]) : K(c[0], c[1]); const ms = MW.get(k); if (!ms) continue;
+      // the main road the lane goes along: the one that carries on from the node (after it for an entry, before it for an exit)
+      let pick = null; for (const [ri, i] of ms) { const L = polyLen(R[ri][4]), sN = sOnRoad(ri, i, 0); if (entry ? L - sN > 60 : sN > 60) { pick = [ri, sN, L]; break; } } if (!pick) continue;
+      const [ri, sN, L] = pick, mc = R[ri][4], mw = R[ri][2];
+      // the side: where the slip road comes from (a point 25 m along it from the node)
+      const q = polyAt(c, entry ? Math.max(0, polyLen(c) - 25) : Math.min(polyLen(c), 25)), p0 = polyAt(mc, sN), p1 = polyAt(mc, Math.min(L, sN + 2)); const tx = p1[0] - p0[0], tz = p1[1] - p0[1];
+      const sd = Math.sign(-tz * (q[0] - p0[0]) + tx * (q[1] - p0[1])) || 1;   // +1: on the side of (-tz, tx) (the guardrails' sd = 1)
+      const s0 = entry ? sN : Math.max(0, sN - LA), s1 = entry ? Math.min(L, sN + LA) : sN; if (s1 - s0 < 30) continue;
+      AUX.push({ ri, s0, s1, sd, w: AW, entry, mw });
+      const yf = ROADY[ri]; let A = acc(p0[0], p0[1], 'auxLane'), prev = null;
+      for (let s = s0; s <= s1 + 0.01; s += 4) { const ss = Math.min(s, s1), p = polyAt(mc, ss), pn = polyAt(mc, Math.min(L, ss + 1)), pb = polyAt(mc, Math.max(0, ss - 1)); let dx = pn[0] - pb[0], dz = pn[1] - pb[1]; const dl = Math.hypot(dx, dz) || 1; dx /= dl; dz /= dl;
+        const kx = entry ? smooth(0, 1, (s1 - ss) / TP) : smooth(0, 1, (ss - s0) / TP), oi = mw / 2 - 0.5, oo = mw / 2 + AW * kx, nx = -dz * sd, nz = dx * sd; const y = (yf ? yf(ss, p[0], p[1]) : heightAt(p[0], p[1])) + YOFF.auxLane;
+        const cur = [[p[0] + nx * oi, Math.max(y, heightAt(p[0] + nx * oi, p[1] + nz * oi) + 0.1), p[1] + nz * oi], [p[0] + nx * oo, Math.max(y, heightAt(p[0] + nx * oo, p[1] + nz * oo) + 0.1), p[1] + nz * oo], ss / 12];
+        if (prev && kx + prev[3] > 0.02) { const [a0, a1] = sd > 0 ? [prev[0], prev[1]] : [prev[1], prev[0]], [b0, b1] = sd > 0 ? [cur[0], cur[1]] : [cur[1], cur[0]], u0 = sd > 0 ? 0 : 1, u1 = 1 - u0;
+          A.quad(a1, a0, b0, b1, [u1, prev[2]], [u0, prev[2]], [u0, cur[2]], [u1, cur[2]], null, undefined, [0, 1, 0]); }
+        prev = [cur[0], cur[1], cur[2], kx]; if (ss >= s1) break; } } });
+  console.log('aux lanes', AUX.length); }
+const auxAt = (ri, s, sd) => { let w = 0; for (const a of AUX) if (a.ri === ri && a.sd === sd && s >= a.s0 - 2 && s <= a.s1 + 2) { const k = a.entry ? smooth(0, 1, (a.s1 - s) / 45) : smooth(0, 1, (s - a.s0) / 45); w = Math.max(w, a.w * k); } return w; };
 // v0.70 (Jonay: lane lines crossing each other at junctions, slip roads and roundabouts): the stretches of a lined
 // road that lie inside another road's carriageway (a junction mouth, a slip road running alongside before it merges, a
 // roundabout) are drawn as plain asphalt; the lines go on where the road is on its own again. Returns [s0, s1, lines].
 function polyAt(c, s) { for (let i = 0; i < c.length - 2; i += 2) { const L = Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]); if (s <= L || i === c.length - 4) { const t = L ? clamp(s / L, 0, 1) : 0; return [c[i] + (c[i + 2] - c[i]) * t, c[i + 1] + (c[i + 3] - c[i + 1]) * t]; } s -= L; } return [c[0], c[1]]; }
 let RIDX = null; // road → its index (lineRuns)
-function lineRuns(ri, c) {
+/** v0.99.6: a lined road on a deck (bridge, raised approach) in the pieces of lineRuns: plain asphalt where it meets
+ *  another road at its level (hf: its height profile from s0 on the whole road) */
+function linedRibbon(ri, pc0, w, cls, tile, hf, s0) { for (const [a, b, ln] of lineRuns(ri, pc0, s0)) { const pc = subPoly(pc0, a, b); if (pc.length >= 4) ribbon(pc, w, ln ? cls : 'asphalt', ln ? YOFF[cls] : YOFF.asphalt, ln ? tile : 8, ln ? 1 : w / 8, (q, x, z) => hf(q + a, x, z)); } }
+const RCUM = new Map(); // road → cumulative lengths of its points (the s of a point found by ROADSEG)
+function sOnRoad(ri, i, t) { let cu = RCUM.get(ri); if (!cu) { const c = DATA.R[ri][4]; cu = [0]; for (let k = 2; k < c.length; k += 2) cu.push(cu[cu.length - 1] + Math.hypot(c[k] - c[k - 2], c[k + 1] - c[k - 1])); RCUM.set(ri, cu); } const k = i / 2; return cu[k] + (cu[k + 1] - cu[k]) * t; }
+function lineRuns(ri, c, s00 = 0) {
   const L = polyLen(c), out = []; if (L < 1) return [[0, L, true]];
-  const me = DATA.R[ri], other = (r) => r !== me && r[0] <= 12 && !(r[3] & 6);
+  const me = DATA.R[ri], other = (r) => r !== me && r[0] <= 12 && !(r[3] & 4); // (v0.99.6: decks too, at the same level)
   // v0.99.5 (Jonay: «muchas líneas que se cruzan»): a road gives way to a bigger one (lower class, or as big and wider):
   // its lines stop as soon as its ribbon touches the bigger road's carriageway (a slip road running alongside before it
   // merges, a junction mouth), not only when its centre is inside it; the bigger road keeps its lines
   if (!RIDX) { RIDX = new Map(); DATA.R.forEach((r, i) => RIDX.set(r, i)); }
   const bigger = (r) => r[0] < me[0] || (r[0] === me[0] && (r[2] > me[2] || (r[2] === me[2] && RIDX.get(r) < ri))); // (two alike: the first one keeps its lines)
-  const inOther = (x, z) => { const rd = ROADSEG.nearest(x, z, (r) => other(r) && bigger(r)); if (rd && rd.d < DATA.R[rd.ri][2] / 2 + me[2] / 2 - 0.2) return true;
-    const r2 = ROADSEG.nearest(x, z, other); return !!r2 && r2.d < DATA.R[r2.ri][2] / 2 + 0.4; };
+  const deckMe = !!(me[3] & 2) || RAISE.has(ri);
+  const level = (rn, s) => { const rj = rn.ri, r2 = DATA.R[rj], deck2 = !!(r2[3] & 2) || RAISE.has(rj) || DEP.has(rj); if (!deckMe && !deck2) return true; if (!ROADY[ri] || !ROADY[rj]) return !deckMe && !deck2;
+    const y1 = ROADY[ri](s, rn.x, rn.z), y2 = ROADY[rj](sOnRoad(rj, rn.i, rn.t), rn.x, rn.z); return Number.isFinite(y1) && Number.isFinite(y2) && Math.abs(y1 - y2) < 1.2; };
+  const inOther = (x, z, s) => { const rd = ROADSEG.nearest(x, z, (r) => other(r) && bigger(r)); if (rd && rd.d < DATA.R[rd.ri][2] / 2 + me[2] / 2 - 0.2 && level(rd, s)) return true;
+    const r2 = ROADSEG.nearest(x, z, other); return !!r2 && r2.d < DATA.R[r2.ri][2] / 2 + 0.4 && level(r2, s); };
   const N = Math.max(2, Math.ceil(L / 2)); let cur = null, s0 = 0;
-  for (let k = 0; k <= N; k++) { const s = L * k / N, p = polyAt(c, s), ln = !inOther(p[0], p[1]); if (cur === null) cur = ln; else if (ln !== cur) { const m = s - L / N / 2; out.push([s0, m, cur]); s0 = m; cur = ln; } }
+  for (let k = 0; k <= N; k++) { const s = L * k / N, p = polyAt(c, s), ln = !inOther(p[0], p[1], s + s00); if (cur === null) cur = ln; else if (ln !== cur) { const m = s - L / N / 2; out.push([s0, m, cur]); s0 = m; cur = ln; } }
   out.push([s0, L, cur]);
   // plain bits shorter than 3 m inside a long lined stretch are noise (a footpath touching the kerb): keep the lines there
   return out.filter((r) => r[1] - r[0] > 0.05).map((r) => (!r[2] && r[1] - r[0] < 3 ? [r[0], r[1], true] : r)).reduce((a, r) => { const q = a[a.length - 1]; if (q && q[2] === r[2]) q[1] = r[1]; else a.push(r.slice()); return a; }, []);
@@ -379,7 +420,7 @@ function bridgeProfile(c) {
   const cl = 1.0, ramp = Math.max(4, Math.min(35, L / 2)); // small camber only: clearance over roads comes from computeRaises (same for twin decks)
   return (s, x, z) => { const t = clamp(s / L, 0, 1); const e = Math.min(s, L - s) / ramp; const b = cl * smooth(0, 1, e); return Math.max(lerp(g0, g1, t) + b, heightAt(x, z) + 0.15); };
 }
-function bridgeDressing(c, w, hf, road) {
+function bridgeDressing(c, w, hf, road, bank = false) {
   const T = acc(c[0], c[1], 'trim'); const col = [0.72, 0.71, 0.68]; const pts = []; let dist = 0; const hw = w / 2 + 0.1;
   for (let i = 0; i < c.length - 2; i += 2) { const x1 = c[i], z1 = c[i + 1], x2 = c[i + 2], z2 = c[i + 3], L = Math.hypot(x2 - x1, z2 - z1); if (L < 1e-3) continue; /* v0.91.1: a 0 m piece gave NaN (the audit: bridge at X 675 Z 3544) */ const n = Math.max(1, Math.ceil(L / 5));
     for (let k = 0; k < n; k++) { const x = x1 + (x2 - x1) * k / n, z = z1 + (z2 - z1) * k / n; pts.push([x, z, hf(dist + L * k / n, x, z), (x2 - x1) / L, (z2 - z1) / L]); } dist += L; }
@@ -387,6 +428,10 @@ function bridgeDressing(c, w, hf, road) {
   for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1]; for (const sg of [1, -1]) { const ax = a[0] - a[4] * hw * sg, az = a[1] + a[3] * hw * sg, bx = b[0] - b[4] * hw * sg, bz = b[1] + b[3] * hw * sg;
       // no parapet where it would stand in another carriageway at this level (twin decks, merging slip roads)
       if (DRESS_RI >= 0 && (inOtherRoad((ax + bx) / 2, (az + bz) / 2, Math.min(a[2], b[2]) - 4.2, Math.max(a[2], b[2]) + 1.0, DRESS_RI, 0.15, true) || inOtherRoad(ax, az, a[2] - 4.2, a[2] + 1.0, DRESS_RI, 0.15, true) || inOtherRoad(bx, bz, b[2] - 4.2, b[2] + 1.0, DRESS_RI, 0.15, true))) continue;
+      // v0.99.6 (Jonay: «carretera que vuela encima»): a raised approach / embankment is solid: a retaining wall down to
+      // the ground on each side (not over a road that passes underneath it: there the deck's underside shows)
+      if (bank) { const ga = heightAt(ax, az) - 0.4, gb = heightAt(bx, bz) - 0.4; if ((a[2] - 0.6 > ga + 0.5 || b[2] - 0.6 > gb + 0.5) && !(DRESS_RI >= 0 && inOtherRoad((ax + bx) / 2, (az + bz) / 2, Math.min(a[2], b[2]) - 12, Math.min(a[2], b[2]) - 2.2, DRESS_RI, -1.2, true)))
+        T.quad([ax, Math.min(ga, a[2] - 0.6), az], [bx, Math.min(gb, b[2] - 0.6), bz], [bx, b[2] - 0.6, bz], [ax, a[2] - 0.6, az], [0, 0], [0, 0], [0, 0], [0, 0], [0.6, 0.58, 0.54], undefined, [-a[4] * sg, 0, a[3] * sg]); }
       // concrete kerb-parapet...
       T.quad([ax, a[2] - 0.6, az], [bx, b[2] - 0.6, bz], [bx, b[2] + 0.5, bz], [ax, a[2] + 0.5, az], [0, 0], [0, 0], [0, 0], [0, 0], col, undefined, [-a[4] * sg, 0, a[3] * sg]);
       T.quad([bx, b[2] - 0.6, bz], [ax, a[2] - 0.6, az], [ax, a[2] + 0.5, az], [bx, b[2] + 0.5, bz], [0, 0], [0, 0], [0, 0], [0, 0], col, undefined, [a[4] * sg, 0, -a[3] * sg]);
@@ -435,6 +480,7 @@ function roundaboutIsland(cx, cz, R, w) {
 const TUNNEL_DECKS = [], TCUTS = [];
 // ---- underpasses / tunnels: depressed profiles that continue into the neighbouring ways (approach cuttings)
 const DEP = new Map();
+const SHORT_UP = []; /* v0.99.6: short underpasses whose over-road is lifted (see computeDepressions) */
 const polyLen = (c) => { let L = 0; for (let i = 2; i < c.length; i += 2) L += Math.hypot(c[i] - c[i - 2], c[i + 1] - c[i - 1]); return L; };
 const PED_TUN = new Set();
 function computeDepressions() {
@@ -453,7 +499,8 @@ function computeDepressions() {
         let best = -1, bd = Math.cos(0.9), bStart = true; for (const cj of pedEnds.get(K(px, pz)) || []) { if (cj === ri) continue; const r2 = DATA.R[cj]; if (r2[3] & 6 || r2[0] <= 12) continue; const c2 = r2[4], m = c2.length; const st = c2[0] === px && c2[1] === pz; let dx = st ? c2[2] - c2[0] : c2[m - 4] - c2[m - 2], dz = st ? c2[3] - c2[1] : c2[m - 3] - c2[m - 1]; const dl = Math.hypot(dx, dz) || 1; const dot = (dx * ox + dz * oz) / dl; if (dot > bd) { bd = dot; best = cj; bStart = st; } }
         if (best >= 0) { const Lc = polyLen(DATA.R[best][4]); push(best, bStart ? (s) => D * smooth(0, 1, (rOut - s) / R) : (s) => D * smooth(0, 1, (rOut - (Lc - s)) / R)); PED_TUN.add(best); } }
       return; }
-    const D = rd[0] <= 2 ? 7.8 : 7.2, rIn = clamp(L * 0.3, 8, 40), rOut0 = rd[0] <= 2 ? 75 : 55;
+    let D = rd[0] <= 2 ? 7.8 : 7.2;
+    const rIn = clamp(L * 0.3, 8, 40), rOut0 = rd[0] <= 2 ? 75 : 55;
     // walk the continuation chain at each end; the ramp must be back at grade before the first junction on it (a side
     // street joining the ramp used to stay at grade against the trench wall — agent: "atasco / hundido" in trenches)
     const chains = [];
@@ -478,6 +525,11 @@ function computeDepressions() {
       chains.push({ hops, lim: clamp(jd - 4, 20, rOut0) });
     }
     const limS = chains[0].lim, limE = chains[1].lim;
+    // v0.99.6 (Jonay, Ofra X 1534 Z 2739 and the TF-5 portals X 1775 Z 3165: «muros en medio de la carretera y salida de
+    // túnel con carretera que vuela encima»): a short underpass between two close junctions can't sink 7 m (ramps of
+    // 20 %+, walls across the side streets). It sinks only what a ~15 % ramp allows and the road over it is lifted
+    // on an embankment for the rest of the headroom (liftOverShort, in computeRaisesOnce), as on the real ones
+    if (L < 80) { const Dm = 0.085 * (rIn + Math.min(limS, limE)); if (Dm < D) { D = Math.max(2.0, Dm); SHORT_UP.push({ ri, D }); } }
     push(ri, (s) => D * Math.min(smooth(0, 1, (s + limS) / (rIn + limS)), smooth(0, 1, (L - s + limE) / (rIn + limE))));
     for (const ch of chains) { const lim = ch.lim, R = rIn + lim;
       for (const { ri: best, bStart, u0, Lc, twin } of ch.hops) { if (u0 > lim) break; push(best, bStart ? (s) => D * smooth(0, 1, (lim - (u0 + s)) / R) : (s) => D * smooth(0, 1, (lim - (u0 + Lc - s)) / R));
@@ -603,6 +655,7 @@ function computeRaisesOnce() {
   DATA.R.forEach((rd, ri) => { const c = rd[4]; addE(K(c[0], c[1]), ri); addE(K(c[c.length - 2], c[c.length - 1]), ri); });
   const push = (ri, f) => { let a = RAISE.get(ri); if (!a) RAISE.set(ri, a = []); a.push(f); };
   let nb = 0; const NEEDS = [], TWIN_NEED = new Map();
+  liftOverShort(push);
   for (const pass of [1, 2]) {
   if (pass === 2) { // twin decks (one per carriageway) get the same lift
     for (const a of NEEDS) for (const b of NEEDS) { if (a === b || Math.hypot(a.x - b.x, a.z - b.z) > 30) continue; const la = Math.hypot(a.dx, a.dz) || 1, lb = Math.hypot(b.dx, b.dz) || 1; if (Math.abs((a.dx * b.dx + a.dz * b.dz) / (la * lb)) < 0.85) continue; TWIN_NEED.set(a.ri, Math.max(TWIN_NEED.get(a.ri) || 0, b.need)); }
@@ -703,6 +756,31 @@ function roadYFn(ri) { const rd = DATA.R[ri], c0 = rd[4];
   if (RAISE.has(ri) && !(rd[3] & 2)) { const sp = RAISE_SPAN.get(ri); return (s, x, z) => heightAt(x, z) + (s >= sp[0] && s <= sp[1] ? raiseOf(ri, s) : 0); }
   if ((rd[3] & 2) && !AT_GRADE.has(ri) && !(rd[0] >= 13 && polyMinDist(c0, -347.5, 745.4) < 75)) { const hf0 = bridgeProfile(c0); return RAISE.has(ri) ? (s, x, z) => hf0(s, x, z) + raiseOf(ri, s) : hf0; }
   return (s, x, z) => heightAt(x, z); }
+// v0.99.6: the road over a short underpass (SHORT_UP) climbs on an embankment to leave 5.4 m of headroom: a plateau
+// as wide as the underpass and ramps of ~3-5 % (it follows on into the next pieces of the same road: OSM cuts the
+// motorway into pieces right by the junctions)
+let SU_ENDS = null;
+function liftOverShort(push) { if (!SHORT_UP.length) return;
+  if (!SU_ENDS) { SU_ENDS = new Map(); DATA.R.forEach((rd, ri) => { if (rd[0] > 12) return; const c = rd[4]; for (const k of [K(c[0], c[1]), K(c[c.length - 2], c[c.length - 1])]) { let a = SU_ENDS.get(k); if (!a) SU_ENDS.set(k, a = []); a.push(ri); } }); }
+  const span = (ri, lo, hi) => { const Lr = polyLen(DATA.R[ri][4]); let a = RAISE_SPAN.get(ri) || [Lr, 0]; RAISE_SPAN.set(ri, [Math.min(a[0], Math.max(0, lo)), Math.max(a[1], Math.min(Lr, hi))]); };
+  // along road ri from s0 (distance d0 already covered): f(dist) up to reach; then into the straightest continuation
+  const walk = (ri, s0, d0, dir, f, reach, from, hop) => { const c = DATA.R[ri][4], Lr = polyLen(c);
+    const lo = dir < 0 ? Math.max(0, s0 - (reach - d0)) : s0, hi = dir > 0 ? Math.min(Lr, s0 + (reach - d0)) : s0;
+    push(ri, (q) => (q < lo - 0.01 || q > hi + 0.01 ? 0 : f(d0 + Math.abs(q - s0)))); span(ri, lo, hi);
+    const left = reach - d0 - (dir < 0 ? s0 : Lr - s0); if (left <= 1 || hop >= 3) return;
+    const n = c.length, atEnd = dir > 0, px = atEnd ? c[n - 2] : c[0], pz = atEnd ? c[n - 1] : c[1];
+    let ox = atEnd ? c[n - 2] - c[n - 4] : c[0] - c[2], oz = atEnd ? c[n - 1] - c[n - 3] : c[1] - c[3]; const ol = Math.hypot(ox, oz) || 1; ox /= ol; oz /= ol;
+    let best = -1, bd = Math.cos(0.5), bStart = true;
+    for (const cj of SU_ENDS.get(K(px, pz)) || []) { if (cj === ri || cj === from) continue; const r2 = DATA.R[cj]; if ((r2[3] & 6) || DEP.has(cj) || r2[0] !== DATA.R[ri][0]) continue; const c2 = r2[4], m = c2.length; const st = c2[0] === px && c2[1] === pz;
+      const dx = st ? c2[2] - c2[0] : c2[m - 4] - c2[m - 2], dz = st ? c2[3] - c2[1] : c2[m - 3] - c2[m - 1]; const dot = (dx * ox + dz * oz) / (Math.hypot(dx, dz) || 1); if (dot > bd) { bd = dot; best = cj; bStart = st; } }
+    if (best < 0) return; const Lb = polyLen(DATA.R[best][4]);
+    walk(best, bStart ? 0 : Lb, reach - left, bStart ? 1 : -1, f, reach, ri, hop + 1); };
+  for (const u of SHORT_UP) { const w = DATA.R[u.ri][2];
+    for (const X of crossingsOf(u.ri)) { const r2 = DATA.R[X.rj]; if (r2[0] > 12 || (r2[3] & 6) || DEP.has(X.rj) || X.cr < 0.3) continue;
+      const lift = 6.4 - depthOf(u.ri, X.s); if (lift < 0.3) continue;
+      const P = w / 2 / X.cr + 3, Rr = clamp(lift * 30, 40, 110), f = (dd) => lift * smooth(0, 1, (P + Rr - dd) / Rr);
+      walk(X.rj, X.so, 0, 1, f, P + Rr, -1, 0); walk(X.rj, X.so, 0, -1, f, P + Rr, -1, 0); } }
+}
 // iterate: a bridge whose road below got lifted (it is the approach ramp of another bridge) must go higher still
 function computeRaises() {
   let nb = 0;
@@ -1112,7 +1190,7 @@ function finalizeChunks() {
     const a = c[mk]; if (!a.p.length) continue;
     const g = a.geo(mk === 'facade' ? 2 : 0, MAT[mk]); a.p = a.n = a.uv = a.c = a.e = null;
     const m = new THREE.Mesh(g, MAT[mk]);
-    const isRoad = isLines(mk) || ['asphalt', 'paving', 'sidewalk', 'footway', 'dirt', 'tram', 'disc', 'discPave', 'tunnelLight', 'grass'].includes(mk);
+    const isRoad = isLines(mk) || mk === 'auxLane' || ['asphalt', 'paving', 'sidewalk', 'footway', 'dirt', 'tram', 'disc', 'discPave', 'tunnelLight', 'grass'].includes(mk);
     m.receiveShadow = true; m.castShadow = !isRoad && mk !== 'glassHouse';
     if (isRoad) m.renderOrder = 1;
     m.matrixAutoUpdate = false; m.name = 'chunk:' + mk; m.userData.chunk = k; scene.add(m); meshes++;
@@ -1213,7 +1291,7 @@ function buildMedians() {
     for (const sd of [1, -1]) { let piece = [], s0 = 0;
       const flush = () => { if (piece.length >= 4) { guardrail(piece); nE++; MEDIANS.push([4, Math.round(piece[0][0]), Math.round(piece[0][1]), Math.round(piece[piece.length - 1][0]), Math.round(piece[piece.length - 1][1]), piece.length]); } piece = []; };
       for (let i = 0; i < c.length - 2; i += 2) { const ax = c[i], az = c[i + 1], bx = c[i + 2], bz = c[i + 3], L = Math.hypot(bx - ax, bz - az); if (L < 0.5) continue; const ux = (bx - ax) / L, uz = (bz - az) / L, nx = -uz * sd, nz = ux * sd;
-        for (let t = 0; t < L; t += 3) { const cx = ax + ux * t, cz = az + uz * t, x = cx + nx * (w / 2 + 0.45), z = cz + nz * (w / 2 + 0.45);
+        for (let t = 0; t < L; t += 3) { const cx = ax + ux * t, cz = az + uz * t, ow = w / 2 + 0.45 + auxAt(ri, s0 + t, sd), x = cx + nx * ow, z = cz + nz * ow; // (v0.99.6: outside the acceleration / deceleration lane)
           const other = ROADSEG.nearest(x, z, (r) => r !== rd && r[0] <= 12 && !(r[3] & 6));
           const y = ROADY[ri] ? ROADY[ri](s0 + t, cx, cz) : heightAt(cx, cz);
           const open = !Number.isFinite(y) || nearNode(cx, cz) || (other && other.d < DATA.R[other.ri][2] / 2 + 1.2) || nearMedian(x, z) || triRampZone(x, z) || tramTrenchAt(x, z, 4);

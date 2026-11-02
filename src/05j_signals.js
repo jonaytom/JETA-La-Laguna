@@ -32,6 +32,7 @@ function buildTrafficSigns() {
   const inc = new Map(); GRAPH.edges.forEach((E) => { if (E.len < 0.5) return; for (const n of [E.a, E.b]) { let l = inc.get(n); if (!l) inc.set(n, l = []); if (!l.includes(E)) l.push(E); } });
   const RB = DATA.RB || []; const nearRB = (x, z) => RB.find((r) => Math.hypot(x - r[0], z - r[1]) < r[2] + 4);
   const out = { x: 0, z: 0, dx: 0, dz: 0 };
+  const onBigger = (x, z, imp0) => { const rn = ROADSEG.nearest(x, z, (r) => r[0] <= 12 && !(r[3] & 4) && imp(RTN[r[0]]) > imp0); return !!rn && rn.d < DATA.R[rn.ri][2] / 2 + 0.8; }; // v0.99.6
   const okSpot = (x, z) => !COL.nearSeg(x, z, 0.45) && !onCarriageway(x, z, 0.15) && !lowAt(x, z, heightAt(x, z)) && !(deckAt(x, z, heightAt(x, z) + 30) > heightAt(x, z) + 1);
   const place = (kind, E, dir, s, side = 1) => {
     for (const extra of [1.1, 0.5, 1.8]) { GRAPH.sample(E.i, dir, clamp(s, 0.5, E.len - 0.5), (E.w / 2 + extra) * side, out); if (okSpot(out.x, out.z)) { TSIGN.list.push([kind, out.x, out.z, Math.atan2(-out.dx, -out.dz)]); return true; } }
@@ -49,11 +50,18 @@ function buildTrafficSigns() {
       if (rb) { const far = dir > 0 ? [E.pts[0], E.pts[1]] : [E.pts[E.pts.length - 2], E.pts[E.pts.length - 1]]; if (Math.hypot(far[0] - rb[0], far[1] - rb[1]) < rb[2] + 3) continue; // ring itself
         if (place('ceda', E, dir, s)) place('rotonda', E, dir, s - 5); paint(2, E, dir, s + 0.2, E.oneway ? 0 : E.w / 4, 0.9, E.oneway ? E.w * 0.8 : E.w / 2 - 0.3); continue; }
       const mine = imp(E.type); if (mine >= maxImp) continue;
+      // v0.99.6 (Jonay: «los STOP no pueden estar en la carretera principal, deben estar en la incorporación», «más STOP en
+      // medio de la autopista»): no STOP nor «ceda» on the slip roads and roads that merge into a motorway or a trunk road
+      // (they join by an acceleration lane), and the line and the sign always where the side road is on its own: further
+      // back while the spot is still on the bigger road's carriageway
+      if (maxImp >= 5 && (mine >= 4 || /link|motorway|trunk/.test(E.type))) continue;
+      let s2 = s; for (let k = 0; k < 14 && s2 > 4; k++) { GRAPH.sample(E.i, dir, clamp(s2, 0.5, E.len - 0.5), 0, out); if (!onBigger(out.x, out.z, mine)) break; s2 -= 3; }
+      GRAPH.sample(E.i, dir, clamp(s2, 0.5, E.len - 0.5), 0, out); if (onBigger(out.x, out.z, mine)) continue;
       const kind = maxImp >= 4 || (maxImp >= 3 && mine <= 1 && Math.random() < 0.5) ? 'stop' : 'ceda';
-      if (!place(kind, E, dir, s)) continue; TSIGN.stops.set(E.i + ':' + dir, { s, kind });
+      if (!place(kind, E, dir, s2)) continue; TSIGN.stops.set(E.i + ':' + dir, { s: s2, kind });
       const off = E.oneway ? 0 : E.w / 4, lw = E.oneway ? E.w * 0.85 : E.w / 2 - 0.3;
-      if (kind === 'stop') { paint(3, E, dir, s + 0.9, off, 0.45, lw); paint(1, E, dir, s - 2.2, off, 3.4, Math.min(2.6, lw)); }
-      else paint(2, E, dir, s + 0.5, off, 0.9, lw);
+      if (kind === 'stop') { paint(3, E, dir, s2 + 0.9, off, 0.45, lw); paint(1, E, dir, s2 - 2.2, off, 3.4, Math.min(2.6, lw)); }
+      else paint(2, E, dir, s2 + 0.5, off, 0.9, lw);
     }
   }
   // one-way streets: "dirección prohibida" at the exit end (facing wrong-way drivers), "sentido único" at the entry, arrows painted along
