@@ -370,6 +370,7 @@ ARCADE.GAMES.guanche = (() => {
     function enemy(e, dt) { e.anim += dt * 6; e.inv = Math.max(0, (e.inv || 0) - dt); e.flash = Math.max(0, (e.flash || 0) - dt); const d = e.d;
       if (body(e, dt)) { if (e.inS && e.st !== 'dead') e.x = clamp(e.x, camX + 12, camX + VW - 12); return; } /* v0.99.6: knocked down they stay on the screen too (with the wider view Guayota fell past the edge, out of reach: stage 7 never ended) */
       const lz = e.mount, spd = (lz ? 46 : d.spd) * (1 + 0.15 * loopN);
+      if (lock && !e.inS && !e.gone && !e.mount && e.k !== 'D' && (e.st === 'idle' || e.st === 'walk') && (e.x < camX + 4 || e.x > camX + VW - 4)) { const dir = Math.sign(camX + VW / 2 - e.x) || 1; e.x += dir * Math.max(spd, 30) * dt; e.face = dir; e.st = 'walk'; return; } // v0.99.7 (prueba_082, stage 5: a Harimaguada left of the screen stood idle and the wave never ended): during a fight they first walk onto the screen
       if (e.st === 'thief') { e.x += -e.face * 0 + (e.dir || (e.dir = e.x < p.x ? 1 : -1)) * spd * dt; e.face = e.dir; if (e.x < camX - 40 || e.x > camX + VW + 40) e.gone = true; return; }
       if (e.k === 'D' && e.st === 'idle') { e.st = 'thief'; e.dir = e.x < p.x ? -1 : 1; e.d = { ...d, spd: 110 }; return; } // got hit: runs away
       const dx = p.x - e.x, dz = p.z - e.z; e.cd -= dt;

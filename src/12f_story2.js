@@ -102,7 +102,9 @@ function story2Init() {
   const H = makeHuman({ skin: 0xd9a07e, shirt: 0x131313, pants: 0x101010, jacket: 0x151515, shoes: 0x080808, hair: 0x2b2018, hairStyle: 'Hair_SimpleParted', scale: 1.02, female: false, beard: false, build: { normal: 0.6, fat: 0.75 }, longPants: true, sleeve: true, hd: true, sole: 0x111111 });
   const mo = new THREE.Mesh(new THREE.BoxGeometry(0.062, 0.011, 0.016), M(0x2b2018, 0.9)); mo.position.set(0, 0.056, 0.118); H.head.add(mo); // moustache
   for (const sx of [-1, 1]) { const tip = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.022, 0.014), M(0x2b2018, 0.9)); tip.position.set(sx * 0.033, 0.047, 0.112); H.head.add(tip); }
-  const [x, z] = AYTO.door; H.root.position.set(x, heightAt(x, z) + 0.72, z); H.root.rotation.y = Math.atan2(AYTO.nx, AYTO.nz); scene.add(H.root); NPC.alcalde = { x, z, H, home: [x, z], name: 'Don Yovoy Gofiérrez' }; COL.addCirc(x, z, 0.4);
+  let [x, z] = AYTO.door; let col = true; // v0.99.6 (auditor: «poste en la Calle Juan de Vera»): he stands in the porch, not in the street
+  if (onCarriageway(x, z, 0.3)) { col = false; for (const sg of [-1, 1]) { let qx = x, qz = z; for (let k = 0; k < 8 && onCarriageway(qx, qz, 0.3); k++) { qx += sg * AYTO.nx * 0.3; qz += sg * AYTO.nz * 0.3; } if (!onCarriageway(qx, qz, 0.3)) { x = qx; z = qz; col = true; break; } } } // (else: no collider, cars pass him)
+  H.root.position.set(x, heightAt(x, z) + 0.72, z); H.root.rotation.y = Math.atan2(AYTO.nx, AYTO.nz); scene.add(H.root); NPC.alcalde = { x, z, H, home: [x, z], name: 'Don Yovoy Gofiérrez' }; if (col) COL.addCirc(x, z, 0.4);
 }
 // nothing of these missions may survive them (a failure, an abort, loading a game saved halfway…)
 function story2Tick(dt) { if (!MISSIONS.active && (S2.npcs.length || S2.cars.length || S2.extras.length || WEAPON.lawful || WEAPON.onHit || FIRES.some((f) => !f.free) || RIFLE.targets.length)) { s2Clear(); return; }

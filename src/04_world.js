@@ -402,7 +402,8 @@ function lineRuns(ri, c, s00 = 0) {
   // its lines stop as soon as its ribbon touches the bigger road's carriageway (a slip road running alongside before it
   // merges, a junction mouth), not only when its centre is inside it; the bigger road keeps its lines
   if (!RIDX) { RIDX = new Map(); DATA.R.forEach((r, i) => RIDX.set(r, i)); }
-  const bigger = (r) => r[0] < me[0] || (r[0] === me[0] && (r[2] > me[2] || (r[2] === me[2] && RIDX.get(r) < ri))); // (two alike: the first one keeps its lines)
+  const cls = (r) => (r[1] >= 0 && /^Vía de Ronda/.test(DATA.S[r[1]] || '') ? Math.min(r[0], 2) : r[0]); // v0.99.6 (agent: «texturas cruzadas» on the Vía de Ronda): the Vía de Ronda keeps its lines over the avenues that meet it
+  const bigger = (r) => cls(r) < cls(me) || (cls(r) === cls(me) && (r[2] > me[2] || (r[2] === me[2] && RIDX.get(r) < ri))); // (two alike: the first one keeps its lines)
   const deckMe = !!(me[3] & 2) || RAISE.has(ri);
   const level = (rn, s) => { const rj = rn.ri, r2 = DATA.R[rj], deck2 = !!(r2[3] & 2) || RAISE.has(rj) || DEP.has(rj); if (!deckMe && !deck2) return true; if (!ROADY[ri] || !ROADY[rj]) return !deckMe && !deck2;
     const y1 = ROADY[ri](s, rn.x, rn.z), y2 = ROADY[rj](sOnRoad(rj, rn.i, rn.t), rn.x, rn.z); return Number.isFinite(y1) && Number.isFinite(y2) && Math.abs(y1 - y2) < 1.2; };
@@ -529,7 +530,7 @@ function computeDepressions() {
     // túnel con carretera que vuela encima»): a short underpass between two close junctions can't sink 7 m (ramps of
     // 20 %+, walls across the side streets). It sinks only what a ~15 % ramp allows and the road over it is lifted
     // on an embankment for the rest of the headroom (liftOverShort, in computeRaisesOnce), as on the real ones
-    if (L < 80) { const Dm = 0.085 * (rIn + Math.min(limS, limE)); if (Dm < D) { D = Math.max(2.0, Dm); SHORT_UP.push({ ri, D }); } }
+    if (L < 80 && !crossingsOf(ri).some((X) => DATA.R[X.rj][0] <= 12 && !(DATA.R[X.rj][3] & 6) && (X.s < 8 || X.s > L - 8))) { /* (v0.99.6, agent at X -1252 Z -2: a road crossing right at the mouth can't go over an embankment there: that underpass keeps the old deep cutting) */ const Dm = 0.085 * (rIn + Math.min(limS, limE)); if (Dm < D) { D = Math.max(2.0, Dm); SHORT_UP.push({ ri, D }); } }
     push(ri, (s) => D * Math.min(smooth(0, 1, (s + limS) / (rIn + limS)), smooth(0, 1, (L - s + limE) / (rIn + limE))));
     for (const ch of chains) { const lim = ch.lim, R = rIn + lim;
       for (const { ri: best, bStart, u0, Lc, twin } of ch.hops) { if (u0 > lim) break; push(best, bStart ? (s) => D * smooth(0, 1, (lim - (u0 + s)) / R) : (s) => D * smooth(0, 1, (lim - (u0 + Lc - s)) / R));
@@ -873,7 +874,8 @@ function tunnelRoad(c, w, cls, tile, hf, opt = {}) {
 }
 const underground = (x, z, y) => y < heightAt(x, z) - 1.6; // deep in a tunnel/cutting: surface obstacles don't apply
 // open cutting edge for things on the surface: returns push-out vector or null
-function trenchPush(x, z, rad) {
+function trenchPush(x, z, rad, y = null) {
+  if (y !== null && y > heightAt(x, z) + 1.2) return null; // v0.99.6 (agent: «atascos» on the TF-5 over the short underpasses): on an embankment or deck above the cutting
   if (ROADS_INDEXED && onSurfaceRoad(x, z)) return null; // on a street at grade (twin roads: one at grade beside the other's cutting): the street covers the ground, nothing to fall into
   for (const c of TCUTS) { const dx = c[2] - c[0], dz = c[3] - c[1], L2 = dx * dx + dz * dz || 1; const tr = ((x - c[0]) * dx + (z - c[1]) * dz) / L2; if (tr < -0.02 || tr > 1.02) continue; const t = clamp(tr, 0, 1); /* only sideways: end-on is the way in along the road (the car used to bounce off the mouth of its own trench) */ const px = c[0] + dx * t, pz = c[1] + dz * t; const d = Math.hypot(x - px, z - pz); const lim = c[4] + rad;
     if (d < lim && d > 0.05) { const g = heightAt(px, pz), l = lowAt(px, pz, g - 1.5); if (!l || g - l.y < 0.8) continue; const k = (lim - d) / d; return [(x - px) * k, (z - pz) * k, (x - px) / d, (z - pz) / d]; } }
@@ -963,6 +965,19 @@ const STORECOL = { Alcampo: '#e8eef2', Makro: '#f3e9c8', 'Leroy Merlin': '#dfe9d
 const BUILD = []; // metadata for landmarks and minimap
 function polyArea(pts) { let a = 0; for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[(i + 1) % pts.length]; a += p[0] * q[1] - q[0] * p[1]; } return a / 2; }
 function hull(pts) { const p = pts.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]); const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]); const lo = [], up = []; for (const q of p) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q); } for (let i = p.length - 1; i >= 0; i--) { const q = p[i]; while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], q) <= 0) up.pop(); up.push(q); } up.pop(); lo.pop(); return lo.concat(up); }
+// v0.99.6: one wall of a building: windows only from the first floor line above the ground under it (column by column
+// on a slope, a smooth plinth below), whole floors up to the top
+function facadeWall(A, T, p, q, nb, fh, y0, bot, top, col, tl, out) {
+  const fl = (g) => y0 + Math.ceil((g - y0) / fh - 0.08) * fh, gAt = (t) => heightAt(p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t);
+  let gmn = 1e9, gmx = -1e9; for (let k = 0; k <= 4; k++) { const g = gAt(k / 4); gmn = Math.min(gmn, g); gmx = Math.max(gmx, g); }
+  const n = gmx - gmn < 0.3 || nb < 1.5 ? 1 : Math.max(1, Math.round(nb)), pc = col.map((v) => v * 0.82);
+  const bases = []; for (let j = 0; j < n; j++) { const t0 = j / n, t1 = (j + 1) / n; let g = -1e9; for (const t of [t0, (t0 + t1) / 2, t1]) g = Math.max(g, gAt(t)); bases.push([t0, t1, Math.min(Math.max(fl(g), y0), top), g]); }
+  const runs = []; for (const c of bases) { const l = runs[runs.length - 1]; if (l && Math.abs(l[2] - c[2]) < 0.01) { l[1] = c[1]; l[3] = Math.min(l[3], c[3]); } else runs.push(c.slice()); } // (columns on the same floor line: one quad)
+  for (const [t0, t1, base, g] of runs) {
+    const a = [p[0] + (q[0] - p[0]) * t0, p[1] + (q[1] - p[1]) * t0], b = [p[0] + (q[0] - p[0]) * t1, p[1] + (q[1] - p[1]) * t1], u0 = nb * t0, u1 = nb * t1;
+    if (base > bot + 0.01 && base > g - 0.05) T.quad([a[0], bot, a[1]], [b[0], bot, b[1]], [b[0], base, b[1]], [a[0], base, a[1]], [0, 0], [0, 0], [0, 0], [0, 0], pc, undefined, out); // (the plinth)
+    if (top > base + 0.05) { const v0 = (base - y0) / fh, v1 = (top - y0) / fh; A.quad([a[0], base, a[1]], [b[0], base, b[1]], [b[0], top, b[1]], [a[0], top, a[1]], [u0, v0], [u1, v0], [u1, v1], [u0, v1], col, tl, out); } }
+}
 function buildBuildings() {
   indexRoads(); let bi = 0;
   try { splitCoarseBlocks(); } catch (e) { console.error('inicio split', e); }
@@ -982,7 +997,7 @@ function buildBuildings() {
     cx /= n; cz /= n;
     const name = nameIdx >= 0 ? STR[nameIdx] : (style === 2 || style === 3) && typeof brandInside === 'function' ? brandInside(pts) : null;
     const LM = (name ? landmarkFor(name) : null) || landmarkAt(cx, cz);
-    const H = LM && LM.H ? LM.H : h10 / 10; const top = bmax + H; const bot = bmin - 0.6;
+    const H = LM && LM.H ? LM.H : h10 / 10; let top = bmax + H; const bot = bmin - 0.6;
     if (name && /Intercambiador/.test(name) && Math.abs(polyArea(pts)) > 5000) { INTER_B = { pts, cx, cz, bmax, top, name }; for (let i = 0; i < n; i++) {} continue; }
     const r = mulberry(seed * 7 + 3);
     const PS = style !== 4 && style !== 5 ? pasajesOf(pts, H) : null; // v0.78: walkways under the building (05x_pasajes.js)
@@ -1007,11 +1022,16 @@ function buildBuildings() {
     const store = name && DATA.BRAND[name] ? DATA.BRAND[name] : null;
     let atlas = chooseAtlas(style, r, name, cx, cz, lv, Math.abs(polyArea(pts))); if (store) atlas = r() < 0.5 ? 3 : 14; if (LM && LM.atlas !== undefined) atlas = LM.atlas;
     const [bay, fh] = FSTY[atlas]; BUILD[BUILD.length - 1].atlas = atlas;
+    // v0.99.6 (Jonay: «las ventanas están bajo tierra o cortadas… no se puede cortar una ventana ni empezar pegada al
+    // suelo»): the floors are counted from the highest ground of the building (on a slope the low side has whole floors
+    // more), and the building is as tall as a whole number of floors (no half windows under the roof)
+    const y0 = bmax - Math.ceil((bmax - bmin) / fh - 0.08) * fh;
+    if (!LM && style !== 4) { top = y0 + Math.max(1, Math.round((top - y0) / fh)) * fh; while (top < bmax + Math.min(H, fh) - 0.01) top += fh; BUILD[BUILD.length - 1].top = top; }
     const palK = atlas === 8 && style !== 0 ? 1 : (PALV[atlas] || style); let colHex = (PAL[palK] || PAL[1])[Math.floor(r() * (PAL[palK] || PAL[1]).length)];
     if (LM && LM.col) colHex = LM.col;
     if (store) colHex = STORECOL[name] || '#e9e7e0';
     const col = hex3(colHex); const shade = 0.92 + r() * 0.12; col[0] *= shade; col[1] *= shade; col[2] *= shade;
-    const A = acc(cx, cz, 'facade');
+    const A = acc(cx, cz, 'facade'), T0 = acc(cx, cz, 'trim');
     const area = polyArea(pts);
     if (store) BIGSTORES.push({ pts, cx, cz, top, bmax, name, parody: store, area: Math.abs(area) });
     // decide roof
@@ -1031,7 +1051,7 @@ function buildBuildings() {
       // long street fronts of terraced houses / blocks: split into parcels with their own colour (and facade for houses)
       const cuts = PS ? pasajeCuts(p, q, PS) : null; if (cuts) { pasajeWall(A, p, q, cuts, bot, wallTop, bmin, fh, nb, col, [atlas, bi % 97], out); continue; }
       const parcel = !LM && !store && (style === 0 || style === 1 || style === 2) && len > (style === 2 ? 24 : 12);
-      if (!parcel) { A.quad([p[0], bot, p[1]], [q[0], bot, q[1]], [q[0], wallTop, q[1]], [p[0], wallTop, p[1]], [0, v0], [nb, v0], [nb, v1], [0, v1], col, [atlas, bi % 97], out); continue; }
+      if (!parcel) { facadeWall(A, T0, p, q, nb, fh, y0, bot, wallTop, col, [atlas, bi % 97], out); continue; }
       const pr = mulberry(seed * 13 + i * 7 + 1); const segL = style === 2 ? 14 + pr() * 10 : 6 + pr() * 6; const k = Math.max(2, Math.round(len / segL));
       const grp = style === 0 ? [0, 8, 9, 0, 8] : style === 1 ? [1, 10, 1, 8, 1] : [atlas, atlas, 11, 2, atlas];
       for (let j = 0; j < k; j++) {
@@ -1039,7 +1059,7 @@ function buildBuildings() {
         const at = j === 0 ? atlas : grp[Math.floor(pr() * grp.length)]; const [bay2, fh2] = FSTY[at]; const sl = len / k; const nb2 = Math.max(1, Math.round(sl / bay2));
         const pk = at === 8 && style !== 0 ? 1 : (PALV[at] || style); const pl = PAL[pk] || PAL[1]; const c2 = j === 0 ? col : hex3(pl[Math.floor(pr() * pl.length)]).map((v) => v * (0.93 + pr() * 0.1));
         const w0 = (bot - bmin) / fh2, w1 = (wallTop - bmin) / fh2;
-        A.quad([a[0], bot, a[1]], [b[0], bot, b[1]], [b[0], wallTop, b[1]], [a[0], wallTop, a[1]], [0, w0], [nb2, w0], [nb2, w1], [0, w1], c2, [at, (bi + j * 31) % 97], out);
+        facadeWall(A, T0, a, b, nb2, fh2, bmax - Math.ceil((bmax - bmin) / fh2 - 0.08) * fh2, bot, wallTop, c2, [at, (bi + j * 31) % 97], out); void w0; void w1;
       }
     }
     if (PS) pasajeInterior(PS, pts, cx, cz, col);
@@ -1267,6 +1287,7 @@ function buildMedians() {
         // a side road crossing the median here = opening
         const cross = ROADSEG.nearest(mx, mz, (r) => r !== rd && r !== R[best.rj] && r[0] <= 12 && !(r[3] & 6)); if (cross && cross.d < R[cross.ri][2] / 2 + 0.5 && crossAtLevel(cross, (ya + yb) / 2)) continue;
         if (triRampZone(mx, mz)) continue; // v0.68: the car park ramp in the middle of the Av. de La Trinidad
+        { const fw = ROADSEG.nearest(mx, mz, (r) => r[0] > 12 && !(r[3] & 6)); if (fw && fw.d < R[fw.ri][2] / 2 + 0.8 && crossAtLevel(fw, (ya + yb) / 2)) continue; } // v0.99.6 (agent: walkers stuck at the medians): a footpath or crossing through the median = opening
         if (tramTrenchAt(mx, mz, 7)) continue; // v0.72: no island over the tram cutting
         // v0.91: the kind: New Jersey between two big roads (the two directions of the TF-5), a steel guardrail between a
         // big road and a smaller one beside it (the TF-5 and the road that runs along it), a kerb island between small ones

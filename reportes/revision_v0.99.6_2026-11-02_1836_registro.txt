@@ -1,0 +1,347 @@
+== Agente revisor v0.99.6 — 2026-11-02_1836 — zonas nuevas: TF-13 bajo la TF-5 (rotonda en trinchera), Tranvía bajo tierra Trinidad / Padre Anchieta, Casco: Obispado y calles del callejero, Aeropuerto (terminal, naves, San Lázaro)
+plan: surf 3722 (323 zona nueva, 0 riesgo, 0 rotación), walk 1684 (111 zona nueva, 0 riesgo, 0 rotación), drive 3722 (323 zona nueva, 0 riesgo, 0 rotación)
+-- superficies: 3722 vías
+   … superficies 50/3722 (22 s)
+   … superficies 100/3722 (27 s)
+   … superficies 150/3722 (30 s)
+   … superficies 200/3722 (32 s)
+   … superficies 250/3722 (34 s)
+   … superficies 300/3722 (37 s)
+   … superficies 350/3722 (40 s)
+   … superficies 400/3722 (43 s)
+   … superficies 450/3722 (45 s)
+   … superficies 500/3722 (48 s)
+   … superficies 550/3722 (51 s)
+   … superficies 600/3722 (54 s)
+[superficies · mapa entero] Objetos flotando sobre la calzada en X 516 Z -332 — Camino Las Estaciones (#637): Algo plano («asphalt») flota 1.0 m sobre la calzada
+   … superficies 650/3722 (59 s)
+   … superficies 700/3722 (61 s)
+   … superficies 750/3722 (64 s)
+[superficies · mapa entero] Texturas cruzadas (suelo sobre la carretera) en X 604 Z 406 — service (#810): Superficie «aL_t4_172» 0.05 m por encima del asfalto
+[superficies · mapa entero] Texturas cruzadas (suelo sobre la carretera) en X 314 Z -33 — primary_link (#823): Superficie «aL_t4_130» 0.15 m por encima del asfalto
+[superficies · mapa entero] Texturas cruzadas (suelo sobre la carretera) en X 343 Z 258 — primary_link (#842): Superficie «aL_t4_130» 0.08 m por encima del asfalto
+   … superficies 800/3722 (70 s)
+   … superficies 850/3722 (71 s)
+   … superficies 900/3722 (74 s)
+   … superficies 950/3722 (76 s)
+   … superficies 1000/3722 (78 s)
+   … superficies 1050/3722 (80 s)
+   … superficies 1100/3722 (82 s)
+   … superficies 1150/3722 (84 s)
+   … superficies 1200/3722 (88 s)
+   … superficies 1250/3722 (91 s)
+   … superficies 1300/3722 (93 s)
+   … superficies 1350/3722 (95 s)
+   … superficies 1400/3722 (98 s)
+   … superficies 1450/3722 (100 s)
+   … superficies 1500/3722 (105 s)
+   … superficies 1550/3722 (106 s)
+   … superficies 1600/3722 (109 s)
+   … superficies 1650/3722 (111 s)
+[superficies · mapa entero] Objetos flotando sobre la calzada en X 342 Z 477 — unclassified (#1922): Algo plano («footway») flota 0.8 m sobre la calzada
+   … superficies 1700/3722 (114 s)
+[superficies · mapa entero] Texturas cruzadas (suelo sobre la carretera) en X 312 Z -36 — Vía de Ronda de La Laguna (#1983): Superficie «aL_t4_130» 0.11 m por encima del asfalto
+[superficies · mapa entero] Texturas cruzadas (suelo sobre la carretera) en X 473 Z 280 — Vía de Ronda de La Laguna (#2021): Superficie «aL_t4_172» 0.13 m por encima del asfalto
+   … superficies 1750/3722 (119 s)
+   … superficies 1800/3722 (122 s)
+   … superficies 1850/3722 (126 s)
+   … superficies 1900/3722 (130 s)
+   … superficies 1950/3722 (132 s)
+   … superficies 2000/3722 (135 s)
+   … superficies 2050/3722 (137 s)
+   … superficies 2100/3722 (140 s)
+   … superficies 2150/3722 (144 s)
+   … superficies 2200/3722 (146 s)
+   … superficies 2250/3722 (147 s)
+   … superficies 2300/3722 (148 s)
+   … superficies 2350/3722 (151 s)
+   … superficies 2400/3722 (152 s)
+   … superficies 2450/3722 (153 s)
+   … superficies 2500/3722 (154 s)
+   … superficies 2550/3722 (156 s)
+   … superficies 2600/3722 (157 s)
+   … superficies 2650/3722 (158 s)
+   … superficies 2700/3722 (159 s)
+[superficies · mapa entero] Texturas cruzadas (suelo sobre la carretera) en X 428 Z 278 — Vía de Ronda de La Laguna (#3604): Superficie «aL_t4_172» 0.10 m por encima del asfalto
+   … superficies 2750/3722 (163 s)
+   … superficies 2800/3722 (164 s)
+   … superficies 2850/3722 (166 s)
+   … superficies 2900/3722 (167 s)
+   … superficies 2950/3722 (168 s)
+   … superficies 3000/3722 (170 s)
+   … superficies 3050/3722 (172 s)
+   … superficies 3100/3722 (174 s)
+   … superficies 3150/3722 (177 s)
+   … superficies 3200/3722 (180 s)
+   … superficies 3250/3722 (183 s)
+   … superficies 3300/3722 (185 s)
+   … superficies 3350/3722 (186 s)
+   … superficies 3400/3722 (188 s)
+   … superficies 3450/3722 (189 s)
+   … superficies 3500/3722 (191 s)
+   … superficies 3550/3722 (193 s)
+   … superficies 3600/3722 (194 s)
+   … superficies 3650/3722 (195 s)
+   … superficies 3700/3722 (196 s)
+-- superficies hecho: 8 avisos acumulados, 196 s
+-- en coche: 3722 vías
+   … en coche 50/3722 (198 s)
+   … en coche 100/3722 (198 s)
+[en coche · mapa entero] Se sale de la calzada en X 1017 Z 1835 — service (#118): El coche se sale de la calzada (6.1 m del eje)
+   … en coche 150/3722 (202 s)
+   … en coche 200/3722 (204 s)
+   … en coche 250/3722 (205 s)
+[en coche · mapa entero] Se sale de la calzada en X 1700 Z 3858 — service (#298): El coche se sale de la calzada (5.7 m del eje)
+[en coche · mapa entero] Edificios sobre la vía en X 543 Z -909 — Camino La Rúa (#308): Un edificio tapa la vía: la calle entra en él (dato de OSM o edificio mal puesto)
+[en coche · mapa entero] Se hunde en X -1253 Z -4 — Calle Timanfaya (#313): El coche va 1.8 m por debajo de la calzada
+[en coche · mapa entero] Saltos de altura en X -1253 Z -4 — Calle Timanfaya (#313): Salto brusco de altura (-1.7 m en un fotograma)
+   … en coche 300/3722 (212 s)
+[en coche · mapa entero] Atascos en X 2235 Z 3470 — service (#352): El coche se queda atascado contra un obstáculo/muro
+   … en coche 350/3722 (215 s)
+   … en coche 400/3722 (216 s)
+[en coche · mapa entero] Vuela sobre la calzada en X 941 Z 2868 — tertiary (#467): El coche va 1.1 m por encima de la calzada
+   … en coche 450/3722 (218 s)
+   … en coche 500/3722 (220 s)
+[en coche · mapa entero] No termina el recorrido en X 480 Z -307 — Calle Pista Militar San Roque (#557): No termina la vía en 38 s (90 m sin recorrer)
+[en coche · mapa entero] Se sale de la calzada en X 661 Z -372 — Calle Pista Militar San Roque (#560): El coche se sale de la calzada (7.3 m del eje)
+[en coche · mapa entero] Se sale de la calzada en X 297 Z 75 — service (#573): El coche se sale de la calzada (5.7 m del eje)
+   … en coche 550/3722 (227 s)
+[en coche · mapa entero] Se sale de la calzada en X -214 Z 1960 — Calle Fresón (#626): El coche se sale de la calzada (7.2 m del eje)
+   … en coche 600/3722 (229 s)
+[en coche · mapa entero] Vuela sobre la calzada en X 516 Z -332 — Camino Las Estaciones (#637): El coche va 1.0 m por encima de la calzada
+   … en coche 650/3722 (231 s)
+   … en coche 700/3722 (232 s)
+   … en coche 750/3722 (234 s)
+[en coche · mapa entero] Se sale de la calzada en X 389 Z 490 — service (#810): El coche se sale de la calzada (5.8 m del eje)
+[en coche · mapa entero] Edificios sobre la vía en X 372 Z 481 — service (#810): Un edificio tapa la vía: la calle entra en él (dato de OSM o edificio mal puesto)
+[en coche · mapa entero] Se hunde en X 720 Z 3389 — motorway_link (#826): El coche va 1.9 m por debajo de la calzada
+[en coche · mapa entero] Saltos de altura en X 720 Z 3389 — motorway_link (#826): Salto brusco de altura (-1.8 m en un fotograma)
+[en coche · mapa entero] Se sale de la calzada en X 315 Z 290 — Calle Ladera de San Roque (#845): El coche se sale de la calzada (5.8 m del eje)
+   … en coche 800/3722 (240 s)
+   … en coche 850/3722 (241 s)
+   … en coche 900/3722 (242 s)
+   … en coche 950/3722 (242 s)
+   … en coche 1000/3722 (243 s)
+   … en coche 1050/3722 (244 s)
+[en coche · mapa entero] Atascos en X -323 Z 783 — secondary (#1187): El coche se queda atascado
+[en coche · mapa entero] Se sale de la calzada en X -307 Z 853 — Rambla Las Clavellinas (#1190): El coche se sale de la calzada (7.0 m del eje)
+[en coche · mapa entero] Se sale de la calzada en X -695 Z 994 — service (#1192): El coche se sale de la calzada (5.6 m del eje)
+[en coche · mapa entero] Edificios sobre la vía en X -632 Z 997 — service (#1192): Un edificio tapa la vía: la calle entra en él (dato de OSM o edificio mal puesto)
+   … en coche 1100/3722 (252 s)
+   … en coche 1150/3722 (253 s)
+[en coche · mapa entero] Atascos en X 1836 Z 3136 — Autopista del Norte (#1293): El coche se queda atascado
+[en coche · mapa entero] Se sale de la calzada en X 2358 Z 944 — service (#1312): El coche se sale de la calzada (5.9 m del eje)
+   … en coche 1200/3722 (258 s)
+   … en coche 1250/3722 (259 s)
+   … en coche 1300/3722 (260 s)
+[en coche · mapa entero] Se sale de la calzada en X 1385 Z 3221 — service (#1486): El coche se sale de la calzada (5.9 m del eje)
+   … en coche 1350/3722 (263 s)
+[en coche · mapa entero] Edificios sobre la vía en X 1755 Z 3764 — service (#1580): Un edificio tapa la vía (Mercadona): la calle entra en él (dato de OSM o edificio mal puesto)
+   … en coche 1400/3722 (266 s)
+   … en coche 1450/3722 (267 s)
+[en coche · mapa entero] Se sale de la calzada en X 1278 Z 1908 — service (#1714): El coche se sale de la calzada (5.7 m del eje)
+   … en coche 1500/3722 (269 s)
+[en coche · mapa entero] Atascos en X 848 Z 3144 — Autovía Interconexión Norte-Sur (#1747): El coche se queda atascado
+[en coche · mapa entero] Atascos en X 858 Z 3161 — Autovía Interconexión Norte-Sur (#1748): El coche se queda atascado
+   … en coche 1550/3722 (273 s)
+[en coche · mapa entero] Atascos en X -1234 Z -16 — Calle Espinero (#1795): El coche se queda atascado
+   … en coche 1600/3722 (277 s)
+   … en coche 1650/3722 (278 s)
+   … en coche 1700/3722 (278 s)
+[en coche · mapa entero] Atascos en X -858 Z 70 — service (#2008): El coche se queda atascado
+[en coche · mapa entero] Edificios sobre la vía en X -858 Z 77 — service (#2011): Un edificio tapa la vía: la calle entra en él (dato de OSM o edificio mal puesto)
+[en coche · mapa entero] Atascos en X 631 Z 586 — Vía de Ronda de La Laguna (#2021): El coche se queda atascado
+   … en coche 1750/3722 (284 s)
+   … en coche 1800/3722 (285 s)
+   … en coche 1850/3722 (286 s)
+[en coche · mapa entero] Se sale de la calzada en X 363 Z -1250 — Camino Madre del Agua (#2226): El coche se sale de la calzada (5.6 m del eje)
+[en coche · mapa entero] Se hunde en X 1775 Z 3118 — tertiary (#2260): El coche va 1.0 m por debajo de la calzada
+[en coche · mapa entero] Atascos en X 1769 Z 3117 — tertiary (#2260): El coche se queda atascado
+[en coche · mapa entero] Atascos en X -1195 Z -24 — Autopista del Norte (#2288): El coche se queda atascado
+   … en coche 1900/3722 (295 s)
+   … en coche 1950/3722 (296 s)
+   … en coche 2000/3722 (297 s)
+   … en coche 2050/3722 (297 s)
+[en coche · mapa entero] Atascos en X 1897 Z 3230 — Autopista del Norte (#2461): El coche se queda atascado
+[en coche · mapa entero] Atascos en X 1781 Z 3102 — Autopista del Norte (#2464): El coche se queda atascado
+[en coche · mapa entero] Vuela sobre la calzada en X 1857 Z 3201 — motorway_link (#2467): El coche va 1.1 m por encima de la calzada
+[en coche · mapa entero] Atascos en X 1857 Z 3201 — motorway_link (#2467): El coche se queda atascado
+[en coche · mapa entero] Atascos en X -1217 Z -26 — Autopista del Norte (#2480): El coche se queda atascado
+   … en coche 2100/3722 (304 s)
+   … en coche 2150/3722 (305 s)
+[en coche · mapa entero] Edificios sobre la vía en X -854 Z 59 — service (#2569): Un edificio tapa la vía: la calle entra en él (dato de OSM o edificio mal puesto)
+   … en coche 2200/3722 (307 s)
+   … en coche 2250/3722 (308 s)
+[en coche · mapa entero] Se sale de la calzada en X -2237 Z 491 — service (#2865): El coche se sale de la calzada (5.8 m del eje)
+   … en coche 2300/3722 (310 s)
+[en coche · mapa entero] Vuela sobre la calzada en X 1857 Z 3202 — service (#2966): El coche va 1.1 m por encima de la calzada
+[en coche · mapa entero] Atascos en X 1857 Z 3201 — service (#2966): El coche se queda atascado
+   … en coche 2350/3722 (312 s)
+   … en coche 2400/3722 (313 s)
+[en coche · mapa entero] Se hunde en X 2210 Z 3312 — service (#3098): El coche va 1.2 m por debajo de la calzada
+[en coche · mapa entero] Saltos de altura en X 2210 Z 3312 — service (#3098): Salto brusco de altura (-1.3 m en un fotograma)
+[en coche · mapa entero] Atascos en X 2211 Z 3310 — service (#3098): El coche se queda atascado
+[en coche · mapa entero] Atascos en X -948 Z 1484 — Calle La Papa (#3117): El coche se queda atascado contra un obstáculo/muro
+   … en coche 2450/3722 (317 s)
+   … en coche 2500/3722 (318 s)
+[en coche · mapa entero] Edificios sobre la vía en X 960 Z 1588 — Calle Alfa (#3285): Un edificio tapa la vía: la calle entra en él (dato de OSM o edificio mal puesto)
+[en coche · mapa entero] Vuela sobre la calzada en X -1253 Z 1 — unclassified (#3286): El coche va 1.0 m por encima de la calzada
+[en coche · mapa entero] Atascos en X -1252 Z -2 — unclassified (#3286): El coche se queda atascado
+   … en coche 2550/3722 (323 s)
+   … en coche 2600/3722 (324 s)
+   … en coche 2650/3722 (324 s)
+   … en coche 2700/3722 (325 s)
+[en coche · mapa entero] Atascos en X 5 Z 2330 — service (#3539): El coche se queda atascado
+[en coche · mapa entero] Se hunde en X 248 Z -554 — service (#3590): El coche va 0.8 m por debajo de la calzada
+   … en coche 2750/3722 (328 s)
+[en coche · mapa entero] Se hunde en X 137 Z -628 — service (#3676): El coche va 2.5 m por debajo de la calzada
+[en coche · mapa entero] Saltos de altura en X 137 Z -628 — service (#3676): Salto brusco de altura (-2.6 m en un fotograma)
+   … en coche 2800/3722 (331 s)
+[en coche · mapa entero] Se sale de la calzada en X -1268 Z -217 — service (#3771): El coche se sale de la calzada (5.7 m del eje)
+   … en coche 2850/3722 (333 s)
+   … en coche 2900/3722 (333 s)
+[en coche · mapa entero] Edificios sobre la vía en X 789 Z 2973 — service (#3998): Un edificio tapa la vía (IKEA): la calle entra en él (dato de OSM o edificio mal puesto)
+   … en coche 2950/3722 (335 s)
+   … en coche 3000/3722 (336 s)
+[en coche · mapa entero] Se sale de la calzada en X 2388 Z 1928 — service (#4592): El coche se sale de la calzada (5.6 m del eje)
+   … en coche 3050/3722 (337 s)
+   … en coche 3100/3722 (338 s)
+[en coche · mapa entero] Se sale de la calzada en X -4257 Z -69 — service (#4734): El coche se sale de la calzada (5.8 m del eje)
+   … en coche 3150/3722 (340 s)
+[en coche · zona nueva] Se sale de la calzada en X -2940 Z -94 — service (#4774): El coche se sale de la calzada (5.7 m del eje)
+   … en coche 3200/3722 (342 s)
+[en coche · zona nueva] Vuela sobre la calzada en X -3253 Z -271 — Carretera General del Norte (#4834): El coche va 1.0 m por encima de la calzada
+[en coche · zona nueva] Atascos en X -3254 Z -271 — Carretera General del Norte (#4834): El coche se queda atascado
+[en coche · zona nueva] Vuela sobre la calzada en X -3269 Z -270 — secondary_link (#4835): El coche va 1.2 m por encima de la calzada
+[en coche · zona nueva] Vuela sobre la calzada en X -3274 Z -265 — secondary_link (#4866): El coche va 1.3 m por encima de la calzada
+[en coche · zona nueva] Saltos de altura en X -3274 Z -264 — secondary_link (#4866): Salto brusco de altura (-1.4 m en un fotograma)
+   … en coche 3250/3722 (349 s)
+[en coche · zona nueva] Vuela sobre la calzada en X -3264 Z -248 — motorway_link (#4884): El coche va 1.1 m por encima de la calzada
+   … en coche 3300/3722 (350 s)
+[en coche · zona nueva] Se sale de la calzada en X -2603 Z 97 — service (#4980): El coche se sale de la calzada (5.7 m del eje)
+   … en coche 3350/3722 (352 s)
+[en coche · zona nueva] Se sale de la calzada en X -2982 Z -241 — service (#4998): El coche se sale de la calzada (5.8 m del eje)
+[en coche · mapa entero] Se sale de la calzada en X -3683 Z 891 — service (#5025): El coche se sale de la calzada (5.7 m del eje)
+[en coche · zona nueva] Edificios sobre la vía en X -3072 Z -67 — service (#5037): Un edificio tapa la vía: la calle entra en él (dato de OSM o edificio mal puesto)
+   … en coche 3400/3722 (356 s)
+[en coche · zona nueva] Vuela sobre la calzada en X -3247 Z -359 — service (#5068): El coche va 1.6 m por encima de la calzada
+[en coche · zona nueva] Saltos de altura en X -3247 Z -359 — service (#5068): Salto brusco de altura (1.8 m en un fotograma)
+   … en coche 3450/3722 (359 s)
+[en coche · mapa entero] Se sale de la calzada en X 3450 Z 1849 — Calle Antequera y Bobadilla (#5196): El coche se sale de la calzada (7.1 m del eje)
+   … en coche 3500/3722 (360 s)
+   … en coche 3550/3722 (362 s)
+   … en coche 3600/3722 (362 s)
+   … en coche 3650/3722 (363 s)
+   … en coche 3700/3722 (364 s)
+-- en coche hecho: 82 avisos acumulados, 364 s
+-- a pie: 1684 vías
+[a pie · zona nueva] Atascos en X -86 Z 232 — Calle Heraclio Sánchez (#0): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Edificios sobre la vía en X 665 Z -578 — track (#641): Un edificio tapa el camino
+   … a pie 50/1684 (430 s)
+[a pie · mapa entero] Se hunde en X 244 Z -174 — cycleway (#838): El personaje se hunde 0.33 m bajo la superficie visible (suelo)
+   … a pie 100/1684 (469 s)
+[a pie · mapa entero] Se hunde en X 1010 Z 1113 — footway (#1550): El personaje se hunde 0.25 m bajo la superficie visible (suelo)
+   … a pie 150/1684 (525 s)
+[a pie · mapa entero] Atascos en X -329 Z 790 — footway (#1776): El personaje se queda atascado andando por el camino
+   … a pie 200/1684 (600 s)
+[a pie · mapa entero] Edificios sobre la vía en X 804 Z 904 — footway (#1998): Un edificio tapa el camino
+[a pie · mapa entero] Edificios sobre la vía en X 1018 Z 1588 — Calle La Tierra (#2071): Un edificio tapa el camino
+   … a pie 250/1684 (645 s)
+[a pie · mapa entero] Atascos en X -1785 Z -1186 — track (#2233): El personaje se queda atascado andando por el camino
+   … a pie 300/1684 (703 s)
+[a pie · mapa entero] Atascos en X 716 Z 3469 — path (#2561): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Atascos en X 674 Z 3460 — path (#2562): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Se hunde en X 1759 Z 2195 — path (#2621): El personaje se hunde 0.61 m bajo la superficie visible (suelo)
+   … a pie 350/1684 (750 s)
+[a pie · mapa entero] Atascos en X -761 Z 514 — footway (#2687): El personaje se queda atascado andando por el camino
+   … a pie 400/1684 (759 s)
+[a pie · mapa entero] Edificios sobre la vía en X -516 Z 754 — path (#2729): Un edificio tapa el camino
+[a pie · mapa entero] Atascos en X -761 Z 514 — footway (#2737): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Atascos en X 1253 Z 1960 — path (#2739): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Edificios sobre la vía en X 1274 Z 1975 — path (#2744): Un edificio tapa el camino (Facultad de Ciencias de la Información)
+[a pie · mapa entero] Atascos en X 1244 Z 1977 — path (#2753): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Edificios sobre la vía en X -721 Z 592 — footway (#2759): Un edificio tapa el camino
+   … a pie 450/1684 (782 s)
+   … a pie 500/1684 (802 s)
+[a pie · mapa entero] Se hunde en X 551 Z 75 — footway (#2923): El personaje se hunde 0.38 m bajo la superficie visible (suelo)
+   … a pie 550/1684 (848 s)
+[a pie · mapa entero] Atascos en X 397 Z 2168 — footway (#3015): El personaje se queda atascado andando por el camino
+   … a pie 600/1684 (877 s)
+[a pie · mapa entero] Edificios sobre la vía en X 1494 Z 3898 — Urbanización El Cardonal (#3173): Un edificio tapa el camino
+[a pie · mapa entero] Edificios sobre la vía en X 1905 Z 1343 — footway (#3193): Un edificio tapa el camino (Pabellón Islas Canarias)
+   … a pie 650/1684 (910 s)
+[a pie · mapa entero] Atascos en X 1737 Z 3671 — footway (#3270): El personaje se queda atascado andando por el camino
+   … a pie 700/1684 (926 s)
+[a pie · mapa entero] Atascos en X 1044 Z 2425 — footway (#3387): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Edificios sobre la vía en X -894 Z -17 — footway (#3519): Un edificio tapa el camino
+[a pie · mapa entero] Atascos en X -628 Z 311 — footway (#3561): El personaje se queda atascado andando por el camino
+   … a pie 750/1684 (970 s)
+   … a pie 800/1684 (996 s)
+[a pie · mapa entero] Edificios sobre la vía en X -181 Z -24 — Pasaje Aguere (#3674): Un edificio tapa el camino
+   … a pie 850/1684 (1010 s)
+   … a pie 900/1684 (1014 s)
+[a pie · zona nueva] Atascos en X -279 Z 583 — footway (#3879): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Atascos en X 2320 Z 2023 — footway (#3897): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Atascos en X 2183 Z 2003 — footway (#3899): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Atascos en X 1808 Z 1916 — footway (#3902): El personaje se queda atascado andando por el camino
+   … a pie 950/1684 (1036 s)
+[a pie · mapa entero] Atascos en X 819 Z 2911 — steps (#3991): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Atascos en X 812 Z 2913 — footway (#3992): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Atascos en X 1171 Z 2319 — footway (#4047): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Atascos en X 1097 Z 2431 — footway (#4050): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Atascos en X 1133 Z 2395 — footway (#4051): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Atascos en X 1196 Z 2347 — footway (#4052): El personaje se queda atascado andando por el camino
+   … a pie 1000/1684 (1062 s)
+   … a pie 1050/1684 (1104 s)
+[a pie · mapa entero] Atascos en X 746 Z 865 — footway (#4153): El personaje se queda atascado andando por el camino
+   … a pie 1100/1684 (1165 s)
+[a pie · mapa entero] Atascos en X 390 Z 1020 — footway (#4172): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Edificios sobre la vía en X 326 Z 995 — footway (#4190): Un edificio tapa el camino
+   … a pie 1150/1684 (1181 s)
+[a pie · mapa entero] Se hunde en X 168 Z 716 — footway (#4222): El personaje se hunde 1.02 m bajo la superficie visible (suelo)
+   … a pie 1200/1684 (1211 s)
+[a pie · mapa entero] Atascos en X 200 Z 941 — footway (#4279): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Edificios sobre la vía en X 233 Z 1060 — footway (#4287): Un edificio tapa el camino
+[a pie · mapa entero] Edificios sobre la vía en X 245 Z 1037 — footway (#4291): Un edificio tapa el camino
+   … a pie 1250/1684 (1231 s)
+[a pie · mapa entero] Atascos en X 592 Z 621 — footway (#4330): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Edificios sobre la vía en X 467 Z 427 — footway (#4354): Un edificio tapa el camino (Seminario Nuevo)
+[a pie · mapa entero] Edificios sobre la vía en X 2353 Z 3464 — footway (#4364): Un edificio tapa el camino (Instituto de Tecnologías Biomédicas)
+   … a pie 1300/1684 (1257 s)
+   … a pie 1350/1684 (1279 s)
+[a pie · mapa entero] Edificios sobre la vía en X 38 Z 294 — footway (#4429): Un edificio tapa el camino
+[a pie · mapa entero] Atascos en X 212 Z 97 — footway (#4454): El personaje se queda atascado andando por el camino
+   … a pie 1400/1684 (1295 s)
+[a pie · mapa entero] Atascos en X 1543 Z 2682 — path (#4524): El personaje se queda atascado andando por el camino
+   … a pie 1450/1684 (1342 s)
+[a pie · mapa entero] Atascos en X -316 Z 818 — path (#4678): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Atascos en X -307 Z 809 — path (#4680): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Edificios sobre la vía en X -3413 Z -399 — track (#4770): Un edificio tapa el camino
+   … a pie 1500/1684 (1389 s)
+[a pie · mapa entero] Atascos en X -3759 Z -272 — footway (#4819): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Atascos en X -3726 Z -247 — footway (#4820): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Atascos en X -1785 Z -1185 — track (#4854): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Edificios sobre la vía en X -3742 Z 1138 — track (#4901): Un edificio tapa el camino
+[a pie · zona nueva] Edificios sobre la vía en X -3126 Z 36 — footway (#4952): Un edificio tapa el camino
+[a pie · zona nueva] Se hunde en X -3040 Z 29 — footway (#5106): El personaje se hunde 0.27 m bajo la superficie visible (suelo)
+[a pie · zona nueva] Atascos en X -3066 Z 21 — footway (#5106): El personaje se queda atascado andando por el camino
+[a pie · zona nueva] Atascos en X -3052 Z 39 — footway (#5112): El personaje se queda atascado andando por el camino
+[a pie · zona nueva] Se hunde en X -3087 Z 16 — footway (#5116): El personaje se hunde 0.83 m bajo la superficie visible (suelo)
+   … a pie 1550/1684 (1488 s)
+[a pie · zona nueva] Se hunde en X -3068 Z 17 — footway (#5120): El personaje se hunde 0.26 m bajo la superficie visible (suelo)
+[a pie · zona nueva] Atascos en X -3146 Z 84 — footway (#5172): El personaje se queda atascado andando por el camino
+[a pie · zona nueva] Atascos en X -3150 Z 101 — footway (#5174): El personaje se queda atascado andando por el camino
+[a pie · zona nueva] Atascos en X -3162 Z -3 — footway (#5179): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Edificios sobre la vía en X 3398 Z 2077 — footway (#5316): Un edificio tapa el camino
+[a pie · mapa entero] Edificios sobre la vía en X 3398 Z 2080 — steps (#5317): Un edificio tapa el camino
+   … a pie 1600/1684 (1521 s)
+[a pie · mapa entero] Atascos en X 3025 Z 2223 — footway (#5405): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Atascos en X 2944 Z 2200 — footway (#5406): El personaje se queda atascado andando por el camino
+[a pie · mapa entero] Atascos en X 2632 Z 2149 — footway (#5451): El personaje se queda atascado andando por el camino
+   … a pie 1650/1684 (1545 s)
+[a pie · mapa entero] Edificios sobre la vía en X 1493 Z 4131 — Urbanización El Cardonal (#5542): Un edificio tapa el camino
+[a pie · mapa entero] Edificios sobre la vía en X 1570 Z 4056 — Urbanización El Cardonal (#5555): Un edificio tapa el camino
+[a pie · mapa entero] Atascos en X 1799 Z 4112 — path (#5567): El personaje se queda atascado andando por el camino
+-- a pie hecho: 156 avisos acumulados, 1563 s
+cobertura acumulada del mapa (vías revisadas alguna vez): {'surf': 3949, 'drive': 3949, 'walk': 1987}
+== INFORME E:\Claude\GTA La Laguna\repo\reportes\revision_v0.99.6_2026-11-02_1836.md — 156 avisos

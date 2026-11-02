@@ -202,7 +202,12 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
       - «Noctámbulo»: estar en la calle a las 4 de la mañana.
       - «Gofio en vena»: comer 30 veces.
 
+### HUD y minimapa
+
+- [ ] ⚡ **Coordenadas X, Y y altura en el minimapa** (Jonay, 2-nov: «tenemos latitud y longitud pero no la altura»; elegido «X, Y y altura aparte»): en pantalla «X 386 · Y −276 · altura 35 m» (Y = lo que ahora se llama Z). Cambiar también el nombre en los informes del agente revisor, la auditoría (`mapa.md`), las sondas y en PENDIENTES / CLAUDE.md para que todo coincida (las capturas viejas dicen Z).
+
 ### Misiones, historia y economía
+- [ ] ⚡ **La rueda del ratón cambia de arma** (Jonay, 2-nov): hoy solo con 1 (manos) y 2 (arma) en `src/09c_weapons.js` (`setWeaponOut`); con la rueda, pasar a la siguiente o anterior de las que se tienen (puños, pistola, rifle de agua…). Que no choque con el zoom de la cámara si lo hay.
 
 - [~] ◐ v0.76.0 (rifle de agua, bolitas en las jugueterías, Tab entre puños/pistola/rifle; faltan euros, tabla de economía y patada en 3D) **Economía y armas** (Jonay, 12-oct), junto con las jugueterías:
       - El dinero va en **euros, no dólares** (HUD «$00000350» → euros; textos «+$1500», multas, precios, docs).
@@ -254,10 +259,14 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
       Domingo, El Cristo…), p. ej. apagar un incendio con la escopeta de agua.
 
 ### Tiendas y edificios del casco
+- [ ] ⚡ **Empedrado de las calles peatonales del casco más oscuro** (Jonay, 2-nov; 3 capturas en `docs/referencias/empedrado/`: Pl. de los Remedios / C. Bencomo y C. Obispo Rey Redondo n.º 31 y 35): el real es gris oscuro basáltico, adoquín rectangular en el centro y losas grandes a los lados; el del juego es más claro. Textura `paving` en `src/02_textures.js`.
 
 - [~] ◐ v0.76.0 (4 jugueterías con icono y compra con E: rifle y bolitas; falta recrear su fachada/escaparate o interior) **Jugueterías** (Jonay, 12-oct): recrear varias (mejor las que ya hay en el mapa); allí se compran **bolitas** para
       la pistola y otras armas: **escopeta de agua** (chorros de agua; se recarga en **fuentes** repartidas por la ciudad;
       necesaria en misiones como el incendio del Obispado). Por ahora no hay más armas.
+
+- [ ] ◐ **La plaza elevada junto a La Concepción** (Jonay, 2-nov; 8 capturas en `docs/referencias/concepcion_plaza/`: Plaza del Dr. Olivera n.º 6–10 y C. Hermanos Marrero 8–16): falta el jardín que rodea la iglesia por ese lado, alzado ~1 m sobre la calle.
+  - Muro de contención ocre/naranja con remate de piedra, barandilla de hierro encima, pilares de piedra con jarrones en las esquinas y junto a la puerta, escalinata de piedra hasta la puerta lateral, césped con flores, palmeras altas, bancos y un pequeño parque infantil (balancín azul, valla de madera). `src/05o_concepcion.js`.
 - [~] ● v0.78.0 (9 edificios más de la ficha con fachada y nombre: Alhóndiga, Riquel, Mustelier, Ossuna, Rodríguez de Azero, Cruz Verde, Plateros, Sabandeños, Cristino de Vera; sin situar: Dominicas, Oque Botino, Jesuitas, Casa Linares, Van Den Heede; lista en `docs/referencias/callejero/edificios.md`) v0.72.0 (PDF en `docs/referencias/callejero/`; Bencomo, Juan de Vera, Rodríguez Moure y Ascanio y Nieves pasan a calles con coches; la hoja 2 trae la ficha de 36 edificios para misiones) **Callejero oficial en PDF** (Jonay, 12-oct): https://turismo.aytolalaguna.es/wp-content/uploads/2019/11/Callejero-La-Laguna-c.pdf
       Sirve para definir bien las **zonas peatonales** (las del empedrado; ahora hay calles donde se pasa en coche y el
       juego dice que son peatonales), tiene **información de edificios** para misiones y un dibujo en 3D bastante fiel de
@@ -291,6 +300,8 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
       en salidas e incorporaciones (autopista, Vía de Ronda) y en las glorietas.
 - [~] ◐ v0.78.0 (marquesina grande de la terminal sobre el carril de dejar pasajeros) v0.72.0 (rotonda-cúpula, depósitos, naves con carteles, P, valla y aviones despegando/aterrizando hechos; mirar fotos `grandes_aeropuerto_*`) Aeropuerto: afinar con las fotos (rotonda-cúpula, depósitos de combustible, naves SEUR/ITV/Binter, P de
       parking con rótulos, valla perimetral) y aviones despegando/aterrizando de vez en cuando.
+- [ ] ◐ **Av. de La Trinidad: soportales a lo largo de todo un lado** (Jonay, 2-nov; 20 capturas de Street View en `docs/referencias/av_trinidad/soportales_*.png`: impares n.º 1 a 61, pares 6 a 58 y, con soportales también, los pares 68 y 76; el 59 y el 74 son el cruce de Pedro Zerolo): «en La Trinidad es todo por un lado como una especie de paso bajo los edificios para los peatones que no está representado… además esto deja más espacio para las entradas del parking».
+  - Hoy solo hay soportales en el bloque del Dialprix y en el n.º 76 (`src/05u_trinidad.js`, «soportales»). Hacerlos en toda la acera de los impares (pilares a la línea de la acera, la planta baja metida 2–3 m con las tiendas al fondo), y aprovechar ese hueco para que las rampas Indigo (n.º 3 y 59) tengan sitio.
 - [~] ● v0.78.0 (comparado: la TF-5 pasa **a nivel** bajo el puente de Cam. San Lázaro; en la realidad va en trinchera: hundirla es un cambio grande, por decidir) Repasar con las fotos del aeropuerto la zona ya hecha alrededor (San Benito, El Coromoto, autopista TF-5). v0.72.0: visto en las fotos que la TF-5 pasa en trinchera bajo la Rotonda Sempiterno y bajo el puente de Cam. San Lázaro; queda por comparar en el juego.
 - [~] ● v0.78.0 (muros de la trinchera de basalto oscuro) v0.72.0 (rotonda partida en trinchera con dos túneles de bóveda bajo la TF-5, accesos en rampa, chalets de Guajara; mirar las fotos `grandes_tf13_*`) **TF-13 / Cam. San Bartolomé de Geneto / Urbanización Guajara** (junto a la TF-5, Museo de la Ciencia y el
       Cosmos): la zona está «fatal». Real: la TF-13 baja en trinchera con muros de piedra y pasa bajo la TF-5 por dos
@@ -388,6 +399,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
       invaden la calzada**: 452 posibles (6 cortan la calle, 54 en calles principales), lista con capturas en
       `docs/auditorias/mapa_v0.58.2/mapa.md`. Revisar primero los 6 que cortan la calle y los 54 de calles principales
       (confirmados: C. Barcelona X −15 Z 217, Av. de los Menceyes X 298 Z 899). Siguen P1.5 y P2.1/P2.2/P2.5.
+- [~] ◐ v0.99.7 (el «poste» de Juan de Vera era el alcalde: fuera de la calzada) **Auditoría v0.99.6 (APTO CON AVISOS)** (2-nov): queda: `09jz_sprx.js` baja de A a B; pintar a 720p 26,5 → 31,1 ms y arranque 9,6 → 11,7 s (vértices +3 %: muros de los terraplenes nuevos, tiras de animación del baloncesto). Revisar en `resultados_pc\2026-11-02_0.99.6_local`.
 - [~] ● v0.77.0 **Punto 17, rendimiento (auditorías viejas)**. Hecho: piezas sueltas juntadas por material y celda, recorte
       por distancia según la niebla (detalle solo de cerca, copas lejanas simples), árboles/farolas/señales por celda,
       coches aparcados instanciados, plazas 3,2 s → 0,4 s, lint en el build. Medido (sonda, vista de calle): llamadas
@@ -462,6 +474,8 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Hecho
 
+- [x] v0.99.7 **Pasada del agente revisor y la auditoría con reglas comunes** (Jonay, 2-nov): edificios atravesados por una calle recortados, pasadizos para los caminos a pie que cruzan edificios, medianas abiertas en los pasos de peatones, sin coches aparcados sobre caminos, la trinchera ya no empuja a los coches de arriba, la Vía de Ronda conserva sus líneas. Quedan «se sale de la calzada» (piloto del agente al final de calles sin salida) y edificios de OSM que siguen metidos.
+- [x] v0.99.7 **Ventanas de las fachadas cortadas por el suelo o por el tejado** (Jonay, 2-nov): plantas enteras desde el suelo más alto, zócalo liso debajo en cuesta, altura en plantas enteras.
 - [x] v0.99.6 **Baloncesto: tiro, robo, rebote, tapón y los cuatro mates de los combos con el pack; aspectos distintos** (Jonay, 27-oct a 2-nov): los mates acaban con las manos en el aro (se inclina), la red se mueve, balón algo mayor que la cabeza, jugadores un 6 % más pequeños y cada uno con su pelo y su talla.
 - [x] v0.99.6 **Guanche Guarriors a 640×448, los personajes al 75 %; la secuaz roja y la vikinga sin casco; el pie de los jinetes enemigos por delante del lagarto** (Jonay, 27-oct).
 - [x] v0.99.6 **Pasos inferiores cortos (Ofra, bocas de la TF-5): se hunden menos y la carretera de encima sube en terraplén con muros** (Jonay, 27-oct: «muros en medio de la carretera y salida de túnel con carretera que vuela encima»).

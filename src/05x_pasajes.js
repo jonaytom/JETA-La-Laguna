@@ -16,6 +16,16 @@ function pasajeSegs() {
   if (PASAJES.segs) return PASAJES.segs; const out = [];
   DATA.R.forEach((rd, ri) => { if (rd[0] <= 12 || !(rd[3] & 4)) return; const c = rd[4]; const name = rd[1] >= 0 ? STR[rd[1]] : ''; const hw = PASAJE_TIENDAS[name] ? 1.9 : Math.max(1.3, rd[2] / 2); /* the casco galleries are ~4 m wide (OSM gives 6) */
     for (let i = 0; i < c.length - 2; i += 2) { const L = Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]); if (L > 0.3) out.push({ ri, ax: c[i], az: c[i + 1], bx: c[i + 2], bz: c[i + 3], L, hw, name }); } });
+  // v0.99.6 (Jonay: «hacer pasadizo»; agent: 23 «un edificio tapa el camino»): a footpath that runs through a building
+  // (OSM indoor corridors, arcades not tagged as passages) gets a passage there too: the stretch inside, 1.5 m more each side
+  const CS = 40, G = new Map(), BB = DATA.B.map((b) => { const c = b[6]; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (let i = 0; i < c.length; i += 2) { x0 = Math.min(x0, c[i]); x1 = Math.max(x1, c[i]); z0 = Math.min(z0, c[i + 1]); z1 = Math.max(z1, c[i + 1]); } return [x0, x1, z0, z1, c]; });
+  BB.forEach((b, i) => { for (let a = Math.floor(b[0] / CS); a <= Math.floor(b[1] / CS); a++) for (let k = Math.floor(b[2] / CS); k <= Math.floor(b[3] / CS); k++) { const key = a * 100003 + k; let l = G.get(key); if (!l) G.set(key, l = []); l.push(i); } });
+  const inB = (x, z) => { const l = G.get(Math.floor(x / CS) * 100003 + Math.floor(z / CS)); if (l) for (const i of l) { const b = BB[i]; if (x >= b[0] && x <= b[1] && z >= b[2] && z <= b[3] && pip(x, z, b[4])) return true; } return false; };
+  let nx = 0; DATA.R.forEach((rd, ri) => { if (rd[0] <= 12 || (rd[3] & 6)) return; const c = rd[4], hw = Math.max(1.3, Math.min(2.2, rd[2] / 2)), name = ''; /* (no name: the shops and the Aguere galleries are only the tagged ones) */
+    for (let i = 0; i < c.length - 2; i += 2) { const ax = c[i], az = c[i + 1], L = Math.hypot(c[i + 2] - ax, c[i + 3] - az); if (L < 0.3) continue; const ux = (c[i + 2] - ax) / L, uz = (c[i + 3] - az) / L, n = Math.max(1, Math.ceil(L / 0.75)); let a = -1;
+      for (let k = 0; k <= n; k++) { const t = (k / n) * L, ins = inB(ax + ux * t, az + uz * t);
+        if (ins && a < 0) a = t; if ((!ins || k === n) && a >= 0) { const b = ins ? t : ((k - 1) / n) * L; if (b - a >= 3 && ![a, (a + b) / 2, b].some((t) => onCarriagewayEarly(ax + ux * t, az + uz * t, 1.0))) { const t0 = Math.max(0, a - 0.6), t1 = Math.min(L, b + 0.6); /* (v0.99.7, auditor: no passage on a pavement that runs along a street: its walls stood in the carriageway) */ out.push({ ri, ax: ax + ux * t0, az: az + uz * t0, bx: ax + ux * t1, bz: az + uz * t1, L: t1 - t0, hw, name, extra: true }); nx++; } a = -1; } } } });
+  console.log('passages through buildings: tagged', out.length - nx, 'footpaths inside buildings', nx);
   return (PASAJES.segs = out);
 }
 // v0.78.1: inside a passage under a building or in the lower gallery of Aguere (no street lamps there)

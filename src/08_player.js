@@ -114,7 +114,7 @@ function updatePlayer(dt) {
   DB('deck'); let lw = PLAYER.interior ? null : lowAt(nx, nz, PLAYER.y);
   // underground (tunnels, car parks): you can't walk through the walls up to the surface
   if (!lw && PLAYER.low && !PLAYER.interior && heightAt(nx, nz) - PLAYER.y > 0.8) { nx = PLAYER.x; nz = PLAYER.z; lw = lowAt(nx, nz, PLAYER.y); }
-  if (lw && !PLAYER.interior && typeof ugcPush === 'function') { const q = ugcPush(nx, nz, 0.35, lw.y); nx = q[0]; nz = q[1]; } if (!lw && !PLAYER.interior && TCUTS.length) { const tp = trenchPush(nx, nz, 0.35); if (tp) { nx += tp[0]; nz += tp[1]; } } PLAYER.low = lw;
+  if (lw && !PLAYER.interior && typeof ugcPush === 'function') { const q = ugcPush(nx, nz, 0.35, lw.y); nx = q[0]; nz = q[1]; } if (!lw && !PLAYER.interior && TCUTS.length) { const tp = trenchPush(nx, nz, 0.35, PLAYER.y); if (tp) { nx += tp[0]; nz += tp[1]; } } PLAYER.low = lw;
   DB('low+trench'); if (lw) { const lim = Math.max(0.3, lw.hw - 0.35); if (lw.d > lim && lw.d > 0.01) { const k = lim / lw.d; nx = lw.px + (nx - lw.px) * k; nz = lw.pz + (nz - lw.pz) * k; } }
   DB('clamp'); PLAYER.x = nx; PLAYER.z = nz;
   const dk = deckAt(nx, nz, PLAYER.y); PLAYER.onDeck = dk > -1e8 && dk > heightAt(nx, nz) + 0.5;

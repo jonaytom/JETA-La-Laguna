@@ -165,7 +165,7 @@ class Car {
         hit = true;
       }
     }
-    if (!this.low && TCUTS.length) { const r = Math.max(this.T.W, this.T.L * 0.5) / 2; const tp = trenchPush(this.x, this.z, r); if (tp) { this.x += tp[0]; this.z += tp[1]; const vn = this.vx * tp[2] + this.vz * tp[3]; if (vn < 0) { this.vx -= 1.3 * vn * tp[2]; this.vz -= 1.3 * vn * tp[3]; impact = Math.max(impact, -vn); } hit = true; } }
+    if (!this.low && TCUTS.length) { const r = Math.max(this.T.W, this.T.L * 0.5) / 2; const tp = trenchPush(this.x, this.z, r, this.y); if (tp) { this.x += tp[0]; this.z += tp[1]; const vn = this.vx * tp[2] + this.vz * tp[3]; if (vn < 0) { this.vx -= 1.3 * vn * tp[2]; this.vz -= 1.3 * vn * tp[3]; impact = Math.max(impact, -vn); } hit = true; } }
     // world bounds
     if (this.x < WORLD.x0) { this.x = WORLD.x0; this.vx = Math.abs(this.vx) * 0.3; } if (this.x > WORLD.x1) { this.x = WORLD.x1; this.vx = -Math.abs(this.vx) * 0.3; }
     if (this.z < WORLD.z0) { this.z = WORLD.z0; this.vz = Math.abs(this.vz) * 0.3; } if (this.z > WORLD.z1) { this.z = WORLD.z1; this.vz = -Math.abs(this.vz) * 0.3; }
@@ -280,6 +280,7 @@ const PARKED = { slots: [], grid: new Map(), meshes: {} };
 // carriageway (or its edge) of a motorway, a slip road, a trunk or primary road or the Vía de Ronda, at ground level
 // (a bridge or a tunnel of those over or under the street doesn't count)
 const BIGNAMES = new Set(['Vía de Ronda de La Laguna']);
+function onFootpath(x, z) { const rd = ROADSEG.nearest(x, z, (r) => r[0] > 12 && !(r[3] & 6)); return !!rd && rd.d < DATA.R[rd.ri][2] / 2 + 1.0; } // v0.99.6 (agent: walkers stuck between parked cars): no car parked across a footpath
 function onBigRoad(x, z) { const rd = ROADSEG.nearest(x, z, (r) => (r[0] <= 4 || BIGNAMES.has(DATA.S[r[1]])) && !(r[3] & 6)); return !!rd && rd.d < DATA.R[rd.ri][2] / 2 + 1.2; }
 function buildParked() {
   const types = ['compact', 'sedan', 'suv', 'van']; const T0 = performance.now(), lt = (n) => { if (window.__LOADT) window.__LOADT.push(['   buildParked · ' + n, Math.round(performance.now() - T0)]); }; // v0.77: where the 2 s go
@@ -298,7 +299,7 @@ function buildParked() {
       for (let s = 9; s < L - 9; s += 6.2) for (const side of sides) {
         if (Math.random() > (isHistoric(x1, z1) ? 0.18 : 0.33)) continue;
         const off = w / 2 - 0.95; const x = x1 + dx * s - dz * off * side, z = z1 + dz * s + dx * off * side;
-        if (COL.nearSeg(x, z, 1.3) || onBigRoad(x, z)) continue; // v0.99.5 (Jonay): never on the motorway, its slip roads or the Vía de Ronda
+        if (COL.nearSeg(x, z, 1.3) || onBigRoad(x, z) || onFootpath(x, z)) continue; // v0.99.5 (Jonay): never on the motorway, its slip roads or the Vía de Ronda
         const h = Math.atan2(dx, dz) + (side < 0 ? Math.PI : 0);
         const mdl = KGEO ? pickModel((m) => m.phys !== 'truck' && m.phys !== 'moto') : null; PARKED.slots.push({ x, z, h, type: mdl ? mdl.id : pick(types), color: pickColor(), alive: true });
       }
@@ -307,6 +308,7 @@ function buildParked() {
   lt('huecos ' + PARKED.slots.length);
   // parked cars: one InstancedMesh per model and 800 m cell (v0.77), culled by distance; paint colour per instance
   if (KGEO) for (const s of PARKED.slots) if (!VMODELS[s.type]) { const m = modelForType(s.type); s.type = m ? m.id : 'polo'; }
+  { const keep = PARKED.slots.filter((s) => !onFootpath(s.x, s.z)); PARKED.slots.length = 0; PARKED.slots.push(...keep); } // v0.99.6: also the car parks' rows (a footpath crosses them)
   PARKED.slots.forEach((s, i) => { const k = Math.floor(s.x / 30) * 1000 + Math.floor(s.z / 30); let l = PARKED.grid.get(k); if (!l) PARKED.grid.set(k, l = []); l.push(i); });
   const glassC = new THREE.Color(0x26313a); const cc = new THREE.Color();
   // simplified per-model template: body (paint flagged) + 4 low-poly wheels

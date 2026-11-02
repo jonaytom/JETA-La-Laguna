@@ -1,0 +1,9 @@
+# v0.99.7 pasada revisor + auditoría
+sonda_juandevera.py
+prueba_recorte.py
+prueba_bordes.py
+prueba_conduccion_tuneles_puentes.py
+prueba_coche_y_boca.py
+prueba_0996.py
+prueba_0995.py
+prueba_078.py

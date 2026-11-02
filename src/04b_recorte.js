@@ -52,7 +52,15 @@ function roadClip(pts) {
   if (!ids.size) return pts;
   let P = pts, changed = false;
   for (const id of ids) { const s = G.segs[id]; const nx = -s.uz, nz = s.ux; let cx = 0, cz = 0; for (const p of P) { cx += p[0]; cz += p[1]; } cx /= P.length; cz /= P.length;
-    const sc = (cx - s.ax) * nx + (cz - s.az) * nz; if (Math.abs(sc) < s.k) continue; const sg = Math.sign(sc); // a road through the middle: a passage, leave it
+    const sc = (cx - s.ax) * nx + (cz - s.az) * nz;
+    if (Math.abs(sc) < s.k) { // a road through the middle. v0.99.6 (Jonay: «recortar el edificio»; auditor: 3 critical, a service road through
+      // a block at X −858 Z 70): if the road goes right through (both ends outside), keep the bigger side, the road free;
+      // a road that ends inside (a garage entrance) is left as it was
+      const flat = P.flat(), ex = s.ax + s.ux * s.L, ez = s.az + s.uz * s.L; if (pip(s.ax, s.az, flat) || pip(ex, ez, flat)) continue;
+      const A0 = Math.abs(polyArea(P)), QA = clipHalf(P, s.ax, s.az, nx, nz, s.k), QB = clipHalf(P, s.ax, s.az, -nx, -nz, s.k);
+      const aA = QA.length >= 3 ? Math.abs(polyArea(QA)) : 0, aB = QB.length >= 3 ? Math.abs(polyArea(QB)) : 0; if (aA + aB > A0 * 0.98) continue; // (not really across it)
+      const Q = aA >= aB ? QA : QB, aq = Math.max(aA, aB); if (aq < 25 || aq < A0 * 0.3) continue; P = Q; changed = true; continue; }
+    const sg = Math.sign(sc);
     let hit = false, beyond = false, deep = 0;
     for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length];
       for (const tt of [0, 0.5]) { const x = p[0] + (q[0] - p[0]) * tt, z = p[1] + (q[1] - p[1]) * tt; const d = ((x - s.ax) * nx + (z - s.az) * nz) * sg; if (d >= s.k) continue;

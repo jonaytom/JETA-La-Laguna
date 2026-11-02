@@ -3,6 +3,25 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.99.7 — 2026-11-02 — Pasada del agente revisor y la auditoría: reglas comunes; fachadas con plantas enteras
+- **Reglas generales** (Jonay: «¿podremos aplicar alguna regla común para evitar estos problemas al generar nuevos?»),
+  sacadas de los avisos del agente revisor (156 → 144, 44 desaparecen) y de la auditoría:
+  - Un edificio que atraviesa una calle de coches de lado a lado se recorta y se queda con el trozo mayor; si la calle
+    acaba dentro (entrada de garaje), se deja.
+  - Un camino a pie que cruza un edificio tiene un pasadizo en planta baja (hueco en la fachada y paso libre), como el
+    Pasaje Teide.
+  - Las medianas e isletas se abren donde las cruza un camino a pie o un paso de peatones (el agente se quedaba atascado).
+  - Ningún coche aparcado sobre un camino a pie (también en los aparcamientos).
+  - Los coches que van por encima de una trinchera abierta (la autopista en terraplén sobre los pasos inferiores
+    cortos) ya no chocan con su borde: eran los atascos de la TF-5; y donde la calle de encima cruza justo en la boca
+    del túnel se deja la trinchera honda de antes (X −1252 Z −2).
+  - La Vía de Ronda conserva sus líneas sobre las avenidas que se le juntan.
+  - El alcalde ya no está de pie en la calzada de la Calle Juan de Vera (el «poste» de la auditoría).
+  - Guanche Guarriors: en una oleada, los enemigos que quedan fuera de la pantalla entran andando (una Harimaguada se quedaba quieta a la izquierda y la fase 5 no se acababa).
+- **Fachadas** (Jonay: «las ventanas están bajo tierra o cortadas… no se puede cortar una ventana ni empezar pegada al
+  suelo»): las plantas se cuentan desde el suelo más alto del edificio; en cuesta, cada tramo de fachada empieza en la
+  primera planta entera sobre su suelo, con un zócalo liso debajo; la altura del edificio es un número entero de plantas.
+
 ## 0.99.6 — 2026-11-02 — Baloncesto con mates y tapones nuevos, Guanche a 640×448 y pasos inferiores
 - **Baloncesto 2D** (Jonay: «perfectas así, aplícalo todo a escala del juego»; «los jugadores deberían ser de distintos
   aspectos»): las animaciones nuevas en el juego (`src/09ecb_bk_anim.js`, hecho por `tools/sprites_ext/bk_anim.py` como
