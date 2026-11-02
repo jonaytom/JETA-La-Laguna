@@ -139,4 +139,8 @@ function weaponSwitchInput() {
   if (pressed('Digit1')) setWeaponOut(false); if (pressed('Digit2')) setWeaponOut(true);
 }
 (() => { const w = document.getElementById('weap'); if (w) { w.style.pointerEvents = 'auto'; w.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); if (typeof RIFLE !== 'undefined' && RIFLE.has) AGUA.cycle(); else setWeaponOut(!WEAPON.out); }); }
-  document.addEventListener('keydown', (e) => { if (e.code === 'Tab' && GAME.state === 'play') e.preventDefault(); }, true); })();
+  document.addEventListener('keydown', (e) => { if (e.code === 'Tab' && GAME.state === 'play') e.preventDefault(); }, true);
+  // v0.99.7 (Jonay: «la rueda del ratón debería dejar cambiar de arma»): wheel down = next (fists → pistol → water rifle), up = back
+  let wheelT = 0; document.addEventListener('wheel', (e) => { const rifle = typeof RIFLE !== 'undefined' && RIFLE.has; if (GAME.state !== 'play' || !document.pointerLockElement || PLAYER.car || (!WEAPON.has && !rifle)) return;
+    const now = performance.now(); if (now - wheelT < 160 || Math.abs(e.deltaY) < 1) return; wheelT = now; const dir = e.deltaY > 0 ? 1 : -1;
+    if (rifle) AGUA.cycle(dir); else setWeaponOut(!WEAPON.out); }, { passive: true }); })();

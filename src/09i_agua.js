@@ -152,7 +152,7 @@ const AGUA = (() => {
   }
   function setRifleOut(v, quiet) { if (!RIFLE.has || RIFLE.out === v) return; RIFLE.out = v; RIFLE.firing = false; WEAPON.aiming = false; if (v) { WEAPON.out = false; if (WEAPON.mesh) WEAPON.mesh.visible = false; ensureMesh(); } if (RIFLE.mesh) RIFLE.mesh.visible = v; if (!quiet) { AUDIO.pickup && AUDIO.pickup(); HUD.toast(v ? 'Rifle de agua' : 'Puños', v ? '#7fd3ff' : '#fff', 1.2); } updateWeaponHUD(); }
   // the order Tab goes round in: fists → pistol (if you have it) → rifle (if you have it) → fists
-  function cycle() { const cur = RIFLE.out ? 2 : WEAPON.out && WEAPON.has ? 1 : 0; for (let k = 1; k <= 3; k++) { const nx = (cur + k) % 3; if (nx === 1 && !WEAPON.has) continue; if (nx === 2 && !RIFLE.has) continue;
+  function cycle(dir = 1) { const cur = RIFLE.out ? 2 : WEAPON.out && WEAPON.has ? 1 : 0; for (let k = 1; k <= 3; k++) { const nx = (cur + dir * k + 6) % 3; /* (v0.99.8: dir −1 = back, the mouse wheel up) */ if (nx === 1 && !WEAPON.has) continue; if (nx === 2 && !RIFLE.has) continue;
       if (nx === 0) { setRifleOut(false, true); if (WEAPON.has) setWeaponOut(false); else HUD.toast('Puños', '#fff', 1.2); } else if (nx === 1) { setRifleOut(false, true); WEAPON.out = false; setWeaponOut(true); } else setRifleOut(true); updateWeaponHUD(); return; } }
   // mouse: right = aim, left = spray while held (the pistol's own handlers only work with the pistol out)
   document.addEventListener('mousedown', (e) => { if (GAME.state !== 'play' || !document.pointerLockElement || !rifleUsable()) return; if (e.button === 2) WEAPON.aiming = true; if (e.button === 0) { RIFLE.firing = true; FIGHT.blockPunch = true; } });

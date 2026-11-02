@@ -205,7 +205,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="tb" id="tbS">CORRER</div>
 <div class="tb" id="tbM">MAPA</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">v0.99.7</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">v0.99.8</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -570,18 +570,20 @@ const TEX = {};
   // ---------------- paving (La Laguna stone slabs)
   {
     const c = mkCanvas(256, 256), x = c.getContext('2d');
-    noiseFill(x, 256, 256, [150, 146, 138], 18, 21);
+    // v0.99.7 (Jonay, 2-nov, docs/referencias/empedrado/: «el empedrado de la ciudad en las zonas peatonales es más
+    // oscuro»): grey basalt setts, small rectangles laid in rows, with darker joints
+    noiseFill(x, 256, 256, [96, 94, 92], 12, 21);
     const r = mulberry(7);
-    for (let row = 0; row < 8; row++) {
-      const hh = 32; let col = -(row % 2) * 20;
+    for (let row = 0; row < 16; row++) {
+      const hh = 16; let col = -(row % 2) * 14;
       while (col < 256) {
-        const ww = 36 + r() * 28; const g = 125 + r() * 45;
-        x.fillStyle = `rgba(${g},${g - 4},${g - 12},0.55)`; x.fillRect(col + 1, row * hh + 1, ww - 2, hh - 2);
-        x.strokeStyle = 'rgba(60,58,55,0.8)'; x.lineWidth = 1.5; x.strokeRect(col, row * hh, ww, hh);
+        const ww = 24 + r() * 18; const g = 78 + r() * 38, t = r() < 0.5 ? 2 : -2;
+        x.fillStyle = `rgba(${g + t},${g},${g + 3},0.7)`; x.fillRect(col + 1, row * hh + 1, ww - 2, hh - 2);
+        x.strokeStyle = 'rgba(42,40,40,0.85)'; x.lineWidth = 1.2; x.strokeRect(col, row * hh, ww, hh);
         col += ww;
       }
     }
-    speckle(x, 256, 256, 600, ['rgba(80,80,80,.4)', 'rgba(200,200,190,.35)'], 1, 2, 9);
+    speckle(x, 256, 256, 700, ['rgba(40,40,42,.45)', 'rgba(150,148,145,.3)'], 1, 2, 9);
     TEX.paving = canvasTex(c);
   }
   // ---------------- sidewalk tiles (panot-like)
@@ -7395,7 +7397,11 @@ function weaponSwitchInput() {
   if (pressed('Digit1')) setWeaponOut(false); if (pressed('Digit2')) setWeaponOut(true);
 }
 (() => { const w = document.getElementById('weap'); if (w) { w.style.pointerEvents = 'auto'; w.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); if (typeof RIFLE !== 'undefined' && RIFLE.has) AGUA.cycle(); else setWeaponOut(!WEAPON.out); }); }
-  document.addEventListener('keydown', (e) => { if (e.code === 'Tab' && GAME.state === 'play') e.preventDefault(); }, true); })();
+  document.addEventListener('keydown', (e) => { if (e.code === 'Tab' && GAME.state === 'play') e.preventDefault(); }, true);
+  // v0.99.7 (Jonay: «la rueda del ratón debería dejar cambiar de arma»): wheel down = next (fists → pistol → water rifle), up = back
+  let wheelT = 0; document.addEventListener('wheel', (e) => { const rifle = typeof RIFLE !== 'undefined' && RIFLE.has; if (GAME.state !== 'play' || !document.pointerLockElement || PLAYER.car || (!WEAPON.has && !rifle)) return;
+    const now = performance.now(); if (now - wheelT < 160 || Math.abs(e.deltaY) < 1) return; wheelT = now; const dir = e.deltaY > 0 ? 1 : -1;
+    if (rifle) AGUA.cycle(dir); else setWeaponOut(!WEAPON.out); }, { passive: true }); })();
 
 // ============ «JETA FIGHTER»: 2D pixel-art street fight, 90s style. Starts when you punch someone ============
 // The 3D view of the place where you are is captured, pixelated and posterized as the stage background; both fighters are
@@ -9507,7 +9513,7 @@ const AGUA = (() => {
   }
   function setRifleOut(v, quiet) { if (!RIFLE.has || RIFLE.out === v) return; RIFLE.out = v; RIFLE.firing = false; WEAPON.aiming = false; if (v) { WEAPON.out = false; if (WEAPON.mesh) WEAPON.mesh.visible = false; ensureMesh(); } if (RIFLE.mesh) RIFLE.mesh.visible = v; if (!quiet) { AUDIO.pickup && AUDIO.pickup(); HUD.toast(v ? 'Rifle de agua' : 'Puños', v ? '#7fd3ff' : '#fff', 1.2); } updateWeaponHUD(); }
   // the order Tab goes round in: fists → pistol (if you have it) → rifle (if you have it) → fists
-  function cycle() { const cur = RIFLE.out ? 2 : WEAPON.out && WEAPON.has ? 1 : 0; for (let k = 1; k <= 3; k++) { const nx = (cur + k) % 3; if (nx === 1 && !WEAPON.has) continue; if (nx === 2 && !RIFLE.has) continue;
+  function cycle(dir = 1) { const cur = RIFLE.out ? 2 : WEAPON.out && WEAPON.has ? 1 : 0; for (let k = 1; k <= 3; k++) { const nx = (cur + dir * k + 6) % 3; /* (v0.99.8: dir −1 = back, the mouse wheel up) */ if (nx === 1 && !WEAPON.has) continue; if (nx === 2 && !RIFLE.has) continue;
       if (nx === 0) { setRifleOut(false, true); if (WEAPON.has) setWeaponOut(false); else HUD.toast('Puños', '#fff', 1.2); } else if (nx === 1) { setRifleOut(false, true); WEAPON.out = false; setWeaponOut(true); } else setRifleOut(true); updateWeaponHUD(); return; } }
   // mouse: right = aim, left = spray while held (the pistol's own handlers only work with the pistol out)
   document.addEventListener('mousedown', (e) => { if (GAME.state !== 'play' || !document.pointerLockElement || !rifleUsable()) return; if (e.button === 2) WEAPON.aiming = true; if (e.button === 0) { RIFLE.firing = true; FIGHT.blockPunch = true; } });
@@ -12176,7 +12182,7 @@ const HUD = (() => {
     update(dt) {
       // (audit P1.1) DOM is touched only when a value changes; elements cached; minimap at 30 Hz; prompts every 6 frames
       tick++;
-      setT('coords', 'X ' + Math.round(PLAYER.x) + '   Z ' + Math.round(PLAYER.z));
+      setT('coords', 'X ' + Math.round(PLAYER.x) + ' · Y ' + Math.round(PLAYER.z) + ' · ' + Math.round((PLAYER.y || 0) + HM.base) + ' m'); /* v0.99.7 (Jonay): X, Y on the map and the altitude above the sea; Y is the old Z */
       if (tick % 2 === 0) drawMinimap();
       const h = GAME.tod, hh = Math.floor(h), mm2 = Math.floor((h - hh) * 60);
       setT('clock', String(hh).padStart(2, '0') + ':' + String(mm2).padStart(2, '0'));

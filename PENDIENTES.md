@@ -204,10 +204,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### HUD y minimapa
 
-- [ ] ⚡ **Coordenadas X, Y y altura en el minimapa** (Jonay, 2-nov: «tenemos latitud y longitud pero no la altura»; elegido «X, Y y altura aparte»): en pantalla «X 386 · Y −276 · altura 35 m» (Y = lo que ahora se llama Z). Cambiar también el nombre en los informes del agente revisor, la auditoría (`mapa.md`), las sondas y en PENDIENTES / CLAUDE.md para que todo coincida (las capturas viejas dicen Z).
-
 ### Misiones, historia y economía
-- [ ] ⚡ **La rueda del ratón cambia de arma** (Jonay, 2-nov): hoy solo con 1 (manos) y 2 (arma) en `src/09c_weapons.js` (`setWeaponOut`); con la rueda, pasar a la siguiente o anterior de las que se tienen (puños, pistola, rifle de agua…). Que no choque con el zoom de la cámara si lo hay.
 
 - [~] ◐ v0.76.0 (rifle de agua, bolitas en las jugueterías, Tab entre puños/pistola/rifle; faltan euros, tabla de economía y patada en 3D) **Economía y armas** (Jonay, 12-oct), junto con las jugueterías:
       - El dinero va en **euros, no dólares** (HUD «$00000350» → euros; textos «+$1500», multas, precios, docs).
@@ -257,9 +254,10 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
       Pack de **misiones secundarias** que se desbloquea a la vez que las del alcalde; no hacen falta para acabar el juego
       («solo si eres religioso»), pero dan dinero: mejoras en las iglesias que ya hay (Catedral, La Concepción, Santo
       Domingo, El Cristo…), p. ej. apagar un incendio con la escopeta de agua.
+- [ ] ● **Reubicar las misiones por zonas, con sentido de avance** (Jonay, 2-nov: «hay que reordenar las misiones y acotarlas por zonas, de manera que te vayan llevando por el mapa y avances sin tener que ir de punta a punta… más que reordenar, reubicar para que tenga un sentido de avance»).
+  - Hacer primero el mapa de dónde ocurre hoy cada misión (inicio, objetivos, entrega) y proponer a Jonay un recorrido por zonas: casco → Trinidad / Padre Anchieta → San Benito / La Verdellada → Ofra / Autopista → aeropuerto / Geneto…, cada tramo de la historia en un barrio y el siguiente al lado. `src/12_missions.js`, `src/12f_story2.js`, `src/12g_obispo.js`, `src/12k_agua.js`.
 
 ### Tiendas y edificios del casco
-- [ ] ⚡ **Empedrado de las calles peatonales del casco más oscuro** (Jonay, 2-nov; 3 capturas en `docs/referencias/empedrado/`: Pl. de los Remedios / C. Bencomo y C. Obispo Rey Redondo n.º 31 y 35): el real es gris oscuro basáltico, adoquín rectangular en el centro y losas grandes a los lados; el del juego es más claro. Textura `paving` en `src/02_textures.js`.
 
 - [~] ◐ v0.76.0 (4 jugueterías con icono y compra con E: rifle y bolitas; falta recrear su fachada/escaparate o interior) **Jugueterías** (Jonay, 12-oct): recrear varias (mejor las que ya hay en el mapa); allí se compran **bolitas** para
       la pistola y otras armas: **escopeta de agua** (chorros de agua; se recarga en **fuentes** repartidas por la ciudad;
@@ -474,6 +472,9 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Hecho
 
+- [x] v0.99.8 **Empedrado de las calles peatonales del casco más oscuro** (Jonay, 2-nov; 3 capturas en `docs/referencias/empedrado/`: Pl. de los Remedios / C. Bencomo y C. Obispo Rey Redondo n.º 31 y 35): el real es gris oscuro basáltico, adoquín rectangular en el centro y losas grandes a los lados; el del juego es más claro. Textura `paving` en `src/02_textures.js`.
+- [x] v0.99.8 **La rueda del ratón cambia de arma** (Jonay, 2-nov): hoy solo con 1 (manos) y 2 (arma) en `src/09c_weapons.js` (`setWeaponOut`); con la rueda, pasar a la siguiente o anterior de las que se tienen (puños, pistola, rifle de agua…). Que no choque con el zoom de la cámara si lo hay.
+- [x] v0.99.8 **Coordenadas X, Y y altura en el minimapa** (Jonay, 2-nov: «tenemos latitud y longitud pero no la altura»; elegido «X, Y y altura aparte»): en pantalla «X 386 · Y −276 · altura 35 m» (Y = lo que ahora se llama Z). Cambiar también el nombre en los informes del agente revisor, la auditoría (`mapa.md`), las sondas y en PENDIENTES / CLAUDE.md para que todo coincida (las capturas viejas dicen Z).
 - [x] v0.99.7 **Pasada del agente revisor y la auditoría con reglas comunes** (Jonay, 2-nov): edificios atravesados por una calle recortados, pasadizos para los caminos a pie que cruzan edificios, medianas abiertas en los pasos de peatones, sin coches aparcados sobre caminos, la trinchera ya no empuja a los coches de arriba, la Vía de Ronda conserva sus líneas. Quedan «se sale de la calzada» (piloto del agente al final de calles sin salida) y edificios de OSM que siguen metidos.
 - [x] v0.99.7 **Ventanas de las fachadas cortadas por el suelo o por el tejado** (Jonay, 2-nov): plantas enteras desde el suelo más alto, zócalo liso debajo en cuesta, altura en plantas enteras.
 - [x] v0.99.6 **Baloncesto: tiro, robo, rebote, tapón y los cuatro mates de los combos con el pack; aspectos distintos** (Jonay, 27-oct a 2-nov): los mates acaban con las manos en el aro (se inclina), la red se mueve, balón algo mayor que la cabeza, jugadores un 6 % más pequeños y cada uno con su pelo y su talla.

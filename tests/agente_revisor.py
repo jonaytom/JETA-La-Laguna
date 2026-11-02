@@ -211,7 +211,7 @@ def write_report(issues, plan, checked, t0, estado, prev=None):
          f'- Comparado con: {pf or "— (primer informe)"}.', '',
          f'**{len(issues)} avisos: {nN} nuevos, {len(issues) - nN} siguen; {len(fixed)} arreglados desde el informe anterior.**', '']
     if fixed:
-        L += ['## Arreglados', '', '| X | Z | Vía | Tipo |', '|---|---|---|---|']
+        L += ['## Arreglados', '', '| X | Y | Vía | Tipo |', '|---|---|---|---|']
         L += [f"| {q.get('x')} | {q.get('z')} | {q.get('name') or q.get('type', '')} (#{q.get('ri')}) | {NAMES.get(q['kind'], q['kind'])} |" for q in fixed[:60]]
         L.append('')
     by = {}
@@ -219,7 +219,7 @@ def write_report(issues, plan, checked, t0, estado, prev=None):
     for k, lst in sorted(by.items(), key=lambda kv: -len(kv[1])):
         lst.sort(key=lambda q: (q['estado'] != 'nuevo', q.get('pasada', '')))
         L.append(f'## {NAMES.get(k, k)} ({len(lst)})'); L.append('')
-        L.append('| | X | Z | Vía | Pasada | Prueba | Detalle | Captura |'); L.append('|---|---|---|---|---|---|---|---|')
+        L.append('| | X | Y | Vía | Pasada | Prueba | Detalle | Captura |'); L.append('|---|---|---|---|---|---|---|---|')
         for q in lst[:80]:
             L.append(f"| {'🆕' if q['estado'] == 'nuevo' else '↻'} | {q.get('x', '')} | {q.get('z', '')} | {q.get('name') or q.get('type', '')} (#{q.get('ri', '')}) | {q.get('pasada', '')} | {q.get('prueba', '')} | {q['msg']} | {('![](' + q['img'] + ')') if q.get('img') else ''} |")
         L.append('')
@@ -290,7 +290,7 @@ async def main():
                             if n < 400:
                                 n += 1; fn = f'v{VER}_{FECHA}_{n:03d}.jpg'; await snap_to(pg, os.path.join(IMG, fn)); q['img'] = 'img/' + fn
                             issues.append(q)
-                            log(f'[{prueba} · {q["pasada"]}] {NAMES.get(q["kind"], q["kind"])} en X {q["x"]} Z {q["z"]} — {q.get("name") or q.get("type", "")} (#{ri}): {q["msg"]}')
+                            log(f'[{prueba} · {q["pasada"]}] {NAMES.get(q["kind"], q["kind"])} en X {q["x"]} Y {q["z"]} — {q.get("name") or q.get("type", "")} (#{ri}): {q["msg"]}')
                         await pg.evaluate("__dbg.GAME.state='play'")
                     if (j + 1) % 25 == 0:
                         write_report(issues, plan, checked, t0, f'en curso ({prueba} {j + 1}/{len(lst)})', prev)

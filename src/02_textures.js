@@ -49,18 +49,20 @@ const TEX = {};
   // ---------------- paving (La Laguna stone slabs)
   {
     const c = mkCanvas(256, 256), x = c.getContext('2d');
-    noiseFill(x, 256, 256, [150, 146, 138], 18, 21);
+    // v0.99.7 (Jonay, 2-nov, docs/referencias/empedrado/: «el empedrado de la ciudad en las zonas peatonales es más
+    // oscuro»): grey basalt setts, small rectangles laid in rows, with darker joints
+    noiseFill(x, 256, 256, [96, 94, 92], 12, 21);
     const r = mulberry(7);
-    for (let row = 0; row < 8; row++) {
-      const hh = 32; let col = -(row % 2) * 20;
+    for (let row = 0; row < 16; row++) {
+      const hh = 16; let col = -(row % 2) * 14;
       while (col < 256) {
-        const ww = 36 + r() * 28; const g = 125 + r() * 45;
-        x.fillStyle = `rgba(${g},${g - 4},${g - 12},0.55)`; x.fillRect(col + 1, row * hh + 1, ww - 2, hh - 2);
-        x.strokeStyle = 'rgba(60,58,55,0.8)'; x.lineWidth = 1.5; x.strokeRect(col, row * hh, ww, hh);
+        const ww = 24 + r() * 18; const g = 78 + r() * 38, t = r() < 0.5 ? 2 : -2;
+        x.fillStyle = `rgba(${g + t},${g},${g + 3},0.7)`; x.fillRect(col + 1, row * hh + 1, ww - 2, hh - 2);
+        x.strokeStyle = 'rgba(42,40,40,0.85)'; x.lineWidth = 1.2; x.strokeRect(col, row * hh, ww, hh);
         col += ww;
       }
     }
-    speckle(x, 256, 256, 600, ['rgba(80,80,80,.4)', 'rgba(200,200,190,.35)'], 1, 2, 9);
+    speckle(x, 256, 256, 700, ['rgba(40,40,42,.45)', 'rgba(150,148,145,.3)'], 1, 2, 9);
     TEX.paving = canvasTex(c);
   }
   // ---------------- sidewalk tiles (panot-like)

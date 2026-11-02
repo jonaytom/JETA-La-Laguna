@@ -3,6 +3,14 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 0.99.8 — 2026-11-02 — Empedrado basáltico, rueda del ratón para las armas y coordenadas X, Y con altura
+- **Empedrado del casco** (Jonay: «es más oscuro», `docs/referencias/empedrado/`): adoquín gris basáltico oscuro en
+  hileras, con juntas oscuras (calles peatonales y plazas).
+- **Armas** (Jonay: «la rueda del ratón debería dejar cambiar de arma»): rueda abajo = siguiente (puños → pistola → rifle de
+  agua), arriba = la anterior.
+- **Minimapa** (Jonay: «estaría bien poner X, Y y la altura»): «X 386 · Y −276 · 562 m» (Y es la antigua Z; la altura,
+  sobre el mar). El agente revisor escribe ya X, Y en sus informes.
+
 ## 0.99.7 — 2026-11-02 — Pasada del agente revisor y la auditoría: reglas comunes; fachadas con plantas enteras
 - **Reglas generales** (Jonay: «¿podremos aplicar alguna regla común para evitar estos problemas al generar nuevos?»),
   sacadas de los avisos del agente revisor (156 → 144, 44 desaparecen) y de la auditoría:

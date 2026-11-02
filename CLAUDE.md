@@ -9,6 +9,8 @@
 - **Herramientas de prueba**: las que tengan algo de complejidad se guardan en `tests/` (pruebas) o
   `tests/herramientas/` (fotos, sondas; índice en `LEEME.md`) y se reutilizan; no rehacerlas en cada versión.
 - El objetivo principal del juego es recrear bien el mapa real de La Laguna (OpenStreetMap). Comercios: siempre parodias.
+- **Coordenadas** (Jonay, 2-nov, v0.99.7): en pantalla, informes, PENDIENTES y mensajes se escriben **X, Y** para el plano y la
+  **altura** aparte (m sobre el mar). Y es lo que el código llama `z` (y lo que los apuntes y capturas viejos llaman Z).
 
 - **Norma (Jonay, v0.64.1): todo lo que se ejecute (pruebas, fotos, sondas, herramientas de mapa, descargas…) se
   ejecuta en el PC de Jonay**, no en la nube: así no gasta uso y el rendimiento es siempre el mismo equipo. Claude edita

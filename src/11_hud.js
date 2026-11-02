@@ -168,7 +168,7 @@ const HUD = (() => {
     update(dt) {
       // (audit P1.1) DOM is touched only when a value changes; elements cached; minimap at 30 Hz; prompts every 6 frames
       tick++;
-      setT('coords', 'X ' + Math.round(PLAYER.x) + '   Z ' + Math.round(PLAYER.z));
+      setT('coords', 'X ' + Math.round(PLAYER.x) + ' · Y ' + Math.round(PLAYER.z) + ' · ' + Math.round((PLAYER.y || 0) + HM.base) + ' m'); /* v0.99.7 (Jonay): X, Y on the map and the altitude above the sea; Y is the old Z */
       if (tick % 2 === 0) drawMinimap();
       const h = GAME.tod, hh = Math.floor(h), mm2 = Math.floor((h - hh) * 60);
       setT('clock', String(hh).padStart(2, '0') + ':' + String(mm2).padStart(2, '0'));
