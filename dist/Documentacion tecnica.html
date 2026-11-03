@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.0.8</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.0.9</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,13 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.0.9 — 2026-11-03 — El GPS ya no da vueltas por los sentidos únicos</h2>
+<ul>
+<li><strong>Ruta en coche</strong> (Jonay: «las indicaciones de ruta hacen unas vueltas terribles… evitemos tener en cuenta el sentido de
+  la calle salvo en autopistas, Vía de Ronda y vías rápidas»): el GPS puede ir en contra por las calles de un solo
+  sentido; solo los respeta en autopistas, autovías, la Vía de Ronda y la Carretera General del Norte. El tráfico sigue
+  yendo en su sentido.</li>
+</ul>
 <h2>1.0.8 — 2026-11-03 — Ninguna calle por encima de una rampa abierta</h2>
 <ul>
 <li><strong>Rampas de aparcamiento y trincheras</strong> (Jonay, Plaza del Cristo X 256, Y −552 y la salida del parking en X 124, Y −637:

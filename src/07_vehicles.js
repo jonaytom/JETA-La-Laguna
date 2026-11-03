@@ -9,6 +9,12 @@ const GRAPH = (() => {
     return { i, a: e[0], b: e[1], type, oneway: !!e[3], w, name: e[5], pts, cum, len: cum[cum.length - 1], speed };
   });
   edges.forEach((e) => { if (e.len < 0.5) return; nodes[e.a].out.push({ e: e.i, dir: 1 }); if (!e.oneway) nodes[e.b].out.push({ e: e.i, dir: -1 }); });
+  // v1.0.9 (Jonay: «para la ruta en coche evitemos tener en cuenta el sentido de la calle salvo en autopistas, Vía de Ronda
+  // y vías rápidas»): the GPS may go the wrong way along a one-way street; the traffic keeps to the real senses
+  const fastRoad = (E) => /^(motorway|trunk)/.test(E.type) || /V[ií]a de Ronda|Autopista|Autov[ií]a|Carretera General del Norte/i.test(typeof E.name === 'number' ? (E.name >= 0 ? DATA.S[E.name] || '' : '') : E.name || ''); // (the name is an index into DATA.S)
+  edges.forEach((e) => { if (e.len >= 0.5) e.fast = fastRoad(e); });
+  nodes.forEach((nd) => { nd.gout = nd.out.slice(); });
+  edges.forEach((e) => { if (e.len >= 0.5 && e.oneway && !e.fast) nodes[e.b].gout.push({ e: e.i, dir: -1 }); });
   // node spatial grid
   const NG = new Map(), CS = 60;
   nodes.forEach((nd, i) => { const k = Math.floor(nd.x / CS) * 1000 + Math.floor(nd.z / CS); let l = NG.get(k); if (!l) NG.set(k, l = []); l.push(i); });
@@ -28,14 +34,14 @@ const GRAPH = (() => {
     out.x = x1 + (x2 - x1) * t - dz * off; out.z = z1 + (z2 - z1) * t + dx * off; out.dx = dx; out.dz = dz; return out;
   }
   // A* over nodes (edge-aware), returns list of points [x,z,...]
-  function route(from, to) {
+  function route(from, to, gps = false) {
     if (from < 0 || to < 0) return null;
     const g = new Map([[from, 0]]), came = new Map(); const open = [[0, from]]; const H = (i) => Math.hypot(nodes[i].x - nodes[to].x, nodes[i].z - nodes[to].z);
     let it = 0;
     while (open.length && it++ < 6000) {
       let bi = 0; for (let i = 1; i < open.length; i++) if (open[i][0] < open[bi][0]) bi = i; const [, cur] = open.splice(bi, 1)[0];
       if (cur === to) break;
-      for (const o of nodes[cur].out) { const E = edges[o.e]; const nx = o.dir > 0 ? E.b : E.a; const ng = g.get(cur) + E.len * (E.type.startsWith('motorway') ? 0.7 : 1); if (ng < (g.has(nx) ? g.get(nx) : 1e12)) { g.set(nx, ng); came.set(nx, [cur, o]); open.push([ng + H(nx), nx]); } }
+      for (const o of (gps ? nodes[cur].gout : nodes[cur].out)) { const E = edges[o.e]; const nx = o.dir > 0 ? E.b : E.a; const ng = g.get(cur) + E.len * (E.type.startsWith('motorway') ? 0.7 : 1); if (ng < (g.has(nx) ? g.get(nx) : 1e12)) { g.set(nx, ng); came.set(nx, [cur, o]); open.push([ng + H(nx), nx]); } }
     }
     if (!came.has(to) && from !== to) return null;
     const segs = []; let c = to; while (c !== from) { const [p, o] = came.get(c); segs.push(o); c = p; }
@@ -57,16 +63,16 @@ const GRAPH = (() => {
   // above, and ends on the target's street
   function routeFrom(x, z, h, tx, tz) {
     const ne = nearestEdge(x, z, 25); let pre = null, from = -1;
-    if (ne) { const E = edges[ne.e]; const fwd = Math.sin(h) * ne.dx + Math.cos(h) * ne.dz >= 0; let dir = fwd ? 1 : -1; if (dir < 0 && E.oneway) dir = 1;
+    if (ne) { const E = edges[ne.e]; const fwd = Math.sin(h) * ne.dx + Math.cos(h) * ne.dz >= 0; let dir = fwd ? 1 : -1; if (dir < 0 && E.oneway && E.fast) dir = 1;
       from = dir > 0 ? E.b : E.a; pre = [x, z, ne.x, ne.z]; const p = E.pts, n2 = p.length / 2;
       if (dir > 0) for (let k = ne.k; k < n2; k++) pre.push(p[k * 2], p[k * 2 + 1]); else for (let k = ne.k - 1; k >= 0; k--) pre.push(p[k * 2], p[k * 2 + 1]); }
     else from = nearestNode(x, z);
     const te = nearestEdge(tx, tz, 40); let to = nearestNode(tx, tz), post = [tx, tz];
     if (te) { const E = edges[te.e]; const cands = [E.a, E.b]; let bestL = 1e12, best = null;
-      for (const c of cands) { const r = route(from, c); if (!r) continue; let L = 0; for (let i = 2; i < r.length; i += 2) L += Math.hypot(r[i] - r[i - 2], r[i + 1] - r[i - 1]); L += c === E.a ? te.s : E.len - te.s; if (L < bestL) { bestL = L; best = [c, r]; } }
+      for (const c of cands) { const r = route(from, c, true); if (!r) continue; let L = 0; for (let i = 2; i < r.length; i += 2) L += Math.hypot(r[i] - r[i - 2], r[i + 1] - r[i - 1]); L += c === E.a ? te.s : E.len - te.s; if (L < bestL) { bestL = L; best = [c, r]; } }
       if (best) { to = best[0]; const p = E.pts, n2 = p.length / 2; const tail = []; if (to === E.a) for (let k = 1; k < te.k; k++) tail.push(p[k * 2], p[k * 2 + 1]); else for (let k = n2 - 2; k >= te.k; k--) tail.push(p[k * 2], p[k * 2 + 1]);
         return [...(pre || [x, z]), ...best[1], ...tail, te.x, te.z, tx, tz]; } }
-    const r = route(from, to); return r ? [...(pre || [x, z]), ...r, ...post] : null;
+    const r = route(from, to, true); return r ? [...(pre || [x, z]), ...r, ...post] : null;
   }
   return { nodes, edges, nearestNode, nearestEdge, sample, route, routeFrom };
 })();

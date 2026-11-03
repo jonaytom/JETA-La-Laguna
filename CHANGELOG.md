@@ -3,6 +3,12 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.0.9 — 2026-11-03 — El GPS ya no da vueltas por los sentidos únicos
+- **Ruta en coche** (Jonay: «las indicaciones de ruta hacen unas vueltas terribles… evitemos tener en cuenta el sentido de
+  la calle salvo en autopistas, Vía de Ronda y vías rápidas»): el GPS puede ir en contra por las calles de un solo
+  sentido; solo los respeta en autopistas, autovías, la Vía de Ronda y la Carretera General del Norte. El tráfico sigue
+  yendo en su sentido.
+
 ## 1.0.8 — 2026-11-03 — Ninguna calle por encima de una rampa abierta
 - **Rampas de aparcamiento y trincheras** (Jonay, Plaza del Cristo X 256, Y −552 y la salida del parking en X 124, Y −637:
   «la entrada al parking tiene una carretera encima… esto no puede pasar nunca»): las calles, aceras, plazas y líneas que se

@@ -226,7 +226,30 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   por encima con una animación de salto apoyando la mano. No hay ninguna en el esqueleto actual: sacarla de Mixamo
   («Jump Over», «Vault»; ver «Recursos externos») o hacerla a mano, y detectar la altura del obstáculo delante.
 
+### Cielo, luz y hora del día
+
+- [ ] ⚡ **Anochece de golpe** (Jonay, 3-nov: «oscurece muy de golpe, debería ser más gradual; de un segundo a otro te
+  oscurece muchísimo»): al pasar de día a noche la luz cae casi de una vez. Hacer el atardecer y el amanecer graduales
+  (sol, luz ambiente, niebla y cielo con una curva suave de ~1 hora de juego) y mirar si hay un salto al cambiar la
+  velocidad del reloj de día a noche (`dayRate` en `13_main.js`: 150 s por hora de día y 40 s de noche desde las 20:24).
+
 ### HUD y minimapa
+
+- [~] ◐ v1.0.9 (sin sentidos únicos salvo en vías rápidas, como pidió Jonay; quedan la vuelta en el sitio, la rebaja de las autopistas y los giros) **La ruta del GPS da vueltas enormes** (Jonay, 3-nov: «las indicaciones de ruta hacen unas vueltas terribles, como
+  si no quisieran coger dirección prohibida… ¿cómo se decide la ruta?»). Cómo va hoy (`07_vehicles.js`, `GRAPH.routeFrom`):
+  en coche, A* por el grafo del tráfico respetando los sentidos únicos del OSM; empieza siempre hacia donde mira el coche
+  (nunca da la vuelta en la calle), y las autopistas cuentan como 0,7 veces su largo (para preferirlas). A pie
+  (`WALKG` en `11_hud.js`) no hay sentidos y se prefieren las calles peatonales. Arreglos posibles:
+  - dejar dar la vuelta en el sitio (o en el primer cruce) con una penalización (~60 m) en vez de prohibirla;
+  - quitar o suavizar la rebaja de las autopistas (0,7 → 0,9), que lleva a dar rodeos por ellas;
+  - una pequeña penalización por giro, para no hacer zigzag por las manzanas;
+  - revisar sentidos únicos mal puestos en el OSM o creados al separar sentidos (calles que salen de un solo sentido).
+
+- [ ] ⚡ **Carreras: el tramo siguiente en el minimapa, en amarillo suave en vez de azul** (Jonay, 3-nov, carrera
+  «Gánale al pijo», captura: «el siguiente punto de ruta del minimapa me gustaría que se viera como el amarillo actual
+  pero más suave en lugar de azul»): el trazo discontinuo del tramo siguiente se pinta en `#46c3ff` (`11_hud.js`,
+  `MISSIONS.aheadPath()`, ~línea 125). Pasarlo al amarillo de la ruta (`#f5b72e`) más claro y transparente (p. ej.
+  `#f5d98a` al 55 %), y lo mismo en el mapa grande si lo pinta.
 
 
 ### Misiones, historia y economía
@@ -298,6 +321,13 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Tiendas y edificios del casco
 
+- [ ] ◐ **Pasillos estrechos entre casas que no existen** (Jonay, 3-nov, X 38, Y −1, junto al Ayuntamiento, captura:
+  «este hueco está raro… por ahí no te deberías poder colar al otro lado; veo muchos huecos de este estilo entre casas que
+  no existen en la realidad»): entre dos edificios pegados queda una rendija de 1–2 m por la que se ve y se pasa a la
+  manzana de atrás. Sale de que cada edificio se dibuja 0,75 m metido hacia dentro de su planta (`insetPoly` en
+  `buildBuildings`) y de plantas del OSM que no llegan a tocarse. Regla: donde dos edificios vecinos dejan entre ellos un
+  hueco de menos de ~3 m que no es una calle ni un camino del mapa, cerrarlo (estirar las fachadas hasta juntarse o poner
+  un muro a la altura de la planta baja, con choque). Contarlos con una sonda en todo el mapa y fotos.
 - [ ] ◐ **Edificio que se mete en la calzada del Camino del Cañaveral** (Jonay, 3-nov, X 234, Y −773, captura: «este
   edificio sí que invade raro… ¿no está detectado?»): una casa baja blanca con la esquina en zigzag ocupa media calzada. No
   es de los del Catastro nuevos (es del OSM). Mirar si sale en las invasiones de la auditoría (`mapa.md`) y por qué el
@@ -365,6 +395,14 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Calles, túneles, puentes, enlaces y aeropuerto
 
+- [ ] ◐ **Puentes: grietas en las uniones y sin marcas viales** (Jonay, 3-nov, Vía de Ronda X 631, Y 600, captura: «en
+  muchos puentes se ven como grietas en las uniones y pierden las marcas viales»): en la junta entre la calzada y el
+  tablero del puente queda una raja fina (se ve el fondo) y las líneas del carril se cortan en todo el tablero. Cerrar la
+  junta (que el tablero empiece donde acaba la calzada, solapando un poco) y pintar las líneas también sobre los puentes
+  (la 0.99.6 ya lo hizo en parte: mirar por qué aquí no).
+- [ ] ◐ **Arranque y pintado más lentos desde la 1.0.4** (auditoría 1.0.8): arranque 11 → 14 s y pintar a 720p
+  13,6 → 24 ms (en la auditoría; la sonda con la tarjeta daba 14–18 ms en la 1.0.4). Medir qué pesa: los muros (cortes por
+  calzada, 0,75 m cada muestra), las tapias, los edificios del Catastro y el recorte de calles sobre rampas (`cutAware`).
 - [ ] ◐ **Calle que acaba en la Vía de Ronda sin valla** (Jonay, 3-nov, X 498, Y −493, captura: «por aquí no se debería
   poder acceder a la Vía de Ronda, debería haber vallado»): una calle sin salida termina en el talud junto a la Vía de
   Ronda y se baja con el coche. Poner valla o bionda al final de las calles sin salida que dan a una vía rápida (autopista,
@@ -381,6 +419,12 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   mapa que busque cada rampa, boca de túnel o paso inferior y las calzadas, aceras y plazas que la pisan a otra altura
   (hay `auditCrossings` en `__dbg`), con foto de cada sitio; y al construir, cortar la calzada de arriba donde abre la
   rampa (como `finalizeCuts` / `TCUTS`) o convertirla en un paso elevado con su losa si de verdad pasa por encima.
+  - v1.0.8: recortadas las calles, aceras y plazas sobre el tramo abierto de las rampas de los aparcamientos.
+  - Jonay (3-nov, aparcamiento de La Trinidad, X −78, Y 27, captura: «la entrada al parking de La Trinidad es muy estrecha
+    porque una acera pasa por encima a los lados; eso toca hacerlo bien: en realidad la bajada también es salida, caben
+    sobrados dos coches»): la rampa se hizo de un sentido y estrecha, y las aceras de los lados se montan sobre sus muros
+    (las baldosas por encima del borde azul). Hacerla de doble sentido (dos carriles, ~7 m más los muros), con las aceras
+    cortadas donde abre, y que los coches puedan salir por ella. `05m_parking.js` (`buildRamp`, opción `w`).
 - [ ] ◐ **Marcas viales de más: líneas pegadas a las de separación y calles con 3 carriles que no los tienen** (Jonay, 3-nov,
   Calle Juana La Blanca X −932, Y −249, captura: «hay marcas viales al lado de las separaciones de carriles, y no me suena
   que esas calles tengan 3 carriles»): junto a cada línea discontinua sale otra línea más corta al lado, y la calle se pinta
@@ -470,6 +514,19 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   Viene saliendo de un túnel (bajo el puente de la autopista, junto al Hospital Universitario) y termina en La Cuesta.
   - En las fotos: calzada de un carril por sentido a cada lado de la plataforma del tranvía, cruces con «prioridad
     tranvía», gasolinera DISO (nº 108), naves y el Lidl hacia el final.
+
+### Mobiliario urbano y objetos rompibles
+
+- [ ] ◐ **Bancos, señales, farolas y papeleras con choque, y que se rompan si vas rápido** (Jonay, 3-nov, X −765, Y −536,
+  captura con el coche atravesando un banco: «los bancos no se deberían poder atravesar, quizá sí destrozarse si vas rápido
+  y si no, como poco, chocar… habrá que hacer algunos elementos rompibles, cosas no muy grandes como bancos, señales de
+  tráfico y cosas así»).
+  - Primero: inventario de lo que se coloca por la calle (bancos de plazas y parques, señales de tráfico, farolas,
+    papeleras, contenedores, bolardos, macetas, mesas de terraza) y cuáles tienen ya choque (`COL.addCirc` / `addSeg`).
+  - Todos con choque; los pequeños, rompibles: a poca velocidad el coche choca; por encima de ~30 km/h el objeto sale
+    despedido o se rompe en trozos (física sencilla, unos segundos), el coche pierde algo de velocidad y queda roto en el
+    sitio un rato (luego se repone). Las farolas y los semáforos, doblados en vez de rotos.
+  - Que no estropee el rendimiento: los objetos siguen juntados en pocas mallas; solo el que se rompe se separa.
 
 ### Gente de la calle
 

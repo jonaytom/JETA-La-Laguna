@@ -1,0 +1,3 @@
+# v1.0.9: GPS sin sentidos únicos
+prueba_arranque.py
+prueba_carpeta.py
