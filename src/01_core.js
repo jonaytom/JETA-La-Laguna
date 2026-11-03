@@ -1,7 +1,7 @@
 // ============ GTA La Laguna — core ============
 import * as THREE from 'three';
 
-const DATA = JSON.parse(document.getElementById('mapdata').textContent);
+const DATA = window.__MAPDATA || JSON.parse(document.getElementById('mapdata').textContent); // v1.0.1: the folder version loads it from datos/mapa.js
 const STR = DATA.S;
 // ---------- play area: bounding box minus the zones that are not needed (Jonay's map, docs/referencias/mapa/zonas_a_quitar.png)
 const WORLD = { x0: -4750, x1: 3450, z0: -1250, z1: 4430 }; // west part only as a band for the airport; east and south only the La Cuesta and Taco zones (see WORLD_EXCL)

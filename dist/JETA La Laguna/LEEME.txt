@@ -1,0 +1,10 @@
+﻿JETA La Laguna — versión en carpeta para probar
+
+1. Descomprime el zip donde quieras (por ejemplo en Documentos).
+2. Abre la carpeta y haz doble clic en «Jugar.bat». La primera vez crea en el Escritorio el acceso directo
+   «JETA La Laguna», con su icono; a partir de ahí, ábrelo desde ahí.
+3. El juego se abre a pantalla completa en Edge o Chrome. Para salir: Alt+F4.
+
+Si Windows avisa de que el archivo viene de internet, pulsa «Más información» → «Ejecutar de todas formas».
+Las partidas se guardan en este PC (no dentro de la carpeta), así que puedes sustituir la carpeta por una versión nueva.
+No hace falta internet ni instalar nada.

@@ -3,6 +3,22 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.0.1 — 2026-11-03 — El juego en carpeta con lanzador e icono, pantalla completa y esquinas recortadas en paralelo a la calle
+- **Versión en carpeta para los testers** (Jonay: «que no sea un archivo único… y hacer zip para pasarlo»): `build.py` saca
+  `dist/JETA La Laguna/` con `Jugar.bat`, `LEEME.txt` y `juego/` (`index.html`, `js/juego.js` con su mapa de fuentes —
+  los errores dicen `src/<archivo>.js` y la línea—, `datos/mapa.js`, `lib/` con Three.js y `lanzador/`). El lanzador sirve
+  la carpeta en `localhost:8790` con PowerShell (viene con Windows) y abre el juego **a pantalla completa** como una
+  aplicación en Edge o Chrome; si no hay ninguno, en el navegador por defecto. La primera vez, `Jugar.bat` crea en el
+  Escritorio el acceso directo «JETA La Laguna» **con el icono del juego**. El servidor se cierra solo al cerrar el juego.
+  Orden nueva del trabajador: `zip_testers` (deja `JETA La Laguna v<versión>.zip` en la carpeta del juego).
+- **Pantalla completa también en el navegador** (Jonay): al darle a «Jugar» (y a «Continuar», porque Esc la quita) el
+  juego la pide si la ventana no llena ya la pantalla.
+- **Esquinas de edificios en los cruces** (Jonay: «que el recorte siga en paralelo a la calle, que la esquina no acabe en 45
+  grados»): donde el corte recto pasaría del final de la calle, solo se quita lo que está en la calzada, con una muesca en
+  ángulo recto paralela a la calle.
+- **Limpieza**: los restos de compilaciones y sesiones viejas pasan a `OLD-Borrar\` (orden `mover_old` del trabajador,
+  lista en `scripts/old_borrar.txt`; no se borra nada).
+
 ## 1.0.0 — 2026-11-03 — Rendimiento: 1080p a 60 fps en «alta», calles al hueco entre edificios y alturas reales
 - **Pintado** (Jonay: «el objetivo es jugar a 1080 a 60 fps en mi gráfica con los gráficos al máximo»): con la RX 6600 en
   «alta» a 1080p, de 23–34 ms por fotograma a **12–14 ms** (sonda nueva con la tarjeta gráfica,

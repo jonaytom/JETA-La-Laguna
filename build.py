@@ -63,6 +63,49 @@ open('dist/gta-la-laguna.html','w',encoding='utf-8').write(make('https://cdnjs.c
 # the copy for the PC carries Three.js inside (data: URL in the import map) so it runs without internet
 THREE_DATA='data:text/javascript;base64,'+base64.b64encode(open('data/three.module.min.js','rb').read()).decode()
 open('dist/JETA La Laguna.html','w',encoding='utf-8').write(make(THREE_DATA,False))
+# v1.0.1 (Jonay: «hagamos el juego en carpeta, con el index llamado desde un lanzador con el icono, a pantalla completa»):
+# dist/juego/ = index.html + js/juego.js (with a source map: errors say src/<file>.js and its line) + datos/mapa.js +
+# lib/three + lanzador/ (servidor PowerShell, acceso directo con icono). The worker's «zip_testers» zips it.
+def make_folder():
+    J = os.path.join('dist', 'JETA La Laguna'); G = os.path.join(J, 'juego')
+    shutil.rmtree(J, ignore_errors=True)
+    for d in ('js', 'datos', 'lib', 'lanzador'): os.makedirs(os.path.join(G, d))
+    s = make('./lib/three.module.min.js', False)
+    s = s.replace('<script id="mapdata" type="application/json">' + data + '</script>', '<script src="datos/mapa.js"></script>', 1)
+    s = s.replace('<script type="module">\n' + js + '\n</script>', '<script type="module" src="js/juego.js"></script>', 1)
+    assert 'datos/mapa.js' in s and 'js/juego.js' in s, 'make_folder: la plantilla ha cambiado'
+    open(os.path.join(G, 'index.html'), 'w', encoding='utf-8').write(s)
+    open(os.path.join(G, 'datos', 'mapa.js'), 'w', encoding='utf-8').write('window.__MAPDATA = ' + data + ';\n')
+    # the game in one module (all src/ files share one scope), with a line-by-line source map back to src/
+    files = sorted(glob.glob('src/*.js')); parts = []; maps = []; B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+    def vlq(v):
+        v = (-v << 1) | 1 if v < 0 else v << 1; o = ''
+        while True:
+            d = v & 31; v >>= 5
+            if v: d |= 32
+            o += B64[d]
+            if not v: return o
+    prev_src = 0; prev_line = 0
+    for si, f in enumerate(files):
+        txt = open(f, encoding='utf-8').read(); lines = txt.split('\n'); parts.append(txt)
+        for li in range(len(lines)):
+            maps.append('A' + vlq(si - prev_src) + vlq(li - prev_line) + 'A'); prev_src, prev_line = si, li
+    out = '\n'.join(parts)
+    smap = {'version': 3, 'file': 'juego.js', 'sources': ['../../../../' + f.replace(os.sep, '/') for f in files], 'names': [], 'mappings': ';'.join(maps)}
+    open(os.path.join(G, 'js', 'juego.js'), 'w', encoding='utf-8').write(out + '\n//# sourceMappingURL=juego.js.map\n')
+    open(os.path.join(G, 'js', 'juego.js.map'), 'w', encoding='utf-8').write(json.dumps(smap))
+    shutil.copy('data/three.module.min.js', os.path.join(G, 'lib', 'three.module.min.js'))
+    for f in ('servidor.ps1', 'lanzar.bat', 'acceso_directo.ps1'):
+        t = open(os.path.join('lanzador', f), encoding='utf-8').read().replace('\r\n', '\n')
+        enc = 'utf-8-sig' if f.endswith('.ps1') else 'cp1252'   # PowerShell 5 reads UTF-8 only with BOM; cmd, the ANSI page
+        open(os.path.join(G, 'lanzador', f), 'w', encoding=enc, errors='replace', newline='\r\n').write(t)
+    shutil.copy('assets/icono.ico', os.path.join(G, 'lanzador', 'icono.ico'))
+    for f, enc in (('Jugar.bat', 'cp1252'), ('LEEME.txt', 'utf-8-sig')):
+        t = open(os.path.join('lanzador', f), encoding='utf-8').read().replace('\r\n', '\n')
+        open(os.path.join(J, f), 'w', encoding=enc, errors='replace', newline='\r\n').write(t.replace('__VERSION__', open('VERSION').read().strip()))
+    return J
+try: print('carpeta', make_folder())
+except Exception as e: print('Aviso: no se pudo hacer la versión en carpeta:', e)
 print('ok', len(js))
 # documentación técnica en una sola página (dist/Documentacion tecnica.html)
 try:

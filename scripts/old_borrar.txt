@@ -1,0 +1,28 @@
+# v1.0.1 (Jonay, 3-nov): restos de compilaciones y sesiones anteriores que ya no usa nada. Se MUEVEN a
+# E:\Claude\GTA La Laguna\OLD-Borrar\ (con sus carpetas), no se borran. Orden del trabajador: mover_old
+#
+# En E:\Claude\GTA La Laguna (de cuando el juego se llamaba GTA La Laguna y se hacía en la nube, sept.–1 oct.)
+GTA La Laguna.html
+GTA_La_Laguna_codigo.zip
+JETA_La_Laguna_codigo.zip
+JETA La Laguna.zip
+laguna_osm.json
+laguna_osm2.json
+three.module.min.js
+Claude outputs
+# repo: herramientas de la época de la nube, sustituidas por el trabajador
+repo\tools\rutina_publicar.sh
+repo\tools\publicar_preparar.py
+repo\scripts\publicar.sh
+repo\scripts\configurar.log
+# repo: lanzadores de pruebas sustituidos (run_test_audit por el auditor; run_test_alta por la sonda con GPU)
+repo\tests\run_test_audit.py
+repo\tests\run_test_alta.py
+# repo: entradas de fotos de una sola vez (v0.77–0.78)
+repo\tests\vistas077.json
+repo\tests\vistas078.json
+repo\tests\vistas078b.json
+repo\tests\vistas078c.json
+# fotos de pruebas y encargos del trabajador de antes de noviembre (se vuelven a generar al pasar las pruebas)
+antiguos repo\tests\shots 3
+antiguos repo\cola\hecho 3

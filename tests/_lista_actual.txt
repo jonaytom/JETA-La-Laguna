@@ -1,5 +1,3 @@
-prueba_arranque.py
+prueba_carpeta.py
 prueba_recorte.py
-herramientas/sonda_tamanos.py
-herramientas/sonda_recorte_motivos.py
-herramientas/sonda_sueltas.py
+herramientas/foto_invasiones.py

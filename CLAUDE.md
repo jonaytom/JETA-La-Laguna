@@ -55,7 +55,8 @@
 `scripts\TRABAJADOR.bat` (ventana abierta en el PC de Jonay) ejecuta los encargos que Claude deja en
 `E:\Claude\GTA La Laguna\repo\cola\<id>.txt` y escribe el resultado en `cola\hecho\<id>.md`. Solo órdenes de una lista
 cerrada (`tools/trabajador.py`): `build`, `pruebas [listas…]` (sin nada = `cambios version`), `prep`, `merge_zona <zona>`, `copiar_html`,
-`publicar <versión>` (escribe `PUBLICAR.txt`: siempre la última), `esperar <s>`. Si no está abierto, pedirle a Jonay que
+`publicar <versión>` (escribe `PUBLICAR.txt`: siempre la última), `esperar <s>`, `zip_testers` (v1.0.1: el zip de la versión en
+carpeta para los testers) y `mover_old` (v1.0.1: mueve a `OLD-Borrar\` lo de `scripts/old_borrar.txt`; nunca borra). Si no está abierto, pedirle a Jonay que
 lo abra (o que lance el `.bat` que toque).
 
 **Esperar al trabajador (Jonay, 26-oct: «metes un sleep de 5 min y tardo segundos»)**: nada de esperas largas a

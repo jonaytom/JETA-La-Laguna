@@ -204,10 +204,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### HUD y minimapa
 
-- [ ] ⚡ **Pantalla completa al empezar en el navegador** (Jonay, 3-nov): al darle a «Jugar» en el PC, que se ponga a
-  pantalla completa, o al menos que lo pregunte. Ahora solo pasa en móvil (`goLandscape()` en `13_main.js`, solo con
-  `touchmode`). El navegador solo deja ponerla al pulsar algo, así que va en el clic de «Jugar»; también estaría bien una
-  opción en el menú de pausa.
 
 ### Misiones, historia y economía
 
@@ -349,6 +345,10 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Agente revisor (avisos de mapa)
 
+- [ ] ◐ **Auditoría 1.0.1 (APTO CON AVISOS)**: con la muesca paralela a la calle se van 9 invasiones y salen 6 nuevas: junto al
+  Intercambiador (X −182, Y 793 y X −171, Y 788; 2,1–2,6 m), C. Orión (X 616, Y 1510; 1,7 m) y C. Plutón (X 668, Y 1535;
+  1,3 m). Y vuelve el «poste» de C. Juan de Vera (X −149, Y −235), que es el alcalde de la misión. Mirar con fotos
+  (`tests/herramientas/foto_invasiones.py`, con estos puntos).
 - [ ] ◐ **Dos edificios de la auditoría 0.69 vuelven a invadir la calzada** (v1.0.0, `prueba_pendientes_faciles.py`; en la
   0.95 estaban a 0 m): X 73, Y 234 (edificio #865, junto a una secundaria del casco, 1,55 m) y X −909, Y −408 (#1357,
   Av. Lucas Vega / Callejón Montaraz, 1,41 m). Volvieron entre la 0.95 y la 0.99.8. La prueba los vigila con un margen
@@ -410,13 +410,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Rendimiento, auditorías y código
 
-- [ ] ◐ **Versión en carpeta para los testers** (Jonay, 3-nov: «¿ayudaría que no fuera todo un HTML todo junto? tener
-  los archivos separados en sus carpetas… y para pasarlo, mientras no tengamos instalador, me dices qué comprimir en un
-  zip»): que `build.py` saque, además del HTML único (el del Artifact y GitHub), una carpeta `dist/juego/` con
-  `index.html`, `js/` (los `src/*.js` tal cual o por grupos), `datos/` (el mapa y los sprites como `.js`, no `.json`,
-  para que abra con doble clic sin servidor: Chrome no deja leer `.json` desde `file://`) y `LEEME.txt`, y una orden
-  del trabajador `zip_testers` que la comprima. No acelera el pintado (lo que pesa son las llamadas de dibujo), pero los
-  errores salen con su archivo y línea, el navegador guarda en caché lo que no cambia y es más fácil de pasar y probar.
 - [~] ◐ v1.0.0 (`12m_mundialito.js`: la tabla de selecciones, una fila por equipo) **Partir funciones largas y ordenar
   los archivos con nota D o C** (auditorías 0.75, 0.76, 0.90 y 0.99.8): quedan `09eb_pixbasket.js` y `09ma_pixguanche.js`
   (el dibujante de la propuesta en una función de ~155 líneas), `12k_agua.js` (líneas muy largas y densas), `12j_campos.js`
@@ -505,6 +498,13 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Hecho
 
+- [x] v1.0.1 **Versión en carpeta para los testers, con lanzador, icono y pantalla completa** (Jonay, 3-nov): `dist/JETA La
+  Laguna/` (Jugar.bat, LEEME.txt, juego/) y la orden `zip_testers`; ver CHANGELOG 1.0.1. Los datos grandes que van dentro
+  del código (sprites en base64) siguen en `js/juego.js`: sacarlos a `datos/` pide cambiar cómo los lee cada módulo.
+- [x] v1.0.1 **Pantalla completa al empezar en el navegador** (Jonay, 3-nov): al darle a «Jugar» y a «Continuar».
+- [x] v1.0.1 **Esquinas de los edificios en los cruces, recortadas en paralelo a la calle** (Jonay, 3-nov, tras las fotos de
+  los 7 puntos del casco): muesca en ángulo recto (`subtractConvex`, 04b_recorte.js). Quedan la Capilla de la Cruz Verde
+  (que la calle la rodee) y la calle de servicio que cruza la plaza del Mercado (quitarla): por confirmar con Jonay.
 - [x] v1.0.0 **Auditorías viejas cerradas** (0.46, 0.49, 0.55, 0.58.2, 0.59, 0.75, 0.76): lo que quedaba de ellas está ahora en
   tres apuntes de «Rendimiento, auditorías y código» (pintado a 60 fps, arranque P2.1/P2.2 y funciones largas).
 - [x] v1.0.0 **Edificios que invaden la calzada** (auditorías 0.58.2 y 0.59; 0.99.8: 4 críticos y 77 altos; Jonay, 3-nov:

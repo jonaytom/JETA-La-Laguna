@@ -91,6 +91,43 @@ function narrowToGap() {
 // v1.0.0 (auditoría: 4 críticos y 77 altos que siguen en la calzada): tests only. When RCLIP.dbg is an array, each rule
 // that leaves a building as it was says why (herramientas/sonda_recorte_motivos.py)
 function clipWhy(m, s) { if (RCLIP && RCLIP.dbg) RCLIP.dbg.push(s ? m + ' [tramo ' + Math.round(s.ax) + ',' + Math.round(s.az) + ' ' + Math.round(s.L) + ' m, medio ancho ' + s.k0.toFixed(1) + ']' : m); }
+// v1.0.1 (Jonay: «que el recorte se haga siguiendo en paralelo a la calle, para que la esquina del edificio no acabe en 45
+// grados»): where the straight cut would run past the end of the road piece (a corner at a junction), only the part of
+// the building that is on the carriageway goes: the polygon minus the road's rectangle, a square notch parallel to the
+// street. R is convex; each «bite» of R into P is replaced by R's border between the way in and the way out.
+function subtractConvex(P, R, ends) { // ends: R's edges that are the ends of the road (the bevelled ones)
+  if (polyArea(R) < 0) { R = R.slice().reverse(); if (ends) ends = ends.map((j) => R.length - 2 - j < 0 ? R.length - 1 : R.length - 2 - j); }
+  const cr = (a, b, p) => (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0]);
+  const inR = (p) => { for (let i = 0; i < R.length; i++) if (cr(R[i], R[(i + 1) % R.length], p) < -1e-9) return false; return true; };
+  const inP = (x, z) => { let o = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const a = P[i], b = P[j]; if ((a[1] > z) !== (b[1] > z) && x < (b[0] - a[0]) * (z - a[1]) / (b[1] - a[1]) + a[0]) o = !o; } return o; };
+  const per = []; let acc = 0; for (let i = 0; i < R.length; i++) { per.push(acc); const q = R[(i + 1) % R.length]; acc += Math.hypot(q[0] - R[i][0], q[1] - R[i][1]); } const PER = acc;
+  // the walk along P with the crossings of R's border put in their place (each with where it falls on R's perimeter)
+  const W = []; let nx = 0;
+  for (let i = 0; i < P.length; i++) { const a = P[i], b = P[(i + 1) % P.length]; W.push({ p: a, inR: inR(a) }); const xs = [];
+    for (let j = 0; j < R.length; j++) { const c = R[j], d = R[(j + 1) % R.length], ex = b[0] - a[0], ez = b[1] - a[1], fx = d[0] - c[0], fz = d[1] - c[1], den = ex * fz - ez * fx; if (Math.abs(den) < 1e-12) continue;
+      const t = ((c[0] - a[0]) * fz - (c[1] - a[1]) * fx) / den, u = ((c[0] - a[0]) * ez - (c[1] - a[1]) * ex) / den; if (t > 1e-9 && t < 1 - 1e-9 && u >= 0 && u <= 1) xs.push({ t, j, pos: per[j] + u * Math.hypot(fx, fz), q: [a[0] + ex * t, a[1] + ez * t] }); }
+    xs.sort((m, n) => m.t - n.t); for (const x of xs) { W.push({ p: x.q, x: true, pos: x.pos, j: x.j }); nx++; } }
+  if (!nx) return W.every((w) => w.inR) ? [] : P; // all on the road, or no bite
+  let st = W.findIndex((w) => !w.x && !w.inR); if (st < 0) return [];
+  const out = []; let entry = null;
+  for (let k = 0; k < W.length; k++) { const w = W[(st + k) % W.length];
+    if (!w.x) { if (!entry && !w.inR) out.push(w.p); continue; }
+    if (!entry) { entry = w; out.push(w.p); continue; }
+    // the way out: R's corners between the two crossings, on the side that lies inside P
+    const fwd = [], bwd = []; for (let j = 0; j < R.length; j++) { const d1 = (per[j] - entry.pos + PER) % PER, d2 = (w.pos - entry.pos + PER) % PER; if (d1 > 0 && d1 < d2) fwd.push([d1, R[j]]); else if (d1 > d2) bwd.push([d1, R[j]]); }
+    fwd.sort((m, n) => m[0] - n[0]); bwd.sort((m, n) => n[0] - m[0]);
+    const mid = (L) => L.length ? L[0][1] : [(entry.p[0] + w.p[0]) / 2, (entry.p[1] + w.p[1]) / 2];
+    const pick = fwd.length && inP(...mid(fwd)) ? fwd : bwd.length && inP(...mid(bwd)) ? bwd : (fwd.length <= bwd.length ? fwd : bwd);
+    // v1.0.1 (Jonay: «la pared se hace paralela a la calle y la unión con la otra no hace falta que sea a 90 grados»): the
+    // step at the end of the road is bevelled, not square: its point on the old wall slides along that wall as far as the
+    // step is deep (about 135° at the inner corner), never past the next corner of the building
+    const slide = (pt, to, r) => { const dx = to[0] - pt[0], dz = to[1] - pt[1], L = Math.hypot(dx, dz), dep = Math.hypot(r[0] - pt[0], r[1] - pt[1]); if (L < 0.05) return pt; const m = Math.min(dep, L * 0.8); return [pt[0] + dx / L * m, pt[1] + dz / L * m]; };
+    if (ends && pick.length && ends.includes(entry.j) && out.length >= 2) out[out.length - 1] = slide(entry.p, out[out.length - 2], pick[0][1]);
+    for (const [, r] of pick) out.push(r);
+    let ex = w.p; if (ends && pick.length && ends.includes(w.j)) ex = slide(w.p, W[(st + k + 1) % W.length].p, pick[pick.length - 1][1]);
+    out.push(ex); entry = null; }
+  return out.length >= 3 ? out : [];
+}
 // a building that goes (only a strip on the pavement would be left): counted, with where and how big it was (tests).
 // One of 50 m² or more never goes (Jonay, 3-nov: «no me gustaría que se fuera nada de más de 50 m²; esos casos mirémoslos
 // uno a uno»): it stays as it was and goes on the list for the photos (herramientas/sonda_edificios_dudosos.py)
@@ -117,6 +154,9 @@ function roadClip(pts) {
     for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length];
       for (const tt of [0, 0.5]) { const x = p[0] + (q[0] - p[0]) * tt, z = p[1] + (q[1] - p[1]) * tt; const d = ((x - s.ax) * nx + (z - s.az) * nz) * sg; if (d >= s.k) continue;
         const t = (x - s.ax) * s.ux + (z - s.az) * s.uz; if (t >= 0 && t <= s.L) { hit = true; deep = Math.max(deep, s.k - d); } else if ((t < -1.5 || t > s.L + 1.5) && !onClipRoad(G, x, z, id)) beyond = true; } }
+    if (hit && beyond && deep >= 0.6) { // v1.0.1: a corner at the end of the road piece: a square notch along the street, not a cut across the whole building
+      const k = s.k, ex = s.ax + s.ux * s.L, ez = s.az + s.uz * s.L, R = [[s.ax + nx * k, s.az + nz * k], [ex + nx * k, ez + nz * k], [ex - nx * k, ez - nz * k], [s.ax - nx * k, s.az - nz * k]];
+      const Q = subtractConvex(P, R, [1, 3]); if (Q.length >= 3 && Q !== P && !selfCross(Q)) { P = Q; changed = true; clipWhy('lado: muesca paralela a la calle', s); } else clipWhy('lado: el corte pasaría del final de la calle', s); continue; }
     if (!hit || beyond || deep < 0.6) { if (hit) clipWhy(beyond ? 'lado: el corte pasaría del final de la calle' : 'lado: menos de 0,6 m', s); continue; } // grazing the kerb by a few centimetres: leave it
     const Q = clipHalf(P, s.ax, s.az, nx * sg, nz * sg, s.k); if (Q.length < 3) { clipWhy('lado: no queda nada: se quita', s); if (!goneNote(G, pts, 'está entero en la calzada')) return pts; return null; } P = Q; changed = true; }
   // corners that still stick into a road (where a road piece ends or bends inside the footprint): push that vertex out

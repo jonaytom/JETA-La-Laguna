@@ -16,6 +16,8 @@
 #   borrar_auditoria_vieja     borra repo\tools\auditoria (copia antigua del auditor)
 #   subir_git                  sube ya a GitHub (scripts\publicar.ps1; necesita «publicar <versión>» antes)
 #   descargar <clave>          baja una referencia de la lista cerrada DESCARGAS (p. ej. callejero) a docs/referencias/
+#   mover_old                  v1.0.1: mueve (nunca borra) lo que dice scripts\old_borrar.txt a E:\Claude\GTA La Laguna\OLD-Borrar\
+#   zip_testers                v1.0.1: comprime dist\JETA La Laguna (la versión en carpeta) en E:\Claude\GTA La Laguna\JETA La Laguna v<versión>.zip
 #   revisor [--solo-zonas|--todo|--lote N]   tests/agente_revisor.py (agente que conduce y anda por el mapa; solo si Jonay lo pide)
 # Si una orden falla (también «pruebas», que deja igualmente su informe), las siguientes no se hacen.
 import os, sys, re, time, shutil, subprocess, datetime
@@ -90,6 +92,40 @@ def orden(linea):
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req, timeout=120) as r, open(dst, 'wb') as f: f.write(r.read())
         return 0, f'{dst} ({os.path.getsize(dst) // 1024} KB)', int(time.time() - t0)
+    if o == 'zip_testers':  # v1.0.1 (Jonay): the folder version (dist/JETA La Laguna, made by build.py) zipped for the testers
+        import zipfile; t0 = time.time(); src = os.path.join(ROOT, 'dist', 'JETA La Laguna'); ver = open(os.path.join(ROOT, 'VERSION')).read().strip()
+        if not os.path.isdir(src): return 1, 'no existe ' + src + ' (haz «build» antes)', 0
+        dst = os.path.join(JUEGO, 'JETA La Laguna v' + ver + '.zip')
+        with zipfile.ZipFile(dst, 'w', zipfile.ZIP_DEFLATED) as z:
+            for base, _, fs in os.walk(src):
+                for f in fs: p = os.path.join(base, f); z.write(p, os.path.join('JETA La Laguna', os.path.relpath(p, src)))
+        return 0, f'{dst} ({os.path.getsize(dst) // 1048576} MB)', int(time.time() - t0)
+    if o == 'mover_old':  # v1.0.1 (Jonay: «lo antiguo lo mueves a una carpeta OLD-Borrar»): moves (never deletes) what
+        # scripts/old_borrar.txt lists, keeping its folders, into E:\Claude\GTA La Laguna\OLD-Borrar\. Lines: a path from
+        # E:\Claude\GTA La Laguna (file or folder), or «antiguos <carpeta> <días>» for the files older than that in a folder
+        t0 = time.time(); lst = os.path.join(ROOT, 'scripts', 'old_borrar.txt'); OLD = os.path.join(JUEGO, 'OLD-Borrar'); hechos = []; malos = []
+        if not os.path.exists(lst): return 1, 'no existe ' + lst, 0
+        def dentro(p): p = os.path.realpath(p); return p.startswith(os.path.realpath(JUEGO) + os.sep) and not p.startswith(os.path.realpath(OLD))
+        def mover(src):
+            rel = os.path.relpath(src, JUEGO); dst = os.path.join(OLD, rel)
+            if rel.split(os.sep)[0] == 'repo' and rel.split(os.sep)[1:2] and rel.split(os.sep)[1] in ('src', '.git'): malos.append(rel + ' (protegido)'); return
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            if os.path.exists(dst): dst += '.' + time.strftime('%Y%m%d%H%M%S')
+            shutil.move(src, dst); hechos.append(rel)
+        for ln in open(lst, encoding='utf-8'):
+            ln = ln.strip()
+            if not ln or ln.startswith('#'): continue
+            if ln.startswith('antiguos '):
+                _, d, dias = ln.split(None, 2); d = os.path.join(JUEGO, d); lim = time.time() - float(dias) * 86400
+                if not dentro(d) or not os.path.isdir(d): malos.append(ln); continue
+                for f in sorted(os.listdir(d)):
+                    p = os.path.join(d, f)
+                    if os.path.isfile(p) and os.path.getmtime(p) < lim: mover(p)
+                continue
+            p = os.path.join(JUEGO, ln)
+            if not dentro(p) or not os.path.exists(p): malos.append(ln + ' (no está)'); continue
+            mover(p)
+        return 0, f'movidos {len(hechos)} a {OLD}\n' + '\n'.join(hechos[:60]) + ('\n…' if len(hechos) > 60 else '') + ('\nno movidos: ' + '; '.join(malos) if malos else ''), int(time.time() - t0)
     if o == 'prep': return run([PY, 'prep.py'])
     if o == 'merge_zona' and len(a) == 1: return run([PY, os.path.join('tools', 'merge_zona.py'), a[0]])
     if o == 'copiar_html':

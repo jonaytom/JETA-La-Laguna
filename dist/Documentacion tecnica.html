@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.0.0</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.0.1</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,23 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.0.1 — 2026-11-03 — El juego en carpeta con lanzador e icono, pantalla completa y esquinas recortadas en paralelo a la calle</h2>
+<ul>
+<li><strong>Versión en carpeta para los testers</strong> (Jonay: «que no sea un archivo único… y hacer zip para pasarlo»): <code>build.py</code> saca
+  <code>dist/JETA La Laguna/</code> con <code>Jugar.bat</code>, <code>LEEME.txt</code> y <code>juego/</code> (<code>index.html</code>, <code>js/juego.js</code> con su mapa de fuentes —
+  los errores dicen <code>src/&lt;archivo&gt;.js</code> y la línea—, <code>datos/mapa.js</code>, <code>lib/</code> con Three.js y <code>lanzador/</code>). El lanzador sirve
+  la carpeta en <code>localhost:8790</code> con PowerShell (viene con Windows) y abre el juego <strong>a pantalla completa</strong> como una
+  aplicación en Edge o Chrome; si no hay ninguno, en el navegador por defecto. La primera vez, <code>Jugar.bat</code> crea en el
+  Escritorio el acceso directo «JETA La Laguna» <strong>con el icono del juego</strong>. El servidor se cierra solo al cerrar el juego.
+  Orden nueva del trabajador: <code>zip_testers</code> (deja <code>JETA La Laguna v&lt;versión&gt;.zip</code> en la carpeta del juego).</li>
+<li><strong>Pantalla completa también en el navegador</strong> (Jonay): al darle a «Jugar» (y a «Continuar», porque Esc la quita) el
+  juego la pide si la ventana no llena ya la pantalla.</li>
+<li><strong>Esquinas de edificios en los cruces</strong> (Jonay: «que el recorte siga en paralelo a la calle, que la esquina no acabe en 45
+  grados»): donde el corte recto pasaría del final de la calle, solo se quita lo que está en la calzada, con una muesca en
+  ángulo recto paralela a la calle.</li>
+<li><strong>Limpieza</strong>: los restos de compilaciones y sesiones viejas pasan a <code>OLD-Borrar\</code> (orden <code>mover_old</code> del trabajador,
+  lista en <code>scripts/old_borrar.txt</code>; no se borra nada).</li>
+</ul>
 <h2>1.0.0 — 2026-11-03 — Rendimiento: 1080p a 60 fps en «alta», calles al hueco entre edificios y alturas reales</h2>
 <ul>
 <li><strong>Pintado</strong> (Jonay: «el objetivo es jugar a 1080 a 60 fps en mi gráfica con los gráficos al máximo»): con la RX 6600 en
