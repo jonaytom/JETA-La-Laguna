@@ -1,6 +1,2 @@
 prueba_arranque.py
-prueba_carpeta.py
-herramientas/sonda_hueco.py -932 -249 40
-herramientas/sonda_hueco.py -259 47 40
-herramientas/sonda_hueco.py 498 -493 40
-herramientas/sonda_tamanos.py
+herramientas/sonda_aparcamiento.py

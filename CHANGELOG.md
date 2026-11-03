@@ -3,6 +3,12 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.1.2 — 2026-11-03 — Alpha 1.1.2: aparcamiento en muchas más calles
+- **Bandas de aparcamiento en más sitios** (Jonay: «lo de la zona de aparcamientos aplica a muchos más sitios, hay que
+  buscar la manera de detallar»): además de las etiquetas del OSM, cada tira de aparcamiento «en la calle» que el OSM
+  dibuja junto a una calle marca ese lado; y las calles residenciales (sin líneas) pintan también su banda con las plazas.
+  Sonda: `tests/herramientas/sonda_aparcamiento.py` (cuántas calles salen de cada fuente).
+
 ## 1.1.1 — 2026-11-03 — Alpha 1.1.1: carriles de aparcamiento, gente por la acera y vallas en los fondos de saco
 - **El juego se llama ahora «Alpha»** (Jonay: «será la Alpha; algún día será la Beta 1.0 y luego la Final 1.0»): la
   pantalla de inicio dice «Alpha 1.1.1»; el número sigue igual.
