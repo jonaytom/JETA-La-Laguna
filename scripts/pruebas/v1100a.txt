@@ -1,0 +1,5 @@
+# v1.1.0: caidas por los puentes, red de seguridad, aparcados
+prueba_arranque.py
+prueba_carpeta.py
+herramientas/sonda_caidas.py -3292 -161 120
+herramientas/sonda_caidas.py

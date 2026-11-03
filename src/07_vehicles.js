@@ -180,7 +180,10 @@ class Car {
   }
   onImpact(v) { this.lastImpact = v; this.lastImpactT = performance.now(); this.health -= v * 0.9 * (this.type === 'police' ? 0.4 : 1); if (this.driver === 'player') { AUDIO.crash(v); CAM.shake = Math.min(1, v / 15); playerCrashDamage(v); } }
   sync(dt = 0.016) {
-    const py = this.y; const low = lowAt(this.x, this.z, py); this.low = low;
+    const py = this.y; let low = lowAt(this.x, this.z, py);
+    if (low) { const dk = deckAt(this.x, this.z, py - 1.3, true, 2.2); if (dk > low.y + 1.5 && Math.abs(py - dk) < Math.abs(py - low.y)) low = null; } // v1.1.0 (Jonay: «me he caído por aquí con el coche… me dejó bloqueado», enlace de la Autopista del Norte X −3292, Y −161): on a deck over a low cutting the car stays on the deck
+    this.low = low;
+    if (this.driver === 'player') unstuck(this, dt);
     const G = low ? (x, z) => { const l = lowAt(x, z, py); return l ? l.y - 0.12 : low.y - 0.12; } : (x, z) => { const g = heightAt(x, z), d = deckAt(x, z, py - 1.3, true, 2.2) - 0.12; if (d > g) { onDk = true; return d; } return g; }; this.Gf = G; let onDk = false;
     const fx = Math.sin(this.h), fz = Math.cos(this.h), L = this.T.L * 0.4, W = this.T.W * 0.45;
     const hf = G(this.x + fx * L, this.z + fz * L), hb = G(this.x - fx * L, this.z - fz * L), hr = G(this.x - fz * W, this.z + fx * W), hl = G(this.x + fz * W, this.z - fx * W);
@@ -205,6 +208,22 @@ class Car {
 
 // ---------- traffic (kinematic along graph)
 function laneOff(E) { return E.oneway ? (E.w >= 10 ? 1.8 : 0) : clamp(E.w / 4, 1.3, E.w >= 13 ? 2.4 : 1.7); }
+// v1.1.0: safety net (Jonay: «esto es súper bug porque impide hacer la misión»): a car that has fallen well below the road
+// it was on, or that cannot move for a while with the throttle down, goes back to the nearest street, in its sense
+const UNSTUCK_S = { x: 0, z: 0, h: 0 };
+function unstuck(car, dt) {
+  const st = car.uns || (car.uns = { t: 0, lx: car.x, lz: car.z, cool: 0 }); st.cool -= dt;
+  const v = Math.hypot(car.vx || 0, car.vz || 0), pushing = Math.abs(car.ctl.thr) > 0.3 || car.mode === 'race';
+  const under = !car.low && !PLAYER.interior && heightAt(car.x, car.z) - car.y > 2.2; // under the terrain and not in a tunnel or car park (not a deck: under a bridge is fine)
+  st.t = (pushing && v < 0.8) || under ? st.t + dt : Math.max(0, st.t - dt * 2);
+  if (st.t < (under ? 1.5 : 6) || st.cool > 0) return;
+  const ne = GRAPH.nearestEdge(car.x, car.z, 60); if (!ne) return;
+  const E = GRAPH.edges[ne.e], fwd = Math.sin(car.h) * ne.dx + Math.cos(car.h) * ne.dz >= 0, dir = fwd || E.oneway ? 1 : -1;
+  GRAPH.sample(ne.e, dir, clamp((dir > 0 ? ne.s : E.len - ne.s) + 4, 1, Math.max(1, E.len - 1)), laneOff(E), UNSTUCK_S); // (s counts along the way the car goes)
+  car.x = UNSTUCK_S.x; car.z = UNSTUCK_S.z; car.h = Math.atan2(UNSTUCK_S.dx, UNSTUCK_S.dz); car.vx = car.vz = 0; if ('vy' in car) car.vy = 0;
+  car.y = heightAt(car.x, car.z) + 0.3; st.t = 0; st.cool = 8;
+  if (car.driver === 'player' && typeof HUD !== 'undefined') HUD.toast('Coche recolocado en la calle', '#f5b72e');
+}
 function spawnTraffic(car, e, dir, s) { car.mode = 'traffic'; car.driver = 'ai'; car.tr = { e, dir, s, v: GRAPH.edges[e].speed * 0.8, off: laneOff(GRAPH.edges[e]) }; GRAPH.sample(e, dir, s, car.tr.off, tmpS); car.x = tmpS.x; car.z = tmpS.z; car.h = Math.atan2(tmpS.dx, tmpS.dz); const g = heightAt(car.x, car.z); car.y = g; for (const dd of [7, 5, 3, 1.5]) { const l = lowAt(car.x, car.z, g - dd); if (l) { car.y = l.y + 0.05; break; } }
   // spawned on a bridge? put it on the deck, not on the ground underneath
   const E = GRAPH.edges[e], dk = deckAt(car.x, car.z, g + 60, true); if (dk > g + 0.6) { const rn = ROADSEG.nearest(car.x, car.z, (r) => (r[3] & 2) && r[1] === E.name); if (rn && rn.d < DATA.R[rn.ri][2] / 2 + 1.5) { const L = Math.hypot(rn.dx, rn.dz) || 1; if (Math.abs((rn.dx * tmpS.dx + rn.dz * tmpS.dz) / L) > 0.85) car.y = dk + 0.05; } } }
@@ -287,7 +306,8 @@ const PARKED = { slots: [], grid: new Map(), meshes: {} };
 // (a bridge or a tunnel of those over or under the street doesn't count)
 const BIGNAMES = new Set(['Vía de Ronda de La Laguna']);
 function onFootpath(x, z) { const rd = ROADSEG.nearest(x, z, (r) => r[0] > 12 && !(r[3] & 6)); return !!rd && rd.d < DATA.R[rd.ri][2] / 2 + 1.0; } // v0.99.6 (agent: walkers stuck between parked cars): no car parked across a footpath
-function onBigRoad(x, z) { const rd = ROADSEG.nearest(x, z, (r) => (r[0] <= 4 || BIGNAMES.has(DATA.S[r[1]])) && !(r[3] & 6)); return !!rd && rd.d < DATA.R[rd.ri][2] / 2 + 1.2; }
+const BIGRX = /V[ií]a de Ronda|Autopista|Autov[ií]a|Carretera General del Norte/i; // v1.1.0 (Jonay: «tampoco puede haber coches aparcados en la autopista»): every fast road by its name too (some are «secondary» in the OSM)
+function onBigRoad(x, z) { const rd = ROADSEG.nearest(x, z, (r) => (r[0] <= 4 || BIGNAMES.has(DATA.S[r[1]]) || (r[1] >= 0 && BIGRX.test(DATA.S[r[1]] || ''))) && !(r[3] & 6)); return !!rd && rd.d < DATA.R[rd.ri][2] / 2 + 1.2; }
 function buildParked() {
   const types = ['compact', 'sedan', 'suv', 'van']; const T0 = performance.now(), lt = (n) => { if (window.__LOADT) window.__LOADT.push(['   buildParked · ' + n, Math.round(performance.now() - T0)]); }; // v0.77: where the 2 s go
   DATA.R.forEach((rd) => {

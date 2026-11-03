@@ -14,6 +14,11 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Recreativas, consola GOFIO-8 y torneo
 
+- [ ] ⚡ **Bencomo: el guanche agarra la vara más por la punta al clavarla** (Jonay, 3-nov: «el clavado del guanche Bencomo
+  debería dejar el palo agarrado más por la punta, de modo que quede más palo por debajo»): en el dibujo del salto con la
+  vara (salto del pastor), mover las manos hacia el extremo de arriba para que asome más vara por debajo.
+  `tools/sprites_ext/` → `09jy_sprx_data.js` / `09k_bencomo.js`.
+
 - [ ] ◐ **Guanche Guarriors: el aura de fuego del lobo como poder del jefe lobo** (Jonay, 27-oct): en el GIF original,
   al aullar sale en el suelo una franja de llamitas rojas que quité al recortarlo (`tools/sprites_ext/wolf2.py`, «red
   bars»). Idea de Jonay: que sea el poder del jefe lobo (BT, fase de Los Gigantes), p. ej. aúlla y quema alrededor.
@@ -232,8 +237,22 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   oscurece muchísimo»): al pasar de día a noche la luz cae casi de una vez. Hacer el atardecer y el amanecer graduales
   (sol, luz ambiente, niebla y cielo con una curva suave de ~1 hora de juego) y mirar si hay un salto al cambiar la
   velocidad del reloj de día a noche (`dayRate` en `13_main.js`: 150 s por hora de día y 40 s de noche desde las 20:24).
+- [ ] ◐ **Más luz de noche: farolas, ventanas y demás luces** (Jonay, 3-nov: «la iluminación de las farolas por la noche
+  debería cubrir un poco más, y la luz de las ventanas y todas las fuentes de luz en general, para que compense un poco la
+  oscuridad que hay»): que el charco de luz de cada farola sea más grande y más claro en el suelo, que las ventanas
+  encendidas se vean más y den algo de luz a la calle, y lo mismo con escaparates, rótulos y faros. Subir también un poco
+  la luz ambiente de noche para que no se vea todo negro. Sin añadir luces de verdad (cuestan mucho): con el brillo de las
+  texturas, manchas de luz pintadas en el suelo y la luz ambiente.
 
 ### HUD y minimapa
+
+- [ ] ⚡ **La leyenda del mapa no dice de quién es cada punto de misión** (Jonay, 3-nov: «las misiones secundarias no
+  salen en la leyenda del minimapa, como las del Obispo; las de la zona entre Curva de Gracia y Finca España tampoco: se
+  ve un punto naranja pero no hay leyenda… ¿esto es la cadena principal o qué es?»): la leyenda (`11_hud.js`, `legend()`)
+  solo trae «Misión» en amarillo, y cada cadena tiene su color (`12_missions.js`, `TRACKS`): Historia amarillo, El Canarión
+  azul claro, El Obispo morado, Torneo Lagunero naranja, Copa Laguna verde, El Secreta salmón, Carreras del Canarión cian.
+  Añadir a la leyenda una línea por cadena ya abierta, con su nombre y su color; y que los naranjas del Torneo y el
+  salmón de El Secreta se distingan mejor entre sí y del amarillo.
 
 - [~] ◐ v1.0.9 (sin sentidos únicos salvo en vías rápidas, como pidió Jonay; quedan la vuelta en el sitio, la rebaja de las autopistas y los giros) **La ruta del GPS da vueltas enormes** (Jonay, 3-nov: «las indicaciones de ruta hacen unas vueltas terribles, como
   si no quisieran coger dirección prohibida… ¿cómo se decide la ruta?»). Cómo va hoy (`07_vehicles.js`, `GRAPH.routeFrom`):
@@ -253,6 +272,18 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 
 ### Misiones, historia y economía
+
+- [ ] ◐ **Rifle de agua: postura, puntería y chorro** (Jonay, 3-nov, misiones del agua con El Blanco y Boca Papa, X −599,
+  Y −525 y X −573, Y −513, 4 capturas).
+  - Al apuntar, el rifle se mete dentro del cuerpo del Chopa (se ve el arma atravesándole el pecho y el hombro): repasar
+    la postura y dónde va el arma (en las manos, delante, con la culata al hombro).
+  - Las gotas caen a la izquierda de donde apuntas: el chorro debe salir hacia la mira (desde la boca del arma, corregido
+    hacia el punto que marca la cruz) y la mira centrada en donde va a caer.
+  - «Boca Papa se ve sentado en la nada y no se sabe si le das a la cabeza»: sentarlo en un banco o una silla de verdad, y
+    que se vea claro cuándo le aciertas (salpicadura en la cabeza, sonido, texto).
+  - Chorro continuo en vez de gotas sueltas (Jonay: «me gustaría que fuera un chorro continuo»): una tira de agua en
+    parábola que sigue al arma mientras disparas, con el charco donde cae. `09i_agua.js` / `12k_agua.js`.
+  - El cilindro azul de la fuente donde se rellena se ve muy grande y opaco de noche; hacerlo más discreto.
 
 - [ ] ◐ **El coche de los malos traza fatal las curvas** (Jonay, 3-nov, la persecución antes de la misión del alcalde:
   «estuvo bien», pero «tengo que frenar y esperar a que gire, es muy mal conductor; además gira raro, de golpe, no es
@@ -320,6 +351,12 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
     Gofiérrez** te manda desde Las Gavias (X −1235, Y −227) hasta la Casa de la Alhóndiga (X 106, Y 32), media ciudad.
 
 ### Tiendas y edificios del casco
+
+- [ ] ◐ **Aparcamiento privado de un edificio que sale como plaza abierta** (Jonay, 3-nov, X −118, Y 311, junto a la Av.
+  de La Trinidad, captura: «este hueco también está fatal; creo que es un parking privado de un edificio y tiene un muro
+  y una entrada para aparcar coches, pero así se ve raro»): una explanada empedrada entre edificios con una maceta en
+  medio. Cerrarlo con su muro y una puerta de garaje (o una rampa de entrada), con asfalto o plazas pintadas dentro; mirar
+  en el OSM si es `amenity=parking` + `access=private` y hacer lo mismo en todos los parkings privados.
 
 - [ ] ◐ **Pasillos estrechos entre casas que no existen** (Jonay, 3-nov, X 38, Y −1, junto al Ayuntamiento, captura:
   «este hueco está raro… por ahí no te deberías poder colar al otro lado; veo muchos huecos de este estilo entre casas que
@@ -394,6 +431,17 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
       gris, valla morada; fotos en `docs/referencias/rios_tejera/`) y el **Colegio Máyex** (`docs/referencias/colegio_mayex/`).
 
 ### Calles, túneles, puentes, enlaces y aeropuerto
+
+- [~] ⚡ v1.1.0 (el coche se queda en el tablero; red de seguridad; falta que Jonay lo pruebe en la misión del queso) **¡Bloquea la misión! El coche se cae a través de la calzada en el enlace de la Autopista del Norte** (Jonay,
+  3-nov, X −3292, Y −161, captura de noche, misión del queso del aeropuerto: «me he caído por aquí con el coche mientras
+  seguía a la furgoneta del queso; él también se cayó pero pudo seguir; esto es súper bug porque impide hacer la misión,
+  me dejó bloqueado»): en la unión del puente con la calzada el suelo deja pasar el coche y queda atrapado debajo del
+  tablero. Dos arreglos:
+  - el sitio: mirar la altura del suelo en ese tramo (`ROADY`, tableros `DECKS`) y cerrar el hueco entre el puente y la
+    calzada; buscar con una sonda otras uniones donde el suelo de conducir dé un salto hacia abajo de más de 1 m;
+  - una red de seguridad general: si el coche (o el jugador) queda más de ~2 m por debajo de la calzada o atrapado sin poder
+    salir unos segundos, devolverlo a la calzada más cercana en su sentido (como hacen los GTA). Que valga también para los
+    coches de las misiones.
 
 - [ ] ◐ **Puentes: grietas en las uniones y sin marcas viales** (Jonay, 3-nov, Vía de Ronda X 631, Y 600, captura: «en
   muchos puentes se ven como grietas en las uniones y pierden las marcas viales»): en la junta entre la calzada y el
@@ -515,6 +563,58 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   - En las fotos: calzada de un carril por sentido a cada lado de la plataforma del tranvía, cruces con «prioridad
     tranvía», gasolinera DISO (nº 108), naves y el Lidl hacia el final.
 
+### Casas, personaje y vida social
+
+- [ ] ◐ **El pisito alquilado, más grande y con habitaciones** (Jonay, 3-nov: «la casa alquilada debería ser un poquito más
+  grande por dentro y tener zonas separadas: la habitación, la zona de estar con la tele, un baño y una cocina, que si
+  quieres la hacemos junto a la zona de estar, con las cosas necesarias»): dormitorio (cama, mesillas, armario, lámpara),
+  salón-cocina (sillones, tele con la GOFIO-8, mesa, estantes y armarios de cocina, nevera, fregadero), baño (retrete,
+  lavabo, ducha) y en general cuadros, alfombras, lámparas, plantas. Puertas entre zonas. `12l_casa.js`.
+  - Jonay (3-nov): «el personaje no puede meterse dentro de los muebles; deja huecos suficientes para moverse por la casa».
+    Todos los muebles con choque y pasillos de al menos ~1 m entre ellos.
+- [ ] ● **Vida en casa: usar las cosas** (Jonay, 3-nov: «que permita sentarte, dormir, usar el baño, lavarte, ducharte, hacer
+  caca/pipí, cocinar, comprar cosas en supermercados para meter en la nevera que luego comer para recuperar salud y esas
+  cosas, no solo jugar a la consola»): con E junto a cada mueble: sentarse (sofá, sillas), dormir (pasa el tiempo hasta la
+  mañana y guarda partida), retrete, lavabo, ducha, cocinar. Compra en los supermercados (parodias que ya hay): los
+  productos van a la nevera de tu casa; cocinar o comer de la nevera recupera salud (más que la comida de la calle y más
+  barato). Cada acción con una animación sencilla o un fundido a negro con texto gracioso.
+- [ ] ● **Recrear todas las casas según su precio** (Jonay, 3-nov: «las otras casas tienen más habitaciones, patio, etc.
+  según su calidad; hay que recrearlas todas; la más cara debe tener una piscinita con jacuzzi donde invitar a tus ligues»):
+  cada casa de la inmobiliaria con su plano (más habitaciones, patio, terraza…), y la más cara con piscina pequeña y
+  jacuzzi.
+- [ ] ● **Hacer amigos y pareja** (Jonay, 3-nov: «habrá que hacer una forma en el juego para que puedas hablar con NPC
+  chicas o, si el jugador lo prefiere, chicos, para ir haciendo amigos que pueden llegar a ser novios si les complaces en
+  minimisiones»): conversación con algunos NPC con nombre, elegir en opciones si te interesan chicas, chicos o ambos,
+  medidor de amistad que sube con minimisiones (llevarle algo, acompañarle, una cita en un bar, una carrera…), y al
+  final pareja; se le puede invitar a casa (el jacuzzi). Sin contenido sexual explícito (fundido a negro, como los GTA).
+  - Pubs y bares de copas para conocer gente (Jonay, 3-nov: «habrá que hacer pubs donde te puedes relacionar»): unos
+    cuantos locales de noche con interior (barra, mesas, pista, música de la radio), abiertos de noche, con gente con la que
+    hablar; ahí empiezan la mayoría de las amistades y las citas.
+  - Niveles de la relación (Jonay, 3-nov: «un sistema de amistad con estos ligues que te permita acabar siendo novios e
+    invitarlos de party a tu jacuzzi o casa cuando tengas»): conocido → amigo → cita → pareja, con su medidor (sube con las
+    minimisiones y las citas, baja si les fallas). Desde amigo se les puede invitar a casa; con casa propia, organizar una
+    fiesta (varios amigos, música, el jacuzzi en la casa cara). Se ven en el diario con su nivel.
+- [ ] ● **Crear tu personaje al empezar** (Jonay, 3-nov: «un generador de personaje inicial que permita sexo masculino y
+  femenino y elegir entre los distintos cuerpos que ya tenemos para los NPC, así como poner barba, tipos de pelo, etc.»):
+  pantalla al empezar partida con cuerpo de hombre o de mujer, complexión (las que ya tienen los NPC), cara, pelo, barba,
+  color de piel y ropa, y la altura (solo se elige aquí).
+  - Nombre (Jonay, 3-nov: «el nombre es el que elijas, pero se propone El Chopa o La Chopa; esto lo podrás cambiar»): campo
+    de nombre que viene relleno con «El Chopa» o «La Chopa» según el cuerpo elegido, y se puede cambiar (también después,
+    en opciones). Todos los diálogos, la pelea 2D («EL CHOPA») y los textos usan el nombre elegido y el género (él/ella,
+    -o/-a), así que hay que pasar los textos de las misiones a plantillas.
+  - Banda en femenino (Jonay, 3-nov: «si es personaje femenino, los amigos de la banda son chicas, con nombres parecidos a
+    los actuales pero femeninos, sin que queden raros; por ejemplo Coco no me gusta que sea Coca porque parece la droga,
+    pero se puede poner otro fruto y cosas así»): cuerpos de mujer para Boca Papa, Rayco «El Blanco», Coco y los demás de
+    la banda, y nombres propios. Elegido por Jonay (3-nov): Boca Papa → **La Papita**; Coco → **Ana la Rana**.
+    Propuesta pendiente de confirmar: Rayco «El Blanco» → Yaiza «La Blanca». Hacer la lista completa de personajes de la
+    banda con su versión femenina antes de tocar textos.
+- [ ] ● **Cambiar de aspecto en la ciudad** (Jonay, 3-nov: «usando esto tendremos barberías donde cortarte el pelo a nuevo
+  look, clínicas de cambio de sexo, operaciones estéticas, liposucciones y gimnasios donde podrás cambiar tu cuerpo; la
+  altura solo se elige al principio, el resto es modificable»): barberías/peluquerías (pelo y barba), clínica (cambiar el
+  cuerpo de hombre a mujer o al revés, y retoques estéticos), clínica de liposucción y gimnasios (más fuerte o más
+  delgado, con el tiempo y con dinero). Todo con el mismo editor del personaje inicial, con precio y parodia en el nombre
+  del local; tratarlo con respeto (sin chistes a costa de nadie).
+
 ### Mobiliario urbano y objetos rompibles
 
 - [ ] ◐ **Bancos, señales, farolas y papeleras con choque, y que se rompan si vas rápido** (Jonay, 3-nov, X −765, Y −536,
@@ -529,6 +629,19 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   - Que no estropee el rendimiento: los objetos siguen juntados en pocas mallas; solo el que se rompe se separa.
 
 ### Gente de la calle
+
+- [ ] ◐ **La gente no debe andar por la calzada ni por las autopistas** (Jonay, 3-nov, Autopista del Norte X −2517,
+  Y −230, captura de noche con gente andando entre los carriles: «no debería haber NPC caminando por las autopistas ni por
+  las calles en general; deberían buscar las aceras de los laterales para sus rutas»): los peatones van por el centro de
+  la vía del OSM. Que caminen por la acera de un lado o del otro (desplazados medio ancho de calzada + ~1,5 m), que
+  crucen solo en los pasos de peatones o en los cruces, y que no se generen ni anden por autopistas, autovías, enlaces
+  ni la Vía de Ronda (sin acera). `09_peds.js` (rutas) y `WALKG` (`11_hud.js`, quitar de ahí las vías rápidas también
+  para la gente).
+- [~] ⚡ v1.1.0 (también las vías rápidas por su nombre; falta comprobar dónde los vio Jonay) **Ni coches aparcados en la autopista** (Jonay, 3-nov, justo después de la captura de la Autopista del Norte en
+  X −2517, Y −230: «tampoco puede haber coches aparcados en la autopista»): la 0.99.5 los quitó de la autopista, pero
+  siguen saliendo (en esa zona, o en vías que no se llaman «motorway» en el OSM: `trunk`, enlaces, Carretera General del
+  Norte, Vía de Ronda). Quitar las plazas de aparcamiento de todas las vías rápidas (`07_vehicles.js`, `PARKED`) con la
+  misma lista que usa el GPS (`fastRoad`), y comprobarlo con una sonda que cuente aparcados por tipo de vía.
 
 - [ ] ● **Niños por la calle** (Jonay, 3-nov, con una tabla de población: menores de 10 años 8,5 %, mujeres de 10 o más
   46,7 %, hombres 44,8 %; alturas por franjas de 8 cm): las alturas de hombres y mujeres ya salen de su tabla (v1.0.0,

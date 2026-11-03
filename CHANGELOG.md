@@ -3,6 +3,16 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.1.0 — 2026-11-03 — Ya no te quedas atrapado debajo de un puente
+- **El coche se colaba por el enlace de la Autopista del Norte** (Jonay, X −3292, Y −161, misión del queso: «me he caído
+  por aquí con el coche… me dejó bloqueado»): yendo por un tablero que pasa por encima de un tramo bajo (trinchera, paso
+  inferior), el coche podía «engancharse» al suelo de abajo y bajar a través del puente. Ahora, si hay tablero a su altura,
+  se queda en el tablero. Sonda nueva para todo el mapa: `tests/herramientas/sonda_caidas.py`.
+- **Red de seguridad**: si tu coche acaba por debajo del terreno fuera de un túnel o un aparcamiento, o se queda clavado
+  unos segundos acelerando sin moverse, vuelve solo a la calle más cercana, en su sentido («Coche recolocado en la calle»).
+- **Sin coches aparcados en las vías rápidas**: también donde el OSM llama a la autopista, la autovía, la Vía de Ronda o la
+  Carretera General del Norte de otra manera.
+
 ## 1.0.9 — 2026-11-03 — El GPS ya no da vueltas por los sentidos únicos
 - **Ruta en coche** (Jonay: «las indicaciones de ruta hacen unas vueltas terribles… evitemos tener en cuenta el sentido de
   la calle salvo en autopistas, Vía de Ronda y vías rápidas»): el GPS puede ir en contra por las calles de un solo
