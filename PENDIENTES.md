@@ -264,6 +264,8 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Tiendas y edificios del casco
 
+- [ ] ⚡ **Pasaje Aguere: mesas y sombrillas flotando** (Jonay, 3-nov, X −213, Y 49, captura): las mesas de la terraza del
+  pasaje no tocan el suelo. Ponerlas a la altura del suelo del pasaje (`05x_pasajes.js`).
 - [ ] ⚡ **Pasaje Aguere: el mismo cartel en cada local** (Jonay, 3-nov, X −213, Y 46, captura): «Tasca El Soportal» y
   «Móviles Guanchófono» se repiten en todos los huecos del pasaje, uno tras otro. Pocos negocios con cartel (3–5, distintos
   y parodias) y el resto de locales cerrados o sin rótulo. Los carteles del pasaje salen de `05x_pasajes.js`.
@@ -295,6 +297,29 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Calles, túneles, puentes, enlaces y aeropuerto
 
+- [ ] ◐ **Aparcamiento subterráneo de La Trinidad: se ve todo blanco y al reanudar o cargar se sale «en la nada»** (Jonay, 3-nov,
+  X −166, Y 322, capturas): bajando la escalera del parking (con un coche encima) la cámara se mete en las paredes; al
+  reanudar le mandó a otro sitio y, desde ahí, con el teletransporte y al cargar partida, solo se ve el cielo y el mar (la
+  ciudad no se pinta; el minimapa en negro). Falta la consola (F12 / Ctrl+Mayús+J) con los errores en rojo para saber
+  qué se rompe. La 1.0.3 protege el pintado para que un fallo de lo nuevo (`actorCull`) no deje la ciudad sin pintar.
+- [ ] ◐ **Edificio con patio sin paredes por fuera junto a la Av. de La Trinidad** (Jonay, 3-nov, X −191, Y 366): se ven solo las
+  fachadas de dentro y se choca con lo que no se ve. Sigue en la 1.0.3 con el recorte de la 0.99.8: viene de cómo se
+  rellenan los solares de la avenida (`trinidadFill`, 05u_trinidad.js) o del OSM. Mirar con `sonda_hueco.py -191 366 50`.
+
+- [ ] ◐ **Cámara bajo tierra y en sitios cubiertos** (Jonay, 3-nov, Av. de La Trinidad X −199, Y 318, captura: «al entrar en el
+  subsuelo de La Trinidad la cámara se pone medio loca; hace falta pulir eso en todas las zonas de subsuelo o debajo de
+  otras, para que la cámara permita ver, y tenerlo en cuenta para dejar espacio»): la cámara se mete en el techo o en los
+  muros y se ve el fondo marrón y piezas sueltas. Acercar la cámara y bajarla en túneles, pasos inferiores y bajo puentes
+  (que no atraviese el techo), en todas esas zonas, y dejar altura libre suficiente al construirlas.
+- [ ] ◐ **Choque invisible corriendo junto a las vías del tranvía** (Jonay, 3-nov, X −193, Y 337, captura): a pie se choca
+  con algo que no se ve en la acera junto a la Av. de La Trinidad. Buscar el colisionador suelto (sonda en ese punto).
+- [ ] ◐ **Calles en zigzag y marcas que se quiebran** (Jonay, 3-nov, Av. de La Trinidad X −147, Y 220, captura: «las
+  carreteras no pueden ser tan angulosas, y menos las marcas viales»): el carril de la avenida y su acera hacen quiebros
+  bruscos (puntos del OSM movidos al separar sentidos o al ensanchar). Suavizar el trazado (curvas con radio mínimo, puntos
+  intermedios) antes de dibujar calzada, aceras y líneas.
+- [ ] ◐ **Plazas de aparcamiento pintadas sobre los carriles** (Jonay, 3-nov, Calle el Juego X −259, Y 47, captura:
+  «confundes carriles con espacios de aparcamiento»): rayas transversales de aparcamiento dentro de la calzada por donde
+  circulan los coches. Que las plazas solo vayan en el carril de aparcamiento (junto al bordillo), nunca en los de paso.
 - [~] ● v0.99.6 (pasos inferiores cortos con la carretera de encima en terraplén, STOP solo en la incorporación, carriles de aceleración y deceleración, líneas en puentes, techo del intercambiador recortado) v0.99.5 (líneas por carriles, bionda en los bordes, sin aparcados en la autopista) **Marcas viales, arcenes y medianas de la autopista, la Vía de Ronda y sus enlaces** (Jonay, 27-oct: «las carreteras con cruces son un lío»; 15 capturas: X 386 Z −276, X 1534 Z 2739, X 1775 Z 3165, X −546 Z 470…):
   - Falta: mirar con Jonay las fotos nuevas de los 15 sitios (`tests/shots/v2_*.jpg`) y los cebreados pintados en las narices de las salidas.
 - [ ] ◐ **Para mirar** (visto en las fotos de la 0.77, ya estaba antes): en la Plaza del Adelantado y en el casco hay **marcos
@@ -357,6 +382,15 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
       Hay que hacer varios modelos con troncos ramificados y copas de varios grupos de hojas, y usar el de cada sitio.
 
 ### Agente revisor (avisos de mapa)
+
+- [ ] ● **Edificios: recortar solo lo que pisa la calzada, sin romperlos** (v1.0.0–1.0.2, deshecho en la 1.0.3; Jonay, 3-nov: «te
+  has cargado demasiados edificios», «los recortes fueron mal, empeoraron mucho», manzanas del casco convertidas en plazas
+  en C. el Juego X −259, Y 47 y C. San Juan X −276, Y 102, y un edificio sin paredes en X −191, Y 366). Lo que falló: quitar la
+  regla de no perder más de la mitad (con el corte recto, más ancho que la calle donde esta tuerce) y la muesca / el
+  recorte por el bordillo (`subtractConvex`, `kerbClip`), que dejan contornos con paredes que faltan. La 1.0.3 vuelve a las
+  reglas de la 0.99.8 y deja solo las calles estrechadas al hueco (`narrowToGap`). La idea de Jonay sigue en pie (fachada
+  paralela al bordillo, esquinas en bisel, recuperar los quitados), pero con un recorte de polígonos fiable (una librería de
+  recorte probada, p. ej. el algoritmo de Martínez o Clipper portado) y una prueba con fotos de las manzanas del casco.
 
 - [ ] ◐ **Auditoría 1.0.1 (APTO CON AVISOS)**: con la muesca paralela a la calle se van 9 invasiones y salen 6 nuevas: junto al
   Intercambiador (X −182, Y 793 y X −171, Y 788; 2,1–2,6 m), C. Orión (X 616, Y 1510; 1,7 m) y C. Plutón (X 668, Y 1535;

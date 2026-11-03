@@ -18,5 +18,8 @@ async def run(pg):
     for k, v in r.items(): print(k, v if not isinstance(v, list) else (len(v), v[:40]))
     await pg.evaluate("(()=>{window.__manual=true; document.getElementById('menu').style.display='none'; __dbg.GAME.state='play'; __dbg.GAME.tod=12; __step(2);})()")
     await pg.evaluate("([x,z])=>{const d=__dbg; d.PLAYER.x=x; d.PLAYER.z=z; __step(3); const y=d.heightAt(x,z); d.camera.position.set(x+5,y+70,z+5); d.camera.lookAt(x,y,z); d.camera.updateMatrixWorld(); if (d.updateCityLOD) d.updateCityLOD(true); }", [x, z])
-    open('shots/hueco.jpg', 'wb').write(base64.b64decode((await pg.evaluate("window.__snap()")).split(',')[1]))
+    open('shots/hueco_%d_%d.jpg' % (x, z), 'wb').write(base64.b64decode((await pg.evaluate("window.__snap()")).split(',')[1]))
+    for k, (ox, oz) in enumerate([(18, 6), (-6, 18)]):  # v1.0.3: two views from the street too
+        await pg.evaluate("([x,z,ox,oz])=>{const d=__dbg; const cx=x+ox, cz=z+oz, y=d.heightAt(cx,cz); d.camera.position.set(cx,y+6,cz); d.camera.lookAt(x,d.heightAt(x,z)+3,z); d.camera.updateMatrixWorld(); if (d.updateCityLOD) d.updateCityLOD(true); }", [x, z, ox, oz])
+        open('shots/hueco_%d_%d_calle%d.jpg' % (x, z, k), 'wb').write(base64.b64decode((await pg.evaluate("window.__snap()")).split(',')[1]))
     print('SONDA HUECO OK')

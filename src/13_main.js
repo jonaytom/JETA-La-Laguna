@@ -151,7 +151,7 @@ const UGSKIRT = (() => { const g = new THREE.CylinderGeometry(1, 1, 1, 40, 1, tr
 function updateUnderground() { const g = heightAt(camera.position.x, camera.position.z); const under = camera.position.y < g - 1.2 && !inCut(camera.position.x, camera.position.z, 1.0); /* only inside covered tubes: in an open cutting the brown backdrop showed above the walls where the ground ahead drops (Camino el Vallado) */ UGSKIRT.visible = under; if (under) { UGSKIRT.position.set(camera.position.x, g + 60, camera.position.z); UGSKIRT.scale.set(240, 460, 240); } }
 function render() { const tt = performance.now(); updateUnderground(); updateCityLOD(); renderer.clear(); renderer.render(bgScene, bgCamera); renderer.clearDepth(); renderer.render(scene, camera); pm('render', tt); }
 // v1.0.0: far people, cars and rooms are not drawn (05w_optimiza.js), in every render of the scene (also the photos and the auditor)
-scene.onBeforeRender = (r, sc, cam) => actorCull(true, cam); scene.onAfterRender = () => actorCull(false);
+scene.onBeforeRender = (r, sc, cam) => { try { actorCull(true, cam); } catch (e) { console.error('actorCull', e); } }; scene.onAfterRender = () => { try { actorCull(false); } catch (e) { console.error('actorCull', e); } }; // v1.0.3: never stops the city from being drawn
 window.__step = (n, dt = 1 / 30, keys = []) => { keys.forEach((k) => KEYS.add(k)); for (let i = 0; i < n; i++) logic(dt, performance.now()); keys.forEach((k) => KEYS.delete(k)); };
 window.__press = (k) => PRESSED.add(k);
 function logic(dt, now) {

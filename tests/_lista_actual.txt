@@ -1,7 +1,3 @@
-prueba_arranque.py
-prueba_hospital.py
-prueba_canchas.py
-herramientas/sonda_tamanos.py
 prueba_guardar_cargar.py
 prueba_coche_y_boca.py
 prueba_bordes.py

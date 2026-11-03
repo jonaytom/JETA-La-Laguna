@@ -3,6 +3,13 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.0.3 — 2026-11-03 — Vuelven los edificios: el recorte de la 0.99.8
+- **Recorte de edificios** (Jonay: «te has cargado demasiados edificios; los recortes fueron mal, empeoraron mucho», con
+  capturas de manzanas del casco convertidas en plazas y de un edificio sin paredes): se deshacen los cambios de recorte de
+  la 1.0.0–1.0.2 (sin límite de lo que se pierde, la muesca y el recorte por el bordillo) y vuelven las reglas de la 0.99.8.
+  Se queda lo que sí funcionó: las calles residenciales estrechadas al hueco entre fachadas. El recorte fino, apuntado para
+  hacerlo con una herramienta de polígonos fiable y una prueba con fotos.
+
 ## 1.0.2 — 2026-11-03 — Edificios que siguen el bordillo (también en curva) y gente delgada menos exagerada
 - **Recorte por el bordillo** (Jonay: «que el edificio vaya paralelo al borde de la calzada, también cuando empieza a tener
   ángulo, de manera que sea imposible que invada»): después de los cortes rectos, se le quita al edificio la calzada pieza a

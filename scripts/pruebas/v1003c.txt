@@ -1,0 +1,5 @@
+prueba_recorte.py
+prueba_pendientes_faciles.py
+herramientas/sonda_hueco.py -259 47 70
+herramientas/sonda_hueco.py -276 102 70
+herramientas/sonda_hueco.py -191 366 50
