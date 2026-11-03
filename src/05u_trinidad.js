@@ -86,7 +86,7 @@ function trinidadFill() {
   console.log('trinidad: casas nuevas', added); TRI.added = added; return added;
 }
 // the median islands stay off the «Casco Histórico» ramp (buildMedians runs before the car parks)
-function triRampZone(x, z) { const T = trinidadGeo(); if (!T || !T.rampA) return false; const r = T.rampA, dx = r.x1 - r.x0, dz = r.z1 - r.z0, L2 = dx * dx + dz * dz || 1; const t = clamp(((x - r.x0) * dx + (z - r.z0) * dz) / L2, -0.08, 1.05); return Math.hypot(x - r.x0 - dx * t, z - r.z0 - dz * t) < 4.2; }
+function triRampZone(x, z, R = 4.6) { /* v1.1.4: R (was a fixed 4.2; the ramp is wider now) */ const T = trinidadGeo(); if (!T || !T.rampA) return false; const r = T.rampA, dx = r.x1 - r.x0, dz = r.z1 - r.z0, L2 = dx * dx + dz * dz || 1; const t = clamp(((x - r.x0) * dx + (z - r.z0) * dz) / L2, -0.08, 1.05); return Math.hypot(x - r.x0 - dx * t, z - r.z0 - dz * t) < R; }
 // ---------- paint on the asphalt: a canvas texture on a grid that follows the ground
 function triDecal(cx, cz, ux, uz, len, wid, draw, y0 = 0.19) {
   const px = 40, cw = Math.max(16, Math.round(wid * px)), ch = Math.max(16, Math.round(len * px)); const c = mkCanvas(cw, ch), x = c.getContext('2d'); draw(x, cw, ch, px);
@@ -134,7 +134,7 @@ function trinidadParking() {
     const holes = found.map((f) => { const p = F.W(f.u, f.v); return stairHole(F, 0, p[0], p[1], F.ux * f.du - F.uz * f.dv, F.uz * f.du + F.ux * f.dv); });
     const hr = buildHall(F, 0, L, sg.y0, name, gaps, holes, { y1: sg.y1, deck: false, density: 0.16 });
     for (const f of found) { const p = F.W(f.u, f.v); const vb = f.v + f.dv * 11.5; const corr = Math.abs(vb) > 14 ? F.W(f.ue, Math.sign(f.v) * 14.5) : null; const dx = F.ux * f.du - F.uz * f.dv, dz = F.uz * f.du + F.ux * f.dv; buildStairwell(p[0], p[1], dx, dz, hr.yAt(corr ? f.ue : f.u + f.du * 10), corr); }
-    if (first) { const bot = F.W(-L / 2 + 3.5, 0); buildRamp(T.rampA.x0, T.rampA.z0, bot[0], bot[1], hr.yAt(-L / 2 + 3.5), 'TRINIDAD CASCO HISTÓRICO', { w: 4.2, wc: blue }); }
+    if (first) { const bot = F.W(-L / 2 + 3.5, 0); buildRamp(T.rampA.x0, T.rampA.z0, bot[0], bot[1], hr.yAt(-L / 2 + 3.5), 'TRINIDAD CASCO HISTÓRICO', { w: 6.4, wc: blue } /* v1.1.4 (Jonay: «la entrada al parking de La Trinidad es muy estrecha… en realidad la bajada también es salida, caben sobrados dos coches»): two lanes */); }
     if (end && botB) buildRamp(topB[0], topB[1], botB[0], botB[1], hr.yAt(toU(F, botB[0], botB[1])), 'TRINIDAD CENTRO', { w: 3.8, wc: blue });
     CARPARKS.push({ name: 'Parking ' + name, x: F.cx, z: F.cz, F, uc: 0, L, yF: Math.min(sg.y0, sg.y1) }); }
   // one deck along the whole chain (walls only at its two ends)

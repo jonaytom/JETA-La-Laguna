@@ -467,12 +467,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
     salir unos segundos, devolverlo a la calzada más cercana en su sentido (como hacen los GTA). Que valga también para los
     coches de las misiones.
 
-- [ ] ◐ **Puentes: grietas en las uniones y sin marcas viales** (Jonay, 3-nov, Vía de Ronda X 631, Y 600, captura: «en
-  muchos puentes se ven como grietas en las uniones y pierden las marcas viales»): en la junta entre la calzada y el
-  tablero del puente queda una raja fina (se ve el fondo) y las líneas del carril se cortan en todo el tablero. Cerrar la
-  junta (que el tablero empiece donde acaba la calzada, solapando un poco) y pintar las líneas también sobre los puentes
-  (la 0.99.6 ya lo hizo en parte: mirar por qué aquí no).
-- [ ] ◐ **Arranque y pintado más lentos desde la 1.0.4** (auditoría 1.0.8): arranque 11 → 14 s y pintar a 720p
+- [~] ◐ v1.1.3 (de nuevo ~11–12 s y 15–17 ms a 720p; la nota del código bajó de B a C: líneas largas) **Arranque y pintado más lentos desde la 1.0.4** (auditoría 1.0.8): arranque 11 → 14 s y pintar a 720p
   13,6 → 24 ms (en la auditoría; la sonda con la tarjeta daba 14–18 ms en la 1.0.4). Medir qué pesa: los muros (cortes por
   calzada, 0,75 m cada muestra), las tapias, los edificios del Catastro y el recorte de calles sobre rampas (`cutAware`).
 - [~] ◐ v1.1.1 (valla metálica al final de las calles sin salida a menos de 18 m de una vía rápida) **Calle que acaba en la Vía de Ronda sin valla** (Jonay, 3-nov, X 498, Y −493, captura: «por aquí no se debería
@@ -497,6 +492,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
     sobrados dos coches»): la rampa se hizo de un sentido y estrecha, y las aceras de los lados se montan sobre sus muros
     (las baldosas por encima del borde azul). Hacerla de doble sentido (dos carriles, ~7 m más los muros), con las aceras
     cortadas donde abre, y que los coches puedan salir por ella. `05m_parking.js` (`buildRamp`, opción `w`).
+  - v1.1.4: la rampa «Trinidad Casco Histórico» pasa a 6,4 m (dos carriles) y las aceras de la avenida no se montan sobre sus muros; falta que los coches salgan por ella.
 - [~] ◐ v1.1.1 (bandas de aparcamiento y plazas fuera de la calzada; falta que Jonay lo mire) **Marcas viales de más: líneas pegadas a las de separación y calles con 3 carriles que no los tienen** (Jonay, 3-nov,
   Calle Juana La Blanca X −932, Y −249, captura: «hay marcas viales al lado de las separaciones de carriles, y no me suena
   que esas calles tengan 3 carriles»): junto a cada línea discontinua sale otra línea más corta al lado, y la calle se pinta
@@ -511,7 +507,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
     banda de aparcamiento con coches aparcados; donde no, una regla por tipo y ancho de calle (residencial ancha = un carril
     por sentido + aparcamiento a los lados) en vez de pintar tres o cuatro carriles. Otra fuente posible: los datos
     abiertos del Ayuntamiento (zonas de aparcamiento regulado).
-- [ ] ◐ **Suelos que parpadean al correr (dos empedrados en el mismo sitio)** (Jonay, 3-nov, Plaza de La Concepción X −517,
+- [~] ◐ v1.1.4 (los empedrados que se solapan, cada uno a unos mm; falta que Jonay lo mire) **Suelos que parpadean al correr (dos empedrados en el mismo sitio)** (Jonay, 3-nov, Plaza de La Concepción X −517,
   Y −289, 4 capturas: «hay suelos que dependiendo del fotograma hacen cambios y eso produce flicks cuando corres»): dos capas
   de suelo a la misma altura (la plaza, la calle peatonal y el bordillo de la acera que se solapan) se pelean por pintarse
   (z-fighting) y cambia cuál se ve según el fotograma. Buscar dónde se pisan las áreas peatonales con calles y aceras y dejar
@@ -537,9 +533,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   otras, para que la cámara permita ver, y tenerlo en cuenta para dejar espacio»): la cámara se mete en el techo o en los
   muros y se ve el fondo marrón y piezas sueltas. Acercar la cámara y bajarla en túneles, pasos inferiores y bajo puentes
   (que no atraviese el techo), en todas esas zonas, y dejar altura libre suficiente al construirlas.
-- [ ] ◐ **Choque invisible corriendo junto a las vías del tranvía** (Jonay, 3-nov, X −193, Y 337, captura): a pie se choca
-  con algo que no se ve en la acera junto a la Av. de La Trinidad. Buscar el colisionador suelto (sonda en ese punto).
-- [ ] ◐ **Calles en zigzag y marcas que se quiebran** (Jonay, 3-nov, Av. de La Trinidad X −147, Y 220, captura: «las
+- [~] ◐ v1.1.4 (San Honorato: líneas de la trinchera cortadas donde se junta con la glorieta; Vía de Ronda X 309: el ramal de bajada sube con la vía elevada; queda el ramal de subida, que está más alto que la vía y habría que bajar el terreno, y los quiebros de la Av. de La Trinidad) **Calles en zigzag y marcas que se quiebran** (Jonay, 3-nov, Av. de La Trinidad X −147, Y 220, captura: «las
   carreteras no pueden ser tan angulosas, y menos las marcas viales»): el carril de la avenida y su acera hacen quiebros
   bruscos (puntos del OSM movidos al separar sentidos o al ensanchar). Suavizar el trazado (curvas con radio mínimo, puntos
   intermedios) antes de dibujar calzada, aceras y líneas.
@@ -860,6 +854,13 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Hecho
 
+- [x] v1.1.4 **Puentes: grietas en las uniones y sin marcas viales** (Jonay, 3-nov, Vía de Ronda X 631, Y 600, captura: «en
+  muchos puentes se ven como grietas en las uniones y pierden las marcas viales»): en la junta entre la calzada y el
+  tablero del puente queda una raja fina (se ve el fondo) y las líneas del carril se cortan en todo el tablero. Cerrar la
+  junta (que el tablero empiece donde acaba la calzada, solapando un poco) y pintar las líneas también sobre los puentes
+  (la 0.99.6 ya lo hizo en parte: mirar por qué aquí no).
+- [x] v1.1.4 **Choque invisible corriendo junto a las vías del tranvía** (Jonay, 3-nov, X −193, Y 337, captura): a pie se choca
+  con algo que no se ve en la acera junto a la Av. de La Trinidad. Buscar el colisionador suelto (sonda en ese punto).
 - [x] v1.1.3 **Esc no pausa ni saca del fútbol** (Jonay, 3-nov: «al darle a Esc no me saca del furbito, ni pausa ni nada»): en
   pantalla completa el navegador se queda la tecla Esc (sale de la pantalla completa o suelta el ratón) y no llega al
   juego. Abrir la pausa del minijuego también cuando se sale de la pantalla completa o se suelta el ratón

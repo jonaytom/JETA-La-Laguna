@@ -100,7 +100,7 @@ function updatePlayer(dt) {
   const _dbg = window.__PDBG ? (window.__PDBG = [['start', nx, nz]]) : null; const DB = (k) => { if (_dbg) _dbg.push([k, +nx.toFixed(3), +nz.toFixed(3)]); };
   // collisions: static
   const pUnder = PLAYER.low && underground(PLAYER.x, PLAYER.z, PLAYER.y);
-  if (!pUnder) { COL.qy = PLAYER.y; const r = COL.resolve(nx, nz, 0.33); COL.qy = null; nx = r.x; nz = r.z; }
+  if (!pUnder) { COL.qy = PLAYER.y + 0.4; /* v1.1.4: on foot you step over kerbs and low islands (their top is 0.2 m over the road) */ const r = COL.resolve(nx, nz, 0.33); COL.qy = null; nx = r.x; nz = r.z; }
   DB('col');
   // cars & parked
   for (const c of CARS) { if (Math.abs(c.x - nx) > 8 || Math.abs(c.z - nz) > 8 || !sameLevel(c.y, PLAYER.y)) continue; for (const [cx, cz, cr] of c.circles()) { const d = Math.hypot(nx - cx, nz - cz); if (d < cr + 0.33) { if (c.speed > 5.5 && c.driver) { knockPlayer(c); } const k = (cr + 0.33 - d) / (d || 1); nx += (nx - cx) * k; nz += (nz - cz) * k; } } }

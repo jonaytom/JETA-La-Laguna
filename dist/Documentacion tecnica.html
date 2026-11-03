@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.1.3</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.1.4</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,21 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.1.4 — 2026-11-03 — Alpha 1.1.4: puentes sin grietas y calzadas que no se pisan</h2>
+<ul>
+<li><strong>Puentes sin grietas en las juntas</strong> (Jonay, Vía de Ronda X 631, Y 600): el tablero empezaba 15 cm por encima de la
+  calzada y el escalón se veía como una raja; ahora en los dos extremos queda a la misma altura que la calle.</li>
+<li><strong>Bocas de trincheras y túneles sin líneas en zigzag</strong> (Jonay, San Honorato X −988, Y 114): las líneas de una vía hundida
+  se cortan donde va dentro de otra calzada a su misma altura, como en el resto de calles.</li>
+<li><strong>Ramales que suben con la vía elevada</strong> (Jonay, Vía de Ronda X 309, Y −40): un ramal que va pegado a un tramo elevado y
+  se monta sobre él sube con él donde se solapan, en vez de quedarse abajo con un escalón (y el coche va por encima).</li>
+<li><strong>Suelos que parpadeaban</strong> (Jonay, Plaza de La Concepción): dos empedrados que se solapan ya no están a la misma altura.</li>
+<li><strong>Choque invisible junto al tranvía</strong> (Jonay, X −193, Y 337): era el bordillo de la isleta; a pie ya se pasa por encima.</li>
+<li><strong>Rampa del aparcamiento de La Trinidad (Casco Histórico) de doble sentido</strong>: más ancha, sin aceras montadas sobre sus muros.</li>
+<li><strong>Bandas de aparcamiento como en La Laguna</strong> (Jonay, foto de C. Narciso de Vera): solo una línea discontinua, sin dividir
+  las plazas una a una.</li>
+<li>Sondas nuevas: <code>sonda_calzadas.py</code> (qué calzadas hay en un sitio y cuáles se pisan) y <code>sonda_choque.py</code> (choques en un punto).</li>
+</ul>
 <h2>1.1.3 — 2026-11-03 — Alpha 1.1.3: tanda de arreglos rápidos (minijuegos, mapa y menús)</h2>
 <ul>
 <li><strong>Guardar y salir</strong> en el menú de pausa: guarda la partida y cierra el juego.</li>

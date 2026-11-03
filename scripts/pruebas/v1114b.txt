@@ -1,0 +1,5 @@
+# v1.1.4: diagnostico del ramal 823, choque junto al tranvia, rampa de La Trinidad
+herramientas/sonda_calzadas.py 309 -40 45 823,522
+herramientas/sonda_choque.py -193 337 4
+herramientas/sonda_calzadas.py -78 27 30
+herramientas/sonda_hueco.py -191 366 50

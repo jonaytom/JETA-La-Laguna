@@ -205,7 +205,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="tb" id="tbS">CORRER</div>
 <div class="tb" id="tbM">MAPA</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">Alpha 1.1.3</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">Alpha 1.1.4</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -1211,7 +1211,8 @@ function laneMk(rd, plain = false) { // plain: a street without lane lines (resi
   const px = 256 / w, line = (m, wd, dash) => { const x = Math.round(m * px - wd * px / 2), ww = Math.max(3, Math.round(wd * px)); y.fillStyle = '#ece9e0';
     if (!dash) y.fillRect(x, 0, ww, 512); else for (let v = 0; v < 512; v += 512 / dash[1]) y.fillRect(x, v + 8, ww, (512 / dash[1]) * dash[0]); };
   const bays = (from, to) => { y.fillStyle = '#ece9e0'; const x0 = Math.round(Math.min(from, to) * px), x1 = Math.round(Math.max(from, to) * px); for (let v = 0; v < 512; v += 512 / 1.6) y.fillRect(x0, v, x1 - x0, 3); }; // a bay every ~5 m (the texture is 8 m long)
-  if (p0) { line(p0, 0.12); bays(0.3, p0); } if (p1) { line(w - p1, 0.12); bays(w - p1, w - 0.3); }
+  /* v1.1.4 (Jonay, foto de C. Narciso de Vera: «las plazas aquí se suelen poner con línea discontinua y sin dividir el largo de los coches»): the parking band is only a short-dashed line, no bays */
+  if (p0) line(p0, 0.12, [0.4, 6]); if (p1) line(w - p1, 0.12, [0.4, 6]);
   if (plain) { /* no lane lines */ }
   else if (ow) { const so = (mot ? 1.6 : 0.6), si = (mot ? 0.6 : 0.35), a = p0 + (p0 ? 0.3 : so), b = w - p1 - (p1 ? 0.3 : si), lw = (b - a) / n;   // right shoulder (u = 0) wider than the left one
     if (!p0) line(so, 0.18); if (!p1) line(w - si, 0.18); for (let k = 1; k < n; k++) line(a + lw * k, 0.14, mot ? [0.38, 1] : [0.5, 2]); }
@@ -1263,6 +1264,7 @@ function ribbonBand(pts, o0, o1, mk, yoff, tileLen, own = -1) { /* own >= 0: ski
     if (i > 0) dist += Math.hypot(p[0] - P[i - 1][0], p[1] - P[i - 1][1]); const q0 = [p[0] + nx * o0, p[1] + nz * o0], q1 = [p[0] + nx * o1, p[1] + nz * o1];
     E.push([[q0[0], heightAt(q0[0], q0[1]) + yoff, q0[1]], [q1[0], heightAt(q1[0], q1[1]) + yoff, q1[1]], dist / tileLen]); }
   const u = Math.abs(o1 - o0) / tileLen; for (let i = 0; i < E.length - 1; i++) { const a = E[i], b = E[i + 1];
+    if (mk === 'sidewalk' && typeof triRampZone === 'function') { const mx = (a[0][0] + a[1][0] + b[0][0] + b[1][0]) / 4, mz = (a[0][2] + a[1][2] + b[0][2] + b[1][2]) / 4; if (triRampZone(mx, mz, 5.0)) continue; } /* v1.1.4: no pavement over the walls of the La Trinidad car park ramp */
     if (own >= 0) { const mx = (a[0][0] + a[1][0] + b[0][0] + b[1][0]) / 4, mz = (a[0][2] + a[1][2] + b[0][2] + b[1][2]) / 4, my = (a[0][1] + b[0][1]) / 2; if (inOtherRoad(mx, mz, my - 1.5, my + 1.5, own, 0.3, true) || inOtherRoad(a[0][0], a[0][2], my - 1.5, my + 1.5, own, 0.2, true) || inOtherRoad(b[0][0], b[0][2], my - 1.5, my + 1.5, own, 0.2, true)) continue; }
     if (o1 > o0) A.quad(a[1], a[0], b[0], b[1], [u, a[2]], [0, a[2]], [0, b[2]], [u, b[2]], null, undefined, [0, 1, 0]); else A.quad(a[0], a[1], b[1], b[0], [0, a[2]], [u, a[2]], [u, b[2]], [0, b[2]], null, undefined, [0, 1, 0]); }
 }
@@ -1297,9 +1299,11 @@ const ROADY = []; // per road: height function (s, x, z) -> y of its surface as 
 function buildRoads() {
   indexRoads(); computeDepressions(); computeRaises();
   for (let ri = 0; ri < DATA.R.length; ri++) ROADY[ri] = roadYFn(ri);
+  for (let ri = 0; ri < DATA.R.length; ri++) { const m = mergeY(ri); if (m) { ROADY[ri] = m; MERGED.set(ri, m); } } console.log('slip roads lifted onto a raised road beside them', MERGED.size);
   for (let ri = 0; ri < DATA.R.length; ri++) { const rd = DATA.R[ri]; DRESS_RI = ri; OBST_RI = (DEP.has(ri) || (rd[3] & 2) || RAISE.has(ri)) && window.__AUDIT ? ri : -1;
     const t = RTN[rd[0]], cls0 = ROADCLASS(rd), cls = cls0 === 'asphaltLines' ? laneMk(rd) : cls0 === 'asphalt' && rd[0] <= 12 && rd[2] >= 5.5 && parkSides(rd).sides.length ? laneMk(rd, true) : cls0, w = rd[2], c = rd[4]; /* v1.1.2: residential streets with their parking lanes painted too */ // v0.99.5: the lane texture of this road
     const tile = isLines(cls) ? 12 : cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8;
+    const yo = cls === 'paving' ? YOFF.paving - (ri % 4) * 0.008 : YOFF[cls]; /* v1.1.4 (Jonay, Plaza de La Concepción: «suelos que parpadean al correr»): two paved ways that overlap were at the very same height and fought over which one shows; now each sits a few mm apart */
     if (DEP.has(ri)) { TUN_RI = ri; tunnelRoad(c, Math.max(w, 2.6), cls, tile, depressedHF(ri), PED_TUN.has(ri) ? { H: 2.9, cover: 3.1 } : (TF13.ring.includes(ri) || TF13.tubes.includes(ri) || TF13.app.includes(ri)) ? { wc: [0.47, 0.41, 0.35] } : {}); TUN_RI = -1; continue; } // v0.78: the TF-13 cutting has brown basalt walls (photos) // tunnels, underpasses and their cuttings
     if (RAISE.has(ri) && !(rd[3] & 2)) { // approach embankment of a bridge that had to be lifted for clearance
       const sp = RAISE_SPAN.get(ri), Lr = polyLen(c), parts = [];
@@ -1313,9 +1317,10 @@ function buildRoads() {
       const hf0 = bridgeProfile(c), hf = RAISE.has(ri) ? (s, x, z) => hf0(s, x, z) + raiseOf(ri, s) : hf0; if (isLines(cls)) linedRibbon(ri, c, w, cls, tile, hf, 0); else ribbon(c, w, cls, YOFF[cls], tile, w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8), hf); // v0.99.6: on bridges too
       bridgeDressing(c, w, hf, rd[0] <= 12); continue;
     }
-    if (isLines(cls)) { for (const [s0, s1, ln] of lineRuns(ri, c)) { const pc = subPoly(c, s0, s1); if (pc.length >= 4) ribbon(pc, w, ln ? cls : 'asphalt', ln ? YOFF[cls] : YOFF.asphalt, ln ? tile : 8, ln ? 1 : w / 8); } }
-    else if (rd[0] >= 13) { for (const pc0 of offTramCut(c)) for (const pc of pasajeRibbonParts(rd, pc0)) ribbon(pc, w, cls, YOFF[cls], tile, w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8)); } // v0.76: no path floating over the tram cutting
-    else ribbon(c, w, cls, YOFF[cls], tile, isLines(cls) ? 1 : w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8));
+    if (isLines(cls)) { for (const [s0, s1, ln] of lineRuns(ri, c)) for (const [m0, m1, mf] of mergeRuns(ri, c, s0, s1)) { const pc = subPoly(c, m0, m1); if (pc.length >= 4) ribbon(pc, w, ln ? cls : 'asphalt', ln ? YOFF[cls] : YOFF.asphalt, ln ? tile : 8, ln ? 1 : w / 8, mf); } }
+    else if (rd[0] >= 13) { for (const pc0 of offTramCut(c)) for (const pc of pasajeRibbonParts(rd, pc0)) ribbon(pc, w, cls, yo, tile, w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8)); } // v0.76: no path floating over the tram cutting
+    else for (const [m0, m1, mf] of mergeRuns(ri, c, 0, polyLen(c))) { const pc = subPoly(c, m0, m1); if (pc.length >= 4) ribbon(pc, w, cls, yo, tile, isLines(cls) ? 1 : w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8), mf); }
+    if (MERGED.has(ri)) mergeDecks(ri, c);
     if (['primary', 'secondary', 'tertiary', 'residential', 'unclassified', 'primary_link', 'secondary_link', 'tertiary_link', 'living_street'].includes(t) && cls !== 'paving')
       for (const sd of [1, -1]) ribbonBand(c, sd * (w / 2 - 0.3), sd * (w / 2 + 2.1), 'sidewalk', YOFF.sidewalk, 2.4, ri); // two kerb-side strips (a full-width slab under the road poked through it on curved slopes)
     // junction discs
@@ -1386,7 +1391,7 @@ function lineRuns(ri, c, s00 = 0) {
   if (!RIDX) { RIDX = new Map(); DATA.R.forEach((r, i) => RIDX.set(r, i)); }
   const cls = (r) => (r[1] >= 0 && /^Vía de Ronda/.test(DATA.S[r[1]] || '') ? Math.min(r[0], 2) : r[0]); // v0.99.6 (agent: «texturas cruzadas» on the Vía de Ronda): the Vía de Ronda keeps its lines over the avenues that meet it
   const bigger = (r) => cls(r) < cls(me) || (cls(r) === cls(me) && (r[2] > me[2] || (r[2] === me[2] && RIDX.get(r) < ri))); // (two alike: the first one keeps its lines)
-  const deckMe = !!(me[3] & 2) || RAISE.has(ri);
+  const deckMe = !!(me[3] & 2) || RAISE.has(ri) || DEP.has(ri); /* v1.1.4: a sunk road too (its lines go on under a street that crosses over it) */
   const level = (rn, s) => { const rj = rn.ri, r2 = DATA.R[rj], deck2 = !!(r2[3] & 2) || RAISE.has(rj) || DEP.has(rj); if (!deckMe && !deck2) return true; if (!ROADY[ri] || !ROADY[rj]) return !deckMe && !deck2;
     const y1 = ROADY[ri](s, rn.x, rn.z), y2 = ROADY[rj](sOnRoad(rj, rn.i, rn.t), rn.x, rn.z); return Number.isFinite(y1) && Number.isFinite(y2) && Math.abs(y1 - y2) < 1.2; };
   const inOther = (x, z, s) => { const rd = ROADSEG.nearest(x, z, (r) => other(r) && bigger(r)); if (rd && rd.d < DATA.R[rd.ri][2] / 2 + me[2] / 2 - 0.2 && level(rd, s)) return true;
@@ -1401,7 +1406,7 @@ function bridgeProfile(c) {
   const cum = [0]; for (let i = 2; i < c.length; i += 2) cum.push(cum[cum.length - 1] + Math.hypot(c[i] - c[i - 2], c[i + 1] - c[i - 1]));
   const L = cum[cum.length - 1] || 1; const g0 = heightAt(c[0], c[1]), g1 = heightAt(c[c.length - 2], c[c.length - 1]);
   const cl = 1.0, ramp = Math.max(4, Math.min(35, L / 2)); // small camber only: clearance over roads comes from computeRaises (same for twin decks)
-  return (s, x, z) => { const t = clamp(s / L, 0, 1); const e = Math.min(s, L - s) / ramp; const b = cl * smooth(0, 1, e); return Math.max(lerp(g0, g1, t) + b, heightAt(x, z) + 0.15); };
+  return (s, x, z) => { const t = clamp(s / L, 0, 1); const e = Math.min(s, L - s) / ramp; const b = cl * smooth(0, 1, e); return Math.max(lerp(g0, g1, t) + b, heightAt(x, z) + 0.15 * smooth(0, 1, e)); }; /* v1.1.4 (Jonay: «grietas en las uniones de los puentes»): at both ends the deck meets the road at its exact height (it started 15 cm above it, and the step showed as a crack) */
 }
 function bridgeDressing(c, w, hf, road, bank = false) {
   const T = acc(c[0], c[1], 'trim'); const col = [0.72, 0.71, 0.68]; const pts = []; let dist = 0; const hw = w / 2 + 0.1;
@@ -1734,6 +1739,38 @@ function computeRaisesOnce() {
 }
 // height of a road's surface as it will be built (same rules as buildRoads)
 function polyMinDist(c, x, z) { let m = 1e9; for (let i = 0; i < c.length; i += 2) m = Math.min(m, Math.hypot(c[i] - x, c[i + 1] - z)); return m; }
+/* v1.1.4 (Jonay, Vía de Ronda X 309, Y −40: «otra superposición fatal de calles»): a slip road at grade that runs
+   alongside a raised road (embankment, bridge) and overlaps its carriageway, rises with it where they overlap (it stayed
+   on the ground: a 1–1.5 m step and the lines crossing). Only roughly parallel roads and only up to ~3 m (a street that
+   crosses under a bridge stays where it is). Returns null when nothing raised runs beside the road. */
+const MERGED = new Map();
+function mergeY(ri) { const rd = DATA.R[ri], c = rd[4]; if (rd[0] > 12 || (rd[3] & 6) || DEP.has(ri) || RAISE.has(ri)) return null;
+  if (!RIDX) { RIDX = new Map(); DATA.R.forEach((r, i) => RIDX.set(r, i)); }
+  const raised = (r) => r !== rd && r[0] <= 12 && ((r[3] & 2) || RAISE.has(RIDX.get(r))) && !DEP.has(RIDX.get(r)) && !AT_GRADE.has(RIDX.get(r));
+  const cand = new Set(); const L = polyLen(c), mw = rd[2];
+  for (let s = 0; s <= L; s += 3) { const p = polyAt(c, s), q = polyAt(c, Math.min(L, s + 1)), b = polyAt(c, Math.max(0, s - 1)); const tx = q[0] - b[0], tz = q[1] - b[1], tl = Math.hypot(tx, tz) || 1;
+    const rn = ROADSEG.nearest(p[0], p[1], raised); if (!rn) continue; const w2 = DATA.R[rn.ri][2]; if (rn.d > w2 / 2 + mw / 2) continue;
+    const dl = Math.hypot(rn.dx, rn.dz) || 1; if (Math.abs((tx * rn.dx + tz * rn.dz) / (tl * dl)) < 0.85) continue;
+    const yr = ROADY[rn.ri] ? ROADY[rn.ri](sOnRoad(rn.ri, rn.i, rn.t), rn.x, rn.z) : NaN, dy = yr - heightAt(p[0], p[1]); if (dy > 0.1 && dy < 3) cand.add(rn.ri); }
+  if (!cand.size) return null;
+  const list = [...cand].map((rj) => [rj, DATA.R[rj]]);
+  return (s, x, z) => { const g = heightAt(x, z); let y = g;
+    for (const [rj, r2] of list) { const rn = ROADSEG.nearest(x, z, (r) => r === r2); if (!rn) continue; const w2 = r2[2], k = 1 - smooth(w2 / 2 - 0.5, w2 / 2 + mw / 2 + 2.5, rn.d); if (k <= 0) continue;
+      const yr = ROADY[rj](sOnRoad(rj, rn.i, rn.t), rn.x, rn.z), dy = yr - g; if (!(dy > 0)) continue; y = Math.max(y, g + dy * k * (1 - smooth(2.2, 3.2, dy))); }
+    return y; };
+}
+/** the pieces [s0, s1, hf] of a road between a and b: hf = its lifted height where it rises beside a raised road, null elsewhere */
+function mergeRuns(ri, c, a, b) { const m = MERGED.get(ri); if (!m) return [[a, b, null]];
+  const out = []; const N = Math.max(2, Math.ceil((b - a) / 2)); let cur = null, s0 = a;
+  for (let k = 0; k <= N; k++) { const s = a + (b - a) * k / N, p = polyAt(c, s), up = m(s, p[0], p[1]) - heightAt(p[0], p[1]) > 0.03; if (cur === null) cur = up; else if (up !== cur) { const mid = s - (b - a) / N / 2; out.push([s0, mid, cur]); s0 = mid; cur = up; } }
+  out.push([s0, b, cur]);
+  return out.filter((r) => r[1] - r[0] > 0.05).map(([x0, x1, up]) => [x0, x1, up ? (q, x, z) => m(q + x0, x, z) : null]);
+}
+/** the lifted stretches of a merging slip road as road decks too (the cars drive on what is drawn) */
+function mergeDecks(ri, c) { const m = MERGED.get(ri), L = polyLen(c);
+  for (const [a, b, hf] of mergeRuns(ri, c, 0, L)) { if (!hf) continue; const pts = []; const a0 = Math.max(0, a - 2), b0 = Math.min(L, b + 2), n = Math.max(1, Math.ceil((b0 - a0) / 3));
+    for (let k = 0; k <= n; k++) { const s = a0 + (b0 - a0) * k / n, p = polyAt(c, s); pts.push([p[0], p[1], m(s, p[0], p[1]) + 0.12]); }
+    BRIDGE_DECKS.push({ ri, type: 'path', pts, w: DATA.R[ri][2], road: true, bridge: true }); } }
 function roadYFn(ri) { const rd = DATA.R[ri], c0 = rd[4];
   if (DEP.has(ri)) return depressedHF(ri);
   if (RAISE.has(ri) && !(rd[3] & 2)) { const sp = RAISE_SPAN.get(ri); return (s, x, z) => heightAt(x, z) + (s >= sp[0] && s <= sp[1] ? raiseOf(ri, s) : 0); }
@@ -1817,7 +1854,10 @@ function tramDepth(s) { const T = TRAM_TRENCH; if (s <= T.s0 || s >= T.s3) retur
 // a street crossing over the cutting here (one running alongside it, like the Avenida itself, does not count)
 function tramUnderRoad(x, z, ux, uz) { const rd = ROADSEG.nearest(x, z, (r) => r[0] <= 12 && !(r[3] & 6)); if (!rd || rd.d > DATA.R[rd.ri][2] / 2 + 3.5) return false; const L = Math.hypot(rd.dx, rd.dz) || 1; return Math.abs((rd.dx * ux + rd.dz * uz) / L) < 0.75; }
 function tunnelRoad(c, w, cls, tile, hf, opt = {}) {
-  ribbon(c, w, cls, YOFF[cls], tile, isLines(cls) ? 1 : w / 8, hf, true);
+  /* v1.1.4 (Jonay, San Honorato X −988, Y 114: «se siguen metiendo carreteras unas debajo de otras… las líneas en zigzag»):
+     the lines of a sunk road also stop where it runs inside another carriageway at its own level (the mouths of the cutting) */
+  if (isLines(cls) && TUN_RI >= 0) { for (const [a, b, ln] of lineRuns(TUN_RI, c)) { const pc = subPoly(c, a, b); if (pc.length >= 4) ribbon(pc, w, ln ? cls : 'asphalt', ln ? YOFF[cls] : YOFF.asphalt, ln ? tile : 8, ln ? 1 : w / 8, (q, x, z) => hf(q + a, x, z), true); } }
+  else ribbon(c, w, cls, YOFF[cls], tile, isLines(cls) ? 1 : w / 8, hf, true);
   // covered stretch -> tube with walls, ceiling and lights; open stretch -> cutting with retaining walls
   const T = acc(c[0], c[1], 'tunnel'); const L2 = acc(c[0], c[1], 'tunnelLight'); const W = acc(c[0], c[1], 'trim'); const hw = w / 2 + (opt.H ? 0.6 : 1.0), H = opt.H || 6.0; // roomier tubes and mouths
   const pts = []; let dist = 0;
@@ -2342,7 +2382,7 @@ function buildMedians() {
       T.quad([a[0] + px * wa, a[2] + h, a[1] + pz * wa], [b[0] + px * wb, b[2] + h, b[1] + pz * wb], [b[0] - px * wb, b[2] + h, b[1] - pz * wb], [a[0] - px * wa, a[2] + h, a[1] - pz * wa], [0, 0], [0, 0], [0, 0], [0, 0], a[3] > 1.8 ? top : kc, undefined, [0, 1, 0]);
       for (const sg of [1, -1]) T.quad([a[0] + px * wa * sg, a[2] - 0.05, a[1] + pz * wa * sg], [b[0] + px * wb * sg, b[2] - 0.05, b[1] + pz * wb * sg], [b[0] + px * wb * sg, b[2] + h, b[1] + pz * wb * sg], [a[0] + px * wa * sg, a[2] + h, a[1] + pz * wa * sg], [0, 0], [0, 0], [0, 0], [0, 0], kc, undefined, [px * sg, 0, pz * sg]);
       if (a[3] > 1.8 && i % 4 === 0 && Math.random() < 0.6) TREES.push([a[0], a[1], 1, 0.75, 1]);
-      COL.addSeg(a[0], a[1], b[0], b[1], Math.min(a[2], b[2]) - 0.2, Math.max(a[2], b[2]) + 0.5); }
+      COL.addSeg(a[0], a[1], b[0], b[1], Math.min(a[2], b[2]) - 0.2, Math.max(a[2], b[2]) + 0.2); } /* v1.1.4: top 0.2 m over the road (was 0.5): cars still stop at the kerb, someone on foot steps over it (Jonay, X −193, Y 337: «choque invisible junto a las vías del tranvía») */
   }
 }
 
@@ -5405,7 +5445,7 @@ function trinidadFill() {
   console.log('trinidad: casas nuevas', added); TRI.added = added; return added;
 }
 // the median islands stay off the «Casco Histórico» ramp (buildMedians runs before the car parks)
-function triRampZone(x, z) { const T = trinidadGeo(); if (!T || !T.rampA) return false; const r = T.rampA, dx = r.x1 - r.x0, dz = r.z1 - r.z0, L2 = dx * dx + dz * dz || 1; const t = clamp(((x - r.x0) * dx + (z - r.z0) * dz) / L2, -0.08, 1.05); return Math.hypot(x - r.x0 - dx * t, z - r.z0 - dz * t) < 4.2; }
+function triRampZone(x, z, R = 4.6) { /* v1.1.4: R (was a fixed 4.2; the ramp is wider now) */ const T = trinidadGeo(); if (!T || !T.rampA) return false; const r = T.rampA, dx = r.x1 - r.x0, dz = r.z1 - r.z0, L2 = dx * dx + dz * dz || 1; const t = clamp(((x - r.x0) * dx + (z - r.z0) * dz) / L2, -0.08, 1.05); return Math.hypot(x - r.x0 - dx * t, z - r.z0 - dz * t) < R; }
 // ---------- paint on the asphalt: a canvas texture on a grid that follows the ground
 function triDecal(cx, cz, ux, uz, len, wid, draw, y0 = 0.19) {
   const px = 40, cw = Math.max(16, Math.round(wid * px)), ch = Math.max(16, Math.round(len * px)); const c = mkCanvas(cw, ch), x = c.getContext('2d'); draw(x, cw, ch, px);
@@ -5453,7 +5493,7 @@ function trinidadParking() {
     const holes = found.map((f) => { const p = F.W(f.u, f.v); return stairHole(F, 0, p[0], p[1], F.ux * f.du - F.uz * f.dv, F.uz * f.du + F.ux * f.dv); });
     const hr = buildHall(F, 0, L, sg.y0, name, gaps, holes, { y1: sg.y1, deck: false, density: 0.16 });
     for (const f of found) { const p = F.W(f.u, f.v); const vb = f.v + f.dv * 11.5; const corr = Math.abs(vb) > 14 ? F.W(f.ue, Math.sign(f.v) * 14.5) : null; const dx = F.ux * f.du - F.uz * f.dv, dz = F.uz * f.du + F.ux * f.dv; buildStairwell(p[0], p[1], dx, dz, hr.yAt(corr ? f.ue : f.u + f.du * 10), corr); }
-    if (first) { const bot = F.W(-L / 2 + 3.5, 0); buildRamp(T.rampA.x0, T.rampA.z0, bot[0], bot[1], hr.yAt(-L / 2 + 3.5), 'TRINIDAD CASCO HISTÓRICO', { w: 4.2, wc: blue }); }
+    if (first) { const bot = F.W(-L / 2 + 3.5, 0); buildRamp(T.rampA.x0, T.rampA.z0, bot[0], bot[1], hr.yAt(-L / 2 + 3.5), 'TRINIDAD CASCO HISTÓRICO', { w: 6.4, wc: blue } /* v1.1.4 (Jonay: «la entrada al parking de La Trinidad es muy estrecha… en realidad la bajada también es salida, caben sobrados dos coches»): two lanes */); }
     if (end && botB) buildRamp(topB[0], topB[1], botB[0], botB[1], hr.yAt(toU(F, botB[0], botB[1])), 'TRINIDAD CENTRO', { w: 3.8, wc: blue });
     CARPARKS.push({ name: 'Parking ' + name, x: F.cx, z: F.cz, F, uc: 0, L, yF: Math.min(sg.y0, sg.y1) }); }
   // one deck along the whole chain (walls only at its two ends)
@@ -7373,7 +7413,7 @@ function updatePlayer(dt) {
   const _dbg = window.__PDBG ? (window.__PDBG = [['start', nx, nz]]) : null; const DB = (k) => { if (_dbg) _dbg.push([k, +nx.toFixed(3), +nz.toFixed(3)]); };
   // collisions: static
   const pUnder = PLAYER.low && underground(PLAYER.x, PLAYER.z, PLAYER.y);
-  if (!pUnder) { COL.qy = PLAYER.y; const r = COL.resolve(nx, nz, 0.33); COL.qy = null; nx = r.x; nz = r.z; }
+  if (!pUnder) { COL.qy = PLAYER.y + 0.4; /* v1.1.4: on foot you step over kerbs and low islands (their top is 0.2 m over the road) */ const r = COL.resolve(nx, nz, 0.33); COL.qy = null; nx = r.x; nz = r.z; }
   DB('col');
   // cars & parked
   for (const c of CARS) { if (Math.abs(c.x - nx) > 8 || Math.abs(c.z - nz) > 8 || !sameLevel(c.y, PLAYER.y)) continue; for (const [cx, cz, cr] of c.circles()) { const d = Math.hypot(nx - cx, nz - cz); if (d < cr + 0.33) { if (c.speed > 5.5 && c.driver) { knockPlayer(c); } const k = (cr + 0.33 - d) / (d || 1); nx += (nx - cx) * k; nz += (nz - cz) * k; } } }
@@ -15412,7 +15452,7 @@ async function boot() {
   window.__GAME_READY = true;
 }
 boot();
-window.__bg = [bgScene, bgCamera]; window.__dbg = { WALLS, parkStats, parkSides, MEDIANS, AUX, SHORT_UP, SPRX, SPRX_DATA, FONDOS, BKSHEET, get RCLIP() { return RCLIP; }, pip, PASAJES, ATRIOS: atrioList, ARCADE, RECRE, CASA, MUNDIALITO, s2Path, s2DriveCar, pitchRects, rectsOverlap, STR, pasajeCeilAt, inAguereLow, LOD, updateCityLOD, lodShowAll, optimizeCity, unfuse, PARKED, activateParked, parkedNear, RIFLE, AGUA, FIRES, makeFire, giveRifle, PK2, RIOS, TRI, PERAZA, MINI, KEYS, PRESSED, INPUT, get TCUTS() { return TCUTS; }, s2Human, s2Down, s2DownTick, onCarriagewayEarly, FLIGHT, updateAirport, TF13, TRAM_TRENCH, tramDepth, OBISPADO_TEX: obispadoTex, MALEANTES, startStreetFight, lineRuns, BIGSTORES, SIGN, actorCull, ACTORS, roadClip, insetPoly, streetTrim, polyArea, BASKET2D, FUTBOL2D, obispoCampo, TRI, OBISPADO, SPORTS, inAnyBuilding, COURTS, courtGateNear, useCourtGate, DIARIO, inPitch, pitchRects, obispoCourt, LAMPS, TREES, GUIDE, AYTO, HUC, HEALTH, nearestHealth, exitCar, DLG, S2, POOLS: { CARPOOL, HPOOL, SHARED_GEO, VGEO }, SHARED_GEO, MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
+window.__bg = [bgScene, bgCamera]; window.__dbg = { WALLS, parkStats, parkSides, MEDIANS, AUX, SHORT_UP, SPRX, SPRX_DATA, FONDOS, BKSHEET, get RCLIP() { return RCLIP; }, pip, PASAJES, ATRIOS: atrioList, ARCADE, RECRE, CASA, MUNDIALITO, s2Path, s2DriveCar, pitchRects, rectsOverlap, STR, pasajeCeilAt, inAguereLow, LOD, updateCityLOD, lodShowAll, optimizeCity, unfuse, PARKED, activateParked, parkedNear, RIFLE, AGUA, FIRES, makeFire, giveRifle, PK2, RIOS, TRI, PERAZA, MINI, KEYS, PRESSED, INPUT, get TCUTS() { return TCUTS; }, s2Human, s2Down, s2DownTick, onCarriagewayEarly, FLIGHT, updateAirport, TF13, TRAM_TRENCH, tramDepth, OBISPADO_TEX: obispadoTex, MALEANTES, startStreetFight, lineRuns, BIGSTORES, SIGN, actorCull, ACTORS, roadClip, insetPoly, streetTrim, polyArea, BASKET2D, FUTBOL2D, obispoCampo, TRI, OBISPADO, SPORTS, inAnyBuilding, COURTS, courtGateNear, useCourtGate, DIARIO, inPitch, pitchRects, obispoCourt, LAMPS, TREES, GUIDE, AYTO, HUC, HEALTH, nearestHealth, exitCar, DLG, S2, POOLS: { CARPOOL, HPOOL, SHARED_GEO, VGEO }, SHARED_GEO, MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, MERGED, mergeY, sOnRoad, polyAt, polyLen, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
 window.__snap = () => { updateUnderground(); updateCityLOD(); bgCamera.position.copy(camera.position); bgCamera.quaternion.copy(camera.quaternion); bgCamera.fov = camera.fov; bgCamera.updateProjectionMatrix(); renderer.clear(); renderer.render(bgScene, bgCamera); renderer.clearDepth(); renderer.render(scene, camera); return renderer.domElement.toDataURL('image/jpeg', 0.85); };
 window.__setYaw = (y) => { CAM.yaw = y; CAM.pitch = 0.1; INPUT.lastMouse = performance.now(); };
 window.__hit = (p) => hitPed(p);

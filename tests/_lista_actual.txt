@@ -1,7 +1,2 @@
-prueba_diario.py
+prueba_trinidad.py
 prueba_arranque.py
-herramientas/sonda_calzadas.py 631 600 45
-herramientas/sonda_calzadas.py -988 114 45
-herramientas/sonda_calzadas.py 309 -40 45
-herramientas/sonda_calzadas.py -147 220 40
-herramientas/sonda_calzadas.py -517 -289 30

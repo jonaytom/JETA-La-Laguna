@@ -3,6 +3,20 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.1.4 — 2026-11-03 — Alpha 1.1.4: puentes sin grietas y calzadas que no se pisan
+- **Puentes sin grietas en las juntas** (Jonay, Vía de Ronda X 631, Y 600): el tablero empezaba 15 cm por encima de la
+  calzada y el escalón se veía como una raja; ahora en los dos extremos queda a la misma altura que la calle.
+- **Bocas de trincheras y túneles sin líneas en zigzag** (Jonay, San Honorato X −988, Y 114): las líneas de una vía hundida
+  se cortan donde va dentro de otra calzada a su misma altura, como en el resto de calles.
+- **Ramales que suben con la vía elevada** (Jonay, Vía de Ronda X 309, Y −40): un ramal que va pegado a un tramo elevado y
+  se monta sobre él sube con él donde se solapan, en vez de quedarse abajo con un escalón (y el coche va por encima).
+- **Suelos que parpadeaban** (Jonay, Plaza de La Concepción): dos empedrados que se solapan ya no están a la misma altura.
+- **Choque invisible junto al tranvía** (Jonay, X −193, Y 337): era el bordillo de la isleta; a pie ya se pasa por encima.
+- **Rampa del aparcamiento de La Trinidad (Casco Histórico) de doble sentido**: más ancha, sin aceras montadas sobre sus muros.
+- **Bandas de aparcamiento como en La Laguna** (Jonay, foto de C. Narciso de Vera): solo una línea discontinua, sin dividir
+  las plazas una a una.
+- Sondas nuevas: `sonda_calzadas.py` (qué calzadas hay en un sitio y cuáles se pisan) y `sonda_choque.py` (choques en un punto).
+
 ## 1.1.3 — 2026-11-03 — Alpha 1.1.3: tanda de arreglos rápidos (minijuegos, mapa y menús)
 - **Guardar y salir** en el menú de pausa: guarda la partida y cierra el juego.
 - **Cambiar de arma con los botones laterales del ratón** (adelante = siguiente, atrás = anterior); la rueda ya no cambia

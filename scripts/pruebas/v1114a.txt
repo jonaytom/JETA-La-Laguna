@@ -1,0 +1,8 @@
+# v1.1.4: calles (juntas de puentes, lineas en trincheras, ramales que suben con la via elevada, suelos que parpadean)
+prueba_arranque.py
+prueba_conduccion_tuneles_puentes.py
+herramientas/sonda_caidas.py
+herramientas/sonda_calzadas.py 631 600 45
+herramientas/sonda_calzadas.py -988 114 45
+herramientas/sonda_calzadas.py 309 -40 45
+herramientas/sonda_calzadas.py -517 -289 30

@@ -1,0 +1,9 @@
+# v1.1.4: calles, puentes, isletas, rampa de La Trinidad
+prueba_arranque.py
+prueba_conduccion_tuneles_puentes.py
+prueba_trinidad.py
+prueba_pasos.py
+herramientas/sonda_caidas.py
+herramientas/sonda_choque.py -193 337 4
+herramientas/sonda_calzadas.py -78 27 30
+herramientas/sonda_calzadas.py 631 600 45

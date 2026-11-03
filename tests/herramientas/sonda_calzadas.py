@@ -27,11 +27,20 @@ async def run(pg):
       return out; })())""", [x, z, R]))
     print('vías (índice, nombre, tipo, ancho, puente/elevada/hundida, dist, X, Y, altura calzada, altura terreno, puntos):')
     for v in r['vias']: print('  ', v)
+    if len(sys.argv) > 5:  # diagnosis of the slip roads that should rise with a raised road beside them: road indices
+        for ri in [int(v) for v in sys.argv[5].split(',')]:
+            dg = json.loads(await pg.evaluate("""(ri)=>JSON.stringify((()=>{ const d=__dbg, rd=d.DATA.R[ri], c=rd[4], L=d.polyLen(c), out={sube: d.MERGED ? d.MERGED.has(ri) : null, muestras:[]};
+              const RI=new Map(); d.DATA.R.forEach((r,i)=>RI.set(r,i)); const raised=(r)=>r!==rd && r[0]<=12 && ((r[3]&2) || d.RAISE.has(RI.get(r))) && !d.DEP.has(RI.get(r)) && !d.AT_GRADE.has(RI.get(r));
+              for (let s=0;s<=L;s+=6){ const p=d.polyAt(c,s), q=d.polyAt(c,Math.min(L,s+1)), b=d.polyAt(c,Math.max(0,s-1)); const tx=q[0]-b[0], tz=q[1]-b[1], tl=Math.hypot(tx,tz)||1; const rn=d.ROADSEG.nearest(p[0],p[1],raised); if(!rn){ out.muestras.push([Math.round(s),'nada']); continue; }
+                const dl=Math.hypot(rn.dx,rn.dz)||1, cos=(tx*rn.dx+tz*rn.dz)/(tl*dl), yr=d.ROADY[rn.ri](d.sOnRoad(rn.ri,rn.i,rn.t),rn.x,rn.z), dy=yr-d.heightAt(p[0],p[1]);
+                out.muestras.push([Math.round(s), rn.ri, +rn.d.toFixed(1), +cos.toFixed(2), +dy.toFixed(2)]); }
+              return out; })())""", ri))
+            print('diagnóstico', ri, dg)
     print('calzadas que se pisan (vía, otra vía, metros, diferencia de altura, dónde):')
     for p in r['pisan']: print('  ', p)
     await pg.evaluate("(()=>{window.__manual=true; document.getElementById('menu').style.display='none'; __dbg.GAME.state='play'; __dbg.GAME.tod=12; __step(2);})()")
     views = [('arriba', 6, 55, 6), ('calle0', 22, 5, 8), ('calle1', -8, 5, -22)]
     for name, ox, oy, oz in views:
-        await pg.evaluate("([x,z,ox,oy,oz])=>{const d=__dbg; d.PLAYER.x=x+ox; d.PLAYER.z=z+oz; __step(3); const y=d.heightAt(x,z); d.camera.position.set(x+ox, d.heightAt(x+ox,z+oz)+oy, z+oz); d.camera.lookAt(x,y+1,z); d.camera.updateMatrixWorld(); if (d.updateCityLOD) d.updateCityLOD(true); }", [x, z, ox, oy, oz])
+        await pg.evaluate("([x,z,ox,oy,oz])=>{const d=__dbg; d.PLAYER.x=x+ox*3+40; d.PLAYER.z=z+oz*3+40; __step(3); const y=d.heightAt(x,z); d.camera.position.set(x+ox, d.heightAt(x+ox,z+oz)+oy, z+oz); d.camera.lookAt(x,y+1,z); d.camera.updateMatrixWorld(); if (d.updateCityLOD) d.updateCityLOD(true); }", [x, z, ox, oy, oz])
         open('shots/calzadas_%d_%d_%s.jpg' % (x, z, name), 'wb').write(base64.b64decode((await pg.evaluate("window.__snap()")).split(',')[1]))
     print('SONDA CALZADAS OK')

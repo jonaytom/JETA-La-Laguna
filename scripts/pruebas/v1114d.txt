@@ -1,0 +1,3 @@
+# v1.1.4: trinidad sola
+prueba_trinidad.py
+prueba_arranque.py
