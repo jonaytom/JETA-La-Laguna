@@ -29,7 +29,7 @@ function inicioTapias() {
       const a = P[i], b = P[(i + 1) % m], L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.round(L));
       for (let t = 0; t < n; t++) {
         const x = a[0] + (b[0] - a[0]) * t / n, z = a[1] + (b[1] - a[1]) * t / n;
-        const inB = cand(x, z).some((p) => pip(x, z, p.flat ? p.flat() : p)) || inAnyBuilding(x, z);
+        const inB = cand(x, z).some((p) => pip(x, z, p.flat ? p.flat() : p)) || wallBuildingAt(x, z);
         if (inB) flush(); else run.push([x, z]);
       }
     }
@@ -38,6 +38,22 @@ function inicioTapias() {
   return out;
 }
 
+// v1.0.5 (Jonay: «los muros no deberían dejar pasar entre muro y edificio»): a wall that stops next to a building (it was cut
+// there, or the garden wall runs up to a house) goes on into it, past the 0.75 m the facade is drawn inside its plan
+let WALL_BI = null;
+function wallBuildingAt(x, z) { // DATA.B in 25 m cells (built once): inAnyBuilding goes through every building
+  if (!WALL_BI) { WALL_BI = new Map(); for (const b of DATA.B) { const c = b[6]; if (!c || c.length < 6) continue; let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9; for (let i = 0; i < c.length; i += 2) { x0 = Math.min(x0, c[i]); x1 = Math.max(x1, c[i]); z0 = Math.min(z0, c[i + 1]); z1 = Math.max(z1, c[i + 1]); }
+    for (let i = Math.floor(x0 / 25); i <= Math.floor(x1 / 25); i++) for (let j = Math.floor(z0 / 25); j <= Math.floor(z1 / 25); j++) { const k = i * 100000 + j; let l = WALL_BI.get(k); if (!l) WALL_BI.set(k, (l = [])); l.push(c); } } }
+  const l = WALL_BI.get(Math.floor(x / 25) * 100000 + Math.floor(z / 25)); if (!l) return false; for (const c of l) if (pip(x, z, c)) return true; return false;
+}
+function wallIntoBuildings(c) {
+  const o = c.slice(), n = o.length;
+  const grow = (ix, jx) => { // end point ix, the point before it jx
+    const x = o[ix], z = o[ix + 1], dx = x - o[jx], dz = z - o[jx + 1], L = Math.hypot(dx, dz); if (L < 0.05) return;
+    for (let t = 0.25; t <= 2.5; t += 0.25) if (wallBuildingAt(x + dx / L * t, z + dz / L * t)) { o[ix] = x + dx / L * (t + 1); o[ix + 1] = z + dz / L * (t + 1); return; }
+  };
+  grow(0, 2); grow(n - 2, n - 4); return o;
+}
 const WALLS = { n: 0, km: 0, meshes: [] };
 function buildWalls() {
   const list = (DATA.BW || []).slice(); let nt = 0;
@@ -57,8 +73,9 @@ function buildWalls() {
   const bucket = (mat, x, z) => { const k = mat + ':' + Math.floor(x / CS) + ',' + Math.floor(z / CS); let b = CELLS.get(k); if (!b) { b = { mat, p: [], c: [] }; CELLS.set(k, b); } return b; };
   const quad = (b, a1, a2, b2, b1, col) => { b.p.push(...a1, ...a2, ...b2, ...a1, ...b2, ...b1); for (let i = 0; i < 6; i++) b.c.push(...col); };
   let km = 0, n = 0;
-  for (const [kind, h, mat0, c] of list) {
-    const K = KIND[kind]; if (!K || c.length < 4) continue;
+  for (const [kind, h, mat0, c0] of list) {
+    const K = KIND[kind]; if (!K || c0.length < 4) continue;
+    const c = wallIntoBuildings(c0);
     const H = h > 0.4 && h < 6 ? h : K[0], T = K[1], mat = K[2];
     const R = mulberry((Math.round(c[0] * 3) * 7919 + Math.round(c[1] * 3)) | 0); const pal = COLS[mat], col = pal ? pal[Math.floor(R() * pal.length)] : [1, 1, 1];
     const shade = (k) => col.map((v) => v * k);

@@ -1,0 +1,4 @@
+# v1.0.5: muros pegados a los edificios
+prueba_arranque.py
+prueba_carpeta.py
+herramientas/sonda_hueco.py -923 -322 70

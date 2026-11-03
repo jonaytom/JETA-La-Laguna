@@ -3,6 +3,11 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.0.5 — 2026-11-03 — Muros pegados a los edificios
+- **Sin pasillos entre muro y edificio** (Jonay, captura: «los muros no deberían dejar pasar entre muro y edificio»): el muro
+  que acaba junto a un edificio (donde se cortó o la tapia que llega a una casa) sigue hasta meterse dentro de él, más allá
+  de los 0,75 m que la fachada se pinta hacia dentro. Antes quedaba un hueco de hasta ~1,7 m por el que se pasaba.
+
 ## 1.0.4 — 2026-11-03 — Edificios del Catastro donde faltan, y muros y vallas
 - **Edificios del Catastro** (Jonay: «hay muchos huecos que no existen en la realidad… hay que revisar con mejores
   fuentes»): `tools/catastro.py` baja los edificios INSPIRE del Catastro de La Laguna (planta de cada parte con sus plantas)
