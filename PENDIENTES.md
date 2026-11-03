@@ -339,7 +339,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   en el OpenStreetMap esa manzana entre C. Núñez de la Peña, C. Obispo Rey Redondo y C. Alcalde Alonso Suárez Melián no
   tiene edificios dibujados, y el juego la pinta como una plaza empedrada. Rellenarla con casas del casco (como
   `trinidadFill` en la Av. de La Trinidad), con referencias de Street View si Jonay las pasa.
-- [ ] ◐ **La plaza elevada junto a La Concepción** (Jonay, 2-nov; 8 capturas en `docs/referencias/concepcion_plaza/`: Plaza del Dr. Olivera n.º 6–10 y C. Hermanos Marrero 8–16): falta el jardín que rodea la iglesia por ese lado, alzado ~1 m sobre la calle.
+- [ ] ◐ **La plaza elevada junto a La Concepción** (3-nov: el OSM tiene ahí la valla de su barandilla, que en la 1.0.6 ya se pinta de barrotes, pero a ras de suelo) (Jonay, 2-nov; 8 capturas en `docs/referencias/concepcion_plaza/`: Plaza del Dr. Olivera n.º 6–10 y C. Hermanos Marrero 8–16): falta el jardín que rodea la iglesia por ese lado, alzado ~1 m sobre la calle.
   - Muro de contención ocre/naranja con remate de piedra, barandilla de hierro encima, pilares de piedra con jarrones en las esquinas y junto a la puerta, escalinata de piedra hasta la puerta lateral, césped con flores, palmeras altas, bancos y un pequeño parque infantil (balancín azul, valla de madera). `src/05o_concepcion.js`.
 - [~] ● v0.78.0 (9 edificios más de la ficha con fachada y nombre: Alhóndiga, Riquel, Mustelier, Ossuna, Rodríguez de Azero, Cruz Verde, Plateros, Sabandeños, Cristino de Vera; sin situar: Dominicas, Oque Botino, Jesuitas, Casa Linares, Van Den Heede; lista en `docs/referencias/callejero/edificios.md`) v0.72.0 (PDF en `docs/referencias/callejero/`; Bencomo, Juan de Vera, Rodríguez Moure y Ascanio y Nieves pasan a calles con coches; la hoja 2 trae la ficha de 36 edificios para misiones) **Callejero oficial en PDF** (Jonay, 12-oct): https://turismo.aytolalaguna.es/wp-content/uploads/2019/11/Callejero-La-Laguna-c.pdf
       Sirve para definir bien las **zonas peatonales** (las del empedrado; ahora hay calles donde se pasa en coche y el
@@ -357,6 +357,11 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Calles, túneles, puentes, enlaces y aeropuerto
 
+- [ ] ◐ **Suelos que parpadean al correr (dos empedrados en el mismo sitio)** (Jonay, 3-nov, Plaza de La Concepción X −517,
+  Y −289, 4 capturas: «hay suelos que dependiendo del fotograma hacen cambios y eso produce flicks cuando corres»): dos capas
+  de suelo a la misma altura (la plaza, la calle peatonal y el bordillo de la acera que se solapan) se pelean por pintarse
+  (z-fighting) y cambia cuál se ve según el fotograma. Buscar dónde se pisan las áreas peatonales con calles y aceras y dejar
+  una sola, o separarlas unos centímetros con prioridad fija (`polygonOffset`).
 - [ ] ⚡ **Contenedores de basura en medio de la calzada** (Jonay, 3-nov, C. Adelantado X −757, Y −359): van pegados a un
   lado (junto al bordillo o en su hueco de aparcamiento), nunca en mitad de la calle. Revisar dónde se colocan en todas.
 - [ ] ◐ **Escalón de terreno en Camino San Francisco / San Honorato** (Jonay, 3-nov, X −720, Y 301 y X −730, Y 335,

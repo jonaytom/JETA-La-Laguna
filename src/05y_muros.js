@@ -40,6 +40,12 @@ function inicioTapias() {
 
 // v1.0.5 (Jonay: «los muros no deberían dejar pasar entre muro y edificio»): a wall that stops next to a building (it was cut
 // there, or the garden wall runs up to a house) goes on into it, past the 0.75 m the facade is drawn inside its plan
+// iron railing: a bar on the left of each tile, a rail at the top and one near the bottom (alphaTest cuts the rest)
+function railTex() {
+  const cv = document.createElement('canvas'); cv.width = 16; cv.height = 64; const x = cv.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, 3, 64); x.fillRect(0, 0, 16, 4); x.fillRect(0, 55, 16, 3);
+  const t = new THREE.CanvasTexture(cv); t.wrapS = THREE.RepeatWrapping; t.magFilter = THREE.LinearFilter; t.anisotropy = 4; return t;
+}
 let WALL_BI = null;
 function wallBuildingAt(x, z) { // DATA.B in 25 m cells (built once): inAnyBuilding goes through every building
   if (!WALL_BI) { WALL_BI = new Map(); for (const b of DATA.B) { const c = b[6]; if (!c || c.length < 6) continue; let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9; for (let i = 0; i < c.length; i += 2) { x0 = Math.min(x0, c[i]); x1 = Math.max(x1, c[i]); z0 = Math.min(z0, c[i + 1]); z1 = Math.max(z1, c[i + 1]); }
@@ -64,29 +70,30 @@ function buildWalls() {
   const MAT = {
     cal: new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.95 }),
     piedra: new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 1 }),
-    valla: new THREE.MeshStandardMaterial({ color: 0x48524c, roughness: 0.6, metalness: 0.4, transparent: true, opacity: 0.55, depthWrite: false, side: THREE.DoubleSide }),
+    valla: new THREE.MeshStandardMaterial({ color: 0x343a36, roughness: 0.55, metalness: 0.5, map: railTex(), alphaTest: 0.5, side: THREE.DoubleSide }), // v1.0.6: iron bars and rails, not a see-through grey panel (Jonay: «¿esto qué es?»)
     madera: new THREE.MeshStandardMaterial({ color: 0x86663f, roughness: 0.9 }),
     seto: new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 1 }),
   };
   const COLS = { cal: [[0.93, 0.91, 0.86], [0.95, 0.94, 0.9], [0.89, 0.85, 0.77], [0.92, 0.88, 0.8]], piedra: [[0.42, 0.4, 0.38], [0.5, 0.47, 0.43], [0.36, 0.35, 0.34]], seto: [[0.22, 0.38, 0.18], [0.26, 0.42, 0.2]] };
   const CELLS = new Map(); const CS = 300;
-  const bucket = (mat, x, z) => { const k = mat + ':' + Math.floor(x / CS) + ',' + Math.floor(z / CS); let b = CELLS.get(k); if (!b) { b = { mat, p: [], c: [] }; CELLS.set(k, b); } return b; };
-  const quad = (b, a1, a2, b2, b1, col) => { b.p.push(...a1, ...a2, ...b2, ...a1, ...b2, ...b1); for (let i = 0; i < 6; i++) b.c.push(...col); };
+  const bucket = (mat, x, z) => { const k = mat + ':' + Math.floor(x / CS) + ',' + Math.floor(z / CS); let b = CELLS.get(k); if (!b) { b = { mat, p: [], c: [], uv: [] }; CELLS.set(k, b); } return b; };
+  const quad = (b, a1, a2, b2, b1, col, uv) => { b.p.push(...a1, ...a2, ...b2, ...a1, ...b2, ...b1); for (let i = 0; i < 6; i++) b.c.push(...col); const [u0, u1] = uv || [0, 0]; b.uv.push(u0, 0, u1, 0, u1, 1, u0, 0, u1, 1, u0, 1); };
   let km = 0, n = 0;
   for (const [kind, h, mat0, c0] of list) {
     const K = KIND[kind]; if (!K || c0.length < 4) continue;
     const c = wallIntoBuildings(c0);
     const H = h > 0.4 && h < 6 ? h : K[0], T = K[1], mat = K[2];
     const R = mulberry((Math.round(c[0] * 3) * 7919 + Math.round(c[1] * 3)) | 0); const pal = COLS[mat], col = pal ? pal[Math.floor(R() * pal.length)] : [1, 1, 1];
-    const shade = (k) => col.map((v) => v * k);
+    const shade = (k) => col.map((v) => v * k); let run = 0;
     for (let i = 0; i + 3 < c.length; i += 2) {
       const ax = c[i], az = c[i + 1], bx = c[i + 2], bz = c[i + 3], L = Math.hypot(bx - ax, bz - az); if (L < 0.05) continue;
       const nx = -(bz - az) / L * T / 2, nz = (bx - ax) / L * T / 2, k = Math.max(1, Math.ceil(L / 5)); km += L; // pieces of up to 5 m following the ground
-      let gmin = 1e9, gmax = -1e9; const b = bucket(mat, ax, az);
+      let gmin = 1e9, gmax = -1e9; const b = bucket(mat, ax, az); if (i === 0) run = 0;
       for (let j = 0; j < k; j++) {
         const x0 = ax + (bx - ax) * j / k, z0 = az + (bz - az) * j / k, x1 = ax + (bx - ax) * (j + 1) / k, z1 = az + (bz - az) * (j + 1) / k;
         const g0 = heightAt(x0, z0), g1 = heightAt(x1, z1); gmin = Math.min(gmin, g0, g1); gmax = Math.max(gmax, g0, g1);
         const y0 = g0 - 0.4, y1 = g1 - 0.4, t0 = g0 + H, t1 = g1 + H;
+        if (mat === 'valla') { quad(b, [x0, g0 - 0.03, z0], [x1, g1 - 0.03, z1], [x1, t1, z1], [x0, t0, z0], col, [(run + L * j / k) / 0.13, (run + L * (j + 1) / k) / 0.13]); continue; } // bars every 13 cm
         quad(b, [x0 + nx, y0, z0 + nz], [x1 + nx, y1, z1 + nz], [x1 + nx, t1, z1 + nz], [x0 + nx, t0, z0 + nz], shade(0.94)); // one side
         if (T > 0.06) {
           quad(b, [x1 - nx, y1, z1 - nz], [x0 - nx, y0, z0 - nz], [x0 - nx, t0, z0 - nz], [x1 - nx, t1, z1 - nz], shade(0.9)); // the other side
@@ -95,12 +102,12 @@ function buildWalls() {
       }
       if (T > 0.06) for (const [ex, ez, s] of [[ax, az, -1], [bx, bz, 1]]) { const g = heightAt(ex, ez); const tx = (bx - ax) / L * 0.001 * s, tz = (bz - az) / L * 0.001 * s;
         quad(b, [ex - nx * s + tx, g - 0.4, ez - nz * s + tz], [ex + nx * s + tx, g - 0.4, ez + nz * s + tz], [ex + nx * s + tx, g + H, ez + nz * s + tz], [ex - nx * s + tx, g + H, ez - nz * s + tz], shade(0.86)); } // the ends
-      COL.addSeg(ax, az, bx, bz, gmin - 0.5, gmax + H);
+      COL.addSeg(ax, az, bx, bz, gmin - 0.5, gmax + H); run += L;
     }
     n++;
   }
   for (const b of CELLS.values()) {
-    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(b.p, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(b.c, 3)); g.computeVertexNormals();
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(b.p, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(b.c, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(b.uv, 2)); g.computeVertexNormals();
     const m = new THREE.Mesh(g, MAT[b.mat]); m.castShadow = b.mat !== 'valla'; m.receiveShadow = true; m.userData.muros = true; scene.add(m); WALLS.meshes.push(m);
   }
   WALLS.n = n; WALLS.km = Math.round(km / 100) / 10;

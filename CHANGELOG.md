@@ -3,6 +3,12 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.0.6 — 2026-11-03 — Vallas de barrotes
+- **Las vallas del OSM, como barandillas de hierro** (Jonay, captura en la Plaza del Doctor Olivera: «¿esto qué es?»): se
+  pintaban como un panel gris semitransparente que parecía un fantasma. Ahora son barrotes cada 13 cm con pasamanos arriba
+  y abajo (textura recortada, sin transparencias). La de esa plaza es la barandilla del jardín alzado de La Concepción, que
+  aún falta hacer (apuntado en PENDIENTES).
+
 ## 1.0.5 — 2026-11-03 — Muros pegados a los edificios
 - **Sin pasillos entre muro y edificio** (Jonay, captura: «los muros no deberían dejar pasar entre muro y edificio»): el muro
   que acaba junto a un edificio (donde se cortó o la tapia que llega a una casa) sigue hasta meterse dentro de él, más allá

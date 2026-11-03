@@ -1,3 +1,2 @@
 prueba_arranque.py
-prueba_carpeta.py
-herramientas/sonda_hueco.py -923 -322 70
+herramientas/sonda_hueco.py -563 -298 40
