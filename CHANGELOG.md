@@ -3,6 +3,12 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.0.7 — 2026-11-03 — Muros continuos en las esquinas
+- **Sin huecos entre tramos de muro** (Jonay, captura: «tampoco debería haber huecos como este entre muros, deberían ser
+  continuos»): cada tramo acababa recto y en las esquinas se abría una cuña por fuera. Ahora las esquinas van a inglete (las
+  caras de los dos tramos se juntan) y los extremos de cada muro salen medio grosor, para que dos muros del mapa que se
+  tocan se solapen en vez de dejar hueco.
+
 ## 1.0.6 — 2026-11-03 — Vallas de barrotes
 - **Las vallas del OSM, como barandillas de hierro** (Jonay, captura en la Plaza del Doctor Olivera: «¿esto qué es?»): se
   pintaban como un panel gris semitransparente que parecía un fantasma. Ahora son barrotes cada 13 cm con pasamanos arriba

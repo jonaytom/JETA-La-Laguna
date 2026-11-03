@@ -357,6 +357,12 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Calles, túneles, puentes, enlaces y aeropuerto
 
+- [ ] ◐ **Marcas viales de más: líneas pegadas a las de separación y calles con 3 carriles que no los tienen** (Jonay, 3-nov,
+  Calle Juana La Blanca X −932, Y −249, captura: «hay marcas viales al lado de las separaciones de carriles, y no me suena
+  que esas calles tengan 3 carriles»): junto a cada línea discontinua sale otra línea más corta al lado, y la calle se pinta
+  con tres carriles. Mirar cuántos carriles trae el OSM (`lanes`) y si el ensanche de la 1.0.0 (`WIDEN` / `narrowToGap`) ha
+  añadido un carril o pinta el de aparcamiento como carril; las líneas dobles pueden ser las del carril de aparcamiento
+  encima de las de separación.
 - [ ] ◐ **Suelos que parpadean al correr (dos empedrados en el mismo sitio)** (Jonay, 3-nov, Plaza de La Concepción X −517,
   Y −289, 4 capturas: «hay suelos que dependiendo del fotograma hacen cambios y eso produce flicks cuando corres»): dos capas
   de suelo a la misma altura (la plaza, la calle peatonal y el bordillo de la acera que se solapan) se pelean por pintarse
@@ -391,6 +397,11 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   carreteras no pueden ser tan angulosas, y menos las marcas viales»): el carril de la avenida y su acera hacen quiebros
   bruscos (puntos del OSM movidos al separar sentidos o al ensanchar). Suavizar el trazado (curvas con radio mínimo, puntos
   intermedios) antes de dibujar calzada, aceras y líneas.
+  - Jonay (3-nov, otra captura, Calle Eduardo Westerdahl X −988, Y 114, bajando hacia la glorieta de San Honorato: «esto
+    está rarísimo, se siguen metiendo carreteras unas debajo de otras, no son un continuo»): varias vías del OSM que llegan
+    a la vez a la glorieta se pintan cada una con su calzada y sus líneas, unas encima de otras, y las líneas salen partidas
+    en zigzag. Hace falta juntar en una sola calzada las vías que se solapan (calzada única con sus carriles) antes de pintar
+    líneas, y no pintar las líneas de una vía por dentro de otra.
 - [ ] ◐ **Plazas de aparcamiento pintadas sobre los carriles** (Jonay, 3-nov, Calle el Juego X −259, Y 47, captura:
   «confundes carriles con espacios de aparcamiento»): rayas transversales de aparcamiento dentro de la calzada por donde
   circulan los coches. Que las plazas solo vayan en el carril de aparcamiento (junto al bordillo), nunca en los de paso.
