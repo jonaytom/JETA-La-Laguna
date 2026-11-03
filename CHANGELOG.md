@@ -3,6 +3,17 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.0.8 — 2026-11-03 — Ninguna calle por encima de una rampa abierta
+- **Rampas de aparcamiento y trincheras** (Jonay, Plaza del Cristo X 256, Y −552 y la salida del parking en X 124, Y −637:
+  «la entrada al parking tiene una carretera encima… esto no puede pasar nunca»): las calles, aceras, plazas y líneas que se
+  pintaban a ras de suelo por encima del tramo abierto de una rampa o una trinchera se recortan ahí, igual que el terreno
+  (solo lo que queda por encima del suelo de la rampa y por debajo del suelo de arriba: los puentes y la propia rampa se
+  quedan). De momento solo en las rampas de los aparcamientos; las trincheras con una calle de verdad encima necesitan
+  una losa (apuntado). Sonda nueva para todo el mapa: `tests/herramientas/sonda_rampas.py`.
+- **Choque invisible en la Vía de Ronda** (Jonay, X 378, Y −270: «aquí se choca el coche»): un muro del mapa quedaba debajo
+  de la calzada (la del juego es más ancha que la del OSM, o va elevada) y chocaba sin verse. Los muros se cortan ahora donde
+  los pisa una calzada tal como la dibuja el juego.
+
 ## 1.0.7 — 2026-11-03 — Muros continuos en las esquinas
 - **Sin huecos entre tramos de muro** (Jonay, captura: «tampoco debería haber huecos como este entre muros, deberían ser
   continuos»): cada tramo acababa recto y en las esquinas se abría una cuña por fuera. Ahora las esquinas van a inglete (las

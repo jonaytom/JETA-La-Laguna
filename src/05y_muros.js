@@ -79,7 +79,16 @@ function buildWalls() {
   const bucket = (mat, x, z) => { const k = mat + ':' + Math.floor(x / CS) + ',' + Math.floor(z / CS); let b = CELLS.get(k); if (!b) { b = { mat, p: [], c: [], uv: [] }; CELLS.set(k, b); } return b; };
   const quad = (b, a1, a2, b2, b1, col, uv) => { b.p.push(...a1, ...a2, ...b2, ...a1, ...b2, ...b1); for (let i = 0; i < 6; i++) b.c.push(...col); const [u0, u1] = uv || [0, 0]; b.uv.push(u0, 0, u1, 0, u1, 1, u0, 0, u1, 1, u0, 1); };
   let km = 0, n = 0;
-  for (const [kind, h, mat0, c0] of list) {
+  // v1.0.8 (Jonay: «aquí se choca el coche», Vía de Ronda X 378, Y −270): a wall of the map under a carriageway as the game
+  // draws it (wider than in the OSM, or raised over the ground) is cut there; it collided unseen under the road
+  const pieces = [];
+  const simp = (r) => { const o = [r[0], r[1]]; for (let k = 2; k + 3 < r.length + 2 && k < r.length - 2; k += 2) { const ax = o[o.length - 2], az = o[o.length - 1], bx = r[k], bz = r[k + 1], ex = r[k + 2], ez = r[k + 3]; const L = Math.hypot(ex - ax, ez - az) || 1; if (Math.abs((bx - ax) * (ez - az) - (bz - az) * (ex - ax)) / L > 0.12) o.push(bx, bz); } o.push(r[r.length - 2], r[r.length - 1]); return o; }; // back to the corners
+  for (const w of list) { const [kind, h, mat0, c0] = w; let run = [];
+    const flush = () => { if (run.length >= 4) pieces.push([kind, h, mat0, simp(run)]); run = []; };
+    for (let i = 0; i + 3 < c0.length; i += 2) { const ax = c0[i], az = c0[i + 1], bx = c0[i + 2], bz = c0[i + 3], L = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.ceil(L / 0.75));
+      for (let t = i ? 1 : 0; t <= n; t++) { const x = ax + (bx - ax) * t / n, z = az + (bz - az) * t / n; if (onCarriagewayEarly(x, z, 0.4)) flush(); else run.push(x, z); } }
+    flush(); }
+  for (const [kind, h, mat0, c0] of pieces) {
     const K = KIND[kind]; if (!K || c0.length < 4) continue;
     const c = wallIntoBuildings(c0);
     const H = h > 0.4 && h < 6 ? h : K[0], T = K[1], mat = K[2];

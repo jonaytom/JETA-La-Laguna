@@ -1,0 +1,7 @@
+# v1.0.8: calles sobre rampas, muros bajo calzada
+prueba_arranque.py
+prueba_carpeta.py
+herramientas/sonda_rampas.py
+herramientas/sonda_hueco.py 256 -552 30
+herramientas/sonda_hueco.py 124 -637 30
+herramientas/sonda_hueco.py 378 -270 30

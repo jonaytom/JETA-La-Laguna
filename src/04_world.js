@@ -163,7 +163,7 @@ const CG_DATA = new Uint8Array(CG.nx * CG.nz);
 const CG_TEX = new THREE.DataTexture(CG_DATA, CG.nx, CG.nz, THREE.RedFormat, THREE.UnsignedByteType); CG_TEX.magFilter = CG_TEX.minFilter = THREE.NearestFilter; CG_TEX.needsUpdate = true;
 function finalizeCuts() { TCUTS_READY = true;
   const n = Math.min(NCUT, TCUTS.length); let g = -1, last = null; const D = TCUT_DATA, R = (row, i) => (row * NCUT + i) * 4;
-  for (let i = 0; i < n; i++) { const c = TCUTS[i]; D.set([c[0], c[1], c[2], c[3]], R(0, i)); D[R(1, i)] = c[4];
+  for (let i = 0; i < n; i++) { const c = TCUTS[i]; D.set([c[0], c[1], c[2], c[3]], R(0, i)); D[R(1, i)] = c[4]; D[R(1, i) + 1] = c[6] ?? 1e9; D[R(1, i) + 2] = c[7] ?? 1e9; D[R(1, i) + 3] = c[8] ?? -1e9; // (no floor: only the terrain is cut)
     if (c[5] !== last) { if (g + 1 >= NGRP) break; g++; last = c[5]; D.set([1e9, 1e9, -1e9, -1e9], R(2, g)); D.set([i, i, 0, 0], R(3, g)); }
     const b = R(2, g), e = c[4] + 1; D[b] = Math.min(D[b], c[0] - e, c[2] - e); D[b + 1] = Math.min(D[b + 1], c[1] - e, c[3] - e); D[b + 2] = Math.max(D[b + 2], c[0] + e, c[2] + e); D[b + 3] = Math.max(D[b + 3], c[1] + e, c[3] + e); D[R(3, g) + 1] = i + 1; }
   TCUT_U.n.value = g + 1; TCUT_TEX.needsUpdate = true;
@@ -172,6 +172,26 @@ function finalizeCuts() { TCUTS_READY = true;
     const j0 = Math.max(0, Math.floor((Math.min(c[1], c[3]) - e - CG.z0) / CG.s)), j1 = Math.min(CG.nz - 1, Math.floor((Math.max(c[1], c[3]) + e - CG.z0) / CG.s));
     for (let j = j0; j <= j1; j++) for (let k = i0; k <= i1; k++) CG_DATA[j * CG.nx + k] = 255; }
   CG_TEX.needsUpdate = true;
+}
+// v1.0.8 (Jonay: «la entrada al parking tiene una carretera encima… esto no puede pasar nunca»): the streets, pavements,
+// plazas and lines drawn at ground level over an open ramp or cutting are cut too, like the terrain; only what lies above
+// its floor (+0.8 m) and under the ground on top (+1.2 m): the ramp's own floor and the bridges over it stay
+function cutAware(mat) {
+  if (!mat || mat.userData.cutAware) return; mat.userData.cutAware = true;
+  const prev = mat.onBeforeCompile, prevKey = mat.customProgramCacheKey ? mat.customProgramCacheKey.bind(mat) : null;
+  mat.onBeforeCompile = (sh, r) => { if (prev) prev.call(mat, sh, r);
+    sh.uniforms.uCutTex = TCUT_U.tex; sh.uniforms.uGrpN = TCUT_U.n; sh.uniforms.uCG = { value: CG_TEX };
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vCW;').replace('#include <project_vertex>', '#include <project_vertex>\nvCW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vCW; uniform highp sampler2D uCutTex; uniform int uGrpN; uniform sampler2D uCG;')
+      .replace('void main() {', `void main() {
+        { ivec2 cgc = ivec2(floor((vCW.xz - vec2(${CG.x0.toFixed(1)}, ${CG.z0.toFixed(1)})) / ${CG.s.toFixed(1)}));
+          if (cgc.x >= 0 && cgc.y >= 0 && cgc.x < ${CG.nx} && cgc.y < ${CG.nz} && texelFetch(uCG, cgc, 0).r > 0.5) for (int g = 0; g < ${NGRP}; g++) { if (g >= uGrpN) break; vec4 B = texelFetch(uCutTex, ivec2(g, 2), 0); if (vCW.x < B.x || vCW.z < B.y || vCW.x > B.z || vCW.z > B.w) continue;
+            vec4 rg = texelFetch(uCutTex, ivec2(g, 3), 0);
+            for (int i = int(rg.x); i < int(rg.y); i++) { vec4 c = texelFetch(uCutTex, ivec2(i, 0), 0); vec4 cw = texelFetch(uCutTex, ivec2(i, 1), 0); if (cw.w < -1e8) continue; vec2 ab = c.zw - c.xy; float t = clamp(dot(vCW.xz - c.xy, ab) / max(dot(ab, ab), 1e-3), 0.0, 1.0); vec2 q = c.xy + ab * t - vCW.xz;
+              if (dot(q, q) < (cw.x - 0.1) * (cw.x - 0.1) && vCW.y > mix(cw.y, cw.z, t) + 0.8 && vCW.y < cw.w) discard; } } }`);
+  };
+  mat.customProgramCacheKey = () => (prevKey ? prevKey() : '') + '|cut';
+  mat.needsUpdate = true;
 }
 function buildTerrain() {
   SPLATCANVAS = buildSplat();
@@ -866,8 +886,9 @@ function tunnelRoad(c, w, cls, tile, hf, opt = {}) {
         W.quad(Pt(b, sg, -0.3, hw + 0.3), Pt(a, sg, -0.3, hw + 0.3), Pt(a, sg, Math.max(flush ? 0.3 : 0.9, ga), hw + 0.3), Pt(b, sg, Math.max(flush ? 0.3 : 0.9, gb), hw + 0.3), [0, 0], [0, 0], [0, 0], [0, 0], wc, undefined, [-a[4] * sg, 0, a[3] * sg]);
         W.quad(Pt(a, sg, Math.max(flush ? 0.3 : 0.9, ga)), Pt(b, sg, Math.max(flush ? 0.3 : 0.9, gb)), Pt(b, sg, Math.max(flush ? 0.3 : 0.9, gb), hw + 0.3), Pt(a, sg, Math.max(flush ? 0.3 : 0.9, ga), hw + 0.3), [0, 0], [0, 0], [0, 0], [0, 0], wc, undefined, [0, 1, 0]); }
       const lc = TCUTS[TCUTS.length - 1]; const gid = TUNNEL_DECKS.length;
-      if (lc && lc[5] === gid && lc[2] === a[0] && lc[3] === a[1] && Math.abs((lc[2] - lc[0]) * a[4] - (lc[3] - lc[1]) * a[3]) < 0.02 * Math.hypot(lc[2] - lc[0], lc[3] - lc[1]) + 1e-6) { lc[2] = b[0]; lc[3] = b[1]; }
-      else TCUTS.push([a[0], a[1], b[0], b[1], hw + 0.15, gid]);
+      const gt = Math.max(heightAt(a[0], a[1]), heightAt(b[0], b[1])) + 1.2; // v1.0.8: floor at both ends and the ground on top, for the streets drawn over the cutting (cutAware)
+      if (lc && lc[5] === gid && lc[2] === a[0] && lc[3] === a[1] && Math.abs((lc[2] - lc[0]) * a[4] - (lc[3] - lc[1]) * a[3]) < 0.02 * Math.hypot(lc[2] - lc[0], lc[3] - lc[1]) + 1e-6 && (lc[6] === undefined) === !opt.cutStreets && (lc[7] === undefined || Math.abs(lc[7] - a[2]) < 0.4)) { lc[2] = b[0]; lc[3] = b[1]; if (lc[7] !== undefined) { lc[7] = b[2]; lc[8] = Math.max(lc[8], gt); } }
+      else TCUTS.push(opt.cutStreets ? [a[0], a[1], b[0], b[1], hw + 0.15, gid, a[2], b[2], gt] : [a[0], a[1], b[0], b[1], hw + 0.15, gid]); // (cutStreets: the car-park ramps; the other cuttings that a road crosses need a deck instead: sonda_rampas)
     }
   }
   TUNNEL_DECKS.push({ ri: TUN_RI, type: 'path', pts: pts.map((p) => [p[0], p[1], p[2] + 0.12]), w: w + 1.0, road: true, tunnel: true, hw: w / 2 + 0.3, tram: cls === 'tram', ceil: opt.H ? opt.H - 0.3 : undefined });
@@ -1213,7 +1234,7 @@ function finalizeChunks() {
     const m = new THREE.Mesh(g, MAT[mk]);
     const isRoad = isLines(mk) || mk === 'auxLane' || ['asphalt', 'paving', 'sidewalk', 'footway', 'dirt', 'tram', 'disc', 'discPave', 'tunnelLight', 'grass'].includes(mk);
     m.receiveShadow = true; m.castShadow = !isRoad && mk !== 'glassHouse';
-    if (isRoad) m.renderOrder = 1;
+    if (isRoad) { m.renderOrder = 1; if (mk !== 'tunnelLight') cutAware(MAT[mk]); } // v1.0.8: not over an open ramp
     m.matrixAutoUpdate = false; m.name = 'chunk:' + mk; m.userData.chunk = k; scene.add(m); meshes++;
     lodAdd(m, mk === 'trim' || mk === 'balcony' || mk === 'wood' || mk.startsWith('sign')); // v0.77: far city without the small details
   }

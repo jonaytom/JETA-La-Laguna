@@ -130,6 +130,10 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   nombres. `09d_fight2d.js` (el HUD se dibuja a la escala de la pantalla: mirar con qué tamaño sale a 1080p).
   - Jonay insiste (3-nov, otra captura: «enorme la verdad lo de las peleas»): también el recuadro de CONTROLES del
     principio ocupa casi toda la pantalla. Todo a la mitad o menos.
+- [ ] ⚡ **Pelea 2D: no pintar detrás a la gente de la calle que pelea** (Jonay, 3-nov: «en las peleas 2D no se deberían
+  renderizar las personas de fondo, porque se veía el que estaba peleando conmigo a la vez que peleaba con él»): el fondo
+  3D de la pelea saca al rival (y al Chopa) de pie en la calle, a la vez que sus dibujos de la pelea. Esconder al rival y
+  al jugador del mundo 3D mientras dura la pelea (o toda la gente cercana) y volver a mostrarlos al acabar. `09d_fight2d.js`.
 
 - [~] ● v0.90.0 (basket: el A++ semicabezón 120 en el juego; fútbol F2 en v0.88) **Repasar el pixel art de los jugadores de todos los minijuegos** (Jonay, 26-oct): no le gustan los personajes
   de ninguno. Se empieza por el basket.
@@ -294,6 +298,10 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Tiendas y edificios del casco
 
+- [ ] ◐ **Edificio que se mete en la calzada del Camino del Cañaveral** (Jonay, 3-nov, X 234, Y −773, captura: «este
+  edificio sí que invade raro… ¿no está detectado?»): una casa baja blanca con la esquina en zigzag ocupa media calzada. No
+  es de los del Catastro nuevos (es del OSM). Mirar si sale en las invasiones de la auditoría (`mapa.md`) y por qué el
+  recorte no la quita (la calle puede estar desplazada en el OSM o la casa entrar justo en el límite del recorte).
 - [~] ◐ v1.0.4 (tapias encaladas donde no hay casa; el Catastro no tiene edificios dentro: son patios) **Huecos que no existen: Callejón Montaraz** (Jonay, 3-nov, X −896, Y −348 y X −923, Y −322, capturas del juego,
   Street View «2 C. Montaraz» y vista de satélite): en el juego hay una explanada empedrada enorme y se ve la calle de un
   lado a otro; en la realidad la manzana entre Av. de Lucas Vega, C. Montaraz, C. Marqués de Celada y C. Teobaldo Power
@@ -357,12 +365,36 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Calles, túneles, puentes, enlaces y aeropuerto
 
+- [ ] ◐ **Calle que acaba en la Vía de Ronda sin valla** (Jonay, 3-nov, X 498, Y −493, captura: «por aquí no se debería
+  poder acceder a la Vía de Ronda, debería haber vallado»): una calle sin salida termina en el talud junto a la Vía de
+  Ronda y se baja con el coche. Poner valla o bionda al final de las calles sin salida que dan a una vía rápida (autopista,
+  autovía, Vía de Ronda) cuando no hay enlace, y con choque.
+- [ ] ◐ **Tramos abiertos de trinchera con una calle por encima** (v1.0.8, `sonda_rampas.py`): además de las rampas de los
+  aparcamientos (arregladas en la 1.0.8), la sonda encuentra ~60 sitios donde una calle de verdad cruza por encima del
+  tramo abierto de una trinchera o un paso inferior (Autopista del Norte X −1193, Y −28; Vía de Ronda X 537, Y 1371 y
+  X 713, Y 1315; Av. de los Menceyes X 694, Y 1326; Camino La Rúa X 630, Y −1146; enlaces de la autopista X 1221, Y 2360…).
+  Ahí la calle de arriba necesita una losa de puente (y la trinchera, cubrirse bajo ella), no un corte.
+- [ ] ◐ **Ninguna calle puede pasar por encima de una rampa o un túnel que baja (en todo el mapa)** (Jonay, 3-nov, Plaza
+  del Cristo X 256, Y −552, captura: «la entrada al parking tiene una carretera encima; hay que revisar dónde se crucen
+  carreteras a distinto nivel en todo el mapa, esto no puede pasar nunca»): la calzada de la plaza se pinta a ras de
+  suelo por encima de la rampa del aparcamiento subterráneo, que se ve partida por debajo. Hacer una sonda para todo el
+  mapa que busque cada rampa, boca de túnel o paso inferior y las calzadas, aceras y plazas que la pisan a otra altura
+  (hay `auditCrossings` en `__dbg`), con foto de cada sitio; y al construir, cortar la calzada de arriba donde abre la
+  rampa (como `finalizeCuts` / `TCUTS`) o convertirla en un paso elevado con su losa si de verdad pasa por encima.
 - [ ] ◐ **Marcas viales de más: líneas pegadas a las de separación y calles con 3 carriles que no los tienen** (Jonay, 3-nov,
   Calle Juana La Blanca X −932, Y −249, captura: «hay marcas viales al lado de las separaciones de carriles, y no me suena
   que esas calles tengan 3 carriles»): junto a cada línea discontinua sale otra línea más corta al lado, y la calle se pinta
   con tres carriles. Mirar cuántos carriles trae el OSM (`lanes`) y si el ensanche de la 1.0.0 (`WIDEN` / `narrowToGap`) ha
   añadido un carril o pinta el de aparcamiento como carril; las líneas dobles pueden ser las del carril de aparcamiento
   encima de las de separación.
+  - Jonay (3-nov: «hay muchas zonas de 2 carriles que lo que tienen en realidad es 2 carriles y una fila de aparcamientos a
+    los lados; eso está mal indicado, pasa en muchísimas calles; no sé si podemos sacar los aparcamientos de algún sitio»):
+    el OSM tiene etiquetas de aparcamiento en la calzada (`parking:both`, `parking:left` / `parking:right` = `lane`, con
+    `…:orientation` = `parallel` / `diagonal` / `perpendicular`) y el número de carriles (`lanes`). Plan: bajarlas con una
+    orden del trabajador (como `barreras`) para ver cuántas calles de La Laguna las tienen; donde estén, pintar carriles +
+    banda de aparcamiento con coches aparcados; donde no, una regla por tipo y ancho de calle (residencial ancha = un carril
+    por sentido + aparcamiento a los lados) en vez de pintar tres o cuatro carriles. Otra fuente posible: los datos
+    abiertos del Ayuntamiento (zonas de aparcamiento regulado).
 - [ ] ◐ **Suelos que parpadean al correr (dos empedrados en el mismo sitio)** (Jonay, 3-nov, Plaza de La Concepción X −517,
   Y −289, 4 capturas: «hay suelos que dependiendo del fotograma hacen cambios y eso produce flicks cuando corres»): dos capas
   de suelo a la misma altura (la plaza, la calle peatonal y el bordillo de la acera que se solapan) se pelean por pintarse
@@ -402,6 +434,8 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
     a la vez a la glorieta se pintan cada una con su calzada y sus líneas, unas encima de otras, y las líneas salen partidas
     en zigzag. Hace falta juntar en una sola calzada las vías que se solapan (calzada única con sus carriles) antes de pintar
     líneas, y no pintar las líneas de una vía por dentro de otra.
+  - Jonay (3-nov, Vía de Ronda X 309, Y −40, captura: «otra superposición fatal de calles»): en el enlace la calzada de
+    un ramal se monta sobre la principal con un escalón y las líneas se cruzan.
 - [ ] ◐ **Plazas de aparcamiento pintadas sobre los carriles** (Jonay, 3-nov, Calle el Juego X −259, Y 47, captura:
   «confundes carriles con espacios de aparcamiento»): rayas transversales de aparcamiento dentro de la calzada por donde
   circulan los coches. Que las plazas solo vayan en el carril de aparcamiento (junto al bordillo), nunca en los de paso.

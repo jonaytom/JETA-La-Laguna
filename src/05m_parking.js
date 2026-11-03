@@ -99,7 +99,7 @@ function buildHall(F, uc, L, yF, name, gaps, holes = [], o = {}) { // holes: [u0
 function rampProfile(Lr, yF) { return (s, x, z) => lerp(heightAt(x, z), yF, smooth(0, 1, (s - 2) / Math.max(4, Lr - 8))); }
 // ramp from (x0,z0) on the surface to (x1,z1) inside the hall, built with the tunnel/cutting machinery
 function buildRamp(x0, z0, x1, z1, yF, label, o = {}) { // o: w (width), wc (wall colour: the Indigo ones are blue)
-  const Lr = Math.hypot(x1 - x0, z1 - z0); const c = [x0, z0, x1, z1]; tunnelRoad(c, o.w || 6.8, 'asphalt', 8, rampProfile(Lr, yF), { H: 3.9, cover: 4.3, wc: o.wc });
+  const Lr = Math.hypot(x1 - x0, z1 - z0); const c = [x0, z0, x1, z1]; tunnelRoad(c, o.w || 6.8, 'asphalt', 8, rampProfile(Lr, yF), { H: 3.9, cover: 4.3, wc: o.wc, cutStreets: true });
   // entrance sign on a post at the top
   const M_ = pkMats(); const dx = (x1 - x0) / Lr, dz = (z1 - z0) / Lr; const so = (o.w || 6.8) / 2 + 0.8; let px = x0 - dz * so, pz = z0 + dx * so; if (onCarriagewayEarly(px, pz, 0.4) || inAnyBuilding(px, pz)) { px = x0 + dz * so; pz = z0 - dx * so; } if (onCarriagewayEarly(px, pz, 0.4) || inAnyBuilding(px, pz)) return; /* v0.68: the post never on a carriageway (auditor) */ const y = heightAt(px, pz);
   const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.2, 8), M_.steel); post.position.set(px, y + 1.6, pz); scene.add(post);

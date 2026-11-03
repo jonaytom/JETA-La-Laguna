@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.0.7</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.0.8</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,18 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.0.8 — 2026-11-03 — Ninguna calle por encima de una rampa abierta</h2>
+<ul>
+<li><strong>Rampas de aparcamiento y trincheras</strong> (Jonay, Plaza del Cristo X 256, Y −552 y la salida del parking en X 124, Y −637:
+  «la entrada al parking tiene una carretera encima… esto no puede pasar nunca»): las calles, aceras, plazas y líneas que se
+  pintaban a ras de suelo por encima del tramo abierto de una rampa o una trinchera se recortan ahí, igual que el terreno
+  (solo lo que queda por encima del suelo de la rampa y por debajo del suelo de arriba: los puentes y la propia rampa se
+  quedan). De momento solo en las rampas de los aparcamientos; las trincheras con una calle de verdad encima necesitan
+  una losa (apuntado). Sonda nueva para todo el mapa: <code>tests/herramientas/sonda_rampas.py</code>.</li>
+<li><strong>Choque invisible en la Vía de Ronda</strong> (Jonay, X 378, Y −270: «aquí se choca el coche»): un muro del mapa quedaba debajo
+  de la calzada (la del juego es más ancha que la del OSM, o va elevada) y chocaba sin verse. Los muros se cortan ahora donde
+  los pisa una calzada tal como la dibuja el juego.</li>
+</ul>
 <h2>1.0.7 — 2026-11-03 — Muros continuos en las esquinas</h2>
 <ul>
 <li><strong>Sin huecos entre tramos de muro</strong> (Jonay, captura: «tampoco debería haber huecos como este entre muros, deberían ser
