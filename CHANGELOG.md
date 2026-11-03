@@ -3,6 +3,19 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.0.2 — 2026-11-03 — Edificios que siguen el bordillo (también en curva) y gente delgada menos exagerada
+- **Recorte por el bordillo** (Jonay: «que el edificio vaya paralelo al borde de la calzada, también cuando empieza a tener
+  ángulo, de manera que sea imposible que invada»): después de los cortes rectos, se le quita al edificio la calzada pieza a
+  pieza tal como se dibuja (rectángulo de cada pieza y un disco en cada unión, para las curvas), con el bisel solo donde la
+  calle acaba. Con esto vuelven muchos de los edificios pequeños que se quitaban: se queda la parte que no pisa la calle.
+- **Gente delgada** (Jonay: «los delgados son demasiado delgados y deformados; las cabezas no se adelgazan tanto»): el
+  cuerpo más delgado es menos extremo y el estrechamiento ya no acorta (la altura sale de la tabla real).
+- **El Chopa mide 1,83 m** (Jonay: «todo el mundo es más alto que el Chopa»): hasta la 1.0.1 el estrechamiento de hombros lo
+  dejaba en ~1,61 m; ahora es más alto que la media de los hombres y que casi todas las mujeres.
+- **Interiores** (Jonay: «la gente atraviesa el mostrador»): nadie se queda dentro de una barra, mesa o estantería; se le
+  saca por el lado más corto antes de ponerle su choque.
+- **Lanzador**: Edge o Chrome se abren limpios, sin bienvenida, extensiones ni inicio de sesión.
+
 ## 1.0.1 — 2026-11-03 — El juego en carpeta con lanzador e icono, pantalla completa y esquinas recortadas en paralelo a la calle
 - **Versión en carpeta para los testers** (Jonay: «que no sea un archivo único… y hacer zip para pasarlo»): `build.py` saca
   `dist/JETA La Laguna/` con `Jugar.bat`, `LEEME.txt` y `juego/` (`index.html`, `js/juego.js` con su mapa de fuentes —

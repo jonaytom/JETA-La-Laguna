@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.0.1</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.0.2</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,20 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.0.2 — 2026-11-03 — Edificios que siguen el bordillo (también en curva) y gente delgada menos exagerada</h2>
+<ul>
+<li><strong>Recorte por el bordillo</strong> (Jonay: «que el edificio vaya paralelo al borde de la calzada, también cuando empieza a tener
+  ángulo, de manera que sea imposible que invada»): después de los cortes rectos, se le quita al edificio la calzada pieza a
+  pieza tal como se dibuja (rectángulo de cada pieza y un disco en cada unión, para las curvas), con el bisel solo donde la
+  calle acaba. Con esto vuelven muchos de los edificios pequeños que se quitaban: se queda la parte que no pisa la calle.</li>
+<li><strong>Gente delgada</strong> (Jonay: «los delgados son demasiado delgados y deformados; las cabezas no se adelgazan tanto»): el
+  cuerpo más delgado es menos extremo y el estrechamiento ya no acorta (la altura sale de la tabla real).</li>
+<li><strong>El Chopa mide 1,83 m</strong> (Jonay: «todo el mundo es más alto que el Chopa»): hasta la 1.0.1 el estrechamiento de hombros lo
+  dejaba en ~1,61 m; ahora es más alto que la media de los hombres y que casi todas las mujeres.</li>
+<li><strong>Interiores</strong> (Jonay: «la gente atraviesa el mostrador»): nadie se queda dentro de una barra, mesa o estantería; se le
+  saca por el lado más corto antes de ponerle su choque.</li>
+<li><strong>Lanzador</strong>: Edge o Chrome se abren limpios, sin bienvenida, extensiones ni inicio de sesión.</li>
+</ul>
 <h2>1.0.1 — 2026-11-03 — El juego en carpeta con lanzador e icono, pantalla completa y esquinas recortadas en paralelo a la calle</h2>
 <ul>
 <li><strong>Versión en carpeta para los testers</strong> (Jonay: «que no sea un archivo único… y hacer zip para pasarlo»): <code>build.py</code> saca

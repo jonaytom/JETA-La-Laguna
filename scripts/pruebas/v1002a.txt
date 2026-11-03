@@ -1,0 +1,7 @@
+prueba_arranque.py
+prueba_recorte.py
+prueba_pendientes_faciles.py
+prueba_carpeta.py
+herramientas/foto_invasiones.py
+herramientas/sonda_tamanos.py
+herramientas/foto_caras.py

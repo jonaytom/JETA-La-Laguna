@@ -125,6 +125,10 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Gráficos de los minijuegos
 
+- [ ] ⚡ **Pelea callejera: textos y barras demasiado grandes** (Jonay, 3-nov, captura a 1920×1080): las barras de vida,
+  el «KO», los nombres («EL CHOPA», «SASTRÓN») y el rótulo de los golpes ocupan demasiado; más pequeños, sobre todo los
+  nombres. `09d_fight2d.js` (el HUD se dibuja a la escala de la pantalla: mirar con qué tamaño sale a 1080p).
+
 - [~] ● v0.90.0 (basket: el A++ semicabezón 120 en el juego; fútbol F2 en v0.88) **Repasar el pixel art de los jugadores de todos los minijuegos** (Jonay, 26-oct): no le gustan los personajes
   de ninguno. Se empieza por el basket.
   - Ejemplos que le gustan: póster «Pixel Slam Dunk»; un mate de los Suns; uno de los Raptors; uno de los Lakers
@@ -260,10 +264,19 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Tiendas y edificios del casco
 
+- [ ] ⚡ **Pasaje Aguere: el mismo cartel en cada local** (Jonay, 3-nov, X −213, Y 46, captura): «Tasca El Soportal» y
+  «Móviles Guanchófono» se repiten en todos los huecos del pasaje, uno tras otro. Pocos negocios con cartel (3–5, distintos
+  y parodias) y el resto de locales cerrados o sin rótulo. Los carteles del pasaje salen de `05x_pasajes.js`.
+
 - [~] ◐ v0.76.0 (4 jugueterías con icono y compra con E: rifle y bolitas; falta recrear su fachada/escaparate o interior) **Jugueterías** (Jonay, 12-oct): recrear varias (mejor las que ya hay en el mapa); allí se compran **bolitas** para
       la pistola y otras armas: **escopeta de agua** (chorros de agua; se recarga en **fuentes** repartidas por la ciudad;
       necesaria en misiones como el incendio del Obispado). Por ahora no hay más armas.
 
+- [ ] ◐ **Manzana vacía junto al Teatro Leal** (Jonay, 3-nov, X −301, Y −262, con captura: «aquí falta ciudad, es una calle
+  estrecha, no hay ese espacio»): no la ha quitado el recorte (`sonda_hueco.py -301 -262 70`: ningún edificio quitado ahí);
+  en el OpenStreetMap esa manzana entre C. Núñez de la Peña, C. Obispo Rey Redondo y C. Alcalde Alonso Suárez Melián no
+  tiene edificios dibujados, y el juego la pinta como una plaza empedrada. Rellenarla con casas del casco (como
+  `trinidadFill` en la Av. de La Trinidad), con referencias de Street View si Jonay las pasa.
 - [ ] ◐ **La plaza elevada junto a La Concepción** (Jonay, 2-nov; 8 capturas en `docs/referencias/concepcion_plaza/`: Plaza del Dr. Olivera n.º 6–10 y C. Hermanos Marrero 8–16): falta el jardín que rodea la iglesia por ese lado, alzado ~1 m sobre la calle.
   - Muro de contención ocre/naranja con remate de piedra, barandilla de hierro encima, pilares de piedra con jarrones en las esquinas y junto a la puerta, escalinata de piedra hasta la puerta lateral, césped con flores, palmeras altas, bancos y un pequeño parque infantil (balancín azul, valla de madera). `src/05o_concepcion.js`.
 - [~] ● v0.78.0 (9 edificios más de la ficha con fachada y nombre: Alhóndiga, Riquel, Mustelier, Ossuna, Rodríguez de Azero, Cruz Verde, Plateros, Sabandeños, Cristino de Vera; sin situar: Dominicas, Oque Botino, Jesuitas, Casa Linares, Van Den Heede; lista en `docs/referencias/callejero/edificios.md`) v0.72.0 (PDF en `docs/referencias/callejero/`; Bencomo, Juan de Vera, Rodríguez Moure y Ascanio y Nieves pasan a calles con coches; la hoja 2 trae la ficha de 36 edificios para misiones) **Callejero oficial en PDF** (Jonay, 12-oct): https://turismo.aytolalaguna.es/wp-content/uploads/2019/11/Callejero-La-Laguna-c.pdf
@@ -498,6 +511,12 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Hecho
 
+- [x] v1.0.2 **La gente de los interiores no se mete en los muebles** (Jonay, 3-nov, Café Brasilito: «la gente atraviesa el
+  mostrador; eso no puede pasar ni aquí ni en ningún sitio»): al amueblar cada sala, quien quede dentro de una barra, mesa,
+  estantería o banco se saca por el lado más corto (`clearInteriorNpcs`, 05g_interiors.js).
+- [x] v1.0.2 **El Chopa mide 1,83 m y los delgados no son tan extremos** (Jonay, 3-nov).
+- [x] v1.0.2 **Recorte por el bordillo, también en curva, y recuperar edificios quitados** (Jonay, 3-nov): `kerbClip`
+  (04b_recorte.js); los quitados bajan de ~440 a 251, todos de menos de 50 m².
 - [x] v1.0.1 **Versión en carpeta para los testers, con lanzador, icono y pantalla completa** (Jonay, 3-nov): `dist/JETA La
   Laguna/` (Jugar.bat, LEEME.txt, juego/) y la orden `zip_testers`; ver CHANGELOG 1.0.1. Los datos grandes que van dentro
   del código (sprites en base64) siguen en `js/juego.js`: sacarlos a `datos/` pide cambiar cómo los lee cada módulo.

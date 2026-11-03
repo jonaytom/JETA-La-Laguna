@@ -22,7 +22,7 @@ function roadClipGrid() {
         if (!ok) break; j = jj; dev = dv; }
       add(c[2 * i], c[2 * i + 1], c[2 * j], c[2 * j + 1], r[2] / 2 + 0.3 + dev, r[2] / 2 + 0.3); i = j; } });
   // the streets as they are drawn (every piece, no straight runs): to measure how deep a point sits in a carriageway
-  const raw = [], m2 = new Map(); DATA.R.forEach((r) => { if ((r[0] > 12 && r[0] !== 13) || (r[3] & 6)) return; /* v0.74: pedestrian streets too (a corner pushed out of one street into a pedestrian one blocked Calle Heraclio Sánchez) */ const c = r[4], k0 = r[2] / 2 + 0.3; for (let i = 0; i + 3 < c.length; i += 2) { const ax = c[i], az = c[i + 1], L = Math.hypot(c[i + 2] - ax, c[i + 3] - az); if (L < 0.05) continue; const id = raw.push({ ax, az, ux: (c[i + 2] - ax) / L, uz: (c[i + 3] - az) / L, L, k0 }) - 1;
+  const raw = [], m2 = new Map(); DATA.R.forEach((r) => { if ((r[0] > 12 && r[0] !== 13) || (r[3] & 6)) return; /* v0.74: pedestrian streets too (a corner pushed out of one street into a pedestrian one blocked Calle Heraclio Sánchez) */ const c = r[4], k0 = r[2] / 2 + 0.3; for (let i = 0; i + 3 < c.length; i += 2) { const ax = c[i], az = c[i + 1], L = Math.hypot(c[i + 2] - ax, c[i + 3] - az); if (L < 0.05) continue; const id = raw.push({ ax, az, ux: (c[i + 2] - ax) / L, uz: (c[i + 3] - az) / L, L, k0, car: r[0] <= 12, first: i === 0, last: i + 4 >= c.length }) - 1; /* v1.0.2: car, and whether the piece ends the road (kerbClip) */
     for (let a = Math.floor((Math.min(ax, c[i + 2]) - k0) / CS); a <= Math.floor((Math.max(ax, c[i + 2]) + k0) / CS); a++) for (let b = Math.floor((Math.min(az, c[i + 3]) - k0) / CS); b <= Math.floor((Math.max(az, c[i + 3]) + k0) / CS); b++) { const key = a * 100003 + b; let l = m2.get(key); if (!l) m2.set(key, l = []); l.push(id); } } });
   RCLIP = { CS, m, segs, raw, m2, cut: 0, gone: 0, goneList: [], keptList: [] }; return RCLIP;
 }
@@ -128,6 +128,28 @@ function subtractConvex(P, R, ends) { // ends: R's edges that are the ends of th
     out.push(ex); entry = null; }
   return out.length >= 3 ? out : [];
 }
+// It also brings back buildings that were going to go (only a strip left with the straight cuts): what is left off the
+// kerb is kept if it has some sense (12 m², 2,5 m deep).
+// v1.0.2 (Jonay: «detectar cuándo el borde de la calzada empieza a tener ángulo y que el edificio vaya paralelo a este, de
+// manera que sea imposible que invada la calzada; si son esquinas, solo se amplía el ángulo de unión»): the carriageway is
+// taken off the building piece by piece of the street as it is drawn (curves included): each piece's rectangle, a disc
+// where two pieces meet, and the bevelled step only where the road really ends. A piece that would cut the building in
+// two (a street right through it) is left to the rules above.
+function kerbClip(P, G) {
+  let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const p of P) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); z0 = Math.min(z0, p[1]); z1 = Math.max(z1, p[1]); }
+  const ids = new Set(); for (let a = Math.floor((x0 - 8) / G.CS); a <= Math.floor((x1 + 8) / G.CS); a++) for (let b = Math.floor((z0 - 8) / G.CS); b <= Math.floor((z1 + 8) / G.CS); b++) { const l = G.m2.get(a * 100003 + b); if (l) for (const id of l) ids.add(id); }
+  const deep = (Q, s, k) => { let w = 0; for (let i = 0; i < Q.length; i++) { const p = Q[i], q = Q[(i + 1) % Q.length]; for (const t of [0, 0.25, 0.5, 0.75]) { const x = p[0] + (q[0] - p[0]) * t, z = p[1] + (q[1] - p[1]) * t, u = Math.max(0, Math.min(s.L, (x - s.ax) * s.ux + (z - s.az) * s.uz)); w = Math.max(w, k - Math.hypot(x - s.ax - s.ux * u, z - s.az - s.uz * u)); } } return w; };
+  for (const id of ids) { const s = G.raw[id]; if (!s.car) continue; const k = s.k0 - 0.3; if (deep(P, s, k) < 0.25) continue;
+    const nx = -s.uz, nz = s.ux, bx = s.ax + s.ux * s.L, bz = s.az + s.uz * s.L;
+    const R = [[s.ax + nx * k, s.az + nz * k], [bx + nx * k, bz + nz * k], [bx - nx * k, bz - nz * k], [s.ax - nx * k, s.az - nz * k]];
+    const ends = []; if (s.last) ends.push(1); if (s.first) ends.push(3);
+    let Q = subtractConvex(P, R, ends);
+    if (Q.length >= 3 && Q !== P && !selfCross(Q) && deep(Q, s, k) < 0.25) P = Q;
+    // the joint with the next piece (a curve): a disc, so the outer side of the bend is also free
+    if (!s.last) { const D = []; for (let j = 0; j < 10; j++) { const a = (j / 10) * Math.PI * 2; D.push([bx + Math.cos(a) * k, bz + Math.sin(a) * k]); }
+      Q = subtractConvex(P, D, null); if (Q.length >= 3 && Q !== P && !selfCross(Q)) P = Q; } }
+  return P;
+}
 // a building that goes (only a strip on the pavement would be left): counted, with where and how big it was (tests).
 // One of 50 m² or more never goes (Jonay, 3-nov: «no me gustaría que se fuera nada de más de 50 m²; esos casos mirémoslos
 // uno a uno»): it stays as it was and goes on the list for the photos (herramientas/sonda_edificios_dudosos.py)
@@ -148,7 +170,7 @@ function roadClip(pts) {
       const flat = P.flat(), ex = s.ax + s.ux * s.L, ez = s.az + s.uz * s.L; if (pip(s.ax, s.az, flat) || pip(ex, ez, flat)) { clipWhy('medio: la calle acaba dentro', s); continue; }
       const A0 = Math.abs(polyArea(P)), QA = clipHalf(P, s.ax, s.az, nx, nz, s.k), QB = clipHalf(P, s.ax, s.az, -nx, -nz, s.k);
       const aA = QA.length >= 3 ? Math.abs(polyArea(QA)) : 0, aB = QB.length >= 3 ? Math.abs(polyArea(QB)) : 0; if (aA + aB > A0 * 0.98) { clipWhy('medio: no la cruza', s); continue; } // (not really across it)
-      const Q = aA >= aB ? QA : QB, aq = Math.max(aA, aB); if (aq < 12 || thin(Q)) { clipWhy('medio: quedaría una tira (' + Math.round(aq) + ' de ' + Math.round(A0) + ' m²): se quita', s); if (!goneNote(G, pts, 'la calle lo cruza y quedaría una tira')) continue; return null; } /* a big one: this road is left alone, the others still cut it (as before v1.0.0) */ P = Q; changed = true; continue; } // v1.0.0 (Jonay: término medio): no minimum share any more
+      const Q = aA >= aB ? QA : QB, aq = Math.max(aA, aB); if (aq < 12 || thin(Q)) { clipWhy('medio: quedaría una tira (' + Math.round(aq) + ' de ' + Math.round(A0) + ' m²): se quita', s); if (!goneNote(G, pts, 'la calle lo cruza y quedaría una tira')) continue; { const K = kerbClip(pts, G); if (K !== pts && Math.abs(polyArea(K)) >= 12 && !thin(K) && !selfCross(K)) { clipWhy('recuperado: recorte por el bordillo'); G.cut++; return K; } } return null; } /* a big one: this road is left alone, the others still cut it (as before v1.0.0) */ P = Q; changed = true; continue; } // v1.0.0 (Jonay: término medio): no minimum share any more
     const sg = Math.sign(sc);
     let hit = false, beyond = false, deep = 0;
     for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length];
@@ -158,7 +180,7 @@ function roadClip(pts) {
       const k = s.k, ex = s.ax + s.ux * s.L, ez = s.az + s.uz * s.L, R = [[s.ax + nx * k, s.az + nz * k], [ex + nx * k, ez + nz * k], [ex - nx * k, ez - nz * k], [s.ax - nx * k, s.az - nz * k]];
       const Q = subtractConvex(P, R, [1, 3]); if (Q.length >= 3 && Q !== P && !selfCross(Q)) { P = Q; changed = true; clipWhy('lado: muesca paralela a la calle', s); } else clipWhy('lado: el corte pasaría del final de la calle', s); continue; }
     if (!hit || beyond || deep < 0.6) { if (hit) clipWhy(beyond ? 'lado: el corte pasaría del final de la calle' : 'lado: menos de 0,6 m', s); continue; } // grazing the kerb by a few centimetres: leave it
-    const Q = clipHalf(P, s.ax, s.az, nx * sg, nz * sg, s.k); if (Q.length < 3) { clipWhy('lado: no queda nada: se quita', s); if (!goneNote(G, pts, 'está entero en la calzada')) return pts; return null; } P = Q; changed = true; }
+    const Q = clipHalf(P, s.ax, s.az, nx * sg, nz * sg, s.k); if (Q.length < 3) { clipWhy('lado: no queda nada: se quita', s); if (!goneNote(G, pts, 'está entero en la calzada')) return pts; { const K = kerbClip(pts, G); if (K !== pts && Math.abs(polyArea(K)) >= 12 && !thin(K) && !selfCross(K)) { clipWhy('recuperado: recorte por el bordillo'); G.cut++; return K; } } return null; } P = Q; changed = true; }
   // corners that still stick into a road (where a road piece ends or bends inside the footprint): push that vertex out
   // across the nearest piece, up to 4 m (v0.70)
   const P0 = P, ch0 = changed;
@@ -175,11 +197,12 @@ function roadClip(pts) {
   // original did (a cut along one street that runs on through a junction into the next one)
   const polyDeep = (Q) => { let w = 0; for (let i = 0; i < Q.length; i++) { const p = Q[i], q = Q[(i + 1) % Q.length]; for (const t of [0, 0.25, 0.5, 0.75]) w = Math.max(w, deepAt(p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t)); } return w; };
   if (changed) { const d0 = polyDeep(pts); if (polyDeep(P) > d0 + 0.1) { if (P !== P0 && ch0 && polyDeep(P0) <= d0 + 0.1) P = P0; else { clipWhy('queda más metido en otra calle'); return pts; } } }
+  { const K = kerbClip(P, G); if (K !== P) { P = K; changed = true; } } // v1.0.2: the kerb, piece by piece (curves included)
   if (!changed) return pts;
   const a0 = Math.abs(polyArea(pts)), a1 = Math.abs(polyArea(P)); if (selfCross(P)) { clipWhy('final: el contorno se cruza'); return pts; }
   // v1.0.0 (auditoría 0.99.8: 45 edificios seguían en la calzada por la regla de no perder más de la mitad; Jonay: «un
   // término medio»): the streets now narrow halfway to the buildings (narrowToGap) and the building is cut for the rest,
   // whatever it loses; if what is left is a strip (under 12 m² or about 2.5 m deep), the building goes
-  if (a1 < 12 || thin(P)) { clipWhy('final: quedaría una tira (' + Math.round(a1) + ' de ' + Math.round(a0) + ' m²): se quita'); if (!goneNote(G, pts, 'recortado quedaría una tira de ' + Math.round(a1) + ' m²')) return pts; return null; }
+  if (a1 < 12 || thin(P)) { clipWhy('final: quedaría una tira (' + Math.round(a1) + ' de ' + Math.round(a0) + ' m²): se quita'); if (!goneNote(G, pts, 'recortado quedaría una tira de ' + Math.round(a1) + ' m²')) return pts; { const K = kerbClip(pts, G); if (K !== pts && Math.abs(polyArea(K)) >= 12 && !thin(K) && !selfCross(K)) { clipWhy('recuperado: recorte por el bordillo'); G.cut++; return K; } } return null; }
   G.cut++; return P;
 }

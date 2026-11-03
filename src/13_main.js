@@ -217,6 +217,7 @@ function buildInteriorsAll() {
   if (typeof buildCommercialInteriors === 'function') buildCommercialInteriors();
   try { CASA.build(); } catch (e) { console.error('casa', e); } // v0.83: the estate agency and the homes
   console.log('halls', buildSportsHalls());
+  console.log('gente de los interiores sacada de los muebles', clearInteriorNpcs()); // v1.0.2
 }
 // long days, short nights: daylight (8:00-20:00) 1 game hour = 150 s (~30 min of day), night 1 hour = 40 s (~8 min)
 function dayRate(t) { const day = t >= 7.6 && t < 20.4; return day ? 1 / 150 : 1 / 40; }

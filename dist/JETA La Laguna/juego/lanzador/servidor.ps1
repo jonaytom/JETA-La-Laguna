@@ -18,7 +18,7 @@ function Abrir-Juego {
     "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe")
   foreach ($c in $cands) {
     if ($c -and (Test-Path $c)) {
-      Start-Process -FilePath $c -ArgumentList @("--app=$url", '--start-fullscreen', "--user-data-dir=`"$perfil`"", '--no-first-run', '--autoplay-policy=no-user-gesture-required')
+      Start-Process -FilePath $c -ArgumentList @("--app=$url", '--start-fullscreen', "--user-data-dir=`"$perfil`"", '--no-first-run', '--no-default-browser-check', '--disable-extensions', '--disable-sync', '--disable-features=msEdgeSidebarV2,msHubApps,msWelcomePage,msImplicitSignin', '--autoplay-policy=no-user-gesture-required')  # v1.0.2 (Jonay: «se abrió como si se hubieran instalado extensiones por primera vez»): a clean window, no welcome, extensions or sign-in
       return
     }
   }

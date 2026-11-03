@@ -37,8 +37,25 @@ function exitDoor(room, x, z, rotY) {
   const s = textPlane('SALIDA', 1.2, 0.3, '#1a8a3a', '#ffffff', 'bold 48px Arial'); s.position.set(x, 3.4, z); s.rotation.y = rotY; s.material.emissive = new THREE.Color(0x1a8a3a); s.material.emissiveIntensity = 0.8; room.g.add(s);
   return { x: room.x0 + x, z: room.z0 + z };
 }
-function npcAt(room, x, z, rot, o = {}) { const h = makeHuman(o); if (o.sit) h.pose = 'sit'; h.root.position.set(room.x0 + x, room.y0 + 0.12, room.z0 + z); h.root.rotation.y = rot; scene.add(h.root); COL.addCirc(room.x0 + x, room.z0 + z, 0.35); INT_NPCS.push(h); return h; }
+function npcAt(room, x, z, rot, o = {}) { const h = makeHuman(o); if (o.sit) h.pose = 'sit'; h.root.position.set(room.x0 + x, room.y0 + 0.12, room.z0 + z); h.root.rotation.y = rot; scene.add(h.root); h.room = room; INT_NPCS.push(h); return h; } // v1.0.2: the collider goes on once the person is in a free spot (clearInteriorNpcs)
 const INT_NPCS = [];
+// v1.0.2 (Jonay: «en el Café Brasilito la gente atraviesa el mostrador; eso no puede pasar ni aquí ni en ningún sitio»): once
+// every room is furnished, nobody stands inside a piece of furniture (bar, table, shelf, pew…): each person is pushed out of
+// any box it overlaps (its footprint plus 0.3 m) by the shortest way that stays in the room; then its collider goes on
+function clearInteriorNpcs() {
+  const box = new THREE.Box3(); let moved = 0;
+  for (const h of INT_NPCS) { const r = h.room; if (!r || h.pose === 'sit') { if (r) COL.addCirc(h.root.position.x, h.root.position.z, 0.35); continue; }
+    const boxes = []; r.g.updateMatrixWorld(true); r.g.traverse((m) => { if (!m.isMesh || m === h.root) return; box.setFromObject(m); const sx = box.max.x - box.min.x, sz = box.max.z - box.min.z;
+      if (box.max.y - r.y0 < 0.45 || box.min.y - r.y0 > 1.6 || sx > r.w * 0.9 || sz > r.d * 0.9) return; boxes.push([box.min.x - 0.3, box.max.x + 0.3, box.min.z - 0.3, box.max.z + 0.3]); });
+    const p = h.root.position;
+    for (let it = 0; it < 4; it++) { let hit = false;
+      for (const [x0, x1, z0, z1] of boxes) { if (p.x <= x0 || p.x >= x1 || p.z <= z0 || p.z >= z1) continue; hit = true;
+        const opts = [[x0 - p.x, 0], [x1 - p.x, 0], [0, z0 - p.z], [0, z1 - p.z]].filter(([dx, dz]) => Math.abs(p.x + dx - r.x0) < r.w / 2 - 0.5 && Math.abs(p.z + dz - r.z0) < r.d / 2 - 0.5);
+        if (!opts.length) continue; opts.sort((a, b) => Math.hypot(...a) - Math.hypot(...b)); p.x += opts[0][0] * 1.02; p.z += opts[0][1] * 1.02; moved++; }
+      if (!hit) break; }
+    COL.addCirc(p.x, p.z, 0.35); }
+  return moved;
+}
 const DOORMARKS = [];
 let doorIconTex = null;
 function doorIcon() { if (doorIconTex) return doorIconTex; const c = mkCanvas(128, 160), x = c.getContext('2d'); x.fillStyle = 'rgba(0,0,0,0)'; x.clearRect(0, 0, 128, 160); x.fillStyle = '#3ddc97'; x.beginPath(); x.moveTo(24, 70); x.lineTo(104, 70); x.lineTo(64, 128); x.closePath(); x.fill(); x.beginPath(); x.arc(64, 38, 34, 0, 7); x.fill(); x.fillStyle = '#0c2a1c'; x.font = 'bold 44px Arial'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('E', 64, 40); doorIconTex = canvasTex(c, { repeat: false }); return doorIconTex; }

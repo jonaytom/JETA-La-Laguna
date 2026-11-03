@@ -20,7 +20,7 @@ function readGamepad() {
 const PLAYER = { x: 0, z: 0, y: 0, h: 0, vy: 0, onGround: true, car: null, lastCar: null, health: 100, money: 350, down: 0, speed: 0, dead: false };
 let playerHuman;
 function initPlayer() {
-  playerHuman = makeHuman({ skin: 0xd9a47c, shirt: 0xf5f5f5, pants: 0x2b3a55, hair: 0x1a1410, shoes: 0xf2f2f2, sole: 0xd62828, scale: 1.0, female: false, beard: false, sleeve: false, longPants: true, hairStyle: 'Hair_SimpleParted', hd: true, jacket: 0x1f4d2b, watch: 0xc9c9c9, chain: true, belt: true });
+  playerHuman = makeHuman({ skin: 0xd9a47c, shirt: 0xf5f5f5, pants: 0x2b3a55, hair: 0x1a1410, shoes: 0xf2f2f2, sole: 0xd62828, scale: 1.011, /* v1.0.2 (Jonay: «el Chopa debe medir 1,83»): the base body is 1,81 m; until v1.0.1 the narrowing also shortened him to ~1,61 m */ female: false, beard: false, sleeve: false, longPants: true, hairStyle: 'Hair_SimpleParted', hd: true, jacket: 0x1f4d2b, watch: 0xc9c9c9, chain: true, belt: true });
   scene.add(playerHuman.root);
   // start: Calle Teobaldo Power at the junction with Calle Adelantado
   PLAYER.x = -758; PLAYER.z = -364; PLAYER.h = Math.PI / 2; CAM.yaw = Math.PI / 2;

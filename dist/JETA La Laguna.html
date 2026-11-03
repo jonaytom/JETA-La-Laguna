@@ -205,7 +205,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="tb" id="tbS">CORRER</div>
 <div class="tb" id="tbM">MAPA</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">v1.0.1</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">v1.0.2</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -2301,7 +2301,7 @@ function roadClipGrid() {
         if (!ok) break; j = jj; dev = dv; }
       add(c[2 * i], c[2 * i + 1], c[2 * j], c[2 * j + 1], r[2] / 2 + 0.3 + dev, r[2] / 2 + 0.3); i = j; } });
   // the streets as they are drawn (every piece, no straight runs): to measure how deep a point sits in a carriageway
-  const raw = [], m2 = new Map(); DATA.R.forEach((r) => { if ((r[0] > 12 && r[0] !== 13) || (r[3] & 6)) return; /* v0.74: pedestrian streets too (a corner pushed out of one street into a pedestrian one blocked Calle Heraclio Sánchez) */ const c = r[4], k0 = r[2] / 2 + 0.3; for (let i = 0; i + 3 < c.length; i += 2) { const ax = c[i], az = c[i + 1], L = Math.hypot(c[i + 2] - ax, c[i + 3] - az); if (L < 0.05) continue; const id = raw.push({ ax, az, ux: (c[i + 2] - ax) / L, uz: (c[i + 3] - az) / L, L, k0 }) - 1;
+  const raw = [], m2 = new Map(); DATA.R.forEach((r) => { if ((r[0] > 12 && r[0] !== 13) || (r[3] & 6)) return; /* v0.74: pedestrian streets too (a corner pushed out of one street into a pedestrian one blocked Calle Heraclio Sánchez) */ const c = r[4], k0 = r[2] / 2 + 0.3; for (let i = 0; i + 3 < c.length; i += 2) { const ax = c[i], az = c[i + 1], L = Math.hypot(c[i + 2] - ax, c[i + 3] - az); if (L < 0.05) continue; const id = raw.push({ ax, az, ux: (c[i + 2] - ax) / L, uz: (c[i + 3] - az) / L, L, k0, car: r[0] <= 12, first: i === 0, last: i + 4 >= c.length }) - 1; /* v1.0.2: car, and whether the piece ends the road (kerbClip) */
     for (let a = Math.floor((Math.min(ax, c[i + 2]) - k0) / CS); a <= Math.floor((Math.max(ax, c[i + 2]) + k0) / CS); a++) for (let b = Math.floor((Math.min(az, c[i + 3]) - k0) / CS); b <= Math.floor((Math.max(az, c[i + 3]) + k0) / CS); b++) { const key = a * 100003 + b; let l = m2.get(key); if (!l) m2.set(key, l = []); l.push(id); } } });
   RCLIP = { CS, m, segs, raw, m2, cut: 0, gone: 0, goneList: [], keptList: [] }; return RCLIP;
 }
@@ -2407,6 +2407,28 @@ function subtractConvex(P, R, ends) { // ends: R's edges that are the ends of th
     out.push(ex); entry = null; }
   return out.length >= 3 ? out : [];
 }
+// It also brings back buildings that were going to go (only a strip left with the straight cuts): what is left off the
+// kerb is kept if it has some sense (12 m², 2,5 m deep).
+// v1.0.2 (Jonay: «detectar cuándo el borde de la calzada empieza a tener ángulo y que el edificio vaya paralelo a este, de
+// manera que sea imposible que invada la calzada; si son esquinas, solo se amplía el ángulo de unión»): the carriageway is
+// taken off the building piece by piece of the street as it is drawn (curves included): each piece's rectangle, a disc
+// where two pieces meet, and the bevelled step only where the road really ends. A piece that would cut the building in
+// two (a street right through it) is left to the rules above.
+function kerbClip(P, G) {
+  let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const p of P) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); z0 = Math.min(z0, p[1]); z1 = Math.max(z1, p[1]); }
+  const ids = new Set(); for (let a = Math.floor((x0 - 8) / G.CS); a <= Math.floor((x1 + 8) / G.CS); a++) for (let b = Math.floor((z0 - 8) / G.CS); b <= Math.floor((z1 + 8) / G.CS); b++) { const l = G.m2.get(a * 100003 + b); if (l) for (const id of l) ids.add(id); }
+  const deep = (Q, s, k) => { let w = 0; for (let i = 0; i < Q.length; i++) { const p = Q[i], q = Q[(i + 1) % Q.length]; for (const t of [0, 0.25, 0.5, 0.75]) { const x = p[0] + (q[0] - p[0]) * t, z = p[1] + (q[1] - p[1]) * t, u = Math.max(0, Math.min(s.L, (x - s.ax) * s.ux + (z - s.az) * s.uz)); w = Math.max(w, k - Math.hypot(x - s.ax - s.ux * u, z - s.az - s.uz * u)); } } return w; };
+  for (const id of ids) { const s = G.raw[id]; if (!s.car) continue; const k = s.k0 - 0.3; if (deep(P, s, k) < 0.25) continue;
+    const nx = -s.uz, nz = s.ux, bx = s.ax + s.ux * s.L, bz = s.az + s.uz * s.L;
+    const R = [[s.ax + nx * k, s.az + nz * k], [bx + nx * k, bz + nz * k], [bx - nx * k, bz - nz * k], [s.ax - nx * k, s.az - nz * k]];
+    const ends = []; if (s.last) ends.push(1); if (s.first) ends.push(3);
+    let Q = subtractConvex(P, R, ends);
+    if (Q.length >= 3 && Q !== P && !selfCross(Q) && deep(Q, s, k) < 0.25) P = Q;
+    // the joint with the next piece (a curve): a disc, so the outer side of the bend is also free
+    if (!s.last) { const D = []; for (let j = 0; j < 10; j++) { const a = (j / 10) * Math.PI * 2; D.push([bx + Math.cos(a) * k, bz + Math.sin(a) * k]); }
+      Q = subtractConvex(P, D, null); if (Q.length >= 3 && Q !== P && !selfCross(Q)) P = Q; } }
+  return P;
+}
 // a building that goes (only a strip on the pavement would be left): counted, with where and how big it was (tests).
 // One of 50 m² or more never goes (Jonay, 3-nov: «no me gustaría que se fuera nada de más de 50 m²; esos casos mirémoslos
 // uno a uno»): it stays as it was and goes on the list for the photos (herramientas/sonda_edificios_dudosos.py)
@@ -2427,7 +2449,7 @@ function roadClip(pts) {
       const flat = P.flat(), ex = s.ax + s.ux * s.L, ez = s.az + s.uz * s.L; if (pip(s.ax, s.az, flat) || pip(ex, ez, flat)) { clipWhy('medio: la calle acaba dentro', s); continue; }
       const A0 = Math.abs(polyArea(P)), QA = clipHalf(P, s.ax, s.az, nx, nz, s.k), QB = clipHalf(P, s.ax, s.az, -nx, -nz, s.k);
       const aA = QA.length >= 3 ? Math.abs(polyArea(QA)) : 0, aB = QB.length >= 3 ? Math.abs(polyArea(QB)) : 0; if (aA + aB > A0 * 0.98) { clipWhy('medio: no la cruza', s); continue; } // (not really across it)
-      const Q = aA >= aB ? QA : QB, aq = Math.max(aA, aB); if (aq < 12 || thin(Q)) { clipWhy('medio: quedaría una tira (' + Math.round(aq) + ' de ' + Math.round(A0) + ' m²): se quita', s); if (!goneNote(G, pts, 'la calle lo cruza y quedaría una tira')) continue; return null; } /* a big one: this road is left alone, the others still cut it (as before v1.0.0) */ P = Q; changed = true; continue; } // v1.0.0 (Jonay: término medio): no minimum share any more
+      const Q = aA >= aB ? QA : QB, aq = Math.max(aA, aB); if (aq < 12 || thin(Q)) { clipWhy('medio: quedaría una tira (' + Math.round(aq) + ' de ' + Math.round(A0) + ' m²): se quita', s); if (!goneNote(G, pts, 'la calle lo cruza y quedaría una tira')) continue; { const K = kerbClip(pts, G); if (K !== pts && Math.abs(polyArea(K)) >= 12 && !thin(K) && !selfCross(K)) { clipWhy('recuperado: recorte por el bordillo'); G.cut++; return K; } } return null; } /* a big one: this road is left alone, the others still cut it (as before v1.0.0) */ P = Q; changed = true; continue; } // v1.0.0 (Jonay: término medio): no minimum share any more
     const sg = Math.sign(sc);
     let hit = false, beyond = false, deep = 0;
     for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length];
@@ -2437,7 +2459,7 @@ function roadClip(pts) {
       const k = s.k, ex = s.ax + s.ux * s.L, ez = s.az + s.uz * s.L, R = [[s.ax + nx * k, s.az + nz * k], [ex + nx * k, ez + nz * k], [ex - nx * k, ez - nz * k], [s.ax - nx * k, s.az - nz * k]];
       const Q = subtractConvex(P, R, [1, 3]); if (Q.length >= 3 && Q !== P && !selfCross(Q)) { P = Q; changed = true; clipWhy('lado: muesca paralela a la calle', s); } else clipWhy('lado: el corte pasaría del final de la calle', s); continue; }
     if (!hit || beyond || deep < 0.6) { if (hit) clipWhy(beyond ? 'lado: el corte pasaría del final de la calle' : 'lado: menos de 0,6 m', s); continue; } // grazing the kerb by a few centimetres: leave it
-    const Q = clipHalf(P, s.ax, s.az, nx * sg, nz * sg, s.k); if (Q.length < 3) { clipWhy('lado: no queda nada: se quita', s); if (!goneNote(G, pts, 'está entero en la calzada')) return pts; return null; } P = Q; changed = true; }
+    const Q = clipHalf(P, s.ax, s.az, nx * sg, nz * sg, s.k); if (Q.length < 3) { clipWhy('lado: no queda nada: se quita', s); if (!goneNote(G, pts, 'está entero en la calzada')) return pts; { const K = kerbClip(pts, G); if (K !== pts && Math.abs(polyArea(K)) >= 12 && !thin(K) && !selfCross(K)) { clipWhy('recuperado: recorte por el bordillo'); G.cut++; return K; } } return null; } P = Q; changed = true; }
   // corners that still stick into a road (where a road piece ends or bends inside the footprint): push that vertex out
   // across the nearest piece, up to 4 m (v0.70)
   const P0 = P, ch0 = changed;
@@ -2454,12 +2476,13 @@ function roadClip(pts) {
   // original did (a cut along one street that runs on through a junction into the next one)
   const polyDeep = (Q) => { let w = 0; for (let i = 0; i < Q.length; i++) { const p = Q[i], q = Q[(i + 1) % Q.length]; for (const t of [0, 0.25, 0.5, 0.75]) w = Math.max(w, deepAt(p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t)); } return w; };
   if (changed) { const d0 = polyDeep(pts); if (polyDeep(P) > d0 + 0.1) { if (P !== P0 && ch0 && polyDeep(P0) <= d0 + 0.1) P = P0; else { clipWhy('queda más metido en otra calle'); return pts; } } }
+  { const K = kerbClip(P, G); if (K !== P) { P = K; changed = true; } } // v1.0.2: the kerb, piece by piece (curves included)
   if (!changed) return pts;
   const a0 = Math.abs(polyArea(pts)), a1 = Math.abs(polyArea(P)); if (selfCross(P)) { clipWhy('final: el contorno se cruza'); return pts; }
   // v1.0.0 (auditoría 0.99.8: 45 edificios seguían en la calzada por la regla de no perder más de la mitad; Jonay: «un
   // término medio»): the streets now narrow halfway to the buildings (narrowToGap) and the building is cut for the rest,
   // whatever it loses; if what is left is a strip (under 12 m² or about 2.5 m deep), the building goes
-  if (a1 < 12 || thin(P)) { clipWhy('final: quedaría una tira (' + Math.round(a1) + ' de ' + Math.round(a0) + ' m²): se quita'); if (!goneNote(G, pts, 'recortado quedaría una tira de ' + Math.round(a1) + ' m²')) return pts; return null; }
+  if (a1 < 12 || thin(P)) { clipWhy('final: quedaría una tira (' + Math.round(a1) + ' de ' + Math.round(a0) + ' m²): se quita'); if (!goneNote(G, pts, 'recortado quedaría una tira de ' + Math.round(a1) + ' m²')) return pts; { const K = kerbClip(pts, G); if (K !== pts && Math.abs(polyArea(K)) >= 12 && !thin(K) && !selfCross(K)) { clipWhy('recuperado: recorte por el bordillo'); G.cut++; return K; } } return null; }
   G.cut++; return P;
 }
 
@@ -3258,8 +3281,25 @@ function exitDoor(room, x, z, rotY) {
   const s = textPlane('SALIDA', 1.2, 0.3, '#1a8a3a', '#ffffff', 'bold 48px Arial'); s.position.set(x, 3.4, z); s.rotation.y = rotY; s.material.emissive = new THREE.Color(0x1a8a3a); s.material.emissiveIntensity = 0.8; room.g.add(s);
   return { x: room.x0 + x, z: room.z0 + z };
 }
-function npcAt(room, x, z, rot, o = {}) { const h = makeHuman(o); if (o.sit) h.pose = 'sit'; h.root.position.set(room.x0 + x, room.y0 + 0.12, room.z0 + z); h.root.rotation.y = rot; scene.add(h.root); COL.addCirc(room.x0 + x, room.z0 + z, 0.35); INT_NPCS.push(h); return h; }
+function npcAt(room, x, z, rot, o = {}) { const h = makeHuman(o); if (o.sit) h.pose = 'sit'; h.root.position.set(room.x0 + x, room.y0 + 0.12, room.z0 + z); h.root.rotation.y = rot; scene.add(h.root); h.room = room; INT_NPCS.push(h); return h; } // v1.0.2: the collider goes on once the person is in a free spot (clearInteriorNpcs)
 const INT_NPCS = [];
+// v1.0.2 (Jonay: «en el Café Brasilito la gente atraviesa el mostrador; eso no puede pasar ni aquí ni en ningún sitio»): once
+// every room is furnished, nobody stands inside a piece of furniture (bar, table, shelf, pew…): each person is pushed out of
+// any box it overlaps (its footprint plus 0.3 m) by the shortest way that stays in the room; then its collider goes on
+function clearInteriorNpcs() {
+  const box = new THREE.Box3(); let moved = 0;
+  for (const h of INT_NPCS) { const r = h.room; if (!r || h.pose === 'sit') { if (r) COL.addCirc(h.root.position.x, h.root.position.z, 0.35); continue; }
+    const boxes = []; r.g.updateMatrixWorld(true); r.g.traverse((m) => { if (!m.isMesh || m === h.root) return; box.setFromObject(m); const sx = box.max.x - box.min.x, sz = box.max.z - box.min.z;
+      if (box.max.y - r.y0 < 0.45 || box.min.y - r.y0 > 1.6 || sx > r.w * 0.9 || sz > r.d * 0.9) return; boxes.push([box.min.x - 0.3, box.max.x + 0.3, box.min.z - 0.3, box.max.z + 0.3]); });
+    const p = h.root.position;
+    for (let it = 0; it < 4; it++) { let hit = false;
+      for (const [x0, x1, z0, z1] of boxes) { if (p.x <= x0 || p.x >= x1 || p.z <= z0 || p.z >= z1) continue; hit = true;
+        const opts = [[x0 - p.x, 0], [x1 - p.x, 0], [0, z0 - p.z], [0, z1 - p.z]].filter(([dx, dz]) => Math.abs(p.x + dx - r.x0) < r.w / 2 - 0.5 && Math.abs(p.z + dz - r.z0) < r.d / 2 - 0.5);
+        if (!opts.length) continue; opts.sort((a, b) => Math.hypot(...a) - Math.hypot(...b)); p.x += opts[0][0] * 1.02; p.z += opts[0][1] * 1.02; moved++; }
+      if (!hit) break; }
+    COL.addCirc(p.x, p.z, 0.35); }
+  return moved;
+}
 const DOORMARKS = [];
 let doorIconTex = null;
 function doorIcon() { if (doorIconTex) return doorIconTex; const c = mkCanvas(128, 160), x = c.getContext('2d'); x.fillStyle = 'rgba(0,0,0,0)'; x.clearRect(0, 0, 128, 160); x.fillStyle = '#3ddc97'; x.beginPath(); x.moveTo(24, 70); x.lineTo(104, 70); x.lineTo(64, 128); x.closePath(); x.fill(); x.beginPath(); x.arc(64, 38, 34, 0, 7); x.fill(); x.fillStyle = '#0c2a1c'; x.font = 'bold 44px Arial'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('E', 64, 40); doorIconTex = canvasTex(c, { repeat: false }); return doorIconTex; }
@@ -6178,18 +6218,18 @@ function makeHumanSkinned(o = {}) {
   if (!bt) { if (o.fat) bt = { fat: rnd(0.6, 1), normal: 0.6 }; else if (o.thin) bt = { normal: 1, teen: 0.5 };
     else if (!o.random) bt = { normal: 0.7 };
     else { const r = Math.random(); /* mostly the middle range; extreme sizes are rare */
-      bt = r < 0.02 ? { slim: 1, sslim: 1 } : r < 0.08 ? { slim: rnd(0.5, 1) } : r < 0.64 ? { normal: rnd(0.5, 1), fat: rnd(0, 0.35) } : r < 0.70 ? { normal: rnd(0, 0.3) }
+      bt = r < 0.02 ? { slim: rnd(0.5, 0.7) } : r < 0.08 ? { slim: rnd(0.2, 0.5) } : /* v1.0.2 (Jonay: «los delgados son demasiado delgados y deformados; las cabezas no se adelgazan tanto»): milder slim, no super-slim */ r < 0.64 ? { normal: rnd(0.5, 1), fat: rnd(0, 0.35) } : r < 0.70 ? { normal: rnd(0, 0.3) }
         : r < 0.82 ? { normal: 0.6, fat: rnd(0.5, 1) } : r < 0.86 ? { normal: 0.6, fat: 1, xfat: rnd(0.4, 1) } : r < 0.88 ? { normal: 0.6, fat: 1, xfat: 1, sfat: rnd(0.5, 1) }
         : r < 0.95 ? { old: rnd(0.6, 1), normal: 0.6, fat: rnd(0, 0.4) } : { teen: 1, normal: 0.4 }; }
   }
   if (bt.size && BODY_SIZES[bt.size]) bt = { ...BODY_SIZES[bt.size], ...bt };
   if (bodyMesh && bodyMesh.morphTargetInfluences) MORPHS.filter((n) => HUM.d.bodies[fem ? 'f' : 'm'].morph?.[n]).forEach((n, i) => { bodyMesh.morphTargetInfluences[i] = bt[n] || 0; });
   const teen = bt.teen || 0, fatK = (bt.fat || 0) + 0.6 * (bt.xfat || 0) + 0.7 * (bt.sfat || 0), oldK = bt.old || 0, slimK = (bt.slim || 0) + (bt.sslim || 0);
-  const w = o.thin ? 0.8 : rnd(0.84, 0.92) + 0.08 * Math.min(fatK, 1) + 0.05 * Math.max(0, fatK - 1) - 0.05 * slimK; bones[0].scale.set(w, o.thin ? 0.9 : w, 1); /* narrower shoulders than the superhero */
+  const w = o.thin ? 0.8 : rnd(0.86, 0.92) + 0.08 * Math.min(fatK, 1) + 0.05 * Math.max(0, fatK - 1); bones[0].scale.set(w, o.thin ? 0.9 : 1, 1); /* v1.0.2: only narrower, no longer shorter too (the height comes from realHeight) */ /* narrower shoulders than the superhero */
   // v1.0.0 (Jonay, 3-nov, with a table of heights: «ahora son más gordos o flacos, pero no más altos o bajos»): the height
   // comes from the real spread for men and women (realHeight); the root bone's narrowing (w) also shortened them, so
   // the scale makes up for it. Teens are 10 % shorter, old people 2 %. A given o.scale (mission people) stays as it was.
-  const s = o.scale ?? (realHeight(fem) * (1 - 0.1 * teen) * (1 - 0.02 * oldK)) / (((fem ? 1.656 : 1.699) + 0.11) * (o.thin ? 0.9 : w) * (fem ? 0.97 : 1));
+  const s = o.scale ?? (realHeight(fem) * (1 - 0.1 * teen) * (1 - 0.02 * oldK)) / (((fem ? 1.656 : 1.699) + 0.11) * (o.thin ? 0.9 : 1) * (fem ? 0.97 : 1));
   body.scale.setScalar(s * (fem ? 0.97 : 1));
   if (fatK > 0.5) for (const n of ['spine_01', 'spine_02', 'pelvis']) { const b = bones.find((x) => x.name === n); b.scale.set(1 + 0.08 * fatK, 1, 1 + 0.1 * fatK); }
   if (slimK > 0) for (const n of ['spine_01', 'spine_02', 'pelvis']) { const b = bones.find((x) => x.name === n); b.scale.set(1 - 0.06 * slimK, 1, 1 - 0.07 * slimK); }
@@ -6992,7 +7032,7 @@ function readGamepad() {
 const PLAYER = { x: 0, z: 0, y: 0, h: 0, vy: 0, onGround: true, car: null, lastCar: null, health: 100, money: 350, down: 0, speed: 0, dead: false };
 let playerHuman;
 function initPlayer() {
-  playerHuman = makeHuman({ skin: 0xd9a47c, shirt: 0xf5f5f5, pants: 0x2b3a55, hair: 0x1a1410, shoes: 0xf2f2f2, sole: 0xd62828, scale: 1.0, female: false, beard: false, sleeve: false, longPants: true, hairStyle: 'Hair_SimpleParted', hd: true, jacket: 0x1f4d2b, watch: 0xc9c9c9, chain: true, belt: true });
+  playerHuman = makeHuman({ skin: 0xd9a47c, shirt: 0xf5f5f5, pants: 0x2b3a55, hair: 0x1a1410, shoes: 0xf2f2f2, sole: 0xd62828, scale: 1.011, /* v1.0.2 (Jonay: «el Chopa debe medir 1,83»): the base body is 1,81 m; until v1.0.1 the narrowing also shortened him to ~1,61 m */ female: false, beard: false, sleeve: false, longPants: true, hairStyle: 'Hair_SimpleParted', hd: true, jacket: 0x1f4d2b, watch: 0xc9c9c9, chain: true, belt: true });
   scene.add(playerHuman.root);
   // start: Calle Teobaldo Power at the junction with Calle Adelantado
   PLAYER.x = -758; PLAYER.z = -364; PLAYER.h = Math.PI / 2; CAM.yaw = Math.PI / 2;
@@ -15041,6 +15081,7 @@ function buildInteriorsAll() {
   if (typeof buildCommercialInteriors === 'function') buildCommercialInteriors();
   try { CASA.build(); } catch (e) { console.error('casa', e); } // v0.83: the estate agency and the homes
   console.log('halls', buildSportsHalls());
+  console.log('gente de los interiores sacada de los muebles', clearInteriorNpcs()); // v1.0.2
 }
 // long days, short nights: daylight (8:00-20:00) 1 game hour = 150 s (~30 min of day), night 1 hour = 40 s (~8 min)
 function dayRate(t) { const day = t >= 7.6 && t < 20.4; return day ? 1 / 150 : 1 / 40; }

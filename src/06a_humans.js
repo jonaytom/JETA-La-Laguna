@@ -110,18 +110,18 @@ function makeHumanSkinned(o = {}) {
   if (!bt) { if (o.fat) bt = { fat: rnd(0.6, 1), normal: 0.6 }; else if (o.thin) bt = { normal: 1, teen: 0.5 };
     else if (!o.random) bt = { normal: 0.7 };
     else { const r = Math.random(); /* mostly the middle range; extreme sizes are rare */
-      bt = r < 0.02 ? { slim: 1, sslim: 1 } : r < 0.08 ? { slim: rnd(0.5, 1) } : r < 0.64 ? { normal: rnd(0.5, 1), fat: rnd(0, 0.35) } : r < 0.70 ? { normal: rnd(0, 0.3) }
+      bt = r < 0.02 ? { slim: rnd(0.5, 0.7) } : r < 0.08 ? { slim: rnd(0.2, 0.5) } : /* v1.0.2 (Jonay: «los delgados son demasiado delgados y deformados; las cabezas no se adelgazan tanto»): milder slim, no super-slim */ r < 0.64 ? { normal: rnd(0.5, 1), fat: rnd(0, 0.35) } : r < 0.70 ? { normal: rnd(0, 0.3) }
         : r < 0.82 ? { normal: 0.6, fat: rnd(0.5, 1) } : r < 0.86 ? { normal: 0.6, fat: 1, xfat: rnd(0.4, 1) } : r < 0.88 ? { normal: 0.6, fat: 1, xfat: 1, sfat: rnd(0.5, 1) }
         : r < 0.95 ? { old: rnd(0.6, 1), normal: 0.6, fat: rnd(0, 0.4) } : { teen: 1, normal: 0.4 }; }
   }
   if (bt.size && BODY_SIZES[bt.size]) bt = { ...BODY_SIZES[bt.size], ...bt };
   if (bodyMesh && bodyMesh.morphTargetInfluences) MORPHS.filter((n) => HUM.d.bodies[fem ? 'f' : 'm'].morph?.[n]).forEach((n, i) => { bodyMesh.morphTargetInfluences[i] = bt[n] || 0; });
   const teen = bt.teen || 0, fatK = (bt.fat || 0) + 0.6 * (bt.xfat || 0) + 0.7 * (bt.sfat || 0), oldK = bt.old || 0, slimK = (bt.slim || 0) + (bt.sslim || 0);
-  const w = o.thin ? 0.8 : rnd(0.84, 0.92) + 0.08 * Math.min(fatK, 1) + 0.05 * Math.max(0, fatK - 1) - 0.05 * slimK; bones[0].scale.set(w, o.thin ? 0.9 : w, 1); /* narrower shoulders than the superhero */
+  const w = o.thin ? 0.8 : rnd(0.86, 0.92) + 0.08 * Math.min(fatK, 1) + 0.05 * Math.max(0, fatK - 1); bones[0].scale.set(w, o.thin ? 0.9 : 1, 1); /* v1.0.2: only narrower, no longer shorter too (the height comes from realHeight) */ /* narrower shoulders than the superhero */
   // v1.0.0 (Jonay, 3-nov, with a table of heights: «ahora son más gordos o flacos, pero no más altos o bajos»): the height
   // comes from the real spread for men and women (realHeight); the root bone's narrowing (w) also shortened them, so
   // the scale makes up for it. Teens are 10 % shorter, old people 2 %. A given o.scale (mission people) stays as it was.
-  const s = o.scale ?? (realHeight(fem) * (1 - 0.1 * teen) * (1 - 0.02 * oldK)) / (((fem ? 1.656 : 1.699) + 0.11) * (o.thin ? 0.9 : w) * (fem ? 0.97 : 1));
+  const s = o.scale ?? (realHeight(fem) * (1 - 0.1 * teen) * (1 - 0.02 * oldK)) / (((fem ? 1.656 : 1.699) + 0.11) * (o.thin ? 0.9 : 1) * (fem ? 0.97 : 1));
   body.scale.setScalar(s * (fem ? 0.97 : 1));
   if (fatK > 0.5) for (const n of ['spine_01', 'spine_02', 'pelvis']) { const b = bones.find((x) => x.name === n); b.scale.set(1 + 0.08 * fatK, 1, 1 + 0.1 * fatK); }
   if (slimK > 0) for (const n of ['spine_01', 'spine_02', 'pelvis']) { const b = bones.find((x) => x.name === n); b.scale.set(1 - 0.06 * slimK, 1, 1 - 0.07 * slimK); }

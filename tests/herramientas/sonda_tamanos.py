@@ -9,7 +9,7 @@ def out(*a):
 async def run(pg):
     r = json.loads(await pg.evaluate("""JSON.stringify((()=>{ const d=__dbg, T=d.THREE, box=new T.Box3(), v=new T.Vector3(); const st=(a)=>{ a=a.filter(x=>isFinite(x)).sort((x,y)=>x-y); if(!a.length) return null; return {n:a.length, min:+a[0].toFixed(2), med:+a[a.length>>1].toFixed(2), max:+a[a.length-1].toFixed(2)}; };
       const hum=[], hum2=[]; for (const p of d.PEDS||[]) { const o=p.H&&p.H.root; if(!o) continue; o.updateMatrixWorld(true); box.setFromObject(o); box.getSize(v); hum.push(v.y); if (p.H.head) { const a=new T.Vector3(), b=new T.Vector3(); p.H.head.getWorldPosition(a); o.getWorldPosition(b); hum2.push(a.y-b.y+0.12); } }
-      let ph=null; try { const o=d.playerHuman.root; o.updateMatrixWorld(true); box.setFromObject(o); box.getSize(v); ph=+v.y.toFixed(2); } catch(e){}
+      let ph=null; try { const H=d.playerHuman, o=H.root; o.updateMatrixWorld(true); const a=new T.Vector3(), b=new T.Vector3(); H.head.getWorldPosition(a); o.getWorldPosition(b); ph=+(a.y-b.y+0.12).toFixed(2); } catch(e){} /* v1.0.2: by the head, like the people */
       const L=[], W=[], H=[]; for (const c of d.CARS||[]) { if (!c.T) continue; L.push(c.T.L); W.push(c.T.W); H.push(c.T.H); }
       const RT=d.DATA.RT, by={}; for (const r of d.DATA.R) { const t=RT[r[0]]; if (r[0]>12) continue; (by[t]||(by[t]=[])).push(r[2]); }
       const roads={}; for (const k in by) roads[k]=st(by[k]);
