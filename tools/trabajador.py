@@ -18,6 +18,8 @@
 #   descargar <clave>          baja una referencia de la lista cerrada DESCARGAS (p. ej. callejero) a docs/referencias/
 #   mover_old                  v1.0.1: mueve (nunca borra) lo que dice scripts\old_borrar.txt a E:\Claude\GTA La Laguna\OLD-Borrar\
 #   zip_testers                v1.0.1: comprime dist\JETA La Laguna (la versión en carpeta) en E:\Claude\GTA La Laguna\JETA La Laguna v<versión>.zip
+#   catastro [--sin-bajar]     v1.0.4: tools/catastro.py (edificios INSPIRE del Catastro → data/catastro_bu.json)
+#   barreras                   v1.0.4: tools/barreras.py (muros y vallas de OSM → data/barreras.json)
 #   revisor [--solo-zonas|--todo|--lote N]   tests/agente_revisor.py (agente que conduce y anda por el mapa; solo si Jonay lo pide)
 # Si una orden falla (también «pruebas», que deja igualmente su informe), las siguientes no se hacen.
 import os, sys, re, time, shutil, subprocess, datetime
@@ -126,6 +128,8 @@ def orden(linea):
             if not dentro(p) or not os.path.exists(p): malos.append(ln + ' (no está)'); continue
             mover(p)
         return 0, f'movidos {len(hechos)} a {OLD}\n' + '\n'.join(hechos[:60]) + ('\n…' if len(hechos) > 60 else '') + ('\nno movidos: ' + '; '.join(malos) if malos else ''), int(time.time() - t0)
+    if o == 'catastro' and a in ([], ['--sin-bajar']): return run([PY, os.path.join('tools', 'catastro.py')] + a, limite=1800)  # v1.0.4
+    if o == 'barreras' and not a: return run([PY, os.path.join('tools', 'barreras.py')], limite=900)  # v1.0.4
     if o == 'prep': return run([PY, 'prep.py'])
     if o == 'merge_zona' and len(a) == 1: return run([PY, os.path.join('tools', 'merge_zona.py'), a[0]])
     if o == 'copiar_html':

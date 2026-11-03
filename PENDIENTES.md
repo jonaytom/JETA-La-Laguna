@@ -128,6 +128,8 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 - [ ] ⚡ **Pelea callejera: textos y barras demasiado grandes** (Jonay, 3-nov, captura a 1920×1080): las barras de vida,
   el «KO», los nombres («EL CHOPA», «SASTRÓN») y el rótulo de los golpes ocupan demasiado; más pequeños, sobre todo los
   nombres. `09d_fight2d.js` (el HUD se dibuja a la escala de la pantalla: mirar con qué tamaño sale a 1080p).
+  - Jonay insiste (3-nov, otra captura: «enorme la verdad lo de las peleas»): también el recuadro de CONTROLES del
+    principio ocupa casi toda la pantalla. Todo a la mitad o menos.
 
 - [~] ● v0.90.0 (basket: el A++ semicabezón 120 en el juego; fútbol F2 en v0.88) **Repasar el pixel art de los jugadores de todos los minijuegos** (Jonay, 26-oct): no le gustan los personajes
   de ninguno. Se empieza por el basket.
@@ -206,10 +208,35 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
       - «Noctámbulo»: estar en la calle a las 4 de la mañana.
       - «Gofio en vena»: comer 30 veces.
 
+### Controles, menús y movimiento del jugador
+
+- [ ] ⚡ **«Salir» en el menú de pausa** (Jonay, 3-nov: «al estar a pantalla completa no se puede salir… el menú de pausa no
+  tiene un salir»): botón «Salir del juego» (guarda si hace falta, sale de la pantalla completa y cierra la ventana del
+  lanzador; en el navegador normal, vuelve al menú de inicio). `13_main.js`, `index.html`.
+- [ ] ⚡ **Cambiar de arma con los botones laterales del ratón, no con la rueda** (Jonay, 3-nov: «lo de la rueda fue mala
+  idea… al cambiar zoom cambio arma; para eso están los botones adelante y atrás»): quitar el cambio con la rueda
+  (`09c_weapons.js`, ~línea 144) y usar los botones 3/4 del ratón (atrás = arma anterior, adelante = siguiente), evitando
+  que el navegador vaya «atrás». Actualizar el texto «TAB / 1: puños» y Opciones › Controles.
+- [ ] ● **Saltar vallas y obstáculos de media altura** (Jonay, 3-nov: «¿no tenemos alguna animación que haga pasar por
+  encima de algo? que valga para saltar una valla»): al correr contra algo de ~0,6–1,3 m (vallas, pretiles, bancos), pasar
+  por encima con una animación de salto apoyando la mano. No hay ninguna en el esqueleto actual: sacarla de Mixamo
+  («Jump Over», «Vault»; ver «Recursos externos») o hacerla a mano, y detectar la altura del obstáculo delante.
+
 ### HUD y minimapa
 
 
 ### Misiones, historia y economía
+
+- [ ] ◐ **El coche de los malos traza fatal las curvas** (Jonay, 3-nov, la persecución antes de la misión del alcalde:
+  «estuvo bien», pero «tengo que frenar y esperar a que gire, es muy mal conductor; además gira raro, de golpe, no es
+  natural»): que frene antes de las curvas, use el freno de mano en las cerradas y gire con el volante suavizado (no
+  cambiar de rumbo de golpe). Mirar cómo conduce el huido en `09h_maleantes.js` / `12f_story2.js`.
+- [ ] ◐ **Presentar al Obispo al firmar la banda** (Jonay, 3-nov: «en ningún momento te dicen lo del obispo… deberíamos
+  desbloquearlo ya cuando se firma la banda; inventa alguna manera para que te lo presenten, sin tener que desbloquear al
+  alcalde»): hoy se desbloquea con las del alcalde y nadie lo cuenta. Una escena o llamada al firmar la banda (p. ej. el
+  cura de La Concepción os pide ayuda y os manda a la Casa Salazar), icono en el mapa y las misiones disponibles desde
+  ahí; las que necesitan el rifle de agua (el incendio) se quedan con candado y aviso («te hace falta un rifle de agua,
+  se vende en las jugueterías») hasta tenerlo. `12g_obispo.js`.
 
 - [~] ◐ v0.76.0 (rifle de agua, bolitas en las jugueterías, Tab entre puños/pistola/rifle; faltan euros, tabla de economía y patada en 3D) **Economía y armas** (Jonay, 12-oct), junto con las jugueterías:
       - El dinero va en **euros, no dólares** (HUD «$00000350» → euros; textos «+$1500», multas, precios, docs).
@@ -261,8 +288,41 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
       Domingo, El Cristo…), p. ej. apagar un incendio con la escopeta de agua.
 - [ ] ● **Reubicar las misiones por zonas, con sentido de avance** (Jonay, 2-nov: «hay que reordenar las misiones y acotarlas por zonas, de manera que te vayan llevando por el mapa y avances sin tener que ir de punta a punta… más que reordenar, reubicar para que tenga un sentido de avance»).
   - Hacer primero el mapa de dónde ocurre hoy cada misión (inicio, objetivos, entrega) y proponer a Jonay un recorrido por zonas: casco → Trinidad / Padre Anchieta → San Benito / La Verdellada → Ofra / Autopista → aeropuerto / Geneto…, cada tramo de la historia en un barrio y el siguiente al lado. `src/12_missions.js`, `src/12f_story2.js`, `src/12g_obispo.js`, `src/12k_agua.js`.
+  - Jonay (3-nov): «importantísimo, una vez corregidos los edificios, glitches gráficos y demás»; que vayas conociendo la
+    ciudad poco a poco sin ir de esquina a esquina nada más empezar. Ejemplo con captura del mapa: la de los **bancos de
+    Gofiérrez** te manda desde Las Gavias (X −1235, Y −227) hasta la Casa de la Alhóndiga (X 106, Y 32), media ciudad.
 
 ### Tiendas y edificios del casco
+
+- [~] ◐ v1.0.4 (tapias encaladas donde no hay casa; el Catastro no tiene edificios dentro: son patios) **Huecos que no existen: Callejón Montaraz** (Jonay, 3-nov, X −896, Y −348 y X −923, Y −322, capturas del juego,
+  Street View «2 C. Montaraz» y vista de satélite): en el juego hay una explanada empedrada enorme y se ve la calle de un
+  lado a otro; en la realidad la manzana entre Av. de Lucas Vega, C. Montaraz, C. Marqués de Celada y C. Teobaldo Power
+  está llena (casas, el Mercadona, Edif. La Carreta) y a la calle da una **tapia alta** continua. Puede haber patios
+  dentro, pero desde la calle no se ven. Es justo donde va la primera misión de las bolas (los ladrones de Guacimara).
+  Mirar con `sonda_hueco.py` si es el OSM o el recorte, y rellenar con casas y la tapia.
+- [~] ● v1.0.4 (~11.900 partes del Catastro añadidas donde el OSM no tenía nada; falta mirarlo con Jonay por zonas y unir las partes de una misma casa) **Repasar los edificios del mapa con mejores fuentes** (Jonay, 3-nov: «hay muchos huecos que no existen en la
+  realidad… estoy seguro de que hay imágenes por satélite de todo en GRAFCAN»): el OSM tiene manzanas sin edificios
+  dibujados. Fuentes a mirar: el **Catastro** (planta de cada edificio, datos abiertos INSPIRE, con nº de plantas), la
+  cartografía y ortofoto de **GRAFCAN / IDECanarias**. Plan: bajar las plantas del Catastro de la zona del mapa, comparar
+  con el OSM manzana a manzana y añadir las que faltan (con la altura de sus plantas); fotos de comprobación desde la
+  calle. Va antes que las misiones por zonas.
+  - v1.0.4 (en marcha): `tools/catastro.py` (orden «catastro» del trabajador) baja los edificios INSPIRE del Catastro de
+    La Laguna (planta y plantas de cada parte) a `data/catastro_bu.json`, en coordenadas del juego, para compararlos.
+- [~] ● v1.0.4 (los del OSM, ~83 km, con choque; tapias en las manzanas del inicio; faltan los recintos que el OSM no tiene) **Muros, tapias y vallas que rodean jardines, solares y recintos como la Universidad** (Jonay, 3-nov: «además de
+  los edificios hay que repasar muros y vallas/cercas que rodean jardines y zonas como la universidad»): el mapa no trae
+  ninguno (la descarga del OSM no pedía «barrier»), por eso se ven explanadas abiertas donde hay tapias (Callejón
+  Montaraz). Bajar los muros, vallas y setos del OSM (`tools/barreras.py`, orden «barreras» → `data/barreras.json`) y
+  pintarlos con su altura y material (tapia encalada, muro de piedra, valla metálica, seto) y con colisión; donde el OSM no
+  tenga, cerrar los recintos (Universidad, colegios, jardines) con la valla que se vea en las fotos.
+- [ ] ◐ **Plaza de la Concepción / C. Obispo Rey Redondo (entre La Concepción y el Teatro Leal)** (Jonay, 3-nov, X −404,
+  Y −290, captura del juego y 4 de Street View): en la realidad hay **jardineras de piedra** bajas con árboles grandes
+  (araucarias, pinos, dragos), flores, **bancos** de madera a su alrededor y la fuente en otro sitio; en el juego hay
+  manchas verdes de «hierba rara» en el empedrado y dos árboles redondos. Quitar las manchas, poner las jardineras, bancos
+  y árboles como en las fotos y mover la fuente. Guardar las capturas en `docs/referencias/plaza_concepcion_rey_redondo/`.
+- [ ] ◐ **El «edificio amarillo» de esa plaza es una caseta modernista** (Jonay, 3-nov, 3 fotos): no es una casa, es una
+  caseta blanca de unos 4–5 m (parece un antiguo transformador eléctrico) con arcos, molduras, pináculos labrados en las
+  esquinas y una **torre de celosía metálica** encima; detrás, un **drago** grande. Hacerla así y quitar la torre amarilla
+  con ventanas.
 
 - [ ] ⚡ **Pasaje Aguere: mesas y sombrillas flotando** (Jonay, 3-nov, X −213, Y 49, captura): las mesas de la terraza del
   pasaje no tocan el suelo. Ponerlas a la altura del suelo del pasaje (`05x_pasajes.js`).
@@ -297,7 +357,16 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Calles, túneles, puentes, enlaces y aeropuerto
 
-- [ ] ◐ **Aparcamiento subterráneo de La Trinidad: se ve todo blanco y al reanudar o cargar se sale «en la nada»** (Jonay, 3-nov,
+- [ ] ⚡ **Contenedores de basura en medio de la calzada** (Jonay, 3-nov, C. Adelantado X −757, Y −359): van pegados a un
+  lado (junto al bordillo o en su hueco de aparcamiento), nunca en mitad de la calle. Revisar dónde se colocan en todas.
+- [ ] ◐ **Escalón de terreno en Camino San Francisco / San Honorato** (Jonay, 3-nov, X −720, Y 301 y X −730, Y 335,
+  capturas): un salto brusco del terreno junto a la calzada y la glorieta; en la realidad la bajada es mucho más suave.
+  Suavizar el terreno y la rasante ahí (y buscar otros saltos parecidos con el revisor).
+- [ ] ● **Ampliar el mapa por el norte** (Jonay, 3-nov): que entren **Mesa Mota** y la parte que une con la **Vía de
+  Ronda**, y que el mapa acabe en la carretera que va a **Las Mercedes, Las Canteras y Tegueste** (esa es la última). Bajar
+  la zona con `descargar_zona.ps1` + `merge_zona.py`, terreno incluido, y mover el borde (`08b_border.js`).
+
+- [ ] ◐ **Aparcamiento subterráneo de La Trinidad: se ve todo blanco y al reanudar o cargar se sale «en la nada»** (Jonay, 3-nov; con la 1.0.3 no le ha vuelto a pasar lo de «la nada»; queda la cámara,
   X −166, Y 322, capturas): bajando la escalera del parking (con un coche encima) la cámara se mete en las paredes; al
   reanudar le mandó a otro sitio y, desde ahí, con el teletransporte y al cargar partida, solo se ve el cielo y el mar (la
   ciudad no se pinta; el minimapa en negro). Falta la consola (F12 / Ctrl+Mayús+J) con los errores en rojo para saber
@@ -488,6 +557,10 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   Los módulos ES (P2.5) no aportan nada al jugador; se deja salvo que Jonay quiera.
 - [~] ◐ v0.99.7 (el «poste» de Juan de Vera era el alcalde) **Auditoría v0.99.6 y v0.99.8 (APTO CON AVISOS)**: `09jz_sprx.js`
   bajó de A a B y `11_hud.js` de B a C; `prueba_076.py` falla en la carga compartida y pasa sola.
+
+- [ ] ◐ **Tirón al escaparse el maleante** (Jonay, 3-nov): a mitad de partida, cuando huía un maleante, el juego se quedó
+  congelado un momento. Probablemente algo que se crea de golpe al empezar la huida (el coche, su conductor, sombreadores
+  nuevos, la ruta). Medirlo con la sonda de tiempos al lanzar un maleante y crear eso antes (o en trozos).
 
 ### Móvil
 

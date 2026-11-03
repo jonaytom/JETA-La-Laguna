@@ -1,5 +1,6 @@
-prueba_guardar_cargar.py
-prueba_coche_y_boca.py
-prueba_bordes.py
-prueba_persecuciones.py
-prueba_conduccion_tuneles_puentes.py
+prueba_arranque.py
+prueba_recorte.py
+prueba_carpeta.py
+herramientas/sonda_hueco.py -896 -348 70
+herramientas/sonda_hueco.py -923 -322 70
+herramientas/sonda_hueco.py -191 366 50

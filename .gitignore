@@ -17,3 +17,8 @@ scripts/publicar.log
 scripts/PUBLICAR.txt
 # encargos del trabajador local (tools/trabajador.py)
 cola/
+
+# v1.0.4: descargas grandes del Catastro (se rehacen con la orden «catastro»)
+data/catastro/
+data/catastro_bu.json
+reportes/catastro/huecos.json

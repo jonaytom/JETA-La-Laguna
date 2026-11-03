@@ -39,3 +39,4 @@ Pruebas completas (en `tests/`): `prueba_misiones.py [desde] [hasta]` juega sola
 `prueba_persecuciones.py` comprueba que los perseguidos se ven y no dan saltos; `prueba_misiones_guardado.py` guarda a mitad, reintenta tras fallar y carga partidas antiguas.
 `tools/publicar_preparar.py VERSION archivos…` prepara la copia a `E:\` (sesión en la nube).
 - `sonda_zonas.py [desde] [hasta]`: dónde se recoge cada misión de la historia, por dónde pasa y a cuántos metros queda del inicio y de la anterior (v0.70, «misiones por zonas»).
+- `comparar_catastro.py` (v1.0.4): edificios del Catastro que el mapa no tiene, zonas con más huecos y foto del casco con huecos en rojo y muros/vallas en azul → `reportes/catastro/` (lista `scripts/pruebas/catastro.txt`; antes, órdenes `catastro` y `barreras` del trabajador).

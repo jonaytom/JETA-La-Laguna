@@ -1,0 +1,2 @@
+# v1.0.4: prepara los edificios del Catastro y los muros para la compilación siguiente
+herramientas/preparar_catastro.py

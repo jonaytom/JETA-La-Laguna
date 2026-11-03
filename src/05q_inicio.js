@@ -66,7 +66,7 @@ function splitCoarseBlocks() {
         if (dd > 3) { const poly = [a, bb, [bb[0] + nx * dd, bb[1] + nz * dd], [a[0] + nx * dd, a[1] + nz * dd]]; made.push({ poly, fx: (a[0] + bb[0]) / 2, fz: (a[1] + bb[1]) / 2, nx: -nx, nz: -nz }); }
         s += w; } }
     if (made.length < 2) continue;
-    DATA.B.splice(bi, 1);
+    DATA.B.splice(bi, 1); (INICIO.blocks || (INICIO.blocks = [])).push(P0); // v1.0.4: for the garden walls between its houses (inicioTapias, 05y_muros.js)
     for (const pc of made) { const r = R(); const lv = r < 0.38 ? 2 : r < 0.75 ? 3 : r < 0.93 ? 4 : 1; const colonial = R() < 0.65; const style = colonial ? 0 : 1;
       const roofT = colonial && R() < 0.7 ? 1 : 0; const h10 = Math.round((lv * (colonial ? 3.6 : 3.1) + 0.6) * 10);
       const flat = []; for (const p of pc.poly) flat.push(Math.round(p[0] * 2) / 2, Math.round(p[1] * 2) / 2);

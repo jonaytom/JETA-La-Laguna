@@ -3,6 +3,17 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.0.4 — 2026-11-03 — Edificios del Catastro donde faltan, y muros y vallas
+- **Edificios del Catastro** (Jonay: «hay muchos huecos que no existen en la realidad… hay que revisar con mejores
+  fuentes»): `tools/catastro.py` baja los edificios INSPIRE del Catastro de La Laguna (planta de cada parte con sus plantas)
+  y `tools/catastro_add.py` mete en el mapa las partes que ningún edificio del OSM tapa y que no caen sobre una calle
+  (~11.900). Lo que ya estaba no se toca. Comparación con fotos: `tests/herramientas/comparar_catastro.py`.
+- **Muros, tapias y vallas** (Jonay: «hay que repasar muros y vallas/cercas que rodean jardines y zonas como la
+  universidad»): los «barrier» del OSM (`tools/barreras.py`; ~60 km de muro y ~23 km de valla), cortados donde cruzan una
+  calle, un camino o un edificio; con su altura, material y choque (`05y_muros.js`).
+- **Callejón Montaraz y la zona de la primera misión de las bolas**: en las manzanas que el juego rellena con casas por el
+  borde, una tapia encalada cierra la calle donde no hay casa, y dentro van las casas del Catastro.
+
 ## 1.0.3 — 2026-11-03 — Vuelven los edificios: el recorte de la 0.99.8
 - **Recorte de edificios** (Jonay: «te has cargado demasiados edificios; los recortes fueron mal, empeoraron mucho», con
   capturas de manzanas del casco convertidas en plazas y de un edificio sin paredes): se deshacen los cambios de recorte de

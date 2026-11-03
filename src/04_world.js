@@ -982,6 +982,7 @@ function buildBuildings() {
   indexRoads(); let bi = 0;
   try { splitCoarseBlocks(); } catch (e) { console.error('inicio split', e); }
   try { trinidadFill(); } catch (e) { console.error('trinidad fill', e); }
+  try { addCatastro(); } catch (e) { console.error('catastro', e); } // v1.0.4: the buildings of the Catastro that the OSM lacks (05y_muros.js)
   for (const b of DATA.B) {
     bi++;
     const [h10, style, lv, roofT, nameIdx, seed, c] = b;

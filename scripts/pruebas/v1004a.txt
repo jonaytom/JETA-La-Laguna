@@ -1,0 +1,7 @@
+# v1.0.4: edificios del Catastro y muros/vallas
+prueba_arranque.py
+prueba_recorte.py
+prueba_carpeta.py
+herramientas/sonda_hueco.py -896 -348 70
+herramientas/sonda_hueco.py -923 -322 70
+herramientas/sonda_hueco.py -191 366 50

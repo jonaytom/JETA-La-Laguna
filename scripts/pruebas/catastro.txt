@@ -1,0 +1,2 @@
+# v1.0.4: huecos del mapa comparados con el Catastro (no carga nada del juego)
+herramientas/comparar_catastro.py

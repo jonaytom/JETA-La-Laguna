@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.0.3</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.0.4</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,18 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.0.4 — 2026-11-03 — Edificios del Catastro donde faltan, y muros y vallas</h2>
+<ul>
+<li><strong>Edificios del Catastro</strong> (Jonay: «hay muchos huecos que no existen en la realidad… hay que revisar con mejores
+  fuentes»): <code>tools/catastro.py</code> baja los edificios INSPIRE del Catastro de La Laguna (planta de cada parte con sus plantas)
+  y <code>tools/catastro_add.py</code> mete en el mapa las partes que ningún edificio del OSM tapa y que no caen sobre una calle
+  (~11.900). Lo que ya estaba no se toca. Comparación con fotos: <code>tests/herramientas/comparar_catastro.py</code>.</li>
+<li><strong>Muros, tapias y vallas</strong> (Jonay: «hay que repasar muros y vallas/cercas que rodean jardines y zonas como la
+  universidad»): los «barrier» del OSM (<code>tools/barreras.py</code>; ~60 km de muro y ~23 km de valla), cortados donde cruzan una
+  calle, un camino o un edificio; con su altura, material y choque (<code>05y_muros.js</code>).</li>
+<li><strong>Callejón Montaraz y la zona de la primera misión de las bolas</strong>: en las manzanas que el juego rellena con casas por el
+  borde, una tapia encalada cierra la calle donde no hay casa, y dentro van las casas del Catastro.</li>
+</ul>
 <h2>1.0.3 — 2026-11-03 — Vuelven los edificios: el recorte de la 0.99.8</h2>
 <ul>
 <li><strong>Recorte de edificios</strong> (Jonay: «te has cargado demasiados edificios; los recortes fueron mal, empeoraron mucho», con

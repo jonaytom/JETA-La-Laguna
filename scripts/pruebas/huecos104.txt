@@ -1,0 +1,4 @@
+# v1.0.4: por qué faltan edificios que sí están en el mapa
+herramientas/sonda_hueco.py -896 -348 70
+herramientas/sonda_hueco.py -923 -322 70
+herramientas/sonda_hueco.py -301 -262 70

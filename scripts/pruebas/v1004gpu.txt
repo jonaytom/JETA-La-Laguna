@@ -1,0 +1,2 @@
+# v1.0.4: pintado con la tarjeta (sola)
+herramientas/sonda_pintado_gpu.py
