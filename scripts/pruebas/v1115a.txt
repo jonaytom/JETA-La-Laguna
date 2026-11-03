@@ -1,0 +1,6 @@
+# v1.1.5: Mapillary (prohibido aparcar), camara bajo tierra, escalon de San Francisco
+prueba_arranque.py
+prueba_trinidad.py
+herramientas/sonda_aparcamiento.py
+herramientas/sonda_calzadas.py -720 301 40
+herramientas/sonda_calzadas.py -730 335 30

@@ -3,6 +3,14 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.1.5 — 2026-11-03 — Alpha 1.1.5: señales de prohibido aparcar (Mapillary) y cámara bajo tierra
+- **Señales de prohibido aparcar y parar de Mapillary** (Jonay: «puedes descargar esos puntos y cruzarlos con tus
+  calles»; eligió «hueco en la banda»): `tools/mapillary.py` baja las señales detectadas en las fotos de Mapillary (828 de
+  aparcamiento en el mapa) y las empareja con cada calle y su lado; delante de cada señal de prohibido la banda de
+  aparcamiento se corta ~12 m y no hay coches aparcados (vados, esquinas).
+- **Cámara bajo tierra** (Jonay, La Trinidad: «al entrar en el subsuelo la cámara se pone medio loca»): en túneles,
+  escaleras y aparcamientos la cámara se acerca y queda por debajo del techo.
+
 ## 1.1.4 — 2026-11-03 — Alpha 1.1.4: puentes sin grietas y calzadas que no se pisan
 - **Puentes sin grietas en las juntas** (Jonay, Vía de Ronda X 631, Y 600): el tablero empezaba 15 cm por encima de la
   calzada y el escalón se veía como una raja; ahora en los dos extremos queda a la misma altura que la calle.

@@ -88,8 +88,9 @@ for k, v, x, z in signs:
         if best is None or dist < best[0]: best = (dist, ri, dx * (z - az) - dz * (x - ax))
     if not best or best[0] > 15: cnt['sin calle'] += 1; continue
     side = 'izq' if best[2] > 0 else 'dcha'
-    e = out.setdefault(str(best[1]), {'no': [], 'si': []})
+    e = out.setdefault(str(best[1]), {'no': [], 'si': [], 'nop': []})
     if side not in e[k]: e[k].append(side)
+    if k == 'no': e['nop'].append([x, z, 1 if side == 'izq' else -1])   # v1.1.4: where each no-parking sign is (the game cuts the parking band ~10 m round it)
     cnt[k] += 1
 json.dump(out, open(os.path.join(ROOT, 'data', 'mapillary_aparca.json'), 'w', encoding='utf-8'), separators=(',', ':'))
 print('señales emparejadas:', dict(cnt), '· calles con alguna:', len(out),

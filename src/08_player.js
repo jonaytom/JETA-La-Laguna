@@ -159,6 +159,7 @@ function updateCamera(dt) {
   } else {
     tx = PLAYER.x; ty = PLAYER.y + 1.55; tz = PLAYER.z; dist = WEAPON.aiming ? 1.9 : CAM.dist; CAM.fov = lerp(CAM.fov, WEAPON.aiming ? 48 : 60, dt * 6);
   }
+  { const lw = PLAYER.car ? PLAYER.car.low : PLAYER.low; if (lw && lw.covered && !PLAYER.interior) dist = Math.min(dist, lw.cap ? 6.5 : lw.hw < 2 ? 2.4 : 3.6); } /* v1.1.4 (Jonay, La Trinidad: «al entrar en el subsuelo la cámara se pone medio loca»): under a roof (tunnel, stairs, car park) the camera comes closer, so it does not go through the walls and the roof */
   const cp = Math.cos(CAM.pitch), sp = Math.sin(CAM.pitch);
   let bx = -Math.sin(CAM.yaw) * cp, bz = -Math.cos(CAM.yaw) * cp;
   const shoulder = PLAYER.car ? 0 : WEAPON.aiming ? 0.75 : 0.45; const rx = -Math.cos(CAM.yaw), rz = Math.sin(CAM.yaw);
@@ -172,7 +173,7 @@ function updateCamera(dt) {
     // inside a tunnel / cutting: keep the camera within the tube
     const refY = PLAYER.car ? PLAYER.car.y : PLAYER.y;
     for (let k = 1; k > 0.1; k -= 0.12) { const qx = tx + (cx - tx) * k, qz = tz + (cz - tz) * k; const l2 = lowAt(qx, qz, refY); if (l2 && l2.d < l2.hw + 0.2) { cx = qx; cz = qz; break; } if (k - 0.12 <= 0.1) { cx = tx + (cx - tx) * 0.15; cz = tz + (cz - tz) * 0.15; } }
-    cy = Math.max(cy, low.y + 0.8); if (low.covered) cy = Math.min(cy, low.y + (low.ceil || 4.6));
+    cy = Math.max(cy, low.y + 0.8); if (low.covered) cy = Math.min(cy, low.y + (low.ceil || 4.6) - 0.35); /* v1.1.4: a little under the roof (it sat on it and showed what is above) */
   } else cy = Math.max(cy, PLAYER.interior ? PLAYER.interior.floor + 0.5 : heightAt(cx, cz) + 0.6);
   if (PLAYER.interior) { cy = Math.min(cy, PLAYER.interior.ceil - 0.3); }
   else if (!PLAYER.car) { const pc = pasajeCeilAt(tx, tz, PLAYER.y); if (pc !== null) cy = Math.min(cy, pc - 0.3); } // v0.78.1: under a passage (Teide, Aguere) the camera stays under its roof (it went up into the hollow building: it looked see-through)

@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.1.4</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.1.5</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,15 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.1.5 — 2026-11-03 — Alpha 1.1.5: señales de prohibido aparcar (Mapillary) y cámara bajo tierra</h2>
+<ul>
+<li><strong>Señales de prohibido aparcar y parar de Mapillary</strong> (Jonay: «puedes descargar esos puntos y cruzarlos con tus
+  calles»; eligió «hueco en la banda»): <code>tools/mapillary.py</code> baja las señales detectadas en las fotos de Mapillary (828 de
+  aparcamiento en el mapa) y las empareja con cada calle y su lado; delante de cada señal de prohibido la banda de
+  aparcamiento se corta ~12 m y no hay coches aparcados (vados, esquinas).</li>
+<li><strong>Cámara bajo tierra</strong> (Jonay, La Trinidad: «al entrar en el subsuelo la cámara se pone medio loca»): en túneles,
+  escaleras y aparcamientos la cámara se acerca y queda por debajo del techo.</li>
+</ul>
 <h2>1.1.4 — 2026-11-03 — Alpha 1.1.4: puentes sin grietas y calzadas que no se pisan</h2>
 <ul>
 <li><strong>Puentes sin grietas en las juntas</strong> (Jonay, Vía de Ronda X 631, Y 600): el tablero empezaba 15 cm por encima de la

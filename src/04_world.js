@@ -287,17 +287,17 @@ function stripSides(rd) {
   return out;
 }
 function parkStats() { const st = {}; for (const ps of PARKSIDE.values()) { const k = (ps.src || 'nada') + ':' + ps.sides.length; st[k] = (st[k] || 0) + 1; } return st; } // (sonda_aparcamiento.py)
-function laneMk(rd, plain = false) { // plain: a street without lane lines (residential…): only its parking lanes
+function laneMk(rd, plain = false, hide = null) { // plain: a street without lane lines (residential…): only its parking lanes; hide: sides whose band line is left out here (a no-parking sign, Mapillary)
   const w = rd[2], ow = !!(rd[3] & 1), mot = rd[0] <= 1, ps = parkSides(rd), PB = 2.2;
   const p0 = ps.sides.includes(1) ? PB : 0, p1 = ps.sides.includes(-1) ? PB : 0, wl = w - p0 - p1; // the carriageway between the parking bands
   const n = ow ? clamp(ps.lanes > 0 ? ps.lanes : Math.round((wl - (mot ? 2.2 : 1.2)) / 3.5), 1, 5) : ps.lanes >= 4 || (ps.lanes < 0 && wl >= 12.5) ? 4 : 2;
-  const key = 'aL_' + (plain ? 'r' : ow ? 'o' : 't') + n + '_' + Math.round(w * 10) + (mot ? 'm' : '') + (p0 ? 'p' : '') + (p1 ? 'q' : ''); if (MAT[key]) return key;
+  const key = 'aL_' + (plain ? 'r' : ow ? 'o' : 't') + n + '_' + Math.round(w * 10) + (mot ? 'm' : '') + (p0 ? 'p' : '') + (p1 ? 'q' : '') + (hide && hide.includes(1) ? 'H' : '') + (hide && hide.includes(-1) ? 'J' : ''); if (MAT[key]) return key;
   const c = mkCanvas(256, 512), y = c.getContext('2d'); y.drawImage(TEX.asphaltC, 0, 0); y.drawImage(TEX.asphaltC, 0, 256);
   const px = 256 / w, line = (m, wd, dash) => { const x = Math.round(m * px - wd * px / 2), ww = Math.max(3, Math.round(wd * px)); y.fillStyle = '#ece9e0';
     if (!dash) y.fillRect(x, 0, ww, 512); else for (let v = 0; v < 512; v += 512 / dash[1]) y.fillRect(x, v + 8, ww, (512 / dash[1]) * dash[0]); };
   const bays = (from, to) => { y.fillStyle = '#ece9e0'; const x0 = Math.round(Math.min(from, to) * px), x1 = Math.round(Math.max(from, to) * px); for (let v = 0; v < 512; v += 512 / 1.6) y.fillRect(x0, v, x1 - x0, 3); }; // a bay every ~5 m (the texture is 8 m long)
   /* v1.1.4 (Jonay, foto de C. Narciso de Vera: «las plazas aquí se suelen poner con línea discontinua y sin dividir el largo de los coches»): the parking band is only a short-dashed line, no bays */
-  if (p0) line(p0, 0.12, [0.4, 6]); if (p1) line(w - p1, 0.12, [0.4, 6]);
+  if (p0 && !(hide && hide.includes(1))) line(p0, 0.12, [0.4, 6]); if (p1 && !(hide && hide.includes(-1))) line(w - p1, 0.12, [0.4, 6]);
   if (plain) { /* no lane lines */ }
   else if (ow) { const so = (mot ? 1.6 : 0.6), si = (mot ? 0.6 : 0.35), a = p0 + (p0 ? 0.3 : so), b = w - p1 - (p1 ? 0.3 : si), lw = (b - a) / n;   // right shoulder (u = 0) wider than the left one
     if (!p0) line(so, 0.18); if (!p1) line(w - si, 0.18); for (let k = 1; k < n; k++) line(a + lw * k, 0.14, mot ? [0.38, 1] : [0.5, 2]); }
@@ -402,7 +402,7 @@ function buildRoads() {
       const hf0 = bridgeProfile(c), hf = RAISE.has(ri) ? (s, x, z) => hf0(s, x, z) + raiseOf(ri, s) : hf0; if (isLines(cls)) linedRibbon(ri, c, w, cls, tile, hf, 0); else ribbon(c, w, cls, YOFF[cls], tile, w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8), hf); // v0.99.6: on bridges too
       bridgeDressing(c, w, hf, rd[0] <= 12); continue;
     }
-    if (isLines(cls)) { for (const [s0, s1, ln] of lineRuns(ri, c)) for (const [m0, m1, mf] of mergeRuns(ri, c, s0, s1)) { const pc = subPoly(c, m0, m1); if (pc.length >= 4) ribbon(pc, w, ln ? cls : 'asphalt', ln ? YOFF[cls] : YOFF.asphalt, ln ? tile : 8, ln ? 1 : w / 8, mf); } }
+    if (isLines(cls)) { const pl = cls0 !== 'asphaltLines'; for (const [s0, s1, ln] of lineRuns(ri, c)) for (const [m0, m1, mf] of mergeRuns(ri, c, s0, s1)) for (const [n0, n1, hd] of noParkRuns(ri, c, m0, m1)) { const pc = subPoly(c, n0, n1), k = ln ? (hd ? laneMk(rd, pl, hd) : cls) : 'asphalt'; if (pc.length >= 4) ribbon(pc, w, k, ln ? YOFF[cls] : YOFF.asphalt, ln ? tile : 8, ln ? 1 : w / 8, mf ? (q, x, z) => mf(q + n0 - m0, x, z) : null); } }
     else if (rd[0] >= 13) { for (const pc0 of offTramCut(c)) for (const pc of pasajeRibbonParts(rd, pc0)) ribbon(pc, w, cls, yo, tile, w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8)); } // v0.76: no path floating over the tram cutting
     else for (const [m0, m1, mf] of mergeRuns(ri, c, 0, polyLen(c))) { const pc = subPoly(c, m0, m1); if (pc.length >= 4) ribbon(pc, w, cls, yo, tile, isLines(cls) ? 1 : w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8), mf); }
     if (MERGED.has(ri)) mergeDecks(ri, c);
@@ -844,6 +844,21 @@ function mergeY(ri) { const rd = DATA.R[ri], c = rd[4]; if (rd[0] > 12 || (rd[3]
       const yr = ROADY[rj](sOnRoad(rj, rn.i, rn.t), rn.x, rn.z), dy = yr - g; if (!(dy > 0)) continue; y = Math.max(y, g + dy * k * (1 - smooth(2.2, 3.2, dy))); }
     return y; };
 }
+/* v1.1.4 (Jonay chose it: «hueco en la banda»): Mapillary's no-parking / no-stopping signs (DATA.MP, tools/mapillary.py)
+   leave out the parking band's line ~6 m on each side of the sign, on its side of the street (driveways, corners), and
+   no car is parked there. Returns the pieces [s0, s1, hide] of the road between a and b (hide: the sides, or null). */
+const NOPARK = new Map();
+function noParkSigns(ri) { let v = NOPARK.get(ri); if (v) return v; v = []; const L = DATA.MP && DATA.MP[ri]; if (L) { const c = DATA.R[ri][4];
+    for (const [x, z, sd] of L) { let best = null, acc0 = 0; for (let i = 0; i + 3 < c.length; i += 2) { const dx = c[i + 2] - c[i], dz = c[i + 3] - c[i + 1], l = Math.hypot(dx, dz) || 1, t = clamp(((x - c[i]) * dx + (z - c[i + 1]) * dz) / (l * l), 0, 1), d = Math.hypot(x - c[i] - dx * t, z - c[i + 1] - dz * t); if (!best || d < best.d) best = { d, s: acc0 + t * l }; acc0 += l; }
+      if (best) v.push([best.s, sd]); } }
+  NOPARK.set(ri, v); return v; }
+function noParkAt(ri, s, side, r = 6) { for (const [s0, sd] of noParkSigns(ri)) if (sd === side && Math.abs(s - s0) < r) return true; return false; }
+function noParkRuns(ri, c, a, b) { const sg = noParkSigns(ri); if (!sg.length) return [[a, b, null]];
+  const cuts = new Set([a, b]); for (const [s0] of sg) for (const e of [s0 - 6, s0 + 6]) if (e > a && e < b) cuts.add(e);
+  const xs = [...cuts].sort((p, q) => p - q), out = [];
+  for (let i = 0; i + 1 < xs.length; i++) { const m = (xs[i] + xs[i + 1]) / 2, hd = [1, -1].filter((sd) => noParkAt(ri, m, sd)); const h = hd.length ? hd : null; const q = out[out.length - 1];
+    if (q && String(q[2]) === String(h)) q[1] = xs[i + 1]; else out.push([xs[i], xs[i + 1], h]); }
+  return out; }
 /** the pieces [s0, s1, hf] of a road between a and b: hf = its lifted height where it rises beside a raised road, null elsewhere */
 function mergeRuns(ri, c, a, b) { const m = MERGED.get(ri); if (!m) return [[a, b, null]];
   const out = []; const N = Math.max(2, Math.ceil((b - a) / 2)); let cur = null, s0 = a;

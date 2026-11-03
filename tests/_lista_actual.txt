@@ -1,2 +1,5 @@
-prueba_trinidad.py
 prueba_arranque.py
+prueba_trinidad.py
+herramientas/sonda_aparcamiento.py
+herramientas/sonda_calzadas.py -720 301 40
+herramientas/sonda_calzadas.py -730 335 30

@@ -456,6 +456,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Calles, túneles, puentes, enlaces y aeropuerto
 
+- [ ] ⚡ **Banda de aparcamiento: raya continua corta al principio y al final** (Jonay, 3-nov, foto de C. Narciso de Vera): junto al paso de cebra la banda empieza con una raya continua transversal. La 1.1.4 ya la pinta discontinua y sin dividir plazas; falta esa raya en los extremos (`laneMk` / `ribbon`, `04_world.js`).
 - [~] ⚡ v1.1.0 (red de seguridad que te devuelve a la calle; la sonda `sonda_caidas.py` no encuentra ahí un tablero sobre un tramo bajo, así que la causa sigue sin saberse: falta reproducirlo conduciendo por ese enlace) **¡Bloquea la misión! El coche se cae a través de la calzada en el enlace de la Autopista del Norte** (Jonay,
   3-nov, X −3292, Y −161, captura de noche, misión del queso del aeropuerto: «me he caído por aquí con el coche mientras
   seguía a la furgoneta del queso; él también se cayó pero pudo seguir; esto es súper bug porque impide hacer la misión,
@@ -515,6 +516,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 - [ ] ◐ **Escalón de terreno en Camino San Francisco / San Honorato** (Jonay, 3-nov, X −720, Y 301 y X −730, Y 335,
   capturas): un salto brusco del terreno junto a la calzada y la glorieta; en la realidad la bajada es mucho más suave.
   Suavizar el terreno y la rasante ahí (y buscar otros saltos parecidos con el revisor).
+  - v1.1.5 (sonda_calzadas): es el terraplén de subida al puente de la Av. República de Venezuela sobre la Autopista del Norte: la calzada va 4–5 m por encima del terreno y el muro cae de golpe. Hay que subir el terreno de alrededor en rampa suave (no solo el muro).
 - [ ] ● **Ampliar el mapa por el norte** (Jonay, 3-nov): que entren **Mesa Mota** y la parte que une con la **Vía de
   Ronda**, y que el mapa acabe en la carretera que va a **Las Mercedes, Las Canteras y Tegueste** (esa es la última). Bajar
   la zona con `descargar_zona.ps1` + `merge_zona.py`, terreno incluido, y mover el borde (`08b_border.js`).
@@ -528,7 +530,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   fachadas de dentro y se choca con lo que no se ve. Sigue en la 1.0.3 con el recorte de la 0.99.8: viene de cómo se
   rellenan los solares de la avenida (`trinidadFill`, 05u_trinidad.js) o del OSM. Mirar con `sonda_hueco.py -191 366 50`.
 
-- [ ] ◐ **Cámara bajo tierra y en sitios cubiertos** (Jonay, 3-nov, Av. de La Trinidad X −199, Y 318, captura: «al entrar en el
+- [~] ◐ v1.1.5 (bajo techo la cámara se acerca y se queda por debajo; falta que Jonay lo mire) **Cámara bajo tierra y en sitios cubiertos** (Jonay, 3-nov, Av. de La Trinidad X −199, Y 318, captura: «al entrar en el
   subsuelo de La Trinidad la cámara se pone medio loca; hace falta pulir eso en todas las zonas de subsuelo o debajo de
   otras, para que la cámara permita ver, y tenerlo en cuenta para dejar espacio»): la cámara se mete en el techo o en los
   muros y se ve el fondo marrón y piezas sueltas. Acercar la cámara y bajarla en túneles, pasos inferiores y bajo puentes
