@@ -15,7 +15,7 @@ function lodAdd(m, detail, lo) {
   LOD.items.push({ m, x: c.x, z: c.z, r: s.radius, d: detail ? 1 : 0, hi: lo ? m.geometry : null, lo: lo || null });
 }
 // distances follow the fog: what is past the fog's end is the fog's colour anyway
-function lodDist() { const ff = scene.fog ? scene.fog.far : Q.far; return { far: ff + 40, det: Math.min(ff, 230 + ff * 0.25), lo: 170 }; }
+function lodDist() { const ff = scene.fog ? scene.fog.far : Q.far; return { far: ff + 40, det: Math.min(ff, 160 + ff * 0.15), lo: 170 }; } // v1.0.0: details (under 2.5 m) up to ~330 m in «alta» (was ~520 m: 6 pixels or less there)
 function updateCityLOD(force) {
   if (LOD.off) return; const p = camera.position, D = lodDist();
   if (!force && Math.abs(p.x - LOD.cx) < 12 && Math.abs(p.z - LOD.cz) < 12 && D.far === LOD.far) return;
@@ -30,27 +30,40 @@ function updateCityLOD(force) {
 function unfuse(on) { if (!LOD.keep) return false; LOD.off = on; for (const [par, o] of LOD.orig) { if (on) par.add(o); else par.remove(o); } for (const it of LOD.items) { it.m.visible = on ? !it.m.userData.fused : true; if (it.hi) it.m.geometry = it.hi; } if (!on) updateCityLOD(true); return LOD.orig.length; }
 function lodShowAll() { for (const it of LOD.items) { it.m.visible = true; if (it.hi) it.m.geometry = it.hi; } LOD.cx = 1e9; } // fotos de herramientas
 
+// v1.0.0 (sonda de pintado con GPU en «alta»: lo que pesa son las ~2.000 llamadas de las piezas sueltas, sobre todo gente
+// y coches, que se pintaban también a 600–1.000 m, donde miden 2–3 píxeles): people, cars and the rooms of the interiors
+// are not drawn past a distance (only during the render: the game logic still sees them as they are). Map: root → metres.
+function actorCull(on, cam) {
+  if (!on) { for (const o of ACULL) o.visible = true; ACULL.length = 0; return; }
+  if (ACULL.length) actorCull(false); const p = (cam || camera).position, px = p.x, pz = p.z, py = p.y;
+  for (const [o, A] of ACTORS) { if (!o.visible || !o.parent) continue; const e = o.matrixWorld.elements, dx = e[12] - px, dz = e[14] - pz, dy = e[13] - py, d2 = dx * dx + dz * dz + dy * dy;
+    if (d2 > A.r * A.r) { o.visible = false; ACULL.push(o); continue; }
+    // small parts (eyes, brows, watch… of people; lights and plate of cars) only from close by: each one is a draw call
+    if (A.dr && d2 > A.dr * A.dr) { if (!A.det) { A.det = []; o.traverse((m) => { if (m === o || !m.isMesh || m.isSkinnedMesh) return; const g = m.geometry; if (!g.boundingSphere) g.computeBoundingSphere(); if (g.boundingSphere.radius * m.scale.x < A.thr) A.det.push(m); }); }
+      for (const m of A.det) if (m.visible) { m.visible = false; ACULL.push(m); } } }
+}
+const WHY_EX = {}; // v1.0.0 (tests): where the pieces left loose are, by reason
 const _MAPS = ['map', 'emissiveMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'alphaMap', 'aoMap', 'bumpMap', 'lightMap', 'displacementMap'];
 function mergeStatics() {
   const t0 = performance.now(); scene.updateMatrixWorld(true);
   const skip = new Set(); if (typeof DOORMARKS !== 'undefined') for (const k of DOORMARKS) skip.add(k.m);
-  const groups = new Map(); let found = 0; const why = {}; const no = (k) => { why[k] = (why[k] || 0) + 1; };
+  const groups = new Map(); let found = 0; const why = {}; const no = (k, o) => { why[k] = (why[k] || 0) + 1; if (o && window.__JETA_TEST) { const e = WHY_EX[k] || (WHY_EX[k] = []); if (e.length < 6) { const p = new THREE.Vector3(); o.getWorldPosition(p); e.push([Math.round(p.x), Math.round(p.z), o.geometry && o.geometry.type]); } } };
   const baseBR = THREE.Mesh.prototype.onBeforeRender;
   const visit = (o, named) => {
     if (skip.has(o) || !o.visible || (o.userData && o.userData.noMerge)) return;
     const nm = named || (o !== scene && !!o.name);
     for (const c of [...o.children]) visit(c, nm);
-    if (o === scene || !o.isMesh || o.isInstancedMesh || o.isSkinnedMesh) return; if (nm) return no('grupo con nombre'); if (o.children.length) return no('con hijos');
+    if (o === scene || !o.isMesh || o.isInstancedMesh || o.isSkinnedMesh) return; if (nm) return no('grupo con nombre'); /* v1.0.0 (sonda de pintado con GPU: ~1.600 piezas sin juntar, sobre todo ruedas de los coches de los aparcamientos, que llevan la llanta de hija): a piece with children is joined too; its children stay where they are (re-hung from its parent) */
     const mat = o.material, g = o.geometry;
-    if (Array.isArray(mat) || !mat || !g || !g.attributes.position || (g.morphAttributes && g.morphAttributes.position)) return no('varios materiales'); /* geometry groups (BoxGeometry has 6) only matter with several materials */
-    if (mat.transparent) return no('transparente'); if (!o.frustumCulled || o.layers.mask !== 1) return no('siempre visible'); if (o.onBeforeRender !== baseBR) return no('onBeforeRender'); if (Object.keys(o.userData).length) return no('userData');
+    if (Array.isArray(mat) || !mat || !g || !g.attributes.position || (g.morphAttributes && g.morphAttributes.position)) return no('varios materiales', o); /* geometry groups (BoxGeometry has 6) only matter with several materials */
+    if (mat.transparent && !o.matrixWorld.elements.every(isFinite)) return no('transparente', o); /* v1.0.0 (sonda de lo que se pinta: 40–110 llamadas por fotograma eran láminas transparentes sueltas, sobre todo lejos): transparent pieces are joined too, by material and cell like the rest (they are flat decals and glass: the order inside one cell does not show) */ if (!o.frustumCulled || o.layers.mask !== 1) return no('siempre visible', o); if (o.onBeforeRender !== baseBR) return no('onBeforeRender', o); if (Object.keys(o.userData).length) return no('userData', o);
     const uv = !!g.attributes.uv && _MAPS.some((k) => mat[k]), col = !!mat.vertexColors && !!g.attributes.color;
     if (!g.boundingSphere) g.computeBoundingSphere();
     const c = g.boundingSphere.center.clone().applyMatrix4(o.matrixWorld), sc = o.matrixWorld.getMaxScaleOnAxis(), r = g.boundingSphere.radius * sc;
     const detail = r < 2.5;
     const key = [mat.uuid, uv ? 1 : 0, col ? 1 : 0, o.castShadow ? 1 : 0, o.receiveShadow ? 1 : 0, o.renderOrder, detail ? 1 : 0, Math.floor(c.x / LOD.cell), Math.floor(c.z / LOD.cell)].join('|');
     let G = groups.get(key); if (!G) groups.set(key, G = { mat, uv, col, cs: o.castShadow, rs: o.receiveShadow, ro: o.renderOrder, detail, list: [] });
-    G.list.push(o); found++;
+    G.list.push(o); found++; if (o.children.length) no('con hijos (se juntan desde v1.0.0)', o);
   };
   visit(scene, false);
   const nm = new THREE.Matrix3(), v = new THREE.Vector3(); let made = 0, merged = 0;
@@ -82,10 +95,10 @@ function mergeStatics() {
     geo.setIndex(new THREE.BufferAttribute(I, 1)); geo.computeBoundingSphere(); geo.computeBoundingBox();
     if (!LOD.keep) { const free = function () { this.array = null; }; for (const k in geo.attributes) geo.attributes[k].onUpload(free); } // RAM back once on the GPU (as the city chunks, audit P1.7; the index stays: the auditor reads it)
     const m = new THREE.Mesh(geo, G.mat); m.castShadow = G.cs; m.receiveShadow = G.rs; m.renderOrder = G.ro; m.name = 'fusion'; m.matrixAutoUpdate = false;
-    for (const o of G.list) { if (o.parent) { if (LOD.keep) LOD.orig.push([o.parent, o]); o.parent.remove(o); } } m.userData.fused = true;
+    for (const o of G.list) { if (o.parent) { if (LOD.keep) LOD.orig.push([o.parent, o]); for (const ch of [...o.children]) o.parent.attach(ch); o.parent.remove(o); } } m.userData.fused = true;
     scene.add(m); lodAdd(m, G.detail); made++; merged += G.list.length;
   }
-  LOD.stats = { sueltas: found, juntadas: merged, mallas: made, ms: Math.round(performance.now() - t0), no: why, ultimoId: new THREE.Object3D().id };
+  LOD.stats = { sueltas: found, juntadas: merged, mallas: made, ms: Math.round(performance.now() - t0), no: why, ejemplos: WHY_EX, ultimoId: new THREE.Object3D().id };
   return LOD.stats;
 }
 // one InstancedMesh per 250 m cell (big ones only): the camera can then skip what it doesn't see

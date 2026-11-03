@@ -56,6 +56,7 @@ const CALLEJERO_TRAFICO = /^Calle (Bencomo|Juan de Vera|Rodriguez Moure|Ascanio 
 for (const rd of DATA.R) { if (rd[1] >= 0 && CALLEJERO_TRAFICO.test(DATA.S[rd[1]]) && (rd[0] === 13 || ((rd[3] >> 3) & 3) === 1)) { rd[0] = 10; rd[3] &= ~(3 << 3); rd[2] = Math.max(rd[2], 6); } }
 for (const rd of DATA.R) { if (rd[0] <= 12) { const c = rd[4], m = (c.length >> 2) << 1; rd[2] = WIDEN2(rd[0], rd[2], rd[3] & 1, c[m], c[m + 1]); } }
 for (const e of DATA.G.e) { const a = e[0] * 2; e[4] = WIDEN2(e[2], e[4], e[3], DATA.G.n[a], DATA.G.n[a + 1]); }
+narrowToGap(); // v1.0.0: residential and service streets meet the buildings halfway (04b_recorte.js)
 trinidadWidths(); // v0.68: Av. de La Trinidad, one lane + parking per carriageway (05u_trinidad.js); after the widening
 // v0.91 (Jonay, with a Street View of the TF-5: «separando los sentidos»): OSM gives the motorway as two one-way ways
 // that are often only 7–10 m apart, so the two carriageways (13 m each here) overlapped into one slab with the lines
@@ -193,6 +194,7 @@ renderer.autoClear = false;
 $('game').appendChild(renderer.domElement);
 const MAXANI = renderer.capabilities.getMaxAnisotropy();
 
+const ACTORS = new Map(); const ACULL = []; // v1.0.0: people, cars and rooms drawn only up to a distance (actorCull, 05w_optimiza.js)
 const scene = new THREE.Scene();
 const bgScene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.25, 3200);

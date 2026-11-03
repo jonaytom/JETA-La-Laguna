@@ -14,11 +14,13 @@ RESET = """(()=>{ const d=__dbg; try { if (d.DIARIO && d.DIARIO.open_) d.DIARIO.
 async def main():
     lines = [l.strip() for l in open(sys.argv[1], encoding='utf-8') if l.strip() and not l.strip().startswith('#')]
     async with async_playwright() as p:
-        b = await p.chromium.launch(args=['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--mute-audio'])
+        # v1.0.0: a list with a «_gpu» tool (herramientas/sonda_pintado_gpu.py) runs on the real graphics card, at «alta» quality (Jonay, 3-nov: the goal is 1080p at 60 fps with everything at maximum)
+        gpu = any(l.split()[0].endswith('_gpu.py') for l in lines)
+        b = await p.chromium.launch(args=(['--enable-gpu', '--use-angle=d3d11' if os.name == 'nt' else '--use-angle=default'] if gpu else ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader']) + ['--ignore-gpu-blocklist', '--mute-audio'])
         pg = await b.new_page(viewport={'width': 640, 'height': 360})
         await pg.add_init_script(MUDO)
         logs = []; pg.on('console', lambda m: logs.append(m.type + ': ' + m.text)); pg.on('pageerror', lambda e: logs.append('PAGEERROR: ' + str(e)))
-        await pg.goto('http://localhost:8765/test.html?q=baja')
+        await pg.goto('http://localhost:8765/test.html?q=' + ('alta' if gpu else 'baja'))
         try: await pg.wait_for_function('window.__GAME_READY', timeout=180000)
         except Exception as e:  # v0.69: the game didn't load: every test would wait for nothing
             print('not ready', e); print('NO CARGA: ' + ' | '.join(l for l in logs if 'PAGEERROR' in l or l.startswith('error'))[:800]); await b.close(); return

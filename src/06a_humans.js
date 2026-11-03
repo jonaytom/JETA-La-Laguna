@@ -57,6 +57,10 @@ function skinMaterial(texKey, cloth, sleeve, longPants) {
   m.customProgramCacheKey = () => 'jetaSkin';
   return m;
 }
+// v1.0.0: a height in metres drawn from the real spread (Jonay's table, % per 8 cm band from under 152 cm to 192 cm and up)
+const HEIGHTS = { m: [0, 0.8, 8, 30, 45, 14, 2.2], f: [5, 21, 38, 26, 8, 1.7, 0.3] };
+function realHeight(fem) { const t = HEIGHTS[fem ? 'f' : 'm'], tot = t.reduce((a, b) => a + b, 0); let r = Math.random() * tot, i = 0; while (i < t.length - 1 && r >= t[i]) { r -= t[i]; i++; }
+  const lo = i === 0 ? 146 : 144 + 8 * i, hi = i === t.length - 1 ? 198 : lo + 8; return (lo + Math.random() * (hi - lo)) / 100; }
 function makeHumanSkinned(o = {}) {
   const fem = o.female ?? (o.longHair ? true : Math.random() < 0.5); const B = HUM.bodies[fem ? 'f' : 'm'];
   const root = new THREE.Group(); root.userData.noMerge = true; /* v0.77: never fused (05w_optimiza.js) */ const body = new THREE.Group(); root.add(body);
@@ -113,7 +117,11 @@ function makeHumanSkinned(o = {}) {
   if (bt.size && BODY_SIZES[bt.size]) bt = { ...BODY_SIZES[bt.size], ...bt };
   if (bodyMesh && bodyMesh.morphTargetInfluences) MORPHS.filter((n) => HUM.d.bodies[fem ? 'f' : 'm'].morph?.[n]).forEach((n, i) => { bodyMesh.morphTargetInfluences[i] = bt[n] || 0; });
   const teen = bt.teen || 0, fatK = (bt.fat || 0) + 0.6 * (bt.xfat || 0) + 0.7 * (bt.sfat || 0), oldK = bt.old || 0, slimK = (bt.slim || 0) + (bt.sslim || 0);
-  const s = o.scale ?? (rnd(0.93, 1.05) * (1 - 0.1 * teen)); const w = o.thin ? 0.8 : rnd(0.84, 0.92) + 0.08 * Math.min(fatK, 1) + 0.05 * Math.max(0, fatK - 1) - 0.05 * slimK; bones[0].scale.set(w, o.thin ? 0.9 : w, 1); /* narrower shoulders than the superhero */
+  const w = o.thin ? 0.8 : rnd(0.84, 0.92) + 0.08 * Math.min(fatK, 1) + 0.05 * Math.max(0, fatK - 1) - 0.05 * slimK; bones[0].scale.set(w, o.thin ? 0.9 : w, 1); /* narrower shoulders than the superhero */
+  // v1.0.0 (Jonay, 3-nov, with a table of heights: «ahora son más gordos o flacos, pero no más altos o bajos»): the height
+  // comes from the real spread for men and women (realHeight); the root bone's narrowing (w) also shortened them, so
+  // the scale makes up for it. Teens are 10 % shorter, old people 2 %. A given o.scale (mission people) stays as it was.
+  const s = o.scale ?? (realHeight(fem) * (1 - 0.1 * teen) * (1 - 0.02 * oldK)) / (((fem ? 1.656 : 1.699) + 0.11) * (o.thin ? 0.9 : w) * (fem ? 0.97 : 1));
   body.scale.setScalar(s * (fem ? 0.97 : 1));
   if (fatK > 0.5) for (const n of ['spine_01', 'spine_02', 'pelvis']) { const b = bones.find((x) => x.name === n); b.scale.set(1 + 0.08 * fatK, 1, 1 + 0.1 * fatK); }
   if (slimK > 0) for (const n of ['spine_01', 'spine_02', 'pelvis']) { const b = bones.find((x) => x.name === n); b.scale.set(1 - 0.06 * slimK, 1, 1 - 0.07 * slimK); }
@@ -123,6 +131,7 @@ function makeHumanSkinned(o = {}) {
   const act = (n) => { if (!actions[n]) { const a = mixer.clipAction(HUM.clips[n]); if (/Death|Punch|Hit|Jump_Start|Jump_Land|Interact/.test(n)) { a.setLoop(THREE.LoopOnce); a.clampWhenFinished = true; } actions[n] = a; } return actions[n]; };
   const dummy = () => ({ p: new THREE.Object3D(), j: new THREE.Object3D() });
   const look = { female: fem, skin: skinCol, shirt, pants, shoes, sleeve, longP, hair: hairCol, hairStyle: hs, cap: o.cap, jacket: o.jacket, beard: !!o.beard, glasses: o.glasses, beanie: o.beanie, sole: o.sole, fat: o.fat, thin: o.thin, build: bt };
+  ACTORS.set(root, { r: 170, dr: 40, thr: 0.07 }); // v1.0.0: not drawn past 170 m (about 10 pixels tall at 1080p), small parts not past 40 m
   const H = { look, root, body, skinned: true, skeleton, mixer, act, cur: null, head, torso: spine, hips: new THREE.Object3D(), armL: dummy(), armR: dummy(), legL: dummy(), legR: dummy(), phase: Math.random() * 6, pose: 'walk', female: fem, oneShot: 0 };
   play(H, 'Idle_Loop', 0); mixer.update(Math.random() * 2);
   return H;

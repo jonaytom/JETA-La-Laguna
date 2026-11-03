@@ -3,6 +3,25 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.0.0 — 2026-11-03 — Rendimiento: 1080p a 60 fps en «alta», calles al hueco entre edificios y alturas reales
+- **Pintado** (Jonay: «el objetivo es jugar a 1080 a 60 fps en mi gráfica con los gráficos al máximo»): con la RX 6600 en
+  «alta» a 1080p, de 23–34 ms por fotograma a **12–14 ms** (sonda nueva con la tarjeta gráfica,
+  `tests/herramientas/sonda_pintado_gpu.py`). No pesaban los píxeles sino las llamadas de dibujo (de 2.200–3.100 a
+  1.300–1.700) y los triángulos (de 6 M a 1,4–1,9 M):
+  - se juntan también las piezas con hijas (ruedas con llanta de los coches de los aparcamientos) y las transparentes;
+  - la gente no se pinta a más de 170 m, los coches a más de 360 m ni los interiores desde lejos; los ojos, cejas, luces o
+    matrículas, solo de cerca (40 y 70 m);
+  - los coches aparcados van en celdas de 400 m y hasta ~580 m; los detalles pequeños de la ciudad, hasta ~330 m.
+- **Edificios en la calzada** (auditorías; Jonay: «un término medio de cada cosa»): las calles residenciales, de servicio y
+  sin clasificar fuera del casco, y lejos de puentes y túneles, se estrechan a medio camino del hueco real entre fachadas
+  (nunca menos de 5,5 m las de doble sentido); los edificios se recortan aunque pierdan más de la mitad y, si solo queda una
+  tira de menos de 50 m², se quitan. Metidos más de 1 m en la calzada: de 121 a 14. Los de 50 m² o más que la calle cruza se
+  quedan como estaban, con fotos para revisarlos uno a uno.
+- **Gente de la calle** (Jonay, con una tabla de alturas por sexo): la altura sale de la tabla real; antes todos medían
+  1,50–1,70 m porque al estrecharles los hombros se acortaban.
+- **Código**: la tabla de selecciones del Mundialito, una fila por equipo; los apuntes de las auditorías viejas, cerrados y
+  resumidos en tres.
+
 ## 0.99.8 — 2026-11-02 — Empedrado basáltico, rueda del ratón para las armas y coordenadas X, Y con altura
 - **Empedrado del casco** (Jonay: «es más oscuro», `docs/referencias/empedrado/`): adoquín gris basáltico oscuro en
   hileras, con juntas oscuras (calles peatonales y plazas).

@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v0.99.8</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.0.0</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,26 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.0.0 — 2026-11-03 — Rendimiento: 1080p a 60 fps en «alta», calles al hueco entre edificios y alturas reales</h2>
+<ul>
+<li><strong>Pintado</strong> (Jonay: «el objetivo es jugar a 1080 a 60 fps en mi gráfica con los gráficos al máximo»): con la RX 6600 en
+  «alta» a 1080p, de 23–34 ms por fotograma a <strong>12–14 ms</strong> (sonda nueva con la tarjeta gráfica,
+  <code>tests/herramientas/sonda_pintado_gpu.py</code>). No pesaban los píxeles sino las llamadas de dibujo (de 2.200–3.100 a
+  1.300–1.700) y los triángulos (de 6 M a 1,4–1,9 M):</li>
+<li>se juntan también las piezas con hijas (ruedas con llanta de los coches de los aparcamientos) y las transparentes;</li>
+<li>la gente no se pinta a más de 170 m, los coches a más de 360 m ni los interiores desde lejos; los ojos, cejas, luces o
+    matrículas, solo de cerca (40 y 70 m);</li>
+<li>los coches aparcados van en celdas de 400 m y hasta ~580 m; los detalles pequeños de la ciudad, hasta ~330 m.</li>
+<li><strong>Edificios en la calzada</strong> (auditorías; Jonay: «un término medio de cada cosa»): las calles residenciales, de servicio y
+  sin clasificar fuera del casco, y lejos de puentes y túneles, se estrechan a medio camino del hueco real entre fachadas
+  (nunca menos de 5,5 m las de doble sentido); los edificios se recortan aunque pierdan más de la mitad y, si solo queda una
+  tira de menos de 50 m², se quitan. Metidos más de 1 m en la calzada: de 121 a 14. Los de 50 m² o más que la calle cruza se
+  quedan como estaban, con fotos para revisarlos uno a uno.</li>
+<li><strong>Gente de la calle</strong> (Jonay, con una tabla de alturas por sexo): la altura sale de la tabla real; antes todos medían
+  1,50–1,70 m porque al estrecharles los hombros se acortaban.</li>
+<li><strong>Código</strong>: la tabla de selecciones del Mundialito, una fila por equipo; los apuntes de las auditorías viejas, cerrados y
+  resumidos en tres.</li>
+</ul>
 <h2>0.99.8 — 2026-11-02 — Empedrado basáltico, rueda del ratón para las armas y coordenadas X, Y con altura</h2>
 <ul>
 <li><strong>Empedrado del casco</strong> (Jonay: «es más oscuro», <code>docs/referencias/empedrado/</code>): adoquín gris basáltico oscuro en

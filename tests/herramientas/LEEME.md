@@ -22,6 +22,13 @@ Se lanzan con el arnés de `tests/run_test.py` (servidor en `localhost:8765` sir
 | `sonda_conduccion.py [ri …] [p:x,z …]` | Recorre en coche las calles indicadas (índice o las que pasan por un punto) y da la traza, el mayor salto de altura y dónde se para. |
 | `sonda_perfil.py x0 z0 x1 z1` | Perfil de la calzada entre dos puntos cada 0,5 m (suelo, tablero, túnel) y los escalones de más de 0,3 m. |
 | `sonda_rendimiento.py` | Llamadas de dibujo y triángulos en dos sitios ocultando cada grupo (trozos de ciudad, piezas juntadas, instanciadas, aparcados, sueltas, sombras, gente, coches; «sinLOD» = sin recorte por distancia), censo de mallas y tiempo de cada paso de la carga. Todo en `shots/sonda_rendimiento.txt`. Los ms no valen (sin tarjeta gráfica). |
+| `sonda_pintado_gpu.py [--trozos]` | v1.0.0: **con la tarjeta gráfica** (su nombre acaba en `_gpu`: `run_varios.py` abre el navegador con la GPU y calidad «alta»). Tiempo de pintar a 1080p ×1,5 en 5 sitios (mediana de 40 fotogramas), a 480×270, y sin cada grupo (sueltas, ciudad, gente, coches, sombras, lejos…). Va en una lista de pruebas, sola. |
+| `sonda_dibujadas.py` | v1.0.0: qué mallas se pintan de verdad en un fotograma (trozos, juntadas, instanciadas, aparcados y sueltas por tipo, transparencia, huesos y distancia). |
+| `sonda_sueltas.py` · `sonda_grupos.py` · `sonda_grupos2.py` | v1.0.0: censo de las piezas sin juntar, por qué no se juntaron (`LOD.stats.no`) y huella de los grupos que más llamadas cuestan. |
+| `sonda_recorte_motivos.py [n]` | v1.0.0: lee el `mapa.json` de la última auditoría y dice qué regla de `roadClip()` dejó cada edificio en la calzada. |
+| `sonda_edificios_dudosos.py [n]` | v1.0.0: edificios de 50 m² o más que el recorte habría quitado: lista y fotos desde arriba (`dudoso_NN.jpg`). |
+| `sonda_tamanos.py` | v1.0.0: altura de la gente, medidas de los coches, anchos de calle por tipo, calles estrechadas y edificios quitados. |
+| `foto_calles_estrechadas.py [n]` | v1.0.0: fotos de los cruces de las calles más estrechadas al hueco entre edificios (`estrechada_NN.jpg`). |
 | `sonda_trinidad.py` | Av. de La Trinidad: fotos desde arriba y a la altura de los ojos (sitios de las capturas de Jonay), aparcamientos y edificios que pisan la avenida. |
 | `foto_desde_arriba.py vistas.json` | Fotos desde arriba: `[[tx,tz,cx,cz,h],…]`. |
 | `foto_puntos.py puntos.json` | Fotos a la altura de los ojos: `[[x,z,yaw,ri],…]`. |

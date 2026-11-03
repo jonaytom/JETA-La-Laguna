@@ -3,7 +3,7 @@ const INTERIORS = []; // {id,name,door:{x,z,nx,nz}, spawn:{x,z,h}, exit:{x,z}, c
 let IX = 9000;
 function roomShell(w, d, h, floorTex, wallCol, opts = {}) {
   const half = Math.max(w, d) / 2 + 40; const x0 = IX + half, z0 = 0; IX = x0 + half; const y0 = heightAt(x0, z0); // rooms never overlap, whatever their size
-  const g = new THREE.Group(); g.position.set(x0, y0, z0); scene.add(g);
+  const g = new THREE.Group(); g.position.set(x0, y0, z0); scene.add(g); ACTORS.set(g, { r: 400 }); // v1.0.0: the rooms (out of the map, past X 9000) are only drawn from close by
   const fm = new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.35, emissive: 0xffffff, emissiveMap: floorTex, emissiveIntensity: 0.12 });
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(w, d), fm); floor.rotation.x = -Math.PI / 2; floor.position.y = 0.13; floor.receiveShadow = true; g.add(floor);
   if (floorTex) { floorTex.repeat.set(w / 2, d / 2); }

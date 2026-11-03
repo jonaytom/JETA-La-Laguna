@@ -990,7 +990,7 @@ function buildBuildings() {
     if (isTramStopBuilding(nameIdx, pts)) continue; // drawn as proper tram stops
     { let qx = 0, qz = 0; for (const p of pts) { qx += p[0]; qz += p[1]; } if (perazaStand(style, insetPoly(pts, 0.4), qx / n, qz / n) || riosHall(insetPoly(pts, 0.6), qx / n, qz / n)) continue; } // v0.75: the stands of the Estadio Francisco Peraza (05v_peraza.js)
     pts = insetPoly(pts, style === 4 ? 0.3 : 0.75);
-    if (style !== 4) { const t = roadClip(streetTrim(pts)); if (t !== pts) { pts = t; n = pts.length; const o = []; for (let i = 0; i < c.length; i += 2) o.push([c[i], c[i + 1]]); const t2 = roadClip(streetTrim(o)); if (t2 !== o) b[6] = t2.flat(); } } // v0.68–0.69: off the carriageways (04b_recorte.js; the Av. de La Trinidad with its pavement); DATA.B too, for inAnyBuilding
+    if (style !== 4) { const t = roadClip(streetTrim(pts)); if (!t) { b[6] = []; continue; } /* v1.0.0: only a strip would be left on the pavement: no building (and none for inAnyBuilding either) */ if (t !== pts) { pts = t; n = pts.length; const o = []; for (let i = 0; i < c.length; i += 2) o.push([c[i], c[i + 1]]); const t2 = roadClip(streetTrim(o)); if (t2 && t2 !== o) b[6] = t2.flat(); } } // v0.68–0.69: off the carriageways (04b_recorte.js; the Av. de La Trinidad with its pavement); DATA.B too, for inAnyBuilding
     if (style === 4 && nameIdx >= 0 && /Concepción/.test(STR[nameIdx])) { pts = carveConcTower(pts); n = pts.length; }
     let bmin = 1e9, bmax = -1e9, cx = 0, cz = 0;
     for (const p of pts) { const h = heightAt(p[0], p[1]); bmin = Math.min(bmin, h); bmax = Math.max(bmax, h); cx += p[0]; cz += p[1]; }

@@ -20,7 +20,7 @@ async def run(pg):
           return JSON.stringify({ hp0, hp: e.hp }); })()"""))
         print('golpe a 10 de profundidad', r); okz = r['hp'] < r['hp0']
         k = json.loads(await pg.evaluate("""(()=>{ const A=__dbg.ARCADE, gm=A._game(), p=gm._p; gm._E.length=0; A._step(30);
-          const e=gm._spawn('S', p.x+14, p.z); e.cd=99; const w=gm._spawn('W', p.x-14, p.z); w.cd=99; p.face=1;
+          const e=gm._spawn('S', p.x+14, p.z); e.cd=99; e.fem=false; if (e.look) e.look.s=1; /* v1.0.0: since v0.99.3 a minion can come out as a woman (the kick does not stun them): a man here */ const w=gm._spawn('W', p.x-14, p.z); w.cd=99; p.face=1;
           A._press('vP', true); A._step(1); A._press('vP', false); A._step(12); const sStun=e.st==='hurt' && !!e.stun;
           p.face=-1; A._step(20); A._press('vP', true); A._step(1); A._press('vP', false); A._step(12); const wStun=!!w.stun;
           gm._E.length=0; const g2=gm._spawn('G', p.x+18, p.z); g2.cd=99; p.face=1; A._step(10); const h0=g2.hp;

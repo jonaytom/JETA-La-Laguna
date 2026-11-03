@@ -204,6 +204,11 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### HUD y minimapa
 
+- [ ] ⚡ **Pantalla completa al empezar en el navegador** (Jonay, 3-nov): al darle a «Jugar» en el PC, que se ponga a
+  pantalla completa, o al menos que lo pregunte. Ahora solo pasa en móvil (`goLandscape()` en `13_main.js`, solo con
+  `touchmode`). El navegador solo deja ponerla al pulsar algo, así que va en el clic de «Jugar»; también estaría bien una
+  opción en el menú de pausa.
+
 ### Misiones, historia y economía
 
 - [~] ◐ v0.76.0 (rifle de agua, bolitas en las jugueterías, Tab entre puños/pistola/rifle; faltan euros, tabla de economía y patada en 3D) **Economía y armas** (Jonay, 12-oct), junto con las jugueterías:
@@ -313,6 +318,19 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   - En las fotos: calzada de un carril por sentido a cada lado de la plataforma del tranvía, cruces con «prioridad
     tranvía», gasolinera DISO (nº 108), naves y el Lidl hacia el final.
 
+### Gente de la calle
+
+- [ ] ● **Niños por la calle** (Jonay, 3-nov, con una tabla de población: menores de 10 años 8,5 %, mujeres de 10 o más
+  46,7 %, hombres 44,8 %; alturas por franjas de 8 cm): las alturas de hombres y mujeres ya salen de su tabla (v1.0.0,
+  `realHeight()` en `06a_humans.js`). Lo que falta son niños: el cuerpo base es de adulto y encogerlo no queda bien
+  (cabeza y proporciones). Hace falta un cuerpo de niño, propio o de un pack con licencia libre, y decidir qué hacen:
+  ir de la mano de un adulto, no cruzar solos, que no se les pueda atropellar ni pegar (como en los GTA).
+  - Alturas por edad (tabla de Jonay, 3-nov, % del total): 0–4 años: <120 cm 4,0, 120–127 0,2 · 5–9: 120–127 0,8,
+    128–135 1,5, 136–143 1,5, 144–151 0,5 · 10–14: 128–135 0,3, 136–143 0,8, 144–151 1,2, 152–159 1,0, 160–167 0,7,
+    168–175 0,2 · 15 o más: 144–151 2,0, 152–159 10,2, 160–167 20,6, 168–175 25,3, 176–183 23,9, 184–191 7,1, ≥192 1,1.
+    Imagen en `docs/referencias/poblacion/alturas_por_edad.png`.
+  - De 10 a 14 años: el morph «teen» que ya tenemos podría servir, con estas alturas.
+
 ### Árboles y vegetación
 
 - [ ] ● **Árboles con más detalle y varios modelos** (Jonay, 19-oct, «no para ya»). Muchas copas son un círculo feo. Fotos
@@ -331,6 +349,15 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Agente revisor (avisos de mapa)
 
+- [ ] ◐ **Dos edificios de la auditoría 0.69 vuelven a invadir la calzada** (v1.0.0, `prueba_pendientes_faciles.py`; en la
+  0.95 estaban a 0 m): X 73, Y 234 (edificio #865, junto a una secundaria del casco, 1,55 m) y X −909, Y −408 (#1357,
+  Av. Lucas Vega / Callejón Montaraz, 1,41 m). Volvieron entre la 0.95 y la 0.99.8. La prueba los vigila con un margen
+  de 2 m hasta mirarlos.
+- [ ] ◐ **Edificios de 50 m² o más que una calle cruza** (v1.0.0; Jonay: «no me gustaría que se fuera nada de más de 50 m²;
+  esos casos mirémoslos uno a uno»): 272 que el recorte habría quitado (casi todos porque una calle de servicio o
+  residencial del OSM los cruza por el medio y quedaría una tira). Se quedan como estaban. Lista y fotos desde arriba de
+  los 60 mayores: `tests/herramientas/sonda_edificios_dudosos.py` → `tests/shots/sonda_edificios_dudosos.txt` y
+  `dudoso_NN.jpg`. Para cada uno: pasadizo, quitar la calle (si es un aparcamiento o un patio), recortar o dejarlo.
 - [~] ◐ v0.74.0 (rotonda del aeropuerto, árbol de Juan de Vera, poste junto a la TF-13, Heraclio Sánchez) **Auditoría y agente revisor v0.73.0** (13-oct; APTO CON AVISOS; pruebas 9/9 con los 3 tramos de conducción como «conocidos»):
       auditoría: 18 edificios «nuevos» en calzada (varios ya salían antes: X −855 Z 56/70/86 3,4 m, X 1615 Z 3466, X 70 Z 220);
       2 obstáculos nuevos: árbol o farola en **Calle Juan de Vera** (X −149 Z −235: la calle pasó de peatonal a calle con
@@ -383,69 +410,56 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Rendimiento, auditorías y código
 
-- [ ] ◐ **Pintar ~30 ms desde la 0.89** (auditorías 0.90 y 0.92; repetida en 0.93–0.95.1: 30,9 · 31,3 · 32,8 · 29,6 ·
-  29,7 ms): se queda ahí; los ~21 ms de alguna pasada eran la medida rara. Buscar qué lo subió en la 0.89.
-- [ ] ◐ **Partir funciones largas** (auditoría 0.90): `09ea_minijuegos.js` bajó de B a C (el público en una función
-  larga); `09eb_pixbasket.js` y `09ma_pixguanche.js` salen con D (el dibujante de la propuesta, copiado tal cual).
-- [~] ◐ v0.90.0 (el fuego comparte el cilindro) **Auditoría 0.76.0**: queda `12k_agua.js` con nota D (las misiones en funciones muy largas: partirlas).
-- [ ] ◐ **Auditoría 0.75.0** (APTO CON AVISOS; pintar 49,9 → 45,5 ms, arranque 14,1 → 13,7 s, memoria igual, sin fugas):
-      bajan de nota `12h_diario.js` (A → B; repasado en v0.90) y `12j_campos.js` (B → C, por la Copa Laguna: funciones largas). Queda el de los campos.
-- [~] ◐ v0.69.0 (recorte general: de los 515 edificios en calzada quedan los que cortan la calle entera o perderían más del 40 %) **Auditoría v0.59.0** (APTO CON AVISOS; memoria 505 → 531 MB y vértices +5 % por las zonas nuevas, sin fugas):
-      **76 edificios nuevos invadiendo la calzada** en La Cuesta/Taco (p. ej. Ctra. Gral. La Cuesta-Taco X 2839 Z 2244,
-      Ctra. de Valle Tabares X 2502 Z 1648). Lista en `docs/auditorias/mapa_v0.59.0/mapa.md`. Total del mapa: 527.
-- [~] ◐ v0.69.0 (ver la 0.59) **Auditoría v0.58.2** (Corrector, APTO; no tocar hasta que Jonay lo diga): el auditor detecta ahora **edificios que
-      invaden la calzada**: 452 posibles (6 cortan la calle, 54 en calles principales), lista con capturas en
-      `docs/auditorias/mapa_v0.58.2/mapa.md`. Revisar primero los 6 que cortan la calle y los 54 de calles principales
-      (confirmados: C. Barcelona X −15 Z 217, Av. de los Menceyes X 298 Z 899). Siguen P1.5 y P2.1/P2.2/P2.5.
-- [~] ◐ v0.99.7 (el «poste» de Juan de Vera era el alcalde: fuera de la calzada) **Auditoría v0.99.6 (APTO CON AVISOS)** (2-nov): queda: `09jz_sprx.js` baja de A a B; pintar a 720p 26,5 → 31,1 ms y arranque 9,6 → 11,7 s (vértices +3 %: muros de los terraplenes nuevos, tiras de animación del baloncesto). Revisar en `resultados_pc\2026-11-02_0.99.6_local`.
-- [~] ● v0.77.0 **Punto 17, rendimiento (auditorías viejas)**. Hecho: piezas sueltas juntadas por material y celda, recorte
-      por distancia según la niebla (detalle solo de cerca, copas lejanas simples), árboles/farolas/señales por celda,
-      coches aparcados instanciados, plazas 3,2 s → 0,4 s, lint en el build. Medido (sonda, vista de calle): llamadas
-      ~5.600 → ~1.900, triángulos 5,1 M → 3,5 M; carga ~11,2 → ~7,6 s. **Auditoría 0.77.0** (APTO CON AVISOS, vs 0.76):
-      pintar 47,8 → 29,8 ms, arranque 13,2 → 8,4 s, geometría en RAM 38 → 36 MB, memoria JS 214 → 228 MB (+6 %: los
-      ~4.000 objetos de las celdas instanciadas), triángulos 5,45 M → 4,0 M, **llamadas 624 → 811** en la vista del
-      auditor (los aparcados van por modelo: ~45 modelos por celda de 800 m; si molesta, usar menos modelos para los
-      aparcados o celdas más grandes). Primer intento NO APTO (+17 % memoria) por guardar las piezas originales
-      también en el auditor y no liberar los vértices juntados: arreglado. **Queda / por decidir**:
-      - Quedan ~4.500 piezas sin juntar: las de **grupos con nombre** (iglesias, aeropuerto, estadio, «inicio»: ~3.400)
-        porque el código las puede buscar por nombre; se pueden juntar dentro de su grupo (seguro: el grupo se sigue
-        moviendo/ocultando) → otras ~1.000 llamadas menos. Y **personas de decorado** (no se juntan para que se animen).
-      - El **terreno** es una sola malla de ~400.000 triángulos (se pinta casi entero siempre): partirlo por trozos con
-        menos detalle lejos.
-      - **Precalcular la ciudad al compilar** (P2.1): lo que más tarda ahora es calles (1,1 s), edificios (1,1 s), unir
-        geometría (0,8 s) y sombreadores (0,7 s). Ganaría ~2–3 s pero es un cambio grande (portar la generación a
-        `build.py` o guardar la geometría en binario); mejor cuando lo demás esté quieto.
-      - **Modelos en binario** (P2.2): coches y personas ya lo están (Int16 en base64); `data.json` (mapa, ~3 MB) sigue en
-        JSON: se podría cuantizar.
-      - **Módulos** (P2.5): el juego se publica como un único archivo HTML, así que los `src/*.js` se juntan en uno; partirlo
-        en módulos ES no cambia nada para el jugador y el riesgo principal (nombres repetidos o sin declarar) ya lo pilla
-        el lint. Se deja así salvo que Jonay quiera.
-- [ ] ● **Auditoría v0.55.0** (`docs/auditorias/INFORME_AUDITORIA_JETA_v0.55.0.md`, APTO; no tocar hasta que Jonay lo diga):
-  - [x] v0.57.0 **P1.8** Al cambiar el tiempo, liberar los mapas de entorno de los otros tipos (`ENVC` en `13_main.js` crece
-        sin límite, hasta 48). Pocas líneas.
-  - [x] v0.57.0 (medido: −41 MB de memoria JS, −40 MB de geometría; no los 250 MB estimados) **P1.7** Liberar también las posiciones de la ciudad tras subirlas a la GPU (~250 MB), conservándolas solo
-        cuando se ejecuta el agente revisor (p. ej. `?revisor=1`).
-  - [x] v0.77.0 **P1.5** Mallas sueltas → juntadas por material/celda e instanciadas por celda; recorte por distancia (ver arriba).
-  - [~] **P2.1 / P2.2 / P2.5** v0.77.0: lint hecho; coches y personas ya en binario; precalcular la ciudad, `data.json` binario y módulos: ver arriba.
-- [ ] ● **Auditoría de código v0.49** (`docs/auditorias/INFORME_AUDITORIA_JETA_v0.49.0.md`, APTO CON AVISOS) — por decidir con Jonay:
-      ~~P0.a coches de tráfico fuera del pool sin liberar + luces/cascos por coche~~ (hecha en v0.52); ~~P0.b rótulos canvas sin caché~~ (ya cacheados con `sharedText`, comprobado en v0.57);
-      aparcados en InstancedMesh; P1.5 mallas sueltas/LOD; mapas de reflejos en segundo plano; P2.1/P2.2/P2.5.
-- [~] ● v0.49.0 hechas P0.1–P0.3, P1.1–P1.4, P1.6, P2.3, P2.4. Quedan P1.5 (fusionar mallas sueltas, LOD), P2.1, P2.2, P2.5.
-      **Auditoría de código v0.46** (`docs/auditorias/INFORME_AUDITORIA_JETA_v0.46.0.md`) — por decidir con Jonay:
-      - P0.1 Geometría de la ciudad ≈1 GB en RAM: quitar normales (flatShading), color en Uint8, liberar arrays tras
-        subir a GPU, construir con Float32Array.
-      - P0.2 Fuga de peatones/coches/policías (makeHuman/Car sin dispose): pool precargado y geometrías compartidas.
-      - P0.3 Pistolas, balizas y latas creadas en caliente: crearlas una vez.
-      - P1.1–P1.4 HUD tocando el DOM cada fotograma, minimapa a 60 Hz, basura por fotograma, búsquedas lineales.
-      - P1.5 12.000 mallas sueltas / 5,4 M triángulos: fusionar e instanciar, LOD por trozo.
-      - P1.6 PMREM regenerado al cambiar la hora: precalcular 6–8.
-      - P2.1–P2.5 Precalcular geometría en build.py, datos binarios, juego offline (Three.js y fuentes incrustadas),
-        compileAsync, calidad de código (módulos, Prettier/ESLint), referencias PNG fuera del repo, prueba de rendimiento.
+- [ ] ◐ **Versión en carpeta para los testers** (Jonay, 3-nov: «¿ayudaría que no fuera todo un HTML todo junto? tener
+  los archivos separados en sus carpetas… y para pasarlo, mientras no tengamos instalador, me dices qué comprimir en un
+  zip»): que `build.py` saque, además del HTML único (el del Artifact y GitHub), una carpeta `dist/juego/` con
+  `index.html`, `js/` (los `src/*.js` tal cual o por grupos), `datos/` (el mapa y los sprites como `.js`, no `.json`,
+  para que abra con doble clic sin servidor: Chrome no deja leer `.json` desde `file://`) y `LEEME.txt`, y una orden
+  del trabajador `zip_testers` que la comprima. No acelera el pintado (lo que pesa son las llamadas de dibujo), pero los
+  errores salen con su archivo y línea, el navegador guarda en caché lo que no cambia y es más fácil de pasar y probar.
+- [~] ◐ v1.0.0 (`12m_mundialito.js`: la tabla de selecciones, una fila por equipo) **Partir funciones largas y ordenar
+  los archivos con nota D o C** (auditorías 0.75, 0.76, 0.90 y 0.99.8): quedan `09eb_pixbasket.js` y `09ma_pixguanche.js`
+  (el dibujante de la propuesta en una función de ~155 líneas), `12k_agua.js` (líneas muy largas y densas), `12j_campos.js`
+  (la Copa Laguna), `09ea_minijuegos.js` (el público) y `11_hud.js` (bajó de B a C por las líneas largas). Las «funciones de
+  más de 400 líneas» de la tabla (`BASKET2D()`, `MISSIONS()`…) son los módulos enteros, no funciones de verdad. Lo más
+  cómodo sería pasar un formateador (Prettier) a esos archivos; en la nube no se puede instalar, en el PC habría que
+  añadirlo al trabajador.
+- [~] ● v1.0.0 **Pintar a 1080p y 60 fps en «alta» con la RX 6600** (Jonay, 3-nov: «el objetivo es jugar a 1080 a 60 fps
+  en mi gráfica con los gráficos al máximo»; antes: «pintar ~30 ms desde la 0.89»). Sonda con la tarjeta de verdad:
+  `tests/herramientas/sonda_pintado_gpu.py`, en 5 sitios. La tarjeta va sobrada: a 480×270 tarda lo mismo que a 1080p ×1,5;
+  lo que pesa es mandar las llamadas de dibujo. v1.0.0: de 23–34 ms (2.200–3.100 llamadas, 6 M de triángulos) a ~16–18 ms
+  (1.500–1.700 llamadas, 1,5–2 M de triángulos):
+  - piezas con hijas (las ruedas con su llanta) y piezas transparentes también se juntan (`mergeStatics`);
+  - la gente no se pinta a más de 170 m, ni los coches a más de 360 m, ni los interiores desde lejos; sus piezas pequeñas
+    (ojos, cejas, reloj; luces y matrícula) solo hasta 40 y 70 m (`actorCull`, en cada pintado de la escena);
+  - aparcados en celdas de 400 m y hasta ~580 m; los detalles de la ciudad (menos de 2,5 m) hasta ~330 m.
+  - **Queda**, de lo que más a lo que menos ahorra según la sonda:
+    - lo lejano (500–1.150 m): 3–9 ms. Una versión simple de los trozos lejanos de la ciudad (un bloque por manzana) o
+      celdas más grandes lejos.
+    - unas 400–650 llamadas de piezas sueltas: ~3.600 piezas de los **grupos con nombre** (iglesias, aeropuerto,
+      estadio, «inicio»), que se podrían juntar dentro de su grupo; ~140 piezas que se crean después de juntar (misiones);
+      103 con `userData`.
+    - sombras: 1,5–2,5 ms (~160–230 llamadas en la pasada de sombras).
+    - el **terreno**: una sola malla de ~400.000 triángulos; partirla por trozos con menos detalle lejos.
+- [ ] ● **Arranque más rápido: precalcular la ciudad al compilar (P2.1) y el mapa en binario (P2.2)** (auditorías 0.46,
+  0.49, 0.55 y punto 17; Jonay eligió hacerlo, 3-nov). Arranque en el PC: ~10 s; lo que más tarda: calles y aceras
+  (2,7 s), sombreadores (2,5 s, ya en asíncrono), casas del casco (1,4 s), árboles (0,6 s). Portar la generación a
+  `build.py` o guardar la geometría ya hecha en binario: varias versiones. `data.json` (~3 MB) se podría cuantizar.
+  Los módulos ES (P2.5) no aportan nada al jugador; se deja salvo que Jonay quiera.
+- [~] ◐ v0.99.7 (el «poste» de Juan de Vera era el alcalde) **Auditoría v0.99.6 y v0.99.8 (APTO CON AVISOS)**: `09jz_sprx.js`
+  bajó de A a B y `11_hud.js` de B a C; `prueba_076.py` falla en la carga compartida y pasa sola.
 
 ### Móvil
 
-- [ ] ◐ **Móvil: acceso a todo** (Jonay): desde el móvil no se llega a las opciones (y revisar que todo lo que se hace con
-      teclado —pausa, opciones, guardar, radio, armas, mapa…— tenga un botón o gesto táctil).
+- [ ] ● **Móvil: repasar todos los controles táctiles siguiendo el estándar** (Jonay; 2-nov: «hay que repasar los controles para móvil para que sea posible usar todas las funciones del juego, usando recomendaciones para ajustarnos al estándar de controles y fijándose en lo que ya hacen otros, no reinventemos la pólvora»): desde el móvil no se llega a las opciones, y todo lo que se hace con teclado —pausa, opciones, guardar, radio, armas, mapa…— tiene que tener botón o gesto.
+  - Primero: inventario de cada acción del teclado/ratón (`src/01b_controls.js`) y si tiene equivalente táctil hoy, por modo (a pie, en coche, apuntando, minijuegos, recreativa, menús).
+  - Referencia: los esquemas de GTA San Andreas / GTA III / Vice City para móvil (joystick virtual a la izquierda, cámara arrastrando a la derecha, botones de acción contextual a la derecha, cambio de arma tocando el icono del arma, mapa tocando el minimapa, pausa arriba) y las pautas de Android/Apple para juegos (botones ≥ 44–48 px, zona del pulgar, nada importante en los bordes con gesto del sistema, opacidad y tamaño ajustables).
+  - Proponer a Jonay el esquema por modo antes de tocar nada.
+  - **Imagen en 16:9** (Jonay, 3-nov: «para móvil también será 1080; si el móvil tiene una resolución más alargada,
+    sobrará espacio por los lados, que vendrá bien para los controles»): el juego se pinta en un recuadro 16:9 (como
+    mucho 1080 de alto) centrado. En los móviles más alargados (19,5:9, 20:9…) las franjas de los lados quedan libres para
+    el joystick y los botones, que así no tapan la imagen. Hay que pensarlo junto con el rendimiento del móvil (resolución
+    dinámica, `DYN` en `13_main.js`).
 
 ### Recursos externos (animaciones, modelos)
 
@@ -469,8 +483,38 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
       aparte.
 - [ ] ● **Música «real»** para la radio (hip hop / rap de finales de los 90 y principios de los 2000). Jonay: «ni lo
       consideres, es un extra final».
+- [ ] ● **Multijugador con un amigo (P2P) y chat** (Jonay, 2-nov: «¿hay alguna forma de hacer esto multijugador usando p2p para que un amigo pueda recorrer la calle y hacer misiones y que nos veamos? y si tuviese un chat, increíble»).
+  - Fase 1: verse andando y conduciendo + chat de texto. WebRTC (canal de datos) con PeerJS o similar: uno crea sala con código, el otro entra; se envían posición, giro, animación y coche ~15 veces por segundo, con suavizado. El mundo es el mismo en los dos (sale de los mismos datos); el tráfico y la gente, cada uno los suyos.
+  - Fase 2: misiones en cooperativo (el anfitrión manda el estado de la misión).
+  - **Cómo lo quiere Jonay** (3-nov):
+    - Hasta **4 jugadores** por sala.
+    - Las misiones de la historia son **solo del anfitrión**: en cooperativo no se hacen misiones personales de los
+      invitados, pero los invitados **ven cómo las resuelve el anfitrión**. Para eso hay que sincronizar solo los pocos
+      personajes y coches que salen en la misión; el resto del tráfico y la gente sigue siendo de cada uno.
+    - **Misiones cooperativas aparte**, diseñadas desde cero para varios jugadores y sin ninguna relación con los hilos
+      de la historia que ya hay.
+  - **Minijuegos a 2 jugadores** (Jonay, 3-nov):
+    - **Guanche Guarriors** (`09m_guanche.js`): salen los dos a la vez, en cooperativo.
+    - **Gufo** (`09l_naves.js`): una segunda nave, de otro color.
+    - **Fútbol y baloncesto** (`09g_futbol2d.js`, `09f_basket2d.js`): un jugador contra el otro.
+    - **Bencomo** (`09k_bencomo.js`): sale también una **pastora**, que se juega exactamente igual pero con cuerpo de
+      mujer. Jonay cree que ya tenemos uno para Guanche Guarriors; mirar las hojas de las chicas de la v0.99.3.
+    - **En red, cada jugador en su PC o su móvil** (Jonay, 3-nov). No en el mismo PC. Hay que compensar el retardo en
+      fútbol, baloncesto y Gufo, y depende de los controles de móvil (apunte en «Móvil»).
+  - Por comprobar: si el Artifact deja abrir conexiones WebRTC y al servidor de emparejamiento (si no, se juega con el HTML descargado); servidor TURN para las redes que no conectan directo.
 
 ## Hecho
+
+- [x] v1.0.0 **Auditorías viejas cerradas** (0.46, 0.49, 0.55, 0.58.2, 0.59, 0.75, 0.76): lo que quedaba de ellas está ahora en
+  tres apuntes de «Rendimiento, auditorías y código» (pintado a 60 fps, arranque P2.1/P2.2 y funciones largas).
+- [x] v1.0.0 **Edificios que invaden la calzada** (auditorías 0.58.2 y 0.59; 0.99.8: 4 críticos y 77 altos; Jonay, 3-nov:
+  «¿es posible que se deba al aumento del ancho de las calles?» y «un término medio de cada cosa»): las residenciales, de
+  servicio y sin clasificar fuera del casco y lejos de puentes y túneles se estrechan a medio camino del hueco entre
+  fachadas (`narrowToGap`, 04b_recorte.js; nunca menos de 5,5 m las de doble sentido); los edificios se recortan aunque
+  pierdan más de la mitad, y si solo queda una tira se quitan, pero nunca uno de 50 m² o más. `prueba_recorte`: de 121 a
+  14 metidos más de 1 m. Los de 50 m² o más que se habrían quitado están apuntados en «Agente revisor».
+- [x] v1.0.0 **Alturas de la gente según la realidad** (Jonay, 3-nov, con una tabla por sexo): cada persona saca su altura
+  de la tabla; antes todos medían 1,50–1,70 m porque al estrecharles los hombros se acortaban.
 
 - [x] v0.99.8 **Empedrado de las calles peatonales del casco más oscuro** (Jonay, 2-nov; 3 capturas en `docs/referencias/empedrado/`: Pl. de los Remedios / C. Bencomo y C. Obispo Rey Redondo n.º 31 y 35): el real es gris oscuro basáltico, adoquín rectangular en el centro y losas grandes a los lados; el del juego es más claro. Textura `paving` en `src/02_textures.js`.
 - [x] v0.99.8 **La rueda del ratón cambia de arma** (Jonay, 2-nov): hoy solo con 1 (manos) y 2 (arma) en `src/09c_weapons.js` (`setWeaponOut`); con la rueda, pasar a la siguiente o anterior de las que se tienen (puños, pistola, rifle de agua…). Que no choque con el zoom de la cámara si lo hay.

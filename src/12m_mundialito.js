@@ -8,18 +8,33 @@
 // pantalla de la GOFIO-8 (elegir país, el cuadro, los resultados, los campeones y las iniciales). Los partidos se juegan
 // en el basket / fútbol 2D con la consola esperando detrás, y al acabar se vuelve a ella.
 const MUNDIALITO = (() => {
+  // v1.0.0 (auditoría de calidad: el 22 % del archivo eran estas filas repetidas): one row per team, kits as
+  // 'shirt shorts socks [stripe]'
+  const kitOf = (k) => { const [shirt, shorts, socks, stripe] = k.split(' '); return stripe ? { shirt, shorts, socks, stripe } : { shirt, shorts, socks }; };
+  const team = (id, code, name, home, away, names, lvF, lvB) => ({ id, code, name, home: kitOf(home), away: kitOf(away), names, lvF, lvB });
   const TEAMS = [
-    { id: 'esp', code: 'ESP', name: 'ESPAÑA', home: { shirt: '#c8102e', shorts: '#1d2a6b', socks: '#c8102e', stripe: '#ffc400' }, away: { shirt: '#f2f2f2', shorts: '#f2f2f2', socks: '#f2f2f2', stripe: '#c8102e' }, names: ['PACO', 'JUANMA', 'DANI', 'RAÚL', 'NACHO'], lvF: 0.72, lvB: 0.72 },
-    { id: 'bra', code: 'BRA', name: 'BRASIL', home: { shirt: '#ffdf00', shorts: '#1f4fb5', socks: '#f2f2f2', stripe: '#1e9a3a' }, away: { shirt: '#1f4fb5', shorts: '#f2f2f2', socks: '#1f4fb5', stripe: '#ffdf00' }, names: ['JUNINHO', 'ZÉ', 'DIDIZINHO', 'CAFUZÃO', 'PELEZITO'], lvF: 0.7, lvB: 0.56 },
-    { id: 'arg', code: 'ARG', name: 'ARGENTINA', home: { shirt: '#75aadb', shorts: '#111111', socks: '#f2f2f2', stripe: '#f2f2f2' }, away: { shirt: '#1d2a6b', shorts: '#1d2a6b', socks: '#1d2a6b', stripe: '#75aadb' }, names: ['EL PIBE', 'CHE', 'TITO', 'EL TANO', 'MARADONITA'], lvF: 0.71, lvB: 0.64 },
-    { id: 'ita', code: 'ITA', name: 'ITALIA', home: { shirt: '#1f5fbf', shorts: '#f2f2f2', socks: '#1f5fbf' }, away: { shirt: '#f2f2f2', shorts: '#1f5fbf', socks: '#f2f2f2', stripe: '#1f9a3a' }, names: ['GIGI', 'TOTÓ', 'PIPPO', 'FABIO', 'CANNAVARO II'], lvF: 0.62, lvB: 0.6 },
-    { id: 'ale', code: 'ALE', name: 'ALEMANIA', home: { shirt: '#f2f2f2', shorts: '#111111', socks: '#f2f2f2', stripe: '#111111' }, away: { shirt: '#2a2a2a', shorts: '#2a2a2a', socks: '#2a2a2a', stripe: '#d4202a' }, names: ['HANS', 'KLAUS', 'FRITZ', 'DER BOMBER', 'JÜRGEN'], lvF: 0.66, lvB: 0.66 },
-    { id: 'fra', code: 'FRA', name: 'FRANCIA', home: { shirt: '#1d2a6b', shorts: '#f2f2f2', socks: '#c8102e' }, away: { shirt: '#f2f2f2', shorts: '#1d2a6b', socks: '#f2f2f2', stripe: '#c8102e' }, names: ['ZIZOU', 'TITÍ', 'PIERRE', 'JEAN-LUC', 'MICHELÍN'], lvF: 0.7, lvB: 0.68 },
-    { id: 'por', code: 'POR', name: 'PORTUGAL', home: { shirt: '#a6192e', shorts: '#1e7a3a', socks: '#a6192e', stripe: '#ffd400' }, away: { shirt: '#f2f2f2', shorts: '#f2f2f2', socks: '#f2f2f2', stripe: '#a6192e' }, names: ['ZEZINHO', 'NANI II', 'BETO', 'EUSEBINHO', 'O BICHO'], lvF: 0.66, lvB: 0.5 },
-    { id: 'usa', code: 'USA', name: 'EE. UU.', home: { shirt: '#f2f2f2', shorts: '#f2f2f2', socks: '#f2f2f2', stripe: '#1d2a6b' }, away: { shirt: '#1d2a6b', shorts: '#1d2a6b', socks: '#1d2a6b', stripe: '#c8102e' }, names: ['AIR JORDI', 'MAGIC JOHNNY', 'BIG SHAQ', 'DUNKMASTER', 'MR. TRIPLE'], lvF: 0.55, lvB: 0.78 },
-    { id: 'srb', code: 'SRB', name: 'SERBIA', home: { shirt: '#c6363c', shorts: '#c6363c', socks: '#f2f2f2', stripe: '#f2f2f2' }, away: { shirt: '#f2f2f2', shorts: '#f2f2f2', socks: '#f2f2f2', stripe: '#c6363c' }, names: ['JOKICITO', 'BODIROGUITA', 'DIVAC JR.', 'EL TORRE', 'STOJAKITO'], lvF: 0.6, lvB: 0.7 },
-    { id: 'ltu', code: 'LTU', name: 'LITUANIA', home: { shirt: '#fdb913', shorts: '#fdb913', socks: '#f2f2f2', stripe: '#006a44' }, away: { shirt: '#006a44', shorts: '#006a44', socks: '#f2f2f2', stripe: '#fdb913' }, names: ['SABONITO', 'MARCIULITO', 'EL BÁLTICO', 'TITANAS', 'JASIKITO'], lvF: 0.5, lvB: 0.64 },
-    { id: 'uru', code: 'URU', name: 'URUGUAY', home: { shirt: '#5fb3e6', shorts: '#111111', socks: '#111111' }, away: { shirt: '#f2f2f2', shorts: '#5fb3e6', socks: '#f2f2f2', stripe: '#5fb3e6' }, names: ['EL MATADOR', 'CHARRÚA', 'PELADO', 'TATO', 'EL FLACO'], lvF: 0.6, lvB: 0.5 }];
+    team('esp', 'ESP', 'ESPAÑA', '#c8102e #1d2a6b #c8102e #ffc400', '#f2f2f2 #f2f2f2 #f2f2f2 #c8102e',
+      ['PACO', 'JUANMA', 'DANI', 'RAÚL', 'NACHO'], 0.72, 0.72),
+    team('bra', 'BRA', 'BRASIL', '#ffdf00 #1f4fb5 #f2f2f2 #1e9a3a', '#1f4fb5 #f2f2f2 #1f4fb5 #ffdf00',
+      ['JUNINHO', 'ZÉ', 'DIDIZINHO', 'CAFUZÃO', 'PELEZITO'], 0.7, 0.56),
+    team('arg', 'ARG', 'ARGENTINA', '#75aadb #111111 #f2f2f2 #f2f2f2', '#1d2a6b #1d2a6b #1d2a6b #75aadb',
+      ['EL PIBE', 'CHE', 'TITO', 'EL TANO', 'MARADONITA'], 0.71, 0.64),
+    team('ita', 'ITA', 'ITALIA', '#1f5fbf #f2f2f2 #1f5fbf', '#f2f2f2 #1f5fbf #f2f2f2 #1f9a3a',
+      ['GIGI', 'TOTÓ', 'PIPPO', 'FABIO', 'CANNAVARO II'], 0.62, 0.6),
+    team('ale', 'ALE', 'ALEMANIA', '#f2f2f2 #111111 #f2f2f2 #111111', '#2a2a2a #2a2a2a #2a2a2a #d4202a',
+      ['HANS', 'KLAUS', 'FRITZ', 'DER BOMBER', 'JÜRGEN'], 0.66, 0.66),
+    team('fra', 'FRA', 'FRANCIA', '#1d2a6b #f2f2f2 #c8102e', '#f2f2f2 #1d2a6b #f2f2f2 #c8102e',
+      ['ZIZOU', 'TITÍ', 'PIERRE', 'JEAN-LUC', 'MICHELÍN'], 0.7, 0.68),
+    team('por', 'POR', 'PORTUGAL', '#a6192e #1e7a3a #a6192e #ffd400', '#f2f2f2 #f2f2f2 #f2f2f2 #a6192e',
+      ['ZEZINHO', 'NANI II', 'BETO', 'EUSEBINHO', 'O BICHO'], 0.66, 0.5),
+    team('usa', 'USA', 'EE. UU.', '#f2f2f2 #f2f2f2 #f2f2f2 #1d2a6b', '#1d2a6b #1d2a6b #1d2a6b #c8102e',
+      ['AIR JORDI', 'MAGIC JOHNNY', 'BIG SHAQ', 'DUNKMASTER', 'MR. TRIPLE'], 0.55, 0.78),
+    team('srb', 'SRB', 'SERBIA', '#c6363c #c6363c #f2f2f2 #f2f2f2', '#f2f2f2 #f2f2f2 #f2f2f2 #c6363c',
+      ['JOKICITO', 'BODIROGUITA', 'DIVAC JR.', 'EL TORRE', 'STOJAKITO'], 0.6, 0.7),
+    team('ltu', 'LTU', 'LITUANIA', '#fdb913 #fdb913 #f2f2f2 #006a44', '#006a44 #006a44 #f2f2f2 #fdb913',
+      ['SABONITO', 'MARCIULITO', 'EL BÁLTICO', 'TITANAS', 'JASIKITO'], 0.5, 0.64),
+    team('uru', 'URU', 'URUGUAY', '#5fb3e6 #111111 #111111', '#f2f2f2 #5fb3e6 #f2f2f2 #5fb3e6',
+      ['EL MATADOR', 'CHARRÚA', 'PELADO', 'TATO', 'EL FLACO'], 0.6, 0.5)];
   const ROUNDS = ['CUARTOS DE FINAL', 'SEMIFINAL', 'LA FINAL'];
   // v0.87 (Jonay): basket and football have their own 8 teams (in basket: USA, Serbia and Lithuania instead of Uruguay,
   // Brazil and Portugal) and each team its own level per sport (Spain among the best in both)

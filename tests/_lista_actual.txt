@@ -1,6 +1,5 @@
 prueba_arranque.py
-prueba_coche_y_boca.py
-prueba_076.py
-prueba_panel_controles.py
-prueba_078.py
-prueba_082.py
+prueba_recorte.py
+herramientas/sonda_tamanos.py
+herramientas/sonda_recorte_motivos.py
+herramientas/sonda_sueltas.py

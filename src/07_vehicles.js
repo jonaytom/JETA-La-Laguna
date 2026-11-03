@@ -94,7 +94,7 @@ class Car {
     this.T = model ? { ...VTYPES[model.phys], L: model.L, W: model.W, H: model.H, name: model.name } : { ...VTYPES[type] }; this.T.maxV = topSpeedKmh(model, type) / 3.6 * rnd(0.96, 1.04); this.T.acc *= CAR_ACCEL; // same top speed (drag scales with acc), slower pick-up
     // pool (audit P0.2): traffic cars that leave are kept and reused instead of building a new model every time
     const pk = model ? model.id + (model.phys === 'moto' ? ':m' : '') : null; const pooled = pk && CARPOOL[pk] && CARPOOL[pk].length ? CARPOOL[pk].pop() : null; this.poolKey = pk;
-    const m = pooled ? pooled.m : !model ? makeCarMesh(type, this.color) : model.phys === 'moto' ? makeMotoMesh(model, this.color) : makeKenneyMesh(model, this.color); m.g.userData.noMerge = true; // v0.77: a car you can drive is never fused (05w_optimiza.js)
+    const m = pooled ? pooled.m : !model ? makeCarMesh(type, this.color) : model.phys === 'moto' ? makeMotoMesh(model, this.color) : makeKenneyMesh(model, this.color); m.g.userData.noMerge = true; ACTORS.set(m.g, { r: 360, dr: 70, thr: 0.3 }); // v0.77: a car you can drive is never fused (05w_optimiza.js); v1.0.0: not drawn past 360 m
     if (pooled) { if (m.paint && !['taxi', 'policia', 'ambulancia'].includes(model.id)) m.paint.color.set(this.color); m.g.visible = true; this.rider = pooled.rider || null; if (this.rider) this.rider.root.visible = false; }
     if (m.moto && !pooled) { this.rider = takeHuman('ped', () => makeHuman({ cap: null, random: true })); seatHuman(this.rider, model); const helm = new THREE.Mesh(shGeo('helmet', () => new THREE.SphereGeometry(0.15, 12, 10)), M(pick([0x111111, 0xf2f2f2, 0xb3261e, 0x1f4e8c]), 0.3, 0.3)); helm.position.y = 0.06; this.rider.head.add(helm); this.rider.helm = helm; m.g.add(this.rider.root); this.rider.root.visible = false; } Object.assign(this, { mesh: m.g, body: m.body, wheels: m.wheels, hl: m.hl, tl: m.tl, bar: m.bar, paint: m.paint }); this._m = m;
     scene.add(this.mesh);
@@ -337,7 +337,7 @@ function buildParked() {
     g.setAttribute('aPaint', new THREE.BufferAttribute(new Float32Array(T.F), 1)); g.computeBoundingSphere(); return (GEO[id] = g);
   };
   const cells = new Map();
-  for (const s of PARKED.slots) { const key = Math.floor(s.x / 800) + ',' + Math.floor(s.z / 800) + ',' + s.type; let c = cells.get(key); if (!c) cells.set(key, c = []); c.push(s); }
+  for (const s of PARKED.slots) { const key = Math.floor(s.x / 400) + ',' + Math.floor(s.z / 400) + ',' + s.type; /* v1.0.0: 400 m cells (800 m ones were drawn whole for one car in sight: 110–140 draw calls a frame) */ let c = cells.get(key); if (!c) cells.set(key, c = []); c.push(s); }
   PARKED.chunks = []; const o = new THREE.Object3D();
   for (const list of cells.values()) {
     const m = new THREE.InstancedMesh(geoOfModel(list[0].type), mat, list.length); let cx = 0, cz = 0;
@@ -347,7 +347,7 @@ function buildParked() {
   }
   lt('mallas ' + Object.keys(TPL).length + ' modelos, ' + PARKED.chunks.length + ' grupos');
 }
-function updateParkedLOD() { if (!PARKED.chunks) return; const far = Q.far * 0.55 + 120; for (const c of PARKED.chunks) c.mesh.visible = Math.hypot(c.x - camera.position.x, c.z - camera.position.z) - (c.r || 0) < far; }
+function updateParkedLOD() { if (!PARKED.chunks) return; const far = Q.far * 0.45 + 60; /* v1.0.0: ~580 m in «alta» (a parked car there is 3 pixels) */ for (const c of PARKED.chunks) c.mesh.visible = Math.hypot(c.x - camera.position.x, c.z - camera.position.z) - (c.r || 0) < far; }
 function parkedNear(x, z, r) { const res = []; const a0 = Math.floor((x - r) / 30), a1 = Math.floor((x + r) / 30), b0 = Math.floor((z - r) / 30), b1 = Math.floor((z + r) / 30); for (let a = a0; a <= a1; a++) for (let b = b0; b <= b1; b++) { const l = PARKED.grid.get(a * 1000 + b); if (l) for (const i of l) { const s = PARKED.slots[i]; if (s.alive && Math.hypot(s.x - x, s.z - z) < r) res.push(s); } } return res; }
 const HIDE = new THREE.Matrix4().makeScale(0, 0, 0);
 function activateParked(s) { s.alive = false; if (s.inst) { s.inst.setMatrixAt(s.idx, HIDE); s.inst.instanceMatrix.needsUpdate = true; } /* v0.77: instanced */ const c = new Car(null, s.color, s.x, s.z, s.h, VMODELS[s.type]); c.mode = 'physics'; c.driver = null; c.fromParked = true; return c; }

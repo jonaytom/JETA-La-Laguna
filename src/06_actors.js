@@ -39,6 +39,7 @@ function makeHumanLegacy(o = {}) {
   const legR = limb(hips, 0.1, -0.05, 0.08, 0.34, 0.065, 0.34, mPants, mPants, new THREE.BoxGeometry(0.11, 0.08, 0.26), mShoe);
   armL.p.rotation.z = 0.08; armR.p.rotation.z = -0.08;
   root.traverse((m) => { if (m.isMesh) { m.castShadow = true; } });
+  ACTORS.set(root, { r: 170, dr: 40, thr: 0.07 }); // v1.0.0
   const H = { root, body, hips, torso, head, armL, armR, legL, legR, phase: Math.random() * 6, pose: 'walk' };
   return H;
 }
