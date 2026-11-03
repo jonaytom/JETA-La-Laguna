@@ -60,6 +60,22 @@ function wallIntoBuildings(c) {
   };
   grow(0, 2); grow(n - 2, n - 4); return o;
 }
+function deadEndFences() {
+  const FAST = /V[ií]a de Ronda|Autopista|Autov[ií]a/i, isFast = (r) => r[0] <= 2 || FAST.test(r[1] >= 0 ? DATA.S[r[1]] || '' : '');
+  const deg = new Map(), K = (x, z) => Math.round(x * 2) + ',' + Math.round(z * 2);
+  for (const r of DATA.R) { const c = r[4]; for (let i = 0; i < c.length; i += 2) { const k = K(c[i], c[i + 1]); deg.set(k, (deg.get(k) || 0) + (i === 0 || i === c.length - 2 ? 1 : 2)); } }
+  const fastSegs = []; for (const r of DATA.R) if (isFast(r) && !(r[3] & 6)) { const c = r[4]; for (let i = 0; i + 3 < c.length; i += 2) fastSegs.push([c[i], c[i + 1], c[i + 2], c[i + 3], r[2] / 2]); }
+  const out = [];
+  for (const r of DATA.R) { if (isFast(r) || r[0] > 12 || (r[3] & 6)) continue; const c = r[4], n = c.length;
+    for (const [i, j] of [[0, 2], [n - 2, n - 4]]) { if (deg.get(K(c[i], c[i + 1])) !== 1) continue; // a real dead end
+      const x = c[i], z = c[i + 1]; let best = 1e9;
+      for (const f of fastSegs) { if (Math.abs(f[0] - x) > 60 && Math.abs(f[2] - x) > 60) continue; const dx = f[2] - f[0], dz = f[3] - f[1], L2 = dx * dx + dz * dz || 1, t = clamp(((x - f[0]) * dx + (z - f[1]) * dz) / L2, 0, 1); best = Math.min(best, Math.hypot(x - f[0] - dx * t, z - f[1] - dz * t) - f[4]); }
+      if (best > 18) continue;
+      const dx = x - c[j], dz = z - c[j + 1], L = Math.hypot(dx, dz) || 1, ux = dx / L, uz = dz / L, hw = r[2] / 2 + 1.6, ex = x - ux * 0.5, ez = z - uz * 0.5;
+      out.push(['fence', 1.4, 'metal', [ex - uz * hw, ez + ux * hw, ex + uz * hw, ez - ux * hw], true]); } } // (true: it stands on the carriageway on purpose)
+  console.log('vallas al final de calles junto a vías rápidas', out.length);
+  return out;
+}
 const WALLS = { n: 0, km: 0, meshes: [] };
 function buildWalls() {
   const list = (DATA.BW || []).slice(); let nt = 0;
@@ -81,12 +97,15 @@ function buildWalls() {
   let km = 0, n = 0;
   // v1.0.8 (Jonay: «aquí se choca el coche», Vía de Ronda X 378, Y −270): a wall of the map under a carriageway as the game
   // draws it (wider than in the OSM, or raised over the ground) is cut there; it collided unseen under the road
+  // v1.1.1 (Jonay, X 498, Y −493: «por aquí no se debería poder acceder a la Vía de Ronda, debería haber vallado»): a
+  // street that ends (dead end) next to a fast road it doesn't join gets a metal fence across its end
+  try { for (const w of deadEndFences()) list.push(w); } catch (e) { console.error('vallas fin de calle', e); }
   const pieces = [];
   const simp = (r) => { const o = [r[0], r[1]]; for (let k = 2; k + 3 < r.length + 2 && k < r.length - 2; k += 2) { const ax = o[o.length - 2], az = o[o.length - 1], bx = r[k], bz = r[k + 1], ex = r[k + 2], ez = r[k + 3]; const L = Math.hypot(ex - ax, ez - az) || 1; if (Math.abs((bx - ax) * (ez - az) - (bz - az) * (ex - ax)) / L > 0.12) o.push(bx, bz); } o.push(r[r.length - 2], r[r.length - 1]); return o; }; // back to the corners
-  for (const w of list) { const [kind, h, mat0, c0] = w; let run = [];
+  for (const w of list) { const [kind, h, mat0, c0, keep] = w; let run = [];
     const flush = () => { if (run.length >= 4) pieces.push([kind, h, mat0, simp(run)]); run = []; };
     for (let i = 0; i + 3 < c0.length; i += 2) { const ax = c0[i], az = c0[i + 1], bx = c0[i + 2], bz = c0[i + 3], L = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.ceil(L / 0.75));
-      for (let t = i ? 1 : 0; t <= n; t++) { const x = ax + (bx - ax) * t / n, z = az + (bz - az) * t / n; if (onCarriagewayEarly(x, z, 0.4)) flush(); else run.push(x, z); } }
+      for (let t = i ? 1 : 0; t <= n; t++) { const x = ax + (bx - ax) * t / n, z = az + (bz - az) * t / n; if (!keep && onCarriagewayEarly(x, z, 0.4)) flush(); else run.push(x, z); } }
     flush(); }
   for (const [kind, h, mat0, c0] of pieces) {
     const K = KIND[kind]; if (!K || c0.length < 4) continue;

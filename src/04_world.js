@@ -245,17 +245,43 @@ const YOFF = { sidewalk: 0.09, dirt: 0.08, footway: 0.1, asphalt: 0.13, paving: 
 // wider hard shoulder on the right and dashed lines between its lanes; a two-way road has a centre line (double and
 // solid with 4 lanes) and its lanes. One texture per kind and width, made when first needed; u = 0 is the right side.
 const isLines = (mk) => mk === 'asphaltLines' || mk.startsWith('aL_');
+// v1.1.1 (Jonay: «hay muchas zonas de 2 carriles que lo que tienen en realidad es 2 carriles y una fila de aparcamientos
+// a los lados»): which sides of a street have a parking lane. From the OSM tags when the street has them (DATA.LN,
+// tools/carriles.py: [lanes, left, right], -1 = no data), else by its width (the rule buildParked used). +1 = the side
+// at u = 0 of the ribbon (left of the way's direction), -1 = the other one.
+const PARKSIDE = new Map(); let RD_INDEX = null;
+function parkSides(rd) {
+  let ps = PARKSIDE.get(rd); if (ps) return ps;
+  if (!RD_INDEX) { RD_INDEX = new Map(); DATA.R.forEach((r, i) => RD_INDEX.set(r, i)); }
+  const t = RTN[rd[0]], w = rd[2], ow = !!(rd[3] & 1), c = rd[4], ln = DATA.LN ? DATA.LN[RD_INDEX.get(rd)] : null;
+  ps = { sides: [], lanes: ln && ln[0] > 0 ? ln[0] : -1, osm: false };
+  const fast = rd[0] <= 4 || /V[ií]a de Ronda|Autopista|Autov[ií]a/i.test(rd[1] >= 0 ? STR[rd[1]] || '' : '');
+  if (!fast && ROADCLASS(rd) !== 'paving' && ['secondary', 'secondary_link', 'tertiary', 'tertiary_link', 'unclassified', 'residential', 'living_street'].includes(t)) {
+    if (ln && (ln[1] >= 0 || ln[2] >= 0)) { ps.osm = true; if (ln[1] > 0) ps.sides.push(1); if (ln[2] > 0) ps.sides.push(-1); } // OSM: left of the way = u 0
+    else {
+      const lanesW = (ps.lanes > 0 ? ps.lanes : ow ? 1 : 2) * 3.1, free = w - lanesW - 0.6; // what is left beside the lanes
+      if (ps.lanes > 0) { if (free >= 4.3) ps.sides = [1, -1]; else if (free >= 2.1) ps.sides = [((c[0] * 13 + c[1] * 7) | 0) % 2 ? 1 : -1]; }
+      else if (ow) { if (w >= 9) ps.sides = [1, -1]; else if (w >= 6.6) ps.sides = [w * 7 % 2 < 1 ? 1 : -1]; }
+      else { const lane = clamp(w / 4, 1.3, w >= 13 ? 2.4 : 1.7), gap = w / 2 - 1.9 - (lane + 1.0); if (gap >= 0.35) ps.sides = w >= 12 ? [1, -1] : [((c[0] * 13 + c[1] * 7) | 0) % 2 ? 1 : -1]; }
+    }
+  }
+  PARKSIDE.set(rd, ps); return ps;
+}
 function laneMk(rd) {
-  const w = rd[2], ow = !!(rd[3] & 1), mot = rd[0] <= 1, n = ow ? clamp(Math.round((w - (mot ? 2.2 : 1.2)) / 3.5), 1, 5) : w >= 12.5 ? 4 : 2;
-  const key = 'aL_' + (ow ? 'o' : 't') + n + '_' + Math.round(w * 10) + (mot ? 'm' : ''); if (MAT[key]) return key;
+  const w = rd[2], ow = !!(rd[3] & 1), mot = rd[0] <= 1, ps = parkSides(rd), PB = 2.2;
+  const p0 = ps.sides.includes(1) ? PB : 0, p1 = ps.sides.includes(-1) ? PB : 0, wl = w - p0 - p1; // the carriageway between the parking bands
+  const n = ow ? clamp(ps.lanes > 0 ? ps.lanes : Math.round((wl - (mot ? 2.2 : 1.2)) / 3.5), 1, 5) : ps.lanes >= 4 || (ps.lanes < 0 && wl >= 12.5) ? 4 : 2;
+  const key = 'aL_' + (ow ? 'o' : 't') + n + '_' + Math.round(w * 10) + (mot ? 'm' : '') + (p0 ? 'p' : '') + (p1 ? 'q' : ''); if (MAT[key]) return key;
   const c = mkCanvas(256, 512), y = c.getContext('2d'); y.drawImage(TEX.asphaltC, 0, 0); y.drawImage(TEX.asphaltC, 0, 256);
   const px = 256 / w, line = (m, wd, dash) => { const x = Math.round(m * px - wd * px / 2), ww = Math.max(3, Math.round(wd * px)); y.fillStyle = '#ece9e0';
     if (!dash) y.fillRect(x, 0, ww, 512); else for (let v = 0; v < 512; v += 512 / dash[1]) y.fillRect(x, v + 8, ww, (512 / dash[1]) * dash[0]); };
-  if (ow) { const so = mot ? 1.6 : 0.6, si = mot ? 0.6 : 0.35, lw = (w - so - si) / n;   // right shoulder (u = 0) wider than the left one
-    line(so, 0.18); line(w - si, 0.18); for (let k = 1; k < n; k++) line(so + lw * k, 0.14, mot ? [0.38, 1] : [0.5, 2]); }
-  else { const e = 0.35, half = (w - 2 * e) / 2; line(e, 0.15); line(w - e, 0.15);
-    if (n >= 4) { line(w / 2 - 0.12, 0.1); line(w / 2 + 0.12, 0.1); for (const sd of [-1, 1]) line(w / 2 + sd * half / 2, 0.12, [0.4, 2]); }
-    else line(w / 2, 0.14, [0.5, 4]); }
+  const bays = (from, to) => { y.fillStyle = '#ece9e0'; const x0 = Math.round(Math.min(from, to) * px), x1 = Math.round(Math.max(from, to) * px); for (let v = 0; v < 512; v += 512 / 1.6) y.fillRect(x0, v, x1 - x0, 3); }; // a bay every ~5 m (the texture is 8 m long)
+  if (p0) { line(p0, 0.12); bays(0.3, p0); } if (p1) { line(w - p1, 0.12); bays(w - p1, w - 0.3); }
+  if (ow) { const so = (mot ? 1.6 : 0.6), si = (mot ? 0.6 : 0.35), a = p0 + (p0 ? 0.3 : so), b = w - p1 - (p1 ? 0.3 : si), lw = (b - a) / n;   // right shoulder (u = 0) wider than the left one
+    if (!p0) line(so, 0.18); if (!p1) line(w - si, 0.18); for (let k = 1; k < n; k++) line(a + lw * k, 0.14, mot ? [0.38, 1] : [0.5, 2]); }
+  else { const e = 0.35, a = p0 || e, b = w - (p1 || e), mid = (a + b) / 2, half = (b - a) / 2; if (!p0) line(e, 0.15); if (!p1) line(w - e, 0.15);
+    if (n >= 4) { line(mid - 0.12, 0.1); line(mid + 0.12, 0.1); for (const sd of [-1, 1]) line(mid + sd * half / 2, 0.12, [0.4, 2]); }
+    else line(mid, 0.14, [0.5, 4]); }
   MAT[key] = MAT.asphaltLines.clone(); MAT[key].map = canvasTex(c); YOFF[key] = YOFF.asphaltLines; SURF_MK.add(key); return key; }
 // v0.73 (agente revisor: «se hunde 0,3–1,1 m bajo la superficie visible» on paths and pavements): where a ribbon
 // drawn as a straight chord across its width stands clearly above the terrain (a hollow under a path), remember its

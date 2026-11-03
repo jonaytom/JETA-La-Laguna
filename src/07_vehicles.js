@@ -311,20 +311,18 @@ function onBigRoad(x, z) { const rd = ROADSEG.nearest(x, z, (r) => (r[0] <= 4 ||
 function buildParked() {
   const types = ['compact', 'sedan', 'suv', 'van']; const T0 = performance.now(), lt = (n) => { if (window.__LOADT) window.__LOADT.push(['   buildParked · ' + n, Math.round(performance.now() - T0)]); }; // v0.77: where the 2 s go
   DATA.R.forEach((rd) => {
-    const t = RTN[rd[0]]; if (!['residential', 'tertiary', 'unclassified', 'living_street'].includes(t) || ROADCLASS(rd) === 'paving') return;
+    const t = RTN[rd[0]]; if (!['residential', 'tertiary', 'tertiary_link', 'secondary', 'secondary_link', 'unclassified', 'living_street'].includes(t) || ROADCLASS(rd) === 'paving') return; // v1.1.1: secondary streets too, where they have a parking lane
     const c = rd[4], w = rd[2], ow = !!(rd[3] & 1);
     // leave a real gap for traffic: lane edge vs. parked-car inner edge (car ~1.9 m wide, 0.95 m from the kerb line)
     const lane = ow ? (w >= 10 ? 1.8 : 0) : clamp(w / 4, 1.3, w >= 13 ? 2.4 : 1.7), inner = w / 2 - 1.9, gap = inner - (lane + 1.0);
-    let sides = [];
-    if (ow) { if (w >= 9) sides = [-1, 1]; else if (w >= 6.6) sides = [w * 7 % 2 < 1 ? -1 : 1]; }
-    else if (gap >= 0.35) sides = w >= 12 ? [-1, 1] : [((c[0] * 13 + c[1] * 7) | 0) % 2 ? -1 : 1];
+    const sides = parkSides(rd).sides; // v1.1.1: the same sides as the painted parking lanes (04_world.js, from the OSM when it says)
     if (!sides.length) return;
     for (let i = 0; i < c.length - 2; i += 2) {
       const x1 = c[i], z1 = c[i + 1], x2 = c[i + 2], z2 = c[i + 3], L = Math.hypot(x2 - x1, z2 - z1); if (L < 16) continue;
       const dx = (x2 - x1) / L, dz = (z2 - z1) / L;
       for (let s = 9; s < L - 9; s += 6.2) for (const side of sides) {
         if (Math.random() > (isHistoric(x1, z1) ? 0.18 : 0.33)) continue;
-        const off = w / 2 - 0.95; const x = x1 + dx * s - dz * off * side, z = z1 + dz * s + dx * off * side;
+        const off = w / 2 - 1.1; /* (the middle of the 2.2 m parking lane) */ const x = x1 + dx * s - dz * off * side, z = z1 + dz * s + dx * off * side;
         if (COL.nearSeg(x, z, 1.3) || onBigRoad(x, z) || onFootpath(x, z)) continue; // v0.99.5 (Jonay): never on the motorway, its slip roads or the Vía de Ronda
         const h = Math.atan2(dx, dz) + (side < 0 ? Math.PI : 0);
         const mdl = KGEO ? pickModel((m) => m.phys !== 'truck' && m.phys !== 'moto') : null; PARKED.slots.push({ x, z, h, type: mdl ? mdl.id : pick(types), color: pickColor(), alive: true });

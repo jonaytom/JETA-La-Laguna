@@ -12,12 +12,78 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Minijuegos: controles, pausa y sonido
 
+- [ ] ⚡ **Esc no pausa ni saca del fútbol** (Jonay, 3-nov: «al darle a Esc no me saca del furbito, ni pausa ni nada»): en
+  pantalla completa el navegador se queda la tecla Esc (sale de la pantalla completa o suelta el ratón) y no llega al
+  juego. Abrir la pausa del minijuego también cuando se sale de la pantalla completa o se suelta el ratón
+  (`fullscreenchange` / `pointerlockchange`), con «Seguir» y «Salir del minijuego»; y que P pause en todos los minijuegos.
+  Repasarlo en fútbol, basket, pelea, recreativas y Achamán.
+
 ### Recreativas, consola GOFIO-8 y torneo
+
+- [ ] ⚡ **La Mirladora: pezón oscuro y falda corta de cuero oscuro** (Jonay, 3-nov, eligió en la hoja de variantes
+  `tests/shots/mirla_variantes.png`, hecha con `tools/sprites_ext/mirla_variantes.py`): pezón «Oscuro» (100, 58, 48) y la
+  falda «Corta de cuero oscuro» (la corta teñida como el taparrabos, `TAPA`, que se levanta al caer). Mejillas y pelo, como
+  están. Rehacer su hoja (`mirla_nat.py`) y la de montada en el lagarto (`riders.py`, `lz_mirla`) y cambiar solo esas dos en
+  `src/09jy_sprx_data.js` (no hay en el PC las salidas de las demás para volver a juntarlo todo con `pack.py`).
+
+- [ ] ⚡ **Guanche Guarriors, campamento: más tiempo para recoger y más fácil pegar a los ladrones** (Jonay, 3-nov: «en el
+  campamento hay que dejar más tiempo para recoger lo que soltaron los ladrones cuando terminan de salir, al menos 3–4
+  segundos extra; además es muy difícil golpearlos, debes coincidir demasiado en altura, hay que ampliar el margen»): al
+  irse el último duende, la fase sigue 3–4 s más para recoger lo que cayó; y el margen de profundidad (eje Y del suelo) para
+  acertarles, más ancho (p. ej. el doble). `09m_guanche.js` (fase `camp`, `campT`).
+
+- [ ] ◐ **Guanche Guarriors: golpe en el aire, con patada y con el arma** (Jonay, 3-nov: «debería hacer un golpe en salto
+  tanto con la patada como con el mazo o arma que tenga; la patada puede ser parecida a la patada en carrera que ya
+  tenemos, pero no derriba, solo golpea; y lo mismo con el arma; lo único, la patada pega algo más lejos por delante y el
+  arma pega un poco por delante y por debajo mientras cae»): en el aire, A = golpe con el arma (alcance hacia delante y
+  hacia abajo, útil al caer sobre el enemigo) y patada (fotogramas de la patada en carrera; alcance más largo hacia
+  delante). Ninguno de los dos derriba, solo quitan vida. Los tres héroes. `09m_guanche.js`.
+
+- [ ] ⚡ **GUFO: la barra de mejoras se entiende mal** (Jonay, 3-nov: «no entiendo qué aporta velocidad… y doble se puede
+  elegir cuando ya tienes láser, ¿tiene eso sentido?»; decidido: «pon un indicador de velocidad; si tengo doble sí puedo
+  pasar a láser, que es mejor, pero empeorar no tiene sentido; hay que poner indicador de los niveles de lo que vas
+  comprando»). `09l_naves.js`:
+  - DOBLE no se puede coger si ya tienes LÁSER (sale en gris); de DOBLE sí se puede pasar a LÁSER.
+  - Indicador de niveles en la barra: VELOC con sus 4 rayitas (o «VELOC 2/4»), OPCIÓN 0/2, y un tic en MISIL, DOBLE/LÁSER
+    y ESCUDO cuando ya los tienes.
+  - Al marcar cada casilla, una línea corta de lo que hace: VELOC «la nave va más rápida», MISIL «misil que cae hacia
+    abajo y sigue el suelo», DOBLE «tiro extra en diagonal hacia arriba», LÁSER «rayo que atraviesa», OPCIÓN «nave
+    fantasma que copia tus disparos», ESCUDO «aguanta 6 golpes».
+  - MISIL con dos niveles (Jonay, 3-nov: «misil debería tener un segundo nivel que sale como el actual pero hacia arriba, y
+    si hay techo corre por el techo; si no, al llegar al cielo se marcha fuera»): nivel 1 = el de ahora (cae en diagonal y
+    sigue el suelo); nivel 2 = además otro hacia arriba que, en las fases con cueva (techo, `terrain().c`), corre pegado al
+    techo y, sin techo, sale por arriba de la pantalla. MISIL pasa a «1/2» en la barra.
+
+- [ ] ◐ **Récords con iniciales antes del «CONTINUE»** (Jonay, 3-nov: «al acabar la partida del minijuego, antes del
+  continue, que ya de por sí reinicia el marcador, debería dejar poner las iniciales de la puntuación y grabar si es que
+  hay récord, y luego se da la opción continue»): al perder la última vida, si la puntuación entra en la tabla de récords,
+  pantalla de iniciales (3 letras, ↑/↓ cambian la letra, A/E confirma, como las recreativas) y se guarda; después sale el
+  «CONTINUE» con su cuenta atrás. Si no hay récord, directamente el continue. En todas las máquinas (Guanche Guarriors,
+  Bencomo, Naves/GUFO…) y con la tabla guardada en la partida.
 
 - [ ] ⚡ **Bencomo: el guanche agarra la vara más por la punta al clavarla** (Jonay, 3-nov: «el clavado del guanche Bencomo
   debería dejar el palo agarrado más por la punta, de modo que quede más palo por debajo»): en el dibujo del salto con la
   vara (salto del pastor), mover las manos hacia el extremo de arriba para que asome más vara por debajo.
   `tools/sprites_ext/` → `09jy_sprx_data.js` / `09k_bencomo.js`.
+- [ ] ⚡ **Bencomo: los perros corren demasiado** (Jonay, 3-nov: «los perros de Bencomo son demasiado rápidos, redúceles un
+  poco la velocidad de carrera; saltar saltan igual; lógicamente con las vueltas irá aumentando como ya hacía el juego»):
+  bajar la velocidad base de carrera de los perros, sin tocar el salto ni la subida de dificultad por vuelta.
+  `09k_bencomo.js`.
+  - Jonay (3-nov, 3 capturas seguidas: «se mueven tan rápido que parece que tengan dos cabezas; cuando están debajo de ti
+    cambian de dirección súper rápido… hay que reducirles definitivamente su velocidad general al menos un 25 %; se vuelve
+    loco»): velocidad general −25 % como mínimo, y que no puedan girarse más de una vez cada ~0,5 s (cuando el jugador
+    está justo encima, que sigan de largo un poco antes de dar la vuelta, en vez de temblar de lado a lado).
+- [ ] ⚡ **Bencomo: el golpe llega muy corto** (Jonay, 3-nov: «Bencomo pega de muy cerca, solo debería extender un poco más el
+  golpe y el efecto del ataque verse un poco más lejos»): alargar el alcance del golpe (la caja que hace daño) y dibujar el
+  destello del impacto más adelante, a la distancia nueva. `09k_bencomo.js`.
+- [ ] ◐ **Bencomo: listón de salto con pértiga antes de cada tagoror** (Jonay, 3-nov: «antes de llegar a cada tagoror
+  debería tener un listón de salto cada vez más alto, por el que te dan puntos extra si lo saltas en lugar de pasarlo por
+  debajo, parecido a la bandera de Mario, pero en este caso son saltos de altura de pértiga como las olimpiadas; siempre
+  será posible rebasarlo, pero depende desde dónde saltes»): al final de cada fase, antes del tagoror, dos postes con un
+  listón; se puede pasar por debajo sin más, o saltarlo con la vara (salto del pastor). Puntos extra según la altura del
+  listón que superas; el listón sube fase a fase. La altura que alcanzas depende de la carrerilla y del punto desde el que
+  clavas la vara (demasiado cerca o demasiado lejos salta menos), así que siempre se puede, pero hay que afinar. Si tocas el
+  listón, se cae y no hay puntos.
 
 - [ ] ◐ **Guanche Guarriors: el aura de fuego del lobo como poder del jefe lobo** (Jonay, 27-oct): en el GIF original,
   al aullar sale en el suelo una franja de llamitas rojas que quité al recortarlo (`tools/sprites_ext/wolf2.py`, «red
@@ -125,10 +191,39 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Fútbol y baloncesto 2D
 
+- [ ] ⚡ **Fútbol: nombre y dorsal del rival que lleva el balón** (Jonay, 3-nov: «en el furbito debería decir en algún sitio,
+  cuando la lleva el enemigo, qué nombre tiene el jugador, siempre inventados, y su número, por ejemplo en la parte inferior
+  derecha»): abajo a la derecha, «7 · PEPE TOLETE» del que tiene el balón (también los tuyos). Nombres inventados por
+  selección (parodia, nunca reales). Lo mismo en el basket. `09g_futbol2d.js`, `09f_basket2d.js`.
+- [ ] ◐ **Estadísticas al acabar el partido y jugador del partido** (Jonay, 3-nov): basket: tiros intentados y anotados,
+  triples, robos, tapones, rebotes y el MVP; fútbol: robos, tiros, goles, pases de gol (el último pase de un compañero 2–3 s
+  antes del gol) y el mejor jugador. Pantalla al final, por equipos y por jugador, con los nombres y dorsales de arriba.
+- [ ] ◐ **Fútbol: los defensas usan el turbo y hacen entradas por detrás** (Jonay, 3-nov: «los defensores deberían usar
+  más el turbo, especialmente si los rebasas y corren por detrás… y más en niveles más altos; si es necesario, gastarlo
+  para tratar de evitar el gol; y también entradas por detrás, que pueden pitar como falta»): cuando el delantero les
+  supera y van detrás, turbo hasta alcanzarle (más ganas en los niveles altos y si va solo hacia la portería); entrada por
+  detrás: si llega, puede quitar el balón o hacer falta (tiro libre, tarjeta si es muy clara).
+  - Jonay (3-nov): las entradas por delante nunca son falta. Dos faltas con tarjeta pueden acabar en expulsión según el
+    árbitro.
+- [ ] ◐ **Fútbol: árbitros con su manera de pitar** (Jonay, 3-nov: «al principio del partido te dirá quién es el árbitro y su
+  nivel de rigurosidad; el más riguroso pita el 90 % de las entradas por detrás como falta y saca más tarjetas»): cada
+  partido sale un árbitro inventado (nombre parodia) con su rigurosidad (de «deja jugar» a «muy estricto»), que se anuncia
+  al empezar. Según ella: probabilidad de pitar una entrada por detrás (hasta el 90 %), de sacar tarjeta y de expulsar con
+  la segunda. Vale para ti y para el rival.
+- [ ] ◐ **Fútbol: el rival regatea más y el efecto del tiro es difícil** (Jonay, 3-nov: «el efecto al chutar es difícil; los
+  enemigos también deben hacer regates más a menudo, que evitan las entradas»): los rivales con balón amagan y regatean
+  (quiebro o caño) cuando les entras, más en los niveles altos; y repasar cómo se da efecto al tiro para que sea más fácil
+  (más margen al girar mientras cargas, o con una tecla), con una línea que enseñe la curva.
+
 - [ ] ● **Baloncesto con el kit de personajes de GandalfHardcore** (Jonay, 27-oct, pregunta): diseñar camisetas de
   tirantes por capas y hacer nosotros los combos de mates con las mismas piezas.
 
 ### Gráficos de los minijuegos
+
+- [ ] ◐ **Fútbol: la carrera apenas mueve piernas y brazos, sobre todo de lado** (Jonay, 3-nov: «los futbolistas,
+  especialmente de lado, parece que apenas muevan los pies y los brazos»): ampliar el balanceo de piernas y brazos en la
+  carrera de perfil (zancada más larga, rodilla que sube, brazos que van y vienen), más fotogramas o más amplitud, y que se
+  note más al ir con turbo. Mirar también la carrera de frente y de espaldas. `09g_futbol2d.js` (dibujo F2).
 
 - [ ] ⚡ **Pelea callejera: textos y barras demasiado grandes** (Jonay, 3-nov, captura a 1920×1080): las barras de vida,
   el «KO», los nombres («EL CHOPA», «SASTRÓN») y el rótulo de los golpes ocupan demasiado; más pequeños, sobre todo los
@@ -165,6 +260,13 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Logros
 
+  - Jonay (3-nov, Pachanga 3×3, captura España–EE. UU.: «son todos iguales… solo cambia el color de pelo»): todos los
+    jugadores salen con el mismo cuerpo y la misma cara; que cada uno sea distinto: altura y complexión (base, alero,
+    pívot), color de piel, cara, peinado (rapado, trenzas, moño, afro…), barba, cinta o muñequeras, y número en la
+    camiseta.
+  - Decidido (Jonay, 3-nov): que salgan todos los peinados que hay (al menos un jugador con cada uno), y luego variar el
+    color del pelo y algo el tamaño (altura y complexión); barba en uno o dos jugadores; mantener los colores de piel como
+    hasta ahora. Cinta y muñequeras: sacar antes una hoja para verlas. Lo que no quiere: que sean clones.
 - [ ] ● **LOGROS COLECCIONABLES** (Jonay, 20-oct). Las misiones y lo que vas haciendo desbloquean logros, cada uno con su
   **icono molón** (diseñarlos: pixel art de chapa / medalla, uno por logro).
   - **Son secretos**: no se ve qué hay que hacer; cuando lo cumples, el juego te lo dice (aviso grande con el icono).
@@ -432,7 +534,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Calles, túneles, puentes, enlaces y aeropuerto
 
-- [~] ⚡ v1.1.0 (el coche se queda en el tablero; red de seguridad; falta que Jonay lo pruebe en la misión del queso) **¡Bloquea la misión! El coche se cae a través de la calzada en el enlace de la Autopista del Norte** (Jonay,
+- [~] ⚡ v1.1.0 (red de seguridad que te devuelve a la calle; la sonda `sonda_caidas.py` no encuentra ahí un tablero sobre un tramo bajo, así que la causa sigue sin saberse: falta reproducirlo conduciendo por ese enlace) **¡Bloquea la misión! El coche se cae a través de la calzada en el enlace de la Autopista del Norte** (Jonay,
   3-nov, X −3292, Y −161, captura de noche, misión del queso del aeropuerto: «me he caído por aquí con el coche mientras
   seguía a la furgoneta del queso; él también se cayó pero pudo seguir; esto es súper bug porque impide hacer la misión,
   me dejó bloqueado»): en la unión del puente con la calzada el suelo deja pasar el coche y queda atrapado debajo del
@@ -451,7 +553,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 - [ ] ◐ **Arranque y pintado más lentos desde la 1.0.4** (auditoría 1.0.8): arranque 11 → 14 s y pintar a 720p
   13,6 → 24 ms (en la auditoría; la sonda con la tarjeta daba 14–18 ms en la 1.0.4). Medir qué pesa: los muros (cortes por
   calzada, 0,75 m cada muestra), las tapias, los edificios del Catastro y el recorte de calles sobre rampas (`cutAware`).
-- [ ] ◐ **Calle que acaba en la Vía de Ronda sin valla** (Jonay, 3-nov, X 498, Y −493, captura: «por aquí no se debería
+- [~] ◐ v1.1.1 (valla metálica al final de las calles sin salida a menos de 18 m de una vía rápida) **Calle que acaba en la Vía de Ronda sin valla** (Jonay, 3-nov, X 498, Y −493, captura: «por aquí no se debería
   poder acceder a la Vía de Ronda, debería haber vallado»): una calle sin salida termina en el talud junto a la Vía de
   Ronda y se baja con el coche. Poner valla o bionda al final de las calles sin salida que dan a una vía rápida (autopista,
   autovía, Vía de Ronda) cuando no hay enlace, y con choque.
@@ -473,7 +575,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
     sobrados dos coches»): la rampa se hizo de un sentido y estrecha, y las aceras de los lados se montan sobre sus muros
     (las baldosas por encima del borde azul). Hacerla de doble sentido (dos carriles, ~7 m más los muros), con las aceras
     cortadas donde abre, y que los coches puedan salir por ella. `05m_parking.js` (`buildRamp`, opción `w`).
-- [ ] ◐ **Marcas viales de más: líneas pegadas a las de separación y calles con 3 carriles que no los tienen** (Jonay, 3-nov,
+- [~] ◐ v1.1.1 (bandas de aparcamiento y plazas fuera de la calzada; falta que Jonay lo mire) **Marcas viales de más: líneas pegadas a las de separación y calles con 3 carriles que no los tienen** (Jonay, 3-nov,
   Calle Juana La Blanca X −932, Y −249, captura: «hay marcas viales al lado de las separaciones de carriles, y no me suena
   que esas calles tengan 3 carriles»): junto a cada línea discontinua sale otra línea más corta al lado, y la calle se pinta
   con tres carriles. Mirar cuántos carriles trae el OSM (`lanes`) y si el ensanche de la 1.0.0 (`WIDEN` / `narrowToGap`) ha
@@ -528,7 +630,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
     líneas, y no pintar las líneas de una vía por dentro de otra.
   - Jonay (3-nov, Vía de Ronda X 309, Y −40, captura: «otra superposición fatal de calles»): en el enlace la calzada de
     un ramal se monta sobre la principal con un escalón y las líneas se cruzan.
-- [ ] ◐ **Plazas de aparcamiento pintadas sobre los carriles** (Jonay, 3-nov, Calle el Juego X −259, Y 47, captura:
+- [~] ◐ v1.1.1 (sin plazas de los aparcamientos del OSM sobre la calzada) **Plazas de aparcamiento pintadas sobre los carriles** (Jonay, 3-nov, Calle el Juego X −259, Y 47, captura:
   «confundes carriles con espacios de aparcamiento»): rayas transversales de aparcamiento dentro de la calzada por donde
   circulan los coches. Que las plazas solo vayan en el carril de aparcamiento (junto al bordillo), nunca en los de paso.
 - [~] ● v0.99.6 (pasos inferiores cortos con la carretera de encima en terraplén, STOP solo en la incorporación, carriles de aceleración y deceleración, líneas en puentes, techo del intercambiador recortado) v0.99.5 (líneas por carriles, bionda en los bordes, sin aparcados en la autopista) **Marcas viales, arcenes y medianas de la autopista, la Vía de Ronda y sus enlaces** (Jonay, 27-oct: «las carreteras con cruces son un lío»; 15 capturas: X 386 Z −276, X 1534 Z 2739, X 1775 Z 3165, X −546 Z 470…):
@@ -630,7 +732,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Gente de la calle
 
-- [ ] ◐ **La gente no debe andar por la calzada ni por las autopistas** (Jonay, 3-nov, Autopista del Norte X −2517,
+- [~] ◐ v1.1.1 (fuera de las vías rápidas y de la otra calzada; falta cruzar solo por los pasos) **La gente no debe andar por la calzada ni por las autopistas** (Jonay, 3-nov, Autopista del Norte X −2517,
   Y −230, captura de noche con gente andando entre los carriles: «no debería haber NPC caminando por las autopistas ni por
   las calles en general; deberían buscar las aceras de los laterales para sus rutas»): los peatones van por el centro de
   la vía del OSM. Que caminen por la acera de un lado o del otro (desplazados medio ancho de calzada + ~1,5 m), que

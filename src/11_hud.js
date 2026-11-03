@@ -36,7 +36,7 @@ const WALKG = (() => {
   const key = new Map(), X = [], Z = [], adj = []; const K = (x, z) => Math.round(x * 4) + ',' + Math.round(z * 4);
   const node = (x, z) => { const k = K(x, z); let i = key.get(k); if (i === undefined) { i = X.length; key.set(k, i); X.push(x); Z.push(z); adj.push([]); } return i; };
   const COST = { 11: 0.85, 12: 0.95, 13: 0.75, 14: 0.8, 15: 0.9, 16: 0.9, 17: 1.1, 18: 0.9, 10: 1.0, 9: 1.0 };
-  for (const rd of DATA.R) { const t = rd[0]; if (t <= 2 || t === 4 || t === 1) continue; const c = rd[4]; const f = COST[t] || 1.15; let prev = node(c[0], c[1]);
+  for (const rd of DATA.R) { const t = rd[0]; if (t <= 2 || t === 4 || t === 1) continue; if (/V[ií]a de Ronda|Autopista|Autov[ií]a/i.test(rd[1] >= 0 ? DATA.S[rd[1]] || '' : '')) continue; /* v1.1.0: no walking along fast roads either */ const c = rd[4]; const f = COST[t] || 1.15; let prev = node(c[0], c[1]);
     for (let i = 2; i < c.length; i += 2) { const cur = node(c[i], c[i + 1]); if (cur !== prev) { const w = Math.hypot(X[cur] - X[prev], Z[cur] - Z[prev]) * f; adj[prev].push(cur, w); adj[cur].push(prev, w); } prev = cur; } }
   const CS = 40, grid = new Map(); for (let i = 0; i < X.length; i++) { if (!adj[i].length) continue; const g = Math.floor(X[i] / CS) * 100000 + Math.floor(Z[i] / CS); let l = grid.get(g); if (!l) grid.set(g, l = []); l.push(i); }
   function nearest(x, z) { let best = -1, bd = 1e18; const a0 = Math.floor(x / CS), b0 = Math.floor(z / CS);

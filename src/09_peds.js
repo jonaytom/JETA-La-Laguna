@@ -4,6 +4,7 @@ const PEDWAYS = []; const PEDKEY = new Map(); const RI2PW = new Map();
   const ok = ['pedestrian', 'footway', 'residential', 'living_street', 'tertiary', 'secondary', 'primary', 'unclassified', 'steps', 'tertiary_link'];
   DATA.R.forEach((rd, ri) => {
     const t = RTN[rd[0]]; if (!ok.includes(t) || (rd[3] & 4)) return;
+    if (/V[ií]a de Ronda|Autopista|Autov[ií]a/i.test(rd[1] >= 0 ? DATA.S[rd[1]] || '' : '') || (t === 'primary' && (rd[3] & 1))) return; // v1.1.0 (Jonay: «no debería haber NPC caminando por las autopistas»): no fast roads, nor one carriageway of a dual one (its side is the other carriageway)
     const road = !['pedestrian', 'footway', 'steps'].includes(t);
     const id = PEDWAYS.length; RI2PW.set(ri, id); PEDWAYS.push({ c: rd[4], road, w: rd[2], hist: isHistoric(rd[4][0], rd[4][1]), t });
     const c = rd[4]; for (let i = 0; i < c.length; i += 2) { const k = c[i] + ',' + c[i + 1]; let l = PEDKEY.get(k); if (!l) PEDKEY.set(k, l = []); l.push([id, i / 2]); }
@@ -36,14 +37,16 @@ function pedTarget(p) {
   const i = p.seg, j = p.seg + p.dir;
   if (j < 0 || j >= n) return null;
   const x1 = c[i * 2], z1 = c[i * 2 + 1], x2 = c[j * 2], z2 = c[j * 2 + 1]; const L = Math.hypot(x2 - x1, z2 - z1) || 1;
-  const dx = (x2 - x1) / L, dz = (z2 - z1) / L; const off = p.off * p.dir; // keep same physical side
-  return [x2 - dz * off, z2 + dx * off];
+  const dx = (x2 - x1) / L, dz = (z2 - z1) / L; let off = p.off * p.dir; // keep same physical side
+  let tx = x2 - dz * off, tz = z2 + dx * off;
+  if (W.road && !p.flipped && typeof onCarriagewayEarly === 'function' && onCarriagewayEarly(tx, tz, 0.2)) { p.off = -p.off; p.flipped = true; off = -off; tx = x2 - dz * off; tz = z2 + dx * off; } // v1.1.0: that side is another carriageway: the pavement of the other side
+  return [tx, tz];
 }
 function advancePed(p) {
   const W = PEDWAYS[p.way]; const n = W.c.length / 2; p.seg += p.dir;
   if (p.seg <= 0 || p.seg >= n - 1 || Math.random() < 0.12) {
     const k = W.c[p.seg * 2] + ',' + W.c[p.seg * 2 + 1]; const opts = (PEDKEY.get(k) || []).filter((o) => o[0] !== p.way || Math.random() < 0.1);
-    if (opts.length) { const o = pick(opts); const NW = PEDWAYS[o[0]]; const nn = NW.c.length / 2; p.way = o[0]; p.seg = o[1]; p.dir = o[1] >= nn - 1 ? -1 : o[1] <= 0 ? 1 : Math.random() < 0.5 ? 1 : -1; const s = Math.sign(p.off) || 1; p.off = NW.road ? (NW.w / 2 + 1.1) * s : rnd(-NW.w / 3, NW.w / 3); }
+    if (opts.length) { const o = pick(opts); const NW = PEDWAYS[o[0]]; const nn = NW.c.length / 2; p.way = o[0]; p.seg = o[1]; p.dir = o[1] >= nn - 1 ? -1 : o[1] <= 0 ? 1 : Math.random() < 0.5 ? 1 : -1; const s = Math.sign(p.off) || 1; p.off = NW.road ? (NW.w / 2 + 1.1) * s : rnd(-NW.w / 3, NW.w / 3); p.flipped = false; }
     else if (p.seg <= 0 || p.seg >= n - 1) { p.dir = -p.dir; }
   }
 }

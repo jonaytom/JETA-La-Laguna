@@ -15,6 +15,7 @@ function buildParkingLots() {
     const S = 2.5, T = 5.5;
     for (let u = F.u0; u < F.u1; u += S) for (let v = F.v0; v < F.v1; v += T) {
       const [mx, mz] = F.W(u + S / 2, v + T / 2); if (!pip(mx, mz, c2)) continue;
+      if (onCarriageway(mx, mz, 0.2)) continue; // v1.1.1 (Jonay: «confundes carriles con espacios de aparcamiento»): a car park drawn over a street in the OSM: no bays on the lanes
       const corners = [[u, v], [u + S, v], [u + S, v + T], [u, v + T]].map(([uu, vv]) => { const [px, pz] = F.W(uu, vv); return [px, heightAt(px, pz) + 0.12, pz]; });
       pos.push(...corners[0], ...corners[2], ...corners[1], ...corners[0], ...corners[3], ...corners[2]); uv.push(0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1);
       // parked cars in every other row (aisles in between), about 60% occupancy

@@ -67,6 +67,11 @@ reenviar la misma ruta de antes puede dejar en el PC la copia vieja. En la nube 
 herramientas de edición de Claude trabajan aquí) y publicar el Artifact (se sube el `dist/gta-la-laguna.html` que
 compila el PC de Jonay).
 
+## Nombre de las versiones (Jonay, 3-nov)
+
+El número sigue como está (`VERSION`, p. ej. 1.1.1), pero el juego está en **Alpha**: en pantalla sale «Alpha 1.1.1».
+Más adelante habrá una **Beta 1.0** y luego la **Final 1.0** (lo decide Jonay); hasta entonces todo es Alpha.
+
 ## Rutina al publicar una versión nueva
 
 1. Editar `src/` (y lo que toque) en la copia de trabajo, subir `VERSION`, entrada en `CHANGELOG.md`, docs al día.

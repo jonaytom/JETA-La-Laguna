@@ -3,6 +3,20 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.1.1 — 2026-11-03 — Alpha 1.1.1: carriles de aparcamiento, gente por la acera y vallas en los fondos de saco
+- **El juego se llama ahora «Alpha»** (Jonay: «será la Alpha; algún día será la Beta 1.0 y luego la Final 1.0»): la
+  pantalla de inicio dice «Alpha 1.1.1»; el número sigue igual.
+- **Aparcamiento en las calles** (Jonay: «hay muchas zonas de 2 carriles que en realidad tienen 2 carriles y una fila de
+  aparcamientos a los lados»): las calles con líneas pintan su banda de aparcamiento (2,2 m, con las plazas marcadas) y
+  los carriles en lo que queda, y los coches aparcados van en esa banda. De qué lados: del OSM cuando lo dice
+  (`tools/carriles.py`: 986 calles con su número de carriles, 109 con aparcamiento), si no, por su anchura.
+- **Plazas de aparcamiento pintadas sobre los carriles** (Jonay, Calle el Juego y Juana La Blanca): los aparcamientos del
+  OSM dibujados encima de una calle ya no pintan plazas en la calzada.
+- **La gente no anda por las vías rápidas** (Jonay, Autopista del Norte): ni autopistas, autovías ni la Vía de Ronda; en
+  una avenida de dos calzadas, si «su» acera cae en la otra calzada, camina por la del otro lado.
+- **Vallas al final de las calles sin salida junto a una vía rápida** (Jonay, X 498, Y −493: «por aquí no se debería
+  poder acceder a la Vía de Ronda»).
+
 ## 1.1.0 — 2026-11-03 — Ya no te quedas atrapado debajo de un puente
 - **El coche se colaba por el enlace de la Autopista del Norte** (Jonay, X −3292, Y −161, misión del queso: «me he caído
   por aquí con el coche… me dejó bloqueado»): yendo por un tablero que pasa por encima de un tramo bajo (trinchera, paso

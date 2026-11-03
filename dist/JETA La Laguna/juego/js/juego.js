@@ -915,17 +915,43 @@ const YOFF = { sidewalk: 0.09, dirt: 0.08, footway: 0.1, asphalt: 0.13, paving: 
 // wider hard shoulder on the right and dashed lines between its lanes; a two-way road has a centre line (double and
 // solid with 4 lanes) and its lanes. One texture per kind and width, made when first needed; u = 0 is the right side.
 const isLines = (mk) => mk === 'asphaltLines' || mk.startsWith('aL_');
+// v1.1.1 (Jonay: «hay muchas zonas de 2 carriles que lo que tienen en realidad es 2 carriles y una fila de aparcamientos
+// a los lados»): which sides of a street have a parking lane. From the OSM tags when the street has them (DATA.LN,
+// tools/carriles.py: [lanes, left, right], -1 = no data), else by its width (the rule buildParked used). +1 = the side
+// at u = 0 of the ribbon (left of the way's direction), -1 = the other one.
+const PARKSIDE = new Map(); let RD_INDEX = null;
+function parkSides(rd) {
+  let ps = PARKSIDE.get(rd); if (ps) return ps;
+  if (!RD_INDEX) { RD_INDEX = new Map(); DATA.R.forEach((r, i) => RD_INDEX.set(r, i)); }
+  const t = RTN[rd[0]], w = rd[2], ow = !!(rd[3] & 1), c = rd[4], ln = DATA.LN ? DATA.LN[RD_INDEX.get(rd)] : null;
+  ps = { sides: [], lanes: ln && ln[0] > 0 ? ln[0] : -1, osm: false };
+  const fast = rd[0] <= 4 || /V[ií]a de Ronda|Autopista|Autov[ií]a/i.test(rd[1] >= 0 ? STR[rd[1]] || '' : '');
+  if (!fast && ROADCLASS(rd) !== 'paving' && ['secondary', 'secondary_link', 'tertiary', 'tertiary_link', 'unclassified', 'residential', 'living_street'].includes(t)) {
+    if (ln && (ln[1] >= 0 || ln[2] >= 0)) { ps.osm = true; if (ln[1] > 0) ps.sides.push(1); if (ln[2] > 0) ps.sides.push(-1); } // OSM: left of the way = u 0
+    else {
+      const lanesW = (ps.lanes > 0 ? ps.lanes : ow ? 1 : 2) * 3.1, free = w - lanesW - 0.6; // what is left beside the lanes
+      if (ps.lanes > 0) { if (free >= 4.3) ps.sides = [1, -1]; else if (free >= 2.1) ps.sides = [((c[0] * 13 + c[1] * 7) | 0) % 2 ? 1 : -1]; }
+      else if (ow) { if (w >= 9) ps.sides = [1, -1]; else if (w >= 6.6) ps.sides = [w * 7 % 2 < 1 ? 1 : -1]; }
+      else { const lane = clamp(w / 4, 1.3, w >= 13 ? 2.4 : 1.7), gap = w / 2 - 1.9 - (lane + 1.0); if (gap >= 0.35) ps.sides = w >= 12 ? [1, -1] : [((c[0] * 13 + c[1] * 7) | 0) % 2 ? 1 : -1]; }
+    }
+  }
+  PARKSIDE.set(rd, ps); return ps;
+}
 function laneMk(rd) {
-  const w = rd[2], ow = !!(rd[3] & 1), mot = rd[0] <= 1, n = ow ? clamp(Math.round((w - (mot ? 2.2 : 1.2)) / 3.5), 1, 5) : w >= 12.5 ? 4 : 2;
-  const key = 'aL_' + (ow ? 'o' : 't') + n + '_' + Math.round(w * 10) + (mot ? 'm' : ''); if (MAT[key]) return key;
+  const w = rd[2], ow = !!(rd[3] & 1), mot = rd[0] <= 1, ps = parkSides(rd), PB = 2.2;
+  const p0 = ps.sides.includes(1) ? PB : 0, p1 = ps.sides.includes(-1) ? PB : 0, wl = w - p0 - p1; // the carriageway between the parking bands
+  const n = ow ? clamp(ps.lanes > 0 ? ps.lanes : Math.round((wl - (mot ? 2.2 : 1.2)) / 3.5), 1, 5) : ps.lanes >= 4 || (ps.lanes < 0 && wl >= 12.5) ? 4 : 2;
+  const key = 'aL_' + (ow ? 'o' : 't') + n + '_' + Math.round(w * 10) + (mot ? 'm' : '') + (p0 ? 'p' : '') + (p1 ? 'q' : ''); if (MAT[key]) return key;
   const c = mkCanvas(256, 512), y = c.getContext('2d'); y.drawImage(TEX.asphaltC, 0, 0); y.drawImage(TEX.asphaltC, 0, 256);
   const px = 256 / w, line = (m, wd, dash) => { const x = Math.round(m * px - wd * px / 2), ww = Math.max(3, Math.round(wd * px)); y.fillStyle = '#ece9e0';
     if (!dash) y.fillRect(x, 0, ww, 512); else for (let v = 0; v < 512; v += 512 / dash[1]) y.fillRect(x, v + 8, ww, (512 / dash[1]) * dash[0]); };
-  if (ow) { const so = mot ? 1.6 : 0.6, si = mot ? 0.6 : 0.35, lw = (w - so - si) / n;   // right shoulder (u = 0) wider than the left one
-    line(so, 0.18); line(w - si, 0.18); for (let k = 1; k < n; k++) line(so + lw * k, 0.14, mot ? [0.38, 1] : [0.5, 2]); }
-  else { const e = 0.35, half = (w - 2 * e) / 2; line(e, 0.15); line(w - e, 0.15);
-    if (n >= 4) { line(w / 2 - 0.12, 0.1); line(w / 2 + 0.12, 0.1); for (const sd of [-1, 1]) line(w / 2 + sd * half / 2, 0.12, [0.4, 2]); }
-    else line(w / 2, 0.14, [0.5, 4]); }
+  const bays = (from, to) => { y.fillStyle = '#ece9e0'; const x0 = Math.round(Math.min(from, to) * px), x1 = Math.round(Math.max(from, to) * px); for (let v = 0; v < 512; v += 512 / 1.6) y.fillRect(x0, v, x1 - x0, 3); }; // a bay every ~5 m (the texture is 8 m long)
+  if (p0) { line(p0, 0.12); bays(0.3, p0); } if (p1) { line(w - p1, 0.12); bays(w - p1, w - 0.3); }
+  if (ow) { const so = (mot ? 1.6 : 0.6), si = (mot ? 0.6 : 0.35), a = p0 + (p0 ? 0.3 : so), b = w - p1 - (p1 ? 0.3 : si), lw = (b - a) / n;   // right shoulder (u = 0) wider than the left one
+    if (!p0) line(so, 0.18); if (!p1) line(w - si, 0.18); for (let k = 1; k < n; k++) line(a + lw * k, 0.14, mot ? [0.38, 1] : [0.5, 2]); }
+  else { const e = 0.35, a = p0 || e, b = w - (p1 || e), mid = (a + b) / 2, half = (b - a) / 2; if (!p0) line(e, 0.15); if (!p1) line(w - e, 0.15);
+    if (n >= 4) { line(mid - 0.12, 0.1); line(mid + 0.12, 0.1); for (const sd of [-1, 1]) line(mid + sd * half / 2, 0.12, [0.4, 2]); }
+    else line(mid, 0.14, [0.5, 4]); }
   MAT[key] = MAT.asphaltLines.clone(); MAT[key].map = canvasTex(c); YOFF[key] = YOFF.asphaltLines; SURF_MK.add(key); return key; }
 // v0.73 (agente revisor: «se hunde 0,3–1,1 m bajo la superficie visible» on paths and pavements): where a ribbon
 // drawn as a straight chord across its width stands clearly above the terrain (a hollow under a path), remember its
@@ -3209,6 +3235,7 @@ function buildParkingLots() {
     const S = 2.5, T = 5.5;
     for (let u = F.u0; u < F.u1; u += S) for (let v = F.v0; v < F.v1; v += T) {
       const [mx, mz] = F.W(u + S / 2, v + T / 2); if (!pip(mx, mz, c2)) continue;
+      if (onCarriageway(mx, mz, 0.2)) continue; // v1.1.1 (Jonay: «confundes carriles con espacios de aparcamiento»): a car park drawn over a street in the OSM: no bays on the lanes
       const corners = [[u, v], [u + S, v], [u + S, v + T], [u, v + T]].map(([uu, vv]) => { const [px, pz] = F.W(uu, vv); return [px, heightAt(px, pz) + 0.12, pz]; });
       pos.push(...corners[0], ...corners[2], ...corners[1], ...corners[0], ...corners[3], ...corners[2]); uv.push(0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1);
       // parked cars in every other row (aisles in between), about 60% occupancy
@@ -5777,6 +5804,22 @@ function wallIntoBuildings(c) {
   };
   grow(0, 2); grow(n - 2, n - 4); return o;
 }
+function deadEndFences() {
+  const FAST = /V[ií]a de Ronda|Autopista|Autov[ií]a/i, isFast = (r) => r[0] <= 2 || FAST.test(r[1] >= 0 ? DATA.S[r[1]] || '' : '');
+  const deg = new Map(), K = (x, z) => Math.round(x * 2) + ',' + Math.round(z * 2);
+  for (const r of DATA.R) { const c = r[4]; for (let i = 0; i < c.length; i += 2) { const k = K(c[i], c[i + 1]); deg.set(k, (deg.get(k) || 0) + (i === 0 || i === c.length - 2 ? 1 : 2)); } }
+  const fastSegs = []; for (const r of DATA.R) if (isFast(r) && !(r[3] & 6)) { const c = r[4]; for (let i = 0; i + 3 < c.length; i += 2) fastSegs.push([c[i], c[i + 1], c[i + 2], c[i + 3], r[2] / 2]); }
+  const out = [];
+  for (const r of DATA.R) { if (isFast(r) || r[0] > 12 || (r[3] & 6)) continue; const c = r[4], n = c.length;
+    for (const [i, j] of [[0, 2], [n - 2, n - 4]]) { if (deg.get(K(c[i], c[i + 1])) !== 1) continue; // a real dead end
+      const x = c[i], z = c[i + 1]; let best = 1e9;
+      for (const f of fastSegs) { if (Math.abs(f[0] - x) > 60 && Math.abs(f[2] - x) > 60) continue; const dx = f[2] - f[0], dz = f[3] - f[1], L2 = dx * dx + dz * dz || 1, t = clamp(((x - f[0]) * dx + (z - f[1]) * dz) / L2, 0, 1); best = Math.min(best, Math.hypot(x - f[0] - dx * t, z - f[1] - dz * t) - f[4]); }
+      if (best > 18) continue;
+      const dx = x - c[j], dz = z - c[j + 1], L = Math.hypot(dx, dz) || 1, ux = dx / L, uz = dz / L, hw = r[2] / 2 + 1.6, ex = x - ux * 0.5, ez = z - uz * 0.5;
+      out.push(['fence', 1.4, 'metal', [ex - uz * hw, ez + ux * hw, ex + uz * hw, ez - ux * hw], true]); } } // (true: it stands on the carriageway on purpose)
+  console.log('vallas al final de calles junto a vías rápidas', out.length);
+  return out;
+}
 const WALLS = { n: 0, km: 0, meshes: [] };
 function buildWalls() {
   const list = (DATA.BW || []).slice(); let nt = 0;
@@ -5798,12 +5841,15 @@ function buildWalls() {
   let km = 0, n = 0;
   // v1.0.8 (Jonay: «aquí se choca el coche», Vía de Ronda X 378, Y −270): a wall of the map under a carriageway as the game
   // draws it (wider than in the OSM, or raised over the ground) is cut there; it collided unseen under the road
+  // v1.1.1 (Jonay, X 498, Y −493: «por aquí no se debería poder acceder a la Vía de Ronda, debería haber vallado»): a
+  // street that ends (dead end) next to a fast road it doesn't join gets a metal fence across its end
+  try { for (const w of deadEndFences()) list.push(w); } catch (e) { console.error('vallas fin de calle', e); }
   const pieces = [];
   const simp = (r) => { const o = [r[0], r[1]]; for (let k = 2; k + 3 < r.length + 2 && k < r.length - 2; k += 2) { const ax = o[o.length - 2], az = o[o.length - 1], bx = r[k], bz = r[k + 1], ex = r[k + 2], ez = r[k + 3]; const L = Math.hypot(ex - ax, ez - az) || 1; if (Math.abs((bx - ax) * (ez - az) - (bz - az) * (ex - ax)) / L > 0.12) o.push(bx, bz); } o.push(r[r.length - 2], r[r.length - 1]); return o; }; // back to the corners
-  for (const w of list) { const [kind, h, mat0, c0] = w; let run = [];
+  for (const w of list) { const [kind, h, mat0, c0, keep] = w; let run = [];
     const flush = () => { if (run.length >= 4) pieces.push([kind, h, mat0, simp(run)]); run = []; };
     for (let i = 0; i + 3 < c0.length; i += 2) { const ax = c0[i], az = c0[i + 1], bx = c0[i + 2], bz = c0[i + 3], L = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.ceil(L / 0.75));
-      for (let t = i ? 1 : 0; t <= n; t++) { const x = ax + (bx - ax) * t / n, z = az + (bz - az) * t / n; if (onCarriagewayEarly(x, z, 0.4)) flush(); else run.push(x, z); } }
+      for (let t = i ? 1 : 0; t <= n; t++) { const x = ax + (bx - ax) * t / n, z = az + (bz - az) * t / n; if (!keep && onCarriagewayEarly(x, z, 0.4)) flush(); else run.push(x, z); } }
     flush(); }
   for (const [kind, h, mat0, c0] of pieces) {
     const K = KIND[kind]; if (!K || c0.length < 4) continue;
@@ -6801,20 +6847,18 @@ function onBigRoad(x, z) { const rd = ROADSEG.nearest(x, z, (r) => (r[0] <= 4 ||
 function buildParked() {
   const types = ['compact', 'sedan', 'suv', 'van']; const T0 = performance.now(), lt = (n) => { if (window.__LOADT) window.__LOADT.push(['   buildParked · ' + n, Math.round(performance.now() - T0)]); }; // v0.77: where the 2 s go
   DATA.R.forEach((rd) => {
-    const t = RTN[rd[0]]; if (!['residential', 'tertiary', 'unclassified', 'living_street'].includes(t) || ROADCLASS(rd) === 'paving') return;
+    const t = RTN[rd[0]]; if (!['residential', 'tertiary', 'tertiary_link', 'secondary', 'secondary_link', 'unclassified', 'living_street'].includes(t) || ROADCLASS(rd) === 'paving') return; // v1.1.1: secondary streets too, where they have a parking lane
     const c = rd[4], w = rd[2], ow = !!(rd[3] & 1);
     // leave a real gap for traffic: lane edge vs. parked-car inner edge (car ~1.9 m wide, 0.95 m from the kerb line)
     const lane = ow ? (w >= 10 ? 1.8 : 0) : clamp(w / 4, 1.3, w >= 13 ? 2.4 : 1.7), inner = w / 2 - 1.9, gap = inner - (lane + 1.0);
-    let sides = [];
-    if (ow) { if (w >= 9) sides = [-1, 1]; else if (w >= 6.6) sides = [w * 7 % 2 < 1 ? -1 : 1]; }
-    else if (gap >= 0.35) sides = w >= 12 ? [-1, 1] : [((c[0] * 13 + c[1] * 7) | 0) % 2 ? -1 : 1];
+    const sides = parkSides(rd).sides; // v1.1.1: the same sides as the painted parking lanes (04_world.js, from the OSM when it says)
     if (!sides.length) return;
     for (let i = 0; i < c.length - 2; i += 2) {
       const x1 = c[i], z1 = c[i + 1], x2 = c[i + 2], z2 = c[i + 3], L = Math.hypot(x2 - x1, z2 - z1); if (L < 16) continue;
       const dx = (x2 - x1) / L, dz = (z2 - z1) / L;
       for (let s = 9; s < L - 9; s += 6.2) for (const side of sides) {
         if (Math.random() > (isHistoric(x1, z1) ? 0.18 : 0.33)) continue;
-        const off = w / 2 - 0.95; const x = x1 + dx * s - dz * off * side, z = z1 + dz * s + dx * off * side;
+        const off = w / 2 - 1.1; /* (the middle of the 2.2 m parking lane) */ const x = x1 + dx * s - dz * off * side, z = z1 + dz * s + dx * off * side;
         if (COL.nearSeg(x, z, 1.3) || onBigRoad(x, z) || onFootpath(x, z)) continue; // v0.99.5 (Jonay): never on the motorway, its slip roads or the Vía de Ronda
         const h = Math.atan2(dx, dz) + (side < 0 ? Math.PI : 0);
         const mdl = KGEO ? pickModel((m) => m.phys !== 'truck' && m.phys !== 'moto') : null; PARKED.slots.push({ x, z, h, type: mdl ? mdl.id : pick(types), color: pickColor(), alive: true });
@@ -7173,6 +7217,7 @@ const PEDWAYS = []; const PEDKEY = new Map(); const RI2PW = new Map();
   const ok = ['pedestrian', 'footway', 'residential', 'living_street', 'tertiary', 'secondary', 'primary', 'unclassified', 'steps', 'tertiary_link'];
   DATA.R.forEach((rd, ri) => {
     const t = RTN[rd[0]]; if (!ok.includes(t) || (rd[3] & 4)) return;
+    if (/V[ií]a de Ronda|Autopista|Autov[ií]a/i.test(rd[1] >= 0 ? DATA.S[rd[1]] || '' : '') || (t === 'primary' && (rd[3] & 1))) return; // v1.1.0 (Jonay: «no debería haber NPC caminando por las autopistas»): no fast roads, nor one carriageway of a dual one (its side is the other carriageway)
     const road = !['pedestrian', 'footway', 'steps'].includes(t);
     const id = PEDWAYS.length; RI2PW.set(ri, id); PEDWAYS.push({ c: rd[4], road, w: rd[2], hist: isHistoric(rd[4][0], rd[4][1]), t });
     const c = rd[4]; for (let i = 0; i < c.length; i += 2) { const k = c[i] + ',' + c[i + 1]; let l = PEDKEY.get(k); if (!l) PEDKEY.set(k, l = []); l.push([id, i / 2]); }
@@ -7205,14 +7250,16 @@ function pedTarget(p) {
   const i = p.seg, j = p.seg + p.dir;
   if (j < 0 || j >= n) return null;
   const x1 = c[i * 2], z1 = c[i * 2 + 1], x2 = c[j * 2], z2 = c[j * 2 + 1]; const L = Math.hypot(x2 - x1, z2 - z1) || 1;
-  const dx = (x2 - x1) / L, dz = (z2 - z1) / L; const off = p.off * p.dir; // keep same physical side
-  return [x2 - dz * off, z2 + dx * off];
+  const dx = (x2 - x1) / L, dz = (z2 - z1) / L; let off = p.off * p.dir; // keep same physical side
+  let tx = x2 - dz * off, tz = z2 + dx * off;
+  if (W.road && !p.flipped && typeof onCarriagewayEarly === 'function' && onCarriagewayEarly(tx, tz, 0.2)) { p.off = -p.off; p.flipped = true; off = -off; tx = x2 - dz * off; tz = z2 + dx * off; } // v1.1.0: that side is another carriageway: the pavement of the other side
+  return [tx, tz];
 }
 function advancePed(p) {
   const W = PEDWAYS[p.way]; const n = W.c.length / 2; p.seg += p.dir;
   if (p.seg <= 0 || p.seg >= n - 1 || Math.random() < 0.12) {
     const k = W.c[p.seg * 2] + ',' + W.c[p.seg * 2 + 1]; const opts = (PEDKEY.get(k) || []).filter((o) => o[0] !== p.way || Math.random() < 0.1);
-    if (opts.length) { const o = pick(opts); const NW = PEDWAYS[o[0]]; const nn = NW.c.length / 2; p.way = o[0]; p.seg = o[1]; p.dir = o[1] >= nn - 1 ? -1 : o[1] <= 0 ? 1 : Math.random() < 0.5 ? 1 : -1; const s = Math.sign(p.off) || 1; p.off = NW.road ? (NW.w / 2 + 1.1) * s : rnd(-NW.w / 3, NW.w / 3); }
+    if (opts.length) { const o = pick(opts); const NW = PEDWAYS[o[0]]; const nn = NW.c.length / 2; p.way = o[0]; p.seg = o[1]; p.dir = o[1] >= nn - 1 ? -1 : o[1] <= 0 ? 1 : Math.random() < 0.5 ? 1 : -1; const s = Math.sign(p.off) || 1; p.off = NW.road ? (NW.w / 2 + 1.1) * s : rnd(-NW.w / 3, NW.w / 3); p.flipped = false; }
     else if (p.seg <= 0 || p.seg >= n - 1) { p.dir = -p.dir; }
   }
 }
@@ -12155,7 +12202,7 @@ const WALKG = (() => {
   const key = new Map(), X = [], Z = [], adj = []; const K = (x, z) => Math.round(x * 4) + ',' + Math.round(z * 4);
   const node = (x, z) => { const k = K(x, z); let i = key.get(k); if (i === undefined) { i = X.length; key.set(k, i); X.push(x); Z.push(z); adj.push([]); } return i; };
   const COST = { 11: 0.85, 12: 0.95, 13: 0.75, 14: 0.8, 15: 0.9, 16: 0.9, 17: 1.1, 18: 0.9, 10: 1.0, 9: 1.0 };
-  for (const rd of DATA.R) { const t = rd[0]; if (t <= 2 || t === 4 || t === 1) continue; const c = rd[4]; const f = COST[t] || 1.15; let prev = node(c[0], c[1]);
+  for (const rd of DATA.R) { const t = rd[0]; if (t <= 2 || t === 4 || t === 1) continue; if (/V[ií]a de Ronda|Autopista|Autov[ií]a/i.test(rd[1] >= 0 ? DATA.S[rd[1]] || '' : '')) continue; /* v1.1.0: no walking along fast roads either */ const c = rd[4]; const f = COST[t] || 1.15; let prev = node(c[0], c[1]);
     for (let i = 2; i < c.length; i += 2) { const cur = node(c[i], c[i + 1]); if (cur !== prev) { const w = Math.hypot(X[cur] - X[prev], Z[cur] - Z[prev]) * f; adj[prev].push(cur, w); adj[cur].push(prev, w); } prev = cur; } }
   const CS = 40, grid = new Map(); for (let i = 0; i < X.length; i++) { if (!adj[i].length) continue; const g = Math.floor(X[i] / CS) * 100000 + Math.floor(Z[i] / CS); let l = grid.get(g); if (!l) grid.set(g, l = []); l.push(i); }
   function nearest(x, z) { let best = -1, bd = 1e18; const a0 = Math.floor(x / CS), b0 = Math.floor(z / CS);
