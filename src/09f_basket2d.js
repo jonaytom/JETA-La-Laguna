@@ -43,7 +43,7 @@ const BASKET2D = (() => {
     return ARMS[k] ? { ...pz[k], ...ARMS[k] } : pz[k] || pz.idle0; }
   function sprOf(p, k) { return p.spr[k] || (p.spr[k] = PIXBASKET.sprite(p.nose ? { ...p.look, bigNose: true } : p.look, poseFor(k), p.num)); }
   // ---------- input (virtual buttons from the player's controls)
-  const PZ = MINI.pauser(() => running); const IN = MINI.input(() => running), { press, held, hit, rel } = IN, keys = IN.keys; // v0.69: shared with the other minigames (09ea_minijuegos.js)
+  const PZ = MINI.pauser(() => running, () => { st.fadeDir = 1; }); /* v1.1.3: Q / Esc in the pause = leave the match */ const IN = MINI.input(() => running), { press, held, hit, rel } = IN, keys = IN.keys; // v0.69: shared with the other minigames (09ea_minijuegos.js)
   // ---------- little sounds (own nodes on the game's audio context)
   const snd = MINI.snd, say = (t) => MINI.say(t);
   let CR = null, PAV = false; const cr = (n, k) => { if (CR && (PAV || !/^(organ|charge|defensa)$/.test(n))) CR.ev(n, k); }; // (the organ and the chants only in a pavilion) // v0.90: the crowd of the pavilion (MINI.crowd)
@@ -486,6 +486,7 @@ const BASKET2D = (() => {
     txt(String(st.score[0]), W / 2 - 92, 22, 9, '#fff'); txt(String(st.score[1]), W / 2 + 92, 22, 9, '#fff');
     const cl = st.tut ? '--:--' : st.golden ? 'ORO' : `${Math.floor(st.clock / 60)}:${String(Math.floor(st.clock % 60)).padStart(2, '0')}`; txt(cl, W / 2, 16, 9, st.golden ? '#ffd400' : '#fff');
     const hu = st.p.find((q) => q.human); MINI.turbo(cx, H, hu.turbo);
+    { const o = st.ball.holder; /* v1.1.3 (Jonay): who has the ball, bottom right, with his number */ if (o && o.name) { const lab = o.num + '  ' + o.name.toUpperCase(), xr = W - 10; cx.font = '6px "Press Start 2P", monospace'; const tw = cx.measureText(lab).width; cx.fillStyle = 'rgba(0,0,0,0.6)'; cx.fillRect(xr - tw - 6, H - 17, tw + 10, 11); txt(lab, xr, H - 15, 6, o.team === 0 ? '#7fe08a' : '#ff6b6b', 'right'); } }
     if (st.tip) { cx.fillStyle = 'rgba(0,0,0,0.7)'; cx.fillRect(40, H - 34, W - 80, 16); txt(st.tip, W / 2, H - 29, 6, '#ffd400'); }
     MINI.banner(cx, st, W, 64, 10);
     if (st.phase === 'ready') { cx.fillStyle = 'rgba(0,0,0,0.8)'; cx.fillRect(60, 50, W - 120, 132); txt(`JETA JAM · ${st.p.length >> 1} CONTRA ${st.p.length >> 1}`, W / 2, 58, 9, '#ffd400');

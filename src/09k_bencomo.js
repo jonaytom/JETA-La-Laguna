@@ -280,7 +280,7 @@ ARCADE.GAMES.bencomo = (() => {
       if (e.k === 'B') { e.face = Math.sign(dx) || -1; e.vx = 0; e.cd -= dt; if (adx < 230 && sameY && e.cd <= 0) { e.cd = 2.4 / s; e.aim = 0.3; } if (e.aim > 0) { e.aim -= dt; if (e.aim <= 0) { shots.push({ k: 'bolt', x: e.x + e.face * 10, y: e.y - 14, vx: e.face * 150 * s, vy: 0, t: 3 }); api.sfx('swing'); } } }
       if (e.k === 'A') { if (e.aim > 0) { e.vx = 0; e.aim -= dt; if (e.aim <= 0) { shots.push({ k: 'ball', x: e.x + e.face * 16, y: e.y - 15, vx: e.face * 250 * s, vy: 0, t: 2 }); addFx('smoke', e.x + e.face * 18, e.y - 16); api.sfx('shot'); e.cd = 3.2 / s; } }
         else { e.cd -= dt; if (adx < 220 && sameY && e.cd <= 0) { e.face = Math.sign(dx) || -1; e.aim = 0.8; } else { if (!groundAhead(e, e.face) || wallAhead(e, e.face)) e.face = -e.face; e.vx = e.face * 16 * s; } } }
-      if (e.k === 'D') { if (e.st === 'sleep') { e.vx = 0; if (adx < 150 && sameY) { e.st = 'run'; api.sfx('bark'); } } else { e.face = Math.sign(dx) || e.face; e.vx = e.face * 150 * s; if (adx < 46 && e.onG && !p.crouch && Math.random() < 0.03) { e.vy = -230; } /* against a crouched Bencomo they stay low (and his low blow gets them) */ if (!groundAhead(e, e.face) && e.onG) e.vy = -240; } }
+      if (e.k === 'D') { if (e.st === 'sleep') { e.vx = 0; if (adx < 150 && sameY) { e.st = 'run'; api.sfx('bark'); } } else { e.turnT = (e.turnT || 0) - dt; if (Math.sign(dx) && Math.sign(dx) !== e.face && e.turnT <= 0 && adx > 6) { e.face = Math.sign(dx); e.turnT = 0.55; } else if (!e.face) e.face = Math.sign(dx) || 1; e.vx = e.face * 110 * s; /* v1.1.3 (Jonay: «los perros corren demasiado… parece que tengan dos cabezas»): 150 → 110 (−27 %), and they turn at most every 0,55 s (they overshoot you before turning back) */ if (adx < 46 && e.onG && !p.crouch && Math.random() < 0.03) { e.vy = -230; } /* against a crouched Bencomo they stay low (and his low blow gets them) */ if (!groundAhead(e, e.face) && e.onG) e.vy = -240; } }
       if (e.k === 'C') { if (e.st === 'walk') { e.vx = e.face * 45 * s; if (e.x < e.x0) e.face = 1; if (e.x > e.x1) e.face = -1; if (adx < 190 && sameY && Math.sign(dx) === e.face) { e.st = 'charge'; api.sfx('bark'); } }
         else { e.vx = e.face * 170 * s; if (e.x < e.x0 - 60 || e.x > e.x1 + 60 || wallAhead(e, e.face) || !groundAhead(e, e.face)) { e.st = 'walk'; e.face = -e.face; } } }
       if (e.k === 'L') { bossAI(e, dt); if (e.st === 'flee') { e.x += e.vx * dt; e.t2 = (e.t2 || 0) + dt; if (e.t2 > 3.5) { e.dead = true; phase = 'clear'; phaseT = 6; api.stopMusic(); api.sfx('clear'); } return; } } // fleeing: off he goes, through anything
@@ -291,7 +291,7 @@ ARCADE.GAMES.bencomo = (() => {
         else if (p.power > 0) hitE(e, 3);
         else if (!(e.k === 'D' && e.st === 'sleep')) hurt(e.k === 'L' || e.k === 'C' ? 1 : 1, e.x); }
       // the banot
-      if (p.atk > 0.06 && !e.hitBy) { const hx = p.x + p.face * 18, hy = p.y - (p.crouch ? 5 : 14); if (Math.abs(hx - e.x) < 14 + e.w / 2 && hy > e.y - e.h - 4 && hy < e.y + 2) { e.hitBy = true; hitE(e, 1); } }
+      if (p.atk > 0.06 && !e.hitBy) { const nv = window.__BEN_NEW !== false, hx = p.x + p.face * (nv ? 24 : 18), hy = p.y - (p.crouch ? 5 : 14); if (Math.abs(hx - e.x) < (nv ? 16 : 14) + e.w / 2 && hy > e.y - e.h - 4 && hy < e.y + 2) { e.hitBy = true; hitE(e, 1); } }
       if (p.atk <= 0) e.hitBy = false;
     }
     function hitE(e, n, stomp) { if (e.hurt > 0 && e.k === 'L') return; if (e.k === 'L' && e.st === 'wait') return; e.hp -= n; e.hurt = e.k === 'L' ? 0.5 : 0.15; api.sfx('hit'); addFx('spark', e.x, e.y - e.h / 2); e.vx = 0;
@@ -397,7 +397,7 @@ ARCADE.GAMES.bencomo = (() => {
         atk: [5, Math.min(5, Math.floor(t / 0.2 * 6))], catk: [8, Math.min(5, Math.floor(t / 0.2 * 6))], crouch: [7, F('bencomo', 7, t, 6)], hurt: [6, 1], dead: [6, 9], pole: [p.pogo ? 4 : 3, 1] }[st];
       // v0.94 (Jonay): the pole of the vault and of the pogo drawn like the one he carries (outline, wood, light), held
       // by the middle: it sticks out behind the hands as much as in front; on the pogo he crouches with it pointing down
-      if (pole) { const hand = p.pogo ? [x - p.face * 3, y - 12] : [x + p.face * 2, y - 24], tip = p.pogo ? [x - p.face * 1, y + 9] : [p.pole[0] - camX, p.pole[1]]; const dx = hand[0] - tip[0], dy = hand[1] - tip[1], L = Math.hypot(dx, dy) || 1, back = p.pogo ? 7 : 6, end = [hand[0] + dx / L * back, hand[1] + dy / L * back];
+      if (pole) { const hand = p.pogo ? [x - p.face * 3, y - 12] : [x + p.face * 2, y - 24], nv = window.__BEN_NEW !== false, tip = p.pogo ? [x - p.face * 1, y + (nv ? 19 : 9)] : [p.pole[0] - camX, p.pole[1]]; const dx = hand[0] - tip[0], dy = hand[1] - tip[1], L = Math.hypot(dx, dy) || 1, back = p.pogo ? (nv ? 2 : 7) : 6, /* v1.1.3 (Jonay): on the pogo he holds it near the top end, more pole below */ end = [hand[0] + dx / L * back, hand[1] + dy / L * back];
         for (const [w, col] of [[1.6, '#1a1008'], [0.8, '#5c3a22'], [0.4, '#96683e']]) { c.strokeStyle = col; c.lineWidth = w; c.lineCap = 'round'; c.beginPath(); c.moveTo(tip[0], tip[1]); c.lineTo(end[0], end[1]); c.stroke(); } c.lineCap = 'butt'; }
       // v0.95.1: the sheet without the pole is asked for every frame so it is already loaded the first time he vaults or
       // goes on the pogo (it loads on its first draw and that frame came out without Bencomo); meanwhile, the one with it
@@ -419,8 +419,8 @@ ARCADE.GAMES.bencomo = (() => {
       // the pole: planted ahead while vaulting, down like a pogo, else carried
       c.strokeStyle = '#d9b77a'; c.lineWidth = 2; c.beginPath();
       if (p.vault > 0 && p.pole) { c.moveTo(p.pole[0] - camX, p.pole[1]); c.lineTo(x + p.face * 2, y - 26); }
-      else if (p.pogo) { c.moveTo(x + p.face * 2, y - 16); c.lineTo(x + p.face * 2, y + 8); }
-      else if (p.atk > 0) { const ay = p.crouch ? 7 : 0; c.moveTo(x - p.face * 6, y - 13 + ay + (p.crouch ? 2 : 0)); c.lineTo(x + p.face * 26, y - 14 + ay + (p.crouch ? 4 : 0)); c.stroke(); c.fillStyle = '#5a3a1a'; c.fillRect(x + p.face * 25 - 1, y - 15 + ay + (p.crouch ? 4 : 0), 3, 3); c.beginPath(); } // the hardened tip (low when crouched)
+      else if (p.pogo) { const nv = window.__BEN_NEW !== false; c.moveTo(x + p.face * 2, nv ? y - 19 : y - 16); c.lineTo(x + p.face * 2, nv ? y + 17 : y + 8); } /* v1.1.3 (Jonay): held near its top end, more pole below (window.__BEN_NEW = false: as before, for the comparison photos) */
+      else if (p.atk > 0) { const ay = p.crouch ? 7 : 0; const tip = window.__BEN_NEW !== false ? 36 : 26; c.moveTo(x - p.face * (tip === 36 ? 4 : 6), y - 13 + ay + (p.crouch ? 2 : 0)); c.lineTo(x + p.face * tip, y - 14 + ay + (p.crouch ? 4 : 0)); c.stroke(); c.fillStyle = '#5a3a1a'; c.fillRect(x + p.face * (tip - 1) - 1, y - 15 + ay + (p.crouch ? 4 : 0), 3, 3); c.beginPath(); } // the hardened tip (low when crouched)
       else if (p.flying) { c.moveTo(x - p.face * 14, y - 4); c.lineTo(x + p.face * 10, y - 30); }
       else if (p.crouch) { c.moveTo(x - p.face * 8, y - 2); c.lineTo(x + p.face * 14, y - 14); }
       else { c.moveTo(x + p.face * 4, y + 1); c.lineTo(x + p.face * 9, y - 32); }

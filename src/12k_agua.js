@@ -62,7 +62,7 @@ const M_RIFLE = {
   done() { const K = K3(), S = this.st; S.step = 7; S.boca.sleep = false; S.boca.H.pose = null;
     K.talk([['Boca Papa', '¡AAAAH! ¿Quién...? ¡¿CHOPA?! ¡Me has empapado la siesta! ¡Y la camisa de los domingos!'], [BLANCO, '«Brrr... ¡diez metros!... mmm... ¡bien!»'], [K.CH, 'Funciona. Diez metros de chorro y cero heridos. Esto lo vamos a usar, Boca.'],
       ['Boca Papa', 'Pues úsalo con otro... Oye, el que te busca es uno de la Secreta, un tal Tostón. Dice que te espera en la Avenida de los Menceyes. Tiene pinta de policía de película mala.']], () => {
-      K.GANG.rifleTut = true; s2Pass('Rifle de agua probado', 300); setTimeout(() => HUD.toast('Nuevo: el SECRETA te espera en la Avenida de los Menceyes (círculo salmón)', '#ff8a65', 7), 4000); }); },
+      K.GANG.rifleTut = true; s2Pass('Rifle de agua probado', 300); setTimeout(() => HUD.toast('Nuevo: el SECRETA te espera en la Avenida de los Menceyes (círculo rosa)', '#ff5fa2', 7), 4000); }); },
 };
 
 // =====================================================================================================================
@@ -80,27 +80,27 @@ const TOSTON = (t) => [SECRETA, t];
 const S_SEGUIR = {
   title: 'Tostón, de la Secreta', who: SECRETA, hint() { return 'Un tal ' + b2('Tostón') + ', de la Secreta, te espera en la ' + b2('Avenida de los Menceyes'); }, startPos: startSecreta,
   start() { const K = K3(); this.st = { step: 0 };
-    K.talk([TOSTON('Inspector Fulgencio Tostón, de la Secreta. Treinta años en el Cuerpo y ni un día de baja... bueno, alguno. Me han hablado de ti: el de la nariz y la banda de defensores.'), TOSTON('Necesito ojos frescos. Ese Seat gris lleva tres días dando vueltas por el barrio. Síguelo, pero de lejos, que si te ve se nos escapa. Entre veinte y cien metros, como en las películas.'),
+    K.talk([TOSTON('Inspector Fulgencio Tostón, de la Secreta. Treinta años en el Cuerpo y ni un día de baja... bueno, alguno. Me han hablado de ti: el de la nariz y la banda de defensores.'), TOSTON('Necesito ojos frescos. Ese coche gris lleva tres días dando vueltas por el barrio. Síguelo, pero de lejos, que si te ve se nos escapa. Entre veinte y cien metros, como en las películas.'),
       [K.CH, '¿Y usted no viene?'], TOSTON('Yo coordino. Desde aquí. Con mi bocadillo de pata.')], () => { if (!K.isActive(this)) return;
       const [x, z, h] = k3Street(PLAYER.x, PLAYER.z, 40, 70); this.st.P = s2Path(s2Route(x, z, 900, 1400)); const a = this.st.P.at(0); this.st.car = s2Car('sedan', 0x8a8f94, a[0], a[1], a[2]); this.st.car.mode = 'race'; this.st.car.driver = 'race'; s2Mark(this.st.car, 10);
-      this.st.step = 1; this.st.close = 0; K.setObjective('Súbete a un coche y sigue al ' + b2('Seat gris') + ' sin acercarte demasiado'); }); },
+      this.st.step = 1; this.st.close = 0; K.setObjective('Súbete a un coche y sigue al ' + b2('coche gris') + ' sin acercarte demasiado'); }); },
   update(dt) { const K = K3(), S = this.st; if (!S || !S.step) return;
     if (S.step === 1) { const c = S.car; const d = Math.hypot(PLAYER.x - c.x, PLAYER.z - c.z); S.trk = (S.trk || 0) - dt; if (S.trk <= 0) { S.trk = 0.8; K.track(c.x, c.z, 6); }
       const done = s2DriveCar(c, S.P, dt, 13, (dd) => (dd > 120 ? 0.5 : 1));
       if (d < 18) { S.close += dt; if (S.close > 2.5) { s2Fail('¡Te ha visto! «Pero qué haces, chaval, que eres más cantoso que un coche de feria»'); return; } K.setObjective(`¡Demasiado cerca! Aléjate (${Math.round(d)} m)`); }
-      else { S.close = Math.max(0, S.close - dt); K.setObjective(`Sigue al ${b2('Seat gris')} · distancia ${Math.round(d)} m (20–100)`); }
+      else { S.close = Math.max(0, S.close - dt); K.setObjective(`Sigue al ${b2('coche gris')} · distancia ${Math.round(d)} m (20–100)`); }
       if (d > 160) { s2Fail('Lo has perdido. Tostón: «Esto en mis tiempos no pasaba»'); return; }
-      if (done) { S.step = 2; c.mode = 'physics'; c.driver = null; c.ctl.brk = 1; const [a, b] = safeSpot(c.x + 2.5, c.z + 1.5, 0.6); S.man = s2Human(THIEF_LOOKS[2], a, b); s2Mark(S.man, 8); K.goto(a, b, 3, 0xff8a65); K.setObjective('El sospechoso se baja. ' + b2('Ve a por él')); } }
+      if (done) { S.step = 2; c.mode = 'physics'; c.driver = null; c.ctl.brk = 1; const [a, b] = safeSpot(c.x + 2.5, c.z + 1.5, 0.6); S.man = s2Human(THIEF_LOOKS[2], a, b); s2Mark(S.man, 8); K.goto(a, b, 3, 0xff5fa2); K.setObjective('El sospechoso se baja. ' + b2('Ve a por él')); } }
     if (S.step === 2 && !S.man.down && s2Near(S.man.x, S.man.z, 3) && !PLAYER.car) { S.step = 3; K.clearBeacon();
-      K.talk([['Sospechoso', '¿Y tú qué miras? ¡Vete a seguir a tu abuela!']], () => s2Fight(this, 'EL DEL SEAT', S.man.H.look, { npc: S.man, lv: 0.5 }, () => { s2Down(S.man);
-        K.talk([TOSTON('(por el walkie) ¡Bien hecho, chaval! Llevaba un maletero lleno de décimos de lotería falsos. Esto es la Secreta: discreción y mano dura.')], () => s2Pass('Sospechoso del Seat gris detenido', 700)); }, () => s2Fail('Te ha dado una paliza y se ha largado'))); } },
+      K.talk([['Sospechoso', '¿Y tú qué miras? ¡Vete a seguir a tu abuela!']], () => s2Fight(this, 'EL DEL COCHE GRIS', S.man.H.look, { npc: S.man, lv: 0.5 }, () => { s2Down(S.man);
+        K.talk([TOSTON('(por el walkie) ¡Bien hecho, chaval! Llevaba un maletero lleno de décimos de lotería falsos. Esto es la Secreta: discreción y mano dura.')], () => s2Pass('Sospechoso del coche gris detenido', 700)); }, () => s2Fail('Te ha dado una paliza y se ha largado'))); } },
 };
 // ---- S2: contenedores ardiendo + el pirómano a la carrera (pistola)
 const S_CONTENEDORES = {
   title: 'Contenedores en llamas', who: SECRETA, hint() { return b2('Tostón') + ' tiene un encargo urgente en la Avenida de los Menceyes'; }, startPos: startSecreta,
   start() { const K = K3(); this.st = { step: 0 };
     K.talk([TOSTON('Un pirómano está quemando contenedores por el barrio. Cuatro esta noche. Tú con el rifle ese de agua apagas, y luego le das con la pistolita de bolas, que a mí la rodilla ya no me da para correr.'), [K.CH, '¿Y los bomberos?'], TOSTON('Están en un gato subido a un drago. Venga, que se acaba el tiempo.')], () => { if (!K.isActive(this)) return;
-      k3RifleReady(); const [x, z] = k3Street(PLAYER.x, PLAYER.z, 220, 380); this.st.c = [x, z]; this.st.step = 1; K.goto(x, z, 8, 0xff8a65); K.setTimer(100); K.setObjective('Ve a la calle de los ' + b2('contenedores ardiendo')); }); },
+      k3RifleReady(); const [x, z] = k3Street(PLAYER.x, PLAYER.z, 220, 380); this.st.c = [x, z]; this.st.step = 1; K.goto(x, z, 8, 0xff5fa2); K.setTimer(100); K.setObjective('Ve a la calle de los ' + b2('contenedores ardiendo')); }); },
   update(dt) { const K = K3(), S = this.st; if (!S || !S.step) return;
     if (S.step === 1 && s2AtGoal(25)) { S.step = 2; K.clearBeacon(); K.setTimer(90); k3RifleReady(); k3Fires(k3Ring(S.c[0], S.c[1], 4, 9), 1.3, 1.6, () => this.runner()); K.setObjective('¡Apaga los ' + b2('4 contenedores') + '! (sal del coche, rifle de agua)'); }
     if (S.step === 3 && !S.n.down) { const end = s2Runner(S.n, S.P, dt, 5.6); s2TrackTarget(S.tg); if (end && !s2Near(S.n.x, S.n.z, 60)) s2Fail('El pirómano se ha escapado'); } },
@@ -114,7 +114,7 @@ const S_AMANO = {
   start() { const K = K3(); this.st = { step: 0 };
     const f = COURTS.filter((c) => c.sport === 'fut' && c.gate === 'court' && !c.final && c.kind !== 'fs').sort((a, b) => Math.hypot(a.cx - PLAYER.x, a.cz - PLAYER.z) - Math.hypot(b.cx - PLAYER.x, b.cz - PLAYER.z))[0];
     K.talk([TOSTON('Hay una banda de apostadores que amaña los partidos de barrio: pagan a un equipo para que pierda y se forran. Hoy juegan contra el tuyo, porque saben que sois nuevos.'), TOSTON('Ganadles. Si pierden su dinero, el jefe se pondrá nervioso y se delatará. Siempre pasa. Lo vi en una película de Bud Spencer.')], () => {
-      if (!K.isActive(this)) return; if (!f) { K.abort('No encuentro ningún campo de fútbol.'); return; } this.st.c = f; this.st.step = 1; K.goto(f.cx, f.cz, 10, 0xff8a65); K.setObjective('Ve con la banda a ' + b2(f.label) + ' para el partido'); }); },
+      if (!K.isActive(this)) return; if (!f) { K.abort('No encuentro ningún campo de fútbol.'); return; } this.st.c = f; this.st.step = 1; K.goto(f.cx, f.cz, 10, 0xff5fa2); K.setObjective('Ve con la banda a ' + b2(f.label) + ' para el partido'); }); },
   update() { const K = K3(), S = this.st; if (!S || S.step !== 1 || !s2AtGoal(12)) return; if (PLAYER.car) { if (PLAYER.car.speed > 2) return; exitCar(); } S.step = 2; K.clearBeacon(); K.setObjective(null);
     playFieldGame(S.c, { rivalName: 'APOSTADORES', kit: { shirt: '#2c3e50', shorts: '#f1c40f', socks: '#2c3e50' }, lv: 0.45, time: 160, onEnd: (r) => { if (!K.isActive(this)) return; if (!r.won) { K.fail('Habéis perdido: los apostadores se forran'); return; } this.boss(); } }); },
   boss() { const K = K3(), S = this.st; const [a, b] = safeSpot(PLAYER.x + 3, PLAYER.z + 2, 0.6); S.b = s2Human(THIEF_LOOKS[1], a, b, [PLAYER.x, PLAYER.z]);
@@ -126,7 +126,7 @@ const S_CANCHA = {
   title: 'Triple en la cancha', who: SECRETA, hint() { return b2('Tostón') + ' necesita a alguien que juegue al baloncesto: Avenida de los Menceyes'; }, startPos: startSecreta,
   start() { const K = K3(); this.st = { step: 0 }; const c = obispoCourt('publica');
     K.talk([TOSTON('Dos trapicheros mueven mercancía en una cancha. Solo hablan con quien les gana al baloncesto: es su manera de fiarse. Tú y el chico ese, Coco.'), [K.CH, 'Y cuando les ganemos, ¿qué?'], TOSTON('Entonces se pondrán nerviosos y saldrán corriendo. Y tú detrás. Yo te espero con el coche... bueno, sin coche.')], () => {
-      if (!K.isActive(this)) return; if (!c) { K.abort('No encuentro ninguna cancha.'); return; } this.st.c = c; this.st.step = 1; K.goto(c.cx, c.cz, 6, 0xff8a65); K.setObjective('Ve con Coco a ' + b2(c.label)); }); },
+      if (!K.isActive(this)) return; if (!c) { K.abort('No encuentro ninguna cancha.'); return; } this.st.c = c; this.st.step = 1; K.goto(c.cx, c.cz, 6, 0xff5fa2); K.setObjective('Ve con Coco a ' + b2(c.label)); }); },
   update(dt) { const K = K3(), S = this.st; if (!S || !S.step) return;
     if (S.step === 1 && s2AtGoal(7)) { if (PLAYER.car) { if (PLAYER.car.speed > 2) return; exitCar(); } S.step = 2; K.clearBeacon(); K.setObjective(null);
       playCourtGame(S.c, { rival: pickRivals(S.c.cx + 7).map((l, k) => ({ name: ['EL FLACO', 'EL TOCHO'][k], look: l })), rivalName: 'TRAPICHEROS', lv: 0.5, time: 120, onEnd: (r) => { if (!K.isActive(this)) return; if (!r.won) { K.fail('Os han ganado y no sueltan prenda'); return; } this.flee(); } }); }
@@ -134,14 +134,14 @@ const S_CANCHA = {
       if (Math.hypot(PLAYER.x - c.x, PLAYER.z - c.z) > 330) { s2Fail('Los trapicheros se han escapado'); return; }
       if (done || c.health < 45) { S.step = 4; c.mode = 'physics'; c.driver = null; c.ctl.brk = 1; K.talk([['Trapichero', '¡Vale, vale! ¡Nos rendimos! ¡Era solo gofio adulterado!'], TOSTON('(por el walkie) Gofio adulterado... Esto es más gordo de lo que pensaba. Buen trabajo, chaval.')], () => s2Pass('Trapicheros detenidos', 1400)); } } },
   flee() { const K = K3(), S = this.st; S.step = 3; const [x, z, h] = k3Street(PLAYER.x, PLAYER.z, 25, 45); S.P = s2Path(s2Route(x, z, 1000, 1600)); const a = S.P.at(0); S.car = s2Car('compact', 0xd35400, a[0], a[1], a[2]); S.car.mode = 'race'; S.car.driver = 'race'; s2Mark(S.car, 10);
-    HUD.big('¡SE ESCAPAN!', '#ff8a65', 2); K.setObjective('¡Los trapicheros huyen en un ' + b2('coche naranja') + '! Persíguelos y embístelos'); },
+    HUD.big('¡SE ESCAPAN!', '#ff5fa2', 2); K.setObjective('¡Los trapicheros huyen en un ' + b2('coche naranja') + '! Persíguelos y embístelos'); },
 };
 // ---- S5: mojar al pirómano a la carrera (rifle) y apagar lo que deja ardiendo
 const S_MOJAR = {
   title: 'Al pirómano, agua', who: SECRETA, hint() { return b2('Tostón') + ' ha vuelto a ver al pirómano: Avenida de los Menceyes'; }, startPos: startSecreta,
   start() { const K = K3(); this.st = { step: 0 };
     K.talk([TOSTON('El pirómano ha salido bajo fianza. Y ha vuelto a las andadas: está prendiendo fuego a los bancos de la plaza. Esta vez nada de pistola, que su abogado es muy pesado.'), TOSTON('Lo mojas tres veces con ese chisme de agua y se le apaga el mechero y las ganas. Luego apagas lo que haya dejado ardiendo. Tienes poco tiempo.')], () => {
-      if (!K.isActive(this)) return; k3RifleReady(); const [x, z] = k3Street(PLAYER.x, PLAYER.z, 250, 400); this.st.c = [x, z]; this.st.step = 1; K.goto(x, z, 8, 0xff8a65); K.setTimer(110); K.setObjective('Ve a la plaza donde está el ' + b2('pirómano')); }); },
+      if (!K.isActive(this)) return; k3RifleReady(); const [x, z] = k3Street(PLAYER.x, PLAYER.z, 250, 400); this.st.c = [x, z]; this.st.step = 1; K.goto(x, z, 8, 0xff5fa2); K.setTimer(110); K.setObjective('Ve a la plaza donde está el ' + b2('pirómano')); }); },
   update(dt) { const K = K3(), S = this.st; if (!S || !S.step) return;
     if (S.step === 1 && s2AtGoal(25)) { S.step = 2; K.clearBeacon(); K.setTimer(0); k3RifleReady(); const [a, b] = safeSpot(S.c[0] + 8, S.c[1] + 5, 0.6); S.n = s2Human(THIEF_LOOKS[0], a, b); S.P = s2RunPath(S.n, 220, 340); s2Mark(S.n, 10); s2Chase(S.n);
       S.fires = k3Fires(k3Ring(S.c[0], S.c[1], 3, 7), 1.0, 1.2, () => { S.firesOut = true; this.check(); }); for (const f of S.fires) { const i = S2.chase.indexOf(f); if (i >= 0) S2.chase.splice(i, 1); } // first the runner: the fires come back on the map when he is caught
@@ -156,7 +156,7 @@ const S_GOFIO = {
   start() { const K = K3(); this.st = { step: 0 };
     K.talk([TOSTON('Chaval, el gofio adulterado sale de una nave del polígono. Es la Operación Gofio Blanco. Tienes dos minutos para llegar antes de que carguen el camión.'), TOSTON('Habrá un portero grandote, unos cuantos matones y, si se ven perdidos, le pegarán fuego a todo. Llévate el rifle y la pistola. Yo llevo el bigote.'), [K.CH, '¿Y el resto de la Secreta?'], TOSTON('El resto de la Secreta soy yo.')], () => {
       if (!K.isActive(this)) return; k3RifleReady(); s2Armed(); AGUA.setRifleOut(false, true); const b = BUILD.filter((q) => q.style === 3 && Math.hypot(q.cx - PLAYER.x, q.cz - PLAYER.z) > 500 && Math.hypot(q.cx - PLAYER.x, q.cz - PLAYER.z) < 1300 && worldEdgeDist(q.cx, q.cz) > 150).sort(() => Math.random() - 0.5)[0];
-      const [x, z] = b ? s2Spot(b.cx, b.cz) : k3Street(PLAYER.x, PLAYER.z, 600, 900); this.st.w = [x, z]; this.st.step = 1; K.goto(x, z, 8, 0xff8a65); K.setTimer(120); K.setObjective('¡Corre! Llega a la ' + b2('nave del polígono') + ' antes de que carguen el camión'); }); },
+      const [x, z] = b ? s2Spot(b.cx, b.cz) : k3Street(PLAYER.x, PLAYER.z, 600, 900); this.st.w = [x, z]; this.st.step = 1; K.goto(x, z, 8, 0xff5fa2); K.setTimer(120); K.setObjective('¡Corre! Llega a la ' + b2('nave del polígono') + ' antes de que carguen el camión'); }); },
   update(dt) { const K = K3(), S = this.st; if (!S || !S.step) return;
     if (S.step === 1 && s2AtGoal(14)) { if (PLAYER.car && PLAYER.car.speed > 3) return; S.step = 2; K.setTimer(0); K.clearBeacon(); const [a, b] = safeSpot(S.w[0] + 3, S.w[1] + 2, 0.6); S.guard = s2Human({ ...THIEF_LOOKS[1], build: { fat: 1 } }, a, b, [PLAYER.x, PLAYER.z]); if (PLAYER.car) exitCar();
       K.talk([['Portero de la nave', 'Aquí no se entra sin invitación. Y tú tienes cara de no tenerla.']], () => s2Fight(this, 'EL PORTERO', S.guard.H.look, { npc: S.guard, lv: 0.62, deal: 1.1 }, () => { s2Down(S.guard); this.thugs(); }, () => s2Fail('El portero te ha mandado a casa'))); }
@@ -171,7 +171,7 @@ const S_GOFIO = {
   fire() { const K = K3(), S = this.st; S.step = 4; WEAPON.targets = []; WEAPON.onHit = null; K.talk([['Jefe del gofio (desde dentro)', '¡Si no es mío no es de nadie! ¡Fuego!']], () => { if (!K.isActive(this)) return;
       k3RifleReady(); k3Fires(k3Ring(S.w[0], S.w[1], 5, 8), 1.4, 1.6, () => this.escape()); K.setTimer(80); K.setObjective('¡Fuego en la nave! Saca el ' + b2('rifle de agua') + ' (3) y apaga los 5 fuegos'); }); },
   escape() { const K = K3(), S = this.st; if (S.step !== 4) return; S.step = 5; K.setTimer(0); const [x, z, h] = k3Street(S.w[0], S.w[1], 20, 40); S.P = s2Path(s2Route(x, z, 1200, 1800)); const a = S.P.at(0); S.car = s2Car('transit', 0xf4f4f4, a[0], a[1], a[2]); S.car.mode = 'race'; S.car.driver = 'race'; s2Mark(S.car, 10);
-    HUD.big('¡EL JEFE HUYE!', '#ff8a65', 2); K.setObjective('¡El jefe escapa en la ' + b2('furgoneta blanca') + '! Coge un coche y embístela'); },
+    HUD.big('¡EL JEFE HUYE!', '#ff5fa2', 2); K.setObjective('¡El jefe escapa en la ' + b2('furgoneta blanca') + '! Coge un coche y embístela'); },
 };
 
 // =====================================================================================================================

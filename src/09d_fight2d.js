@@ -282,10 +282,10 @@ const FIGHT2D = (() => {
     for (const e of st.fx) { const k = e.t; cx.fillStyle = e.col; for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; const r = 3 + k * 1.5; cx.fillRect(Math.round(e.x + Math.cos(a) * r), Math.round(e.y + Math.sin(a) * r), 2, 2); } if (k < 4) { cx.fillStyle = '#fff'; cx.fillRect(Math.round(e.x - 2), Math.round(e.y - 2), 4, 4); } }
     cx.restore();
     // HUD: life bars, names, round wins
-    const bar = (f, x0, right) => { const w = 124; cx.fillStyle = '#000'; cx.fillRect(x0 - 1, 13, w + 2, 10); cx.fillStyle = '#b3261e'; const sw = w * f.shown / 100; cx.fillRect(right ? x0 + w - sw : x0, 14, sw, 8); cx.fillStyle = '#ffd400'; const hw = w * f.hp / 100; cx.fillRect(right ? x0 + w - hw : x0, 14, hw, 8);
-      txt(f.name, right ? x0 + w : x0, 26, 8, '#fff', right ? 'right' : 'left'); for (let i = 0; i < f.wins; i++) { cx.fillStyle = '#ffd400'; cx.fillRect(right ? x0 + w - 8 - i * 10 : x0 + i * 10, 38, 7, 7); } };
-    bar(st.a, 12, false); bar(st.b, W - 136, true);
-    txt('KO', W / 2, 13, 10, '#ffd400');
+    const bar = (f, x0, right) => { const w = 84; /* v1.1.3 (Jonay: «enorme la verdad lo de las peleas»): bars, names and KO about a third smaller */ cx.fillStyle = '#000'; cx.fillRect(x0 - 1, 9, w + 2, 7); cx.fillStyle = '#b3261e'; const sw = w * f.shown / 100; cx.fillRect(right ? x0 + w - sw : x0, 10, sw, 5); cx.fillStyle = '#ffd400'; const hw = w * f.hp / 100; cx.fillRect(right ? x0 + w - hw : x0, 10, hw, 5);
+      txt(f.name, right ? x0 + w : x0, 19, 6, '#fff', right ? 'right' : 'left'); for (let i = 0; i < f.wins; i++) { cx.fillStyle = '#ffd400'; cx.fillRect(right ? x0 + w - 6 - i * 8 : x0 + i * 8, 28, 5, 5); } };
+    bar(st.a, 10, false); bar(st.b, W - 94, true);
+    txt('KO', W / 2, 9, 7, '#ffd400');
     if (st.stake) txt('$' + st.stake, W / 2, 28, 8, '#7fe08a');
     if (st.comboT > 0 && st.comboBy && st.comboBy.combo >= 2) txt(st.comboBy.combo + ' HITS', st.comboBy === st.a ? 60 : W - 60, 52, 10, '#ff8a3d');
     if (st.banner) txt(st.banner, W / 2, 68, st.bannerSize || 16, st.bannerCol || '#fff');
@@ -295,14 +295,14 @@ const FIGHT2D = (() => {
   }
   // first fights: a plain controls card, waits until you press Space (or tap) to start
   function drawControls() {
-    const touch = document.body.classList.contains('touchmode'); const bx = 22, by = 46, bw = W - 44, bh = 112;
+    const touch = document.body.classList.contains('touchmode'); const bw = 170, bh = 78, bx = (W - bw) / 2, by = 56; /* v1.1.3: a smaller card (it covered the whole screen) */
     cx.fillStyle = 'rgba(0,0,0,0.78)'; cx.fillRect(bx, by, bw, bh); cx.fillStyle = '#ffd400'; cx.fillRect(bx, by, bw, 2); cx.fillRect(bx, by + bh - 2, bw, 2);
-    txt('CONTROLES', W / 2, by + 8, 10, '#ffd400');
+    txt('CONTROLES', W / 2, by + 6, 7, '#ffd400');
     const rows = touch ? [['PUÑO', 'P', '#ffd400'], ['PATADA', 'K', '#ff5252'], ['SALTO', '▲', '#5ec8ff'], ['CUBRIRSE', 'atrás', '#9fd7ff']]
       : [['PUÑO', CONTROLS.keyName('f_punch') + ' · clic izq.', '#ffd400'], ['PATADA', CONTROLS.keyName('f_kick') + ' · clic dcho.', '#ff5252'], ['SALTO', CONTROLS.keyName('f_jump'), '#5ec8ff'], ['CUBRIRSE', 'atrás', '#9fd7ff']];
-    rows.forEach(([a, b, c], i) => { const y = by + 26 + i * 13; txt(a, bx + 14, y, 7, c, 'left'); txt(b, bx + bw - 14, y, 7, '#fff', 'right'); });
-    txt(touch ? 'Más en Opciones' : 'Más en Opciones › Controles', W / 2, by + 80, 6, '#bbb');
-    if (st.frame % 50 < 34) txt(touch ? 'TOCA LA PANTALLA PARA EMPEZAR' : 'PULSA ' + CONTROLS.keyName('f_punch').toUpperCase() + ' PARA EMPEZAR', W / 2, by + 92, 7, '#7fe08a');
+    rows.forEach(([a, b, c], i) => { const y = by + 19 + i * 10; txt(a, bx + 10, y, 5, c, 'left'); txt(b, bx + bw - 10, y, 5, '#fff', 'right'); });
+    txt(touch ? 'Más en Opciones' : 'Más en Opciones › Controles', W / 2, by + 59, 4, '#bbb');
+    if (st.frame % 50 < 34) txt(touch ? 'TOCA LA PANTALLA PARA EMPEZAR' : 'PULSA ' + CONTROLS.keyName('f_punch').toUpperCase() + ' PARA EMPEZAR', W / 2, by + 67, 5, '#7fe08a');
   }
   window.addEventListener('pointerdown', (e) => { if (running && st && st.phase === 'ready' && e.pointerType === 'touch') { st.readyTap = true; e.preventDefault(); } }, true);
   // ---------------- loop
@@ -362,6 +362,7 @@ const FIGHT2D = (() => {
     const mx = (ax + bx) / 2, mz = (az + bz) / 2; const dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz) || 1; const nx = -dz / L, nz = dx / L;
     let best = null; for (const s of [1, -1]) { const px = mx + nx * s * 10, pz = mz + nz * s * 10; const free = COL.raycast(mx, mz, px, pz); if (!best || free > best.f) best = { f: free, px: mx + nx * s * 10 * Math.max(0.35, Math.min(1, free) - 0.05), pz: mz + nz * s * 10 * Math.max(0.35, Math.min(1, free) - 0.05) }; }
     const gy = heightAt(mx, mz); const cam = camera.clone(); cam.fov = 62; cam.aspect = W / H; cam.position.set(best.px, gy + 1.7, best.pz); cam.lookAt(mx, gy + 1.5, mz); cam.updateProjectionMatrix(); cam.updateMatrixWorld();
+    hide = hide.slice(); if (typeof ACTORS !== 'undefined') for (const [o, A] of ACTORS) { if (A.r !== 170 || !o.visible) continue; const e = o.matrixWorld.elements; if (Math.hypot(e[12] - mx, e[14] - mz) < 30) hide.push(o); } // v1.1.3 (Jonay: «se veía el que estaba peleando conmigo a la vez que peleaba con él»): every person near the fight out of the backdrop
     const vis = hide.map((o) => o && o.visible); hide.forEach((o) => { if (o) o.visible = false; });
     // drawn on the main canvas with the game camera and the same shaders as normal play (a render target needed its own
     // shader variants: ~1 s freeze on the first fight and +34 programs), then the middle 16:9 strip is copied

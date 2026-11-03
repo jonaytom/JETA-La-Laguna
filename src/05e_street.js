@@ -33,7 +33,7 @@ function buildStreetProps() {
     if (!'CRB'.includes(q.cat)) continue;
     const rd = ROADSEG.nearest(q.P[0] + q.N[0] * 3, q.P[1] + q.N[1] * 3); if (!rd || !isPedRoad(DATA.R[rd.ri]) || !isHistoric(q.P[0], q.P[1])) continue;
     const n = 2 + Math.floor(Math.random() * 3);
-    for (let i = 0; i < n; i++) { const s = (i - (n - 1) / 2) * 2.2; const x = q.P[0] + q.N[0] * 2.1 + q.U[0] * s, z = q.P[1] + q.N[1] * 2.1 + q.U[1] * s; if (!free(x, z, 1.0)) continue; lists.table.push([x, z, Math.random() * 6]); if (i % 2 === 0) lists.parasol.push([x, z, 0, q.cat]); }
+    for (let i = 0; i < n; i++) { const s = (i - (n - 1) / 2) * 2.2; const x = q.P[0] + q.N[0] * 2.1 + q.U[0] * s, z = q.P[1] + q.N[1] * 2.1 + q.U[1] * s; if (!free(x, z, 1.0) || (typeof pasajeNear === 'function' && pasajeNear(x, z))) continue; /* v1.1.3: no terraces inside the passages (they floated in Pasaje Aguere) */ lists.table.push([x, z, Math.random() * 6]); if (i % 2 === 0) lists.parasol.push([x, z, 0, q.cat]); }
   }
   // small fountains in the squares between the Catedral and La Concepción
   for (const nm of ['Plaza de los Remedios', 'Plaza de la Concepción', 'Plaza del Doctor Olivera', 'Plaza de San Cristóbal']) {
@@ -42,7 +42,7 @@ function buildStreetProps() {
     if (free(x, z, 3)) lists.fount.push([x, z, 0]);
   }
   // ---- meshes
-  const mk = (geo, mat, arr, col, colFn, scale = 1) => { if (!arr.length) return; const m = new THREE.InstancedMesh(geo, mat, arr.length); const cc = new THREE.Color(); arr.forEach((p, i) => { o.position.set(p[0], heightAt(p[0], p[1]) + 0.13, p[1]); o.rotation.set(0, p[2], 0); o.scale.setScalar(scale); o.updateMatrix(); m.setMatrixAt(i, o.matrix); if (colFn) m.setColorAt(i, cc.set(colFn(p, i))); }); m.castShadow = true; m.receiveShadow = true; scene.add(m); };
+  const mk = (geo, mat, arr, col, colFn, scale = 1) => { if (!arr.length) return; const m = new THREE.InstancedMesh(geo, mat, arr.length); const cc = new THREE.Color(); arr.forEach((p, i) => { o.position.set(p[0], (typeof pasajeFloor === 'function' ? pasajeFloor(p[0], p[1]) : heightAt(p[0], p[1])) + 0.13, p[1]); o.rotation.set(0, p[2], 0); o.scale.setScalar(scale); o.updateMatrix(); m.setMatrixAt(i, o.matrix); if (colFn) m.setColorAt(i, cc.set(colFn(p, i))); }); m.castShadow = true; m.receiveShadow = true; scene.add(m); };
   const wood = MAT.wood, iron = M(0x1d1f21, 0.5, 0.6), stoneL = M(0xcfc8bb, 0.8), green = M(0x3d6b2c, 0.85), white = M(0xf0efe9, 0.6);
   // bench: wooden seat & back on iron legs
   const bench = mergeGeos([(() => { const g = new THREE.BoxGeometry(1.8, 0.07, 0.45); g.translate(0, 0.45, 0); return g; })(), (() => { const g = new THREE.BoxGeometry(1.8, 0.4, 0.06); g.translate(0, 0.72, -0.22); return g; })()]);

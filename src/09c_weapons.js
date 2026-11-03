@@ -141,6 +141,10 @@ function weaponSwitchInput() {
 (() => { const w = document.getElementById('weap'); if (w) { w.style.pointerEvents = 'auto'; w.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); if (typeof RIFLE !== 'undefined' && RIFLE.has) AGUA.cycle(); else setWeaponOut(!WEAPON.out); }); }
   document.addEventListener('keydown', (e) => { if (e.code === 'Tab' && GAME.state === 'play') e.preventDefault(); }, true);
   // v0.99.7 (Jonay: «la rueda del ratón debería dejar cambiar de arma»): wheel down = next (fists → pistol → water rifle), up = back
-  let wheelT = 0; document.addEventListener('wheel', (e) => { const rifle = typeof RIFLE !== 'undefined' && RIFLE.has; if (GAME.state !== 'play' || !document.pointerLockElement || PLAYER.car || (!WEAPON.has && !rifle)) return;
-    const now = performance.now(); if (now - wheelT < 160 || Math.abs(e.deltaY) < 1) return; wheelT = now; const dir = e.deltaY > 0 ? 1 : -1;
-    if (rifle) AGUA.cycle(dir); else setWeaponOut(!WEAPON.out); }, { passive: true }); })();
+  // v1.1.3 (Jonay: «lo de la rueda del ratón fue mala idea… para eso están los botones adelante y atrás»): the wheel is
+  // the camera zoom again; the mouse's side buttons change weapon (forward = next, back = previous), without the browser
+  // going back a page
+  const side = (e) => e.button === 3 || e.button === 4;
+  document.addEventListener('mousedown', (e) => { if (side(e)) e.preventDefault(); }, true);
+  document.addEventListener('mouseup', (e) => { if (!side(e)) return; e.preventDefault(); const rifle = typeof RIFLE !== 'undefined' && RIFLE.has; if (GAME.state !== 'play' || PLAYER.car || (!WEAPON.has && !rifle)) return;
+    const dir = e.button === 4 ? 1 : -1; if (rifle) AGUA.cycle(dir); else setWeaponOut(!WEAPON.out); }, true); })();

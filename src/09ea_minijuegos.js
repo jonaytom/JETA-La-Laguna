@@ -48,10 +48,19 @@ const MINI = (() => {
   function hide(cv, state, lock) { clearWorldInput(); if (cv) cv.style.display = 'none'; document.body.classList.remove('fighting'); if (lock) { GAME.state = 'play'; GAME.lock(); } else if (GAME.state === state) GAME.state = 'play'; }
   // v0.89 (Jonay: «todos los minijuegos necesitan pausa con la P, que se reanuda al volver a pulsarla»): P toggles the pause
   // of the minigame that is running (the sound stops too); pauseOverlay() darkens the frame and says PAUSA
-  function pauser(isRunning) { const o = { on: false };
-    window.addEventListener('keydown', (e) => { if (!isRunning() || e.code !== 'KeyP' || e.repeat) return; e.preventDefault(); e.stopPropagation(); o.on = !o.on; const ac = AUDIO.ctx; try { if (ac) (o.on ? ac.suspend() : ac.resume()); } catch (er) { } }, true);
-    o.off = () => { if (o.on) { o.on = false; try { AUDIO.ctx && AUDIO.ctx.resume(); } catch (er) { } } }; return o; }
-  function pauseOverlay(cx, W, H) { cx.fillStyle = 'rgba(0,0,0,0.55)'; cx.fillRect(0, 0, W, H); txt(cx, 'PAUSA', W / 2, H / 2 - 14, 16, '#ffd400'); txt(cx, 'PULSA P PARA SEGUIR', W / 2, H / 2 + 10, 6, '#fff'); }
+  // v1.1.3 (Jonay: «al darle a Esc no me saca del furbito, ni pausa ni nada»): in full screen the browser keeps Esc for
+  // itself (it leaves the full screen and drops the mouse) and the game never sees it: leaving the full screen or losing the
+  // mouse pauses too, and Esc pauses when it does arrive. Paused, Q (or Esc) quits the minigame when it has a way out (quit)
+  function pauser(isRunning, quit) { const o = { on: false, quit: !!quit };
+    const set = (v) => { o.on = v; const ac = AUDIO.ctx; try { if (ac) (v ? ac.suspend() : ac.resume()); } catch (er) { } };
+    window.addEventListener('keydown', (e) => { if (!isRunning() || e.repeat) return;
+      if (e.code === 'KeyP') { e.preventDefault(); e.stopPropagation(); set(!o.on); return; }
+      if (e.code === 'Escape') { e.preventDefault(); e.stopPropagation(); if (o.on && quit) { set(false); quit(); } else set(true); return; }
+      if (o.on && quit && e.code === 'KeyQ') { e.preventDefault(); e.stopPropagation(); set(false); quit(); } }, true);
+    const lost = () => { if (isRunning() && !o.on && !document.fullscreenElement && !document.pointerLockElement && !window.__JETA_TEST) set(true); };
+    document.addEventListener('fullscreenchange', lost); document.addEventListener('pointerlockchange', () => { if (!document.pointerLockElement && document.fullscreenElement === null && !document.body.classList.contains('touchmode')) lost(); });
+    o.off = () => { if (o.on) set(false); }; return o; }
+  function pauseOverlay(cx, W, H) { cx.fillStyle = 'rgba(0,0,0,0.55)'; cx.fillRect(0, 0, W, H); txt(cx, 'PAUSA', W / 2, H / 2 - 14, 16, '#ffd400'); txt(cx, 'PULSA P PARA SEGUIR', W / 2, H / 2 + 10, 6, '#fff'); txt(cx, 'Q: SALIR', W / 2, H / 2 + 22, 6, '#bbb'); }
   // ---------- v0.90 (Jonay: «en basket y fútbol, más que música, efectos del público: el organillo, el furor»). The crowd of
   // a match, all synthesised: the murmur underneath (it rises with the play), the «¡uuuh!» of a near miss, the roar and the
   // applause of a goal or a basket, the pavilion organ (the «charge», the riffs) and the «¡de-fen-sa!» chant with the

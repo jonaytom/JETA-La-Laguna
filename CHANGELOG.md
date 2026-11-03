@@ -3,6 +3,26 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.1.3 — 2026-11-03 — Alpha 1.1.3: tanda de arreglos rápidos (minijuegos, mapa y menús)
+- **Guardar y salir** en el menú de pausa: guarda la partida y cierra el juego.
+- **Cambiar de arma con los botones laterales del ratón** (adelante = siguiente, atrás = anterior); la rueda ya no cambia
+  de arma.
+- **Minijuegos (fútbol, baloncesto)**: Esc pausa (y otra vez Esc o Q sale), P pausa; al salir de pantalla completa se pausa.
+  Abajo a la derecha sale quién lleva el balón, con su número.
+- **Atardecer más suave** (Jonay: «oscurece muy de golpe»): la luz baja poco a poco y la noche ya no empieza de golpe a las 20:24.
+- **Leyenda del mapa**: una línea por cada cadena de misiones abierta, con su color; El Secreta pasa de salmón a rosa para
+  no confundirse con el Torneo.
+- **Carreras**: el siguiente punto de control en el minimapa, en amarillo suave en vez de azul.
+- **Pasaje Aguere**: sin mesas flotando y cada local con su propio cartel (los demás, cerrados).
+- **Contenedores** pegados al bordillo, no en mitad de la calle.
+- **Bencomo**: perros un 25 % más lentos y que no giran a cada momento; el golpe llega más lejos; en el picado agarra la
+  vara por arriba.
+- **Guanche Guarriors**: el campamento dura más y el golpe alcanza más; La Mirladora con el pezón oscuro y la falda corta de cuero oscuro.
+- **Guerra de Naves (GUFO)**: el misil tiene un segundo nivel (otro misil hacia arriba que corre por el techo), DOBLE y
+  LÁSER no se pueden llevar a la vez, marcas de nivel bajo cada casilla y una línea que dice qué hace la marcada.
+- **Peleas**: marcador y cartel de controles más pequeños; la gente de la calle no se ve detrás de la pelea.
+- **Sin marcas reales**: el «Seat gris» de una misión es ahora «el coche gris».
+
 ## 1.1.2 — 2026-11-03 — Alpha 1.1.2: aparcamiento en muchas más calles
 - **Bandas de aparcamiento en más sitios** (Jonay: «lo de la zona de aparcamientos aplica a muchos más sitios, hay que
   buscar la manera de detallar»): además de las etiquetas del OSM, cada tira de aparcamiento «en la calle» que el OSM

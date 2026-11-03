@@ -1,0 +1,9 @@
+# v1.1.3: tanda de arreglos rapidos (minijuegos, luz, leyenda, pasajes, contenedores, Mirladora)
+prueba_arranque.py
+prueba_futbol.py
+prueba_baloncesto.py
+prueba_pelea_especiales.py
+prueba_misiones.py
+prueba_diario.py
+prueba_guardar_cargar.py
+herramientas/foto_bencomo.py

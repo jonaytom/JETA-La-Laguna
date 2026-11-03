@@ -12,25 +12,10 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Minijuegos: controles, pausa y sonido
 
-- [ ] ⚡ **Esc no pausa ni saca del fútbol** (Jonay, 3-nov: «al darle a Esc no me saca del furbito, ni pausa ni nada»): en
-  pantalla completa el navegador se queda la tecla Esc (sale de la pantalla completa o suelta el ratón) y no llega al
-  juego. Abrir la pausa del minijuego también cuando se sale de la pantalla completa o se suelta el ratón
-  (`fullscreenchange` / `pointerlockchange`), con «Seguir» y «Salir del minijuego»; y que P pause en todos los minijuegos.
-  Repasarlo en fútbol, basket, pelea, recreativas y Achamán.
 
 ### Recreativas, consola GOFIO-8 y torneo
 
-- [ ] ⚡ **La Mirladora: pezón oscuro y falda corta de cuero oscuro** (Jonay, 3-nov, eligió en la hoja de variantes
-  `tests/shots/mirla_variantes.png`, hecha con `tools/sprites_ext/mirla_variantes.py`): pezón «Oscuro» (100, 58, 48) y la
-  falda «Corta de cuero oscuro» (la corta teñida como el taparrabos, `TAPA`, que se levanta al caer). Mejillas y pelo, como
-  están. Rehacer su hoja (`mirla_nat.py`) y la de montada en el lagarto (`riders.py`, `lz_mirla`) y cambiar solo esas dos en
-  `src/09jy_sprx_data.js` (no hay en el PC las salidas de las demás para volver a juntarlo todo con `pack.py`).
 
-- [ ] ⚡ **Guanche Guarriors, campamento: más tiempo para recoger y más fácil pegar a los ladrones** (Jonay, 3-nov: «en el
-  campamento hay que dejar más tiempo para recoger lo que soltaron los ladrones cuando terminan de salir, al menos 3–4
-  segundos extra; además es muy difícil golpearlos, debes coincidir demasiado en altura, hay que ampliar el margen»): al
-  irse el último duende, la fase sigue 3–4 s más para recoger lo que cayó; y el margen de profundidad (eje Y del suelo) para
-  acertarles, más ancho (p. ej. el doble). `09m_guanche.js` (fase `camp`, `campT`).
 
 - [ ] ◐ **Guanche Guarriors: golpe en el aire, con patada y con el arma** (Jonay, 3-nov: «debería hacer un golpe en salto
   tanto con la patada como con el mazo o arma que tenga; la patada puede ser parecida a la patada en carrera que ya
@@ -39,20 +24,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   hacia abajo, útil al caer sobre el enemigo) y patada (fotogramas de la patada en carrera; alcance más largo hacia
   delante). Ninguno de los dos derriba, solo quitan vida. Los tres héroes. `09m_guanche.js`.
 
-- [ ] ⚡ **GUFO: la barra de mejoras se entiende mal** (Jonay, 3-nov: «no entiendo qué aporta velocidad… y doble se puede
-  elegir cuando ya tienes láser, ¿tiene eso sentido?»; decidido: «pon un indicador de velocidad; si tengo doble sí puedo
-  pasar a láser, que es mejor, pero empeorar no tiene sentido; hay que poner indicador de los niveles de lo que vas
-  comprando»). `09l_naves.js`:
-  - DOBLE no se puede coger si ya tienes LÁSER (sale en gris); de DOBLE sí se puede pasar a LÁSER.
-  - Indicador de niveles en la barra: VELOC con sus 4 rayitas (o «VELOC 2/4»), OPCIÓN 0/2, y un tic en MISIL, DOBLE/LÁSER
-    y ESCUDO cuando ya los tienes.
-  - Al marcar cada casilla, una línea corta de lo que hace: VELOC «la nave va más rápida», MISIL «misil que cae hacia
-    abajo y sigue el suelo», DOBLE «tiro extra en diagonal hacia arriba», LÁSER «rayo que atraviesa», OPCIÓN «nave
-    fantasma que copia tus disparos», ESCUDO «aguanta 6 golpes».
-  - MISIL con dos niveles (Jonay, 3-nov: «misil debería tener un segundo nivel que sale como el actual pero hacia arriba, y
-    si hay techo corre por el techo; si no, al llegar al cielo se marcha fuera»): nivel 1 = el de ahora (cae en diagonal y
-    sigue el suelo); nivel 2 = además otro hacia arriba que, en las fases con cueva (techo, `terrain().c`), corre pegado al
-    techo y, sin techo, sale por arriba de la pantalla. MISIL pasa a «1/2» en la barra.
 
 - [ ] ◐ **Récords con iniciales antes del «CONTINUE»** (Jonay, 3-nov: «al acabar la partida del minijuego, antes del
   continue, que ya de por sí reinicia el marcador, debería dejar poner las iniciales de la puntuación y grabar si es que
@@ -61,21 +32,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   «CONTINUE» con su cuenta atrás. Si no hay récord, directamente el continue. En todas las máquinas (Guanche Guarriors,
   Bencomo, Naves/GUFO…) y con la tabla guardada en la partida.
 
-- [ ] ⚡ **Bencomo: el guanche agarra la vara más por la punta al clavarla** (Jonay, 3-nov: «el clavado del guanche Bencomo
-  debería dejar el palo agarrado más por la punta, de modo que quede más palo por debajo»): en el dibujo del salto con la
-  vara (salto del pastor), mover las manos hacia el extremo de arriba para que asome más vara por debajo.
-  `tools/sprites_ext/` → `09jy_sprx_data.js` / `09k_bencomo.js`.
-- [ ] ⚡ **Bencomo: los perros corren demasiado** (Jonay, 3-nov: «los perros de Bencomo son demasiado rápidos, redúceles un
-  poco la velocidad de carrera; saltar saltan igual; lógicamente con las vueltas irá aumentando como ya hacía el juego»):
-  bajar la velocidad base de carrera de los perros, sin tocar el salto ni la subida de dificultad por vuelta.
-  `09k_bencomo.js`.
-  - Jonay (3-nov, 3 capturas seguidas: «se mueven tan rápido que parece que tengan dos cabezas; cuando están debajo de ti
-    cambian de dirección súper rápido… hay que reducirles definitivamente su velocidad general al menos un 25 %; se vuelve
-    loco»): velocidad general −25 % como mínimo, y que no puedan girarse más de una vez cada ~0,5 s (cuando el jugador
-    está justo encima, que sigan de largo un poco antes de dar la vuelta, en vez de temblar de lado a lado).
-- [ ] ⚡ **Bencomo: el golpe llega muy corto** (Jonay, 3-nov: «Bencomo pega de muy cerca, solo debería extender un poco más el
-  golpe y el efecto del ataque verse un poco más lejos»): alargar el alcance del golpe (la caja que hace daño) y dibujar el
-  destello del impacto más adelante, a la distancia nueva. `09k_bencomo.js`.
 - [ ] ◐ **Bencomo: listón de salto con pértiga antes de cada tagoror** (Jonay, 3-nov: «antes de llegar a cada tagoror
   debería tener un listón de salto cada vez más alto, por el que te dan puntos extra si lo saltas en lugar de pasarlo por
   debajo, parecido a la bandera de Mario, pero en este caso son saltos de altura de pértiga como las olimpiadas; siempre
@@ -191,10 +147,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Fútbol y baloncesto 2D
 
-- [ ] ⚡ **Fútbol: nombre y dorsal del rival que lleva el balón** (Jonay, 3-nov: «en el furbito debería decir en algún sitio,
-  cuando la lleva el enemigo, qué nombre tiene el jugador, siempre inventados, y su número, por ejemplo en la parte inferior
-  derecha»): abajo a la derecha, «7 · PEPE TOLETE» del que tiene el balón (también los tuyos). Nombres inventados por
-  selección (parodia, nunca reales). Lo mismo en el basket. `09g_futbol2d.js`, `09f_basket2d.js`.
 - [ ] ◐ **Estadísticas al acabar el partido y jugador del partido** (Jonay, 3-nov): basket: tiros intentados y anotados,
   triples, robos, tapones, rebotes y el MVP; fútbol: robos, tiros, goles, pases de gol (el último pase de un compañero 2–3 s
   antes del gol) y el mejor jugador. Pantalla al final, por equipos y por jugador, con los nombres y dorsales de arriba.
@@ -225,15 +177,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   carrera de perfil (zancada más larga, rodilla que sube, brazos que van y vienen), más fotogramas o más amplitud, y que se
   note más al ir con turbo. Mirar también la carrera de frente y de espaldas. `09g_futbol2d.js` (dibujo F2).
 
-- [ ] ⚡ **Pelea callejera: textos y barras demasiado grandes** (Jonay, 3-nov, captura a 1920×1080): las barras de vida,
-  el «KO», los nombres («EL CHOPA», «SASTRÓN») y el rótulo de los golpes ocupan demasiado; más pequeños, sobre todo los
-  nombres. `09d_fight2d.js` (el HUD se dibuja a la escala de la pantalla: mirar con qué tamaño sale a 1080p).
-  - Jonay insiste (3-nov, otra captura: «enorme la verdad lo de las peleas»): también el recuadro de CONTROLES del
-    principio ocupa casi toda la pantalla. Todo a la mitad o menos.
-- [ ] ⚡ **Pelea 2D: no pintar detrás a la gente de la calle que pelea** (Jonay, 3-nov: «en las peleas 2D no se deberían
-  renderizar las personas de fondo, porque se veía el que estaba peleando conmigo a la vez que peleaba con él»): el fondo
-  3D de la pelea saca al rival (y al Chopa) de pie en la calle, a la vez que sus dibujos de la pelea. Esconder al rival y
-  al jugador del mundo 3D mientras dura la pelea (o toda la gente cercana) y volver a mostrarlos al acabar. `09d_fight2d.js`.
 
 - [~] ● v0.90.0 (basket: el A++ semicabezón 120 en el juego; fútbol F2 en v0.88) **Repasar el pixel art de los jugadores de todos los minijuegos** (Jonay, 26-oct): no le gustan los personajes
   de ninguno. Se empieza por el basket.
@@ -321,13 +264,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Controles, menús y movimiento del jugador
 
-- [ ] ⚡ **«Salir» en el menú de pausa** (Jonay, 3-nov: «al estar a pantalla completa no se puede salir… el menú de pausa no
-  tiene un salir»): botón «Salir del juego» (guarda si hace falta, sale de la pantalla completa y cierra la ventana del
-  lanzador; en el navegador normal, vuelve al menú de inicio). `13_main.js`, `index.html`.
-- [ ] ⚡ **Cambiar de arma con los botones laterales del ratón, no con la rueda** (Jonay, 3-nov: «lo de la rueda fue mala
-  idea… al cambiar zoom cambio arma; para eso están los botones adelante y atrás»): quitar el cambio con la rueda
-  (`09c_weapons.js`, ~línea 144) y usar los botones 3/4 del ratón (atrás = arma anterior, adelante = siguiente), evitando
-  que el navegador vaya «atrás». Actualizar el texto «TAB / 1: puños» y Opciones › Controles.
 - [ ] ● **Saltar vallas y obstáculos de media altura** (Jonay, 3-nov: «¿no tenemos alguna animación que haga pasar por
   encima de algo? que valga para saltar una valla»): al correr contra algo de ~0,6–1,3 m (vallas, pretiles, bancos), pasar
   por encima con una animación de salto apoyando la mano. No hay ninguna en el esqueleto actual: sacarla de Mixamo
@@ -335,10 +271,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Cielo, luz y hora del día
 
-- [ ] ⚡ **Anochece de golpe** (Jonay, 3-nov: «oscurece muy de golpe, debería ser más gradual; de un segundo a otro te
-  oscurece muchísimo»): al pasar de día a noche la luz cae casi de una vez. Hacer el atardecer y el amanecer graduales
-  (sol, luz ambiente, niebla y cielo con una curva suave de ~1 hora de juego) y mirar si hay un salto al cambiar la
-  velocidad del reloj de día a noche (`dayRate` en `13_main.js`: 150 s por hora de día y 40 s de noche desde las 20:24).
 - [ ] ◐ **Más luz de noche: farolas, ventanas y demás luces** (Jonay, 3-nov: «la iluminación de las farolas por la noche
   debería cubrir un poco más, y la luz de las ventanas y todas las fuentes de luz en general, para que compense un poco la
   oscuridad que hay»): que el charco de luz de cada farola sea más grande y más claro en el suelo, que las ventanas
@@ -348,13 +280,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### HUD y minimapa
 
-- [ ] ⚡ **La leyenda del mapa no dice de quién es cada punto de misión** (Jonay, 3-nov: «las misiones secundarias no
-  salen en la leyenda del minimapa, como las del Obispo; las de la zona entre Curva de Gracia y Finca España tampoco: se
-  ve un punto naranja pero no hay leyenda… ¿esto es la cadena principal o qué es?»): la leyenda (`11_hud.js`, `legend()`)
-  solo trae «Misión» en amarillo, y cada cadena tiene su color (`12_missions.js`, `TRACKS`): Historia amarillo, El Canarión
-  azul claro, El Obispo morado, Torneo Lagunero naranja, Copa Laguna verde, El Secreta salmón, Carreras del Canarión cian.
-  Añadir a la leyenda una línea por cadena ya abierta, con su nombre y su color; y que los naranjas del Torneo y el
-  salmón de El Secreta se distingan mejor entre sí y del amarillo.
 
 - [~] ◐ v1.0.9 (sin sentidos únicos salvo en vías rápidas, como pidió Jonay; quedan la vuelta en el sitio, la rebaja de las autopistas y los giros) **La ruta del GPS da vueltas enormes** (Jonay, 3-nov: «las indicaciones de ruta hacen unas vueltas terribles, como
   si no quisieran coger dirección prohibida… ¿cómo se decide la ruta?»). Cómo va hoy (`07_vehicles.js`, `GRAPH.routeFrom`):
@@ -366,14 +291,16 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   - una pequeña penalización por giro, para no hacer zigzag por las manzanas;
   - revisar sentidos únicos mal puestos en el OSM o creados al separar sentidos (calles que salen de un solo sentido).
 
-- [ ] ⚡ **Carreras: el tramo siguiente en el minimapa, en amarillo suave en vez de azul** (Jonay, 3-nov, carrera
-  «Gánale al pijo», captura: «el siguiente punto de ruta del minimapa me gustaría que se viera como el amarillo actual
-  pero más suave en lugar de azul»): el trazo discontinuo del tramo siguiente se pinta en `#46c3ff` (`11_hud.js`,
-  `MISSIONS.aheadPath()`, ~línea 125). Pasarlo al amarillo de la ruta (`#f5b72e`) más claro y transparente (p. ej.
-  `#f5d98a` al 55 %), y lo mismo en el mapa grande si lo pinta.
 
 
 ### Misiones, historia y economía
+
+- [ ] ◐ **Nombres de coches demasiado parecidos a las marcas reales** (Jonay, 3-nov: «algunos nombres de los coches se
+  identifican demasiado… y en una misión sale un SEAT; eso está mal, no puede haber marcas reales»): en la 1.1.3 el «Seat
+  gris» de la misión de la Secreta pasa a «coche gris». Falta repasar la lista de `06b_vmodels.js` (Volksgofio, Tollota,
+  Jiundái, Quia, Renol, Pijó, Opal, Citrón, Fiá, Nisanto, Susuki, Fordo, Merceditas, Mitsubichi, Asiento…): proponer a
+  Jonay nombres que solo recuerden de lejos (p. ej. por el país o un chiste canario) y buscar marcas reales en todos los
+  textos (misiones, rótulos, radio).
 
 - [ ] ◐ **Rifle de agua: postura, puntería y chorro** (Jonay, 3-nov, misiones del agua con El Blanco y Boca Papa, X −599,
   Y −525 y X −573, Y −513, 4 capturas).
@@ -501,11 +428,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   esquinas y una **torre de celosía metálica** encima; detrás, un **drago** grande. Hacerla así y quitar la torre amarilla
   con ventanas.
 
-- [ ] ⚡ **Pasaje Aguere: mesas y sombrillas flotando** (Jonay, 3-nov, X −213, Y 49, captura): las mesas de la terraza del
-  pasaje no tocan el suelo. Ponerlas a la altura del suelo del pasaje (`05x_pasajes.js`).
-- [ ] ⚡ **Pasaje Aguere: el mismo cartel en cada local** (Jonay, 3-nov, X −213, Y 46, captura): «Tasca El Soportal» y
-  «Móviles Guanchófono» se repiten en todos los huecos del pasaje, uno tras otro. Pocos negocios con cartel (3–5, distintos
-  y parodias) y el resto de locales cerrados o sin rótulo. Los carteles del pasaje salen de `05x_pasajes.js`.
 
 - [~] ◐ v0.76.0 (4 jugueterías con icono y compra con E: rifle y bolitas; falta recrear su fachada/escaparate o interior) **Jugueterías** (Jonay, 12-oct): recrear varias (mejor las que ya hay en el mapa); allí se compran **bolitas** para
       la pistola y otras armas: **escopeta de agua** (chorros de agua; se recarga en **fuentes** repartidas por la ciudad;
@@ -594,8 +516,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   de suelo a la misma altura (la plaza, la calle peatonal y el bordillo de la acera que se solapan) se pelean por pintarse
   (z-fighting) y cambia cuál se ve según el fotograma. Buscar dónde se pisan las áreas peatonales con calles y aceras y dejar
   una sola, o separarlas unos centímetros con prioridad fija (`polygonOffset`).
-- [ ] ⚡ **Contenedores de basura en medio de la calzada** (Jonay, 3-nov, C. Adelantado X −757, Y −359): van pegados a un
-  lado (junto al bordillo o en su hueco de aparcamiento), nunca en mitad de la calle. Revisar dónde se colocan en todas.
 - [ ] ◐ **Escalón de terreno en Camino San Francisco / San Honorato** (Jonay, 3-nov, X −720, Y 301 y X −730, Y 335,
   capturas): un salto brusco del terreno junto a la calzada y la glorieta; en la realidad la bajada es mucho más suave.
   Suavizar el terreno y la rasante ahí (y buscar otros saltos parecidos con el revisor).
@@ -940,6 +860,93 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Hecho
 
+- [x] v1.1.3 **Esc no pausa ni saca del fútbol** (Jonay, 3-nov: «al darle a Esc no me saca del furbito, ni pausa ni nada»): en
+  pantalla completa el navegador se queda la tecla Esc (sale de la pantalla completa o suelta el ratón) y no llega al
+  juego. Abrir la pausa del minijuego también cuando se sale de la pantalla completa o se suelta el ratón
+  (`fullscreenchange` / `pointerlockchange`), con «Seguir» y «Salir del minijuego»; y que P pause en todos los minijuegos.
+  Repasarlo en fútbol, basket, pelea, recreativas y Achamán.
+- [x] v1.1.3 **La Mirladora: pezón oscuro y falda corta de cuero oscuro** (Jonay, 3-nov, eligió en la hoja de variantes
+  `tests/shots/mirla_variantes.png`, hecha con `tools/sprites_ext/mirla_variantes.py`): pezón «Oscuro» (100, 58, 48) y la
+  falda «Corta de cuero oscuro» (la corta teñida como el taparrabos, `TAPA`, que se levanta al caer). Mejillas y pelo, como
+  están. Rehacer su hoja (`mirla_nat.py`) y la de montada en el lagarto (`riders.py`, `lz_mirla`) y cambiar solo esas dos en
+  `src/09jy_sprx_data.js` (no hay en el PC las salidas de las demás para volver a juntarlo todo con `pack.py`).
+- [x] v1.1.3 **Guanche Guarriors, campamento: más tiempo para recoger y más fácil pegar a los ladrones** (Jonay, 3-nov: «en el
+  campamento hay que dejar más tiempo para recoger lo que soltaron los ladrones cuando terminan de salir, al menos 3–4
+  segundos extra; además es muy difícil golpearlos, debes coincidir demasiado en altura, hay que ampliar el margen»): al
+  irse el último duende, la fase sigue 3–4 s más para recoger lo que cayó; y el margen de profundidad (eje Y del suelo) para
+  acertarles, más ancho (p. ej. el doble). `09m_guanche.js` (fase `camp`, `campT`).
+- [x] v1.1.3 **GUFO: la barra de mejoras se entiende mal** (Jonay, 3-nov: «no entiendo qué aporta velocidad… y doble se puede
+  elegir cuando ya tienes láser, ¿tiene eso sentido?»; decidido: «pon un indicador de velocidad; si tengo doble sí puedo
+  pasar a láser, que es mejor, pero empeorar no tiene sentido; hay que poner indicador de los niveles de lo que vas
+  comprando»). `09l_naves.js`:
+  - DOBLE no se puede coger si ya tienes LÁSER (sale en gris); de DOBLE sí se puede pasar a LÁSER.
+  - Indicador de niveles en la barra: VELOC con sus 4 rayitas (o «VELOC 2/4»), OPCIÓN 0/2, y un tic en MISIL, DOBLE/LÁSER
+    y ESCUDO cuando ya los tienes.
+  - Al marcar cada casilla, una línea corta de lo que hace: VELOC «la nave va más rápida», MISIL «misil que cae hacia
+    abajo y sigue el suelo», DOBLE «tiro extra en diagonal hacia arriba», LÁSER «rayo que atraviesa», OPCIÓN «nave
+    fantasma que copia tus disparos», ESCUDO «aguanta 6 golpes».
+  - MISIL con dos niveles (Jonay, 3-nov: «misil debería tener un segundo nivel que sale como el actual pero hacia arriba, y
+    si hay techo corre por el techo; si no, al llegar al cielo se marcha fuera»): nivel 1 = el de ahora (cae en diagonal y
+    sigue el suelo); nivel 2 = además otro hacia arriba que, en las fases con cueva (techo, `terrain().c`), corre pegado al
+    techo y, sin techo, sale por arriba de la pantalla. MISIL pasa a «1/2» en la barra.
+- [x] v1.1.3 **Bencomo: el guanche agarra la vara más por la punta al clavarla** (Jonay, 3-nov: «el clavado del guanche Bencomo
+  debería dejar el palo agarrado más por la punta, de modo que quede más palo por debajo»): en el dibujo del salto con la
+  vara (salto del pastor), mover las manos hacia el extremo de arriba para que asome más vara por debajo.
+  `tools/sprites_ext/` → `09jy_sprx_data.js` / `09k_bencomo.js`.
+- [x] v1.1.3 **Bencomo: los perros corren demasiado** (Jonay, 3-nov: «los perros de Bencomo son demasiado rápidos, redúceles un
+  poco la velocidad de carrera; saltar saltan igual; lógicamente con las vueltas irá aumentando como ya hacía el juego»):
+  bajar la velocidad base de carrera de los perros, sin tocar el salto ni la subida de dificultad por vuelta.
+  `09k_bencomo.js`.
+  - Jonay (3-nov, 3 capturas seguidas: «se mueven tan rápido que parece que tengan dos cabezas; cuando están debajo de ti
+    cambian de dirección súper rápido… hay que reducirles definitivamente su velocidad general al menos un 25 %; se vuelve
+    loco»): velocidad general −25 % como mínimo, y que no puedan girarse más de una vez cada ~0,5 s (cuando el jugador
+    está justo encima, que sigan de largo un poco antes de dar la vuelta, en vez de temblar de lado a lado).
+- [x] v1.1.3 **Bencomo: el golpe llega muy corto** (Jonay, 3-nov: «Bencomo pega de muy cerca, solo debería extender un poco más el
+  golpe y el efecto del ataque verse un poco más lejos»): alargar el alcance del golpe (la caja que hace daño) y dibujar el
+  destello del impacto más adelante, a la distancia nueva. `09k_bencomo.js`.
+- [x] v1.1.3 **Fútbol: nombre y dorsal del rival que lleva el balón** (Jonay, 3-nov: «en el furbito debería decir en algún sitio,
+  cuando la lleva el enemigo, qué nombre tiene el jugador, siempre inventados, y su número, por ejemplo en la parte inferior
+  derecha»): abajo a la derecha, «7 · PEPE TOLETE» del que tiene el balón (también los tuyos). Nombres inventados por
+  selección (parodia, nunca reales). Lo mismo en el basket. `09g_futbol2d.js`, `09f_basket2d.js`.
+- [x] v1.1.3 **Pelea callejera: textos y barras demasiado grandes** (Jonay, 3-nov, captura a 1920×1080): las barras de vida,
+  el «KO», los nombres («EL CHOPA», «SASTRÓN») y el rótulo de los golpes ocupan demasiado; más pequeños, sobre todo los
+  nombres. `09d_fight2d.js` (el HUD se dibuja a la escala de la pantalla: mirar con qué tamaño sale a 1080p).
+  - Jonay insiste (3-nov, otra captura: «enorme la verdad lo de las peleas»): también el recuadro de CONTROLES del
+    principio ocupa casi toda la pantalla. Todo a la mitad o menos.
+- [x] v1.1.3 **Pelea 2D: no pintar detrás a la gente de la calle que pelea** (Jonay, 3-nov: «en las peleas 2D no se deberían
+  renderizar las personas de fondo, porque se veía el que estaba peleando conmigo a la vez que peleaba con él»): el fondo
+  3D de la pelea saca al rival (y al Chopa) de pie en la calle, a la vez que sus dibujos de la pelea. Esconder al rival y
+  al jugador del mundo 3D mientras dura la pelea (o toda la gente cercana) y volver a mostrarlos al acabar. `09d_fight2d.js`.
+- [x] v1.1.3 **«Salir» en el menú de pausa** (Jonay, 3-nov: «al estar a pantalla completa no se puede salir… el menú de pausa no
+  tiene un salir»): botón «Salir del juego» (guarda si hace falta, sale de la pantalla completa y cierra la ventana del
+  lanzador; en el navegador normal, vuelve al menú de inicio). `13_main.js`, `index.html`.
+- [x] v1.1.3 **Cambiar de arma con los botones laterales del ratón, no con la rueda** (Jonay, 3-nov: «lo de la rueda fue mala
+  idea… al cambiar zoom cambio arma; para eso están los botones adelante y atrás»): quitar el cambio con la rueda
+  (`09c_weapons.js`, ~línea 144) y usar los botones 3/4 del ratón (atrás = arma anterior, adelante = siguiente), evitando
+  que el navegador vaya «atrás». Actualizar el texto «TAB / 1: puños» y Opciones › Controles.
+- [x] v1.1.3 **Anochece de golpe** (Jonay, 3-nov: «oscurece muy de golpe, debería ser más gradual; de un segundo a otro te
+  oscurece muchísimo»): al pasar de día a noche la luz cae casi de una vez. Hacer el atardecer y el amanecer graduales
+  (sol, luz ambiente, niebla y cielo con una curva suave de ~1 hora de juego) y mirar si hay un salto al cambiar la
+  velocidad del reloj de día a noche (`dayRate` en `13_main.js`: 150 s por hora de día y 40 s de noche desde las 20:24).
+- [x] v1.1.3 **La leyenda del mapa no dice de quién es cada punto de misión** (Jonay, 3-nov: «las misiones secundarias no
+  salen en la leyenda del minimapa, como las del Obispo; las de la zona entre Curva de Gracia y Finca España tampoco: se
+  ve un punto naranja pero no hay leyenda… ¿esto es la cadena principal o qué es?»): la leyenda (`11_hud.js`, `legend()`)
+  solo trae «Misión» en amarillo, y cada cadena tiene su color (`12_missions.js`, `TRACKS`): Historia amarillo, El Canarión
+  azul claro, El Obispo morado, Torneo Lagunero naranja, Copa Laguna verde, El Secreta salmón, Carreras del Canarión cian.
+  Añadir a la leyenda una línea por cadena ya abierta, con su nombre y su color; y que los naranjas del Torneo y el
+  salmón de El Secreta se distingan mejor entre sí y del amarillo.
+- [x] v1.1.3 **Carreras: el tramo siguiente en el minimapa, en amarillo suave en vez de azul** (Jonay, 3-nov, carrera
+  «Gánale al pijo», captura: «el siguiente punto de ruta del minimapa me gustaría que se viera como el amarillo actual
+  pero más suave en lugar de azul»): el trazo discontinuo del tramo siguiente se pinta en `#46c3ff` (`11_hud.js`,
+  `MISSIONS.aheadPath()`, ~línea 125). Pasarlo al amarillo de la ruta (`#f5b72e`) más claro y transparente (p. ej.
+  `#f5d98a` al 55 %), y lo mismo en el mapa grande si lo pinta.
+- [x] v1.1.3 **Pasaje Aguere: mesas y sombrillas flotando** (Jonay, 3-nov, X −213, Y 49, captura): las mesas de la terraza del
+  pasaje no tocan el suelo. Ponerlas a la altura del suelo del pasaje (`05x_pasajes.js`).
+- [x] v1.1.3 **Pasaje Aguere: el mismo cartel en cada local** (Jonay, 3-nov, X −213, Y 46, captura): «Tasca El Soportal» y
+  «Móviles Guanchófono» se repiten en todos los huecos del pasaje, uno tras otro. Pocos negocios con cartel (3–5, distintos
+  y parodias) y el resto de locales cerrados o sin rótulo. Los carteles del pasaje salen de `05x_pasajes.js`.
+- [x] v1.1.3 **Contenedores de basura en medio de la calzada** (Jonay, 3-nov, C. Adelantado X −757, Y −359): van pegados a un
+  lado (junto al bordillo o en su hueco de aparcamiento), nunca en mitad de la calle. Revisar dónde se colocan en todas.
 - [x] v1.0.2 **La gente de los interiores no se mete en los muebles** (Jonay, 3-nov, Café Brasilito: «la gente atraviesa el
   mostrador; eso no puede pasar ni aquí ni en ningún sitio»): al amueblar cada sala, quien quede dentro de una barra, mesa,
   estantería o banco se saca por el lado más corto (`clearInteriorNpcs`, 05g_interiors.js).

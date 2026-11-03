@@ -70,11 +70,11 @@ function updateSun() {
   SKY.mat.uniforms.sunDir.value.copy(dir); SKY.mat.uniforms.zen.value.copy(cZen); SKY.mat.uniforms.hor.value.copy(cHor);
   SKY.mat.uniforms.uCloud.value = w === 0 ? 0.42 : w === 1 ? 0.97 : 1.0;
   // lights
-  const dayI = smooth(-0.04, 0.25, se);
+  const dayI = smooth(-0.1, 0.32, se); /* v1.1.3: wider dusk (Jonay: «oscurece muy de golpe») */
   const moon = night > 0.5;
   const ldir = _ldir.copy(moon ? _moonDir : dir);
-  sun.color.copy(moon ? tmpC.set(0x8fa6d8) : sunCol);
-  sun.intensity = moon ? 0.35 : 2.9 * dayI * (1 - overcast * 0.75) + 0.05;
+  sun.color.copy(sunCol).lerp(tmpC.set(0x8fa6d8), night);
+  sun.intensity = Math.max((2.9 * dayI * (1 - overcast * 0.75) + 0.05) * (1 - night), 0.35 * night);
   hemi.color.copy(cZen).lerp(tmpC.set(0xffffff), 0.35); hemi.groundColor.set(0x5b5140).multiplyScalar(0.45 + dayI * 0.55);
   hemi.intensity = 0.42 + dayI * (0.58 + overcast * 0.5); /* night floor raised (v0.60: it was too dark) */
   if (SKY.ring) SKY.ring.material.color.setScalar(0.18 + dayI * 0.72 * (1 - overcast * 0.3));
@@ -113,6 +113,13 @@ $('tod').addEventListener('input', (e) => { GAME.tod = +e.target.value; updateSu
 $('sens').addEventListener('input', (e) => { SETTINGS.sens = +e.target.value; saveSettings(); });
 $('vol').addEventListener('input', (e) => AUDIO.setVol(+e.target.value));
 $('mvol').value = SETTINGS.music ?? 1; $('mvol').addEventListener('input', (e) => { SETTINGS.music = +e.target.value; saveSettings(); MUSIC.setVol(); });
+// v1.1.3 (Jonay: «al estar a pantalla completa no se puede salir; el menú de pausa no tiene un salir»): saves (automatic slot),
+// leaves the full screen and closes the window of the launcher (its server stops by itself); in a normal browser tab, back
+// to the start menu
+$('bQuit').addEventListener('click', () => { try { GAME.pause(false); if (typeof SAVE !== 'undefined' && SAVE.auto) SAVE.auto('Al salir'); } catch (e) { console.error('guardar al salir', e); }
+  try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) { }
+  if (location.port === '8790') { window.close(); }
+  setTimeout(() => { location.reload(); }, 300); });
 $('bResume').addEventListener('click', () => { GAME.pause(false); if (!document.body.classList.contains('touchmode') && !window.__JETA_TEST && typeof goFullscreen === 'function') goFullscreen(); }); // v1.0.1: Esc leaves the full screen with the pause; «Continuar» brings it back
 for (const id of ['bCtl', 'bCtl2']) { const b = $(id); if (b) b.addEventListener('click', (e) => { e.stopPropagation(); CONTROLS.open(); }); }
 $('bReload').addEventListener('click', () => { try { localStorage.setItem(QKEY, pendingQ); } catch (e) { } location.reload(); });
@@ -220,7 +227,9 @@ function buildInteriorsAll() {
   console.log('gente de los interiores sacada de los muebles', clearInteriorNpcs()); // v1.0.2
 }
 // long days, short nights: daylight (8:00-20:00) 1 game hour = 150 s (~30 min of day), night 1 hour = 40 s (~8 min)
-function dayRate(t) { const day = t >= 7.6 && t < 20.4; return day ? 1 / 150 : 1 / 40; }
+function dayRate(t) { /* v1.1.3: the day/night speed changes gradually (it jumped at 20.4 h and dusk felt sudden) */
+  const k = t >= 12 ? smooth(19.9, 21.2, t) : 1 - smooth(6.4, 7.7, t); return 1 / (150 + (40 - 150) * k);
+}
 // ---------- boot
 async function boot() {
   const steps = [
@@ -252,7 +261,7 @@ async function boot() {
   window.__GAME_READY = true;
 }
 boot();
-window.__bg = [bgScene, bgCamera]; window.__dbg = { WALLS, parkStats, MEDIANS, AUX, SHORT_UP, SPRX, SPRX_DATA, FONDOS, BKSHEET, get RCLIP() { return RCLIP; }, pip, PASAJES, ATRIOS: atrioList, ARCADE, RECRE, CASA, MUNDIALITO, s2Path, s2DriveCar, pitchRects, rectsOverlap, STR, pasajeCeilAt, inAguereLow, LOD, updateCityLOD, lodShowAll, optimizeCity, unfuse, PARKED, activateParked, parkedNear, RIFLE, AGUA, FIRES, makeFire, giveRifle, PK2, RIOS, TRI, PERAZA, MINI, KEYS, PRESSED, INPUT, get TCUTS() { return TCUTS; }, s2Human, s2Down, s2DownTick, onCarriagewayEarly, FLIGHT, updateAirport, TF13, TRAM_TRENCH, tramDepth, OBISPADO_TEX: obispadoTex, MALEANTES, startStreetFight, lineRuns, BIGSTORES, SIGN, actorCull, ACTORS, roadClip, insetPoly, streetTrim, polyArea, BASKET2D, FUTBOL2D, obispoCampo, TRI, OBISPADO, SPORTS, inAnyBuilding, COURTS, courtGateNear, useCourtGate, DIARIO, inPitch, pitchRects, obispoCourt, LAMPS, TREES, GUIDE, AYTO, HUC, HEALTH, nearestHealth, exitCar, DLG, S2, POOLS: { CARPOOL, HPOOL, SHARED_GEO, VGEO }, SHARED_GEO, MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
+window.__bg = [bgScene, bgCamera]; window.__dbg = { WALLS, parkStats, parkSides, MEDIANS, AUX, SHORT_UP, SPRX, SPRX_DATA, FONDOS, BKSHEET, get RCLIP() { return RCLIP; }, pip, PASAJES, ATRIOS: atrioList, ARCADE, RECRE, CASA, MUNDIALITO, s2Path, s2DriveCar, pitchRects, rectsOverlap, STR, pasajeCeilAt, inAguereLow, LOD, updateCityLOD, lodShowAll, optimizeCity, unfuse, PARKED, activateParked, parkedNear, RIFLE, AGUA, FIRES, makeFire, giveRifle, PK2, RIOS, TRI, PERAZA, MINI, KEYS, PRESSED, INPUT, get TCUTS() { return TCUTS; }, s2Human, s2Down, s2DownTick, onCarriagewayEarly, FLIGHT, updateAirport, TF13, TRAM_TRENCH, tramDepth, OBISPADO_TEX: obispadoTex, MALEANTES, startStreetFight, lineRuns, BIGSTORES, SIGN, actorCull, ACTORS, roadClip, insetPoly, streetTrim, polyArea, BASKET2D, FUTBOL2D, obispoCampo, TRI, OBISPADO, SPORTS, inAnyBuilding, COURTS, courtGateNear, useCourtGate, DIARIO, inPitch, pitchRects, obispoCourt, LAMPS, TREES, GUIDE, AYTO, HUC, HEALTH, nearestHealth, exitCar, DLG, S2, POOLS: { CARPOOL, HPOOL, SHARED_GEO, VGEO }, SHARED_GEO, MATS: MAT, AIRPORT, BUILD, HPOOL, CARPOOL, DATA, trenchPush, parkedNear, inCut, TCUTS, CONTROLS, worldEdgeDist, inPlayArea, borderTarget, WORLD_EXCL, get MAPC() { return MAPC; }, MAP, AMBIENCE, INICIO, CONC_TOWER, CONC_CARVE, get playerHuman() { return playerHuman; }, AUDIO, STEPS, footContacts, INTERIORS, nearestDoor, useDoor, DECKS, ROADSEG, GRAPH, heightAt, THREE, PLAYER, CARS, GAME, scene, camera, renderer, WANTED, MISSIONS, enterCar, nearestEnterable, TRAM, PEDS, BIGMAP, COL, INTERIORS, useDoor, NPC, makeHuman, animHuman, VMODELS, BUILD, LMQ, frontEdge, TSIGN, TUNNEL_DECKS, lowAt, deckAt, deckSide, CARPARKS, UGC, FIGHT2D, startStreetFight, setWaypoint, WEAPON, fireWeapon, giveWeapon, FOOD, COPS, NPC, PK2, MUSIC, SAVE, inOtherRoad, lowAt, TUNNEL_DECKS, depthOf, auditCrossings, auditObstacles, crossingsOf, ROADY, DEP, RAISE, AT_GRADE, giveWeapon, WALKG, GPS, CONC_TOWER, PLASTER, CAM, TCUTS, DEP, Car: typeof Car !== 'undefined' ? Car : null };
 window.__snap = () => { updateUnderground(); updateCityLOD(); bgCamera.position.copy(camera.position); bgCamera.quaternion.copy(camera.quaternion); bgCamera.fov = camera.fov; bgCamera.updateProjectionMatrix(); renderer.clear(); renderer.render(bgScene, bgCamera); renderer.clearDepth(); renderer.render(scene, camera); return renderer.domElement.toDataURL('image/jpeg', 0.85); };
 window.__setYaw = (y) => { CAM.yaw = y; CAM.pitch = 0.1; INPUT.lastMouse = performance.now(); };
 window.__hit = (p) => hitPed(p);

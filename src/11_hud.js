@@ -122,7 +122,7 @@ const HUD = (() => {
     // GPS route
     if (GPS.path) { mx.strokeStyle = MISSIONS.target() || GPS.story ? '#f5b72e' : '#e040fb'; mx.lineWidth = 7 * s * 1.6; mx.lineJoin = 'round'; mx.lineCap = 'round'; mx.beginPath(); const p = GPS.path; for (let i = 0; i < p.length; i += 2) i ? mx.lineTo(p[i], p[i + 1]) : mx.moveTo(p[i], p[i + 1]); mx.stroke(); }
     // v0.75: races: the route of the next two controls, dimmer, with their dots
-    { const ap = MISSIONS.aheadPath(); if (ap) { mx.save(); mx.globalAlpha = 0.55; mx.strokeStyle = '#46c3ff'; mx.lineWidth = 5 * s * 1.6; mx.setLineDash([9 * s * 1.6, 6 * s * 1.6]); mx.beginPath(); for (let i = 0; i < ap.length; i += 2) i ? mx.lineTo(ap[i], ap[i + 1]) : mx.moveTo(ap[i], ap[i + 1]); mx.stroke(); mx.restore(); for (const q of MISSIONS.aheadPts() || []) blip(q[0], q[1], '#46c3ff', 6 * s * 1.6); } }
+    { const ap = MISSIONS.aheadPath(); if (ap) { mx.save(); mx.globalAlpha = 0.55; mx.strokeStyle = '#f5d98a'; mx.lineWidth = 5 * s * 1.6; mx.setLineDash([9 * s * 1.6, 6 * s * 1.6]); mx.beginPath(); for (let i = 0; i < ap.length; i += 2) i ? mx.lineTo(ap[i], ap[i + 1]) : mx.moveTo(ap[i], ap[i + 1]); mx.stroke(); mx.restore(); for (const q of MISSIONS.aheadPts() || []) blip(q[0], q[1], '#f5d98a', 6 * s * 1.6); } }
     // tram
     if (TRAM.parts) { const t = TRAM.parts[0].position; blip(t.x, t.z, '#e04848', 5 * s * 1.6, 'sq'); }
     // police
@@ -215,7 +215,10 @@ const BIGMAP = (() => {
   // can already use (the maleantes, the arcades, the toy shops, the estate agency, your homes…)
   function legend() { const L = $('bmLeg'); if (!L) return; const G = window.GANG || {}, A = typeof ARCADE !== 'undefined' ? ARCADE.data() : {}, C = typeof CASA !== 'undefined' ? CASA.data() : {};
     const it = (shape, col, txt) => { const st = shape === 'sq' ? `background:${col};border-radius:2px` : shape === 'ring' ? `background:#e53935;border-radius:2px;box-shadow:0 0 0 2px #11181a,0 0 0 4px ${col}` : shape === 'tri' ? `background:transparent;width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:11px solid ${col};border-radius:0` : shape === 'drop' ? `background:${col};border-radius:50% 50% 50% 0;transform:rotate(-45deg)` : `background:${col}`; return `<span style="white-space:nowrap;margin-right:12px"><span class="dot" style="${st}"></span>${txt}</span>`; };
-    const out = [it('dot', '#fff', 'Tú'), it('dot', '#f5b72e', 'Misión'), it('dot', '#e040fb', 'Destino (GPS)'), it('sq', '#e53935', 'Comida'), it('dot', '#3d7bff', 'Policía')];
+    const out = [it('dot', '#fff', 'Tú')];
+    /* v1.1.3 (Jonay: «las misiones secundarias no salen en la leyenda»): one line per mission chain already open, in its colour */
+    for (const t of (typeof MISSIONS !== 'undefined' && MISSIONS.diary ? MISSIONS.diary() : [])) if (!t.locked && t.list.some((m) => m.state !== 'hecha')) out.push(it('dot', t.css, t.key === 'story' ? 'Misión: Historia' : t.name));
+    out.push(it('dot', '#e040fb', 'Destino (GPS)'), it('sq', '#e53935', 'Comida'), it('dot', '#3d7bff', 'Policía'));
     if (G.maleIntro) out.push(it('tri', '#ff1744', 'Maleante'));
     if (A.invited) { out.push(it('sq', '#ffb347', 'Casa de El Blanco')); out.push(it('ring', '#b388ff', 'Bar con la máquina del GUFO')); }
     const ic = (kind, txt) => `<span style="white-space:nowrap;margin-right:12px"><img src="${window.__mapIconURL(kind)}" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px">${txt}</span>`;
@@ -230,7 +233,7 @@ const BIGMAP = (() => {
     x.save(); x.translate(W / 2, H / 2); x.scale(k, k); x.translate(-cx, -cz);
     x.save(); x.translate(MAP.x0, MAP.z0); x.scale(1 / MAP.scale, 1 / MAP.scale); x.drawImage(MAPC, 0, 0); x.restore();
     if (GPS.path) { x.strokeStyle = MISSIONS.target() || GPS.story ? '#f5b72e' : '#e040fb'; x.lineWidth = 6 / k * devicePixelRatio; x.beginPath(); const p = GPS.path; for (let i = 0; i < p.length; i += 2) i ? x.lineTo(p[i], p[i + 1]) : x.moveTo(p[i], p[i + 1]); x.stroke(); }
-    { const ap = MISSIONS.aheadPath(); if (ap) { x.save(); x.globalAlpha = 0.6; x.strokeStyle = '#46c3ff'; x.lineWidth = 4 / k * devicePixelRatio; x.setLineDash([10 / k * devicePixelRatio, 7 / k * devicePixelRatio]); x.beginPath(); for (let i = 0; i < ap.length; i += 2) i ? x.lineTo(ap[i], ap[i + 1]) : x.moveTo(ap[i], ap[i + 1]); x.stroke(); x.restore(); } }
+    { const ap = MISSIONS.aheadPath(); if (ap) { x.save(); x.globalAlpha = 0.6; x.strokeStyle = '#f5d98a'; x.lineWidth = 4 / k * devicePixelRatio; x.setLineDash([10 / k * devicePixelRatio, 7 / k * devicePixelRatio]); x.beginPath(); for (let i = 0; i < ap.length; i += 2) i ? x.lineTo(ap[i], ap[i + 1]) : x.moveTo(ap[i], ap[i + 1]); x.stroke(); x.restore(); } }
     x.restore();
     drawLabels(W, H, k);
     // v0.79 (Jonay): the markers go over the names (a mission dot hidden under «Centro de Salud…»)
@@ -243,7 +246,7 @@ const BIGMAP = (() => {
       if (typeof RECRE !== 'undefined') for (const b of RECRE.blips()) sqm(b[0], b[1], b[2]); if (typeof CASA !== 'undefined') for (const b of CASA.blips()) { x.save(); x.translate(b[0], b[1]); window.__mapIcon(b[3], x, 8 * devicePixelRatio / k, 1.8 / k * devicePixelRatio); x.restore(); } } // v0.83: El Blanco's, the estate agency, your homes
     if (typeof AGUA !== 'undefined' && AGUA.isOpen()) for (const t of AGUA.shops) { x.save(); x.translate(t.x, t.z); window.__toyBear(x, 7 * devicePixelRatio / k, 1.8 / k * devicePixelRatio); x.restore(); } // the toy shops (a little robot)
     for (const m of MISSIONS.blips()) { if (m[3] === 'tri') { const a = 11 / k * devicePixelRatio; x.fillStyle = m[2]; x.strokeStyle = '#000'; x.lineWidth = 2 / k * devicePixelRatio; x.beginPath(); x.moveTo(m[0], m[1] - a); x.lineTo(m[0] + a * 0.9, m[1] + a * 0.65); x.lineTo(m[0] - a * 0.9, m[1] + a * 0.65); x.closePath(); x.fill(); x.stroke(); } else dot(m[0], m[1], m[2] || '#f5b72e', 8); }
-    for (const q of MISSIONS.aheadPts() || []) dot(q[0], q[1], '#46c3ff', 6);
+    for (const q of MISSIONS.aheadPts() || []) dot(q[0], q[1], '#f5d98a', 6);
     if (GPS.target) dot(GPS.target[0], GPS.target[1], '#e040fb', 8);
     x.save(); x.translate(PLAYER.x, PLAYER.z); x.rotate(-(PLAYER.car ? PLAYER.car.h : PLAYER.h) + Math.PI); const a = 12 / k * devicePixelRatio; x.fillStyle = '#fff'; x.strokeStyle = '#000'; x.lineWidth = 2 / k * devicePixelRatio; x.beginPath(); x.moveTo(0, -a); x.lineTo(a * 0.7, a * 0.7); x.lineTo(0, a * 0.35); x.lineTo(-a * 0.7, a * 0.7); x.closePath(); x.fill(); x.stroke(); x.restore();
     x.restore();

@@ -23,7 +23,7 @@ const FUTBOL2D = (() => {
   const sxp = (x) => X0 + x * S, syw = (y) => (y + MG) * S;  // pitch metres -> background px
   let inConsole = false; let cv = null, cx = null, running = false, raf = 0, last = 0, acc = 0, st = null, onEnd = null, camY = 0, bgCache = null;
   // ---------- input: virtual buttons, the same as the basketball (vS = A, vP = pass, vT = sprint)
-  const PZ = MINI.pauser(() => running); const IN = MINI.input(() => running), { press, held, hit, rel } = IN, keys = IN.keys; // v0.69: shared with the other minigames (09ea_minijuegos.js)
+  const PZ = MINI.pauser(() => running, () => { st.fadeDir = 1; }); /* v1.1.3: Q / Esc in the pause = leave the match */ const IN = MINI.input(() => running), { press, held, hit, rel } = IN, keys = IN.keys; // v0.69: shared with the other minigames (09ea_minijuegos.js)
   // ---------- sounds
   const snd = MINI.snd, say = (t) => MINI.say(t);
   let CR = null; const cr = (n, k) => { if (CR) CR.ev(n, k); }; // v0.90 (Jonay): the roar of the stands (MINI.crowd)
@@ -411,6 +411,7 @@ const FUTBOL2D = (() => {
     const min = Math.min(90, Math.floor((1 - st.clock / st.time) * 90)); txt(st.tut ? "--'" : st.golden ? 'ORO' : `${min}'`, W / 2, 14, 8, st.golden ? '#ffd400' : '#fff');
     const hu = st.ctl || st.p[1]; MINI.turbo(cx, H, hu.turbo);
     drawRadar();
+    { const o = st.ball.owner; /* v1.1.3 (Jonay): who has the ball, bottom right, with his number */ if (o && o.name) { const n = o.role === 'gk' ? 1 : o.idx + 1, lab = n + '  ' + o.name.toUpperCase(), xr = W - 52; cx.font = '6px "Press Start 2P", monospace'; const tw = cx.measureText(lab).width; cx.fillStyle = 'rgba(0,0,0,0.6)'; cx.fillRect(xr - tw - 6, H - 17, tw + 10, 11); txt(lab, xr, H - 15, 6, o.team === 0 ? '#7fe08a' : '#ff6b6b', 'right'); } }
     if (st.tip) { cx.fillStyle = 'rgba(0,0,0,0.7)'; cx.fillRect(30, H - 46, W - 90, 16); txt(st.tip, (W - 60) / 2, H - 41, 5, '#ffd400'); }
     MINI.banner(cx, st, W, 60, 9);
     if (st.phase === 'ready') { cx.fillStyle = 'rgba(0,0,0,0.82)'; cx.fillRect(60, 48, W - 120, 150); txt('JETA SOCCER · 5 CONTRA 5', W / 2, 56, 9, '#ffd400');

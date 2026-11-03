@@ -94,14 +94,18 @@ function pasajeRun(s, t0, t1, cx, cz, wallCol, yf = heightAt, floor = false) {
   PASAJES.built.push({ name: s.name, x: (pa[0] + pb[0]) / 2, z: (pa[1] + pb[1]) / 2, len: +len.toFixed(1), ancho: +(s.hw * 2).toFixed(1), y: +((ga + gb) / 2).toFixed(1) });
   // shops and bars on both sides (the named passages of the casco)
   const shops = PASAJE_TIENDAS[s.name]; if (!shops || len < 5) return;
-  let k = 0; for (let d = 2.2; d < len - 2.2; d += 4.6) for (const sd of [-1, 1]) {
-    const sh = shops[(k++) % shops.length]; const t = t0 + d / s.L * 1, px = s.ax + ux * (t * s.L) + nx * (s.hw - 0.04) * sd, pz = s.az + uz * (t * s.L) + nz * (s.hw - 0.04) * sd; const g = lerp(ga, gb, clamp(d / len, 0, 1));
+  /* v1.1.3 (Jonay: «el mismo cartel en cada local»): each shop of the passage once (counted across all its runs); the
+     other fronts are closed with a shutter and no sign */
+  const used = PASAJES.shopN || (PASAJES.shopN = {});
+  for (let d = 2.2; d < len - 2.2; d += 4.6) for (const sd of [-1, 1]) {
+    const k = used[s.name] = (used[s.name] || 0) + 1, sh = k <= shops.length ? shops[k - 1] : null; const t = t0 + d / s.L * 1, px = s.ax + ux * (t * s.L) + nx * (s.hw - 0.04) * sd, pz = s.az + uz * (t * s.L) + nz * (s.hw - 0.04) * sd; const g = lerp(ga, gb, clamp(d / len, 0, 1));
     const fw = Math.min(3.2, len - 1), inn = [-nx * sd, 0, -nz * sd]; const ex = ux * fw / 2, ez = uz * fw / 2; const ix = -nx * sd * 0.02, iz = -nz * sd * 0.02;
     const Q = (o, y) => [px + ex * o + ix, g + y, pz + ez * o + iz];
     const glass = [0.16, 0.22, 0.27], frame = [0.12, 0.12, 0.13];
     W.quad(Q(-1.06, -0.05), Q(1.06, -0.05), Q(1.06, 2.55), Q(-1.06, 2.55), [0, 0], [0, 0], [0, 0], [0, 0], frame, undefined, inn);
     const Q2 = (o, y) => [px + ex * o + ix * 2, g + y, pz + ez * o + iz * 2];
-    W.quad(Q2(-0.95, 0.35), Q2(0.95, 0.35), Q2(0.95, 2.4), Q2(-0.95, 2.4), [0, 0], [0, 0], [0, 0], [0, 0], glass, undefined, inn);
+    W.quad(Q2(-0.95, 0.35), Q2(0.95, 0.35), Q2(0.95, 2.4), Q2(-0.95, 2.4), [0, 0], [0, 0], [0, 0], [0, 0], sh ? glass : [0.42, 0.42, 0.4], undefined, inn);
+    if (!sh) continue;
     const sg = bigSign(sh[0], fw * 0.95, 0.55, sh[1], sh[2]); sg.position.set(px - nx * sd * 0.06, g + 2.92, pz - nz * sd * 0.06); sg.rotation.y = Math.atan2(-nx * sd, -nz * sd); scene.add(sg);
   }
 }
