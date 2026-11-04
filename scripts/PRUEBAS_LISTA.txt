@@ -1,4 +1,6 @@
 # Pruebas de ESTA versión (scripts\PRUEBAS.bat las junta con las de lo cambiado).
-# v0.83.0: la casa, la inmobiliaria y la consola GOFIO-8
-prueba_083.py
+# v1.1.8: tareas del auditor (precarga de minijuegos, caché del fútbol, aviso al guardar, recreativa sin 3D detrás)
+prueba_118.py
+prueba_0851.py
+prueba_futbol.py
 prueba_arranque.py

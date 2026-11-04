@@ -1,5 +1,20 @@
 // ============ GTA La Laguna — core ============
 import * as THREE from 'three';
+// v1.1.8 («¿qué código dibuja esto?», tests/herramientas/sonda_origen.py): with window.__ORIGEN set before the page loads,
+// every piece added to the scene remembers the functions that added it (nothing changes in the game)
+if (typeof window !== 'undefined' && window.__ORIGEN) {
+  const add0 = THREE.Object3D.prototype.add;
+  THREE.Object3D.prototype.add = function (...o) {
+    const st = String(new Error().stack || '')
+      .split('\n')
+      .slice(2, 8)
+      .map((l) => (l.match(/at (?:new )?([\w$.]+) /) || [])[1] || '?')
+      .filter((n) => n !== '?')
+      .join(' < ');
+    for (const c of o) if (c && !c.__origen) c.__origen = st;
+    return add0.apply(this, o);
+  };
+}
 
 const DATA = window.__MAPDATA || JSON.parse(document.getElementById('mapdata').textContent); // v1.0.1: the folder version loads it from datos/mapa.js
 const STR = DATA.S;
@@ -3234,6 +3249,36 @@ function bridgeDressingEach(pts, i, hw, T, bank, col, w) {
   }
   bridgeDressingEachPart1(a, hw, b, T, i, w);
 }
+/** v1.1.8 (Jonay, Camino San Francisco X −720, Y 301: «un salto brusco junto a la calzada; en la realidad la bajada es mucho
+ *  más suave»): in front of the retaining wall of a raised approach, an earth bank down to the ground (about 1 : 1.6), where
+ *  there is room (no street, pavement or building in the way; otherwise the wall stays bare) */
+function bankSlope(ax, az, bx, bz, a, b, sg, T) {
+  const nx = -a[4] * sg,
+    nz = a[3] * sg,
+    ta = a[2] - 0.6,
+    tb = b[2] - 0.6;
+  const wa = clamp(1.6 * (ta - heightAt(ax, az)), 2, 9),
+    wb = clamp(1.6 * (tb - heightAt(bx, bz)), 2, 9);
+  for (const t of [0, 0.5, 1])
+    for (const k of [0.35, 0.7, 1]) {
+      const w = (wa + (wb - wa) * t) * k,
+        x = ax + (bx - ax) * t + nx * w,
+        z = az + (bz - az) * t + nz * w,
+        g = heightAt(x, z);
+      if (inOtherRoad(x, z, g - 3, Math.max(ta, tb) + 1, DRESS_RI, -2.5) || inAnyBuilding(x, z)) return;
+    }
+  const pa = [ax + nx * wa, 0, az + nz * wa],
+    pb = [bx + nx * wb, 0, bz + nz * wb];
+  pa[1] = heightAt(pa[0], pa[2]) - 0.15;
+  pb[1] = heightAt(pb[0], pb[2]) - 0.15;
+  if (pa[1] > ta - 0.5 || pb[1] > tb - 0.5) return; // the ground is already as high there (a hillside)
+  // grass and earth, like the ground around (vertex colours are linear: this is the olive green of the terrain)
+  acc(ax, az, 'trim').quad(pa, pb, [bx, tb, bz], [ax, ta, az], [0, 0], [0, 0], [0, 0], [0, 0], [0.16, 0.21, 0.07], undefined, [
+    nx * 0.55,
+    0.84,
+    nz * 0.55
+  ]);
+}
 /** (v1.1.7, code quality) the body of a loop of bridgeDressingEach, split out of it */
 function bridgeDressingEachEach(a, hw, sg, b, bank, T, col) {
   const ax = a[0] - a[4] * hw * sg,
@@ -3270,6 +3315,7 @@ function bridgeDressingEachEach(a, hw, sg, b, bank, T, col) {
         undefined,
         [-a[4] * sg, 0, a[3] * sg]
       );
+    if (a[2] - 0.6 > ga + 1.9 || b[2] - 0.6 > gb + 1.9) bankSlope(ax, az, bx, bz, a, b, sg, T);
   }
   // concrete kerb-parapet...
   T.quad([ax, a[2] - 0.6, az], [bx, b[2] - 0.6, bz], [bx, b[2] + 0.5, bz], [ax, a[2] + 0.5, az], [0, 0], [0, 0], [0, 0], [0, 0], col, undefined, [
@@ -18389,6 +18435,9 @@ function trinidadFill() {
           [pa.x + na[0] * (fa + dep), pa.z + na[1] * (fa + dep)]
         ];
         if (!poly.every((q) => free(q[0], q[1]))) continue;
+        // v1.1.8 (Jonay, X −191, Y 366: «edificio con patio sin paredes por fuera»): on one side of the avenue the lot came out
+        // clockwise, and a building is drawn counter-clockwise (outward walls): turned the other way it was inside out
+        if (polyArea(poly) < 0) poly.reverse();
         // like the nearest real building of the avenue: style, floors (± 1) and roof
         let nb0 = null,
           bd = 1e9;
@@ -19353,6 +19402,7 @@ function mergeStatics() {
       Math.floor(c.x / LOD.cell),
       Math.floor(c.z / LOD.cell)
     ].join('|');
+    if (window.__ORIGEN) origenNote(o, mat); // v1.1.8: sonda_origen.py
     let G = groups.get(key);
     if (!G) groups.set(key, (G = { mat, uv, col, cs: o.castShadow, rs: o.receiveShadow, ro: o.renderOrder, detail, list: [] }));
     G.list.push(o);
@@ -19477,6 +19527,25 @@ function mergeStatics() {
   return LOD.stats;
 }
 /** (v1.1.7, code quality) part of mergeStatics */
+/** v1.1.8 (sonda_origen.py): what a piece that is about to be joined was, and who added it (its own functions, or its parents') */
+function origenNote(o, mat) {
+  const L = window.__ORIGEN_OUT || (window.__ORIGEN_OUT = []);
+  const b = new THREE.Box3().setFromObject(o);
+  let p = o,
+    who = '';
+  while (p && !who) {
+    who = p.__origen || '';
+    p = p.parent;
+  }
+  L.push({
+    c: [b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z].map((v) => Math.round(v * 10) / 10),
+    col: mat.color ? mat.color.getHexString() : '',
+    mat: mat.name || mat.type,
+    geo: o.geometry.type,
+    name: o.name || (o.parent && o.parent.name) || '',
+    who
+  });
+}
 function mergeStaticsPart1() {
   const why = {};
   const no = (k, o) => {
@@ -30062,7 +30131,9 @@ const BKSHEET = (() => {
     if (k.startsWith('walk') || k.startsWith('drib')) return [2, Math.floor((p.walkT || 0) * 4.4) % 8];
     return [0, Math.floor(t * 5) % 5];
   }
-  return { ready, sheet, anim, frame, A: BK_ANIM.meta };
+  /** v1.1.8 (auditor): the layers start loading now; their images */
+  const preload = () => (ready(), Object.values(IM));
+  return { ready, sheet, anim, frame, A: BK_ANIM.meta, preload };
 })();
 
 // ============ «JETA JAM»: 2D basketball, 3 vs 3 since v0.84 (2 vs 2 before), in the style of the 90s arcade games (v0.65) ============
@@ -33265,7 +33336,11 @@ const FUTBOL2D = (() => {
     const trim = full(hx(K.stripe || K.trim, light(shirt) ? '#1a1a1a' : '#f2f2f2'));
     const key = [shirt, shorts, socks, trim, sk, hr, view, l, a, num, gk ? 1 : 0].join('|');
     let o = SPR.get(key);
-    if (o) return o;
+    if (o) {
+      SPR.delete(key); // v1.1.8 (auditor): the most recently used goes last, so the one dropped is the least used
+      SPR.set(key, o);
+      return o;
+    }
     const SZ = 80,
       c = mkCanvas(SZ, SZ),
       g = c.getContext('2d'),
@@ -33427,7 +33502,7 @@ const FUTBOL2D = (() => {
       for (let x = 0; x < SZ; x++) if (!A(x, y) && (A(x + 1, y) || A(x - 1, y) || A(x, y + 1) || A(x, y - 1))) outl.push(x, y);
     for (let i = 0; i < outl.length; i += 2) g.fillRect(outl[i], outl[i + 1], 1, 1);
     o = { c, ox, oy };
-    if (SPR.size > 600) SPR.clear();
+    if (SPR.size >= 900) SPR.delete(SPR.keys().next().value); // v1.1.8 (auditor: «la caché se vacía sin parar»): drop the least used one, not all of them
     SPR.set(key, o);
     return o;
   }
@@ -36001,7 +36076,9 @@ const FONDOS = (() => {
     c.imageSmoothingEnabled = sm;
     return true;
   }
-  return { get, draw, g: (k) => (FONDOS_DATA[k] ? FONDOS_DATA[k].g : 0) };
+  /** v1.1.8 (auditor): every background starts loading now; its images */
+  const preload = () => Object.keys(FONDOS_DATA).flatMap((k) => (get(k), C[k].layers.map((l) => l.im)));
+  return { get, draw, g: (k) => (FONDOS_DATA[k] ? FONDOS_DATA[k].g : 0), preload };
 })();
 
 // ============ SPRX_DATA (v0.93): the sprite sheets made from the external packs (GandalfHardcore, Evil Wizard 3,
@@ -36156,7 +36233,11 @@ const SPRX = (() => {
       }
     return (SKC[k] = best ? 'rgb(' + best + ')' : '#c08a6a');
   }
-  return { draw, fr, stT, skin, has: (k) => !!D[k], D, ready: (k) => !!(D[k] && img(k)) };
+  /** v1.1.8 (auditor): every sheet starts loading now; the images, for 13_main.js to decode them in quiet moments */
+  function preload() {
+    return Object.keys(D).map((k) => (img(k), IM[k]));
+  }
+  return { draw, fr, stT, skin, has: (k) => !!D[k], D, ready: (k) => !!(D[k] && img(k)), preload };
 })();
 
 // ============ «BENCOMO, ACENTEJO'S REVENGE» (v0.80): the arcade at El Blanco's house (free) ============
@@ -50400,7 +50481,9 @@ const SAVE = (() => {
   }
   function auto(label) {
     if (GAME.state !== 'play' || PLAYER.dead) return;
-    save('auto', label || 'Guardado automático');
+    // v1.1.8 (auditor): if it does not fit (or the browser blocks storage), say so instead of losing the save silently
+    if (!save('auto', label || 'Guardado automático') && typeof HUD !== 'undefined' && HUD.toast)
+      HUD.toast('No se ha podido guardar la partida: el navegador no deja guardar más datos', '#ff5252', 5);
   }
   function latest() {
     let best = null;
@@ -57518,7 +57601,7 @@ function loop() {
   const now = performance.now();
   let dt = Math.min(0.05, (now - last) / 1000);
   last = now;
-  if (GAME.state === 'fight2d' || GAME.state === 'basket2d' || GAME.state === 'futbol2d') return; // the 2D fight / basketball game draw themselves
+  if (GAME.state === 'fight2d' || GAME.state === 'basket2d' || GAME.state === 'futbol2d' || GAME.state === 'arcade') return; // the 2D fight / basketball game draw themselves; v1.1.8 (auditor): the arcade and the console too (their screen covers everything)
   logic(dt, now);
   render();
   adaptRes(now);
@@ -57999,6 +58082,26 @@ async function boot() {
   last = performance.now();
   loop();
   window.__GAME_READY = true;
+  if (!/[?&]noprecarga=1\b/.test(location.search)) setTimeout(preloadMinigameImages, 1500); // ?noprecarga=1: to measure without it
+}
+/** v1.1.8 (auditor: «empieza a cargar 46 imágenes al abrirse»): the pictures of the minigames (Guanche Warriors, Bencomo,
+ *  the basketball players, the backgrounds) are loaded after the game and decoded one by one in quiet moments, so
+ *  opening a machine shows the new figures from the first frame */
+function preloadMinigameImages() {
+  const list = [];
+  try {
+    list.push(...SPRX.preload(), ...FONDOS.preload(), ...BKSHEET.preload());
+  } catch (e) {
+    console.warn('precarga de minijuegos', e);
+    return;
+  }
+  const idle = window.requestIdleCallback || ((f) => setTimeout(f, 50));
+  const next = () => {
+    const im = list.shift();
+    if (!im) return;
+    (im.decode ? im.decode() : Promise.resolve()).catch(() => {}).then(() => idle(next));
+  };
+  idle(next);
 }
 boot();
 window.__bg = [bgScene, bgCamera];

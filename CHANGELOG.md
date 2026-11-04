@@ -3,6 +3,23 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.1.8 — 2026-11-04 — Alpha 1.1.8: tareas del auditor y sonda de «qué dibuja esto»
+- **Recreativas y consola sin el mundo 3D detrás** (auditor): con Bencomo, Gufo, Guanche Warriors o la GOFIO-8 abiertos
+  ya no se pinta la ciudad debajo de su pantalla (como en la pelea, el baloncesto y el fútbol).
+- **Las imágenes de los minijuegos se cargan después de la partida** y se preparan una a una en los ratos libres: al
+  abrir Guanche Warriors, Bencomo o el baloncesto se ven las figuras nuevas desde el primer fotograma.
+- **Fútbol**: la caché de jugadores dibujados quita el menos usado en vez de vaciarse entera (se redibujaban sin parar).
+- **Guardado automático**: si el navegador no deja guardar (sin sitio), sale un aviso en vez de perder la partida sin decir nada.
+- **Av. de La Trinidad: edificios sin paredes por fuera** (Jonay, X −191, Y 366): los solares que se rellenan a un lado
+  de la avenida salían girados al revés y se pintaban del revés (solo se veían las fachadas desde dentro).
+- **Terraplenes con talud** (Jonay, Camino San Francisco / San Honorato, X −720, Y 301: «en la realidad la bajada es mucho
+  más suave»): delante del muro de las subidas a los puentes baja ahora una ladera de tierra hasta el suelo, donde hay sitio
+  (sin calles, aceras ni edificios delante); si no, se queda el muro.
+- **«Marcos grises flotando» del Adelantado**: no eran un fallo; las fotos de la prueba se sacaban con la cámara dentro del
+  Palacio Nava, desde donde se ven su cornisa y su portada pero no sus paredes.
+- **Sondas nuevas**: `sonda_origen.py` (qué función del código añadió cada pieza de un sitio) y `sonda_rayos.py` (qué es lo
+  que se ve desde un punto, con rayos por la pantalla).
+
 ## 1.1.7 — 2026-11-04 — Alpha 1.1.7: código partido en funciones más cortas y sin copias
 - **Calidad del código** (Jonay: «intentar llegar a A, partir las funciones gigantes y quitar código repetido»): de B (83)
   a A (88 en la medición local).

@@ -22,8 +22,10 @@ async def main():
         await pg.add_init_script(MUDO)
         # v1.1.7: a list with a «huella_» tool (fingerprints of what is built) gets the same fixed-seed Math.random as the auditor, so two loads build the same city
         if any('huella_' in l.split()[0] for l in lines): await pg.add_init_script(SEMILLA)
+        # v1.1.8: «sonda_origen» (what code draws a piece): every piece remembers the functions that added it to the scene
+        if any(('sonda_origen' in l.split()[0] or 'sonda_rayos' in l.split()[0]) for l in lines): await pg.add_init_script('window.__ORIGEN = true')
         logs = []; pg.on('console', lambda m: logs.append(m.type + ': ' + m.text)); pg.on('pageerror', lambda e: logs.append('PAGEERROR: ' + str(e)))
-        await pg.goto('http://localhost:8765/test.html?q=' + ('alta' if gpu else 'baja'))
+        await pg.goto('http://localhost:8765/test.html?q=' + ('alta' if gpu else 'baja') + ('&noprecarga=1' if any('--noprecarga' in l.split() for l in lines) else '') + ('&revisor=1' if any(('sonda_origen' in l.split()[0] or 'sonda_rayos' in l.split()[0]) for l in lines) else ''))  # v1.1.8: sonda_origen also reads the fused city (its positions are kept)
         try: await pg.wait_for_function('window.__GAME_READY', timeout=180000)
         except Exception as e:  # v0.69: the game didn't load: every test would wait for nothing
             print('not ready', e); print('NO CARGA: ' + ' | '.join(l for l in logs if 'PAGEERROR' in l or l.startswith('error'))[:800]); await b.close(); return

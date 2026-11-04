@@ -1,0 +1,2 @@
+# v1.1.8: el Palacio Nava (marcos grises del Adelantado)
+herramientas/sonda_hueco.py 122 -49 35

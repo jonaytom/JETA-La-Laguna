@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.1.7</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.1.8</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,24 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.1.8 — 2026-11-04 — Alpha 1.1.8: tareas del auditor y sonda de «qué dibuja esto»</h2>
+<ul>
+<li><strong>Recreativas y consola sin el mundo 3D detrás</strong> (auditor): con Bencomo, Gufo, Guanche Warriors o la GOFIO-8 abiertos
+  ya no se pinta la ciudad debajo de su pantalla (como en la pelea, el baloncesto y el fútbol).</li>
+<li><strong>Las imágenes de los minijuegos se cargan después de la partida</strong> y se preparan una a una en los ratos libres: al
+  abrir Guanche Warriors, Bencomo o el baloncesto se ven las figuras nuevas desde el primer fotograma.</li>
+<li><strong>Fútbol</strong>: la caché de jugadores dibujados quita el menos usado en vez de vaciarse entera (se redibujaban sin parar).</li>
+<li><strong>Guardado automático</strong>: si el navegador no deja guardar (sin sitio), sale un aviso en vez de perder la partida sin decir nada.</li>
+<li><strong>Av. de La Trinidad: edificios sin paredes por fuera</strong> (Jonay, X −191, Y 366): los solares que se rellenan a un lado
+  de la avenida salían girados al revés y se pintaban del revés (solo se veían las fachadas desde dentro).</li>
+<li><strong>Terraplenes con talud</strong> (Jonay, Camino San Francisco / San Honorato, X −720, Y 301: «en la realidad la bajada es mucho
+  más suave»): delante del muro de las subidas a los puentes baja ahora una ladera de tierra hasta el suelo, donde hay sitio
+  (sin calles, aceras ni edificios delante); si no, se queda el muro.</li>
+<li><strong>«Marcos grises flotando» del Adelantado</strong>: no eran un fallo; las fotos de la prueba se sacaban con la cámara dentro del
+  Palacio Nava, desde donde se ven su cornisa y su portada pero no sus paredes.</li>
+<li><strong>Sondas nuevas</strong>: <code>sonda_origen.py</code> (qué función del código añadió cada pieza de un sitio) y <code>sonda_rayos.py</code> (qué es lo
+  que se ve desde un punto, con rayos por la pantalla).</li>
+</ul>
 <h2>1.1.7 — 2026-11-04 — Alpha 1.1.7: código partido en funciones más cortas y sin copias</h2>
 <ul>
 <li><strong>Calidad del código</strong> (Jonay: «intentar llegar a A, partir las funciones gigantes y quitar código repetido»): de B (83)
@@ -2132,6 +2150,9 @@ el título de la entrada más reciente como mensaje del commit.</p>
     que comprueba qué variables usa cada trozo para no cambiar lo que hace.</li>
 <li>Dos pruebas nuevas comparan lo de antes y lo de ahora píxel a píxel y pieza a pieza: <code>huella_sprites.py</code> (los
     dibujos del baloncesto y de Guanche) y <code>huella_mundo.py</code> (todo lo que se construye del mapa, con la misma semilla).</li>
+<li>Auditoría: <strong>APTO CON AVISOS, calidad A (86)</strong>, mismas métricas que la 1.1.6.</li>
+<li>Pruebas: entre prueba y prueba se esconde también el panel de pausa (<code>run_varios.py</code>): una prueba anterior podía dejarlo
+  a la vista y <code>prueba_0851</code> lo tomaba por un fallo del Esc de la consola.</li>
 </ul>
 <h2>1.1.6 — 2026-11-04 — Alpha 1.1.6: código ordenado y coches con nombres más lejos de las marcas</h2>
 <ul>

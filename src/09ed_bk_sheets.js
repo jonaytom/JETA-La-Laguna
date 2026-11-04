@@ -148,5 +148,7 @@ const BKSHEET = (() => {
     if (k.startsWith('walk') || k.startsWith('drib')) return [2, Math.floor((p.walkT || 0) * 4.4) % 8];
     return [0, Math.floor(t * 5) % 5];
   }
-  return { ready, sheet, anim, frame, A: BK_ANIM.meta };
+  /** v1.1.8 (auditor): the layers start loading now; their images */
+  const preload = () => (ready(), Object.values(IM));
+  return { ready, sheet, anim, frame, A: BK_ANIM.meta, preload };
 })();

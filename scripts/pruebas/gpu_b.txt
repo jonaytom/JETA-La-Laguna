@@ -1,0 +1,2 @@
+# v1.1.8: pintado con la tarjeta, SIN la precarga de los minijuegos (?noprecarga=1)
+herramientas/sonda_pintado_gpu.py --noprecarga

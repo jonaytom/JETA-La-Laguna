@@ -442,7 +442,7 @@ function loop() {
   const now = performance.now();
   let dt = Math.min(0.05, (now - last) / 1000);
   last = now;
-  if (GAME.state === 'fight2d' || GAME.state === 'basket2d' || GAME.state === 'futbol2d') return; // the 2D fight / basketball game draw themselves
+  if (GAME.state === 'fight2d' || GAME.state === 'basket2d' || GAME.state === 'futbol2d' || GAME.state === 'arcade') return; // the 2D fight / basketball game draw themselves; v1.1.8 (auditor): the arcade and the console too (their screen covers everything)
   logic(dt, now);
   render();
   adaptRes(now);
@@ -923,6 +923,26 @@ async function boot() {
   last = performance.now();
   loop();
   window.__GAME_READY = true;
+  if (!/[?&]noprecarga=1\b/.test(location.search)) setTimeout(preloadMinigameImages, 1500); // ?noprecarga=1: to measure without it
+}
+/** v1.1.8 (auditor: «empieza a cargar 46 imágenes al abrirse»): the pictures of the minigames (Guanche Warriors, Bencomo,
+ *  the basketball players, the backgrounds) are loaded after the game and decoded one by one in quiet moments, so
+ *  opening a machine shows the new figures from the first frame */
+function preloadMinigameImages() {
+  const list = [];
+  try {
+    list.push(...SPRX.preload(), ...FONDOS.preload(), ...BKSHEET.preload());
+  } catch (e) {
+    console.warn('precarga de minijuegos', e);
+    return;
+  }
+  const idle = window.requestIdleCallback || ((f) => setTimeout(f, 50));
+  const next = () => {
+    const im = list.shift();
+    if (!im) return;
+    (im.decode ? im.decode() : Promise.resolve()).catch(() => {}).then(() => idle(next));
+  };
+  idle(next);
 }
 boot();
 window.__bg = [bgScene, bgCamera];

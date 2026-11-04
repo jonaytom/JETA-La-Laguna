@@ -1,5 +1,20 @@
 // ============ GTA La Laguna — core ============
 import * as THREE from 'three';
+// v1.1.8 («¿qué código dibuja esto?», tests/herramientas/sonda_origen.py): with window.__ORIGEN set before the page loads,
+// every piece added to the scene remembers the functions that added it (nothing changes in the game)
+if (typeof window !== 'undefined' && window.__ORIGEN) {
+  const add0 = THREE.Object3D.prototype.add;
+  THREE.Object3D.prototype.add = function (...o) {
+    const st = String(new Error().stack || '')
+      .split('\n')
+      .slice(2, 8)
+      .map((l) => (l.match(/at (?:new )?([\w$.]+) /) || [])[1] || '?')
+      .filter((n) => n !== '?')
+      .join(' < ');
+    for (const c of o) if (c && !c.__origen) c.__origen = st;
+    return add0.apply(this, o);
+  };
+}
 
 const DATA = window.__MAPDATA || JSON.parse(document.getElementById('mapdata').textContent); // v1.0.1: the folder version loads it from datos/mapa.js
 const STR = DATA.S;

@@ -1238,7 +1238,11 @@ const FUTBOL2D = (() => {
     const trim = full(hx(K.stripe || K.trim, light(shirt) ? '#1a1a1a' : '#f2f2f2'));
     const key = [shirt, shorts, socks, trim, sk, hr, view, l, a, num, gk ? 1 : 0].join('|');
     let o = SPR.get(key);
-    if (o) return o;
+    if (o) {
+      SPR.delete(key); // v1.1.8 (auditor): the most recently used goes last, so the one dropped is the least used
+      SPR.set(key, o);
+      return o;
+    }
     const SZ = 80,
       c = mkCanvas(SZ, SZ),
       g = c.getContext('2d'),
@@ -1400,7 +1404,7 @@ const FUTBOL2D = (() => {
       for (let x = 0; x < SZ; x++) if (!A(x, y) && (A(x + 1, y) || A(x - 1, y) || A(x, y + 1) || A(x, y - 1))) outl.push(x, y);
     for (let i = 0; i < outl.length; i += 2) g.fillRect(outl[i], outl[i + 1], 1, 1);
     o = { c, ox, oy };
-    if (SPR.size > 600) SPR.clear();
+    if (SPR.size >= 900) SPR.delete(SPR.keys().next().value); // v1.1.8 (auditor: «la caché se vacía sin parar»): drop the least used one, not all of them
     SPR.set(key, o);
     return o;
   }

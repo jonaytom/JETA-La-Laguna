@@ -1,0 +1,8 @@
+# v1.1.8: qué código dibuja las piezas raras (sonda_origen y sonda_rayos: en su propia carga, con ?revisor=1)
+herramientas/sonda_rayos.py 105 -45 0
+herramientas/sonda_rayos.py 105 -45 90
+herramientas/sonda_rayos.py 105 -45 180
+herramientas/sonda_rayos.py 105 -45 270
+herramientas/sonda_rayos.py -60 -230 32
+herramientas/sonda_rayos.py -191 366 0 2
+herramientas/sonda_rayos.py -191 366 180 2

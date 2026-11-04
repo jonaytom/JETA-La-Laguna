@@ -244,6 +244,9 @@ function trinidadFill() {
           [pa.x + na[0] * (fa + dep), pa.z + na[1] * (fa + dep)]
         ];
         if (!poly.every((q) => free(q[0], q[1]))) continue;
+        // v1.1.8 (Jonay, X −191, Y 366: «edificio con patio sin paredes por fuera»): on one side of the avenue the lot came out
+        // clockwise, and a building is drawn counter-clockwise (outward walls): turned the other way it was inside out
+        if (polyArea(poly) < 0) poly.reverse();
         // like the nearest real building of the avenue: style, floors (± 1) and roof
         let nb0 = null,
           bd = 1e9;

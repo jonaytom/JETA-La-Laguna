@@ -168,7 +168,9 @@ const SAVE = (() => {
   }
   function auto(label) {
     if (GAME.state !== 'play' || PLAYER.dead) return;
-    save('auto', label || 'Guardado automático');
+    // v1.1.8 (auditor): if it does not fit (or the browser blocks storage), say so instead of losing the save silently
+    if (!save('auto', label || 'Guardado automático') && typeof HUD !== 'undefined' && HUD.toast)
+      HUD.toast('No se ha podido guardar la partida: el navegador no deja guardar más datos', '#ff5252', 5);
   }
   function latest() {
     let best = null;

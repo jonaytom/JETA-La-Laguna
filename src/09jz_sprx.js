@@ -107,5 +107,9 @@ const SPRX = (() => {
       }
     return (SKC[k] = best ? 'rgb(' + best + ')' : '#c08a6a');
   }
-  return { draw, fr, stT, skin, has: (k) => !!D[k], D, ready: (k) => !!(D[k] && img(k)) };
+  /** v1.1.8 (auditor): every sheet starts loading now; the images, for 13_main.js to decode them in quiet moments */
+  function preload() {
+    return Object.keys(D).map((k) => (img(k), IM[k]));
+  }
+  return { draw, fr, stT, skin, has: (k) => !!D[k], D, ready: (k) => !!(D[k] && img(k)), preload };
 })();

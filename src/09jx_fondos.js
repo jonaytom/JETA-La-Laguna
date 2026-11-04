@@ -73,5 +73,7 @@ const FONDOS = (() => {
     c.imageSmoothingEnabled = sm;
     return true;
   }
-  return { get, draw, g: (k) => (FONDOS_DATA[k] ? FONDOS_DATA[k].g : 0) };
+  /** v1.1.8 (auditor): every background starts loading now; its images */
+  const preload = () => Object.keys(FONDOS_DATA).flatMap((k) => (get(k), C[k].layers.map((l) => l.im)));
+  return { get, draw, g: (k) => (FONDOS_DATA[k] ? FONDOS_DATA[k].g : 0), preload };
 })();

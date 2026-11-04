@@ -1,0 +1,3 @@
+# v1.1.8: el talud del terraplén de Camino San Francisco / San Honorato
+herramientas/sonda_calzadas.py -720 301 45
+herramientas/sonda_calzadas.py -730 335 45

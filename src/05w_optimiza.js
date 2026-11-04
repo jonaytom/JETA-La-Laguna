@@ -157,6 +157,7 @@ function mergeStatics() {
       Math.floor(c.x / LOD.cell),
       Math.floor(c.z / LOD.cell)
     ].join('|');
+    if (window.__ORIGEN) origenNote(o, mat); // v1.1.8: sonda_origen.py
     let G = groups.get(key);
     if (!G) groups.set(key, (G = { mat, uv, col, cs: o.castShadow, rs: o.receiveShadow, ro: o.renderOrder, detail, list: [] }));
     G.list.push(o);
@@ -281,6 +282,25 @@ function mergeStatics() {
   return LOD.stats;
 }
 /** (v1.1.7, code quality) part of mergeStatics */
+/** v1.1.8 (sonda_origen.py): what a piece that is about to be joined was, and who added it (its own functions, or its parents') */
+function origenNote(o, mat) {
+  const L = window.__ORIGEN_OUT || (window.__ORIGEN_OUT = []);
+  const b = new THREE.Box3().setFromObject(o);
+  let p = o,
+    who = '';
+  while (p && !who) {
+    who = p.__origen || '';
+    p = p.parent;
+  }
+  L.push({
+    c: [b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z].map((v) => Math.round(v * 10) / 10),
+    col: mat.color ? mat.color.getHexString() : '',
+    mat: mat.name || mat.type,
+    geo: o.geometry.type,
+    name: o.name || (o.parent && o.parent.name) || '',
+    who
+  });
+}
 function mergeStaticsPart1() {
   const why = {};
   const no = (k, o) => {

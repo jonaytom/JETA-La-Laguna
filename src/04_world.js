@@ -1473,6 +1473,36 @@ function bridgeDressingEach(pts, i, hw, T, bank, col, w) {
   }
   bridgeDressingEachPart1(a, hw, b, T, i, w);
 }
+/** v1.1.8 (Jonay, Camino San Francisco X −720, Y 301: «un salto brusco junto a la calzada; en la realidad la bajada es mucho
+ *  más suave»): in front of the retaining wall of a raised approach, an earth bank down to the ground (about 1 : 1.6), where
+ *  there is room (no street, pavement or building in the way; otherwise the wall stays bare) */
+function bankSlope(ax, az, bx, bz, a, b, sg, T) {
+  const nx = -a[4] * sg,
+    nz = a[3] * sg,
+    ta = a[2] - 0.6,
+    tb = b[2] - 0.6;
+  const wa = clamp(1.6 * (ta - heightAt(ax, az)), 2, 9),
+    wb = clamp(1.6 * (tb - heightAt(bx, bz)), 2, 9);
+  for (const t of [0, 0.5, 1])
+    for (const k of [0.35, 0.7, 1]) {
+      const w = (wa + (wb - wa) * t) * k,
+        x = ax + (bx - ax) * t + nx * w,
+        z = az + (bz - az) * t + nz * w,
+        g = heightAt(x, z);
+      if (inOtherRoad(x, z, g - 3, Math.max(ta, tb) + 1, DRESS_RI, -2.5) || inAnyBuilding(x, z)) return;
+    }
+  const pa = [ax + nx * wa, 0, az + nz * wa],
+    pb = [bx + nx * wb, 0, bz + nz * wb];
+  pa[1] = heightAt(pa[0], pa[2]) - 0.15;
+  pb[1] = heightAt(pb[0], pb[2]) - 0.15;
+  if (pa[1] > ta - 0.5 || pb[1] > tb - 0.5) return; // the ground is already as high there (a hillside)
+  // grass and earth, like the ground around (vertex colours are linear: this is the olive green of the terrain)
+  acc(ax, az, 'trim').quad(pa, pb, [bx, tb, bz], [ax, ta, az], [0, 0], [0, 0], [0, 0], [0, 0], [0.16, 0.21, 0.07], undefined, [
+    nx * 0.55,
+    0.84,
+    nz * 0.55
+  ]);
+}
 /** (v1.1.7, code quality) the body of a loop of bridgeDressingEach, split out of it */
 function bridgeDressingEachEach(a, hw, sg, b, bank, T, col) {
   const ax = a[0] - a[4] * hw * sg,
@@ -1509,6 +1539,7 @@ function bridgeDressingEachEach(a, hw, sg, b, bank, T, col) {
         undefined,
         [-a[4] * sg, 0, a[3] * sg]
       );
+    if (a[2] - 0.6 > ga + 1.9 || b[2] - 0.6 > gb + 1.9) bankSlope(ax, az, bx, bz, a, b, sg, T);
   }
   // concrete kerb-parapet...
   T.quad([ax, a[2] - 0.6, az], [bx, b[2] - 0.6, bz], [bx, b[2] + 0.5, bz], [ax, a[2] + 0.5, az], [0, 0], [0, 0], [0, 0], [0, 0], col, undefined, [

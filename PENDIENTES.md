@@ -506,7 +506,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   de suelo a la misma altura (la plaza, la calle peatonal y el bordillo de la acera que se solapan) se pelean por pintarse
   (z-fighting) y cambia cuál se ve según el fotograma. Buscar dónde se pisan las áreas peatonales con calles y aceras y dejar
   una sola, o separarlas unos centímetros con prioridad fija (`polygonOffset`).
-- [ ] ◐ **Escalón de terreno en Camino San Francisco / San Honorato** (Jonay, 3-nov, X −720, Y 301 y X −730, Y 335,
+- [~] ◐ v1.1.8 (talud de tierra de ~1:1,6 delante del muro de los terraplenes, donde hay sitio; falta que Jonay lo mire y, si no basta, subir el terreno de verdad) **Escalón de terreno en Camino San Francisco / San Honorato** (Jonay, 3-nov, X −720, Y 301 y X −730, Y 335,
   capturas): un salto brusco del terreno junto a la calzada y la glorieta; en la realidad la bajada es mucho más suave.
   Suavizar el terreno y la rasante ahí (y buscar otros saltos parecidos con el revisor).
   - v1.1.5 (sonda_calzadas): es el terraplén de subida al puente de la Av. República de Venezuela sobre la Autopista del Norte: la calzada va 4–5 m por encima del terreno y el muro cae de golpe. Hay que subir el terreno de alrededor en rampa suave (no solo el muro).
@@ -519,7 +519,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   reanudar le mandó a otro sitio y, desde ahí, con el teletransporte y al cargar partida, solo se ve el cielo y el mar (la
   ciudad no se pinta; el minimapa en negro). Falta la consola (F12 / Ctrl+Mayús+J) con los errores en rojo para saber
   qué se rompe. La 1.0.3 protege el pintado para que un fallo de lo nuevo (`actorCull`) no deje la ciudad sin pintar.
-- [ ] ◐ **Edificio con patio sin paredes por fuera junto a la Av. de La Trinidad** (Jonay, 3-nov, X −191, Y 366): se ven solo las
+- [~] ◐ v1.1.8 (los solares que rellena `trinidadFill` en un lado de la avenida salían girados al revés y se pintaban del revés: paredes hacia dentro; falta que Jonay lo mire) **Edificio con patio sin paredes por fuera junto a la Av. de La Trinidad** (Jonay, 3-nov, X −191, Y 366): se ven solo las
   fachadas de dentro y se choca con lo que no se ve. Sigue en la 1.0.3 con el recorte de la 0.99.8: viene de cómo se
   rellenan los solares de la avenida (`trinidadFill`, 05u_trinidad.js) o del OSM. Mirar con `sonda_hueco.py -191 366 50`.
 
@@ -544,13 +544,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   circulan los coches. Que las plazas solo vayan en el carril de aparcamiento (junto al bordillo), nunca en los de paso.
 - [~] ● v0.99.6 (pasos inferiores cortos con la carretera de encima en terraplén, STOP solo en la incorporación, carriles de aceleración y deceleración, líneas en puentes, techo del intercambiador recortado) v0.99.5 (líneas por carriles, bionda en los bordes, sin aparcados en la autopista) **Marcas viales, arcenes y medianas de la autopista, la Vía de Ronda y sus enlaces** (Jonay, 27-oct: «las carreteras con cruces son un lío»; 15 capturas: X 386 Z −276, X 1534 Z 2739, X 1775 Z 3165, X −546 Z 470…):
   - Falta: mirar con Jonay las fotos nuevas de los 15 sitios (`tests/shots/v2_*.jpg`) y los cebreados pintados en las narices de las salidas.
-- [ ] ◐ **Para mirar** (visto en las fotos de la 0.77, ya estaba antes): en la Plaza del Adelantado y en el casco hay **marcos
-      grises flotando** sobre las fachadas (vigas horizontales a la altura del tejado y algún poste suelto), en
-      X 105 Z −45 mirando a la plaza y en X −60 Z −230 mirando a X −10 Z −150. ¿Soportales/pérgolas mal colocados?
-  - v0.85.1: fotografiados (`tests/shots/v0851_marcos_*.jpg`, `prueba_0851.py`). Se ven vigas grises largas a unos
-    8–12 m, en polilínea sobre las plazas, y en una foto dos postes con un frontón. No son calles elevadas (ninguna vía
-    sube más de 2 m allí) ni objetos sueltos: están dentro de las piezas juntadas de la ciudad. Siguiente paso: sacar
-    las fotos sin juntar (`?revisor=1`) ocultando cada material, para saber qué código las dibuja.
 - [~] ◐ v0.78.0 (tramos elevados que bajan a la calle donde acaban: Travesía Andenes/Av. Ghandi X 820 Z 3494 y Vía de Ronda X 377 Z −268; rampa X −495 Z 683 de 1,2 m a 0,4 m; queda la **rampa del HUC X 2210 Z 3312**: la boca de la rampa empieza 2 m honda justo donde la cruza la calle de servicio, y el coche cae dentro: hay que acortar la rampa o mover el cruce) v0.55.0 **Uniones de túneles y puentes con la vía normal** (hecho: Vallado y boca de la Vía de Ronda) (Jonay, 7-oct): salida del túnel de Camino el Vallado
       (X −942 Z 86 / X −928 Z 64): la losa de arriba se superpone a la salida y no deja salir, y por las paredes
       laterales se ve a través (no debería verse el exterior a través de las paredes del túnel). Vía de Ronda
@@ -790,7 +783,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 - [~] ◐ v0.99.7 (el «poste» de Juan de Vera era el alcalde) **Auditoría v0.99.6 y v0.99.8 (APTO CON AVISOS)**: `09jz_sprx.js`
   bajó de A a B y `11_hud.js` de B a C; `prueba_076.py` falla en la carga compartida y pasa sola.
 
-- [ ] ◐ **Auditoría 1.1.7 (APTO CON AVISOS, calidad A 86)**: avisos de minijuegos que salen con el auditor nuevo:
+- [~] ◐ v1.1.8 (hechos los cuatro de minijuegos y el aviso al guardar; los «lienzos nuevos» y «JSON por fotograma» del análisis de código en la pelea, el baloncesto, las recreativas y sus fondos son de dibujos que se hacen una vez y se guardan, no de cada fotograma; queda el sombreador por el camino) **Auditoría 1.1.7 (APTO CON AVISOS, calidad A 86)**: avisos de minijuegos que salen con el auditor nuevo:
   - el mundo 3D se sigue pintando detrás de bencomo, naves y guanche (la pantalla del minijuego lo tapa entero): no pintar la escena mientras haya un minijuego a pantalla completa (`13_main.js`, `loop()`).
   - baloncesto (9 imágenes, 0,11 MB), bencomo (19, 0,33 MB) y guanche (46, 1,53 MB) empiezan a cargar sus imágenes al abrirse: precargarlas (`img.decode()`) durante la carga o al acercarse a la máquina.
   - el fútbol crea lienzos y lee píxeles en cada fotograma (0,21 por fotograma): crearlos una vez y reutilizarlos.
@@ -857,6 +850,14 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Hecho
 
+- [x] v1.1.8 **Para mirar** (visto en las fotos de la 0.77, ya estaba antes): en la Plaza del Adelantado y en el casco hay **marcos
+      grises flotando** sobre las fachadas (vigas horizontales a la altura del tejado y algún poste suelto), en
+      X 105 Z −45 mirando a la plaza y en X −60 Z −230 mirando a X −10 Z −150. ¿Soportales/pérgolas mal colocados?
+  - v0.85.1: fotografiados (`tests/shots/v0851_marcos_*.jpg`, `prueba_0851.py`). Se ven vigas grises largas a unos
+    8–12 m, en polilínea sobre las plazas, y en una foto dos postes con un frontón. No son calles elevadas (ninguna vía
+    sube más de 2 m allí) ni objetos sueltos: están dentro de las piezas juntadas de la ciudad. Siguiente paso: sacar
+    las fotos sin juntar (`?revisor=1`) ocultando cada material, para saber qué código las dibuja.
+  - v1.1.8 (`sonda_origen.py`, `sonda_rayos.py`): **no es un fallo del juego**: las dos fotos se sacaban con la cámara *dentro* de un edificio (X 105, Y −45 está dentro del Palacio Nava; X −60, Y −230 dentro de otro del casco). Desde dentro no se ven las paredes (solo se pintan por fuera) y sí la cornisa, la portada y la banda del tejado: eso eran los «marcos».
 - [x] v1.1.6 **Nombres de coches demasiado parecidos a las marcas reales** (Jonay, 3-nov: «algunos nombres de los coches se
   identifican demasiado… y en una misión sale un SEAT; eso está mal, no puede haber marcas reales»): en la 1.1.3 el «Seat
   gris» de la misión de la Secreta pasa a «coche gris». Falta repasar la lista de `06b_vmodels.js` (Volksgofio, Tollota,
