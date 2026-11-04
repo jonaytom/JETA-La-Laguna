@@ -3,6 +3,18 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.1.6 — 2026-11-04 — Alpha 1.1.6: código ordenado y coches con nombres más lejos de las marcas
+- **Calidad del código** (Jonay: «revisa la calidad del código»): todo `src/` pasa por un formateador (Prettier,
+  `.prettierrc.json`: líneas de hasta 150 caracteres, una sentencia por línea). Mismo juego, mismo comportamiento; la nota
+  del auditor sube de C (69) a B (84): las líneas largas bajan del 26 % al 0,4 % y las densas del 21 % al 0 %.
+  `tools/lint_js.py` entiende ya las declaraciones partidas en varias líneas.
+- **Calles sobre trincheras abiertas** (sonda_rampas: ~60 sitios): donde una calle cruza por encima del tramo abierto de una
+  trinchera honda, lleva debajo su losa de puente con pretiles a los lados (y su choque), en vez de flotar sobre el hueco.
+- **Banda de aparcamiento con su raya continua corta** al principio y al final de cada tramo (Jonay, foto de C. Narciso de Vera).
+- **Coches** (Jonay: «que se alejen más… Pijó me vale»): Guagüen, Butaca, Tagoror, Quillo, Jandía, Datilera, Reinona,
+  Copal, Limonero, Fiao, Nisperero, MaGofio, Susurro, Fardo, Mercadillo, Mojo Bichi, Burrero; motos Olita, Llamarada,
+  Sinsín, Quinqué y Cachimba. Los concesionarios del mapa, igual.
+
 ## 1.1.5 — 2026-11-03 — Alpha 1.1.5: señales de prohibido aparcar (Mapillary) y cámara bajo tierra
 - **Señales de prohibido aparcar y parar de Mapillary** (Jonay: «puedes descargar esos puntos y cruzarlos con tus
   calles»; eligió «hueco en la banda»): `tools/mapillary.py` baja las señales detectadas en las fotos de Mapillary (828 de

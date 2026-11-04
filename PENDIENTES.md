@@ -295,12 +295,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Misiones, historia y economía
 
-- [ ] ◐ **Nombres de coches demasiado parecidos a las marcas reales** (Jonay, 3-nov: «algunos nombres de los coches se
-  identifican demasiado… y en una misión sale un SEAT; eso está mal, no puede haber marcas reales»): en la 1.1.3 el «Seat
-  gris» de la misión de la Secreta pasa a «coche gris». Falta repasar la lista de `06b_vmodels.js` (Volksgofio, Tollota,
-  Jiundái, Quia, Renol, Pijó, Opal, Citrón, Fiá, Nisanto, Susuki, Fordo, Merceditas, Mitsubichi, Asiento…): proponer a
-  Jonay nombres que solo recuerden de lejos (p. ej. por el país o un chiste canario) y buscar marcas reales en todos los
-  textos (misiones, rótulos, radio).
 
 - [ ] ◐ **Rifle de agua: postura, puntería y chorro** (Jonay, 3-nov, misiones del agua con El Blanco y Boca Papa, X −599,
   Y −525 y X −573, Y −513, 4 capturas).
@@ -456,7 +450,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Calles, túneles, puentes, enlaces y aeropuerto
 
-- [ ] ⚡ **Banda de aparcamiento: raya continua corta al principio y al final** (Jonay, 3-nov, foto de C. Narciso de Vera): junto al paso de cebra la banda empieza con una raya continua transversal. La 1.1.4 ya la pinta discontinua y sin dividir plazas; falta esa raya en los extremos (`laneMk` / `ribbon`, `04_world.js`).
 - [~] ⚡ v1.1.0 (red de seguridad que te devuelve a la calle; la sonda `sonda_caidas.py` no encuentra ahí un tablero sobre un tramo bajo, así que la causa sigue sin saberse: falta reproducirlo conduciendo por ese enlace) **¡Bloquea la misión! El coche se cae a través de la calzada en el enlace de la Autopista del Norte** (Jonay,
   3-nov, X −3292, Y −161, captura de noche, misión del queso del aeropuerto: «me he caído por aquí con el coche mientras
   seguía a la furgoneta del queso; él también se cayó pero pudo seguir; esto es súper bug porque impide hacer la misión,
@@ -475,7 +468,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   poder acceder a la Vía de Ronda, debería haber vallado»): una calle sin salida termina en el talud junto a la Vía de
   Ronda y se baja con el coche. Poner valla o bionda al final de las calles sin salida que dan a una vía rápida (autopista,
   autovía, Vía de Ronda) cuando no hay enlace, y con choque.
-- [ ] ◐ **Tramos abiertos de trinchera con una calle por encima** (v1.0.8, `sonda_rampas.py`): además de las rampas de los
+- [~] ◐ v1.1.6 (losa de puente con pretil bajo la calle donde cruza el tramo abierto de una trinchera de más de 3,2 m; falta mirarlo con fotos sitio a sitio) **Tramos abiertos de trinchera con una calle por encima** (v1.0.8, `sonda_rampas.py`): además de las rampas de los
   aparcamientos (arregladas en la 1.0.8), la sonda encuentra ~60 sitios donde una calle de verdad cruza por encima del
   tramo abierto de una trinchera o un paso inferior (Autopista del Norte X −1193, Y −28; Vía de Ronda X 537, Y 1371 y
   X 713, Y 1315; Av. de los Menceyes X 694, Y 1326; Camino La Rúa X 630, Y −1146; enlaces de la autopista X 1221, Y 2360…).
@@ -764,7 +757,8 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Rendimiento, auditorías y código
 
-- [~] ◐ v1.0.0 (`12m_mundialito.js`: la tabla de selecciones, una fila por equipo) **Partir funciones largas y ordenar
+- [ ] ⚡ **Auditoría 1.1.6: «180 avisos nuevos» del análisis estático** (crear geometría en `buildRoofProps`, `buildTerrain`, `buildLamps`…): no son nuevos, son los de siempre con otro número de línea tras pasar el formateador. Comprobar en la próxima auditoría que vuelven a contar como conocidos; `03_collide.js` bajó de A a B (más líneas por función).
+- [~] ◐ v1.1.6 (todo `src/` con Prettier: nota de C 69 a B 84, sin líneas largas ni densas; quedan las funciones-módulo muy largas y el código repetido de 09ma/09eb/06b) v1.0.0 (`12m_mundialito.js`: la tabla de selecciones, una fila por equipo) **Partir funciones largas y ordenar
   los archivos con nota D o C** (auditorías 0.75, 0.76, 0.90 y 0.99.8): quedan `09eb_pixbasket.js` y `09ma_pixguanche.js`
   (el dibujante de la propuesta en una función de ~155 líneas), `12k_agua.js` (líneas muy largas y densas), `12j_campos.js`
   (la Copa Laguna), `09ea_minijuegos.js` (el público) y `11_hud.js` (bajó de B a C por las líneas largas). Las «funciones de
@@ -856,6 +850,13 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Hecho
 
+- [x] v1.1.6 **Nombres de coches demasiado parecidos a las marcas reales** (Jonay, 3-nov: «algunos nombres de los coches se
+  identifican demasiado… y en una misión sale un SEAT; eso está mal, no puede haber marcas reales»): en la 1.1.3 el «Seat
+  gris» de la misión de la Secreta pasa a «coche gris». Falta repasar la lista de `06b_vmodels.js` (Volksgofio, Tollota,
+  Jiundái, Quia, Renol, Pijó, Opal, Citrón, Fiá, Nisanto, Susuki, Fordo, Merceditas, Mitsubichi, Asiento…): proponer a
+  Jonay nombres que solo recuerden de lejos (p. ej. por el país o un chiste canario) y buscar marcas reales en todos los
+  textos (misiones, rótulos, radio).
+- [x] v1.1.6 **Banda de aparcamiento: raya continua corta al principio y al final** (Jonay, 3-nov, foto de C. Narciso de Vera): junto al paso de cebra la banda empieza con una raya continua transversal. La 1.1.4 ya la pinta discontinua y sin dividir plazas; falta esa raya en los extremos (`laneMk` / `ribbon`, `04_world.js`).
 - [x] v1.1.4 **Puentes: grietas en las uniones y sin marcas viales** (Jonay, 3-nov, Vía de Ronda X 631, Y 600, captura: «en
   muchos puentes se ven como grietas en las uniones y pierden las marcas viales»): en la junta entre la calzada y el
   tablero del puente queda una raja fina (se ve el fondo) y las líneas del carril se cortan en todo el tablero. Cerrar la

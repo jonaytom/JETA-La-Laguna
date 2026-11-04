@@ -23,6 +23,10 @@
 - **Controles de los minijuegos: siempre las mismas teclas** (pelea, baloncesto y los que vengan): botón A = `E` / clic
   izquierdo, botón B = `Espacio`, arriba = `↑`/`W`, clic derecho (o `Q`), y moverse como al andar.
 
+- **Formato del código** (v1.1.6, Jonay pidió revisar la calidad): `src/` va formateado con Prettier (`.prettierrc.json`). Claude
+  pasa el formateador en la nube (`/opt/node-tools/node_modules/.bin/prettier --write`) a los archivos que toque antes de
+  subirlos al PC; los `*_data.js` y `09ecb_bk_anim.js` (datos) no se formatean.
+
 ## Cómo se apuntan los pendientes (Jonay, 20-oct)
 
 `PENDIENTES.md` tiene dos partes: **«Pendientes por categoría»** (lo abierto) y **«Hecho»** (lo terminado).

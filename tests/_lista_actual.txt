@@ -1,5 +1,8 @@
+prueba_079.py
 prueba_arranque.py
-prueba_trinidad.py
+prueba_conduccion_tuneles_puentes.py
+herramientas/sonda_caidas.py
+herramientas/sonda_calzadas.py -1193 -28 40
+herramientas/sonda_calzadas.py 537 1371 40
+herramientas/sonda_calzadas.py 630 -1146 40
 herramientas/sonda_aparcamiento.py
-herramientas/sonda_calzadas.py -720 301 40
-herramientas/sonda_calzadas.py -730 335 30

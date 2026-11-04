@@ -1,45 +1,162 @@
-# Pruebas 1.1.5 — 2026-11-03 23:48 — 5/5 OK
+# Pruebas 1.1.6 — 2026-11-04 00:18 — 8/8 OK
 
-Listas: v1115a. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 89 s en total.
+Listas: v1116c. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 123 s en total.
 
 | # | Prueba | Resultado | Tiempo |
 |---|---|---|---|
-| 1 | `prueba_arranque.py` | **OK** | 7 s |
-| 2 | `prueba_trinidad.py` | **OK** | 55 s |
-| 3 | `herramientas/sonda_aparcamiento.py` | **OK** | 4 s |
-| 4 | `herramientas/sonda_calzadas.py -720 301 40` | **OK** | 2 s |
-| 5 | `herramientas/sonda_calzadas.py -730 335 30` | **OK** | 1 s |
+| 1 | `prueba_079.py` | **OK** | 57 s |
+| 2 | `prueba_arranque.py` | **OK** | 1 s |
+| 3 | `prueba_conduccion_tuneles_puentes.py` | **OK** | 35 s |
+| 4 | `herramientas/sonda_caidas.py` | **OK** | 0 s |
+| 5 | `herramientas/sonda_calzadas.py -1193 -28 40` | **OK** | 2 s |
+| 6 | `herramientas/sonda_calzadas.py 537 1371 40` | **OK** | 2 s |
+| 7 | `herramientas/sonda_calzadas.py 630 -1146 40` | **OK** | 1 s |
+| 8 | `herramientas/sonda_aparcamiento.py` | **OK** | 3 s |
 
 ## Detalle
 
-### 1. prueba_arranque.py — OK
+### 1. prueba_079.py — OK
 
 ```
-30 pasos (ms): {'mediana': 36, 'peor': 141, 'estado': 'play'}
+rifle sin apuntar {'mano_dcha': 0.114, 'mano_izq': 0.05, 'angulo_antebrazo': 38}
+foto v079_rifle_llevar
+rifle apuntando {'mano_dcha': 0.116, 'mano_izq': 0.033, 'angulo_antebrazo': 60}
+foto v079_rifle_apuntar
+foto v079_rifle_apuntar_lado
+RIFLE OK
+saque de centro {'saque': 'centro', 'dist_rival': 6}
+palomitas {'frames_en_palomita': 252, 'paradas': 0, 'marcador': [2, 2]}
+tiro a tope de cerca {'D': 8, 'z_en_la_linea': 2.28, 'gol': False} de lejos {'D': 27, 'z_en_la_linea': 1.18, 'gol': True}
+regate {'regate': True, 'sigue_con_balon': True}
+portero sale a por el balón {'portero_la_quita': True, 'frames': 63, 'gol': 0}
+FUTBOL saque True palomitas True fuerza True regate True
+foto v079_mate_m360_0
+foto v079_mate_m360_1
+foto v079_mate_m360_2
+foto v079_mate_m360_3
+foto v079_mate_molino_0
+foto v079_mate_molino_1
+foto v079_mate_molino_2
+foto v079_mate_molino_3
+foto v079_mate_espaldas_0
+foto v079_mate_espaldas_1
+foto v079_mate_espaldas_2
+foto v079_mate_espaldas_3
+foto v079_mate_piernas_0
+foto v079_mate_piernas_1
+foto v079_mate_piernas_2
+foto v079_mate_piernas_3
+mates {'m360': {'marcador': [2, 0]}, 'molino': {'marcador': [4, 0]}, 'espaldas': {'marcador': [6, 0]}, 'piernas': {'marcador': [8, 0]}}
+pase largo {'altura_max': 3.42, 'recibe': True}
+combos de la CPU buena {'combos_cpu': 13, 'marcador': [38, 24]}
+BASKET OK
+foto v079_mapa_grande
+errores []
+PRUEBA 079 OK
+```
+
+### 2. prueba_arranque.py — OK
+
+```
+30 pasos (ms): {'mediana': 36, 'peor': 51, 'estado': 'play'}
 errores JS []
 ARRANQUE OK
 ```
 
-### 2. prueba_trinidad.py — OK
+### 3. prueba_conduccion_tuneles_puentes.py — OK
 
 ```
-widths [6.6]
-invaden []
-aparcamientos [{'name': 'Parking Trinidad', 'x': -113, 'z': 106, 'yF': -13.5}, {'name': 'Parking Trinidad', 'x': -133, 'z': 163, 'yF': -14.2}, {'name': 'Parking Trinidad', 'x': -153, 'z': 221, 'yF': -14.2}, {'name': 'Parking Trinidad', 'x': -173, 'z': 278, 'yF': -14.2}, {'name': 'Parking Trinidad', 'x': -193, 'z': 336, 'yF': -14}, {'name': 'Parking Trinidad', 'x': -213, 'z': 394, 'yF': -13.7}, {'name': 'Parking Trinidad', 'x': -232, 'z': 451, 'yF': -13.2}]
-nuevas 7
-coche {'aparcamiento': 'Parking Trinidad', 'rampa': [-85, 28], 'profundidad': 8.2, 'en_sala': True, 'fin': [-105, 82]}
-coche {'aparcamiento': 'Parking Trinidad', 'rampa': [-244, 524], 'profundidad': 7.3, 'en_sala': True, 'fin': [-228, 471]}
-foto trinidad_rampa_1
-foto trinidad_rampa_1_alto
-foto trinidad_rampa_7
-foto trinidad_rampa_7_alto
-foto trinidad_pedrozerolo
-foto trinidad_pedrozerolo_calle
-errores JS []
-TRINIDAD OK
+roads 118
+failed 0 of 118 · conocidos 0
+CONDUCCION OK
 ```
 
-### 3. herramientas/sonda_aparcamiento.py — OK
+### 4. herramientas/sonda_caidas.py — OK
+
+```
+sitios donde se bajaba del tablero al tramo de abajo: 0
+SONDA CAIDAS OK
+```
+
+### 5. herramientas/sonda_calzadas.py -1193 -28 40 — OK
+
+```
+vías (índice, nombre, tipo, ancho, puente/elevada/hundida, dist, X, Y, altura calzada, altura terreno, puntos):
+   [311, '', 'unclassified', 8, 'hundida,tunel', 3, -1195, -31, 11.56, 18.08, 2]
+   [715, 'Calle Higueras Don Felipe', 'residential', 7.9, 'hundida', 22, -1173, -39, 18.1, 18.1, 10]
+   [1271, '', 'unclassified', 8, 'hundida', 8, -1188, -34, 13.76, 18.09, 4]
+   [1795, 'Calle Espinero', 'unclassified', 7.9, 'elevada', 27, -1202, -2, 18.26, 18.26, 10]
+   [1865, 'Camino Margallo', 'residential', 7.9, '', 22, -1173, -39, 18.1, 18.1, 3]
+   [2288, 'Autopista del Norte', 'motorway', 13.4, '', 0, -1193, -28, 18.14, 18.14, 81]
+   [2480, 'Autopista del Norte', 'motorway', 13.4, '', 15, -1197, -14, 18.22, 18.22, 58]
+   [3752, '', 'footway', 2.4, 'hundida,tunel', 5, -1196, -32, 14.96, 18.05, 2]
+   [3753, '', 'footway', 2.4, 'hundida', 7, -1191, -35, 15.75, 18.07, 2]
+calzadas que se pisan (vía, otra vía, metros, diferencia de altura, dónde):
+   [311, 1271, '4 m', 'dif. altura 0.68..1.32', [-1192, -33]]
+   [311, 1795, '8 m', 'dif. altura 5.81..7.18', [-1229, -12]]
+   [311, 2288, '16 m', 'dif. altura 6.26..7.59', [-1206, -25]]
+   [311, 2480, '18 m', 'dif. altura 7.44..7.65', [-1222, -16]]
+   [715, 1271, '10 m', 'dif. altura 0.00..0.02', [-1173, -39]]
+SONDA CALZADAS OK
+```
+
+### 6. herramientas/sonda_calzadas.py 537 1371 40 — OK
+
+```
+vías (índice, nombre, tipo, ancho, puente/elevada/hundida, dist, X, Y, altura calzada, altura terreno, puntos):
+   [355, 'Camino la Hornera', 'residential', 7.9, '', 24, 553, 1353, -72.51, -72.51, 10]
+   [428, '', 'residential', 7.9, '', 24, 553, 1353, -72.51, -72.51, 6]
+   [430, 'Camino la Hornera', 'residential', 8, '', 21, 557, 1365, -73.09, -73.09, 6]
+   [445, 'Vía de Ronda de La Laguna', 'primary', 17.2, 'hundida', 0, 537, 1371, -75.95, -71.94, 4]
+   [446, 'Vía de Ronda de La Laguna', 'primary', 17.2, 'hundida,tunel', 1, 537, 1371, -75.98, -71.95, 5]
+   [1020, 'Calle Júpiter', 'residential', 7.9, '', 34, 533, 1405, -72.78, -72.78, 2]
+   [1299, '', 'service', 5.2, '', 29, 566, 1368, -73.73, -73.73, 2]
+   [1389, '', 'service', 5.2, '', 34, 507, 1356, -69.27, -69.27, 4]
+   [1403, 'Calle las Saltonas', 'residential', 7.9, '', 34, 509, 1352, -69.27, -69.27, 5]
+   [2066, 'Calle Hércules', 'residential', 7.9, '', 29, 527, 1398, -72.12, -72.12, 10]
+   [3613, '', 'pedestrian', 6, '', 19, 543, 1389, -72.93, -72.93, 3]
+   [3617, 'Calle las Saltonas', 'residential', 8, '', 15, 539, 1356, -71.63, -71.63, 2]
+   [3621, 'Calle Habaneras', 'residential', 8, '', 34, 507, 1356, -69.27, -69.27, 9]
+   [4204, '', 'footway', 2.4, '', 33, 558, 1346, -72.58, -72.58, 55]
+   [4210, '', 'footway', 2.4, '', 25, 561, 1364, -73.37, -73.37, 36]
+   [4214, '', 'footway', 2.4, '', 31, 564, 1356, -73.28, -73.28, 3]
+   [4215, '', 'footway', 2.4, '', 17, 540, 1354, -71.61, -71.61, 64]
+   [4217, '', 'footway', 2.4, '', 24, 548, 1350, -72.06, -72.06, 3]
+calzadas que se pisan (vía, otra vía, metros, diferencia de altura, dónde):
+   [355, 428, '6 m', 'dif. altura 0.09..0.27', [552, 1347]]
+   [430, 446, '12 m', 'dif. altura 6.37..6.75', [556, 1364]]
+   [430, 3617, '8 m', 'dif. altura 0.00..0.19', [554, 1356]]
+   [445, 446, '18 m', 'dif. altura 0.00..3.00', [537, 1371]]
+   [446, 1299, '16 m', 'dif. altura 6.87..7.80', [576, 1361]]
+   [1020, 2066, '8 m', 'dif. altura 0.00..0.30', [533, 1405]]
+   [1389, 3621, '6 m', 'dif. altura 0.10..0.30', [501, 1355]]
+   [1403, 3621, '4 m', 'dif. altura 0.17..0.33', [505, 1351]]
+SONDA CALZADAS OK
+```
+
+### 7. herramientas/sonda_calzadas.py 630 -1146 40 — OK
+
+```
+vías (índice, nombre, tipo, ancho, puente/elevada/hundida, dist, X, Y, altura calzada, altura terreno, puntos):
+   [308, 'Camino La Rúa', 'residential', 8, 'hundida', 0, 630, -1146, -0.86, 3, 18]
+   [564, 'Camino La Rúa', 'residential', 8, 'hundida,tunel', 3, 632, -1148, -1, 3.03, 2]
+   [565, '', 'unclassified', 8, '', 29, 659, -1151, 4.76, 4.76, 5]
+   [577, 'Camino La Rúa', 'residential', 8, 'hundida', 23, 648, -1161, -0.26, 3.66, 6]
+   [1449, '', 'primary_link', 9.1, '', 28, 658, -1145, 5.02, 5.02, 4]
+   [1568, 'Camino el Bronco', 'unclassified', 8, '', 29, 659, -1151, 4.76, 4.76, 10]
+   [2023, 'Vía de Ronda de La Laguna', 'primary', 13, 'elevada', 10, 640, -1147, 5.79, 3.63, 22]
+   [3032, 'Calle Félix Torres', 'residential', 8.1, '', 1, 630, -1146, 3, 3, 5]
+calzadas que se pisan (vía, otra vía, metros, diferencia de altura, dónde):
+   [308, 564, '2 m', 'dif. altura 0.00..0.00', [632, -1148]]
+   [308, 3032, '10 m', 'dif. altura 3.45..3.90', [631, -1147]]
+   [564, 577, '4 m', 'dif. altura 0.19..0.34', [645, -1159]]
+   [564, 2023, '12 m', 'dif. altura 6.10..6.58', [636, -1152]]
+   [565, 1449, '8 m', 'dif. altura 0.06..0.22', [660, -1159]]
+   [1449, 1568, '8 m', 'dif. altura 0.04..0.18', [658, -1144]]
+SONDA CALZADAS OK
+```
+
+### 8. herramientas/sonda_aparcamiento.py — OK
 
 ```
 calles miradas: 2794
@@ -60,51 +177,4 @@ foto 5 1757 3600
 SONDA APARCAMIENTO OK
 ```
 
-### 4. herramientas/sonda_calzadas.py -720 301 40 — OK
-
-```
-vías (índice, nombre, tipo, ancho, puente/elevada/hundida, dist, X, Y, altura calzada, altura terreno, puntos):
-   [5, 'Buenaventura Bonnet', 'residential', 8, '', 25, -703, 282, 8.42, 8.42, 3]
-   [91, 'Avenida República de Venezuela', 'tertiary', 10.4, 'puente,elevada', 26, -714, 326, 14.28, 9.17, 2]
-   [981, '', 'tertiary', 10.4, 'elevada', 37, -744, 329, 14.6, 10.62, 4]
-   [2289, 'Autopista del Norte', 'motorway', 13.4, '', 8, -714, 296, 9.09, 9.09, 25]
-   [2296, 'Autopista del Norte', 'motorway', 13.4, '', 7, -725, 306, 9.62, 9.62, 28]
-   [2502, 'Avenida República de Venezuela', 'tertiary', 10.4, 'elevada', 29, -726, 330, 14.31, 9.73, 10]
-   [2839, 'Camino San Francisco', 'tertiary', 10.4, 'elevada', 29, -726, 330, 14.3, 9.73, 3]
-   [3599, '', 'motorway_link', 7.8, '', 8, -714, 296, 9.09, 9.09, 13]
-calzadas que se pisan (vía, otra vía, metros, diferencia de altura, dónde):
-   [91, 2289, '16 m', 'dif. altura 4.98..5.83', [-699, 323]]
-   [91, 2296, '18 m', 'dif. altura 5.17..5.46', [-717, 327]]
-   [91, 2502, '10 m', 'dif. altura 0.00..0.10', [-726, 330]]
-   [981, 2502, '6 m', 'dif. altura 0.32..1.97', [-741, 334]]
-   [981, 2839, '2 m', 'dif. altura 0.41..0.41', [-740, 336]]
-   [2289, 3599, '52 m', 'dif. altura 0.00..0.46', [-708, 303]]
-   [2502, 2839, '10 m', 'dif. altura 0.04..0.12', [-735, 329]]
-SONDA CALZADAS OK
-```
-
-### 5. herramientas/sonda_calzadas.py -730 335 30 — OK
-
-```
-vías (índice, nombre, tipo, ancho, puente/elevada/hundida, dist, X, Y, altura calzada, altura terreno, puntos):
-   [91, 'Avenida República de Venezuela', 'tertiary', 10.4, 'puente,elevada', 7, -726, 330, 14.31, 9.73, 2]
-   [93, 'Camino San Francisco', 'tertiary', 10.4, 'elevada', 11, -738, 343, 11.05, 10.3, 3]
-   [981, '', 'tertiary', 10.4, 'elevada', 9, -739, 339, 11.49, 10.33, 4]
-   [2296, 'Autopista del Norte', 'motorway', 13.4, '', 23, -713, 320, 9.14, 9.14, 28]
-   [2502, 'Avenida República de Venezuela', 'tertiary', 10.4, 'elevada', 6, -730, 329, 14.44, 9.89, 10]
-   [2834, 'Camino San Francisco', 'tertiary', 10.4, '', 27, -747, 356, 10.7, 10.7, 3]
-   [2839, 'Camino San Francisco', 'tertiary', 10.4, 'elevada', 1, -731, 334, 14.48, 9.94, 3]
-   [3379, '', 'tertiary_link', 7.8, 'elevada', 27, -747, 356, 10.7, 10.7, 5]
-calzadas que se pisan (vía, otra vía, metros, diferencia de altura, dónde):
-   [91, 2296, '16 m', 'dif. altura 5.17..5.46', [-717, 327]]
-   [91, 2502, '10 m', 'dif. altura 0.00..0.10', [-726, 330]]
-   [93, 981, '8 m', 'dif. altura 0.19..0.56', [-742, 349]]
-   [93, 2834, '10 m', 'dif. altura 0.00..0.15', [-747, 356]]
-   [981, 2502, '6 m', 'dif. altura 0.32..1.97', [-741, 334]]
-   [981, 2839, '10 m', 'dif. altura 0.03..0.90', [-738, 342]]
-   [2502, 2839, '10 m', 'dif. altura 0.04..0.12', [-735, 329]]
-   [2834, 3379, '2 m', 'dif. altura 0.00..0.00', [-749, 357]]
-SONDA CALZADAS OK
-```
-
-Fotos/archivos nuevos en `tests/shots/`: aparca_0.jpg, aparca_1.jpg, aparca_2.jpg, aparca_3.jpg, aparca_4.jpg, aparca_5.jpg, calzadas_-720_301_arriba.jpg, calzadas_-720_301_calle0.jpg, calzadas_-720_301_calle1.jpg, calzadas_-730_335_arriba.jpg, calzadas_-730_335_calle0.jpg, calzadas_-730_335_calle1.jpg, trinidad_pedrozerolo.jpg, trinidad_pedrozerolo_calle.jpg, trinidad_rampa_1.jpg, trinidad_rampa_1_alto.jpg, trinidad_rampa_7.jpg, trinidad_rampa_7_alto.jpg
+Fotos/archivos nuevos en `tests/shots/`: aparca_0.jpg, aparca_1.jpg, aparca_2.jpg, aparca_3.jpg, aparca_4.jpg, aparca_5.jpg, calzadas_-1193_-28_arriba.jpg, calzadas_-1193_-28_calle0.jpg, calzadas_-1193_-28_calle1.jpg, calzadas_537_1371_arriba.jpg, calzadas_537_1371_calle0.jpg, calzadas_537_1371_calle1.jpg, calzadas_630_-1146_arriba.jpg, calzadas_630_-1146_calle0.jpg, calzadas_630_-1146_calle1.jpg, conduccion.json, v079_mapa_grande.jpg, v079_mate_espaldas_0.jpg, v079_mate_espaldas_1.jpg, v079_mate_espaldas_2.jpg, v079_mate_espaldas_3.jpg, v079_mate_m360_0.jpg, v079_mate_m360_1.jpg, v079_mate_m360_2.jpg, v079_mate_m360_3.jpg, v079_mate_molino_0.jpg, v079_mate_molino_1.jpg, v079_mate_molino_2.jpg, v079_mate_molino_3.jpg, v079_mate_piernas_0.jpg, v079_mate_piernas_1.jpg, v079_mate_piernas_2.jpg, v079_mate_piernas_3.jpg, v079_rifle_apuntar.jpg, v079_rifle_apuntar_lado.jpg, v079_rifle_llevar.jpg

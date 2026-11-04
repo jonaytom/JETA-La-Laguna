@@ -1,150 +1,512 @@
 // ============ weapons: El Blanco's pistol. Aim (right mouse / APUNTAR), shoot (left click / DISPARAR) ============
 const WEAPON = { has: false, ammo: 0, max: 6, aiming: false, cd: 0, mesh: null, targets: [], training: false, onHit: null, onShot: null };
 (() => {
-  document.addEventListener('mousedown', (e) => { if (GAME.state !== 'play' || !document.pointerLockElement) return; if (e.button === 2 && canUse()) WEAPON.aiming = true; if (e.button === 0 && canUse() && (WEAPON.ammo > 0 || WEAPON.aiming)) { WEAPON.want = true; FIGHT.blockPunch = true; } });
-  document.addEventListener('mouseup', (e) => { if (e.button === 2) WEAPON.aiming = false; });
-  document.addEventListener('contextmenu', (e) => { if (document.pointerLockElement) e.preventDefault(); });
+  document.addEventListener('mousedown', (e) => {
+    if (GAME.state !== 'play' || !document.pointerLockElement) return;
+    if (e.button === 2 && canUse()) WEAPON.aiming = true;
+    if (e.button === 0 && canUse() && (WEAPON.ammo > 0 || WEAPON.aiming)) {
+      WEAPON.want = true;
+      FIGHT.blockPunch = true;
+    }
+  });
+  document.addEventListener('mouseup', (e) => {
+    if (e.button === 2) WEAPON.aiming = false;
+  });
+  document.addEventListener('contextmenu', (e) => {
+    if (document.pointerLockElement) e.preventDefault();
+  });
 })();
-function canUse() { return WEAPON.has && WEAPON.out && !PLAYER.car && !PLAYER.interior && PLAYER.down <= 0 && !PLAYER.dead; }
-function giveWeapon(ammo = 6, training = false) { WEAPON.has = true; WEAPON.out = true; WEAPON.ammo = ammo; WEAPON.training = training; ensureGunMesh(); updateWeaponHUD(); }
-function takeWeapon() { WEAPON.has = false; WEAPON.ammo = 0; WEAPON.aiming = false; if (WEAPON.mesh) WEAPON.mesh.visible = false; updateWeaponHUD(); }
+function canUse() {
+  return WEAPON.has && WEAPON.out && !PLAYER.car && !PLAYER.interior && PLAYER.down <= 0 && !PLAYER.dead;
+}
+function giveWeapon(ammo = 6, training = false) {
+  WEAPON.has = true;
+  WEAPON.out = true;
+  WEAPON.ammo = ammo;
+  WEAPON.training = training;
+  ensureGunMesh();
+  updateWeaponHUD();
+}
+function takeWeapon() {
+  WEAPON.has = false;
+  WEAPON.ammo = 0;
+  WEAPON.aiming = false;
+  if (WEAPON.mesh) WEAPON.mesh.visible = false;
+  updateWeaponHUD();
+}
 function ensureGunMesh() {
-  if (WEAPON.mesh) { WEAPON.mesh.visible = true; return; }
-  const g = new THREE.Group(); const dark = M(0x1e1f22, 0.35, 0.7), grip = M(0x3a2a20, 0.7);
-  const G = gunGeos(); const slide = new THREE.Mesh(G.slide, dark); slide.position.set(0, 0.03, 0.06);
-  const handle = new THREE.Mesh(G.handle, grip); handle.position.set(0, -0.025, 0); handle.rotation.x = -0.25;
-  g.add(slide, handle); g.scale.setScalar(1.35); WEAPON.mesh = g; scene.add(g);
+  if (WEAPON.mesh) {
+    WEAPON.mesh.visible = true;
+    return;
+  }
+  const g = new THREE.Group();
+  const dark = M(0x1e1f22, 0.35, 0.7),
+    grip = M(0x3a2a20, 0.7);
+  const G = gunGeos();
+  const slide = new THREE.Mesh(G.slide, dark);
+  slide.position.set(0, 0.03, 0.06);
+  const handle = new THREE.Mesh(G.handle, grip);
+  handle.position.set(0, -0.025, 0);
+  handle.rotation.x = -0.25;
+  g.add(slide, handle);
+  g.scale.setScalar(1.35);
+  WEAPON.mesh = g;
+  scene.add(g);
 }
 // v0.69 (auditor): the gun's two boxes, made once and shared by your gun and the police ones
 let GUN_GEO = null;
-function gunGeos() { if (!GUN_GEO) { GUN_GEO = { slide: new THREE.BoxGeometry(0.035, 0.04, 0.19), handle: new THREE.BoxGeometry(0.03, 0.1, 0.045) }; GUN_GEO.slide.userData.shared = GUN_GEO.handle.userData.shared = true; } return GUN_GEO; }
+function gunGeos() {
+  if (!GUN_GEO) {
+    GUN_GEO = { slide: new THREE.BoxGeometry(0.035, 0.04, 0.19), handle: new THREE.BoxGeometry(0.03, 0.1, 0.045) };
+    GUN_GEO.slide.userData.shared = GUN_GEO.handle.userData.shared = true;
+  }
+  return GUN_GEO;
+}
 function updateWeaponHUD() {
-  const w = $('weap'); if (!w) return; const rifle = typeof RIFLE !== 'undefined' && RIFLE.has; w.style.display = WEAPON.has || rifle ? 'block' : 'none'; const tm = document.body.classList.contains('touchmode');
-  if (rifle && RIFLE.out) w.innerHTML = `RIFLE DE AGUA <b>${Math.round(100 * RIFLE.water / RIFLE.max)}%</b><br><small style="font-size:12px;opacity:.75">${tm ? 'toca: cambiar' : CONTROLS.keyName('weap').toUpperCase() + ' / 1: puños' + (WEAPON.has ? ' · 2: pistola' : '')}</small>`;
-  else if (rifle && !WEAPON.has) w.innerHTML = `PUÑOS<br><small style="font-size:12px;opacity:.75">${tm ? 'toca: rifle de agua' : CONTROLS.keyName('weap').toUpperCase() + ' / 3: rifle de agua'}</small>`;
-  else if (WEAPON.has) w.innerHTML = WEAPON.out ? `PISTOLA <b>${WEAPON.ammo}</b><small>/${WEAPON.max}</small><br><small style="font-size:12px;opacity:.75">${tm ? 'toca: puños' : CONTROLS.keyName('weap').toUpperCase() + ' / 1: puños'}</small>` : `PUÑOS<br><small style="font-size:12px;opacity:.75">${tm ? 'toca: pistola' : CONTROLS.keyName('weap').toUpperCase() + ' / 2: pistola'}</small>`;
-  const t = document.body.classList.contains('touchmode'); for (const id of ['tbA', 'tbD']) { const b = $(id); if (b) b.style.display = ((WEAPON.has && WEAPON.out) || (rifle && RIFLE.out)) && t ? 'flex' : 'none'; }
+  const w = $('weap');
+  if (!w) return;
+  const rifle = typeof RIFLE !== 'undefined' && RIFLE.has;
+  w.style.display = WEAPON.has || rifle ? 'block' : 'none';
+  const tm = document.body.classList.contains('touchmode');
+  if (rifle && RIFLE.out)
+    w.innerHTML = `RIFLE DE AGUA <b>${Math.round((100 * RIFLE.water) / RIFLE.max)}%</b><br><small style="font-size:12px;opacity:.75">${tm ? 'toca: cambiar' : CONTROLS.keyName('weap').toUpperCase() + ' / 1: puños' + (WEAPON.has ? ' · 2: pistola' : '')}</small>`;
+  else if (rifle && !WEAPON.has)
+    w.innerHTML = `PUÑOS<br><small style="font-size:12px;opacity:.75">${tm ? 'toca: rifle de agua' : CONTROLS.keyName('weap').toUpperCase() + ' / 3: rifle de agua'}</small>`;
+  else if (WEAPON.has)
+    w.innerHTML = WEAPON.out
+      ? `PISTOLA <b>${WEAPON.ammo}</b><small>/${WEAPON.max}</small><br><small style="font-size:12px;opacity:.75">${tm ? 'toca: puños' : CONTROLS.keyName('weap').toUpperCase() + ' / 1: puños'}</small>`
+      : `PUÑOS<br><small style="font-size:12px;opacity:.75">${tm ? 'toca: pistola' : CONTROLS.keyName('weap').toUpperCase() + ' / 2: pistola'}</small>`;
+  const t = document.body.classList.contains('touchmode');
+  for (const id of ['tbA', 'tbD']) {
+    const b = $(id);
+    if (b) b.style.display = ((WEAPON.has && WEAPON.out) || (rifle && RIFLE.out)) && t ? 'flex' : 'none';
+  }
 }
 // ray from the camera through the crosshair; returns the first thing hit
-const _rayO = new THREE.Vector3(), _rayD = new THREE.Vector3(), _aimD = new THREE.Vector3(); // v0.69 (auditor): no new vectors per shot
+const _rayO = new THREE.Vector3(),
+  _rayD = new THREE.Vector3(),
+  _aimD = new THREE.Vector3(); // v0.69 (auditor): no new vectors per shot
 function shootRay() {
-  const o = _rayO.copy(camera.position); const dir = _rayD; camera.getWorldDirection(dir);
-  const skip = Math.hypot(o.x - PLAYER.x, o.z - PLAYER.z) + 0.6; const maxD = 140;
+  const o = _rayO.copy(camera.position);
+  const dir = _rayD;
+  camera.getWorldDirection(dir);
+  const skip = Math.hypot(o.x - PLAYER.x, o.z - PLAYER.z) + 0.6;
+  const maxD = 140;
   // walls (2D) cap the range
-  const ex = o.x + dir.x * maxD, ez = o.z + dir.z * maxD; const tw = COL.raycast(o.x, o.z, ex, ez); const hz = Math.hypot(dir.x, dir.z) || 1e-6; let best = { d: tw < 1 ? tw * maxD / hz : maxD, kind: 'wall' };
-  const sphere = (cx, cy, cz, r) => { const lx = cx - o.x, ly = cy - o.y, lz = cz - o.z; const tca = lx * dir.x + ly * dir.y + lz * dir.z; if (tca < skip) return -1; const d2 = lx * lx + ly * ly + lz * lz - tca * tca; return d2 < r * r ? tca - Math.sqrt(r * r - d2) : -1; };
-  for (const t of WEAPON.targets) { if (t.hit) continue; const d = sphere(t.x, t.y, t.z, t.r); if (d > 0 && d < best.d) best = { d, kind: 'target', t }; }
-  for (const p of PEDS) { if (p.down > 0 || Math.abs(p.x - o.x) > maxD || Math.abs(p.z - o.z) > maxD) continue; const y0 = heightAt(p.x, p.z); for (const hy of [0.5, 1.0, 1.45]) { const d = sphere(p.x, y0 + hy, p.z, hy > 1.3 ? 0.18 : 0.3); if (d > 0 && d < best.d) best = { d, kind: 'ped', p }; } }
-  for (const c of CARS) { if (c === PLAYER.car || Math.abs(c.x - o.x) > maxD || Math.abs(c.z - o.z) > maxD) continue; for (const [cx, cz, r] of c.circles()) { const d = sphere(cx, c.y + 0.7, cz, r); if (d > 0 && d < best.d) best = { d, kind: 'car', c }; } }
-  best.p3 = o.clone().addScaledVector(dir, best.d); return best;
+  const ex = o.x + dir.x * maxD,
+    ez = o.z + dir.z * maxD;
+  const tw = COL.raycast(o.x, o.z, ex, ez);
+  const hz = Math.hypot(dir.x, dir.z) || 1e-6;
+  let best = { d: tw < 1 ? (tw * maxD) / hz : maxD, kind: 'wall' };
+  const sphere = (cx, cy, cz, r) => {
+    const lx = cx - o.x,
+      ly = cy - o.y,
+      lz = cz - o.z;
+    const tca = lx * dir.x + ly * dir.y + lz * dir.z;
+    if (tca < skip) return -1;
+    const d2 = lx * lx + ly * ly + lz * lz - tca * tca;
+    return d2 < r * r ? tca - Math.sqrt(r * r - d2) : -1;
+  };
+  for (const t of WEAPON.targets) {
+    if (t.hit) continue;
+    const d = sphere(t.x, t.y, t.z, t.r);
+    if (d > 0 && d < best.d) best = { d, kind: 'target', t };
+  }
+  for (const p of PEDS) {
+    if (p.down > 0 || Math.abs(p.x - o.x) > maxD || Math.abs(p.z - o.z) > maxD) continue;
+    const y0 = heightAt(p.x, p.z);
+    for (const hy of [0.5, 1.0, 1.45]) {
+      const d = sphere(p.x, y0 + hy, p.z, hy > 1.3 ? 0.18 : 0.3);
+      if (d > 0 && d < best.d) best = { d, kind: 'ped', p };
+    }
+  }
+  for (const c of CARS) {
+    if (c === PLAYER.car || Math.abs(c.x - o.x) > maxD || Math.abs(c.z - o.z) > maxD) continue;
+    for (const [cx, cz, r] of c.circles()) {
+      const d = sphere(cx, c.y + 0.7, cz, r);
+      if (d > 0 && d < best.d) best = { d, kind: 'car', c };
+    }
+  }
+  best.p3 = o.clone().addScaledVector(dir, best.d);
+  return best;
 }
 function fireWeapon() {
-  if (WEAPON.cd > 0) return; if (WEAPON.ammo <= 0) { AUDIO.empty && AUDIO.empty(); HUD.toast(WEAPON.training ? 'Sin bolas' : 'Sin bolas. El Blanco te conseguirá más… algún día.', '#ffb3b3', 1.5); WEAPON.cd = 0.3; if (WEAPON.onShot) WEAPON.onShot(null); return; }
-  WEAPON.cd = 0.38; WEAPON.ammo--; updateWeaponHUD(); AUDIO.shot && AUDIO.shot(); CAM.shake = Math.max(CAM.shake, 0.18);
+  if (WEAPON.cd > 0) return;
+  if (WEAPON.ammo <= 0) {
+    AUDIO.empty && AUDIO.empty();
+    HUD.toast(WEAPON.training ? 'Sin bolas' : 'Sin bolas. El Blanco te conseguirá más… algún día.', '#ffb3b3', 1.5);
+    WEAPON.cd = 0.3;
+    if (WEAPON.onShot) WEAPON.onShot(null);
+    return;
+  }
+  WEAPON.cd = 0.38;
+  WEAPON.ammo--;
+  updateWeaponHUD();
+  AUDIO.shot && AUDIO.shot();
+  CAM.shake = Math.max(CAM.shake, 0.18);
   PLAYER.h = CAM.yaw; // face where you aim
   muzzleFlash();
   const h = shootRay();
-  if (h.kind === 'target') { h.t.hit = true; AUDIO.clink && AUDIO.clink(); if (h.t.mesh) { h.t.vy = 3.5; h.t.vx = rnd(-1.5, 1.5); h.t.vz = rnd(-1.5, 1.5); } if (WEAPON.onHit) WEAPON.onHit(h.t); }
-  else if (h.kind === 'ped') { const p = h.p; p.down = 8; p.fight = 0; p.vx = (p.x - PLAYER.x) * 0.2; p.vz = (p.z - PLAYER.z) * 0.2; if (p.H.skinned) hitSkinned(p.H); SUB.show('<b>Peatón:</b> ¡Aaaay! ¡Me han dado!', 2); }
-  else if (h.kind === 'car') { h.c.health -= 18; h.c.lastImpact = 0; }
+  if (h.kind === 'target') {
+    h.t.hit = true;
+    AUDIO.clink && AUDIO.clink();
+    if (h.t.mesh) {
+      h.t.vy = 3.5;
+      h.t.vx = rnd(-1.5, 1.5);
+      h.t.vz = rnd(-1.5, 1.5);
+    }
+    if (WEAPON.onHit) WEAPON.onHit(h.t);
+  } else if (h.kind === 'ped') {
+    const p = h.p;
+    p.down = 8;
+    p.fight = 0;
+    p.vx = (p.x - PLAYER.x) * 0.2;
+    p.vz = (p.z - PLAYER.z) * 0.2;
+    if (p.H.skinned) hitSkinned(p.H);
+    SUB.show('<b>Peatón:</b> ¡Aaaay! ¡Me han dado!', 2);
+  } else if (h.kind === 'car') {
+    h.c.health -= 18;
+    h.c.lastImpact = 0;
+  }
   if (WEAPON.onShot) WEAPON.onShot(h);
   // shooting in the street is a serious crime if anybody sees or hears it
-  if (!WEAPON.training && !WEAPON.lawful) { // lawful: the gang are city defenders on a mission (stopping a thief is not a crime)
-    const witness = PEDS.some((p) => p.down <= 0 && Math.hypot(p.x - PLAYER.x, p.z - PLAYER.z) < 55) || CARS.some((c) => c.type === 'police' && Math.hypot(c.x - PLAYER.x, c.z - PLAYER.z) < 120);
-    if (witness) { WANTED.armed = true; WANTED.crime(Math.max(3, Math.ceil(WANTED.level) + 1) - Math.ceil(WANTED.level), 'Disparos en la vía pública'); for (const p of PEDS) if (p.down <= 0 && Math.hypot(p.x - PLAYER.x, p.z - PLAYER.z) < 40) { p.flee = 10; p.fleeFrom = [PLAYER.x, PLAYER.z]; } }
+  if (!WEAPON.training && !WEAPON.lawful) {
+    // lawful: the gang are city defenders on a mission (stopping a thief is not a crime)
+    const witness =
+      PEDS.some((p) => p.down <= 0 && Math.hypot(p.x - PLAYER.x, p.z - PLAYER.z) < 55) ||
+      CARS.some((c) => c.type === 'police' && Math.hypot(c.x - PLAYER.x, c.z - PLAYER.z) < 120);
+    if (witness) {
+      WANTED.armed = true;
+      WANTED.crime(Math.max(3, Math.ceil(WANTED.level) + 1) - Math.ceil(WANTED.level), 'Disparos en la vía pública');
+      for (const p of PEDS)
+        if (p.down <= 0 && Math.hypot(p.x - PLAYER.x, p.z - PLAYER.z) < 40) {
+          p.flee = 10;
+          p.fleeFrom = [PLAYER.x, PLAYER.z];
+        }
+    }
   }
 }
 // muzzle flash light exists from the start (intensity 0): adding a light on the first shot forced every material to
 // recompile its shaders and froze the game for ~1 s
-let flashLight = new THREE.PointLight(0xffc870, 0, 9, 2); scene.add(flashLight); const _flashP = new THREE.Vector3();
+let flashLight = new THREE.PointLight(0xffc870, 0, 9, 2);
+scene.add(flashLight);
+const _flashP = new THREE.Vector3();
 function muzzleFlash() {
-  if (!flashLight) { flashLight = new THREE.PointLight(0xffc870, 0, 9, 2); scene.add(flashLight); }
-  const m = WEAPON.mesh; const p = _flashP; if (m) m.getWorldPosition(p); else p.set(PLAYER.x, PLAYER.y + 1.4, PLAYER.z);
-  flashLight.position.copy(p); flashLight.intensity = 6; setTimeout(() => { flashLight.intensity = 0; }, 60);
+  if (!flashLight) {
+    flashLight = new THREE.PointLight(0xffc870, 0, 9, 2);
+    scene.add(flashLight);
+  }
+  const m = WEAPON.mesh;
+  const p = _flashP;
+  if (m) m.getWorldPosition(p);
+  else p.set(PLAYER.x, PLAYER.y + 1.4, PLAYER.z);
+  flashLight.position.copy(p);
+  flashLight.intensity = 6;
+  setTimeout(() => {
+    flashLight.intensity = 0;
+  }, 60);
 }
 // arm pose: point the right arm along the aim direction (done after the animation mixer)
-const _qa = new THREE.Quaternion(), _qb = new THREE.Quaternion(), _qc = new THREE.Quaternion(), _va = new THREE.Vector3(), _vb = new THREE.Vector3(), _vc = new THREE.Vector3();
+const _qa = new THREE.Quaternion(),
+  _qb = new THREE.Quaternion(),
+  _qc = new THREE.Quaternion(),
+  _va = new THREE.Vector3(),
+  _vb = new THREE.Vector3(),
+  _vc = new THREE.Vector3();
 function aimArm(H, dir) {
-  if (!H.skinned) return; const sk = H.skeleton; const up = sk.getBoneByName('upperarm_r'), lo = sk.getBoneByName('lowerarm_r'), ha = sk.getBoneByName('hand_r'); if (!up || !lo || !ha) return;
-  const align = (b, child) => { b.updateWorldMatrix(true, false); child.updateWorldMatrix(false, false); b.getWorldPosition(_va); child.getWorldPosition(_vb); _vc.subVectors(_vb, _va).normalize();
-    _qa.setFromUnitVectors(_vc, dir); b.getWorldQuaternion(_qb); _qb.premultiply(_qa); const pq = _qc; b.parent.getWorldQuaternion(pq); b.quaternion.copy(pq.invert().multiply(_qb)); b.updateWorldMatrix(false, true); };
-  align(up, lo); align(lo, ha);
+  if (!H.skinned) return;
+  const sk = H.skeleton;
+  const up = sk.getBoneByName('upperarm_r'),
+    lo = sk.getBoneByName('lowerarm_r'),
+    ha = sk.getBoneByName('hand_r');
+  if (!up || !lo || !ha) return;
+  const align = (b, child) => {
+    b.updateWorldMatrix(true, false);
+    child.updateWorldMatrix(false, false);
+    b.getWorldPosition(_va);
+    child.getWorldPosition(_vb);
+    _vc.subVectors(_vb, _va).normalize();
+    _qa.setFromUnitVectors(_vc, dir);
+    b.getWorldQuaternion(_qb);
+    _qb.premultiply(_qa);
+    const pq = _qc;
+    b.parent.getWorldQuaternion(pq);
+    b.quaternion.copy(pq.invert().multiply(_qb));
+    b.updateWorldMatrix(false, true);
+  };
+  align(up, lo);
+  align(lo, ha);
 }
 // v0.79: two-bone arm IK (rifle held with both hands): the hand of `side` ('r'/'l') goes to T, the elbow towards `pole`
-const _IK = { S: new THREE.Vector3(), E: new THREE.Vector3(), W: new THREE.Vector3(), u: new THREE.Vector3(), v: new THREE.Vector3(), d: new THREE.Vector3(), p: new THREE.Vector3(), qa: new THREE.Quaternion(), qb: new THREE.Quaternion(), qc: new THREE.Quaternion() };
-function boneAim(b, child, dir) { const I = _IK; b.updateWorldMatrix(true, false); child.updateWorldMatrix(false, false); b.getWorldPosition(I.p); child.getWorldPosition(I.d); I.d.sub(I.p).normalize();
-  I.qa.setFromUnitVectors(I.d, dir); b.getWorldQuaternion(I.qb); I.qb.premultiply(I.qa); b.parent.getWorldQuaternion(I.qc); b.quaternion.copy(I.qc.invert().multiply(I.qb)); b.updateWorldMatrix(false, true); }
+const _IK = {
+  S: new THREE.Vector3(),
+  E: new THREE.Vector3(),
+  W: new THREE.Vector3(),
+  u: new THREE.Vector3(),
+  v: new THREE.Vector3(),
+  d: new THREE.Vector3(),
+  p: new THREE.Vector3(),
+  qa: new THREE.Quaternion(),
+  qb: new THREE.Quaternion(),
+  qc: new THREE.Quaternion()
+};
+function boneAim(b, child, dir) {
+  const I = _IK;
+  b.updateWorldMatrix(true, false);
+  child.updateWorldMatrix(false, false);
+  b.getWorldPosition(I.p);
+  child.getWorldPosition(I.d);
+  I.d.sub(I.p).normalize();
+  I.qa.setFromUnitVectors(I.d, dir);
+  b.getWorldQuaternion(I.qb);
+  I.qb.premultiply(I.qa);
+  b.parent.getWorldQuaternion(I.qc);
+  b.quaternion.copy(I.qc.invert().multiply(I.qb));
+  b.updateWorldMatrix(false, true);
+}
 function armIK(H, side, T, pole) {
-  if (!H.skinned) return false; const sk = H.skeleton; const bc = sk.userData || (sk.userData = {}); const cache = bc.bones || (bc.bones = {}); const B = (n) => (n in cache ? cache[n] : (cache[n] = sk.getBoneByName(n) || null));
-  const up = B('upperarm_' + side), lo = B('lowerarm_' + side), ha = B('hand_' + side); if (!up || !lo || !ha) return false; const I = _IK;
-  up.updateWorldMatrix(true, true); up.getWorldPosition(I.S); lo.getWorldPosition(I.E); ha.getWorldPosition(I.W);
-  const a = I.E.distanceTo(I.S), b = I.W.distanceTo(I.E); I.u.subVectors(T, I.S); const d = clamp(I.u.length(), 0.05, (a + b) * 0.995); I.u.normalize();
-  const x = (a * a - b * b + d * d) / (2 * d), h = Math.sqrt(Math.max(0, a * a - x * x));
-  I.v.copy(pole).addScaledVector(I.u, -pole.dot(I.u)); if (I.v.lengthSq() < 1e-6) I.v.set(0, -1, 0).addScaledVector(I.u, I.u.y); I.v.normalize();
+  if (!H.skinned) return false;
+  const sk = H.skeleton;
+  const bc = sk.userData || (sk.userData = {});
+  const cache = bc.bones || (bc.bones = {});
+  const B = (n) => (n in cache ? cache[n] : (cache[n] = sk.getBoneByName(n) || null));
+  const up = B('upperarm_' + side),
+    lo = B('lowerarm_' + side),
+    ha = B('hand_' + side);
+  if (!up || !lo || !ha) return false;
+  const I = _IK;
+  up.updateWorldMatrix(true, true);
+  up.getWorldPosition(I.S);
+  lo.getWorldPosition(I.E);
+  ha.getWorldPosition(I.W);
+  const a = I.E.distanceTo(I.S),
+    b = I.W.distanceTo(I.E);
+  I.u.subVectors(T, I.S);
+  const d = clamp(I.u.length(), 0.05, (a + b) * 0.995);
+  I.u.normalize();
+  const x = (a * a - b * b + d * d) / (2 * d),
+    h = Math.sqrt(Math.max(0, a * a - x * x));
+  I.v.copy(pole).addScaledVector(I.u, -pole.dot(I.u));
+  if (I.v.lengthSq() < 1e-6) I.v.set(0, -1, 0).addScaledVector(I.u, I.u.y);
+  I.v.normalize();
   I.E.copy(I.S).addScaledVector(I.u, x).addScaledVector(I.v, h); // where the elbow goes
   boneAim(up, lo, I.v.subVectors(I.E, I.S).normalize());
-  lo.getWorldPosition(I.E); I.W.copy(I.S).addScaledVector(I.u, d); boneAim(lo, ha, I.v.subVectors(I.W, I.E).normalize());
+  lo.getWorldPosition(I.E);
+  I.W.copy(I.S).addScaledVector(I.u, d);
+  boneAim(lo, ha, I.v.subVectors(I.W, I.E).normalize());
   return true;
 }
 function updateWeapons(dt) {
   weaponSwitchInput();
   if (WEAPON.cd > 0) WEAPON.cd -= dt;
-  if (!canUse() && !(typeof rifleUsable === 'function' && rifleUsable())) { WEAPON.aiming = WEAPON.touchAim = false; } else if (WEAPON.touchAim) WEAPON.aiming = true;
-  const xh = $('xhair'); if (xh) xh.style.display = WEAPON.aiming || ((canUse() || rifleUsable()) && document.body.classList.contains('touchmode')) ? 'block' : 'none';
-  if (WEAPON.want && canUse()) fireWeapon(); WEAPON.want = false;
+  if (!canUse() && !(typeof rifleUsable === 'function' && rifleUsable())) {
+    WEAPON.aiming = WEAPON.touchAim = false;
+  } else if (WEAPON.touchAim) WEAPON.aiming = true;
+  const xh = $('xhair');
+  if (xh) xh.style.display = WEAPON.aiming || ((canUse() || rifleUsable()) && document.body.classList.contains('touchmode')) ? 'block' : 'none';
+  if (WEAPON.want && canUse()) fireWeapon();
+  WEAPON.want = false;
   if (WEAPON.has && WEAPON.mesh) {
     WEAPON.mesh.visible = !PLAYER.car && !PLAYER.interior && !!WEAPON.out;
-    if (WEAPON.aiming && playerHuman) { PLAYER.h = CAM.yaw; playerHuman.root.rotation.y = PLAYER.h; const d = _aimD; camera.getWorldDirection(d); aimArm(playerHuman, d); }
-    if (playerHuman && playerHuman.skinned && WEAPON.mesh.visible && WEAPON.out) { let d = null; if (WEAPON.aiming) { d = _aimD; camera.getWorldDirection(d); } gripGun(playerHuman, WEAPON.mesh, d); }
+    if (WEAPON.aiming && playerHuman) {
+      PLAYER.h = CAM.yaw;
+      playerHuman.root.rotation.y = PLAYER.h;
+      const d = _aimD;
+      camera.getWorldDirection(d);
+      aimArm(playerHuman, d);
+    }
+    if (playerHuman && playerHuman.skinned && WEAPON.mesh.visible && WEAPON.out) {
+      let d = null;
+      if (WEAPON.aiming) {
+        d = _aimD;
+        camera.getWorldDirection(d);
+      }
+      gripGun(playerHuman, WEAPON.mesh, d);
+    }
   }
   // flying cans
-  for (const t of WEAPON.targets) if (t.hit && t.mesh && t.vy !== undefined) { t.vy -= 9.8 * dt; t.mesh.position.x += t.vx * dt; t.mesh.position.z += t.vz * dt; t.mesh.position.y += t.vy * dt; t.mesh.rotation.x += dt * 9; const g = heightAt(t.mesh.position.x, t.mesh.position.z) + 0.06; if (t.mesh.position.y < g) { t.mesh.position.y = g; t.vy = 0; t.vx *= 0.5; t.vz *= 0.5; } }
+  for (const t of WEAPON.targets)
+    if (t.hit && t.mesh && t.vy !== undefined) {
+      t.vy -= 9.8 * dt;
+      t.mesh.position.x += t.vx * dt;
+      t.mesh.position.z += t.vz * dt;
+      t.mesh.position.y += t.vy * dt;
+      t.mesh.rotation.x += dt * 9;
+      const g = heightAt(t.mesh.position.x, t.mesh.position.z) + 0.06;
+      if (t.mesh.position.y < g) {
+        t.mesh.position.y = g;
+        t.vy = 0;
+        t.vx *= 0.5;
+        t.vz *= 0.5;
+      }
+    }
 }
 
 // the pistol sits in the palm of the right hand: barrel along the knuckles' direction, slide on the thumb side, fingers wrapped round the grip
 const GRIP = { curl: 1.25, sgn: 1 };
 // v0.69 (auditor): temporaries made once and the bones looked up once per skeleton (this runs every frame while aiming)
-const GG = { ph: new THREE.Vector3(), pm: new THREE.Vector3(), pi: new THREE.Vector3(), pp: new THREE.Vector3(), fwd: new THREE.Vector3(), up: new THREE.Vector3(), x: new THREE.Vector3(), m: new THREE.Matrix4(), palm: new THREE.Vector3(), axis: new THREE.Vector3(), qd: new THREE.Quaternion(), qw: new THREE.Quaternion(), qp: new THREE.Quaternion(), fist: new THREE.Vector3(), tmp: new THREE.Vector3(), hOff: new THREE.Vector3() };
+const GG = {
+  ph: new THREE.Vector3(),
+  pm: new THREE.Vector3(),
+  pi: new THREE.Vector3(),
+  pp: new THREE.Vector3(),
+  fwd: new THREE.Vector3(),
+  up: new THREE.Vector3(),
+  x: new THREE.Vector3(),
+  m: new THREE.Matrix4(),
+  palm: new THREE.Vector3(),
+  axis: new THREE.Vector3(),
+  qd: new THREE.Quaternion(),
+  qw: new THREE.Quaternion(),
+  qp: new THREE.Quaternion(),
+  fist: new THREE.Vector3(),
+  tmp: new THREE.Vector3(),
+  hOff: new THREE.Vector3()
+};
 function gripGun(H, mesh, aimDir) {
-  const sk = H.skeleton; const bc = sk.userData || (sk.userData = {}); const cache = bc.bones || (bc.bones = {}); const B = (n) => (n in cache ? cache[n] : (cache[n] = sk.getBoneByName(n) || null)); const hand = B('hand_r'), mid = B('middle_01_r'), ind = B('index_01_r'), pin = B('pinky_01_r'); if (!hand || !mid) return;
+  const sk = H.skeleton;
+  const bc = sk.userData || (sk.userData = {});
+  const cache = bc.bones || (bc.bones = {});
+  const B = (n) => (n in cache ? cache[n] : (cache[n] = sk.getBoneByName(n) || null));
+  const hand = B('hand_r'),
+    mid = B('middle_01_r'),
+    ind = B('index_01_r'),
+    pin = B('pinky_01_r');
+  if (!hand || !mid) return;
   // start every frame from the rest pose of the fingers/thumb (not every clip keys them: rotations would pile up and spin the hand)
-  for (const f of ['index', 'middle', 'ring', 'pinky', 'thumb']) for (const k of ['01', '02', '03']) { const b = B(f + '_' + k + '_r'); if (!b) continue; if (!b.userData.q0) b.userData.q0 = b.quaternion.clone(); b.quaternion.copy(b.userData.q0); }
+  for (const f of ['index', 'middle', 'ring', 'pinky', 'thumb'])
+    for (const k of ['01', '02', '03']) {
+      const b = B(f + '_' + k + '_r');
+      if (!b) continue;
+      if (!b.userData.q0) b.userData.q0 = b.quaternion.clone();
+      b.quaternion.copy(b.userData.q0);
+    }
   hand.updateWorldMatrix(true, true);
   const { ph, pm, pi, pp } = GG;
-  hand.getWorldPosition(ph); mid.getWorldPosition(pm); ind.getWorldPosition(pi); pin.getWorldPosition(pp);
+  hand.getWorldPosition(ph);
+  mid.getWorldPosition(pm);
+  ind.getWorldPosition(pi);
+  pin.getWorldPosition(pp);
   const fwd = aimDir ? GG.fwd.copy(aimDir).normalize() : GG.fwd.copy(pm).sub(ph).normalize();
-  const up = GG.up.copy(pi).sub(pp); up.addScaledVector(fwd, -up.dot(fwd)).normalize();
+  const up = GG.up.copy(pi).sub(pp);
+  up.addScaledVector(fwd, -up.dot(fwd)).normalize();
   const x = GG.x.crossVectors(up, fwd).normalize();
-  const m = GG.m.makeBasis(x, up, fwd); mesh.quaternion.setFromRotationMatrix(m);
+  const m = GG.m.makeBasis(x, up, fwd);
+  mesh.quaternion.setFromRotationMatrix(m);
   // palm centre: a bit before the knuckles, on the palm side
-  const palm = GG.palm.copy(ph).lerp(pm, 0.8); palm.addScaledVector(x, GRIP.sgn * -0.025); palm.addScaledVector(up, -0.005);
+  const palm = GG.palm.copy(ph).lerp(pm, 0.8);
+  palm.addScaledVector(x, GRIP.sgn * -0.025);
+  palm.addScaledVector(up, -0.005);
   mesh.position.copy(palm);
   // curl the four fingers round the grip (rotation about the knuckle line)
-  const axis = GG.axis.copy(pi).sub(pp).normalize(); const { qd, qw, qp } = GG;
-  for (const f of ['index', 'middle', 'ring', 'pinky']) for (const k of ['01', '02', '03']) { const b = B(f + '_' + k + '_r'); if (!b) continue; b.updateWorldMatrix(true, false);
-    qd.setFromAxisAngle(axis, GRIP.sgn * GRIP.curl * (k === '01' ? 0.85 : 0.7)); b.getWorldQuaternion(qw); qw.premultiply(qd); b.parent.getWorldQuaternion(qp); b.quaternion.copy(qp.invert().multiply(qw)); b.updateWorldMatrix(false, true); }
+  const axis = GG.axis.copy(pi).sub(pp).normalize();
+  const { qd, qw, qp } = GG;
+  for (const f of ['index', 'middle', 'ring', 'pinky'])
+    for (const k of ['01', '02', '03']) {
+      const b = B(f + '_' + k + '_r');
+      if (!b) continue;
+      b.updateWorldMatrix(true, false);
+      qd.setFromAxisAngle(axis, GRIP.sgn * GRIP.curl * (k === '01' ? 0.85 : 0.7));
+      b.getWorldQuaternion(qw);
+      qw.premultiply(qd);
+      b.parent.getWorldQuaternion(qp);
+      b.quaternion.copy(qp.invert().multiply(qw));
+      b.updateWorldMatrix(false, true);
+    }
   // the handle goes exactly inside the closed fist: halfway between the knuckles and the middle phalanges
-  const fist = GG.fist.set(0, 0, 0), tmp = GG.tmp; let nf = 0;
-  for (const f of ['index', 'middle', 'ring', 'pinky']) for (const k of ['01', '02']) { const b = B(f + '_' + k + '_r'); if (!b) continue; b.getWorldPosition(tmp); fist.add(tmp); nf++; }
-  if (nf) { fist.multiplyScalar(1 / nf); const hOff = GG.hOff.set(0, -0.025, 0).multiplyScalar(mesh.scale.x).applyQuaternion(mesh.quaternion); mesh.position.copy(fist).sub(hOff); }
+  const fist = GG.fist.set(0, 0, 0),
+    tmp = GG.tmp;
+  let nf = 0;
+  for (const f of ['index', 'middle', 'ring', 'pinky'])
+    for (const k of ['01', '02']) {
+      const b = B(f + '_' + k + '_r');
+      if (!b) continue;
+      b.getWorldPosition(tmp);
+      fist.add(tmp);
+      nf++;
+    }
+  if (nf) {
+    fist.multiplyScalar(1 / nf);
+    const hOff = GG.hOff.set(0, -0.025, 0).multiplyScalar(mesh.scale.x).applyQuaternion(mesh.quaternion);
+    mesh.position.copy(fist).sub(hOff);
+  }
   // thumb wraps over the other side of the grip
-  for (const k of ['01', '02']) { const b = B('thumb_' + k + '_r'); if (!b) continue; b.updateWorldMatrix(true, false); qd.setFromAxisAngle(fwd, GRIP.sgn * -0.45); b.getWorldQuaternion(qw); qw.premultiply(qd); b.parent.getWorldQuaternion(qp); b.quaternion.copy(qp.invert().multiply(qw)); b.updateWorldMatrix(false, true); }
+  for (const k of ['01', '02']) {
+    const b = B('thumb_' + k + '_r');
+    if (!b) continue;
+    b.updateWorldMatrix(true, false);
+    qd.setFromAxisAngle(fwd, GRIP.sgn * -0.45);
+    b.getWorldQuaternion(qw);
+    qw.premultiply(qd);
+    b.parent.getWorldQuaternion(qp);
+    b.quaternion.copy(qp.invert().multiply(qw));
+    b.updateWorldMatrix(false, true);
+  }
   mesh.updateMatrixWorld(true);
 }
 // switch between fists and the pistol: Tab toggles, 1 = fists, 2 = pistol, gamepad d-pad left/right, tap the weapon label on phones
-function setWeaponOut(v) { if (v && typeof RIFLE !== 'undefined' && RIFLE.out) AGUA.setRifleOut(false, true); if (!WEAPON.has || WEAPON.out === v) return; WEAPON.out = v; WEAPON.aiming = false; if (WEAPON.mesh) WEAPON.mesh.visible = v; AUDIO.pickup && AUDIO.pickup(); updateWeaponHUD(); HUD.toast(v ? 'Pistola' : 'Puños', '#fff', 1.2); }
-function weaponSwitchInput() {
-  const rifle = typeof RIFLE !== 'undefined' && RIFLE.has; if (GAME.state !== 'play' || (!WEAPON.has && !rifle)) return; const gp = INPUT.gp;
-  if (pressed('Tab') || (gp && (gp.down(14) || gp.down(15)))) { if (rifle) AGUA.cycle(); else setWeaponOut(!WEAPON.out); } // v0.76: fists → pistol → water rifle
-  if (pressed('Digit1')) setWeaponOut(false); if (pressed('Digit2')) setWeaponOut(true);
+function setWeaponOut(v) {
+  if (v && typeof RIFLE !== 'undefined' && RIFLE.out) AGUA.setRifleOut(false, true);
+  if (!WEAPON.has || WEAPON.out === v) return;
+  WEAPON.out = v;
+  WEAPON.aiming = false;
+  if (WEAPON.mesh) WEAPON.mesh.visible = v;
+  AUDIO.pickup && AUDIO.pickup();
+  updateWeaponHUD();
+  HUD.toast(v ? 'Pistola' : 'Puños', '#fff', 1.2);
 }
-(() => { const w = document.getElementById('weap'); if (w) { w.style.pointerEvents = 'auto'; w.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); if (typeof RIFLE !== 'undefined' && RIFLE.has) AGUA.cycle(); else setWeaponOut(!WEAPON.out); }); }
-  document.addEventListener('keydown', (e) => { if (e.code === 'Tab' && GAME.state === 'play') e.preventDefault(); }, true);
+function weaponSwitchInput() {
+  const rifle = typeof RIFLE !== 'undefined' && RIFLE.has;
+  if (GAME.state !== 'play' || (!WEAPON.has && !rifle)) return;
+  const gp = INPUT.gp;
+  if (pressed('Tab') || (gp && (gp.down(14) || gp.down(15)))) {
+    if (rifle) AGUA.cycle();
+    else setWeaponOut(!WEAPON.out);
+  } // v0.76: fists → pistol → water rifle
+  if (pressed('Digit1')) setWeaponOut(false);
+  if (pressed('Digit2')) setWeaponOut(true);
+}
+(() => {
+  const w = document.getElementById('weap');
+  if (w) {
+    w.style.pointerEvents = 'auto';
+    w.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (typeof RIFLE !== 'undefined' && RIFLE.has) AGUA.cycle();
+      else setWeaponOut(!WEAPON.out);
+    });
+  }
+  document.addEventListener(
+    'keydown',
+    (e) => {
+      if (e.code === 'Tab' && GAME.state === 'play') e.preventDefault();
+    },
+    true
+  );
   // v0.99.7 (Jonay: «la rueda del ratón debería dejar cambiar de arma»): wheel down = next (fists → pistol → water rifle), up = back
   // v1.1.3 (Jonay: «lo de la rueda del ratón fue mala idea… para eso están los botones adelante y atrás»): the wheel is
   // the camera zoom again; the mouse's side buttons change weapon (forward = next, back = previous), without the browser
   // going back a page
   const side = (e) => e.button === 3 || e.button === 4;
-  document.addEventListener('mousedown', (e) => { if (side(e)) e.preventDefault(); }, true);
-  document.addEventListener('mouseup', (e) => { if (!side(e)) return; e.preventDefault(); const rifle = typeof RIFLE !== 'undefined' && RIFLE.has; if (GAME.state !== 'play' || PLAYER.car || (!WEAPON.has && !rifle)) return;
-    const dir = e.button === 4 ? 1 : -1; if (rifle) AGUA.cycle(dir); else setWeaponOut(!WEAPON.out); }, true); })();
+  document.addEventListener(
+    'mousedown',
+    (e) => {
+      if (side(e)) e.preventDefault();
+    },
+    true
+  );
+  document.addEventListener(
+    'mouseup',
+    (e) => {
+      if (!side(e)) return;
+      e.preventDefault();
+      const rifle = typeof RIFLE !== 'undefined' && RIFLE.has;
+      if (GAME.state !== 'play' || PLAYER.car || (!WEAPON.has && !rifle)) return;
+      const dir = e.button === 4 ? 1 : -1;
+      if (rifle) AGUA.cycle(dir);
+      else setWeaponOut(!WEAPON.out);
+    },
+    true
+  );
+})();

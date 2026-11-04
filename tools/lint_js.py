@@ -80,7 +80,7 @@ def main():
                 elif ch in ')]}':
                     if d0 == 0: break
                     d0 -= 1
-                if d0 == 0 and ch in ';\n' and not part.strip().endswith(('=', ',', '&&', '||', '?', ':', '(')): parts.append(part); break
+                if d0 == 0 and (ch == ';' or (ch == '\n' and part.strip() and not part.strip().endswith(('=', ',', '&&', '||', '?', ':', '(', '+', '-', '*', '/')))): parts.append(part); break  # (v1.1.6: after «a = 1,» the next declarator may be on the next line: formatted code)
                 if d0 == 0 and ch == ',': parts.append(part); part = ''
                 else: part += ch
                 j += 1

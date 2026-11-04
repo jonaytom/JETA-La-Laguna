@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.1.5</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.1.6</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,19 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.1.6 — 2026-11-04 — Alpha 1.1.6: código ordenado y coches con nombres más lejos de las marcas</h2>
+<ul>
+<li><strong>Calidad del código</strong> (Jonay: «revisa la calidad del código»): todo <code>src/</code> pasa por un formateador (Prettier,
+  <code>.prettierrc.json</code>: líneas de hasta 150 caracteres, una sentencia por línea). Mismo juego, mismo comportamiento; la nota
+  del auditor sube de C (69) a B (84): las líneas largas bajan del 26 % al 0,4 % y las densas del 21 % al 0 %.
+  <code>tools/lint_js.py</code> entiende ya las declaraciones partidas en varias líneas.</li>
+<li><strong>Calles sobre trincheras abiertas</strong> (sonda_rampas: ~60 sitios): donde una calle cruza por encima del tramo abierto de una
+  trinchera honda, lleva debajo su losa de puente con pretiles a los lados (y su choque), en vez de flotar sobre el hueco.</li>
+<li><strong>Banda de aparcamiento con su raya continua corta</strong> al principio y al final de cada tramo (Jonay, foto de C. Narciso de Vera).</li>
+<li><strong>Coches</strong> (Jonay: «que se alejen más… Pijó me vale»): Guagüen, Butaca, Tagoror, Quillo, Jandía, Datilera, Reinona,
+  Copal, Limonero, Fiao, Nisperero, MaGofio, Susurro, Fardo, Mercadillo, Mojo Bichi, Burrero; motos Olita, Llamarada,
+  Sinsín, Quinqué y Cachimba. Los concesionarios del mapa, igual.</li>
+</ul>
 <h2>1.1.5 — 2026-11-03 — Alpha 1.1.5: señales de prohibido aparcar (Mapillary) y cámara bajo tierra</h2>
 <ul>
 <li><strong>Señales de prohibido aparcar y parar de Mapillary</strong> (Jonay: «puedes descargar esos puntos y cruzarlos con tus

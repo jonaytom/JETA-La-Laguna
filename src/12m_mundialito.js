@@ -10,169 +10,698 @@
 const MUNDIALITO = (() => {
   // v1.0.0 (auditoría de calidad: el 22 % del archivo eran estas filas repetidas): one row per team, kits as
   // 'shirt shorts socks [stripe]'
-  const kitOf = (k) => { const [shirt, shorts, socks, stripe] = k.split(' '); return stripe ? { shirt, shorts, socks, stripe } : { shirt, shorts, socks }; };
+  const kitOf = (k) => {
+    const [shirt, shorts, socks, stripe] = k.split(' ');
+    return stripe ? { shirt, shorts, socks, stripe } : { shirt, shorts, socks };
+  };
   const team = (id, code, name, home, away, names, lvF, lvB) => ({ id, code, name, home: kitOf(home), away: kitOf(away), names, lvF, lvB });
   const TEAMS = [
-    team('esp', 'ESP', 'ESPAÑA', '#c8102e #1d2a6b #c8102e #ffc400', '#f2f2f2 #f2f2f2 #f2f2f2 #c8102e',
-      ['PACO', 'JUANMA', 'DANI', 'RAÚL', 'NACHO'], 0.72, 0.72),
-    team('bra', 'BRA', 'BRASIL', '#ffdf00 #1f4fb5 #f2f2f2 #1e9a3a', '#1f4fb5 #f2f2f2 #1f4fb5 #ffdf00',
-      ['JUNINHO', 'ZÉ', 'DIDIZINHO', 'CAFUZÃO', 'PELEZITO'], 0.7, 0.56),
-    team('arg', 'ARG', 'ARGENTINA', '#75aadb #111111 #f2f2f2 #f2f2f2', '#1d2a6b #1d2a6b #1d2a6b #75aadb',
-      ['EL PIBE', 'CHE', 'TITO', 'EL TANO', 'MARADONITA'], 0.71, 0.64),
-    team('ita', 'ITA', 'ITALIA', '#1f5fbf #f2f2f2 #1f5fbf', '#f2f2f2 #1f5fbf #f2f2f2 #1f9a3a',
-      ['GIGI', 'TOTÓ', 'PIPPO', 'FABIO', 'CANNAVARO II'], 0.62, 0.6),
-    team('ale', 'ALE', 'ALEMANIA', '#f2f2f2 #111111 #f2f2f2 #111111', '#2a2a2a #2a2a2a #2a2a2a #d4202a',
-      ['HANS', 'KLAUS', 'FRITZ', 'DER BOMBER', 'JÜRGEN'], 0.66, 0.66),
-    team('fra', 'FRA', 'FRANCIA', '#1d2a6b #f2f2f2 #c8102e', '#f2f2f2 #1d2a6b #f2f2f2 #c8102e',
-      ['ZIZOU', 'TITÍ', 'PIERRE', 'JEAN-LUC', 'MICHELÍN'], 0.7, 0.68),
-    team('por', 'POR', 'PORTUGAL', '#a6192e #1e7a3a #a6192e #ffd400', '#f2f2f2 #f2f2f2 #f2f2f2 #a6192e',
-      ['ZEZINHO', 'NANI II', 'BETO', 'EUSEBINHO', 'O BICHO'], 0.66, 0.5),
-    team('usa', 'USA', 'EE. UU.', '#f2f2f2 #f2f2f2 #f2f2f2 #1d2a6b', '#1d2a6b #1d2a6b #1d2a6b #c8102e',
-      ['AIR JORDI', 'MAGIC JOHNNY', 'BIG SHAQ', 'DUNKMASTER', 'MR. TRIPLE'], 0.55, 0.78),
-    team('srb', 'SRB', 'SERBIA', '#c6363c #c6363c #f2f2f2 #f2f2f2', '#f2f2f2 #f2f2f2 #f2f2f2 #c6363c',
-      ['JOKICITO', 'BODIROGUITA', 'DIVAC JR.', 'EL TORRE', 'STOJAKITO'], 0.6, 0.7),
-    team('ltu', 'LTU', 'LITUANIA', '#fdb913 #fdb913 #f2f2f2 #006a44', '#006a44 #006a44 #f2f2f2 #fdb913',
-      ['SABONITO', 'MARCIULITO', 'EL BÁLTICO', 'TITANAS', 'JASIKITO'], 0.5, 0.64),
-    team('uru', 'URU', 'URUGUAY', '#5fb3e6 #111111 #111111', '#f2f2f2 #5fb3e6 #f2f2f2 #5fb3e6',
-      ['EL MATADOR', 'CHARRÚA', 'PELADO', 'TATO', 'EL FLACO'], 0.6, 0.5)];
+    team(
+      'esp',
+      'ESP',
+      'ESPAÑA',
+      '#c8102e #1d2a6b #c8102e #ffc400',
+      '#f2f2f2 #f2f2f2 #f2f2f2 #c8102e',
+      ['PACO', 'JUANMA', 'DANI', 'RAÚL', 'NACHO'],
+      0.72,
+      0.72
+    ),
+    team(
+      'bra',
+      'BRA',
+      'BRASIL',
+      '#ffdf00 #1f4fb5 #f2f2f2 #1e9a3a',
+      '#1f4fb5 #f2f2f2 #1f4fb5 #ffdf00',
+      ['JUNINHO', 'ZÉ', 'DIDIZINHO', 'CAFUZÃO', 'PELEZITO'],
+      0.7,
+      0.56
+    ),
+    team(
+      'arg',
+      'ARG',
+      'ARGENTINA',
+      '#75aadb #111111 #f2f2f2 #f2f2f2',
+      '#1d2a6b #1d2a6b #1d2a6b #75aadb',
+      ['EL PIBE', 'CHE', 'TITO', 'EL TANO', 'MARADONITA'],
+      0.71,
+      0.64
+    ),
+    team(
+      'ita',
+      'ITA',
+      'ITALIA',
+      '#1f5fbf #f2f2f2 #1f5fbf',
+      '#f2f2f2 #1f5fbf #f2f2f2 #1f9a3a',
+      ['GIGI', 'TOTÓ', 'PIPPO', 'FABIO', 'CANNAVARO II'],
+      0.62,
+      0.6
+    ),
+    team(
+      'ale',
+      'ALE',
+      'ALEMANIA',
+      '#f2f2f2 #111111 #f2f2f2 #111111',
+      '#2a2a2a #2a2a2a #2a2a2a #d4202a',
+      ['HANS', 'KLAUS', 'FRITZ', 'DER BOMBER', 'JÜRGEN'],
+      0.66,
+      0.66
+    ),
+    team(
+      'fra',
+      'FRA',
+      'FRANCIA',
+      '#1d2a6b #f2f2f2 #c8102e',
+      '#f2f2f2 #1d2a6b #f2f2f2 #c8102e',
+      ['ZIZOU', 'TITÍ', 'PIERRE', 'JEAN-LUC', 'MICHELÍN'],
+      0.7,
+      0.68
+    ),
+    team(
+      'por',
+      'POR',
+      'PORTUGAL',
+      '#a6192e #1e7a3a #a6192e #ffd400',
+      '#f2f2f2 #f2f2f2 #f2f2f2 #a6192e',
+      ['ZEZINHO', 'NANI II', 'BETO', 'EUSEBINHO', 'O BICHO'],
+      0.66,
+      0.5
+    ),
+    team(
+      'usa',
+      'USA',
+      'EE. UU.',
+      '#f2f2f2 #f2f2f2 #f2f2f2 #1d2a6b',
+      '#1d2a6b #1d2a6b #1d2a6b #c8102e',
+      ['AIR JORDI', 'MAGIC JOHNNY', 'BIG SHAQ', 'DUNKMASTER', 'MR. TRIPLE'],
+      0.55,
+      0.78
+    ),
+    team(
+      'srb',
+      'SRB',
+      'SERBIA',
+      '#c6363c #c6363c #f2f2f2 #f2f2f2',
+      '#f2f2f2 #f2f2f2 #f2f2f2 #c6363c',
+      ['JOKICITO', 'BODIROGUITA', 'DIVAC JR.', 'EL TORRE', 'STOJAKITO'],
+      0.6,
+      0.7
+    ),
+    team(
+      'ltu',
+      'LTU',
+      'LITUANIA',
+      '#fdb913 #fdb913 #f2f2f2 #006a44',
+      '#006a44 #006a44 #f2f2f2 #fdb913',
+      ['SABONITO', 'MARCIULITO', 'EL BÁLTICO', 'TITANAS', 'JASIKITO'],
+      0.5,
+      0.64
+    ),
+    team(
+      'uru',
+      'URU',
+      'URUGUAY',
+      '#5fb3e6 #111111 #111111',
+      '#f2f2f2 #5fb3e6 #f2f2f2 #5fb3e6',
+      ['EL MATADOR', 'CHARRÚA', 'PELADO', 'TATO', 'EL FLACO'],
+      0.6,
+      0.5
+    )
+  ];
   const ROUNDS = ['CUARTOS DE FINAL', 'SEMIFINAL', 'LA FINAL'];
   // v0.87 (Jonay): basket and football have their own 8 teams (in basket: USA, Serbia and Lithuania instead of Uruguay,
   // Brazil and Portugal) and each team its own level per sport (Spain among the best in both)
-  const SPORT = { pachanga: { title: 'PACHANGA 3x3', n: 3, game: 'basket', col: '#ff8a3a', teams: ['esp', 'usa', 'srb', 'fra', 'ltu', 'arg', 'ale', 'ita'] },
-    furbito: { title: 'PLAY FURBITO', n: 5, game: 'futbol', col: '#7fe08a', teams: ['esp', 'bra', 'arg', 'ita', 'ale', 'fra', 'por', 'uru'] } };
+  const SPORT = {
+    pachanga: { title: 'PACHANGA 3x3', n: 3, game: 'basket', col: '#ff8a3a', teams: ['esp', 'usa', 'srb', 'fra', 'ltu', 'arg', 'ale', 'ita'] },
+    furbito: { title: 'PLAY FURBITO', n: 5, game: 'futbol', col: '#7fe08a', teams: ['esp', 'bra', 'arg', 'ita', 'ale', 'fra', 'por', 'uru'] }
+  };
   const teamsOf = (id) => SPORT[id].teams.map((k) => TEAMS.find((t) => t.id === k));
   const lvOf = (t, S) => (S.game === 'basket' ? t.lvB : t.lvF);
   const rgb = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
-  const near = (a, b) => { const p = rgb(a), q = rgb(b); return Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]) < 140; };
+  const near = (a, b) => {
+    const p = rgb(a),
+      q = rgb(b);
+    return Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]) < 140;
+  };
   // the rival's kit: its first one, unless it looks like ours: then the second (and if that one too, all black)
-  function kits(me, op) { const a = me.home; let b = op.home; if (near(a.shirt, b.shirt)) b = op.away; if (near(a.shirt, b.shirt)) b = { shirt: '#111111', shorts: '#111111', socks: '#111111', stripe: '#ffd400' }; return [a, b]; }
-  const SK = ['#e0ac86', '#8d5a3b', '#c68a5e', '#f1c9a5', '#6b4226'], HR = ['#1a1410', '#6b3e1e', '#d8b56a', '#2a1a10', '#111111'];
+  function kits(me, op) {
+    const a = me.home;
+    let b = op.home;
+    if (near(a.shirt, b.shirt)) b = op.away;
+    if (near(a.shirt, b.shirt)) b = { shirt: '#111111', shorts: '#111111', socks: '#111111', stripe: '#ffd400' };
+    return [a, b];
+  }
+  const SK = ['#e0ac86', '#8d5a3b', '#c68a5e', '#f1c9a5', '#6b4226'],
+    HR = ['#1a1410', '#6b3e1e', '#d8b56a', '#2a1a10', '#111111'];
   const num = (h) => parseInt(h.slice(1), 16);
-  function squad(t, kit, n, mine) { const L = []; for (let i = 0; i < n; i++) { const k = (t.id.charCodeAt(0) + i * 3) % 5;
-      L.push({ name: mine && i === 0 ? 'TÚ' : t.names[i % t.names.length], look: { skin: num(SK[k]), hair: num(HR[(k + i) % 5]), shirt: num(kit.shirt), pants: num(kit.shorts), shoes: 0x222222, sole: num(kit.socks || kit.shirt) }, nose: mine && i === 0 }); }
-    return L; }
-  const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  function squad(t, kit, n, mine) {
+    const L = [];
+    for (let i = 0; i < n; i++) {
+      const k = (t.id.charCodeAt(0) + i * 3) % 5;
+      L.push({
+        name: mine && i === 0 ? 'TÚ' : t.names[i % t.names.length],
+        look: {
+          skin: num(SK[k]),
+          hair: num(HR[(k + i) % 5]),
+          shirt: num(kit.shirt),
+          pants: num(kit.shorts),
+          shoes: 0x222222,
+          sole: num(kit.socks || kit.shirt)
+        },
+        nose: mine && i === 0
+      });
+    }
+    return L;
+  }
+  const shuffle = (a) => {
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = (Math.random() * (i + 1)) | 0;
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
   // ---------- the flags (drawn: the pixel font has no emoji)
   function flag(g, id, x, y, w, h) {
-    const R = (c, a, b, cw, ch) => { g.fillStyle = c; g.fillRect(x + a, y + b, cw, ch); };
-    const V3 = (a, b, c) => { R(a, 0, 0, w / 3, h); R(b, w / 3, 0, w / 3 + 0.5, h); R(c, (2 * w) / 3, 0, w / 3, h); };
-    const H3 = (a, b, c, k = 1 / 3) => { R(a, 0, 0, w, h * k); R(b, 0, h * k, w, h * (1 - 2 * k) + 0.5); R(c, 0, h * (1 - k), w, h * k); };
-    const sun = (cx, cy, r) => { g.fillStyle = '#f2b21b'; g.beginPath(); g.arc(x + cx, y + cy, r, 0, 7); g.fill(); };
+    const R = (c, a, b, cw, ch) => {
+      g.fillStyle = c;
+      g.fillRect(x + a, y + b, cw, ch);
+    };
+    const V3 = (a, b, c) => {
+      R(a, 0, 0, w / 3, h);
+      R(b, w / 3, 0, w / 3 + 0.5, h);
+      R(c, (2 * w) / 3, 0, w / 3, h);
+    };
+    const H3 = (a, b, c, k = 1 / 3) => {
+      R(a, 0, 0, w, h * k);
+      R(b, 0, h * k, w, h * (1 - 2 * k) + 0.5);
+      R(c, 0, h * (1 - k), w, h * k);
+    };
+    const sun = (cx, cy, r) => {
+      g.fillStyle = '#f2b21b';
+      g.beginPath();
+      g.arc(x + cx, y + cy, r, 0, 7);
+      g.fill();
+    };
     if (id === 'esp') H3('#c8102e', '#ffc400', '#c8102e', 0.25);
-    else if (id === 'bra') { R('#1e9a3a', 0, 0, w, h); g.fillStyle = '#ffdf00'; g.beginPath(); g.moveTo(x + w / 2, y + h * 0.1); g.lineTo(x + w * 0.92, y + h / 2); g.lineTo(x + w / 2, y + h * 0.9); g.lineTo(x + w * 0.08, y + h / 2); g.fill(); g.fillStyle = '#1f3f9a'; g.beginPath(); g.arc(x + w / 2, y + h / 2, h * 0.22, 0, 7); g.fill(); }
-    else if (id === 'arg') { H3('#75aadb', '#f2f2f2', '#75aadb'); sun(w / 2, h / 2, h * 0.1); }
-    else if (id === 'ita') V3('#1e9a3a', '#f2f2f2', '#c8102e');
+    else if (id === 'bra') {
+      R('#1e9a3a', 0, 0, w, h);
+      g.fillStyle = '#ffdf00';
+      g.beginPath();
+      g.moveTo(x + w / 2, y + h * 0.1);
+      g.lineTo(x + w * 0.92, y + h / 2);
+      g.lineTo(x + w / 2, y + h * 0.9);
+      g.lineTo(x + w * 0.08, y + h / 2);
+      g.fill();
+      g.fillStyle = '#1f3f9a';
+      g.beginPath();
+      g.arc(x + w / 2, y + h / 2, h * 0.22, 0, 7);
+      g.fill();
+    } else if (id === 'arg') {
+      H3('#75aadb', '#f2f2f2', '#75aadb');
+      sun(w / 2, h / 2, h * 0.1);
+    } else if (id === 'ita') V3('#1e9a3a', '#f2f2f2', '#c8102e');
     else if (id === 'ale') H3('#111111', '#d4202a', '#ffc400');
     else if (id === 'fra') V3('#1d3f9a', '#f2f2f2', '#c8102e');
-    else if (id === 'por') { R('#1e7a3a', 0, 0, w * 0.4, h); R('#c8102e', w * 0.4, 0, w * 0.6, h); g.fillStyle = '#ffd400'; g.beginPath(); g.arc(x + w * 0.4, y + h / 2, h * 0.2, 0, 7); g.fill(); }
-    else if (id === 'usa') { R('#f2f2f2', 0, 0, w, h); for (let i = 0; i < 7; i += 2) R('#c8102e', 0, (h * i) / 7, w, h / 7 + 0.3); R('#1d2a6b', 0, 0, w * 0.42, h * (4 / 7)); g.fillStyle = '#fff'; for (let a = 0; a < 3; a++) for (let b = 0; b < 2; b++) g.fillRect(x + w * 0.07 + a * w * 0.12, y + h * 0.12 + b * h * 0.25, 1, 1); }
-    else if (id === 'srb') H3('#c6363c', '#0c4076', '#f2f2f2');
+    else if (id === 'por') {
+      R('#1e7a3a', 0, 0, w * 0.4, h);
+      R('#c8102e', w * 0.4, 0, w * 0.6, h);
+      g.fillStyle = '#ffd400';
+      g.beginPath();
+      g.arc(x + w * 0.4, y + h / 2, h * 0.2, 0, 7);
+      g.fill();
+    } else if (id === 'usa') {
+      R('#f2f2f2', 0, 0, w, h);
+      for (let i = 0; i < 7; i += 2) R('#c8102e', 0, (h * i) / 7, w, h / 7 + 0.3);
+      R('#1d2a6b', 0, 0, w * 0.42, h * (4 / 7));
+      g.fillStyle = '#fff';
+      for (let a = 0; a < 3; a++) for (let b = 0; b < 2; b++) g.fillRect(x + w * 0.07 + a * w * 0.12, y + h * 0.12 + b * h * 0.25, 1, 1);
+    } else if (id === 'srb') H3('#c6363c', '#0c4076', '#f2f2f2');
     else if (id === 'ltu') H3('#fdb913', '#006a44', '#c1272d');
-    else if (id === 'uru') { R('#f2f2f2', 0, 0, w, h); for (let i = 1; i < 9; i += 2) R('#3f7fd0', 0, (h * i) / 9, w, h / 9 + 0.3); R('#f2f2f2', 0, 0, w * 0.4, h * (5 / 9)); sun(w * 0.2, h * 0.27, h * 0.14); }
-    g.strokeStyle = 'rgba(0,0,0,0.6)'; g.lineWidth = 1; g.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1); }
+    else if (id === 'uru') {
+      R('#f2f2f2', 0, 0, w, h);
+      for (let i = 1; i < 9; i += 2) R('#3f7fd0', 0, (h * i) / 9, w, h / 9 + 0.3);
+      R('#f2f2f2', 0, 0, w * 0.4, h * (5 / 9));
+      sun(w * 0.2, h * 0.27, h * 0.14);
+    }
+    g.strokeStyle = 'rgba(0,0,0,0.6)';
+    g.lineWidth = 1;
+    g.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+  }
   // a little player in the kit (shirt, stripe, shorts, socks)
-  function kitMan(g, k, x, y, s = 1, bb = false) { const R = (c, a, b, w, h) => { g.fillStyle = c; g.fillRect(x + a * s, y + b * s, w * s, h * s); };
-    if (bb) { // v0.87 (Jonay: in Pachanga they looked like football kits): tank top, long baggy shorts, short socks, sneakers
-      R('#c68a5e', 4, 0, 6, 5); R('#c68a5e', 0, 6, 2, 8); R('#c68a5e', 12, 6, 2, 8); R(k.shirt, 2, 5, 10, 10); R(k.stripe || '#fff', 5, 5, 4, 1); R(k.stripe || '#fff', 2, 6, 1, 4); R(k.stripe || '#fff', 11, 6, 1, 4);
-      R(k.shorts, 1, 15, 12, 7); R(k.stripe || '#fff', 1, 15, 1, 7); R(k.stripe || '#fff', 12, 15, 1, 7); R('#c68a5e', 3, 22, 3, 1); R('#c68a5e', 8, 22, 3, 1);
-      R('#f2f2f2', 3, 23, 3, 1); R('#f2f2f2', 8, 23, 3, 1); R('#eeeeee', 2, 24, 5, 2); R('#eeeeee', 7, 24, 5, 2); R(k.stripe || k.shirt, 3, 24, 2, 1); R(k.stripe || k.shirt, 8, 24, 2, 1); return; }
-    R('#e0ac86', 4, 0, 6, 5); R(k.shirt, 1, 5, 12, 9); if (k.stripe) R(k.stripe, 1, 9, 12, 2); R(k.shorts, 2, 14, 10, 5); R(k.socks || k.shirt, 3, 19, 3, 4); R(k.socks || k.shirt, 8, 19, 3, 4); R('#222', 2, 23, 4, 2); R('#222', 8, 23, 4, 2); }
+  function kitMan(g, k, x, y, s = 1, bb = false) {
+    const R = (c, a, b, w, h) => {
+      g.fillStyle = c;
+      g.fillRect(x + a * s, y + b * s, w * s, h * s);
+    };
+    if (bb) {
+      // v0.87 (Jonay: in Pachanga they looked like football kits): tank top, long baggy shorts, short socks, sneakers
+      R('#c68a5e', 4, 0, 6, 5);
+      R('#c68a5e', 0, 6, 2, 8);
+      R('#c68a5e', 12, 6, 2, 8);
+      R(k.shirt, 2, 5, 10, 10);
+      R(k.stripe || '#fff', 5, 5, 4, 1);
+      R(k.stripe || '#fff', 2, 6, 1, 4);
+      R(k.stripe || '#fff', 11, 6, 1, 4);
+      R(k.shorts, 1, 15, 12, 7);
+      R(k.stripe || '#fff', 1, 15, 1, 7);
+      R(k.stripe || '#fff', 12, 15, 1, 7);
+      R('#c68a5e', 3, 22, 3, 1);
+      R('#c68a5e', 8, 22, 3, 1);
+      R('#f2f2f2', 3, 23, 3, 1);
+      R('#f2f2f2', 8, 23, 3, 1);
+      R('#eeeeee', 2, 24, 5, 2);
+      R('#eeeeee', 7, 24, 5, 2);
+      R(k.stripe || k.shirt, 3, 24, 2, 1);
+      R(k.stripe || k.shirt, 8, 24, 2, 1);
+      return;
+    }
+    R('#e0ac86', 4, 0, 6, 5);
+    R(k.shirt, 1, 5, 12, 9);
+    if (k.stripe) R(k.stripe, 1, 9, 12, 2);
+    R(k.shorts, 2, 14, 10, 5);
+    R(k.socks || k.shirt, 3, 19, 3, 4);
+    R(k.socks || k.shirt, 8, 19, 3, 4);
+    R('#222', 2, 23, 4, 2);
+    R('#222', 8, 23, 4, 2);
+  }
   // ---------- the tournament data (one at a time)
   let T = null; // { id, S, me, round, alive, hist: [[{a,b,w,sc}…] per round], last }
-  function newTour(id, me) { const others = shuffle(teamsOf(id).filter((t) => t !== me)); T = { id, S: SPORT[id], me, round: 0, alive: [me, ...others], hist: [], last: null }; return T; }
-  function pairs() { const A = T.alive, P = []; for (let i = 0; i < A.length; i += 2) P.push([A[i], A[i + 1]]); return P; }
+  function newTour(id, me) {
+    const others = shuffle(teamsOf(id).filter((t) => t !== me));
+    T = { id, S: SPORT[id], me, round: 0, alive: [me, ...others], hist: [], last: null };
+    return T;
+  }
+  function pairs() {
+    const A = T.alive,
+      P = [];
+    for (let i = 0; i < A.length; i += 2) P.push([A[i], A[i + 1]]);
+    return P;
+  }
   // the other matches of the round: the better team wins more often; made-up scores of the right sport
-  function fakeScore(win) { const bb = T.S.game === 'basket'; const a = bb ? 14 + ((Math.random() * 10) | 0) : 1 + ((Math.random() * 3) | 0); const b = bb ? Math.max(4, a - 2 - ((Math.random() * 9) | 0)) : Math.max(0, a - 1 - ((Math.random() * 2) | 0)); return win ? [a, b] : [b, a]; }
-  function closeRound(r) { const P = pairs(), res = [], win = [];
-    P.forEach(([a, b], i) => { if (i === 0) { const w = r.won ? a : b; res.push({ a, b, w, sc: r.score.slice() }); win.push(w); return; }
-      const aw = Math.random() < 0.5 + (lvOf(a, T.S) - lvOf(b, T.S)) * 1.5; res.push({ a, b, w: aw ? a : b, sc: fakeScore(aw) }); win.push(aw ? a : b); });
-    T.hist[T.round] = res; T.last = res[0]; T.alive = win; }
+  function fakeScore(win) {
+    const bb = T.S.game === 'basket';
+    const a = bb ? 14 + ((Math.random() * 10) | 0) : 1 + ((Math.random() * 3) | 0);
+    const b = bb ? Math.max(4, a - 2 - ((Math.random() * 9) | 0)) : Math.max(0, a - 1 - ((Math.random() * 2) | 0));
+    return win ? [a, b] : [b, a];
+  }
+  function closeRound(r) {
+    const P = pairs(),
+      res = [],
+      win = [];
+    P.forEach(([a, b], i) => {
+      if (i === 0) {
+        const w = r.won ? a : b;
+        res.push({ a, b, w, sc: r.score.slice() });
+        win.push(w);
+        return;
+      }
+      const aw = Math.random() < 0.5 + (lvOf(a, T.S) - lvOf(b, T.S)) * 1.5;
+      res.push({ a, b, w: aw ? a : b, sc: fakeScore(aw) });
+      win.push(aw ? a : b);
+    });
+    T.hist[T.round] = res;
+    T.last = res[0];
+    T.alive = win;
+  }
   // ---------- the match: the console waits behind, the 2D game plays it, and we come back to the console
   let SCR = null; // the screen running in the console (for the tests and the match's return)
-  function play() { const me = T.me, op = pairs()[0][1], [ka, kb] = kits(me, op), lv = [0.35, 0.55, 0.75][T.round] * (0.85 + lvOf(op, T.S) * 0.25);
+  function play() {
+    const me = T.me,
+      op = pairs()[0][1],
+      [ka, kb] = kits(me, op),
+      lv = [0.35, 0.55, 0.75][T.round] * (0.85 + lvOf(op, T.S) * 0.25);
     const onEnd = (r) => matchEnd(r);
     return ARCADE.api.suspend(() => {
-      if (T.S.game === 'basket') return BASKET2D.start({ team: squad(me, ka, 3, true), rival: squad(op, kb, 3, false), teamName: me.name, rivalName: op.name, time: T.round === 2 ? 120 : 90, lv, mateLv: 0.62, style: 'pabellon', inConsole: true, onEnd });
-      return FUTBOL2D.start({ team: squad(me, ka, 6, true), rival: squad(op, kb, 6, false), teamName: me.name, rivalName: op.name, kit: { ...ka, gk: { shirt: '#f1c40f', shorts: '#222', socks: '#f1c40f' } }, rivalKit: { ...kb, gk: { shirt: '#5ec8ff', shorts: '#222', socks: '#5ec8ff' } }, time: T.round === 2 ? 150 : 120, lv, mateLv: 0.62, inConsole: true, onEnd }); }); }
-  function matchEnd(r) { if (!T) { ARCADE.resume(); return; } closeRound(r && r.score ? r : { won: false, score: [0, 0] }); if (SCR) SCR.go('result'); ARCADE.resume(); }
+      if (T.S.game === 'basket')
+        return BASKET2D.start({
+          team: squad(me, ka, 3, true),
+          rival: squad(op, kb, 3, false),
+          teamName: me.name,
+          rivalName: op.name,
+          time: T.round === 2 ? 120 : 90,
+          lv,
+          mateLv: 0.62,
+          style: 'pabellon',
+          inConsole: true,
+          onEnd
+        });
+      return FUTBOL2D.start({
+        team: squad(me, ka, 6, true),
+        rival: squad(op, kb, 6, false),
+        teamName: me.name,
+        rivalName: op.name,
+        kit: { ...ka, gk: { shirt: '#f1c40f', shorts: '#222', socks: '#f1c40f' } },
+        rivalKit: { ...kb, gk: { shirt: '#5ec8ff', shorts: '#222', socks: '#5ec8ff' } },
+        time: T.round === 2 ? 150 : 120,
+        lv,
+        mateLv: 0.62,
+        inConsole: true,
+        onEnd
+      });
+    });
+  }
+  function matchEnd(r) {
+    if (!T) {
+      ARCADE.resume();
+      return;
+    }
+    closeRound(r && r.score ? r : { won: false, score: [0, 0] });
+    if (SCR) SCR.go('result');
+    ARCADE.resume();
+  }
   // ---------- the champion: the table of the console
-  function champion(id, me, ini) { const a = ARCADE.data(); a.sports = a.sports || {}; const s = a.sports[id] = a.sports[id] || { won: 0 }; s.won++;
-    a.scores = a.scores || {}; const key = 'mundial_' + id; a.scores[key] = a.scores[key] || []; a.scores[key].unshift([ini, me.name, s.won]); a.scores[key].length = Math.min(10, a.scores[key].length);
-    if (typeof SAVE !== 'undefined' && SAVE.auto) SAVE.auto('Campeón del mundialito'); return s.won; }
+  function champion(id, me, ini) {
+    const a = ARCADE.data();
+    a.sports = a.sports || {};
+    const s = (a.sports[id] = a.sports[id] || { won: 0 });
+    s.won++;
+    a.scores = a.scores || {};
+    const key = 'mundial_' + id;
+    a.scores[key] = a.scores[key] || [];
+    a.scores[key].unshift([ini, me.name, s.won]);
+    a.scores[key].length = Math.min(10, a.scores[key].length);
+    if (typeof SAVE !== 'undefined' && SAVE.auto) SAVE.auto('Campeón del mundialito');
+    return s.won;
+  }
   // ---------- the screens, inside the GOFIO-8 (A = E / left click, Q = right click, arrows to move)
   const ABC = 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ.!♥ ';
-  function screen(id) { return (api) => {
-    const { W, H, txt, sfx } = api; const S = SPORT[id], BB = S.game === 'basket';
-    const TL = teamsOf(id); const o = { v: 'pick', t: 0, sel: Math.max(0, TL.indexOf(T && T.id === id ? T.me : TL[0])), name: ['A', 'A', 'A'], ni: 0, conf: [] };
-    o.go = (v) => { o.v = v; o.t = 0; if (v === 'champ') { sfx('clear'); o.conf = []; for (let i = 0; i < 90; i++) o.conf.push([Math.random() * W, -Math.random() * H, 20 + Math.random() * 40, ['#ffd400', '#ff6b6b', '#7fe0ff', '#7fe08a', '#fff'][i % 5]]); } };
-    o.onResume = () => { if (o.v === 'result' && T && T.last) sfx(T.last.w === T.me ? 'clear' : 'die'); };
-    SCR = o; T = null;
-    // v0.90 (auditoría 0.86: «partir screen() en una función por pantalla»): what each screen does with the buttons…
-    const UPD = {
-      pick(A, Q, pad, dt) { const c = o.sel % 4, r = (o.sel / 4) | 0;
-        if (pad.hit('vR')) { o.sel = r * 4 + ((c + 1) % 4); sfx('pick'); } if (pad.hit('vL')) { o.sel = r * 4 + ((c + 3) % 4); sfx('pick'); }
-        if (pad.hit('vU') || pad.hit('vD')) { o.sel = (o.sel + 4) % 8; sfx('pick'); }
-        if (A) { newTour(id, TL[o.sel]); sfx('coin'); o.go('round'); } else if (Q) api.toMenu(); return; },
-      round(A, Q, pad, dt) { if (A) { sfx('start'); play(); } else if (Q) { T = null; o.go('pick'); } return; },
-      result(A, Q, pad, dt) { if (!A) return; if (!T || T.last.w !== T.me) { T = null; o.go('pick'); return; } T.round++; if (T.round >= ROUNDS.length) { o.go('champ'); } else o.go('round'); return; },
-      champ(A, Q, pad, dt) { for (const p of o.conf) { p[1] += p[2] * dt; if (p[1] > H) p[1] -= H + 10; } if (A && o.t > 1.2) { o.name = ['A', 'A', 'A']; o.ni = 0; o.go('name'); } return; },
-      name(A, Q, pad, dt) { let k = ABC.indexOf(o.name[o.ni]); if (pad.hit('vU') || pad.hit('vR')) { k = (k + 1) % ABC.length; sfx('pick'); } if (pad.hit('vD') || pad.hit('vL')) { k = (k + ABC.length - 1) % ABC.length; sfx('pick'); } o.name[o.ni] = ABC[k];
-        if (A) { o.ni++; sfx('coin'); if (o.ni >= 3) { o.won = champion(id, T.me, o.name.join('')); o.hl = o.name.join(''); o.go('table'); } } return; },
-      table(A, Q, pad, dt) { if (A || Q) { T = null; o.go('pick'); } },
+  function screen(id) {
+    return (api) => {
+      const { W, H, txt, sfx } = api;
+      const S = SPORT[id],
+        BB = S.game === 'basket';
+      const TL = teamsOf(id);
+      const o = { v: 'pick', t: 0, sel: Math.max(0, TL.indexOf(T && T.id === id ? T.me : TL[0])), name: ['A', 'A', 'A'], ni: 0, conf: [] };
+      o.go = (v) => {
+        o.v = v;
+        o.t = 0;
+        if (v === 'champ') {
+          sfx('clear');
+          o.conf = [];
+          for (let i = 0; i < 90; i++)
+            o.conf.push([
+              Math.random() * W,
+              -Math.random() * H,
+              20 + Math.random() * 40,
+              ['#ffd400', '#ff6b6b', '#7fe0ff', '#7fe08a', '#fff'][i % 5]
+            ]);
+        }
+      };
+      o.onResume = () => {
+        if (o.v === 'result' && T && T.last) sfx(T.last.w === T.me ? 'clear' : 'die');
+      };
+      SCR = o;
+      T = null;
+      // v0.90 (auditoría 0.86: «partir screen() en una función por pantalla»): what each screen does with the buttons…
+      const UPD = {
+        pick(A, Q, pad, dt) {
+          const c = o.sel % 4,
+            r = (o.sel / 4) | 0;
+          if (pad.hit('vR')) {
+            o.sel = r * 4 + ((c + 1) % 4);
+            sfx('pick');
+          }
+          if (pad.hit('vL')) {
+            o.sel = r * 4 + ((c + 3) % 4);
+            sfx('pick');
+          }
+          if (pad.hit('vU') || pad.hit('vD')) {
+            o.sel = (o.sel + 4) % 8;
+            sfx('pick');
+          }
+          if (A) {
+            newTour(id, TL[o.sel]);
+            sfx('coin');
+            o.go('round');
+          } else if (Q) api.toMenu();
+          return;
+        },
+        round(A, Q, pad, dt) {
+          if (A) {
+            sfx('start');
+            play();
+          } else if (Q) {
+            T = null;
+            o.go('pick');
+          }
+          return;
+        },
+        result(A, Q, pad, dt) {
+          if (!A) return;
+          if (!T || T.last.w !== T.me) {
+            T = null;
+            o.go('pick');
+            return;
+          }
+          T.round++;
+          if (T.round >= ROUNDS.length) {
+            o.go('champ');
+          } else o.go('round');
+          return;
+        },
+        champ(A, Q, pad, dt) {
+          for (const p of o.conf) {
+            p[1] += p[2] * dt;
+            if (p[1] > H) p[1] -= H + 10;
+          }
+          if (A && o.t > 1.2) {
+            o.name = ['A', 'A', 'A'];
+            o.ni = 0;
+            o.go('name');
+          }
+          return;
+        },
+        name(A, Q, pad, dt) {
+          let k = ABC.indexOf(o.name[o.ni]);
+          if (pad.hit('vU') || pad.hit('vR')) {
+            k = (k + 1) % ABC.length;
+            sfx('pick');
+          }
+          if (pad.hit('vD') || pad.hit('vL')) {
+            k = (k + ABC.length - 1) % ABC.length;
+            sfx('pick');
+          }
+          o.name[o.ni] = ABC[k];
+          if (A) {
+            o.ni++;
+            sfx('coin');
+            if (o.ni >= 3) {
+              o.won = champion(id, T.me, o.name.join(''));
+              o.hl = o.name.join('');
+              o.go('table');
+            }
+          }
+          return;
+        },
+        table(A, Q, pad, dt) {
+          if (A || Q) {
+            T = null;
+            o.go('pick');
+          }
+        }
+      };
+      o.update = (dt, pad) => {
+        o.t += dt;
+        const A = pad.hit('vS') || pad.hit('vT'),
+          Q = pad.hit('vP');
+        if (o.t < 0.35) return;
+        const f = UPD[o.v];
+        if (f) f(A, Q, pad, dt);
+      };
+      // ----- drawing
+      const bg = (g) => {
+        const gr = g.createLinearGradient(0, 0, 0, H);
+        if (S.game === 'basket') {
+          gr.addColorStop(0, '#1a0e06');
+          gr.addColorStop(1, '#5a3418');
+        } else {
+          gr.addColorStop(0, '#04210f');
+          gr.addColorStop(1, '#0f5a2a');
+        }
+        g.fillStyle = gr;
+        g.fillRect(0, 0, W, H);
+        g.fillStyle = 'rgba(255,255,255,0.05)';
+        for (let y = 0; y < H; y += 16) g.fillRect(0, y, W, 8);
+      };
+      const head = (g, sub) => {
+        txt(g, S.title, W / 2, 10, S.col, 16, 'center');
+        txt(g, sub, W / 2, 32, '#fff', 8, 'center');
+      };
+      const foot = (g, s) => txt(g, s, W / 2, H - 16, '#9fd7ff', 8, 'center');
+      const tag = (g, t, x, y, st) => {
+        flag(g, t.id, x, y, 18, 12);
+        txt(g, t.code, x + 22, y + 2, st === 'win' ? '#ffd400' : st === 'lost' ? '#777' : t === (T && T.me) ? '#7fe0ff' : '#fff', 8);
+      };
+      // …and how each one is drawn
+      const DRAW = {
+        pick(g) {
+          head(g, 'EL MUNDIALITO · ELIGE TU SELECCIÓN');
+          TL.forEach((t, i) => {
+            const c = i % 4,
+              r = (i / 4) | 0,
+              x = 18 + c * 113,
+              y = 50 + r * 128,
+              on = i === o.sel;
+            g.fillStyle = on ? 'rgba(255,212,0,0.2)' : 'rgba(0,0,0,0.4)';
+            g.fillRect(x, y, 106, 120);
+            if (on) {
+              g.strokeStyle = Math.floor(o.t * 4) % 2 ? '#ffd400' : '#ff8a3a';
+              g.lineWidth = 2;
+              g.strokeRect(x + 1, y + 1, 104, 118);
+            }
+            flag(g, t.id, x + 13, y + 8, 80, 50);
+            txt(g, t.name, x + 53, y + 64, on ? '#ffd400' : '#fff', 8, 'center');
+            kitMan(g, t.home, x + 22, y + 76, 1.3, BB);
+            kitMan(g, t.away, x + 62, y + 76, 1.3, BB);
+            const st5 = Math.max(1, Math.min(5, Math.round((lvOf(t, S) - 0.48) / 0.06)));
+            for (let k = 0; k < 5; k++) {
+              g.fillStyle = k < st5 ? '#ffd400' : 'rgba(255,255,255,0.18)';
+              g.fillRect(x + 28 + k * 10, y + 113, 7, 4);
+            }
+          });
+          foot(g, 'FLECHAS ELEGIR   A JUGAR   Q MENÚ');
+          return;
+        },
+        bracket(g) {
+          const R = T.round;
+          head(g, o.v === 'round' ? ROUNDS[R] : 'RESULTADOS · ' + ROUNDS[R]);
+          // the bracket: quarter-finals, semis, final
+          const col = [14, 176, 330],
+            rowY = (r, i) => (r === 0 ? 54 + i * 22 + ((i / 2) | 0) * 6 : r === 1 ? 65 + i * 50 : 90 + i * 100);
+          const seed = T.hist[0] ? T.hist[0].flatMap((m) => [m.a, m.b]) : R === 0 ? T.alive : [];
+          const teamsAt = (r) => (r === 0 ? seed : T.hist[r - 1] ? T.hist[r - 1].map((m) => m.w) : r === R ? T.alive : []);
+          for (let r = 0; r < 3; r++) {
+            txt(g, ['CUARTOS', 'SEMIS', 'FINAL'][r], col[r], 46 - 4, '#9fd7ff', 6);
+            const L = teamsAt(r),
+              M = T.hist[r];
+            L.forEach((t, i) => {
+              const m = M && M[(i / 2) | 0],
+                y = rowY(r, i) + 6,
+                stt = m ? (m.w === t ? 'win' : 'lost') : '';
+              if (r === R && !M && pairs()[0].includes(t)) {
+                g.fillStyle = 'rgba(127,224,255,0.18)';
+                g.fillRect(col[r] - 3, y - 3, 128, 18);
+              }
+              tag(g, t, col[r], y, stt);
+              if (m) txt(g, String(m.a === t ? m.sc[0] : m.sc[1]), col[r] + 110, y + 2, stt === 'win' ? '#ffd400' : '#777', 8, 'right');
+            });
+          }
+          if (o.v === 'round') {
+            const [me, op] = pairs()[0],
+              [ka, kb] = kits(me, op);
+            g.fillStyle = 'rgba(0,0,0,0.55)';
+            g.fillRect(40, 250, W - 80, 52);
+            kitMan(g, ka, 60, 262, 1, BB);
+            flag(g, me.id, 82, 266, 24, 16);
+            txt(g, me.name, 112, 270, '#7fe0ff', 8);
+            txt(g, 'CONTRA', W / 2, 270, '#fff', 8, 'center');
+            txt(g, op.name, W - 112, 270, '#fff', 8, 'right');
+            flag(g, op.id, W - 106, 266, 24, 16);
+            kitMan(g, kb, W - 76, 262, 1, BB);
+            foot(g, Math.floor(o.t * 2) % 2 ? 'A ¡A JUGAR!   Q RETIRARSE' : 'Q RETIRARSE');
+          } else {
+            const m = T.last,
+              won = m.w === T.me;
+            g.fillStyle = 'rgba(0,0,0,0.65)';
+            g.fillRect(40, 250, W - 80, 52);
+            txt(
+              g,
+              won ? (T.round === 2 ? '¡CAMPEONES!' : '¡A ' + ROUNDS[T.round + 1] + '!') : '¡ELIMINADOS!',
+              W / 2,
+              258,
+              won ? '#ffd400' : '#ff6b6b',
+              12,
+              'center'
+            );
+            txt(g, `${m.a.name} ${m.sc[0]} - ${m.sc[1]} ${m.b.name}`, W / 2, 280, '#fff', 8, 'center');
+            foot(g, 'A SEGUIR');
+          }
+          return;
+        },
+        champ(g) {
+          for (const p of o.conf) {
+            g.fillStyle = p[3];
+            g.fillRect(p[0], p[1], 3, 5);
+          }
+          head(g, 'EL MUNDIALITO DE LA GOFIO-8');
+          flag(g, T.me.id, W / 2 - 60, 70, 120, 76);
+          kitMan(g, T.me.home, W / 2 - 14, 158, 2, BB);
+          const k = Math.min(1, o.t * 2);
+          txt(g, '¡CAMPEONES', W / 2, 222, '#ffd400', Math.round(10 + 8 * k), 'center');
+          txt(g, 'DEL MUNDIALITO!', W / 2, 248, '#ffd400', Math.round(10 + 8 * k), 'center');
+          txt(g, T.me.name, W / 2, 278, '#fff', 12, 'center');
+          if (o.t > 1.2) foot(g, 'A PONER TUS INICIALES');
+          return;
+        },
+        name(g) {
+          head(g, '¡CAMPEONES! LA TABLA DE CAMPEONES');
+          flag(g, T.me.id, W / 2 - 30, 60, 60, 38);
+          txt(g, 'TUS INICIALES', W / 2, 120, '#9fd7ff', 8, 'center');
+          for (let i = 0; i < 3; i++) {
+            const on = i === o.ni && Math.floor(performance.now() / 250) % 2 === 0;
+            txt(g, o.name[i], W / 2 - 40 + i * 40, 150, i === o.ni ? (on ? '#ffd400' : '#fff') : '#7fe08a', 24, 'center');
+          }
+          foot(g, '↑↓ LETRA   A SIGUIENTE');
+          return;
+        },
+        table(g) {
+          head(g, 'TABLA DE CAMPEONES');
+          const L = ((ARCADE.data().scores || {})['mundial_' + id] || []).slice(0, 10);
+          L.forEach(([n, team, w], i) => {
+            const y = 60 + i * 22,
+              tm = TEAMS.find((q) => q.name === team),
+              hl = i === 0 && n === o.hl && Math.floor(performance.now() / 200) % 2;
+            const c = hl ? '#ffd400' : ['#ff6b6b', '#ffb347', '#ffd400', '#7fe08a', '#5ec8ff'][i % 5];
+            txt(g, String(i + 1).padStart(2, ' '), 70, y, c, 8);
+            txt(g, n, 110, y, c, 8);
+            if (tm) flag(g, tm.id, 170, y - 2, 18, 12);
+            txt(g, team, 196, y, c, 8);
+          });
+          if (!L.length) txt(g, 'TODAVÍA NO HAY CAMPEONES', W / 2, 140, '#fff', 8, 'center');
+          foot(g, 'A SEGUIR');
+        }
+      };
+      o.draw = (g) => {
+        bg(g);
+        if (o.v === 'pick') {
+          DRAW.pick(g);
+          return;
+        }
+        if (!T && o.v !== 'table') return;
+        DRAW[o.v === 'round' || o.v === 'result' ? 'bracket' : o.v](g);
+      };
+      return o;
     };
-    o.update = (dt, pad) => { o.t += dt; const A = pad.hit('vS') || pad.hit('vT'), Q = pad.hit('vP'); if (o.t < 0.35) return;
-      const f = UPD[o.v]; if (f) f(A, Q, pad, dt); };
-    // ----- drawing
-    const bg = (g) => { const gr = g.createLinearGradient(0, 0, 0, H); if (S.game === 'basket') { gr.addColorStop(0, '#1a0e06'); gr.addColorStop(1, '#5a3418'); } else { gr.addColorStop(0, '#04210f'); gr.addColorStop(1, '#0f5a2a'); } g.fillStyle = gr; g.fillRect(0, 0, W, H);
-      g.fillStyle = 'rgba(255,255,255,0.05)'; for (let y = 0; y < H; y += 16) g.fillRect(0, y, W, 8); };
-    const head = (g, sub) => { txt(g, S.title, W / 2, 10, S.col, 16, 'center'); txt(g, sub, W / 2, 32, '#fff', 8, 'center'); };
-    const foot = (g, s) => txt(g, s, W / 2, H - 16, '#9fd7ff', 8, 'center');
-    const tag = (g, t, x, y, st) => { flag(g, t.id, x, y, 18, 12); txt(g, t.code, x + 22, y + 2, st === 'win' ? '#ffd400' : st === 'lost' ? '#777' : t === (T && T.me) ? '#7fe0ff' : '#fff', 8); };
-    // …and how each one is drawn
-    const DRAW = {
-      pick(g) { head(g, 'EL MUNDIALITO · ELIGE TU SELECCIÓN');
-        TL.forEach((t, i) => { const c = i % 4, r = (i / 4) | 0, x = 18 + c * 113, y = 50 + r * 128, on = i === o.sel;
-          g.fillStyle = on ? 'rgba(255,212,0,0.2)' : 'rgba(0,0,0,0.4)'; g.fillRect(x, y, 106, 120);
-          if (on) { g.strokeStyle = Math.floor(o.t * 4) % 2 ? '#ffd400' : '#ff8a3a'; g.lineWidth = 2; g.strokeRect(x + 1, y + 1, 104, 118); }
-          flag(g, t.id, x + 13, y + 8, 80, 50); txt(g, t.name, x + 53, y + 64, on ? '#ffd400' : '#fff', 8, 'center');
-          kitMan(g, t.home, x + 22, y + 76, 1.3, BB); kitMan(g, t.away, x + 62, y + 76, 1.3, BB);
-          const st5 = Math.max(1, Math.min(5, Math.round((lvOf(t, S) - 0.48) / 0.06))); for (let k = 0; k < 5; k++) { g.fillStyle = k < st5 ? '#ffd400' : 'rgba(255,255,255,0.18)'; g.fillRect(x + 28 + k * 10, y + 113, 7, 4); } });
-        foot(g, 'FLECHAS ELEGIR   A JUGAR   Q MENÚ'); return; },
-      bracket(g) { const R = T.round; head(g, o.v === 'round' ? ROUNDS[R] : 'RESULTADOS · ' + ROUNDS[R]);
-        // the bracket: quarter-finals, semis, final
-        const col = [14, 176, 330], rowY = (r, i) => (r === 0 ? 54 + i * 22 + ((i / 2) | 0) * 6 : r === 1 ? 65 + i * 50 : 90 + i * 100);
-        const seed = T.hist[0] ? T.hist[0].flatMap((m) => [m.a, m.b]) : (R === 0 ? T.alive : []);
-        const teamsAt = (r) => r === 0 ? seed : T.hist[r - 1] ? T.hist[r - 1].map((m) => m.w) : r === R ? T.alive : [];
-        for (let r = 0; r < 3; r++) { txt(g, ['CUARTOS', 'SEMIS', 'FINAL'][r], col[r], 46 - 4, '#9fd7ff', 6); const L = teamsAt(r), M = T.hist[r];
-          L.forEach((t, i) => { const m = M && M[(i / 2) | 0], y = rowY(r, i) + 6, stt = m ? (m.w === t ? 'win' : 'lost') : '';
-            if (r === R && !M && pairs()[0].includes(t)) { g.fillStyle = 'rgba(127,224,255,0.18)'; g.fillRect(col[r] - 3, y - 3, 128, 18); }
-            tag(g, t, col[r], y, stt); if (m) txt(g, String(m.a === t ? m.sc[0] : m.sc[1]), col[r] + 110, y + 2, stt === 'win' ? '#ffd400' : '#777', 8, 'right'); }); }
-        if (o.v === 'round') { const [me, op] = pairs()[0], [ka, kb] = kits(me, op);
-          g.fillStyle = 'rgba(0,0,0,0.55)'; g.fillRect(40, 250, W - 80, 52); kitMan(g, ka, 60, 262, 1, BB); flag(g, me.id, 82, 266, 24, 16); txt(g, me.name, 112, 270, '#7fe0ff', 8);
-          txt(g, 'CONTRA', W / 2, 270, '#fff', 8, 'center'); txt(g, op.name, W - 112, 270, '#fff', 8, 'right'); flag(g, op.id, W - 106, 266, 24, 16); kitMan(g, kb, W - 76, 262, 1, BB);
-          foot(g, Math.floor(o.t * 2) % 2 ? 'A ¡A JUGAR!   Q RETIRARSE' : 'Q RETIRARSE'); }
-        else { const m = T.last, won = m.w === T.me; g.fillStyle = 'rgba(0,0,0,0.65)'; g.fillRect(40, 250, W - 80, 52);
-          txt(g, won ? (T.round === 2 ? '¡CAMPEONES!' : '¡A ' + ROUNDS[T.round + 1] + '!') : '¡ELIMINADOS!', W / 2, 258, won ? '#ffd400' : '#ff6b6b', 12, 'center');
-          txt(g, `${m.a.name} ${m.sc[0]} - ${m.sc[1]} ${m.b.name}`, W / 2, 280, '#fff', 8, 'center'); foot(g, 'A SEGUIR'); }
-        return; },
-      champ(g) { for (const p of o.conf) { g.fillStyle = p[3]; g.fillRect(p[0], p[1], 3, 5); }
-        head(g, 'EL MUNDIALITO DE LA GOFIO-8'); flag(g, T.me.id, W / 2 - 60, 70, 120, 76); kitMan(g, T.me.home, W / 2 - 14, 158, 2, BB);
-        const k = Math.min(1, o.t * 2); txt(g, '¡CAMPEONES', W / 2, 222, '#ffd400', Math.round(10 + 8 * k), 'center'); txt(g, 'DEL MUNDIALITO!', W / 2, 248, '#ffd400', Math.round(10 + 8 * k), 'center');
-        txt(g, T.me.name, W / 2, 278, '#fff', 12, 'center'); if (o.t > 1.2) foot(g, 'A PONER TUS INICIALES'); return; },
-      name(g) { head(g, '¡CAMPEONES! LA TABLA DE CAMPEONES'); flag(g, T.me.id, W / 2 - 30, 60, 60, 38); txt(g, 'TUS INICIALES', W / 2, 120, '#9fd7ff', 8, 'center');
-        for (let i = 0; i < 3; i++) { const on = i === o.ni && Math.floor(performance.now() / 250) % 2 === 0; txt(g, o.name[i], W / 2 - 40 + i * 40, 150, i === o.ni ? (on ? '#ffd400' : '#fff') : '#7fe08a', 24, 'center'); }
-        foot(g, '↑↓ LETRA   A SIGUIENTE'); return; },
-      table(g) { head(g, 'TABLA DE CAMPEONES'); const L = ((ARCADE.data().scores || {})['mundial_' + id] || []).slice(0, 10);
-        L.forEach(([n, team, w], i) => { const y = 60 + i * 22, tm = TEAMS.find((q) => q.name === team), hl = i === 0 && n === o.hl && Math.floor(performance.now() / 200) % 2;
-          const c = hl ? '#ffd400' : ['#ff6b6b', '#ffb347', '#ffd400', '#7fe08a', '#5ec8ff'][i % 5]; txt(g, String(i + 1).padStart(2, ' '), 70, y, c, 8); txt(g, n, 110, y, c, 8); if (tm) flag(g, tm.id, 170, y - 2, 18, 12); txt(g, team, 196, y, c, 8); });
-        if (!L.length) txt(g, 'TODAVÍA NO HAY CAMPEONES', W / 2, 140, '#fff', 8, 'center'); foot(g, 'A SEGUIR'); },
-    };
-    o.draw = (g) => { bg(g); if (o.v === 'pick') { DRAW.pick(g); return; } if (!T && o.v !== 'table') return;
-      DRAW[o.v === 'round' || o.v === 'result' ? 'bracket' : o.v](g); };
-    return o; }; }
+  }
   // the two cartridges, in the GOFIO-8's menu
-  const MUS_ = { title: { bpm: 132, div: 4, loop: true, ch: [{ w: 'sq', v: 0.7, n: ['C5 . E5 G5 . E5 C5 . D5 . F5 A5 . F5 D5 .', 'E5 . G5 C6 . G5 E5 . D5 . G5 B5 . . G5 .'], form: [0, 1, 0, 1] }, { w: 'tri', v: 1, n: 'C3 . G2 . C3 . G2 . D3 . A2 . G2 . B2 .' }] } };
-  for (const id in SPORT) ARCADE.GAMES[id] = { title: SPORT[id].title, sub: id === 'pachanga' ? 'EL MUNDIALITO DE BASKET 3 CONTRA 3' : 'EL MUNDIALITO DE FÚTBOL', marquee: id === 'pachanga' ? ['#c0392b', '#2a0a06'] : ['#1f8f4e', '#06200e'], titleCol: '#fff',
-    help: (K) => `FLECHAS ELEGIR  A: ${K('f_punch')}  Q: ${K('b_pass')}  ESC MENÚ`, music: MUS_, screen: screen(id) };
-  return { TEAMS, kits, near, flag, _teams: (id) => teamsOf(id).map((t) => [t.code, lvOf(t, SPORT[id])]), _T: () => T, _scr: () => SCR, _end: (r) => matchEnd(r) };
+  const MUS_ = {
+    title: {
+      bpm: 132,
+      div: 4,
+      loop: true,
+      ch: [
+        { w: 'sq', v: 0.7, n: ['C5 . E5 G5 . E5 C5 . D5 . F5 A5 . F5 D5 .', 'E5 . G5 C6 . G5 E5 . D5 . G5 B5 . . G5 .'], form: [0, 1, 0, 1] },
+        { w: 'tri', v: 1, n: 'C3 . G2 . C3 . G2 . D3 . A2 . G2 . B2 .' }
+      ]
+    }
+  };
+  for (const id in SPORT)
+    ARCADE.GAMES[id] = {
+      title: SPORT[id].title,
+      sub: id === 'pachanga' ? 'EL MUNDIALITO DE BASKET 3 CONTRA 3' : 'EL MUNDIALITO DE FÚTBOL',
+      marquee: id === 'pachanga' ? ['#c0392b', '#2a0a06'] : ['#1f8f4e', '#06200e'],
+      titleCol: '#fff',
+      help: (K) => `FLECHAS ELEGIR  A: ${K('f_punch')}  Q: ${K('b_pass')}  ESC MENÚ`,
+      music: MUS_,
+      screen: screen(id)
+    };
+  return {
+    TEAMS,
+    kits,
+    near,
+    flag,
+    _teams: (id) => teamsOf(id).map((t) => [t.code, lvOf(t, SPORT[id])]),
+    _T: () => T,
+    _scr: () => SCR,
+    _end: (r) => matchEnd(r)
+  };
 })();
