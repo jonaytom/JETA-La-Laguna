@@ -43,22 +43,7 @@ const GENERIC = {
   G: ['Gasolinera Ande Pepe']
 };
 function buildSigns() {
-  const CWd = 384,
-    CHt = 64,
-    COLS = 5,
-    ROWS = 16,
-    PER = COLS * ROWS;
-  const list = DATA.SH.filter((s) => s[3] || s[2] === 'P').map((s) => ({ x: s[0], z: s[1], cat: s[2], name: s[3] || 'Farmacia' }));
-  const atlases = [];
-  const cellOf = (idx) => {
-    const a = Math.floor(idx / PER),
-      k = idx % PER;
-    if (!atlases[a]) {
-      const c = mkCanvas(CWd * COLS, CHt * ROWS);
-      atlases[a] = c;
-    }
-    return [atlases[a], (k % COLS) * CWd, Math.floor(k / COLS) * CHt, a, k];
-  };
+  const { CWd, CHt, list, atlases, cellOf } = buildSignsPart1();
   let idx = 0;
   const quads = [];
   for (const sh of list) {
@@ -143,6 +128,11 @@ function buildSigns() {
     quads.push({ a, P, N, U, w: ww, h, y, uv: [u0, v0, u1, v1], cat: sh.cat, name: sh.name });
     LABELS.push([sh.name, P[0], P[1], 3, bg]);
   }
+  buildSignsPart2(atlases, list, quads);
+  return quads.length;
+}
+/** (v1.1.7, code quality) part of buildSigns */
+function buildSignsPart2(atlases, list, quads) {
   atlases.forEach((cv, i) => {
     const t = canvasTex(cv, { repeat: false });
     const m = new THREE.MeshStandardMaterial({ map: t, emissiveMap: t, emissive: 0xffffff, emissiveIntensity: 0, roughness: 0.5 });
@@ -180,5 +170,24 @@ function buildSigns() {
   }
   SIGN.list = list;
   SIGN.quads = quads;
-  return quads.length;
+}
+/** (v1.1.7, code quality) part of buildSigns */
+function buildSignsPart1() {
+  const CWd = 384,
+    CHt = 64,
+    COLS = 5,
+    ROWS = 16,
+    PER = COLS * ROWS;
+  const list = DATA.SH.filter((s) => s[3] || s[2] === 'P').map((s) => ({ x: s[0], z: s[1], cat: s[2], name: s[3] || 'Farmacia' }));
+  const atlases = [];
+  const cellOf = (idx) => {
+    const a = Math.floor(idx / PER),
+      k = idx % PER;
+    if (!atlases[a]) {
+      const c = mkCanvas(CWd * COLS, CHt * ROWS);
+      atlases[a] = c;
+    }
+    return [atlases[a], (k % COLS) * CWd, Math.floor(k / COLS) * CHt, a, k];
+  };
+  return { CWd, CHt, list, atlases, cellOf };
 }

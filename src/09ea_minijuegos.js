@@ -24,6 +24,32 @@ const MINI = (() => {
                     : null;
   }
   function input(isRunning) {
+    const { keys, pressedK, releasedK, press } = inputPart1(isRunning);
+    return {
+      keys,
+      press,
+      held: (v) => keys.has(v),
+      hit: (v) => pressedK.has(v),
+      rel: (v) => releasedK.has(v),
+      consume(v) {
+        pressedK.delete(v);
+      },
+      clearHits() {
+        pressedK.clear();
+      },
+      frame() {
+        pressedK.clear();
+        releasedK.clear();
+      },
+      reset() {
+        keys.clear();
+        pressedK.clear();
+        releasedK.clear();
+      }
+    };
+  }
+  /** (v1.1.7, code quality) part of input */
+  function inputPart1(isRunning) {
     const keys = new Set(),
       pressedK = new Set(),
       releasedK = new Set();
@@ -73,28 +99,7 @@ const MINI = (() => {
       },
       true
     );
-    return {
-      keys,
-      press,
-      held: (v) => keys.has(v),
-      hit: (v) => pressedK.has(v),
-      rel: (v) => releasedK.has(v),
-      consume(v) {
-        pressedK.delete(v);
-      },
-      clearHits() {
-        pressedK.clear();
-      },
-      frame() {
-        pressedK.clear();
-        releasedK.clear();
-      },
-      reset() {
-        keys.clear();
-        pressedK.clear();
-        releasedK.clear();
-      }
-    };
+    return { keys, pressedK, releasedK, press };
   }
   const tone = (ctx, g, type, f0, f1, vol, dur) => {
     const o = ctx.createOscillator();
@@ -341,193 +346,13 @@ const MINI = (() => {
     const ctx = AUDIO.ctx,
       out = AUDIO.master;
     if (!ctx || !out) return { tick() {}, ev() {}, stop() {} };
-    const C = { basket: { mf: 900, mv: 0.022, ex: 0.05 }, futbol: { mf: 520, mv: 0.03, ex: 0.07 }, calle: { mf: 700, mv: 0.012, ex: 0.03 } }[
-      kind
-    ] || { mf: 800, mv: 0.02, ex: 0.05 };
-    const bus = ctx.createGain();
-    bus.gain.value = 1;
-    bus.connect(out);
-    const nodes = [];
-    // the murmur: looped noise through a voice-like band, slowly breathing
-    const src = ctx.createBufferSource();
-    src.buffer = AUDIO.noise;
-    src.loop = true;
-    const bp = ctx.createBiquadFilter();
-    bp.type = 'bandpass';
-    bp.frequency.value = C.mf;
-    bp.Q.value = 0.8;
-    const lp = ctx.createBiquadFilter();
-    lp.type = 'lowpass';
-    lp.frequency.value = 1800;
-    const mg = ctx.createGain();
-    mg.gain.value = 0;
-    mg.gain.setTargetAtTime(C.mv, ctx.currentTime, 0.8);
-    const lfo = ctx.createOscillator(),
-      lg = ctx.createGain();
-    lfo.frequency.value = 0.23;
-    lg.gain.value = C.mv * 0.35;
-    lfo.connect(lg);
-    lg.connect(mg.gain);
-    src.connect(bp);
-    bp.connect(lp);
-    lp.connect(mg);
-    mg.connect(bus);
-    src.start();
-    lfo.start();
-    nodes.push(src, lfo);
+    const { C, bus, nodes, mg } = crowdPart1(kind, ctx, out);
     let exc = 0,
       dead = false;
-    const T = () => ctx.currentTime;
-    const env = (g, t0, a, peak, hold, rel) => {
-      g.gain.setValueAtTime(0.0001, t0);
-      g.gain.linearRampToValueAtTime(peak, t0 + a);
-      g.gain.setValueAtTime(peak, t0 + a + hold);
-      g.gain.exponentialRampToValueAtTime(0.0001, t0 + a + hold + rel);
-    };
-    // a crowd of voices singing a vowel (detuned saws through two formants) — «uuuh», «aaah», a syllable of a chant
-    function voices(t0, f0, glide, form, vol, a, hold, rel, n = 7) {
-      const g = ctx.createGain();
-      env(g, t0, a, vol, hold, rel);
-      const f1 = ctx.createBiquadFilter(),
-        f2 = ctx.createBiquadFilter();
-      f1.type = f2.type = 'bandpass';
-      f1.frequency.value = form[0];
-      f2.frequency.value = form[1];
-      f1.Q.value = 2.5;
-      f2.Q.value = 3;
-      const mixG = ctx.createGain();
-      mixG.gain.value = 1;
-      f1.connect(mixG);
-      f2.connect(mixG);
-      mixG.connect(g);
-      g.connect(bus);
-      for (let i = 0; i < n; i++) {
-        const o = ctx.createOscillator();
-        o.type = 'sawtooth';
-        const f = f0 * (0.82 + Math.random() * 0.4) * (i % 3 === 0 ? 2 : 1);
-        o.frequency.setValueAtTime(f, t0);
-        o.frequency.linearRampToValueAtTime(f * glide, t0 + a + hold + rel);
-        o.connect(f1);
-        o.connect(f2);
-        o.start(t0);
-        o.stop(t0 + a + hold + rel + 0.05);
-      }
-      const ns = ctx.createBufferSource();
-      ns.buffer = AUDIO.noise;
-      const ng = ctx.createGain();
-      ng.gain.value = 0.35;
-      ns.connect(ng);
-      ng.connect(f1);
-      ns.start(t0, Math.random());
-      ns.stop(t0 + a + hold + rel + 0.05);
-    }
-    function burst(t0, freq, type, q, vol, dur) {
-      const s2 = ctx.createBufferSource();
-      s2.buffer = AUDIO.noise;
-      const f = ctx.createBiquadFilter();
-      f.type = type;
-      f.frequency.value = freq;
-      f.Q.value = q;
-      const g = ctx.createGain();
-      env(g, t0, 0.004, vol, 0, dur);
-      s2.connect(f);
-      f.connect(g);
-      g.connect(bus);
-      s2.start(t0, Math.random() * 1.5);
-      s2.stop(t0 + dur + 0.05);
-    }
-    function thump(t0, f, vol, dur) {
-      const o = ctx.createOscillator(),
-        g = ctx.createGain();
-      o.type = 'sine';
-      o.frequency.setValueAtTime(f * 1.6, t0);
-      o.frequency.exponentialRampToValueAtTime(f, t0 + 0.05);
-      env(g, t0, 0.005, vol, 0, dur);
-      o.connect(g);
-      g.connect(bus);
-      o.start(t0);
-      o.stop(t0 + dur + 0.05);
-    }
-    function claps(t0, dur, dens, vol) {
-      for (let t = 0; t < dur; t += 1 / dens)
-        burst(t0 + t + Math.random() / dens, 1800 + Math.random() * 1400, 'bandpass', 1.2, vol * (1 - (t / dur) * 0.6), 0.03);
-    }
-    // the pavilion organ: drawbars 8' 4' 2 2/3', a little vibrato, short notes
-    function organ(t0, notes, vol = 0.045) {
-      let t = t0;
-      for (const [f, d] of notes) {
-        if (f) {
-          const g = ctx.createGain();
-          env(g, t, 0.008, vol, d * 0.8, 0.06);
-          g.connect(bus);
-          const vib = ctx.createOscillator(),
-            vg = ctx.createGain();
-          vib.frequency.value = 6.2;
-          vg.gain.value = f * 0.004;
-          vib.connect(vg);
-          for (const [h, a] of [
-            [1, 0.55],
-            [2, 0.3],
-            [3, 0.18],
-            [4, 0.08]
-          ]) {
-            const o = ctx.createOscillator(),
-              og = ctx.createGain();
-            o.type = 'sine';
-            o.frequency.value = f * h;
-            vg.connect(o.frequency);
-            og.gain.value = a;
-            o.connect(og);
-            og.connect(g);
-            o.start(t);
-            o.stop(t + d + 0.1);
-          }
-          vib.start(t);
-          vib.stop(t + d + 0.1);
-        }
-        t += d;
-      }
-      return t;
-    }
-    const N = { G4: 392, A4: 440, B4: 494, C5: 523, D5: 587, E5: 659, F5: 698, G5: 784, A5: 880, C6: 1047 };
-    const RIFFS = [
-      [
-        [N.G4, 0.14],
-        [N.C5, 0.14],
-        [N.E5, 0.14],
-        [N.G5, 0.3],
-        [0, 0.08],
-        [N.E5, 0.14],
-        [N.G5, 0.5]
-      ], // the «charge»
-      [
-        [N.C5, 0.12],
-        [N.C5, 0.12],
-        [N.D5, 0.12],
-        [N.E5, 0.24],
-        [N.D5, 0.12],
-        [N.C5, 0.12],
-        [N.G4, 0.3]
-      ],
-      [
-        [N.E5, 0.1],
-        [N.G5, 0.1],
-        [N.A5, 0.1],
-        [N.G5, 0.1],
-        [N.E5, 0.1],
-        [N.G5, 0.1],
-        [N.A5, 0.2],
-        [N.C6, 0.3]
-      ],
-      [
-        [N.G4, 0.16],
-        [N.G4, 0.16],
-        [N.A4, 0.16],
-        [N.B4, 0.16],
-        [N.C5, 0.32],
-        [N.G4, 0.32]
-      ]
-    ];
+    const { T, env, voices } = crowdPart2(ctx, bus);
+    const { burst, thump, claps } = crowdPart3(ctx, env, bus);
+    const { organ, N } = crowdPart4(ctx, env, bus);
+    const { RIFFS } = crowdPart5(N);
     const api = {
       // exc 0..1: how hot the play is (the murmur follows it)
       tick(dt, e = 0) {
@@ -643,6 +468,211 @@ const MINI = (() => {
       }
     };
     return api;
+  }
+  /** (v1.1.7, code quality) part of crowd */
+  function crowdPart5(N) {
+    const RIFFS = [
+      [
+        [N.G4, 0.14],
+        [N.C5, 0.14],
+        [N.E5, 0.14],
+        [N.G5, 0.3],
+        [0, 0.08],
+        [N.E5, 0.14],
+        [N.G5, 0.5]
+      ], // the «charge»
+      [
+        [N.C5, 0.12],
+        [N.C5, 0.12],
+        [N.D5, 0.12],
+        [N.E5, 0.24],
+        [N.D5, 0.12],
+        [N.C5, 0.12],
+        [N.G4, 0.3]
+      ],
+      [
+        [N.E5, 0.1],
+        [N.G5, 0.1],
+        [N.A5, 0.1],
+        [N.G5, 0.1],
+        [N.E5, 0.1],
+        [N.G5, 0.1],
+        [N.A5, 0.2],
+        [N.C6, 0.3]
+      ],
+      [
+        [N.G4, 0.16],
+        [N.G4, 0.16],
+        [N.A4, 0.16],
+        [N.B4, 0.16],
+        [N.C5, 0.32],
+        [N.G4, 0.32]
+      ]
+    ];
+    return { RIFFS };
+  }
+  /** (v1.1.7, code quality) part of crowd: the pavilion organ: drawbars 8' 4' 2 2/3', a little vibrato, short notes */
+  function crowdPart4(ctx, env, bus) {
+    // the pavilion organ: drawbars 8' 4' 2 2/3', a little vibrato, short notes
+    function organ(t0, notes, vol = 0.045) {
+      let t = t0;
+      for (const [f, d] of notes) {
+        if (f) {
+          const g = ctx.createGain();
+          env(g, t, 0.008, vol, d * 0.8, 0.06);
+          g.connect(bus);
+          const vib = ctx.createOscillator(),
+            vg = ctx.createGain();
+          vib.frequency.value = 6.2;
+          vg.gain.value = f * 0.004;
+          vib.connect(vg);
+          for (const [h, a] of [
+            [1, 0.55],
+            [2, 0.3],
+            [3, 0.18],
+            [4, 0.08]
+          ]) {
+            const o = ctx.createOscillator(),
+              og = ctx.createGain();
+            o.type = 'sine';
+            o.frequency.value = f * h;
+            vg.connect(o.frequency);
+            og.gain.value = a;
+            o.connect(og);
+            og.connect(g);
+            o.start(t);
+            o.stop(t + d + 0.1);
+          }
+          vib.start(t);
+          vib.stop(t + d + 0.1);
+        }
+        t += d;
+      }
+      return t;
+    }
+    const N = { G4: 392, A4: 440, B4: 494, C5: 523, D5: 587, E5: 659, F5: 698, G5: 784, A5: 880, C6: 1047 };
+    return { organ, N };
+  }
+  /** (v1.1.7, code quality) part of crowd */
+  function crowdPart3(ctx, env, bus) {
+    function burst(t0, freq, type, q, vol, dur) {
+      const s2 = ctx.createBufferSource();
+      s2.buffer = AUDIO.noise;
+      const f = ctx.createBiquadFilter();
+      f.type = type;
+      f.frequency.value = freq;
+      f.Q.value = q;
+      const g = ctx.createGain();
+      env(g, t0, 0.004, vol, 0, dur);
+      s2.connect(f);
+      f.connect(g);
+      g.connect(bus);
+      s2.start(t0, Math.random() * 1.5);
+      s2.stop(t0 + dur + 0.05);
+    }
+    function thump(t0, f, vol, dur) {
+      const o = ctx.createOscillator(),
+        g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(f * 1.6, t0);
+      o.frequency.exponentialRampToValueAtTime(f, t0 + 0.05);
+      env(g, t0, 0.005, vol, 0, dur);
+      o.connect(g);
+      g.connect(bus);
+      o.start(t0);
+      o.stop(t0 + dur + 0.05);
+    }
+    function claps(t0, dur, dens, vol) {
+      for (let t = 0; t < dur; t += 1 / dens)
+        burst(t0 + t + Math.random() / dens, 1800 + Math.random() * 1400, 'bandpass', 1.2, vol * (1 - (t / dur) * 0.6), 0.03);
+    }
+    return { burst, thump, claps };
+  }
+  /** (v1.1.7, code quality) part of crowd: a crowd of voices singing a vowel (detuned saws through two formants) — «uuuh», «aaah», a syllable of a chant */
+  function crowdPart2(ctx, bus) {
+    const T = () => ctx.currentTime;
+    const env = (g, t0, a, peak, hold, rel) => {
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.linearRampToValueAtTime(peak, t0 + a);
+      g.gain.setValueAtTime(peak, t0 + a + hold);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + a + hold + rel);
+    };
+    // a crowd of voices singing a vowel (detuned saws through two formants) — «uuuh», «aaah», a syllable of a chant
+    function voices(t0, f0, glide, form, vol, a, hold, rel, n = 7) {
+      const g = ctx.createGain();
+      env(g, t0, a, vol, hold, rel);
+      const f1 = ctx.createBiquadFilter(),
+        f2 = ctx.createBiquadFilter();
+      f1.type = f2.type = 'bandpass';
+      f1.frequency.value = form[0];
+      f2.frequency.value = form[1];
+      f1.Q.value = 2.5;
+      f2.Q.value = 3;
+      const mixG = ctx.createGain();
+      mixG.gain.value = 1;
+      f1.connect(mixG);
+      f2.connect(mixG);
+      mixG.connect(g);
+      g.connect(bus);
+      for (let i = 0; i < n; i++) {
+        const o = ctx.createOscillator();
+        o.type = 'sawtooth';
+        const f = f0 * (0.82 + Math.random() * 0.4) * (i % 3 === 0 ? 2 : 1);
+        o.frequency.setValueAtTime(f, t0);
+        o.frequency.linearRampToValueAtTime(f * glide, t0 + a + hold + rel);
+        o.connect(f1);
+        o.connect(f2);
+        o.start(t0);
+        o.stop(t0 + a + hold + rel + 0.05);
+      }
+      const ns = ctx.createBufferSource();
+      ns.buffer = AUDIO.noise;
+      const ng = ctx.createGain();
+      ng.gain.value = 0.35;
+      ns.connect(ng);
+      ng.connect(f1);
+      ns.start(t0, Math.random());
+      ns.stop(t0 + a + hold + rel + 0.05);
+    }
+    return { T, env, voices };
+  }
+  /** (v1.1.7, code quality) part of crowd: the murmur: looped noise through a voice-like band, slowly breathing */
+  function crowdPart1(kind, ctx, out) {
+    const C = { basket: { mf: 900, mv: 0.022, ex: 0.05 }, futbol: { mf: 520, mv: 0.03, ex: 0.07 }, calle: { mf: 700, mv: 0.012, ex: 0.03 } }[
+      kind
+    ] || { mf: 800, mv: 0.02, ex: 0.05 };
+    const bus = ctx.createGain();
+    bus.gain.value = 1;
+    bus.connect(out);
+    const nodes = [];
+    // the murmur: looped noise through a voice-like band, slowly breathing
+    const src = ctx.createBufferSource();
+    src.buffer = AUDIO.noise;
+    src.loop = true;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = C.mf;
+    bp.Q.value = 0.8;
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 1800;
+    const mg = ctx.createGain();
+    mg.gain.value = 0;
+    mg.gain.setTargetAtTime(C.mv, ctx.currentTime, 0.8);
+    const lfo = ctx.createOscillator(),
+      lg = ctx.createGain();
+    lfo.frequency.value = 0.23;
+    lg.gain.value = C.mv * 0.35;
+    lfo.connect(lg);
+    lg.connect(mg.gain);
+    src.connect(bp);
+    bp.connect(lp);
+    lp.connect(mg);
+    mg.connect(bus);
+    src.start();
+    lfo.start();
+    nodes.push(src, lfo);
+    return { C, bus, nodes, mg };
   }
   return { input, snd, say, txt, turbo, banner, rows, endScreen, show, hide, clearWorldInput, pauser, pauseOverlay, crowd };
 })();

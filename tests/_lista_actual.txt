@@ -1,8 +1,32 @@
-prueba_079.py
 prueba_arranque.py
+prueba_bordes.py
 prueba_conduccion_tuneles_puentes.py
-herramientas/sonda_caidas.py
-herramientas/sonda_calzadas.py -1193 -28 40
-herramientas/sonda_calzadas.py 537 1371 40
-herramientas/sonda_calzadas.py 630 -1146 40
-herramientas/sonda_aparcamiento.py
+prueba_parking_cristo.py
+prueba_083.py
+prueba_0851.py
+prueba_canchas.py
+prueba_baloncesto.py
+prueba_futbol.py
+prueba_panel_controles.py
+prueba_pelea_especiales.py
+prueba_pelea_atras.py
+prueba_bloqueo.py
+prueba_076.py
+prueba_079.py
+prueba_084.py
+prueba_085.py
+prueba_089.py
+prueba_090.py
+prueba_075.py
+prueba_088.py
+prueba_095.py
+prueba_0962.py
+prueba_082.py
+prueba_080.py
+prueba_081.py
+herramientas/sonda_guia.py 284 112
+herramientas/sonda_guia.py 284 112 coche
+prueba_0821.py
+prueba_misiones_guardado.py
+prueba_persecuciones.py
+prueba_diario.py

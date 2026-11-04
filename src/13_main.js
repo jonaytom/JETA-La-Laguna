@@ -187,6 +187,32 @@ const _sunDir = new THREE.Vector3(),
   _ldir = new THREE.Vector3(),
   _moonDir = new THREE.Vector3(-0.3, 0.8, 0.4).normalize();
 function updateSun() {
+  const { w, overcast, night, ldir } = updateSunPart1();
+  if (PLAYER.interior) {
+    hemi.color.set(0xfff6ea);
+    hemi.groundColor.set(0x8a8478);
+    hemi.intensity = 1.25;
+    sun.intensity = 0.9;
+    sun.color.set(0xffffff);
+    renderer.toneMappingExposure = 1.05;
+  }
+  // shadows follow the player
+  const px = PLAYER.x,
+    pz = PLAYER.z,
+    py = PLAYER.y;
+  const snap = 2;
+  sun.target.position.set(Math.round(px / snap) * snap, py, Math.round(pz / snap) * snap);
+  sun.position.copy(sun.target.position).addScaledVector(ldir, 320);
+  sun.castShadow = Q.shadow > 0 && sun.intensity > 0.3;
+  // street lights & car lamps
+  for (const m of SIGN.mats) m.emissiveIntensity = night * 0.85;
+  lampHeadMat.emissiveIntensity = night * 2.5 + overcast * 0.2 * (1 - night);
+  lampPoolMat.opacity = night * 0.55;
+  headMat.emissiveIntensity = 0.2 + night * 3 + (w === 2 ? 1.5 : 0);
+  tailMat.emissiveIntensity = 0.3 + night * 1.2;
+}
+/** (v1.1.7, code quality) part of updateSun: palette interpolation */
+function updateSunPart1() {
   const t = GAME.tod;
   const el = Math.sin((Math.PI * (t - 7.9)) / (20.1 - 7.9)) * ((62 * Math.PI) / 180);
   const az = ((90 + (180 * (t - 7.9)) / (20.1 - 7.9)) * Math.PI) / 180;
@@ -236,28 +262,7 @@ function updateSun() {
   bgScene.fog.near = w === 2 ? 300 : w === 1 ? 1000 : 1400;
   bgScene.fog.far = w === 2 ? 900 : w === 1 ? 12000 : 22000;
   renderer.toneMappingExposure = 1.0 + night * 0.5;
-  if (PLAYER.interior) {
-    hemi.color.set(0xfff6ea);
-    hemi.groundColor.set(0x8a8478);
-    hemi.intensity = 1.25;
-    sun.intensity = 0.9;
-    sun.color.set(0xffffff);
-    renderer.toneMappingExposure = 1.05;
-  }
-  // shadows follow the player
-  const px = PLAYER.x,
-    pz = PLAYER.z,
-    py = PLAYER.y;
-  const snap = 2;
-  sun.target.position.set(Math.round(px / snap) * snap, py, Math.round(pz / snap) * snap);
-  sun.position.copy(sun.target.position).addScaledVector(ldir, 320);
-  sun.castShadow = Q.shadow > 0 && sun.intensity > 0.3;
-  // street lights & car lamps
-  for (const m of SIGN.mats) m.emissiveIntensity = night * 0.85;
-  lampHeadMat.emissiveIntensity = night * 2.5 + overcast * 0.2 * (1 - night);
-  lampPoolMat.opacity = night * 0.55;
-  headMat.emissiveIntensity = 0.2 + night * 3 + (w === 2 ? 1.5 : 0);
-  tailMat.emissiveIntensity = 0.3 + night * 1.2;
+  return { w, overcast, night, ldir };
 }
 // player headlights at night
 const headSpot = new THREE.SpotLight(0xfff1d0, 0, 60, 0.55, 0.5, 1.2);
@@ -514,20 +519,7 @@ window.__step = (n, dt = 1 / 30, keys = []) => {
 };
 window.__press = (k) => PRESSED.add(k);
 function logic(dt, now) {
-  if (PLAYER.dead && GAME._respawnFinish && performance.now() - (GAME.deadT || 0) > 6000) {
-    try {
-      GAME._respawnFinish();
-    } catch (e) {
-      console.error(e);
-    }
-    if (PLAYER.dead) {
-      PLAYER.dead = false;
-      PLAYER.health = 100;
-      GAME.state = 'play';
-      $('fade').style.opacity = 0;
-    }
-  }
-  const T0 = performance.now();
+  const { T0 } = logicPart1();
   let tt;
   frame++;
   readGamepad();
@@ -708,6 +700,24 @@ function logic(dt, now) {
   }
   PRESSED.clear();
   pm('js', T0);
+}
+/** (v1.1.7, code quality) part of logic */
+function logicPart1() {
+  if (PLAYER.dead && GAME._respawnFinish && performance.now() - (GAME.deadT || 0) > 6000) {
+    try {
+      GAME._respawnFinish();
+    } catch (e) {
+      console.error(e);
+    }
+    if (PLAYER.dead) {
+      PLAYER.dead = false;
+      PLAYER.health = 100;
+      GAME.state = 'play';
+      $('fade').style.opacity = 0;
+    }
+  }
+  const T0 = performance.now();
+  return { T0 };
 }
 function tramCollisions() {
   if (!TRAM.circ) return;
@@ -1105,6 +1115,8 @@ window.__dbg = {
   DEP,
   RAISE,
   AT_GRADE,
+  PIXBASKET,
+  PIXGUAN,
   MERGED,
   mergeY,
   sOnRoad,

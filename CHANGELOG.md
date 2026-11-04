@@ -3,6 +3,21 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.1.7 — 2026-11-04 — Alpha 1.1.7: código partido en funciones más cortas y sin copias
+- **Calidad del código** (Jonay: «intentar llegar a A, partir las funciones gigantes y quitar código repetido»): de B (83)
+  a A (88 en la medición local).
+  - Los dos dibujantes de píxel (baloncesto `09eb` y Guanche `09ma`) comparten ya sus piezas en `09e_pixkit.js` (tonos,
+    formas, el sombreado por píxel, la cara de perfil, el dorsal): un 22 % menos de código repetido en cada uno.
+  - El Torneo Lagunero y la Copa Laguna comparten cómo se mira la cancha y el final del partido; las tres persecuciones
+    de El Secreta, un `k3Chase`; la lista de coches es una tabla de una línea por modelo.
+  - Las funciones largas se han partido en trozos con nombre (de 251 de más de 60 líneas a 147), con una herramienta
+    que comprueba qué variables usa cada trozo para no cambiar lo que hace.
+  - Dos pruebas nuevas comparan lo de antes y lo de ahora píxel a píxel y pieza a pieza: `huella_sprites.py` (los
+    dibujos del baloncesto y de Guanche) y `huella_mundo.py` (todo lo que se construye del mapa, con la misma semilla).
+  - Auditoría: **APTO CON AVISOS, calidad A (86)**, mismas métricas que la 1.1.6.
+- Pruebas: entre prueba y prueba se esconde también el panel de pausa (`run_varios.py`): una prueba anterior podía dejarlo
+  a la vista y `prueba_0851` lo tomaba por un fallo del Esc de la consola.
+
 ## 1.1.6 — 2026-11-04 — Alpha 1.1.6: código ordenado y coches con nombres más lejos de las marcas
 - **Calidad del código** (Jonay: «revisa la calidad del código»): todo `src/` pasa por un formateador (Prettier,
   `.prettierrc.json`: líneas de hasta 150 caracteres, una sentencia por línea). Mismo juego, mismo comportamiento; la nota

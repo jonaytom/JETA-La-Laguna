@@ -26,6 +26,10 @@
 - **Formato del código** (v1.1.6, Jonay pidió revisar la calidad): `src/` va formateado con Prettier (`.prettierrc.json`). Claude
   pasa el formateador en la nube (`/opt/node-tools/node_modules/.bin/prettier --write`) a los archivos que toque antes de
   subirlos al PC; los `*_data.js` y `09ecb_bk_anim.js` (datos) no se formatean.
+- **Reordenar código sin cambiar el juego** (v1.1.7): antes, `pruebas huella_base` y `pruebas huella_mundo_base` con el código
+  viejo (guardan la huella de los sprites y de todo lo construido, con semilla fija); después, `pruebas huella_cmp` y
+  `pruebas huella_mundo_cmp` (cada una en su propia carga) tienen que salir iguales. Partir funciones:
+  `tools/calidad/extraer_trozos.js` (en la nube).
 
 ## Cómo se apuntan los pendientes (Jonay, 20-oct)
 

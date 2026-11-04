@@ -442,6 +442,50 @@ const MUSIC = (() => {
     return d;
   }
   function makeSong(style, def) {
+    let { seed, R, root, prog, K, kicks } = makeSongPart1(def, style);
+    const kick = R(kicks),
+      snare = [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, rng() < 0.4 ? 1 : 0];
+    const hat = style === 'gfunk' ? [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1] : [1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0];
+    // bass: root on kicks + passing notes
+    const bass = kick.map((k, i) => (k ? 0 : rng() < (style === 'gfunk' ? 0.28 : 0.12) ? R([2, 4, 6, -1]) : null));
+    // keys/stabs rhythm
+    const stab =
+      style === 'hard'
+        ? [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
+        : style === 'gfunk'
+          ? [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+          : R([
+              [1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+              [0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+              [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0]
+            ]);
+    // lead motif (G-funk whistle / horn line): 8 notes in the scale over 2 bars
+    const motif = [];
+    let d = 4 + Math.floor(rng() * 3);
+    for (let i = 0; i < 8; i++) {
+      d += R([-2, -1, 0, 1, 2]);
+      motif.push(rng() < 0.25 ? null : d);
+    }
+    const lyrics = writeLyrics(style, rng, def);
+    return {
+      lyrics,
+      style,
+      root,
+      prog,
+      K,
+      kick,
+      snare,
+      hat,
+      bass,
+      stab,
+      motif,
+      chordType: style === 'gfunk' ? 'saw' : style === 'hard' ? 'brass' : 'keys',
+      seed,
+      def
+    };
+  }
+  /** (v1.1.7, code quality) part of makeSong: drums (16 steps) */
+  function makeSongPart1(def, style) {
     let seed = Math.floor(Math.random() * 1e9);
     if (def) {
       seed = 7;
@@ -489,46 +533,7 @@ const MUSIC = (() => {
               [1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1],
               [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0]
             ];
-    const kick = R(kicks),
-      snare = [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, rng() < 0.4 ? 1 : 0];
-    const hat = style === 'gfunk' ? [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1] : [1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0];
-    // bass: root on kicks + passing notes
-    const bass = kick.map((k, i) => (k ? 0 : rng() < (style === 'gfunk' ? 0.28 : 0.12) ? R([2, 4, 6, -1]) : null));
-    // keys/stabs rhythm
-    const stab =
-      style === 'hard'
-        ? [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
-        : style === 'gfunk'
-          ? [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
-          : R([
-              [1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-              [0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-              [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0]
-            ]);
-    // lead motif (G-funk whistle / horn line): 8 notes in the scale over 2 bars
-    const motif = [];
-    let d = 4 + Math.floor(rng() * 3);
-    for (let i = 0; i < 8; i++) {
-      d += R([-2, -1, 0, 1, 2]);
-      motif.push(rng() < 0.25 ? null : d);
-    }
-    const lyrics = writeLyrics(style, rng, def);
-    return {
-      lyrics,
-      style,
-      root,
-      prog,
-      K,
-      kick,
-      snare,
-      hat,
-      bass,
-      stab,
-      motif,
-      chordType: style === 'gfunk' ? 'saw' : style === 'hard' ? 'brass' : 'keys',
-      seed,
-      def
-    };
+    return { seed, R, root, prog, K, kicks };
   }
   // ---------- instruments
   function env(g, t, a, peak, d) {

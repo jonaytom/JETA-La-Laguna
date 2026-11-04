@@ -90,22 +90,7 @@ function buildTramStops() {
     mRoof = M(0xf0f0ee, 0.6),
     mGreen = M(0x2f8a3c, 0.6),
     mWood = M(0x8a5a3a, 0.8);
-  const mGlass = new THREE.MeshStandardMaterial({
-    color: 0xcfe6ee,
-    roughness: 0.05,
-    metalness: 0.1,
-    transparent: true,
-    opacity: 0.28,
-    depthWrite: false
-  });
-  const box = (g, mat, w, h, d, x, y, z) => {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-    m.position.set(x, y, z);
-    m.castShadow = h > 0.2;
-    m.receiveShadow = true;
-    g.add(m);
-    return m;
-  };
+  const { mGlass, box } = buildTramStopsPart1();
   let n = 0;
   for (const [nameIdx, list] of by) {
     const cx = list.reduce((s, p) => s + p[2], 0) / list.length,
@@ -215,4 +200,24 @@ function buildTramStops() {
     }
   }
   return n;
+}
+/** (v1.1.7, code quality) part of buildTramStops */
+function buildTramStopsPart1() {
+  const mGlass = new THREE.MeshStandardMaterial({
+    color: 0xcfe6ee,
+    roughness: 0.05,
+    metalness: 0.1,
+    transparent: true,
+    opacity: 0.28,
+    depthWrite: false
+  });
+  const box = (g, mat, w, h, d, x, y, z) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    m.position.set(x, y, z);
+    m.castShadow = h > 0.2;
+    m.receiveShadow = true;
+    g.add(m);
+    return m;
+  };
+  return { mGlass, box };
 }

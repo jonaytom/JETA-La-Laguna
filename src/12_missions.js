@@ -212,21 +212,7 @@ function safeSpot(x, z, clear = 0.7) {
 // los demás son gente del barrio, de la pandilla de El Blanco, a los que la vida ha tratado fatal.
 // fight tutorial (Sastrón): step by step through the 2D fighting controls, then a real round
 function fightTutorial() {
-  const T = document.body.classList.contains('touchmode');
-  const steps = [
-    ['walk', T ? 'Muévete con ◀ ▶' : `Muévete con ${CONTROLS.keyName('left')} y ${CONTROLS.keyName('right')}`, (e) => (e.walk || 0) > 50],
-    // v0.64: the keys shown are the ones set in Opciones › Controles
-    ['jab', T ? 'Puñetazo: P' : `Puñetazo: ${CONTROLS.keyName('f_punch')} o clic izquierdo`, (e) => e.jab],
-    ['kick', T ? 'Patada: K' : `Patada: ${CONTROLS.keyName('f_kick')} o clic derecho`, (e) => e.kick],
-    ['jump', T ? 'Salta: ▲' : `Salta: ${CONTROLS.keyName('f_jump')}`, (e) => e.jump],
-    ['sweep', T ? 'Barrido: ▼ + K' : `Barrido: ${CONTROLS.keyName('back')} + patada`, (e) => e.sweep],
-    ['blocked', T ? 'Cúbrete: atrás cuando ataque' : 'Cúbrete: mantén atrás cuando Sastrón ataque', (e) => e.blocked],
-    ['combo', 'Combo: puño, puño, patada', (e) => e.combo],
-    ['gofio', T ? 'Bola de gofio: ◀ ▶ + P' : 'Bola de gofio: atrás, adelante + puñetazo', (e) => e.gofio],
-    ['teide', T ? 'Patada del Teide: ◀ ▶ + K' : 'Patada del Teide: atrás, adelante + patada', (e) => e.teide],
-    ['gancho', T ? 'Gancho del Roque: ▼ ▲ + P' : 'Gancho del Roque: abajo, arriba + puñetazo', (e) => e.gancho],
-    ['pastor', T ? 'Salto del Pastor: ▼ ▲ + K' : 'Salto del Pastor: abajo, arriba + patada', (e) => e.pastor]
-  ];
+  const { steps } = fightTutorialPart1();
   let i = 0,
     wait = 0;
   return {
@@ -272,6 +258,25 @@ function fightTutorial() {
     }
   };
 }
+/** (v1.1.7, code quality) part of fightTutorial: v0.64: the keys shown are the ones set in Opciones › Controles */
+function fightTutorialPart1() {
+  const T = document.body.classList.contains('touchmode');
+  const steps = [
+    ['walk', T ? 'Muévete con ◀ ▶' : `Muévete con ${CONTROLS.keyName('left')} y ${CONTROLS.keyName('right')}`, (e) => (e.walk || 0) > 50],
+    // v0.64: the keys shown are the ones set in Opciones › Controles
+    ['jab', T ? 'Puñetazo: P' : `Puñetazo: ${CONTROLS.keyName('f_punch')} o clic izquierdo`, (e) => e.jab],
+    ['kick', T ? 'Patada: K' : `Patada: ${CONTROLS.keyName('f_kick')} o clic derecho`, (e) => e.kick],
+    ['jump', T ? 'Salta: ▲' : `Salta: ${CONTROLS.keyName('f_jump')}`, (e) => e.jump],
+    ['sweep', T ? 'Barrido: ▼ + K' : `Barrido: ${CONTROLS.keyName('back')} + patada`, (e) => e.sweep],
+    ['blocked', T ? 'Cúbrete: atrás cuando ataque' : 'Cúbrete: mantén atrás cuando Sastrón ataque', (e) => e.blocked],
+    ['combo', 'Combo: puño, puño, patada', (e) => e.combo],
+    ['gofio', T ? 'Bola de gofio: ◀ ▶ + P' : 'Bola de gofio: atrás, adelante + puñetazo', (e) => e.gofio],
+    ['teide', T ? 'Patada del Teide: ◀ ▶ + K' : 'Patada del Teide: atrás, adelante + patada', (e) => e.teide],
+    ['gancho', T ? 'Gancho del Roque: ▼ ▲ + P' : 'Gancho del Roque: abajo, arriba + puñetazo', (e) => e.gancho],
+    ['pastor', T ? 'Salto del Pastor: ▼ ▲ + K' : 'Salto del Pastor: abajo, arriba + patada', (e) => e.pastor]
+  ];
+  return { steps };
+}
 // advance spoken lines: click (PC, without punching), Enter, or tap on the subtitle
 function talkSkip() {
   const T = window.__TALK;
@@ -296,6 +301,10 @@ window.addEventListener(
   },
   true
 );
+/** a copy of a character's look (or an empty one) */
+const lookCopy = (l) => ({ ...(l || {}) });
+/** a fighter that only defends (Sastrón's tutorial fight) */
+const passiveAI = () => ({ lv: 0, t: 0, blockT: 0, passive: true });
 const MISSIONS = (() => {
   let active = null,
     activeTrack = null,
@@ -830,8 +839,8 @@ const MISSIONS = (() => {
           () => {
             if (active !== this) return;
             FIGHT2D.start({
-              a: { name: 'EL CHOPA', look: { ...(playerHuman.look || {}) }, nose: true },
-              b: { name: 'SASTRÓN', look: NPC.sastron.H.look || {}, deal: 0.4, recv: 1.3, ai: { lv: 0, t: 0, blockT: 0, passive: true } },
+              a: { name: 'EL CHOPA', look: lookCopy(playerHuman.look), nose: true },
+              b: { name: 'SASTRÓN', look: lookCopy(NPC.sastron.H.look), deal: 0.4, recv: 1.3, ai: passiveAI() },
               ax: PLAYER.x,
               az: PLAYER.z,
               bx: NPC.sastron.x,
@@ -1118,20 +1127,19 @@ const MISSIONS = (() => {
               setTimeout(() => {
                 if (step === 1 && WEAPON.ammo <= 0 && data.cans.some((t) => !t.hit)) {
                   SUB.show(bold('El Blanco:') + ' «Brrr... ¡NO!... mmm... otra vez... psss.» (vuelve a colocar las latas)', 3);
-                  setTimeout(() => {
-                    if (step === 1) {
-                      this.setCans();
-                      WEAPON.ammo = 6;
-                      updateWeaponHUD();
-                      const e = $('cansLeft');
-                      if (e) e.textContent = 6;
-                    }
-                  }, 1800);
+                  setTimeout(() => step === 1 && this.resetCans(), 1800);
                 }
               }, 400);
             };
           }
         );
+      },
+      resetCans() {
+        this.setCans();
+        WEAPON.ammo = 6;
+        updateWeaponHUD();
+        const e = $('cansLeft');
+        if (e) e.textContent = 6;
       },
       setCans() {
         for (const t of data.cans || []) scene.remove(t.mesh);
@@ -1185,6 +1193,25 @@ const MISSIONS = (() => {
   ];
   // ===== the Canarión's time trial (story mission + repeatable rematch when you're short of money for Sastrón)
   function startRace(m, first) {
+    let { pts, cps } = startRacePart1(first, m);
+    let acc = 0,
+      nextAt = 300;
+    for (let i = 2; i < pts.length; i += 2) {
+      acc += Math.hypot(pts[i] - pts[i - 2], pts[i + 1] - pts[i - 1]);
+      if (acc >= nextAt) {
+        cps.push([pts[i], pts[i + 1]]);
+        nextAt += 300;
+      }
+    }
+    cps.push([pts[pts.length - 2], pts[pts.length - 1]]);
+    data.cps = cps;
+    data.start = [pts[0], pts[1]];
+    data.pts = pts;
+    data.cum = [0];
+    for (let i = 2; i < pts.length; i += 2) data.cum.push(data.cum[data.cum.length - 1] + Math.hypot(pts[i] - pts[i - 2], pts[i + 1] - pts[i - 1]));
+  }
+  /** (v1.1.7, code quality) part of startRace */
+  function startRacePart1(first, m) {
     step = 0;
     data.first = first;
     if (first)
@@ -1233,21 +1260,7 @@ const MISSIONS = (() => {
       data.L = 1500;
     }
     const cps = [];
-    let acc = 0,
-      nextAt = 300;
-    for (let i = 2; i < pts.length; i += 2) {
-      acc += Math.hypot(pts[i] - pts[i - 2], pts[i + 1] - pts[i - 1]);
-      if (acc >= nextAt) {
-        cps.push([pts[i], pts[i + 1]]);
-        nextAt += 300;
-      }
-    }
-    cps.push([pts[pts.length - 2], pts[pts.length - 1]]);
-    data.cps = cps;
-    data.start = [pts[0], pts[1]];
-    data.pts = pts;
-    data.cum = [0];
-    for (let i = 2; i < pts.length; i += 2) data.cum.push(data.cum[data.cum.length - 1] + Math.hypot(pts[i] - pts[i - 2], pts[i + 1] - pts[i - 1]));
+    return { pts, cps };
   }
   function raceCP() {
     const c = data.cps[data.cp];

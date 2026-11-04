@@ -9,13 +9,13 @@ async def run(pg):
     await pg.evaluate("(()=>{document.getElementById('menu').style.display='none'; window.__manual=true; __dbg.GAME.state='play'; __dbg.GAME.tod=12; __step(2);})()")
     ok = True
     try:
-        # 1) Esc in the console
+        # 1) Esc in the console (v1.1.7: the pause panel starts hidden; a previous test in the shared load could leave it shown)
         a = json.loads(await pg.evaluate("""(()=>{ const A=__dbg.ARCADE, d=__dbg; const P=(v)=>{ A._press(v,true); A._step(1); A._press(v,false); A._step(1); };
           const esc=()=>document.body.dispatchEvent(new KeyboardEvent('keydown', { code: 'Escape', key: 'Escape', bubbles: true }));
-          A.open({ console: ['bencomo', 'naves'], where: 'PRUEBA' }); A._step(40); P('vS'); const enJuego=A._st().mode;
+          const antes=document.getElementById('pause').style.display; document.getElementById('pause').style.display='none'; A.open({ console: ['bencomo', 'naves'], where: 'PRUEBA' }); A._step(40); P('vS'); const enJuego=A._st().mode;
           esc(); const tras1={ mode: A._st().mode, running: A.running };
           esc(); const pausa=document.getElementById('pause').style.display; __step(2);
-          return JSON.stringify({ enJuego, tras1, fuera: !A.running, estado: d.GAME.state, pausa: document.getElementById('pause').style.display || pausa }); })()"""))
+          return JSON.stringify({ antes, enJuego, tras1, fuera: !A.running, estado: d.GAME.state, pausa: document.getElementById('pause').style.display || pausa }); })()"""))
         print('esc', a)
         ok1 = a['enJuego'] != 'menu' and a['tras1']['mode'] == 'menu' and a['tras1']['running'] and a['fuera'] and a['estado'] == 'play' and a['pausa'] in ('', 'none')
         print('ESC', 'OK' if ok1 else 'FALLA'); ok = ok and ok1

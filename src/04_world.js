@@ -205,83 +205,39 @@ const MAT = {};
 // ---------- terrain with splat map
 const SPLAT = { x0: HM.x0, z0: HM.z0, w: (HM.nx - 1) * HM.dx, h: (HM.nz - 1) * HM.dx, W: 2048, H: Math.round(2048 * ((HM.nz - 1) / (HM.nx - 1))) };
 function buildSplat() {
-  const c = mkCanvas(SPLAT.W, SPLAT.H),
-    x = c.getContext('2d');
-  const sx = SPLAT.W / SPLAT.w,
-    sz = SPLAT.H / SPLAT.h;
-  const P = (px, pz) => [(px - SPLAT.x0) * sx, (pz - SPLAT.z0) * sz];
-  // base: rural terrain with noise (greens/ochres of La Laguna)
-  x.fillStyle = '#7c8452';
-  x.fillRect(0, 0, SPLAT.W, SPLAT.H);
-  const r = mulberry(99);
-  for (let i = 0; i < 2600; i++) {
-    x.fillStyle = pick(['rgba(110,120,70,.35)', 'rgba(150,130,85,.3)', 'rgba(95,110,60,.35)', 'rgba(160,145,100,.25)']);
-    const R = 6 + r() * 40;
-    x.beginPath();
-    x.arc(r() * SPLAT.W, r() * SPLAT.H, R, 0, 7);
-    x.fill();
-  }
-  const poly = (coords, fill, stroke) => {
-    x.beginPath();
+  const { c, x, sx, P, poly, AT } = buildSplatPart1();
+  const { areaCol, order } = buildSplatPart2();
+  const { m, y } = buildSplatPart3(order, AT, x, poly, areaCol, sx, P);
+  y.fillStyle = '#000';
+  y.fillRect(0, 0, SPLAT.W, SPLAT.H);
+  const mpoly = (coords, fill) => {
+    y.beginPath();
     for (let i = 0; i < coords.length; i += 2) {
       const p = P(coords[i], coords[i + 1]);
-      i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]);
+      i ? y.lineTo(p[0], p[1]) : y.moveTo(p[0], p[1]);
     }
-    x.closePath();
-    if (fill) {
-      x.fillStyle = fill;
-      x.fill();
-    }
-    if (stroke) {
-      x.strokeStyle = stroke;
-      x.stroke();
-    }
+    y.closePath();
+    y.fillStyle = fill;
+    y.fill();
   };
-  // urban halo around buildings
-  x.lineJoin = 'round';
+  y.lineJoin = 'round';
   for (const b of DATA.B) {
-    x.lineWidth = 16 * sx;
-    poly(b[6], '#9d978a', '#9d978a');
+    y.lineWidth = 12 * sx;
+    y.strokeStyle = '#999';
+    mpoly(b[6], '#999');
+    y.stroke();
   }
-  const AT = DATA.AT;
-  const areaCol = {
-    park: '#5f8a3e',
-    garden: '#6c9146',
-    grass: '#6f9a45',
-    farmland: '#8b8a4e',
-    meadow: '#7f9650',
-    pitch: '#4f8a3a',
-    forest: '#3f6230',
-    scrub: '#6f7a45',
-    water: '#4a7fa0',
-    cemetery: '#86866a',
-    playground: '#b49a74',
-    parking: '#6b6b6b',
-    residential: '#a09a8c',
-    industrial: '#8f8c86',
-    square: '#b8b2a6',
-    sports: '#9c7b5b',
-    orchard: '#6c8844'
-  };
-  const order = [
-    'residential',
-    'industrial',
-    'farmland',
-    'meadow',
-    'orchard',
-    'scrub',
-    'forest',
-    'grass',
-    'park',
-    'garden',
-    'cemetery',
-    'sports',
-    'pitch',
-    'playground',
-    'parking',
-    'square',
-    'water'
-  ];
+  for (const a of DATA.A) if (['residential', 'industrial'].includes(AT[a[0]])) mpoly(a[2], '#777');
+  mpoly(HIST_CORE, '#fff');
+  for (const a of DATA.A) if (['square', 'parking', 'playground'].includes(AT[a[0]])) mpoly(a[2], '#fff');
+  for (const a of DATA.A)
+    if (['park', 'garden', 'grass', 'pitch', 'forest', 'water', 'farmland', 'meadow', 'scrub', 'cemetery', 'orchard'].includes(AT[a[0]]))
+      mpoly(a[2], '#000');
+  SPLAT.mask = m;
+  return c;
+}
+/** (v1.1.7, code quality) part of buildSplat: furrows */
+function buildSplatPart3(order, AT, x, poly, areaCol, sx, P) {
   for (const k of order)
     for (const a of DATA.A)
       if (AT[a[0]] === k) {
@@ -337,33 +293,92 @@ function buildSplat() {
   // paving mask (R channel): historic core, squares, urban halos
   const m = mkCanvas(SPLAT.W, SPLAT.H),
     y = m.getContext('2d');
-  y.fillStyle = '#000';
-  y.fillRect(0, 0, SPLAT.W, SPLAT.H);
-  const mpoly = (coords, fill) => {
-    y.beginPath();
+  return { m, y };
+}
+/** (v1.1.7, code quality) part of buildSplat */
+function buildSplatPart2() {
+  const areaCol = {
+    park: '#5f8a3e',
+    garden: '#6c9146',
+    grass: '#6f9a45',
+    farmland: '#8b8a4e',
+    meadow: '#7f9650',
+    pitch: '#4f8a3a',
+    forest: '#3f6230',
+    scrub: '#6f7a45',
+    water: '#4a7fa0',
+    cemetery: '#86866a',
+    playground: '#b49a74',
+    parking: '#6b6b6b',
+    residential: '#a09a8c',
+    industrial: '#8f8c86',
+    square: '#b8b2a6',
+    sports: '#9c7b5b',
+    orchard: '#6c8844'
+  };
+  const order = [
+    'residential',
+    'industrial',
+    'farmland',
+    'meadow',
+    'orchard',
+    'scrub',
+    'forest',
+    'grass',
+    'park',
+    'garden',
+    'cemetery',
+    'sports',
+    'pitch',
+    'playground',
+    'parking',
+    'square',
+    'water'
+  ];
+  return { areaCol, order };
+}
+/** (v1.1.7, code quality) part of buildSplat: base: rural terrain with noise (greens/ochres of La Laguna) */
+function buildSplatPart1() {
+  const c = mkCanvas(SPLAT.W, SPLAT.H),
+    x = c.getContext('2d');
+  const sx = SPLAT.W / SPLAT.w,
+    sz = SPLAT.H / SPLAT.h;
+  const P = (px, pz) => [(px - SPLAT.x0) * sx, (pz - SPLAT.z0) * sz];
+  // base: rural terrain with noise (greens/ochres of La Laguna)
+  x.fillStyle = '#7c8452';
+  x.fillRect(0, 0, SPLAT.W, SPLAT.H);
+  const r = mulberry(99);
+  for (let i = 0; i < 2600; i++) {
+    x.fillStyle = pick(['rgba(110,120,70,.35)', 'rgba(150,130,85,.3)', 'rgba(95,110,60,.35)', 'rgba(160,145,100,.25)']);
+    const R = 6 + r() * 40;
+    x.beginPath();
+    x.arc(r() * SPLAT.W, r() * SPLAT.H, R, 0, 7);
+    x.fill();
+  }
+  const poly = (coords, fill, stroke) => {
+    x.beginPath();
     for (let i = 0; i < coords.length; i += 2) {
       const p = P(coords[i], coords[i + 1]);
-      i ? y.lineTo(p[0], p[1]) : y.moveTo(p[0], p[1]);
+      i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]);
     }
-    y.closePath();
-    y.fillStyle = fill;
-    y.fill();
+    x.closePath();
+    if (fill) {
+      x.fillStyle = fill;
+      x.fill();
+    }
+    if (stroke) {
+      x.strokeStyle = stroke;
+      x.stroke();
+    }
   };
-  y.lineJoin = 'round';
+  // urban halo around buildings
+  x.lineJoin = 'round';
   for (const b of DATA.B) {
-    y.lineWidth = 12 * sx;
-    y.strokeStyle = '#999';
-    mpoly(b[6], '#999');
-    y.stroke();
+    x.lineWidth = 16 * sx;
+    poly(b[6], '#9d978a', '#9d978a');
   }
-  for (const a of DATA.A) if (['residential', 'industrial'].includes(AT[a[0]])) mpoly(a[2], '#777');
-  mpoly(HIST_CORE, '#fff');
-  for (const a of DATA.A) if (['square', 'parking', 'playground'].includes(AT[a[0]])) mpoly(a[2], '#fff');
-  for (const a of DATA.A)
-    if (['park', 'garden', 'grass', 'pitch', 'forest', 'water', 'farmland', 'meadow', 'scrub', 'cemetery', 'orchard'].includes(AT[a[0]]))
-      mpoly(a[2], '#000');
-  SPLAT.mask = m;
-  return c;
+  const AT = DATA.AT;
+  return { c, x, sx, P, poly, AT };
 }
 let SPLATCANVAS;
 // tunnel cuttings: kept in a small float texture (mobile GPUs have few fragment uniforms)
@@ -457,41 +472,7 @@ function cutAware(mat) {
   mat.needsUpdate = true;
 }
 function buildTerrain() {
-  SPLATCANVAS = buildSplat();
-  const tex = canvasTex(SPLATCANVAS, { repeat: false });
-  tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
-  const nx = HM.nx,
-    nz = HM.nz;
-  const pos = new Float32Array(nx * nz * 3),
-    uv = new Float32Array(nx * nz * 2);
-  for (let j = 0; j < nz; j++)
-    for (let i = 0; i < nx; i++) {
-      const k = j * nx + i,
-        x = HM.x0 + i * HM.dx,
-        z = HM.z0 + j * HM.dx;
-      pos[k * 3] = x;
-      pos[k * 3 + 1] = HM.a[k] / 10;
-      pos[k * 3 + 2] = z;
-      uv[k * 2] = i / (nx - 1);
-      uv[k * 2 + 1] = 1 - j / (nz - 1);
-    }
-  const idx = [];
-  for (let j = 0; j < nz - 1; j++)
-    for (let i = 0; i < nx - 1; i++) {
-      const a = j * nx + i,
-        b = a + 1,
-        c = a + nx,
-        d = c + 1;
-      idx.push(a, c, b, b, c, d);
-    }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
-  g.setIndex(idx);
-  g.computeVertexNormals();
-  const m = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.97, side: THREE.DoubleSide }); // seen from below (from inside a cutting) it reads as earth, not as a hole
-  const mtex = canvasTex(SPLAT.mask, { repeat: false, srgb: false });
-  mtex.wrapS = mtex.wrapT = THREE.ClampToEdgeWrapping;
+  const { g, m, mtex } = buildTerrainPart1();
   m.onBeforeCompile = (sh) => {
     sh.uniforms.uCutTex = TCUT_U.tex;
     sh.uniforms.uGrpN = TCUT_U.n;
@@ -534,6 +515,45 @@ function buildTerrain() {
   mesh.receiveShadow = true;
   scene.add(mesh);
   return mesh;
+}
+/** (v1.1.7, code quality) part of buildTerrain */
+function buildTerrainPart1() {
+  SPLATCANVAS = buildSplat();
+  const tex = canvasTex(SPLATCANVAS, { repeat: false });
+  tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+  const nx = HM.nx,
+    nz = HM.nz;
+  const pos = new Float32Array(nx * nz * 3),
+    uv = new Float32Array(nx * nz * 2);
+  for (let j = 0; j < nz; j++)
+    for (let i = 0; i < nx; i++) {
+      const k = j * nx + i,
+        x = HM.x0 + i * HM.dx,
+        z = HM.z0 + j * HM.dx;
+      pos[k * 3] = x;
+      pos[k * 3 + 1] = HM.a[k] / 10;
+      pos[k * 3 + 2] = z;
+      uv[k * 2] = i / (nx - 1);
+      uv[k * 2 + 1] = 1 - j / (nz - 1);
+    }
+  const idx = [];
+  for (let j = 0; j < nz - 1; j++)
+    for (let i = 0; i < nx - 1; i++) {
+      const a = j * nx + i,
+        b = a + 1,
+        c = a + nx,
+        d = c + 1;
+      idx.push(a, c, b, b, c, d);
+    }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  const m = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.97, side: THREE.DoubleSide }); // seen from below (from inside a cutting) it reads as earth, not as a hole
+  const mtex = canvasTex(SPLAT.mask, { repeat: false, srgb: false });
+  mtex.wrapS = mtex.wrapT = THREE.ClampToEdgeWrapping;
+  return { g, m, mtex };
 }
 
 // ---------- roads
@@ -614,31 +634,7 @@ function parkSides(rd) {
 // just beside its kerb, inside one of them
 let PARK_STRIPS = null;
 function stripSides(rd) {
-  if (!PARK_STRIPS) {
-    PARK_STRIPS = [];
-    for (const a of DATA.A) {
-      if (DATA.AT[a[0]] !== 'parking' || !a[2]) continue;
-      const c = a[2],
-        n = c.length / 2;
-      let A = 0,
-        P = 0,
-        x0 = 1e9,
-        x1 = -1e9,
-        z0 = 1e9,
-        z1 = -1e9;
-      for (let i = 0; i < n; i++) {
-        const j = (i + 1) % n;
-        A += c[2 * i] * c[2 * j + 1] - c[2 * j] * c[2 * i + 1];
-        P += Math.hypot(c[2 * j] - c[2 * i], c[2 * j + 1] - c[2 * i + 1]);
-        x0 = Math.min(x0, c[2 * i]);
-        x1 = Math.max(x1, c[2 * i]);
-        z0 = Math.min(z0, c[2 * i + 1]);
-        z1 = Math.max(z1, c[2 * i + 1]);
-      }
-      A = Math.abs(A / 2);
-      if (P > 0 && (2 * A) / P < 4.5) PARK_STRIPS.push({ c, bb: [x0, x1, z0, z1] });
-    }
-  } // (mean width under ~9 m: a strip, not a car park)
+  stripSidesPart1(); // (mean width under ~9 m: a strip, not a car park)
   if (!PARK_STRIPS.length) return [];
   const c = rd[4],
     w = rd[2],
@@ -676,6 +672,34 @@ function stripSides(rd) {
   }
   return out;
 }
+/** (v1.1.7, code quality) part of stripSides */
+function stripSidesPart1() {
+  if (!PARK_STRIPS) {
+    PARK_STRIPS = [];
+    for (const a of DATA.A) {
+      if (DATA.AT[a[0]] !== 'parking' || !a[2]) continue;
+      const c = a[2],
+        n = c.length / 2;
+      let A = 0,
+        P = 0,
+        x0 = 1e9,
+        x1 = -1e9,
+        z0 = 1e9,
+        z1 = -1e9;
+      for (let i = 0; i < n; i++) {
+        const j = (i + 1) % n;
+        A += c[2 * i] * c[2 * j + 1] - c[2 * j] * c[2 * i + 1];
+        P += Math.hypot(c[2 * j] - c[2 * i], c[2 * j + 1] - c[2 * i + 1]);
+        x0 = Math.min(x0, c[2 * i]);
+        x1 = Math.max(x1, c[2 * i]);
+        z0 = Math.min(z0, c[2 * i + 1]);
+        z1 = Math.max(z1, c[2 * i + 1]);
+      }
+      A = Math.abs(A / 2);
+      if (P > 0 && (2 * A) / P < 4.5) PARK_STRIPS.push({ c, bb: [x0, x1, z0, z1] });
+    }
+  }
+}
 function parkStats() {
   const st = {};
   for (const ps of PARKSIDE.values()) {
@@ -685,20 +709,7 @@ function parkStats() {
   return st;
 } // (sonda_aparcamiento.py)
 function laneMk(rd, plain = false, hide = null) {
-  // plain: a street without lane lines (residential…): only its parking lanes; hide: sides whose band line is left out here (a no-parking sign, Mapillary)
-  const w = rd[2],
-    ow = !!(rd[3] & 1),
-    mot = rd[0] <= 1,
-    ps = parkSides(rd),
-    PB = 2.2;
-  const p0 = ps.sides.includes(1) ? PB : 0,
-    p1 = ps.sides.includes(-1) ? PB : 0,
-    wl = w - p0 - p1; // the carriageway between the parking bands
-  const n = ow
-    ? clamp(ps.lanes > 0 ? ps.lanes : Math.round((wl - (mot ? 2.2 : 1.2)) / 3.5), 1, 5)
-    : ps.lanes >= 4 || (ps.lanes < 0 && wl >= 12.5)
-      ? 4
-      : 2;
+  const { w, ow, mot, p0, p1, n } = laneMkPart1(rd);
   const key =
     'aL_' +
     (plain ? 'r' : ow ? 'o' : 't') +
@@ -711,6 +722,15 @@ function laneMk(rd, plain = false, hide = null) {
     (hide && hide.includes(1) ? 'H' : '') +
     (hide && hide.includes(-1) ? 'J' : '');
   if (MAT[key]) return key;
+  const { c } = laneMkPart2(w, p0, hide, p1, plain, ow, mot, n);
+  MAT[key] = MAT.asphaltLines.clone();
+  MAT[key].map = canvasTex(c);
+  YOFF[key] = YOFF.asphaltLines;
+  SURF_MK.add(key);
+  return key;
+}
+/** (v1.1.7, code quality) part of laneMk */
+function laneMkPart2(w, p0, hide, p1, plain, ow, mot, n) {
   const c = mkCanvas(256, 512),
     y = c.getContext('2d');
   y.drawImage(TEX.asphaltC, 0, 0);
@@ -757,11 +777,25 @@ function laneMk(rd, plain = false, hide = null) {
       for (const sd of [-1, 1]) line(mid + (sd * half) / 2, 0.12, [0.4, 2]);
     } else line(mid, 0.14, [0.5, 4]);
   }
-  MAT[key] = MAT.asphaltLines.clone();
-  MAT[key].map = canvasTex(c);
-  YOFF[key] = YOFF.asphaltLines;
-  SURF_MK.add(key);
-  return key;
+  return { c };
+}
+/** (v1.1.7, code quality) part of laneMk: plain: a street without lane lines (residential…): only its parking lanes; hide: sides whose band line is left out here (a no-parking sign, Mapillary) */
+function laneMkPart1(rd) {
+  // plain: a street without lane lines (residential…): only its parking lanes; hide: sides whose band line is left out here (a no-parking sign, Mapillary)
+  const w = rd[2],
+    ow = !!(rd[3] & 1),
+    mot = rd[0] <= 1,
+    ps = parkSides(rd),
+    PB = 2.2;
+  const p0 = ps.sides.includes(1) ? PB : 0,
+    p1 = ps.sides.includes(-1) ? PB : 0,
+    wl = w - p0 - p1; // the carriageway between the parking bands
+  const n = ow
+    ? clamp(ps.lanes > 0 ? ps.lanes : Math.round((wl - (mot ? 2.2 : 1.2)) / 3.5), 1, 5)
+    : ps.lanes >= 4 || (ps.lanes < 0 && wl >= 12.5)
+      ? 4
+      : 2;
+  return { w, ow, mot, p0, p1, n };
 }
 // v0.73 (agente revisor: «se hunde 0,3–1,1 m bajo la superficie visible» on paths and pavements): where a ribbon
 // drawn as a straight chord across its width stands clearly above the terrain (a hollow under a path), remember its
@@ -1017,127 +1051,129 @@ function indexRoads() {
 }
 const ROADY = []; // per road: height function (s, x, z) -> y of its surface as built (for audits and AI)
 function buildRoads() {
-  indexRoads();
-  computeDepressions();
-  computeRaises();
-  for (let ri = 0; ri < DATA.R.length; ri++) ROADY[ri] = roadYFn(ri);
+  buildRoadsPart1();
   for (let ri = 0; ri < DATA.R.length; ri++) {
-    const m = mergeY(ri);
-    if (m) {
-      ROADY[ri] = m;
-      MERGED.set(ri, m);
-    }
+    buildRoadsEach(ri);
   }
-  console.log('slip roads lifted onto a raised road beside them', MERGED.size);
-  for (let ri = 0; ri < DATA.R.length; ri++) {
-    const rd = DATA.R[ri];
-    DRESS_RI = ri;
-    OBST_RI = (DEP.has(ri) || rd[3] & 2 || RAISE.has(ri)) && window.__AUDIT ? ri : -1;
-    const t = RTN[rd[0]],
-      cls0 = ROADCLASS(rd),
-      cls =
-        cls0 === 'asphaltLines'
-          ? laneMk(rd)
-          : cls0 === 'asphalt' && rd[0] <= 12 && rd[2] >= 5.5 && parkSides(rd).sides.length
-            ? laneMk(rd, true)
-            : cls0,
-      w = rd[2],
-      c = rd[4]; /* v1.1.2: residential streets with their parking lanes painted too */ // v0.99.5: the lane texture of this road
-    const tile = isLines(cls) ? 12 : cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8;
-    const yo =
-      cls === 'paving'
-        ? YOFF.paving - (ri % 4) * 0.008
-        : YOFF[
-            cls
-          ]; /* v1.1.4 (Jonay, Plaza de La Concepción: «suelos que parpadean al correr»): two paved ways that overlap were at the very same height and fought over which one shows; now each sits a few mm apart */
-    if (DEP.has(ri)) {
-      TUN_RI = ri;
-      tunnelRoad(
-        c,
-        Math.max(w, 2.6),
-        cls,
-        tile,
-        depressedHF(ri),
-        PED_TUN.has(ri)
-          ? { H: 2.9, cover: 3.1 }
-          : TF13.ring.includes(ri) || TF13.tubes.includes(ri) || TF13.app.includes(ri)
-            ? { wc: [0.47, 0.41, 0.35] }
-            : {}
-      );
-      TUN_RI = -1;
-      continue;
-    } // v0.78: the TF-13 cutting has brown basalt walls (photos) // tunnels, underpasses and their cuttings
-    if (RAISE.has(ri) && !(rd[3] & 2)) {
-      // approach embankment of a bridge that had to be lifted for clearance
-      const sp = RAISE_SPAN.get(ri),
-        Lr = polyLen(c),
-        parts = [];
-      const raised = subPoly(c, sp[0], sp[1]);
-      const hf = (s, x, z) => heightAt(x, z) + raiseOf(ri, s + sp[0]);
-      linedRibbon(ri, raised, w, cls, tile, hf, sp[0]);
-      bridgeDressing(raised, w, hf, rd[0] <= 12, true); // v0.99.6: its lines cut where it meets another road, like at grade
-      if (sp[0] > 0.5) parts.push(subPoly(c, 0, sp[0]));
-      if (sp[1] < Lr - 0.5) parts.push(subPoly(c, sp[1], Lr));
-      for (const pc of parts) ribbon(pc, w, cls, YOFF[cls], tile, isLines(cls) ? 1 : w / 8);
-      continue;
-    }
-    if (rd[3] & 2 && !AT_GRADE.has(ri)) {
-      // bridges / overpasses: raised deck with parapets and piers
-      if (rd[0] >= 13 && polyMinDist(c, -347.5, 745.4) < 75) continue; // the Padre Anchieta ring and its ramps are modelled separately (OSM footbridge pieces of the ramp blocked it)
-      const hf0 = bridgeProfile(c),
-        hf = RAISE.has(ri) ? (s, x, z) => hf0(s, x, z) + raiseOf(ri, s) : hf0;
-      if (isLines(cls)) linedRibbon(ri, c, w, cls, tile, hf, 0);
-      else ribbon(c, w, cls, YOFF[cls], tile, w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8), hf); // v0.99.6: on bridges too
-      bridgeDressing(c, w, hf, rd[0] <= 12);
-      continue;
-    }
-    if (isLines(cls)) {
-      const pl = cls0 !== 'asphaltLines',
-        bandRuns = { 1: [], [-1]: [] };
-      for (const [s0, s1, ln] of lineRuns(ri, c))
-        for (const [m0, m1, mf] of mergeRuns(ri, c, s0, s1))
-          for (const [n0, n1, hd] of noParkRuns(ri, c, m0, m1)) {
-            const pc = subPoly(c, n0, n1),
-              k = ln ? (hd ? laneMk(rd, pl, hd) : cls) : 'asphalt';
-            if (pc.length >= 4)
-              ribbon(pc, w, k, ln ? YOFF[cls] : YOFF.asphalt, ln ? tile : 8, ln ? 1 : w / 8, mf ? (q, x, z) => mf(q + n0 - m0, x, z) : null);
-            if (ln) for (const sd of [1, -1]) if (!(hd && hd.includes(sd))) bandRuns[sd].push([n0, n1]);
-          }
-      bandEnds(ri, rd, c, bandRuns);
-    } else if (rd[0] >= 13) {
-      for (const pc0 of offTramCut(c))
-        for (const pc of pasajeRibbonParts(rd, pc0)) ribbon(pc, w, cls, yo, tile, w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8));
-    } // v0.76: no path floating over the tram cutting
-    else
-      for (const [m0, m1, mf] of mergeRuns(ri, c, 0, polyLen(c))) {
-        const pc = subPoly(c, m0, m1);
-        if (pc.length >= 4) ribbon(pc, w, cls, yo, tile, isLines(cls) ? 1 : w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8), mf);
-      }
-    if (MERGED.has(ri)) mergeDecks(ri, c);
-    if (
-      [
-        'primary',
-        'secondary',
-        'tertiary',
-        'residential',
-        'unclassified',
-        'primary_link',
-        'secondary_link',
-        'tertiary_link',
-        'living_street'
-      ].includes(t) &&
-      cls !== 'paving'
-    )
-      for (const sd of [1, -1]) ribbonBand(c, sd * (w / 2 - 0.3), sd * (w / 2 + 2.1), 'sidewalk', YOFF.sidewalk, 2.4, ri); // two kerb-side strips (a full-width slab under the road poked through it on curved slopes)
-    // junction discs
-    if (cls === 'asphalt' || isLines(cls) || cls === 'paving')
-      for (let i = 0; i < c.length; i += 2) {
-        const n = nodeCount.get(K(c[i], c[i + 1]));
-        const end = i === 0 || i === c.length - 2;
-        if (n >= 2 || end)
-          disc(c[i], c[i + 1], (w / 2) * (n >= 3 ? 1.05 : 1.0), cls === 'paving' ? 'discPave' : 'disc', cls === 'paving' ? YOFF.discPave : YOFF.disc);
-      }
+  buildRoadsPart2();
+}
+/** (v1.1.7, code quality) the body of a loop of buildRoads, split out of it */
+function buildRoadsEach(ri) {
+  const { rd, t, cls0, cls, w, c } = buildRoadsEachPart1(ri); /* v1.1.2: residential streets with their parking lanes painted too */ // v0.99.5: the lane texture of this road
+  const tile = isLines(cls) ? 12 : cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8;
+  const yo =
+    cls === 'paving'
+      ? YOFF.paving - (ri % 4) * 0.008
+      : YOFF[
+          cls
+        ]; /* v1.1.4 (Jonay, Plaza de La Concepción: «suelos que parpadean al correr»): two paved ways that overlap were at the very same height and fought over which one shows; now each sits a few mm apart */
+  if (DEP.has(ri)) {
+    TUN_RI = ri;
+    tunnelRoad(
+      c,
+      Math.max(w, 2.6),
+      cls,
+      tile,
+      depressedHF(ri),
+      PED_TUN.has(ri)
+        ? { H: 2.9, cover: 3.1 }
+        : TF13.ring.includes(ri) || TF13.tubes.includes(ri) || TF13.app.includes(ri)
+          ? { wc: [0.47, 0.41, 0.35] }
+          : {}
+    );
+    TUN_RI = -1;
+    return;
+  } // v0.78: the TF-13 cutting has brown basalt walls (photos) // tunnels, underpasses and their cuttings
+  if (RAISE.has(ri) && !(rd[3] & 2)) {
+    // approach embankment of a bridge that had to be lifted for clearance
+    const sp = RAISE_SPAN.get(ri),
+      Lr = polyLen(c),
+      parts = [];
+    const raised = subPoly(c, sp[0], sp[1]);
+    const hf = (s, x, z) => heightAt(x, z) + raiseOf(ri, s + sp[0]);
+    linedRibbon(ri, raised, w, cls, tile, hf, sp[0]);
+    bridgeDressing(raised, w, hf, rd[0] <= 12, true); // v0.99.6: its lines cut where it meets another road, like at grade
+    if (sp[0] > 0.5) parts.push(subPoly(c, 0, sp[0]));
+    if (sp[1] < Lr - 0.5) parts.push(subPoly(c, sp[1], Lr));
+    for (const pc of parts) ribbon(pc, w, cls, YOFF[cls], tile, isLines(cls) ? 1 : w / 8);
+    return;
   }
+  if (rd[3] & 2 && !AT_GRADE.has(ri)) {
+    // bridges / overpasses: raised deck with parapets and piers
+    if (rd[0] >= 13 && polyMinDist(c, -347.5, 745.4) < 75) return; // the Padre Anchieta ring and its ramps are modelled separately (OSM footbridge pieces of the ramp blocked it)
+    const hf0 = bridgeProfile(c),
+      hf = RAISE.has(ri) ? (s, x, z) => hf0(s, x, z) + raiseOf(ri, s) : hf0;
+    if (isLines(cls)) linedRibbon(ri, c, w, cls, tile, hf, 0);
+    else ribbon(c, w, cls, YOFF[cls], tile, w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8), hf); // v0.99.6: on bridges too
+    bridgeDressing(c, w, hf, rd[0] <= 12);
+    return;
+  }
+  buildRoadsEachPart2(cls, rd, ri, c, cls0, w, tile, yo);
+  buildRoadsEachPart3(t, cls, c, w, ri);
+}
+/** (v1.1.7, code quality) part of buildRoadsEach: junction discs */
+function buildRoadsEachPart3(t, cls, c, w, ri) {
+  if (
+    ['primary', 'secondary', 'tertiary', 'residential', 'unclassified', 'primary_link', 'secondary_link', 'tertiary_link', 'living_street'].includes(
+      t
+    ) &&
+    cls !== 'paving'
+  )
+    for (const sd of [1, -1]) ribbonBand(c, sd * (w / 2 - 0.3), sd * (w / 2 + 2.1), 'sidewalk', YOFF.sidewalk, 2.4, ri); // two kerb-side strips (a full-width slab under the road poked through it on curved slopes)
+  // junction discs
+  if (cls === 'asphalt' || isLines(cls) || cls === 'paving')
+    for (let i = 0; i < c.length; i += 2) {
+      const n = nodeCount.get(K(c[i], c[i + 1]));
+      const end = i === 0 || i === c.length - 2;
+      if (n >= 2 || end)
+        disc(c[i], c[i + 1], (w / 2) * (n >= 3 ? 1.05 : 1.0), cls === 'paving' ? 'discPave' : 'disc', cls === 'paving' ? YOFF.discPave : YOFF.disc);
+    }
+}
+/** (v1.1.7, code quality) part of buildRoadsEach */
+function buildRoadsEachPart2(cls, rd, ri, c, cls0, w, tile, yo) {
+  if (isLines(cls)) {
+    const pl = cls0 !== 'asphaltLines',
+      bandRuns = { 1: [], [-1]: [] };
+    for (const [s0, s1, ln] of lineRuns(ri, c))
+      for (const [m0, m1, mf] of mergeRuns(ri, c, s0, s1))
+        for (const [n0, n1, hd] of noParkRuns(ri, c, m0, m1)) {
+          const pc = subPoly(c, n0, n1),
+            k = ln ? (hd ? laneMk(rd, pl, hd) : cls) : 'asphalt';
+          if (pc.length >= 4)
+            ribbon(pc, w, k, ln ? YOFF[cls] : YOFF.asphalt, ln ? tile : 8, ln ? 1 : w / 8, mf ? (q, x, z) => mf(q + n0 - m0, x, z) : null);
+          if (ln) for (const sd of [1, -1]) if (!(hd && hd.includes(sd))) bandRuns[sd].push([n0, n1]);
+        }
+    bandEnds(ri, rd, c, bandRuns);
+  } else if (rd[0] >= 13) {
+    for (const pc0 of offTramCut(c))
+      for (const pc of pasajeRibbonParts(rd, pc0)) ribbon(pc, w, cls, yo, tile, w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8));
+  } // v0.76: no path floating over the tram cutting
+  else
+    for (const [m0, m1, mf] of mergeRuns(ri, c, 0, polyLen(c))) {
+      const pc = subPoly(c, m0, m1);
+      if (pc.length >= 4) ribbon(pc, w, cls, yo, tile, isLines(cls) ? 1 : w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8), mf);
+    }
+  if (MERGED.has(ri)) mergeDecks(ri, c);
+}
+/** (v1.1.7, code quality) part of buildRoadsEach */
+function buildRoadsEachPart1(ri) {
+  const rd = DATA.R[ri];
+  DRESS_RI = ri;
+  OBST_RI = (DEP.has(ri) || rd[3] & 2 || RAISE.has(ri)) && window.__AUDIT ? ri : -1;
+  const t = RTN[rd[0]],
+    cls0 = ROADCLASS(rd),
+    cls =
+      cls0 === 'asphaltLines'
+        ? laneMk(rd)
+        : cls0 === 'asphalt' && rd[0] <= 12 && rd[2] >= 5.5 && parkSides(rd).sides.length
+          ? laneMk(rd, true)
+          : cls0,
+    w = rd[2],
+    c = rd[4];
+  return { rd, t, cls0, cls, w, c };
+}
+/** (v1.1.7, code quality) part of buildRoads: tram track */
+function buildRoadsPart2() {
   OBST_RI = -1;
   DRESS_RI = -1;
   trenchSlabs();
@@ -1171,6 +1207,21 @@ function buildRoads() {
     } else ribbon(DATA.T, 7.2, 'tram', YOFF.tram, 6, 1);
   }
 }
+/** (v1.1.7, code quality) part of buildRoads */
+function buildRoadsPart1() {
+  indexRoads();
+  computeDepressions();
+  computeRaises();
+  for (let ri = 0; ri < DATA.R.length; ri++) ROADY[ri] = roadYFn(ri);
+  for (let ri = 0; ri < DATA.R.length; ri++) {
+    const m = mergeY(ri);
+    if (m) {
+      ROADY[ri] = m;
+      MERGED.set(ri, m);
+    }
+  }
+  console.log('slip roads lifted onto a raised road beside them', MERGED.size);
+}
 
 // v0.99.6 (Jonay: «la salida y la incorporación se cortan; debería haber un carril bastante largo que permita
 // incorporarse y abandonar», with a photo of the TF-5): where a slip road leaves or joins a motorway or a trunk road, an
@@ -1195,22 +1246,7 @@ function auxTex() {
   SURF_MK.add('auxLane');
 }
 function buildAuxLanes() {
-  const R = DATA.R,
-    MW = new Map(); // node → [main road index, point index]
-  R.forEach((rd, ri) => {
-    if (!(rd[0] === 0 || rd[0] === 2) || !(rd[3] & 1) || rd[3] & 4) return;
-    const c = rd[4];
-    for (let i = 0; i < c.length; i += 2) {
-      const k = K(c[i], c[i + 1]);
-      let l = MW.get(k);
-      if (!l) MW.set(k, (l = []));
-      l.push([ri, i]);
-    }
-  });
-  auxTex();
-  const LA = 140,
-    TP = 45,
-    AW = 3.6;
+  const { R, MW, LA, TP, AW } = buildAuxLanesPart1();
   R.forEach((rd, li) => {
     if (!(rd[0] === 1 || rd[0] === 3) || !(rd[3] & 1) || rd[3] & 4) return;
     const c = rd[4],
@@ -1281,6 +1317,26 @@ function buildAuxLanes() {
     }
   });
   console.log('aux lanes', AUX.length);
+}
+/** (v1.1.7, code quality) part of buildAuxLanes */
+function buildAuxLanesPart1() {
+  const R = DATA.R,
+    MW = new Map(); // node → [main road index, point index]
+  R.forEach((rd, ri) => {
+    if (!(rd[0] === 0 || rd[0] === 2) || !(rd[3] & 1) || rd[3] & 4) return;
+    const c = rd[4];
+    for (let i = 0; i < c.length; i += 2) {
+      const k = K(c[i], c[i + 1]);
+      let l = MW.get(k);
+      if (!l) MW.set(k, (l = []));
+      l.push([ri, i]);
+    }
+  });
+  auxTex();
+  const LA = 140,
+    TP = 45,
+    AW = 3.6;
+  return { R, MW, LA, TP, AW };
 }
 const auxAt = (ri, s, sd) => {
   let w = 0;
@@ -1402,6 +1458,228 @@ function bridgeProfile(c) {
   }; /* v1.1.4 (Jonay: «grietas en las uniones de los puentes»): at both ends the deck meets the road at its exact height (it started 15 cm above it, and the step showed as a crack) */
 }
 function bridgeDressing(c, w, hf, road, bank = false) {
+  const { T, col, pts, hw } = bridgeDressingPart1(c, w, hf);
+  for (let i = 0; i < pts.length - 1; i++) {
+    bridgeDressingEach(pts, i, hw, T, bank, col, w);
+  }
+  BRIDGE_DECKS.push({ ri: DRESS_RI, type: 'path', pts: pts.map((p) => [p[0], p[1], p[2] + 0.12]), w: w + 0.4, road, bridge: true });
+}
+/** (v1.1.7, code quality) the body of a loop of bridgeDressing, split out of it */
+function bridgeDressingEach(pts, i, hw, T, bank, col, w) {
+  const a = pts[i],
+    b = pts[i + 1];
+  for (const sg of [1, -1]) {
+    bridgeDressingEachEach(a, hw, sg, b, bank, T, col);
+  }
+  bridgeDressingEachPart1(a, hw, b, T, i, w);
+}
+/** (v1.1.7, code quality) the body of a loop of bridgeDressingEach, split out of it */
+function bridgeDressingEachEach(a, hw, sg, b, bank, T, col) {
+  const ax = a[0] - a[4] * hw * sg,
+    az = a[1] + a[3] * hw * sg,
+    bx = b[0] - b[4] * hw * sg,
+    bz = b[1] + b[3] * hw * sg;
+  // no parapet where it would stand in another carriageway at this level (twin decks, merging slip roads)
+  if (
+    DRESS_RI >= 0 &&
+    (inOtherRoad((ax + bx) / 2, (az + bz) / 2, Math.min(a[2], b[2]) - 4.2, Math.max(a[2], b[2]) + 1.0, DRESS_RI, 0.15, true) ||
+      inOtherRoad(ax, az, a[2] - 4.2, a[2] + 1.0, DRESS_RI, 0.15, true) ||
+      inOtherRoad(bx, bz, b[2] - 4.2, b[2] + 1.0, DRESS_RI, 0.15, true))
+  )
+    return;
+  // v0.99.6 (Jonay: «carretera que vuela encima»): a raised approach / embankment is solid: a retaining wall down to
+  // the ground on each side (not over a road that passes underneath it: there the deck's underside shows)
+  if (bank) {
+    const ga = heightAt(ax, az) - 0.4,
+      gb = heightAt(bx, bz) - 0.4;
+    if (
+      (a[2] - 0.6 > ga + 0.5 || b[2] - 0.6 > gb + 0.5) &&
+      !(DRESS_RI >= 0 && inOtherRoad((ax + bx) / 2, (az + bz) / 2, Math.min(a[2], b[2]) - 12, Math.min(a[2], b[2]) - 2.2, DRESS_RI, -1.2, true))
+    )
+      T.quad(
+        [ax, Math.min(ga, a[2] - 0.6), az],
+        [bx, Math.min(gb, b[2] - 0.6), bz],
+        [bx, b[2] - 0.6, bz],
+        [ax, a[2] - 0.6, az],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0.6, 0.58, 0.54],
+        undefined,
+        [-a[4] * sg, 0, a[3] * sg]
+      );
+  }
+  // concrete kerb-parapet...
+  T.quad([ax, a[2] - 0.6, az], [bx, b[2] - 0.6, bz], [bx, b[2] + 0.5, bz], [ax, a[2] + 0.5, az], [0, 0], [0, 0], [0, 0], [0, 0], col, undefined, [
+    -a[4] * sg,
+    0,
+    a[3] * sg
+  ]);
+  T.quad([bx, b[2] - 0.6, bz], [ax, a[2] - 0.6, az], [ax, a[2] + 0.5, az], [bx, b[2] + 0.5, bz], [0, 0], [0, 0], [0, 0], [0, 0], col, undefined, [
+    a[4] * sg,
+    0,
+    -a[3] * sg
+  ]);
+  {
+    const ix = ax + a[4] * 0.3 * sg,
+      iz = az - a[3] * 0.3 * sg,
+      jx = bx + b[4] * 0.3 * sg,
+      jz = bz - b[3] * 0.3 * sg;
+    T.quad(
+      [ax, a[2] + 0.5, az],
+      [bx, b[2] + 0.5, bz],
+      [jx, b[2] + 0.5, jz],
+      [ix, a[2] + 0.5, iz],
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      col,
+      undefined,
+      [0, 1, 0]
+    );
+  }
+  // ...topped with a galvanised steel railing (posts + two rails)
+  const rc = [0.52, 0.55, 0.58],
+    ox = a[4] * 0.15 * sg,
+    oz = -a[3] * 0.15 * sg; // rail line sits on the middle of the kerb
+  for (const [h0, h1] of [
+    [1.08, 1.16],
+    [0.78, 0.83]
+  ]) {
+    const p1 = [ax + ox, a[2] + h0, az + oz],
+      p2 = [bx + ox, b[2] + h0, bz + oz],
+      p3 = [bx + ox, b[2] + h1, bz + oz],
+      p4 = [ax + ox, a[2] + h1, az + oz];
+    T.quad(p1, p2, p3, p4, [0, 0], [0, 0], [0, 0], [0, 0], rc, undefined, [-a[4] * sg, 0, a[3] * sg]);
+    T.quad(p2, p1, p4, p3, [0, 0], [0, 0], [0, 0], [0, 0], rc, undefined, [a[4] * sg, 0, -a[3] * sg]);
+    T.quad(
+      p4,
+      p3,
+      [bx + ox + b[4] * 0.06 * sg, b[2] + h1, bz + oz - b[3] * 0.06 * sg],
+      [ax + ox + a[4] * 0.06 * sg, a[2] + h1, az + oz - a[3] * 0.06 * sg],
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      rc,
+      undefined,
+      [0, 1, 0]
+    );
+  }
+  {
+    const segL = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    const np = Math.max(1, Math.round(segL / 2.2));
+    for (let k = 0; k < np; k++) {
+      const t = k / np,
+        px = ax + (bx - ax) * t + ox,
+        pz = az + (bz - az) * t + oz,
+        py = a[2] + (b[2] - a[2]) * t;
+      const ux = a[3] * 0.035,
+        uz = a[4] * 0.035,
+        vx = a[4] * 0.035,
+        vz = -a[3] * 0.035;
+      T.quad(
+        [px - ux - vx, py + 0.5, pz - uz - vz],
+        [px + ux - vx, py + 0.5, pz + uz - vz],
+        [px + ux - vx, py + 1.16, pz + uz - vz],
+        [px - ux - vx, py + 1.16, pz - uz - vz],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        rc,
+        undefined,
+        [-a[4], 0, a[3]]
+      );
+      T.quad(
+        [px + ux + vx, py + 0.5, pz + uz + vz],
+        [px - ux + vx, py + 0.5, pz - uz + vz],
+        [px - ux + vx, py + 1.16, pz - uz + vz],
+        [px + ux + vx, py + 1.16, pz + uz + vz],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        rc,
+        undefined,
+        [a[4], 0, -a[3]]
+      );
+      T.quad(
+        [px - ux + vx, py + 0.5, pz - uz + vz],
+        [px - ux - vx, py + 0.5, pz - uz - vz],
+        [px - ux - vx, py + 1.16, pz - uz - vz],
+        [px - ux + vx, py + 1.16, pz - uz + vz],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        rc,
+        undefined,
+        [-a[3], 0, -a[4]]
+      );
+      T.quad(
+        [px + ux - vx, py + 0.5, pz + uz - vz],
+        [px + ux + vx, py + 0.5, pz + uz + vz],
+        [px + ux + vx, py + 1.16, pz + uz + vz],
+        [px + ux - vx, py + 1.16, pz + uz - vz],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        rc,
+        undefined,
+        [a[3], 0, a[4]]
+      );
+    }
+  }
+}
+/** (v1.1.7, code quality) part of bridgeDressingEach: underside */
+function bridgeDressingEachPart1(a, hw, b, T, i, w) {
+  // underside
+  const l1 = [a[0] - a[4] * hw, a[2] - 0.6, a[1] + a[3] * hw],
+    r1 = [a[0] + a[4] * hw, a[2] - 0.6, a[1] - a[3] * hw],
+    l2 = [b[0] - b[4] * hw, b[2] - 0.6, b[1] + b[3] * hw],
+    r2 = [b[0] + b[4] * hw, b[2] - 0.6, b[1] - b[3] * hw];
+  T.quad(l1, r1, r2, l2, [0, 0], [0, 0], [0, 0], [0, 0], [0.55, 0.54, 0.52], undefined, [0, -1, 0]);
+  // piers where the deck is high
+  if (i % 4 === 2) {
+    const g = heightAt(a[0], a[1]);
+    if (a[2] - g > 3 && !onCarriagewayEarly(a[0], a[1])) {
+      const pw = Math.min(1.2, w * 0.2);
+      const px = a[0],
+        pz = a[1];
+      const y0 = g - 0.5,
+        y1 = a[2] - 0.6;
+      for (const [dx, dz] of [
+        [1, 1],
+        [1, -1],
+        [-1, -1],
+        [-1, 1]
+      ]) {
+      }
+      const q = [
+        [px - pw, pz - pw],
+        [px + pw, pz - pw],
+        [px + pw, pz + pw],
+        [px - pw, pz + pw]
+      ];
+      for (let k = 0; k < 4; k++) {
+        const p = q[k],
+          r = q[(k + 1) % 4];
+        T.quad([p[0], y0, p[1]], [r[0], y0, r[1]], [r[0], y1, r[1]], [p[0], y1, p[1]], [0, 0], [0, 0], [0, 0], [0, 0], [0.7, 0.69, 0.66], undefined, [
+          r[1] - p[1],
+          0,
+          -(r[0] - p[0])
+        ]);
+      }
+      COL.addCirc(px, pz, pw * 1.2, y0, y1);
+    }
+  }
+}
+/** (v1.1.7, code quality) part of bridgeDressing */
+function bridgeDressingPart1(c, w, hf) {
   const T = acc(c[0], c[1], 'trim');
   const col = [0.72, 0.71, 0.68];
   const pts = [];
@@ -1429,220 +1707,7 @@ function bridgeDressing(c, w, hf, road, bank = false) {
     pts.length ? pts[pts.length - 1][3] : 1,
     pts.length ? pts[pts.length - 1][4] : 0
   ]);
-  for (let i = 0; i < pts.length - 1; i++) {
-    const a = pts[i],
-      b = pts[i + 1];
-    for (const sg of [1, -1]) {
-      const ax = a[0] - a[4] * hw * sg,
-        az = a[1] + a[3] * hw * sg,
-        bx = b[0] - b[4] * hw * sg,
-        bz = b[1] + b[3] * hw * sg;
-      // no parapet where it would stand in another carriageway at this level (twin decks, merging slip roads)
-      if (
-        DRESS_RI >= 0 &&
-        (inOtherRoad((ax + bx) / 2, (az + bz) / 2, Math.min(a[2], b[2]) - 4.2, Math.max(a[2], b[2]) + 1.0, DRESS_RI, 0.15, true) ||
-          inOtherRoad(ax, az, a[2] - 4.2, a[2] + 1.0, DRESS_RI, 0.15, true) ||
-          inOtherRoad(bx, bz, b[2] - 4.2, b[2] + 1.0, DRESS_RI, 0.15, true))
-      )
-        continue;
-      // v0.99.6 (Jonay: «carretera que vuela encima»): a raised approach / embankment is solid: a retaining wall down to
-      // the ground on each side (not over a road that passes underneath it: there the deck's underside shows)
-      if (bank) {
-        const ga = heightAt(ax, az) - 0.4,
-          gb = heightAt(bx, bz) - 0.4;
-        if (
-          (a[2] - 0.6 > ga + 0.5 || b[2] - 0.6 > gb + 0.5) &&
-          !(DRESS_RI >= 0 && inOtherRoad((ax + bx) / 2, (az + bz) / 2, Math.min(a[2], b[2]) - 12, Math.min(a[2], b[2]) - 2.2, DRESS_RI, -1.2, true))
-        )
-          T.quad(
-            [ax, Math.min(ga, a[2] - 0.6), az],
-            [bx, Math.min(gb, b[2] - 0.6), bz],
-            [bx, b[2] - 0.6, bz],
-            [ax, a[2] - 0.6, az],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            [0.6, 0.58, 0.54],
-            undefined,
-            [-a[4] * sg, 0, a[3] * sg]
-          );
-      }
-      // concrete kerb-parapet...
-      T.quad([ax, a[2] - 0.6, az], [bx, b[2] - 0.6, bz], [bx, b[2] + 0.5, bz], [ax, a[2] + 0.5, az], [0, 0], [0, 0], [0, 0], [0, 0], col, undefined, [
-        -a[4] * sg,
-        0,
-        a[3] * sg
-      ]);
-      T.quad([bx, b[2] - 0.6, bz], [ax, a[2] - 0.6, az], [ax, a[2] + 0.5, az], [bx, b[2] + 0.5, bz], [0, 0], [0, 0], [0, 0], [0, 0], col, undefined, [
-        a[4] * sg,
-        0,
-        -a[3] * sg
-      ]);
-      {
-        const ix = ax + a[4] * 0.3 * sg,
-          iz = az - a[3] * 0.3 * sg,
-          jx = bx + b[4] * 0.3 * sg,
-          jz = bz - b[3] * 0.3 * sg;
-        T.quad(
-          [ax, a[2] + 0.5, az],
-          [bx, b[2] + 0.5, bz],
-          [jx, b[2] + 0.5, jz],
-          [ix, a[2] + 0.5, iz],
-          [0, 0],
-          [0, 0],
-          [0, 0],
-          [0, 0],
-          col,
-          undefined,
-          [0, 1, 0]
-        );
-      }
-      // ...topped with a galvanised steel railing (posts + two rails)
-      const rc = [0.52, 0.55, 0.58],
-        ox = a[4] * 0.15 * sg,
-        oz = -a[3] * 0.15 * sg; // rail line sits on the middle of the kerb
-      for (const [h0, h1] of [
-        [1.08, 1.16],
-        [0.78, 0.83]
-      ]) {
-        const p1 = [ax + ox, a[2] + h0, az + oz],
-          p2 = [bx + ox, b[2] + h0, bz + oz],
-          p3 = [bx + ox, b[2] + h1, bz + oz],
-          p4 = [ax + ox, a[2] + h1, az + oz];
-        T.quad(p1, p2, p3, p4, [0, 0], [0, 0], [0, 0], [0, 0], rc, undefined, [-a[4] * sg, 0, a[3] * sg]);
-        T.quad(p2, p1, p4, p3, [0, 0], [0, 0], [0, 0], [0, 0], rc, undefined, [a[4] * sg, 0, -a[3] * sg]);
-        T.quad(
-          p4,
-          p3,
-          [bx + ox + b[4] * 0.06 * sg, b[2] + h1, bz + oz - b[3] * 0.06 * sg],
-          [ax + ox + a[4] * 0.06 * sg, a[2] + h1, az + oz - a[3] * 0.06 * sg],
-          [0, 0],
-          [0, 0],
-          [0, 0],
-          [0, 0],
-          rc,
-          undefined,
-          [0, 1, 0]
-        );
-      }
-      {
-        const segL = Math.hypot(b[0] - a[0], b[1] - a[1]);
-        const np = Math.max(1, Math.round(segL / 2.2));
-        for (let k = 0; k < np; k++) {
-          const t = k / np,
-            px = ax + (bx - ax) * t + ox,
-            pz = az + (bz - az) * t + oz,
-            py = a[2] + (b[2] - a[2]) * t;
-          const ux = a[3] * 0.035,
-            uz = a[4] * 0.035,
-            vx = a[4] * 0.035,
-            vz = -a[3] * 0.035;
-          T.quad(
-            [px - ux - vx, py + 0.5, pz - uz - vz],
-            [px + ux - vx, py + 0.5, pz + uz - vz],
-            [px + ux - vx, py + 1.16, pz + uz - vz],
-            [px - ux - vx, py + 1.16, pz - uz - vz],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            rc,
-            undefined,
-            [-a[4], 0, a[3]]
-          );
-          T.quad(
-            [px + ux + vx, py + 0.5, pz + uz + vz],
-            [px - ux + vx, py + 0.5, pz - uz + vz],
-            [px - ux + vx, py + 1.16, pz - uz + vz],
-            [px + ux + vx, py + 1.16, pz + uz + vz],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            rc,
-            undefined,
-            [a[4], 0, -a[3]]
-          );
-          T.quad(
-            [px - ux + vx, py + 0.5, pz - uz + vz],
-            [px - ux - vx, py + 0.5, pz - uz - vz],
-            [px - ux - vx, py + 1.16, pz - uz - vz],
-            [px - ux + vx, py + 1.16, pz - uz + vz],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            rc,
-            undefined,
-            [-a[3], 0, -a[4]]
-          );
-          T.quad(
-            [px + ux - vx, py + 0.5, pz + uz - vz],
-            [px + ux + vx, py + 0.5, pz + uz + vz],
-            [px + ux + vx, py + 1.16, pz + uz + vz],
-            [px + ux - vx, py + 1.16, pz + uz - vz],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            rc,
-            undefined,
-            [a[3], 0, a[4]]
-          );
-        }
-      }
-    }
-    // underside
-    const l1 = [a[0] - a[4] * hw, a[2] - 0.6, a[1] + a[3] * hw],
-      r1 = [a[0] + a[4] * hw, a[2] - 0.6, a[1] - a[3] * hw],
-      l2 = [b[0] - b[4] * hw, b[2] - 0.6, b[1] + b[3] * hw],
-      r2 = [b[0] + b[4] * hw, b[2] - 0.6, b[1] - b[3] * hw];
-    T.quad(l1, r1, r2, l2, [0, 0], [0, 0], [0, 0], [0, 0], [0.55, 0.54, 0.52], undefined, [0, -1, 0]);
-    // piers where the deck is high
-    if (i % 4 === 2) {
-      const g = heightAt(a[0], a[1]);
-      if (a[2] - g > 3 && !onCarriagewayEarly(a[0], a[1])) {
-        const pw = Math.min(1.2, w * 0.2);
-        const px = a[0],
-          pz = a[1];
-        const y0 = g - 0.5,
-          y1 = a[2] - 0.6;
-        for (const [dx, dz] of [
-          [1, 1],
-          [1, -1],
-          [-1, -1],
-          [-1, 1]
-        ]) {
-        }
-        const q = [
-          [px - pw, pz - pw],
-          [px + pw, pz - pw],
-          [px + pw, pz + pw],
-          [px - pw, pz + pw]
-        ];
-        for (let k = 0; k < 4; k++) {
-          const p = q[k],
-            r = q[(k + 1) % 4];
-          T.quad(
-            [p[0], y0, p[1]],
-            [r[0], y0, r[1]],
-            [r[0], y1, r[1]],
-            [p[0], y1, p[1]],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            [0.7, 0.69, 0.66],
-            undefined,
-            [r[1] - p[1], 0, -(r[0] - p[0])]
-          );
-        }
-        COL.addCirc(px, pz, pw * 1.2, y0, y1);
-      }
-    }
-  }
-  BRIDGE_DECKS.push({ ri: DRESS_RI, type: 'path', pts: pts.map((p) => [p[0], p[1], p[2] + 0.12]), w: w + 0.4, road, bridge: true });
+  return { T, col, pts, hw };
 }
 const BRIDGE_DECKS = [];
 function roundaboutIsland(cx, cz, R, w) {
@@ -1722,51 +1787,7 @@ const polyLen = (c) => {
 };
 const PED_TUN = new Set();
 function computeDepressions() {
-  // v0.92: the node where a road splits into its two one-way carriageways (both going on ahead) is not a side junction
-  const twinSplit = (k, from, dx, dz) => {
-    const dl = Math.hypot(dx, dz) || 1;
-    const on = [];
-    for (const cj of ends.get(k) || []) {
-      if (cj === from) continue;
-      const r2 = DATA.R[cj],
-        c2 = r2[4],
-        m = c2.length;
-      if (!(r2[3] & 1) || r2[0] > 12) return false;
-      const st = K(c2[0], c2[1]) === k;
-      const ex = st ? c2[2] - c2[0] : c2[m - 4] - c2[m - 2],
-        ez = st ? c2[3] - c2[1] : c2[m - 3] - c2[m - 1];
-      if ((ex * dx + ez * dz) / ((Math.hypot(ex, ez) || 1) * dl) < Math.cos(0.75)) return false;
-      on.push(cj);
-    }
-    return on.length === 2;
-  };
-  const pedEnds = new Map();
-  DATA.R.forEach((rd, ri) => {
-    if (rd[0] <= 12) return;
-    const c = rd[4];
-    for (const k of [K(c[0], c[1]), K(c[c.length - 2], c[c.length - 1])]) {
-      let a = pedEnds.get(k);
-      if (!a) pedEnds.set(k, (a = []));
-      a.push(ri);
-    }
-  });
-  const ends = new Map();
-  const addE = (k, ri) => {
-    let a = ends.get(k);
-    if (!a) ends.set(k, (a = []));
-    a.push(ri);
-  };
-  DATA.R.forEach((rd, ri) => {
-    if (rd[0] > 12) return;
-    const c = rd[4];
-    addE(K(c[0], c[1]), ri);
-    addE(K(c[c.length - 2], c[c.length - 1]), ri);
-  });
-  const push = (ri, f) => {
-    let a = DEP.get(ri);
-    if (!a) DEP.set(ri, (a = []));
-    a.push(f);
-  };
+  const { twinSplit, pedEnds, ends, push } = computeDepressionsPart1();
   DATA.R.forEach((rd, ri) => {
     if (!(rd[3] & 4)) return;
     const c = rd[4];
@@ -1934,40 +1955,92 @@ function computeDepressions() {
       }
     }
   });
-  // trench mouths where another street at grade overlaps the carriageway (merges, side streets that run into the ramp,
-  // a twin carriageway that stays up): the trench only starts sinking once it is clear of them (Vía de Ronda X 388
-  // Z 1499: cars at the merge fell 1.7 m into the cutting). Ramps at ~15 % from the last overlapping point.
-  // caps are by position and shared by every road of the same sunk chain (main road + approach hops), so the
-  // depth stays continuous where they meet
-  const depRows = new Set([...DEP.keys()].map((i) => DATA.R[i]));
-  const comp = new Map();
-  const par = (i) => {
-    while (comp.get(i) !== i) {
-      comp.set(i, comp.get(comp.get(i)));
-      i = comp.get(i);
+  const { depRows, par, OV, joined } = computeDepressionsPart2(); // only streets that merge into the trench (its mouth), not ones that just run beside it
+  const { KEEPS } = computeDepressionsPart3(joined, par, depRows, OV);
+  let { ncap, sink } = computeDepressionsPart4(OV, par, KEEPS);
+  computeDepressionsPart5(ncap, sink, push);
+}
+/** (v1.1.7, code quality) part of computeDepressions */
+function computeDepressionsPart5(ncap, sink, push) {
+  for (const [rj, a0] of sink) {
+    const a = a0.filter((q) => q[1] <= 4.0);
+    if (a.length < 4 || a.length < a0.length / 2) {
+      sink.delete(rj);
+      continue;
     }
-    return i;
-  };
-  const nodeOf = new Map();
-  for (const ri of DEP.keys()) {
-    comp.set(ri, ri);
-    const c = DATA.R[ri][4];
-    for (let i = 0; i < c.length; i += 2) {
-      const k = K(c[i], c[i + 1]);
-      const o = nodeOf.get(k);
-      if (o !== undefined) comp.set(par(ri), par(o));
-      else nodeOf.set(k, ri);
+    /* only a clear merge into a moderately deep trench; deeper ones keep the street at grade (the cap above) */ const Lj = polyLen(DATA.R[rj][4]);
+    push(rj, (q) => {
+      let m = 0;
+      for (const [s0, d] of a) {
+        const R = Math.max(8, d / 0.12);
+        const t = Math.abs(q - s0);
+        if (t < R) m = Math.max(m, d * smooth(0, 1, (R - t) / R));
+      }
+      return m;
+    });
+  }
+  console.log(
+    'trench mouths kept at grade under overlapping streets',
+    ncap,
+    'streets sinking with a trench',
+    JSON.stringify([...sink].map(([k, a]) => [k, a.length, Math.max(...a.map((q) => q[1])).toFixed(1)]))
+  );
+  try {
+    tf13Bowl();
+  } catch (e) {
+    console.error('tf13', e);
+  }
+}
+/** (v1.1.7, code quality) part of computeDepressions: where the trench still has to be deep there (it passes under something just after the mouth), the street that */
+function computeDepressionsPart4(OV, par, KEEPS) {
+  let ncap = 0;
+  for (const [ri, fs0] of [...DEP.entries()]) {
+    const rd = DATA.R[ri];
+    if (PED_TUN.has(ri)) continue;
+    const pts = OV.get(par(ri));
+    if (!pts || pts.length < 4) continue;
+    ncap++; /* a real merge overlaps for a while (>= 8 m); a corner just touching the mouth does not count */
+    const c = rd[4],
+      cum = [0];
+    for (let i = 2; i < c.length; i += 2) cum.push(cum[cum.length - 1] + Math.hypot(c[i] - c[i - 2], c[i + 1] - c[i - 1]));
+    const at = (q) => {
+      let j = 1;
+      while (j < cum.length - 1 && cum[j] < q) j++;
+      const t = clamp((q - cum[j - 1]) / (cum[j] - cum[j - 1] || 1), 0, 1);
+      return [lerp(c[(j - 1) * 2], c[j * 2], t), lerp(c[(j - 1) * 2 + 1], c[j * 2 + 1], t)];
+    };
+    const fs = fs0.slice();
+    const KEEP = KEEPS.get(par(ri)) || [];
+    DEP.set(ri, [
+      (q) => {
+        let d = 0;
+        for (const f of fs) d = Math.max(d, f(q));
+        if (d <= 0.5) return d;
+        const [x, z] = at(q);
+        let cap = Infinity;
+        for (const p of pts) cap = Math.min(cap, 0.5 + Math.hypot(x - p[0], z - p[1]) * 0.15);
+        for (const k of KEEP) cap = Math.max(cap, k[2] - Math.hypot(x - k[0], z - k[1]) * 0.15);
+        return Math.min(d, cap);
+      }
+    ]);
+  } // ...but never shallower where it passes under a bridge or another road
+  // where the trench still has to be deep there (it passes under something just after the mouth), the street that
+  // merges into it goes down with it instead (a slip road into the underpass)
+  const sink = new Map();
+  for (const pts of OV.values()) {
+    if (pts.length < 4) continue;
+    for (const [x, z, rj, sj, ri, ss] of pts) {
+      const dT = depthOf(ri, ss) / 1.12 + 0.5;
+      if (dT < 1.1) continue;
+      let a = sink.get(rj);
+      if (!a) sink.set(rj, (a = []));
+      a.push([sj, dT]);
     }
   }
-  const OV = new Map(); // component -> [[x, z], ...]
-  const joined = (rj, k) => {
-    const c = DATA.R[rj][4];
-    for (let i = 0; i < c.length; i += 2) {
-      const o = nodeOf.get(K(c[i], c[i + 1]));
-      if (o !== undefined && par(o) === k) return true;
-    }
-    return false;
-  }; // only streets that merge into the trench (its mouth), not ones that just run beside it
+  return { ncap, sink };
+}
+/** (v1.1.7, code quality) part of computeDepressions */
+function computeDepressionsPart3(joined, par, depRows, OV) {
   for (const [ri, fs0] of DEP.entries()) {
     const rd = DATA.R[ri];
     if (rd[0] > 12 || PED_TUN.has(ri)) continue;
@@ -2015,78 +2088,94 @@ function computeDepressions() {
       a.push([X.x, X.z, d]);
     }
   }
-  let ncap = 0;
-  for (const [ri, fs0] of [...DEP.entries()]) {
-    const rd = DATA.R[ri];
-    if (PED_TUN.has(ri)) continue;
-    const pts = OV.get(par(ri));
-    if (!pts || pts.length < 4) continue;
-    ncap++; /* a real merge overlaps for a while (>= 8 m); a corner just touching the mouth does not count */
-    const c = rd[4],
-      cum = [0];
-    for (let i = 2; i < c.length; i += 2) cum.push(cum[cum.length - 1] + Math.hypot(c[i] - c[i - 2], c[i + 1] - c[i - 1]));
-    const at = (q) => {
-      let j = 1;
-      while (j < cum.length - 1 && cum[j] < q) j++;
-      const t = clamp((q - cum[j - 1]) / (cum[j] - cum[j - 1] || 1), 0, 1);
-      return [lerp(c[(j - 1) * 2], c[j * 2], t), lerp(c[(j - 1) * 2 + 1], c[j * 2 + 1], t)];
-    };
-    const fs = fs0.slice();
-    const KEEP = KEEPS.get(par(ri)) || [];
-    DEP.set(ri, [
-      (q) => {
-        let d = 0;
-        for (const f of fs) d = Math.max(d, f(q));
-        if (d <= 0.5) return d;
-        const [x, z] = at(q);
-        let cap = Infinity;
-        for (const p of pts) cap = Math.min(cap, 0.5 + Math.hypot(x - p[0], z - p[1]) * 0.15);
-        for (const k of KEEP) cap = Math.max(cap, k[2] - Math.hypot(x - k[0], z - k[1]) * 0.15);
-        return Math.min(d, cap);
-      }
-    ]);
-  } // ...but never shallower where it passes under a bridge or another road
-  // where the trench still has to be deep there (it passes under something just after the mouth), the street that
-  // merges into it goes down with it instead (a slip road into the underpass)
-  const sink = new Map();
-  for (const pts of OV.values()) {
-    if (pts.length < 4) continue;
-    for (const [x, z, rj, sj, ri, ss] of pts) {
-      const dT = depthOf(ri, ss) / 1.12 + 0.5;
-      if (dT < 1.1) continue;
-      let a = sink.get(rj);
-      if (!a) sink.set(rj, (a = []));
-      a.push([sj, dT]);
+  return { KEEPS };
+}
+/** (v1.1.7, code quality) part of computeDepressions: trench mouths where another street at grade overlaps the carriageway (merges, side streets that run into the ramp, */
+function computeDepressionsPart2() {
+  // trench mouths where another street at grade overlaps the carriageway (merges, side streets that run into the ramp,
+  // a twin carriageway that stays up): the trench only starts sinking once it is clear of them (Vía de Ronda X 388
+  // Z 1499: cars at the merge fell 1.7 m into the cutting). Ramps at ~15 % from the last overlapping point.
+  // caps are by position and shared by every road of the same sunk chain (main road + approach hops), so the
+  // depth stays continuous where they meet
+  const depRows = new Set([...DEP.keys()].map((i) => DATA.R[i]));
+  const comp = new Map();
+  const par = (i) => {
+    while (comp.get(i) !== i) {
+      comp.set(i, comp.get(comp.get(i)));
+      i = comp.get(i);
+    }
+    return i;
+  };
+  const nodeOf = new Map();
+  for (const ri of DEP.keys()) {
+    comp.set(ri, ri);
+    const c = DATA.R[ri][4];
+    for (let i = 0; i < c.length; i += 2) {
+      const k = K(c[i], c[i + 1]);
+      const o = nodeOf.get(k);
+      if (o !== undefined) comp.set(par(ri), par(o));
+      else nodeOf.set(k, ri);
     }
   }
-  for (const [rj, a0] of sink) {
-    const a = a0.filter((q) => q[1] <= 4.0);
-    if (a.length < 4 || a.length < a0.length / 2) {
-      sink.delete(rj);
-      continue;
+  const OV = new Map(); // component -> [[x, z], ...]
+  const joined = (rj, k) => {
+    const c = DATA.R[rj][4];
+    for (let i = 0; i < c.length; i += 2) {
+      const o = nodeOf.get(K(c[i], c[i + 1]));
+      if (o !== undefined && par(o) === k) return true;
     }
-    /* only a clear merge into a moderately deep trench; deeper ones keep the street at grade (the cap above) */ const Lj = polyLen(DATA.R[rj][4]);
-    push(rj, (q) => {
-      let m = 0;
-      for (const [s0, d] of a) {
-        const R = Math.max(8, d / 0.12);
-        const t = Math.abs(q - s0);
-        if (t < R) m = Math.max(m, d * smooth(0, 1, (R - t) / R));
-      }
-      return m;
-    });
-  }
-  console.log(
-    'trench mouths kept at grade under overlapping streets',
-    ncap,
-    'streets sinking with a trench',
-    JSON.stringify([...sink].map(([k, a]) => [k, a.length, Math.max(...a.map((q) => q[1])).toFixed(1)]))
-  );
-  try {
-    tf13Bowl();
-  } catch (e) {
-    console.error('tf13', e);
-  }
+    return false;
+  };
+  return { depRows, par, OV, joined };
+}
+/** (v1.1.7, code quality) part of computeDepressions: v0.92: the node where a road splits into its two one-way carriageways (both going on ahead) is not a side junction */
+function computeDepressionsPart1() {
+  // v0.92: the node where a road splits into its two one-way carriageways (both going on ahead) is not a side junction
+  const twinSplit = (k, from, dx, dz) => {
+    const dl = Math.hypot(dx, dz) || 1;
+    const on = [];
+    for (const cj of ends.get(k) || []) {
+      if (cj === from) continue;
+      const r2 = DATA.R[cj],
+        c2 = r2[4],
+        m = c2.length;
+      if (!(r2[3] & 1) || r2[0] > 12) return false;
+      const st = K(c2[0], c2[1]) === k;
+      const ex = st ? c2[2] - c2[0] : c2[m - 4] - c2[m - 2],
+        ez = st ? c2[3] - c2[1] : c2[m - 3] - c2[m - 1];
+      if ((ex * dx + ez * dz) / ((Math.hypot(ex, ez) || 1) * dl) < Math.cos(0.75)) return false;
+      on.push(cj);
+    }
+    return on.length === 2;
+  };
+  const pedEnds = new Map();
+  DATA.R.forEach((rd, ri) => {
+    if (rd[0] <= 12) return;
+    const c = rd[4];
+    for (const k of [K(c[0], c[1]), K(c[c.length - 2], c[c.length - 1])]) {
+      let a = pedEnds.get(k);
+      if (!a) pedEnds.set(k, (a = []));
+      a.push(ri);
+    }
+  });
+  const ends = new Map();
+  const addE = (k, ri) => {
+    let a = ends.get(k);
+    if (!a) ends.set(k, (a = []));
+    a.push(ri);
+  };
+  DATA.R.forEach((rd, ri) => {
+    if (rd[0] > 12) return;
+    const c = rd[4];
+    addE(K(c[0], c[1]), ri);
+    addE(K(c[c.length - 2], c[c.length - 1]), ri);
+  });
+  const push = (ri, f) => {
+    let a = DEP.get(ri);
+    if (!a) DEP.set(ri, (a = []));
+    a.push(f);
+  };
+  return { twinSplit, pedEnds, ends, push };
 }
 // v0.72 (Jonay, docs/referencias/tf13_geneto/): the split roundabout of the TF-13 under the TF-5. Real: the TF-5 stays
 // up and the two halves of the roundabout lie in a cutting with stone walls, joined by two vaulted tunnels under the
@@ -2095,21 +2184,32 @@ function computeDepressions() {
 // tunnels 7.4 m (covered), and every street that meets it ramps back to grade within 75 m of the ring.
 const TF13 = { ring: [], tubes: [], app: [], D: 6.0, DT: 7.4, R: 75 };
 function tf13Bowl() {
-  // found by geometry (DATA.R is trimmed to the play area at load, so OSM indices move): the two tunnel pieces of the
-  // roundabout under the TF-5, the rest of the roundabout around them, and the streets that join it (chained)
-  const R = DATA.R,
-    C = [352, 1500],
-    near = (c, x, z, d) => {
-      for (let i = 0; i < c.length; i += 2) if (Math.hypot(c[i] - x, c[i + 1] - z) < d) return true;
-      return false;
-    };
-  R.forEach((r, ri) => {
-    if (r[0] > 12 || !(r[3] & 4)) return;
-    const c = r[4];
-    if (near(c, 347, 1470, 4) && near(c, 320, 1492, 4)) TF13.tubes.push(ri);
-    else if (near(c, 353, 1528, 4) && near(c, 382, 1508, 4)) TF13.tubes.push(ri);
-  });
+  const { R, C, near } = tf13BowlPart1();
   if (TF13.tubes.length !== 2) return;
+  const { raw, ringPts, along } = tf13BowlPart2(R, C, near);
+  for (const ri of TF13.app) {
+    const at = along(ri),
+      L = polyLen(R[ri][4]),
+      tab = []; // depth every 2 m along the street (depthOf is called every frame)
+    for (let q = 0; q <= L + 2; q += 2) {
+      const [x, z] = at(Math.min(q, L));
+      let dr = 1e9;
+      for (const p of ringPts) dr = Math.min(dr, Math.hypot(p[0] - x, p[1] - z));
+      tab.push(raw(TF13.D * smooth(0, 1, 1 - dr / TF13.R)));
+    }
+    if (Math.max(...tab) < raw(0.4)) continue;
+    /* never reaches down: left as it was */ DEP.set(ri, [
+      (q) => {
+        const f = clamp(q, 0, L) / 2,
+          i = Math.floor(f);
+        return lerp(tab[i], tab[Math.min(i + 1, tab.length - 1)], f - i);
+      }
+    ]);
+  }
+  TF13.ok = true;
+}
+/** (v1.1.7, code quality) part of tf13Bowl */
+function tf13BowlPart2(R, C, near) {
   R.forEach((r, ri) => {
     if (r[0] > 12 || !(r[3] & 32) || TF13.tubes.includes(ri)) return;
     const c = r[4];
@@ -2159,26 +2259,25 @@ function tf13Bowl() {
     const L = polyLen(R[ri][4]);
     DEP.set(ri, [(q) => raw(TF13.D + (TF13.DT - TF13.D) * smooth(0, 1, Math.min(q, L - q) / Math.min(10, L / 2)))]);
   }
-  for (const ri of TF13.app) {
-    const at = along(ri),
-      L = polyLen(R[ri][4]),
-      tab = []; // depth every 2 m along the street (depthOf is called every frame)
-    for (let q = 0; q <= L + 2; q += 2) {
-      const [x, z] = at(Math.min(q, L));
-      let dr = 1e9;
-      for (const p of ringPts) dr = Math.min(dr, Math.hypot(p[0] - x, p[1] - z));
-      tab.push(raw(TF13.D * smooth(0, 1, 1 - dr / TF13.R)));
-    }
-    if (Math.max(...tab) < raw(0.4)) continue;
-    /* never reaches down: left as it was */ DEP.set(ri, [
-      (q) => {
-        const f = clamp(q, 0, L) / 2,
-          i = Math.floor(f);
-        return lerp(tab[i], tab[Math.min(i + 1, tab.length - 1)], f - i);
-      }
-    ]);
-  }
-  TF13.ok = true;
+  return { raw, ringPts, along };
+}
+/** (v1.1.7, code quality) part of tf13Bowl: found by geometry (DATA.R is trimmed to the play area at load, so OSM indices move): the two tunnel pieces of the */
+function tf13BowlPart1() {
+  // found by geometry (DATA.R is trimmed to the play area at load, so OSM indices move): the two tunnel pieces of the
+  // roundabout under the TF-5, the rest of the roundabout around them, and the streets that join it (chained)
+  const R = DATA.R,
+    C = [352, 1500],
+    near = (c, x, z, d) => {
+      for (let i = 0; i < c.length; i += 2) if (Math.hypot(c[i] - x, c[i + 1] - z) < d) return true;
+      return false;
+    };
+  R.forEach((r, ri) => {
+    if (r[0] > 12 || !(r[3] & 4)) return;
+    const c = r[4];
+    if (near(c, 347, 1470, 4) && near(c, 320, 1492, 4)) TF13.tubes.push(ri);
+    else if (near(c, 353, 1528, 4) && near(c, 382, 1508, 4)) TF13.tubes.push(ri);
+  });
+  return { R, C, near };
 }
 // stone vaults at the four mouths of the two tunnels (the tube itself is the generic tunnelRoad box)
 function tf13Portals() {
@@ -2376,34 +2475,7 @@ function trenchSlabs() {
   console.log('trench slabs (streets over open cuttings)', made);
 }
 function crossingsOf(ri) {
-  const R = DATA.R;
-  const CS = 40;
-  if (!XSEG) {
-    XSEG = { segs: [], G: new Map() };
-    R.forEach((rd, rj) => {
-      const c = rd[4];
-      let s = 0;
-      for (let i = 0; i < c.length - 2; i += 2) {
-        const L = Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]);
-        const k = XSEG.segs.length;
-        XSEG.segs.push([rj, c[i], c[i + 1], c[i + 2], c[i + 3], s, L]);
-        s += L;
-        const x0 = Math.floor(Math.min(c[i], c[i + 2]) / CS),
-          x1 = Math.floor(Math.max(c[i], c[i + 2]) / CS),
-          z0 = Math.floor(Math.min(c[i + 1], c[i + 3]) / CS),
-          z1 = Math.floor(Math.max(c[i + 1], c[i + 3]) / CS);
-        for (let a = x0; a <= x1; a++)
-          for (let b = z0; b <= z1; b++) {
-            const key = a * 10000 + b;
-            let l = XSEG.G.get(key);
-            if (!l) XSEG.G.set(key, (l = []));
-            l.push(k);
-          }
-      }
-    });
-  }
-  const out = [];
-  const c = R[ri][4];
+  const { R, CS, out, c } = crossingsOfPart1(ri);
   let s = 0;
   const done = new Set();
   for (let i = 0; i < c.length - 2; i += 2) {
@@ -2451,6 +2523,38 @@ function crossingsOf(ri) {
     s += L;
   }
   return out;
+}
+/** (v1.1.7, code quality) part of crossingsOf */
+function crossingsOfPart1(ri) {
+  const R = DATA.R;
+  const CS = 40;
+  if (!XSEG) {
+    XSEG = { segs: [], G: new Map() };
+    R.forEach((rd, rj) => {
+      const c = rd[4];
+      let s = 0;
+      for (let i = 0; i < c.length - 2; i += 2) {
+        const L = Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]);
+        const k = XSEG.segs.length;
+        XSEG.segs.push([rj, c[i], c[i + 1], c[i + 2], c[i + 3], s, L]);
+        s += L;
+        const x0 = Math.floor(Math.min(c[i], c[i + 2]) / CS),
+          x1 = Math.floor(Math.max(c[i], c[i + 2]) / CS),
+          z0 = Math.floor(Math.min(c[i + 1], c[i + 3]) / CS),
+          z1 = Math.floor(Math.max(c[i + 1], c[i + 3]) / CS);
+        for (let a = x0; a <= x1; a++)
+          for (let b = z0; b <= z1; b++) {
+            const key = a * 10000 + b;
+            let l = XSEG.G.get(key);
+            if (!l) XSEG.G.set(key, (l = []));
+            l.push(k);
+          }
+      }
+    });
+  }
+  const out = [];
+  const c = R[ri][4];
+  return { R, CS, out, c };
 }
 function xsegGrid() {
   if (!XSEG) crossingsOf(0);
@@ -2559,24 +2663,62 @@ const raiseOf = (ri, s) => {
 };
 const EXTRA_NEED = new Map(),
   BRIDGE_H = new Map();
+/** (v1.1.6, split out of computeRaisesOnce for the code-quality audit) the road that best continues straight on from the
+ *  node (px, pz) heading (ox, oz): [its index or -1, whether it starts at that node]. minDot: how straight it must be;
+ *  sameName: a road of that name gets a small bonus (null: no bonus) */
+function straightestNext(ends, px, pz, prev, ri, ped, ox, oz, minDot, sameName) {
+  let best = -1,
+    bd = minDot,
+    bStart = true;
+  for (const cj of ends.get(K(px, pz)) || []) {
+    if (cj === prev || cj === ri) continue;
+    const r2 = DATA.R[cj];
+    if (r2[3] & 6 || DEP.has(cj) || (!ped && r2[0] > 12) || (ped && r2[0] <= 12)) continue;
+    const c2 = r2[4],
+      m = c2.length;
+    const st = c2[0] === px && c2[1] === pz;
+    const dx = st ? c2[2] - c2[0] : c2[m - 4] - c2[m - 2],
+      dz = st ? c2[3] - c2[1] : c2[m - 3] - c2[m - 1];
+    const dl = Math.hypot(dx, dz) || 1;
+    const dot = (dx * ox + dz * oz) / dl + (sameName !== null && r2[1] === sameName ? 0.15 : 0);
+    if (dot > bd) {
+      bd = dot;
+      best = cj;
+      bStart = st;
+    }
+  }
+  return [best, bStart];
+}
+/** height of a raised road o ({ri, c, w, isBr, sp, pf}) at distance ss along it */
+function raisedYOf(o, ss, x, z) {
+  return o.isBr ? o.pf(ss, x, z) + raiseOf(o.ri, ss) : heightAt(x, z) + (ss >= o.sp[0] - 0.5 && ss <= o.sp[1] + 0.5 ? raiseOf(o.ri, ss) : 0);
+}
+/** the top of the raised road o where the point (x, z) of a road heading (tx, tz) overlaps it, or -1e9 (followOverlaps) */
+function overlapTopY(o, x, z, tx, tz) {
+  if (x < o.b[0] - o.w || x > o.b[1] + o.w || z < o.b[2] - o.w || z > o.b[3] + o.w) return -1e9;
+  const c2 = o.c;
+  let acc = 0,
+    best = -1e9;
+  for (let j = 0; j + 3 < c2.length; j += 2) {
+    const dx = c2[j + 2] - c2[j],
+      dz = c2[j + 3] - c2[j + 1],
+      L2 = Math.hypot(dx, dz) || 1;
+    const tr = ((x - c2[j]) * dx + (z - c2[j + 1]) * dz) / (L2 * L2);
+    const d = Math.hypot(x - c2[j] - dx * tr, z - c2[j + 1] - dz * tr),
+      along = Math.abs((dx * tx + dz * tz) / L2) > 0.6;
+    if (tr >= 0 && tr <= 1 && d < o.w / 2 + 1.2 && (d < o.w / 2 - 0.5 || along)) {
+      const px = c2[j] + dx * tr,
+        pz = c2[j + 1] + dz * tr,
+        yT = raisedYOf(o, acc + L2 * tr, px, pz);
+      if (yT - heightAt(px, pz) < 3.2 || (!o.isBr && d < o.w / 2 - 0.5 && along))
+        best = Math.max(best, yT); /* any embankment (not a deck) running along it: follow it too */
+    }
+    acc += L2;
+  }
+  return best;
+}
 function computeRaisesOnce() {
-  DEPSET = new Set([...DEP.keys()].map((ri) => DATA.R[ri]));
-  const ends = new Map();
-  const addE = (k, ri) => {
-    let a = ends.get(k);
-    if (!a) ends.set(k, (a = []));
-    a.push(ri);
-  };
-  DATA.R.forEach((rd, ri) => {
-    const c = rd[4];
-    addE(K(c[0], c[1]), ri);
-    addE(K(c[c.length - 2], c[c.length - 1]), ri);
-  });
-  const push = (ri, f) => {
-    let a = RAISE.get(ri);
-    if (!a) RAISE.set(ri, (a = []));
-    a.push(f);
-  };
+  const { ends, push } = computeRaisesOncePart1();
   let nb = 0;
   const NEEDS = [],
     TWIN_NEED = new Map();
@@ -2643,47 +2785,9 @@ function computeRaisesOnce() {
         const hops = [];
         let lastX = -1;
         for (let hop = 0; hop < 6 && uOff < 170; hop++) {
-          let best = -1,
-            bd = Math.cos(0.6),
-            bStart = true;
-          for (const cj of ends.get(K(px, pz)) || []) {
-            if (cj === prev || cj === ri) continue;
-            const r2 = DATA.R[cj];
-            if (r2[3] & 6 || DEP.has(cj) || (!ped && r2[0] > 12) || (ped && r2[0] <= 12)) continue;
-            const c2 = r2[4],
-              m = c2.length;
-            const st = c2[0] === px && c2[1] === pz;
-            let dx = st ? c2[2] - c2[0] : c2[m - 4] - c2[m - 2],
-              dz = st ? c2[3] - c2[1] : c2[m - 3] - c2[m - 1];
-            const dl = Math.hypot(dx, dz) || 1;
-            const dot = (dx * ox + dz * oz) / dl + (r2[1] === rd[1] ? 0.15 : 0);
-            if (dot > bd) {
-              bd = dot;
-              best = cj;
-              bStart = st;
-            }
-          }
-          if (best < 0 && uOff < 60) {
-            // no straight continuation yet but the ramp is still high: follow the straightest road (even round a corner)
-            let bd2 = 0.15;
-            for (const cj of ends.get(K(px, pz)) || []) {
-              if (cj === prev || cj === ri) continue;
-              const r2 = DATA.R[cj];
-              if (r2[3] & 6 || DEP.has(cj) || (!ped && r2[0] > 12) || (ped && r2[0] <= 12)) continue;
-              const c2 = r2[4],
-                m = c2.length;
-              const st = c2[0] === px && c2[1] === pz;
-              let dx = st ? c2[2] - c2[0] : c2[m - 4] - c2[m - 2],
-                dz = st ? c2[3] - c2[1] : c2[m - 3] - c2[m - 1];
-              const dl = Math.hypot(dx, dz) || 1;
-              const dot = (dx * ox + dz * oz) / dl;
-              if (dot > bd2) {
-                bd2 = dot;
-                best = cj;
-                bStart = st;
-              }
-            }
-          }
+          let [best, bStart] = straightestNext(ends, px, pz, prev, ri, ped, ox, oz, Math.cos(0.6), rd[1]);
+          // no straight continuation yet but the ramp is still high: follow the straightest road (even round a corner)
+          if (best < 0 && uOff < 60) [best, bStart] = straightestNext(ends, px, pz, prev, ri, ped, ox, oz, 0.15, null);
           if (best < 0) break;
           const c2 = DATA.R[best][4],
             m = c2.length,
@@ -2757,8 +2861,6 @@ function computeRaisesOnce() {
         for (let i = 0; i < c.length; i += 2) b = [Math.min(b[0], c[i]), Math.max(b[1], c[i]), Math.min(b[2], c[i + 1]), Math.max(b[3], c[i + 1])];
         RB.push({ ri, c, w: rd[2], isBr, sp, pf: isBr ? bridgeProfile(c) : null, b });
       }
-      const yOf = (o, ss, x, z) =>
-        o.isBr ? o.pf(ss, x, z) + raiseOf(o.ri, ss) : heightAt(x, z) + (ss >= o.sp[0] - 0.5 && ss <= o.sp[1] + 0.5 ? raiseOf(o.ri, ss) : 0);
       const ovl = new Map();
       DATA.R.forEach((rd, rj) => {
         if (rd[0] > 12 || DEP.has(rj)) return;
@@ -2777,29 +2879,7 @@ function computeRaisesOnce() {
               z = c[i + 1] + tz * u,
               sj = s + u;
             let best = -1e9;
-            for (const o of RB) {
-              if (o.ri === rj || x < o.b[0] - o.w || x > o.b[1] + o.w || z < o.b[2] - o.w || z > o.b[3] + o.w) continue;
-              const c2 = o.c;
-              let acc = 0;
-              for (let j = 0; j + 3 < c2.length; j += 2) {
-                const dx = c2[j + 2] - c2[j],
-                  dz = c2[j + 3] - c2[j + 1],
-                  L2 = Math.hypot(dx, dz) || 1;
-                const tr = ((x - c2[j]) * dx + (z - c2[j + 1]) * dz) / (L2 * L2);
-                if (tr >= 0 && tr <= 1) {
-                  const d = Math.hypot(x - c2[j] - dx * tr, z - c2[j + 1] - dz * tr);
-                  if (d < o.w / 2 + 1.2 && (d < o.w / 2 - 0.5 || Math.abs((dx * tx + dz * tz) / L2) > 0.6)) {
-                    const ss = acc + L2 * tr;
-                    const px = c2[j] + dx * tr,
-                      pz = c2[j + 1] + dz * tr;
-                    const yT = yOf(o, ss, px, pz);
-                    if (yT - heightAt(px, pz) < 3.2 || (!o.isBr && d < o.w / 2 - 0.5 && Math.abs((dx * tx + dz * tz) / L2) > 0.6))
-                      best = Math.max(best, yT); /* any embankment (not a deck) running along it: follow it too */
-                  }
-                }
-                acc += L2;
-              }
-            }
+            for (const o of RB) if (o.ri !== rj) best = Math.max(best, overlapTopY(o, x, z, tx, tz));
             if (best < -1e8) continue;
             const have = brJ ? raiseOf(rj, sj) : RAISE.has(rj) && spj && sj >= spj[0] - 0.5 && sj <= spj[1] + 0.5 ? raiseOf(rj, sj) : 0;
             const yJ = brJ ? pfJ(sj, x, z) + have : heightAt(x, z) + have;
@@ -2838,6 +2918,11 @@ function computeRaisesOnce() {
       if (!ovl.size) break;
     }
   };
+  computeRaisesOncePart2(followOverlaps, push);
+  return nb;
+}
+/** (v1.1.7, code quality) part of computeRaisesOnce: side roads that meet a raised approach / deck at one of its nodes (slip roads, junctions on the ramp) climb to meet it */
+function computeRaisesOncePart2(followOverlaps, push) {
   followOverlaps(2);
   // side roads that meet a raised approach / deck at one of its nodes (slip roads, junctions on the ramp) climb to meet it
   // instead of staying at grade under it (agent: "deck floating over the road", "parapet in the carriageway")
@@ -2888,7 +2973,27 @@ function computeRaisesOnce() {
     RAISE_SPAN.set(rj, a);
   }
   if (extra.length) followOverlaps(1);
-  return nb;
+}
+/** (v1.1.7, code quality) part of computeRaisesOnce */
+function computeRaisesOncePart1() {
+  DEPSET = new Set([...DEP.keys()].map((ri) => DATA.R[ri]));
+  const ends = new Map();
+  const addE = (k, ri) => {
+    let a = ends.get(k);
+    if (!a) ends.set(k, (a = []));
+    a.push(ri);
+  };
+  DATA.R.forEach((rd, ri) => {
+    const c = rd[4];
+    addE(K(c[0], c[1]), ri);
+    addE(K(c[c.length - 2], c[c.length - 1]), ri);
+  });
+  const push = (ri, f) => {
+    let a = RAISE.get(ri);
+    if (!a) RAISE.set(ri, (a = []));
+    a.push(f);
+  };
+  return { ends, push };
 }
 // height of a road's surface as it will be built (same rules as buildRoads)
 function polyMinDist(c, x, z) {
@@ -3060,23 +3165,7 @@ function roadYFn(ri) {
 let SU_ENDS = null;
 function liftOverShort(push) {
   if (!SHORT_UP.length) return;
-  if (!SU_ENDS) {
-    SU_ENDS = new Map();
-    DATA.R.forEach((rd, ri) => {
-      if (rd[0] > 12) return;
-      const c = rd[4];
-      for (const k of [K(c[0], c[1]), K(c[c.length - 2], c[c.length - 1])]) {
-        let a = SU_ENDS.get(k);
-        if (!a) SU_ENDS.set(k, (a = []));
-        a.push(ri);
-      }
-    });
-  }
-  const span = (ri, lo, hi) => {
-    const Lr = polyLen(DATA.R[ri][4]);
-    let a = RAISE_SPAN.get(ri) || [Lr, 0];
-    RAISE_SPAN.set(ri, [Math.min(a[0], Math.max(0, lo)), Math.max(a[1], Math.min(Lr, hi))]);
-  };
+  const { span } = liftOverShortPart1();
   // along road ri from s0 (distance d0 already covered): f(dist) up to reach; then into the straightest continuation
   const walk = (ri, s0, d0, dir, f, reach, from, hop) => {
     const c = DATA.R[ri][4],
@@ -3133,6 +3222,27 @@ function liftOverShort(push) {
       walk(X.rj, X.so, 0, -1, f, P + Rr, -1, 0);
     }
   }
+}
+/** (v1.1.7, code quality) part of liftOverShort */
+function liftOverShortPart1() {
+  if (!SU_ENDS) {
+    SU_ENDS = new Map();
+    DATA.R.forEach((rd, ri) => {
+      if (rd[0] > 12) return;
+      const c = rd[4];
+      for (const k of [K(c[0], c[1]), K(c[c.length - 2], c[c.length - 1])]) {
+        let a = SU_ENDS.get(k);
+        if (!a) SU_ENDS.set(k, (a = []));
+        a.push(ri);
+      }
+    });
+  }
+  const span = (ri, lo, hi) => {
+    const Lr = polyLen(DATA.R[ri][4]);
+    let a = RAISE_SPAN.get(ri) || [Lr, 0];
+    RAISE_SPAN.set(ri, [Math.min(a[0], Math.max(0, lo)), Math.max(a[1], Math.min(Lr, hi))]);
+  };
+  return { span };
 }
 // iterate: a bridge whose road below got lifted (it is the approach ramp of another bridge) must go higher still
 function computeRaises() {
@@ -3335,36 +3445,7 @@ function tramUnderRoad(x, z, ux, uz) {
 function tunnelRoad(c, w, cls, tile, hf, opt = {}) {
   /* v1.1.4 (Jonay, San Honorato X −988, Y 114: «se siguen metiendo carreteras unas debajo de otras… las líneas en zigzag»):
      the lines of a sunk road also stop where it runs inside another carriageway at its own level (the mouths of the cutting) */
-  if (isLines(cls) && TUN_RI >= 0) {
-    for (const [a, b, ln] of lineRuns(TUN_RI, c)) {
-      const pc = subPoly(c, a, b);
-      if (pc.length >= 4)
-        ribbon(pc, w, ln ? cls : 'asphalt', ln ? YOFF[cls] : YOFF.asphalt, ln ? tile : 8, ln ? 1 : w / 8, (q, x, z) => hf(q + a, x, z), true);
-    }
-  } else ribbon(c, w, cls, YOFF[cls], tile, isLines(cls) ? 1 : w / 8, hf, true);
-  // covered stretch -> tube with walls, ceiling and lights; open stretch -> cutting with retaining walls
-  const T = acc(c[0], c[1], 'tunnel');
-  const L2 = acc(c[0], c[1], 'tunnelLight');
-  const W = acc(c[0], c[1], 'trim');
-  const hw = w / 2 + (opt.H ? 0.6 : 1.0),
-    H = opt.H || 6.0; // roomier tubes and mouths
-  const pts = [];
-  let dist = 0;
-  for (let i = 0; i < c.length - 2; i += 2) {
-    const x1 = c[i],
-      z1 = c[i + 1],
-      x2 = c[i + 2],
-      z2 = c[i + 3],
-      Ls = Math.hypot(x2 - x1, z2 - z1) || 1;
-    const n = Math.max(1, Math.ceil(Ls / 4));
-    for (let k = 0; k < n; k++) {
-      const x = x1 + ((x2 - x1) * k) / n,
-        z = z1 + ((z2 - z1) * k) / n;
-      pts.push([x, z, hf(dist + (Ls * k) / n, x, z), (x2 - x1) / Ls, (z2 - z1) / Ls, dist + (Ls * k) / n]);
-    }
-    dist += Ls;
-  }
-  pts.push([c[c.length - 2], c[c.length - 1], hf(dist, c[c.length - 2], c[c.length - 1]), pts[pts.length - 1][3], pts[pts.length - 1][4], dist]);
+  const { T, L2, W, hw, H, pts } = tunnelRoadPart1(cls, c, w, tile, hf, opt);
   const dep = (p) => heightAt(p[0], p[1]) - p[2];
   const covered = opt.coveredAt || ((p) => dep(p) > Math.max(opt.cover || 3.4, H + 0.35));
   /* the roof must stay under the ground (it used to stick out as a white slab across the road) */ const wc = opt.wc || [0.66, 0.64, 0.6];
@@ -3558,6 +3639,40 @@ function tunnelRoad(c, w, cls, tile, hf, opt = {}) {
     tram: cls === 'tram',
     ceil: opt.H ? opt.H - 0.3 : undefined
   });
+}
+/** (v1.1.7, code quality) part of tunnelRoad: covered stretch -> tube with walls, ceiling and lights; open stretch -> cutting with retaining walls */
+function tunnelRoadPart1(cls, c, w, tile, hf, opt) {
+  if (isLines(cls) && TUN_RI >= 0) {
+    for (const [a, b, ln] of lineRuns(TUN_RI, c)) {
+      const pc = subPoly(c, a, b);
+      if (pc.length >= 4)
+        ribbon(pc, w, ln ? cls : 'asphalt', ln ? YOFF[cls] : YOFF.asphalt, ln ? tile : 8, ln ? 1 : w / 8, (q, x, z) => hf(q + a, x, z), true);
+    }
+  } else ribbon(c, w, cls, YOFF[cls], tile, isLines(cls) ? 1 : w / 8, hf, true);
+  // covered stretch -> tube with walls, ceiling and lights; open stretch -> cutting with retaining walls
+  const T = acc(c[0], c[1], 'tunnel');
+  const L2 = acc(c[0], c[1], 'tunnelLight');
+  const W = acc(c[0], c[1], 'trim');
+  const hw = w / 2 + (opt.H ? 0.6 : 1.0),
+    H = opt.H || 6.0; // roomier tubes and mouths
+  const pts = [];
+  let dist = 0;
+  for (let i = 0; i < c.length - 2; i += 2) {
+    const x1 = c[i],
+      z1 = c[i + 1],
+      x2 = c[i + 2],
+      z2 = c[i + 3],
+      Ls = Math.hypot(x2 - x1, z2 - z1) || 1;
+    const n = Math.max(1, Math.ceil(Ls / 4));
+    for (let k = 0; k < n; k++) {
+      const x = x1 + ((x2 - x1) * k) / n,
+        z = z1 + ((z2 - z1) * k) / n;
+      pts.push([x, z, hf(dist + (Ls * k) / n, x, z), (x2 - x1) / Ls, (z2 - z1) / Ls, dist + (Ls * k) / n]);
+    }
+    dist += Ls;
+  }
+  pts.push([c[c.length - 2], c[c.length - 1], hf(dist, c[c.length - 2], c[c.length - 1]), pts[pts.length - 1][3], pts[pts.length - 1][4], dist]);
+  return { T, L2, W, hw, H, pts };
 }
 const underground = (x, z, y) => y < heightAt(x, z) - 1.6; // deep in a tunnel/cutting: surface obstacles don't apply
 // open cutting edge for things on the surface: returns push-out vector or null
@@ -3914,7 +4029,458 @@ function facadeWall(A, T, p, q, nb, fh, y0, bot, top, col, tl, out) {
 }
 function buildBuildings() {
   indexRoads();
-  let bi = 0;
+  buildBuildingsPart1(); // v1.0.4: the buildings of the Catastro that the OSM lacks (05y_muros.js)
+  for (let bi = 1; bi <= DATA.B.length; bi++) {
+    buildBuildingsEach(bi);
+  }
+}
+/** (v1.1.7, code quality) the body of a loop of buildBuildings, split out of it */
+function buildBuildingsEach(bi) {
+  const b = DATA.B[bi - 1];
+  const [h10, style, lv, roofT, nameIdx, seed, c] = b;
+  let pts = [];
+  for (let i = 0; i < c.length; i += 2) pts.push([c[i], c[i + 1]]);
+  let n = pts.length;
+  if (n < 3) return;
+  if (isTramStopBuilding(nameIdx, pts)) return; // drawn as proper tram stops
+  {
+    let qx = 0,
+      qz = 0;
+    for (const p of pts) {
+      qx += p[0];
+      qz += p[1];
+    }
+    if (perazaStand(style, insetPoly(pts, 0.4), qx / n, qz / n) || riosHall(insetPoly(pts, 0.6), qx / n, qz / n)) return;
+  } // v0.75: the stands of the Estadio Francisco Peraza (05v_peraza.js)
+  pts = insetPoly(pts, style === 4 ? 0.3 : 0.75);
+  if (style !== 4) {
+    const t = roadClip(streetTrim(pts));
+    if (!t) {
+      b[6] = [];
+      return;
+    }
+    /* v1.0.0: only a strip would be left on the pavement: no building (and none for inAnyBuilding either) */ if (t !== pts) {
+      pts = t;
+      n = pts.length;
+      const o = [];
+      for (let i = 0; i < c.length; i += 2) o.push([c[i], c[i + 1]]);
+      const t2 = roadClip(streetTrim(o));
+      if (t2 && t2 !== o) b[6] = t2.flat();
+    }
+  } // v0.68–0.69: off the carriageways (04b_recorte.js; the Av. de La Trinidad with its pavement); DATA.B too, for inAnyBuilding
+  if (style === 4 && nameIdx >= 0 && /Concepción/.test(STR[nameIdx])) {
+    pts = carveConcTower(pts);
+    n = pts.length;
+  }
+  let bmin = 1e9,
+    bmax = -1e9,
+    cx = 0,
+    cz = 0;
+  for (const p of pts) {
+    const h = heightAt(p[0], p[1]);
+    bmin = Math.min(bmin, h);
+    bmax = Math.max(bmax, h);
+    cx += p[0];
+    cz += p[1];
+  }
+  cx /= n;
+  cz /= n;
+  const name = nameIdx >= 0 ? STR[nameIdx] : (style === 2 || style === 3) && typeof brandInside === 'function' ? brandInside(pts) : null;
+  const LM = (name ? landmarkFor(name) : null) || landmarkAt(cx, cz);
+  const H = LM && LM.H ? LM.H : h10 / 10;
+  let top = bmax + H;
+  const bot = bmin - 0.6;
+  if (name && /Intercambiador/.test(name) && Math.abs(polyArea(pts)) > 5000) {
+    INTER_B = { pts, cx, cz, bmax, top, name };
+    for (let i = 0; i < n; i++) {}
+    return;
+  }
+  const r = mulberry(seed * 7 + 3);
+  const PS = style !== 4 && style !== 5 ? pasajesOf(pts, H) : null; // v0.78: walkways under the building (05x_pasajes.js)
+  BUILD.push({ pts, cx, cz, top, bmax, style, name, H, pasaje: !!PS });
+  // collisions
+  for (let i = 0; i < n; i++) {
+    const p = pts[i],
+      q = pts[(i + 1) % n];
+    const cu = PS ? pasajeCuts(p, q, PS) : null;
+    if (cu) pasajeCol(p, q, cu);
+    else COL.addSeg(p[0], p[1], q[0], q[1]);
+  }
+  if (CONC_CARVE.pts === pts) {
+    CHURCHES.push({ pts, cx, cz, top, bmin, bmax, H, name, area: Math.abs(polyArea(pts)), custom: true });
+    return;
+  } // La Concepción: modelled in 05o_concepcion.js
+  if (style === 5) {
+    // greenhouse
+    const A = acc(cx, cz, 'glassHouse');
+    // greenhouses follow the slope (a flat top over a 13 m slope made a huge glass box)
+    const gy = pts.map((p) => heightAt(p[0], p[1])),
+      Hh = H,
+      ty = gy.map((g) => g + Hh);
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n,
+        p = pts[i],
+        q = pts[j];
+      A.quad([p[0], gy[i] - 0.6, p[1]], [q[0], gy[j] - 0.6, q[1]], [q[0], ty[j], q[1]], [p[0], ty[i], p[1]], [0, 0], [1, 0], [1, 1], [0, 1]);
+    }
+    const tris = THREE.ShapeUtils.triangulateShape(
+      pts.map((p) => new THREE.Vector2(p[0], p[1])),
+      []
+    );
+    for (const t of tris)
+      A.tri(
+        [pts[t[0]][0], ty[t[0]], pts[t[0]][1]],
+        [pts[t[1]][0], ty[t[1]], pts[t[1]][1]],
+        [pts[t[2]][0], ty[t[2]], pts[t[2]][1]],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        null,
+        undefined,
+        [0, 1, 0]
+      );
+    // white steel frame: posts every ~4 m and a ridge band along the top edge
+    const F = acc(cx, cz, 'trim');
+    const fc = [0.93, 0.94, 0.93];
+    for (let i = 0; i < n; i++) {
+      const p = pts[i],
+        q = pts[(i + 1) % n];
+      const L = Math.hypot(q[0] - p[0], q[1] - p[1]);
+      const ux = (q[0] - p[0]) / (L || 1),
+        uz = (q[1] - p[1]) / (L || 1),
+        nx = -uz * 0.06,
+        nz = ux * 0.06;
+      for (let k = 0; k <= Math.floor(L / 4); k++) {
+        const x = p[0] + ux * Math.min(L, k * 4),
+          z = p[1] + uz * Math.min(L, k * 4);
+        const g = heightAt(x, z) - 0.1,
+          tp = g + 0.1 + Hh;
+        F.quad(
+          [x - ux * 0.07 + nx, g, z - uz * 0.07 + nz],
+          [x + ux * 0.07 + nx, g, z + uz * 0.07 + nz],
+          [x + ux * 0.07 + nx, tp, z + uz * 0.07 + nz],
+          [x - ux * 0.07 + nx, tp, z - uz * 0.07 + nz],
+          [0, 0],
+          [0, 0],
+          [0, 0],
+          [0, 0],
+          fc,
+          undefined,
+          [nx * 16, 0, nz * 16]
+        );
+      }
+      F.quad(
+        [p[0] + nx, ty[i] - 0.18, p[1] + nz],
+        [q[0] + nx, ty[(i + 1) % n] - 0.18, q[1] + nz],
+        [q[0] + nx, ty[(i + 1) % n] + 0.02, q[1] + nz],
+        [p[0] + nx, ty[i] + 0.02, p[1] + nz],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        fc,
+        undefined,
+        [nx * 16, 0, nz * 16]
+      );
+    }
+    return;
+  }
+  const store = name && DATA.BRAND[name] ? DATA.BRAND[name] : null;
+  let atlas = chooseAtlas(style, r, name, cx, cz, lv, Math.abs(polyArea(pts)));
+  if (store) atlas = r() < 0.5 ? 3 : 14;
+  if (LM && LM.atlas !== undefined) atlas = LM.atlas;
+  const [bay, fh] = FSTY[atlas];
+  BUILD[BUILD.length - 1].atlas = atlas;
+  // v0.99.6 (Jonay: «las ventanas están bajo tierra o cortadas… no se puede cortar una ventana ni empezar pegada al
+  // suelo»): the floors are counted from the highest ground of the building (on a slope the low side has whole floors
+  // more), and the building is as tall as a whole number of floors (no half windows under the roof)
+  const y0 = bmax - Math.ceil((bmax - bmin) / fh - 0.08) * fh;
+  if (!LM && style !== 4) {
+    top = y0 + Math.max(1, Math.round((top - y0) / fh)) * fh;
+    while (top < bmax + Math.min(H, fh) - 0.01) top += fh;
+    BUILD[BUILD.length - 1].top = top;
+  }
+  const palK = atlas === 8 && style !== 0 ? 1 : PALV[atlas] || style;
+  let colHex = (PAL[palK] || PAL[1])[Math.floor(r() * (PAL[palK] || PAL[1]).length)];
+  if (LM && LM.col) colHex = LM.col;
+  if (store) colHex = STORECOL[name] || '#e9e7e0';
+  const col = hex3(colHex);
+  const shade = 0.92 + r() * 0.12;
+  col[0] *= shade;
+  col[1] *= shade;
+  col[2] *= shade;
+  const A = acc(cx, cz, 'facade'),
+    T0 = acc(cx, cz, 'trim');
+  const area = polyArea(pts);
+  if (store) BIGSTORES.push({ pts, cx, cz, top, bmax, name, parody: store, area: Math.abs(area) });
+  // decide roof
+  const hl = hull(pts);
+  const hullA = Math.abs(polyArea(hl));
+  let hip = (roofT === 1 || (LM && LM.hip)) && Math.abs(area) / hullA > 0.55 && n <= (LM && LM.hip ? 60 : 40);
+  const parapet = !hip && style !== 3 && H > 3;
+  // recessed top floor (ático) on taller apartment blocks
+  let atico = null;
+  if (style === 2 && lv >= 5 && n <= 14 && Math.abs(area) > 150 && !hip && r() < 0.5) {
+    const ip = insetPoly(pts, 1.8);
+    if (ip && ip.length === n && Math.abs(polyArea(ip)) > Math.abs(area) * 0.35) atico = ip;
+  }
+  const wallTop = atico ? top - fh : top;
+  for (let i = 0; i < n; i++) {
+    const p = pts[i],
+      q = pts[(i + 1) % n];
+    const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
+    if (len < 0.05) continue;
+    const nb = len > 1.6 ? Math.max(1, Math.round(len / bay)) : 0.1;
+    const out = [(q[1] - p[1]) / len, 0, -(q[0] - p[0]) / len];
+    const v0 = (bot - bmin) / fh,
+      v1 = (wallTop - bmin) / fh;
+    // long street fronts of terraced houses / blocks: split into parcels with their own colour (and facade for houses)
+    const cuts = PS ? pasajeCuts(p, q, PS) : null;
+    if (cuts) {
+      pasajeWall(A, p, q, cuts, bot, wallTop, bmin, fh, nb, col, [atlas, bi % 97], out);
+      continue;
+    }
+    const parcel = !LM && !store && (style === 0 || style === 1 || style === 2) && len > (style === 2 ? 24 : 12);
+    if (!parcel) {
+      facadeWall(A, T0, p, q, nb, fh, y0, bot, wallTop, col, [atlas, bi % 97], out);
+      continue;
+    }
+    const pr = mulberry(seed * 13 + i * 7 + 1);
+    const segL = style === 2 ? 14 + pr() * 10 : 6 + pr() * 6;
+    const k = Math.max(2, Math.round(len / segL));
+    const grp = style === 0 ? [0, 8, 9, 0, 8] : style === 1 ? [1, 10, 1, 8, 1] : [atlas, atlas, 11, 2, atlas];
+    for (let j = 0; j < k; j++) {
+      const t0 = j / k,
+        t1 = (j + 1) / k;
+      const a = [p[0] + (q[0] - p[0]) * t0, p[1] + (q[1] - p[1]) * t0],
+        b = [p[0] + (q[0] - p[0]) * t1, p[1] + (q[1] - p[1]) * t1];
+      const at = j === 0 ? atlas : grp[Math.floor(pr() * grp.length)];
+      const [bay2, fh2] = FSTY[at];
+      const sl = len / k;
+      const nb2 = Math.max(1, Math.round(sl / bay2));
+      const pk = at === 8 && style !== 0 ? 1 : PALV[at] || style;
+      const pl = PAL[pk] || PAL[1];
+      const c2 = j === 0 ? col : hex3(pl[Math.floor(pr() * pl.length)]).map((v) => v * (0.93 + pr() * 0.1));
+      const w0 = (bot - bmin) / fh2,
+        w1 = (wallTop - bmin) / fh2;
+      facadeWall(A, T0, a, b, nb2, fh2, bmax - Math.ceil((bmax - bmin) / fh2 - 0.08) * fh2, bot, wallTop, c2, [at, (bi + j * 31) % 97], out);
+      void w0;
+      void w1;
+    }
+  }
+  if (PS) pasajeInterior(PS, pts, cx, cz, col);
+  if (LM) LMQ.push({ L: LM, pts, top, bmin, bmax, cx, cz, name });
+  if (LM && LM.quoin) addQuoins(pts, bot, wallTop, 0.75, LM.quoin);
+  if (LM && LM.noRoof) return;
+  const quoin = !(LM && LM.quoin) && (style === 4 || (style === 0 && (name || r() < 0.45) && H > 4) || (style === 6 && name && isHistoric(cx, cz)));
+  if (quoin) addQuoins(pts, bot, wallTop, style === 4 ? 0.7 : 0.5);
+  if (style === 0 && lv >= 2 && r() < 0.42) addBalcony(pts, bmin, fh, r);
+  if (style === 4) {
+    CHURCHES.push({ pts, cx, cz, top, bmin, bmax, H, name, area: Math.abs(area) });
+    return;
+  }
+  // roofs
+  if (atico) {
+    // terrace over the main block (railing), then the recessed floor whose roof continues below
+    const T0 = THREE.ShapeUtils.triangulateShape(
+      pts.map((p) => new THREE.Vector2(p[0], p[1])),
+      []
+    );
+    const R0 = acc(cx, cz, 'roofFlat');
+    const tc = [0.78, 0.74, 0.68];
+    for (const t of T0) {
+      const a = pts[t[0]],
+        b2 = pts[t[1]],
+        c2 = pts[t[2]];
+      R0.tri(
+        [a[0], wallTop, a[1]],
+        [b2[0], wallTop, b2[1]],
+        [c2[0], wallTop, c2[1]],
+        [a[0] / 4, a[1] / 4],
+        [b2[0] / 4, b2[1] / 4],
+        [c2[0] / 4, c2[1] / 4],
+        tc,
+        undefined,
+        [0, 1, 0]
+      );
+    }
+    const Tr = acc(cx, cz, 'trim');
+    const rcol = [0.25, 0.26, 0.27];
+    for (let i = 0; i < n; i++) {
+      const p = pts[i],
+        q = pts[(i + 1) % n];
+      const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
+      if (len < 0.05) continue;
+      const out = [(q[1] - p[1]) / len, 0, -(q[0] - p[0]) / len];
+      Tr.quad(
+        [p[0], wallTop, p[1]],
+        [q[0], wallTop, q[1]],
+        [q[0], wallTop + 1.0, q[1]],
+        [p[0], wallTop + 1.0, p[1]],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        rcol,
+        undefined,
+        out
+      );
+      Tr.quad(
+        [q[0], wallTop, q[1]],
+        [p[0], wallTop, p[1]],
+        [p[0], wallTop + 1.0, p[1]],
+        [q[0], wallTop + 1.0, q[1]],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        rcol,
+        undefined,
+        [-out[0], 0, -out[2]]
+      );
+    }
+    for (let i = 0; i < n; i++) {
+      const p = atico[i],
+        q = atico[(i + 1) % n];
+      const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
+      if (len < 0.05) continue;
+      const nb = len > 1.6 ? Math.max(1, Math.round(len / bay)) : 0.1;
+      const out = [(q[1] - p[1]) / len, 0, -(q[0] - p[0]) / len];
+      const v0 = (wallTop - bmin) / fh,
+        v1 = (top - bmin) / fh;
+      A.quad(
+        [p[0], wallTop, p[1]],
+        [q[0], wallTop, q[1]],
+        [q[0], top, q[1]],
+        [p[0], top, p[1]],
+        [0, v0],
+        [nb, v0],
+        [nb, v1],
+        [0, v1],
+        col,
+        [atlas, bi % 97],
+        out
+      );
+    }
+    pts = atico;
+  }
+  const AH = !hip ? atrioHole(pts) : null; // v0.78: a patio open to the sky through the block (Cine Aguere, 05x_pasajes.js)
+  const tris = THREE.ShapeUtils.triangulateShape(
+    pts.map((p) => new THREE.Vector2(p[0], p[1])),
+    AH ? [AH.hole.map((p) => new THREE.Vector2(p[0], p[1]))] : []
+  );
+  const TP = AH ? pts.concat(AH.hole) : pts;
+  if (AH) buildAtrio(AH.a, top, cx, cz);
+  if (hip) {
+    hipRoof(pts, cx, cz, top, area, tris);
+  } else {
+    const R = acc(cx, cz, 'roofFlat');
+    const ry = parapet ? top - 0.85 : top;
+    const g = 0.7 + r() * 0.2;
+    const rc = [g, g * 0.98, g * 0.95];
+    for (const t of tris) {
+      const a = TP[t[0]],
+        b2 = TP[t[1]],
+        c2 = TP[t[2]];
+      R.tri(
+        [a[0], ry, a[1]],
+        [b2[0], ry, b2[1]],
+        [c2[0], ry, c2[1]],
+        [a[0] / 4, a[1] / 4],
+        [b2[0] / 4, b2[1] / 4],
+        [c2[0] / 4, c2[1] / 4],
+        rc,
+        undefined,
+        [0, 1, 0]
+      );
+    }
+    if (parapet) {
+      const T = acc(cx, cz, 'trim');
+      const pc = [col[0] * 0.95, col[1] * 0.95, col[2] * 0.95];
+      const tc = style === 0 ? [0.45, 0.44, 0.42] : [0.93, 0.92, 0.9];
+      for (let i = 0; i < n; i++) {
+        const p = pts[i],
+          q = pts[(i + 1) % n];
+        const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
+        if (len < 0.05) continue;
+        const ix = (-(q[1] - p[1]) / len) * 0.22,
+          iz = ((q[0] - p[0]) / len) * 0.22;
+        T.quad(
+          [p[0] + ix, ry, p[1] + iz],
+          [q[0] + ix, ry, q[1] + iz],
+          [q[0] + ix, top, q[1] + iz],
+          [p[0] + ix, top, p[1] + iz],
+          [0, 0],
+          [0, 0],
+          [0, 0],
+          [0, 0],
+          pc,
+          undefined,
+          [ix, 0, iz]
+        );
+        T.quad(
+          [p[0], top, p[1]],
+          [q[0], top, q[1]],
+          [q[0] + ix, top, q[1] + iz],
+          [p[0] + ix, top, p[1] + iz],
+          [0, 0],
+          [0, 0],
+          [0, 0],
+          [0, 0],
+          tc,
+          undefined,
+          [0, 1, 0]
+        );
+        // cornice band
+        const ox = -ix * 1.1,
+          oz = -iz * 1.1;
+        T.quad(
+          [p[0] + ox, top - 0.35, p[1] + oz],
+          [q[0] + ox, top - 0.35, q[1] + oz],
+          [q[0] + ox, top + 0.05, q[1] + oz],
+          [p[0] + ox, top + 0.05, p[1] + oz],
+          [0, 0],
+          [0, 0],
+          [0, 0],
+          [0, 0],
+          tc,
+          undefined,
+          [ox, 0, oz]
+        );
+        T.quad(
+          [p[0], top + 0.05, p[1]],
+          [q[0], top + 0.05, q[1]],
+          [q[0] + ox, top + 0.05, q[1] + oz],
+          [p[0] + ox, top + 0.05, p[1] + oz],
+          [0, 0],
+          [0, 0],
+          [0, 0],
+          [0, 0],
+          tc,
+          undefined,
+          [0, 1, 0]
+        );
+        T.quad(
+          [p[0], top - 0.35, p[1]],
+          [q[0], top - 0.35, q[1]],
+          [q[0] + ox, top - 0.35, q[1] + oz],
+          [p[0] + ox, top - 0.35, p[1] + oz],
+          [0, 0],
+          [0, 0],
+          [0, 0],
+          [0, 0],
+          tc,
+          undefined,
+          [0, -1, 0]
+        );
+      }
+      // rooftop clutter: water tanks & antennas (Canarian azoteas)
+      if ((style === 1 || style === 2) && Math.abs(area) > 50 && r() < 0.7) ROOFPROPS.push([cx + (r() - 0.5) * 3, ry, cz + (r() - 0.5) * 3, r()]);
+    }
+  }
+}
+/** (v1.1.7, code quality) part of buildBuildings */
+function buildBuildingsPart1() {
   try {
     splitCoarseBlocks();
   } catch (e) {
@@ -3929,484 +4495,33 @@ function buildBuildings() {
     addCatastro();
   } catch (e) {
     console.error('catastro', e);
-  } // v1.0.4: the buildings of the Catastro that the OSM lacks (05y_muros.js)
-  for (const b of DATA.B) {
-    bi++;
-    const [h10, style, lv, roofT, nameIdx, seed, c] = b;
-    let pts = [];
-    for (let i = 0; i < c.length; i += 2) pts.push([c[i], c[i + 1]]);
-    let n = pts.length;
-    if (n < 3) continue;
-    if (isTramStopBuilding(nameIdx, pts)) continue; // drawn as proper tram stops
-    {
-      let qx = 0,
-        qz = 0;
-      for (const p of pts) {
-        qx += p[0];
-        qz += p[1];
-      }
-      if (perazaStand(style, insetPoly(pts, 0.4), qx / n, qz / n) || riosHall(insetPoly(pts, 0.6), qx / n, qz / n)) continue;
-    } // v0.75: the stands of the Estadio Francisco Peraza (05v_peraza.js)
-    pts = insetPoly(pts, style === 4 ? 0.3 : 0.75);
-    if (style !== 4) {
-      const t = roadClip(streetTrim(pts));
-      if (!t) {
-        b[6] = [];
-        continue;
-      }
-      /* v1.0.0: only a strip would be left on the pavement: no building (and none for inAnyBuilding either) */ if (t !== pts) {
-        pts = t;
-        n = pts.length;
-        const o = [];
-        for (let i = 0; i < c.length; i += 2) o.push([c[i], c[i + 1]]);
-        const t2 = roadClip(streetTrim(o));
-        if (t2 && t2 !== o) b[6] = t2.flat();
-      }
-    } // v0.68–0.69: off the carriageways (04b_recorte.js; the Av. de La Trinidad with its pavement); DATA.B too, for inAnyBuilding
-    if (style === 4 && nameIdx >= 0 && /Concepción/.test(STR[nameIdx])) {
-      pts = carveConcTower(pts);
-      n = pts.length;
-    }
-    let bmin = 1e9,
-      bmax = -1e9,
-      cx = 0,
-      cz = 0;
-    for (const p of pts) {
-      const h = heightAt(p[0], p[1]);
-      bmin = Math.min(bmin, h);
-      bmax = Math.max(bmax, h);
-      cx += p[0];
-      cz += p[1];
-    }
-    cx /= n;
-    cz /= n;
-    const name = nameIdx >= 0 ? STR[nameIdx] : (style === 2 || style === 3) && typeof brandInside === 'function' ? brandInside(pts) : null;
-    const LM = (name ? landmarkFor(name) : null) || landmarkAt(cx, cz);
-    const H = LM && LM.H ? LM.H : h10 / 10;
-    let top = bmax + H;
-    const bot = bmin - 0.6;
-    if (name && /Intercambiador/.test(name) && Math.abs(polyArea(pts)) > 5000) {
-      INTER_B = { pts, cx, cz, bmax, top, name };
-      for (let i = 0; i < n; i++) {}
-      continue;
-    }
-    const r = mulberry(seed * 7 + 3);
-    const PS = style !== 4 && style !== 5 ? pasajesOf(pts, H) : null; // v0.78: walkways under the building (05x_pasajes.js)
-    BUILD.push({ pts, cx, cz, top, bmax, style, name, H, pasaje: !!PS });
-    // collisions
-    for (let i = 0; i < n; i++) {
-      const p = pts[i],
-        q = pts[(i + 1) % n];
-      const cu = PS ? pasajeCuts(p, q, PS) : null;
-      if (cu) pasajeCol(p, q, cu);
-      else COL.addSeg(p[0], p[1], q[0], q[1]);
-    }
-    if (CONC_CARVE.pts === pts) {
-      CHURCHES.push({ pts, cx, cz, top, bmin, bmax, H, name, area: Math.abs(polyArea(pts)), custom: true });
-      continue;
-    } // La Concepción: modelled in 05o_concepcion.js
-    if (style === 5) {
-      // greenhouse
-      const A = acc(cx, cz, 'glassHouse');
-      // greenhouses follow the slope (a flat top over a 13 m slope made a huge glass box)
-      const gy = pts.map((p) => heightAt(p[0], p[1])),
-        Hh = H,
-        ty = gy.map((g) => g + Hh);
-      for (let i = 0; i < n; i++) {
-        const j = (i + 1) % n,
-          p = pts[i],
-          q = pts[j];
-        A.quad([p[0], gy[i] - 0.6, p[1]], [q[0], gy[j] - 0.6, q[1]], [q[0], ty[j], q[1]], [p[0], ty[i], p[1]], [0, 0], [1, 0], [1, 1], [0, 1]);
-      }
-      const tris = THREE.ShapeUtils.triangulateShape(
-        pts.map((p) => new THREE.Vector2(p[0], p[1])),
-        []
-      );
-      for (const t of tris)
-        A.tri(
-          [pts[t[0]][0], ty[t[0]], pts[t[0]][1]],
-          [pts[t[1]][0], ty[t[1]], pts[t[1]][1]],
-          [pts[t[2]][0], ty[t[2]], pts[t[2]][1]],
-          [0, 0],
-          [0, 0],
-          [0, 0],
-          null,
-          undefined,
-          [0, 1, 0]
-        );
-      // white steel frame: posts every ~4 m and a ridge band along the top edge
-      const F = acc(cx, cz, 'trim');
-      const fc = [0.93, 0.94, 0.93];
-      for (let i = 0; i < n; i++) {
-        const p = pts[i],
-          q = pts[(i + 1) % n];
-        const L = Math.hypot(q[0] - p[0], q[1] - p[1]);
-        const ux = (q[0] - p[0]) / (L || 1),
-          uz = (q[1] - p[1]) / (L || 1),
-          nx = -uz * 0.06,
-          nz = ux * 0.06;
-        for (let k = 0; k <= Math.floor(L / 4); k++) {
-          const x = p[0] + ux * Math.min(L, k * 4),
-            z = p[1] + uz * Math.min(L, k * 4);
-          const g = heightAt(x, z) - 0.1,
-            tp = g + 0.1 + Hh;
-          F.quad(
-            [x - ux * 0.07 + nx, g, z - uz * 0.07 + nz],
-            [x + ux * 0.07 + nx, g, z + uz * 0.07 + nz],
-            [x + ux * 0.07 + nx, tp, z + uz * 0.07 + nz],
-            [x - ux * 0.07 + nx, tp, z - uz * 0.07 + nz],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            fc,
-            undefined,
-            [nx * 16, 0, nz * 16]
-          );
-        }
-        F.quad(
-          [p[0] + nx, ty[i] - 0.18, p[1] + nz],
-          [q[0] + nx, ty[(i + 1) % n] - 0.18, q[1] + nz],
-          [q[0] + nx, ty[(i + 1) % n] + 0.02, q[1] + nz],
-          [p[0] + nx, ty[i] + 0.02, p[1] + nz],
-          [0, 0],
-          [0, 0],
-          [0, 0],
-          [0, 0],
-          fc,
-          undefined,
-          [nx * 16, 0, nz * 16]
-        );
-      }
-      continue;
-    }
-    const store = name && DATA.BRAND[name] ? DATA.BRAND[name] : null;
-    let atlas = chooseAtlas(style, r, name, cx, cz, lv, Math.abs(polyArea(pts)));
-    if (store) atlas = r() < 0.5 ? 3 : 14;
-    if (LM && LM.atlas !== undefined) atlas = LM.atlas;
-    const [bay, fh] = FSTY[atlas];
-    BUILD[BUILD.length - 1].atlas = atlas;
-    // v0.99.6 (Jonay: «las ventanas están bajo tierra o cortadas… no se puede cortar una ventana ni empezar pegada al
-    // suelo»): the floors are counted from the highest ground of the building (on a slope the low side has whole floors
-    // more), and the building is as tall as a whole number of floors (no half windows under the roof)
-    const y0 = bmax - Math.ceil((bmax - bmin) / fh - 0.08) * fh;
-    if (!LM && style !== 4) {
-      top = y0 + Math.max(1, Math.round((top - y0) / fh)) * fh;
-      while (top < bmax + Math.min(H, fh) - 0.01) top += fh;
-      BUILD[BUILD.length - 1].top = top;
-    }
-    const palK = atlas === 8 && style !== 0 ? 1 : PALV[atlas] || style;
-    let colHex = (PAL[palK] || PAL[1])[Math.floor(r() * (PAL[palK] || PAL[1]).length)];
-    if (LM && LM.col) colHex = LM.col;
-    if (store) colHex = STORECOL[name] || '#e9e7e0';
-    const col = hex3(colHex);
-    const shade = 0.92 + r() * 0.12;
-    col[0] *= shade;
-    col[1] *= shade;
-    col[2] *= shade;
-    const A = acc(cx, cz, 'facade'),
-      T0 = acc(cx, cz, 'trim');
-    const area = polyArea(pts);
-    if (store) BIGSTORES.push({ pts, cx, cz, top, bmax, name, parody: store, area: Math.abs(area) });
-    // decide roof
-    const hl = hull(pts);
-    const hullA = Math.abs(polyArea(hl));
-    let hip = (roofT === 1 || (LM && LM.hip)) && Math.abs(area) / hullA > 0.55 && n <= (LM && LM.hip ? 60 : 40);
-    const parapet = !hip && style !== 3 && H > 3;
-    // recessed top floor (ático) on taller apartment blocks
-    let atico = null;
-    if (style === 2 && lv >= 5 && n <= 14 && Math.abs(area) > 150 && !hip && r() < 0.5) {
-      const ip = insetPoly(pts, 1.8);
-      if (ip && ip.length === n && Math.abs(polyArea(ip)) > Math.abs(area) * 0.35) atico = ip;
-    }
-    const wallTop = atico ? top - fh : top;
-    for (let i = 0; i < n; i++) {
-      const p = pts[i],
-        q = pts[(i + 1) % n];
-      const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
-      if (len < 0.05) continue;
-      const nb = len > 1.6 ? Math.max(1, Math.round(len / bay)) : 0.1;
-      const out = [(q[1] - p[1]) / len, 0, -(q[0] - p[0]) / len];
-      const v0 = (bot - bmin) / fh,
-        v1 = (wallTop - bmin) / fh;
-      // long street fronts of terraced houses / blocks: split into parcels with their own colour (and facade for houses)
-      const cuts = PS ? pasajeCuts(p, q, PS) : null;
-      if (cuts) {
-        pasajeWall(A, p, q, cuts, bot, wallTop, bmin, fh, nb, col, [atlas, bi % 97], out);
-        continue;
-      }
-      const parcel = !LM && !store && (style === 0 || style === 1 || style === 2) && len > (style === 2 ? 24 : 12);
-      if (!parcel) {
-        facadeWall(A, T0, p, q, nb, fh, y0, bot, wallTop, col, [atlas, bi % 97], out);
-        continue;
-      }
-      const pr = mulberry(seed * 13 + i * 7 + 1);
-      const segL = style === 2 ? 14 + pr() * 10 : 6 + pr() * 6;
-      const k = Math.max(2, Math.round(len / segL));
-      const grp = style === 0 ? [0, 8, 9, 0, 8] : style === 1 ? [1, 10, 1, 8, 1] : [atlas, atlas, 11, 2, atlas];
-      for (let j = 0; j < k; j++) {
-        const t0 = j / k,
-          t1 = (j + 1) / k;
-        const a = [p[0] + (q[0] - p[0]) * t0, p[1] + (q[1] - p[1]) * t0],
-          b = [p[0] + (q[0] - p[0]) * t1, p[1] + (q[1] - p[1]) * t1];
-        const at = j === 0 ? atlas : grp[Math.floor(pr() * grp.length)];
-        const [bay2, fh2] = FSTY[at];
-        const sl = len / k;
-        const nb2 = Math.max(1, Math.round(sl / bay2));
-        const pk = at === 8 && style !== 0 ? 1 : PALV[at] || style;
-        const pl = PAL[pk] || PAL[1];
-        const c2 = j === 0 ? col : hex3(pl[Math.floor(pr() * pl.length)]).map((v) => v * (0.93 + pr() * 0.1));
-        const w0 = (bot - bmin) / fh2,
-          w1 = (wallTop - bmin) / fh2;
-        facadeWall(A, T0, a, b, nb2, fh2, bmax - Math.ceil((bmax - bmin) / fh2 - 0.08) * fh2, bot, wallTop, c2, [at, (bi + j * 31) % 97], out);
-        void w0;
-        void w1;
-      }
-    }
-    if (PS) pasajeInterior(PS, pts, cx, cz, col);
-    if (LM) LMQ.push({ L: LM, pts, top, bmin, bmax, cx, cz, name });
-    if (LM && LM.quoin) addQuoins(pts, bot, wallTop, 0.75, LM.quoin);
-    if (LM && LM.noRoof) continue;
-    const quoin = !(LM && LM.quoin) && (style === 4 || (style === 0 && (name || r() < 0.45) && H > 4) || (style === 6 && name && isHistoric(cx, cz)));
-    if (quoin) addQuoins(pts, bot, wallTop, style === 4 ? 0.7 : 0.5);
-    if (style === 0 && lv >= 2 && r() < 0.42) addBalcony(pts, bmin, fh, r);
-    if (style === 4) {
-      CHURCHES.push({ pts, cx, cz, top, bmin, bmax, H, name, area: Math.abs(area) });
-      continue;
-    }
-    // roofs
-    if (atico) {
-      // terrace over the main block (railing), then the recessed floor whose roof continues below
-      const T0 = THREE.ShapeUtils.triangulateShape(
-        pts.map((p) => new THREE.Vector2(p[0], p[1])),
-        []
-      );
-      const R0 = acc(cx, cz, 'roofFlat');
-      const tc = [0.78, 0.74, 0.68];
-      for (const t of T0) {
-        const a = pts[t[0]],
-          b2 = pts[t[1]],
-          c2 = pts[t[2]];
-        R0.tri(
-          [a[0], wallTop, a[1]],
-          [b2[0], wallTop, b2[1]],
-          [c2[0], wallTop, c2[1]],
-          [a[0] / 4, a[1] / 4],
-          [b2[0] / 4, b2[1] / 4],
-          [c2[0] / 4, c2[1] / 4],
-          tc,
-          undefined,
-          [0, 1, 0]
-        );
-      }
-      const Tr = acc(cx, cz, 'trim');
-      const rcol = [0.25, 0.26, 0.27];
-      for (let i = 0; i < n; i++) {
-        const p = pts[i],
-          q = pts[(i + 1) % n];
-        const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
-        if (len < 0.05) continue;
-        const out = [(q[1] - p[1]) / len, 0, -(q[0] - p[0]) / len];
-        Tr.quad(
-          [p[0], wallTop, p[1]],
-          [q[0], wallTop, q[1]],
-          [q[0], wallTop + 1.0, q[1]],
-          [p[0], wallTop + 1.0, p[1]],
-          [0, 0],
-          [0, 0],
-          [0, 0],
-          [0, 0],
-          rcol,
-          undefined,
-          out
-        );
-        Tr.quad(
-          [q[0], wallTop, q[1]],
-          [p[0], wallTop, p[1]],
-          [p[0], wallTop + 1.0, p[1]],
-          [q[0], wallTop + 1.0, q[1]],
-          [0, 0],
-          [0, 0],
-          [0, 0],
-          [0, 0],
-          rcol,
-          undefined,
-          [-out[0], 0, -out[2]]
-        );
-      }
-      for (let i = 0; i < n; i++) {
-        const p = atico[i],
-          q = atico[(i + 1) % n];
-        const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
-        if (len < 0.05) continue;
-        const nb = len > 1.6 ? Math.max(1, Math.round(len / bay)) : 0.1;
-        const out = [(q[1] - p[1]) / len, 0, -(q[0] - p[0]) / len];
-        const v0 = (wallTop - bmin) / fh,
-          v1 = (top - bmin) / fh;
-        A.quad(
-          [p[0], wallTop, p[1]],
-          [q[0], wallTop, q[1]],
-          [q[0], top, q[1]],
-          [p[0], top, p[1]],
-          [0, v0],
-          [nb, v0],
-          [nb, v1],
-          [0, v1],
-          col,
-          [atlas, bi % 97],
-          out
-        );
-      }
-      pts = atico;
-    }
-    const AH = !hip ? atrioHole(pts) : null; // v0.78: a patio open to the sky through the block (Cine Aguere, 05x_pasajes.js)
-    const tris = THREE.ShapeUtils.triangulateShape(
-      pts.map((p) => new THREE.Vector2(p[0], p[1])),
-      AH ? [AH.hole.map((p) => new THREE.Vector2(p[0], p[1]))] : []
-    );
-    const TP = AH ? pts.concat(AH.hole) : pts;
-    if (AH) buildAtrio(AH.a, top, cx, cz);
-    if (hip) {
-      hipRoof(pts, cx, cz, top, area, tris);
-    } else {
-      const R = acc(cx, cz, 'roofFlat');
-      const ry = parapet ? top - 0.85 : top;
-      const g = 0.7 + r() * 0.2;
-      const rc = [g, g * 0.98, g * 0.95];
-      for (const t of tris) {
-        const a = TP[t[0]],
-          b2 = TP[t[1]],
-          c2 = TP[t[2]];
-        R.tri(
-          [a[0], ry, a[1]],
-          [b2[0], ry, b2[1]],
-          [c2[0], ry, c2[1]],
-          [a[0] / 4, a[1] / 4],
-          [b2[0] / 4, b2[1] / 4],
-          [c2[0] / 4, c2[1] / 4],
-          rc,
-          undefined,
-          [0, 1, 0]
-        );
-      }
-      if (parapet) {
-        const T = acc(cx, cz, 'trim');
-        const pc = [col[0] * 0.95, col[1] * 0.95, col[2] * 0.95];
-        const tc = style === 0 ? [0.45, 0.44, 0.42] : [0.93, 0.92, 0.9];
-        for (let i = 0; i < n; i++) {
-          const p = pts[i],
-            q = pts[(i + 1) % n];
-          const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
-          if (len < 0.05) continue;
-          const ix = (-(q[1] - p[1]) / len) * 0.22,
-            iz = ((q[0] - p[0]) / len) * 0.22;
-          T.quad(
-            [p[0] + ix, ry, p[1] + iz],
-            [q[0] + ix, ry, q[1] + iz],
-            [q[0] + ix, top, q[1] + iz],
-            [p[0] + ix, top, p[1] + iz],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            pc,
-            undefined,
-            [ix, 0, iz]
-          );
-          T.quad(
-            [p[0], top, p[1]],
-            [q[0], top, q[1]],
-            [q[0] + ix, top, q[1] + iz],
-            [p[0] + ix, top, p[1] + iz],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            tc,
-            undefined,
-            [0, 1, 0]
-          );
-          // cornice band
-          const ox = -ix * 1.1,
-            oz = -iz * 1.1;
-          T.quad(
-            [p[0] + ox, top - 0.35, p[1] + oz],
-            [q[0] + ox, top - 0.35, q[1] + oz],
-            [q[0] + ox, top + 0.05, q[1] + oz],
-            [p[0] + ox, top + 0.05, p[1] + oz],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            tc,
-            undefined,
-            [ox, 0, oz]
-          );
-          T.quad(
-            [p[0], top + 0.05, p[1]],
-            [q[0], top + 0.05, q[1]],
-            [q[0] + ox, top + 0.05, q[1] + oz],
-            [p[0] + ox, top + 0.05, p[1] + oz],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            tc,
-            undefined,
-            [0, 1, 0]
-          );
-          T.quad(
-            [p[0], top - 0.35, p[1]],
-            [q[0], top - 0.35, q[1]],
-            [q[0] + ox, top - 0.35, q[1] + oz],
-            [p[0] + ox, top - 0.35, p[1] + oz],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            tc,
-            undefined,
-            [0, -1, 0]
-          );
-        }
-        // rooftop clutter: water tanks & antennas (Canarian azoteas)
-        if ((style === 1 || style === 2) && Math.abs(area) > 50 && r() < 0.7) ROOFPROPS.push([cx + (r() - 0.5) * 3, ry, cz + (r() - 0.5) * 3, r()]);
-      }
-    }
   }
 }
 function hipRoof(pts, cx, cz, top, area, tris, maxDin = 3.4) {
-  const n = pts.length;
-  const R = acc(cx, cz, 'roofTile');
-  const rin = (Math.abs(area) * 2) / pts.reduce((s, p, i) => s + Math.hypot(pts[(i + 1) % n][0] - p[0], pts[(i + 1) % n][1] - p[1]), 0);
-  const ov = 0.45;
-  // outer ring expanded along bisectors
-  const outer = pts.map((p, i) => {
-    const a = pts[(i - 1 + n) % n],
-      b2 = pts[(i + 1) % n];
-    let e1x = p[0] - a[0],
-      e1z = p[1] - a[1],
-      e2x = b2[0] - p[0],
-      e2z = b2[1] - p[1];
-    const l1 = Math.hypot(e1x, e1z) || 1,
-      l2 = Math.hypot(e2x, e2z) || 1;
-    e1x /= l1;
-    e1z /= l1;
-    e2x /= l2;
-    e2z /= l2;
-    const n1x = e1z,
-      n1z = -e1x,
-      n2x = e2z,
-      n2z = -e2x;
-    let bx = n1x + n2x,
-      bz = n1z + n2z;
-    const bl = Math.hypot(bx, bz) || 1;
-    bx /= bl;
-    bz /= bl;
-    const m = 1 / Math.max(0.5, bx * n1x + bz * n1z);
-    return [p[0] + bx * ov * m, top - 0.12, p[1] + bz * ov * m];
-  });
-  const din = clamp(rin * 0.85, 0.8, maxDin);
+  const { n, R, outer, din } = hipRoofPart1(pts, cx, cz, area, maxDin, top);
+  hipRoofPart2(pts, n, din, top, outer, R, tris);
+  // eave underside (so it isn't see-through from below)
+  const T = acc(cx, cz, 'trim');
+  const ec = [0.55, 0.45, 0.38];
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    T.quad(
+      [pts[i][0], top - 0.12, pts[i][1]],
+      [pts[j][0], top - 0.12, pts[j][1]],
+      outer[j],
+      outer[i],
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      ec,
+      undefined,
+      [0, -1, 0]
+    );
+  }
+}
+/** (v1.1.7, code quality) part of hipRoof */
+function hipRoofPart2(pts, n, din, top, outer, R, tris) {
   const inner = pts.map((p, i) => {
     const a = pts[(i - 1 + n) % n],
       b2 = pts[(i + 1) % n];
@@ -4451,25 +4566,41 @@ function hipRoof(pts, cx, cz, top, area, tris, maxDin = 3.4) {
     R.quad(o1, o2, i2, i1, U(o1), U(o2), U(i2), U(i1), null, undefined, want);
   }
   for (const t of tris) R.tri(inner[t[0]], inner[t[1]], inner[t[2]], [0, 0], [0.3, 0], [0, 0.3], null, undefined, [0, 1, 0]);
-  // eave underside (so it isn't see-through from below)
-  const T = acc(cx, cz, 'trim');
-  const ec = [0.55, 0.45, 0.38];
-  for (let i = 0; i < n; i++) {
-    const j = (i + 1) % n;
-    T.quad(
-      [pts[i][0], top - 0.12, pts[i][1]],
-      [pts[j][0], top - 0.12, pts[j][1]],
-      outer[j],
-      outer[i],
-      [0, 0],
-      [0, 0],
-      [0, 0],
-      [0, 0],
-      ec,
-      undefined,
-      [0, -1, 0]
-    );
-  }
+}
+/** (v1.1.7, code quality) part of hipRoof: outer ring expanded along bisectors */
+function hipRoofPart1(pts, cx, cz, area, maxDin, top) {
+  const n = pts.length;
+  const R = acc(cx, cz, 'roofTile');
+  const rin = (Math.abs(area) * 2) / pts.reduce((s, p, i) => s + Math.hypot(pts[(i + 1) % n][0] - p[0], pts[(i + 1) % n][1] - p[1]), 0);
+  const ov = 0.45;
+  // outer ring expanded along bisectors
+  const outer = pts.map((p, i) => {
+    const a = pts[(i - 1 + n) % n],
+      b2 = pts[(i + 1) % n];
+    let e1x = p[0] - a[0],
+      e1z = p[1] - a[1],
+      e2x = b2[0] - p[0],
+      e2z = b2[1] - p[1];
+    const l1 = Math.hypot(e1x, e1z) || 1,
+      l2 = Math.hypot(e2x, e2z) || 1;
+    e1x /= l1;
+    e1z /= l1;
+    e2x /= l2;
+    e2z /= l2;
+    const n1x = e1z,
+      n1z = -e1x,
+      n2x = e2z,
+      n2z = -e2x;
+    let bx = n1x + n2x,
+      bz = n1z + n2z;
+    const bl = Math.hypot(bx, bz) || 1;
+    bx /= bl;
+    bz /= bl;
+    const m = 1 / Math.max(0.5, bx * n1x + bz * n1z);
+    return [p[0] + bx * ov * m, top - 0.12, p[1] + bz * ov * m];
+  });
+  const din = clamp(rin * 0.85, 0.8, maxDin);
+  return { n, R, outer, din };
 }
 function insetPoly(pts, d0) {
   const n = pts.length;
@@ -4544,24 +4675,7 @@ function addQuoins(pts, bot, top, w, col = null) {
   }
 }
 function addBalcony(pts, bmin, fh, r) {
-  // longest edge that faces a road
-  const n = pts.length;
-  let best = -1,
-    bl = 0;
-  for (let i = 0; i < n; i++) {
-    const p = pts[i],
-      q = pts[(i + 1) % n];
-    const L = Math.hypot(q[0] - p[0], q[1] - p[1]);
-    if (L < 5) continue;
-    const mx = (p[0] + q[0]) / 2 + ((q[1] - p[1]) / L) * 3,
-      mz = (p[1] + q[1]) / 2 - ((q[0] - p[0]) / L) * 3;
-    const rd = ROADSEG.nearest(mx, mz);
-    if (!rd || rd.d > DATA.R[rd.ri][2] / 2 + 3) continue;
-    if (L > bl) {
-      bl = L;
-      best = i;
-    }
-  }
+  let { n, best, bl } = addBalconyPart1(pts);
   if (best < 0) return;
   const p = pts[best],
     q = pts[(best + 1) % n];
@@ -4589,32 +4703,7 @@ function addBalcony(pts, bmin, fh, r) {
   ]);
   A.quad(P(a, 0, y0), P(a, dep, y0), P(a, dep, y0 + hr), P(a, 0, y0 + hr), [0, 0], [0.7, 0], [0.7, 1], [0, 1], null, undefined, [-ux, 0, -uz]);
   A.quad(P(b, dep, y0), P(b, 0, y0), P(b, 0, y0 + hr), P(b, dep, y0 + hr), [0, 0], [0.7, 0], [0.7, 1], [0, 1], null, undefined, [ux, 0, uz]);
-  W.quad(
-    P(a - 0.1, 0, y0),
-    P(b + 0.1, 0, y0),
-    P(b + 0.1, dep + 0.1, y0),
-    P(a - 0.1, dep + 0.1, y0),
-    [0, 0],
-    [w, 0],
-    [w, 1],
-    [0, 1],
-    null,
-    undefined,
-    [0, -1, 0]
-  );
-  W.quad(
-    P(a - 0.1, 0, y0 + 0.001),
-    P(b + 0.1, 0, y0 + 0.001),
-    P(b + 0.1, dep + 0.1, y0 + 0.001),
-    P(a - 0.1, dep + 0.1, y0 + 0.001),
-    [0, 0],
-    [w, 0],
-    [w, 1],
-    [0, 1],
-    null,
-    undefined,
-    [0, 1, 0]
-  );
+  addBalconyPart2(W, P, a, y0, b, dep, w);
   W.quad(
     P(a - 0.1, dep + 0.1, y0 - 0.18),
     P(b + 0.1, dep + 0.1, y0 - 0.18),
@@ -4644,6 +4733,10 @@ function addBalcony(pts, bmin, fh, r) {
       [ox, 0, oz]
     );
   }
+  addBalconyPart3(T, P, a, roofY, b, dep, w);
+}
+/** (v1.1.7, code quality) part of addBalcony */
+function addBalconyPart3(T, P, a, roofY, b, dep, w) {
   T.quad(
     P(a - 0.25, 0, roofY + 0.35),
     P(b + 0.25, 0, roofY + 0.35),
@@ -4670,6 +4763,57 @@ function addBalcony(pts, bmin, fh, r) {
     undefined,
     [0, -1, 0]
   );
+}
+/** (v1.1.7, code quality) part of addBalcony */
+function addBalconyPart2(W, P, a, y0, b, dep, w) {
+  W.quad(
+    P(a - 0.1, 0, y0),
+    P(b + 0.1, 0, y0),
+    P(b + 0.1, dep + 0.1, y0),
+    P(a - 0.1, dep + 0.1, y0),
+    [0, 0],
+    [w, 0],
+    [w, 1],
+    [0, 1],
+    null,
+    undefined,
+    [0, -1, 0]
+  );
+  W.quad(
+    P(a - 0.1, 0, y0 + 0.001),
+    P(b + 0.1, 0, y0 + 0.001),
+    P(b + 0.1, dep + 0.1, y0 + 0.001),
+    P(a - 0.1, dep + 0.1, y0 + 0.001),
+    [0, 0],
+    [w, 0],
+    [w, 1],
+    [0, 1],
+    null,
+    undefined,
+    [0, 1, 0]
+  );
+}
+/** (v1.1.7, code quality) part of addBalcony: longest edge that faces a road */
+function addBalconyPart1(pts) {
+  // longest edge that faces a road
+  const n = pts.length;
+  let best = -1,
+    bl = 0;
+  for (let i = 0; i < n; i++) {
+    const p = pts[i],
+      q = pts[(i + 1) % n];
+    const L = Math.hypot(q[0] - p[0], q[1] - p[1]);
+    if (L < 5) continue;
+    const mx = (p[0] + q[0]) / 2 + ((q[1] - p[1]) / L) * 3,
+      mz = (p[1] + q[1]) / 2 - ((q[0] - p[0]) / L) * 3;
+    const rd = ROADSEG.nearest(mx, mz);
+    if (!rd || rd.d > DATA.R[rd.ri][2] / 2 + 3) continue;
+    if (L > bl) {
+      bl = L;
+      best = i;
+    }
+  }
+  return { n, best, bl };
 }
 function buildRoofProps() {
   if (!ROOFPROPS.length) return;
@@ -4721,35 +4865,7 @@ function finalizeChunks() {
 
 // audit: roads that cross without a junction (different OSM layers) must be ≥ ~4.5 m apart vertically
 function auditCrossings(minClear = 4.4) {
-  const R = DATA.R,
-    out = [];
-  const segs = [];
-  R.forEach((rd, ri) => {
-    if (rd[0] > 12 && !(rd[3] & 6)) return;
-    const c = rd[4];
-    let s = 0;
-    for (let i = 0; i < c.length - 2; i += 2) {
-      const L = Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]);
-      segs.push([ri, c[i], c[i + 1], c[i + 2], c[i + 3], s, L]);
-      s += L;
-    }
-  });
-  const G = new Map(),
-    CS = 40;
-  segs.forEach((g, k) => {
-    const x0 = Math.floor(Math.min(g[1], g[3]) / CS),
-      x1 = Math.floor(Math.max(g[1], g[3]) / CS),
-      z0 = Math.floor(Math.min(g[2], g[4]) / CS),
-      z1 = Math.floor(Math.max(g[2], g[4]) / CS);
-    for (let a = x0; a <= x1; a++)
-      for (let b = z0; b <= z1; b++) {
-        const key = a * 10000 + b;
-        let l = G.get(key);
-        if (!l) G.set(key, (l = []));
-        l.push(k);
-      }
-  });
-  const seen = new Set();
+  const { R, out, segs, G, seen } = auditCrossingsPart1();
   for (const l of G.values())
     for (let i = 0; i < l.length; i++)
       for (let j = i + 1; j < l.length; j++) {
@@ -4805,28 +4921,43 @@ function auditCrossings(minClear = 4.4) {
       }
   return out;
 }
+/** (v1.1.7, code quality) part of auditCrossings */
+function auditCrossingsPart1() {
+  const R = DATA.R,
+    out = [];
+  const segs = [];
+  R.forEach((rd, ri) => {
+    if (rd[0] > 12 && !(rd[3] & 6)) return;
+    const c = rd[4];
+    let s = 0;
+    for (let i = 0; i < c.length - 2; i += 2) {
+      const L = Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]);
+      segs.push([ri, c[i], c[i + 1], c[i + 2], c[i + 3], s, L]);
+      s += L;
+    }
+  });
+  const G = new Map(),
+    CS = 40;
+  segs.forEach((g, k) => {
+    const x0 = Math.floor(Math.min(g[1], g[3]) / CS),
+      x1 = Math.floor(Math.max(g[1], g[3]) / CS),
+      z0 = Math.floor(Math.min(g[2], g[4]) / CS),
+      z1 = Math.floor(Math.max(g[2], g[4]) / CS);
+    for (let a = x0; a <= x1; a++)
+      for (let b = z0; b <= z1; b++) {
+        const key = a * 10000 + b;
+        let l = G.get(key);
+        if (!l) G.set(key, (l = []));
+        l.push(k);
+      }
+  });
+  const seen = new Set();
+  return { R, out, segs, G, seen };
+}
 
 // audit 2: structure (walls, parapets, portals, slabs, piers) inside another road's carriageway at driving height
 function auditObstacles() {
-  const R = DATA.R;
-  const out = [];
-  const near = new Map();
-  const nodesOf = (ri) => {
-    let st = near.get(ri);
-    if (!st) {
-      st = new Set();
-      const c = R[ri][4];
-      for (let i = 0; i < c.length; i += 2) st.add(K(c[i], c[i + 1]));
-      near.set(ri, st);
-    }
-    return st;
-  };
-  const shares = (a, b) => {
-    const A = nodesOf(a);
-    for (const k of nodesOf(b)) if (A.has(k)) return true;
-    return false;
-  };
-  const seen = new Set();
+  const { R, out, shares, seen } = auditObstaclesPart1();
   for (const o of OBST) {
     const [own, cx, cz, y0, y1, ax, az, bx, bz] = o;
     for (const [px, pz] of [
@@ -4868,6 +4999,29 @@ function auditObstacles() {
   }
   return out;
 }
+/** (v1.1.7, code quality) part of auditObstacles */
+function auditObstaclesPart1() {
+  const R = DATA.R;
+  const out = [];
+  const near = new Map();
+  const nodesOf = (ri) => {
+    let st = near.get(ri);
+    if (!st) {
+      st = new Set();
+      const c = R[ri][4];
+      for (let i = 0; i < c.length; i += 2) st.add(K(c[i], c[i + 1]));
+      near.set(ri, st);
+    }
+    return st;
+  };
+  const shares = (a, b) => {
+    const A = nodesOf(a);
+    for (const k of nodesOf(b)) if (A.has(k)) return true;
+    return false;
+  };
+  const seen = new Set();
+  return { R, out, shares, seen };
+}
 // ---- medians: a concrete barrier between the two directions of an autovía (and between an autovía and a road running beside it);
 // a raised kerb island between the carriageways of urban dual roads. Openings are left at junctions.
 const MEDIANS = []; // v0.91: [kind (2 New Jersey, 3 guardrail, 1 island), x0, z0, x1, z1, samples] (tests)
@@ -4877,39 +5031,7 @@ function buildMedians() {
   let nB = 0,
     nK = 0,
     nG = 0;
-  const big = (t) => t <= 2;
-  // nodes with 3+ ways (junctions) on a grid
-  const JG = new Map();
-  for (const [k, n] of nodeCount) {
-    if (n < 3) continue;
-    const [x, z] = k.split(',').map(Number);
-    const g = Math.floor(x / 30) * 100000 + Math.floor(z / 30);
-    let l = JG.get(g);
-    if (!l) JG.set(g, (l = []));
-    l.push(x, z);
-  }
-  const nearJ = (x, z, r) => {
-    const a0 = Math.floor(x / 30),
-      b0 = Math.floor(z / 30);
-    for (let a = a0 - 1; a <= a0 + 1; a++)
-      for (let b = b0 - 1; b <= b0 + 1; b++) {
-        const l = JG.get(a * 100000 + b);
-        if (!l) continue;
-        for (let i = 0; i < l.length; i += 2) if (Math.hypot(l[i] - x, l[i + 1] - z) < r) return true;
-      }
-    return false;
-  };
-  const runs = new Map();
-  // v0.91: a road over the median only opens it if it is at the same level (a slip road rising to the San Lázaro bridge
-  // passes over the median without being a bridge in the map, and it used to leave the TF-5 without a barrier there)
-  const crossAtLevel = (cr, y) => {
-    const c = R[cr.ri][4];
-    let s = 0;
-    for (let i = 0; i < cr.i; i += 2) s += Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]);
-    s += Math.hypot(c[cr.i + 2] - c[cr.i], c[cr.i + 3] - c[cr.i + 1]) * cr.t;
-    const yc = ROADY[cr.ri] ? ROADY[cr.ri](s, cr.x, cr.z) : y;
-    return Math.abs(yc - y) < 1.6;
-  };
+  const { big, nearJ, runs, crossAtLevel } = buildMediansPart1(R);
   R.forEach((rd, ri) => {
     if (rd[0] > 10 || rd[3] & 6 || (RAISE.has(ri) && !big(rd[0]))) return;
     const c = rd[4];
@@ -5006,13 +5128,13 @@ function buildMedians() {
           piece.length
         ]);
         if (k === 2) {
-          barrier(piece);
+          medianBarrier(piece);
           nB++;
         } else if (k === 3) {
-          guardrail(piece);
+          medianGuardrail(piece);
           nG++;
         } else {
-          island(piece);
+          medianIsland(piece);
           nK++;
         }
       }
@@ -5052,7 +5174,7 @@ function buildMedians() {
         s0 = 0;
       const flush = () => {
         if (piece.length >= 4) {
-          guardrail(piece);
+          medianGuardrail(piece);
           nE++;
           MEDIANS.push([
             4,
@@ -5103,236 +5225,279 @@ function buildMedians() {
     }
   });
   console.log('medians: barriers', nB, 'guardrails', nG, 'islands', nK, 'edge guardrails', nE);
-  function barrier(P) {
-    /* New Jersey profile */
-    const T = acc(P[0][0], P[0][1], 'trim');
-    const col = [0.6, 0.59, 0.56]; // v0.91: darker (it vanished against the asphalt)
-    for (let i = 0; i < P.length - 1; i++) {
-      const a = P[i],
-        b = P[i + 1];
-      const dx = b[0] - a[0],
-        dz = b[1] - a[1],
-        L = Math.hypot(dx, dz) || 1,
-        px = -dz / L,
-        pz = dx / L;
-      const prof = [
-        [0.32, 0],
-        [0.24, 0.08],
-        [0.1, 0.33],
-        [0.08, 0.82]
-      ];
-      for (const sg of [1, -1])
-        for (let k = 0; k < prof.length - 1; k++) {
-          const [w0, h0] = prof[k],
-            [w1, h1] = prof[k + 1];
-          T.quad(
-            [a[0] + px * w0 * sg, a[2] + h0, a[1] + pz * w0 * sg],
-            [b[0] + px * w0 * sg, b[2] + h0, b[1] + pz * w0 * sg],
-            [b[0] + px * w1 * sg, b[2] + h1, b[1] + pz * w1 * sg],
-            [a[0] + px * w1 * sg, a[2] + h1, a[1] + pz * w1 * sg],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            col,
-            undefined,
-            [px * sg, 0.35, pz * sg]
-          );
-        }
+}
+/** (v1.1.7, code quality) part of buildMedians: nodes with 3+ ways (junctions) on a grid */
+function buildMediansPart1(R) {
+  const big = (t) => t <= 2;
+  // nodes with 3+ ways (junctions) on a grid
+  const JG = new Map();
+  for (const [k, n] of nodeCount) {
+    if (n < 3) continue;
+    const [x, z] = k.split(',').map(Number);
+    const g = Math.floor(x / 30) * 100000 + Math.floor(z / 30);
+    let l = JG.get(g);
+    if (!l) JG.set(g, (l = []));
+    l.push(x, z);
+  }
+  const nearJ = (x, z, r) => {
+    const a0 = Math.floor(x / 30),
+      b0 = Math.floor(z / 30);
+    for (let a = a0 - 1; a <= a0 + 1; a++)
+      for (let b = b0 - 1; b <= b0 + 1; b++) {
+        const l = JG.get(a * 100000 + b);
+        if (!l) continue;
+        for (let i = 0; i < l.length; i += 2) if (Math.hypot(l[i] - x, l[i + 1] - z) < r) return true;
+      }
+    return false;
+  };
+  const runs = new Map();
+  // v0.91: a road over the median only opens it if it is at the same level (a slip road rising to the San Lázaro bridge
+  // passes over the median without being a bridge in the map, and it used to leave the TF-5 without a barrier there)
+  const crossAtLevel = (cr, y) => {
+    const c = R[cr.ri][4];
+    let s = 0;
+    for (let i = 0; i < cr.i; i += 2) s += Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]);
+    s += Math.hypot(c[cr.i + 2] - c[cr.i], c[cr.i + 3] - c[cr.i + 1]) * cr.t;
+    const yc = ROADY[cr.ri] ? ROADY[cr.ri](s, cr.x, cr.z) : y;
+    return Math.abs(yc - y) < 1.6;
+  };
+  return { big, nearJ, runs, crossAtLevel };
+}
+// v1.1.7 (code quality): the pieces buildMedians draws, moved out of it
+function medianBarrier(P) {
+  /* New Jersey profile */
+  const { T, col } = medianBarrierPart1(P);
+  // v0.91: on a slope the barrier stands on the higher carriageway; a concrete face goes down to the lower one
+  for (let i = 0; i < P.length - 1; i++) {
+    const a = P[i],
+      b = P[i + 1];
+    if (a[2] - a[6] < 0.12 && b[2] - b[6] < 0.12) continue;
+    const dx = b[0] - a[0],
+      dz = b[1] - a[1],
+      L = Math.hypot(dx, dz) || 1,
+      px = -dz / L,
+      pz = dx / L;
+    for (const sg of [1, -1])
       T.quad(
-        [a[0] + px * 0.08, a[2] + 0.82, a[1] + pz * 0.08],
-        [b[0] + px * 0.08, b[2] + 0.82, b[1] + pz * 0.08],
-        [b[0] - px * 0.08, b[2] + 0.82, b[1] - pz * 0.08],
-        [a[0] - px * 0.08, a[2] + 0.82, a[1] - pz * 0.08],
+        [a[0] + px * 0.32 * sg, a[6] - 0.1, a[1] + pz * 0.32 * sg],
+        [b[0] + px * 0.32 * sg, b[6] - 0.1, b[1] + pz * 0.32 * sg],
+        [b[0] + px * 0.32 * sg, b[2], b[1] + pz * 0.32 * sg],
+        [a[0] + px * 0.32 * sg, a[2], a[1] + pz * 0.32 * sg],
         [0, 0],
         [0, 0],
         [0, 0],
         [0, 0],
         col,
         undefined,
-        [0, 1, 0]
+        [px * sg, 0, pz * sg]
       );
-      COL.addSeg(a[0], a[1], b[0], b[1], Math.min(a[2], b[2]) - 0.2, Math.max(a[2], b[2]) + 0.9);
-    }
-    // v0.91: on a slope the barrier stands on the higher carriageway; a concrete face goes down to the lower one
-    for (let i = 0; i < P.length - 1; i++) {
-      const a = P[i],
-        b = P[i + 1];
-      if (a[2] - a[6] < 0.12 && b[2] - b[6] < 0.12) continue;
-      const dx = b[0] - a[0],
-        dz = b[1] - a[1],
-        L = Math.hypot(dx, dz) || 1,
-        px = -dz / L,
-        pz = dx / L;
-      for (const sg of [1, -1])
+  }
+  // v0.91 (the Street View of the TF-5): blue reflective posts on top of the barrier, every ~4 m
+  medianDelineators(T, P, 0.82);
+  // end caps sloping to the ground (no blunt ends in front of traffic)
+}
+/** (v1.1.7, code quality) part of medianBarrier */
+function medianBarrierPart1(P) {
+  const T = acc(P[0][0], P[0][1], 'trim');
+  const col = [0.6, 0.59, 0.56]; // v0.91: darker (it vanished against the asphalt)
+  for (let i = 0; i < P.length - 1; i++) {
+    const a = P[i],
+      b = P[i + 1];
+    const dx = b[0] - a[0],
+      dz = b[1] - a[1],
+      L = Math.hypot(dx, dz) || 1,
+      px = -dz / L,
+      pz = dx / L;
+    const prof = [
+      [0.32, 0],
+      [0.24, 0.08],
+      [0.1, 0.33],
+      [0.08, 0.82]
+    ];
+    for (const sg of [1, -1])
+      for (let k = 0; k < prof.length - 1; k++) {
+        const [w0, h0] = prof[k],
+          [w1, h1] = prof[k + 1];
         T.quad(
-          [a[0] + px * 0.32 * sg, a[6] - 0.1, a[1] + pz * 0.32 * sg],
-          [b[0] + px * 0.32 * sg, b[6] - 0.1, b[1] + pz * 0.32 * sg],
-          [b[0] + px * 0.32 * sg, b[2], b[1] + pz * 0.32 * sg],
-          [a[0] + px * 0.32 * sg, a[2], a[1] + pz * 0.32 * sg],
+          [a[0] + px * w0 * sg, a[2] + h0, a[1] + pz * w0 * sg],
+          [b[0] + px * w0 * sg, b[2] + h0, b[1] + pz * w0 * sg],
+          [b[0] + px * w1 * sg, b[2] + h1, b[1] + pz * w1 * sg],
+          [a[0] + px * w1 * sg, a[2] + h1, a[1] + pz * w1 * sg],
           [0, 0],
           [0, 0],
           [0, 0],
           [0, 0],
           col,
           undefined,
-          [px * sg, 0, pz * sg]
+          [px * sg, 0.35, pz * sg]
+        );
+      }
+    T.quad(
+      [a[0] + px * 0.08, a[2] + 0.82, a[1] + pz * 0.08],
+      [b[0] + px * 0.08, b[2] + 0.82, b[1] + pz * 0.08],
+      [b[0] - px * 0.08, b[2] + 0.82, b[1] - pz * 0.08],
+      [a[0] - px * 0.08, a[2] + 0.82, a[1] - pz * 0.08],
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      col,
+      undefined,
+      [0, 1, 0]
+    );
+    COL.addSeg(a[0], a[1], b[0], b[1], Math.min(a[2], b[2]) - 0.2, Math.max(a[2], b[2]) + 0.9);
+  }
+  return { T, col };
+}
+// a small blue post with a white reflector, every ~4 m along P, standing on «base» metres above the road
+function medianDelineators(T, P, base) {
+  const blue = [0.12, 0.33, 0.78];
+  let acc0 = 0; // (v0.91.1: two crossed faces per post, the audit counted the vertices)
+  for (let i = 0; i < P.length - 1; i++) {
+    const a = P[i],
+      b = P[i + 1],
+      L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1,
+      ux = (b[0] - a[0]) / L,
+      uz = (b[1] - a[1]) / L;
+    for (let t = (4 - acc0) % 4; t < L; t += 4) {
+      const x = a[0] + ux * t,
+        z = a[1] + uz * t,
+        y = a[2] + (b[2] - a[2]) * (t / L) + base,
+        w = 0.06;
+      for (const [dx, dz] of [
+        [ux * w, uz * w],
+        [-uz * w, ux * w]
+      ])
+        T.quad(
+          [x - dx, y, z - dz],
+          [x + dx, y, z + dz],
+          [x + dx, y + 0.45, z + dz],
+          [x - dx, y + 0.45, z - dz],
+          [0, 0],
+          [0, 0],
+          [0, 0],
+          [0, 0],
+          blue,
+          undefined,
+          [-dz, 0, dx]
         );
     }
-    // v0.91 (the Street View of the TF-5): blue reflective posts on top of the barrier, every ~4 m
-    delineators(T, P, 0.82);
-    // end caps sloping to the ground (no blunt ends in front of traffic)
+    acc0 = (acc0 + L) % 4;
   }
-  // a small blue post with a white reflector, every ~4 m along P, standing on «base» metres above the road
-  function delineators(T, P, base) {
-    const blue = [0.12, 0.33, 0.78];
-    let acc0 = 0; // (v0.91.1: two crossed faces per post, the audit counted the vertices)
-    for (let i = 0; i < P.length - 1; i++) {
-      const a = P[i],
-        b = P[i + 1],
-        L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1,
-        ux = (b[0] - a[0]) / L,
-        uz = (b[1] - a[1]) / L;
-      for (let t = (4 - acc0) % 4; t < L; t += 4) {
-        const x = a[0] + ux * t,
-          z = a[1] + uz * t,
-          y = a[2] + (b[2] - a[2]) * (t / L) + base,
-          w = 0.06;
-        for (const [dx, dz] of [
-          [ux * w, uz * w],
-          [-uz * w, ux * w]
-        ])
-          T.quad(
-            [x - dx, y, z - dz],
-            [x + dx, y, z + dz],
-            [x + dx, y + 0.45, z + dz],
-            [x - dx, y + 0.45, z - dz],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            blue,
-            undefined,
-            [-dz, 0, dx]
-          );
-      }
-      acc0 = (acc0 + L) % 4;
-    }
-  }
-  // v0.91: steel guardrail (W-beam on posts) between the motorway and a smaller road beside it, with the blue posts
-  function guardrail(P) {
-    const T = acc(P[0][0], P[0][1], 'trim');
-    const steel = [0.66, 0.68, 0.7],
-      dark = [0.36, 0.37, 0.38];
-    let acc0 = 0;
-    for (let i = 0; i < P.length - 1; i++) {
-      const a = P[i],
-        b = P[i + 1];
-      const dx = b[0] - a[0],
-        dz = b[1] - a[1],
-        L = Math.hypot(dx, dz) || 1,
-        px = -dz / L,
-        pz = dx / L,
-        ux = dx / L,
-        uz = dz / L;
-      // the beam: a strip 0.32 m tall, both faces, with a darker fold in the middle
-      for (const sg of [1, -1])
-        for (const [h0, h1, c] of [
-          [0.45, 0.58, steel],
-          [0.58, 0.63, dark],
-          [0.63, 0.77, steel]
-        ])
-          T.quad(
-            [a[0] + px * 0.06 * sg, a[2] + h0, a[1] + pz * 0.06 * sg],
-            [b[0] + px * 0.06 * sg, b[2] + h0, b[1] + pz * 0.06 * sg],
-            [b[0] + px * 0.06 * sg, b[2] + h1, b[1] + pz * 0.06 * sg],
-            [a[0] + px * 0.06 * sg, a[2] + h1, a[1] + pz * 0.06 * sg],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            c,
-            undefined,
-            [px * sg, 0, pz * sg]
-          );
-      // the posts, every 4 m
-      for (let t = (4 - acc0) % 4; t < L; t += 4) {
-        const x = a[0] + ux * t,
-          z = a[1] + uz * t,
-          y = a[2] + (b[2] - a[2]) * (t / L),
-          w = 0.06,
-          qx = px * w,
-          qz = pz * w,
-          fx = ux * w,
-          fz = uz * w;
-        for (const [sx, sz, fx2, fz2] of [
-          [qx, qz, fx, fz],
-          [fx, fz, -qx, -qz]
-        ])
-          T.quad(
-            [x + sx - fx2, y, z + sz - fz2],
-            [x + sx + fx2, y, z + sz + fz2],
-            [x + sx + fx2, y + 0.75, z + sz + fz2],
-            [x + sx - fx2, y + 0.75, z + sz - fz2],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            dark,
-            undefined,
-            [sx, 0, sz]
-          );
-      }
-      acc0 = (acc0 + L) % 4;
-      COL.addSeg(a[0], a[1], b[0], b[1], Math.min(a[2], b[2]) - 0.2, Math.max(a[2], b[2]) + 0.8);
-    }
-    delineators(T, P, 0.77);
-  }
-  function island(P) {
-    // raised kerb + paving/grass, as wide as the gap (min 0.8 m)
-    const T = acc(P[0][0], P[0][1], 'trim');
-    const kc = [0.8, 0.79, 0.75],
-      top = [0.42, 0.52, 0.36];
-    for (let i = 0; i < P.length - 1; i++) {
-      const a = P[i],
-        b = P[i + 1];
-      const dx = b[0] - a[0],
-        dz = b[1] - a[1],
-        L = Math.hypot(dx, dz) || 1,
-        px = -dz / L,
-        pz = dx / L;
-      const wa = Math.max(0.4, a[3] / 2 - 0.05),
-        wb = Math.max(0.4, b[3] / 2 - 0.05),
-        h = 0.16;
-      T.quad(
-        [a[0] + px * wa, a[2] + h, a[1] + pz * wa],
-        [b[0] + px * wb, b[2] + h, b[1] + pz * wb],
-        [b[0] - px * wb, b[2] + h, b[1] - pz * wb],
-        [a[0] - px * wa, a[2] + h, a[1] - pz * wa],
-        [0, 0],
-        [0, 0],
-        [0, 0],
-        [0, 0],
-        a[3] > 1.8 ? top : kc,
-        undefined,
-        [0, 1, 0]
-      );
-      for (const sg of [1, -1])
+}
+// v0.91: steel guardrail (W-beam on posts) between the motorway and a smaller road beside it, with the blue posts
+function medianGuardrail(P) {
+  const T = acc(P[0][0], P[0][1], 'trim');
+  const steel = [0.66, 0.68, 0.7],
+    dark = [0.36, 0.37, 0.38];
+  let acc0 = 0;
+  for (let i = 0; i < P.length - 1; i++) {
+    const a = P[i],
+      b = P[i + 1];
+    const dx = b[0] - a[0],
+      dz = b[1] - a[1],
+      L = Math.hypot(dx, dz) || 1,
+      px = -dz / L,
+      pz = dx / L,
+      ux = dx / L,
+      uz = dz / L;
+    // the beam: a strip 0.32 m tall, both faces, with a darker fold in the middle
+    for (const sg of [1, -1])
+      for (const [h0, h1, c] of [
+        [0.45, 0.58, steel],
+        [0.58, 0.63, dark],
+        [0.63, 0.77, steel]
+      ])
         T.quad(
-          [a[0] + px * wa * sg, a[2] - 0.05, a[1] + pz * wa * sg],
-          [b[0] + px * wb * sg, b[2] - 0.05, b[1] + pz * wb * sg],
-          [b[0] + px * wb * sg, b[2] + h, b[1] + pz * wb * sg],
-          [a[0] + px * wa * sg, a[2] + h, a[1] + pz * wa * sg],
+          [a[0] + px * 0.06 * sg, a[2] + h0, a[1] + pz * 0.06 * sg],
+          [b[0] + px * 0.06 * sg, b[2] + h0, b[1] + pz * 0.06 * sg],
+          [b[0] + px * 0.06 * sg, b[2] + h1, b[1] + pz * 0.06 * sg],
+          [a[0] + px * 0.06 * sg, a[2] + h1, a[1] + pz * 0.06 * sg],
           [0, 0],
           [0, 0],
           [0, 0],
           [0, 0],
-          kc,
+          c,
           undefined,
           [px * sg, 0, pz * sg]
         );
-      if (a[3] > 1.8 && i % 4 === 0 && Math.random() < 0.6) TREES.push([a[0], a[1], 1, 0.75, 1]);
-      COL.addSeg(a[0], a[1], b[0], b[1], Math.min(a[2], b[2]) - 0.2, Math.max(a[2], b[2]) + 0.2);
-    } /* v1.1.4: top 0.2 m over the road (was 0.5): cars still stop at the kerb, someone on foot steps over it (Jonay, X −193, Y 337: «choque invisible junto a las vías del tranvía») */
+    // the posts, every 4 m
+    for (let t = (4 - acc0) % 4; t < L; t += 4) {
+      const x = a[0] + ux * t,
+        z = a[1] + uz * t,
+        y = a[2] + (b[2] - a[2]) * (t / L),
+        w = 0.06,
+        qx = px * w,
+        qz = pz * w,
+        fx = ux * w,
+        fz = uz * w;
+      for (const [sx, sz, fx2, fz2] of [
+        [qx, qz, fx, fz],
+        [fx, fz, -qx, -qz]
+      ])
+        T.quad(
+          [x + sx - fx2, y, z + sz - fz2],
+          [x + sx + fx2, y, z + sz + fz2],
+          [x + sx + fx2, y + 0.75, z + sz + fz2],
+          [x + sx - fx2, y + 0.75, z + sz - fz2],
+          [0, 0],
+          [0, 0],
+          [0, 0],
+          [0, 0],
+          dark,
+          undefined,
+          [sx, 0, sz]
+        );
+    }
+    acc0 = (acc0 + L) % 4;
+    COL.addSeg(a[0], a[1], b[0], b[1], Math.min(a[2], b[2]) - 0.2, Math.max(a[2], b[2]) + 0.8);
   }
+  medianDelineators(T, P, 0.77);
+}
+function medianIsland(P) {
+  // raised kerb + paving/grass, as wide as the gap (min 0.8 m)
+  const T = acc(P[0][0], P[0][1], 'trim');
+  const kc = [0.8, 0.79, 0.75],
+    top = [0.42, 0.52, 0.36];
+  for (let i = 0; i < P.length - 1; i++) {
+    const a = P[i],
+      b = P[i + 1];
+    const dx = b[0] - a[0],
+      dz = b[1] - a[1],
+      L = Math.hypot(dx, dz) || 1,
+      px = -dz / L,
+      pz = dx / L;
+    const wa = Math.max(0.4, a[3] / 2 - 0.05),
+      wb = Math.max(0.4, b[3] / 2 - 0.05),
+      h = 0.16;
+    T.quad(
+      [a[0] + px * wa, a[2] + h, a[1] + pz * wa],
+      [b[0] + px * wb, b[2] + h, b[1] + pz * wb],
+      [b[0] - px * wb, b[2] + h, b[1] - pz * wb],
+      [a[0] - px * wa, a[2] + h, a[1] - pz * wa],
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      a[3] > 1.8 ? top : kc,
+      undefined,
+      [0, 1, 0]
+    );
+    for (const sg of [1, -1])
+      T.quad(
+        [a[0] + px * wa * sg, a[2] - 0.05, a[1] + pz * wa * sg],
+        [b[0] + px * wb * sg, b[2] - 0.05, b[1] + pz * wb * sg],
+        [b[0] + px * wb * sg, b[2] + h, b[1] + pz * wb * sg],
+        [a[0] + px * wa * sg, a[2] + h, a[1] + pz * wa * sg],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        kc,
+        undefined,
+        [px * sg, 0, pz * sg]
+      );
+    if (a[3] > 1.8 && i % 4 === 0 && Math.random() < 0.6) TREES.push([a[0], a[1], 1, 0.75, 1]);
+    COL.addSeg(a[0], a[1], b[0], b[1], Math.min(a[2], b[2]) - 0.2, Math.max(a[2], b[2]) + 0.2);
+  } /* v1.1.4: top 0.2 m over the road (was 0.5): cars still stop at the kerb, someone on foot steps over it (Jonay, X −193, Y 337: «choque invisible junto a las vías del tranvía») */
 }

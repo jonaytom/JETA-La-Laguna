@@ -1,0 +1,2 @@
+# v1.1.7: huella de sprites ANTES de juntar el codigo
+herramientas/huella_sprites.py base

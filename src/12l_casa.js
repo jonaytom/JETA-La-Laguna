@@ -167,19 +167,48 @@ const CASA = (() => {
       d = P.d;
     const r = roomShell(w, d, 3.2, woodTex(), 0xf0e2c8);
     const g = r.g;
-    const M = (col, o = {}) => new THREE.MeshStandardMaterial({ color: col, roughness: 0.7, ...o });
-    const box = (W, H, D, col, x, y, z, o) => {
-      const m = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), M(col, o));
-      m.position.set(x, y, z);
-      g.add(m);
-      return m;
+    const { M, box, hw, hd, tvX, tvZ } = buildHomePart1(w, d, g); // TV stand
+    const { scr, con, led, bx, bz } = buildHomePart2(box, tvX, tvZ, g, r, M, hw, hd);
+    // a little kitchen on the other side, a lamp, a poster, a window with the night / day sky
+    const kx = hw - 0.5;
+    box(0.8, 0.95, Math.min(3, d - 3), 0xd8d2c6, kx, 0.55, 0);
+    box(0.82, 0.05, Math.min(3, d - 3) + 0.02, 0x2a2a2a, kx, 1.05, 0);
+    box(0.5, 0.35, 0.5, 0xc0c0c0, kx, 1.25, 0.6, { metalness: 0.8, roughness: 0.3 });
+    COL.addSeg(r.x0 + kx - 0.45, r.z0 - 1.5, r.x0 + kx - 0.45, r.z0 + 1.5);
+    box(0.06, 1.6, 0.06, 0x2a2a2a, tvX - 1.9, 0.9, tvZ - 0.5);
+    const lamp = box(0.5, 0.35, 0.5, 0xfff0c0, tvX - 1.9, 1.8, tvZ - 0.5, { emissive: 0xffd28a, emissiveIntensity: 1.2 });
+    void lamp;
+    const post = textPlane(P.id === 'herradores' ? '¡BENCOMO!' : 'GUANCHE GUARRIORS', 1.4, 0.5, '#6b2a10', '#f2c46a', 'bold 34px Arial');
+    post.position.set(-hw + 0.05, 2.1, 0);
+    post.rotation.y = Math.PI / 2;
+    g.add(post);
+    const win = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(3, w * 0.3), 1.3), new THREE.MeshBasicMaterial({ color: 0x8ab8e0 }));
+    win.position.set(hw * 0.45, 1.9, hd - 0.04);
+    win.rotation.y = Math.PI;
+    g.add(win);
+    if (w >= 11) {
+      box(1.4, 1.9, 0.4, 0x5a3a22, hw - 0.4, 0.95, -hd + 1.4);
+      for (let i = 0; i < 3; i++) box(1.2, 0.04, 0.35, 0x3a2a1e, hw - 0.4, 0.5 + i * 0.55, -hd + 1.4);
+    } // a bookcase in the bigger homes
+    const md = { x: 0, z: -hd + 0.05, rot: 0, h: 0, ix: 0, iz: -hd + 2.2 };
+    const ex = exitDoor(r, md.x, md.z, md.rot);
+    const def = {
+      id: 'casa_' + P.id,
+      name: P.name,
+      door,
+      spawn: { x: r.x0 + md.ix, z: r.z0 + md.iz, h: md.h },
+      exit: ex,
+      ceil: r.y0 + 3.0,
+      floor: r.y0 + 0.13,
+      home: P.id,
+      noLabel: true,
+      locked: () => !has(P.id)
     };
-    const hw = w / 2,
-      hd = d / 2;
-    // the TV on the far wall (+z), the console under it, the sofa facing it, the rug
-    const tvX = 0,
-      tvZ = hd - 0.45;
-    box(2.2, 0.5, 0.6, 0x3a2a1e, tvX, 0.35, tvZ); // TV stand
+    addInterior(def);
+    HOMES[P.id] = { def, P, door, tv: { x: r.x0 + tvX, z: r.z0 + tvZ - 1.2 }, bed: { x: r.x0 + bx + 1.2, z: r.z0 + bz }, con, led, scr };
+  }
+  /** (v1.1.7, code quality) part of buildHome: v0.83.2 (Jonay): you come into the living-dining room: the sofa and an armchair facing the TV, the dining table */
+  function buildHomePart2(box, tvX, tvZ, g, r, M, hw, hd) {
     const tv = box(1.8, 1.05, 0.12, 0x111111, tvX, 1.25, tvZ + 0.05);
     const scr = new THREE.Mesh(new THREE.PlaneGeometry(1.62, 0.9), new THREE.MeshBasicMaterial({ color: 0x1a2a3a }));
     scr.position.set(tvX, 1.25, tvZ - 0.02);
@@ -235,43 +264,24 @@ const CASA = (() => {
     box(1.0, 0.15, 0.4, 0xffffff, bx, 0.75, bz + 0.8);
     COL.addSeg(r.x0 + bx + 0.85, r.z0 + bz - 1.15, r.x0 + bx + 0.85, r.z0 + bz + 1.15);
     COL.addSeg(r.x0 + bx - 0.85, r.z0 + bz - 1.15, r.x0 + bx + 0.85, r.z0 + bz - 1.15);
-    // a little kitchen on the other side, a lamp, a poster, a window with the night / day sky
-    const kx = hw - 0.5;
-    box(0.8, 0.95, Math.min(3, d - 3), 0xd8d2c6, kx, 0.55, 0);
-    box(0.82, 0.05, Math.min(3, d - 3) + 0.02, 0x2a2a2a, kx, 1.05, 0);
-    box(0.5, 0.35, 0.5, 0xc0c0c0, kx, 1.25, 0.6, { metalness: 0.8, roughness: 0.3 });
-    COL.addSeg(r.x0 + kx - 0.45, r.z0 - 1.5, r.x0 + kx - 0.45, r.z0 + 1.5);
-    box(0.06, 1.6, 0.06, 0x2a2a2a, tvX - 1.9, 0.9, tvZ - 0.5);
-    const lamp = box(0.5, 0.35, 0.5, 0xfff0c0, tvX - 1.9, 1.8, tvZ - 0.5, { emissive: 0xffd28a, emissiveIntensity: 1.2 });
-    void lamp;
-    const post = textPlane(P.id === 'herradores' ? '¡BENCOMO!' : 'GUANCHE GUARRIORS', 1.4, 0.5, '#6b2a10', '#f2c46a', 'bold 34px Arial');
-    post.position.set(-hw + 0.05, 2.1, 0);
-    post.rotation.y = Math.PI / 2;
-    g.add(post);
-    const win = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(3, w * 0.3), 1.3), new THREE.MeshBasicMaterial({ color: 0x8ab8e0 }));
-    win.position.set(hw * 0.45, 1.9, hd - 0.04);
-    win.rotation.y = Math.PI;
-    g.add(win);
-    if (w >= 11) {
-      box(1.4, 1.9, 0.4, 0x5a3a22, hw - 0.4, 0.95, -hd + 1.4);
-      for (let i = 0; i < 3; i++) box(1.2, 0.04, 0.35, 0x3a2a1e, hw - 0.4, 0.5 + i * 0.55, -hd + 1.4);
-    } // a bookcase in the bigger homes
-    const md = { x: 0, z: -hd + 0.05, rot: 0, h: 0, ix: 0, iz: -hd + 2.2 };
-    const ex = exitDoor(r, md.x, md.z, md.rot);
-    const def = {
-      id: 'casa_' + P.id,
-      name: P.name,
-      door,
-      spawn: { x: r.x0 + md.ix, z: r.z0 + md.iz, h: md.h },
-      exit: ex,
-      ceil: r.y0 + 3.0,
-      floor: r.y0 + 0.13,
-      home: P.id,
-      noLabel: true,
-      locked: () => !has(P.id)
+    return { scr, con, led, bx, bz };
+  }
+  /** (v1.1.7, code quality) part of buildHome: the TV on the far wall (+z), the console under it, the sofa facing it, the rug */
+  function buildHomePart1(w, d, g) {
+    const M = (col, o = {}) => new THREE.MeshStandardMaterial({ color: col, roughness: 0.7, ...o });
+    const box = (W, H, D, col, x, y, z, o) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), M(col, o));
+      m.position.set(x, y, z);
+      g.add(m);
+      return m;
     };
-    addInterior(def);
-    HOMES[P.id] = { def, P, door, tv: { x: r.x0 + tvX, z: r.z0 + tvZ - 1.2 }, bed: { x: r.x0 + bx + 1.2, z: r.z0 + bz }, con, led, scr };
+    const hw = w / 2,
+      hd = d / 2;
+    // the TV on the far wall (+z), the console under it, the sofa facing it, the rug
+    const tvX = 0,
+      tvZ = hd - 0.45;
+    box(2.2, 0.5, 0.6, 0x3a2a1e, tvX, 0.35, tvZ);
+    return { M, box, hw, hd, tvX, tvZ };
   }
   function build() {
     if (built) return;

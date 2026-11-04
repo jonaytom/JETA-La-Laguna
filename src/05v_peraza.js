@@ -42,120 +42,9 @@ function perazaSeatTex() {
 function buildPeraza() {
   const P = SPORTS.pitches.find((q) => Math.hypot(q.cx - PERAZA.cx, q.cz - PERAZA.cz) < 25);
   if (!P || !PERAZA.stands.length) return;
-  const F = P.F,
-    uc = (F.u0 + F.u1) / 2,
-    vc = (F.v0 + F.v1) / 2;
-  const dPitch = (x, z) => {
-    const u = (x - P.cx) * F.ux + (z - P.cz) * F.uz,
-      v = (x - P.cx) * F.vx + (z - P.cz) * F.vz;
-    return Math.hypot(Math.max(0, Math.abs(u - uc) - P.len / 2), Math.max(0, Math.abs(v - vc) - P.wid / 2));
-  };
-  const seatM = new THREE.MeshStandardMaterial({ map: perazaSeatTex(), roughness: 0.8 }),
-    wallM = M(0xc9c4b8, 0.9),
-    roofM = M(0x5d6268, 0.5, 0.5, { side: THREE.DoubleSide }),
-    postM = M(0x8a8f94, 0.5, 0.6);
-  let big = null,
-    bigA = 0;
+  let { dPitch, seatM, roofM, postM, big, root } = buildPerazaPart1(P);
   for (const pts of PERAZA.stands) {
-    const A = Math.abs(polyArea(pts));
-    if (A > bigA) {
-      bigA = A;
-      big = pts;
-    }
-  }
-  const root = new THREE.Group();
-  root.name = 'Estadio Francisco Peraza';
-  for (const pts of PERAZA.stands) {
-    const n = pts.length;
-    const g = pts.map((p) => heightAt(p[0], p[1]));
-    const g0 = Math.min(...g);
-    const d = pts.map((p) => dPitch(p[0], p[1]));
-    const d0 = Math.min(...d),
-      d1 = Math.max(...d);
-    const HS = pts === big ? 8.5 : 6.5;
-    const t = d.map((v) => (d1 - d0 > 2 ? (v - d0) / (d1 - d0) : 0.5));
-    const y = t.map((v) => g0 + 0.9 + v * HS);
-    // the sloping seats
-    const tri = THREE.ShapeUtils.triangulateShape(
-      pts.map((p) => new THREE.Vector2(p[0], p[1])),
-      []
-    );
-    const pos = [],
-      uv = [];
-    for (const [a, b, c] of tri) {
-      const cr = (pts[b][0] - pts[a][0]) * (pts[c][1] - pts[a][1]) - (pts[b][1] - pts[a][1]) * (pts[c][0] - pts[a][0]);
-      const o = cr > 0 ? [a, c, b] : [a, b, c];
-      for (const i of o) {
-        pos.push(pts[i][0], y[i], pts[i][1]);
-        uv.push(0.5, t[i] * 2.4);
-      }
-    }
-    const sg = new THREE.BufferGeometry();
-    sg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-    sg.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
-    sg.computeVertexNormals();
-    const seats = new THREE.Mesh(sg, seatM);
-    seats.receiveShadow = true;
-    seats.castShadow = true;
-    root.add(seats);
-    // walls all round, from the ground up to the seats
-    const wp = [];
-    for (let i = 0; i < n; i++) {
-      const j = (i + 1) % n,
-        p = pts[i],
-        q = pts[j];
-      wp.push(
-        p[0],
-        g[i] - 0.6,
-        p[1],
-        q[0],
-        g[j] - 0.6,
-        q[1],
-        q[0],
-        y[j] + (t[j] > 0.9 ? 1.1 : 0),
-        q[1],
-        p[0],
-        g[i] - 0.6,
-        p[1],
-        q[0],
-        y[j] + (t[j] > 0.9 ? 1.1 : 0),
-        q[1],
-        p[0],
-        y[i] + (t[i] > 0.9 ? 1.1 : 0),
-        p[1]
-      );
-    }
-    const wg = new THREE.BufferGeometry();
-    wg.setAttribute('position', new THREE.Float32BufferAttribute(wp, 3));
-    wg.computeVertexNormals();
-    const walls = new THREE.Mesh(wg, new THREE.MeshStandardMaterial({ color: 0xc9c4b8, roughness: 0.9, side: THREE.DoubleSide }));
-    walls.castShadow = true;
-    walls.receiveShadow = true;
-    root.add(walls);
-    // the roof of the main tribune, on pillars along its back
-    if (pts === big) {
-      const ry = g0 + 0.9 + HS + 3.6;
-      const rp = [];
-      for (const [a, b, c] of tri) for (const i of [a, b, c]) rp.push(pts[i][0], ry + (1 - t[i]) * 0.6, pts[i][1]);
-      const rg = new THREE.BufferGeometry();
-      rg.setAttribute('position', new THREE.Float32BufferAttribute(rp, 3));
-      rg.computeVertexNormals();
-      const roof = new THREE.Mesh(rg, roofM);
-      roof.castShadow = true;
-      root.add(roof);
-      let acc2 = 99;
-      for (let i = 0; i < n; i++) {
-        const j = (i + 1) % n;
-        acc2 += Math.hypot(pts[j][0] - pts[i][0], pts[j][1] - pts[i][1]);
-        if (t[i] < 0.85 || acc2 < 12) continue;
-        acc2 = 0;
-        const h = ry - g[i];
-        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, h, 8), postM);
-        post.position.set(pts[i][0], g[i] + h / 2, pts[i][1]);
-        post.castShadow = true;
-        root.add(post);
-      }
-    }
+    buildPerazaEach(pts, big, seatM, root, dPitch, roofM, postM);
   }
   scene.add(root);
   PERAZA.ok = true;
@@ -163,6 +52,130 @@ function buildPeraza() {
   // the entrance on the street: two white pillars, a green gate, the name over it and a ticket booth
   const d = streetDoor(PERAZA.cx, PERAZA.cz);
   if (!d) return;
+  const { g, add, tc, tx } = buildPerazaPart2(d);
+  buildPerazaPart3(tx, add, tc, g);
+}
+/** (v1.1.7, code quality) the body of a loop of buildPeraza, split out of it */
+function buildPerazaEach(pts, big, seatM, root, dPitch, roofM, postM) {
+  const n = pts.length;
+  const { g, g0, HS, t, y, tri } = buildPerazaEachPart1(pts, big, seatM, root, dPitch);
+  buildPerazaEachPart2(root, n, pts, g, y, t);
+  // the roof of the main tribune, on pillars along its back
+  if (pts === big) {
+    const ry = g0 + 0.9 + HS + 3.6;
+    const rp = [];
+    for (const [a, b, c] of tri) for (const i of [a, b, c]) rp.push(pts[i][0], ry + (1 - t[i]) * 0.6, pts[i][1]);
+    const rg = new THREE.BufferGeometry();
+    rg.setAttribute('position', new THREE.Float32BufferAttribute(rp, 3));
+    rg.computeVertexNormals();
+    const roof = new THREE.Mesh(rg, roofM);
+    roof.castShadow = true;
+    root.add(roof);
+    let acc2 = 99;
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n;
+      acc2 += Math.hypot(pts[j][0] - pts[i][0], pts[j][1] - pts[i][1]);
+      if (t[i] < 0.85 || acc2 < 12) continue;
+      acc2 = 0;
+      const h = ry - g[i];
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, h, 8), postM);
+      post.position.set(pts[i][0], g[i] + h / 2, pts[i][1]);
+      post.castShadow = true;
+      root.add(post);
+    }
+  }
+}
+/** (v1.1.7, code quality) part of buildPerazaEach: walls all round, from the ground up to the seats */
+function buildPerazaEachPart2(root, n, pts, g, y, t) {
+  // walls all round, from the ground up to the seats
+  const wp = [];
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n,
+      p = pts[i],
+      q = pts[j];
+    wp.push(
+      p[0],
+      g[i] - 0.6,
+      p[1],
+      q[0],
+      g[j] - 0.6,
+      q[1],
+      q[0],
+      y[j] + (t[j] > 0.9 ? 1.1 : 0),
+      q[1],
+      p[0],
+      g[i] - 0.6,
+      p[1],
+      q[0],
+      y[j] + (t[j] > 0.9 ? 1.1 : 0),
+      q[1],
+      p[0],
+      y[i] + (t[i] > 0.9 ? 1.1 : 0),
+      p[1]
+    );
+  }
+  const wg = new THREE.BufferGeometry();
+  wg.setAttribute('position', new THREE.Float32BufferAttribute(wp, 3));
+  wg.computeVertexNormals();
+  const walls = new THREE.Mesh(wg, new THREE.MeshStandardMaterial({ color: 0xc9c4b8, roughness: 0.9, side: THREE.DoubleSide }));
+  walls.castShadow = true;
+  walls.receiveShadow = true;
+  root.add(walls);
+}
+/** (v1.1.7, code quality) part of buildPerazaEach: the sloping seats */
+function buildPerazaEachPart1(pts, big, seatM, root, dPitch) {
+  const g = pts.map((p) => heightAt(p[0], p[1]));
+  const g0 = Math.min(...g);
+  const d = pts.map((p) => dPitch(p[0], p[1]));
+  const d0 = Math.min(...d),
+    d1 = Math.max(...d);
+  const HS = pts === big ? 8.5 : 6.5;
+  const t = d.map((v) => (d1 - d0 > 2 ? (v - d0) / (d1 - d0) : 0.5));
+  const y = t.map((v) => g0 + 0.9 + v * HS);
+  // the sloping seats
+  const tri = THREE.ShapeUtils.triangulateShape(
+    pts.map((p) => new THREE.Vector2(p[0], p[1])),
+    []
+  );
+  const pos = [],
+    uv = [];
+  for (const [a, b, c] of tri) {
+    const cr = (pts[b][0] - pts[a][0]) * (pts[c][1] - pts[a][1]) - (pts[b][1] - pts[a][1]) * (pts[c][0] - pts[a][0]);
+    const o = cr > 0 ? [a, c, b] : [a, b, c];
+    for (const i of o) {
+      pos.push(pts[i][0], y[i], pts[i][1]);
+      uv.push(0.5, t[i] * 2.4);
+    }
+  }
+  const sg = new THREE.BufferGeometry();
+  sg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  sg.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  sg.computeVertexNormals();
+  const seats = new THREE.Mesh(sg, seatM);
+  seats.receiveShadow = true;
+  seats.castShadow = true;
+  root.add(seats);
+  return { g, g0, HS, t, y, tri };
+}
+/** (v1.1.7, code quality) part of buildPeraza */
+function buildPerazaPart3(tx, add, tc, g) {
+  tx.fillStyle = '#1f7a3d';
+  tx.fillRect(0, 0, 256, 64);
+  tx.fillStyle = '#fff';
+  tx.font = 'bold 34px sans-serif';
+  tx.textAlign = 'center';
+  tx.fillText('TAQUILLA', 128, 44);
+  const ts = add(
+    new THREE.PlaneGeometry(1.5, 0.38),
+    new THREE.MeshStandardMaterial({ map: canvasTex(tc, { repeat: false }), roughness: 0.6 }),
+    4.6,
+    2.15,
+    -1.78
+  );
+  scene.add(g);
+}
+/** (v1.1.7, code quality) part of buildPeraza: ticket booth beside the gate */
+function buildPerazaPart2(d) {
   PERAZA.door = [d.x, d.z];
   PERAZA.street = d.street;
   const g = new THREE.Group();
@@ -218,20 +231,34 @@ function buildPeraza() {
   }
   const tc = mkCanvas(256, 64),
     tx = tc.getContext('2d');
-  tx.fillStyle = '#1f7a3d';
-  tx.fillRect(0, 0, 256, 64);
-  tx.fillStyle = '#fff';
-  tx.font = 'bold 34px sans-serif';
-  tx.textAlign = 'center';
-  tx.fillText('TAQUILLA', 128, 44);
-  const ts = add(
-    new THREE.PlaneGeometry(1.5, 0.38),
-    new THREE.MeshStandardMaterial({ map: canvasTex(tc, { repeat: false }), roughness: 0.6 }),
-    4.6,
-    2.15,
-    -1.78
-  );
-  scene.add(g);
+  return { g, add, tc, tx };
+}
+/** (v1.1.7, code quality) part of buildPeraza */
+function buildPerazaPart1(P) {
+  const F = P.F,
+    uc = (F.u0 + F.u1) / 2,
+    vc = (F.v0 + F.v1) / 2;
+  const dPitch = (x, z) => {
+    const u = (x - P.cx) * F.ux + (z - P.cz) * F.uz,
+      v = (x - P.cx) * F.vx + (z - P.cz) * F.vz;
+    return Math.hypot(Math.max(0, Math.abs(u - uc) - P.len / 2), Math.max(0, Math.abs(v - vc) - P.wid / 2));
+  };
+  const seatM = new THREE.MeshStandardMaterial({ map: perazaSeatTex(), roughness: 0.8 }),
+    wallM = M(0xc9c4b8, 0.9),
+    roofM = M(0x5d6268, 0.5, 0.5, { side: THREE.DoubleSide }),
+    postM = M(0x8a8f94, 0.5, 0.6);
+  let big = null,
+    bigA = 0;
+  for (const pts of PERAZA.stands) {
+    const A = Math.abs(polyArea(pts));
+    if (A > bigA) {
+      bigA = A;
+      big = pts;
+    }
+  }
+  const root = new THREE.Group();
+  root.name = 'Estadio Francisco Peraza';
+  return { dPitch, seatM, roofM, postM, big, root };
 }
 // ============ Pabellón Juan Ríos Tejera (v0.76, Jonay: «parece una casa, no un pabellón») ============
 // OSM has the hall as a plain 16 m, 5-storey building inside the sports area «Pabellón Juan Ríos Tejera»: drawn as a
@@ -259,6 +286,37 @@ function riosHall(pts, cx, cz) {
 function buildRiosHall() {
   const pts = RIOS.pts;
   if (!pts) return;
+  const { n, g, yT, root, fp } = buildRiosHallPart1(pts);
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n,
+      p = pts[i],
+      q = pts[j];
+    fp.push(p[0], yT - 0.7, p[1], q[0], yT - 0.7, q[1], q[0], yT + 0.15, q[1], p[0], yT - 0.7, p[1], q[0], yT + 0.15, q[1], p[0], yT + 0.15, p[1]);
+  }
+  const fg = new THREE.BufferGeometry();
+  fg.setAttribute('position', new THREE.Float32BufferAttribute(fp, 3));
+  fg.computeVertexNormals();
+  root.add(new THREE.Mesh(fg, M(0x7e3fa0, 0.5, 0.3, { side: THREE.DoubleSide })));
+  const F = axisFrame(pts, RIOS.cx, RIOS.cz);
+  const len = F.u1 - F.u0,
+    wid = F.v1 - F.v0,
+    vm = (F.v0 + F.v1) / 2,
+    um = (F.u0 + F.u1) / 2;
+  const cl = new THREE.Mesh(new THREE.BoxGeometry(wid * 0.45, 2.2, len * 0.8), new THREE.MeshStandardMaterial({ color: 0xf2f1ec, roughness: 0.85 }));
+  const [qx, qz] = F.W(um, vm);
+  cl.position.set(qx, yT + 1.1, qz);
+  cl.rotation.y = F.ang;
+  cl.castShadow = true;
+  root.add(cl);
+  const cr = new THREE.Mesh(new THREE.BoxGeometry(wid * 0.5, 0.25, len * 0.84), M(0x9aa0a6, 0.45, 0.6));
+  cr.position.set(qx, yT + 2.3, qz);
+  cr.rotation.y = cl.rotation.y;
+  root.add(cr);
+  scene.add(root);
+  BUILD.push({ pts, cx: RIOS.cx, cz: RIOS.cz, top: yT, bmax: Math.max(...g), style: 3, name: 'Pabellón Juan Ríos Tejera', H: yT - Math.max(...g) });
+}
+/** (v1.1.7, code quality) part of buildRiosHall: wall texture: white render with purple vertical stripes every 4 m and a grey plinth */
+function buildRiosHallPart1(pts) {
   const n = pts.length;
   const g = pts.map((p) => heightAt(p[0], p[1]));
   const y0 = Math.min(...g) - 0.5,
@@ -312,31 +370,5 @@ function buildRiosHall() {
   rg.computeVertexNormals();
   root.add(new THREE.Mesh(rg, M(0x9aa0a6, 0.45, 0.6, { side: THREE.DoubleSide })));
   const fp = [];
-  for (let i = 0; i < n; i++) {
-    const j = (i + 1) % n,
-      p = pts[i],
-      q = pts[j];
-    fp.push(p[0], yT - 0.7, p[1], q[0], yT - 0.7, q[1], q[0], yT + 0.15, q[1], p[0], yT - 0.7, p[1], q[0], yT + 0.15, q[1], p[0], yT + 0.15, p[1]);
-  }
-  const fg = new THREE.BufferGeometry();
-  fg.setAttribute('position', new THREE.Float32BufferAttribute(fp, 3));
-  fg.computeVertexNormals();
-  root.add(new THREE.Mesh(fg, M(0x7e3fa0, 0.5, 0.3, { side: THREE.DoubleSide })));
-  const F = axisFrame(pts, RIOS.cx, RIOS.cz);
-  const len = F.u1 - F.u0,
-    wid = F.v1 - F.v0,
-    vm = (F.v0 + F.v1) / 2,
-    um = (F.u0 + F.u1) / 2;
-  const cl = new THREE.Mesh(new THREE.BoxGeometry(wid * 0.45, 2.2, len * 0.8), new THREE.MeshStandardMaterial({ color: 0xf2f1ec, roughness: 0.85 }));
-  const [qx, qz] = F.W(um, vm);
-  cl.position.set(qx, yT + 1.1, qz);
-  cl.rotation.y = F.ang;
-  cl.castShadow = true;
-  root.add(cl);
-  const cr = new THREE.Mesh(new THREE.BoxGeometry(wid * 0.5, 0.25, len * 0.84), M(0x9aa0a6, 0.45, 0.6));
-  cr.position.set(qx, yT + 2.3, qz);
-  cr.rotation.y = cl.rotation.y;
-  root.add(cr);
-  scene.add(root);
-  BUILD.push({ pts, cx: RIOS.cx, cz: RIOS.cz, top: yT, bmax: Math.max(...g), style: 3, name: 'Pabellón Juan Ríos Tejera', H: yT - Math.max(...g) });
+  return { n, g, yT, root, fp };
 }

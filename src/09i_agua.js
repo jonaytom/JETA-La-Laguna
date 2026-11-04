@@ -110,6 +110,10 @@ function holdRifle(H, aim) {
     m.updateMatrixWorld(true);
     return;
   }
+  holdRiflePart1(H, aim, dir, fx, fz, m);
+}
+/** (v1.1.7, code quality) part of holdRifle: right hand target: the grip, 30 cm along the aim from the shoulder (aiming) or by the right hip (carried) */
+function holdRiflePart1(H, aim, dir, fx, fz, m) {
   const sk = H.skeleton,
     sh = sk.getBoneByName('upperarm_r');
   sh.updateWorldMatrix(true, false);
@@ -383,64 +387,30 @@ const AGUA = (() => {
     return false;
   }
   function update(dt) {
-    init();
-    weaponKeys();
-    shopT -= dt;
-    if (shopT <= 0) {
-      shopT = 0.5;
-      tickShops();
-    }
-    const use = rifleUsable();
-    if (RIFLE.mesh) RIFLE.mesh.visible = RIFLE.has && RIFLE.out && !PLAYER.car && !PLAYER.interior;
-    if (!use) RIFLE.firing = false;
-    else if (WEAPON.touchAim) WEAPON.aiming = true;
-    if (use && WEAPON.want) {
-      RIFLE.touchT = 0.5;
-      WEAPON.want = false;
-    } // a tap on the phone's fire button: a short burst
-    if (RIFLE.touchT > 0) RIFLE.touchT -= dt;
-    // hold the rifle (v0.79, Jonay: it went through the arm): both hands, like a real rifle. Aiming: the butt at the right
-    // shoulder along the aim, the right hand on the grip (elbow down and out), the left hand under the handguard. Not
-    // aiming: carried at the hip pointing ahead and a bit down, both hands on it.
-    if (use && RIFLE.mesh && playerHuman) {
-      if (WEAPON.aiming) {
-        PLAYER.h = CAM.yaw;
-        playerHuman.root.rotation.y = PLAYER.h;
-        camera.getWorldDirection(aimV);
+    const { spraying } = updatePart1(dt); // the jet goes where you look (as when aiming)
+    updatePart2(spraying, dt);
+    updatePart3(dt);
+    // fires: flicker, burn you if you stand in them, the burnt pile goes after a while
+    for (let i = FIRES.length - 1; i >= 0; i--) {
+      const f = FIRES[i];
+      f.t += dt;
+      if (!f.out) {
+        f.flames.forEach((m, k) => {
+          const s = f.size * (k === 1 ? 1.15 : 0.8) * Math.max(0.25, f.hp);
+          m.scale.set(s * (1 + 0.12 * Math.sin(f.t * 13 + k * 2)), s * (1 + 0.25 * Math.sin(f.t * 9 + k)), s);
+        });
+        if (!PLAYER.car && Math.hypot(PLAYER.x - f.x, PLAYER.z - f.z) < f.r * 0.8 && PLAYER.y < f.y + 1) {
+          PLAYER.health -= dt * 12;
+          if (Math.random() < dt * 2) HUD.toast('¡Quema!', '#ff6a00', 0.8);
+        }
+      } else if ((f.outT += dt) > 40 && !f.keep) {
+        if (f.g.parent) f.g.parent.remove(f.g);
+        FIRES.splice(i, 1);
       }
-      holdRifle(playerHuman, WEAPON.aiming ? aimV : null);
-      const wl = RIFLE.mesh.userData.water;
-      const k = clamp(RIFLE.water / RIFLE.max, 0.02, 1);
-      wl.scale.y = k;
-      wl.position.y = 0.098 - (0.07 * (1 - k)) / 2;
     }
-    // spray
-    const spraying = use && (RIFLE.firing || RIFLE.touchT > 0) && RIFLE.water > 0;
-    if (use && (RIFLE.firing || RIFLE.touchT > 0) && RIFLE.water <= 0 && !RIFLE.emptyMsg) {
-      RIFLE.emptyMsg = true;
-      AUDIO.empty && AUDIO.empty();
-      HUD.toast('Rifle de agua vacío: recárgalo en una fuente (' + CONTROLS.keyName('use').toUpperCase() + ')', '#7fd3ff', 2.5);
-    }
-    if (spraying && !WEAPON.aiming && playerHuman) {
-      PLAYER.h = CAM.yaw;
-      playerHuman.root.rotation.y = PLAYER.h;
-    } // the jet goes where you look (as when aiming)
-    if (spraying) {
-      RIFLE.emptyMsg = false;
-      FIGHT.blockPunch = true;
-      spawnT -= dt;
-      while (spawnT <= 0) {
-        spawnT += 0.04;
-        spawnDrop();
-      }
-      RIFLE.water = Math.max(0, RIFLE.water - dt * 7.5);
-      sndT -= dt;
-      if (sndT <= 0) {
-        sndT = 0.11;
-        AUDIO.spray && AUDIO.spray();
-      }
-      if (Math.random() < dt * 4) updateWeaponHUD();
-    }
+  }
+  /** (v1.1.7, code quality) part of update: drops in flight */
+  function updatePart3(dt) {
     // drops in flight
     let n = 0;
     for (const d of D) {
@@ -496,24 +466,71 @@ const AGUA = (() => {
       if (p.t <= 0) p.m.visible = false;
     }
     for (const p of PEDS) if (p.wetT > 0) p.wetT -= dt;
-    // fires: flicker, burn you if you stand in them, the burnt pile goes after a while
-    for (let i = FIRES.length - 1; i >= 0; i--) {
-      const f = FIRES[i];
-      f.t += dt;
-      if (!f.out) {
-        f.flames.forEach((m, k) => {
-          const s = f.size * (k === 1 ? 1.15 : 0.8) * Math.max(0.25, f.hp);
-          m.scale.set(s * (1 + 0.12 * Math.sin(f.t * 13 + k * 2)), s * (1 + 0.25 * Math.sin(f.t * 9 + k)), s);
-        });
-        if (!PLAYER.car && Math.hypot(PLAYER.x - f.x, PLAYER.z - f.z) < f.r * 0.8 && PLAYER.y < f.y + 1) {
-          PLAYER.health -= dt * 12;
-          if (Math.random() < dt * 2) HUD.toast('¡Quema!', '#ff6a00', 0.8);
-        }
-      } else if ((f.outT += dt) > 40 && !f.keep) {
-        if (f.g.parent) f.g.parent.remove(f.g);
-        FIRES.splice(i, 1);
+  }
+  /** (v1.1.7, code quality) part of update */
+  function updatePart2(spraying, dt) {
+    if (spraying) {
+      RIFLE.emptyMsg = false;
+      FIGHT.blockPunch = true;
+      spawnT -= dt;
+      while (spawnT <= 0) {
+        spawnT += 0.04;
+        spawnDrop();
       }
+      RIFLE.water = Math.max(0, RIFLE.water - dt * 7.5);
+      sndT -= dt;
+      if (sndT <= 0) {
+        sndT = 0.11;
+        AUDIO.spray && AUDIO.spray();
+      }
+      if (Math.random() < dt * 4) updateWeaponHUD();
     }
+  }
+  /** (v1.1.7, code quality) part of update: hold the rifle (v0.79, Jonay: it went through the arm): both hands, like a real rifle. Aiming: the butt at the right */
+  function updatePart1(dt) {
+    init();
+    weaponKeys();
+    shopT -= dt;
+    if (shopT <= 0) {
+      shopT = 0.5;
+      tickShops();
+    }
+    const use = rifleUsable();
+    if (RIFLE.mesh) RIFLE.mesh.visible = RIFLE.has && RIFLE.out && !PLAYER.car && !PLAYER.interior;
+    if (!use) RIFLE.firing = false;
+    else if (WEAPON.touchAim) WEAPON.aiming = true;
+    if (use && WEAPON.want) {
+      RIFLE.touchT = 0.5;
+      WEAPON.want = false;
+    } // a tap on the phone's fire button: a short burst
+    if (RIFLE.touchT > 0) RIFLE.touchT -= dt;
+    // hold the rifle (v0.79, Jonay: it went through the arm): both hands, like a real rifle. Aiming: the butt at the right
+    // shoulder along the aim, the right hand on the grip (elbow down and out), the left hand under the handguard. Not
+    // aiming: carried at the hip pointing ahead and a bit down, both hands on it.
+    if (use && RIFLE.mesh && playerHuman) {
+      if (WEAPON.aiming) {
+        PLAYER.h = CAM.yaw;
+        playerHuman.root.rotation.y = PLAYER.h;
+        camera.getWorldDirection(aimV);
+      }
+      holdRifle(playerHuman, WEAPON.aiming ? aimV : null);
+      const wl = RIFLE.mesh.userData.water;
+      const k = clamp(RIFLE.water / RIFLE.max, 0.02, 1);
+      wl.scale.y = k;
+      wl.position.y = 0.098 - (0.07 * (1 - k)) / 2;
+    }
+    // spray
+    const spraying = use && (RIFLE.firing || RIFLE.touchT > 0) && RIFLE.water > 0;
+    if (use && (RIFLE.firing || RIFLE.touchT > 0) && RIFLE.water <= 0 && !RIFLE.emptyMsg) {
+      RIFLE.emptyMsg = true;
+      AUDIO.empty && AUDIO.empty();
+      HUD.toast('Rifle de agua vacío: recárgalo en una fuente (' + CONTROLS.keyName('use').toUpperCase() + ')', '#7fd3ff', 2.5);
+    }
+    if (spraying && !WEAPON.aiming && playerHuman) {
+      PLAYER.h = CAM.yaw;
+      playerHuman.root.rotation.y = PLAYER.h;
+    }
+    return { spraying };
   }
   // ---------- Tab / 1 / 2 / 3: fists, pistol, water rifle
   function weaponKeys() {
@@ -617,19 +634,7 @@ const AGUA = (() => {
   const PRICE = 350,
     BALLS = 20;
   function openShop(s) {
-    const items = [];
-    if (ARCADE.data().invited) items.push(['arc', '🕹 Echar una partida a la máquina: <b>GUANCHE GUARRIORS</b> · <b>$1</b> la partida']); // v0.82: the toy shops' machine
-    // v0.83: the GOFIO-8 console for the TV at home and its cartridges (once El Blanco has told you about the arcades)
-    const A_ = ARCADE.data(),
-      CART = { bencomo: 90, naves: 120, guanche: 150, pachanga: 140, furbito: 140 }; // v0.85: + the two sports cartridges
-    if (A_.invited && !A_.console) items.push(['console', '🎮 Consola <b>GOFIO-8</b> para la tele de casa · <b>$1.200</b>']);
-    if (A_.console)
-      for (const id in CART)
-        if (!A_.bought.includes(id) && ARCADE.GAMES[id])
-          items.push(['cart_' + id, `💾 Cartucho «${ARCADE.GAMES[id].title}» para la GOFIO-8 · <b>$${CART[id]}</b>`, CART[id], id]);
-    if (!RIFLE.has) items.push(['rifle', `Rifle de agua «Guepardo SK-9» eléctrico · <b>$${PRICE}</b>`]);
-    else items.push(['fill', 'Llenar el rifle de agua (del grifo de la tienda) · <b>$2</b>']);
-    if (WEAPON.has) items.push(['balls', `Bolsa de bolitas para la pistola (6) · <b>$${BALLS}</b>`]);
+    const { items, A_, CART } = openShopPart1();
     DLG.show(
       s.name,
       'Juguetería',
@@ -714,6 +719,23 @@ const AGUA = (() => {
         }
       }
     );
+  }
+  /** (v1.1.7, code quality) part of openShop: v0.83: the GOFIO-8 console for the TV at home and its cartridges (once El Blanco has told you about the arcades) */
+  function openShopPart1() {
+    const items = [];
+    if (ARCADE.data().invited) items.push(['arc', '🕹 Echar una partida a la máquina: <b>GUANCHE GUARRIORS</b> · <b>$1</b> la partida']); // v0.82: the toy shops' machine
+    // v0.83: the GOFIO-8 console for the TV at home and its cartridges (once El Blanco has told you about the arcades)
+    const A_ = ARCADE.data(),
+      CART = { bencomo: 90, naves: 120, guanche: 150, pachanga: 140, furbito: 140 }; // v0.85: + the two sports cartridges
+    if (A_.invited && !A_.console) items.push(['console', '🎮 Consola <b>GOFIO-8</b> para la tele de casa · <b>$1.200</b>']);
+    if (A_.console)
+      for (const id in CART)
+        if (!A_.bought.includes(id) && ARCADE.GAMES[id])
+          items.push(['cart_' + id, `💾 Cartucho «${ARCADE.GAMES[id].title}» para la GOFIO-8 · <b>$${CART[id]}</b>`, CART[id], id]);
+    if (!RIFLE.has) items.push(['rifle', `Rifle de agua «Guepardo SK-9» eléctrico · <b>$${PRICE}</b>`]);
+    else items.push(['fill', 'Llenar el rifle de agua (del grifo de la tienda) · <b>$2</b>']);
+    if (WEAPON.has) items.push(['balls', `Bolsa de bolitas para la pistola (6) · <b>$${BALLS}</b>`]);
+    return { items, A_, CART };
   }
   function use() {
     const s = nearShop();

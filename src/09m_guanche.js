@@ -807,6 +807,169 @@ ARCADE.GAMES.guanche = (() => {
   const FZ = { taoro: 'taoro', anaga: 'anaga', barranco: 'barranco', gigantes: 'gigantes', malpais: 'malpais', canadas: 'canadas', teide: 'echeyde' }; // v0.99: theme → drawn background (FONDOS)
   function background(th) {
     if (bgC[th]) return bgC[th];
+    const { rr, L, sky } = backgroundPart1(th);
+    for (let li = 0; li < 3; li++) {
+      backgroundEach(L, li, sky, th, rr);
+    }
+    return (bgC[th] = L);
+  }
+  /** (v1.1.7, code quality) the body of a loop of background, split out of it */
+  function backgroundEach(L, li, sky, th, rr) {
+    const { x } = backgroundEachPart1(L, li, sky, th, rr);
+    backgroundEachPart2(li, th, x, rr);
+    if (li === 2) {
+      if (th === 'taoro') for (let i = 0; i < 7; i++) choza(x, 40 + i * 140 + rr() * 30, 212, rr);
+      if (th === 'anaga') {
+        for (let i = 0; i < 14; i++) laurel(x, i * 70 + rr() * 30, 214, rr);
+        x.fillStyle = 'rgba(200,220,215,0.18)';
+        x.fillRect(0, 150, 960, 50);
+      }
+      if (th === 'gigantes') {
+        x.fillStyle = '#2a3a6a';
+        x.fillRect(0, 200, 960, 20);
+        x.fillStyle = 'rgba(255,255,255,0.3)';
+        for (let i = 0; i < 50; i++) x.fillRect(rr() * 960, 202 + rr() * 16, 6, 1);
+      }
+      if (th === 'barranco') {
+        for (let i = 0; i < 9; i++) {
+          const cx0 = 50 + i * 110 + rr() * 30,
+            cy = 120 + rr() * 60;
+          x.fillStyle = '#2a221c';
+          x.fillRect(cx0 - 30, cy - 10, 60, 120);
+          x.fillStyle = '#060404';
+          x.beginPath();
+          x.ellipse(cx0, cy + 22, 13, 16, 0, Math.PI, 0);
+          x.fillRect(cx0 - 13, cy + 22, 26, 14);
+          x.fill();
+        } // rock and cave mouths
+        for (let i = 0; i < 10; i++) cardon(x, rr() * 960, 214, rr);
+      }
+      if (th === 'malpais') {
+        for (let i = 0; i < 26; i++) {
+          x.fillStyle = rr() < 0.5 ? '#1a1418' : '#241c22';
+          x.beginPath();
+          const bx = rr() * 960,
+            bw = 18 + rr() * 30;
+          x.moveTo(bx, 214);
+          x.lineTo(bx + bw * 0.3, 196 - rr() * 14);
+          x.lineTo(bx + bw * 0.7, 200 - rr() * 10);
+          x.lineTo(bx + bw, 214);
+          x.fill();
+        }
+        for (let i = 0; i < 8; i++) cardon(x, rr() * 960, 214, rr);
+        x.fillStyle = 'rgba(255,90,20,0.35)';
+        for (let i = 0; i < 18; i++) x.fillRect(rr() * 960, 206 + rr() * 8, 10 + rr() * 20, 1.5);
+      }
+      if (th === 'canadas') {
+        for (let i = 0; i < 5; i++) roque(x, 80 + i * 200 + rr() * 40, 214, rr);
+        for (let i = 0; i < 30; i++) {
+          x.fillStyle = '#4a5a2a';
+          x.beginPath();
+          x.ellipse(rr() * 960, 210 + rr() * 6, 8, 4, 0, 0, 7);
+          x.fill();
+        }
+      }
+      if (th === 'teide') {
+        x.fillStyle = '#3a0c06';
+        for (let i = 0; i < 12; i++) {
+          const cx0 = rr() * 960;
+          x.beginPath();
+          x.moveTo(cx0 - 30, 0);
+          x.lineTo(cx0, 60 + rr() * 60);
+          x.lineTo(cx0 + 30, 0);
+          x.fill();
+        }
+        x.fillStyle = 'rgba(255,120,20,0.4)';
+        for (let i = 0; i < 8; i++) x.fillRect(rr() * 960, 0, 3 + rr() * 4, 210);
+      }
+    }
+  }
+  /** (v1.1.7, code quality) part of backgroundEach */
+  function backgroundEachPart2(li, th, x, rr) {
+    if (li === 1) {
+      const col = {
+        taoro: '#1e1a30',
+        anaga: '#1e3030',
+        gigantes: '#141c34',
+        canadas: '#2a1418',
+        teide: '#2a0806',
+        barranco: '#1c1714',
+        malpais: '#140c10'
+      }[th];
+      x.fillStyle = col;
+      if (th === 'gigantes') {
+        for (let i = 0; i < 6; i++) {
+          const cx0 = i * 170 + rr() * 40;
+          x.fillRect(cx0, 40 + rr() * 40, 90 + rr() * 30, SH);
+        }
+        x.fillStyle = '#1a2a5a';
+        x.fillRect(0, 196, 960, 30);
+      } else if (th === 'barranco') {
+        x.beginPath();
+        x.moveTo(0, SH);
+        for (let i = 0; i <= 960; i += 16) x.lineTo(i, 30 + Math.abs(Math.sin(i * 0.009)) * 90 + rr() * 18);
+        x.lineTo(960, SH);
+        x.fill();
+      } // v0.98: the ravine's high walls
+      else if (th === 'malpais') {
+        x.beginPath();
+        x.moveTo(0, SH);
+        for (let i = 0; i <= 960; i += 12) x.lineTo(i, 172 + rr() * 16 + (i % 120 < 20 ? -20 : 0));
+        x.lineTo(960, SH);
+        x.fill();
+        x.fillStyle = '#1a2a4a';
+        x.fillRect(0, 150, 960, 22);
+      } // the sea behind the black lava
+      else {
+        x.beginPath();
+        x.moveTo(0, SH);
+        for (let i = 0; i <= 960; i += 24) x.lineTo(i, 150 + Math.sin(i * 0.012) * 30 + rr() * 14);
+        x.lineTo(960, SH);
+        x.fill();
+      }
+    }
+  }
+  /** (v1.1.7, code quality) part of backgroundEach */
+  function backgroundEachPart1(L, li, sky, th, rr) {
+    const c = mkCanvas(1920, SH * 2),
+      x = c.getContext('2d');
+    x.scale(2, 2);
+    L.push(c); // v0.82.2: at ×2 (sharper)
+    if (li === 0) {
+      const g = x.createLinearGradient(0, 0, 0, SH * 0.7);
+      g.addColorStop(0, sky[0]);
+      g.addColorStop(1, sky[1]);
+      x.fillStyle = g;
+      x.fillRect(0, 0, 960, SH);
+      if (th !== 'teide') {
+        for (let i = 0; i < 90; i++) {
+          x.fillStyle = `rgba(255,255,255,${0.2 + rr() * 0.5})`;
+          x.fillRect(rr() * 960, rr() * 150, 1, 1);
+        }
+        x.fillStyle = th === 'canadas' ? '#3a1a22' : '#241a3a';
+        x.beginPath();
+        x.moveTo(250, 200);
+        x.lineTo(450, 50);
+        x.lineTo(490, 40);
+        x.lineTo(530, 50);
+        x.lineTo(740, 200);
+        x.fill(); // the Teide, dark: no sun
+        x.fillStyle = '#ff5a1a';
+        x.globalAlpha = 0.6;
+        x.fillRect(486, 40, 8, 3);
+        x.globalAlpha = 1;
+      } else
+        for (let i = 0; i < 40; i++) {
+          x.fillStyle = `rgba(255,${(60 + rr() * 90) | 0},10,${0.08 + rr() * 0.15})`;
+          x.beginPath();
+          x.arc(rr() * 960, rr() * SH, 20 + rr() * 60, 0, 7);
+          x.fill();
+        }
+    }
+    return { x };
+  }
+  /** (v1.1.7, code quality) part of background */
+  function backgroundPart1(th) {
     let s0 = th.length * 53;
     const rr = () => {
       s0 = (s0 * 9301 + 49297) % 233280;
@@ -822,152 +985,7 @@ ARCADE.GAMES.guanche = (() => {
       barranco: ['#0a0a14', '#2e2a3a'],
       malpais: ['#0a0612', '#40182a']
     }[th];
-    for (let li = 0; li < 3; li++) {
-      const c = mkCanvas(1920, SH * 2),
-        x = c.getContext('2d');
-      x.scale(2, 2);
-      L.push(c); // v0.82.2: at ×2 (sharper)
-      if (li === 0) {
-        const g = x.createLinearGradient(0, 0, 0, SH * 0.7);
-        g.addColorStop(0, sky[0]);
-        g.addColorStop(1, sky[1]);
-        x.fillStyle = g;
-        x.fillRect(0, 0, 960, SH);
-        if (th !== 'teide') {
-          for (let i = 0; i < 90; i++) {
-            x.fillStyle = `rgba(255,255,255,${0.2 + rr() * 0.5})`;
-            x.fillRect(rr() * 960, rr() * 150, 1, 1);
-          }
-          x.fillStyle = th === 'canadas' ? '#3a1a22' : '#241a3a';
-          x.beginPath();
-          x.moveTo(250, 200);
-          x.lineTo(450, 50);
-          x.lineTo(490, 40);
-          x.lineTo(530, 50);
-          x.lineTo(740, 200);
-          x.fill(); // the Teide, dark: no sun
-          x.fillStyle = '#ff5a1a';
-          x.globalAlpha = 0.6;
-          x.fillRect(486, 40, 8, 3);
-          x.globalAlpha = 1;
-        } else
-          for (let i = 0; i < 40; i++) {
-            x.fillStyle = `rgba(255,${(60 + rr() * 90) | 0},10,${0.08 + rr() * 0.15})`;
-            x.beginPath();
-            x.arc(rr() * 960, rr() * SH, 20 + rr() * 60, 0, 7);
-            x.fill();
-          }
-      }
-      if (li === 1) {
-        const col = {
-          taoro: '#1e1a30',
-          anaga: '#1e3030',
-          gigantes: '#141c34',
-          canadas: '#2a1418',
-          teide: '#2a0806',
-          barranco: '#1c1714',
-          malpais: '#140c10'
-        }[th];
-        x.fillStyle = col;
-        if (th === 'gigantes') {
-          for (let i = 0; i < 6; i++) {
-            const cx0 = i * 170 + rr() * 40;
-            x.fillRect(cx0, 40 + rr() * 40, 90 + rr() * 30, SH);
-          }
-          x.fillStyle = '#1a2a5a';
-          x.fillRect(0, 196, 960, 30);
-        } else if (th === 'barranco') {
-          x.beginPath();
-          x.moveTo(0, SH);
-          for (let i = 0; i <= 960; i += 16) x.lineTo(i, 30 + Math.abs(Math.sin(i * 0.009)) * 90 + rr() * 18);
-          x.lineTo(960, SH);
-          x.fill();
-        } // v0.98: the ravine's high walls
-        else if (th === 'malpais') {
-          x.beginPath();
-          x.moveTo(0, SH);
-          for (let i = 0; i <= 960; i += 12) x.lineTo(i, 172 + rr() * 16 + (i % 120 < 20 ? -20 : 0));
-          x.lineTo(960, SH);
-          x.fill();
-          x.fillStyle = '#1a2a4a';
-          x.fillRect(0, 150, 960, 22);
-        } // the sea behind the black lava
-        else {
-          x.beginPath();
-          x.moveTo(0, SH);
-          for (let i = 0; i <= 960; i += 24) x.lineTo(i, 150 + Math.sin(i * 0.012) * 30 + rr() * 14);
-          x.lineTo(960, SH);
-          x.fill();
-        }
-      }
-      if (li === 2) {
-        if (th === 'taoro') for (let i = 0; i < 7; i++) choza(x, 40 + i * 140 + rr() * 30, 212, rr);
-        if (th === 'anaga') {
-          for (let i = 0; i < 14; i++) laurel(x, i * 70 + rr() * 30, 214, rr);
-          x.fillStyle = 'rgba(200,220,215,0.18)';
-          x.fillRect(0, 150, 960, 50);
-        }
-        if (th === 'gigantes') {
-          x.fillStyle = '#2a3a6a';
-          x.fillRect(0, 200, 960, 20);
-          x.fillStyle = 'rgba(255,255,255,0.3)';
-          for (let i = 0; i < 50; i++) x.fillRect(rr() * 960, 202 + rr() * 16, 6, 1);
-        }
-        if (th === 'barranco') {
-          for (let i = 0; i < 9; i++) {
-            const cx0 = 50 + i * 110 + rr() * 30,
-              cy = 120 + rr() * 60;
-            x.fillStyle = '#2a221c';
-            x.fillRect(cx0 - 30, cy - 10, 60, 120);
-            x.fillStyle = '#060404';
-            x.beginPath();
-            x.ellipse(cx0, cy + 22, 13, 16, 0, Math.PI, 0);
-            x.fillRect(cx0 - 13, cy + 22, 26, 14);
-            x.fill();
-          } // rock and cave mouths
-          for (let i = 0; i < 10; i++) cardon(x, rr() * 960, 214, rr);
-        }
-        if (th === 'malpais') {
-          for (let i = 0; i < 26; i++) {
-            x.fillStyle = rr() < 0.5 ? '#1a1418' : '#241c22';
-            x.beginPath();
-            const bx = rr() * 960,
-              bw = 18 + rr() * 30;
-            x.moveTo(bx, 214);
-            x.lineTo(bx + bw * 0.3, 196 - rr() * 14);
-            x.lineTo(bx + bw * 0.7, 200 - rr() * 10);
-            x.lineTo(bx + bw, 214);
-            x.fill();
-          }
-          for (let i = 0; i < 8; i++) cardon(x, rr() * 960, 214, rr);
-          x.fillStyle = 'rgba(255,90,20,0.35)';
-          for (let i = 0; i < 18; i++) x.fillRect(rr() * 960, 206 + rr() * 8, 10 + rr() * 20, 1.5);
-        }
-        if (th === 'canadas') {
-          for (let i = 0; i < 5; i++) roque(x, 80 + i * 200 + rr() * 40, 214, rr);
-          for (let i = 0; i < 30; i++) {
-            x.fillStyle = '#4a5a2a';
-            x.beginPath();
-            x.ellipse(rr() * 960, 210 + rr() * 6, 8, 4, 0, 0, 7);
-            x.fill();
-          }
-        }
-        if (th === 'teide') {
-          x.fillStyle = '#3a0c06';
-          for (let i = 0; i < 12; i++) {
-            const cx0 = rr() * 960;
-            x.beginPath();
-            x.moveTo(cx0 - 30, 0);
-            x.lineTo(cx0, 60 + rr() * 60);
-            x.lineTo(cx0 + 30, 0);
-            x.fill();
-          }
-          x.fillStyle = 'rgba(255,120,20,0.4)';
-          for (let i = 0; i < 8; i++) x.fillRect(rr() * 960, 0, 3 + rr() * 4, 210);
-        }
-      }
-    }
-    return (bgC[th] = L);
+    return { rr, L, sky };
   }
   function choza(x, cx0, y, rr) {
     x.fillStyle = '#3a3040';
@@ -1214,32 +1232,7 @@ ARCADE.GAMES.guanche = (() => {
       items = [],
       liz = [];
     let fx = [];
-    // v0.95.2: every sheet starts loading when the machine opens (they load on their first draw; meanwhile the old
-    // drawings were built, and that is what read the canvas with getImageData — the 0.90 audit warning)
-    for (const k of [...Object.values(SX_HERO), ...Object.values(SX_EN), 'g_duende_azul', 'lagarto', 'lz_mencey', 'lz_pastor', 'lz_mirla', ...SECF])
-      SPRX.ready(k);
-    for (const k of Object.values(FZ)) FONDOS.get(k); // (v0.99: the backgrounds' images too)
-    const p = {
-      hero: HEROES[0],
-      x: 30,
-      z: 22,
-      h: 0,
-      vh: 0,
-      vx: 0,
-      face: 1,
-      hp: 24,
-      st: 'idle',
-      stT: 0,
-      anim: 0,
-      combo: 0,
-      comboT: 0,
-      hitDone: new Set(),
-      jars: 0,
-      inv: 0,
-      tap: { d: 0, t: 0 },
-      run: false,
-      mount: null
-    };
+    const { p } = createPart1();
     const lp = () => 1 + 0.35 * loopN;
     function choose(i) {
       sel = i;
@@ -1270,40 +1263,7 @@ ARCADE.GAMES.guanche = (() => {
       phaseT = 2.8;
       if (!opt.demo) api.music(SONGS[THM[L.theme]]);
     }
-    // ---------- spawning
-    function spawn(k, x, z, extra) {
-      const d = ED[k],
-        look = LK[k] || LK.S;
-      const e = {
-        k,
-        x,
-        z,
-        h: 0,
-        vh: 0,
-        vx: 0,
-        face: -1,
-        hp: d.hp * lp(),
-        max: d.hp * lp(),
-        st: 'walk',
-        stT: 0,
-        anim: Math.random() * 4,
-        cd: 0.6 + Math.random(),
-        d,
-        look,
-        side: Math.random() < 0.5 ? -1 : 1,
-        hitDone: new Set(),
-        hits: 0,
-        ...(extra || {})
-      };
-      if (k === 'BT') e.s = 1.45;
-      if (k === 'T') e.s = 1;
-      if (k === 'S' && Math.random() < 0.5) {
-        e.sxk = SECF[Math.floor(Math.random() * SECF.length)];
-        e.fem = true;
-      } // v0.99.3 (Jonay): half the minions are women (five looks)
-      E.push(e);
-      return e;
-    }
+    const { spawn } = createPart2(lp, E);
     function startWave(w) {
       const [wx, list, isBoss] = w;
       lock = { x: clamp(wx - VW / 2, 0, L.len - VW), n: 0, boss: !!isBoss };
@@ -1509,30 +1469,7 @@ ARCADE.GAMES.guanche = (() => {
         }
         return;
       }
-      const H = p.hero,
-        dx = (pad.held('vR') ? 1 : 0) - (pad.held('vL') ? 1 : 0),
-        dz = (pad.held('vD') ? 1 : 0) - (pad.held('vU') ? 1 : 0);
-      // v0.95 (Jonay): A held = the strong blow, right button held = the strong parry kick; both = magic.
-      // v0.96 (Jonay): every blow comes out ON RELEASE: a short press = the normal one, held half a second = the strong one
-      // (before, the normal one came out on pressing and then the strong one charged)
-      for (const [b, ch, q, q0] of [
-        ['vS', 'chS', 'strong', 'atk'],
-        ['vP', 'chP', 'skick', 'kick']
-      ]) {
-        if (pad.hit(b)) {
-          p[ch] = 0;
-          if (!pad.held(b)) {
-            if (!p.mount) p.q = q0;
-            p[ch] = -1;
-          }
-        } /* (a tap that is not held, like the demo pilot's: at once) */ else if (p[ch] >= 0) {
-          if (pad.held(b)) p[ch] += dt;
-          else {
-            if (!p.mount) p.q = p[ch] >= 0.5 ? q : q0;
-            p[ch] = -1;
-          }
-        }
-      }
+      const { H, dx, dz } = playerPart1(pad, dt);
       if (pad.held('vS') && pad.held('vP') && p.jars > 0 && !p.mount && p.h <= 0 && p.st !== 'magic') {
         p.st = 'magic';
         p.stT = 1.6;
@@ -1741,6 +1678,10 @@ ARCADE.GAMES.guanche = (() => {
           return;
         }
       } // v0.83.2: the lizard bites (neck out) or, running, leaps and lashes its tail
+      playerPart2(dx, spd, dt, dz, H);
+    }
+    /** (v1.1.7, code quality) part of player */
+    function playerPart2(dx, spd, dt, dz, H) {
       if (dx) p.face = dx;
       p.x += dx * spd * dt;
       p.z = clamp(p.z + dz * spd * 0.6 * dt, 0, ZD);
@@ -1760,6 +1701,34 @@ ARCADE.GAMES.guanche = (() => {
           }
         }
     }
+    /** (v1.1.7, code quality) part of player: v0.95 (Jonay): A held = the strong blow, right button held = the strong parry kick; both = magic. */
+    function playerPart1(pad, dt) {
+      const H = p.hero,
+        dx = (pad.held('vR') ? 1 : 0) - (pad.held('vL') ? 1 : 0),
+        dz = (pad.held('vD') ? 1 : 0) - (pad.held('vU') ? 1 : 0);
+      // v0.95 (Jonay): A held = the strong blow, right button held = the strong parry kick; both = magic.
+      // v0.96 (Jonay): every blow comes out ON RELEASE: a short press = the normal one, held half a second = the strong one
+      // (before, the normal one came out on pressing and then the strong one charged)
+      for (const [b, ch, q, q0] of [
+        ['vS', 'chS', 'strong', 'atk'],
+        ['vP', 'chP', 'skick', 'kick']
+      ]) {
+        if (pad.hit(b)) {
+          p[ch] = 0;
+          if (!pad.held(b)) {
+            if (!p.mount) p.q = q0;
+            p[ch] = -1;
+          }
+        } /* (a tap that is not held, like the demo pilot's: at once) */ else if (p[ch] >= 0) {
+          if (pad.held(b)) p[ch] += dt;
+          else {
+            if (!p.mount) p.q = p[ch] >= 0.5 ? q : q0;
+            p[ch] = -1;
+          }
+        }
+      }
+      return { H, dx, dz };
+    }
     function clampP() {
       const lo = camX + 8,
         hi = camX + VW - 8;
@@ -1770,30 +1739,12 @@ ARCADE.GAMES.guanche = (() => {
         p.mount.face = p.face;
       }
     }
+    function strongFlash(e) {
+      fx.push({ k: 'flash', t: 0.22, x: e.x, y: GY + e.z - 22 });
+      shake = Math.max(shake, 0.15);
+    }
     function attackStep(dt) {
-      const H = p.hero;
-      p.atkT += dt;
-      p.stT -= dt;
-      const st = p.st;
-      const dur =
-          st === 'atk'
-            ? p.combo === 3
-              ? 0.5
-              : 0.28
-            : st === 'dash'
-              ? 0.6
-              : st === 'whip'
-                ? 0.45
-                : st === 'bite'
-                  ? 0.4
-                  : st === 'strong'
-                    ? 0.55
-                    : st === 'kick'
-                      ? 0.3
-                      : st === 'skick'
-                        ? 0.45
-                        : 0.35,
-        k = p.atkT / dur;
+      const { H, st, k } = attackStepPart1(dt);
       if (k > (st === 'dash' ? 0.12 : 0.35) && k < (st === 'dash' ? 0.9 : 0.75)) {
         const reach =
             st === 'whip'
@@ -1841,16 +1792,40 @@ ARCADE.GAMES.guanche = (() => {
             p.hitDone.add(e);
             if (hit(p, e, dmg * (1 + 0.1 * loopN), kind)) {
               aimAt(e);
-              if (st === 'strong') {
-                fx.push({ k: 'flash', t: 0.22, x: e.x, y: GY + e.z - 22 });
-                shake = Math.max(shake, 0.15);
-              }
+              if (st === 'strong') strongFlash(e);
               if (e.hp <= 0) killed(e);
             }
           }
         }
       } // v0.94 (Jonay): more margin in depth (z 8 → 11, more for the big ones)
       if (p.stT <= 0 && st !== 'jatk') p.st = 'idle';
+    }
+    /** (v1.1.7, code quality) part of attackStep */
+    function attackStepPart1(dt) {
+      const H = p.hero;
+      p.atkT += dt;
+      p.stT -= dt;
+      const st = p.st;
+      const dur =
+          st === 'atk'
+            ? p.combo === 3
+              ? 0.5
+              : 0.28
+            : st === 'dash'
+              ? 0.6
+              : st === 'whip'
+                ? 0.45
+                : st === 'bite'
+                  ? 0.4
+                  : st === 'strong'
+                    ? 0.55
+                    : st === 'kick'
+                      ? 0.3
+                      : st === 'skick'
+                        ? 0.45
+                        : 0.35,
+        k = p.atkT / dur;
+      return { H, st, k };
     }
     // v0.94 (Jonay): the portrait of the enemy you are hitting (top of the screen, with its level and life); a blow
     // that hits several keeps the strongest (the most life), and among equals one at random
@@ -2053,6 +2028,37 @@ ARCADE.GAMES.guanche = (() => {
         }
         return;
       }
+      const { mx, mz } = enemyPart1(e, d, dx, lz, spd, dt); // once on the screen they stay on it (no hitting from outside)
+      enemyPart2(e, d, dz, dx, lz, canK, lv);
+      if (lz) {
+        lz.x = e.x;
+        lz.z = e.z;
+        lz.face = e.face;
+        lz.vx = mx;
+        lz.vz = mz;
+      }
+    }
+    /** (v1.1.7, code quality) part of enemy: the bosses call for help at half health */
+    function enemyPart2(e, d, dz, dx, lz, canK, lv) {
+      if (e.cd <= 0 && p.st !== 'dead') {
+        const inR = d.ranged ? Math.abs(dz) < 10 : Math.abs(dx) < (lz ? 60 : d.reach + 6) && Math.abs(dz) < 7;
+        if (inR && (e.engaged || d.ranged) && e.x > camX + 4 && e.x < camX + VW - 4) {
+          const r = Math.random();
+          e.move = !canK ? 'hit' : r < 0.06 * lv ? 'strong' : r < 0.11 * lv ? 'kick' : 'hit';
+          e.st = 'windup';
+          e.stT = d.wind * (e.move === 'strong' ? 1.5 : e.move === 'kick' ? 0.7 : 1);
+        }
+      } /* v0.84: they only attack from inside the screen (Guayota hit you from beyond the edge) */
+      // the bosses call for help at half health
+      if (d.boss && !e.called && e.hp < e.max / 2) {
+        e.called = true;
+        const k2 = e.k === 'BT' || e.k === 'BY' ? 'T' : e.k === 'BGO' ? 'GO' : e.k === 'BGX' ? 'RA' : 'S';
+        for (const sd of [-1, 1]) spawn(k2, sd > 0 ? camX + VW + 20 : camX - 20, 10 + Math.random() * 24, { wave: true });
+        lock.n += 2;
+      }
+    }
+    /** (v1.1.7, code quality) part of enemy: walking: engage (only two at a time come in close), or hover; the witches keep away; teleports */
+    function enemyPart1(e, d, dx, lz, spd, dt) {
       // walking: engage (only two at a time come in close), or hover; the witches keep away; teleports
       const engaged = E.filter((q) => q !== e && q.engaged && q.st !== 'dead' && q.hp > 0).length;
       e.engaged = d.ranged ? false : engaged < 2 || d.boss;
@@ -2078,69 +2084,10 @@ ARCADE.GAMES.guanche = (() => {
       } else e.st = 'idle';
       e.face = Math.sign(dx) || e.face;
       if (e.x > camX + 4 && e.x < camX + VW - 4) e.inS = true;
-      if (e.inS) e.x = clamp(e.x, camX + 6, camX + VW - 6); // once on the screen they stay on it (no hitting from outside)
-      if (e.cd <= 0 && p.st !== 'dead') {
-        const inR = d.ranged ? Math.abs(dz) < 10 : Math.abs(dx) < (lz ? 60 : d.reach + 6) && Math.abs(dz) < 7;
-        if (inR && (e.engaged || d.ranged) && e.x > camX + 4 && e.x < camX + VW - 4) {
-          const r = Math.random();
-          e.move = !canK ? 'hit' : r < 0.06 * lv ? 'strong' : r < 0.11 * lv ? 'kick' : 'hit';
-          e.st = 'windup';
-          e.stT = d.wind * (e.move === 'strong' ? 1.5 : e.move === 'kick' ? 0.7 : 1);
-        }
-      } /* v0.84: they only attack from inside the screen (Guayota hit you from beyond the edge) */
-      // the bosses call for help at half health
-      if (d.boss && !e.called && e.hp < e.max / 2) {
-        e.called = true;
-        const k2 = e.k === 'BT' || e.k === 'BY' ? 'T' : e.k === 'BGO' ? 'GO' : e.k === 'BGX' ? 'RA' : 'S';
-        for (const sd of [-1, 1]) spawn(k2, sd > 0 ? camX + VW + 20 : camX - 20, 10 + Math.random() * 24, { wave: true });
-        lock.n += 2;
-      }
-      if (lz) {
-        lz.x = e.x;
-        lz.z = e.z;
-        lz.face = e.face;
-        lz.vx = mx;
-        lz.vz = mz;
-      }
+      if (e.inS) e.x = clamp(e.x, camX + 6, camX + VW - 6);
+      return { mx, mz };
     }
-    function lizards(dt) {
-      for (const lz of liz) {
-        lz.anim += dt * 4;
-        lz.whip = Math.max(0, lz.whip - dt);
-        lz.bite = Math.max(0, (lz.bite || 0) - dt);
-        lz.hop = Math.max(0, (lz.hop || 0) - dt);
-        if (lz.free) {
-          lz.gone += dt;
-          if (lz.gone > 20 || lz.drops > 2) {
-            lz.x += 60 * dt;
-            lz.vx = 60;
-          } else {
-            lz.vx = 0;
-            lz.vz = 0;
-          }
-        }
-      }
-    }
-    function updShots(dt) {
-      for (const s of shots) {
-        s.t -= dt;
-        if (s.k === 'wave') {
-          s.r = (s.r || 0) + s.vx * dt;
-          if (p.h < 3 && Math.abs(Math.abs(p.x - s.x) - s.r) < 6 && Math.abs(p.z - s.z) < 20 && !s.hitP) {
-            s.hitP = true;
-            hit({ x: s.x }, p, s.dmg, 'knock');
-          }
-        } else {
-          s.x += s.vx * dt;
-          if (!s.hitP && Math.abs(s.x - p.x) < 7 && Math.abs(s.z - p.z) < 6 && p.h < s.h + 6) {
-            s.hitP = true;
-            s.t = 0;
-            hit({ x: s.x - s.vx }, p, s.dmg, 'knock');
-          }
-        }
-      }
-      for (let i = shots.length - 1; i >= 0; i--) if (shots[i].t <= 0) shots.splice(i, 1);
-    }
+    const { lizards, updShots } = createPart3(liz, shots, p, hit);
     // ---------- the night camp between stages: the duendes come to steal while you rest; kick them for pouches
     function camp(dt, pad) {
       campT -= dt;
@@ -2344,31 +2291,7 @@ ARCADE.GAMES.guanche = (() => {
     };
     // ---------- drawing
     const flick = () => Math.floor(time * 16) % 2 === 0;
-    function poseOf(o) {
-      const st = o.st;
-      if (st === 'walk') return cyc(WALK, o.anim * 0.7);
-      if (st === 'run' || st === 'thief') return cyc(RUN, o.anim * 0.9);
-      if (st === 'atk') {
-        if (o === p) {
-          const k = p.atkT / (p.combo === 3 ? 0.5 : 0.28);
-          return p.combo === 3 ? (k < 0.4 ? PO.wind : PO.smash) : k < 0.3 ? PO.idle : p.combo === 1 ? PO.atk1 : PO.atk2;
-        }
-        return o.stT > 0.15 ? PO.atk1 : PO.smash;
-      }
-      if (st === 'flip') return PO.jump;
-      if (st === 'windup') return PO.wind;
-      if (st === 'dash') return PO.fkick;
-      if (st === 'jump') return PO.jump;
-      if (st === 'jatk') return PO.jatk;
-      if (st === 'whip') return PO.ride;
-      if (st === 'hurt') return PO.hurt;
-      if (st === 'fall') return mix(PO.hurt, PO.down, 0.5);
-      if (st === 'down' || st === 'dead') return PO.down;
-      if (st === 'getup') return mix(PO.down, PO.idle, 1 - o.stT / 0.45);
-      if (st === 'magic') return PO.magic;
-      return PO.idle;
-    }
-    const hopOf = (lz) => (lz.hop > 0 ? Math.sin((1 - lz.hop / 0.45) * Math.PI) * 9 : 0);
+    const { poseOf, hopOf } = createPart4(p);
     /** [row, frame] of an actor's sheet for its state (rows: 0 idle, 1 walk, 2 run, 3 jump up, 4 down, 5 attack, 6 death) */
     function sxAnim(o, k) {
       const t = SPRX.stT(o, time),
@@ -2397,33 +2320,7 @@ ARCADE.GAMES.guanche = (() => {
       if (st === 'magic') return [5, k === 'mirla' ? 4 : 1];
       return [0, F(k, 0, t, 6)];
     }
-    const sxScale = (o) => {
-      if (o === p) return SXP * (SX_BIG[p.hero.id] || 1);
-      const k = SX_K[SX_EN[o.k]];
-      return SXP * (o.s || (o.look && o.look.s) || 1) * (k || (o.d && o.d.dog ? 1.6 : 1));
-    }; // Jonay: bigger dogs; v0.98: each new sheet at its size
-    /** the bite of the dogs (like the lizard's): jaws with teeth that open and snap shut (k 0 → 1) */
-    // v0.96 (Jonay: «se queda fuera del perro y es demasiado grande»): smaller, and on the snout
-    function chomp(c, x, y, k, s) {
-      const op = k < 0.5 ? k * 2 : 2 - k * 2,
-        g = (0.5 + op * 2) * s,
-        w = 5 * s;
-      c.fillStyle = '#6e1012';
-      c.fillRect(x - w / 2, y - g, w, g * 2);
-      for (const sd of [-1, 1]) {
-        c.fillStyle = '#141018';
-        c.fillRect(x - w / 2 - s * 0.5, y + sd * g - (sd < 0 ? s : 0), w + s, s);
-        c.fillStyle = '#f4f0e2';
-        for (let i = 0; i < 3; i++) {
-          const tx = x - w / 2 + ((i + 0.5) * w) / 3;
-          c.beginPath();
-          c.moveTo(tx - 0.6 * s, y + sd * g);
-          c.lineTo(tx + 0.6 * s, y + sd * g);
-          c.lineTo(tx, y + sd * (g - 1.4 * s));
-          c.fill();
-        }
-      }
-    }
+    const { sxScale, chomp } = createPart5(p);
     /** the lizard: walking, biting, with the hero on it (one sheet each) or an enemy sitting on its back */
     function drawLiz(c, sx, sy, q) {
       const mv = Math.abs(q.x - (q._px === undefined ? q.x : q._px)) + Math.abs(q.z - (q._pz === undefined ? q.z : q._pz)) > 0.05;
@@ -2926,6 +2823,176 @@ ARCADE.GAMES.guanche = (() => {
       }
     }); // tests
     return g;
+  }
+  /** (v1.1.7, code quality) part of create: v0.96 (Jonay: «se queda fuera del perro y es demasiado grande»): smaller, and on the snout */
+  function createPart5(p) {
+    const sxScale = (o) => {
+      if (o === p) return SXP * (SX_BIG[p.hero.id] || 1);
+      const k = SX_K[SX_EN[o.k]];
+      return SXP * (o.s || (o.look && o.look.s) || 1) * (k || (o.d && o.d.dog ? 1.6 : 1));
+    }; // Jonay: bigger dogs; v0.98: each new sheet at its size
+    /** the bite of the dogs (like the lizard's): jaws with teeth that open and snap shut (k 0 → 1) */
+    // v0.96 (Jonay: «se queda fuera del perro y es demasiado grande»): smaller, and on the snout
+    function chomp(c, x, y, k, s) {
+      const op = k < 0.5 ? k * 2 : 2 - k * 2,
+        g = (0.5 + op * 2) * s,
+        w = 5 * s;
+      c.fillStyle = '#6e1012';
+      c.fillRect(x - w / 2, y - g, w, g * 2);
+      for (const sd of [-1, 1]) {
+        c.fillStyle = '#141018';
+        c.fillRect(x - w / 2 - s * 0.5, y + sd * g - (sd < 0 ? s : 0), w + s, s);
+        c.fillStyle = '#f4f0e2';
+        for (let i = 0; i < 3; i++) {
+          const tx = x - w / 2 + ((i + 0.5) * w) / 3;
+          c.beginPath();
+          c.moveTo(tx - 0.6 * s, y + sd * g);
+          c.lineTo(tx + 0.6 * s, y + sd * g);
+          c.lineTo(tx, y + sd * (g - 1.4 * s));
+          c.fill();
+        }
+      }
+    }
+    return { sxScale, chomp };
+  }
+  /** (v1.1.7, code quality) part of create */
+  function createPart4(p) {
+    function poseOf(o) {
+      const st = o.st;
+      if (st === 'walk') return cyc(WALK, o.anim * 0.7);
+      if (st === 'run' || st === 'thief') return cyc(RUN, o.anim * 0.9);
+      if (st === 'atk') {
+        if (o === p) {
+          const k = p.atkT / (p.combo === 3 ? 0.5 : 0.28);
+          return p.combo === 3 ? (k < 0.4 ? PO.wind : PO.smash) : k < 0.3 ? PO.idle : p.combo === 1 ? PO.atk1 : PO.atk2;
+        }
+        return o.stT > 0.15 ? PO.atk1 : PO.smash;
+      }
+      if (st === 'flip') return PO.jump;
+      if (st === 'windup') return PO.wind;
+      if (st === 'dash') return PO.fkick;
+      if (st === 'jump') return PO.jump;
+      if (st === 'jatk') return PO.jatk;
+      if (st === 'whip') return PO.ride;
+      if (st === 'hurt') return PO.hurt;
+      if (st === 'fall') return mix(PO.hurt, PO.down, 0.5);
+      if (st === 'down' || st === 'dead') return PO.down;
+      if (st === 'getup') return mix(PO.down, PO.idle, 1 - o.stT / 0.45);
+      if (st === 'magic') return PO.magic;
+      return PO.idle;
+    }
+    const hopOf = (lz) => (lz.hop > 0 ? Math.sin((1 - lz.hop / 0.45) * Math.PI) * 9 : 0);
+    return { poseOf, hopOf };
+  }
+  /** (v1.1.7, code quality) part of create */
+  function createPart3(liz, shots, p, hit) {
+    function lizards(dt) {
+      for (const lz of liz) {
+        lz.anim += dt * 4;
+        lz.whip = Math.max(0, lz.whip - dt);
+        lz.bite = Math.max(0, (lz.bite || 0) - dt);
+        lz.hop = Math.max(0, (lz.hop || 0) - dt);
+        if (lz.free) {
+          lz.gone += dt;
+          if (lz.gone > 20 || lz.drops > 2) {
+            lz.x += 60 * dt;
+            lz.vx = 60;
+          } else {
+            lz.vx = 0;
+            lz.vz = 0;
+          }
+        }
+      }
+    }
+    function updShots(dt) {
+      for (const s of shots) {
+        s.t -= dt;
+        if (s.k === 'wave') {
+          s.r = (s.r || 0) + s.vx * dt;
+          if (p.h < 3 && Math.abs(Math.abs(p.x - s.x) - s.r) < 6 && Math.abs(p.z - s.z) < 20 && !s.hitP) {
+            s.hitP = true;
+            hit({ x: s.x }, p, s.dmg, 'knock');
+          }
+        } else {
+          s.x += s.vx * dt;
+          if (!s.hitP && Math.abs(s.x - p.x) < 7 && Math.abs(s.z - p.z) < 6 && p.h < s.h + 6) {
+            s.hitP = true;
+            s.t = 0;
+            hit({ x: s.x - s.vx }, p, s.dmg, 'knock');
+          }
+        }
+      }
+      for (let i = shots.length - 1; i >= 0; i--) if (shots[i].t <= 0) shots.splice(i, 1);
+    }
+    return { lizards, updShots };
+  }
+  /** (v1.1.7, code quality) part of create: ---------- spawning */
+  function createPart2(lp, E) {
+    // ---------- spawning
+    function spawn(k, x, z, extra) {
+      const d = ED[k],
+        look = LK[k] || LK.S;
+      const e = {
+        k,
+        x,
+        z,
+        h: 0,
+        vh: 0,
+        vx: 0,
+        face: -1,
+        hp: d.hp * lp(),
+        max: d.hp * lp(),
+        st: 'walk',
+        stT: 0,
+        anim: Math.random() * 4,
+        cd: 0.6 + Math.random(),
+        d,
+        look,
+        side: Math.random() < 0.5 ? -1 : 1,
+        hitDone: new Set(),
+        hits: 0,
+        ...(extra || {})
+      };
+      if (k === 'BT') e.s = 1.45;
+      if (k === 'T') e.s = 1;
+      if (k === 'S' && Math.random() < 0.5) {
+        e.sxk = SECF[Math.floor(Math.random() * SECF.length)];
+        e.fem = true;
+      } // v0.99.3 (Jonay): half the minions are women (five looks)
+      E.push(e);
+      return e;
+    }
+    return { spawn };
+  }
+  /** (v1.1.7, code quality) part of create: v0.95.2: every sheet starts loading when the machine opens (they load on their first draw; meanwhile the old */
+  function createPart1() {
+    // v0.95.2: every sheet starts loading when the machine opens (they load on their first draw; meanwhile the old
+    // drawings were built, and that is what read the canvas with getImageData — the 0.90 audit warning)
+    for (const k of [...Object.values(SX_HERO), ...Object.values(SX_EN), 'g_duende_azul', 'lagarto', 'lz_mencey', 'lz_pastor', 'lz_mirla', ...SECF])
+      SPRX.ready(k);
+    for (const k of Object.values(FZ)) FONDOS.get(k); // (v0.99: the backgrounds' images too)
+    const p = {
+      hero: HEROES[0],
+      x: 30,
+      z: 22,
+      h: 0,
+      vh: 0,
+      vx: 0,
+      face: 1,
+      hp: 24,
+      st: 'idle',
+      stT: 0,
+      anim: 0,
+      combo: 0,
+      comboT: 0,
+      hitDone: new Set(),
+      jars: 0,
+      inv: 0,
+      tap: { d: 0, t: 0 },
+      run: false,
+      mount: null
+    };
+    return { p };
   }
   // ---------- title screen and the backdrop of the hi-score table
   function drawTitle(c0, t) {

@@ -247,6 +247,52 @@ function buildCathedralInterior(doors, ch) {
   const L = fr.L,
     W = fr.W,
     Hh = fr.H;
+  const { r, g, md, altarX, dirA, pewLen } = buildCathedralInteriorPart1(L, W, Hh, fr, doors);
+  const colors = [0xc0392b, 0x2e86de, 0xf1c40f, 0x27ae60, 0x8e44ad];
+  for (const sz of [-W / 2 + 0.05, W / 2 - 0.05])
+    for (let x = -L / 2 + 5, k = 0; x < L / 2 - 4; x += 8, k++) {
+      const w = new THREE.Mesh(
+        new THREE.PlaneGeometry(2.2, Math.min(6, Hh * 0.35)),
+        new THREE.MeshStandardMaterial({ color: colors[k % 5], emissive: colors[(k + (sz > 0 ? 2 : 0)) % 5], emissiveIntensity: 1.1 })
+      );
+      w.position.set(x, Hh * 0.55, sz);
+      w.rotation.y = sz > 0 ? Math.PI : 0;
+      g.add(w);
+    }
+  const dome = new THREE.Mesh(new THREE.CircleGeometry(Math.min(5, W * 0.25), 32), new THREE.MeshBasicMaterial({ color: 0xfff6dc }));
+  dome.rotation.x = Math.PI / 2;
+  dome.position.set(altarX - dirA * L * 0.25, Hh - 0.2, 0);
+  g.add(dome);
+  const ex = exitDoor(r, md.x, md.z, md.rot);
+  npcAt(r, altarX - dirA * 1.6, 0.5, dirA > 0 ? -Math.PI / 2 : Math.PI / 2, {
+    shirt: 0x111111,
+    pants: 0x111111,
+    hair: 0x8c8c8c,
+    skin: 0xe0ac86,
+    female: false,
+    sleeve: true,
+    longPants: true
+  });
+  for (let i = 0; i < 6; i++)
+    npcAt(
+      r,
+      altarX - dirA * (9 + Math.floor(rnd(0, 6)) * 2.4 + 0.6),
+      (Math.random() < 0.5 ? -1 : 1) * rnd(1.8, 1 + pewLen),
+      dirA > 0 ? Math.PI / 2 : -Math.PI / 2,
+      { sit: true }
+    );
+  addInterior({
+    id: 'catedral',
+    name: 'Catedral de La Laguna',
+    door: doors,
+    spawn: { x: r.x0 + md.ix, z: r.z0 + md.iz, h: md.h },
+    exit: ex,
+    ceil: r.y0 + Hh - 0.5,
+    floor: r.y0 + 0.13
+  });
+}
+/** (v1.1.7, code quality) part of buildCathedralInterior */
+function buildCathedralInteriorPart1(L, W, Hh, fr, doors) {
   const r = roomShell(L, W, Hh, checkerTex('#e8e2d4', '#6b5f55', 8), 0xe9e4da);
   const g = r.g;
   const md = mapDoor(fr, doors[0]);
@@ -296,48 +342,7 @@ function buildCathedralInterior(doors, ch) {
     n.position.set(altarX + dirA * 2.95, 6 + (i % 2) * 1.5, -4 + i * 2);
     g.add(n);
   }
-  const colors = [0xc0392b, 0x2e86de, 0xf1c40f, 0x27ae60, 0x8e44ad];
-  for (const sz of [-W / 2 + 0.05, W / 2 - 0.05])
-    for (let x = -L / 2 + 5, k = 0; x < L / 2 - 4; x += 8, k++) {
-      const w = new THREE.Mesh(
-        new THREE.PlaneGeometry(2.2, Math.min(6, Hh * 0.35)),
-        new THREE.MeshStandardMaterial({ color: colors[k % 5], emissive: colors[(k + (sz > 0 ? 2 : 0)) % 5], emissiveIntensity: 1.1 })
-      );
-      w.position.set(x, Hh * 0.55, sz);
-      w.rotation.y = sz > 0 ? Math.PI : 0;
-      g.add(w);
-    }
-  const dome = new THREE.Mesh(new THREE.CircleGeometry(Math.min(5, W * 0.25), 32), new THREE.MeshBasicMaterial({ color: 0xfff6dc }));
-  dome.rotation.x = Math.PI / 2;
-  dome.position.set(altarX - dirA * L * 0.25, Hh - 0.2, 0);
-  g.add(dome);
-  const ex = exitDoor(r, md.x, md.z, md.rot);
-  npcAt(r, altarX - dirA * 1.6, 0.5, dirA > 0 ? -Math.PI / 2 : Math.PI / 2, {
-    shirt: 0x111111,
-    pants: 0x111111,
-    hair: 0x8c8c8c,
-    skin: 0xe0ac86,
-    female: false,
-    sleeve: true,
-    longPants: true
-  });
-  for (let i = 0; i < 6; i++)
-    npcAt(
-      r,
-      altarX - dirA * (9 + Math.floor(rnd(0, 6)) * 2.4 + 0.6),
-      (Math.random() < 0.5 ? -1 : 1) * rnd(1.8, 1 + pewLen),
-      dirA > 0 ? Math.PI / 2 : -Math.PI / 2,
-      { sit: true }
-    );
-  addInterior({
-    id: 'catedral',
-    name: 'Catedral de La Laguna',
-    door: doors,
-    spawn: { x: r.x0 + md.ix, z: r.z0 + md.iz, h: md.h },
-    exit: ex,
-    ceil: r.y0 + Hh - 0.5,
-    floor: r.y0 + 0.13
-  });
+  return { r, g, md, altarX, dirA, pewLen };
 }
 // ---- Café interior (the barraquito place): ground floor of its building
 function buildCafeInterior(door, name, bld) {
@@ -350,19 +355,44 @@ function buildCafeInterior(door, name, bld) {
   const g = r.g;
   const md = mapDoor(fr, door); // bar against the wall opposite the door
   const wood = new THREE.MeshStandardMaterial({ color: 0x6b4226, roughness: 0.5 });
-  const along = md.side === 'px' || md.side === 'nx' ? 'z' : 'x';
-  const backSign = md.side === 'px' || md.side === 'pz' ? -1 : 1;
-  const backPos = ((along === 'x' ? W : L) / 2) * backSign;
-  const barLen = Math.min(7, (along === 'x' ? L : W) - 3);
-  const P = (a, b) => (along === 'x' ? [a, b] : [b, a]); // a along wall, b across
-  const place = (m, a, y, b, ry = 0) => {
+  const { along, backSign, backPos, barLen, P, place } = buildCafeInteriorPart1(md, W, L, g);
+  const { bb } = buildCafeInteriorPart2(backPos, backSign, place, barLen, wood, P, r);
+  const span = (along === 'x' ? L : W) / 2 - 1.5,
+    depth = (along === 'x' ? W : L) / 2;
+  for (const a of [-span * 0.6, 0, span * 0.6]) {
+    const b = -backSign * (depth - 2.6);
+    const t = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.05, 16), new THREE.MeshStandardMaterial({ color: 0xf2f2f2 }));
+    place(t, a, 0.78, b);
+    const l = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.76, 6), new THREE.MeshStandardMaterial({ color: 0x222222 }));
+    place(l, a, 0.4, b);
     const [x, z] = P(a, b);
-    m.position.set(x, y, z);
-    if (along === 'z') m.rotation.y = Math.PI / 2 + ry;
-    else m.rotation.y = ry;
-    g.add(m);
-    return m;
-  };
+    COL.addCirc(r.x0 + x, r.z0 + z, 0.6);
+  }
+  const menu = textPlane('BARRAQUITO 1,80 € · LECHE Y LECHE 1,40 €', 5, 0.5, '#1a1a1a', '#f5d9a8', 'bold 20px Arial');
+  place(menu, 0, 3.1, backPos - backSign * 0.42, backSign > 0 ? Math.PI : 0);
+  const ex = exitDoor(r, md.x, md.z, md.rot);
+  {
+    const [x, z] = P(-barLen / 4, bb + backSign * 0.95);
+    npcAt(r, x, z, Math.atan2(-x, -z), { shirt: 0x111111, pants: 0x222222, female: true });
+  }
+  for (let i = 0; i < 3; i++) {
+    const [x, z] = P(rnd(-span, span), -backSign * (depth - 2.6) + rnd(-1, 1));
+    npcAt(r, x, z, Math.random() * 6);
+  }
+  const [bqx, bqz] = P(barLen / 6, bb - backSign * 1.1); // customer side of the counter
+  addInterior({
+    id: 'cafe',
+    name,
+    door,
+    spawn: { x: r.x0 + md.ix, z: r.z0 + md.iz, h: md.h },
+    exit: ex,
+    ceil: r.y0 + 3.4,
+    floor: r.y0 + 0.13,
+    bar: { x: r.x0 + bqx, z: r.z0 + bqz }
+  });
+}
+/** (v1.1.7, code quality) part of buildCafeInterior */
+function buildCafeInteriorPart2(backPos, backSign, place, barLen, wood, P, r) {
   const bb = backPos - backSign * 2.4;
   place(new THREE.Mesh(new THREE.BoxGeometry(barLen, 1.1, 0.8), wood), 0, 0.65, bb);
   place(
@@ -400,39 +430,24 @@ function buildCafeInterior(door, name, bld) {
       0.5,
       bb - backSign * 0.9
     );
-  const span = (along === 'x' ? L : W) / 2 - 1.5,
-    depth = (along === 'x' ? W : L) / 2;
-  for (const a of [-span * 0.6, 0, span * 0.6]) {
-    const b = -backSign * (depth - 2.6);
-    const t = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.05, 16), new THREE.MeshStandardMaterial({ color: 0xf2f2f2 }));
-    place(t, a, 0.78, b);
-    const l = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.76, 6), new THREE.MeshStandardMaterial({ color: 0x222222 }));
-    place(l, a, 0.4, b);
+  return { bb };
+}
+/** (v1.1.7, code quality) part of buildCafeInterior */
+function buildCafeInteriorPart1(md, W, L, g) {
+  const along = md.side === 'px' || md.side === 'nx' ? 'z' : 'x';
+  const backSign = md.side === 'px' || md.side === 'pz' ? -1 : 1;
+  const backPos = ((along === 'x' ? W : L) / 2) * backSign;
+  const barLen = Math.min(7, (along === 'x' ? L : W) - 3);
+  const P = (a, b) => (along === 'x' ? [a, b] : [b, a]); // a along wall, b across
+  const place = (m, a, y, b, ry = 0) => {
     const [x, z] = P(a, b);
-    COL.addCirc(r.x0 + x, r.z0 + z, 0.6);
-  }
-  const menu = textPlane('BARRAQUITO 1,80 € · LECHE Y LECHE 1,40 €', 5, 0.5, '#1a1a1a', '#f5d9a8', 'bold 20px Arial');
-  place(menu, 0, 3.1, backPos - backSign * 0.42, backSign > 0 ? Math.PI : 0);
-  const ex = exitDoor(r, md.x, md.z, md.rot);
-  {
-    const [x, z] = P(-barLen / 4, bb + backSign * 0.95);
-    npcAt(r, x, z, Math.atan2(-x, -z), { shirt: 0x111111, pants: 0x222222, female: true });
-  }
-  for (let i = 0; i < 3; i++) {
-    const [x, z] = P(rnd(-span, span), -backSign * (depth - 2.6) + rnd(-1, 1));
-    npcAt(r, x, z, Math.random() * 6);
-  }
-  const [bqx, bqz] = P(barLen / 6, bb - backSign * 1.1); // customer side of the counter
-  addInterior({
-    id: 'cafe',
-    name,
-    door,
-    spawn: { x: r.x0 + md.ix, z: r.z0 + md.iz, h: md.h },
-    exit: ex,
-    ceil: r.y0 + 3.4,
-    floor: r.y0 + 0.13,
-    bar: { x: r.x0 + bqx, z: r.z0 + bqz }
-  });
+    m.position.set(x, y, z);
+    if (along === 'z') m.rotation.y = Math.PI / 2 + ry;
+    else m.rotation.y = ry;
+    g.add(m);
+    return m;
+  };
+  return { along, backSign, backPos, barLen, P, place };
 }
 // ---- Hypermarket interior (Alcampito): the whole box of the store
 function buildHyperInterior(doors, name, s) {
@@ -442,6 +457,55 @@ function buildHyperInterior(doors, name, s) {
     Hh = fr.H;
   const r = roomShell(L, W, Hh, tileTex('#e6e6e2', '#c9c9c4'), 0xf1f1ee);
   const g = r.g;
+  const { md, alongX, A, D, ent, P } = buildHyperInteriorPart1(fr, doors, L, W, g, r);
+  for (let i = 0; i < Math.floor(D / 7); i++) {
+    const [x, z] = P(0, -D / 2 + 3.5 + i * 7);
+    const l = new THREE.Mesh(
+      alongX ? new THREE.BoxGeometry(A - 4, 0.1, 0.4) : new THREE.BoxGeometry(0.4, 0.1, A - 4),
+      new THREE.MeshBasicMaterial({ color: 0xffffff })
+    );
+    l.position.set(x, Hh - 0.2, z);
+    g.add(l);
+  }
+  const nC = Math.max(2, Math.min(10, Math.floor((A - 10) / 6)));
+  for (let k = 0; k < nC; k++) {
+    const ax = -((nC - 1) * 6) / 2 + k * 6;
+    const bz = ent * (D / 2 - 7);
+    const [x, z] = P(ax, bz);
+    const c = new THREE.Mesh(
+      alongX ? new THREE.BoxGeometry(1.1, 1, 4) : new THREE.BoxGeometry(4, 1, 1.1),
+      new THREE.MeshStandardMaterial({ color: 0x333a40 })
+    );
+    c.position.set(x, 0.6, z);
+    g.add(c);
+    const [x1, z1] = P(ax, bz - 2),
+      [x2, z2] = P(ax, bz + 2);
+    COL.addSeg(r.x0 + x1, r.z0 + z1, r.x0 + x2, r.z0 + z2);
+    const [nx, nz] = P(ax + 1.1, bz + 0.5);
+    npcAt(r, nx, nz, alongX ? -Math.PI / 2 : Math.PI, { shirt: 0xd62828 });
+  }
+  const big = textPlane(name.toUpperCase(), Math.min(14, A * 0.5), 2.2, '#d62828', '#ffffff', 'bold 44px Oswald, Arial');
+  const [bx, bz] = P(0, -ent * (D / 2 - 0.1));
+  big.position.set(bx, Math.min(6, Hh - 1.5), bz);
+  big.rotation.y = alongX ? (ent > 0 ? 0 : Math.PI) : ent > 0 ? Math.PI / 2 : -Math.PI / 2;
+  g.add(big);
+  for (let i = 0; i < 12; i++) {
+    const [x, z] = P(rnd(-A / 2 + 3, A / 2 - 3), rnd(-D / 2 + 3, D / 2 - 9));
+    npcAt(r, x, z, Math.random() * 6);
+  }
+  const ex = exitDoor(r, md.x, md.z, md.rot);
+  addInterior({
+    id: 'hiper',
+    name,
+    door: doors,
+    spawn: { x: r.x0 + md.ix, z: r.z0 + md.iz, h: md.h },
+    exit: ex,
+    ceil: r.y0 + Hh - 0.4,
+    floor: r.y0 + 0.13
+  });
+}
+/** (v1.1.7, code quality) part of buildHyperInterior */
+function buildHyperInteriorPart1(fr, doors, L, W, g, r) {
   const md = mapDoor(fr, doors[0]);
   const alongX = md.side === 'pz' || md.side === 'nz'; // aisles run perpendicular to the entrance wall
   const A = alongX ? L : W,
@@ -491,51 +555,7 @@ function buildHyperInterior(doors, name, s) {
     s2.rotation.y = alongX ? (ent > 0 ? 0 : Math.PI) : ent > 0 ? Math.PI / 2 : -Math.PI / 2;
     g.add(s2);
   }
-  for (let i = 0; i < Math.floor(D / 7); i++) {
-    const [x, z] = P(0, -D / 2 + 3.5 + i * 7);
-    const l = new THREE.Mesh(
-      alongX ? new THREE.BoxGeometry(A - 4, 0.1, 0.4) : new THREE.BoxGeometry(0.4, 0.1, A - 4),
-      new THREE.MeshBasicMaterial({ color: 0xffffff })
-    );
-    l.position.set(x, Hh - 0.2, z);
-    g.add(l);
-  }
-  const nC = Math.max(2, Math.min(10, Math.floor((A - 10) / 6)));
-  for (let k = 0; k < nC; k++) {
-    const ax = -((nC - 1) * 6) / 2 + k * 6;
-    const bz = ent * (D / 2 - 7);
-    const [x, z] = P(ax, bz);
-    const c = new THREE.Mesh(
-      alongX ? new THREE.BoxGeometry(1.1, 1, 4) : new THREE.BoxGeometry(4, 1, 1.1),
-      new THREE.MeshStandardMaterial({ color: 0x333a40 })
-    );
-    c.position.set(x, 0.6, z);
-    g.add(c);
-    const [x1, z1] = P(ax, bz - 2),
-      [x2, z2] = P(ax, bz + 2);
-    COL.addSeg(r.x0 + x1, r.z0 + z1, r.x0 + x2, r.z0 + z2);
-    const [nx, nz] = P(ax + 1.1, bz + 0.5);
-    npcAt(r, nx, nz, alongX ? -Math.PI / 2 : Math.PI, { shirt: 0xd62828 });
-  }
-  const big = textPlane(name.toUpperCase(), Math.min(14, A * 0.5), 2.2, '#d62828', '#ffffff', 'bold 44px Oswald, Arial');
-  const [bx, bz] = P(0, -ent * (D / 2 - 0.1));
-  big.position.set(bx, Math.min(6, Hh - 1.5), bz);
-  big.rotation.y = alongX ? (ent > 0 ? 0 : Math.PI) : ent > 0 ? Math.PI / 2 : -Math.PI / 2;
-  g.add(big);
-  for (let i = 0; i < 12; i++) {
-    const [x, z] = P(rnd(-A / 2 + 3, A / 2 - 3), rnd(-D / 2 + 3, D / 2 - 9));
-    npcAt(r, x, z, Math.random() * 6);
-  }
-  const ex = exitDoor(r, md.x, md.z, md.rot);
-  addInterior({
-    id: 'hiper',
-    name,
-    door: doors,
-    spawn: { x: r.x0 + md.ix, z: r.z0 + md.iz, h: md.h },
-    exit: ex,
-    ceil: r.y0 + Hh - 0.4,
-    floor: r.y0 + 0.13
-  });
+  return { md, alongX, A, D, ent, P };
 }
 function nearestDoor() {
   const P = PLAYER;

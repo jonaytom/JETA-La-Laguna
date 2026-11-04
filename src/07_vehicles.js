@@ -820,45 +820,7 @@ function nextEdge(car) {
 function updateTraffic(car, dt) {
   const tr = car.tr;
   let E = GRAPH.edges[tr.e];
-  // look ahead for obstacles
-  const fx = Math.sin(car.h),
-    fz = Math.cos(car.h);
-  let block = 99;
-  const test = (ox, oz, rad) => {
-    const dx = ox - car.x,
-      dz = oz - car.z;
-    const along = dx * fx + dz * fz;
-    if (along < 0 || along > 22) return false;
-    const lat = Math.abs(dx * fz - dz * fx);
-    if (lat < rad + 1.1) {
-      block = Math.min(block, along);
-      return true;
-    }
-    return false;
-  };
-  if (!car.uid) car.uid = ++Car.seq;
-  for (const o of CARS)
-    if (o !== car && !o.dead && sameLevel(o.y, car.y)) {
-      const dx = o.x - car.x,
-        dz = o.z - car.z;
-      if (dx * dx + dz * dz >= 600) continue;
-      // crossing traffic: the car with priority (older one, or one stuck for long) goes first so two cars never wait for each other forever
-      if (o.mode === 'traffic' && o.tr) {
-        const cross = Math.abs(angDiff(car.h, o.h)) > 0.6;
-        if (cross && ((car.uid < (o.uid || 1e9) && (o.tr.v < 1 || tr.stuck > 2)) || tr.stuck > 6)) continue;
-        if (Math.abs(angDiff(car.h, o.h)) > 2.6 && Math.abs(dx * fz - dz * fx) > 1.2) continue;
-      } // oncoming in its own lane
-      test(o.x, o.z, o.T.W / 2);
-    }
-  if (!PLAYER.car && sameLevel(PLAYER.y, car.y)) test(PLAYER.x, PLAYER.z, 0.4);
-  if (!underground(car.x, car.z, car.y))
-    for (const p of PEDS)
-      if (!p.down) {
-        const dx = p.x - car.x,
-          dz = p.z - car.z;
-        if (dx * dx + dz * dz < 500) test(p.x, p.z, 0.3);
-      }
-  const ahead = block - car.T.L / 2 - 2.5;
+  const { ahead } = updateTrafficPart1(car, tr);
   let target = E.speed * (car.type === 'bus' ? 0.75 : 1) * (car.personality || 1);
   if (ahead < 12) target = Math.min(target, Math.max(0, ahead) * 0.8);
   // slow in curves: look at heading change ahead
@@ -906,6 +868,49 @@ function updateTraffic(car, dt) {
   car.vz = Math.cos(car.h) * tr.v;
   car.steer = clamp(dh * 2, -0.5, 0.5);
   car.ctl.brk = target < tr.v - 0.5 ? 1 : 0;
+}
+/** (v1.1.7, code quality) part of updateTraffic: look ahead for obstacles */
+function updateTrafficPart1(car, tr) {
+  // look ahead for obstacles
+  const fx = Math.sin(car.h),
+    fz = Math.cos(car.h);
+  let block = 99;
+  const test = (ox, oz, rad) => {
+    const dx = ox - car.x,
+      dz = oz - car.z;
+    const along = dx * fx + dz * fz;
+    if (along < 0 || along > 22) return false;
+    const lat = Math.abs(dx * fz - dz * fx);
+    if (lat < rad + 1.1) {
+      block = Math.min(block, along);
+      return true;
+    }
+    return false;
+  };
+  if (!car.uid) car.uid = ++Car.seq;
+  for (const o of CARS)
+    if (o !== car && !o.dead && sameLevel(o.y, car.y)) {
+      const dx = o.x - car.x,
+        dz = o.z - car.z;
+      if (dx * dx + dz * dz >= 600) continue;
+      // crossing traffic: the car with priority (older one, or one stuck for long) goes first so two cars never wait for each other forever
+      if (o.mode === 'traffic' && o.tr) {
+        const cross = Math.abs(angDiff(car.h, o.h)) > 0.6;
+        if (cross && ((car.uid < (o.uid || 1e9) && (o.tr.v < 1 || tr.stuck > 2)) || tr.stuck > 6)) continue;
+        if (Math.abs(angDiff(car.h, o.h)) > 2.6 && Math.abs(dx * fz - dz * fx) > 1.2) continue;
+      } // oncoming in its own lane
+      test(o.x, o.z, o.T.W / 2);
+    }
+  if (!PLAYER.car && sameLevel(PLAYER.y, car.y)) test(PLAYER.x, PLAYER.z, 0.4);
+  if (!underground(car.x, car.z, car.y))
+    for (const p of PEDS)
+      if (!p.down) {
+        const dx = p.x - car.x,
+          dz = p.z - car.z;
+        if (dx * dx + dz * dz < 500) test(p.x, p.z, 0.3);
+      }
+  const ahead = block - car.T.L / 2 - 2.5;
+  return { ahead };
 }
 function trafficSpawnPoint(minD, maxD, avoidView = true) {
   for (let t = 0; t < 30; t++) {
@@ -985,111 +990,13 @@ function onBigRoad(x, z) {
   return !!rd && rd.d < DATA.R[rd.ri][2] / 2 + 1.2;
 }
 function buildParked() {
-  const types = ['compact', 'sedan', 'suv', 'van'];
-  const T0 = performance.now(),
-    lt = (n) => {
-      if (window.__LOADT) window.__LOADT.push(['   buildParked · ' + n, Math.round(performance.now() - T0)]);
-    }; // v0.77: where the 2 s go
-  DATA.R.forEach((rd, ri) => {
-    const t = RTN[rd[0]];
-    if (
-      !['residential', 'tertiary', 'tertiary_link', 'secondary', 'secondary_link', 'unclassified', 'living_street'].includes(t) ||
-      ROADCLASS(rd) === 'paving'
-    )
-      return; // v1.1.1: secondary streets too, where they have a parking lane
-    const c = rd[4],
-      w = rd[2],
-      ow = !!(rd[3] & 1);
-    // leave a real gap for traffic: lane edge vs. parked-car inner edge (car ~1.9 m wide, 0.95 m from the kerb line)
-    const lane = ow ? (w >= 10 ? 1.8 : 0) : clamp(w / 4, 1.3, w >= 13 ? 2.4 : 1.7),
-      inner = w / 2 - 1.9,
-      gap = inner - (lane + 1.0);
-    const sides = parkSides(rd).sides; // v1.1.1: the same sides as the painted parking lanes (04_world.js, from the OSM when it says)
-    if (!sides.length) return;
-    let s0 = 0;
-    for (let i = 0; i < c.length - 2; i += 2, s0 += Math.hypot(c[i] - c[i - 2], c[i + 1] - c[i - 1])) {
-      const x1 = c[i],
-        z1 = c[i + 1],
-        x2 = c[i + 2],
-        z2 = c[i + 3],
-        L = Math.hypot(x2 - x1, z2 - z1);
-      if (L < 16) continue;
-      const dx = (x2 - x1) / L,
-        dz = (z2 - z1) / L;
-      for (let s = 9; s < L - 9; s += 6.2)
-        for (const side of sides) {
-          if (Math.random() > (isHistoric(x1, z1) ? 0.18 : 0.33)) continue;
-          if (noParkAt(ri, s0 + s, side, 7)) continue; /* v1.1.4: not in front of a no-parking sign (Mapillary) */
-          const off = w / 2 - 1.1;
-          /* (the middle of the 2.2 m parking lane) */ const x = x1 + dx * s - dz * off * side,
-            z = z1 + dz * s + dx * off * side;
-          if (COL.nearSeg(x, z, 1.3) || onBigRoad(x, z) || onFootpath(x, z)) continue; // v0.99.5 (Jonay): never on the motorway, its slip roads or the Vía de Ronda
-          const h = Math.atan2(dx, dz) + (side < 0 ? Math.PI : 0);
-          const mdl = KGEO ? pickModel((m) => m.phys !== 'truck' && m.phys !== 'moto') : null;
-          PARKED.slots.push({ x, z, h, type: mdl ? mdl.id : pick(types), color: pickColor(), alive: true });
-        }
-    }
-  });
-  lt('huecos ' + PARKED.slots.length);
-  // parked cars: one InstancedMesh per model and 800 m cell (v0.77), culled by distance; paint colour per instance
-  if (KGEO)
-    for (const s of PARKED.slots)
-      if (!VMODELS[s.type]) {
-        const m = modelForType(s.type);
-        s.type = m ? m.id : 'polo';
-      }
-  {
-    const keep = PARKED.slots.filter((s) => !onFootpath(s.x, s.z));
-    PARKED.slots.length = 0;
-    PARKED.slots.push(...keep);
-  } // v0.99.6: also the car parks' rows (a footpath crosses them)
-  PARKED.slots.forEach((s, i) => {
-    const k = Math.floor(s.x / 30) * 1000 + Math.floor(s.z / 30);
-    let l = PARKED.grid.get(k);
-    if (!l) PARKED.grid.set(k, (l = []));
-    l.push(i);
-  });
-  const glassC = new THREE.Color(0x26313a);
-  const cc = new THREE.Color();
-  // simplified per-model template: body (paint flagged) + 4 low-poly wheels
-  const TPL = {};
-  const lowWheel = (() => {
-    const g = new THREE.CylinderGeometry(1, 1, 1, 10);
-    g.rotateZ(Math.PI / 2);
-    return g.toNonIndexed();
-  })();
-  const template = (model) => {
-    if (TPL[model.id]) return TPL[model.id];
-    const G = modelGeometry(model);
-    const P = [],
-      N = [],
-      C = [],
-      F = [];
-    const push = (g, flag, col) => {
-      const p = g.attributes.position.array,
-        n = g.attributes.normal.array,
-        c = g.attributes.color ? g.attributes.color.array : null;
-      for (let i = 0; i < p.length / 3; i++) {
-        P.push(p[i * 3], p[i * 3 + 1], p[i * 3 + 2]);
-        N.push(n[i * 3], n[i * 3 + 1], n[i * 3 + 2]);
-        if (col) C.push(col.r, col.g, col.b);
-        else C.push(c[i * 3], c[i * 3 + 1], c[i * 3 + 2]);
-        F.push(flag);
-      }
-    };
-    if (G.paint) push(G.paint, 1);
-    if (G.rest) push(G.rest, 0);
-    if (G.glass) push(G.glass, 0, glassC);
-    const wr = (G.wheels[0] && G.wheels[0].y) || 0.33;
-    const tire = new THREE.Color(0x1a1a1a);
-    for (const w of G.wheels) {
-      const g = lowWheel.clone();
-      g.scale(0.2, wr, wr);
-      g.translate(w.x + (w.left ? 0.12 : -0.12), w.y, w.z);
-      push(g, 0, tire);
-    }
-    return (TPL[model.id] = { P: new Float32Array(P), N: new Float32Array(N), C: new Float32Array(C), F: new Uint8Array(F) });
-  };
+  const { lt } = buildParkedPart1();
+  const { cc, TPL, template } = buildParkedPart2();
+  buildParkedPart3(template, cc);
+  lt('mallas ' + Object.keys(TPL).length + ' modelos, ' + PARKED.chunks.length + ' grupos');
+}
+/** (v1.1.7, code quality) part of buildParked: v0.77 (auditorías: «coches aparcados instanciados»): one geometry per model, used by every parked car of that model in */
+function buildParkedPart3(template, cc) {
   // v0.77 (auditorías: «coches aparcados instanciados»): one geometry per model, used by every parked car of that model in
   // an 800 m cell (InstancedMesh). Before, every car's triangles were copied into big merged meshes: ~2 s of the load and
   // hundreds of MB of vertices. The paint is the instance colour, applied only to the vertices flagged as paint (aPaint).
@@ -1148,7 +1055,119 @@ function buildParked() {
     scene.add(m);
     PARKED.chunks.push({ mesh: m, x: cx / list.length, z: cz / list.length, r: m.boundingSphere.radius });
   }
-  lt('mallas ' + Object.keys(TPL).length + ' modelos, ' + PARKED.chunks.length + ' grupos');
+}
+/** (v1.1.7, code quality) part of buildParked: simplified per-model template: body (paint flagged) + 4 low-poly wheels */
+function buildParkedPart2() {
+  {
+    const keep = PARKED.slots.filter((s) => !onFootpath(s.x, s.z));
+    PARKED.slots.length = 0;
+    PARKED.slots.push(...keep);
+  } // v0.99.6: also the car parks' rows (a footpath crosses them)
+  PARKED.slots.forEach((s, i) => {
+    const k = Math.floor(s.x / 30) * 1000 + Math.floor(s.z / 30);
+    let l = PARKED.grid.get(k);
+    if (!l) PARKED.grid.set(k, (l = []));
+    l.push(i);
+  });
+  const glassC = new THREE.Color(0x26313a);
+  const cc = new THREE.Color();
+  // simplified per-model template: body (paint flagged) + 4 low-poly wheels
+  const TPL = {};
+  const lowWheel = (() => {
+    const g = new THREE.CylinderGeometry(1, 1, 1, 10);
+    g.rotateZ(Math.PI / 2);
+    return g.toNonIndexed();
+  })();
+  const template = (model) => {
+    if (TPL[model.id]) return TPL[model.id];
+    const G = modelGeometry(model);
+    const P = [],
+      N = [],
+      C = [],
+      F = [];
+    const push = (g, flag, col) => {
+      const p = g.attributes.position.array,
+        n = g.attributes.normal.array,
+        c = g.attributes.color ? g.attributes.color.array : null;
+      for (let i = 0; i < p.length / 3; i++) {
+        P.push(p[i * 3], p[i * 3 + 1], p[i * 3 + 2]);
+        N.push(n[i * 3], n[i * 3 + 1], n[i * 3 + 2]);
+        if (col) C.push(col.r, col.g, col.b);
+        else C.push(c[i * 3], c[i * 3 + 1], c[i * 3 + 2]);
+        F.push(flag);
+      }
+    };
+    if (G.paint) push(G.paint, 1);
+    if (G.rest) push(G.rest, 0);
+    if (G.glass) push(G.glass, 0, glassC);
+    const wr = (G.wheels[0] && G.wheels[0].y) || 0.33;
+    const tire = new THREE.Color(0x1a1a1a);
+    for (const w of G.wheels) {
+      const g = lowWheel.clone();
+      g.scale(0.2, wr, wr);
+      g.translate(w.x + (w.left ? 0.12 : -0.12), w.y, w.z);
+      push(g, 0, tire);
+    }
+    return (TPL[model.id] = { P: new Float32Array(P), N: new Float32Array(N), C: new Float32Array(C), F: new Uint8Array(F) });
+  };
+  return { cc, TPL, template };
+}
+/** (v1.1.7, code quality) part of buildParked: leave a real gap for traffic: lane edge vs. parked-car inner edge (car ~1.9 m wide, 0.95 m from the kerb line) */
+function buildParkedPart1() {
+  const types = ['compact', 'sedan', 'suv', 'van'];
+  const T0 = performance.now(),
+    lt = (n) => {
+      if (window.__LOADT) window.__LOADT.push(['   buildParked · ' + n, Math.round(performance.now() - T0)]);
+    }; // v0.77: where the 2 s go
+  DATA.R.forEach((rd, ri) => {
+    const t = RTN[rd[0]];
+    if (
+      !['residential', 'tertiary', 'tertiary_link', 'secondary', 'secondary_link', 'unclassified', 'living_street'].includes(t) ||
+      ROADCLASS(rd) === 'paving'
+    )
+      return; // v1.1.1: secondary streets too, where they have a parking lane
+    const c = rd[4],
+      w = rd[2],
+      ow = !!(rd[3] & 1);
+    // leave a real gap for traffic: lane edge vs. parked-car inner edge (car ~1.9 m wide, 0.95 m from the kerb line)
+    const lane = ow ? (w >= 10 ? 1.8 : 0) : clamp(w / 4, 1.3, w >= 13 ? 2.4 : 1.7),
+      inner = w / 2 - 1.9,
+      gap = inner - (lane + 1.0);
+    const sides = parkSides(rd).sides; // v1.1.1: the same sides as the painted parking lanes (04_world.js, from the OSM when it says)
+    if (!sides.length) return;
+    let s0 = 0;
+    for (let i = 0; i < c.length - 2; i += 2, s0 += Math.hypot(c[i] - c[i - 2], c[i + 1] - c[i - 1])) {
+      const x1 = c[i],
+        z1 = c[i + 1],
+        x2 = c[i + 2],
+        z2 = c[i + 3],
+        L = Math.hypot(x2 - x1, z2 - z1);
+      if (L < 16) continue;
+      const dx = (x2 - x1) / L,
+        dz = (z2 - z1) / L;
+      for (let s = 9; s < L - 9; s += 6.2)
+        for (const side of sides) {
+          if (Math.random() > (isHistoric(x1, z1) ? 0.18 : 0.33)) continue;
+          if (noParkAt(ri, s0 + s, side, 7)) continue; /* v1.1.4: not in front of a no-parking sign (Mapillary) */
+          const off = w / 2 - 1.1;
+          /* (the middle of the 2.2 m parking lane) */ const x = x1 + dx * s - dz * off * side,
+            z = z1 + dz * s + dx * off * side;
+          if (COL.nearSeg(x, z, 1.3) || onBigRoad(x, z) || onFootpath(x, z)) continue; // v0.99.5 (Jonay): never on the motorway, its slip roads or the Vía de Ronda
+          const h = Math.atan2(dx, dz) + (side < 0 ? Math.PI : 0);
+          const mdl = KGEO ? pickModel((m) => m.phys !== 'truck' && m.phys !== 'moto') : null;
+          PARKED.slots.push({ x, z, h, type: mdl ? mdl.id : pick(types), color: pickColor(), alive: true });
+        }
+    }
+  });
+  lt('huecos ' + PARKED.slots.length);
+  // parked cars: one InstancedMesh per model and 800 m cell (v0.77), culled by distance; paint colour per instance
+  if (KGEO)
+    for (const s of PARKED.slots)
+      if (!VMODELS[s.type]) {
+        const m = modelForType(s.type);
+        s.type = m ? m.id : 'polo';
+      }
+  return { lt };
 }
 function updateParkedLOD() {
   if (!PARKED.chunks) return;
@@ -1189,6 +1208,13 @@ function activateParked(s) {
 
 // ---------- dynamic collisions between cars (and parked cars)
 const CC_ACT = { f: -1, l: [] };
+/** a traffic car hit hard stops dead and honks (carCollisions) */
+function crashStop(C) {
+  C.mode = 'physics';
+  C.ctl = { thr: 0, brk: 1, steer: 0, hb: 0 };
+  C.crashed = true;
+  C.honkT = 2;
+}
 function carCollisions() {
   if (CC_ACT.f !== frame) {
     CC_ACT.f = frame;
@@ -1201,96 +1227,99 @@ function carCollisions() {
   } /* once per frame, not per substep (audit P1.3) */
   const active = CC_ACT.l;
   for (let i = 0; i < active.length; i++) {
-    const A = active[i];
-    if (A.dead) continue;
-    const ca = A.circles();
-    // parked
-    if (A.mode === 'physics' && !underground(A.x, A.z, A.y))
-      for (const s of parkedNear(A.x, A.z, 8)) {
-        for (const [x, z, r] of ca) {
-          const d = Math.hypot(s.x - x, s.z - z);
-          if (d < r + 1.2) {
-            if (A.speed > 4) {
-              const c = activateParked(s);
-              c.vx = A.vx * 0.6;
-              c.vz = A.vz * 0.6;
-              A.vx *= 0.55;
-              A.vz *= 0.55;
-              if (A.driver === 'player') {
-                AUDIO.crash(A.speed);
-                CAM.shake = 0.4;
-              }
-            } else {
-              const nx = (x - s.x) / (d || 1),
-                nz = (z - s.z) / (d || 1);
-              const pen = r + 1.2 - d;
-              A.x += nx * pen;
-              A.z += nz * pen;
-              const vn = A.vx * nx + A.vz * nz;
-              if (vn < 0) {
-                A.vx -= vn * nx * 1.3;
-                A.vz -= vn * nz * 1.3;
-              }
-            }
-            break;
+    carCollisionsEach(active, i);
+  }
+}
+/** (v1.1.7, code quality) the body of a loop of carCollisions, split out of it */
+function carCollisionsEach(active, i) {
+  const A = active[i];
+  if (A.dead) return;
+  const { ca } = carCollisionsEachPart1(A);
+  for (let j = i + 1; j < active.length; j++) {
+    const B = active[j];
+    if (Math.abs(A.x - B.x) > 14 || Math.abs(A.z - B.z) > 14) continue;
+    if (A.mode === 'traffic' && B.mode === 'traffic') continue;
+    if (!sameLevel(A.y, B.y)) continue;
+    if (B.dead) continue;
+    const cb = B.circles();
+    let done = false;
+    for (const [ax, az, ar] of ca) {
+      if (done) break;
+      for (const [bx, bz, br] of cb) {
+        const dx = bx - ax,
+          dz = bz - az,
+          d = Math.hypot(dx, dz);
+        if (d >= ar + br || d < 1e-4) continue;
+        const nx = dx / d,
+          nz = dz / d,
+          pen = ar + br - d;
+        const rv = (B.vx - A.vx) * nx + (B.vz - A.vz) * nz;
+        const ma = A.mode === 'traffic' ? 3 : A.T.mass,
+          mb = B.mode === 'traffic' ? 3 : B.T.mass;
+        const wa = mb / (ma + mb),
+          wb = ma / (ma + mb);
+        A.x -= nx * pen * wa;
+        A.z -= nz * pen * wa;
+        B.x += nx * pen * wb;
+        B.z += nz * pen * wb;
+        if (rv < 0) {
+          const j2 = -1.3 * rv;
+          A.vx -= nx * j2 * wa;
+          A.vz -= nz * j2 * wa;
+          B.vx += nx * j2 * wb;
+          B.vz += nz * j2 * wb;
+          const imp = -rv;
+          for (const C of [A, B]) if (C.mode === 'traffic' && imp > 2.5) crashStop(C);
+          if (imp > 3) {
+            A.onImpact(imp * 0.6);
+            B.onImpact(imp * 0.6);
           }
+          if ((A.driver === 'player' && B.type === 'police') || (B.driver === 'player' && A.type === 'police')) {
+            if (imp > 4) WANTED.crime(1, 'Embestir a la policía');
+          } else if ((A.driver === 'player' || B.driver === 'player') && imp > 6 && Math.random() < 0.3) WANTED.crime(0.5);
         }
+        done = true;
+        break;
       }
-    for (let j = i + 1; j < active.length; j++) {
-      const B = active[j];
-      if (Math.abs(A.x - B.x) > 14 || Math.abs(A.z - B.z) > 14) continue;
-      if (A.mode === 'traffic' && B.mode === 'traffic') continue;
-      if (!sameLevel(A.y, B.y)) continue;
-      if (B.dead) continue;
-      const cb = B.circles();
-      let done = false;
-      for (const [ax, az, ar] of ca) {
-        if (done) break;
-        for (const [bx, bz, br] of cb) {
-          const dx = bx - ax,
-            dz = bz - az,
-            d = Math.hypot(dx, dz);
-          if (d >= ar + br || d < 1e-4) continue;
-          const nx = dx / d,
-            nz = dz / d,
-            pen = ar + br - d;
-          const rv = (B.vx - A.vx) * nx + (B.vz - A.vz) * nz;
-          const ma = A.mode === 'traffic' ? 3 : A.T.mass,
-            mb = B.mode === 'traffic' ? 3 : B.T.mass;
-          const wa = mb / (ma + mb),
-            wb = ma / (ma + mb);
-          A.x -= nx * pen * wa;
-          A.z -= nz * pen * wa;
-          B.x += nx * pen * wb;
-          B.z += nz * pen * wb;
-          if (rv < 0) {
-            const j2 = -1.3 * rv;
-            A.vx -= nx * j2 * wa;
-            A.vz -= nz * j2 * wa;
-            B.vx += nx * j2 * wb;
-            B.vz += nz * j2 * wb;
-            const imp = -rv;
-            for (const C of [A, B])
-              if (C.mode === 'traffic' && imp > 2.5) {
-                C.mode = 'physics';
-                C.ctl = { thr: 0, brk: 1, steer: 0, hb: 0 };
-                C.crashed = true;
-                C.honkT = 2;
-              }
-            if (imp > 3) {
-              A.onImpact(imp * 0.6);
-              B.onImpact(imp * 0.6);
+    }
+  }
+}
+/** (v1.1.7, code quality) part of carCollisionsEach: parked */
+function carCollisionsEachPart1(A) {
+  const ca = A.circles();
+  // parked
+  if (A.mode === 'physics' && !underground(A.x, A.z, A.y))
+    for (const s of parkedNear(A.x, A.z, 8)) {
+      for (const [x, z, r] of ca) {
+        const d = Math.hypot(s.x - x, s.z - z);
+        if (d < r + 1.2) {
+          if (A.speed > 4) {
+            const c = activateParked(s);
+            c.vx = A.vx * 0.6;
+            c.vz = A.vz * 0.6;
+            A.vx *= 0.55;
+            A.vz *= 0.55;
+            if (A.driver === 'player') {
+              AUDIO.crash(A.speed);
+              CAM.shake = 0.4;
             }
-            if ((A.driver === 'player' && B.type === 'police') || (B.driver === 'player' && A.type === 'police')) {
-              if (imp > 4) WANTED.crime(1, 'Embestir a la policía');
-            } else if ((A.driver === 'player' || B.driver === 'player') && imp > 6 && Math.random() < 0.3) WANTED.crime(0.5);
+          } else {
+            const nx = (x - s.x) / (d || 1),
+              nz = (z - s.z) / (d || 1);
+            const pen = r + 1.2 - d;
+            A.x += nx * pen;
+            A.z += nz * pen;
+            const vn = A.vx * nx + A.vz * nz;
+            if (vn < 0) {
+              A.vx -= vn * nx * 1.3;
+              A.vz -= vn * nz * 1.3;
+            }
           }
-          done = true;
           break;
         }
       }
     }
-  }
+  return { ca };
 }
 
 // ---------- police AI

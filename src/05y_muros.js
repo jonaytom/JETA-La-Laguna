@@ -198,124 +198,11 @@ function deadEndFences() {
 }
 const WALLS = { n: 0, km: 0, meshes: [] };
 function buildWalls() {
-  const list = (DATA.BW || []).slice();
-  let nt = 0;
-  try {
-    const t = inicioTapias();
-    nt = t.length;
-    for (const w of t) list.push(w);
-  } catch (e) {
-    console.error('tapias', e);
-  }
-  // height (m above the ground), thickness, material
-  const KIND = {
-    wall: [2.2, 0.3, 'cal'],
-    tapia: [2.6, 0.3, 'cal'],
-    city_wall: [3.2, 0.6, 'piedra'],
-    retaining_wall: [1.1, 0.45, 'piedra'],
-    fence: [1.8, 0.05, 'valla'],
-    wire_fence: [1.6, 0.04, 'valla'],
-    wood_fence: [1.3, 0.07, 'madera'],
-    hedge: [1.4, 0.9, 'seto']
-  };
-  const MAT = {
-    cal: new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.95 }),
-    piedra: new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 1 }),
-    valla: new THREE.MeshStandardMaterial({
-      color: 0x343a36,
-      roughness: 0.55,
-      metalness: 0.5,
-      map: railTex(),
-      alphaTest: 0.5,
-      side: THREE.DoubleSide
-    }), // v1.0.6: iron bars and rails, not a see-through grey panel (Jonay: «¿esto qué es?»)
-    madera: new THREE.MeshStandardMaterial({ color: 0x86663f, roughness: 0.9 }),
-    seto: new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 1 })
-  };
-  const COLS = {
-    cal: [
-      [0.93, 0.91, 0.86],
-      [0.95, 0.94, 0.9],
-      [0.89, 0.85, 0.77],
-      [0.92, 0.88, 0.8]
-    ],
-    piedra: [
-      [0.42, 0.4, 0.38],
-      [0.5, 0.47, 0.43],
-      [0.36, 0.35, 0.34]
-    ],
-    seto: [
-      [0.22, 0.38, 0.18],
-      [0.26, 0.42, 0.2]
-    ]
-  };
-  const CELLS = new Map();
-  const CS = 300;
-  const bucket = (mat, x, z) => {
-    const k = mat + ':' + Math.floor(x / CS) + ',' + Math.floor(z / CS);
-    let b = CELLS.get(k);
-    if (!b) {
-      b = { mat, p: [], c: [], uv: [] };
-      CELLS.set(k, b);
-    }
-    return b;
-  };
-  const quad = (b, a1, a2, b2, b1, col, uv) => {
-    b.p.push(...a1, ...a2, ...b2, ...a1, ...b2, ...b1);
-    for (let i = 0; i < 6; i++) b.c.push(...col);
-    const [u0, u1] = uv || [0, 0];
-    b.uv.push(u0, 0, u1, 0, u1, 1, u0, 0, u1, 1, u0, 1);
-  };
+  let { list, nt, KIND, MAT, COLS, CELLS } = buildWallsPart1();
+  const { bucket, quad } = buildWallsPart2(CELLS);
   let km = 0,
     n = 0;
-  // v1.0.8 (Jonay: «aquí se choca el coche», Vía de Ronda X 378, Y −270): a wall of the map under a carriageway as the game
-  // draws it (wider than in the OSM, or raised over the ground) is cut there; it collided unseen under the road
-  // v1.1.1 (Jonay, X 498, Y −493: «por aquí no se debería poder acceder a la Vía de Ronda, debería haber vallado»): a
-  // street that ends (dead end) next to a fast road it doesn't join gets a metal fence across its end
-  try {
-    for (const w of deadEndFences()) list.push(w);
-  } catch (e) {
-    console.error('vallas fin de calle', e);
-  }
-  const pieces = [];
-  const simp = (r) => {
-    const o = [r[0], r[1]];
-    for (let k = 2; k + 3 < r.length + 2 && k < r.length - 2; k += 2) {
-      const ax = o[o.length - 2],
-        az = o[o.length - 1],
-        bx = r[k],
-        bz = r[k + 1],
-        ex = r[k + 2],
-        ez = r[k + 3];
-      const L = Math.hypot(ex - ax, ez - az) || 1;
-      if (Math.abs((bx - ax) * (ez - az) - (bz - az) * (ex - ax)) / L > 0.12) o.push(bx, bz);
-    }
-    o.push(r[r.length - 2], r[r.length - 1]);
-    return o;
-  }; // back to the corners
-  for (const w of list) {
-    const [kind, h, mat0, c0, keep] = w;
-    let run = [];
-    const flush = () => {
-      if (run.length >= 4) pieces.push([kind, h, mat0, simp(run)]);
-      run = [];
-    };
-    for (let i = 0; i + 3 < c0.length; i += 2) {
-      const ax = c0[i],
-        az = c0[i + 1],
-        bx = c0[i + 2],
-        bz = c0[i + 3],
-        L = Math.hypot(bx - ax, bz - az),
-        n = Math.max(1, Math.ceil(L / 0.75));
-      for (let t = i ? 1 : 0; t <= n; t++) {
-        const x = ax + ((bx - ax) * t) / n,
-          z = az + ((bz - az) * t) / n;
-        if (!keep && onCarriagewayEarly(x, z, 0.4)) flush();
-        else run.push(x, z);
-      }
-    }
-    flush();
-  }
+  const { pieces } = buildWallsPart3(list);
   for (const [kind, h, mat0, c0] of pieces) {
     const K = KIND[kind];
     if (!K || c0.length < 4) continue;
@@ -444,6 +331,14 @@ function buildWalls() {
     }
     n++;
   }
+  buildWallsPart4(CELLS, MAT);
+  WALLS.n = n;
+  WALLS.km = Math.round(km / 100) / 10;
+  console.log('muros y vallas', n, 'tapias del inicio', nt, WALLS.km, 'km', CELLS.size, 'mallas');
+  return n;
+}
+/** (v1.1.7, code quality) part of buildWalls */
+function buildWallsPart4(CELLS, MAT) {
   for (const b of CELLS.values()) {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(b.p, 3));
@@ -457,8 +352,132 @@ function buildWalls() {
     scene.add(m);
     WALLS.meshes.push(m);
   }
-  WALLS.n = n;
-  WALLS.km = Math.round(km / 100) / 10;
-  console.log('muros y vallas', n, 'tapias del inicio', nt, WALLS.km, 'km', CELLS.size, 'mallas');
-  return n;
+}
+/** (v1.1.7, code quality) part of buildWalls: v1.0.8 (Jonay: «aquí se choca el coche», Vía de Ronda X 378, Y −270): a wall of the map under a carriageway as the game */
+function buildWallsPart3(list) {
+  // v1.0.8 (Jonay: «aquí se choca el coche», Vía de Ronda X 378, Y −270): a wall of the map under a carriageway as the game
+  // draws it (wider than in the OSM, or raised over the ground) is cut there; it collided unseen under the road
+  // v1.1.1 (Jonay, X 498, Y −493: «por aquí no se debería poder acceder a la Vía de Ronda, debería haber vallado»): a
+  // street that ends (dead end) next to a fast road it doesn't join gets a metal fence across its end
+  try {
+    for (const w of deadEndFences()) list.push(w);
+  } catch (e) {
+    console.error('vallas fin de calle', e);
+  }
+  const pieces = [];
+  const simp = (r) => {
+    const o = [r[0], r[1]];
+    for (let k = 2; k + 3 < r.length + 2 && k < r.length - 2; k += 2) {
+      const ax = o[o.length - 2],
+        az = o[o.length - 1],
+        bx = r[k],
+        bz = r[k + 1],
+        ex = r[k + 2],
+        ez = r[k + 3];
+      const L = Math.hypot(ex - ax, ez - az) || 1;
+      if (Math.abs((bx - ax) * (ez - az) - (bz - az) * (ex - ax)) / L > 0.12) o.push(bx, bz);
+    }
+    o.push(r[r.length - 2], r[r.length - 1]);
+    return o;
+  }; // back to the corners
+  for (const w of list) {
+    const [kind, h, mat0, c0, keep] = w;
+    let run = [];
+    const flush = () => {
+      if (run.length >= 4) pieces.push([kind, h, mat0, simp(run)]);
+      run = [];
+    };
+    for (let i = 0; i + 3 < c0.length; i += 2) {
+      const ax = c0[i],
+        az = c0[i + 1],
+        bx = c0[i + 2],
+        bz = c0[i + 3],
+        L = Math.hypot(bx - ax, bz - az),
+        n = Math.max(1, Math.ceil(L / 0.75));
+      for (let t = i ? 1 : 0; t <= n; t++) {
+        const x = ax + ((bx - ax) * t) / n,
+          z = az + ((bz - az) * t) / n;
+        if (!keep && onCarriagewayEarly(x, z, 0.4)) flush();
+        else run.push(x, z);
+      }
+    }
+    flush();
+  }
+  return { pieces };
+}
+/** (v1.1.7, code quality) part of buildWalls */
+function buildWallsPart2(CELLS) {
+  const CS = 300;
+  const bucket = (mat, x, z) => {
+    const k = mat + ':' + Math.floor(x / CS) + ',' + Math.floor(z / CS);
+    let b = CELLS.get(k);
+    if (!b) {
+      b = { mat, p: [], c: [], uv: [] };
+      CELLS.set(k, b);
+    }
+    return b;
+  };
+  const quad = (b, a1, a2, b2, b1, col, uv) => {
+    b.p.push(...a1, ...a2, ...b2, ...a1, ...b2, ...b1);
+    for (let i = 0; i < 6; i++) b.c.push(...col);
+    const [u0, u1] = uv || [0, 0];
+    b.uv.push(u0, 0, u1, 0, u1, 1, u0, 0, u1, 1, u0, 1);
+  };
+  return { bucket, quad };
+}
+/** (v1.1.7, code quality) part of buildWalls: height (m above the ground), thickness, material */
+function buildWallsPart1() {
+  const list = (DATA.BW || []).slice();
+  let nt = 0;
+  try {
+    const t = inicioTapias();
+    nt = t.length;
+    for (const w of t) list.push(w);
+  } catch (e) {
+    console.error('tapias', e);
+  }
+  // height (m above the ground), thickness, material
+  const KIND = {
+    wall: [2.2, 0.3, 'cal'],
+    tapia: [2.6, 0.3, 'cal'],
+    city_wall: [3.2, 0.6, 'piedra'],
+    retaining_wall: [1.1, 0.45, 'piedra'],
+    fence: [1.8, 0.05, 'valla'],
+    wire_fence: [1.6, 0.04, 'valla'],
+    wood_fence: [1.3, 0.07, 'madera'],
+    hedge: [1.4, 0.9, 'seto']
+  };
+  const MAT = {
+    cal: new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.95 }),
+    piedra: new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 1 }),
+    valla: new THREE.MeshStandardMaterial({
+      color: 0x343a36,
+      roughness: 0.55,
+      metalness: 0.5,
+      map: railTex(),
+      alphaTest: 0.5,
+      side: THREE.DoubleSide
+    }), // v1.0.6: iron bars and rails, not a see-through grey panel (Jonay: «¿esto qué es?»)
+    madera: new THREE.MeshStandardMaterial({ color: 0x86663f, roughness: 0.9 }),
+    seto: new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 1 })
+  };
+  const COLS = {
+    cal: [
+      [0.93, 0.91, 0.86],
+      [0.95, 0.94, 0.9],
+      [0.89, 0.85, 0.77],
+      [0.92, 0.88, 0.8]
+    ],
+    piedra: [
+      [0.42, 0.4, 0.38],
+      [0.5, 0.47, 0.43],
+      [0.36, 0.35, 0.34]
+    ],
+    seto: [
+      [0.22, 0.38, 0.18],
+      [0.26, 0.42, 0.2]
+    ]
+  };
+  const CELLS = new Map();
+  return { list, nt, KIND, MAT, COLS, CELLS };
 }

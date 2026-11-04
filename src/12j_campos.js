@@ -46,15 +46,9 @@ function camposInit() {
   for (const P of SPORTS.pitches) {
     if (P.kind !== 'f11' && P.kind !== 'f7' && P.kind !== 'fs') continue;
     const rd = roadNear(P.cx, P.cz);
-    let shut = !rd;
-    if (rd) {
-      const L = Math.hypot(P.cx - rd.x, P.cz - rd.z);
-      for (let t = 0.15; t < 0.85 && !shut; t += 0.7 / Math.max(3, L))
-        if (inAnyBuilding(rd.x + (P.cx - rd.x) * t, rd.z + (P.cz - rd.z) * t)) shut = true;
-    }
+    const shut = pitchShut(P, rd);
     const school = BUILD.find((b) => b.name && SCHOOL_RE.test(b.name) && Math.hypot(b.cx - P.cx, b.cz - P.cz) < 90);
-    const h = Math.abs(Math.sin(P.cx * 5.3 + P.cz * 2.9) * 9999) % 1;
-    const level = 1 + Math.floor(h * 5);
+    const level = pitchLevel(P, 5.3, 2.9);
     const what = P.kind === 'fs' ? 'la pista de fútbol sala' : 'el campo de fútbol';
     const c = {
       id: 'f' + n++,
@@ -146,18 +140,7 @@ const COPA_TEAMS = [
   }
 ];
 function copaInit() {
-  const fin = COURTS.find((c) => c.sport === 'fut' && c.final);
-  const ob = obispoCampo();
-  const pub = COURTS.filter((c) => c.sport === 'fut' && !c.final && c !== ob && c.kind !== 'fs').sort((a, b) => a.dist - b.dist);
-  const chosen = [];
-  for (const sp of [450, 300, 150, 0]) {
-    for (const c of pub) {
-      if (chosen.length >= 4) break;
-      if (chosen.includes(c)) continue;
-      if (chosen.every((q) => Math.hypot(q.cx - c.cx, q.cz - c.cz) >= sp)) chosen.push(c);
-    }
-    if (chosen.length >= 4) break;
-  }
+  const { fin, chosen } = copaInitPart1();
   if (!chosen.length || !fin) return;
   const list = COPA_TEAMS.map((t, i) => {
     const finalGame = i === 4;
@@ -199,20 +182,33 @@ function copaInit() {
             kit: t.kit,
             lv: t.lv,
             time: finalGame ? 210 : 160,
-            onEnd: (r) => {
-              if (!K.isActive(this)) return;
-              if (r.won) {
-                if (finalGame) HUD.big('¡CAMPEONES DE LA COPA LAGUNA!', '#26d07c', 6);
-                K.pass(this.title, t.prize);
-              } else K.fail(finalGame ? 'Habéis perdido la final. Volved a intentarlo en el Francisco Peraza.' : `${t.name} os han ganado.`);
-            }
+            onEnd: (r) => this.ended(r, t, finalGame)
           });
         });
+      },
+      ended(r, t, finalGame) {
+        tourneyEnded(this, r, t, finalGame, 'el Francisco Peraza', '¡CAMPEONES DE LA COPA LAGUNA!', '#26d07c');
       },
       update() {}
     };
   });
   MISSIONS.addCopa(list);
+}
+/** (v1.1.7, code quality) part of copaInit */
+function copaInitPart1() {
+  const fin = COURTS.find((c) => c.sport === 'fut' && c.final);
+  const ob = obispoCampo();
+  const pub = COURTS.filter((c) => c.sport === 'fut' && !c.final && c !== ob && c.kind !== 'fs').sort((a, b) => a.dist - b.dist);
+  const chosen = [];
+  for (const sp of [450, 300, 150, 0]) {
+    for (const c of pub) {
+      if (chosen.length >= 4) break;
+      if (chosen.includes(c)) continue;
+      if (chosen.every((q) => Math.hypot(q.cx - c.cx, q.cz - c.cz) >= sp)) chosen.push(c);
+    }
+    if (chosen.length >= 4) break;
+  }
+  return { fin, chosen };
 }
 // the Obispo's pitch: the nearest real football field (11 or 7) you can walk onto, else any
 function obispoCampo() {
@@ -228,7 +224,7 @@ function gangTeam() {
     { name: 'BOCA PAPA', look: lookOf('boca') },
     { name: 'SASTRÓN', look: lookOf('sastron') },
     { name: 'COCO', look: cocoLook() },
-    { name: 'EL CHOPA', look: { ...(playerHuman.look || {}) } }
+    { name: 'EL CHOPA', look: lookCopy(playerHuman.look) }
   ];
 }
 const FOOT_RIVAL_KITS = [

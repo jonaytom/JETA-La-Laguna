@@ -601,6 +601,17 @@ ARCADE.GAMES.bencomo = (() => {
         x.stroke();
       }
     } // tunera with its figs; v0.83.2 (Jonay: «parece inofensivo, se ve poco»): a soft dark outline
+    const { n } = tileImgPart1(x, k, rr, t);
+    if (k === 3) {
+      x.fillStyle = 'rgba(0,0,0,0.25)';
+      for (let i = 0; i < n; i += 4) x.fillRect(i, 3, 2, 1);
+      x.fillStyle = 'rgba(255,255,255,0.18)';
+      x.fillRect(0, 1, n, 1);
+    }
+    return (tileCache[key] = c);
+  }
+  /** (v1.1.7, code quality) part of tileImg */
+  function tileImgPart1(x, k, rr, t) {
     x.setTransform(1, 0, 0, 1, 0, 0);
     const n = T * 2; // the fine detail of the ×2 tile: grains, cracks, grass blades
     if (k === 1 || k === 2) {
@@ -651,13 +662,7 @@ ARCADE.GAMES.bencomo = (() => {
         x.fillStyle = '#d4204a';
       }
     }
-    if (k === 3) {
-      x.fillStyle = 'rgba(0,0,0,0.25)';
-      for (let i = 0; i < n; i += 4) x.fillRect(i, 3, 2, 1);
-      x.fillStyle = 'rgba(255,255,255,0.18)';
-      x.fillRect(0, 1, n, 1);
-    }
-    return (tileCache[key] = c);
+    return { n };
   }
   const bgCache = {};
   const BZ = { costa: 'anaza', barranco: 'barranco', monte: 'anaga' }; // v0.99: theme → drawn background (FONDOS)
@@ -681,94 +686,103 @@ ARCADE.GAMES.bencomo = (() => {
       return s / 233280;
     };
     for (let li = 0; li < 3; li++) {
-      const c = mkCanvas(1280, H * 2),
-        x = c.getContext('2d');
-      x.scale(2, 2);
-      L.push(c); // ×2: smoother hills, sea and trees
-      if (li === 0) {
-        const g = x.createLinearGradient(0, 0, 0, H);
-        g.addColorStop(0, TH[theme].sky[0]);
-        g.addColorStop(1, TH[theme].sky[1]);
-        x.fillStyle = g;
-        x.fillRect(0, 0, 640, H);
-        if (theme === 'costa') {
-          x.fillStyle = '#fff6c8';
-          x.beginPath();
-          x.arc(470, 46, 16, 0, 7);
-          x.fill();
-          x.fillStyle = '#3d7fb8';
-          x.fillRect(0, 128, 640, H - 128);
-          x.fillStyle = 'rgba(255,255,255,0.35)';
-          for (let i = 0; i < 90; i++) x.fillRect((rr() * 640) | 0, 130 + ((rr() * 70) | 0), 3 + ((rr() * 4) | 0), 1);
-        }
-        if (theme === 'barranco') {
-          x.fillStyle = '#fff1c2';
-          x.beginPath();
-          x.arc(150, 70, 22, 0, 7);
-          x.fill();
-        }
-        if (theme === 'monte') {
-          x.fillStyle = 'rgba(255,255,255,0.25)';
-          for (let i = 0; i < 6; i++) x.fillRect(0, 60 + i * 18, 640, 6);
-        }
-        // the Teide on the horizon, always
-        x.fillStyle = theme === 'monte' ? '#7a958c' : theme === 'barranco' ? '#c0855a' : '#8aa6c2';
-        x.beginPath();
-        x.moveTo(330, 128);
-        x.lineTo(410, 52);
-        x.lineTo(424, 48);
-        x.lineTo(438, 52);
-        x.lineTo(530, 128);
-        x.fill();
-        x.fillStyle = '#f4f4f4';
-        x.beginPath();
-        x.moveTo(400, 62);
-        x.lineTo(410, 52);
-        x.lineTo(424, 48);
-        x.lineTo(438, 52);
-        x.lineTo(448, 62);
-        x.lineTo(430, 58);
-        x.lineTo(418, 63);
-        x.fill();
-      }
-      if (li === 1) {
-        if (theme === 'costa') {
-          for (const sx2 of [80, 300, 520]) caravel(x, sx2, 118);
-          x.fillStyle = '#56708a';
-          x.beginPath();
-          x.moveTo(0, 130);
-          for (let i = 0; i <= 640; i += 20) x.lineTo(i, 112 - Math.sin(i * 0.02) * 10 - rr() * 6);
-          x.lineTo(640, 130);
-          x.fill();
-        } else {
-          x.fillStyle = theme === 'monte' ? '#3e5f48' : '#9a5a34';
-          x.beginPath();
-          x.moveTo(0, H);
-          for (let i = 0; i <= 640; i += 16) x.lineTo(i, 96 + Math.sin(i * 0.018) * 22 + rr() * 8);
-          x.lineTo(640, H);
-          x.fill();
-        }
-      }
-      if (li === 2) {
-        if (theme === 'monte') {
-          for (let i = 0; i < 18; i++) tree(x, i * 36 + rr() * 10, 150 + rr() * 20, rr);
-          x.fillStyle = 'rgba(200,220,210,0.18)';
-          x.fillRect(0, 120, 640, 30);
-        } else if (theme === 'barranco') {
-          x.fillStyle = '#7a4128';
-          x.beginPath();
-          x.moveTo(0, H);
-          for (let i = 0; i <= 640; i += 12) x.lineTo(i, 140 + Math.sin(i * 0.04) * 14 + rr() * 10);
-          x.lineTo(640, H);
-          x.fill();
-          x.fillStyle = 'rgba(0,0,0,0.15)';
-          for (let i = 0; i < 40; i++) x.fillRect((rr() * 640) | 0, 150 + ((rr() * 70) | 0), 12, 2);
-        } else {
-          for (let i = 0; i < 9; i++) palm(x, i * 72 + rr() * 20, 168, rr);
-        }
-      }
+      backgroundEach(L, li, theme, rr);
     }
     return (bgCache[theme] = L);
+  }
+  /** (v1.1.7, code quality) the body of a loop of background, split out of it */
+  function backgroundEach(L, li, theme, rr) {
+    const { x } = backgroundEachPart1(L, li, theme, rr);
+    if (li === 1) {
+      if (theme === 'costa') {
+        for (const sx2 of [80, 300, 520]) caravel(x, sx2, 118);
+        x.fillStyle = '#56708a';
+        x.beginPath();
+        x.moveTo(0, 130);
+        for (let i = 0; i <= 640; i += 20) x.lineTo(i, 112 - Math.sin(i * 0.02) * 10 - rr() * 6);
+        x.lineTo(640, 130);
+        x.fill();
+      } else {
+        x.fillStyle = theme === 'monte' ? '#3e5f48' : '#9a5a34';
+        x.beginPath();
+        x.moveTo(0, H);
+        for (let i = 0; i <= 640; i += 16) x.lineTo(i, 96 + Math.sin(i * 0.018) * 22 + rr() * 8);
+        x.lineTo(640, H);
+        x.fill();
+      }
+    }
+    if (li === 2) {
+      if (theme === 'monte') {
+        for (let i = 0; i < 18; i++) tree(x, i * 36 + rr() * 10, 150 + rr() * 20, rr);
+        x.fillStyle = 'rgba(200,220,210,0.18)';
+        x.fillRect(0, 120, 640, 30);
+      } else if (theme === 'barranco') {
+        x.fillStyle = '#7a4128';
+        x.beginPath();
+        x.moveTo(0, H);
+        for (let i = 0; i <= 640; i += 12) x.lineTo(i, 140 + Math.sin(i * 0.04) * 14 + rr() * 10);
+        x.lineTo(640, H);
+        x.fill();
+        x.fillStyle = 'rgba(0,0,0,0.15)';
+        for (let i = 0; i < 40; i++) x.fillRect((rr() * 640) | 0, 150 + ((rr() * 70) | 0), 12, 2);
+      } else {
+        for (let i = 0; i < 9; i++) palm(x, i * 72 + rr() * 20, 168, rr);
+      }
+    }
+  }
+  /** (v1.1.7, code quality) part of backgroundEach: the Teide on the horizon, always */
+  function backgroundEachPart1(L, li, theme, rr) {
+    const c = mkCanvas(1280, H * 2),
+      x = c.getContext('2d');
+    x.scale(2, 2);
+    L.push(c); // ×2: smoother hills, sea and trees
+    if (li === 0) {
+      const g = x.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, TH[theme].sky[0]);
+      g.addColorStop(1, TH[theme].sky[1]);
+      x.fillStyle = g;
+      x.fillRect(0, 0, 640, H);
+      if (theme === 'costa') {
+        x.fillStyle = '#fff6c8';
+        x.beginPath();
+        x.arc(470, 46, 16, 0, 7);
+        x.fill();
+        x.fillStyle = '#3d7fb8';
+        x.fillRect(0, 128, 640, H - 128);
+        x.fillStyle = 'rgba(255,255,255,0.35)';
+        for (let i = 0; i < 90; i++) x.fillRect((rr() * 640) | 0, 130 + ((rr() * 70) | 0), 3 + ((rr() * 4) | 0), 1);
+      }
+      if (theme === 'barranco') {
+        x.fillStyle = '#fff1c2';
+        x.beginPath();
+        x.arc(150, 70, 22, 0, 7);
+        x.fill();
+      }
+      if (theme === 'monte') {
+        x.fillStyle = 'rgba(255,255,255,0.25)';
+        for (let i = 0; i < 6; i++) x.fillRect(0, 60 + i * 18, 640, 6);
+      }
+      // the Teide on the horizon, always
+      x.fillStyle = theme === 'monte' ? '#7a958c' : theme === 'barranco' ? '#c0855a' : '#8aa6c2';
+      x.beginPath();
+      x.moveTo(330, 128);
+      x.lineTo(410, 52);
+      x.lineTo(424, 48);
+      x.lineTo(438, 52);
+      x.lineTo(530, 128);
+      x.fill();
+      x.fillStyle = '#f4f4f4';
+      x.beginPath();
+      x.moveTo(400, 62);
+      x.lineTo(410, 52);
+      x.lineTo(424, 48);
+      x.lineTo(438, 52);
+      x.lineTo(448, 62);
+      x.lineTo(430, 58);
+      x.lineTo(418, 63);
+      x.fill();
+    }
+    return { x };
   }
   function caravel(x, cx0, y) {
     x.fillStyle = '#4a2c18';
@@ -942,34 +956,7 @@ ARCADE.GAMES.bencomo = (() => {
       banner = null,
       bannerT = 0,
       boss = null;
-    for (const k of ['bencomo', 'bencomo_ns', ...Object.values(BX_EN)]) SPRX.ready(k);
-    for (const k of Object.values(BZ)) FONDOS.get(k); // v0.95.2: start loading every sheet now (v0.99: and the backgrounds)
-    const p = {
-      x: 0,
-      y: 0,
-      vx: 0,
-      vy: 0,
-      face: 1,
-      hp: 3,
-      inv: 0,
-      atk: 0,
-      atkCD: 0,
-      vault: 0,
-      pogo: false,
-      onG: false,
-      coy: 0,
-      buf: 0,
-      power: 0,
-      stones: 3,
-      anim: 0,
-      dead: 0,
-      cp: null,
-      hurtT: 0
-    };
-    const E = [];
-    const shots = [];
-    const rocks = [];
-    const items = [];
+    const { p, E, shots, rocks, items } = createPart1();
     const spd = () => 1 + 0.22 * loopN;
     function load(n) {
       L = STAGES[n % STAGES.length]();
@@ -1044,72 +1031,8 @@ ARCADE.GAMES.bencomo = (() => {
       if (r >= ROWS) return 0;
       return tiles[c][r];
     };
-    const solid = (t) => t === 1 || t === 2 || t === 4;
-    function moveBody(o, dt, oneWay = true) {
-      // AABB vs tiles; x = centre, y = feet
-      const hw = o.w / 2;
-      o.x += o.vx * dt;
-      const top = o.y - o.h + 2,
-        bot = o.y - 2;
-      for (const yy of [top, (top + bot) / 2, bot]) {
-        if (o.vx > 0 && solid(tAt(o.x + hw, yy))) {
-          o.x = Math.floor((o.x + hw) / T) * T - hw - 0.01;
-          o.vx = 0;
-          o.hitWall = 1;
-        } else if (o.vx < 0 && solid(tAt(o.x - hw, yy))) {
-          o.x = Math.floor((o.x - hw) / T + 1) * T + hw + 0.01;
-          o.vx = 0;
-          o.hitWall = -1;
-        }
-      }
-      const py = o.y;
-      o.y += o.vy * dt;
-      o.onG = false;
-      if (o.vy >= 0) {
-        for (const xx of [o.x - hw + 1, o.x + hw - 1]) {
-          const t = tAt(xx, o.y);
-          const ry = Math.floor(o.y / T) * T;
-          if (solid(t) || (oneWay && t === 3 && py <= ry + 1 && !o.drop)) {
-            o.y = ry;
-            o.vy = 0;
-            o.onG = true;
-            break;
-          }
-        }
-      } else {
-        for (const xx of [o.x - hw + 1, o.x + hw - 1])
-          if (solid(tAt(xx, o.y - o.h))) {
-            o.y = (Math.floor((o.y - o.h) / T) + 1) * T + o.h;
-            o.vy = 0;
-            break;
-          }
-      }
-    }
-    const groundAhead = (o, dir) => {
-      const xx = o.x + dir * (o.w / 2 + 3);
-      const t = tAt(xx, o.y + 4);
-      return solid(t) || t === 3;
-    };
-    const wallAhead = (o, dir) => solid(tAt(o.x + dir * (o.w / 2 + 2), o.y - 6));
-    // ---------- player
-    function hurt(n = 1, from) {
-      if (p.inv > 0 || p.power > 0 || p.dead) return;
-      p.hp -= n;
-      p.inv = 1.4;
-      p.hurtT = 0.35;
-      p.vy = -180;
-      p.vx = from !== undefined ? Math.sign(p.x - from) * 120 : -p.face * 120;
-      api.sfx('hurt');
-      if (p.hp <= 0) die();
-    }
-    function die() {
-      if (p.dead) return;
-      p.dead = 1.8;
-      p.vy = -260;
-      p.vx = 0;
-      api.stopMusic();
-      api.sfx('die');
-    }
+    const { solid, moveBody, groundAhead, wallAhead } = createPart2(tAt);
+    const { hurt, die } = createPart3(p, api);
     function respawn() {
       lives--;
       if (lives < 0) {
@@ -1148,20 +1071,56 @@ ARCADE.GAMES.bencomo = (() => {
         if (p.dead <= 0) respawn();
         return;
       }
-      const run = pad.held('vR') ? 1 : pad.held('vL') ? -1 : 0,
-        down = pad.held('vD'),
-        upK = pad.held('vU');
-      p.inv = Math.max(0, p.inv - dt);
-      p.hurtT = Math.max(0, p.hurtT - dt);
-      p.power = Math.max(0, p.power - dt);
-      p.atkCD = Math.max(0, p.atkCD - dt);
-      p.atk = Math.max(0, p.atk - dt);
-      if (pad.hit('vT')) p.buf = 0.12;
-      else p.buf = Math.max(0, p.buf - dt);
-      p.coy = p.onG ? 0.09 : Math.max(0, p.coy - dt);
-      p.crouch = p.onG && down && p.vault <= 0 && !p.dead; // ↓ on the ground: crouched (A hits low: the dogs)
-      const top = p.power > 0 ? 150 : 118,
-        acc = p.onG ? 900 : 560;
+      const { run, down, upK, top, acc } = playerPart1(pad, dt);
+      playerPart2(down, dt, upK, run, top, pad, acc);
+      // A: a blow with the banot; Q: a stone
+      if (pad.hit('vS') && p.atkCD <= 0) {
+        p.atk = 0.2;
+        p.atkCD = 0.3;
+        api.sfx('swing');
+      }
+      if (pad.hit('vP') && p.stones > 0) {
+        p.stones--;
+        shots.push({ k: 'stone', x: p.x + p.face * 8, y: p.y - 16, vx: p.face * 230 + p.vx * 0.3, vy: -140, mine: true, t: 2 });
+        api.sfx('swing');
+      }
+      p.vy += (p.vy < 0 && pad.held('vT') ? 760 : 980) * dt;
+      p.vy = Math.min(p.vy, 520);
+      const wasG = p.onG;
+      p.w = 10;
+      p.h = p.crouch ? 15 : 22;
+      moveBody(p, dt);
+      if (p.onG) {
+        p.flying = false;
+        if (!wasG) addFx('dust', p.x, p.y);
+      }
+      if (p.x < camX + 6) {
+        p.x = camX + 6;
+        p.vx = Math.max(0, p.vx);
+      }
+      if (p.x > L.w * T - 6) p.x = L.w * T - 6;
+      p.anim += dt * (Math.abs(p.vx) / 30 + (p.onG ? 0 : 0));
+      // hazards: tuneras (pogo on them = a bounce), the sea, falling off
+      const tF = tAt(p.x, p.y + 1),
+        tB = tAt(p.x, p.y - 4);
+      if (tF === 5 || tB === 5) {
+        if (p.pogo && p.vy >= 0) {
+          p.vy = -330;
+          api.sfx('jump');
+          addFx('spark', p.x, p.y);
+        } else hurt(1);
+      }
+      if (p.y > ROWS * T + 30 || tAt(p.x, p.y - 2) === 6) die();
+      // the end of the stage
+      if (L.endX && p.x > L.endX && !boss && phase === 'play') {
+        phase = 'clear';
+        phaseT = 4;
+        api.stopMusic();
+        api.sfx('clear');
+      }
+    }
+    /** (v1.1.7, code quality) part of player: the pole planted ahead: the body swings up over it, then flies */
+    function playerPart2(down, dt, upK, run, top, pad, acc) {
       if (p.vault > 0) {
         // the pole planted ahead: the body swings up over it, then flies
         p.vault -= dt;
@@ -1213,54 +1172,117 @@ ARCADE.GAMES.bencomo = (() => {
       p.pogo = !p.onG && down && p.vault <= 0;
       p.dropT = Math.max(0, (p.dropT || 0) - dt);
       p.drop = p.dropT > 0;
-      // A: a blow with the banot; Q: a stone
-      if (pad.hit('vS') && p.atkCD <= 0) {
-        p.atk = 0.2;
-        p.atkCD = 0.3;
-        api.sfx('swing');
-      }
-      if (pad.hit('vP') && p.stones > 0) {
-        p.stones--;
-        shots.push({ k: 'stone', x: p.x + p.face * 8, y: p.y - 16, vx: p.face * 230 + p.vx * 0.3, vy: -140, mine: true, t: 2 });
-        api.sfx('swing');
-      }
-      p.vy += (p.vy < 0 && pad.held('vT') ? 760 : 980) * dt;
-      p.vy = Math.min(p.vy, 520);
-      const wasG = p.onG;
-      p.w = 10;
-      p.h = p.crouch ? 15 : 22;
-      moveBody(p, dt);
-      if (p.onG) {
-        p.flying = false;
-        if (!wasG) addFx('dust', p.x, p.y);
-      }
-      if (p.x < camX + 6) {
-        p.x = camX + 6;
-        p.vx = Math.max(0, p.vx);
-      }
-      if (p.x > L.w * T - 6) p.x = L.w * T - 6;
-      p.anim += dt * (Math.abs(p.vx) / 30 + (p.onG ? 0 : 0));
-      // hazards: tuneras (pogo on them = a bounce), the sea, falling off
-      const tF = tAt(p.x, p.y + 1),
-        tB = tAt(p.x, p.y - 4);
-      if (tF === 5 || tB === 5) {
-        if (p.pogo && p.vy >= 0) {
-          p.vy = -330;
-          api.sfx('jump');
-          addFx('spark', p.x, p.y);
-        } else hurt(1);
-      }
-      if (p.y > ROWS * T + 30 || tAt(p.x, p.y - 2) === 6) die();
-      // the end of the stage
-      if (L.endX && p.x > L.endX && !boss && phase === 'play') {
-        phase = 'clear';
-        phaseT = 4;
-        api.stopMusic();
-        api.sfx('clear');
-      }
+    }
+    /** (v1.1.7, code quality) part of player */
+    function playerPart1(pad, dt) {
+      const run = pad.held('vR') ? 1 : pad.held('vL') ? -1 : 0,
+        down = pad.held('vD'),
+        upK = pad.held('vU');
+      p.inv = Math.max(0, p.inv - dt);
+      p.hurtT = Math.max(0, p.hurtT - dt);
+      p.power = Math.max(0, p.power - dt);
+      p.atkCD = Math.max(0, p.atkCD - dt);
+      p.atk = Math.max(0, p.atk - dt);
+      if (pad.hit('vT')) p.buf = 0.12;
+      else p.buf = Math.max(0, p.buf - dt);
+      p.coy = p.onG ? 0.09 : Math.max(0, p.coy - dt);
+      p.crouch = p.onG && down && p.vault <= 0 && !p.dead; // ↓ on the ground: crouched (A hits low: the dogs)
+      const top = p.power > 0 ? 150 : 118,
+        acc = p.onG ? 900 : 560;
+      return { run, down, upK, top, acc };
     }
     // ---------- enemies
     function enemy(e, dt) {
+      const { dx, adx, sameY, s } = enemyPart1(e, dt);
+      enemyPart2(e, adx, sameY, dt, dx, s);
+      if (e.k === 'L') {
+        bossAI(e, dt);
+        if (e.st === 'flee') {
+          e.x += e.vx * dt;
+          e.t2 = (e.t2 || 0) + dt;
+          if (e.t2 > 3.5) {
+            e.dead = true;
+            phase = 'clear';
+            phaseT = 6;
+            api.stopMusic();
+            api.sfx('clear');
+          }
+          return;
+        }
+      } // fleeing: off he goes, through anything
+      e.vy += 900 * dt;
+      e.vy = Math.min(e.vy, 500);
+      e.hitWall = 0;
+      moveBody(e, dt);
+      if (e.y > ROWS * T + 40) e.dead = true;
+      // touching Bencomo
+      if (!p.dead && Math.abs(p.x - e.x) < (e.w + 10) / 2 && p.y > e.y - e.h && p.y - p.h < e.y) {
+        if ((p.pogo || p.power > 0) && p.vy > 0 && p.y < e.y - e.h + Math.max(10, e.h * 0.5)) {
+          /* v0.89 (Jonay): the «picado» on the rider of a horse hit you: landing anywhere on the top half counts */ hitE(e, p.pogo ? 2 : 3, true);
+          p.vy = -340;
+          api.sfx('jump');
+        } else if (p.power > 0) hitE(e, 3);
+        else if (!(e.k === 'D' && e.st === 'sleep')) hurt(e.k === 'L' || e.k === 'C' ? 1 : 1, e.x);
+      }
+      // the banot
+      if (p.atk > 0.06 && !e.hitBy) {
+        const nv = window.__BEN_NEW !== false,
+          hx = p.x + p.face * (nv ? 24 : 18),
+          hy = p.y - (p.crouch ? 5 : 14);
+        if (Math.abs(hx - e.x) < (nv ? 16 : 14) + e.w / 2 && hy > e.y - e.h - 4 && hy < e.y + 2) {
+          e.hitBy = true;
+          hitE(e, 1);
+        }
+      }
+      if (p.atk <= 0) e.hitBy = false;
+    }
+    /** (v1.1.7, code quality) part of enemy */
+    function enemyPart2(e, adx, sameY, dt, dx, s) {
+      if (e.k === 'D') {
+        if (e.st === 'sleep') {
+          e.vx = 0;
+          if (adx < 150 && sameY) {
+            e.st = 'run';
+            api.sfx('bark');
+          }
+        } else {
+          e.turnT = (e.turnT || 0) - dt;
+          if (Math.sign(dx) && Math.sign(dx) !== e.face && e.turnT <= 0 && adx > 6) {
+            e.face = Math.sign(dx);
+            e.turnT = 0.55;
+          } else if (!e.face) e.face = Math.sign(dx) || 1;
+          e.vx = e.face * 110 * s;
+          /* v1.1.3 (Jonay: «los perros corren demasiado… parece que tengan dos cabezas»): 150 → 110 (−27 %), and they turn at most every 0,55 s (they overshoot you before turning back) */ if (
+            adx < 46 &&
+            e.onG &&
+            !p.crouch &&
+            Math.random() < 0.03
+          ) {
+            e.vy = -230;
+          }
+          /* against a crouched Bencomo they stay low (and his low blow gets them) */ if (!groundAhead(e, e.face) && e.onG) e.vy = -240;
+        }
+      }
+      if (e.k === 'C') {
+        if (e.st === 'walk') {
+          e.vx = e.face * 45 * s;
+          if (e.x < e.x0) e.face = 1;
+          if (e.x > e.x1) e.face = -1;
+          if (adx < 190 && sameY && Math.sign(dx) === e.face) {
+            e.st = 'charge';
+            api.sfx('bark');
+          }
+        } else {
+          e.vx = e.face * 170 * s;
+          if (e.x < e.x0 - 60 || e.x > e.x1 + 60 || wallAhead(e, e.face) || !groundAhead(e, e.face)) {
+            e.st = 'walk';
+            e.face = -e.face;
+          }
+        }
+      }
+    }
+    /** (v1.1.7, code quality) part of enemy */
+    function enemyPart1(e, dt) {
       e.t += dt;
       const dx = p.x - e.x,
         adx = Math.abs(dx),
@@ -1311,88 +1333,7 @@ ARCADE.GAMES.bencomo = (() => {
           }
         }
       }
-      if (e.k === 'D') {
-        if (e.st === 'sleep') {
-          e.vx = 0;
-          if (adx < 150 && sameY) {
-            e.st = 'run';
-            api.sfx('bark');
-          }
-        } else {
-          e.turnT = (e.turnT || 0) - dt;
-          if (Math.sign(dx) && Math.sign(dx) !== e.face && e.turnT <= 0 && adx > 6) {
-            e.face = Math.sign(dx);
-            e.turnT = 0.55;
-          } else if (!e.face) e.face = Math.sign(dx) || 1;
-          e.vx = e.face * 110 * s;
-          /* v1.1.3 (Jonay: «los perros corren demasiado… parece que tengan dos cabezas»): 150 → 110 (−27 %), and they turn at most every 0,55 s (they overshoot you before turning back) */ if (
-            adx < 46 &&
-            e.onG &&
-            !p.crouch &&
-            Math.random() < 0.03
-          ) {
-            e.vy = -230;
-          }
-          /* against a crouched Bencomo they stay low (and his low blow gets them) */ if (!groundAhead(e, e.face) && e.onG) e.vy = -240;
-        }
-      }
-      if (e.k === 'C') {
-        if (e.st === 'walk') {
-          e.vx = e.face * 45 * s;
-          if (e.x < e.x0) e.face = 1;
-          if (e.x > e.x1) e.face = -1;
-          if (adx < 190 && sameY && Math.sign(dx) === e.face) {
-            e.st = 'charge';
-            api.sfx('bark');
-          }
-        } else {
-          e.vx = e.face * 170 * s;
-          if (e.x < e.x0 - 60 || e.x > e.x1 + 60 || wallAhead(e, e.face) || !groundAhead(e, e.face)) {
-            e.st = 'walk';
-            e.face = -e.face;
-          }
-        }
-      }
-      if (e.k === 'L') {
-        bossAI(e, dt);
-        if (e.st === 'flee') {
-          e.x += e.vx * dt;
-          e.t2 = (e.t2 || 0) + dt;
-          if (e.t2 > 3.5) {
-            e.dead = true;
-            phase = 'clear';
-            phaseT = 6;
-            api.stopMusic();
-            api.sfx('clear');
-          }
-          return;
-        }
-      } // fleeing: off he goes, through anything
-      e.vy += 900 * dt;
-      e.vy = Math.min(e.vy, 500);
-      e.hitWall = 0;
-      moveBody(e, dt);
-      if (e.y > ROWS * T + 40) e.dead = true;
-      // touching Bencomo
-      if (!p.dead && Math.abs(p.x - e.x) < (e.w + 10) / 2 && p.y > e.y - e.h && p.y - p.h < e.y) {
-        if ((p.pogo || p.power > 0) && p.vy > 0 && p.y < e.y - e.h + Math.max(10, e.h * 0.5)) {
-          /* v0.89 (Jonay): the «picado» on the rider of a horse hit you: landing anywhere on the top half counts */ hitE(e, p.pogo ? 2 : 3, true);
-          p.vy = -340;
-          api.sfx('jump');
-        } else if (p.power > 0) hitE(e, 3);
-        else if (!(e.k === 'D' && e.st === 'sleep')) hurt(e.k === 'L' || e.k === 'C' ? 1 : 1, e.x);
-      }
-      // the banot
-      if (p.atk > 0.06 && !e.hitBy) {
-        const nv = window.__BEN_NEW !== false,
-          hx = p.x + p.face * (nv ? 24 : 18),
-          hy = p.y - (p.crouch ? 5 : 14);
-        if (Math.abs(hx - e.x) < (nv ? 16 : 14) + e.w / 2 && hy > e.y - e.h - 4 && hy < e.y + 2) {
-          e.hitBy = true;
-          hitE(e, 1);
-        }
-      }
-      if (p.atk <= 0) e.hitBy = false;
+      return { dx, adx, sameY, s };
     }
     function hitE(e, n, stomp) {
       if (e.hurt > 0 && e.k === 'L') return;
@@ -1498,59 +1439,7 @@ ARCADE.GAMES.bencomo = (() => {
       fx.push({ k, x, y, t: k === 'ko' ? 0.9 : 0.4, e, vy: -160 });
     }
     function updateShots(dt) {
-      for (const s of shots) {
-        s.t -= dt;
-        if (s.k === 'stone') s.vy += 700 * dt;
-        s.x += s.vx * dt;
-        s.y += s.vy * dt;
-        if (solid(tAt(s.x, s.y))) s.t = 0;
-        if (s.mine) {
-          for (const e of E)
-            if (!e.dead && Math.abs(e.x - s.x) < e.w / 2 + 3 && s.y > e.y - e.h && s.y < e.y) {
-              hitE(e, 1);
-              s.t = 0;
-              break;
-            }
-        } else if (!p.dead && Math.abs(p.x - s.x) < 8 && s.y > p.y - (p.h || 22) && s.y < p.y) {
-          if (p.atk > 0 && Math.sign(s.x - p.x) === p.face && s.k !== 'wave') {
-            s.vx = -s.vx;
-            s.mine = true;
-            api.sfx('hit');
-          } else {
-            hurt(1, s.x);
-            s.t = 0;
-          }
-        }
-      }
-      for (let i = shots.length - 1; i >= 0; i--) if (shots[i].t <= 0 || shots[i].x < camX - 40 || shots[i].x > camX + W + 40) shots.splice(i, 1);
-      // Acentejo: the Guanches up on the slopes roll stones down (a shadow first): they crush the Castilians too
-      if (L.rocks && !p.dead && Math.random() < dt * (0.55 + 0.15 * loopN)) {
-        const x = p.x + (Math.random() * 2 - 1) * 140;
-        rocks.push({ x, y: -20, vy: 0, warn: 0.7, t: 0 });
-      }
-      for (const r of rocks) {
-        if (r.warn > 0) {
-          r.warn -= dt;
-          continue;
-        }
-        r.vy += 600 * dt;
-        r.y += r.vy * dt;
-        r.t += dt;
-        if (!p.dead && Math.abs(r.x - p.x) < 12 && r.y > p.y - 24 && r.y < p.y) {
-          hurt(1, r.x);
-          r.done = true;
-        }
-        for (const e of E)
-          if (!e.dead && e.k !== 'L' && Math.abs(r.x - e.x) < e.w / 2 + 6 && r.y > e.y - e.h && r.y < e.y) {
-            hitE(e, 3);
-            r.done = true;
-          }
-        if (solid(tAt(r.x, r.y + 6)) || r.y > H + 20) {
-          r.done = true;
-          addFx('dust', r.x, r.y + 6);
-        }
-      }
-      for (let i = rocks.length - 1; i >= 0; i--) if (rocks[i].done) rocks.splice(i, 1);
+      updateShotsPart1(dt);
       for (const it of items)
         if (it.k === 'P' && !it.on && p.x > it.x - 4 && !p.dead) {
           it.on = true;
@@ -1604,23 +1493,63 @@ ARCADE.GAMES.bencomo = (() => {
         }
       }
     }
-    // ---------- demo pilot (attract mode): runs, vaults the gaps, hits who is in front
-    function demoPilot(dt) {
-      const k = g.demoKeys;
-      k.hit = {};
-      k.held = { vR: true };
-      const ahead = p.x + (Math.abs(p.vx) > 85 ? 34 : 10); // fast: vault early; slow: jump at the very edge
-      const gapAhead = !solid(tAt(ahead, p.y + 6)) && tAt(ahead, p.y + 6) !== 3;
-      const wall = solid(tAt(p.x + 20, p.y - 10)) || solid(tAt(p.x + 20, p.y - 26)) || tAt(p.x + 18, p.y - 4) === 5;
-      if (p.onG && (gapAhead || wall)) {
-        k.hit.vT = true;
-        g.holdB = 0.4;
+    /** (v1.1.7, code quality) part of updateShots: Acentejo: the Guanches up on the slopes roll stones down (a shadow first): they crush the Castilians too */
+    function updateShotsPart1(dt) {
+      for (const s of shots) {
+        s.t -= dt;
+        if (s.k === 'stone') s.vy += 700 * dt;
+        s.x += s.vx * dt;
+        s.y += s.vy * dt;
+        if (solid(tAt(s.x, s.y))) s.t = 0;
+        if (s.mine) {
+          for (const e of E)
+            if (!e.dead && Math.abs(e.x - s.x) < e.w / 2 + 3 && s.y > e.y - e.h && s.y < e.y) {
+              hitE(e, 1);
+              s.t = 0;
+              break;
+            }
+        } else if (!p.dead && Math.abs(p.x - s.x) < 8 && s.y > p.y - (p.h || 22) && s.y < p.y) {
+          if (p.atk > 0 && Math.sign(s.x - p.x) === p.face && s.k !== 'wave') {
+            s.vx = -s.vx;
+            s.mine = true;
+            api.sfx('hit');
+          } else {
+            hurt(1, s.x);
+            s.t = 0;
+          }
+        }
       }
-      g.holdB = Math.max(0, (g.holdB || 0) - dt);
-      k.held.vT = g.holdB > 0; // keeps B down for the whole jump
-      for (const e of E) if (!e.dead && e.x > p.x && e.x - p.x < 34 && Math.abs(e.y - p.y) < 30) k.hit.vS = true;
-      g.demoT = (g.demoT || 0) + dt;
+      for (let i = shots.length - 1; i >= 0; i--) if (shots[i].t <= 0 || shots[i].x < camX - 40 || shots[i].x > camX + W + 40) shots.splice(i, 1);
+      // Acentejo: the Guanches up on the slopes roll stones down (a shadow first): they crush the Castilians too
+      if (L.rocks && !p.dead && Math.random() < dt * (0.55 + 0.15 * loopN)) {
+        const x = p.x + (Math.random() * 2 - 1) * 140;
+        rocks.push({ x, y: -20, vy: 0, warn: 0.7, t: 0 });
+      }
+      for (const r of rocks) {
+        if (r.warn > 0) {
+          r.warn -= dt;
+          continue;
+        }
+        r.vy += 600 * dt;
+        r.y += r.vy * dt;
+        r.t += dt;
+        if (!p.dead && Math.abs(r.x - p.x) < 12 && r.y > p.y - 24 && r.y < p.y) {
+          hurt(1, r.x);
+          r.done = true;
+        }
+        for (const e of E)
+          if (!e.dead && e.k !== 'L' && Math.abs(r.x - e.x) < e.w / 2 + 6 && r.y > e.y - e.h && r.y < e.y) {
+            hitE(e, 3);
+            r.done = true;
+          }
+        if (solid(tAt(r.x, r.y + 6)) || r.y > H + 20) {
+          r.done = true;
+          addFx('dust', r.x, r.y + 6);
+        }
+      }
+      for (let i = rocks.length - 1; i >= 0; i--) if (rocks[i].done) rocks.splice(i, 1);
     }
+    const { demoPilot } = createPart4(g, p, solid, tAt, E);
     // ---------- step
     g.update = (dt, pad) => {
       time += dt;
@@ -1951,24 +1880,7 @@ ARCADE.GAMES.bencomo = (() => {
       }
     }
     /** [row, frame] of an enemy's sheet */
-    function enAnim(e, k) {
-      const F = SPRX.fr,
-        t = e.t || 0,
-        mv = Math.abs(e.vx) > 2;
-      if (k === 'b_perro') return e.st === 'run' ? [1, F(k, 1, t, 12)] : [0, F(k, 0, t, 6)];
-      if (k === 'b_caballero') return e.ko ? [2, 4] : e.st === 'charge' ? [1, F(k, 1, t, 14)] : mv ? [1, F(k, 1, t, 9)] : [0, F(k, 0, t, 5)]; // (v0.94: a captain on a horse like Lugo's)
-      if (k === 'b_lugo')
-        return e.st === 'slash'
-          ? [2, Math.min(9, Math.floor((t / 1.1) * 10))]
-          : e.st === 'charge' || e.st === 'flee'
-            ? [1, F(k, 1, t, 12)]
-            : [0, F(k, 0, t, 6)];
-      if (k === 'b_arquero')
-        return e.ko ? [4, 2] : e.aim > 0 ? [1, Math.min(10, Math.floor(((0.8 - e.aim) / 0.8) * 11))] : mv ? [2, F(k, 2, t, 10)] : [0, F(k, 0, t, 6)];
-      if (e.ko) return [6, 2];
-      if (e.k === 'A' && e.aim > 0) return [0, 0];
-      return mv ? [1, F(k, 1, t, 10)] : [0, F(k, 0, t, 6)];
-    }
+    const { enAnim } = createPart5();
     function drawBencomo(c) {
       if (p.inv > 0 && !p.dead && flick() && p.power <= 0) return;
       const x = Math.round(p.x - camX),
@@ -2122,6 +2034,155 @@ ARCADE.GAMES.bencomo = (() => {
       _cam: () => camX
     }); // tests
     return g;
+  }
+  /** (v1.1.7, code quality) part of create */
+  function createPart5() {
+    function enAnim(e, k) {
+      const F = SPRX.fr,
+        t = e.t || 0,
+        mv = Math.abs(e.vx) > 2;
+      if (k === 'b_perro') return e.st === 'run' ? [1, F(k, 1, t, 12)] : [0, F(k, 0, t, 6)];
+      if (k === 'b_caballero') return e.ko ? [2, 4] : e.st === 'charge' ? [1, F(k, 1, t, 14)] : mv ? [1, F(k, 1, t, 9)] : [0, F(k, 0, t, 5)]; // (v0.94: a captain on a horse like Lugo's)
+      if (k === 'b_lugo')
+        return e.st === 'slash'
+          ? [2, Math.min(9, Math.floor((t / 1.1) * 10))]
+          : e.st === 'charge' || e.st === 'flee'
+            ? [1, F(k, 1, t, 12)]
+            : [0, F(k, 0, t, 6)];
+      if (k === 'b_arquero')
+        return e.ko ? [4, 2] : e.aim > 0 ? [1, Math.min(10, Math.floor(((0.8 - e.aim) / 0.8) * 11))] : mv ? [2, F(k, 2, t, 10)] : [0, F(k, 0, t, 6)];
+      if (e.ko) return [6, 2];
+      if (e.k === 'A' && e.aim > 0) return [0, 0];
+      return mv ? [1, F(k, 1, t, 10)] : [0, F(k, 0, t, 6)];
+    }
+    return { enAnim };
+  }
+  /** (v1.1.7, code quality) part of create: ---------- demo pilot (attract mode): runs, vaults the gaps, hits who is in front */
+  function createPart4(g, p, solid, tAt, E) {
+    // ---------- demo pilot (attract mode): runs, vaults the gaps, hits who is in front
+    function demoPilot(dt) {
+      const k = g.demoKeys;
+      k.hit = {};
+      k.held = { vR: true };
+      const ahead = p.x + (Math.abs(p.vx) > 85 ? 34 : 10); // fast: vault early; slow: jump at the very edge
+      const gapAhead = !solid(tAt(ahead, p.y + 6)) && tAt(ahead, p.y + 6) !== 3;
+      const wall = solid(tAt(p.x + 20, p.y - 10)) || solid(tAt(p.x + 20, p.y - 26)) || tAt(p.x + 18, p.y - 4) === 5;
+      if (p.onG && (gapAhead || wall)) {
+        k.hit.vT = true;
+        g.holdB = 0.4;
+      }
+      g.holdB = Math.max(0, (g.holdB || 0) - dt);
+      k.held.vT = g.holdB > 0; // keeps B down for the whole jump
+      for (const e of E) if (!e.dead && e.x > p.x && e.x - p.x < 34 && Math.abs(e.y - p.y) < 30) k.hit.vS = true;
+      g.demoT = (g.demoT || 0) + dt;
+    }
+    return { demoPilot };
+  }
+  /** (v1.1.7, code quality) part of create: ---------- player */
+  function createPart3(p, api) {
+    // ---------- player
+    function hurt(n = 1, from) {
+      if (p.inv > 0 || p.power > 0 || p.dead) return;
+      p.hp -= n;
+      p.inv = 1.4;
+      p.hurtT = 0.35;
+      p.vy = -180;
+      p.vx = from !== undefined ? Math.sign(p.x - from) * 120 : -p.face * 120;
+      api.sfx('hurt');
+      if (p.hp <= 0) die();
+    }
+    function die() {
+      if (p.dead) return;
+      p.dead = 1.8;
+      p.vy = -260;
+      p.vx = 0;
+      api.stopMusic();
+      api.sfx('die');
+    }
+    return { hurt, die };
+  }
+  /** (v1.1.7, code quality) part of create: AABB vs tiles; x = centre, y = feet */
+  function createPart2(tAt) {
+    const solid = (t) => t === 1 || t === 2 || t === 4;
+    function moveBody(o, dt, oneWay = true) {
+      // AABB vs tiles; x = centre, y = feet
+      const hw = o.w / 2;
+      o.x += o.vx * dt;
+      const top = o.y - o.h + 2,
+        bot = o.y - 2;
+      for (const yy of [top, (top + bot) / 2, bot]) {
+        if (o.vx > 0 && solid(tAt(o.x + hw, yy))) {
+          o.x = Math.floor((o.x + hw) / T) * T - hw - 0.01;
+          o.vx = 0;
+          o.hitWall = 1;
+        } else if (o.vx < 0 && solid(tAt(o.x - hw, yy))) {
+          o.x = Math.floor((o.x - hw) / T + 1) * T + hw + 0.01;
+          o.vx = 0;
+          o.hitWall = -1;
+        }
+      }
+      const py = o.y;
+      o.y += o.vy * dt;
+      o.onG = false;
+      if (o.vy >= 0) {
+        for (const xx of [o.x - hw + 1, o.x + hw - 1]) {
+          const t = tAt(xx, o.y);
+          const ry = Math.floor(o.y / T) * T;
+          if (solid(t) || (oneWay && t === 3 && py <= ry + 1 && !o.drop)) {
+            o.y = ry;
+            o.vy = 0;
+            o.onG = true;
+            break;
+          }
+        }
+      } else {
+        for (const xx of [o.x - hw + 1, o.x + hw - 1])
+          if (solid(tAt(xx, o.y - o.h))) {
+            o.y = (Math.floor((o.y - o.h) / T) + 1) * T + o.h;
+            o.vy = 0;
+            break;
+          }
+      }
+    }
+    const groundAhead = (o, dir) => {
+      const xx = o.x + dir * (o.w / 2 + 3);
+      const t = tAt(xx, o.y + 4);
+      return solid(t) || t === 3;
+    };
+    const wallAhead = (o, dir) => solid(tAt(o.x + dir * (o.w / 2 + 2), o.y - 6));
+    return { solid, moveBody, groundAhead, wallAhead };
+  }
+  /** (v1.1.7, code quality) part of create */
+  function createPart1() {
+    for (const k of ['bencomo', 'bencomo_ns', ...Object.values(BX_EN)]) SPRX.ready(k);
+    for (const k of Object.values(BZ)) FONDOS.get(k); // v0.95.2: start loading every sheet now (v0.99: and the backgrounds)
+    const p = {
+      x: 0,
+      y: 0,
+      vx: 0,
+      vy: 0,
+      face: 1,
+      hp: 3,
+      inv: 0,
+      atk: 0,
+      atkCD: 0,
+      vault: 0,
+      pogo: false,
+      onG: false,
+      coy: 0,
+      buf: 0,
+      power: 0,
+      stones: 3,
+      anim: 0,
+      dead: 0,
+      cp: null,
+      hurtT: 0
+    };
+    const E = [];
+    const shots = [];
+    const rocks = [];
+    const items = [];
+    return { p, E, shots, rocks, items };
   }
   // ---------- title screen (attract) and the backdrop of the hi-score table
   function drawTitle(c, t) {

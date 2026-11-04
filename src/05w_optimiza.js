@@ -117,19 +117,7 @@ function mergeStatics() {
   if (typeof DOORMARKS !== 'undefined') for (const k of DOORMARKS) skip.add(k.m);
   const groups = new Map();
   let found = 0;
-  const why = {};
-  const no = (k, o) => {
-    why[k] = (why[k] || 0) + 1;
-    if (o && window.__JETA_TEST) {
-      const e = WHY_EX[k] || (WHY_EX[k] = []);
-      if (e.length < 6) {
-        const p = new THREE.Vector3();
-        o.getWorldPosition(p);
-        e.push([Math.round(p.x), Math.round(p.z), o.geometry && o.geometry.type]);
-      }
-    }
-  };
-  const baseBR = THREE.Mesh.prototype.onBeforeRender;
+  const { why, no, baseBR } = mergeStaticsPart1();
   const visit = (o, named) => {
     if (skip.has(o) || !o.visible || (o.userData && o.userData.noMerge)) return;
     const nm = named || (o !== scene && !!o.name);
@@ -291,6 +279,23 @@ function mergeStatics() {
     ultimoId: new THREE.Object3D().id
   };
   return LOD.stats;
+}
+/** (v1.1.7, code quality) part of mergeStatics */
+function mergeStaticsPart1() {
+  const why = {};
+  const no = (k, o) => {
+    why[k] = (why[k] || 0) + 1;
+    if (o && window.__JETA_TEST) {
+      const e = WHY_EX[k] || (WHY_EX[k] = []);
+      if (e.length < 6) {
+        const p = new THREE.Vector3();
+        o.getWorldPosition(p);
+        e.push([Math.round(p.x), Math.round(p.z), o.geometry && o.geometry.type]);
+      }
+    }
+  };
+  const baseBR = THREE.Mesh.prototype.onBeforeRender;
+  return { why, no, baseBR };
 }
 // one InstancedMesh per 250 m cell (big ones only): the camera can then skip what it doesn't see
 function splitInstanced() {

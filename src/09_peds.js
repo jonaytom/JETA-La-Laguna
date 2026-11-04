@@ -147,6 +147,181 @@ function updatePeds(dt) {
     for (const h of INT_NPCS) animHuman(h, dt, 0);
     return;
   }
+  updatePedsPart1();
+  for (const p of PEDS) {
+    updatePedsEach(p, dt);
+  }
+}
+/** (v1.1.7, code quality) the body of a loop of updatePeds, split out of it */
+function updatePedsEach(p, dt) {
+  const dp = Math.hypot(p.x - PLAYER.x, p.z - PLAYER.z);
+  if (p.down > 0) {
+    p.down -= dt;
+    p.x += (p.vx || 0) * dt;
+    p.z += (p.vz || 0) * dt;
+    p.vx *= 0.9;
+    p.vz *= 0.9;
+    const r = COL.resolve(p.x, p.z, 0.3);
+    p.x = r.x;
+    p.z = r.z;
+    animHuman(p.H, dt, 0, 'down');
+    if (p.down <= 0) {
+      p.flee = 10;
+      p.fleeFrom = [PLAYER.x, PLAYER.z];
+    }
+    p.H.root.position.set(p.x, heightAt(p.x, p.z) + 0.17, p.z);
+    return;
+  }
+  updatePedsEachPart1(p, dp);
+  if (p.down > 0) return;
+  if (combatPed(p, dt)) return;
+  if (p.wetChase > 0 && typeof wetChasePed === 'function' && wetChasePed(p, dt)) return; // v0.76: soaked with the water rifle, he comes for you
+  // danger → flee
+  if (PLAYER.car && PLAYER.car.speed > 9 && dp < 12) {
+    p.flee = 5;
+    p.fleeFrom = [PLAYER.x, PLAYER.z];
+  }
+  if (WANTED.level > 0 && dp < 25 && Math.random() < 0.01) {
+    p.flee = 6;
+    p.fleeFrom = [PLAYER.x, PLAYER.z];
+  }
+  let tx, tz, sp;
+  if (p.flee > 0) {
+    p.flee -= dt;
+    const fx = p.x - p.fleeFrom[0],
+      fz = p.z - p.fleeFrom[1],
+      fl = Math.hypot(fx, fz) || 1;
+    tx = p.x + (fx / fl) * 5;
+    tz = p.z + (fz / fl) * 5;
+    sp = 5.2;
+  } else if (p.way >= 0) {
+    const t = pedTarget(p);
+    if (!t) {
+      advancePed(p);
+      return;
+    }
+    tx = t[0];
+    tz = t[1];
+    sp = p.speed;
+    if (Math.hypot(tx - p.x, tz - p.z) < 1.2) advancePed(p);
+  } else {
+    sp = 0;
+    tx = p.x;
+    tz = p.z;
+    if (p.flee <= 0) p.way = -1;
+  }
+  updatePedsEachPart2(p);
+  // idle chatting
+  let dx = tx - p.x,
+    dz = tz - p.z;
+  const L = Math.hypot(dx, dz);
+  if (p.talk > 0) {
+    p.talk -= dt;
+    sp = 0;
+  } else if (p.flee <= 0 && Math.random() < 0.0007) p.talk = rnd(2, 6);
+  let mv = 0;
+  const ox = p.x,
+    oz = p.z;
+  if (L > 0.05 && sp > 0) {
+    dx /= L;
+    dz /= L;
+    mv = sp;
+    p.h += angDiff(p.h, Math.atan2(dx, dz)) * clamp(dt * 6, 0, 1);
+    p.x += dx * sp * dt;
+    p.z += dz * sp * dt;
+  }
+  updatePedsEachPart3(dp, p);
+  // walking into a wall? (moving much less than intended) → step towards the middle of the way, then turn round, then give up
+  if (mv > 0 && dt > 0) {
+    const real = Math.hypot(p.x - ox, p.z - oz);
+    if (real < mv * dt * 0.35) p.stuck = (p.stuck || 0) + dt;
+    else p.stuck = Math.max(0, (p.stuck || 0) - dt * 2);
+  }
+  if (p.stuck > 0.45) {
+    p.stuck = 0;
+    p.strikes = (p.strikes || 0) + 1;
+    if (p.flee > 0) {
+      const a = Math.atan2(p.x - p.fleeFrom[0], p.z - p.fleeFrom[1]) + (Math.random() < 0.5 ? 1.3 : -1.3);
+      p.fleeFrom = [p.x - Math.sin(a) * 5, p.z - Math.cos(a) * 5];
+    } else if (p.way >= 0 && Math.abs(p.off) > 0.5 && p.strikes < 3) p.off *= 0.35;
+    else if (p.way >= 0) {
+      const W = PEDWAYS[p.way],
+        j = p.seg + p.dir;
+      if (j >= 0 && j < W.c.length / 2) {
+        p.seg = j;
+        p.dir = -p.dir;
+      }
+      p.off = 0;
+    }
+    if (p.strikes >= 5) {
+      if (dp > 35) {
+        p.gone = true;
+      } else {
+        p.way = -1;
+        p.strikes = 0;
+      }
+    }
+  } else if (mv > 0 && (p.stuck || 0) === 0 && p.strikes) p.strikes = Math.max(0, p.strikes - dt * 0.2);
+  animHuman(p.H, dt, mv);
+  p.H.root.position.set(p.x, heightAt(p.x, p.z) + 0.17, p.z);
+  p.H.root.rotation.y = p.h;
+  p.H.root.visible = dp < 110;
+}
+/** (v1.1.7, code quality) part of updatePedsEach: separation from player */
+function updatePedsEachPart3(dp, p) {
+  // separation from player
+  if (!PLAYER.car && dp < 0.75) {
+    const k = (0.75 - dp) / (dp || 1);
+    p.x += (p.x - PLAYER.x) * k;
+    p.z += (p.z - PLAYER.z) * k;
+    if (PLAYER.speed > 3 && Math.random() < 0.05) {
+      SUB.show(p.canarion ? '<b>Canarión:</b> ' + pick(LINES.canBrav) : pick(PEDLINES), 2.5);
+      p.flee = 2;
+      p.fleeFrom = [PLAYER.x, PLAYER.z];
+    }
+  }
+  const r = COL.resolve(p.x, p.z, 0.3);
+  p.x = r.x;
+  p.z = r.z;
+}
+/** (v1.1.7, code quality) part of updatePedsEach */
+function updatePedsEachPart2(p) {
+  if (p.way < 0 && p.flee <= 0) {
+    const rd = ROADSEG.nearest(p.x, p.z);
+    if (rd) {
+      const w = RI2PW.has(rd.ri) ? RI2PW.get(rd.ri) : -1;
+      if (w >= 0) {
+        p.way = w;
+        p.seg = rd.i / 2;
+        p.dir = 1;
+        p.off = PEDWAYS[w].road ? PEDWAYS[w].w / 2 + 1.1 : 0;
+      }
+    }
+  }
+}
+/** (v1.1.7, code quality) part of updatePedsEach: hit by cars */
+function updatePedsEachPart1(p, dp) {
+  // hit by cars
+  for (const c of CARS) {
+    if (c.speed < 4 || Math.abs(c.x - p.x) > 7 || Math.abs(c.z - p.z) > 7 || underground(c.x, c.z, c.y)) continue;
+    for (const [cx, cz, cr] of c.circles()) {
+      if (Math.hypot(p.x - cx, p.z - cz) < cr + 0.3) {
+        p.down = 4;
+        p.vx = c.vx * 0.8 + rnd(-2, 2);
+        p.vz = c.vz * 0.8 + rnd(-2, 2);
+        AUDIO.thud(dp);
+        if (c.driver === 'player') {
+          WANTED.crime(1, 'Atropello');
+          MISSIONS.onEvent('hitped');
+        }
+        break;
+      }
+    }
+    if (p.down > 0) break;
+  }
+}
+/** (v1.1.7, code quality) part of updatePeds: spawn/despawn */
+function updatePedsPart1() {
   // spawn/despawn
   for (let i = PEDS.length - 1; i >= 0; i--) {
     const p = PEDS[i];
@@ -161,161 +336,6 @@ function updatePeds(dt) {
     const x = PLAYER.x + Math.sin(a) * d,
       z = PLAYER.z + Math.cos(a) * d;
     spawnPed(x, z);
-  }
-  for (const p of PEDS) {
-    const dp = Math.hypot(p.x - PLAYER.x, p.z - PLAYER.z);
-    if (p.down > 0) {
-      p.down -= dt;
-      p.x += (p.vx || 0) * dt;
-      p.z += (p.vz || 0) * dt;
-      p.vx *= 0.9;
-      p.vz *= 0.9;
-      const r = COL.resolve(p.x, p.z, 0.3);
-      p.x = r.x;
-      p.z = r.z;
-      animHuman(p.H, dt, 0, 'down');
-      if (p.down <= 0) {
-        p.flee = 10;
-        p.fleeFrom = [PLAYER.x, PLAYER.z];
-      }
-      p.H.root.position.set(p.x, heightAt(p.x, p.z) + 0.17, p.z);
-      continue;
-    }
-    // hit by cars
-    for (const c of CARS) {
-      if (c.speed < 4 || Math.abs(c.x - p.x) > 7 || Math.abs(c.z - p.z) > 7 || underground(c.x, c.z, c.y)) continue;
-      for (const [cx, cz, cr] of c.circles()) {
-        if (Math.hypot(p.x - cx, p.z - cz) < cr + 0.3) {
-          p.down = 4;
-          p.vx = c.vx * 0.8 + rnd(-2, 2);
-          p.vz = c.vz * 0.8 + rnd(-2, 2);
-          AUDIO.thud(dp);
-          if (c.driver === 'player') {
-            WANTED.crime(1, 'Atropello');
-            MISSIONS.onEvent('hitped');
-          }
-          break;
-        }
-      }
-      if (p.down > 0) break;
-    }
-    if (p.down > 0) continue;
-    if (combatPed(p, dt)) continue;
-    if (p.wetChase > 0 && typeof wetChasePed === 'function' && wetChasePed(p, dt)) continue; // v0.76: soaked with the water rifle, he comes for you
-    // danger → flee
-    if (PLAYER.car && PLAYER.car.speed > 9 && dp < 12) {
-      p.flee = 5;
-      p.fleeFrom = [PLAYER.x, PLAYER.z];
-    }
-    if (WANTED.level > 0 && dp < 25 && Math.random() < 0.01) {
-      p.flee = 6;
-      p.fleeFrom = [PLAYER.x, PLAYER.z];
-    }
-    let tx, tz, sp;
-    if (p.flee > 0) {
-      p.flee -= dt;
-      const fx = p.x - p.fleeFrom[0],
-        fz = p.z - p.fleeFrom[1],
-        fl = Math.hypot(fx, fz) || 1;
-      tx = p.x + (fx / fl) * 5;
-      tz = p.z + (fz / fl) * 5;
-      sp = 5.2;
-    } else if (p.way >= 0) {
-      const t = pedTarget(p);
-      if (!t) {
-        advancePed(p);
-        continue;
-      }
-      tx = t[0];
-      tz = t[1];
-      sp = p.speed;
-      if (Math.hypot(tx - p.x, tz - p.z) < 1.2) advancePed(p);
-    } else {
-      sp = 0;
-      tx = p.x;
-      tz = p.z;
-      if (p.flee <= 0) p.way = -1;
-    }
-    if (p.way < 0 && p.flee <= 0) {
-      const rd = ROADSEG.nearest(p.x, p.z);
-      if (rd) {
-        const w = RI2PW.has(rd.ri) ? RI2PW.get(rd.ri) : -1;
-        if (w >= 0) {
-          p.way = w;
-          p.seg = rd.i / 2;
-          p.dir = 1;
-          p.off = PEDWAYS[w].road ? PEDWAYS[w].w / 2 + 1.1 : 0;
-        }
-      }
-    }
-    // idle chatting
-    let dx = tx - p.x,
-      dz = tz - p.z;
-    const L = Math.hypot(dx, dz);
-    if (p.talk > 0) {
-      p.talk -= dt;
-      sp = 0;
-    } else if (p.flee <= 0 && Math.random() < 0.0007) p.talk = rnd(2, 6);
-    let mv = 0;
-    const ox = p.x,
-      oz = p.z;
-    if (L > 0.05 && sp > 0) {
-      dx /= L;
-      dz /= L;
-      mv = sp;
-      p.h += angDiff(p.h, Math.atan2(dx, dz)) * clamp(dt * 6, 0, 1);
-      p.x += dx * sp * dt;
-      p.z += dz * sp * dt;
-    }
-    // separation from player
-    if (!PLAYER.car && dp < 0.75) {
-      const k = (0.75 - dp) / (dp || 1);
-      p.x += (p.x - PLAYER.x) * k;
-      p.z += (p.z - PLAYER.z) * k;
-      if (PLAYER.speed > 3 && Math.random() < 0.05) {
-        SUB.show(p.canarion ? '<b>Canarión:</b> ' + pick(LINES.canBrav) : pick(PEDLINES), 2.5);
-        p.flee = 2;
-        p.fleeFrom = [PLAYER.x, PLAYER.z];
-      }
-    }
-    const r = COL.resolve(p.x, p.z, 0.3);
-    p.x = r.x;
-    p.z = r.z;
-    // walking into a wall? (moving much less than intended) → step towards the middle of the way, then turn round, then give up
-    if (mv > 0 && dt > 0) {
-      const real = Math.hypot(p.x - ox, p.z - oz);
-      if (real < mv * dt * 0.35) p.stuck = (p.stuck || 0) + dt;
-      else p.stuck = Math.max(0, (p.stuck || 0) - dt * 2);
-    }
-    if (p.stuck > 0.45) {
-      p.stuck = 0;
-      p.strikes = (p.strikes || 0) + 1;
-      if (p.flee > 0) {
-        const a = Math.atan2(p.x - p.fleeFrom[0], p.z - p.fleeFrom[1]) + (Math.random() < 0.5 ? 1.3 : -1.3);
-        p.fleeFrom = [p.x - Math.sin(a) * 5, p.z - Math.cos(a) * 5];
-      } else if (p.way >= 0 && Math.abs(p.off) > 0.5 && p.strikes < 3) p.off *= 0.35;
-      else if (p.way >= 0) {
-        const W = PEDWAYS[p.way],
-          j = p.seg + p.dir;
-        if (j >= 0 && j < W.c.length / 2) {
-          p.seg = j;
-          p.dir = -p.dir;
-        }
-        p.off = 0;
-      }
-      if (p.strikes >= 5) {
-        if (dp > 35) {
-          p.gone = true;
-        } else {
-          p.way = -1;
-          p.strikes = 0;
-        }
-      }
-    } else if (mv > 0 && (p.stuck || 0) === 0 && p.strikes) p.strikes = Math.max(0, p.strikes - dt * 0.2);
-    animHuman(p.H, dt, mv);
-    p.H.root.position.set(p.x, heightAt(p.x, p.z) + 0.17, p.z);
-    p.H.root.rotation.y = p.h;
-    p.H.root.visible = dp < 110;
   }
 }
 

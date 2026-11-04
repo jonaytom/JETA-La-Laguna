@@ -215,56 +215,7 @@ const DIARIO = (() => {
       }
     });
   function render() {
-    const tracks = MISSIONS.diary()
-      .filter((t) => !t.locked)
-      .map((t) => ({ ...t, vis: t.list.map((m, i) => ({ m, i })).filter(({ m }) => m.state !== 'pendiente') }))
-      .filter((t) => t.vis.length);
-    const item = (k, i, txt, col, on) =>
-      `<div class="diaItem" data-k="${k}" data-i="${i}" style="cursor:pointer;padding:5px 8px;border-radius:6px;margin:1px 0;font:400 14px Barlow,sans-serif;color:${col};background:${on ? 'rgba(255,111,184,.28)' : 'transparent'}">${txt}</div>`;
-    const head = (txt, col) => `<div style="margin:6px 0 2px;font:400 15px Audiowide,Oswald,sans-serif;color:${col}">${esc(txt)}</div>`;
-    const kn = known();
-    // first entry: every conversation of the game, newest first (v0.75); then what you know; then the missions
-    ui.querySelector('#diaList').innerHTML =
-      `<div class="diaItem" data-k="__all" data-i="0" style="cursor:pointer;padding:6px 8px;border-radius:6px;margin:0 0 4px;font:400 15px Audiowide,Oswald,sans-serif;color:#ffd27a;background:${sel && sel.k === '__all' ? 'rgba(255,111,184,.28)' : 'transparent'}">💬 Todas las conversaciones</div>` +
-      (kn.length
-        ? head('Lo que sabes', '#9fd7ff') +
-          kn
-            .map(({ f, i }) =>
-              item(
-                '__f',
-                i,
-                `<span style="display:inline-block;width:18px;color:#9fd7ff">${f.icon && window.__mapIconURL ? `<img src="${window.__mapIconURL(f.icon)}" style="width:15px;height:15px;vertical-align:-3px">` : '★'}</span>${esc(f.t)}`,
-                '#fff',
-                sel && sel.k === '__f' && sel.i === i
-              )
-            )
-            .join('')
-        : '') +
-      tracks
-        .map(
-          (t) =>
-            head(t.name, t.css) +
-            t.vis
-              .map(({ m, i }) =>
-                item(
-                  t.key,
-                  i,
-                  `<span style="display:inline-block;width:18px;color:${m.state === 'hecha' ? '#7fe08a' : m.state === 'activa' ? '#ffd400' : t.css}">${ICON[m.state]}</span>${esc(m.title)}`,
-                  '#fff',
-                  sel && sel.k === t.key && sel.i === i
-                )
-              )
-              .join('')
-        )
-        .join('');
-    ui.querySelectorAll('.diaItem').forEach(
-      (el) =>
-        (el.onclick = () => {
-          sel = { k: el.dataset.k, i: +el.dataset.i };
-          render();
-        })
-    );
-    const det = ui.querySelector('#diaDet');
+    const { tracks, det } = renderPart1();
     if (!sel) {
       const t = tracks.find((q) => q.key === 'story');
       const v = t ? t.vis.find(({ m }) => m.state === 'activa' || m.state === 'siguiente') || t.vis[t.vis.length - 1] : null;
@@ -332,6 +283,10 @@ const DIARIO = (() => {
       sel = null;
       return render();
     }
+    renderPart2(m, det, t, convo);
+  }
+  /** (v1.1.7, code quality) part of render */
+  function renderPart2(m, det, t, convo) {
     const log = MISSIONS.log(m.title);
     det.innerHTML = `<div style="font:400 22px Audiowide,Oswald,sans-serif;color:${t.css}">${esc(m.title)}</div>
       <div style="color:#bdb6c9;margin:2px 0 8px;font:400 14px Barlow,sans-serif">${esc(t.name)} · ${m.who ? 'Te la da ' + esc(m.who) + ' · ' : ''}<b style="color:${m.state === 'hecha' ? '#7fe08a' : m.state === 'activa' ? '#ffd400' : '#fff'}">${LABEL[m.state]}</b></div>
@@ -345,6 +300,60 @@ const DIARIO = (() => {
       HUD.toast('Reiniciado desde «' + m.title + '»', t.css, 4);
       render();
     };
+  }
+  /** (v1.1.7, code quality) part of render: first entry: every conversation of the game, newest first (v0.75); then what you know; then the missions */
+  function renderPart1() {
+    const tracks = MISSIONS.diary()
+      .filter((t) => !t.locked)
+      .map((t) => ({ ...t, vis: t.list.map((m, i) => ({ m, i })).filter(({ m }) => m.state !== 'pendiente') }))
+      .filter((t) => t.vis.length);
+    const item = (k, i, txt, col, on) =>
+      `<div class="diaItem" data-k="${k}" data-i="${i}" style="cursor:pointer;padding:5px 8px;border-radius:6px;margin:1px 0;font:400 14px Barlow,sans-serif;color:${col};background:${on ? 'rgba(255,111,184,.28)' : 'transparent'}">${txt}</div>`;
+    const head = (txt, col) => `<div style="margin:6px 0 2px;font:400 15px Audiowide,Oswald,sans-serif;color:${col}">${esc(txt)}</div>`;
+    const kn = known();
+    // first entry: every conversation of the game, newest first (v0.75); then what you know; then the missions
+    ui.querySelector('#diaList').innerHTML =
+      `<div class="diaItem" data-k="__all" data-i="0" style="cursor:pointer;padding:6px 8px;border-radius:6px;margin:0 0 4px;font:400 15px Audiowide,Oswald,sans-serif;color:#ffd27a;background:${sel && sel.k === '__all' ? 'rgba(255,111,184,.28)' : 'transparent'}">💬 Todas las conversaciones</div>` +
+      (kn.length
+        ? head('Lo que sabes', '#9fd7ff') +
+          kn
+            .map(({ f, i }) =>
+              item(
+                '__f',
+                i,
+                `<span style="display:inline-block;width:18px;color:#9fd7ff">${f.icon && window.__mapIconURL ? `<img src="${window.__mapIconURL(f.icon)}" style="width:15px;height:15px;vertical-align:-3px">` : '★'}</span>${esc(f.t)}`,
+                '#fff',
+                sel && sel.k === '__f' && sel.i === i
+              )
+            )
+            .join('')
+        : '') +
+      tracks
+        .map(
+          (t) =>
+            head(t.name, t.css) +
+            t.vis
+              .map(({ m, i }) =>
+                item(
+                  t.key,
+                  i,
+                  `<span style="display:inline-block;width:18px;color:${m.state === 'hecha' ? '#7fe08a' : m.state === 'activa' ? '#ffd400' : t.css}">${ICON[m.state]}</span>${esc(m.title)}`,
+                  '#fff',
+                  sel && sel.k === t.key && sel.i === i
+                )
+              )
+              .join('')
+        )
+        .join('');
+    ui.querySelectorAll('.diaItem').forEach(
+      (el) =>
+        (el.onclick = () => {
+          sel = { k: el.dataset.k, i: +el.dataset.i };
+          render();
+        })
+    );
+    const det = ui.querySelector('#diaDet');
+    return { tracks, det };
   }
   function confirmReset(title) {
     const b = ui.querySelector('#diaReset');

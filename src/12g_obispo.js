@@ -62,57 +62,7 @@ const CRISTO_TEAM = [
 // baroque crest with the coat of arms and pinnacles over the cornice; through the open door you see the zaguán and the
 // patio with its wooden gallery. The corner towers come from the landmark (05k_landmarks.js, 'towers2').
 function obispadoTex(kind) {
-  const W = { grille: [256, 384], crest: [256, 96], rail: [256, 128], win: [128, 224], zaguan: [256, 384] }[kind],
-    c = mkCanvas(W[0], W[1]),
-    x = c.getContext('2d');
-  if (kind === 'grille') {
-    x.strokeStyle = '#5d6166';
-    x.lineWidth = 7;
-    for (let k = 0; k <= 10; k++) {
-      const xx = 8 + k * 24;
-      x.beginPath();
-      x.moveTo(xx, 0);
-      x.lineTo(xx, 384);
-      x.stroke();
-    }
-    x.lineWidth = 10;
-    for (const y of [6, 378]) {
-      x.beginPath();
-      x.moveTo(0, y);
-      x.lineTo(256, y);
-      x.stroke();
-    }
-    x.fillStyle = '#5d6166';
-    x.fillRect(0, 222, 256, 20);
-    for (let k = 0; k < 10; k++) {
-      x.beginPath();
-      x.arc(14 + k * 25, 232, 9, 0, 7);
-      x.fill();
-    }
-  }
-  if (kind === 'crest') {
-    x.strokeStyle = '#5d6166';
-    x.lineWidth = 7;
-    x.beginPath();
-    x.moveTo(4, 92);
-    x.lineTo(252, 92);
-    x.stroke();
-    for (const sx of [-1, 1])
-      for (let k = 0; k < 3; k++) {
-        const cx = 128 + sx * (22 + k * 36),
-          r = 26 - k * 5;
-        x.beginPath();
-        x.arc(cx, 92 - r, r, sx > 0 ? Math.PI : 0, sx > 0 ? Math.PI * 2.6 : -Math.PI * 1.6, sx < 0);
-        x.stroke();
-      }
-    x.beginPath();
-    x.arc(128, 40, 22, 0, 7);
-    x.stroke();
-    x.beginPath();
-    x.moveTo(128, 18);
-    x.lineTo(128, 2);
-    x.stroke();
-  }
+  const { c, x } = obispadoTexPart1(kind);
   if (kind === 'rail') {
     x.strokeStyle = '#2b2d30';
     x.lineWidth = 8;
@@ -171,37 +121,65 @@ function obispadoTex(kind) {
   }
   return canvasTex(c, { repeat: false });
 }
+/** (v1.1.7, code quality) part of obispadoTex */
+function obispadoTexPart1(kind) {
+  const W = { grille: [256, 384], crest: [256, 96], rail: [256, 128], win: [128, 224], zaguan: [256, 384] }[kind],
+    c = mkCanvas(W[0], W[1]),
+    x = c.getContext('2d');
+  if (kind === 'grille') {
+    x.strokeStyle = '#5d6166';
+    x.lineWidth = 7;
+    for (let k = 0; k <= 10; k++) {
+      const xx = 8 + k * 24;
+      x.beginPath();
+      x.moveTo(xx, 0);
+      x.lineTo(xx, 384);
+      x.stroke();
+    }
+    x.lineWidth = 10;
+    for (const y of [6, 378]) {
+      x.beginPath();
+      x.moveTo(0, y);
+      x.lineTo(256, y);
+      x.stroke();
+    }
+    x.fillStyle = '#5d6166';
+    x.fillRect(0, 222, 256, 20);
+    for (let k = 0; k < 10; k++) {
+      x.beginPath();
+      x.arc(14 + k * 25, 232, 9, 0, 7);
+      x.fill();
+    }
+  }
+  if (kind === 'crest') {
+    x.strokeStyle = '#5d6166';
+    x.lineWidth = 7;
+    x.beginPath();
+    x.moveTo(4, 92);
+    x.lineTo(252, 92);
+    x.stroke();
+    for (const sx of [-1, 1])
+      for (let k = 0; k < 3; k++) {
+        const cx = 128 + sx * (22 + k * 36),
+          r = 26 - k * 5;
+        x.beginPath();
+        x.arc(cx, 92 - r, r, sx > 0 ? Math.PI : 0, sx > 0 ? Math.PI * 2.6 : -Math.PI * 1.6, sx < 0);
+        x.stroke();
+      }
+    x.beginPath();
+    x.arc(128, 40, 22, 0, 7);
+    x.stroke();
+    x.beginPath();
+    x.moveTo(128, 18);
+    x.lineTo(128, 2);
+    x.stroke();
+  }
+  return { c, x };
+}
 function buildObispado() {
   const b = findBuilding('Casa Salazar');
   if (!b) return;
-  const P = b.pts,
-    n = P.length,
-    flat = P.flat();
-  let E = null,
-    best = -1;
-  for (let i = 0; i < n; i++) {
-    const p = P[i],
-      q = P[(i + 1) % n];
-    const L = Math.hypot(q[0] - p[0], q[1] - p[1]);
-    if (L < 6) continue;
-    let nx = (q[1] - p[1]) / L,
-      nz = -(q[0] - p[0]) / L;
-    const mx = (p[0] + q[0]) / 2,
-      mz = (p[1] + q[1]) / 2;
-    if (pip(mx + nx * 0.4, mz + nz * 0.4, flat)) {
-      nx = -nx;
-      nz = -nz;
-    } /* outward from THIS house (v0.65.1: a neighbour used to flip it inwards) */
-    if (inAnyBuilding(mx + nx * 3, mz + nz * 3)) continue; /* the street must be in front */
-    const rd = ROADSEG.nearest(mx + nx * 4, mz + nz * 4);
-    if (!rd || rd.d > 9) continue;
-    const nm = DATA.R[rd.ri][1] >= 0 ? STR[DATA.R[rd.ri][1]] : '';
-    const sc = L + (/Agust/i.test(nm) ? 100 : 0);
-    if (sc > best) {
-      best = sc;
-      E = { p, q, L, nx, nz, mx, mz };
-    }
-  }
+  let { E } = buildObispadoPart1(b);
   if (!E) return;
   const ang = Math.atan2(E.nx, E.nz),
     g0 = Math.min(heightAt(E.p[0], E.p[1]), heightAt(E.q[0], E.q[1])),
@@ -215,58 +193,50 @@ function buildObispado() {
     carved = M(0x77736b, 0.9),
     wood = M(0x4a2c17, 0.8),
     glassD = M(0x1d2328, 0.35, 0.3);
-  const alpha = (t) =>
-    new THREE.MeshStandardMaterial({ map: t, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide, roughness: 0.6, metalness: 0.4 });
-  const mGrille = alpha(obispadoTex('grille')),
-    mCrest = alpha(obispadoTex('crest')),
-    mRail = alpha(obispadoTex('rail'));
-  const mWin = new THREE.MeshStandardMaterial({ map: obispadoTex('win'), roughness: 0.7 }),
-    mZag = new THREE.MeshStandardMaterial({ map: obispadoTex('zaguan'), roughness: 0.9 });
-  const plane = (w, h, mat, x, y, z, ry = 0) => {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
-    m.applyMatrix4(fr(x, y, z, ry));
-    root.add(m);
-    return m;
-  };
-  const box = (w, h, d, mat, x, y, z) => B.geo(cBox(w, h, d), mat, fr(x, y, z));
-  const col = (r, h, x, y, z, mat = carved) => B.geo(new THREE.CylinderGeometry(r * 0.9, r, h, 12), mat, fr(x, y + h / 2, z));
-  const pin = (x, y, z, s = 1) => {
-    B.geo(new THREE.ConeGeometry(0.2 * s, 1.0 * s, 8), carved, fr(x, y + 0.5 * s, z));
-    B.geo(new THREE.SphereGeometry(0.12 * s, 8, 6), carved, fr(x, y + 1.05 * s, z));
-  };
-  // dark ashlar over the whole front (a plane 14 cm off the wall: a box touching it flickered, v0.65.1), plinth, string course, cornice
-  const fh = Math.max(9, Math.min(11, (b.top || g0 + 10) - g0));
-  stone.polygonOffset = true;
-  stone.polygonOffsetFactor = -2;
-  stone.polygonOffsetUnits = -2;
-  stone.map.repeat.set(L / 4, fh / 4);
-  stone.map.anisotropy = 4;
-  plane(L - 0.2, fh, stone, 0, fh / 2, 0.14);
-  box(L - 0.2, 0.7, 0.3, carved, 0, 0.35, 0.25);
-  box(L - 0.2, 0.3, 0.35, carved, 0, 4.95, 0.3);
-  box(L + 0.3, 0.45, 0.75, carved, 0, fh - 0.1, 0.4);
-  box(L + 0.1, 0.2, 0.5, carved, 0, fh - 0.45, 0.32);
-  // portal: zaguán seen through the open door, the two leaves open inwards, paired fluted columns on carved pedestals, entablature with dentils
-  plane(2.2, 3.5, mZag, 0, 1.75, 0.16);
-  box(0.12, 3.5, 1.0, wood, -1.05, 1.75, -0.35);
-  box(0.12, 3.5, 1.0, wood, 1.05, 1.75, -0.35);
-  box(2.9, 0.35, 0.4, carved, 0, 3.7, 0.3);
-  for (const s of [-1, 1]) box(0.35, 3.6, 0.35, carved, s * 1.28, 1.8, 0.3);
+  const { mGrille, mCrest, mRail, mWin, mZag, plane } = buildObispadoPart2(fr, root);
+  const { box, col, pin, fh } = buildObispadoPart3(b, g0, stone, L, plane, carved, B, fr);
+  buildObispadoPart4(plane, mZag, box, wood, carved, mRail, mWin, col);
+  const { half, nb } = buildObispadoPart5(L, B, stone, fr, fh, pin, plane);
+  for (const s of [-1, 1])
+    for (let i = 0; i < nb; i++) {
+      const u = s * (3.6 + (i + 0.5) * Math.min(3.9, (half - 3.0) / nb + 0.0001));
+      if (Math.abs(u) > half + 1) continue;
+      plane(1.7, 2.7, mWin, u, 2.25, 0.17);
+      plane(2.1, 3.0, mGrille, u, 2.2, 0.55);
+      for (const k of [-1, 1]) plane(0.4, 3.0, mGrille, u + k * 1.05, 2.2, 0.36, Math.PI / 2);
+      plane(2.3, 0.8, mCrest, u, 4.1, 0.55);
+      box(2.0, 0.12, 0.5, carved, u, 3.72, 0.4);
+      box(1.9, 0.16, 0.8, carved, u, 5.4, 0.55);
+      for (const k of [-0.7, 0, 0.7]) box(0.18, 0.4, 0.6, carved, u + k, 5.12, 0.45);
+      plane(1.9, 0.95, mRail, u, 5.95, 0.93);
+      for (const k of [-1, 1]) plane(0.75, 0.95, mRail, u + k * 0.95, 5.95, 0.55, Math.PI / 2);
+      plane(1.25, 2.4, mWin, u, 6.75, 0.17);
+      for (const k of [-1, 1]) box(0.22, 2.7, 0.22, carved, u + k * 0.8, 6.8, 0.25);
+      {
+        const sh = new THREE.Shape();
+        sh.moveTo(-1.05, 0);
+        sh.lineTo(1.05, 0);
+        sh.lineTo(0, 0.55);
+        sh.closePath();
+        B.geo(new THREE.ExtrudeGeometry(sh, { depth: 0.3, bevelEnabled: false }), carved, fr(u, 8.25, 0.15));
+        box(2.2, 0.18, 0.4, carved, u, 8.18, 0.3);
+      }
+      pin(u, fh + 0.15, 0.5, 0.8);
+    }
+  B.finish(root);
+  scene.add(root);
+  const door = at(0, 0, 1.6);
+  let front = [door.x + E.nx * 1.6, door.z + E.nz * 1.6];
+  if (inAnyBuilding(front[0], front[1]) || COL.nearSeg(front[0], front[1], 0.6)) front = safeSpot(front[0], front[1], 0.6); // v0.65.1: always reachable, out in the street
+  Object.assign(OBISPADO, { ok: true, door: [door.x, door.z], nx: E.nx, nz: E.nz, front, bays: nb * 2, L });
   for (const s of [-1, 1])
     for (const k of [1.75, 2.35]) {
-      box(0.65, 1.1, 0.65, carved, s * k, 0.55, 0.55);
-      col(0.22, 3.2, s * k, 1.1, 0.55);
-      box(0.6, 0.3, 0.6, carved, s * k, 4.45, 0.55);
+      const p = at(s * k, 0, 0.55);
+      COL.addCirc(p.x, p.z, 0.35);
     }
-  box(5.8, 0.5, 0.95, carved, 0, 4.85, 0.55);
-  for (let x = -2.7; x <= 2.71; x += 0.36) box(0.16, 0.16, 0.16, carved, x, 4.52, 1.05);
-  // central balcony with the window framed by paired columns, crest with the coat of arms and pinnacles above the cornice
-  box(4.4, 0.18, 1.0, carved, 0, 5.25, 0.65);
-  plane(4.3, 1.0, mRail, 0, 5.85, 1.12);
-  for (const s of [-1, 1]) plane(0.95, 1.0, mRail, s * 2.15, 5.85, 0.65, Math.PI / 2);
-  plane(1.5, 2.6, mWin, 0, 6.65, 0.18);
-  for (const s of [-1, 1]) for (const k of [1.1, 1.55]) col(0.15, 3.3, s * k, 5.3, 0.4);
-  box(3.8, 0.4, 0.6, carved, 0, 8.8, 0.4);
+}
+/** (v1.1.7, code quality) part of buildObispado: side bays: grilled windows with cresting below, balconies with pediments above; pinnacles over the cornice at each bay */
+function buildObispadoPart5(L, B, stone, fr, fh, pin, plane) {
   {
     const sh = new THREE.Shape();
     sh.moveTo(-2.6, 0);
@@ -310,43 +280,102 @@ function buildObispado() {
   // side bays: grilled windows with cresting below, balconies with pediments above; pinnacles over the cornice at each bay
   const half = L / 2 - 4.6,
     nb = Math.max(1, Math.floor((half - 3.0) / 3.9 + 1));
-  for (const s of [-1, 1])
-    for (let i = 0; i < nb; i++) {
-      const u = s * (3.6 + (i + 0.5) * Math.min(3.9, (half - 3.0) / nb + 0.0001));
-      if (Math.abs(u) > half + 1) continue;
-      plane(1.7, 2.7, mWin, u, 2.25, 0.17);
-      plane(2.1, 3.0, mGrille, u, 2.2, 0.55);
-      for (const k of [-1, 1]) plane(0.4, 3.0, mGrille, u + k * 1.05, 2.2, 0.36, Math.PI / 2);
-      plane(2.3, 0.8, mCrest, u, 4.1, 0.55);
-      box(2.0, 0.12, 0.5, carved, u, 3.72, 0.4);
-      box(1.9, 0.16, 0.8, carved, u, 5.4, 0.55);
-      for (const k of [-0.7, 0, 0.7]) box(0.18, 0.4, 0.6, carved, u + k, 5.12, 0.45);
-      plane(1.9, 0.95, mRail, u, 5.95, 0.93);
-      for (const k of [-1, 1]) plane(0.75, 0.95, mRail, u + k * 0.95, 5.95, 0.55, Math.PI / 2);
-      plane(1.25, 2.4, mWin, u, 6.75, 0.17);
-      for (const k of [-1, 1]) box(0.22, 2.7, 0.22, carved, u + k * 0.8, 6.8, 0.25);
-      {
-        const sh = new THREE.Shape();
-        sh.moveTo(-1.05, 0);
-        sh.lineTo(1.05, 0);
-        sh.lineTo(0, 0.55);
-        sh.closePath();
-        B.geo(new THREE.ExtrudeGeometry(sh, { depth: 0.3, bevelEnabled: false }), carved, fr(u, 8.25, 0.15));
-        box(2.2, 0.18, 0.4, carved, u, 8.18, 0.3);
-      }
-      pin(u, fh + 0.15, 0.5, 0.8);
-    }
-  B.finish(root);
-  scene.add(root);
-  const door = at(0, 0, 1.6);
-  let front = [door.x + E.nx * 1.6, door.z + E.nz * 1.6];
-  if (inAnyBuilding(front[0], front[1]) || COL.nearSeg(front[0], front[1], 0.6)) front = safeSpot(front[0], front[1], 0.6); // v0.65.1: always reachable, out in the street
-  Object.assign(OBISPADO, { ok: true, door: [door.x, door.z], nx: E.nx, nz: E.nz, front, bays: nb * 2, L });
+  return { half, nb };
+}
+/** (v1.1.7, code quality) part of buildObispado: portal: zaguán seen through the open door, the two leaves open inwards, paired fluted columns on carved pedestals, entablature with dentils */
+function buildObispadoPart4(plane, mZag, box, wood, carved, mRail, mWin, col) {
+  // portal: zaguán seen through the open door, the two leaves open inwards, paired fluted columns on carved pedestals, entablature with dentils
+  plane(2.2, 3.5, mZag, 0, 1.75, 0.16);
+  box(0.12, 3.5, 1.0, wood, -1.05, 1.75, -0.35);
+  box(0.12, 3.5, 1.0, wood, 1.05, 1.75, -0.35);
+  box(2.9, 0.35, 0.4, carved, 0, 3.7, 0.3);
+  for (const s of [-1, 1]) box(0.35, 3.6, 0.35, carved, s * 1.28, 1.8, 0.3);
   for (const s of [-1, 1])
     for (const k of [1.75, 2.35]) {
-      const p = at(s * k, 0, 0.55);
-      COL.addCirc(p.x, p.z, 0.35);
+      box(0.65, 1.1, 0.65, carved, s * k, 0.55, 0.55);
+      col(0.22, 3.2, s * k, 1.1, 0.55);
+      box(0.6, 0.3, 0.6, carved, s * k, 4.45, 0.55);
     }
+  box(5.8, 0.5, 0.95, carved, 0, 4.85, 0.55);
+  for (let x = -2.7; x <= 2.71; x += 0.36) box(0.16, 0.16, 0.16, carved, x, 4.52, 1.05);
+  // central balcony with the window framed by paired columns, crest with the coat of arms and pinnacles above the cornice
+  box(4.4, 0.18, 1.0, carved, 0, 5.25, 0.65);
+  plane(4.3, 1.0, mRail, 0, 5.85, 1.12);
+  for (const s of [-1, 1]) plane(0.95, 1.0, mRail, s * 2.15, 5.85, 0.65, Math.PI / 2);
+  plane(1.5, 2.6, mWin, 0, 6.65, 0.18);
+  for (const s of [-1, 1]) for (const k of [1.1, 1.55]) col(0.15, 3.3, s * k, 5.3, 0.4);
+  box(3.8, 0.4, 0.6, carved, 0, 8.8, 0.4);
+}
+/** (v1.1.7, code quality) part of buildObispado: dark ashlar over the whole front (a plane 14 cm off the wall: a box touching it flickered, v0.65.1), plinth, string course, cornice */
+function buildObispadoPart3(b, g0, stone, L, plane, carved, B, fr) {
+  const box = (w, h, d, mat, x, y, z) => B.geo(cBox(w, h, d), mat, fr(x, y, z));
+  const col = (r, h, x, y, z, mat = carved) => B.geo(new THREE.CylinderGeometry(r * 0.9, r, h, 12), mat, fr(x, y + h / 2, z));
+  const pin = (x, y, z, s = 1) => {
+    B.geo(new THREE.ConeGeometry(0.2 * s, 1.0 * s, 8), carved, fr(x, y + 0.5 * s, z));
+    B.geo(new THREE.SphereGeometry(0.12 * s, 8, 6), carved, fr(x, y + 1.05 * s, z));
+  };
+  // dark ashlar over the whole front (a plane 14 cm off the wall: a box touching it flickered, v0.65.1), plinth, string course, cornice
+  const fh = Math.max(9, Math.min(11, (b.top || g0 + 10) - g0));
+  stone.polygonOffset = true;
+  stone.polygonOffsetFactor = -2;
+  stone.polygonOffsetUnits = -2;
+  stone.map.repeat.set(L / 4, fh / 4);
+  stone.map.anisotropy = 4;
+  plane(L - 0.2, fh, stone, 0, fh / 2, 0.14);
+  box(L - 0.2, 0.7, 0.3, carved, 0, 0.35, 0.25);
+  box(L - 0.2, 0.3, 0.35, carved, 0, 4.95, 0.3);
+  box(L + 0.3, 0.45, 0.75, carved, 0, fh - 0.1, 0.4);
+  box(L + 0.1, 0.2, 0.5, carved, 0, fh - 0.45, 0.32);
+  return { box, col, pin, fh };
+}
+/** (v1.1.7, code quality) part of buildObispado */
+function buildObispadoPart2(fr, root) {
+  const alpha = (t) =>
+    new THREE.MeshStandardMaterial({ map: t, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide, roughness: 0.6, metalness: 0.4 });
+  const mGrille = alpha(obispadoTex('grille')),
+    mCrest = alpha(obispadoTex('crest')),
+    mRail = alpha(obispadoTex('rail'));
+  const mWin = new THREE.MeshStandardMaterial({ map: obispadoTex('win'), roughness: 0.7 }),
+    mZag = new THREE.MeshStandardMaterial({ map: obispadoTex('zaguan'), roughness: 0.9 });
+  const plane = (w, h, mat, x, y, z, ry = 0) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+    m.applyMatrix4(fr(x, y, z, ry));
+    root.add(m);
+    return m;
+  };
+  return { mGrille, mCrest, mRail, mWin, mZag, plane };
+}
+/** (v1.1.7, code quality) part of buildObispado */
+function buildObispadoPart1(b) {
+  const P = b.pts,
+    n = P.length,
+    flat = P.flat();
+  let E = null,
+    best = -1;
+  for (let i = 0; i < n; i++) {
+    const p = P[i],
+      q = P[(i + 1) % n];
+    const L = Math.hypot(q[0] - p[0], q[1] - p[1]);
+    if (L < 6) continue;
+    let nx = (q[1] - p[1]) / L,
+      nz = -(q[0] - p[0]) / L;
+    const mx = (p[0] + q[0]) / 2,
+      mz = (p[1] + q[1]) / 2;
+    if (pip(mx + nx * 0.4, mz + nz * 0.4, flat)) {
+      nx = -nx;
+      nz = -nz;
+    } /* outward from THIS house (v0.65.1: a neighbour used to flip it inwards) */
+    if (inAnyBuilding(mx + nx * 3, mz + nz * 3)) continue; /* the street must be in front */
+    const rd = ROADSEG.nearest(mx + nx * 4, mz + nz * 4);
+    if (!rd || rd.d > 9) continue;
+    const nm = DATA.R[rd.ri][1] >= 0 ? STR[DATA.R[rd.ri][1]] : '';
+    const sc = L + (/Agust/i.test(nm) ? 100 : 0);
+    if (sc > best) {
+      best = sc;
+      E = { p, q, L, nx, nz, mx, mz };
+    }
+  }
+  return { E };
 }
 // ---------- the bishop himself, in purple, at the door
 function obispoInit() {

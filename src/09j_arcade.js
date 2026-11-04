@@ -94,37 +94,7 @@ const ARCADE = (() => {
   // instead of plain doubled pixels —, a thin dark outline and a little light on the top edges
   function hires(s) {
     if (s.h2) return s;
-    const w = s.w,
-      h = s.h,
-      src = s.c.getContext('2d').getImageData(0, 0, w, h).data,
-      px = new Uint32Array(src.buffer.slice(0)),
-      W2 = w * 2,
-      H2 = h * 2;
-    const c = mkCanvas(W2, H2),
-      x = c.getContext('2d'),
-      out = x.createImageData(W2, H2),
-      o = new Uint32Array(out.data.buffer);
-    const at = (i, j) => (i < 0 || j < 0 || i >= w || j >= h ? 0 : px[j * w + i]);
-    for (let j = 0; j < h; j++)
-      for (let i = 0; i < w; i++) {
-        const P0 = at(i, j),
-          A = at(i, j - 1),
-          B = at(i + 1, j),
-          C = at(i - 1, j),
-          D = at(i, j + 1);
-        let e0 = P0,
-          e1 = P0,
-          e2 = P0,
-          e3 = P0;
-        if (C === A && C !== D && A !== B) e0 = A;
-        if (A === B && A !== C && B !== D) e1 = B;
-        if (D === C && D !== B && C !== A) e2 = C;
-        if (B === D && B !== A && D !== C) e3 = D;
-        o[2 * j * W2 + 2 * i] = e0;
-        o[2 * j * W2 + 2 * i + 1] = e1;
-        o[(2 * j + 1) * W2 + 2 * i] = e2;
-        o[(2 * j + 1) * W2 + 2 * i + 1] = e3;
-      }
+    const { W2, H2, c, x, out } = hiresPart1(s);
     const d = out.data,
       op = (k) => d[k * 4 + 3] > 40;
     for (let j = 0; j < H2; j++)
@@ -159,6 +129,41 @@ const ARCADE = (() => {
     s.h2 = c;
     s.h2f = f;
     return s;
+  }
+  /** (v1.1.7, code quality) part of hires */
+  function hiresPart1(s) {
+    const w = s.w,
+      h = s.h,
+      src = s.c.getContext('2d').getImageData(0, 0, w, h).data,
+      px = new Uint32Array(src.buffer.slice(0)),
+      W2 = w * 2,
+      H2 = h * 2;
+    const c = mkCanvas(W2, H2),
+      x = c.getContext('2d'),
+      out = x.createImageData(W2, H2),
+      o = new Uint32Array(out.data.buffer);
+    const at = (i, j) => (i < 0 || j < 0 || i >= w || j >= h ? 0 : px[j * w + i]);
+    for (let j = 0; j < h; j++)
+      for (let i = 0; i < w; i++) {
+        const P0 = at(i, j),
+          A = at(i, j - 1),
+          B = at(i + 1, j),
+          C = at(i - 1, j),
+          D = at(i, j + 1);
+        let e0 = P0,
+          e1 = P0,
+          e2 = P0,
+          e3 = P0;
+        if (C === A && C !== D && A !== B) e0 = A;
+        if (A === B && A !== C && B !== D) e1 = B;
+        if (D === C && D !== B && C !== A) e2 = C;
+        if (B === D && B !== A && D !== C) e3 = D;
+        o[2 * j * W2 + 2 * i] = e0;
+        o[2 * j * W2 + 2 * i + 1] = e1;
+        o[(2 * j + 1) * W2 + 2 * i] = e2;
+        o[(2 * j + 1) * W2 + 2 * i + 1] = e3;
+      }
+    return { W2, H2, c, x, out };
   }
   function draw(g, s, x, y, flip, alpha) {
     if (!s) return;

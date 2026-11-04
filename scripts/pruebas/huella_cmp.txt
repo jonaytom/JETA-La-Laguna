@@ -1,0 +1,2 @@
+# v1.1.7: huella de los sprites (debe salir igual que con el codigo de antes); la del mundo va aparte: huella_mundo_cmp
+herramientas/huella_sprites.py comparar

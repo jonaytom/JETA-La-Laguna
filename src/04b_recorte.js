@@ -9,6 +9,36 @@
 let RCLIP = null;
 function roadClipGrid() {
   if (RCLIP) return RCLIP;
+  const { CS, m, segs } = roadClipGridPart1();
+  // the streets as they are drawn (every piece, no straight runs): to measure how deep a point sits in a carriageway
+  const raw = [],
+    m2 = new Map();
+  DATA.R.forEach((r) => {
+    if ((r[0] > 12 && r[0] !== 13) || r[3] & 6) return;
+    /* v0.74: pedestrian streets too (a corner pushed out of one street into a pedestrian one blocked Calle Heraclio Sánchez) */ const c = r[4],
+      k0 = r[2] / 2 + 0.3;
+    for (let i = 0; i + 3 < c.length; i += 2) {
+      const ax = c[i],
+        az = c[i + 1],
+        L = Math.hypot(c[i + 2] - ax, c[i + 3] - az);
+      if (L < 0.05) continue;
+      const id =
+        raw.push({ ax, az, ux: (c[i + 2] - ax) / L, uz: (c[i + 3] - az) / L, L, k0, car: r[0] <= 12, first: i === 0, last: i + 4 >= c.length }) -
+        1; /* v1.0.2: car, and whether the piece ends the road (kerbClip) */
+      for (let a = Math.floor((Math.min(ax, c[i + 2]) - k0) / CS); a <= Math.floor((Math.max(ax, c[i + 2]) + k0) / CS); a++)
+        for (let b = Math.floor((Math.min(az, c[i + 3]) - k0) / CS); b <= Math.floor((Math.max(az, c[i + 3]) + k0) / CS); b++) {
+          const key = a * 100003 + b;
+          let l = m2.get(key);
+          if (!l) m2.set(key, (l = []));
+          l.push(id);
+        }
+    }
+  });
+  RCLIP = { CS, m, segs, raw, m2, cut: 0, gone: 0, goneList: [], keptList: [] };
+  return RCLIP;
+}
+/** (v1.1.7, code quality) part of roadClipGrid: each road as straight runs (pieces that turn less than 12°), so a long building beside a road drawn with many short */
+function roadClipGridPart1() {
   const CS = 40,
     m = new Map();
   const segs = [];
@@ -62,32 +92,7 @@ function roadClipGrid() {
       i = j;
     }
   });
-  // the streets as they are drawn (every piece, no straight runs): to measure how deep a point sits in a carriageway
-  const raw = [],
-    m2 = new Map();
-  DATA.R.forEach((r) => {
-    if ((r[0] > 12 && r[0] !== 13) || r[3] & 6) return;
-    /* v0.74: pedestrian streets too (a corner pushed out of one street into a pedestrian one blocked Calle Heraclio Sánchez) */ const c = r[4],
-      k0 = r[2] / 2 + 0.3;
-    for (let i = 0; i + 3 < c.length; i += 2) {
-      const ax = c[i],
-        az = c[i + 1],
-        L = Math.hypot(c[i + 2] - ax, c[i + 3] - az);
-      if (L < 0.05) continue;
-      const id =
-        raw.push({ ax, az, ux: (c[i + 2] - ax) / L, uz: (c[i + 3] - az) / L, L, k0, car: r[0] <= 12, first: i === 0, last: i + 4 >= c.length }) -
-        1; /* v1.0.2: car, and whether the piece ends the road (kerbClip) */
-      for (let a = Math.floor((Math.min(ax, c[i + 2]) - k0) / CS); a <= Math.floor((Math.max(ax, c[i + 2]) + k0) / CS); a++)
-        for (let b = Math.floor((Math.min(az, c[i + 3]) - k0) / CS); b <= Math.floor((Math.max(az, c[i + 3]) + k0) / CS); b++) {
-          const key = a * 100003 + b;
-          let l = m2.get(key);
-          if (!l) m2.set(key, (l = []));
-          l.push(id);
-        }
-    }
-  });
-  RCLIP = { CS, m, segs, raw, m2, cut: 0, gone: 0, goneList: [], keptList: [] };
-  return RCLIP;
+  return { CS, m, segs };
 }
 // is (x, z) on the carriageway of some road piece (other than `skip`)? A building corner that sticks out past the end of
 // one road piece is still on the road when it sits in the junction or in the next piece (v0.70: blocks on corners)
@@ -140,43 +145,92 @@ function selfCross(P) {
 // narrows to the middle point between its widened width and that room (never under 5.5 m two-way, 4 m one-way, 4.5 m
 // living street, 3.5 m service); the buildings are cut back for the rest (roadClip). The old town (CORE0) keeps its widths.
 function narrowToGap() {
-  const CS = 16,
-    E = [];
-  let X0 = 1e9,
-    Z0 = 1e9,
-    X1 = -1e9,
-    Z1 = -1e9; // building edges (the 0.75 m inset the buildings get later is added below)
-  for (const b of DATA.B) {
-    if (b[1] === 4) continue;
-    const c = b[6],
-      n = c.length / 2;
-    if (n < 3) continue;
-    for (let i = 0; i < n; i++) {
-      const j = (i + 1) % n;
-      E.push([c[2 * i], c[2 * i + 1], c[2 * j], c[2 * j + 1]]);
-      X0 = Math.min(X0, c[2 * i]);
-      X1 = Math.max(X1, c[2 * i]);
-      Z0 = Math.min(Z0, c[2 * i + 1]);
-      Z1 = Math.max(Z1, c[2 * i + 1]);
+  const { E, G, cell, stamp } = narrowToGapPart1();
+  const { ray, MINW, nearBT, narrowed } = narrowToGapPart2(cell, G, stamp, E);
+  let n = 0;
+  DATA.R.forEach((r, ri) => {
+    const t = r[0];
+    if (t < 9 || t > 12 || r[3] & 6) return;
+    const c = r[4],
+      W = r[2],
+      one = r[3] & 1,
+      half = W / 2;
+    const m = (c.length >> 2) << 1;
+    if (inCore0(c[m], c[m + 1])) return;
+    for (let i = 0; i < c.length; i += 2) if (nearBT(c[i], c[i + 1])) return;
+    const room = [];
+    let samples = 0;
+    for (let i = 0; i + 3 < c.length; i += 2) {
+      const ax = c[i],
+        az = c[i + 1],
+        L = Math.hypot(c[i + 2] - ax, c[i + 3] - az);
+      if (L < 0.5) continue;
+      const ux = (c[i + 2] - ax) / L,
+        uz = (c[i + 3] - az) / L;
+      for (let s = 3; s < L - 1; s += 6) {
+        const x = ax + ux * s,
+          z = az + uz * s;
+        samples++;
+        const d = Math.min(ray(x, z, -uz, ux, half + 1), ray(x, z, uz, -ux, half + 1)) + 0.75;
+        if (d < half) room.push(2 * d);
+      }
+    }
+    if (room.length < 3 || room.length < samples * 0.25) return; // one garage on a corner does not narrow the whole street (it gets cut)
+    room.sort((a, b) => a - b);
+    const gap = room[Math.floor(room.length * 0.3)];
+    const w = Math.round(Math.max(MINW(t, one), Math.min(W, (W + gap) / 2)) * 10) / 10;
+    if (w < W - 0.2) {
+      r[2] = w;
+      narrowed.set(ri, w);
+      n++;
+    }
+  });
+  narrowToGapPart3(narrowed);
+  console.log('calles al hueco entre edificios:', n); // (road index → width, for the tests)
+}
+/** (v1.1.7, code quality) part of narrowToGap: the traffic graph's edges along those streets take the same width (lanes and parked cars follow it) */
+function narrowToGapPart3(narrowed) {
+  // the traffic graph's edges along those streets take the same width (lanes and parked cars follow it)
+  if (narrowed.size) {
+    const RG = new Map();
+    for (const [ri] of narrowed) {
+      const c = DATA.R[ri][4];
+      for (let i = 0; i + 3 < c.length; i += 2) {
+        const k = Math.floor((c[i] + c[i + 2]) / 2 / 20) * 100003 + Math.floor((c[i + 1] + c[i + 3]) / 2 / 20);
+        let l = RG.get(k);
+        if (!l) RG.set(k, (l = []));
+        l.push([ri, c[i], c[i + 1], c[i + 2], c[i + 3]]);
+      }
+    }
+    const N = DATA.G.n;
+    for (const e of DATA.G.e) {
+      if (e[2] < 9 || e[2] > 12) continue;
+      const P = [N[e[0] * 2], N[e[0] * 2 + 1], ...(e[6] || []), N[e[1] * 2], N[e[1] * 2 + 1]],
+        h = (P.length >> 2) << 1;
+      const x = (P[h] + P[h - 2]) / 2,
+        z = (P[h + 1] + P[h - 1]) / 2;
+      let best = null,
+        bd = 3;
+      for (let a = -1; a <= 1; a++)
+        for (let q = -1; q <= 1; q++)
+          for (const sg of RG.get((Math.floor(x / 20) + a) * 100003 + Math.floor(z / 20) + q) || []) {
+            const ex = sg[3] - sg[1],
+              ez = sg[4] - sg[2],
+              L2 = ex * ex + ez * ez || 1,
+              tt = Math.max(0, Math.min(1, ((x - sg[1]) * ex + (z - sg[2]) * ez) / L2)),
+              dd = Math.hypot(x - sg[1] - ex * tt, z - sg[2] - ez * tt);
+            if (dd < bd) {
+              bd = dd;
+              best = sg[0];
+            }
+          }
+      if (best !== null) e[4] = Math.min(e[4], narrowed.get(best));
     }
   }
-  const GX = Math.ceil((X1 - X0) / CS) + 1,
-    GZ = Math.ceil((Z1 - Z0) / CS) + 1,
-    G = new Array(GX * GZ); // flat array grid (number keys in a Map were 4x slower)
-  const cell = (x, z) => {
-    const a = Math.floor((x - X0) / CS),
-      q = Math.floor((z - Z0) / CS);
-    return a < 0 || q < 0 || a >= GX || q >= GZ ? -1 : a * GZ + q;
-  };
-  E.forEach((e, id) => {
-    for (let a = Math.floor((Math.min(e[0], e[2]) - X0) / CS); a <= Math.floor((Math.max(e[0], e[2]) - X0) / CS); a++)
-      for (let q = Math.floor((Math.min(e[1], e[3]) - Z0) / CS); q <= Math.floor((Math.max(e[1], e[3]) - Z0) / CS); q++) {
-        const k = a * GZ + q;
-        (G[k] || (G[k] = [])).push(id);
-      }
-  });
-  // distance from (x, z) along (nx, nz) to the first building edge, up to `far`
-  const stamp = new Int32Array(E.length);
+  DATA.NARROWED = narrowed;
+}
+/** (v1.1.7, code quality) part of narrowToGap: v1.0.0 (Jonay: «me da miedo que se rompan las intersecciones con puentes y túneles»): a street that comes within */
+function narrowToGapPart2(cell, G, stamp, E) {
   let st = 0;
   const ray = (x, z, nx, nz, far) => {
     let best = far,
@@ -227,83 +281,48 @@ function narrowToGap() {
     return false;
   };
   const narrowed = new Map();
-  let n = 0;
-  DATA.R.forEach((r, ri) => {
-    const t = r[0];
-    if (t < 9 || t > 12 || r[3] & 6) return;
-    const c = r[4],
-      W = r[2],
-      one = r[3] & 1,
-      half = W / 2;
-    const m = (c.length >> 2) << 1;
-    if (inCore0(c[m], c[m + 1])) return;
-    for (let i = 0; i < c.length; i += 2) if (nearBT(c[i], c[i + 1])) return;
-    const room = [];
-    let samples = 0;
-    for (let i = 0; i + 3 < c.length; i += 2) {
-      const ax = c[i],
-        az = c[i + 1],
-        L = Math.hypot(c[i + 2] - ax, c[i + 3] - az);
-      if (L < 0.5) continue;
-      const ux = (c[i + 2] - ax) / L,
-        uz = (c[i + 3] - az) / L;
-      for (let s = 3; s < L - 1; s += 6) {
-        const x = ax + ux * s,
-          z = az + uz * s;
-        samples++;
-        const d = Math.min(ray(x, z, -uz, ux, half + 1), ray(x, z, uz, -ux, half + 1)) + 0.75;
-        if (d < half) room.push(2 * d);
-      }
-    }
-    if (room.length < 3 || room.length < samples * 0.25) return; // one garage on a corner does not narrow the whole street (it gets cut)
-    room.sort((a, b) => a - b);
-    const gap = room[Math.floor(room.length * 0.3)];
-    const w = Math.round(Math.max(MINW(t, one), Math.min(W, (W + gap) / 2)) * 10) / 10;
-    if (w < W - 0.2) {
-      r[2] = w;
-      narrowed.set(ri, w);
-      n++;
-    }
-  });
-  // the traffic graph's edges along those streets take the same width (lanes and parked cars follow it)
-  if (narrowed.size) {
-    const RG = new Map();
-    for (const [ri] of narrowed) {
-      const c = DATA.R[ri][4];
-      for (let i = 0; i + 3 < c.length; i += 2) {
-        const k = Math.floor((c[i] + c[i + 2]) / 2 / 20) * 100003 + Math.floor((c[i + 1] + c[i + 3]) / 2 / 20);
-        let l = RG.get(k);
-        if (!l) RG.set(k, (l = []));
-        l.push([ri, c[i], c[i + 1], c[i + 2], c[i + 3]]);
-      }
-    }
-    const N = DATA.G.n;
-    for (const e of DATA.G.e) {
-      if (e[2] < 9 || e[2] > 12) continue;
-      const P = [N[e[0] * 2], N[e[0] * 2 + 1], ...(e[6] || []), N[e[1] * 2], N[e[1] * 2 + 1]],
-        h = (P.length >> 2) << 1;
-      const x = (P[h] + P[h - 2]) / 2,
-        z = (P[h + 1] + P[h - 1]) / 2;
-      let best = null,
-        bd = 3;
-      for (let a = -1; a <= 1; a++)
-        for (let q = -1; q <= 1; q++)
-          for (const sg of RG.get((Math.floor(x / 20) + a) * 100003 + Math.floor(z / 20) + q) || []) {
-            const ex = sg[3] - sg[1],
-              ez = sg[4] - sg[2],
-              L2 = ex * ex + ez * ez || 1,
-              tt = Math.max(0, Math.min(1, ((x - sg[1]) * ex + (z - sg[2]) * ez) / L2)),
-              dd = Math.hypot(x - sg[1] - ex * tt, z - sg[2] - ez * tt);
-            if (dd < bd) {
-              bd = dd;
-              best = sg[0];
-            }
-          }
-      if (best !== null) e[4] = Math.min(e[4], narrowed.get(best));
+  return { ray, MINW, nearBT, narrowed };
+}
+/** (v1.1.7, code quality) part of narrowToGap: distance from (x, z) along (nx, nz) to the first building edge, up to `far` */
+function narrowToGapPart1() {
+  const CS = 16,
+    E = [];
+  let X0 = 1e9,
+    Z0 = 1e9,
+    X1 = -1e9,
+    Z1 = -1e9; // building edges (the 0.75 m inset the buildings get later is added below)
+  for (const b of DATA.B) {
+    if (b[1] === 4) continue;
+    const c = b[6],
+      n = c.length / 2;
+    if (n < 3) continue;
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n;
+      E.push([c[2 * i], c[2 * i + 1], c[2 * j], c[2 * j + 1]]);
+      X0 = Math.min(X0, c[2 * i]);
+      X1 = Math.max(X1, c[2 * i]);
+      Z0 = Math.min(Z0, c[2 * i + 1]);
+      Z1 = Math.max(Z1, c[2 * i + 1]);
     }
   }
-  DATA.NARROWED = narrowed;
-  console.log('calles al hueco entre edificios:', n); // (road index → width, for the tests)
+  const GX = Math.ceil((X1 - X0) / CS) + 1,
+    GZ = Math.ceil((Z1 - Z0) / CS) + 1,
+    G = new Array(GX * GZ); // flat array grid (number keys in a Map were 4x slower)
+  const cell = (x, z) => {
+    const a = Math.floor((x - X0) / CS),
+      q = Math.floor((z - Z0) / CS);
+    return a < 0 || q < 0 || a >= GX || q >= GZ ? -1 : a * GZ + q;
+  };
+  E.forEach((e, id) => {
+    for (let a = Math.floor((Math.min(e[0], e[2]) - X0) / CS); a <= Math.floor((Math.max(e[0], e[2]) - X0) / CS); a++)
+      for (let q = Math.floor((Math.min(e[1], e[3]) - Z0) / CS); q <= Math.floor((Math.max(e[1], e[3]) - Z0) / CS); q++) {
+        const k = a * GZ + q;
+        (G[k] || (G[k] = [])).push(id);
+      }
+  });
+  // distance from (x, z) along (nx, nz) to the first building edge, up to `far`
+  const stamp = new Int32Array(E.length);
+  return { E, G, cell, stamp };
 }
 // v1.0.0 (auditoría: 4 críticos y 77 altos que siguen en la calzada): tests only. When RCLIP.dbg is an array, each rule
 // that leaves a building as it was says why (herramientas/sonda_recorte_motivos.py)
@@ -446,20 +465,7 @@ function kerbClip(P, G) {
       const l = G.m2.get(a * 100003 + b);
       if (l) for (const id of l) ids.add(id);
     }
-  const deep = (Q, s, k) => {
-    let w = 0;
-    for (let i = 0; i < Q.length; i++) {
-      const p = Q[i],
-        q = Q[(i + 1) % Q.length];
-      for (const t of [0, 0.25, 0.5, 0.75]) {
-        const x = p[0] + (q[0] - p[0]) * t,
-          z = p[1] + (q[1] - p[1]) * t,
-          u = Math.max(0, Math.min(s.L, (x - s.ax) * s.ux + (z - s.az) * s.uz));
-        w = Math.max(w, k - Math.hypot(x - s.ax - s.ux * u, z - s.az - s.uz * u));
-      }
-    }
-    return w;
-  };
+  const { deep } = kerbClipPart1();
   for (const id of ids) {
     const s = G.raw[id];
     if (!s.car) continue;
@@ -492,6 +498,24 @@ function kerbClip(P, G) {
     }
   }
   return P;
+}
+/** (v1.1.7, code quality) part of kerbClip */
+function kerbClipPart1() {
+  const deep = (Q, s, k) => {
+    let w = 0;
+    for (let i = 0; i < Q.length; i++) {
+      const p = Q[i],
+        q = Q[(i + 1) % Q.length];
+      for (const t of [0, 0.25, 0.5, 0.75]) {
+        const x = p[0] + (q[0] - p[0]) * t,
+          z = p[1] + (q[1] - p[1]) * t,
+          u = Math.max(0, Math.min(s.L, (x - s.ax) * s.ux + (z - s.az) * s.uz));
+        w = Math.max(w, k - Math.hypot(x - s.ax - s.ux * u, z - s.az - s.uz * u));
+      }
+    }
+    return w;
+  };
+  return { deep };
 }
 // a building that goes (only a strip on the pavement would be left): counted, with where and how big it was (tests).
 // One of 50 m² or more never goes (Jonay, 3-nov: «no me gustaría que se fuera nada de más de 50 m²; esos casos mirémoslos
@@ -560,23 +584,7 @@ function roadClip(pts) {
   return roadClipStraight(pts);
 } // v1.0.3: the v0.99.8 rules (the notch and the kerb cut made glitches and ate blocks; to redo)
 function roadClipStraight(pts) {
-  const G = roadClipGrid();
-  let x0 = 1e9,
-    x1 = -1e9,
-    z0 = 1e9,
-    z1 = -1e9;
-  for (const p of pts) {
-    x0 = Math.min(x0, p[0]);
-    x1 = Math.max(x1, p[0]);
-    z0 = Math.min(z0, p[1]);
-    z1 = Math.max(z1, p[1]);
-  }
-  const ids = new Set();
-  for (let a = Math.floor(x0 / G.CS); a <= Math.floor(x1 / G.CS); a++)
-    for (let b = Math.floor(z0 / G.CS); b <= Math.floor(z1 / G.CS); b++) {
-      const l = G.m.get(a * 100003 + b);
-      if (l) for (const id of l) ids.add(id);
-    }
+  const { G, ids } = roadClipStraightPart1(pts);
   if (!ids.size) return pts;
   let P = pts,
     changed = false;
@@ -763,4 +771,25 @@ function roadClipStraight(pts) {
   } // small houses may lose a bit more (v0.73); v1.0.3 (Jonay: «te has cargado demasiados edificios»): the v0.99.8 rule again
   G.cut++;
   return P;
+}
+/** (v1.1.7, code quality) part of roadClipStraight */
+function roadClipStraightPart1(pts) {
+  const G = roadClipGrid();
+  let x0 = 1e9,
+    x1 = -1e9,
+    z0 = 1e9,
+    z1 = -1e9;
+  for (const p of pts) {
+    x0 = Math.min(x0, p[0]);
+    x1 = Math.max(x1, p[0]);
+    z0 = Math.min(z0, p[1]);
+    z1 = Math.max(z1, p[1]);
+  }
+  const ids = new Set();
+  for (let a = Math.floor(x0 / G.CS); a <= Math.floor(x1 / G.CS); a++)
+    for (let b = Math.floor(z0 / G.CS); b <= Math.floor(z1 / G.CS); b++) {
+      const l = G.m.get(a * 100003 + b);
+      if (l) for (const id of l) ids.add(id);
+    }
+  return { G, ids };
 }

@@ -115,6 +115,32 @@ function addMesh(g, geo, mat, x, y, z, ry = 0) {
 }
 // Canarian bell tower: stone shaft, string courses, open belfry, balustrade and cupola/pyramid
 function bellTower(x, z, ang, w, shaftH, cap = 'cupola', mat) {
+  const { g, y0, sm, ty } = bellTowerPart1(x, z, mat, w, shaftH);
+  for (const sx of [-1, 1])
+    for (const sz of [-1, 1]) {
+      addMesh(g, new THREE.ConeGeometry(0.22, 1.1, 6), greyStone, sx * (w / 2 + 0.1), ty + 1.2, sz * (w / 2 + 0.1));
+      addMesh(g, new THREE.SphereGeometry(0.16, 8, 6), greyStone, sx * (w / 2 + 0.1), ty + 1.8, sz * (w / 2 + 0.1));
+    }
+  if (cap === 'cupola') {
+    addMesh(g, new THREE.CylinderGeometry(w * 0.3, w * 0.33, w * 0.35, 8), sm, 0, ty + 0.45 + w * 0.17, 0);
+    const d = addMesh(g, new THREE.SphereGeometry(w * 0.31, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), greyStone, 0, ty + 0.45 + w * 0.35, 0);
+    d.scale.y = 1.25;
+    addMesh(g, new THREE.CylinderGeometry(0.12, 0.2, 1, 6), greyStone, 0, ty + 0.9 + w * 0.72, 0);
+    addMesh(g, new THREE.BoxGeometry(0.1, 1.2, 0.1), darkMat, 0, ty + 1.8 + w * 0.72, 0);
+    addMesh(g, new THREE.BoxGeometry(0.6, 0.1, 0.1), darkMat, 0, ty + 1.95 + w * 0.72, 0);
+  } else if (cap === 'pyramid') {
+    const c = addMesh(g, new THREE.ConeGeometry(w * 0.72, w * 0.8, 4), MAT.roofTile, 0, ty + 0.45 + w * 0.4, 0);
+    c.rotation.y = Math.PI / 4;
+    addMesh(g, new THREE.BoxGeometry(0.1, 1.2, 0.1), darkMat, 0, ty + 1.3 + w * 0.8, 0);
+  }
+  g.position.set(x, y0, z);
+  g.rotation.y = ang;
+  scene.add(g);
+  COL.addCirc(x, z, w * 0.62);
+  return g;
+}
+/** (v1.1.7, code quality) part of bellTower: small windows on the shaft */
+function bellTowerPart1(x, z, mat, w, shaftH) {
   const g = new THREE.Group();
   const y0 = heightAt(x, z) - 0.8;
   const sm = mat || stoneFor(w, shaftH);
@@ -166,28 +192,7 @@ function bellTower(x, z, ang, w, shaftH, cap = 'cupola', mat) {
     rail.rotation.y = a;
     g.add(rail);
   }
-  for (const sx of [-1, 1])
-    for (const sz of [-1, 1]) {
-      addMesh(g, new THREE.ConeGeometry(0.22, 1.1, 6), greyStone, sx * (w / 2 + 0.1), ty + 1.2, sz * (w / 2 + 0.1));
-      addMesh(g, new THREE.SphereGeometry(0.16, 8, 6), greyStone, sx * (w / 2 + 0.1), ty + 1.8, sz * (w / 2 + 0.1));
-    }
-  if (cap === 'cupola') {
-    addMesh(g, new THREE.CylinderGeometry(w * 0.3, w * 0.33, w * 0.35, 8), sm, 0, ty + 0.45 + w * 0.17, 0);
-    const d = addMesh(g, new THREE.SphereGeometry(w * 0.31, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), greyStone, 0, ty + 0.45 + w * 0.35, 0);
-    d.scale.y = 1.25;
-    addMesh(g, new THREE.CylinderGeometry(0.12, 0.2, 1, 6), greyStone, 0, ty + 0.9 + w * 0.72, 0);
-    addMesh(g, new THREE.BoxGeometry(0.1, 1.2, 0.1), darkMat, 0, ty + 1.8 + w * 0.72, 0);
-    addMesh(g, new THREE.BoxGeometry(0.6, 0.1, 0.1), darkMat, 0, ty + 1.95 + w * 0.72, 0);
-  } else if (cap === 'pyramid') {
-    const c = addMesh(g, new THREE.ConeGeometry(w * 0.72, w * 0.8, 4), MAT.roofTile, 0, ty + 0.45 + w * 0.4, 0);
-    c.rotation.y = Math.PI / 4;
-    addMesh(g, new THREE.BoxGeometry(0.1, 1.2, 0.1), darkMat, 0, ty + 1.3 + w * 0.8, 0);
-  }
-  g.position.set(x, y0, z);
-  g.rotation.y = ang;
-  scene.add(g);
-  COL.addCirc(x, z, w * 0.62);
-  return g;
+  return { g, y0, sm, ty };
 }
 function espadana(x, z, y, ang, w = 4.2) {
   const g = new THREE.Group();
@@ -220,204 +225,218 @@ function espadana(x, z, y, ang, w = 4.2) {
 }
 function buildChurches() {
   for (const ch of CHURCHES) {
-    const F = axisFrame(ch.pts, ch.cx, ch.cz);
-    const top = ch.top;
-    const width = F.v1 - F.v0,
-      len = F.u1 - F.u0;
-    const nm = ch.name || '';
-    // which end is the facade: nearest named square / plaza, else west
-    let plaza = null;
-    if (/Catedral/.test(nm)) plaza = centroidOfNamedWays('Plaza de los Remedios');
-    else if (/Concepción/.test(nm)) plaza = centroidOfNamedWays('Plaza de la Concepción');
-    else if (/Cristo/.test(nm)) plaza = centroidOfNamedWays('Plaza de San Francisco') || centroidOfNamedWays('Plaza del Cristo');
-    let facadeEnd;
-    if (plaza) {
-      const e0 = F.W(F.u0, 0),
-        e1 = F.W(F.u1, 0);
-      facadeEnd = Math.hypot(e0[0] - plaza[0], e0[1] - plaza[1]) < Math.hypot(e1[0] - plaza[0], e1[1] - plaza[1]) ? 0 : 1;
+    buildChurchesEach(ch);
+  }
+}
+/** (v1.1.7, code quality) the body of a loop of buildChurches, split out of it */
+function buildChurchesEach(ch) {
+  let { F, top, width, len, nm, facadeEnd } = buildChurchesEachPart1(ch);
+  const { fu, back, tris, roof } = buildChurchesEachPart2(facadeEnd, F, ch, len, width, top);
+  if (/Convento/.test(nm)) {
+    roof(width * 0.3);
+    if (/San Agustín/.test(nm)) {
+      const t = F.W(fu + back * 3, F.v0 + 3);
+      bellTower(t[0], t[1], F.ang, 4.6, Math.max(14, ch.H + 5), 'pyramid');
+      CHURCH_MARKS.push(['Instituto Cabrera Pinto', ch.cx, ch.cz]);
+    }
+    if (/Santo Domingo/.test(nm)) {
+      const e = F.W(fu + back * 0.3, F.v1 - 2.5);
+      espadana(e[0], e[1], top - 0.3, F.ang, 3.8);
+    }
+    return;
+  }
+  if (/Catedral/.test(nm)) {
+    hipRoof(ch.pts, ch.cx, ch.cz, top, ch.area, tris, 5);
+    // neoclassical facade: stone block, portico with 4 columns, pediment and two towers
+    const fx = F.W(fu + back * 2, 0);
+    const fy = heightAt(fx[0], fx[1]) - 0.5;
+    const g = new THREE.Group();
+    const fw = Math.min(width, 24),
+      fh = top - fy + 3;
+    addMesh(g, new THREE.BoxGeometry(fw, fh, 4), stoneFor(fw, fh), 0, fh / 2, 0);
+    for (const k of [-1.5, -0.5, 0.5, 1.5]) {
+      addMesh(g, new THREE.CylinderGeometry(0.55, 0.62, fh * 0.62, 16), greyStone, k * fw * 0.14, fh * 0.31 + 0.6, -back * 2.9);
+      addMesh(g, new THREE.BoxGeometry(1.4, 0.6, 1.4), greyStone, k * fw * 0.14, 0.3, -back * 2.9);
+    }
+    addMesh(g, new THREE.BoxGeometry(fw * 0.62, 1.2, 2.4), greyStone, 0, fh * 0.62 + 1.2, -back * 2.4);
+    const tri = new THREE.Shape();
+    tri.moveTo(-fw * 0.33, 0);
+    tri.lineTo(fw * 0.33, 0);
+    tri.lineTo(0, fw * 0.14);
+    tri.closePath();
+    const pg = new THREE.ExtrudeGeometry(tri, { depth: 2.4, bevelEnabled: false });
+    pg.translate(0, 0, -1.2);
+    addMesh(g, pg, greyStone, 0, fh * 0.62 + 1.8, -back * 2.4);
+    const door = new THREE.Mesh(new THREE.PlaneGeometry(3, 5.5), new THREE.MeshStandardMaterial({ color: 0x3b2616, roughness: 0.7 }));
+    door.position.set(0, 2.75, -back * 2.02);
+    door.rotation.y = back > 0 ? Math.PI : 0;
+    g.add(door);
+    g.position.set(fx[0], fy, fx[1]);
+    g.rotation.y = F.ang;
+    scene.add(g);
+    {
+      const dp = F.W(fu - back * 1.2, 0);
+      CAT_DOOR.x = dp[0];
+      CAT_DOOR.z = dp[1];
+      CAT_DOOR.nx = -back * F.ux;
+      CAT_DOOR.nz = -back * F.uz;
+      CAT_DOOR.ok = true;
+      CAT_DOOR.ch = ch;
+      const sides = [
+        [F.v1 + 0.35, 1],
+        [F.v0 - 0.35, -1]
+      ]
+        .map(([v, sg]) => {
+          const p = F.W(fu + back * len * 0.5, v);
+          const rd = ROADSEG.nearest(p[0] + F.vx * sg * 4, p[1] + F.vz * sg * 4);
+          return { p, sg, d: rd ? rd.d : 99 };
+        })
+        .sort((a, b) => a.d - b.d);
+      const sd = sides[0];
+      CAT_DOOR.side = { x: sd.p[0], z: sd.p[1], nx: F.vx * sd.sg, nz: F.vz * sd.sg };
+    }
+    for (const sv of [-1, 1]) {
+      const t = F.W(fu + back * 3.2, sv * (fw / 2 - 3.2));
+      bellTower(t[0], t[1], F.ang, 6.2, fh + 4, 'cupola');
+    }
+    // great dome over the crossing
+    const d = F.W(fu + back * len * 0.62, 0);
+    const dy = top + 2.5;
+    const dg = new THREE.Group();
+    addMesh(dg, new THREE.CylinderGeometry(7.2, 7.4, 6, 24), plasterMat, 0, 3, 0);
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      const wdw = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 2.8), darkMat);
+      wdw.position.set(Math.sin(a) * 7.42, 3, Math.cos(a) * 7.42);
+      wdw.rotation.y = a;
+      dg.add(wdw);
+      const pil = new THREE.Mesh(new THREE.BoxGeometry(0.7, 6.2, 0.6), greyStone);
+      pil.position.set(Math.sin(a + 0.39) * 7.4, 3.1, Math.cos(a + 0.39) * 7.4);
+      pil.rotation.y = a + 0.39;
+      dg.add(pil);
+    }
+    addMesh(dg, new THREE.CylinderGeometry(7.8, 7.8, 0.6, 24), greyStone, 0, 6.2, 0);
+    const dome = addMesh(dg, new THREE.SphereGeometry(7.4, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), leadMat, 0, 6.4, 0);
+    dome.scale.y = 1.3;
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      const rib = new THREE.Mesh(new THREE.TorusGeometry(7.45, 0.12, 4, 24, Math.PI / 2), greyStone);
+      rib.position.set(0, 6.4, 0);
+      rib.rotation.set(0, a, Math.PI / 2);
+      rib.scale.set(1.3, 1, 1);
+      dg.add(rib);
+    }
+    addMesh(dg, new THREE.CylinderGeometry(1.5, 1.5, 3.2, 12), plasterMat, 0, 17.5, 0);
+    const ld = addMesh(dg, new THREE.SphereGeometry(1.6, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), leadMat, 0, 19.1, 0);
+    ld.scale.y = 1.3;
+    addMesh(dg, new THREE.BoxGeometry(0.18, 2.4, 0.18), darkMat, 0, 21.9, 0);
+    addMesh(dg, new THREE.BoxGeometry(1.1, 0.16, 0.16), darkMat, 0, 22.4, 0);
+    dg.position.set(d[0], dy, d[1]);
+    scene.add(dg);
+    CHURCH_MARKS.push(['Catedral', ch.cx, ch.cz]);
+  } else if (/Concepción/.test(nm)) {
+    try {
+      buildConcepcion(ch);
+    } catch (e) {
+      console.error('Concepción', e);
+    }
+    CHURCH_MARKS.push(['La Concepción', ch.cx, ch.cz]);
+  } else {
+    roof(width * 0.32);
+    if (ch.area > 420 && ch.name) {
+      const t = F.W(fu + back * 2.6, F.v1 - 2.6);
+      bellTower(t[0], t[1], F.ang, 5, Math.max(12, ch.H + 4), 'pyramid');
     } else {
-      const e0 = F.W(F.u0, 0),
-        e1 = F.W(F.u1, 0);
-      facadeEnd = e0[0] < e1[0] ? 0 : 1;
+      const e = F.W(fu + back * 0.3, (F.v0 + F.v1) / 2);
+      espadana(e[0], e[1], top - 0.3, F.ang, Math.min(4.6, width * 0.6));
     }
-    const fu = facadeEnd === 0 ? F.u0 : F.u1,
-      back = facadeEnd === 0 ? 1 : -1; // back: direction into the church
-    const rect = ch.area / (len * width);
-    const tris = THREE.ShapeUtils.triangulateShape(
-      ch.pts.map((p) => new THREE.Vector2(p[0], p[1])),
-      []
-    );
-    const simple = rect > 0.8 && width < 24;
-    const roof = (rise) => {
-      if (simple) gableRoof(F, top, Math.min(rise, 6), F.u0, F.u1, F.v0, F.v1);
-      else hipRoof(ch.pts, ch.cx, ch.cz, top, ch.area, tris, 4);
-    };
-    if (/Convento/.test(nm)) {
-      roof(width * 0.3);
-      if (/San Agustín/.test(nm)) {
-        const t = F.W(fu + back * 3, F.v0 + 3);
-        bellTower(t[0], t[1], F.ang, 4.6, Math.max(14, ch.H + 5), 'pyramid');
-        CHURCH_MARKS.push(['Instituto Cabrera Pinto', ch.cx, ch.cz]);
-      }
-      if (/Santo Domingo/.test(nm)) {
-        const e = F.W(fu + back * 0.3, F.v1 - 2.5);
-        espadana(e[0], e[1], top - 0.3, F.ang, 3.8);
-      }
-      continue;
+    // Ermita de San Miguel: a bell wall at each end of the roof
+    if (/Ermita de San Miguel/.test(nm)) {
+      const e = F.W(fu + back * (len - 0.3), (F.v0 + F.v1) / 2);
+      espadana(e[0], e[1], top - 0.3, F.ang, Math.min(4.0, width * 0.55));
     }
-    if (/Catedral/.test(nm)) {
-      hipRoof(ch.pts, ch.cx, ch.cz, top, ch.area, tris, 5);
-      // neoclassical facade: stone block, portico with 4 columns, pediment and two towers
-      const fx = F.W(fu + back * 2, 0);
-      const fy = heightAt(fx[0], fx[1]) - 0.5;
+    // Santuario del Cristo: stone porch with three round arches facing the plaza + two-tier bell wall
+    if (/Santuario del Cristo/.test(nm)) {
+      const pw = Math.min(width, 12),
+        pd = 4.2,
+        ph = 5.2;
+      const c0 = F.W(fu - (back * pd) / 2, (F.v0 + F.v1) / 2);
       const g = new THREE.Group();
-      const fw = Math.min(width, 24),
-        fh = top - fy + 3;
-      addMesh(g, new THREE.BoxGeometry(fw, fh, 4), stoneFor(fw, fh), 0, fh / 2, 0);
-      for (const k of [-1.5, -0.5, 0.5, 1.5]) {
-        addMesh(g, new THREE.CylinderGeometry(0.55, 0.62, fh * 0.62, 16), greyStone, k * fw * 0.14, fh * 0.31 + 0.6, -back * 2.9);
-        addMesh(g, new THREE.BoxGeometry(1.4, 0.6, 1.4), greyStone, k * fw * 0.14, 0.3, -back * 2.9);
+      const y0 = heightAt(c0[0], c0[1]) - 0.2;
+      const sh = new THREE.Shape();
+      sh.moveTo(-pw / 2, 0);
+      sh.lineTo(pw / 2, 0);
+      sh.lineTo(pw / 2, ph);
+      sh.lineTo(-pw / 2, ph);
+      sh.closePath();
+      for (let k = -1; k <= 1; k++) {
+        const ax = (k * pw) / 3,
+          aw = (pw / 3) * 0.62;
+        const hole = new THREE.Path();
+        hole.moveTo(ax - aw / 2, 0);
+        hole.lineTo(ax + aw / 2, 0);
+        hole.lineTo(ax + aw / 2, ph * 0.55);
+        hole.absarc(ax, ph * 0.55, aw / 2, 0, Math.PI, false);
+        hole.lineTo(ax - aw / 2, 0);
+        sh.holes.push(hole);
       }
-      addMesh(g, new THREE.BoxGeometry(fw * 0.62, 1.2, 2.4), greyStone, 0, fh * 0.62 + 1.2, -back * 2.4);
-      const tri = new THREE.Shape();
-      tri.moveTo(-fw * 0.33, 0);
-      tri.lineTo(fw * 0.33, 0);
-      tri.lineTo(0, fw * 0.14);
-      tri.closePath();
-      const pg = new THREE.ExtrudeGeometry(tri, { depth: 2.4, bevelEnabled: false });
-      pg.translate(0, 0, -1.2);
-      addMesh(g, pg, greyStone, 0, fh * 0.62 + 1.8, -back * 2.4);
-      const door = new THREE.Mesh(new THREE.PlaneGeometry(3, 5.5), new THREE.MeshStandardMaterial({ color: 0x3b2616, roughness: 0.7 }));
-      door.position.set(0, 2.75, -back * 2.02);
-      door.rotation.y = back > 0 ? Math.PI : 0;
-      g.add(door);
-      g.position.set(fx[0], fy, fx[1]);
-      g.rotation.y = F.ang;
+      const fg = new THREE.ExtrudeGeometry(sh, { depth: 0.6, bevelEnabled: false });
+      fg.translate(0, 0, pd / 2 - 0.6);
+      addMesh(g, fg, greyStone, 0, 0, 0);
+      for (const sx of [-1, 1]) addMesh(g, new THREE.BoxGeometry(0.6, ph, pd), plasterMat, sx * (pw / 2 - 0.3), ph / 2, 0);
+      const rf = addMesh(g, new THREE.BoxGeometry(pw + 0.6, 0.35, pd + 0.4), MAT.roofTile, 0, ph + 0.2, 0);
+      rf.rotation.x = -0.12 * back;
+      g.position.set(c0[0], y0, c0[1]);
+      g.rotation.y = F.ang + (back > 0 ? Math.PI : 0);
       scene.add(g);
-      {
-        const dp = F.W(fu - back * 1.2, 0);
-        CAT_DOOR.x = dp[0];
-        CAT_DOOR.z = dp[1];
-        CAT_DOOR.nx = -back * F.ux;
-        CAT_DOOR.nz = -back * F.uz;
-        CAT_DOOR.ok = true;
-        CAT_DOOR.ch = ch;
-        const sides = [
-          [F.v1 + 0.35, 1],
-          [F.v0 - 0.35, -1]
-        ]
-          .map(([v, sg]) => {
-            const p = F.W(fu + back * len * 0.5, v);
-            const rd = ROADSEG.nearest(p[0] + F.vx * sg * 4, p[1] + F.vz * sg * 4);
-            return { p, sg, d: rd ? rd.d : 99 };
-          })
-          .sort((a, b) => a.d - b.d);
-        const sd = sides[0];
-        CAT_DOOR.side = { x: sd.p[0], z: sd.p[1], nx: F.vx * sd.sg, nz: F.vz * sd.sg };
-      }
-      for (const sv of [-1, 1]) {
-        const t = F.W(fu + back * 3.2, sv * (fw / 2 - 3.2));
-        bellTower(t[0], t[1], F.ang, 6.2, fh + 4, 'cupola');
-      }
-      // great dome over the crossing
-      const d = F.W(fu + back * len * 0.62, 0);
-      const dy = top + 2.5;
-      const dg = new THREE.Group();
-      addMesh(dg, new THREE.CylinderGeometry(7.2, 7.4, 6, 24), plasterMat, 0, 3, 0);
-      for (let i = 0; i < 8; i++) {
-        const a = (i / 8) * Math.PI * 2;
-        const wdw = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 2.8), darkMat);
-        wdw.position.set(Math.sin(a) * 7.42, 3, Math.cos(a) * 7.42);
-        wdw.rotation.y = a;
-        dg.add(wdw);
-        const pil = new THREE.Mesh(new THREE.BoxGeometry(0.7, 6.2, 0.6), greyStone);
-        pil.position.set(Math.sin(a + 0.39) * 7.4, 3.1, Math.cos(a + 0.39) * 7.4);
-        pil.rotation.y = a + 0.39;
-        dg.add(pil);
-      }
-      addMesh(dg, new THREE.CylinderGeometry(7.8, 7.8, 0.6, 24), greyStone, 0, 6.2, 0);
-      const dome = addMesh(dg, new THREE.SphereGeometry(7.4, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), leadMat, 0, 6.4, 0);
-      dome.scale.y = 1.3;
-      for (let i = 0; i < 12; i++) {
-        const a = (i / 12) * Math.PI * 2;
-        const rib = new THREE.Mesh(new THREE.TorusGeometry(7.45, 0.12, 4, 24, Math.PI / 2), greyStone);
-        rib.position.set(0, 6.4, 0);
-        rib.rotation.set(0, a, Math.PI / 2);
-        rib.scale.set(1.3, 1, 1);
-        dg.add(rib);
-      }
-      addMesh(dg, new THREE.CylinderGeometry(1.5, 1.5, 3.2, 12), plasterMat, 0, 17.5, 0);
-      const ld = addMesh(dg, new THREE.SphereGeometry(1.6, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), leadMat, 0, 19.1, 0);
-      ld.scale.y = 1.3;
-      addMesh(dg, new THREE.BoxGeometry(0.18, 2.4, 0.18), darkMat, 0, 21.9, 0);
-      addMesh(dg, new THREE.BoxGeometry(1.1, 0.16, 0.16), darkMat, 0, 22.4, 0);
-      dg.position.set(d[0], dy, d[1]);
-      scene.add(dg);
-      CHURCH_MARKS.push(['Catedral', ch.cx, ch.cz]);
-    } else if (/Concepción/.test(nm)) {
-      try {
-        buildConcepcion(ch);
-      } catch (e) {
-        console.error('Concepción', e);
-      }
-      CHURCH_MARKS.push(['La Concepción', ch.cx, ch.cz]);
-    } else {
-      roof(width * 0.32);
-      if (ch.area > 420 && ch.name) {
-        const t = F.W(fu + back * 2.6, F.v1 - 2.6);
-        bellTower(t[0], t[1], F.ang, 5, Math.max(12, ch.H + 4), 'pyramid');
-      } else {
-        const e = F.W(fu + back * 0.3, (F.v0 + F.v1) / 2);
-        espadana(e[0], e[1], top - 0.3, F.ang, Math.min(4.6, width * 0.6));
-      }
-      // Ermita de San Miguel: a bell wall at each end of the roof
-      if (/Ermita de San Miguel/.test(nm)) {
-        const e = F.W(fu + back * (len - 0.3), (F.v0 + F.v1) / 2);
-        espadana(e[0], e[1], top - 0.3, F.ang, Math.min(4.0, width * 0.55));
-      }
-      // Santuario del Cristo: stone porch with three round arches facing the plaza + two-tier bell wall
-      if (/Santuario del Cristo/.test(nm)) {
-        const pw = Math.min(width, 12),
-          pd = 4.2,
-          ph = 5.2;
-        const c0 = F.W(fu - (back * pd) / 2, (F.v0 + F.v1) / 2);
-        const g = new THREE.Group();
-        const y0 = heightAt(c0[0], c0[1]) - 0.2;
-        const sh = new THREE.Shape();
-        sh.moveTo(-pw / 2, 0);
-        sh.lineTo(pw / 2, 0);
-        sh.lineTo(pw / 2, ph);
-        sh.lineTo(-pw / 2, ph);
-        sh.closePath();
-        for (let k = -1; k <= 1; k++) {
-          const ax = (k * pw) / 3,
-            aw = (pw / 3) * 0.62;
-          const hole = new THREE.Path();
-          hole.moveTo(ax - aw / 2, 0);
-          hole.lineTo(ax + aw / 2, 0);
-          hole.lineTo(ax + aw / 2, ph * 0.55);
-          hole.absarc(ax, ph * 0.55, aw / 2, 0, Math.PI, false);
-          hole.lineTo(ax - aw / 2, 0);
-          sh.holes.push(hole);
-        }
-        const fg = new THREE.ExtrudeGeometry(sh, { depth: 0.6, bevelEnabled: false });
-        fg.translate(0, 0, pd / 2 - 0.6);
-        addMesh(g, fg, greyStone, 0, 0, 0);
-        for (const sx of [-1, 1]) addMesh(g, new THREE.BoxGeometry(0.6, ph, pd), plasterMat, sx * (pw / 2 - 0.3), ph / 2, 0);
-        const rf = addMesh(g, new THREE.BoxGeometry(pw + 0.6, 0.35, pd + 0.4), MAT.roofTile, 0, ph + 0.2, 0);
-        rf.rotation.x = -0.12 * back;
-        g.position.set(c0[0], y0, c0[1]);
-        g.rotation.y = F.ang + (back > 0 ? Math.PI : 0);
-        scene.add(g);
-        const e2 = F.W(fu + back * 0.5, F.v0 + 2.4);
-        espadana(e2[0], e2[1], top + 0.6, F.ang, 4.6);
-        for (const v of [F.v0 + 1, F.v1 - 1]) {
-          const p = F.W(fu - back * pd, v);
-          COL.addCirc(p[0], p[1], 0.4);
-        }
+      const e2 = F.W(fu + back * 0.5, F.v0 + 2.4);
+      espadana(e2[0], e2[1], top + 0.6, F.ang, 4.6);
+      for (const v of [F.v0 + 1, F.v1 - 1]) {
+        const p = F.W(fu - back * pd, v);
+        COL.addCirc(p[0], p[1], 0.4);
       }
     }
   }
+}
+/** (v1.1.7, code quality) part of buildChurchesEach */
+function buildChurchesEachPart2(facadeEnd, F, ch, len, width, top) {
+  const fu = facadeEnd === 0 ? F.u0 : F.u1,
+    back = facadeEnd === 0 ? 1 : -1; // back: direction into the church
+  const rect = ch.area / (len * width);
+  const tris = THREE.ShapeUtils.triangulateShape(
+    ch.pts.map((p) => new THREE.Vector2(p[0], p[1])),
+    []
+  );
+  const simple = rect > 0.8 && width < 24;
+  const roof = (rise) => {
+    if (simple) gableRoof(F, top, Math.min(rise, 6), F.u0, F.u1, F.v0, F.v1);
+    else hipRoof(ch.pts, ch.cx, ch.cz, top, ch.area, tris, 4);
+  };
+  return { fu, back, tris, roof };
+}
+/** (v1.1.7, code quality) part of buildChurchesEach: which end is the facade: nearest named square / plaza, else west */
+function buildChurchesEachPart1(ch) {
+  const F = axisFrame(ch.pts, ch.cx, ch.cz);
+  const top = ch.top;
+  const width = F.v1 - F.v0,
+    len = F.u1 - F.u0;
+  const nm = ch.name || '';
+  // which end is the facade: nearest named square / plaza, else west
+  let plaza = null;
+  if (/Catedral/.test(nm)) plaza = centroidOfNamedWays('Plaza de los Remedios');
+  else if (/Concepción/.test(nm)) plaza = centroidOfNamedWays('Plaza de la Concepción');
+  else if (/Cristo/.test(nm)) plaza = centroidOfNamedWays('Plaza de San Francisco') || centroidOfNamedWays('Plaza del Cristo');
+  let facadeEnd;
+  if (plaza) {
+    const e0 = F.W(F.u0, 0),
+      e1 = F.W(F.u1, 0);
+    facadeEnd = Math.hypot(e0[0] - plaza[0], e0[1] - plaza[1]) < Math.hypot(e1[0] - plaza[0], e1[1] - plaza[1]) ? 0 : 1;
+  } else {
+    const e0 = F.W(F.u0, 0),
+      e1 = F.W(F.u1, 0);
+    facadeEnd = e0[0] < e1[0] ? 0 : 1;
+  }
+  return { F, top, width, len, nm, facadeEnd };
 }
 const CHURCH_MARKS = [];
 const CAT_DOOR = { ok: false };

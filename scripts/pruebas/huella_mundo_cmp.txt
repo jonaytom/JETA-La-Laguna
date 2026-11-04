@@ -1,0 +1,2 @@
+# v1.1.7: huella del mundo, segunda carga con el mismo codigo (estable?)
+herramientas/huella_mundo.py comparar

@@ -112,24 +112,7 @@ function copShoot(c, dist, stars) {
     SUB.show('<b>Policía:</b> ' + pick(['¡Alto, policía!', '¡Al suelo, chacho!', '¡Quieto ahí!', '¡Tírate al suelo!']), 1.5);
 }
 function updateCops(dt) {
-  const stars = Math.ceil(WANTED.level);
-  // bail out: a patrol car that is close but stopped / stuck while you're on foot
-  if (stars > 0 && !PLAYER.car && !PLAYER.interior) {
-    for (const car of CARS) {
-      if (car.type !== 'police' || car.driver !== 'police' || car.bailed) continue;
-      const d = Math.hypot(car.x - PLAYER.x, car.z - PLAYER.z);
-      const slowNear = d < 55 && d > 6 && car.speed < 2.5;
-      car.slowT = slowNear ? (car.slowT || 0) + dt : 0;
-      const blocked = d < 35 && car.ai && car.ai.rev > 0;
-      if (car.slowT > 1.6 || blocked || (d < 22 && d > 7 && COL.raycast(car.x, car.z, PLAYER.x, PLAYER.z) < 1)) {
-        car.bailed = true;
-        car.ctl = { thr: 0, brk: 1, steer: 0, hb: 0 };
-        spawnCop(car, 1);
-        if (stars >= 2 || Math.random() < 0.5) spawnCop(car, -1);
-        SUB.show('<b>Policía:</b> ' + pick(['¡Bájate, que se nos escapa!', '¡A pie, a pie!', '¡Ese es, a por él!']), 2);
-      }
-    }
-  }
+  const { stars } = updateCopsPart1(dt);
   for (const c of COPS.slice()) {
     const dx = PLAYER.x - c.x,
       dz = PLAYER.z - c.z,
@@ -268,6 +251,28 @@ function updateCops(dt) {
       gripGun(c.H, c.gun, d);
     } else if (c.gun) c.gun.visible = false;
   }
+}
+/** (v1.1.7, code quality) part of updateCops: bail out: a patrol car that is close but stopped / stuck while you're on foot */
+function updateCopsPart1(dt) {
+  const stars = Math.ceil(WANTED.level);
+  // bail out: a patrol car that is close but stopped / stuck while you're on foot
+  if (stars > 0 && !PLAYER.car && !PLAYER.interior) {
+    for (const car of CARS) {
+      if (car.type !== 'police' || car.driver !== 'police' || car.bailed) continue;
+      const d = Math.hypot(car.x - PLAYER.x, car.z - PLAYER.z);
+      const slowNear = d < 55 && d > 6 && car.speed < 2.5;
+      car.slowT = slowNear ? (car.slowT || 0) + dt : 0;
+      const blocked = d < 35 && car.ai && car.ai.rev > 0;
+      if (car.slowT > 1.6 || blocked || (d < 22 && d > 7 && COL.raycast(car.x, car.z, PLAYER.x, PLAYER.z) < 1)) {
+        car.bailed = true;
+        car.ctl = { thr: 0, brk: 1, steer: 0, hb: 0 };
+        spawnCop(car, 1);
+        if (stars >= 2 || Math.random() < 0.5) spawnCop(car, -1);
+        SUB.show('<b>Policía:</b> ' + pick(['¡Bájate, que se nos escapa!', '¡A pie, a pie!', '¡Ese es, a por él!']), 2);
+      }
+    }
+  }
+  return { stars };
 }
 // officers on foot also count for "seen" and for getting busted
 function copsSee() {

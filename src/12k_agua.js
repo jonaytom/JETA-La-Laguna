@@ -15,6 +15,26 @@ function lookOfNpc(k) {
   return NPC[k] && NPC[k].H && NPC[k].H.look ? { ...NPC[k].H.look } : {};
 }
 // fires to put out: each one a red dot on the minimap (so the arrow and the compass find them); cb when all are out
+/** (v1.1.7, code quality: three chases had this copied) a getaway car on its route, the minimap following it: null if
+ *  it got away (the mission fails), true when it is caught (it arrived or it is broken: it stops), false meanwhile */
+function k3Chase(S, K, dt, v, far, failMsg, hp) {
+  const c = S.car;
+  const done = s2DriveCar(c, S.P, dt, v, (d) => (d > 150 ? 0.6 : d < 25 ? 1.1 : 1), true);
+  S.trk = (S.trk || 0) - dt;
+  if (S.trk <= 0) {
+    S.trk = 0.8;
+    K.track(c.x, c.z);
+  }
+  if (Math.hypot(PLAYER.x - c.x, PLAYER.z - c.z) > far) {
+    s2Fail(failMsg);
+    return null;
+  }
+  if (!(done || c.health < hp)) return false;
+  c.mode = 'physics';
+  c.driver = null;
+  c.ctl.brk = 1;
+  return true;
+}
 function k3Fires(spots, size, hp, cb) {
   let left = spots.length;
   const list = spots.map(([x, z]) => {
@@ -660,22 +680,11 @@ const S_CANCHA = {
       });
     }
     if (S.step === 3) {
-      const c = S.car;
-      const done = s2DriveCar(c, S.P, dt, 20, (d) => (d > 150 ? 0.6 : d < 25 ? 1.1 : 1), true);
-      S.trk = (S.trk || 0) - dt;
-      if (S.trk <= 0) {
-        S.trk = 0.8;
-        K.track(c.x, c.z);
-      }
-      if (Math.hypot(PLAYER.x - c.x, PLAYER.z - c.z) > 330) {
-        s2Fail('Los trapicheros se han escapado');
-        return;
-      }
-      if (done || c.health < 45) {
+      const c = S.car,
+        caught = k3Chase(S, K, dt, 20, 330, 'Los trapicheros se han escapado', 45);
+      if (caught === null) return;
+      if (caught) {
         S.step = 4;
-        c.mode = 'physics';
-        c.driver = null;
-        c.ctl.brk = 1;
         K.talk(
           [
             ['Trapichero', '¡Vale, vale! ¡Nos rendimos! ¡Era solo gofio adulterado!'],
@@ -861,22 +870,11 @@ const S_GOFIO = {
           t.y = heightAt(t.x, t.z) + 1.1;
         }
     if (S.step === 5) {
-      const c = S.car;
-      const done = s2DriveCar(c, S.P, dt, 21, (d) => (d > 150 ? 0.6 : d < 25 ? 1.1 : 1), true);
-      S.trk = (S.trk || 0) - dt;
-      if (S.trk <= 0) {
-        S.trk = 0.8;
-        K.track(c.x, c.z);
-      }
-      if (Math.hypot(PLAYER.x - c.x, PLAYER.z - c.z) > 330) {
-        s2Fail('El jefe se ha escapado con el gofio');
-        return;
-      }
-      if (done || c.health < 40) {
+      const c = S.car,
+        caught = k3Chase(S, K, dt, 21, 330, 'El jefe se ha escapado con el gofio', 40);
+      if (caught === null) return;
+      if (caught) {
         S.step = 6;
-        c.mode = 'physics';
-        c.driver = null;
-        c.ctl.brk = 1;
         K.talk(
           [
             ['Jefe del gofio', '¡No me detengáis! ¡Yo solo quería que el gofio fuera más blanco!'],
@@ -1243,22 +1241,11 @@ const M_OBISPO_8 = {
       K.setObjective('¡El ladrón huye en un ' + b2('coche marrón') + '! Persíguelo');
     }
     if (S.step === 2) {
-      const c = S.car;
-      const done = s2DriveCar(c, S.P, dt, 19, (d) => (d > 150 ? 0.6 : d < 25 ? 1.1 : 1), true);
-      S.trk = (S.trk || 0) - dt;
-      if (S.trk <= 0) {
-        S.trk = 0.8;
-        K.track(c.x, c.z);
-      }
-      if (Math.hypot(PLAYER.x - c.x, PLAYER.z - c.z) > 320) {
-        s2Fail('El ladrón del cepillo se ha escapado');
-        return;
-      }
-      if (done || c.health < 45) {
+      const c = S.car,
+        caught = k3Chase(S, K, dt, 19, 320, 'El ladrón del cepillo se ha escapado', 45);
+      if (caught === null) return;
+      if (caught) {
         S.step = 3;
-        c.mode = 'physics';
-        c.driver = null;
-        c.ctl.brk = 1;
         const [a, b] = safeSpot(c.x + 2.5, c.z + 2, 0.6);
         S.n = s2Human(THIEF_LOOKS[2], a, b);
         S.P2 = s2RunPath(S.n, 150, 260);

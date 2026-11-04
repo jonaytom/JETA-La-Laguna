@@ -2,19 +2,7 @@
 function courtCanvas(kind, len, wid) {
   const W = 512,
     H = Math.max(64, Math.round((512 * wid) / len));
-  const c = mkCanvas(W, H),
-    x = c.getContext('2d');
-  const k = W / len; // px per metre
-  const line = (col, w = 2) => {
-    x.strokeStyle = col;
-    x.lineWidth = Math.max(1.5, w);
-  };
-  const R = (u, v, w, h) => x.strokeRect(u * k, v * k, w * k, h * k);
-  const circ = (u, v, r, a0 = 0, a1 = 7) => {
-    x.beginPath();
-    x.arc(u * k, v * k, r * k, a0, a1);
-    x.stroke();
-  };
+  const { c, x, k, line, R, circ } = courtCanvasPart1(W, H, len);
   const m = 1.5; // margin
   const PL = len - 2 * m,
     PW = wid - 2 * m;
@@ -98,6 +86,23 @@ function courtCanvas(kind, len, wid) {
     }
   }
   return canvasTex(c, { repeat: false });
+}
+/** (v1.1.7, code quality) part of courtCanvas */
+function courtCanvasPart1(W, H, len) {
+  const c = mkCanvas(W, H),
+    x = c.getContext('2d');
+  const k = W / len; // px per metre
+  const line = (col, w = 2) => {
+    x.strokeStyle = col;
+    x.lineWidth = Math.max(1.5, w);
+  };
+  const R = (u, v, w, h) => x.strokeRect(u * k, v * k, w * k, h * k);
+  const circ = (u, v, r, a0 = 0, a1 = 7) => {
+    x.beginPath();
+    x.arc(u * k, v * k, r * k, a0, a1);
+    x.stroke();
+  };
+  return { c, x, k, line, R, circ };
 }
 function noiseOverlay(x, W, H, a) {
   for (let i = 0; i < (W * H) / 60; i++) {
@@ -219,6 +224,250 @@ function inPitch(x, z, m = 1) {
   return null;
 }
 function buildSports() {
+  const { white, dark, orange, fenceMat, sportsAreas } = buildSportsPart1();
+  for (const a of DATA.A) {
+    buildSportsEach(a, sportsAreas, white, fenceMat, dark, orange);
+  }
+  try {
+    buildPeraza();
+  } catch (e) {
+    console.error('peraza', e);
+  } // v0.75
+  try {
+    buildRiosHall();
+  } catch (e) {
+    console.error('rios tejera', e);
+  } // v0.76
+}
+/** (v1.1.7, code quality) the body of a loop of buildSports, split out of it */
+function buildSportsEach(a, sportsAreas, white, fenceMat, dark, orange) {
+  if (DATA.AT[a[0]] !== 'pitch') return;
+  const c2 = a[2];
+  const pts = [];
+  for (let i = 0; i < c2.length; i += 2) pts.push([c2[i], c2[i + 1]]);
+  if (pts.length < 3) return;
+  let cx = 0,
+    cz = 0;
+  for (const p of pts) {
+    cx += p[0];
+    cz += p[1];
+  }
+  cx /= pts.length;
+  cz /= pts.length;
+  if (cx < WORLD.x0 || cx > WORLD.x1 || cz < WORLD.z0 || cz > WORLD.z1) return;
+  const F = axisFrame(pts, cx, cz);
+  const len = F.u1 - F.u0,
+    wid = F.v1 - F.v0;
+  const area = len * wid;
+  if (len < 12 || wid < 8) return;
+  const pr = pitchRects().find((q) => Math.abs(q.cx - cx) < 0.01 && Math.abs(q.cz - cz) < 0.01);
+  if (!pr) return;
+  const { kind, at, add } = buildSportsEachPart1(pr, len, wid, F);
+  buildSportsEachPart2(kind, F, add, white, fenceMat, at, dark, orange);
+  buildSportsEachPart3(area, F, fenceMat);
+  // floodlights on football pitches
+  if (kind === 'f11' || kind === 'f7') {
+    for (const [u, v] of [
+      [F.u0 - 3, F.v0 - 3],
+      [F.u1 + 3, F.v0 - 3],
+      [F.u1 + 3, F.v1 + 3],
+      [F.u0 - 3, F.v1 + 3]
+    ]) {
+      const [px, pz] = F.W(u, v);
+      if (onCarriageway(px, pz, 0.5) || COL.nearSeg(px, pz, 1)) continue;
+      const h = kind === 'f11' ? 20 : 14;
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.3, h, 8), M(0x6a6f73, 0.5, 0.6));
+      p.position.set(px, heightAt(px, pz) + h / 2, pz);
+      p.castShadow = true;
+      scene.add(p);
+      const hd = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.2, 0.4), lampHeadMat);
+      hd.position.set(px, heightAt(px, pz) + h, pz);
+      hd.lookAt(cx, heightAt(cx, cz), cz);
+      scene.add(hd);
+      COL.addCirc(px, pz, 0.3);
+    }
+  }
+  // grandstands when the pitch sits in a named stadium / sports complex
+  const inStadium = sportsAreas.find((s2) => s2[1] >= 0 && /Estadio|Campo|Complejo/.test(STR[s2[1]]) && pip(cx, cz, s2[2]));
+  if (inStadium && kind === 'f11' && !/Francisco Peraza/.test(STR[inStadium[1]])) {
+    // (the Francisco Peraza has its own stands: 05v_peraza.js)
+    const standM = M(0xb8b4ac, 0.9),
+      seatM = M(0x1f6fb5, 0.6);
+    for (const side of [-1, 1]) {
+      const v = side < 0 ? F.v0 - 4 : F.v1 + 4;
+      for (let st = 0; st < 6; st++) {
+        const s = add(
+          new THREE.BoxGeometry(0.8 + (5 - st) * 0.8, 0.5 + st * 0.5, len * 0.8),
+          st % 2 ? standM : seatM,
+          (F.u0 + F.u1) / 2,
+          v + side * st * 0.8,
+          (0.5 + st * 0.5) / 2
+        );
+        s.rotation.y = F.ang + (Math.PI / 2) * 0;
+        s.rotation.y = F.ang;
+      }
+      const [sx, sz] = F.W((F.u0 + F.u1) / 2, v + side * 2.4);
+      for (let t = -0.4; t <= 0.4; t += 0.1) {
+        const [px, pz] = F.W((F.u0 + F.u1) / 2 + t * len, v + side * 2.4);
+        COL.addCirc(px, pz, 2.4);
+      }
+    }
+    LABELS.push([STR[inStadium[1]], cx, cz, 1]);
+  }
+  SPORTS.pitches.push({ cx, cz, kind, F, len, wid });
+}
+/** (v1.1.7, code quality) part of buildSportsEach: chain-link fence around small courts (with a gap to walk in) */
+function buildSportsEachPart3(area, F, fenceMat) {
+  // chain-link fence around small courts (with a gap to walk in)
+  if (area < 1700) {
+    const e = 1.2;
+    const cor = [
+      [F.u0 - e, F.v0 - e],
+      [F.u1 + e, F.v0 - e],
+      [F.u1 + e, F.v1 + e],
+      [F.u0 - e, F.v1 + e]
+    ];
+    for (let i = 0; i < 4; i++) {
+      const [ua, va] = cor[i],
+        [ub, vb] = cor[(i + 1) % 4];
+      const segs0 =
+        i === 0
+          ? [
+              [0, 0.42],
+              [0.58, 1]
+            ]
+          : [[0, 1]];
+      // no fence on a carriageway (agent: court fence across C. Castellón / Valencia): split the side into runs off the road
+      const Ls = Math.hypot(ub - ua, vb - va) || 1,
+        st = Math.min(0.5, 1 / Ls),
+        segs = [];
+      for (const [a0, a1] of segs0) {
+        let r0 = null;
+        for (let t = a0; t <= a1 + 1e-6; t += st) {
+          const tt = Math.min(t, a1),
+            q = F.W(ua + (ub - ua) * tt, va + (vb - va) * tt),
+            ok = !onCarriageway(q[0], q[1], 0.3);
+          if (ok && r0 === null) r0 = tt;
+          if ((!ok || tt >= a1) && r0 !== null) {
+            if (tt - r0 > 0) segs.push([r0, ok ? tt : Math.max(r0, tt - st)]);
+            r0 = null;
+          }
+        }
+      }
+      for (const [t0, t1] of segs) {
+        const pa = F.W(ua + (ub - ua) * t0, va + (vb - va) * t0),
+          pb = F.W(ua + (ub - ua) * t1, va + (vb - va) * t1);
+        const L = Math.hypot(pb[0] - pa[0], pb[1] - pa[1]);
+        if (L < 0.5) continue;
+        const fg = new THREE.PlaneGeometry(L, 3.5);
+        {
+          const uvA = fg.attributes.uv;
+          for (let q = 0; q < uvA.count; q++) uvA.setXY(q, (uvA.getX(q) * L) / 1.5, (uvA.getY(q) * 3.5) / 1.5);
+        }
+        const f = new THREE.Mesh(fg, fenceMat);
+        const mx = (pa[0] + pb[0]) / 2,
+          mz = (pa[1] + pb[1]) / 2;
+        f.position.set(mx, heightAt(mx, mz) + 1.9, mz);
+        f.rotation.y = Math.atan2(pb[0] - pa[0], pb[1] - pa[1]) + Math.PI / 2;
+        scene.add(f);
+        COL.addSeg(pa[0], pa[1], pb[0], pb[1]);
+      }
+    }
+  }
+}
+/** (v1.1.7, code quality) part of buildSportsEach: goals */
+function buildSportsEachPart2(kind, F, add, white, fenceMat, at, dark, orange) {
+  // goals
+  if (kind !== 'bb') {
+    const gw = kind === 'f11' ? 7.32 : kind === 'f7' ? 6 : 3,
+      gh = kind === 'f11' ? 2.44 : 2;
+    for (const s of [0, 1]) {
+      const u = s ? F.u1 - 1.5 : F.u0 + 1.5;
+      const back = s ? 1 : -1;
+      for (const dv of [-gw / 2, gw / 2]) {
+        const pp = at(u, dv + (F.v0 + F.v1) / 2);
+        if (onCarriageway(pp[0], pp[2], 0.4)) continue;
+        add(new THREE.BoxGeometry(0.12, gh, 0.12), white, u, dv + (F.v0 + F.v1) / 2, gh / 2);
+        COL.addCirc(pp[0], pp[2], 0.12);
+      }
+      add(new THREE.BoxGeometry(0.12, 0.12, gw + 0.12), white, u, (F.v0 + F.v1) / 2, gh, (Math.PI / 2) * 0).rotation.y = F.ang + Math.PI / 2;
+      const net = add(new THREE.PlaneGeometry(gw, gh), fenceMat, u + back * 1.1, (F.v0 + F.v1) / 2, gh / 2);
+      net.rotation.y = F.ang;
+    }
+  }
+  // basketball hoops
+  if (kind === 'bb' || kind === 'multi') {
+    for (const s of [0, 1]) {
+      const u = s ? F.u1 - 0.3 : F.u0 + 0.3;
+      const back = s ? 1 : -1;
+      const vm = (F.v0 + F.v1) / 2;
+      const pp = at(u + back * 0.6, vm);
+      if (onCarriageway(pp[0], pp[2], 0.4)) continue; /* v0.68: a court drawn over a road: no pole in the carriageway (auditor) */
+      add(new THREE.CylinderGeometry(0.09, 0.09, 3.6, 8), dark, u + back * 0.6, vm, 1.8);
+      COL.addCirc(pp[0], pp[2], 0.12);
+      const bd = add(new THREE.BoxGeometry(1.8, 1.05, 0.05), white, u, vm, 3.4);
+      const ring = add(new THREE.TorusGeometry(0.23, 0.02, 6, 16), orange, u - back * 0.35, vm, 3.05);
+      ring.rotation.set(Math.PI / 2, 0, 0);
+    }
+  }
+}
+/** (v1.1.7, code quality) part of buildSportsEach: raster the rectangle so it follows the ground */
+function buildSportsEachPart1(pr, len, wid, F) {
+  /* a duplicate on top of a bigger one */ const kind = pr.kind;
+  const tex = courtCanvas(kind, len, wid);
+  const mat = new THREE.MeshStandardMaterial({
+    map: tex,
+    roughness: kind.startsWith('f') && kind !== 'fs' ? 0.95 : 0.6,
+    polygonOffset: true,
+    polygonOffsetFactor: -3,
+    polygonOffsetUnits: -6
+  });
+  // raster the rectangle so it follows the ground
+  const N = Math.max(2, Math.ceil(len / 6)),
+    Mv = Math.max(2, Math.ceil(wid / 6));
+  const pos = [],
+    uv = [];
+  const V = (i, j) => {
+    const u = F.u0 + (len * i) / N,
+      v = F.v0 + (wid * j) / Mv;
+    const [px, pz] = F.W(u, v);
+    return [px, heightAt(px, pz) + 0.16, pz];
+  };
+  for (let i = 0; i < N; i++)
+    for (let j = 0; j < Mv; j++) {
+      const a0 = V(i, j),
+        a1 = V(i + 1, j),
+        a2 = V(i + 1, j + 1),
+        a3 = V(i, j + 1);
+      pos.push(...a0, ...a2, ...a1, ...a0, ...a3, ...a2);
+      const U = (ii, jj) => [ii / N, 1 - jj / Mv];
+      uv.push(...U(i, j), ...U(i + 1, j + 1), ...U(i + 1, j), ...U(i, j), ...U(i, j + 1), ...U(i + 1, j + 1));
+    }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.computeVertexNormals();
+  const mesh = new THREE.Mesh(g, mat);
+  mesh.receiveShadow = true;
+  mesh.renderOrder = 1;
+  scene.add(mesh);
+  const at = (u, v, y = 0) => {
+    const [px, pz] = F.W(u, v);
+    return [px, heightAt(px, pz) + 0.16 + y, pz];
+  };
+  const add = (geo, m, u, v, y, rot = 0) => {
+    const o = new THREE.Mesh(geo, m);
+    const p = at(u, v, y);
+    o.position.set(p[0], p[1], p[2]);
+    o.rotation.y = F.ang + rot;
+    o.castShadow = true;
+    scene.add(o);
+    return o;
+  };
+  return { kind, at, add };
+}
+/** (v1.1.7, code quality) part of buildSports */
+function buildSportsPart1() {
   const white = M(0xf4f4f2, 0.4, 0.2),
     dark = M(0x2a2d30, 0.5, 0.6),
     orange = M(0xe8641c, 0.4, 0.6);
@@ -231,229 +480,7 @@ function buildSports() {
     metalness: 0.5
   });
   const sportsAreas = DATA.A.filter((a) => DATA.AT[a[0]] === 'sports');
-  for (const a of DATA.A) {
-    if (DATA.AT[a[0]] !== 'pitch') continue;
-    const c2 = a[2];
-    const pts = [];
-    for (let i = 0; i < c2.length; i += 2) pts.push([c2[i], c2[i + 1]]);
-    if (pts.length < 3) continue;
-    let cx = 0,
-      cz = 0;
-    for (const p of pts) {
-      cx += p[0];
-      cz += p[1];
-    }
-    cx /= pts.length;
-    cz /= pts.length;
-    if (cx < WORLD.x0 || cx > WORLD.x1 || cz < WORLD.z0 || cz > WORLD.z1) continue;
-    const F = axisFrame(pts, cx, cz);
-    const len = F.u1 - F.u0,
-      wid = F.v1 - F.v0;
-    const area = len * wid;
-    if (len < 12 || wid < 8) continue;
-    const pr = pitchRects().find((q) => Math.abs(q.cx - cx) < 0.01 && Math.abs(q.cz - cz) < 0.01);
-    if (!pr) continue;
-    /* a duplicate on top of a bigger one */ const kind = pr.kind;
-    const tex = courtCanvas(kind, len, wid);
-    const mat = new THREE.MeshStandardMaterial({
-      map: tex,
-      roughness: kind.startsWith('f') && kind !== 'fs' ? 0.95 : 0.6,
-      polygonOffset: true,
-      polygonOffsetFactor: -3,
-      polygonOffsetUnits: -6
-    });
-    // raster the rectangle so it follows the ground
-    const N = Math.max(2, Math.ceil(len / 6)),
-      Mv = Math.max(2, Math.ceil(wid / 6));
-    const pos = [],
-      uv = [];
-    const V = (i, j) => {
-      const u = F.u0 + (len * i) / N,
-        v = F.v0 + (wid * j) / Mv;
-      const [px, pz] = F.W(u, v);
-      return [px, heightAt(px, pz) + 0.16, pz];
-    };
-    for (let i = 0; i < N; i++)
-      for (let j = 0; j < Mv; j++) {
-        const a0 = V(i, j),
-          a1 = V(i + 1, j),
-          a2 = V(i + 1, j + 1),
-          a3 = V(i, j + 1);
-        pos.push(...a0, ...a2, ...a1, ...a0, ...a3, ...a2);
-        const U = (ii, jj) => [ii / N, 1 - jj / Mv];
-        uv.push(...U(i, j), ...U(i + 1, j + 1), ...U(i + 1, j), ...U(i, j), ...U(i, j + 1), ...U(i + 1, j + 1));
-      }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-    g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
-    g.computeVertexNormals();
-    const mesh = new THREE.Mesh(g, mat);
-    mesh.receiveShadow = true;
-    mesh.renderOrder = 1;
-    scene.add(mesh);
-    const at = (u, v, y = 0) => {
-      const [px, pz] = F.W(u, v);
-      return [px, heightAt(px, pz) + 0.16 + y, pz];
-    };
-    const add = (geo, m, u, v, y, rot = 0) => {
-      const o = new THREE.Mesh(geo, m);
-      const p = at(u, v, y);
-      o.position.set(p[0], p[1], p[2]);
-      o.rotation.y = F.ang + rot;
-      o.castShadow = true;
-      scene.add(o);
-      return o;
-    };
-    // goals
-    if (kind !== 'bb') {
-      const gw = kind === 'f11' ? 7.32 : kind === 'f7' ? 6 : 3,
-        gh = kind === 'f11' ? 2.44 : 2;
-      for (const s of [0, 1]) {
-        const u = s ? F.u1 - 1.5 : F.u0 + 1.5;
-        const back = s ? 1 : -1;
-        for (const dv of [-gw / 2, gw / 2]) {
-          const pp = at(u, dv + (F.v0 + F.v1) / 2);
-          if (onCarriageway(pp[0], pp[2], 0.4)) continue;
-          add(new THREE.BoxGeometry(0.12, gh, 0.12), white, u, dv + (F.v0 + F.v1) / 2, gh / 2);
-          COL.addCirc(pp[0], pp[2], 0.12);
-        }
-        add(new THREE.BoxGeometry(0.12, 0.12, gw + 0.12), white, u, (F.v0 + F.v1) / 2, gh, (Math.PI / 2) * 0).rotation.y = F.ang + Math.PI / 2;
-        const net = add(new THREE.PlaneGeometry(gw, gh), fenceMat, u + back * 1.1, (F.v0 + F.v1) / 2, gh / 2);
-        net.rotation.y = F.ang;
-      }
-    }
-    // basketball hoops
-    if (kind === 'bb' || kind === 'multi') {
-      for (const s of [0, 1]) {
-        const u = s ? F.u1 - 0.3 : F.u0 + 0.3;
-        const back = s ? 1 : -1;
-        const vm = (F.v0 + F.v1) / 2;
-        const pp = at(u + back * 0.6, vm);
-        if (onCarriageway(pp[0], pp[2], 0.4)) continue; /* v0.68: a court drawn over a road: no pole in the carriageway (auditor) */
-        add(new THREE.CylinderGeometry(0.09, 0.09, 3.6, 8), dark, u + back * 0.6, vm, 1.8);
-        COL.addCirc(pp[0], pp[2], 0.12);
-        const bd = add(new THREE.BoxGeometry(1.8, 1.05, 0.05), white, u, vm, 3.4);
-        const ring = add(new THREE.TorusGeometry(0.23, 0.02, 6, 16), orange, u - back * 0.35, vm, 3.05);
-        ring.rotation.set(Math.PI / 2, 0, 0);
-      }
-    }
-    // chain-link fence around small courts (with a gap to walk in)
-    if (area < 1700) {
-      const e = 1.2;
-      const cor = [
-        [F.u0 - e, F.v0 - e],
-        [F.u1 + e, F.v0 - e],
-        [F.u1 + e, F.v1 + e],
-        [F.u0 - e, F.v1 + e]
-      ];
-      for (let i = 0; i < 4; i++) {
-        const [ua, va] = cor[i],
-          [ub, vb] = cor[(i + 1) % 4];
-        const segs0 =
-          i === 0
-            ? [
-                [0, 0.42],
-                [0.58, 1]
-              ]
-            : [[0, 1]];
-        // no fence on a carriageway (agent: court fence across C. Castellón / Valencia): split the side into runs off the road
-        const Ls = Math.hypot(ub - ua, vb - va) || 1,
-          st = Math.min(0.5, 1 / Ls),
-          segs = [];
-        for (const [a0, a1] of segs0) {
-          let r0 = null;
-          for (let t = a0; t <= a1 + 1e-6; t += st) {
-            const tt = Math.min(t, a1),
-              q = F.W(ua + (ub - ua) * tt, va + (vb - va) * tt),
-              ok = !onCarriageway(q[0], q[1], 0.3);
-            if (ok && r0 === null) r0 = tt;
-            if ((!ok || tt >= a1) && r0 !== null) {
-              if (tt - r0 > 0) segs.push([r0, ok ? tt : Math.max(r0, tt - st)]);
-              r0 = null;
-            }
-          }
-        }
-        for (const [t0, t1] of segs) {
-          const pa = F.W(ua + (ub - ua) * t0, va + (vb - va) * t0),
-            pb = F.W(ua + (ub - ua) * t1, va + (vb - va) * t1);
-          const L = Math.hypot(pb[0] - pa[0], pb[1] - pa[1]);
-          if (L < 0.5) continue;
-          const fg = new THREE.PlaneGeometry(L, 3.5);
-          {
-            const uvA = fg.attributes.uv;
-            for (let q = 0; q < uvA.count; q++) uvA.setXY(q, (uvA.getX(q) * L) / 1.5, (uvA.getY(q) * 3.5) / 1.5);
-          }
-          const f = new THREE.Mesh(fg, fenceMat);
-          const mx = (pa[0] + pb[0]) / 2,
-            mz = (pa[1] + pb[1]) / 2;
-          f.position.set(mx, heightAt(mx, mz) + 1.9, mz);
-          f.rotation.y = Math.atan2(pb[0] - pa[0], pb[1] - pa[1]) + Math.PI / 2;
-          scene.add(f);
-          COL.addSeg(pa[0], pa[1], pb[0], pb[1]);
-        }
-      }
-    }
-    // floodlights on football pitches
-    if (kind === 'f11' || kind === 'f7') {
-      for (const [u, v] of [
-        [F.u0 - 3, F.v0 - 3],
-        [F.u1 + 3, F.v0 - 3],
-        [F.u1 + 3, F.v1 + 3],
-        [F.u0 - 3, F.v1 + 3]
-      ]) {
-        const [px, pz] = F.W(u, v);
-        if (onCarriageway(px, pz, 0.5) || COL.nearSeg(px, pz, 1)) continue;
-        const h = kind === 'f11' ? 20 : 14;
-        const p = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.3, h, 8), M(0x6a6f73, 0.5, 0.6));
-        p.position.set(px, heightAt(px, pz) + h / 2, pz);
-        p.castShadow = true;
-        scene.add(p);
-        const hd = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.2, 0.4), lampHeadMat);
-        hd.position.set(px, heightAt(px, pz) + h, pz);
-        hd.lookAt(cx, heightAt(cx, cz), cz);
-        scene.add(hd);
-        COL.addCirc(px, pz, 0.3);
-      }
-    }
-    // grandstands when the pitch sits in a named stadium / sports complex
-    const inStadium = sportsAreas.find((s2) => s2[1] >= 0 && /Estadio|Campo|Complejo/.test(STR[s2[1]]) && pip(cx, cz, s2[2]));
-    if (inStadium && kind === 'f11' && !/Francisco Peraza/.test(STR[inStadium[1]])) {
-      // (the Francisco Peraza has its own stands: 05v_peraza.js)
-      const standM = M(0xb8b4ac, 0.9),
-        seatM = M(0x1f6fb5, 0.6);
-      for (const side of [-1, 1]) {
-        const v = side < 0 ? F.v0 - 4 : F.v1 + 4;
-        for (let st = 0; st < 6; st++) {
-          const s = add(
-            new THREE.BoxGeometry(0.8 + (5 - st) * 0.8, 0.5 + st * 0.5, len * 0.8),
-            st % 2 ? standM : seatM,
-            (F.u0 + F.u1) / 2,
-            v + side * st * 0.8,
-            (0.5 + st * 0.5) / 2
-          );
-          s.rotation.y = F.ang + (Math.PI / 2) * 0;
-          s.rotation.y = F.ang;
-        }
-        const [sx, sz] = F.W((F.u0 + F.u1) / 2, v + side * 2.4);
-        for (let t = -0.4; t <= 0.4; t += 0.1) {
-          const [px, pz] = F.W((F.u0 + F.u1) / 2 + t * len, v + side * 2.4);
-          COL.addCirc(px, pz, 2.4);
-        }
-      }
-      LABELS.push([STR[inStadium[1]], cx, cz, 1]);
-    }
-    SPORTS.pitches.push({ cx, cz, kind, F, len, wid });
-  }
-  try {
-    buildPeraza();
-  } catch (e) {
-    console.error('peraza', e);
-  } // v0.75
-  try {
-    buildRiosHall();
-  } catch (e) {
-    console.error('rios tejera', e);
-  } // v0.76
+  return { white, dark, orange, fenceMat, sportsAreas };
 }
 // indoor halls: buildings named Pabellón / Polideportivo or sitting inside a sports complex
 function buildSportsHalls() {
@@ -511,6 +538,50 @@ function buildHallInterior(doors, name, b) {
     W = fr.W,
     Hh = Math.max(7, fr.H);
   const r = roomShell(L, W, Hh, null, 0xdfe3e6);
+  const { g, md, cl, cw, bleach, cz } = buildHallInteriorPart1(r, fr, doors, L, W);
+  if (bleach) {
+    const seat = M(0x1f6fb5, 0.6),
+      step = M(0x9aa0a4, 0.8);
+    const z0b = cz + cw / 2 + 1.2;
+    const nSt = Math.max(2, Math.min(6, Math.floor((W / 2 - z0b) / 0.9)));
+    for (let st = 0; st < nSt; st++) {
+      const bk = new THREE.Mesh(new THREE.BoxGeometry(cl - 2, 0.45, 0.9), st % 2 ? step : seat);
+      bk.position.set(0, 0.35 + st * 0.45, z0b + st * 0.9);
+      g.add(bk);
+    }
+    COL.addSeg(r.x0 - cl / 2 + 1, r.z0 + z0b - 0.5, r.x0 + cl / 2 - 1, r.z0 + z0b - 0.5);
+    for (let i = 0; i < 10; i++) npcAt(r, rnd(-cl / 2 + 2, cl / 2 - 2), z0b - 0.1, Math.PI);
+  }
+  for (let i = 0; i < Math.floor(L / 8); i++) {
+    const l = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.15, W - 4), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+    l.position.set(-L / 2 + 4 + i * 8, Hh - 0.3, 0);
+    g.add(l);
+  }
+  const sb = textPlane('LOCAL 3 - 2 VISITANTE', 6, 1.2, '#111', '#ffcc00', 'bold 30px monospace');
+  sb.position.set(0, Math.min(7.5, Hh - 2.5), -W / 2 + 0.1);
+  g.add(sb);
+  const nm = textPlane(name.toUpperCase(), 10, 1.2, '#1f6fb5', '#ffffff', 'bold 36px Oswald, Arial');
+  nm.position.set(0, Math.min(9, Hh - 1), -W / 2 + 0.1);
+  g.add(nm);
+  for (let i = 0; i < 8; i++)
+    npcAt(r, rnd(-cl / 2 + 3, cl / 2 - 3), cz + rnd(-cw / 2 + 2, cw / 2 - 2), Math.random() * 6, {
+      shirt: i % 2 ? 0xd62828 : 0xf2f2f2,
+      pants: 0x111111,
+      longPants: false
+    });
+  const ex = exitDoor(r, md.x, md.z, md.rot);
+  addInterior({
+    id: 'hall' + INTERIORS.length,
+    name,
+    door: doors,
+    spawn: { x: r.x0 + md.ix, z: r.z0 + md.iz, h: md.h },
+    exit: ex,
+    ceil: r.y0 + Hh - 0.4,
+    floor: r.y0 + 0.13
+  });
+}
+/** (v1.1.7, code quality) part of buildHallInterior */
+function buildHallInteriorPart1(r, fr, doors, L, W) {
   const g = r.g;
   const md = mapDoor(fr, doors[0]);
   const cl = Math.min(40, L - 6),
@@ -554,44 +625,5 @@ function buildHallInterior(doors, name, b) {
     bar.position.set(ex + sd * 0.2, 2.1, cz);
     g.add(bar);
   }
-  if (bleach) {
-    const seat = M(0x1f6fb5, 0.6),
-      step = M(0x9aa0a4, 0.8);
-    const z0b = cz + cw / 2 + 1.2;
-    const nSt = Math.max(2, Math.min(6, Math.floor((W / 2 - z0b) / 0.9)));
-    for (let st = 0; st < nSt; st++) {
-      const bk = new THREE.Mesh(new THREE.BoxGeometry(cl - 2, 0.45, 0.9), st % 2 ? step : seat);
-      bk.position.set(0, 0.35 + st * 0.45, z0b + st * 0.9);
-      g.add(bk);
-    }
-    COL.addSeg(r.x0 - cl / 2 + 1, r.z0 + z0b - 0.5, r.x0 + cl / 2 - 1, r.z0 + z0b - 0.5);
-    for (let i = 0; i < 10; i++) npcAt(r, rnd(-cl / 2 + 2, cl / 2 - 2), z0b - 0.1, Math.PI);
-  }
-  for (let i = 0; i < Math.floor(L / 8); i++) {
-    const l = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.15, W - 4), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-    l.position.set(-L / 2 + 4 + i * 8, Hh - 0.3, 0);
-    g.add(l);
-  }
-  const sb = textPlane('LOCAL 3 - 2 VISITANTE', 6, 1.2, '#111', '#ffcc00', 'bold 30px monospace');
-  sb.position.set(0, Math.min(7.5, Hh - 2.5), -W / 2 + 0.1);
-  g.add(sb);
-  const nm = textPlane(name.toUpperCase(), 10, 1.2, '#1f6fb5', '#ffffff', 'bold 36px Oswald, Arial');
-  nm.position.set(0, Math.min(9, Hh - 1), -W / 2 + 0.1);
-  g.add(nm);
-  for (let i = 0; i < 8; i++)
-    npcAt(r, rnd(-cl / 2 + 3, cl / 2 - 3), cz + rnd(-cw / 2 + 2, cw / 2 - 2), Math.random() * 6, {
-      shirt: i % 2 ? 0xd62828 : 0xf2f2f2,
-      pants: 0x111111,
-      longPants: false
-    });
-  const ex = exitDoor(r, md.x, md.z, md.rot);
-  addInterior({
-    id: 'hall' + INTERIORS.length,
-    name,
-    door: doors,
-    spawn: { x: r.x0 + md.ix, z: r.z0 + md.iz, h: md.h },
-    exit: ex,
-    ceil: r.y0 + Hh - 0.4,
-    floor: r.y0 + 0.13
-  });
+  return { g, md, cl, cw, bleach, cz };
 }

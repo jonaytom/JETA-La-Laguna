@@ -300,38 +300,7 @@ function updatePlayer(dt) {
     playerHuman.root.position.set(PLAYER.x, PLAYER.y, PLAYER.z);
     return;
   }
-  let ix = (key('KeyD', 'ArrowRight') ? 1 : 0) - (key('KeyA', 'ArrowLeft') ? 1 : 0),
-    iz = (key('KeyW', 'ArrowUp') ? 1 : 0) - (key('KeyS', 'ArrowDown') ? 1 : 0);
-  if (gp && (gp.lx || gp.ly)) {
-    ix = gp.lx;
-    iz = -gp.ly;
-  }
-  if (INPUT.touch.active) {
-    ix = INPUT.touch.x;
-    iz = -INPUT.touch.y;
-  }
-  const il = Math.hypot(ix, iz);
-  if (il > 1) {
-    ix /= il;
-    iz /= il;
-  }
-  const fx = Math.sin(CAM.yaw),
-    fz = Math.cos(CAM.yaw),
-    rx = -fz,
-    rz = fx;
-  const sprint = key('ShiftLeft', 'ShiftRight') || (gp && gp.hold(0)) || INPUT.touch.sprint;
-  const walk = key('AltLeft', 'KeyC');
-  const sp = walk ? 1.6 : sprint ? 7.4 : 4.3;
-  const mx = (fx * iz + rx * ix) * sp,
-    mz = (fz * iz + rz * ix) * sp;
-  const m = Math.hypot(mx, mz);
-  PLAYER.speed = lerp(PLAYER.speed, m, clamp(dt * 8, 0, 1));
-  if (m > 0.1) {
-    const th = Math.atan2(mx, mz);
-    PLAYER.h += angDiff(PLAYER.h, th) * clamp(dt * 10, 0, 1);
-  }
-  const vdx = Math.sin(PLAYER.h) * PLAYER.speed,
-    vdz = Math.cos(PLAYER.h) * PLAYER.speed;
+  const { mx, mz, m, vdx, vdz } = updatePlayerPart1(gp, dt);
   let nx = PLAYER.x + (m > 0.1 ? (mx / m) * PLAYER.speed : vdx) * dt,
     nz = PLAYER.z + (m > 0.1 ? (mz / m) * PLAYER.speed : vdz) * dt;
   const _dbg = window.__PDBG ? (window.__PDBG = [['start', nx, nz]]) : null;
@@ -441,6 +410,10 @@ function updatePlayer(dt) {
     : lw
       ? lw.y
       : Math.max(heightAt(nx, nz) + 0.17, dk, sf - heightAt(nx, nz) < 1.6 ? sf + 0.07 : -1e9); // v0.73: the visible path over a hollow
+  updatePlayerPart2(gp, dt, gy);
+}
+/** (v1.1.7, code quality) part of updatePlayer: ground surface + acoustic space (used by footsteps and landing) */
+function updatePlayerPart2(gp, dt, gy) {
   if ((pressed('Space') || (gp && gp.down(1)) || INPUT.touch.jump) && PLAYER.onGround) {
     PLAYER.vy = 5.3;
     PLAYER.onGround = false;
@@ -495,6 +468,42 @@ function updatePlayer(dt) {
     }
   }
 }
+/** (v1.1.7, code quality) part of updatePlayer */
+function updatePlayerPart1(gp, dt) {
+  let ix = (key('KeyD', 'ArrowRight') ? 1 : 0) - (key('KeyA', 'ArrowLeft') ? 1 : 0),
+    iz = (key('KeyW', 'ArrowUp') ? 1 : 0) - (key('KeyS', 'ArrowDown') ? 1 : 0);
+  if (gp && (gp.lx || gp.ly)) {
+    ix = gp.lx;
+    iz = -gp.ly;
+  }
+  if (INPUT.touch.active) {
+    ix = INPUT.touch.x;
+    iz = -INPUT.touch.y;
+  }
+  const il = Math.hypot(ix, iz);
+  if (il > 1) {
+    ix /= il;
+    iz /= il;
+  }
+  const fx = Math.sin(CAM.yaw),
+    fz = Math.cos(CAM.yaw),
+    rx = -fz,
+    rz = fx;
+  const sprint = key('ShiftLeft', 'ShiftRight') || (gp && gp.hold(0)) || INPUT.touch.sprint;
+  const walk = key('AltLeft', 'KeyC');
+  const sp = walk ? 1.6 : sprint ? 7.4 : 4.3;
+  const mx = (fx * iz + rx * ix) * sp,
+    mz = (fz * iz + rz * ix) * sp;
+  const m = Math.hypot(mx, mz);
+  PLAYER.speed = lerp(PLAYER.speed, m, clamp(dt * 8, 0, 1));
+  if (m > 0.1) {
+    const th = Math.atan2(mx, mz);
+    PLAYER.h += angDiff(PLAYER.h, th) * clamp(dt * 10, 0, 1);
+  }
+  const vdx = Math.sin(PLAYER.h) * PLAYER.speed,
+    vdz = Math.cos(PLAYER.h) * PLAYER.speed;
+  return { mx, mz, m, vdx, vdz };
+}
 function knockPlayer(c) {
   if (PLAYER.down > 0) return;
   PLAYER.down = 2.2;
@@ -505,57 +514,20 @@ function knockPlayer(c) {
 }
 
 function updateCamera(dt) {
-  const gp = INPUT.gp;
-  let mdx = INPUT.mdx,
-    mdy = INPUT.mdy;
-  INPUT.mdx = INPUT.mdy = 0;
-  if (gp) {
-    mdx += gp.rx * 900 * dt;
-    mdy += gp.ry * 600 * dt;
-    if (gp.rx || gp.ry) INPUT.lastMouse = performance.now();
+  let { tx, ty, tz, dist, cp, sp } = updateCameraPart1(dt);
+  const { ox, oz } = updateCameraPart2(cp, tx, tz, dist, ty, sp, dt);
+  camera.lookAt(ox, ty + (PLAYER.car ? 0.2 : 0), oz);
+  if (Math.abs(camera.fov - CAM.fov) > 0.05) {
+    camera.fov = CAM.fov;
+    camera.updateProjectionMatrix();
+    bgCamera.fov = CAM.fov;
+    bgCamera.updateProjectionMatrix();
   }
-  if (INPUT.touch.look[0] || INPUT.touch.look[1]) {
-    mdx += INPUT.touch.look[0];
-    mdy += INPUT.touch.look[1];
-    INPUT.touch.look = [0, 0];
-    INPUT.lastMouse = performance.now();
-  }
-  const sens = SETTINGS.sens;
-  CAM.yaw -= mdx * 0.0023 * sens;
-  CAM.pitch = clamp(CAM.pitch + mdy * 0.0018 * sens * (SETTINGS.invertY ? -1 : 1), -0.5, 1.2);
-  if (INPUT.wheel) {
-    CAM.dist = clamp(CAM.dist + INPUT.wheel * 0.5, 2.2, 14);
-    INPUT.wheel = 0;
-  }
-  let tx, ty, tz, dist;
-  if (PLAYER.car) {
-    const car = PLAYER.car;
-    tx = car.x;
-    ty = car.y + 1.25 + Math.max(0, car.T.H - 1.5) * 0.85;
-    tz = car.z;
-    dist =
-      (car.type === 'bus' ? 12 : car.type === 'moto' ? 4.2 : 5.3 + Math.max(0, car.T.L - 4.6) * 0.9) +
-      CAM.dist * 0.3 +
-      clamp(car.speed * 0.035, 0, 1.6);
-    if (performance.now() - INPUT.lastMouse > 1300 && car.speed > 2) {
-      const moveYaw = car.fwdV >= -0.5 ? Math.atan2(car.vx, car.vz) : car.h;
-      CAM.yaw += angDiff(CAM.yaw, car.speed > 3 ? moveYaw : car.h) * clamp(dt * 2.5, 0, 1);
-      CAM.pitch = lerp(CAM.pitch, 0.18, dt * 1.5);
-    }
-    CAM.fov = lerp(CAM.fov, 62 + clamp(car.speed - 15, 0, 35) * 0.35, dt * 2);
-  } else {
-    tx = PLAYER.x;
-    ty = PLAYER.y + 1.55;
-    tz = PLAYER.z;
-    dist = WEAPON.aiming ? 1.9 : CAM.dist;
-    CAM.fov = lerp(CAM.fov, WEAPON.aiming ? 48 : 60, dt * 6);
-  }
-  {
-    const lw = PLAYER.car ? PLAYER.car.low : PLAYER.low;
-    if (lw && lw.covered && !PLAYER.interior) dist = Math.min(dist, lw.cap ? 6.5 : lw.hw < 2 ? 2.4 : 3.6);
-  } /* v1.1.4 (Jonay, La Trinidad: «al entrar en el subsuelo la cámara se pone medio loca»): under a roof (tunnel, stairs, car park) the camera comes closer, so it does not go through the walls and the roof */
-  const cp = Math.cos(CAM.pitch),
-    sp = Math.sin(CAM.pitch);
+  bgCamera.position.copy(camera.position);
+  bgCamera.quaternion.copy(camera.quaternion);
+}
+/** (v1.1.7, code quality) part of updateCamera: collision with buildings */
+function updateCameraPart2(cp, tx, tz, dist, ty, sp, dt) {
   let bx = -Math.sin(CAM.yaw) * cp,
     bz = -Math.cos(CAM.yaw) * cp;
   const shoulder = PLAYER.car ? 0 : WEAPON.aiming ? 0.75 : 0.45;
@@ -611,13 +583,60 @@ function updateCamera(dt) {
     CAM.shake = Math.max(0, CAM.shake - dt * 2);
   }
   camera.position.copy(CAM.pos);
-  camera.lookAt(ox, ty + (PLAYER.car ? 0.2 : 0), oz);
-  if (Math.abs(camera.fov - CAM.fov) > 0.05) {
-    camera.fov = CAM.fov;
-    camera.updateProjectionMatrix();
-    bgCamera.fov = CAM.fov;
-    bgCamera.updateProjectionMatrix();
+  return { ox, oz };
+}
+/** (v1.1.7, code quality) part of updateCamera */
+function updateCameraPart1(dt) {
+  const gp = INPUT.gp;
+  let mdx = INPUT.mdx,
+    mdy = INPUT.mdy;
+  INPUT.mdx = INPUT.mdy = 0;
+  if (gp) {
+    mdx += gp.rx * 900 * dt;
+    mdy += gp.ry * 600 * dt;
+    if (gp.rx || gp.ry) INPUT.lastMouse = performance.now();
   }
-  bgCamera.position.copy(camera.position);
-  bgCamera.quaternion.copy(camera.quaternion);
+  if (INPUT.touch.look[0] || INPUT.touch.look[1]) {
+    mdx += INPUT.touch.look[0];
+    mdy += INPUT.touch.look[1];
+    INPUT.touch.look = [0, 0];
+    INPUT.lastMouse = performance.now();
+  }
+  const sens = SETTINGS.sens;
+  CAM.yaw -= mdx * 0.0023 * sens;
+  CAM.pitch = clamp(CAM.pitch + mdy * 0.0018 * sens * (SETTINGS.invertY ? -1 : 1), -0.5, 1.2);
+  if (INPUT.wheel) {
+    CAM.dist = clamp(CAM.dist + INPUT.wheel * 0.5, 2.2, 14);
+    INPUT.wheel = 0;
+  }
+  let tx, ty, tz, dist;
+  if (PLAYER.car) {
+    const car = PLAYER.car;
+    tx = car.x;
+    ty = car.y + 1.25 + Math.max(0, car.T.H - 1.5) * 0.85;
+    tz = car.z;
+    dist =
+      (car.type === 'bus' ? 12 : car.type === 'moto' ? 4.2 : 5.3 + Math.max(0, car.T.L - 4.6) * 0.9) +
+      CAM.dist * 0.3 +
+      clamp(car.speed * 0.035, 0, 1.6);
+    if (performance.now() - INPUT.lastMouse > 1300 && car.speed > 2) {
+      const moveYaw = car.fwdV >= -0.5 ? Math.atan2(car.vx, car.vz) : car.h;
+      CAM.yaw += angDiff(CAM.yaw, car.speed > 3 ? moveYaw : car.h) * clamp(dt * 2.5, 0, 1);
+      CAM.pitch = lerp(CAM.pitch, 0.18, dt * 1.5);
+    }
+    CAM.fov = lerp(CAM.fov, 62 + clamp(car.speed - 15, 0, 35) * 0.35, dt * 2);
+  } else {
+    tx = PLAYER.x;
+    ty = PLAYER.y + 1.55;
+    tz = PLAYER.z;
+    dist = WEAPON.aiming ? 1.9 : CAM.dist;
+    CAM.fov = lerp(CAM.fov, WEAPON.aiming ? 48 : 60, dt * 6);
+  }
+  {
+    const lw = PLAYER.car ? PLAYER.car.low : PLAYER.low;
+    if (lw && lw.covered && !PLAYER.interior) dist = Math.min(dist, lw.cap ? 6.5 : lw.hw < 2 ? 2.4 : 3.6);
+  } /* v1.1.4 (Jonay, La Trinidad: «al entrar en el subsuelo la cámara se pone medio loca»): under a roof (tunnel, stairs, car park) the camera comes closer, so it does not go through the walls and the roof */
+  const cp = Math.cos(CAM.pitch),
+    sp = Math.sin(CAM.pitch);
+  return { tx, ty, tz, dist, cp, sp };
 }

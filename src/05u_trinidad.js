@@ -20,43 +20,48 @@ function trinidadGeo() {
     TRI.fail = true;
     return null;
   }
-  const P = (ri, i) => [DATA.R[ri][4][i], DATA.R[ri][4][i + 1]],
-    first = (ri) => P(ri, 0),
-    last = (ri) => P(ri, DATA.R[ri][4].length - 2);
-  const near = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]) < 0.6;
-  const plaza = typeof PLAZA !== 'undefined' ? [PLAZA.x, PLAZA.z] : [0, 0];
-  const chain = (fwd) => {
-    // fwd: follow the way direction (starts at the top); else backwards (ends at the top)
-    let cur = rs.slice().sort((a, b) => {
-      const pa = fwd ? first(a) : last(a),
-        pb = fwd ? first(b) : last(b);
-      return Math.hypot(pa[0] - plaza[0], pa[1] - plaza[1]) - Math.hypot(pb[0] - plaza[0], pb[1] - plaza[1]);
-    })[0];
-    const used = new Set([cur]);
-    const pts = [];
-    const add = (ri) => {
-      const c = DATA.R[ri][4];
-      const q = [];
-      for (let i = 0; i < c.length; i += 2) q.push([c[i], c[i + 1]]);
-      if (!fwd) q.reverse();
-      for (const p of q) if (!pts.length || !near(pts[pts.length - 1], p)) pts.push(p);
-    };
-    add(cur);
-    for (;;) {
-      const end = pts[pts.length - 1];
-      const nx = rs.find((ri) => !used.has(ri) && near(fwd ? first(ri) : last(ri), end));
-      if (nx === undefined) break;
-      used.add(nx);
-      add(nx);
-    }
-    return { pts, w: DATA.R[cur][2], used };
-  };
-  const A = chain(true),
-    B = chain(false);
+  const { A, B } = trinidadGeoPart1(rs);
   if (A.pts.length < 2 || B.pts.length < 2) {
     TRI.fail = true;
     return null;
   }
+  trinidadGeoPart2(A, B);
+  // Calle Pedro Zerolo: where it meets the two carriageways
+  const pz = [];
+  DATA.R.forEach((r, ri) => {
+    if (r[1] >= 0 && STR[r[1]] === 'Calle Pedro Zerolo') pz.push(ri);
+  });
+  let jA = null,
+    jB = null;
+  for (const ri of pz) {
+    const c = DATA.R[ri][4];
+    for (let i = 0; i < c.length; i += 2) {
+      const a = A.proj(c[i], c[i + 1]),
+        b = B.proj(c[i], c[i + 1]);
+      if (a.d < 1 && (!jA || a.d < jA.d)) jA = { ...a, ri };
+      if (b.d < 1 && (!jB || b.d < jB.d)) jB = { ...b, ri };
+    }
+  }
+  if (jB && !jA) jA = A.proj(jB.px, jB.pz); // Pedro Zerolo only reaches the carriageway that comes up: the other one, straight across
+  TRI.pz = jA && jB ? { a: jA, b: jB } : null;
+  // the «Trinidad Centro» ramp (Av. Trinidad 59): on the carriageway that comes up (B), beside its pavement, starting ~14 m
+  // above the Pedro Zerolo junction and going down towards the top of the avenue; the pavement goes round it
+  if (TRI.pz) {
+    const s0 = TRI.pz.b.s - 16,
+      s1 = s0 - 46;
+    TRI.rampB = { s0, s1, v: B.out * (B.w / 2 + 2.0) };
+  }
+  // the «Casco Histórico» ramp: in the middle, from 20 m down the avenue to the hall (60 m long, centred 102 m down)
+  {
+    const m = TRI.mid(102),
+      t = TRI.mid(20);
+    TRI.hallA = { x: m.x, z: m.z, ux: m.ux, uz: m.uz, L: 60 };
+    TRI.rampA = { x0: t.x, z0: t.z, x1: m.x - m.ux * 26.5, z1: m.z - m.uz * 26.5 };
+  }
+  return TRI;
+}
+/** (v1.1.7, code quality) part of trinidadGeo: the outer side of each carriageway (the pavement, away from the other one): +1 = to the left of the travel line */
+function trinidadGeoPart2(A, B) {
   const mk = (c) => {
     const s = [0];
     for (let i = 1; i < c.pts.length; i++) s.push(s[i - 1] + Math.hypot(c.pts[i][0] - c.pts[i - 1][0], c.pts[i][1] - c.pts[i - 1][1]));
@@ -112,39 +117,43 @@ function trinidadGeo() {
       return { x: (p.x + r.px) / 2, z: (p.z + r.pz) / 2, ux: p.ux, uz: p.uz };
     }
   });
-  // Calle Pedro Zerolo: where it meets the two carriageways
-  const pz = [];
-  DATA.R.forEach((r, ri) => {
-    if (r[1] >= 0 && STR[r[1]] === 'Calle Pedro Zerolo') pz.push(ri);
-  });
-  let jA = null,
-    jB = null;
-  for (const ri of pz) {
-    const c = DATA.R[ri][4];
-    for (let i = 0; i < c.length; i += 2) {
-      const a = A.proj(c[i], c[i + 1]),
-        b = B.proj(c[i], c[i + 1]);
-      if (a.d < 1 && (!jA || a.d < jA.d)) jA = { ...a, ri };
-      if (b.d < 1 && (!jB || b.d < jB.d)) jB = { ...b, ri };
+}
+/** (v1.1.7, code quality) part of trinidadGeo: fwd: follow the way direction (starts at the top); else backwards (ends at the top) */
+function trinidadGeoPart1(rs) {
+  const P = (ri, i) => [DATA.R[ri][4][i], DATA.R[ri][4][i + 1]],
+    first = (ri) => P(ri, 0),
+    last = (ri) => P(ri, DATA.R[ri][4].length - 2);
+  const near = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]) < 0.6;
+  const plaza = typeof PLAZA !== 'undefined' ? [PLAZA.x, PLAZA.z] : [0, 0];
+  const chain = (fwd) => {
+    // fwd: follow the way direction (starts at the top); else backwards (ends at the top)
+    let cur = rs.slice().sort((a, b) => {
+      const pa = fwd ? first(a) : last(a),
+        pb = fwd ? first(b) : last(b);
+      return Math.hypot(pa[0] - plaza[0], pa[1] - plaza[1]) - Math.hypot(pb[0] - plaza[0], pb[1] - plaza[1]);
+    })[0];
+    const used = new Set([cur]);
+    const pts = [];
+    const add = (ri) => {
+      const c = DATA.R[ri][4];
+      const q = [];
+      for (let i = 0; i < c.length; i += 2) q.push([c[i], c[i + 1]]);
+      if (!fwd) q.reverse();
+      for (const p of q) if (!pts.length || !near(pts[pts.length - 1], p)) pts.push(p);
+    };
+    add(cur);
+    for (;;) {
+      const end = pts[pts.length - 1];
+      const nx = rs.find((ri) => !used.has(ri) && near(fwd ? first(ri) : last(ri), end));
+      if (nx === undefined) break;
+      used.add(nx);
+      add(nx);
     }
-  }
-  if (jB && !jA) jA = A.proj(jB.px, jB.pz); // Pedro Zerolo only reaches the carriageway that comes up: the other one, straight across
-  TRI.pz = jA && jB ? { a: jA, b: jB } : null;
-  // the «Trinidad Centro» ramp (Av. Trinidad 59): on the carriageway that comes up (B), beside its pavement, starting ~14 m
-  // above the Pedro Zerolo junction and going down towards the top of the avenue; the pavement goes round it
-  if (TRI.pz) {
-    const s0 = TRI.pz.b.s - 16,
-      s1 = s0 - 46;
-    TRI.rampB = { s0, s1, v: B.out * (B.w / 2 + 2.0) };
-  }
-  // the «Casco Histórico» ramp: in the middle, from 20 m down the avenue to the hall (60 m long, centred 102 m down)
-  {
-    const m = TRI.mid(102),
-      t = TRI.mid(20);
-    TRI.hallA = { x: m.x, z: m.z, ux: m.ux, uz: m.uz, L: 60 };
-    TRI.rampA = { x0: t.x, z0: t.z, x1: m.x - m.ux * 26.5, z1: m.z - m.uz * 26.5 };
-  }
-  return TRI;
+    return { pts, w: DATA.R[cur][2], used };
+  };
+  const A = chain(true),
+    B = chain(false);
+  return { A, B };
 }
 // in 01_core-time terms this runs before the roads are indexed: one lane + parking per carriageway, like the real one
 function trinidadWidths() {
@@ -183,56 +192,7 @@ function streetTrim(pts) {
 function trinidadFill() {
   const T = trinidadGeo();
   if (!T) return 0;
-  const boxes = DATA.B.map((b) => {
-    const c = b[6];
-    let x0 = 1e9,
-      x1 = -1e9,
-      z0 = 1e9,
-      z1 = -1e9;
-    for (let i = 0; i < c.length; i += 2) {
-      x0 = Math.min(x0, c[i]);
-      x1 = Math.max(x1, c[i]);
-      z0 = Math.min(z0, c[i + 1]);
-      z1 = Math.max(z1, c[i + 1]);
-    }
-    return [x0, x1, z0, z1];
-  });
-  const near = [];
-  DATA.B.forEach((b, i) => {
-    const bb = boxes[i];
-    const cx = (bb[0] + bb[1]) / 2,
-      cz = (bb[2] + bb[3]) / 2;
-    if (Math.min(T.A.proj(cx, cz).d, T.B.proj(cx, cz).d) < 70) near.push(i);
-  });
-  const inB = (x, z) => {
-    for (const i of near) {
-      const bb = boxes[i];
-      if (x < bb[0] || x > bb[1] || z < bb[2] || z > bb[3]) continue;
-      if (pip(x, z, DATA.B[i][6])) return true;
-    }
-    return false;
-  };
-  const BLOCK = new Set(
-    ['park', 'garden', 'pitch', 'playground', 'parking', 'square', 'sports', 'cemetery', 'water', 'forest'].map((t) => DATA.AT.indexOf(t))
-  );
-  const areas = DATA.A.filter(
-    (a) => BLOCK.has(a[0]) && a[2].length > 5 && Math.min(T.A.proj(a[2][0], a[2][1]).d, T.B.proj(a[2][0], a[2][1]).d) < 160
-  );
-  const inArea = (x, z) => areas.some((a) => pip(x, z, a[2]));
-  const tramNear = (x, z, m) => {
-    const t = DATA.T;
-    for (let i = 0; i < t.length - 2; i += 2) {
-      const dx = t[i + 2] - t[i],
-        dz = t[i + 3] - t[i + 1],
-        L2 = dx * dx + dz * dz || 1;
-      const u = clamp(((x - t[i]) * dx + (z - t[i + 1]) * dz) / L2, 0, 1);
-      if (Math.hypot(x - t[i] - dx * u, z - t[i + 1] - dz * u) < m) return true;
-    }
-    return false;
-  };
-  const hit = (rd) => !!rd && rd.d < DATA.R[rd.ri][2] / 2 + 1.6;
-  const onRoad = (x, z) => hit(ROADSEG.nearest(x, z, (r) => r[0] <= 12)) || hit(ROADSEG.nearest(x, z));
-  const free = (x, z) => !inB(x, z) && !onRoad(x, z) && !inArea(x, z) && !tramNear(x, z, 5) && Math.min(T.A.proj(x, z).d, T.B.proj(x, z).d) > 5.5;
+  const { boxes, near, free } = trinidadFillPart1(T);
   let added = 0;
   let seed = 7;
   const rr = () => {
@@ -313,6 +273,60 @@ function trinidadFill() {
   TRI.added = added;
   return added;
 }
+/** (v1.1.7, code quality) part of trinidadFill */
+function trinidadFillPart1(T) {
+  const boxes = DATA.B.map((b) => {
+    const c = b[6];
+    let x0 = 1e9,
+      x1 = -1e9,
+      z0 = 1e9,
+      z1 = -1e9;
+    for (let i = 0; i < c.length; i += 2) {
+      x0 = Math.min(x0, c[i]);
+      x1 = Math.max(x1, c[i]);
+      z0 = Math.min(z0, c[i + 1]);
+      z1 = Math.max(z1, c[i + 1]);
+    }
+    return [x0, x1, z0, z1];
+  });
+  const near = [];
+  DATA.B.forEach((b, i) => {
+    const bb = boxes[i];
+    const cx = (bb[0] + bb[1]) / 2,
+      cz = (bb[2] + bb[3]) / 2;
+    if (Math.min(T.A.proj(cx, cz).d, T.B.proj(cx, cz).d) < 70) near.push(i);
+  });
+  const inB = (x, z) => {
+    for (const i of near) {
+      const bb = boxes[i];
+      if (x < bb[0] || x > bb[1] || z < bb[2] || z > bb[3]) continue;
+      if (pip(x, z, DATA.B[i][6])) return true;
+    }
+    return false;
+  };
+  const BLOCK = new Set(
+    ['park', 'garden', 'pitch', 'playground', 'parking', 'square', 'sports', 'cemetery', 'water', 'forest'].map((t) => DATA.AT.indexOf(t))
+  );
+  const areas = DATA.A.filter(
+    (a) => BLOCK.has(a[0]) && a[2].length > 5 && Math.min(T.A.proj(a[2][0], a[2][1]).d, T.B.proj(a[2][0], a[2][1]).d) < 160
+  );
+  const inArea = (x, z) => areas.some((a) => pip(x, z, a[2]));
+  const tramNear = (x, z, m) => {
+    const t = DATA.T;
+    for (let i = 0; i < t.length - 2; i += 2) {
+      const dx = t[i + 2] - t[i],
+        dz = t[i + 3] - t[i + 1],
+        L2 = dx * dx + dz * dz || 1;
+      const u = clamp(((x - t[i]) * dx + (z - t[i + 1]) * dz) / L2, 0, 1);
+      if (Math.hypot(x - t[i] - dx * u, z - t[i + 1] - dz * u) < m) return true;
+    }
+    return false;
+  };
+  const hit = (rd) => !!rd && rd.d < DATA.R[rd.ri][2] / 2 + 1.6;
+  const onRoad = (x, z) => hit(ROADSEG.nearest(x, z, (r) => r[0] <= 12)) || hit(ROADSEG.nearest(x, z));
+  const free = (x, z) => !inB(x, z) && !onRoad(x, z) && !inArea(x, z) && !tramNear(x, z, 5) && Math.min(T.A.proj(x, z).d, T.B.proj(x, z).d) > 5.5;
+  return { boxes, near, free };
+}
 // the median islands stay off the «Casco Histórico» ramp (buildMedians runs before the car parks)
 function triRampZone(x, z, R = 4.6) {
   /* v1.1.4: R (was a fixed 4.2; the ramp is wider now) */ const T = trinidadGeo();
@@ -386,6 +400,164 @@ const zebra = (x, w, h, k) => {
 function trinidadParking() {
   const T = trinidadGeo();
   if (!T) return;
+  const { blue, frame, stairs, DEPTH, r, B } = trinidadParkingPart1(T);
+  const { nB, botB, topB, N, segs } = trinidadParkingPart2(r, B, T, DEPTH, frame);
+  trinidadParkingPart3(segs, botB, stairs, topB, blue, T);
+  // one deck along the whole chain (walls only at its two ends)
+  TUNNEL_DECKS.push({
+    type: 'path',
+    pts: N.map((p) => [p.x, p.z, p.y + 0.12]),
+    w: 31,
+    hw: 15.35,
+    road: true,
+    tunnel: true,
+    capped: true,
+    ceil: 3.2,
+    hall: true
+  });
+  if (r) {
+    const nx = nB[0],
+      nz = nB[1];
+    // the yellow box grid in front of the ramp mouth
+    const g0 = B.at(r.s0 + 4),
+      gv = B.out * (B.w / 2 - 1.6);
+    triDecal(g0.x + nx * gv, g0.z + nz * gv, -g0.ux, -g0.uz, 8, 3.2, (x, w, h, k) => yellowBox(x, w, h, k));
+  }
+  // Pedro Zerolo: yellow box grid where the tram crosses between the carriageways, zebra crossings on both carriageways
+  if (T.pz) {
+    const a = T.pz.a,
+      b = T.pz.b;
+    const cx = (a.px + b.px) / 2,
+      cz = (a.pz + b.pz) / 2;
+    const dx = b.px - a.px,
+      dz = b.pz - a.pz,
+      L = Math.hypot(dx, dz) || 1;
+    const along = T.A.at(a.s);
+    triDecal(cx, cz, along.ux, along.uz, 12, Math.max(4, L - T.A.w - 0.6), (x, w, h, k) => yellowBox(x, w, h, k));
+    for (const [c, j] of [
+      [T.A, a],
+      [T.B, b]
+    ])
+      for (const ds of [-6, 6]) {
+        const p = c.at(j.s + ds);
+        triDecal(p.x, p.z, p.ux, p.uz, 3.2, c.w - 0.4, (x, w, h, k) => zebra(x, w, h, k));
+      }
+    const pzr = DATA.R[b.ri][4];
+    const st = Math.hypot(pzr[0] - b.px, pzr[1] - b.pz) < 2 ? 0 : pzr.length - 2;
+    const nxt = st === 0 ? 2 : pzr.length - 4;
+    const ux = pzr[nxt] - pzr[st],
+      uz = pzr[nxt + 1] - pzr[st + 1],
+      Lp = Math.hypot(ux, uz) || 1;
+    const q = [b.px + (ux / Lp) * (T.B.w / 2 + 3.5), b.pz + (uz / Lp) * (T.B.w / 2 + 3.5)];
+    triDecal(q[0], q[1], ux / Lp, uz / Lp, 3.2, DATA.R[b.ri][2] - 0.4, (x, w, h, k) => zebra(x, w, h, k));
+  }
+}
+/** (v1.1.7, code quality) part of trinidadParking */
+function trinidadParkingPart3(segs, botB, stairs, topB, blue, T) {
+  const toV = (F, x, z) => -(x - F.cx) * F.uz + (z - F.cz) * F.ux,
+    toU = (F, x, z) => (x - F.cx) * F.ux + (z - F.cz) * F.uz;
+  const name = 'Trinidad',
+    last = segs.length - 1;
+  for (const sg of segs) {
+    const { F, L } = sg;
+    const first = sg.k === 0,
+      end = sg.k === last;
+    const vR = end && botB ? toV(F, botB[0], botB[1]) : 0;
+    const found = sg.k % 2 === 0 || end ? stairs(F, L, sg.y0, end ? vR : 99, end ? L / 2 - 3.5 : first ? -L / 2 + 3.5 : 999) : [];
+    const gaps = [];
+    if (first) gaps.push(['u-', 0, 4.2 + 1.6]);
+    else gaps.push(['u-', 0, 31]);
+    if (end) {
+      if (botB) gaps.push(['u+', vR, 3.8 + 1.6]);
+    } else gaps.push(['u+', 0, 31]);
+    for (const f of found) {
+      const vb = f.v + f.dv * 11.5;
+      if (Math.abs(vb) > 14) gaps.push([f.v > 0 ? 'v+' : 'v-', f.ue, 2.6]);
+    }
+    const holes = found.map((f) => {
+      const p = F.W(f.u, f.v);
+      return stairHole(F, 0, p[0], p[1], F.ux * f.du - F.uz * f.dv, F.uz * f.du + F.ux * f.dv);
+    });
+    const hr = buildHall(F, 0, L, sg.y0, name, gaps, holes, { y1: sg.y1, deck: false, density: 0.16 });
+    for (const f of found) {
+      const p = F.W(f.u, f.v);
+      const vb = f.v + f.dv * 11.5;
+      const corr = Math.abs(vb) > 14 ? F.W(f.ue, Math.sign(f.v) * 14.5) : null;
+      const dx = F.ux * f.du - F.uz * f.dv,
+        dz = F.uz * f.du + F.ux * f.dv;
+      buildStairwell(p[0], p[1], dx, dz, hr.yAt(corr ? f.ue : f.u + f.du * 10), corr);
+    }
+    if (first) {
+      const bot = F.W(-L / 2 + 3.5, 0);
+      buildRamp(
+        T.rampA.x0,
+        T.rampA.z0,
+        bot[0],
+        bot[1],
+        hr.yAt(-L / 2 + 3.5),
+        'TRINIDAD CASCO HISTÓRICO',
+        {
+          w: 6.4,
+          wc: blue
+        } /* v1.1.4 (Jonay: «la entrada al parking de La Trinidad es muy estrecha… en realidad la bajada también es salida, caben sobrados dos coches»): two lanes */
+      );
+    }
+    if (end && botB) buildRamp(topB[0], topB[1], botB[0], botB[1], hr.yAt(toU(F, botB[0], botB[1])), 'TRINIDAD CENTRO', { w: 3.8, wc: blue });
+    CARPARKS.push({ name: 'Parking ' + name, x: F.cx, z: F.cz, F, uc: 0, L, yF: Math.min(sg.y0, sg.y1) });
+  }
+}
+/** (v1.1.7, code quality) part of trinidadParking */
+function trinidadParkingPart2(r, B, T, DEPTH, frame) {
+  const t0 = r ? B.at(r.s0) : null,
+    t1 = r ? B.at(r.s1) : null;
+  const nB = t1 ? [-t1.uz, t1.ux] : null;
+  const botB = r ? [t1.x + nB[0] * r.v, t1.z + nB[1] * r.v] : null,
+    topB = r ? [t0.x + nB[0] * r.v, t0.z + nB[1] * r.v] : null;
+  const sA = 72,
+    sE = r ? T.A.proj(B.at(r.s1 + 3.5).x, B.at(r.s1 + 3.5).z).s : 132;
+  const nSeg = Math.max(1, Math.round((sE - sA) / 60));
+  const node = (s) => T.mid(s);
+  const N = [];
+  for (let k = 0; k <= nSeg; k++) {
+    const s = sA + ((sE - sA) * k) / nSeg;
+    const m = node(s);
+    N.push({ s, x: m.x, z: m.z });
+  }
+  const gmin = (x, z, ux, uz) => {
+    let g = 1e9;
+    for (let a = -24; a <= 24; a += 6) for (let v = -15.5; v <= 15.5; v += 5.15) g = Math.min(g, heightAt(x + ux * a - uz * v, z + uz * a + ux * v));
+    return g;
+  };
+  for (let k = 0; k < N.length; k++) {
+    const a = N[Math.max(0, k - 1)],
+      b = N[Math.min(N.length - 1, k + 1)],
+      L = Math.hypot(b.x - a.x, b.z - a.z) || 1;
+    N[k].y = gmin(N[k].x, N[k].z, (b.x - a.x) / L, (b.z - a.z) / L) - DEPTH;
+  }
+  for (let pass = 0; pass < 2; pass++)
+    for (let k = 1; k < N.length; k++) {
+      const d = Math.hypot(N[k].x - N[k - 1].x, N[k].z - N[k - 1].z),
+        lim = d * 0.06;
+      N[k].y = clamp(N[k].y, N[k - 1].y - lim, N[k - 1].y + lim);
+      N[k - 1].y = Math.min(N[k - 1].y, N[k].y + lim);
+    } // never steeper than 6 %, and only ever deeper
+  const segs = [];
+  for (let k = 0; k < nSeg; k++) {
+    const a = N[k],
+      b = N[k + 1];
+    const L0 = Math.hypot(b.x - a.x, b.z - a.z),
+      ux = (b.x - a.x) / L0,
+      uz = (b.z - a.z) / L0;
+    const e0 = k > 0 ? 1 : 0,
+      e1 = k < nSeg - 1 ? 1 : 0; // internal joints overlap 1 m each side (no slit at the bends)
+    const L = L0 + e0 + e1,
+      F = frame((a.x + b.x) / 2 + (ux * (e1 - e0)) / 2, (a.z + b.z) / 2 + (uz * (e1 - e0)) / 2, ux, uz);
+    segs.push({ F, L, y0: a.y - ((b.y - a.y) * e0) / L0, y1: b.y + ((b.y - a.y) * e1) / L0, k });
+  }
+  return { nB, botB, topB, N, segs };
+}
+/** (v1.1.7, code quality) part of trinidadParking: pedestrian stairwells on real pavement, one each side if possible */
+function trinidadParkingPart1(T) {
   const blue = [0.12, 0.38, 0.75];
   const depthAt = (F, L) => {
     let gmin = 1e9;
@@ -441,151 +613,7 @@ function trinidadParking() {
   const DEPTH = 7.0,
     r = T.rampB,
     B = T.B;
-  const t0 = r ? B.at(r.s0) : null,
-    t1 = r ? B.at(r.s1) : null;
-  const nB = t1 ? [-t1.uz, t1.ux] : null;
-  const botB = r ? [t1.x + nB[0] * r.v, t1.z + nB[1] * r.v] : null,
-    topB = r ? [t0.x + nB[0] * r.v, t0.z + nB[1] * r.v] : null;
-  const sA = 72,
-    sE = r ? T.A.proj(B.at(r.s1 + 3.5).x, B.at(r.s1 + 3.5).z).s : 132;
-  const nSeg = Math.max(1, Math.round((sE - sA) / 60));
-  const node = (s) => T.mid(s);
-  const N = [];
-  for (let k = 0; k <= nSeg; k++) {
-    const s = sA + ((sE - sA) * k) / nSeg;
-    const m = node(s);
-    N.push({ s, x: m.x, z: m.z });
-  }
-  const gmin = (x, z, ux, uz) => {
-    let g = 1e9;
-    for (let a = -24; a <= 24; a += 6) for (let v = -15.5; v <= 15.5; v += 5.15) g = Math.min(g, heightAt(x + ux * a - uz * v, z + uz * a + ux * v));
-    return g;
-  };
-  for (let k = 0; k < N.length; k++) {
-    const a = N[Math.max(0, k - 1)],
-      b = N[Math.min(N.length - 1, k + 1)],
-      L = Math.hypot(b.x - a.x, b.z - a.z) || 1;
-    N[k].y = gmin(N[k].x, N[k].z, (b.x - a.x) / L, (b.z - a.z) / L) - DEPTH;
-  }
-  for (let pass = 0; pass < 2; pass++)
-    for (let k = 1; k < N.length; k++) {
-      const d = Math.hypot(N[k].x - N[k - 1].x, N[k].z - N[k - 1].z),
-        lim = d * 0.06;
-      N[k].y = clamp(N[k].y, N[k - 1].y - lim, N[k - 1].y + lim);
-      N[k - 1].y = Math.min(N[k - 1].y, N[k].y + lim);
-    } // never steeper than 6 %, and only ever deeper
-  const segs = [];
-  for (let k = 0; k < nSeg; k++) {
-    const a = N[k],
-      b = N[k + 1];
-    const L0 = Math.hypot(b.x - a.x, b.z - a.z),
-      ux = (b.x - a.x) / L0,
-      uz = (b.z - a.z) / L0;
-    const e0 = k > 0 ? 1 : 0,
-      e1 = k < nSeg - 1 ? 1 : 0; // internal joints overlap 1 m each side (no slit at the bends)
-    const L = L0 + e0 + e1,
-      F = frame((a.x + b.x) / 2 + (ux * (e1 - e0)) / 2, (a.z + b.z) / 2 + (uz * (e1 - e0)) / 2, ux, uz);
-    segs.push({ F, L, y0: a.y - ((b.y - a.y) * e0) / L0, y1: b.y + ((b.y - a.y) * e1) / L0, k });
-  }
-  const toV = (F, x, z) => -(x - F.cx) * F.uz + (z - F.cz) * F.ux,
-    toU = (F, x, z) => (x - F.cx) * F.ux + (z - F.cz) * F.uz;
-  const name = 'Trinidad',
-    last = segs.length - 1;
-  for (const sg of segs) {
-    const { F, L } = sg;
-    const first = sg.k === 0,
-      end = sg.k === last;
-    const vR = end && botB ? toV(F, botB[0], botB[1]) : 0;
-    const found = sg.k % 2 === 0 || end ? stairs(F, L, sg.y0, end ? vR : 99, end ? L / 2 - 3.5 : first ? -L / 2 + 3.5 : 999) : [];
-    const gaps = [];
-    if (first) gaps.push(['u-', 0, 4.2 + 1.6]);
-    else gaps.push(['u-', 0, 31]);
-    if (end) {
-      if (botB) gaps.push(['u+', vR, 3.8 + 1.6]);
-    } else gaps.push(['u+', 0, 31]);
-    for (const f of found) {
-      const vb = f.v + f.dv * 11.5;
-      if (Math.abs(vb) > 14) gaps.push([f.v > 0 ? 'v+' : 'v-', f.ue, 2.6]);
-    }
-    const holes = found.map((f) => {
-      const p = F.W(f.u, f.v);
-      return stairHole(F, 0, p[0], p[1], F.ux * f.du - F.uz * f.dv, F.uz * f.du + F.ux * f.dv);
-    });
-    const hr = buildHall(F, 0, L, sg.y0, name, gaps, holes, { y1: sg.y1, deck: false, density: 0.16 });
-    for (const f of found) {
-      const p = F.W(f.u, f.v);
-      const vb = f.v + f.dv * 11.5;
-      const corr = Math.abs(vb) > 14 ? F.W(f.ue, Math.sign(f.v) * 14.5) : null;
-      const dx = F.ux * f.du - F.uz * f.dv,
-        dz = F.uz * f.du + F.ux * f.dv;
-      buildStairwell(p[0], p[1], dx, dz, hr.yAt(corr ? f.ue : f.u + f.du * 10), corr);
-    }
-    if (first) {
-      const bot = F.W(-L / 2 + 3.5, 0);
-      buildRamp(
-        T.rampA.x0,
-        T.rampA.z0,
-        bot[0],
-        bot[1],
-        hr.yAt(-L / 2 + 3.5),
-        'TRINIDAD CASCO HISTÓRICO',
-        {
-          w: 6.4,
-          wc: blue
-        } /* v1.1.4 (Jonay: «la entrada al parking de La Trinidad es muy estrecha… en realidad la bajada también es salida, caben sobrados dos coches»): two lanes */
-      );
-    }
-    if (end && botB) buildRamp(topB[0], topB[1], botB[0], botB[1], hr.yAt(toU(F, botB[0], botB[1])), 'TRINIDAD CENTRO', { w: 3.8, wc: blue });
-    CARPARKS.push({ name: 'Parking ' + name, x: F.cx, z: F.cz, F, uc: 0, L, yF: Math.min(sg.y0, sg.y1) });
-  }
-  // one deck along the whole chain (walls only at its two ends)
-  TUNNEL_DECKS.push({
-    type: 'path',
-    pts: N.map((p) => [p.x, p.z, p.y + 0.12]),
-    w: 31,
-    hw: 15.35,
-    road: true,
-    tunnel: true,
-    capped: true,
-    ceil: 3.2,
-    hall: true
-  });
-  if (r) {
-    const nx = nB[0],
-      nz = nB[1];
-    // the yellow box grid in front of the ramp mouth
-    const g0 = B.at(r.s0 + 4),
-      gv = B.out * (B.w / 2 - 1.6);
-    triDecal(g0.x + nx * gv, g0.z + nz * gv, -g0.ux, -g0.uz, 8, 3.2, (x, w, h, k) => yellowBox(x, w, h, k));
-  }
-  // Pedro Zerolo: yellow box grid where the tram crosses between the carriageways, zebra crossings on both carriageways
-  if (T.pz) {
-    const a = T.pz.a,
-      b = T.pz.b;
-    const cx = (a.px + b.px) / 2,
-      cz = (a.pz + b.pz) / 2;
-    const dx = b.px - a.px,
-      dz = b.pz - a.pz,
-      L = Math.hypot(dx, dz) || 1;
-    const along = T.A.at(a.s);
-    triDecal(cx, cz, along.ux, along.uz, 12, Math.max(4, L - T.A.w - 0.6), (x, w, h, k) => yellowBox(x, w, h, k));
-    for (const [c, j] of [
-      [T.A, a],
-      [T.B, b]
-    ])
-      for (const ds of [-6, 6]) {
-        const p = c.at(j.s + ds);
-        triDecal(p.x, p.z, p.ux, p.uz, 3.2, c.w - 0.4, (x, w, h, k) => zebra(x, w, h, k));
-      }
-    const pzr = DATA.R[b.ri][4];
-    const st = Math.hypot(pzr[0] - b.px, pzr[1] - b.pz) < 2 ? 0 : pzr.length - 2;
-    const nxt = st === 0 ? 2 : pzr.length - 4;
-    const ux = pzr[nxt] - pzr[st],
-      uz = pzr[nxt + 1] - pzr[st + 1],
-      Lp = Math.hypot(ux, uz) || 1;
-    const q = [b.px + (ux / Lp) * (T.B.w / 2 + 3.5), b.pz + (uz / Lp) * (T.B.w / 2 + 3.5)];
-    triDecal(q[0], q[1], ux / Lp, uz / Lp, 3.2, DATA.R[b.ri][2] - 0.4, (x, w, h, k) => zebra(x, w, h, k));
-  }
+  return { blue, frame, stairs, DEPTH, r, B };
 }
 // ---------- soportales: pillars along the facade facing the avenue (Dialprix block and n.º 76)
 function trinidadArcades() {

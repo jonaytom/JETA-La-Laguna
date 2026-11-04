@@ -720,38 +720,7 @@ const FUTBOL2D = (() => {
     return c[0];
   }
   function stepBall(dt) {
-    const b = st.ball;
-    if (b.owner) {
-      const p = b.owner;
-      if (p.role === 'gk') p.dir = p.team === 0 ? -Math.PI / 2 : Math.PI / 2;
-      const ax = p.x + Math.cos(p.dir) * 0.55,
-        ay = p.y + Math.sin(p.dir) * 0.55;
-      const k = Math.min(1, 14 * dt);
-      b.x += (ax - b.x) * k;
-      b.y += (ay - b.y) * k;
-      b.z = 0;
-      b.vx = p.vx;
-      b.vy = p.vy;
-    } else {
-      if (b.curveT > 0) {
-        b.curveT -= dt;
-        const sp = Math.hypot(b.vx, b.vy) || 1;
-        b.vx += (-b.vy / sp) * b.curve * dt;
-        b.vy += (b.vx / sp) * b.curve * dt;
-      }
-      b.x += b.vx * dt;
-      b.y += b.vy * dt;
-      b.z += b.vz * dt;
-      if (b.z > 0) b.vz -= 9.8 * dt;
-      if (b.z <= 0) {
-        b.z = 0;
-        if (b.vz < -1.5) b.vz = -b.vz * 0.45;
-        else b.vz = 0;
-      }
-      const fr = b.z > 0.05 ? 0.15 : 1.0;
-      b.vx -= b.vx * fr * dt;
-      b.vy -= b.vy * fr * dt;
-    }
+    const { b } = stepBallPart1(dt);
     // the goal, the posts and the lines
     if (st.sp && b.owner === st.sp.p) return; // a throw-in / corner taker stands on the line with the ball in his hands
     for (const t of [0, 1]) {
@@ -798,6 +767,42 @@ const FUTBOL2D = (() => {
         return;
       }
     }
+  }
+  /** (v1.1.7, code quality) part of stepBall */
+  function stepBallPart1(dt) {
+    const b = st.ball;
+    if (b.owner) {
+      const p = b.owner;
+      if (p.role === 'gk') p.dir = p.team === 0 ? -Math.PI / 2 : Math.PI / 2;
+      const ax = p.x + Math.cos(p.dir) * 0.55,
+        ay = p.y + Math.sin(p.dir) * 0.55;
+      const k = Math.min(1, 14 * dt);
+      b.x += (ax - b.x) * k;
+      b.y += (ay - b.y) * k;
+      b.z = 0;
+      b.vx = p.vx;
+      b.vy = p.vy;
+    } else {
+      if (b.curveT > 0) {
+        b.curveT -= dt;
+        const sp = Math.hypot(b.vx, b.vy) || 1;
+        b.vx += (-b.vy / sp) * b.curve * dt;
+        b.vy += (b.vx / sp) * b.curve * dt;
+      }
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+      b.z += b.vz * dt;
+      if (b.z > 0) b.vz -= 9.8 * dt;
+      if (b.z <= 0) {
+        b.z = 0;
+        if (b.vz < -1.5) b.vz = -b.vz * 0.45;
+        else b.vz = 0;
+      }
+      const fr = b.z > 0.05 ? 0.15 : 1.0;
+      b.vx -= b.vx * fr * dt;
+      b.vy -= b.vy * fr * dt;
+    }
+    return { b };
   }
   function outOfPlay(kind, t) {
     // simple restarts: throw-in / corner / goal kick to the right team, after a short pause
@@ -963,6 +968,28 @@ const FUTBOL2D = (() => {
       st.pause -= dt;
       return;
     }
+    const { b, me } = stepPart1(dt);
+    if (
+      !st.auto &&
+      !st.sp &&
+      me &&
+      b.owner &&
+      b.owner.team === 1 &&
+      b.owner.role !== 'gk' &&
+      me.down <= 0 &&
+      me.kickCD <= 0 &&
+      !(b.owner.drib > 0) &&
+      Math.hypot(b.x - me.x, b.y - me.y) < 0.6 &&
+      Math.random() < dt * 2.5
+    ) {
+      b.owner.kickCD = 0.6;
+      give(me);
+      if (st.ev) st.ev.tackle = true;
+    }
+    stepBall(dt);
+  }
+  /** (v1.1.7, code quality) part of step: who you control: the one with the ball, or the nearest to it (with a margin so it doesn't flicker) */
+  function stepPart1(dt) {
     if (st.tut) tutorial(dt);
     else if (!st.golden) {
       st.clock -= dt;
@@ -1005,24 +1032,7 @@ const FUTBOL2D = (() => {
     } // the drum of the stand, now and then
     // running into the ball takes it off the rival (you: easily; the CPU only by tackling)
     const me = st.ctl;
-    if (
-      !st.auto &&
-      !st.sp &&
-      me &&
-      b.owner &&
-      b.owner.team === 1 &&
-      b.owner.role !== 'gk' &&
-      me.down <= 0 &&
-      me.kickCD <= 0 &&
-      !(b.owner.drib > 0) &&
-      Math.hypot(b.x - me.x, b.y - me.y) < 0.6 &&
-      Math.random() < dt * 2.5
-    ) {
-      b.owner.kickCD = 0.6;
-      give(me);
-      if (st.ev) st.ev.tackle = true;
-    }
-    stepBall(dt);
+    return { b, me };
   }
   // ---------- tutorial (first game, against the seminarians who stand still)
   const K_ = (id) => CONTROLS.keyName(id);
@@ -1086,6 +1096,53 @@ const FUTBOL2D = (() => {
   function drawBg() {
     // the whole pitch once: striped grass, lines, goals with nets, ad boards and the stands at the sides
     if (bgCache) return bgCache;
+    const { c, x } = drawBgPart1();
+    x.moveTo(sxp(0), syw(PL / 2));
+    x.lineTo(sxp(PW), syw(PL / 2));
+    x.stroke();
+    x.beginPath();
+    x.arc(sxp(PW / 2), syw(PL / 2), 6 * S, 0, 7);
+    x.stroke();
+    x.fillStyle = '#f4f4ee';
+    x.fillRect(sxp(PW / 2) - 1, syw(PL / 2) - 1, 2, 2);
+    for (const t of [0, 1]) {
+      const y0 = t ? PL : 0,
+        sg = t ? -1 : 1;
+      x.strokeRect(sxp(PW / 2 - 11), syw(Math.min(y0, y0 + sg * 11)), 22 * S, 11 * S);
+      x.strokeRect(sxp(PW / 2 - 5), syw(Math.min(y0, y0 + sg * 4)), 10 * S, 4 * S);
+      x.fillRect(sxp(PW / 2) - 1, syw(y0 + sg * 8) - 1, 2, 2);
+      x.beginPath();
+      x.arc(sxp(PW / 2), syw(y0 + sg * 8), 6 * S, t ? Math.PI * 1.2 : Math.PI * 0.2, t ? Math.PI * 1.8 : Math.PI * 0.8);
+      x.stroke();
+      // the goal: net behind the line, white posts
+      const gy0 = t ? syw(PL) : syw(0) - 2.2 * S;
+      x.fillStyle = 'rgba(255,255,255,0.18)';
+      x.fillRect(sxp(PW / 2 - GW / 2), gy0, GW * S, 2.2 * S);
+      x.strokeStyle = 'rgba(255,255,255,0.45)';
+      x.lineWidth = 0.5;
+      for (let k = 0; k <= GW * S; k += 3) {
+        x.beginPath();
+        x.moveTo(sxp(PW / 2 - GW / 2) + k, gy0);
+        x.lineTo(sxp(PW / 2 - GW / 2) + k, gy0 + 2.2 * S);
+        x.stroke();
+      }
+      for (let k = 0; k <= 2.2 * S; k += 3) {
+        x.beginPath();
+        x.moveTo(sxp(PW / 2 - GW / 2), gy0 + k);
+        x.lineTo(sxp(PW / 2 + GW / 2), gy0 + k);
+        x.stroke();
+      }
+      x.fillStyle = '#fff';
+      x.fillRect(sxp(PW / 2 - GW / 2) - 1, gy0, 2, 2.2 * S);
+      x.fillRect(sxp(PW / 2 + GW / 2) - 1, gy0, 2, 2.2 * S);
+      x.strokeStyle = '#f4f4ee';
+      x.lineWidth = 1.2;
+    }
+    bgCache = c;
+    return c;
+  }
+  /** (v1.1.7, code quality) part of drawBg: stands and ad boards beside the pitch */
+  function drawBgPart1() {
     const c = mkCanvas(W * BR, BGH * BR),
       x = c.getContext('2d');
     x.scale(BR, BR);
@@ -1141,49 +1198,7 @@ const FUTBOL2D = (() => {
     x.lineWidth = 1.2;
     x.strokeRect(sxp(0), syw(0), PW * S, PL * S);
     x.beginPath();
-    x.moveTo(sxp(0), syw(PL / 2));
-    x.lineTo(sxp(PW), syw(PL / 2));
-    x.stroke();
-    x.beginPath();
-    x.arc(sxp(PW / 2), syw(PL / 2), 6 * S, 0, 7);
-    x.stroke();
-    x.fillStyle = '#f4f4ee';
-    x.fillRect(sxp(PW / 2) - 1, syw(PL / 2) - 1, 2, 2);
-    for (const t of [0, 1]) {
-      const y0 = t ? PL : 0,
-        sg = t ? -1 : 1;
-      x.strokeRect(sxp(PW / 2 - 11), syw(Math.min(y0, y0 + sg * 11)), 22 * S, 11 * S);
-      x.strokeRect(sxp(PW / 2 - 5), syw(Math.min(y0, y0 + sg * 4)), 10 * S, 4 * S);
-      x.fillRect(sxp(PW / 2) - 1, syw(y0 + sg * 8) - 1, 2, 2);
-      x.beginPath();
-      x.arc(sxp(PW / 2), syw(y0 + sg * 8), 6 * S, t ? Math.PI * 1.2 : Math.PI * 0.2, t ? Math.PI * 1.8 : Math.PI * 0.8);
-      x.stroke();
-      // the goal: net behind the line, white posts
-      const gy0 = t ? syw(PL) : syw(0) - 2.2 * S;
-      x.fillStyle = 'rgba(255,255,255,0.18)';
-      x.fillRect(sxp(PW / 2 - GW / 2), gy0, GW * S, 2.2 * S);
-      x.strokeStyle = 'rgba(255,255,255,0.45)';
-      x.lineWidth = 0.5;
-      for (let k = 0; k <= GW * S; k += 3) {
-        x.beginPath();
-        x.moveTo(sxp(PW / 2 - GW / 2) + k, gy0);
-        x.lineTo(sxp(PW / 2 - GW / 2) + k, gy0 + 2.2 * S);
-        x.stroke();
-      }
-      for (let k = 0; k <= 2.2 * S; k += 3) {
-        x.beginPath();
-        x.moveTo(sxp(PW / 2 - GW / 2), gy0 + k);
-        x.lineTo(sxp(PW / 2 + GW / 2), gy0 + k);
-        x.stroke();
-      }
-      x.fillStyle = '#fff';
-      x.fillRect(sxp(PW / 2 - GW / 2) - 1, gy0, 2, 2.2 * S);
-      x.fillRect(sxp(PW / 2 + GW / 2) - 1, gy0, 2, 2.2 * S);
-      x.strokeStyle = '#f4f4ee';
-      x.lineWidth = 1.2;
-    }
-    bgCache = c;
-    return c;
+    return { c, x };
   }
   const sy = (y) => syw(y) - camY;
   // ---------- v0.88 (Jonay: «el F2 está muy bien, lo incorporamos así»): the little man drawn on whole pixels of the real
@@ -1230,30 +1245,7 @@ const FUTBOL2D = (() => {
       ox = SZ / 2,
       oy = SZ - 20,
       hk = 1.3;
-    const Rr = (x, y, w, h, col) => {
-      g.fillStyle = col;
-      g.fillRect(Math.round(ox + x), Math.round(oy + y), Math.max(1, Math.round(w)), Math.max(1, Math.round(h)));
-    };
-    const sh = (h, t) => mixC(h, '#1e1028', t),
-      lt = (h, t) => mixC(h, '#fff6e6', t),
-      side = view === 'side',
-      up = view === 'up';
-    // v0.88.1 (Jonay): the tackle with one leg stretched out and the other bent, and the keeper's dive with the arms out
-    // in front; both drawn lying down, facing right (x forward, y up negative), and the same outline below
-    const sideHead = (x0, y0) => {
-      const hw = 13,
-        hh = 13;
-      Rr(x0, y0, hw, hh, sk);
-      Rr(x0, y0 + hh - 1, hw, 1, sh(sk, 0.35));
-      Rr(x0, y0 - 1, hw, 4, hr);
-      Rr(x0, y0 - 1, 4, hh - 3, hr);
-      Rr(x0 + 3, y0, 3, 1, lt(hr, 0.25));
-      Rr(x0 + hw - 3, y0 + 5, 1, 2, '#f2eee6');
-      Rr(x0 + hw - 2, y0 + 5, 1, 2, '#1a1010');
-      Rr(x0 + hw - 4, y0 + 3, 3, 1, sh(hr, 0.2));
-      Rr(x0 + hw, y0 + 6, 1, 2, sk);
-      Rr(x0 + hw - 3, y0 + 9, 2, 1, sh(sk, 0.45));
-    };
+    const { Rr, sh, lt, side, up, sideHead } = manSpritePart1(view, g, ox, oy, sk, hr);
     const boot = (x, y) => {
       Rr(x, y, 7, 4, '#141414');
       Rr(x, y + 3, 7, 1, '#e8e4dc');
@@ -1412,6 +1404,34 @@ const FUTBOL2D = (() => {
     SPR.set(key, o);
     return o;
   }
+  /** (v1.1.7, code quality) part of manSprite: v0.88.1 (Jonay): the tackle with one leg stretched out and the other bent, and the keeper's dive with the arms out */
+  function manSpritePart1(view, g, ox, oy, sk, hr) {
+    const Rr = (x, y, w, h, col) => {
+      g.fillStyle = col;
+      g.fillRect(Math.round(ox + x), Math.round(oy + y), Math.max(1, Math.round(w)), Math.max(1, Math.round(h)));
+    };
+    const sh = (h, t) => mixC(h, '#1e1028', t),
+      lt = (h, t) => mixC(h, '#fff6e6', t),
+      side = view === 'side',
+      up = view === 'up';
+    // v0.88.1 (Jonay): the tackle with one leg stretched out and the other bent, and the keeper's dive with the arms out
+    // in front; both drawn lying down, facing right (x forward, y up negative), and the same outline below
+    const sideHead = (x0, y0) => {
+      const hw = 13,
+        hh = 13;
+      Rr(x0, y0, hw, hh, sk);
+      Rr(x0, y0 + hh - 1, hw, 1, sh(sk, 0.35));
+      Rr(x0, y0 - 1, hw, 4, hr);
+      Rr(x0, y0 - 1, 4, hh - 3, hr);
+      Rr(x0 + 3, y0, 3, 1, lt(hr, 0.25));
+      Rr(x0 + hw - 3, y0 + 5, 1, 2, '#f2eee6');
+      Rr(x0 + hw - 2, y0 + 5, 1, 2, '#1a1010');
+      Rr(x0 + hw - 4, y0 + 3, 3, 1, sh(hr, 0.2));
+      Rr(x0 + hw, y0 + 6, 1, 2, sk);
+      Rr(x0 + hw - 3, y0 + 9, 2, 1, sh(sk, 0.45));
+    };
+    return { Rr, sh, lt, side, up, sideHead };
+  }
   // the side man turned over (the dive, a tackle, lying on the grass): head towards s
   function turned(K, look, p, x, y, s, kind) {
     const sp = manSprite(K, look, kind, 0, 0, p.role === 'gk' ? 1 : p.idx + 1, p.role === 'gk');
@@ -1448,6 +1468,10 @@ const FUTBOL2D = (() => {
       turned(K, look, p, px, py, s, 'slide');
       return;
     } // lying / sliding
+    drawPlayerPart1(p, K, look, px, py);
+  }
+  /** (v1.1.7, code quality) part of drawPlayer */
+  function drawPlayerPart1(p, K, look, px, py) {
     const ph = Math.sin(p.anim * 2.4),
       mv = Math.hypot(p.vx, p.vy) > 0.6;
     const view = Math.abs(Math.sin(p.dir)) > Math.abs(Math.cos(p.dir)) ? (Math.sin(p.dir) < 0 ? 'up' : 'down') : 'side';
@@ -1539,6 +1563,33 @@ const FUTBOL2D = (() => {
     camY = lerp(camY, target, k);
   }
   function draw() {
+    drawPart1();
+    MINI.banner(cx, st, W, 60, 9);
+    if (st.phase === 'ready') {
+      cx.fillStyle = 'rgba(0,0,0,0.82)';
+      cx.fillRect(60, 48, W - 120, 150);
+      txt('JETA SOCCER · 5 CONTRA 5', W / 2, 56, 9, '#ffd400');
+      const rows = [
+        ['MOVERSE', `${K_('left')} ${K_('right')} ${K_('fwd')} ${K_('back')}`],
+        ['CHUTAR (mantén y suelta)', `clic izq. · ${K_('f_punch')}`],
+        ['EFECTO (tras chutar)', `${K_('left')} / ${K_('right')}`],
+        ['PASAR (mantén: más fuerte y bombeado)', `clic dcho. · ${K_('b_pass')}`],
+        ['ENTRADA (sin balón)', `clic izq. · ${K_('f_punch')}`],
+        ['CAMBIAR DE JUGADOR', `clic dcho. · ${K_('b_pass')}`],
+        ['CORRER (turbo)', K_('f_kick')],
+        ['REGATE (con balón)', `${K_('f_kick')} dos veces`]
+      ];
+      MINI.rows(cx, W, rows, 74);
+      if (Math.floor(st.time0 * 2) % 2 === 0) txt(`CLIC IZQ. O ${K_('f_punch').toUpperCase()} PARA EMPEZAR`, W / 2, 184, 7, '#7fe08a');
+    }
+    if (st.phase === 'end') MINI.endScreen(cx, W, st.score);
+    if (st.fade > 0) {
+      cx.fillStyle = `rgba(0,0,0,${st.fade})`;
+      cx.fillRect(0, 0, W, H);
+    }
+  }
+  /** (v1.1.7, code quality) part of draw: crossbars over the players near the goals */
+  function drawPart1() {
     cx.setTransform(R, 0, 0, R, 0, 0);
     cx.imageSmoothingEnabled = false;
     const bg = drawBg();
@@ -1594,29 +1645,6 @@ const FUTBOL2D = (() => {
       cx.fillRect(30, H - 46, W - 90, 16);
       txt(st.tip, (W - 60) / 2, H - 41, 5, '#ffd400');
     }
-    MINI.banner(cx, st, W, 60, 9);
-    if (st.phase === 'ready') {
-      cx.fillStyle = 'rgba(0,0,0,0.82)';
-      cx.fillRect(60, 48, W - 120, 150);
-      txt('JETA SOCCER · 5 CONTRA 5', W / 2, 56, 9, '#ffd400');
-      const rows = [
-        ['MOVERSE', `${K_('left')} ${K_('right')} ${K_('fwd')} ${K_('back')}`],
-        ['CHUTAR (mantén y suelta)', `clic izq. · ${K_('f_punch')}`],
-        ['EFECTO (tras chutar)', `${K_('left')} / ${K_('right')}`],
-        ['PASAR (mantén: más fuerte y bombeado)', `clic dcho. · ${K_('b_pass')}`],
-        ['ENTRADA (sin balón)', `clic izq. · ${K_('f_punch')}`],
-        ['CAMBIAR DE JUGADOR', `clic dcho. · ${K_('b_pass')}`],
-        ['CORRER (turbo)', K_('f_kick')],
-        ['REGATE (con balón)', `${K_('f_kick')} dos veces`]
-      ];
-      MINI.rows(cx, W, rows, 74);
-      if (Math.floor(st.time0 * 2) % 2 === 0) txt(`CLIC IZQ. O ${K_('f_punch').toUpperCase()} PARA EMPEZAR`, W / 2, 184, 7, '#7fe08a');
-    }
-    if (st.phase === 'end') MINI.endScreen(cx, W, st.score);
-    if (st.fade > 0) {
-      cx.fillStyle = `rgba(0,0,0,${st.fade})`;
-      cx.fillRect(0, 0, W, H);
-    }
   }
   // ---------- loop
   function loop(now) {
@@ -1655,6 +1683,15 @@ const FUTBOL2D = (() => {
   function start(opt) {
     PZ.off();
     if (running || (typeof FIGHT2D !== 'undefined' && FIGHT2D.running) || (typeof BASKET2D !== 'undefined' && BASKET2D.running)) return false;
+    startPart1(opt);
+    CR = MINI.crowd('futbol');
+    last = performance.now();
+    acc = 0;
+    raf = requestAnimationFrame(loop);
+    return true;
+  }
+  /** (v1.1.7, code quality) part of start */
+  function startPart1(opt) {
     running = true;
     onEnd = opt.onEnd || null;
     inConsole = !!opt.inConsole;
@@ -1710,11 +1747,6 @@ const FUTBOL2D = (() => {
     document.exitPointerLock?.();
     MINI.show(cv, 'futbol2d');
     if (CR) CR.stop();
-    CR = MINI.crowd('futbol');
-    last = performance.now();
-    acc = 0;
-    raf = requestAnimationFrame(loop);
-    return true;
   }
   function finish() {
     if (!st || st.fadeDir > 0) return;

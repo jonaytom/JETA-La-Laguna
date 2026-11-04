@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.1.6</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.1.7</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,19 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.1.7 — 2026-11-04 — Alpha 1.1.7: código partido en funciones más cortas y sin copias</h2>
+<ul>
+<li><strong>Calidad del código</strong> (Jonay: «intentar llegar a A, partir las funciones gigantes y quitar código repetido»): de B (83)
+  a A (88 en la medición local).</li>
+<li>Los dos dibujantes de píxel (baloncesto <code>09eb</code> y Guanche <code>09ma</code>) comparten ya sus piezas en <code>09e_pixkit.js</code> (tonos,
+    formas, el sombreado por píxel, la cara de perfil, el dorsal): un 22 % menos de código repetido en cada uno.</li>
+<li>El Torneo Lagunero y la Copa Laguna comparten cómo se mira la cancha y el final del partido; las tres persecuciones
+    de El Secreta, un <code>k3Chase</code>; la lista de coches es una tabla de una línea por modelo.</li>
+<li>Las funciones largas se han partido en trozos con nombre (de 251 de más de 60 líneas a 147), con una herramienta
+    que comprueba qué variables usa cada trozo para no cambiar lo que hace.</li>
+<li>Dos pruebas nuevas comparan lo de antes y lo de ahora píxel a píxel y pieza a pieza: <code>huella_sprites.py</code> (los
+    dibujos del baloncesto y de Guanche) y <code>huella_mundo.py</code> (todo lo que se construye del mapa, con la misma semilla).</li>
+</ul>
 <h2>1.1.6 — 2026-11-04 — Alpha 1.1.6: código ordenado y coches con nombres más lejos de las marcas</h2>
 <ul>
 <li><strong>Calidad del código</strong> (Jonay: «revisa la calidad del código»): todo <code>src/</code> pasa por un formateador (Prettier,

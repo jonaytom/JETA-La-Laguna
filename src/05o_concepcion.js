@@ -11,151 +11,14 @@
 const CONCM = {};
 function concMaterials() {
   if (CONCM.basalt) return CONCM;
-  const tex = (w, h, draw, rep = true) => {
-    const c = mkCanvas(w, h),
-      x = c.getContext('2d');
-    draw(x, w, h);
-    const t = new THREE.CanvasTexture(c);
-    t.colorSpace = THREE.SRGBColorSpace;
-    if (rep) t.wrapS = t.wrapT = THREE.RepeatWrapping;
-    t.anisotropy = 4;
-    return t;
-  };
-  const R = mulberry(777);
-  // basalt ashlar (2.4 m tile): courses of 0.4 m, blocks 0.5-1.2 m, dark grey with brownish blocks, light mortar
-  const ashlar = (dark) =>
-    tex(512, 512, (x, W, H) => {
-      x.fillStyle = '#6a6259';
-      x.fillRect(0, 0, W, H);
-      const rows = 6,
-        rh = H / rows;
-      for (let r = 0; r < rows; r++) {
-        let px = -R() * 60;
-        while (px < W) {
-          const bw = 55 + R() * 150;
-          const t = R();
-          const base = dark ? (t < 0.35 ? [74, 62, 52] : t < 0.7 ? [56, 52, 49] : [66, 58, 50]) : t < 0.5 ? [120, 104, 90] : [104, 94, 86];
-          const k = 0.82 + R() * 0.32;
-          x.fillStyle = `rgb(${(base[0] * k) | 0},${(base[1] * k) | 0},${(base[2] * k) | 0})`;
-          x.fillRect(px + 2, r * rh + 2, bw - 4, rh - 4);
-          for (let s = 0; s < 40; s++) {
-            x.fillStyle = `rgba(${R() < 0.5 ? '20,18,16' : '150,135,115'},${0.05 + R() * 0.1})`;
-            x.fillRect(px + R() * bw, r * rh + R() * rh, 2 + R() * 7, 2 + R() * 5);
-          }
-          if (R() < 0.12) {
-            x.fillStyle = 'rgba(150,140,90,0.25)';
-            x.beginPath();
-            x.arc(px + R() * bw, r * rh + R() * rh, 6 + R() * 12, 0, 7);
-            x.fill();
-          } // lichen
-          px += bw;
-        }
-      }
-    });
-  CONCM.basalt = new THREE.MeshStandardMaterial({ map: ashlar(true), roughness: 0.95 });
-  CONCM.stone = new THREE.MeshStandardMaterial({ map: ashlar(false), roughness: 0.9 }); // lighter mouldings / cornices
-  CONCM.plaster = new THREE.MeshStandardMaterial({
-    map: tex(256, 256, (x, W, H) => {
-      x.fillStyle = '#efe5cc';
-      x.fillRect(0, 0, W, H);
-      for (let i = 0; i < 2500; i++) {
-        x.fillStyle = `rgba(${R() < 0.5 ? '120,100,70' : '255,255,245'},${R() * 0.06})`;
-        x.fillRect(R() * W, R() * H, 1 + R() * 4, 1 + R() * 4);
-      }
-    }),
-    roughness: 0.92
-  });
-  CONCM.white = new THREE.MeshStandardMaterial({ map: CONCM.plaster.map, color: 0xffffff, roughness: 0.9 });
-  CONCM.white.color.setRGB(1.04, 1.05, 1.08);
-  CONCM.redStone = new THREE.MeshStandardMaterial({ color: 0xa8674a, roughness: 0.85 });
-  CONCM.portal = new THREE.MeshStandardMaterial({ map: ashlar(true), color: 0xb9b2a8, roughness: 0.9 });
-  CONCM.tile = new THREE.MeshStandardMaterial({
-    map: tex(128, 64, (x, W, H) => {
-      x.fillStyle = '#7a3a26';
-      x.fillRect(0, 0, W, H);
-      for (let i = 0; i < 8; i++) {
-        const g = x.createLinearGradient(i * 16, 0, i * 16 + 16, 0);
-        g.addColorStop(0, '#5a2a1c');
-        g.addColorStop(0.5, '#b8654a');
-        g.addColorStop(1, '#5a2a1c');
-        x.fillStyle = g;
-        x.fillRect(i * 16 + 1, 0, 14, H);
-      }
-    }),
-    roughness: 0.85
-  });
-  CONCM.iron = new THREE.MeshStandardMaterial({ color: 0x1b1b1d, roughness: 0.5, metalness: 0.6 });
-  CONCM.dark = new THREE.MeshStandardMaterial({ color: 0x141312, roughness: 1 });
-  CONCM.bell = new THREE.MeshStandardMaterial({ color: 0x8a6a30, roughness: 0.35, metalness: 0.85 });
-  CONCM.wood = new THREE.MeshStandardMaterial({ color: 0x6b3f22, roughness: 0.75 });
-  const doorT = tex(
-    256,
-    512,
-    (x, W, H) => {
-      x.fillStyle = '#5a3017';
-      x.fillRect(0, 0, W, H);
-      for (const lx of [0, W / 2])
-        for (let r = 0; r < 7; r++)
-          for (let c = 0; c < 2; c++) {
-            const px = lx + 14 + c * 54,
-              py = 70 + r * 62;
-            x.fillStyle = '#3d1f0e';
-            x.fillRect(px, py, 46, 52);
-            x.fillStyle = '#7a4524';
-            x.fillRect(px + 6, py + 6, 34, 40);
-            x.fillStyle = '#5a3017';
-            x.fillRect(px + 12, py + 12, 22, 28);
-          }
-      x.fillStyle = '#2a150a';
-      x.fillRect(W / 2 - 3, 0, 6, H);
-      for (let i = 0; i < 600; i++) {
-        x.fillStyle = `rgba(0,0,0,${R() * 0.12})`;
-        x.fillRect(R() * W, R() * H, 1, 6 + R() * 20);
-      }
-    },
-    false
-  );
-  CONCM.door = new THREE.MeshStandardMaterial({ map: doorT, roughness: 0.7 });
-  const glassT = tex(
-    128,
-    256,
-    (x, W, H) => {
-      const cols = ['#2e4f8f', '#8f2e3a', '#c9a23a', '#2f7a4e', '#5b3f8a', '#d9c69a'];
-      for (let i = 0; i < 90; i++) {
-        x.fillStyle = cols[(R() * cols.length) | 0];
-        x.beginPath();
-        const cx = R() * W,
-          cy = R() * H;
-        x.moveTo(cx, cy);
-        for (let k = 0; k < 4; k++) x.lineTo(cx + (R() - 0.5) * 60, cy + (R() - 0.5) * 60);
-        x.fill();
-      }
-      x.strokeStyle = '#1a1a1a';
-      x.lineWidth = 3;
-      for (let i = 0; i < 40; i++) {
-        x.beginPath();
-        x.moveTo(R() * W, R() * H);
-        x.lineTo(R() * W, R() * H);
-        x.stroke();
-      }
-      x.lineWidth = 4;
-      for (let yy = 32; yy < H; yy += 32) {
-        x.beginPath();
-        x.moveTo(0, yy);
-        x.lineTo(W, yy);
-        x.stroke();
-      }
-    },
-    false
-  );
-  CONCM.glass = new THREE.MeshStandardMaterial({
-    map: glassT,
-    emissiveMap: glassT,
-    emissive: 0xffffff,
-    emissiveIntensity: 0.18,
-    roughness: 0.3,
-    metalness: 0.2
-  });
+  const { tex, R, ashlar } = concMaterialsPart1();
+  concMaterialsPart2(ashlar, tex, R);
+  concMaterialsPart3(tex, R);
+  concMaterialsPart4(tex);
+  return CONCM;
+}
+/** (v1.1.7, code quality) part of concMaterials */
+function concMaterialsPart4(tex) {
   const winT = tex(
     128,
     192,
@@ -211,7 +74,161 @@ function concMaterials() {
   );
   CONCM.clock = new THREE.MeshStandardMaterial({ map: clockT, roughness: 0.6 });
   for (const k of ['plaster', 'white', 'basalt', 'tile', 'stone']) CONCM[k].side = THREE.DoubleSide;
-  return CONCM;
+}
+/** (v1.1.7, code quality) part of concMaterials */
+function concMaterialsPart3(tex, R) {
+  const glassT = tex(
+    128,
+    256,
+    (x, W, H) => {
+      const cols = ['#2e4f8f', '#8f2e3a', '#c9a23a', '#2f7a4e', '#5b3f8a', '#d9c69a'];
+      for (let i = 0; i < 90; i++) {
+        x.fillStyle = cols[(R() * cols.length) | 0];
+        x.beginPath();
+        const cx = R() * W,
+          cy = R() * H;
+        x.moveTo(cx, cy);
+        for (let k = 0; k < 4; k++) x.lineTo(cx + (R() - 0.5) * 60, cy + (R() - 0.5) * 60);
+        x.fill();
+      }
+      x.strokeStyle = '#1a1a1a';
+      x.lineWidth = 3;
+      for (let i = 0; i < 40; i++) {
+        x.beginPath();
+        x.moveTo(R() * W, R() * H);
+        x.lineTo(R() * W, R() * H);
+        x.stroke();
+      }
+      x.lineWidth = 4;
+      for (let yy = 32; yy < H; yy += 32) {
+        x.beginPath();
+        x.moveTo(0, yy);
+        x.lineTo(W, yy);
+        x.stroke();
+      }
+    },
+    false
+  );
+  CONCM.glass = new THREE.MeshStandardMaterial({
+    map: glassT,
+    emissiveMap: glassT,
+    emissive: 0xffffff,
+    emissiveIntensity: 0.18,
+    roughness: 0.3,
+    metalness: 0.2
+  });
+}
+/** (v1.1.7, code quality) part of concMaterials */
+function concMaterialsPart2(ashlar, tex, R) {
+  CONCM.white.color.setRGB(1.04, 1.05, 1.08);
+  CONCM.redStone = new THREE.MeshStandardMaterial({ color: 0xa8674a, roughness: 0.85 });
+  CONCM.portal = new THREE.MeshStandardMaterial({ map: ashlar(true), color: 0xb9b2a8, roughness: 0.9 });
+  CONCM.tile = new THREE.MeshStandardMaterial({
+    map: tex(128, 64, (x, W, H) => {
+      x.fillStyle = '#7a3a26';
+      x.fillRect(0, 0, W, H);
+      for (let i = 0; i < 8; i++) {
+        const g = x.createLinearGradient(i * 16, 0, i * 16 + 16, 0);
+        g.addColorStop(0, '#5a2a1c');
+        g.addColorStop(0.5, '#b8654a');
+        g.addColorStop(1, '#5a2a1c');
+        x.fillStyle = g;
+        x.fillRect(i * 16 + 1, 0, 14, H);
+      }
+    }),
+    roughness: 0.85
+  });
+  CONCM.iron = new THREE.MeshStandardMaterial({ color: 0x1b1b1d, roughness: 0.5, metalness: 0.6 });
+  CONCM.dark = new THREE.MeshStandardMaterial({ color: 0x141312, roughness: 1 });
+  CONCM.bell = new THREE.MeshStandardMaterial({ color: 0x8a6a30, roughness: 0.35, metalness: 0.85 });
+  CONCM.wood = new THREE.MeshStandardMaterial({ color: 0x6b3f22, roughness: 0.75 });
+  const doorT = tex(
+    256,
+    512,
+    (x, W, H) => {
+      x.fillStyle = '#5a3017';
+      x.fillRect(0, 0, W, H);
+      for (const lx of [0, W / 2])
+        for (let r = 0; r < 7; r++)
+          for (let c = 0; c < 2; c++) {
+            const px = lx + 14 + c * 54,
+              py = 70 + r * 62;
+            x.fillStyle = '#3d1f0e';
+            x.fillRect(px, py, 46, 52);
+            x.fillStyle = '#7a4524';
+            x.fillRect(px + 6, py + 6, 34, 40);
+            x.fillStyle = '#5a3017';
+            x.fillRect(px + 12, py + 12, 22, 28);
+          }
+      x.fillStyle = '#2a150a';
+      x.fillRect(W / 2 - 3, 0, 6, H);
+      for (let i = 0; i < 600; i++) {
+        x.fillStyle = `rgba(0,0,0,${R() * 0.12})`;
+        x.fillRect(R() * W, R() * H, 1, 6 + R() * 20);
+      }
+    },
+    false
+  );
+  CONCM.door = new THREE.MeshStandardMaterial({ map: doorT, roughness: 0.7 });
+}
+/** (v1.1.7, code quality) part of concMaterials: basalt ashlar (2.4 m tile): courses of 0.4 m, blocks 0.5-1.2 m, dark grey with brownish blocks, light mortar */
+function concMaterialsPart1() {
+  const tex = (w, h, draw, rep = true) => {
+    const c = mkCanvas(w, h),
+      x = c.getContext('2d');
+    draw(x, w, h);
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    if (rep) t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.anisotropy = 4;
+    return t;
+  };
+  const R = mulberry(777);
+  // basalt ashlar (2.4 m tile): courses of 0.4 m, blocks 0.5-1.2 m, dark grey with brownish blocks, light mortar
+  const ashlar = (dark) =>
+    tex(512, 512, (x, W, H) => {
+      x.fillStyle = '#6a6259';
+      x.fillRect(0, 0, W, H);
+      const rows = 6,
+        rh = H / rows;
+      for (let r = 0; r < rows; r++) {
+        let px = -R() * 60;
+        while (px < W) {
+          const bw = 55 + R() * 150;
+          const t = R();
+          const base = dark ? (t < 0.35 ? [74, 62, 52] : t < 0.7 ? [56, 52, 49] : [66, 58, 50]) : t < 0.5 ? [120, 104, 90] : [104, 94, 86];
+          const k = 0.82 + R() * 0.32;
+          x.fillStyle = `rgb(${(base[0] * k) | 0},${(base[1] * k) | 0},${(base[2] * k) | 0})`;
+          x.fillRect(px + 2, r * rh + 2, bw - 4, rh - 4);
+          for (let s = 0; s < 40; s++) {
+            x.fillStyle = `rgba(${R() < 0.5 ? '20,18,16' : '150,135,115'},${0.05 + R() * 0.1})`;
+            x.fillRect(px + R() * bw, r * rh + R() * rh, 2 + R() * 7, 2 + R() * 5);
+          }
+          if (R() < 0.12) {
+            x.fillStyle = 'rgba(150,140,90,0.25)';
+            x.beginPath();
+            x.arc(px + R() * bw, r * rh + R() * rh, 6 + R() * 12, 0, 7);
+            x.fill();
+          } // lichen
+          px += bw;
+        }
+      }
+    });
+  CONCM.basalt = new THREE.MeshStandardMaterial({ map: ashlar(true), roughness: 0.95 });
+  CONCM.stone = new THREE.MeshStandardMaterial({ map: ashlar(false), roughness: 0.9 }); // lighter mouldings / cornices
+  CONCM.plaster = new THREE.MeshStandardMaterial({
+    map: tex(256, 256, (x, W, H) => {
+      x.fillStyle = '#efe5cc';
+      x.fillRect(0, 0, W, H);
+      for (let i = 0; i < 2500; i++) {
+        x.fillStyle = `rgba(${R() < 0.5 ? '120,100,70' : '255,255,245'},${R() * 0.06})`;
+        x.fillRect(R() * W, R() * H, 1 + R() * 4, 1 + R() * 4);
+      }
+    }),
+    roughness: 0.92
+  });
+  CONCM.white = new THREE.MeshStandardMaterial({ map: CONCM.plaster.map, color: 0xffffff, roughness: 0.9 });
+  return { tex, R, ashlar };
 }
 
 // ---- geometry buckets: everything is merged per material
@@ -361,76 +378,9 @@ function buildConcepcion(ch) {
   const M = concMaterials();
   const B = concBuckets();
   const root = new THREE.Group();
-  root.name = 'La Concepción';
-  const pts = ch.pts;
-  const n = pts.length;
-  const F = axisFrame(pts, ch.cx, ch.cz);
-  const U = (p) => (p[0] - ch.cx) * F.ux + (p[1] - ch.cz) * F.uz,
-    V = (p) => (p[0] - ch.cx) * F.vx + (p[1] - ch.cz) * F.vz;
-  const pip = (x, z) => {
-    let c = false;
-    for (let i = 0, j = n - 1; i < n; j = i++) {
-      const a = pts[i],
-        b = pts[j];
-      if (a[1] > z !== b[1] > z && x < ((b[0] - a[0]) * (z - a[1])) / (b[1] - a[1]) + a[0]) c = !c;
-    }
-    return c;
-  };
-  // outward normal convention (checked once)
-  let osg = 1;
-  {
-    let bi = 0,
-      bl = 0;
-    for (let i = 0; i < n; i++) {
-      const L = Math.hypot(pts[(i + 1) % n][0] - pts[i][0], pts[(i + 1) % n][1] - pts[i][1]);
-      if (L > bl) {
-        bl = L;
-        bi = i;
-      }
-    }
-    const p = pts[bi],
-      q = pts[(bi + 1) % n];
-    const ox = (q[1] - p[1]) / bl,
-      oz = -(q[0] - p[0]) / bl;
-    if (pip((p[0] + q[0]) / 2 + ox * 0.8, (p[1] + q[1]) / 2 + oz * 0.8)) osg = -1;
-  }
-  const outN = (p, q) => {
-    const L = Math.hypot(q[0] - p[0], q[1] - p[1]) || 1;
-    return [(osg * (q[1] - p[1])) / L, (osg * -(q[0] - p[0])) / L];
-  };
-  const bot = ch.bmin - 0.6,
-    H1 = ch.bmax + 10.5,
-    H2 = ch.bmax + 14.8;
-  // head block at the Plaza de la Concepción end
-  const plaza = centroidOfNamedWays('Plaza de la Concepción');
-  let sE = 1;
-  if (plaza) {
-    const e0 = F.W(F.u0, 0),
-      e1 = F.W(F.u1, 0);
-    sE = Math.hypot(e1[0] - plaza[0], e1[1] - plaza[1]) < Math.hypot(e0[0] - plaza[0], e0[1] - plaza[1]) ? 1 : -1;
-  }
-  const uEnd = sE > 0 ? F.u1 : F.u0,
-    uE = uEnd - sE * 24;
-  const side = (p) => sE * (U(p) - uE); // >0: head block
-  const clip = (P, keepHead) => {
-    const out = [];
-    for (let i = 0; i < P.length; i++) {
-      const a = P[i],
-        b = P[(i + 1) % P.length];
-      const sa = keepHead ? side(a) : -side(a),
-        sb = keepHead ? side(b) : -side(b);
-      if (sa >= 0) out.push(a);
-      if (sa >= 0 !== sb >= 0) {
-        const t = sa / (sa - sb);
-        out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
-      }
-    }
-    return out;
-  };
-  const Pm = clip(pts, false),
-    Pe = clip(pts, true);
-  const onCut = (p) => Math.abs(side(p)) < 0.02;
-  const T = CONC_CARVE.ok ? CONC_CARVE : null;
+  const { pts, F, U, V, pip, outN } = buildConcepcionPart1(root, ch);
+  let { bot, H1, H2, sE, uE, side } = buildConcepcionPart2(ch, F, U); // >0: head block
+  const { Pm, Pe, onCut, T } = buildConcepcionPart3(pts, side);
   // ---------- walls, plinth, eaves
   const wallsOf = (P, top, mat, head) => {
     for (let i = 0; i < P.length; i++) {
@@ -490,199 +440,12 @@ function buildConcepcion(ch) {
       );
     }
   };
-  wallsOf(Pm, H1, M.plaster, false);
-  wallsOf(Pe, H2, M.white, true);
-  const roofOf = (P, top, din) => {
-    if (P.length < 3) return;
-    let cx = 0,
-      cz = 0;
-    for (const p of P) {
-      cx += p[0];
-      cz += p[1];
-    }
-    cx /= P.length;
-    cz /= P.length;
-    const A = polyArea(P);
-    const Q = P;
-    const tris = THREE.ShapeUtils.triangulateShape(
-      Q.map((p) => new THREE.Vector2(p[0], p[1])),
-      []
-    );
-    hipRoof(Q, cx, cz, top, Math.abs(A), tris, din);
-  };
-  roofOf(Pm, H1, 3.2);
-  roofOf(Pe, H2, 3.6);
-  // ---------- raised central nave (clerestory with oculi) over the three naves
-  {
-    let va = 1e9,
-      vb = -1e9;
-    for (const p of Pe) {
-      va = Math.min(va, V(p));
-      vb = Math.max(vb, V(p));
-    }
-    const vc = (va + vb) / 2,
-      hw = Math.min(5.2, (vb - va) * 0.22);
-    const uW = (sE > 0 ? F.u0 : F.u1) + sE * 2.5;
-    const ua = Math.min(uW, uE),
-      ub = Math.max(uW, uE);
-    const y0 = H1 - 0.3,
-      y1 = H1 + 3.0;
-    for (const sv of [-1, 1]) {
-      const a = F.W(sv > 0 ? ua : ub, vc + sv * hw),
-        b = F.W(sv > 0 ? ub : ua, vc + sv * hw);
-      B.quad(M.plaster, [a[0], y0, a[1]], [b[0], y0, b[1]], [b[0], y1, b[1]], [a[0], y1, a[1]]);
-      const Ln = ub - ua;
-      for (let k = 3; k < Ln - 2; k += 6.5) {
-        const u = ua + k;
-        const c = F.W(u, vc + sv * (hw + 0.04));
-        const fr = cFrame(c[0], (y0 + y1) / 2 + 0.2, c[1], Math.atan2(F.vx * sv, F.vz * sv));
-        B.geo(new THREE.CircleGeometry(0.55, 20), M.glass, fr(0, 0, 0.02));
-        B.geo(new THREE.TorusGeometry(0.62, 0.11, 6, 20), M.redStone, fr(0, 0, 0.02));
-      }
-    }
-    {
-      const uu = sE > 0 ? ua : ub;
-      const a = F.W(uu, vc - hw),
-        b = F.W(uu, vc + hw);
-      const sgn = sE > 0 ? 1 : -1;
-      const [p, q] = sgn > 0 ? [b, a] : [a, b];
-      B.quad(M.plaster, [p[0], y0, p[1]], [q[0], y0, q[1]], [q[0], y1, q[1]], [p[0], y1, p[1]]);
-    }
-    gableRoof(F, y1, 2.0, ua, ub, vc - hw, vc + hw);
-  }
-  // ---------- arched stained-glass windows on the nave walls
-  const portals = [];
-  const winAt = (p, q, t, y, wdt, ht) => {
-    const [ox, oz] = outN(p, q);
-    const x = p[0] + (q[0] - p[0]) * t + ox * 0.03,
-      z = p[1] + (q[1] - p[1]) * t + oz * 0.03;
-    const fr = cFrame(x, y, z, Math.atan2(ox, oz));
-    B.geo(shapeUV(new THREE.ShapeGeometry(archShape(wdt, ht), 10), wdt, ht), M.glass, fr(0, 0, 0));
-    B.geo(archFrame(wdt, ht, 0.22, 0.14), M.redStone, fr(0, 0, -0.04));
-  };
-  // portal: on the flank next to the tower (the long edge whose end is nearest to the tower)
-  let pe = null;
-  if (T) {
-    let bd = 1e9;
-    for (let i = 0; i < Pm.length; i++) {
-      const p = Pm[i],
-        q = Pm[(i + 1) % Pm.length];
-      const L = Math.hypot(q[0] - p[0], q[1] - p[1]);
-      if (L < 14 || (onCut(p) && onCut(q))) continue;
-      const d0 = Math.hypot(p[0] - T.x, p[1] - T.z),
-        d1 = Math.hypot(q[0] - T.x, q[1] - T.z),
-        d = Math.min(d0, d1);
-      if (d < 16 && d < bd) {
-        bd = d;
-        pe = { p, q, L, fromP: d0 < d1 };
-      }
-    }
-  }
-  if (pe) {
-    const at = (m) => (pe.fromP ? m / pe.L : 1 - m / pe.L);
-    portals.push({ p: pe.p, q: pe.q, t: at(3.6), kind: 'portal' }, { p: pe.p, q: pe.q, t: at(10.5), kind: 'blind' });
-  }
-  // second (side) portal: middle of the longest edge on the other flank
-  {
-    let best = null,
-      bl = 0;
-    for (let i = 0; i < Pm.length; i++) {
-      const p = Pm[i],
-        q = Pm[(i + 1) % Pm.length];
-      const L = Math.hypot(q[0] - p[0], q[1] - p[1]);
-      if (onCut(p) && onCut(q)) continue;
-      if (pe && p === pe.p) continue;
-      if (T && Math.min(Math.hypot(p[0] - T.x, p[1] - T.z), Math.hypot(q[0] - T.x, q[1] - T.z)) < 20) continue;
-      if (L > bl) {
-        bl = L;
-        best = { p, q };
-      }
-    }
-    if (best && bl > 20) portals.push({ p: best.p, q: best.q, t: 0.5, kind: 'portal' });
-  }
-  for (let i = 0; i < Pm.length; i++) {
-    const p = Pm[i],
-      q = Pm[(i + 1) % Pm.length];
-    const L = Math.hypot(q[0] - p[0], q[1] - p[1]);
-    if (L < 7 || (onCut(p) && onCut(q))) continue;
-    for (let m = 4; m < L - 3; m += 8.5) {
-      const t = m / L;
-      const x = p[0] + (q[0] - p[0]) * t,
-        z = p[1] + (q[1] - p[1]) * t;
-      if (T && Math.hypot(x - T.x, z - T.z) < 7) continue;
-      if (portals.some((o) => o.p === p && Math.abs(o.t - t) * L < 3.6)) continue;
-      winAt(p, q, t, H1 - 5.6, 1.5, 3.0);
-    }
-  }
-  // ---------- portals
-  for (const po of portals) {
-    const [ox, oz] = outN(po.p, po.q);
-    const x = po.p[0] + (po.q[0] - po.p[0]) * po.t,
-      z = po.p[1] + (po.q[1] - po.p[1]) * po.t;
-    const y = heightAt(x, z) - 0.05;
-    const fr = cFrame(x, y, z, Math.atan2(ox, oz));
-    if (po.kind === 'blind') {
-      B.geo(shapeUV(new THREE.ShapeGeometry(archShape(3.6, 5.6), 12), 3.6, 5.6), M.white, fr(0, 0, 0.02));
-      B.geo(archFrame(3.6, 5.6, 0.32, 0.22), M.portal, fr(0, 0, -0.02));
-      continue;
-    }
-    B.geo(shapeUV(new THREE.ShapeGeometry(archShape(2.7, 4.7), 12), 2.7, 4.7), M.door, fr(0, 0, 0.04));
-    B.geo(archFrame(2.7, 4.7, 0.45, 0.3), M.portal, fr(0, 0, 0));
-    for (const sx of [-1, 1]) {
-      B.geo(cBox(0.7, 1.1, 0.6), M.portal, fr(sx * 2.15, 0.55, 0.3));
-      B.geo(new THREE.CylinderGeometry(0.2, 0.23, 3.6, 12), M.portal, fr(sx * 2.15, 2.9, 0.38));
-      B.geo(cBox(0.62, 0.35, 0.62), M.portal, fr(sx * 2.15, 4.85, 0.34));
-      B.geo(cBox(2.1, 0.32, 0.55), M.portal, fr(sx * 1.55, 5.95, 0.3, 0, 0, sx * -0.38)); // broken pediment
-      B.geo(cBox(0.36, 0.5, 0.36), M.portal, fr(sx * 2.55, 5.55, 0.3));
-      B.geo(new THREE.ConeGeometry(0.16, 0.9, 6), M.portal, fr(sx * 2.55, 6.25, 0.3));
-      B.geo(new THREE.SphereGeometry(0.12, 8, 6), M.portal, fr(sx * 2.55, 6.75, 0.3));
-    }
-    B.geo(cBox(5.0, 0.42, 0.62), M.portal, fr(0, 5.25, 0.3));
-    B.geo(cBox(1.15, 1.35, 0.32), M.portal, fr(0, 6.2, 0.22));
-    B.geo(cBox(0.7, 0.7, 0.36), M.redStone, fr(0, 6.25, 0.26)); // coat of arms
-    B.geo(cBox(0.8, 0.45, 0.5), M.portal, fr(0, 7.1, 0.25));
-    B.geo(cBox(0.18, 1.2, 0.18), M.portal, fr(0, 7.9, 0.25));
-    B.geo(cBox(0.75, 0.16, 0.18), M.portal, fr(0, 8.15, 0.25));
-  }
-  // ---------- head block: dark basalt pilasters + two rows of windows
-  for (let i = 0; i < Pe.length; i++) {
-    const p = Pe[i],
-      q = Pe[(i + 1) % Pe.length];
-    const L = Math.hypot(q[0] - p[0], q[1] - p[1]);
-    if (L < 2 || (onCut(p) && onCut(q))) continue;
-    const [ox, oz] = outN(p, q);
-    const ang = Math.atan2(ox, oz);
-    const nb = Math.max(1, Math.round(L / 6.5));
-    const g0 = Math.min(heightAt(p[0], p[1]), heightAt(q[0], q[1]));
-    for (let k = 0; k <= nb; k++) {
-      const t = k / nb;
-      const x = p[0] + (q[0] - p[0]) * t + ox * 0.12,
-        z = p[1] + (q[1] - p[1]) * t + oz * 0.12;
-      const ph = H2 - 0.5 - bot;
-      B.geo(cBox(0.95, ph, 0.26), M.basalt, cFrame(x, bot + ph / 2, z, ang)(0, 0, 0));
-    }
-    for (let k = 0; k < nb; k++) {
-      const t = (k + 0.5) / nb;
-      const x = p[0] + (q[0] - p[0]) * t + ox * 0.04,
-        z = p[1] + (q[1] - p[1]) * t + oz * 0.04;
-      const fr = cFrame(x, g0, z, ang);
-      for (const [y, w, h] of [
-        [2.6, 1.3, 0.9],
-        [7.6, 1.25, 2.1],
-        [10.9, 1.25, 2.1]
-      ]) {
-        if (g0 + y + h > H2 - 0.8) continue;
-        B.geo(shapeUV(new THREE.PlaneGeometry(w, h), w, h), M.win, fr(0, y + h / 2, 0.02));
-        for (const [fx, fy, fw, fh] of [
-          [0, y - 0.1, w + 0.5, 0.2],
-          [0, y + h + 0.1, w + 0.5, 0.22],
-          [-w / 2 - 0.13, y + h / 2, 0.26, h],
-          [w / 2 + 0.13, y + h / 2, 0.26, h]
-        ])
-          B.geo(cBox(fw, fh, 0.14), M.basalt, fr(fx, fy, 0.06));
-      }
-    }
-  }
+  buildConcepcionPart4(wallsOf, Pm, H1, M, Pe, H2);
+  const { portals } = buildConcepcionPart5(sE, F, uE, H1, Pe, V, B, M);
+  const { winAt } = buildConcepcionPart6(T, outN, B, M, Pm, onCut, portals);
+  buildConcepcionPart7(Pm, onCut, T, portals, winAt, H1);
+  buildConcepcionPart8(portals, outN, B, M);
+  buildConcepcionPart9(Pe, onCut, outN, H2, bot, B, M);
   // ---------- the tower
   if (T) {
     const w = T.w,
@@ -858,4 +621,299 @@ function buildConcepcion(ch) {
   B.finish(root);
   scene.add(root);
   CONC_TOWER.group = root;
+}
+/** (v1.1.7, code quality) part of buildConcepcion: ---------- head block: dark basalt pilasters + two rows of windows */
+function buildConcepcionPart9(Pe, onCut, outN, H2, bot, B, M) {
+  // ---------- head block: dark basalt pilasters + two rows of windows
+  for (let i = 0; i < Pe.length; i++) {
+    const p = Pe[i],
+      q = Pe[(i + 1) % Pe.length];
+    const L = Math.hypot(q[0] - p[0], q[1] - p[1]);
+    if (L < 2 || (onCut(p) && onCut(q))) continue;
+    const [ox, oz] = outN(p, q);
+    const ang = Math.atan2(ox, oz);
+    const nb = Math.max(1, Math.round(L / 6.5));
+    const g0 = Math.min(heightAt(p[0], p[1]), heightAt(q[0], q[1]));
+    for (let k = 0; k <= nb; k++) {
+      const t = k / nb;
+      const x = p[0] + (q[0] - p[0]) * t + ox * 0.12,
+        z = p[1] + (q[1] - p[1]) * t + oz * 0.12;
+      const ph = H2 - 0.5 - bot;
+      B.geo(cBox(0.95, ph, 0.26), M.basalt, cFrame(x, bot + ph / 2, z, ang)(0, 0, 0));
+    }
+    for (let k = 0; k < nb; k++) {
+      const t = (k + 0.5) / nb;
+      const x = p[0] + (q[0] - p[0]) * t + ox * 0.04,
+        z = p[1] + (q[1] - p[1]) * t + oz * 0.04;
+      const fr = cFrame(x, g0, z, ang);
+      for (const [y, w, h] of [
+        [2.6, 1.3, 0.9],
+        [7.6, 1.25, 2.1],
+        [10.9, 1.25, 2.1]
+      ]) {
+        if (g0 + y + h > H2 - 0.8) continue;
+        B.geo(shapeUV(new THREE.PlaneGeometry(w, h), w, h), M.win, fr(0, y + h / 2, 0.02));
+        for (const [fx, fy, fw, fh] of [
+          [0, y - 0.1, w + 0.5, 0.2],
+          [0, y + h + 0.1, w + 0.5, 0.22],
+          [-w / 2 - 0.13, y + h / 2, 0.26, h],
+          [w / 2 + 0.13, y + h / 2, 0.26, h]
+        ])
+          B.geo(cBox(fw, fh, 0.14), M.basalt, fr(fx, fy, 0.06));
+      }
+    }
+  }
+}
+/** (v1.1.7, code quality) part of buildConcepcion: ---------- portals */
+function buildConcepcionPart8(portals, outN, B, M) {
+  // ---------- portals
+  for (const po of portals) {
+    const [ox, oz] = outN(po.p, po.q);
+    const x = po.p[0] + (po.q[0] - po.p[0]) * po.t,
+      z = po.p[1] + (po.q[1] - po.p[1]) * po.t;
+    const y = heightAt(x, z) - 0.05;
+    const fr = cFrame(x, y, z, Math.atan2(ox, oz));
+    if (po.kind === 'blind') {
+      B.geo(shapeUV(new THREE.ShapeGeometry(archShape(3.6, 5.6), 12), 3.6, 5.6), M.white, fr(0, 0, 0.02));
+      B.geo(archFrame(3.6, 5.6, 0.32, 0.22), M.portal, fr(0, 0, -0.02));
+      continue;
+    }
+    B.geo(shapeUV(new THREE.ShapeGeometry(archShape(2.7, 4.7), 12), 2.7, 4.7), M.door, fr(0, 0, 0.04));
+    B.geo(archFrame(2.7, 4.7, 0.45, 0.3), M.portal, fr(0, 0, 0));
+    for (const sx of [-1, 1]) {
+      B.geo(cBox(0.7, 1.1, 0.6), M.portal, fr(sx * 2.15, 0.55, 0.3));
+      B.geo(new THREE.CylinderGeometry(0.2, 0.23, 3.6, 12), M.portal, fr(sx * 2.15, 2.9, 0.38));
+      B.geo(cBox(0.62, 0.35, 0.62), M.portal, fr(sx * 2.15, 4.85, 0.34));
+      B.geo(cBox(2.1, 0.32, 0.55), M.portal, fr(sx * 1.55, 5.95, 0.3, 0, 0, sx * -0.38)); // broken pediment
+      B.geo(cBox(0.36, 0.5, 0.36), M.portal, fr(sx * 2.55, 5.55, 0.3));
+      B.geo(new THREE.ConeGeometry(0.16, 0.9, 6), M.portal, fr(sx * 2.55, 6.25, 0.3));
+      B.geo(new THREE.SphereGeometry(0.12, 8, 6), M.portal, fr(sx * 2.55, 6.75, 0.3));
+    }
+    B.geo(cBox(5.0, 0.42, 0.62), M.portal, fr(0, 5.25, 0.3));
+    B.geo(cBox(1.15, 1.35, 0.32), M.portal, fr(0, 6.2, 0.22));
+    B.geo(cBox(0.7, 0.7, 0.36), M.redStone, fr(0, 6.25, 0.26)); // coat of arms
+    B.geo(cBox(0.8, 0.45, 0.5), M.portal, fr(0, 7.1, 0.25));
+    B.geo(cBox(0.18, 1.2, 0.18), M.portal, fr(0, 7.9, 0.25));
+    B.geo(cBox(0.75, 0.16, 0.18), M.portal, fr(0, 8.15, 0.25));
+  }
+}
+/** (v1.1.7, code quality) part of buildConcepcion */
+function buildConcepcionPart7(Pm, onCut, T, portals, winAt, H1) {
+  for (let i = 0; i < Pm.length; i++) {
+    const p = Pm[i],
+      q = Pm[(i + 1) % Pm.length];
+    const L = Math.hypot(q[0] - p[0], q[1] - p[1]);
+    if (L < 7 || (onCut(p) && onCut(q))) continue;
+    for (let m = 4; m < L - 3; m += 8.5) {
+      const t = m / L;
+      const x = p[0] + (q[0] - p[0]) * t,
+        z = p[1] + (q[1] - p[1]) * t;
+      if (T && Math.hypot(x - T.x, z - T.z) < 7) continue;
+      if (portals.some((o) => o.p === p && Math.abs(o.t - t) * L < 3.6)) continue;
+      winAt(p, q, t, H1 - 5.6, 1.5, 3.0);
+    }
+  }
+}
+/** (v1.1.7, code quality) part of buildConcepcion: portal: on the flank next to the tower (the long edge whose end is nearest to the tower) */
+function buildConcepcionPart6(T, outN, B, M, Pm, onCut, portals) {
+  const winAt = (p, q, t, y, wdt, ht) => {
+    const [ox, oz] = outN(p, q);
+    const x = p[0] + (q[0] - p[0]) * t + ox * 0.03,
+      z = p[1] + (q[1] - p[1]) * t + oz * 0.03;
+    const fr = cFrame(x, y, z, Math.atan2(ox, oz));
+    B.geo(shapeUV(new THREE.ShapeGeometry(archShape(wdt, ht), 10), wdt, ht), M.glass, fr(0, 0, 0));
+    B.geo(archFrame(wdt, ht, 0.22, 0.14), M.redStone, fr(0, 0, -0.04));
+  };
+  // portal: on the flank next to the tower (the long edge whose end is nearest to the tower)
+  let pe = null;
+  if (T) {
+    let bd = 1e9;
+    for (let i = 0; i < Pm.length; i++) {
+      const p = Pm[i],
+        q = Pm[(i + 1) % Pm.length];
+      const L = Math.hypot(q[0] - p[0], q[1] - p[1]);
+      if (L < 14 || (onCut(p) && onCut(q))) continue;
+      const d0 = Math.hypot(p[0] - T.x, p[1] - T.z),
+        d1 = Math.hypot(q[0] - T.x, q[1] - T.z),
+        d = Math.min(d0, d1);
+      if (d < 16 && d < bd) {
+        bd = d;
+        pe = { p, q, L, fromP: d0 < d1 };
+      }
+    }
+  }
+  if (pe) {
+    const at = (m) => (pe.fromP ? m / pe.L : 1 - m / pe.L);
+    portals.push({ p: pe.p, q: pe.q, t: at(3.6), kind: 'portal' }, { p: pe.p, q: pe.q, t: at(10.5), kind: 'blind' });
+  }
+  // second (side) portal: middle of the longest edge on the other flank
+  {
+    let best = null,
+      bl = 0;
+    for (let i = 0; i < Pm.length; i++) {
+      const p = Pm[i],
+        q = Pm[(i + 1) % Pm.length];
+      const L = Math.hypot(q[0] - p[0], q[1] - p[1]);
+      if (onCut(p) && onCut(q)) continue;
+      if (pe && p === pe.p) continue;
+      if (T && Math.min(Math.hypot(p[0] - T.x, p[1] - T.z), Math.hypot(q[0] - T.x, q[1] - T.z)) < 20) continue;
+      if (L > bl) {
+        bl = L;
+        best = { p, q };
+      }
+    }
+    if (best && bl > 20) portals.push({ p: best.p, q: best.q, t: 0.5, kind: 'portal' });
+  }
+  return { winAt };
+}
+/** (v1.1.7, code quality) part of buildConcepcion: ---------- raised central nave (clerestory with oculi) over the three naves */
+function buildConcepcionPart5(sE, F, uE, H1, Pe, V, B, M) {
+  // ---------- raised central nave (clerestory with oculi) over the three naves
+  {
+    let va = 1e9,
+      vb = -1e9;
+    for (const p of Pe) {
+      va = Math.min(va, V(p));
+      vb = Math.max(vb, V(p));
+    }
+    const vc = (va + vb) / 2,
+      hw = Math.min(5.2, (vb - va) * 0.22);
+    const uW = (sE > 0 ? F.u0 : F.u1) + sE * 2.5;
+    const ua = Math.min(uW, uE),
+      ub = Math.max(uW, uE);
+    const y0 = H1 - 0.3,
+      y1 = H1 + 3.0;
+    for (const sv of [-1, 1]) {
+      const a = F.W(sv > 0 ? ua : ub, vc + sv * hw),
+        b = F.W(sv > 0 ? ub : ua, vc + sv * hw);
+      B.quad(M.plaster, [a[0], y0, a[1]], [b[0], y0, b[1]], [b[0], y1, b[1]], [a[0], y1, a[1]]);
+      const Ln = ub - ua;
+      for (let k = 3; k < Ln - 2; k += 6.5) {
+        const u = ua + k;
+        const c = F.W(u, vc + sv * (hw + 0.04));
+        const fr = cFrame(c[0], (y0 + y1) / 2 + 0.2, c[1], Math.atan2(F.vx * sv, F.vz * sv));
+        B.geo(new THREE.CircleGeometry(0.55, 20), M.glass, fr(0, 0, 0.02));
+        B.geo(new THREE.TorusGeometry(0.62, 0.11, 6, 20), M.redStone, fr(0, 0, 0.02));
+      }
+    }
+    {
+      const uu = sE > 0 ? ua : ub;
+      const a = F.W(uu, vc - hw),
+        b = F.W(uu, vc + hw);
+      const sgn = sE > 0 ? 1 : -1;
+      const [p, q] = sgn > 0 ? [b, a] : [a, b];
+      B.quad(M.plaster, [p[0], y0, p[1]], [q[0], y0, q[1]], [q[0], y1, q[1]], [p[0], y1, p[1]]);
+    }
+    gableRoof(F, y1, 2.0, ua, ub, vc - hw, vc + hw);
+  }
+  // ---------- arched stained-glass windows on the nave walls
+  const portals = [];
+  return { portals };
+}
+/** (v1.1.7, code quality) part of buildConcepcion */
+function buildConcepcionPart4(wallsOf, Pm, H1, M, Pe, H2) {
+  wallsOf(Pm, H1, M.plaster, false);
+  wallsOf(Pe, H2, M.white, true);
+  const roofOf = (P, top, din) => {
+    if (P.length < 3) return;
+    let cx = 0,
+      cz = 0;
+    for (const p of P) {
+      cx += p[0];
+      cz += p[1];
+    }
+    cx /= P.length;
+    cz /= P.length;
+    const A = polyArea(P);
+    const Q = P;
+    const tris = THREE.ShapeUtils.triangulateShape(
+      Q.map((p) => new THREE.Vector2(p[0], p[1])),
+      []
+    );
+    hipRoof(Q, cx, cz, top, Math.abs(A), tris, din);
+  };
+  roofOf(Pm, H1, 3.2);
+  roofOf(Pe, H2, 3.6);
+}
+/** (v1.1.7, code quality) part of buildConcepcion */
+function buildConcepcionPart3(pts, side) {
+  const clip = (P, keepHead) => {
+    const out = [];
+    for (let i = 0; i < P.length; i++) {
+      const a = P[i],
+        b = P[(i + 1) % P.length];
+      const sa = keepHead ? side(a) : -side(a),
+        sb = keepHead ? side(b) : -side(b);
+      if (sa >= 0) out.push(a);
+      if (sa >= 0 !== sb >= 0) {
+        const t = sa / (sa - sb);
+        out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
+      }
+    }
+    return out;
+  };
+  const Pm = clip(pts, false),
+    Pe = clip(pts, true);
+  const onCut = (p) => Math.abs(side(p)) < 0.02;
+  const T = CONC_CARVE.ok ? CONC_CARVE : null;
+  return { Pm, Pe, onCut, T };
+}
+/** (v1.1.7, code quality) part of buildConcepcion: head block at the Plaza de la Concepción end */
+function buildConcepcionPart2(ch, F, U) {
+  const bot = ch.bmin - 0.6,
+    H1 = ch.bmax + 10.5,
+    H2 = ch.bmax + 14.8;
+  // head block at the Plaza de la Concepción end
+  const plaza = centroidOfNamedWays('Plaza de la Concepción');
+  let sE = 1;
+  if (plaza) {
+    const e0 = F.W(F.u0, 0),
+      e1 = F.W(F.u1, 0);
+    sE = Math.hypot(e1[0] - plaza[0], e1[1] - plaza[1]) < Math.hypot(e0[0] - plaza[0], e0[1] - plaza[1]) ? 1 : -1;
+  }
+  const uEnd = sE > 0 ? F.u1 : F.u0,
+    uE = uEnd - sE * 24;
+  const side = (p) => sE * (U(p) - uE);
+  return { bot, H1, H2, sE, uE, side };
+}
+/** (v1.1.7, code quality) part of buildConcepcion: outward normal convention (checked once) */
+function buildConcepcionPart1(root, ch) {
+  root.name = 'La Concepción';
+  const pts = ch.pts;
+  const n = pts.length;
+  const F = axisFrame(pts, ch.cx, ch.cz);
+  const U = (p) => (p[0] - ch.cx) * F.ux + (p[1] - ch.cz) * F.uz,
+    V = (p) => (p[0] - ch.cx) * F.vx + (p[1] - ch.cz) * F.vz;
+  const pip = (x, z) => {
+    let c = false;
+    for (let i = 0, j = n - 1; i < n; j = i++) {
+      const a = pts[i],
+        b = pts[j];
+      if (a[1] > z !== b[1] > z && x < ((b[0] - a[0]) * (z - a[1])) / (b[1] - a[1]) + a[0]) c = !c;
+    }
+    return c;
+  };
+  // outward normal convention (checked once)
+  let osg = 1;
+  {
+    let bi = 0,
+      bl = 0;
+    for (let i = 0; i < n; i++) {
+      const L = Math.hypot(pts[(i + 1) % n][0] - pts[i][0], pts[(i + 1) % n][1] - pts[i][1]);
+      if (L > bl) {
+        bl = L;
+        bi = i;
+      }
+    }
+    const p = pts[bi],
+      q = pts[(bi + 1) % n];
+    const ox = (q[1] - p[1]) / bl,
+      oz = -(q[0] - p[0]) / bl;
+    if (pip((p[0] + q[0]) / 2 + ox * 0.8, (p[1] + q[1]) / 2 + oz * 0.8)) osg = -1;
+  }
+  const outN = (p, q) => {
+    const L = Math.hypot(q[0] - p[0], q[1] - p[1]) || 1;
+    return [(osg * (q[1] - p[1])) / L, (osg * -(q[0] - p[0])) / L];
+  };
+  return { pts, F, U, V, pip, outN };
 }

@@ -94,23 +94,7 @@ function updateAchaman(dt) {
     achamanEnd();
     return;
   }
-  const fast = key('ShiftLeft', 'ShiftRight') || ACH.boost ? 4 : 1;
-  let ix = 0,
-    iz = 0;
-  if (key('KeyW', 'ArrowUp')) iz += 1;
-  if (key('KeyS', 'ArrowDown')) iz -= 1;
-  if (key('KeyA', 'ArrowLeft')) ix -= 1;
-  if (key('KeyD', 'ArrowRight')) ix += 1;
-  if (INPUT.touch.active) {
-    ix += INPUT.touch.x;
-    iz -= INPUT.touch.y;
-  }
-  let iy = (key('KeyE', 'Space') || ACH.up ? 1 : 0) - (key('KeyQ', 'ControlLeft', 'KeyC') || ACH.down ? 1 : 0);
-  if (INPUT.wheel) {
-    iy -= INPUT.wheel * 3;
-    INPUT.wheel = 0;
-  }
-  const g = heightAt(ACH.x, ACH.z);
+  let { fast, ix, iz, iy, g } = updateAchamanPart1();
   if (ACH.mode === 'libre') {
     ACH.yaw -= mdx * 0.0023 * sens;
     ACH.pitch = clamp(ACH.pitch - mdy * 0.0018 * sens * (SETTINGS.invertY ? -1 : 1), -1.45, 1.2);
@@ -155,6 +139,10 @@ function updateAchaman(dt) {
     camera.lookAt(ACH.x, g, ACH.z);
     camera.up.set(0, 1, 0);
   }
+  updateAchamanPart2(g);
+}
+/** (v1.1.7, code quality) part of updateAchaman: the world follows the camera (traffic, people, street names, minimap) */
+function updateAchamanPart2(g) {
   if (Math.abs(camera.fov - 62) > 0.05) {
     camera.fov = 62;
     camera.updateProjectionMatrix();
@@ -170,6 +158,27 @@ function updateAchaman(dt) {
   CAM.yaw = ACH.yaw + Math.PI;
   const alt = Math.round(ACH.y - g);
   $('achAlt').textContent = alt + ' m';
+}
+/** (v1.1.7, code quality) part of updateAchaman */
+function updateAchamanPart1() {
+  const fast = key('ShiftLeft', 'ShiftRight') || ACH.boost ? 4 : 1;
+  let ix = 0,
+    iz = 0;
+  if (key('KeyW', 'ArrowUp')) iz += 1;
+  if (key('KeyS', 'ArrowDown')) iz -= 1;
+  if (key('KeyA', 'ArrowLeft')) ix -= 1;
+  if (key('KeyD', 'ArrowRight')) ix += 1;
+  if (INPUT.touch.active) {
+    ix += INPUT.touch.x;
+    iz -= INPUT.touch.y;
+  }
+  let iy = (key('KeyE', 'Space') || ACH.up ? 1 : 0) - (key('KeyQ', 'ControlLeft', 'KeyC') || ACH.down ? 1 : 0);
+  if (INPUT.wheel) {
+    iy -= INPUT.wheel * 3;
+    INPUT.wheel = 0;
+  }
+  const g = heightAt(ACH.x, ACH.z);
+  return { fast, ix, iz, iy, g };
 }
 function setupAchaman() {
   $('bAch').addEventListener('click', achamanStart);

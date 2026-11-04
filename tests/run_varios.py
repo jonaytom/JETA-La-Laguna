@@ -7,10 +7,11 @@ from playwright.async_api import async_playwright
 MUDO = """(()=>{ window.__JETA_TEST = true; try { if (window.speechSynthesis) { window.speechSynthesis.speak = () => {}; } } catch (e) {}
   try { const P = window.BaseAudioContext && BaseAudioContext.prototype, d = P && Object.getOwnPropertyDescriptor(P, 'destination');
     if (d) Object.defineProperty(P, 'destination', { get() { if (!this.__mudo) { const g = this.createGain(); g.gain.value = 0; g.connect(d.get.call(this)); this.__mudo = g; } return this.__mudo; } }); } catch (e) {} })()"""  # v0.77: tests in silence (--mute-audio doesn't stop the system voice)
+SEMILLA = """(() => { let s = 20261006 >>> 0; Math.random = function () { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; })()"""  # v1.1.7: as RevisordeCodigo/herramientas/revisor/js/semilla.js
 RESET = """(()=>{ const d=__dbg; try { if (d.DIARIO && d.DIARIO.open_) d.DIARIO.close(); } catch (e) {} try { if (d.BASKET2D.running) d.BASKET2D._abort(); } catch (e) {}
   try { if (d.FIGHT2D.running) d.FIGHT2D._abort(); } catch (e) {} try { if (d.FUTBOL2D && d.FUTBOL2D.running) d.FUTBOL2D._abort(); } catch (e) {} try { if (d.DLG.open) d.DLG.hide(); } catch (e) {} try { if (window.__TALK) window.__TALK.cur = null; } catch (e) {}
   try { if (d.MISSIONS.active) d.MISSIONS.fail('fin de prueba', true); } catch (e) {} try { if (d.PLAYER.car) d.exitCar(); } catch (e) {}
-  try { d.WANTED.level = 0; } catch (e) {} document.body.classList.remove('fighting'); window.__manual = true; d.GAME.state = 'play'; d.GAME.tod = 12; })()"""
+  try { d.WANTED.level = 0; } catch (e) {} document.body.classList.remove('fighting'); try { if (d.GAME.state === 'pause') d.GAME.pause(false); document.getElementById('pause').style.display = 'none'; } catch (e) {} window.__manual = true; d.GAME.state = 'play'; d.GAME.tod = 12; })()"""
 async def main():
     lines = [l.strip() for l in open(sys.argv[1], encoding='utf-8') if l.strip() and not l.strip().startswith('#')]
     async with async_playwright() as p:
@@ -19,6 +20,8 @@ async def main():
         b = await p.chromium.launch(args=(['--enable-gpu', '--use-angle=d3d11' if os.name == 'nt' else '--use-angle=default'] if gpu else ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader']) + ['--ignore-gpu-blocklist', '--mute-audio'])
         pg = await b.new_page(viewport={'width': 640, 'height': 360})
         await pg.add_init_script(MUDO)
+        # v1.1.7: a list with a «huella_» tool (fingerprints of what is built) gets the same fixed-seed Math.random as the auditor, so two loads build the same city
+        if any('huella_' in l.split()[0] for l in lines): await pg.add_init_script(SEMILLA)
         logs = []; pg.on('console', lambda m: logs.append(m.type + ': ' + m.text)); pg.on('pageerror', lambda e: logs.append('PAGEERROR: ' + str(e)))
         await pg.goto('http://localhost:8765/test.html?q=' + ('alta' if gpu else 'baja'))
         try: await pg.wait_for_function('window.__GAME_READY', timeout=180000)

@@ -90,19 +90,7 @@ function playerPunch() {
 }
 function hitPed(p) {
   if (!p.fought && p.down <= 0 && startStreetFight(p)) return; // → 2D street fight
-  AUDIO.thud(2);
-  CAM.shake = 0.12;
-  if (p.H.skinned) hitSkinned(p.H);
-  p.hp = (p.hp ?? 3) - 1;
-  p.hits = (p.hits || 0) + 1;
-  const dx = p.x - PLAYER.x,
-    dz = p.z - PLAYER.z,
-    d = Math.hypot(dx, dz) || 1;
-  p.x += (dx / d) * 0.5;
-  p.z += (dz / d) * 0.5;
-  let policeNear = CARS.some((c) => c.type === 'police' && Math.hypot(c.x - p.x, c.z - p.z) < 45);
-  if (policeNear) WANTED.crime(1, 'Agresión');
-  else if (Math.random() < 0.12) WANTED.crime(1, 'Alguien ha llamado a la policía');
+  const { dx, dz, d } = hitPedPart1(p);
   if (p.hp <= 0) {
     p.down = 5;
     p.fight = 0;
@@ -156,6 +144,23 @@ function hitPed(p) {
       SUB.show('<b>Peatón:</b> ' + pick(LINES.flee), 2.5);
     }
   }
+}
+/** (v1.1.7, code quality) part of hitPed */
+function hitPedPart1(p) {
+  AUDIO.thud(2);
+  CAM.shake = 0.12;
+  if (p.H.skinned) hitSkinned(p.H);
+  p.hp = (p.hp ?? 3) - 1;
+  p.hits = (p.hits || 0) + 1;
+  const dx = p.x - PLAYER.x,
+    dz = p.z - PLAYER.z,
+    d = Math.hypot(dx, dz) || 1;
+  p.x += (dx / d) * 0.5;
+  p.z += (dz / d) * 0.5;
+  let policeNear = CARS.some((c) => c.type === 'police' && Math.hypot(c.x - p.x, c.z - p.z) < 45);
+  if (policeNear) WANTED.crime(1, 'Agresión');
+  else if (Math.random() < 0.12) WANTED.crime(1, 'Alguien ha llamado a la policía');
+  return { dx, dz, d };
 }
 function startFight(p) {
   p.fight = 12;

@@ -134,19 +134,7 @@ function buildHall(F, uc, L, yF, name, gaps, holes = [], o = {}) {
     H = 3.4,
     hl = L / 2,
     hw = W / 2;
-  const y1 = o.y1 ?? yF,
-    yAt = (u) => yF + (y1 - yF) * clamp((u + hl) / L, 0, 1),
-    tilt = Math.atan2(y1 - yF, L),
-    dens = o.density ?? 0.45;
-  const P = (u, v) => F.W(uc + u, v);
-  const ang = Math.atan2(F.ux, F.uz); // rotation.y so that local z = u
-  const place = (mesh, u, y, v, rotY = 0) => {
-    const [x, z] = P(u, v);
-    mesh.position.set(x, y, z);
-    mesh.rotation.y = ang + rotY;
-    g.add(mesh);
-    return mesh;
-  };
+  const { yAt, tilt, dens, P, ang, place } = buildHallPart1(o, yF, L, F, hl, uc, g);
   const tilted = (mesh) => {
     if (tilt) mesh.rotation.set(-tilt, mesh.rotation.y, 0, 'YXZ');
     return mesh;
@@ -206,31 +194,7 @@ function buildHall(F, uc, L, yF, name, gaps, holes = [], o = {}) {
     st.rotation.copy(m.rotation);
     g.add(st);
   };
-  for (const side of ['v+', 'v-', 'u+', 'u-']) {
-    const ext = side[0] === 'v' ? hl : hw;
-    const gs = gaps
-      .filter((q) => q[0] === side)
-      .map((q) => [q[1] - q[2] / 2, q[1] + q[2] / 2])
-      .sort((p, q) => p[0] - q[0]);
-    let a = -ext;
-    for (const [s, e] of gs) {
-      wallSeg(side, a, s);
-      a = e;
-    }
-    wallSeg(side, a, ext);
-  }
-  // bays: rows at v in [-15.5,-10.5], [-4, 0], [0, 4], [10.5, 15.5]; lanes at v = ±7.25 and cross lanes at both ends (7 m)
-  const openU = (s) => gaps.some((q) => q[0] === s && q[2] >= W - 0.5); // an end opening onto the next hall of a chain: bays and columns run on
-  const bayW = 2.5,
-    rows = [
-      [-13, 1],
-      [-2, -1],
-      [2, 1],
-      [13, -1]
-    ];
-  const uStart = -hl + (openU('u-') ? 1.5 : 7.5),
-    uEnd = hl - (openU('u+') ? 1.5 : 7.5);
-  const lines = [];
+  const { bayW, rows, uStart, uEnd, lines } = buildHallPart2(hl, hw, gaps, wallSeg, W);
   let nCars = 0;
   for (const [vc, face] of rows)
     for (let u = uStart; u <= uEnd + 0.01; u += bayW) {
@@ -259,23 +223,7 @@ function buildHall(F, uc, L, yF, name, gaps, holes = [], o = {}) {
         }
       }
     }
-  for (const [u, vc] of lines) {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 5), M_.line);
-    m.rotation.x = -Math.PI / 2;
-    const q = new THREE.Group();
-    q.add(m);
-    place(q, u, yAt(u) + 0.135, vc);
-    q.rotation.y = ang + Math.PI / 2;
-  }
-  // lane arrows and centre dashes
-  for (const vl of [-7.25, 7.25])
-    for (let u = -hl + 4; u < hl - 4; u += 6) {
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 2.6), M_.line);
-      m.rotation.x = -Math.PI / 2;
-      const q = new THREE.Group();
-      q.add(m);
-      tilted(place(q, u, yAt(u) + 0.135, vl));
-    }
+  buildHallPart3(lines, M_, place, yAt, ang, hl, tilted);
   // columns (between back-to-back bays) and light strips over the lanes
   for (let u = uStart; u <= uEnd; u += bayW * 3) {
     const yb = yAt(u) + 0.12;
@@ -291,21 +239,7 @@ function buildHall(F, uc, L, yF, name, gaps, holes = [], o = {}) {
       UGC.push([x2, z2, 0.35, yAt(u)]);
     }
   }
-  for (const vl of [-7.25, 7.25])
-    for (let u = -hl + 3; u < hl - 3; u += 5) {
-      const l = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.06, 1.6), M_.light);
-      tilted(place(l, u, yAt(u) + 0.12 + H - 0.05, vl));
-    }
-  // signs
-  const sP = new THREE.MeshBasicMaterial({ map: pkSignTex('P  -1   ' + name.toUpperCase(), '#1d4f9c', '#fff', 1024, 128) });
-  for (const s of [-1, 1]) {
-    const u = s * hl * 0.5;
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(6, 0.75), sP);
-    place(m, u, yAt(u) + 0.12 + 2.1, -hw + 0.2, -Math.PI / 2);
-    const m2 = new THREE.Mesh(new THREE.PlaneGeometry(6, 0.75), sP);
-    place(m2, u, yAt(u) + 0.12 + 2.1, hw - 0.2, Math.PI / 2);
-  }
-  const sx = new THREE.MeshBasicMaterial({ map: pkSignTex('SALIDA  ►', '#1f8a3c', '#fff') });
+  const { sx } = buildHallPart4(name, hl, M_, tilted, place, yAt, H, hw);
   for (const q of gaps) {
     if (q[2] >= W - 0.5) continue;
     const m = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.4), sx);
@@ -313,6 +247,11 @@ function buildHall(F, uc, L, yF, name, gaps, holes = [], o = {}) {
     const v = q[0][0] === 'u' ? q[1] : q[0] === 'v+' ? hw - 3 : -hw + 3;
     place(m, u, yAt(u) + 0.12 + H - 0.35, v, q[0] === 'u+' ? 0 : q[0] === 'u-' ? Math.PI : Math.PI / 2);
   }
+  buildHallPart5(g, o, P, hl, yAt, W, hw, H);
+  return { nCars, yAt };
+}
+/** (v1.1.7, code quality) part of buildHall: v0.76: the long hall of La Trinidad is ~1200 small pieces: fuse those without a texture into one mesh per material */
+function buildHallPart5(g, o, P, hl, yAt, W, hw, H) {
   // v0.76: the long hall of La Trinidad is ~1200 small pieces: fuse those without a texture into one mesh per material
   g.updateMatrixWorld(true);
   const byMat = new Map();
@@ -358,7 +297,91 @@ function buildHall(F, uc, L, yF, name, gaps, holes = [], o = {}) {
       hall: true
     });
   }
-  return { nCars, yAt };
+}
+/** (v1.1.7, code quality) part of buildHall: signs */
+function buildHallPart4(name, hl, M_, tilted, place, yAt, H, hw) {
+  for (const vl of [-7.25, 7.25])
+    for (let u = -hl + 3; u < hl - 3; u += 5) {
+      const l = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.06, 1.6), M_.light);
+      tilted(place(l, u, yAt(u) + 0.12 + H - 0.05, vl));
+    }
+  // signs
+  const sP = new THREE.MeshBasicMaterial({ map: pkSignTex('P  -1   ' + name.toUpperCase(), '#1d4f9c', '#fff', 1024, 128) });
+  for (const s of [-1, 1]) {
+    const u = s * hl * 0.5;
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(6, 0.75), sP);
+    place(m, u, yAt(u) + 0.12 + 2.1, -hw + 0.2, -Math.PI / 2);
+    const m2 = new THREE.Mesh(new THREE.PlaneGeometry(6, 0.75), sP);
+    place(m2, u, yAt(u) + 0.12 + 2.1, hw - 0.2, Math.PI / 2);
+  }
+  const sx = new THREE.MeshBasicMaterial({ map: pkSignTex('SALIDA  ►', '#1f8a3c', '#fff') });
+  return { sx };
+}
+/** (v1.1.7, code quality) part of buildHall: lane arrows and centre dashes */
+function buildHallPart3(lines, M_, place, yAt, ang, hl, tilted) {
+  for (const [u, vc] of lines) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 5), M_.line);
+    m.rotation.x = -Math.PI / 2;
+    const q = new THREE.Group();
+    q.add(m);
+    place(q, u, yAt(u) + 0.135, vc);
+    q.rotation.y = ang + Math.PI / 2;
+  }
+  // lane arrows and centre dashes
+  for (const vl of [-7.25, 7.25])
+    for (let u = -hl + 4; u < hl - 4; u += 6) {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 2.6), M_.line);
+      m.rotation.x = -Math.PI / 2;
+      const q = new THREE.Group();
+      q.add(m);
+      tilted(place(q, u, yAt(u) + 0.135, vl));
+    }
+}
+/** (v1.1.7, code quality) part of buildHall: bays: rows at v in [-15.5,-10.5], [-4, 0], [0, 4], [10.5, 15.5]; lanes at v = ±7.25 and cross lanes at both ends (7 m) */
+function buildHallPart2(hl, hw, gaps, wallSeg, W) {
+  for (const side of ['v+', 'v-', 'u+', 'u-']) {
+    const ext = side[0] === 'v' ? hl : hw;
+    const gs = gaps
+      .filter((q) => q[0] === side)
+      .map((q) => [q[1] - q[2] / 2, q[1] + q[2] / 2])
+      .sort((p, q) => p[0] - q[0]);
+    let a = -ext;
+    for (const [s, e] of gs) {
+      wallSeg(side, a, s);
+      a = e;
+    }
+    wallSeg(side, a, ext);
+  }
+  // bays: rows at v in [-15.5,-10.5], [-4, 0], [0, 4], [10.5, 15.5]; lanes at v = ±7.25 and cross lanes at both ends (7 m)
+  const openU = (s) => gaps.some((q) => q[0] === s && q[2] >= W - 0.5); // an end opening onto the next hall of a chain: bays and columns run on
+  const bayW = 2.5,
+    rows = [
+      [-13, 1],
+      [-2, -1],
+      [2, 1],
+      [13, -1]
+    ];
+  const uStart = -hl + (openU('u-') ? 1.5 : 7.5),
+    uEnd = hl - (openU('u+') ? 1.5 : 7.5);
+  const lines = [];
+  return { bayW, rows, uStart, uEnd, lines };
+}
+/** (v1.1.7, code quality) part of buildHall */
+function buildHallPart1(o, yF, L, F, hl, uc, g) {
+  const y1 = o.y1 ?? yF,
+    yAt = (u) => yF + (y1 - yF) * clamp((u + hl) / L, 0, 1),
+    tilt = Math.atan2(y1 - yF, L),
+    dens = o.density ?? 0.45;
+  const P = (u, v) => F.W(uc + u, v);
+  const ang = Math.atan2(F.ux, F.uz); // rotation.y so that local z = u
+  const place = (mesh, u, y, v, rotY = 0) => {
+    const [x, z] = P(u, v);
+    mesh.position.set(x, y, z);
+    mesh.rotation.y = ang + rotY;
+    g.add(mesh);
+    return mesh;
+  };
+  return { yAt, tilt, dens, P, ang, place };
 }
 function rampProfile(Lr, yF) {
   return (s, x, z) => lerp(heightAt(x, z), yF, smooth(0, 1, (s - 2) / Math.max(4, Lr - 8)));
@@ -423,69 +446,8 @@ function stairHole(F, uc, x0, z0, ux, uz) {
 }
 // pedestrian stairwell: a glass pavilion on the surface over a stair that goes down into the hall
 function buildStairwell(x0, z0, ux, uz, yF, corr) {
-  const M_ = pkMats();
-  const L = 10,
-    g0 = heightAt(x0, z0);
-  const x1 = x0 + ux * L,
-    z1 = z0 + uz * L;
-  const ang = Math.atan2(ux, uz);
-  const dpts = [
-    [x0 - ux * 0.5, z0 - uz * 0.5, g0 - 0.1],
-    [x1, z1, yF + 0.12],
-    [x1 + ux * 1.5, z1 + uz * 1.5, yF + 0.12]
-  ];
-  if (corr) {
-    // underground corridor from the foot of the stairs to the hall
-    const cx0 = x1 + ux * 1.5,
-      cz0 = z1 + uz * 1.5,
-      cx1 = corr[0],
-      cz1 = corr[1];
-    dpts.push([cx1, cz1, yF + 0.12]);
-    const cl = Math.hypot(cx1 - cx0, cz1 - cz0),
-      ca = Math.atan2(cx1 - cx0, cz1 - cz0);
-    const cg = new THREE.Group();
-    cg.position.set((cx0 + cx1) / 2, 0, (cz0 + cz1) / 2);
-    cg.rotation.y = ca;
-    const fl = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.1, cl + 2.6), M_.col);
-    fl.position.y = yF + 0.07;
-    cg.add(fl);
-    const ce = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.12, cl + 2.6), M_.ceil);
-    ce.position.y = yF + 2.75;
-    cg.add(ce);
-    for (const sd of [-1, 1]) {
-      const wl = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2.7, cl + 2.6), M_.wall);
-      wl.position.set(sd * 1.32, yF + 1.45, 0);
-      cg.add(wl);
-    }
-    const lt = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.05, cl * 0.8), M_.light);
-    lt.position.y = yF + 2.68;
-    cg.add(lt);
-    scene.add(cg);
-  }
-  TUNNEL_DECKS.push({ type: 'path', pts: dpts, w: 2.4, hw: 1.0, tunnel: true, ceil: 2.6 });
-  // keep the foot of the stairs clear: no parked cars under / in front of the stairwell
-  {
-    const sx = x0 - ux,
-      sz = z0 - uz,
-      ex = x1 + ux * 4,
-      ez = z1 + uz * 4,
-      L2 = (ex - sx) ** 2 + (ez - sz) ** 2;
-    for (let i = UGC.length - 1; i >= 0; i--) {
-      const c = UGC[i];
-      if (c[3] === undefined || Math.abs(c[3] - yF) > 0.6 || !c[4]) continue;
-      const t = clamp(((c[0] - sx) * (ex - sx) + (c[1] - sz) * (ez - sz)) / L2, 0, 1);
-      if (Math.hypot(c[0] - sx - (ex - sx) * t, c[1] - sz - (ez - sz) * t) < 2.6) {
-        c[4].visible = false;
-        const m = c[4];
-        for (let j = UGC.length - 1; j >= 0; j--) if (UGC[j][4] === m) UGC.splice(j, 1);
-        i = Math.min(i, UGC.length);
-      }
-    }
-  }
-  TCUTS.push([x0 - ux * 0.3, z0 - uz * 0.3, x1 - ux * 2.5, z1 - uz * 2.5, 1.35, 9000 + TCUTS.length]);
-  const g = new THREE.Group();
-  g.position.set((x0 + x1) / 2, 0, (z0 + z1) / 2);
-  g.rotation.y = ang;
+  const { M_, L, g0, x1, z1, ang } = buildStairwellPart1(x0, z0, ux, uz, yF, corr);
+  const { g } = buildStairwellPart2(x0, ux, z0, uz, x1, z1, ang, yF);
   const n = Math.ceil((g0 - yF) / 0.18);
   for (let i = 0; i < n; i++) {
     const t = (i + 0.5) / n;
@@ -528,6 +490,77 @@ function buildStairwell(x0, z0, ux, uz, yF, corr) {
       az = z0 - ux * s * 1.5;
     COL.addSeg(ax, az, ax + ux * L * 0.75, az + uz * L * 0.75);
   }
+}
+/** (v1.1.7, code quality) part of buildStairwell: keep the foot of the stairs clear: no parked cars under / in front of the stairwell */
+function buildStairwellPart2(x0, ux, z0, uz, x1, z1, ang, yF) {
+  // keep the foot of the stairs clear: no parked cars under / in front of the stairwell
+  {
+    const sx = x0 - ux,
+      sz = z0 - uz,
+      ex = x1 + ux * 4,
+      ez = z1 + uz * 4,
+      L2 = (ex - sx) ** 2 + (ez - sz) ** 2;
+    for (let i = UGC.length - 1; i >= 0; i--) {
+      const c = UGC[i];
+      if (c[3] === undefined || Math.abs(c[3] - yF) > 0.6 || !c[4]) continue;
+      const t = clamp(((c[0] - sx) * (ex - sx) + (c[1] - sz) * (ez - sz)) / L2, 0, 1);
+      if (Math.hypot(c[0] - sx - (ex - sx) * t, c[1] - sz - (ez - sz) * t) < 2.6) {
+        c[4].visible = false;
+        const m = c[4];
+        for (let j = UGC.length - 1; j >= 0; j--) if (UGC[j][4] === m) UGC.splice(j, 1);
+        i = Math.min(i, UGC.length);
+      }
+    }
+  }
+  TCUTS.push([x0 - ux * 0.3, z0 - uz * 0.3, x1 - ux * 2.5, z1 - uz * 2.5, 1.35, 9000 + TCUTS.length]);
+  const g = new THREE.Group();
+  g.position.set((x0 + x1) / 2, 0, (z0 + z1) / 2);
+  g.rotation.y = ang;
+  return { g };
+}
+/** (v1.1.7, code quality) part of buildStairwell: underground corridor from the foot of the stairs to the hall */
+function buildStairwellPart1(x0, z0, ux, uz, yF, corr) {
+  const M_ = pkMats();
+  const L = 10,
+    g0 = heightAt(x0, z0);
+  const x1 = x0 + ux * L,
+    z1 = z0 + uz * L;
+  const ang = Math.atan2(ux, uz);
+  const dpts = [
+    [x0 - ux * 0.5, z0 - uz * 0.5, g0 - 0.1],
+    [x1, z1, yF + 0.12],
+    [x1 + ux * 1.5, z1 + uz * 1.5, yF + 0.12]
+  ];
+  if (corr) {
+    // underground corridor from the foot of the stairs to the hall
+    const cx0 = x1 + ux * 1.5,
+      cz0 = z1 + uz * 1.5,
+      cx1 = corr[0],
+      cz1 = corr[1];
+    dpts.push([cx1, cz1, yF + 0.12]);
+    const cl = Math.hypot(cx1 - cx0, cz1 - cz0),
+      ca = Math.atan2(cx1 - cx0, cz1 - cz0);
+    const cg = new THREE.Group();
+    cg.position.set((cx0 + cx1) / 2, 0, (cz0 + cz1) / 2);
+    cg.rotation.y = ca;
+    const fl = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.1, cl + 2.6), M_.col);
+    fl.position.y = yF + 0.07;
+    cg.add(fl);
+    const ce = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.12, cl + 2.6), M_.ceil);
+    ce.position.y = yF + 2.75;
+    cg.add(ce);
+    for (const sd of [-1, 1]) {
+      const wl = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2.7, cl + 2.6), M_.wall);
+      wl.position.set(sd * 1.32, yF + 1.45, 0);
+      cg.add(wl);
+    }
+    const lt = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.05, cl * 0.8), M_.light);
+    lt.position.y = yF + 2.68;
+    cg.add(lt);
+    scene.add(cg);
+  }
+  TUNNEL_DECKS.push({ type: 'path', pts: dpts, w: 2.4, hw: 1.0, tunnel: true, ceil: 2.6 });
+  return { M_, L, g0, x1, z1, ang };
 }
 function buildCarParks() {
   // ---- Plaza del Cristo

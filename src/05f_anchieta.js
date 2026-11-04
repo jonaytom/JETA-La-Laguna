@@ -4,24 +4,7 @@ const DECKS = [];
 function deckAt(x, z, py, roadOnly = false, slack = 0) {
   // slack: extra step allowed per unit of the deck's own slope (cars reaching ahead on steep ramps)
   let best = -1e9;
-  if (!DECKS.bridgesAdded) {
-    DECKS.push(...BRIDGE_DECKS);
-    DECKS.bridgesAdded = true;
-    for (const d of DECKS)
-      if (d.type === 'path') {
-        let a = 1e9,
-          b = -1e9,
-          c2 = 1e9,
-          e = -1e9;
-        for (const p of d.pts) {
-          a = Math.min(a, p[0]);
-          b = Math.max(b, p[0]);
-          c2 = Math.min(c2, p[1]);
-          e = Math.max(e, p[1]);
-        }
-        d.bb = [a - d.w, b + d.w, c2 - d.w, e + d.w];
-      }
-  }
+  deckAtPart1();
   for (const d of DECKS) {
     if (roadOnly && !d.road) continue;
     if (d.bb && (x < d.bb[0] || x > d.bb[1] || z < d.bb[2] || z > d.bb[3])) continue;
@@ -69,6 +52,27 @@ function deckAt(x, z, py, roadOnly = false, slack = 0) {
   }
   return best;
 }
+/** (v1.1.7, code quality) part of deckAt */
+function deckAtPart1() {
+  if (!DECKS.bridgesAdded) {
+    DECKS.push(...BRIDGE_DECKS);
+    DECKS.bridgesAdded = true;
+    for (const d of DECKS)
+      if (d.type === 'path') {
+        let a = 1e9,
+          b = -1e9,
+          c2 = 1e9,
+          e = -1e9;
+        for (const p of d.pts) {
+          a = Math.min(a, p[0]);
+          b = Math.max(b, p[0]);
+          c2 = Math.min(c2, p[1]);
+          e = Math.max(e, p[1]);
+        }
+        d.bb = [a - d.w, b + d.w, c2 - d.w, e + d.w];
+      }
+  }
+}
 // nearest road-deck centreline under (x,z) at about height py, for keeping vehicles from driving off the side of bridges
 function deckSide(x, z, py) {
   let best = null;
@@ -98,98 +102,102 @@ function deckSide(x, z, py) {
 }
 const RING = { cx: -347.5, cz: 745.4, R: 49.9, w: 3.7, y: 0 };
 function buildPasarela() {
-  // deck level: 6 m over the highest ground below the ring
-  let gmax = -1e9;
-  for (let i = 0; i < 64; i++) {
-    const a = (i / 64) * Math.PI * 2;
-    gmax = Math.max(gmax, heightAt(RING.cx + Math.cos(a) * RING.R, RING.cz + Math.sin(a) * RING.R));
-  }
-  RING.y = gmax + 6.2;
-  DECKS.push({ type: 'ring', ...RING });
-  const white = new THREE.MeshStandardMaterial({ color: 0xeef0f1, roughness: 0.45, metalness: 0.35, side: THREE.DoubleSide });
-  const floorM = new THREE.MeshStandardMaterial({ color: 0x8f9296, roughness: 0.85 });
-  const ledM = new THREE.MeshStandardMaterial({ color: 0xdfefff, emissive: 0xcfe6ff, emissiveIntensity: 0.2 });
-  PASARELA.led = ledM;
-  const concrete = new THREE.MeshStandardMaterial({ color: 0xb8b4ac, roughness: 0.9 });
+  const { white, floorM, ledM, concrete } = buildPasarelaPart1();
   const N = 120,
     R = RING.R,
     hw = RING.w / 2,
     y = RING.y;
-  const pos = [],
-    nor = [],
-    fl = [],
-    led = [];
-  const P = (a, r, yy) => [RING.cx + Math.cos(a) * r, yy, RING.cz + Math.sin(a) * r];
-  const quad = (arr, a, b, c, d) => {
-    arr.push(...a, ...b, ...c, ...a, ...c, ...d);
-  };
-  // openings in the outer wall where the stairs and the helical ramp leave the ring
-  const SE_STAIR = [-272, 709];
-  /* where the south-east stairs reach the ground (Jonay: they used to land on the road) */ const SE_ANG = Math.atan2(
-    SE_STAIR[1] - RING.cz,
-    SE_STAIR[0] - RING.cx
-  );
-  const GAPS = [
-    [Math.PI * 0.98, 0.045],
-    [SE_ANG, 0.045],
-    [Math.atan2(792 - RING.cz, -326 - RING.cx), 0.05]
-  ];
-  const inGap = (a) => GAPS.some(([g, hwA]) => Math.abs(angDiff(a, g)) < hwA);
-  for (let i = 0; i < N; i++) {
-    const a0 = (i / N) * Math.PI * 2,
-      a1 = ((i + 1) / N) * Math.PI * 2;
-    const fold = i % 2 ? 0.28 : -0.05;
-    const gap = inGap((a0 + a1) / 2) || inGap(a0 + 0.004) || inGap(a1 - 0.004);
-    const ri = R - hw,
-      ro = R + hw;
-    // floor slab
-    quad(fl, P(a0, ri, y), P(a1, ri, y), P(a1, ro, y), P(a0, ro, y));
-    quad(pos, P(a0, ri - 0.15, y - 1.0), P(a1, ri - 0.15, y - 1.0), P(a1, ro + 0.3, y - 1.25), P(a0, ro + 0.3, y - 1.25)); // underside
-    // outer wall: folded U-section, higher towards the TF-5 side (noise barrier)
-    const oh = 2.2 + 0.3 * Math.sin(a0 * 2);
-    if (gap) {
-      quad(pos, P(a0, ro + 0.3, y - 1.25), P(a1, ro + 0.3, y - 1.25), P(a1, ro + 0.3, y), P(a0, ro + 0.3, y));
-      quad(fl, P(a0, ro - 0.1, y), P(a1, ro - 0.1, y), P(a1, ro + 0.3, y), P(a0, ro + 0.3, y));
-    } else {
-      quad(pos, P(a0, ro + 0.3, y - 1.25), P(a1, ro + 0.3, y - 1.25), P(a1, ro + 0.3 + fold, y + oh * 0.45), P(a0, ro + 0.3 - fold, y + oh * 0.45));
-      quad(pos, P(a0, ro + 0.3 - fold, y + oh * 0.45), P(a1, ro + 0.3 + fold, y + oh * 0.45), P(a1, ro + 0.05, y + oh), P(a0, ro + 0.05, y + oh));
-      quad(pos, P(a0, ro + 0.05, y + oh), P(a1, ro + 0.05, y + oh), P(a1, ro - 0.1, y + oh), P(a0, ro - 0.1, y + oh));
-      quad(pos, P(a0, ro - 0.1, y + oh), P(a1, ro - 0.1, y + oh), P(a1, ro - 0.1, y), P(a0, ro - 0.1, y));
+  const { pos, fl, led, SE_STAIR, SE_ANG } = buildPasarelaPart2(N, R, hw, y);
+  const { tramNear } = buildPasarelaPart3(pos, white, fl, floorM, led, ledM);
+  let { rampPts, L, cum } = buildPasarelaPart4(R, tramNear, y, concrete);
+  const endG = heightAt(-316, 839.5) + 0.15;
+  const ramp = rampPts.map((p, i) => {
+    const t = cum[i] / L;
+    return [p[0], p[1], lerp(y, endG, t)];
+  });
+  buildPasarelaPart5(ramp, white, floorM, concrete, R, hw, y);
+  buildPasarelaPart6(SE_ANG, R, hw, SE_STAIR, y, white, floorM, concrete);
+}
+/** (v1.1.7, code quality) part of buildPasarela: south-east: a level walkway leaves the ring towards the campus pavement and the stairs come down onto it */
+function buildPasarelaPart6(SE_ANG, R, hw, SE_STAIR, y, white, floorM, concrete) {
+  // south-east: a level walkway leaves the ring towards the campus pavement and the stairs come down onto it
+  {
+    const ang = SE_ANG;
+    const dx = Math.cos(ang),
+      dz = Math.sin(ang);
+    const sx = RING.cx + dx * (R + hw),
+      sz = RING.cz + dz * (R + hw);
+    const [ex, ez] = SE_STAIR;
+    const g = heightAt(ex, ez) + 0.15;
+    const len = (y - g) * 1.7,
+      D = Math.hypot(ex - sx, ez - sz);
+    const ux = (ex - sx) / D,
+      uz = (ez - sz) / D;
+    const tx = ex - ux * len,
+      tz = ez - uz * len; // top of the stairs
+    if (D - len > 1) {
+      const walk = [
+        [sx - ux * 0.5, sz - uz * 0.5, y],
+        [tx, tz, y]
+      ];
+      DECKS.push({ type: 'path', pts: walk, w: 2.8 });
+      buildRampMesh(walk, 2.8, white, floorM, concrete);
     }
-    // inner wall (lower, parapet)
-    quad(pos, P(a0, ri - 0.15, y - 1.0), P(a1, ri - 0.15, y - 1.0), P(a1, ri - 0.15, y + 1.15), P(a0, ri - 0.15, y + 1.15));
-    quad(pos, P(a0, ri - 0.15, y + 1.15), P(a1, ri - 0.15, y + 1.15), P(a1, ri + 0.05, y + 1.15), P(a0, ri + 0.05, y + 1.15));
-    quad(pos, P(a0, ri + 0.05, y + 1.15), P(a1, ri + 0.05, y + 1.15), P(a1, ri + 0.05, y), P(a0, ri + 0.05, y));
-    // LED strips
-    if (!gap) quad(led, P(a0, ro - 0.12, y + 0.95), P(a1, ro - 0.12, y + 0.95), P(a1, ro - 0.12, y + 1.02), P(a0, ro - 0.12, y + 1.02));
-    quad(led, P(a0, ri + 0.07, y + 0.95), P(a1, ri + 0.07, y + 0.95), P(a1, ri + 0.07, y + 1.02), P(a0, ri + 0.07, y + 1.02));
+    const st = [
+      [tx, tz, y],
+      [ex, ez, g]
+    ];
+    DECKS.push({ type: 'path', pts: st, w: 2.8 });
+    buildStairs(st, 2.8, white, floorM);
   }
-  const mkMesh = (arr, mat, cast = true) => {
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3));
-    g.computeVertexNormals();
-    const m = new THREE.Mesh(g, mat);
-    m.castShadow = cast;
-    m.receiveShadow = true;
-    scene.add(m);
-    return m;
-  };
-  mkMesh(pos, white);
-  mkMesh(fl, floorM);
-  mkMesh(led, ledM, false);
-  // concrete point supports, kept off the carriageways and the tram
-  const tramNear = (x, z) => {
-    const T = DATA.T;
-    for (let i = 0; i < T.length - 2; i += 2) {
-      const dx = T[i + 2] - T[i],
-        dz = T[i + 3] - T[i + 1],
-        L2 = dx * dx + dz * dz || 1;
-      let t = ((x - T[i]) * dx + (z - T[i + 1]) * dz) / L2;
-      t = clamp(t, 0, 1);
-      if (Math.hypot(x - T[i] - dx * t, z - T[i + 1] - dz * t) < 5) return true;
-    }
-    return false;
-  };
+  // glass lift tower on the north side, next to the ring
+  {
+    const ang = Math.PI * 0.42;
+    const x = RING.cx + Math.cos(ang) * (R + hw + 2.2),
+      z = RING.cz + Math.sin(ang) * (R + hw + 2.2);
+    const g = heightAt(x, z);
+    const tower = new THREE.Mesh(
+      new THREE.BoxGeometry(3, y - g + 3.2, 3),
+      new THREE.MeshStandardMaterial({ color: 0x9fc3d6, roughness: 0.05, metalness: 0.4, transparent: true, opacity: 0.55 })
+    );
+    tower.position.set(x, g + (y - g + 3.2) / 2, z);
+    tower.rotation.y = -ang;
+    scene.add(tower);
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(3.15, 0.3, 3.15), white);
+    frame.position.set(x, y + 3.2, z);
+    frame.rotation.y = -ang;
+    scene.add(frame);
+    COL.addCirc(x, z, 1.9);
+    PASARELA.lift = { x, z, g, y };
+  }
+  PASARELA.ok = true;
+}
+/** (v1.1.7, code quality) part of buildPasarela: the ramp overlaps itself in plan (it is a helix): keep two separate decks for the two turns */
+function buildPasarelaPart5(ramp, white, floorM, concrete, R, hw, y) {
+  // the ramp overlaps itself in plan (it is a helix): keep two separate decks for the two turns
+  const half = 12;
+  DECKS.push({ type: 'path', pts: ramp.slice(0, half + 1), w: 3.2 });
+  DECKS.push({ type: 'path', pts: ramp.slice(half), w: 3.2 });
+  buildRampMesh(ramp, 3.2, white, floorM, concrete);
+  // straight stairs on the west side (towards Avenida de La Trinidad) and south-east (towards the tram stop)
+  {
+    const ang = Math.PI * 0.98;
+    const sx = RING.cx + Math.cos(ang) * (R + hw),
+      sz = RING.cz + Math.sin(ang) * (R + hw);
+    const dx = Math.cos(ang),
+      dz = Math.sin(ang);
+    const g = heightAt(sx + dx * 12, sz + dz * 12) + 0.15;
+    const len = (y - g) * 1.7;
+    const st = [
+      [sx - dx * 0.5, sz - dz * 0.5, y],
+      [sx + dx * len, sz + dz * len, g]
+    ];
+    DECKS.push({ type: 'path', pts: st, w: 2.8 });
+    buildStairs(st, 2.8, white, floorM);
+  }
+}
+/** (v1.1.7, code quality) part of buildPasarela: helical ramp down towards the Intercambiador (follows the real path geometry) */
+function buildPasarelaPart4(R, tramNear, y, concrete) {
   for (let k = 0; k < 16; k++) {
     for (const da of [0, 0.06, -0.06, 0.12, -0.12]) {
       const a = (k / 16) * Math.PI * 2 + da;
@@ -245,83 +253,107 @@ function buildPasarela() {
     L += Math.hypot(rampPts[i][0] - rampPts[i - 1][0], rampPts[i][1] - rampPts[i - 1][1]);
     cum.push(L);
   }
-  const endG = heightAt(-316, 839.5) + 0.15;
-  const ramp = rampPts.map((p, i) => {
-    const t = cum[i] / L;
-    return [p[0], p[1], lerp(y, endG, t)];
-  });
-  // the ramp overlaps itself in plan (it is a helix): keep two separate decks for the two turns
-  const half = 12;
-  DECKS.push({ type: 'path', pts: ramp.slice(0, half + 1), w: 3.2 });
-  DECKS.push({ type: 'path', pts: ramp.slice(half), w: 3.2 });
-  buildRampMesh(ramp, 3.2, white, floorM, concrete);
-  // straight stairs on the west side (towards Avenida de La Trinidad) and south-east (towards the tram stop)
-  {
-    const ang = Math.PI * 0.98;
-    const sx = RING.cx + Math.cos(ang) * (R + hw),
-      sz = RING.cz + Math.sin(ang) * (R + hw);
-    const dx = Math.cos(ang),
-      dz = Math.sin(ang);
-    const g = heightAt(sx + dx * 12, sz + dz * 12) + 0.15;
-    const len = (y - g) * 1.7;
-    const st = [
-      [sx - dx * 0.5, sz - dz * 0.5, y],
-      [sx + dx * len, sz + dz * len, g]
-    ];
-    DECKS.push({ type: 'path', pts: st, w: 2.8 });
-    buildStairs(st, 2.8, white, floorM);
-  }
-  // south-east: a level walkway leaves the ring towards the campus pavement and the stairs come down onto it
-  {
-    const ang = SE_ANG;
-    const dx = Math.cos(ang),
-      dz = Math.sin(ang);
-    const sx = RING.cx + dx * (R + hw),
-      sz = RING.cz + dz * (R + hw);
-    const [ex, ez] = SE_STAIR;
-    const g = heightAt(ex, ez) + 0.15;
-    const len = (y - g) * 1.7,
-      D = Math.hypot(ex - sx, ez - sz);
-    const ux = (ex - sx) / D,
-      uz = (ez - sz) / D;
-    const tx = ex - ux * len,
-      tz = ez - uz * len; // top of the stairs
-    if (D - len > 1) {
-      const walk = [
-        [sx - ux * 0.5, sz - uz * 0.5, y],
-        [tx, tz, y]
-      ];
-      DECKS.push({ type: 'path', pts: walk, w: 2.8 });
-      buildRampMesh(walk, 2.8, white, floorM, concrete);
+  return { rampPts, L, cum };
+}
+/** (v1.1.7, code quality) part of buildPasarela: concrete point supports, kept off the carriageways and the tram */
+function buildPasarelaPart3(pos, white, fl, floorM, led, ledM) {
+  const mkMesh = (arr, mat, cast = true) => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3));
+    g.computeVertexNormals();
+    const m = new THREE.Mesh(g, mat);
+    m.castShadow = cast;
+    m.receiveShadow = true;
+    scene.add(m);
+    return m;
+  };
+  mkMesh(pos, white);
+  mkMesh(fl, floorM);
+  mkMesh(led, ledM, false);
+  // concrete point supports, kept off the carriageways and the tram
+  const tramNear = (x, z) => {
+    const T = DATA.T;
+    for (let i = 0; i < T.length - 2; i += 2) {
+      const dx = T[i + 2] - T[i],
+        dz = T[i + 3] - T[i + 1],
+        L2 = dx * dx + dz * dz || 1;
+      let t = ((x - T[i]) * dx + (z - T[i + 1]) * dz) / L2;
+      t = clamp(t, 0, 1);
+      if (Math.hypot(x - T[i] - dx * t, z - T[i + 1] - dz * t) < 5) return true;
     }
-    const st = [
-      [tx, tz, y],
-      [ex, ez, g]
-    ];
-    DECKS.push({ type: 'path', pts: st, w: 2.8 });
-    buildStairs(st, 2.8, white, floorM);
+    return false;
+  };
+  return { tramNear };
+}
+/** (v1.1.7, code quality) part of buildPasarela: openings in the outer wall where the stairs and the helical ramp leave the ring */
+function buildPasarelaPart2(N, R, hw, y) {
+  const pos = [],
+    nor = [],
+    fl = [],
+    led = [];
+  const P = (a, r, yy) => [RING.cx + Math.cos(a) * r, yy, RING.cz + Math.sin(a) * r];
+  const quad = (arr, a, b, c, d) => {
+    arr.push(...a, ...b, ...c, ...a, ...c, ...d);
+  };
+  // openings in the outer wall where the stairs and the helical ramp leave the ring
+  const SE_STAIR = [-272, 709];
+  /* where the south-east stairs reach the ground (Jonay: they used to land on the road) */ const SE_ANG = Math.atan2(
+    SE_STAIR[1] - RING.cz,
+    SE_STAIR[0] - RING.cx
+  );
+  const GAPS = [
+    [Math.PI * 0.98, 0.045],
+    [SE_ANG, 0.045],
+    [Math.atan2(792 - RING.cz, -326 - RING.cx), 0.05]
+  ];
+  const inGap = (a) => GAPS.some(([g, hwA]) => Math.abs(angDiff(a, g)) < hwA);
+  for (let i = 0; i < N; i++) {
+    const a0 = (i / N) * Math.PI * 2,
+      a1 = ((i + 1) / N) * Math.PI * 2;
+    const fold = i % 2 ? 0.28 : -0.05;
+    const gap = inGap((a0 + a1) / 2) || inGap(a0 + 0.004) || inGap(a1 - 0.004);
+    const ri = R - hw,
+      ro = R + hw;
+    // floor slab
+    quad(fl, P(a0, ri, y), P(a1, ri, y), P(a1, ro, y), P(a0, ro, y));
+    quad(pos, P(a0, ri - 0.15, y - 1.0), P(a1, ri - 0.15, y - 1.0), P(a1, ro + 0.3, y - 1.25), P(a0, ro + 0.3, y - 1.25)); // underside
+    // outer wall: folded U-section, higher towards the TF-5 side (noise barrier)
+    const oh = 2.2 + 0.3 * Math.sin(a0 * 2);
+    if (gap) {
+      quad(pos, P(a0, ro + 0.3, y - 1.25), P(a1, ro + 0.3, y - 1.25), P(a1, ro + 0.3, y), P(a0, ro + 0.3, y));
+      quad(fl, P(a0, ro - 0.1, y), P(a1, ro - 0.1, y), P(a1, ro + 0.3, y), P(a0, ro + 0.3, y));
+    } else {
+      quad(pos, P(a0, ro + 0.3, y - 1.25), P(a1, ro + 0.3, y - 1.25), P(a1, ro + 0.3 + fold, y + oh * 0.45), P(a0, ro + 0.3 - fold, y + oh * 0.45));
+      quad(pos, P(a0, ro + 0.3 - fold, y + oh * 0.45), P(a1, ro + 0.3 + fold, y + oh * 0.45), P(a1, ro + 0.05, y + oh), P(a0, ro + 0.05, y + oh));
+      quad(pos, P(a0, ro + 0.05, y + oh), P(a1, ro + 0.05, y + oh), P(a1, ro - 0.1, y + oh), P(a0, ro - 0.1, y + oh));
+      quad(pos, P(a0, ro - 0.1, y + oh), P(a1, ro - 0.1, y + oh), P(a1, ro - 0.1, y), P(a0, ro - 0.1, y));
+    }
+    // inner wall (lower, parapet)
+    quad(pos, P(a0, ri - 0.15, y - 1.0), P(a1, ri - 0.15, y - 1.0), P(a1, ri - 0.15, y + 1.15), P(a0, ri - 0.15, y + 1.15));
+    quad(pos, P(a0, ri - 0.15, y + 1.15), P(a1, ri - 0.15, y + 1.15), P(a1, ri + 0.05, y + 1.15), P(a0, ri + 0.05, y + 1.15));
+    quad(pos, P(a0, ri + 0.05, y + 1.15), P(a1, ri + 0.05, y + 1.15), P(a1, ri + 0.05, y), P(a0, ri + 0.05, y));
+    // LED strips
+    if (!gap) quad(led, P(a0, ro - 0.12, y + 0.95), P(a1, ro - 0.12, y + 0.95), P(a1, ro - 0.12, y + 1.02), P(a0, ro - 0.12, y + 1.02));
+    quad(led, P(a0, ri + 0.07, y + 0.95), P(a1, ri + 0.07, y + 0.95), P(a1, ri + 0.07, y + 1.02), P(a0, ri + 0.07, y + 1.02));
   }
-  // glass lift tower on the north side, next to the ring
-  {
-    const ang = Math.PI * 0.42;
-    const x = RING.cx + Math.cos(ang) * (R + hw + 2.2),
-      z = RING.cz + Math.sin(ang) * (R + hw + 2.2);
-    const g = heightAt(x, z);
-    const tower = new THREE.Mesh(
-      new THREE.BoxGeometry(3, y - g + 3.2, 3),
-      new THREE.MeshStandardMaterial({ color: 0x9fc3d6, roughness: 0.05, metalness: 0.4, transparent: true, opacity: 0.55 })
-    );
-    tower.position.set(x, g + (y - g + 3.2) / 2, z);
-    tower.rotation.y = -ang;
-    scene.add(tower);
-    const frame = new THREE.Mesh(new THREE.BoxGeometry(3.15, 0.3, 3.15), white);
-    frame.position.set(x, y + 3.2, z);
-    frame.rotation.y = -ang;
-    scene.add(frame);
-    COL.addCirc(x, z, 1.9);
-    PASARELA.lift = { x, z, g, y };
+  return { pos, fl, led, SE_STAIR, SE_ANG };
+}
+/** (v1.1.7, code quality) part of buildPasarela: deck level: 6 m over the highest ground below the ring */
+function buildPasarelaPart1() {
+  // deck level: 6 m over the highest ground below the ring
+  let gmax = -1e9;
+  for (let i = 0; i < 64; i++) {
+    const a = (i / 64) * Math.PI * 2;
+    gmax = Math.max(gmax, heightAt(RING.cx + Math.cos(a) * RING.R, RING.cz + Math.sin(a) * RING.R));
   }
-  PASARELA.ok = true;
+  RING.y = gmax + 6.2;
+  DECKS.push({ type: 'ring', ...RING });
+  const white = new THREE.MeshStandardMaterial({ color: 0xeef0f1, roughness: 0.45, metalness: 0.35, side: THREE.DoubleSide });
+  const floorM = new THREE.MeshStandardMaterial({ color: 0x8f9296, roughness: 0.85 });
+  const ledM = new THREE.MeshStandardMaterial({ color: 0xdfefff, emissive: 0xcfe6ff, emissiveIntensity: 0.2 });
+  PASARELA.led = ledM;
+  const concrete = new THREE.MeshStandardMaterial({ color: 0xb8b4ac, roughness: 0.9 });
+  return { white, floorM, ledM, concrete };
 }
 const PASARELA = { ok: false };
 function buildRampMesh(pts, w, wallMat, floorMat, colMat) {
@@ -411,6 +443,93 @@ function buildStairs(st, w, wallMat, stepMat) {
 // ---------- Intercambiador de La Laguna: open canopy over the bus platforms with green guaguas
 const INTER = { buses: [] };
 function buildIntercambiador(b) {
+  const { pts, y, fascia, mk } = buildIntercambiadorPart1(b);
+  const { F, platM, len, wid } = buildIntercambiadorPart2(mk, fascia, pts, b, y);
+  for (let k = 0; k < 3; k++) {
+    const v = F.v0 + wid * (0.22 + k * 0.28);
+    const [cx, cz] = F.W((F.u0 + F.u1) / 2, v);
+    // the platform is laid in 2 m pieces and skips any carriageway / sunken road it would cross (it used to float over the motorway)
+    {
+      const Lp = len * 0.7,
+        n = Math.ceil(Lp / 2);
+      for (let i = 0; i < n; i++) {
+        const u = (F.u0 + F.u1) / 2 - Lp / 2 + ((i + 0.5) * Lp) / n;
+        const [px, pz] = F.W(u, v);
+        const g = heightAt(px, pz);
+        if (onCarriageway(px, pz, 2.2) || lowAt(px, pz, g) || !pip(px, pz, pts.flat())) continue;
+        const pl = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.25, Lp / n + 0.02), platM);
+        pl.position.set(px, g + 0.22, pz);
+        pl.rotation.y = F.ang;
+        pl.receiveShadow = true;
+        scene.add(pl);
+      }
+    }
+    // benches + shelter signs on the platform
+    for (let s = -2; s <= 2; s++) {
+      const [bx, bz] = F.W((F.u0 + F.u1) / 2 + s * len * 0.13, v);
+      if (onCarriageway(bx, bz, 2) || lowAt(bx, bz, heightAt(bx, bz))) continue;
+      const sign = textPlane('Dársena ' + (k * 5 + s + 3), 1.4, 0.35, '#1f8a4c', '#ffffff', 'bold 40px Arial');
+      sign.position.set(bx, heightAt(bx, bz) + 2.6, bz);
+      sign.rotation.y = F.ang + Math.PI / 2;
+      scene.add(sign);
+    }
+    for (const side of [-1, 1])
+      for (let s = -1; s <= 1; s += 1) {
+        if (Math.random() < 0.25) continue;
+        const [bx, bz] = F.W((F.u0 + F.u1) / 2 + s * len * 0.22, v + side * 3.6);
+        {
+          const fx = Math.cos(F.ang) * 0,
+            ok = [-6, 0, 6].every((k) => {
+              const q = F.W((F.u0 + F.u1) / 2 + s * len * 0.22 + k, v + side * 3.6);
+              return !onCarriageway(q[0], q[1], 1.5) && !lowAt(q[0], q[1], heightAt(q[0], q[1]));
+            });
+          if (!ok) continue;
+        }
+        const bus = new Car('bus', 0x1f8a4c, bx, bz, F.ang + (side > 0 ? 0 : Math.PI));
+        bus.persist = true;
+        bus.driver = null;
+        bus.ctl.brk = 1;
+        bus.mode = 'physics';
+        INTER.buses.push(bus);
+      }
+  }
+  INTER.ok = true;
+  INTER.center = [b.cx, b.cz];
+}
+/** (v1.1.7, code quality) part of buildIntercambiador: columns on a grid inside the footprint */
+function buildIntercambiadorPart2(mk, fascia, pts, b, y) {
+  mk(fascia, new THREE.MeshStandardMaterial({ color: 0x1f8a4c, roughness: 0.5, side: THREE.DoubleSide }));
+  // columns on a grid inside the footprint
+  const F = axisFrame(pts, b.cx, b.cz);
+  const colM = new THREE.MeshStandardMaterial({ color: 0x9aa0a4, roughness: 0.5, metalness: 0.5 });
+  for (let u = F.u0 + 6; u < F.u1 - 3; u += 14)
+    for (let v0 = F.v0 + 6; v0 < F.v1 - 3; v0 += 16) {
+      let x = 0,
+        z = 0,
+        ok = false;
+      for (const dv of [0, 3, -3, 5.5, -5.5]) {
+        [x, z] = F.W(u, v0 + dv);
+        if (pip(x, z, pts.flat()) && !onCarriagewayEarly(x, z, 0.6)) {
+          ok = true;
+          break;
+        }
+      }
+      if (!ok) continue;
+      /* v0.73 (auditor): never in a bus lane */ const g = heightAt(x, z);
+      const c = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, y - g, 10), colM);
+      c.position.set(x, g + (y - g) / 2, z);
+      c.castShadow = true;
+      scene.add(c);
+      COL.addCirc(x, z, 0.4);
+    }
+  // platforms (raised island kerbs) and green guaguas parked in the bays
+  const platM = new THREE.MeshStandardMaterial({ color: 0xbdb8ae, roughness: 0.9 });
+  const len = F.u1 - F.u0,
+    wid = F.v1 - F.v0;
+  return { F, platM, len, wid };
+}
+/** (v1.1.7, code quality) part of buildIntercambiador: b: building record (pts, top, bmin...) of the big station roof */
+function buildIntercambiadorPart1(b) {
   // b: building record (pts, top, bmin...) of the big station roof
   const pts = b.pts;
   const y = b.bmax + 7.5;
@@ -467,82 +586,5 @@ function buildIntercambiador(b) {
     }
   }
   mk(under, new THREE.MeshStandardMaterial({ color: 0xf2f2ef, roughness: 0.8, emissive: 0xffffff, emissiveIntensity: 0.05, side: THREE.DoubleSide }));
-  mk(fascia, new THREE.MeshStandardMaterial({ color: 0x1f8a4c, roughness: 0.5, side: THREE.DoubleSide }));
-  // columns on a grid inside the footprint
-  const F = axisFrame(pts, b.cx, b.cz);
-  const colM = new THREE.MeshStandardMaterial({ color: 0x9aa0a4, roughness: 0.5, metalness: 0.5 });
-  for (let u = F.u0 + 6; u < F.u1 - 3; u += 14)
-    for (let v0 = F.v0 + 6; v0 < F.v1 - 3; v0 += 16) {
-      let x = 0,
-        z = 0,
-        ok = false;
-      for (const dv of [0, 3, -3, 5.5, -5.5]) {
-        [x, z] = F.W(u, v0 + dv);
-        if (pip(x, z, pts.flat()) && !onCarriagewayEarly(x, z, 0.6)) {
-          ok = true;
-          break;
-        }
-      }
-      if (!ok) continue;
-      /* v0.73 (auditor): never in a bus lane */ const g = heightAt(x, z);
-      const c = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, y - g, 10), colM);
-      c.position.set(x, g + (y - g) / 2, z);
-      c.castShadow = true;
-      scene.add(c);
-      COL.addCirc(x, z, 0.4);
-    }
-  // platforms (raised island kerbs) and green guaguas parked in the bays
-  const platM = new THREE.MeshStandardMaterial({ color: 0xbdb8ae, roughness: 0.9 });
-  const len = F.u1 - F.u0,
-    wid = F.v1 - F.v0;
-  for (let k = 0; k < 3; k++) {
-    const v = F.v0 + wid * (0.22 + k * 0.28);
-    const [cx, cz] = F.W((F.u0 + F.u1) / 2, v);
-    // the platform is laid in 2 m pieces and skips any carriageway / sunken road it would cross (it used to float over the motorway)
-    {
-      const Lp = len * 0.7,
-        n = Math.ceil(Lp / 2);
-      for (let i = 0; i < n; i++) {
-        const u = (F.u0 + F.u1) / 2 - Lp / 2 + ((i + 0.5) * Lp) / n;
-        const [px, pz] = F.W(u, v);
-        const g = heightAt(px, pz);
-        if (onCarriageway(px, pz, 2.2) || lowAt(px, pz, g) || !pip(px, pz, pts.flat())) continue;
-        const pl = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.25, Lp / n + 0.02), platM);
-        pl.position.set(px, g + 0.22, pz);
-        pl.rotation.y = F.ang;
-        pl.receiveShadow = true;
-        scene.add(pl);
-      }
-    }
-    // benches + shelter signs on the platform
-    for (let s = -2; s <= 2; s++) {
-      const [bx, bz] = F.W((F.u0 + F.u1) / 2 + s * len * 0.13, v);
-      if (onCarriageway(bx, bz, 2) || lowAt(bx, bz, heightAt(bx, bz))) continue;
-      const sign = textPlane('Dársena ' + (k * 5 + s + 3), 1.4, 0.35, '#1f8a4c', '#ffffff', 'bold 40px Arial');
-      sign.position.set(bx, heightAt(bx, bz) + 2.6, bz);
-      sign.rotation.y = F.ang + Math.PI / 2;
-      scene.add(sign);
-    }
-    for (const side of [-1, 1])
-      for (let s = -1; s <= 1; s += 1) {
-        if (Math.random() < 0.25) continue;
-        const [bx, bz] = F.W((F.u0 + F.u1) / 2 + s * len * 0.22, v + side * 3.6);
-        {
-          const fx = Math.cos(F.ang) * 0,
-            ok = [-6, 0, 6].every((k) => {
-              const q = F.W((F.u0 + F.u1) / 2 + s * len * 0.22 + k, v + side * 3.6);
-              return !onCarriageway(q[0], q[1], 1.5) && !lowAt(q[0], q[1], heightAt(q[0], q[1]));
-            });
-          if (!ok) continue;
-        }
-        const bus = new Car('bus', 0x1f8a4c, bx, bz, F.ang + (side > 0 ? 0 : Math.PI));
-        bus.persist = true;
-        bus.driver = null;
-        bus.ctl.brk = 1;
-        bus.mode = 'physics';
-        INTER.buses.push(bus);
-      }
-  }
-  INTER.ok = true;
-  INTER.center = [b.cx, b.cz];
+  return { pts, y, fascia, mk };
 }

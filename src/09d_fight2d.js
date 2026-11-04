@@ -100,22 +100,7 @@ const FIGHT2D = (() => {
     const sleeve = look.sleeve || look.jacket !== undefined,
       longP = look.longP !== false;
     const fat = bodyK(look);
-    const belly = Math.max(0, fat - 1.05);
-    const hx = 36,
-      hy = 50 + (P.dy || 0);
-    const rad = (a) => (a * Math.PI) / 180;
-    const lean = rad(P.tl || 0);
-    const neck = [hx + Math.sin(lean) * 22, hy - Math.cos(lean) * 22];
-    const seg = (o, a, L) => [o[0] + Math.sin(rad(a)) * L, o[1] + Math.cos(rad(a)) * L];
-    const line = (a, b, w, col) => {
-      x.strokeStyle = col;
-      x.lineWidth = w;
-      x.lineCap = 'round';
-      x.beginPath();
-      x.moveTo(a[0], a[1]);
-      x.lineTo(b[0], b[1]);
-      x.stroke();
-    };
+    const { belly, hx, hy, neck, seg, line } = drawFigurePart1(fat, P, x);
     const dot = (p, r, col) => {
       x.fillStyle = col;
       x.beginPath();
@@ -166,26 +151,7 @@ const FIGHT2D = (() => {
     // back limbs first
     limbLeg([hx - 2, hy], P.hB, P.kB, true);
     limbArm(shB, P.sB, P.eB, true);
-    // torso (+ belly for big bodies)
-    const tw = 9 * fat;
-    x.fillStyle = top;
-    x.beginPath();
-    x.moveTo(neck[0] - tw + 1, neck[1] + 2);
-    x.lineTo(neck[0] + tw, neck[1] + 2);
-    x.lineTo(hx + 7 * fat, hy + 2);
-    x.lineTo(hx - 7 * fat, hy + 2);
-    x.closePath();
-    x.fill();
-    if (belly > 0) {
-      x.fillStyle = top;
-      x.beginPath();
-      x.ellipse(hx + 3 + 4 * belly, hy - 7, 6 + 4 * belly, 7 + 2 * belly, 0, 0, 7);
-      x.fill();
-      x.fillStyle = topL;
-      x.beginPath();
-      x.ellipse(hx + 5 + 5 * belly, hy - 9, 2 + belly, 3, 0, 0, 7);
-      x.fill();
-    }
+    const { tw } = drawFigurePart2(fat, x, top, neck, hx, hy, belly, topL);
     if (look.jacket !== undefined) {
       x.fillStyle = inner;
       x.beginPath();
@@ -223,40 +189,8 @@ const FIGHT2D = (() => {
     limbLeg([hx + 2, hy], P.hF, P.kF, false);
     // head
     const hd = seg(neck, 180 + (P.tl || 0) + (P.head || 0), 7);
-    const hc = [hd[0], hd[1] - 1];
-    x.fillStyle = sk;
-    x.fillRect(neck[0] - 2 * Math.min(fat, 1.3), neck[1] - 3, 4 * Math.min(fat, 1.3), 5);
-    dot(hc, 6.5, sk);
-    if (fat > 1.3) dot([hc[0] + 1, hc[1] + 4], 4, sk); /* double chin */
-    x.fillStyle = skD;
-    x.beginPath();
-    x.arc(hc[0], hc[1], 6.5, Math.PI * 0.55, Math.PI * 1.15);
-    x.lineTo(hc[0] - 2, hc[1] + 2);
-    x.fill(); /* shadow on the back of the head */
-    dot([hc[0] + 2.5, hc[1] - 3.5], 1.6, skL); /* forehead light */
-    dot([hc[0] - 1.2, hc[1] + 0.6], 1.5, skD);
-    dot([hc[0] - 1.2, hc[1] + 0.6], 0.6, skDD); /* ear */
-    // nose (El Chopa's is legendary)
-    x.fillStyle = sk;
-    if (nose) {
-      x.beginPath();
-      x.moveTo(hc[0] + 5, hc[1] - 2);
-      x.lineTo(hc[0] + 11, hc[1] + 3);
-      x.lineTo(hc[0] + 5, hc[1] + 3);
-      x.fill();
-      x.fillStyle = skD;
-      x.fillRect(hc[0] + 6, hc[1] + 2.4, 4, 0.6);
-    } else {
-      x.beginPath();
-      x.moveTo(hc[0] + 5.5, hc[1] - 1.5);
-      x.lineTo(hc[0] + 7.6, hc[1] + 1.4);
-      x.lineTo(hc[0] + 5.5, hc[1] + 1.6);
-      x.fill();
-      x.fillStyle = skD;
-      x.fillRect(hc[0] + 5.5, hc[1] + 1.2, 1.6, 0.5);
-    }
-    // hair / cap / beanie
-    const capCol = look.cap ?? look.beanie;
+    const { hc } = drawFigurePart3(hd, x, sk, neck, fat, dot, skD, skL);
+    const { capCol } = drawFigurePart4(dot, hc, skDD, x, sk, nose, look, skD);
     if (capCol !== undefined && capCol !== null) {
       x.fillStyle = hexs(capCol);
       x.beginPath();
@@ -289,6 +223,51 @@ const FIGHT2D = (() => {
       line([hc[0] - 4, hc[1] - 6], [hc[0] + 2, hc[1] - 8], 0.6, hairL);
       line([hc[0] - 6, hc[1] - 3], [hc[0] - 3, hc[1] - 7], 0.5, hairD); /* strands */
     }
+    drawFigurePart5(x, hc, hairD, skDD, look, hair, hairL);
+    drawFigurePart6(limbArm, shF, P, x);
+    if (P.lying) {
+      const r = mkCanvas(88 * R, 88 * R),
+        rx = r.getContext('2d');
+      rx.imageSmoothingEnabled = false;
+      rx.translate(44 * R, 84 * R);
+      rx.rotate(-Math.PI / 2);
+      rx.drawImage(c, -36 * R, -86 * R);
+      return r;
+    }
+    return c;
+  }
+  /** (v1.1.7, code quality) part of drawFigure: front arm last (guard in front of the body) */
+  function drawFigurePart6(limbArm, shF, P, x) {
+    // front arm last (guard in front of the body)
+    limbArm(shF, P.sF, P.eF, false);
+    // --- pixelate: hard alpha + 1px dark outline (at the higher resolution)
+    const CW = 72 * R,
+      CH = 88 * R;
+    x.setTransform(1, 0, 0, 1, 0, 0);
+    const id = x.getImageData(0, 0, CW, CH),
+      d = id.data;
+    const opa = new Uint8Array(CW * CH);
+    for (let i = 0; i < CW * CH; i++) {
+      if (d[i * 4 + 3] > 110) {
+        d[i * 4 + 3] = 255;
+        opa[i] = 1;
+      } else d[i * 4 + 3] = 0;
+    }
+    for (let yy = 0; yy < CH; yy++)
+      for (let xx = 0; xx < CW; xx++) {
+        const i = yy * CW + xx;
+        if (opa[i]) continue;
+        if ((xx > 0 && opa[i - 1]) || (xx < CW - 1 && opa[i + 1]) || (yy > 0 && opa[i - CW]) || (yy < CH - 1 && opa[i + CW])) {
+          d[i * 4] = 20;
+          d[i * 4 + 1] = 14;
+          d[i * 4 + 2] = 24;
+          d[i * 4 + 3] = 255;
+        }
+      }
+    x.putImageData(id, 0, 0);
+  }
+  /** (v1.1.7, code quality) part of drawFigure: face details over the hair line */
+  function drawFigurePart5(x, hc, hairD, skDD, look, hair, hairL) {
     // face details over the hair line
     x.fillStyle = '#f4f1ea';
     x.fillRect(hc[0] + 2, hc[1] - 2.6, 2.6, 1.6);
@@ -318,43 +297,92 @@ const FIGHT2D = (() => {
         x.fillRect(hc[0] + 3.4, hc[1] - 2.6, 1.1, 1.6);
       }
     }
-    // front arm last (guard in front of the body)
-    limbArm(shF, P.sF, P.eF, false);
-    // --- pixelate: hard alpha + 1px dark outline (at the higher resolution)
-    const CW = 72 * R,
-      CH = 88 * R;
-    x.setTransform(1, 0, 0, 1, 0, 0);
-    const id = x.getImageData(0, 0, CW, CH),
-      d = id.data;
-    const opa = new Uint8Array(CW * CH);
-    for (let i = 0; i < CW * CH; i++) {
-      if (d[i * 4 + 3] > 110) {
-        d[i * 4 + 3] = 255;
-        opa[i] = 1;
-      } else d[i * 4 + 3] = 0;
+  }
+  /** (v1.1.7, code quality) part of drawFigure: nose (El Chopa's is legendary) */
+  function drawFigurePart4(dot, hc, skDD, x, sk, nose, look, skD) {
+    dot([hc[0] - 1.2, hc[1] + 0.6], 0.6, skDD); /* ear */
+    // nose (El Chopa's is legendary)
+    x.fillStyle = sk;
+    if (nose) {
+      x.beginPath();
+      x.moveTo(hc[0] + 5, hc[1] - 2);
+      x.lineTo(hc[0] + 11, hc[1] + 3);
+      x.lineTo(hc[0] + 5, hc[1] + 3);
+      x.fill();
+      x.fillStyle = skD;
+      x.fillRect(hc[0] + 6, hc[1] + 2.4, 4, 0.6);
+    } else {
+      x.beginPath();
+      x.moveTo(hc[0] + 5.5, hc[1] - 1.5);
+      x.lineTo(hc[0] + 7.6, hc[1] + 1.4);
+      x.lineTo(hc[0] + 5.5, hc[1] + 1.6);
+      x.fill();
+      x.fillStyle = skD;
+      x.fillRect(hc[0] + 5.5, hc[1] + 1.2, 1.6, 0.5);
     }
-    for (let yy = 0; yy < CH; yy++)
-      for (let xx = 0; xx < CW; xx++) {
-        const i = yy * CW + xx;
-        if (opa[i]) continue;
-        if ((xx > 0 && opa[i - 1]) || (xx < CW - 1 && opa[i + 1]) || (yy > 0 && opa[i - CW]) || (yy < CH - 1 && opa[i + CW])) {
-          d[i * 4] = 20;
-          d[i * 4 + 1] = 14;
-          d[i * 4 + 2] = 24;
-          d[i * 4 + 3] = 255;
-        }
-      }
-    x.putImageData(id, 0, 0);
-    if (P.lying) {
-      const r = mkCanvas(88 * R, 88 * R),
-        rx = r.getContext('2d');
-      rx.imageSmoothingEnabled = false;
-      rx.translate(44 * R, 84 * R);
-      rx.rotate(-Math.PI / 2);
-      rx.drawImage(c, -36 * R, -86 * R);
-      return r;
+    // hair / cap / beanie
+    const capCol = look.cap ?? look.beanie;
+    return { capCol };
+  }
+  /** (v1.1.7, code quality) part of drawFigure */
+  function drawFigurePart3(hd, x, sk, neck, fat, dot, skD, skL) {
+    const hc = [hd[0], hd[1] - 1];
+    x.fillStyle = sk;
+    x.fillRect(neck[0] - 2 * Math.min(fat, 1.3), neck[1] - 3, 4 * Math.min(fat, 1.3), 5);
+    dot(hc, 6.5, sk);
+    if (fat > 1.3) dot([hc[0] + 1, hc[1] + 4], 4, sk); /* double chin */
+    x.fillStyle = skD;
+    x.beginPath();
+    x.arc(hc[0], hc[1], 6.5, Math.PI * 0.55, Math.PI * 1.15);
+    x.lineTo(hc[0] - 2, hc[1] + 2);
+    x.fill(); /* shadow on the back of the head */
+    dot([hc[0] + 2.5, hc[1] - 3.5], 1.6, skL); /* forehead light */
+    dot([hc[0] - 1.2, hc[1] + 0.6], 1.5, skD);
+    return { hc };
+  }
+  /** (v1.1.7, code quality) part of drawFigure: torso (+ belly for big bodies) */
+  function drawFigurePart2(fat, x, top, neck, hx, hy, belly, topL) {
+    // torso (+ belly for big bodies)
+    const tw = 9 * fat;
+    x.fillStyle = top;
+    x.beginPath();
+    x.moveTo(neck[0] - tw + 1, neck[1] + 2);
+    x.lineTo(neck[0] + tw, neck[1] + 2);
+    x.lineTo(hx + 7 * fat, hy + 2);
+    x.lineTo(hx - 7 * fat, hy + 2);
+    x.closePath();
+    x.fill();
+    if (belly > 0) {
+      x.fillStyle = top;
+      x.beginPath();
+      x.ellipse(hx + 3 + 4 * belly, hy - 7, 6 + 4 * belly, 7 + 2 * belly, 0, 0, 7);
+      x.fill();
+      x.fillStyle = topL;
+      x.beginPath();
+      x.ellipse(hx + 5 + 5 * belly, hy - 9, 2 + belly, 3, 0, 0, 7);
+      x.fill();
     }
-    return c;
+    return { tw };
+  }
+  /** (v1.1.7, code quality) part of drawFigure */
+  function drawFigurePart1(fat, P, x) {
+    const belly = Math.max(0, fat - 1.05);
+    const hx = 36,
+      hy = 50 + (P.dy || 0);
+    const rad = (a) => (a * Math.PI) / 180;
+    const lean = rad(P.tl || 0);
+    const neck = [hx + Math.sin(lean) * 22, hy - Math.cos(lean) * 22];
+    const seg = (o, a, L) => [o[0] + Math.sin(rad(a)) * L, o[1] + Math.cos(rad(a)) * L];
+    const line = (a, b, w, col) => {
+      x.strokeStyle = col;
+      x.lineWidth = w;
+      x.lineCap = 'round';
+      x.beginPath();
+      x.moveTo(a[0], a[1]);
+      x.lineTo(b[0], b[1]);
+      x.stroke();
+    };
+    return { belly, hx, hy, neck, seg, line };
   }
   function spritesFor(look, nose) {
     const key = JSON.stringify(look) + nose;
@@ -571,25 +599,7 @@ const FIGHT2D = (() => {
   }
   // ---------------- AI
   function aiInput(f, o) {
-    const a = f.ai;
-    const dist = Math.abs(o.x - f.x) / SZ;
-    /* AI thinks in unscaled sprite distances */ const inp = {
-      fwd: false,
-      back: false,
-      up: false,
-      down: false,
-      P: false,
-      K: false,
-      B: false,
-      seq: ''
-    };
-    a.t -= 1;
-    const threat = o.mv && o.mt < MOVES[o.mv].su + MOVES[o.mv].ac + 2 && dist < 70;
-    if (threat && Math.random() < a.lv * 0.12 + 0.02) a.blockT = 18 + Math.random() * 12;
-    if (st.proj.some((p) => p.owner !== f && Math.abs(p.x - f.x) < 90) && Math.random() < a.lv * 0.1) {
-      if (Math.random() < 0.5) a.blockT = 25;
-      else inp.up = true;
-    }
+    const { a, dist, inp } = aiInputPart1(f, o);
     if (a.blockT > 0) {
       a.blockT--;
       inp.back = true;
@@ -644,6 +654,29 @@ const FIGHT2D = (() => {
     Object.assign(inp, a.hold);
     return inp;
   }
+  /** (v1.1.7, code quality) part of aiInput */
+  function aiInputPart1(f, o) {
+    const a = f.ai;
+    const dist = Math.abs(o.x - f.x) / SZ;
+    /* AI thinks in unscaled sprite distances */ const inp = {
+      fwd: false,
+      back: false,
+      up: false,
+      down: false,
+      P: false,
+      K: false,
+      B: false,
+      seq: ''
+    };
+    a.t -= 1;
+    const threat = o.mv && o.mt < MOVES[o.mv].su + MOVES[o.mv].ac + 2 && dist < 70;
+    if (threat && Math.random() < a.lv * 0.12 + 0.02) a.blockT = 18 + Math.random() * 12;
+    if (st.proj.some((p) => p.owner !== f && Math.abs(p.x - f.x) < 90) && Math.random() < a.lv * 0.1) {
+      if (Math.random() < 0.5) a.blockT = 25;
+      else inp.up = true;
+    }
+    return { a, dist, inp };
+  }
   // ---------------- core
   function startMove(f, m) {
     if (st.ev && f === st.a) st.ev[m] = true;
@@ -687,36 +720,7 @@ const FIGHT2D = (() => {
       }
       return;
     }
-    // facing
-    if (!air && !f.mv) f.dir = o.x > f.x ? 1 : -1;
-    f.crouch = !air && inp.down && !(f.mv && !MOVES[f.mv].crouch);
-    // Street Fighter style: holding back walks back, and only turns into a guard while the rival is actually attacking
-    // (a move in its startup/active frames, or a ball of gofio flying towards you). The block button always guards.
-    const threat =
-      (o.mv && MOVES[o.mv].box && o.mt <= MOVES[o.mv].su * (o.ai ? AI_WINDUP : 1) + MOVES[o.mv].ac + 3 && Math.abs(o.x - f.x) < 120) ||
-      st.proj.some((p) => p.owner === o && Math.sign(f.x - p.x) === Math.sign(p.vx) && Math.abs(p.x - f.x) < 110);
-    f.block = !air && !f.mv && (inp.B || ((inp.guard !== undefined ? inp.guard : inp.back) && threat));
-    // attacks (with chain cancels on hit)
-    const want = inp.P ? 'P' : inp.K ? 'K' : null;
-    if (want) {
-      let m = null;
-      const seq = inp.seq;
-      // specials: back, forward (+P gofio / +K Teide); down, up (+P gancho / +K pastor). The buffer keeps ~0.5 s.
-      const bf = /[147][5]{0,3}[369]$/.test(seq) || /[147][5]{0,3}[369][5]{0,2}$/.test(seq),
-        du = /[123][5]{0,3}[789]$/.test(seq) || /[123][5]{0,3}[789][5]{0,2}$/.test(seq);
-      if (bf) m = want === 'P' ? 'gofio' : 'teide';
-      else if (du) m = want === 'P' ? 'gancho' : 'pastor';
-      else if (air) m = 'jkick';
-      else if (f.crouch) m = want === 'P' ? 'cpunch' : 'sweep';
-      else if (want === 'P') m = f.mv === 'jab' ? 'cross' : 'jab';
-      else m = f.mv === 'kick' || f.mv === 'cross' ? 'round' : 'kick';
-      if (m === 'gofio' && st.proj.some((p) => p.owner === f)) m = 'jab';
-      if (!f.mv) startMove(f, m);
-      else if (f.chainOk && CHAIN[f.mv] && CHAIN[f.mv].includes(m)) {
-        f.chainOk = false;
-        startMove(f, m);
-      }
-    }
+    stepFighterPart1(air, f, o, inp);
     if (f.mv) {
       const M = MOVES[f.mv];
       if (f.ai && f.mt < M.su) {
@@ -794,6 +798,39 @@ const FIGHT2D = (() => {
     f.vx = inp.fwd ? f.dir * 1.7 : inp.back ? -f.dir * 1.3 : 0;
     f.x += f.vx;
     if (st.ev && f === st.a) st.ev.walk = (st.ev.walk || 0) + Math.abs(f.vx);
+  }
+  /** (v1.1.7, code quality) part of stepFighter: facing */
+  function stepFighterPart1(air, f, o, inp) {
+    // facing
+    if (!air && !f.mv) f.dir = o.x > f.x ? 1 : -1;
+    f.crouch = !air && inp.down && !(f.mv && !MOVES[f.mv].crouch);
+    // Street Fighter style: holding back walks back, and only turns into a guard while the rival is actually attacking
+    // (a move in its startup/active frames, or a ball of gofio flying towards you). The block button always guards.
+    const threat =
+      (o.mv && MOVES[o.mv].box && o.mt <= MOVES[o.mv].su * (o.ai ? AI_WINDUP : 1) + MOVES[o.mv].ac + 3 && Math.abs(o.x - f.x) < 120) ||
+      st.proj.some((p) => p.owner === o && Math.sign(f.x - p.x) === Math.sign(p.vx) && Math.abs(p.x - f.x) < 110);
+    f.block = !air && !f.mv && (inp.B || ((inp.guard !== undefined ? inp.guard : inp.back) && threat));
+    // attacks (with chain cancels on hit)
+    const want = inp.P ? 'P' : inp.K ? 'K' : null;
+    if (want) {
+      let m = null;
+      const seq = inp.seq;
+      // specials: back, forward (+P gofio / +K Teide); down, up (+P gancho / +K pastor). The buffer keeps ~0.5 s.
+      const bf = /[147][5]{0,3}[369]$/.test(seq) || /[147][5]{0,3}[369][5]{0,2}$/.test(seq),
+        du = /[123][5]{0,3}[789]$/.test(seq) || /[123][5]{0,3}[789][5]{0,2}$/.test(seq);
+      if (bf) m = want === 'P' ? 'gofio' : 'teide';
+      else if (du) m = want === 'P' ? 'gancho' : 'pastor';
+      else if (air) m = 'jkick';
+      else if (f.crouch) m = want === 'P' ? 'cpunch' : 'sweep';
+      else if (want === 'P') m = f.mv === 'jab' ? 'cross' : 'jab';
+      else m = f.mv === 'kick' || f.mv === 'cross' ? 'round' : 'kick';
+      if (m === 'gofio' && st.proj.some((p) => p.owner === f)) m = 'jab';
+      if (!f.mv) startMove(f, m);
+      else if (f.chainOk && CHAIN[f.mv] && CHAIN[f.mv].includes(m)) {
+        f.chainOk = false;
+        startMove(f, m);
+      }
+    }
   }
   function land(f, o, M, proj) {
     const dir = proj ? Math.sign(proj.vx) : f.dir;
@@ -894,6 +931,53 @@ const FIGHT2D = (() => {
     return 'idle' + (Math.floor(f.t / 28) % 2);
   }
   function draw() {
+    drawPart1();
+    cx.restore();
+    // HUD: life bars, names, round wins
+    const bar = (f, x0, right) => {
+      const w = 84;
+      /* v1.1.3 (Jonay: «enorme la verdad lo de las peleas»): bars, names and KO about a third smaller */ cx.fillStyle = '#000';
+      cx.fillRect(x0 - 1, 9, w + 2, 7);
+      cx.fillStyle = '#b3261e';
+      const sw = (w * f.shown) / 100;
+      cx.fillRect(right ? x0 + w - sw : x0, 10, sw, 5);
+      cx.fillStyle = '#ffd400';
+      const hw = (w * f.hp) / 100;
+      cx.fillRect(right ? x0 + w - hw : x0, 10, hw, 5);
+      txt(f.name, right ? x0 + w : x0, 19, 6, '#fff', right ? 'right' : 'left');
+      for (let i = 0; i < f.wins; i++) {
+        cx.fillStyle = '#ffd400';
+        cx.fillRect(right ? x0 + w - 6 - i * 8 : x0 + i * 8, 28, 5, 5);
+      }
+    };
+    bar(st.a, 10, false);
+    bar(st.b, W - 94, true);
+    txt('KO', W / 2, 9, 7, '#ffd400');
+    if (st.stake) txt('$' + st.stake, W / 2, 28, 8, '#7fe08a');
+    if (st.comboT > 0 && st.comboBy && st.comboBy.combo >= 2) txt(st.comboBy.combo + ' HITS', st.comboBy === st.a ? 60 : W - 60, 52, 10, '#ff8a3d');
+    if (st.banner) txt(st.banner, W / 2, 68, st.bannerSize || 16, st.bannerCol || '#fff');
+    if (st.phase === 'ready') {
+      drawControls();
+      return;
+    }
+    if (st.tip) {
+      cx.font = '6px "Press Start 2P", monospace';
+      const words = st.tip.split(' ');
+      const lines = [''];
+      for (const w of words) {
+        const t = (lines[lines.length - 1] + ' ' + w).trim();
+        if (cx.measureText(t).width > W - 36 && lines[lines.length - 1]) lines.push(w);
+        else lines[lines.length - 1] = t;
+      }
+      const lh = 9,
+        bh = lines.length * lh + 8;
+      cx.fillStyle = 'rgba(0,0,0,0.65)';
+      cx.fillRect(10, H - 10 - bh, W - 20, bh);
+      lines.forEach((l, i) => txt(l, W / 2, H - 6 - bh + i * lh, 6, '#fff', 'center', false));
+    }
+  }
+  /** (v1.1.7, code quality) part of draw: fighters */
+  function drawPart1() {
     cx.setTransform(R, 0, 0, R, 0, 0);
     cx.imageSmoothingEnabled = false;
     const sx = st.shake > 0 ? (Math.random() - 0.5) * st.shake : 0;
@@ -949,49 +1033,6 @@ const FIGHT2D = (() => {
         cx.fillRect(Math.round(e.x - 2), Math.round(e.y - 2), 4, 4);
       }
     }
-    cx.restore();
-    // HUD: life bars, names, round wins
-    const bar = (f, x0, right) => {
-      const w = 84;
-      /* v1.1.3 (Jonay: «enorme la verdad lo de las peleas»): bars, names and KO about a third smaller */ cx.fillStyle = '#000';
-      cx.fillRect(x0 - 1, 9, w + 2, 7);
-      cx.fillStyle = '#b3261e';
-      const sw = (w * f.shown) / 100;
-      cx.fillRect(right ? x0 + w - sw : x0, 10, sw, 5);
-      cx.fillStyle = '#ffd400';
-      const hw = (w * f.hp) / 100;
-      cx.fillRect(right ? x0 + w - hw : x0, 10, hw, 5);
-      txt(f.name, right ? x0 + w : x0, 19, 6, '#fff', right ? 'right' : 'left');
-      for (let i = 0; i < f.wins; i++) {
-        cx.fillStyle = '#ffd400';
-        cx.fillRect(right ? x0 + w - 6 - i * 8 : x0 + i * 8, 28, 5, 5);
-      }
-    };
-    bar(st.a, 10, false);
-    bar(st.b, W - 94, true);
-    txt('KO', W / 2, 9, 7, '#ffd400');
-    if (st.stake) txt('$' + st.stake, W / 2, 28, 8, '#7fe08a');
-    if (st.comboT > 0 && st.comboBy && st.comboBy.combo >= 2) txt(st.comboBy.combo + ' HITS', st.comboBy === st.a ? 60 : W - 60, 52, 10, '#ff8a3d');
-    if (st.banner) txt(st.banner, W / 2, 68, st.bannerSize || 16, st.bannerCol || '#fff');
-    if (st.phase === 'ready') {
-      drawControls();
-      return;
-    }
-    if (st.tip) {
-      cx.font = '6px "Press Start 2P", monospace';
-      const words = st.tip.split(' ');
-      const lines = [''];
-      for (const w of words) {
-        const t = (lines[lines.length - 1] + ' ' + w).trim();
-        if (cx.measureText(t).width > W - 36 && lines[lines.length - 1]) lines.push(w);
-        else lines[lines.length - 1] = t;
-      }
-      const lh = 9,
-        bh = lines.length * lh + 8;
-      cx.fillStyle = 'rgba(0,0,0,0.65)';
-      cx.fillRect(10, H - 10 - bh, W - 20, bh);
-      lines.forEach((l, i) => txt(l, W / 2, H - 6 - bh + i * lh, 6, '#fff', 'center', false));
-    }
   }
   // first fights: a plain controls card, waits until you press Space (or tap) to start
   function drawControls() {
@@ -1046,46 +1087,7 @@ const FIGHT2D = (() => {
   );
   // ---------------- loop
   function tick() {
-    st.frame++;
-    pollPad();
-    if (st.fx.length) {
-      for (const e of st.fx) e.t++;
-      st.fx = st.fx.filter((e) => e.t < 10);
-    }
-    if (st.comboT > 0) st.comboT--;
-    for (const f of [st.a, st.b]) f.shown += (f.hp - f.shown) * (f.shown > f.hp ? 0.06 : 1);
-    if (st.phase === 'ready') {
-      st.pt++;
-      if (st.pt === 1) {
-        st.banner = '';
-        voice('Round one');
-      }
-      if (st.pt > 20 && (hit('vP', 'vK', 'vU', 'vS') || st.readyTap)) {
-        st.readyTap = false;
-        st.phase = 'intro';
-        st.pt = 79;
-      }
-    }
-    if (st.phase === 'intro') {
-      st.pt++;
-      if (st.pt === 1) {
-        st.banner = 'ROUND ' + st.round;
-        st.bannerCol = '#fff';
-        voice('Round ' + ['one', 'two', 'three'][st.round - 1]);
-      }
-      if (st.pt === 80) {
-        st.banner = 'FIGHT!';
-        st.bannerCol = '#ff5252';
-        voice('Fight!');
-      }
-      if (st.pt === 120) {
-        st.banner = '';
-        st.phase = 'fight';
-      }
-    }
-    const live = st.phase === 'fight';
-    const ia = live ? playerInput(st.a, st.b) : {};
-    const ib = live ? aiInput(st.b, st.a) : {};
+    const { live, ia, ib } = tickPart1();
     if (st.slow > 0) {
       st.slow--;
       if (st.slow % 3) {
@@ -1093,6 +1095,20 @@ const FIGHT2D = (() => {
         return;
       }
     }
+    tickPart2(live, ia, ib);
+    if (st.phase === 'end') {
+      st.pt++;
+      if (st.pt === 1) {
+        st.banner = st.winner === st.a ? '¡VICTORIA!' : 'DERROTA';
+        st.bannerCol = st.winner === st.a ? '#7fe08a' : '#ff5252';
+        st.bannerSize = 20;
+      }
+      if (st.pt === 120) finishFight();
+    }
+    pressedK.clear();
+  }
+  /** (v1.1.7, code quality) part of tick: push apart, stage bounds */
+  function tickPart2(live, ia, ib) {
     if (live || st.phase === 'ko') {
       stepFighter(st.a, st.b, ia);
       stepFighter(st.b, st.a, ib);
@@ -1148,16 +1164,50 @@ const FIGHT2D = (() => {
         }
       }
     }
-    if (st.phase === 'end') {
+  }
+  /** (v1.1.7, code quality) part of tick */
+  function tickPart1() {
+    st.frame++;
+    pollPad();
+    if (st.fx.length) {
+      for (const e of st.fx) e.t++;
+      st.fx = st.fx.filter((e) => e.t < 10);
+    }
+    if (st.comboT > 0) st.comboT--;
+    for (const f of [st.a, st.b]) f.shown += (f.hp - f.shown) * (f.shown > f.hp ? 0.06 : 1);
+    if (st.phase === 'ready') {
       st.pt++;
       if (st.pt === 1) {
-        st.banner = st.winner === st.a ? '¡VICTORIA!' : 'DERROTA';
-        st.bannerCol = st.winner === st.a ? '#7fe08a' : '#ff5252';
-        st.bannerSize = 20;
+        st.banner = '';
+        voice('Round one');
       }
-      if (st.pt === 120) finishFight();
+      if (st.pt > 20 && (hit('vP', 'vK', 'vU', 'vS') || st.readyTap)) {
+        st.readyTap = false;
+        st.phase = 'intro';
+        st.pt = 79;
+      }
     }
-    pressedK.clear();
+    if (st.phase === 'intro') {
+      st.pt++;
+      if (st.pt === 1) {
+        st.banner = 'ROUND ' + st.round;
+        st.bannerCol = '#fff';
+        voice('Round ' + ['one', 'two', 'three'][st.round - 1]);
+      }
+      if (st.pt === 80) {
+        st.banner = 'FIGHT!';
+        st.bannerCol = '#ff5252';
+        voice('Fight!');
+      }
+      if (st.pt === 120) {
+        st.banner = '';
+        st.phase = 'fight';
+      }
+    }
+    const live = st.phase === 'fight';
+    const ia = live ? playerInput(st.a, st.b) : {};
+    const ib = live ? aiInput(st.b, st.a) : {};
+    return { live, ia, ib };
   }
   function pressedFrame() {}
   function resetRound() {

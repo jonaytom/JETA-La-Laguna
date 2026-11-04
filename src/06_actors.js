@@ -24,60 +24,8 @@ function makeHumanLegacy(o = {}) {
   const root = new THREE.Group();
   root.userData.noMerge = true;
   /* v0.77: never fused (05w_optimiza.js) */ const body = new THREE.Group();
-  root.add(body);
-  const s = o.scale ?? rnd(0.92, 1.06);
-  body.scale.setScalar(s);
-  const mSkin = M(skin, 0.7),
-    mShirt = M(shirt, 0.9),
-    mPants = M(pants, 0.9),
-    mShoe = M(o.shoes ?? pick([0x111111, 0xeeeeee, 0x5a3b22]), 0.6),
-    mHair = M(hair, 0.9);
-  const hips = new THREE.Group();
-  hips.position.y = 0.95;
-  body.add(hips);
-  const pelvis = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.2, 0.2), mPants);
-  hips.add(pelvis);
-  const torso = new THREE.Group();
-  hips.add(torso);
-  const chest = new THREE.Mesh(GEO.capsule(0.17, 0.3), mShirt);
-  chest.position.y = 0.3;
-  chest.scale.set(1.08, 1, 0.72);
-  torso.add(chest);
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.1, 8), mSkin);
-  neck.position.y = 0.58;
-  torso.add(neck);
-  const head = new THREE.Group();
-  head.position.y = 0.7;
-  torso.add(head);
-  const skull = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 12), mSkin);
-  skull.scale.set(0.9, 1.05, 1);
-  head.add(skull);
-  const hairM = new THREE.Mesh(new THREE.SphereGeometry(0.128, 16, 10, 0, Math.PI * 2, 0, o.longHair ? Math.PI * 0.75 : Math.PI * 0.5), mHair);
-  hairM.position.y = 0.015;
-  hairM.position.z = -0.01;
-  head.add(hairM);
-  if (o.longHair) {
-    const h2 = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.25, 0.08), mHair);
-    h2.position.set(0, -0.08, -0.08);
-    head.add(h2);
-  }
-  const nose = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.04, 0.04), mSkin);
-  nose.position.set(0, -0.01, 0.12);
-  head.add(nose);
-  const eyeM = M(0x111111, 0.3);
-  [-0.04, 0.04].forEach((x) => {
-    const e = new THREE.Mesh(new THREE.SphereGeometry(0.014, 6, 6), eyeM);
-    e.position.set(x, 0.02, 0.105);
-    head.add(e);
-  });
-  if (o.cap) {
-    const c = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.07, 14), M(o.cap, 0.8));
-    c.position.y = 0.08;
-    head.add(c);
-    const v = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.015, 0.12), M(o.cap, 0.8));
-    v.position.set(0, 0.05, 0.14);
-    head.add(v);
-  }
+  const { mSkin, mShirt, mPants, mShoe, mHair, hips } = makeHumanLegacyPart1(root, body, o, skin, shirt, pants, hair);
+  const { torso, head } = makeHumanLegacyPart2(hips, mShirt, mSkin, o, mHair);
   const limb = (parent, x, y, r1, l1, r2, l2, m1, m2, endGeo, endMat) => {
     const p = new THREE.Group();
     p.position.set(x, y, 0);
@@ -123,6 +71,68 @@ function makeHumanLegacy(o = {}) {
   ACTORS.set(root, { r: 170, dr: 40, thr: 0.07 }); // v1.0.0
   const H = { root, body, hips, torso, head, armL, armR, legL, legR, phase: Math.random() * 6, pose: 'walk' };
   return H;
+}
+/** (v1.1.7, code quality) part of makeHumanLegacy */
+function makeHumanLegacyPart2(hips, mShirt, mSkin, o, mHair) {
+  const torso = new THREE.Group();
+  hips.add(torso);
+  const chest = new THREE.Mesh(GEO.capsule(0.17, 0.3), mShirt);
+  chest.position.y = 0.3;
+  chest.scale.set(1.08, 1, 0.72);
+  torso.add(chest);
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.1, 8), mSkin);
+  neck.position.y = 0.58;
+  torso.add(neck);
+  const head = new THREE.Group();
+  head.position.y = 0.7;
+  torso.add(head);
+  const skull = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 12), mSkin);
+  skull.scale.set(0.9, 1.05, 1);
+  head.add(skull);
+  const hairM = new THREE.Mesh(new THREE.SphereGeometry(0.128, 16, 10, 0, Math.PI * 2, 0, o.longHair ? Math.PI * 0.75 : Math.PI * 0.5), mHair);
+  hairM.position.y = 0.015;
+  hairM.position.z = -0.01;
+  head.add(hairM);
+  if (o.longHair) {
+    const h2 = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.25, 0.08), mHair);
+    h2.position.set(0, -0.08, -0.08);
+    head.add(h2);
+  }
+  const nose = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.04, 0.04), mSkin);
+  nose.position.set(0, -0.01, 0.12);
+  head.add(nose);
+  const eyeM = M(0x111111, 0.3);
+  [-0.04, 0.04].forEach((x) => {
+    const e = new THREE.Mesh(new THREE.SphereGeometry(0.014, 6, 6), eyeM);
+    e.position.set(x, 0.02, 0.105);
+    head.add(e);
+  });
+  if (o.cap) {
+    const c = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.07, 14), M(o.cap, 0.8));
+    c.position.y = 0.08;
+    head.add(c);
+    const v = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.015, 0.12), M(o.cap, 0.8));
+    v.position.set(0, 0.05, 0.14);
+    head.add(v);
+  }
+  return { torso, head };
+}
+/** (v1.1.7, code quality) part of makeHumanLegacy */
+function makeHumanLegacyPart1(root, body, o, skin, shirt, pants, hair) {
+  root.add(body);
+  const s = o.scale ?? rnd(0.92, 1.06);
+  body.scale.setScalar(s);
+  const mSkin = M(skin, 0.7),
+    mShirt = M(shirt, 0.9),
+    mPants = M(pants, 0.9),
+    mShoe = M(o.shoes ?? pick([0x111111, 0xeeeeee, 0x5a3b22]), 0.6),
+    mHair = M(hair, 0.9);
+  const hips = new THREE.Group();
+  hips.position.y = 0.95;
+  body.add(hips);
+  const pelvis = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.2, 0.2), mPants);
+  hips.add(pelvis);
+  return { mSkin, mShirt, mPants, mShoe, mHair, hips };
 }
 function animHumanLegacy(H, dt, speed, state = 'ground') {
   // speed m/s
@@ -326,45 +336,74 @@ function makeCarMesh(type, color) {
   if (type === 'police') color = 0xf5f7fa;
   if (type === 'bus') color = 0x1f8a4c;
   const paint = new THREE.MeshStandardMaterial({ color, roughness: 0.28, metalness: 0.55 });
-  const P = profile(T.prof, T.L, T.H);
-  const GC = CARGEO[type] || (CARGEO[type] = { low: extrudeProfile(P.low, T.W, 0.08), cab: extrudeProfile(P.cab, T.W * 0.84, 0.05) });
-  GC.low.userData.shared = GC.cab.userData.shared = true;
-  const low = new THREE.Mesh(GC.low, paint);
-  body.add(low);
-  const cab = new THREE.Mesh(GC.cab, glassMat);
-  body.add(cab);
-  // roof slab
-  const roofPts = P.cab;
-  const ry = roofPts[1][1];
-  const roof = new THREE.Mesh(
-    new THREE.BoxGeometry(T.W * 0.86, 0.07, Math.abs(roofPts[2][0] - roofPts[1][0]) + 0.1),
-    type === 'bus' ? M(0xf2f2f2, 0.4, 0.2) : paint
-  );
-  roof.position.set(0, ry, (roofPts[2][0] + roofPts[1][0]) / 2);
-  body.add(roof);
-  // pillars
-  const pil = (i) => {
-    const a = roofPts[i],
-      b = roofPts[i === 0 ? 1 : 2];
-    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
-    const m = new THREE.Mesh(new THREE.BoxGeometry(T.W * 0.855, 0.08, len), paint);
-    m.position.set(0, (a[1] + b[1]) / 2, (a[0] + b[0]) / 2);
-    m.rotation.x = -Math.atan2(b[1] - a[1], b[0] - a[0]);
-    return m;
-  };
-  if (type === 'bus') {
-    const band = new THREE.Mesh(new THREE.BoxGeometry(T.W + 0.02, 0.35, T.L - 0.1), M(0xf2f2f2, 0.4, 0.2));
-    band.position.y = 1.25;
-    body.add(band);
-    const sign = sharedText('014  LA LAGUNA', 1.9, 0.3, '#111', '#ffb000', 'bold 30px monospace');
-    sign.position.set(0, T.H - 0.35, T.L / 2 + 0.02);
-    body.add(sign);
+  const { P, roofPts, ry, wr, wheels, wg } = makeCarMeshPart1(T, type, paint, body);
+  const { hl, tl, bumperM } = makeCarMeshPart2(wr, T, type, body, g, wg, wheels, P);
+  let { bar } = makeCarMeshPart3(T, type, paint, bumperM, body, ry, roofPts);
+  body.traverse((m) => {
+    if (m.isMesh) {
+      m.castShadow = true;
+      m.receiveShadow = false;
+    }
+  });
+  return { g, body, wheels, hl, tl, bar, paint };
+}
+/** (v1.1.7, code quality) part of makeCarMesh */
+function makeCarMeshPart3(T, type, paint, bumperM, body, ry, roofPts) {
+  const bf = new THREE.Mesh(new THREE.BoxGeometry(T.W * 0.98, 0.18, 0.12), type === 'sport' ? paint : bumperM);
+  bf.position.set(0, 0.42, T.L / 2 - 0.02);
+  body.add(bf);
+  const bb = bf.clone();
+  bb.position.z = -T.L / 2 + 0.02;
+  body.add(bb);
+  let bar = null;
+  if (type === 'police') {
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(T.W + 0.01, 0.16, T.L * 0.8), M(0x1c3fa8, 0.4));
+    stripe.position.y = 0.66;
+    body.add(stripe);
+    const st2 = new THREE.Mesh(new THREE.BoxGeometry(T.W + 0.012, 0.05, T.L * 0.8), M(0xf2c200, 0.4));
+    st2.position.y = 0.77;
+    body.add(st2);
+    bar = new THREE.Group();
+    const b1 = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.12, 0.25), policeBlue);
+    b1.position.x = -0.28;
+    const b2 = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.12, 0.25), policeRed);
+    b2.position.x = 0.28;
+    bar.add(b1, b2);
+    bar.position.set(0, ry + 0.1, (roofPts[2][0] + roofPts[1][0]) / 2);
+    body.add(bar);
+    for (const side of [-1, 1]) {
+      const t = sharedText('POLICÍA LOCAL', 1.8, 0.28, 'rgba(0,0,0,0)', '#1c3fa8', 'bold 34px Arial');
+      t.position.set(side * (T.W / 2 + 0.015), 0.95, -0.2);
+      t.rotation.y = (side * Math.PI) / 2;
+      body.add(t);
+    }
   }
-  // wheels
-  const wr = type === 'bus' ? 0.5 : type === 'suv' ? 0.38 : 0.33;
-  const wheels = [];
-  const wg = new THREE.CylinderGeometry(wr, wr, 0.24, 16);
-  wg.rotateZ(Math.PI / 2);
+  if (type === 'taxi') {
+    const s2 = sharedText('TAXI', 0.5, 0.16, '#f4f4f4', '#1a8a3a', 'bold 56px Arial');
+    s2.position.set(0, ry + 0.14, (roofPts[2][0] + roofPts[1][0]) / 2 + 0.05);
+    const bx = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.18, 0.12), M(0xf4f4f4, 0.5));
+    bx.position.copy(s2.position);
+    bx.position.z -= 0.07;
+    body.add(bx, s2);
+    const st = new THREE.Mesh(new THREE.BoxGeometry(T.W + 0.01, 0.07, T.L * 0.7), M(0x1a8a3a, 0.4));
+    st.position.y = 0.75;
+    body.add(st);
+  }
+  if (type === 'sport') {
+    const sp = new THREE.Mesh(new THREE.BoxGeometry(T.W * 0.9, 0.05, 0.3), M(0x111111, 0.5));
+    sp.position.set(0, 0.98, -T.L / 2 + 0.2);
+    body.add(sp);
+    const st = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.01, T.L), M(0xffffff, 0.3));
+    st.position.set(-0.2, 0.81, 0);
+    body.add(st);
+    const st2 = st.clone();
+    st2.position.x = 0.2;
+    body.add(st2);
+  }
+  return { bar };
+}
+/** (v1.1.7, code quality) part of makeCarMesh: lights */
+function makeCarMeshPart2(wr, T, type, body, g, wg, wheels, P) {
   const rg = new THREE.CylinderGeometry(wr * 0.62, wr * 0.62, 0.25, 12);
   rg.rotateZ(Math.PI / 2);
   const axF = T.L / 2 - (type === 'bus' ? 2.4 : 0.85),
@@ -418,64 +457,50 @@ function makeCarMesh(type, color) {
   plate.rotation.y = Math.PI;
   body.add(plate);
   const bumperM = M(0x222222, 0.7);
-  const bf = new THREE.Mesh(new THREE.BoxGeometry(T.W * 0.98, 0.18, 0.12), type === 'sport' ? paint : bumperM);
-  bf.position.set(0, 0.42, T.L / 2 - 0.02);
-  body.add(bf);
-  const bb = bf.clone();
-  bb.position.z = -T.L / 2 + 0.02;
-  body.add(bb);
-  let bar = null;
-  if (type === 'police') {
-    const stripe = new THREE.Mesh(new THREE.BoxGeometry(T.W + 0.01, 0.16, T.L * 0.8), M(0x1c3fa8, 0.4));
-    stripe.position.y = 0.66;
-    body.add(stripe);
-    const st2 = new THREE.Mesh(new THREE.BoxGeometry(T.W + 0.012, 0.05, T.L * 0.8), M(0xf2c200, 0.4));
-    st2.position.y = 0.77;
-    body.add(st2);
-    bar = new THREE.Group();
-    const b1 = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.12, 0.25), policeBlue);
-    b1.position.x = -0.28;
-    const b2 = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.12, 0.25), policeRed);
-    b2.position.x = 0.28;
-    bar.add(b1, b2);
-    bar.position.set(0, ry + 0.1, (roofPts[2][0] + roofPts[1][0]) / 2);
-    body.add(bar);
-    for (const side of [-1, 1]) {
-      const t = sharedText('POLICÍA LOCAL', 1.8, 0.28, 'rgba(0,0,0,0)', '#1c3fa8', 'bold 34px Arial');
-      t.position.set(side * (T.W / 2 + 0.015), 0.95, -0.2);
-      t.rotation.y = (side * Math.PI) / 2;
-      body.add(t);
-    }
+  return { hl, tl, bumperM };
+}
+/** (v1.1.7, code quality) part of makeCarMesh: roof slab */
+function makeCarMeshPart1(T, type, paint, body) {
+  const P = profile(T.prof, T.L, T.H);
+  const GC = CARGEO[type] || (CARGEO[type] = { low: extrudeProfile(P.low, T.W, 0.08), cab: extrudeProfile(P.cab, T.W * 0.84, 0.05) });
+  GC.low.userData.shared = GC.cab.userData.shared = true;
+  const low = new THREE.Mesh(GC.low, paint);
+  body.add(low);
+  const cab = new THREE.Mesh(GC.cab, glassMat);
+  body.add(cab);
+  // roof slab
+  const roofPts = P.cab;
+  const ry = roofPts[1][1];
+  const roof = new THREE.Mesh(
+    new THREE.BoxGeometry(T.W * 0.86, 0.07, Math.abs(roofPts[2][0] - roofPts[1][0]) + 0.1),
+    type === 'bus' ? M(0xf2f2f2, 0.4, 0.2) : paint
+  );
+  roof.position.set(0, ry, (roofPts[2][0] + roofPts[1][0]) / 2);
+  body.add(roof);
+  // pillars
+  const pil = (i) => {
+    const a = roofPts[i],
+      b = roofPts[i === 0 ? 1 : 2];
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    const m = new THREE.Mesh(new THREE.BoxGeometry(T.W * 0.855, 0.08, len), paint);
+    m.position.set(0, (a[1] + b[1]) / 2, (a[0] + b[0]) / 2);
+    m.rotation.x = -Math.atan2(b[1] - a[1], b[0] - a[0]);
+    return m;
+  };
+  if (type === 'bus') {
+    const band = new THREE.Mesh(new THREE.BoxGeometry(T.W + 0.02, 0.35, T.L - 0.1), M(0xf2f2f2, 0.4, 0.2));
+    band.position.y = 1.25;
+    body.add(band);
+    const sign = sharedText('014  LA LAGUNA', 1.9, 0.3, '#111', '#ffb000', 'bold 30px monospace');
+    sign.position.set(0, T.H - 0.35, T.L / 2 + 0.02);
+    body.add(sign);
   }
-  if (type === 'taxi') {
-    const s2 = sharedText('TAXI', 0.5, 0.16, '#f4f4f4', '#1a8a3a', 'bold 56px Arial');
-    s2.position.set(0, ry + 0.14, (roofPts[2][0] + roofPts[1][0]) / 2 + 0.05);
-    const bx = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.18, 0.12), M(0xf4f4f4, 0.5));
-    bx.position.copy(s2.position);
-    bx.position.z -= 0.07;
-    body.add(bx, s2);
-    const st = new THREE.Mesh(new THREE.BoxGeometry(T.W + 0.01, 0.07, T.L * 0.7), M(0x1a8a3a, 0.4));
-    st.position.y = 0.75;
-    body.add(st);
-  }
-  if (type === 'sport') {
-    const sp = new THREE.Mesh(new THREE.BoxGeometry(T.W * 0.9, 0.05, 0.3), M(0x111111, 0.5));
-    sp.position.set(0, 0.98, -T.L / 2 + 0.2);
-    body.add(sp);
-    const st = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.01, T.L), M(0xffffff, 0.3));
-    st.position.set(-0.2, 0.81, 0);
-    body.add(st);
-    const st2 = st.clone();
-    st2.position.x = 0.2;
-    body.add(st2);
-  }
-  body.traverse((m) => {
-    if (m.isMesh) {
-      m.castShadow = true;
-      m.receiveShadow = false;
-    }
-  });
-  return { g, body, wheels, hl, tl, bar, paint };
+  // wheels
+  const wr = type === 'bus' ? 0.5 : type === 'suv' ? 0.38 : 0.33;
+  const wheels = [];
+  const wg = new THREE.CylinderGeometry(wr, wr, 0.24, 16);
+  wg.rotateZ(Math.PI / 2);
+  return { P, roofPts, ry, wr, wheels, wg };
 }
 
 // ---------- tram (articulated, 3 modules)

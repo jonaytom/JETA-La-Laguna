@@ -156,54 +156,26 @@ function gateIcon(x, z, y = 3.2) {
   scene.add(s);
   return s;
 }
+/* v1.1.7 (code quality: the Torneo Lagunero and the Copa Laguna, 12j_campos.js, had these copied) */
+/** is a pitch shut in: a building between it and the nearest street (rd)? */
+function pitchShut(P, rd) {
+  if (!rd) return true;
+  const L = Math.hypot(P.cx - rd.x, P.cz - rd.z);
+  for (let t = 0.15; t < 0.85; t += 0.7 / Math.max(3, L)) if (inAnyBuilding(rd.x + (P.cx - rd.x) * t, rd.z + (P.cz - rd.z) * t)) return true;
+  return false;
+}
+/** the level (1–5) of the team that plays on a pitch: fixed by where it is */
+const pitchLevel = (P, a, b) => 1 + Math.floor((Math.abs(Math.sin(P.cx * a + P.cz * b) * 9999) % 1) * 5);
+/** end of a tournament match: the final gives the cup; a defeat, try again (where: the final's ground) */
+function tourneyEnded(m, r, t, finalGame, where, champ, col) {
+  const K = MISSIONS.kit;
+  if (!K.isActive(m)) return;
+  if (!r.won) return K.fail(finalGame ? `Habéis perdido la final. Volved a intentarlo en ${where}.` : `${t.name} os han ganado.`);
+  if (finalGame) HUD.big(champ, col, 6);
+  K.pass(m.title, t.prize);
+}
 function canchasInit() {
-  const o = (typeof OBISPADO !== 'undefined' && OBISPADO.front) || [0, 0];
-  for (const P of SPORTS.pitches) {
-    if (P.kind !== 'bb' && P.kind !== 'multi') continue;
-    // shut in? (a building between the court and the nearest street)
-    const rd = roadNear(P.cx, P.cz);
-    let shut = !rd;
-    if (rd) {
-      const L = Math.hypot(P.cx - rd.x, P.cz - rd.z);
-      for (let t = 0.15; t < 0.85 && !shut; t += 0.7 / Math.max(3, L))
-        if (inAnyBuilding(rd.x + (P.cx - rd.x) * t, rd.z + (P.cz - rd.z) * t)) shut = true;
-    }
-    const school = BUILD.find((b) => b.name && SCHOOL_RE.test(b.name) && Math.hypot(b.cx - P.cx, b.cz - P.cz) < 70);
-    const h = Math.abs(Math.sin(P.cx * 7.1 + P.cz * 3.3) * 9999) % 1;
-    const level = 1 + Math.floor(h * 5);
-    const c = {
-      id: 'c' + COURTS.length,
-      cx: P.cx,
-      cz: P.cz,
-      F: P.F,
-      len: P.len,
-      wid: P.wid,
-      kind: P.kind,
-      level,
-      street: roadName(rd),
-      dist: Math.hypot(P.cx - o[0], P.cz - o[1])
-    };
-    if (shut || school) {
-      const base = school && Math.hypot(school.cx - P.cx, school.cz - P.cz) < 70 ? school : { cx: P.cx, cz: P.cz };
-      const d = streetDoor(base.cx, base.cz);
-      if (!d) continue;
-      Object.assign(c, {
-        gate: 'door',
-        x: d.x,
-        z: d.z,
-        label: school ? school.name : 'la cancha (entrada por ' + (d.street || 'la calle') + ')',
-        style: school ? 'colegio' : 'calle'
-      });
-    } else Object.assign(c, { gate: 'court', x: P.cx, z: P.cz, label: 'la cancha de ' + (c.street || 'baloncesto'), style: 'calle' });
-    c.icon = gateIcon(c.x, c.z, c.gate === 'door' ? 3.0 : 4.2);
-    COURTS.push(c);
-  }
-  // Colegio Máyex (C. Pintor Cristino de Vera): its yard court is reached through the school door
-  let mb = findBuilding('Máyex') || findBuilding('Mayex');
-  if (!mb) {
-    const c0 = COURTS.find((q) => q.gate === 'door' && /Cristino de Vera/i.test(q.street || q.label || ''));
-    if (c0) mb = { cx: c0.cx, cz: c0.cz };
-  } // not named in OSM: the shut-in court with its door on C. Pintor Cristino de Vera
+  let { mb } = canchasInitPart1(); // not named in OSM: the shut-in court with its door on C. Pintor Cristino de Vera
   if (mb) {
     const d = streetDoor(mb.cx, mb.cz);
     if (d) {
@@ -236,32 +208,54 @@ function canchasInit() {
     console.warn('campos', e);
   } // v0.67: football pitches (12j_campos.js)
 }
+/** (v1.1.7, code quality) part of canchasInit: shut in? (a building between the court and the nearest street) */
+function canchasInitPart1() {
+  const o = (typeof OBISPADO !== 'undefined' && OBISPADO.front) || [0, 0];
+  for (const P of SPORTS.pitches) {
+    if (P.kind !== 'bb' && P.kind !== 'multi') continue;
+    // shut in? (a building between the court and the nearest street)
+    const rd = roadNear(P.cx, P.cz);
+    const shut = pitchShut(P, rd);
+    const school = BUILD.find((b) => b.name && SCHOOL_RE.test(b.name) && Math.hypot(b.cx - P.cx, b.cz - P.cz) < 70);
+    const level = pitchLevel(P, 7.1, 3.3);
+    const c = {
+      id: 'c' + COURTS.length,
+      cx: P.cx,
+      cz: P.cz,
+      F: P.F,
+      len: P.len,
+      wid: P.wid,
+      kind: P.kind,
+      level,
+      street: roadName(rd),
+      dist: Math.hypot(P.cx - o[0], P.cz - o[1])
+    };
+    if (shut || school) {
+      const base = school && Math.hypot(school.cx - P.cx, school.cz - P.cz) < 70 ? school : { cx: P.cx, cz: P.cz };
+      const d = streetDoor(base.cx, base.cz);
+      if (!d) continue;
+      Object.assign(c, {
+        gate: 'door',
+        x: d.x,
+        z: d.z,
+        label: school ? school.name : 'la cancha (entrada por ' + (d.street || 'la calle') + ')',
+        style: school ? 'colegio' : 'calle'
+      });
+    } else Object.assign(c, { gate: 'court', x: P.cx, z: P.cz, label: 'la cancha de ' + (c.street || 'baloncesto'), style: 'calle' });
+    c.icon = gateIcon(c.x, c.z, c.gate === 'door' ? 3.0 : 4.2);
+    COURTS.push(c);
+  }
+  // Colegio Máyex (C. Pintor Cristino de Vera): its yard court is reached through the school door
+  let mb = findBuilding('Máyex') || findBuilding('Mayex');
+  if (!mb) {
+    const c0 = COURTS.find((q) => q.gate === 'door' && /Cristino de Vera/i.test(q.street || q.label || ''));
+    if (c0) mb = { cx: c0.cx, cz: c0.cz };
+  }
+  return { mb };
+}
 // ---------- the Pabellón Juan Ríos Tejera (C. Leopoldo de la Rosa Olivera): white walls, purple gate, the sign; E = in
 function riosTejeraInit() {
-  let b =
-    findBuilding('Ríos Tejera') || findBuilding('Rios Tejera') || (typeof RIOS !== 'undefined' && RIOS.pts ? { cx: RIOS.cx, cz: RIOS.cz } : null); // v0.76: the hall rebuilt in 05v_peraza.js
-  if (!b) {
-    // not named in OSM: the biggest building (a hall of ~40 × 60 m) beside Calle Leopoldo de la Rosa Olivera
-    const pts = [];
-    for (const r of DATA.R)
-      if (r[1] >= 0 && STR[r[1]] === 'Calle Leopoldo de la Rosa Olivera') for (let i = 0; i < r[4].length; i += 2) pts.push([r[4][i], r[4][i + 1]]);
-    let best = 0;
-    for (const q of BUILD) {
-      if (!q.pts || q.pts.length < 3) continue;
-      let A = 0;
-      for (let i = 0, n = q.pts.length; i < n; i++) {
-        const p1 = q.pts[i],
-          p2 = q.pts[(i + 1) % n];
-        A += p1[0] * p2[1] - p2[0] * p1[1];
-      }
-      A = Math.abs(A) / 2;
-      if (A < 1200 || A <= best) continue;
-      if (!pts.some((p) => Math.hypot(p[0] - q.cx, p[1] - q.cz) < 70)) continue;
-      best = A;
-      b = q;
-    }
-  }
-  let base = b ? [b.cx, b.cz] : centroidOfNamedWays('Calle Leopoldo de la Rosa Olivera');
+  let { base } = riosTejeraInitPart1();
   if (!base) return;
   const d = streetDoor(base[0], base[1]);
   if (!d) return;
@@ -312,6 +306,34 @@ function riosTejeraInit() {
     icon: gateIcon(d.x, d.z, 3.4)
   });
 }
+/** (v1.1.7, code quality) part of riosTejeraInit: not named in OSM: the biggest building (a hall of ~40 × 60 m) beside Calle Leopoldo de la Rosa Olivera */
+function riosTejeraInitPart1() {
+  let b =
+    findBuilding('Ríos Tejera') || findBuilding('Rios Tejera') || (typeof RIOS !== 'undefined' && RIOS.pts ? { cx: RIOS.cx, cz: RIOS.cz } : null); // v0.76: the hall rebuilt in 05v_peraza.js
+  if (!b) {
+    // not named in OSM: the biggest building (a hall of ~40 × 60 m) beside Calle Leopoldo de la Rosa Olivera
+    const pts = [];
+    for (const r of DATA.R)
+      if (r[1] >= 0 && STR[r[1]] === 'Calle Leopoldo de la Rosa Olivera') for (let i = 0; i < r[4].length; i += 2) pts.push([r[4][i], r[4][i + 1]]);
+    let best = 0;
+    for (const q of BUILD) {
+      if (!q.pts || q.pts.length < 3) continue;
+      let A = 0;
+      for (let i = 0, n = q.pts.length; i < n; i++) {
+        const p1 = q.pts[i],
+          p2 = q.pts[(i + 1) % n];
+        A += p1[0] * p2[1] - p2[0] * p1[1];
+      }
+      A = Math.abs(A) / 2;
+      if (A < 1200 || A <= best) continue;
+      if (!pts.some((p) => Math.hypot(p[0] - q.cx, p[1] - q.cz) < 70)) continue;
+      best = A;
+      b = q;
+    }
+  }
+  let base = b ? [b.cx, b.cz] : centroidOfNamedWays('Calle Leopoldo de la Rosa Olivera');
+  return { base };
+}
 // ---------- E near a court entrance
 function courtGateNear() {
   if (PLAYER.car || PLAYER.interior) return null;
@@ -341,7 +363,7 @@ function playCourtGame(c, o) {
   if (PLAYER.car) exitCar();
   return BASKET2D.start({
     team: [
-      { name: 'EL CHOPA', look: { ...(playerHuman.look || {}) }, nose: true },
+      { name: 'EL CHOPA', look: lookCopy(playerHuman.look), nose: true },
       { name: 'COCO', look: cocoLook() },
       { name: 'EL BLANCO', look: NPC.blanco && NPC.blanco.H ? { ...NPC.blanco.H.look } : {} }
     ],
@@ -416,18 +438,7 @@ const TORNEO_TEAMS = [
   { name: 'Los Magos de la Vega', short: 'MAGOS VEGA', cap: 'Don Tinguaro', lv: 0.75, prize: 1500 }
 ];
 function torneoInit() {
-  const pub = COURTS.filter((c) => c.gate === 'court' && !c.final && c.sport !== 'fut').sort((a, b) => a.dist - b.dist);
-  const used = new Set(typeof obispoCourt === 'function' ? [(obispoCourt(true) || {}).cx] : []);
-  const chosen = [];
-  for (const sp of [350, 220, 120, 0]) {
-    for (const c of pub) {
-      if (chosen.length >= 4) break;
-      if (used.has(c.cx) || chosen.includes(c)) continue;
-      if (chosen.every((q) => Math.hypot(q.cx - c.cx, q.cz - c.cz) >= sp)) chosen.push(c);
-    }
-    if (chosen.length >= 4) break;
-  }
-  const fin = COURTS.find((c) => c.final);
+  const { chosen, fin } = torneoInitPart1();
   if (chosen.length < 1 || !fin) return;
   const list = TORNEO_TEAMS.map((t, i) => {
     const c = i < 4 ? chosen[i % chosen.length] : fin;
@@ -465,20 +476,31 @@ function torneoInit() {
             lv: t.lv,
             time: finalGame ? 180 : 150,
             style: finalGame ? 'pabellon' : 'calle',
-            onEnd: (r) => {
-              if (!K.isActive(this)) return;
-              if (r.won) {
-                if (finalGame) {
-                  HUD.big('¡CAMPEONES DEL TORNEO LAGUNERO!', '#ff9f43', 6);
-                }
-                K.pass(this.title, t.prize);
-              } else K.fail(finalGame ? 'Habéis perdido la final. Volved a intentarlo en el Ríos Tejera.' : `${t.name} os han ganado.`);
-            }
+            onEnd: (r) => this.ended(r, t, finalGame)
           });
         });
+      },
+      ended(r, t, finalGame) {
+        tourneyEnded(this, r, t, finalGame, 'el Ríos Tejera', '¡CAMPEONES DEL TORNEO LAGUNERO!', '#ff9f43');
       },
       update() {}
     };
   });
   MISSIONS.addTorneo(list);
+}
+/** (v1.1.7, code quality) part of torneoInit */
+function torneoInitPart1() {
+  const pub = COURTS.filter((c) => c.gate === 'court' && !c.final && c.sport !== 'fut').sort((a, b) => a.dist - b.dist);
+  const used = new Set(typeof obispoCourt === 'function' ? [(obispoCourt(true) || {}).cx] : []);
+  const chosen = [];
+  for (const sp of [350, 220, 120, 0]) {
+    for (const c of pub) {
+      if (chosen.length >= 4) break;
+      if (used.has(c.cx) || chosen.includes(c)) continue;
+      if (chosen.every((q) => Math.hypot(q.cx - c.cx, q.cz - c.cz) >= sp)) chosen.push(c);
+    }
+    if (chosen.length >= 4) break;
+  }
+  const fin = COURTS.find((c) => c.final);
+  return { chosen, fin };
 }

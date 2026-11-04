@@ -69,6 +69,43 @@ const SAVE = (() => {
   }
   function apply(s) {
     if (!s || !s.player) return false;
+    const { T } = applyPart1(s);
+    T(() => {
+      RIFLE.has = !!(s.rifle && s.rifle.has);
+      RIFLE.water = s.rifle ? s.rifle.water | 0 : 0;
+      RIFLE.out = false;
+      if (RIFLE.has && s.rifle.out && !WEAPON.out) AGUA.setRifleOut(true, true);
+      else if (RIFLE.mesh) RIFLE.mesh.visible = false;
+      updateWeaponHUD();
+    }); // v0.76
+    T(() => {
+      if (typeof s.tod === 'number') {
+        GAME.tod = s.tod;
+        updateSun();
+        updateEnvironment(true);
+      }
+    });
+    T(() => {
+      MUSIC.changes = s.radioChanges | 0;
+    });
+    T(() => {
+      if (typeof s.fights === 'number') localStorage.setItem('gtall_fights', String(s.fights));
+    });
+    // the car you were driving is waiting for you, engine running
+    T(() => {
+      if (!s.car) return;
+      const m = s.car.model && VMODELS[s.car.model];
+      const c = new Car(m ? null : s.car.type || 'compact', s.car.color, s.car.x, s.car.z, s.car.h || 0, m || undefined);
+      c.mode = 'physics';
+      c.persist = true;
+      if (!CARS.includes(c)) CARS.push(c);
+      enterCar(c);
+    });
+    T(() => (playerHuman.root.visible = !PLAYER.car));
+    return true;
+  }
+  /** (v1.1.7, code quality) part of apply */
+  function applyPart1(s) {
     const T = (f) => {
       try {
         f();
@@ -121,39 +158,7 @@ const SAVE = (() => {
         updateWeaponHUD();
       } else takeWeapon();
     });
-    T(() => {
-      RIFLE.has = !!(s.rifle && s.rifle.has);
-      RIFLE.water = s.rifle ? s.rifle.water | 0 : 0;
-      RIFLE.out = false;
-      if (RIFLE.has && s.rifle.out && !WEAPON.out) AGUA.setRifleOut(true, true);
-      else if (RIFLE.mesh) RIFLE.mesh.visible = false;
-      updateWeaponHUD();
-    }); // v0.76
-    T(() => {
-      if (typeof s.tod === 'number') {
-        GAME.tod = s.tod;
-        updateSun();
-        updateEnvironment(true);
-      }
-    });
-    T(() => {
-      MUSIC.changes = s.radioChanges | 0;
-    });
-    T(() => {
-      if (typeof s.fights === 'number') localStorage.setItem('gtall_fights', String(s.fights));
-    });
-    // the car you were driving is waiting for you, engine running
-    T(() => {
-      if (!s.car) return;
-      const m = s.car.model && VMODELS[s.car.model];
-      const c = new Car(m ? null : s.car.type || 'compact', s.car.color, s.car.x, s.car.z, s.car.h || 0, m || undefined);
-      c.mode = 'physics';
-      c.persist = true;
-      if (!CARS.includes(c)) CARS.push(c);
-      enterCar(c);
-    });
-    T(() => (playerHuman.root.visible = !PLAYER.car));
-    return true;
+    return { T };
   }
   // ---- slots
   function save(slot, label) {

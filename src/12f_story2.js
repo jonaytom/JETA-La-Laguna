@@ -232,7 +232,7 @@ function s2Fight(m, name, look, opts, onWin, onLose) {
   if (PLAYER.car) exitCar();
   const b = opts.npc;
   FIGHT2D.start({
-    a: { name: 'EL CHOPA', look: { ...(playerHuman.look || {}) }, nose: true },
+    a: { name: 'EL CHOPA', look: lookCopy(playerHuman.look), nose: true },
     b: { name, look: look || {}, deal: opts.deal ?? 0.8, recv: opts.recv ?? 1.0, ai: { lv: opts.lv ?? 0.5, t: 0, blockT: 0 } },
     ax: PLAYER.x,
     az: PLAYER.z,

@@ -98,41 +98,9 @@ function aytoWindowTex() {
   return canvasTex(c, { repeat: false });
 }
 function buildAyuntamiento(pts) {
-  // the facade edge: the one of the block closest to the town hall's front on Calle Consistorio
-  let E = null,
-    bd = 1e9;
-  for (let i = 0; i < pts.length; i++) {
-    const p = pts[i],
-      q = pts[(i + 1) % pts.length];
-    const L = Math.hypot(q[0] - p[0], q[1] - p[1]);
-    if (L < 8) continue;
-    const d = Math.hypot((p[0] + q[0]) / 2 - 102.5, (p[1] + q[1]) / 2 - 30.5);
-    if (d < bd) {
-      bd = d;
-      E = { p, q, L };
-    }
-  }
+  let { E, bd } = buildAyuntamientoPart1(pts);
   if (!E || bd > 25) return;
-  let ux = (E.q[0] - E.p[0]) / E.L,
-    uz = (E.q[1] - E.p[1]) / E.L;
-  let nx = uz,
-    nz = -ux;
-  const mx = (E.p[0] + E.q[0]) / 2,
-    mz = (E.p[1] + E.q[1]) / 2;
-  {
-    let cx = 0,
-      cz = 0;
-    for (const p of pts) {
-      cx += p[0];
-      cz += p[1];
-    }
-    cx /= pts.length;
-    cz /= pts.length;
-    if ((mx - cx) * nx + (mz - cz) * nz < 0) {
-      nx = -nx;
-      nz = -nz;
-    }
-  } // outwards
+  let { ux, uz, nx, nz, mx, mz } = buildAyuntamientoPart2(E, pts); // outwards
   const W = Math.min(E.L, 20),
     PD = 1.25; // facade width, porch depth
   const g = new THREE.Group();
@@ -143,6 +111,142 @@ function buildAyuntamiento(pts) {
   const stoneT = aytoStoneTex();
   const stone = new THREE.MeshStandardMaterial({ color: 0xffffff, map: stoneT, roughness: 0.92 });
   const stoneD = new THREE.MeshStandardMaterial({ color: 0x5f5b55, roughness: 0.9 });
+  const { wood, box, n, bw, G1, H } = buildAyuntamientoPart3(W, PD, stoneD, stone, g);
+  box(W + 0.35, 0.35, 0.35, stoneD, 0, G1, 0.12); // string course
+  const winM = new THREE.MeshStandardMaterial({ map: aytoWindowTex(), roughness: 0.35 });
+  for (let i = 0; i <= n; i++) {
+    const x = -W / 2 + i * bw;
+    box(0.7, G1, 0.25, stone, x, G1 / 2, 0.12);
+    box(0.6, H - G1 - 0.2, 0.2, stone, x, G1 + (H - G1) / 2, 0.08);
+  } // pilasters
+  for (let i = 0; i < n; i++) {
+    const x = -W / 2 + (i + 0.5) * bw;
+    const w = new THREE.Mesh(new THREE.PlaneGeometry(1.45, 2.9), winM);
+    w.position.set(x, G1 + 0.55 + 1.45, 0.02);
+    g.add(w);
+    box(1.85, 0.25, 0.25, stoneD, x, G1 + 0.55 + 2.95, 0.1); // lintel
+    box(1.7, 0.1, 0.55, wood, x, G1 + 0.5, 0.28);
+    box(1.7, 0.08, 0.06, wood, x, G1 + 1.45, 0.53); // balcony floor + rail
+    for (let k = 0; k <= 8; k++) box(0.05, 0.9, 0.05, wood, x - 0.8 + k * 0.2, G1 + 1.0, 0.53);
+  }
+  buildAyuntamientoPart4(box, W, stoneD, H, stone, n, bw, g);
+  const { c, f } = buildAyuntamientoPart5(g, W, PD, bw, G1, wood, n);
+  Object.assign(AYTO, { ok: true, door: c, front: f, nx, nz, ux, uz, W });
+  LABELS.push(['Ayuntamiento', f[0], f[1], 1]);
+}
+/** (v1.1.7, code quality) part of buildAyuntamiento: flags on slanted poles between the upstairs windows */
+function buildAyuntamientoPart5(g, W, PD, bw, G1, wood, n) {
+  // flags on slanted poles between the upstairs windows
+  ['laguna', 'canarias', 'espana', 'tenerife', 'ue'].forEach((k, i) => {
+    const x = -W / 2 + (i + 0.5) * bw + bw * 0.42;
+    const pole = new THREE.Group();
+    pole.position.set(x, G1 + 3.4, 0.25);
+    pole.rotation.x = 0.75;
+    g.add(pole);
+    addMesh(pole, new THREE.CylinderGeometry(0.03, 0.03, 3.0, 6), wood, 0, 1.5, 0);
+    const f = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.95, 1.5),
+      new THREE.MeshStandardMaterial({ map: aytoFlagTex(k), roughness: 0.8, side: THREE.DoubleSide })
+    );
+    f.position.set(0.0, 2.2, 0.48);
+    f.rotation.x = -0.75;
+    f.rotation.y = Math.PI / 2;
+    pole.add(f);
+  });
+  // street lamps at the corners
+  for (const sx of [-1, 1]) {
+    const l = new THREE.Group();
+    l.position.set(sx * (W / 2 + 0.2), G1 - 1.0, 0.45);
+    g.add(l);
+    addMesh(l, new THREE.BoxGeometry(0.06, 0.06, 0.5), wood, 0, 0, -0.2);
+    addMesh(
+      l,
+      new THREE.CylinderGeometry(0.16, 0.12, 0.45, 6),
+      new THREE.MeshStandardMaterial({ color: 0xfff1c9, emissive: 0xffe2a0, emissiveIntensity: 0.4 }),
+      0,
+      -0.2,
+      0.05
+    );
+  }
+  g.traverse((m) => {
+    if (m.isMesh) {
+      m.castShadow = true;
+      m.receiveShadow = true;
+    }
+  });
+  g.updateMatrixWorld(true);
+  // collisions: the piers (you can walk into the porch through the arches), the porch back wall
+  const Wd = (lx, lz) => {
+    const v = new THREE.Vector3(lx, 0, lz).applyMatrix4(g.matrixWorld);
+    return [v.x, v.z];
+  };
+  for (let i = 0; i <= n; i++) {
+    const p = Wd(-W / 2 + i * bw, 0.1);
+    COL.addCirc(p[0], p[1], 0.45);
+  }
+  const b0 = Wd(-W / 2, -PD),
+    b1 = Wd(W / 2, -PD);
+  COL.addSeg(b0[0], b0[1], b1[0], b1[1]);
+  // where the mayor stands (under the middle arch) and where the gang lines up for the ceremony (in front)
+  const c = Wd(0, -PD + 0.6),
+    f = Wd(0, 3.2);
+  return { c, f };
+}
+/** (v1.1.7, code quality) part of buildAyuntamiento: cornice, stone balls on pedestals, curved central pediment with the coat of arms and the plaque */
+function buildAyuntamientoPart4(box, W, stoneD, H, stone, n, bw, g) {
+  // cornice, stone balls on pedestals, curved central pediment with the coat of arms and the plaque
+  box(W + 0.7, 0.55, 0.85, stoneD, 0, H + 0.1, 0.05);
+  box(W, 0.9, 0.5, stone, 0, H + 0.8, -0.15);
+  for (let i = 0; i <= n; i++) {
+    const x = -W / 2 + i * bw;
+    if (i === 2 || i === 3) continue;
+    box(0.55, 0.6, 0.55, stoneD, x, H + 1.55, -0.1);
+    addMesh(g, new THREE.SphereGeometry(0.33, 12, 10), stone, x, H + 2.15, -0.1);
+  }
+  {
+    const pw = bw + 0.6,
+      ph = 2.5;
+    const s = new THREE.Shape();
+    s.moveTo(-pw / 2, 0);
+    s.lineTo(-pw / 2, ph * 0.55);
+    s.quadraticCurveTo(-pw / 2, ph, 0, ph);
+    s.quadraticCurveTo(pw / 2, ph, pw / 2, ph * 0.55);
+    s.lineTo(pw / 2, 0);
+    s.closePath();
+    addMesh(g, new THREE.ExtrudeGeometry(s, { depth: 0.6, bevelEnabled: false }), stone, 0, H + 0.35, -0.35);
+    const arms = (() => {
+      const c = mkCanvas(128, 160),
+        x = c.getContext('2d');
+      x.fillStyle = '#cfcac0';
+      x.fillRect(0, 0, 128, 160);
+      x.fillStyle = '#b8b2a6';
+      x.beginPath();
+      x.moveTo(24, 30);
+      x.lineTo(104, 30);
+      x.lineTo(104, 100);
+      x.quadraticCurveTo(64, 150, 24, 100);
+      x.closePath();
+      x.fill();
+      x.fillStyle = '#8d877c';
+      x.fillRect(56, 6, 16, 22);
+      x.fillRect(46, 14, 36, 8);
+      x.strokeStyle = '#7d776c';
+      x.lineWidth = 4;
+      x.strokeRect(36, 46, 56, 44);
+      return canvasTex(c, { repeat: false });
+    })();
+    const a = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 1.15), new THREE.MeshStandardMaterial({ map: arms, roughness: 0.9 }));
+    a.position.set(0, H + 1.55, 0.27);
+    g.add(a);
+  }
+  {
+    const s = signPlate('AYUNTAMIENTO', 2.6, 0.32);
+    s.position.set(0, H - 0.45, 0.09);
+    g.add(s);
+  }
+}
+/** (v1.1.7, code quality) part of buildAyuntamiento: ground floor: one extruded stone bay per arch (rectangle with an arched opening) */
+function buildAyuntamientoPart3(W, PD, stoneD, stone, g) {
   const pink = new THREE.MeshStandardMaterial({ color: 0xd9b7ae, roughness: 0.9 }),
     wood = new THREE.MeshStandardMaterial({ color: 0x5a3820, roughness: 0.75 }),
     door = new THREE.MeshStandardMaterial({ color: 0x3e2614, roughness: 0.7 });
@@ -198,127 +302,47 @@ function buildAyuntamiento(pts) {
     const uv = up.geometry.attributes.uv;
     for (let k = 0; k < uv.count; k++) uv.setXY(k, (uv.getX(k) * W) / 4, (uv.getY(k) * (H - G1)) / 2);
   }
-  box(W + 0.35, 0.35, 0.35, stoneD, 0, G1, 0.12); // string course
-  const winM = new THREE.MeshStandardMaterial({ map: aytoWindowTex(), roughness: 0.35 });
-  for (let i = 0; i <= n; i++) {
-    const x = -W / 2 + i * bw;
-    box(0.7, G1, 0.25, stone, x, G1 / 2, 0.12);
-    box(0.6, H - G1 - 0.2, 0.2, stone, x, G1 + (H - G1) / 2, 0.08);
-  } // pilasters
-  for (let i = 0; i < n; i++) {
-    const x = -W / 2 + (i + 0.5) * bw;
-    const w = new THREE.Mesh(new THREE.PlaneGeometry(1.45, 2.9), winM);
-    w.position.set(x, G1 + 0.55 + 1.45, 0.02);
-    g.add(w);
-    box(1.85, 0.25, 0.25, stoneD, x, G1 + 0.55 + 2.95, 0.1); // lintel
-    box(1.7, 0.1, 0.55, wood, x, G1 + 0.5, 0.28);
-    box(1.7, 0.08, 0.06, wood, x, G1 + 1.45, 0.53); // balcony floor + rail
-    for (let k = 0; k <= 8; k++) box(0.05, 0.9, 0.05, wood, x - 0.8 + k * 0.2, G1 + 1.0, 0.53);
-  }
-  // cornice, stone balls on pedestals, curved central pediment with the coat of arms and the plaque
-  box(W + 0.7, 0.55, 0.85, stoneD, 0, H + 0.1, 0.05);
-  box(W, 0.9, 0.5, stone, 0, H + 0.8, -0.15);
-  for (let i = 0; i <= n; i++) {
-    const x = -W / 2 + i * bw;
-    if (i === 2 || i === 3) continue;
-    box(0.55, 0.6, 0.55, stoneD, x, H + 1.55, -0.1);
-    addMesh(g, new THREE.SphereGeometry(0.33, 12, 10), stone, x, H + 2.15, -0.1);
-  }
+  return { wood, box, n, bw, G1, H };
+}
+/** (v1.1.7, code quality) part of buildAyuntamiento */
+function buildAyuntamientoPart2(E, pts) {
+  let ux = (E.q[0] - E.p[0]) / E.L,
+    uz = (E.q[1] - E.p[1]) / E.L;
+  let nx = uz,
+    nz = -ux;
+  const mx = (E.p[0] + E.q[0]) / 2,
+    mz = (E.p[1] + E.q[1]) / 2;
   {
-    const pw = bw + 0.6,
-      ph = 2.5;
-    const s = new THREE.Shape();
-    s.moveTo(-pw / 2, 0);
-    s.lineTo(-pw / 2, ph * 0.55);
-    s.quadraticCurveTo(-pw / 2, ph, 0, ph);
-    s.quadraticCurveTo(pw / 2, ph, pw / 2, ph * 0.55);
-    s.lineTo(pw / 2, 0);
-    s.closePath();
-    addMesh(g, new THREE.ExtrudeGeometry(s, { depth: 0.6, bevelEnabled: false }), stone, 0, H + 0.35, -0.35);
-    const arms = (() => {
-      const c = mkCanvas(128, 160),
-        x = c.getContext('2d');
-      x.fillStyle = '#cfcac0';
-      x.fillRect(0, 0, 128, 160);
-      x.fillStyle = '#b8b2a6';
-      x.beginPath();
-      x.moveTo(24, 30);
-      x.lineTo(104, 30);
-      x.lineTo(104, 100);
-      x.quadraticCurveTo(64, 150, 24, 100);
-      x.closePath();
-      x.fill();
-      x.fillStyle = '#8d877c';
-      x.fillRect(56, 6, 16, 22);
-      x.fillRect(46, 14, 36, 8);
-      x.strokeStyle = '#7d776c';
-      x.lineWidth = 4;
-      x.strokeRect(36, 46, 56, 44);
-      return canvasTex(c, { repeat: false });
-    })();
-    const a = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 1.15), new THREE.MeshStandardMaterial({ map: arms, roughness: 0.9 }));
-    a.position.set(0, H + 1.55, 0.27);
-    g.add(a);
-  }
-  {
-    const s = signPlate('AYUNTAMIENTO', 2.6, 0.32);
-    s.position.set(0, H - 0.45, 0.09);
-    g.add(s);
-  }
-  // flags on slanted poles between the upstairs windows
-  ['laguna', 'canarias', 'espana', 'tenerife', 'ue'].forEach((k, i) => {
-    const x = -W / 2 + (i + 0.5) * bw + bw * 0.42;
-    const pole = new THREE.Group();
-    pole.position.set(x, G1 + 3.4, 0.25);
-    pole.rotation.x = 0.75;
-    g.add(pole);
-    addMesh(pole, new THREE.CylinderGeometry(0.03, 0.03, 3.0, 6), wood, 0, 1.5, 0);
-    const f = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.95, 1.5),
-      new THREE.MeshStandardMaterial({ map: aytoFlagTex(k), roughness: 0.8, side: THREE.DoubleSide })
-    );
-    f.position.set(0.0, 2.2, 0.48);
-    f.rotation.x = -0.75;
-    f.rotation.y = Math.PI / 2;
-    pole.add(f);
-  });
-  // street lamps at the corners
-  for (const sx of [-1, 1]) {
-    const l = new THREE.Group();
-    l.position.set(sx * (W / 2 + 0.2), G1 - 1.0, 0.45);
-    g.add(l);
-    addMesh(l, new THREE.BoxGeometry(0.06, 0.06, 0.5), wood, 0, 0, -0.2);
-    addMesh(
-      l,
-      new THREE.CylinderGeometry(0.16, 0.12, 0.45, 6),
-      new THREE.MeshStandardMaterial({ color: 0xfff1c9, emissive: 0xffe2a0, emissiveIntensity: 0.4 }),
-      0,
-      -0.2,
-      0.05
-    );
-  }
-  g.traverse((m) => {
-    if (m.isMesh) {
-      m.castShadow = true;
-      m.receiveShadow = true;
+    let cx = 0,
+      cz = 0;
+    for (const p of pts) {
+      cx += p[0];
+      cz += p[1];
     }
-  });
-  g.updateMatrixWorld(true);
-  // collisions: the piers (you can walk into the porch through the arches), the porch back wall
-  const Wd = (lx, lz) => {
-    const v = new THREE.Vector3(lx, 0, lz).applyMatrix4(g.matrixWorld);
-    return [v.x, v.z];
-  };
-  for (let i = 0; i <= n; i++) {
-    const p = Wd(-W / 2 + i * bw, 0.1);
-    COL.addCirc(p[0], p[1], 0.45);
+    cx /= pts.length;
+    cz /= pts.length;
+    if ((mx - cx) * nx + (mz - cz) * nz < 0) {
+      nx = -nx;
+      nz = -nz;
+    }
   }
-  const b0 = Wd(-W / 2, -PD),
-    b1 = Wd(W / 2, -PD);
-  COL.addSeg(b0[0], b0[1], b1[0], b1[1]);
-  // where the mayor stands (under the middle arch) and where the gang lines up for the ceremony (in front)
-  const c = Wd(0, -PD + 0.6),
-    f = Wd(0, 3.2);
-  Object.assign(AYTO, { ok: true, door: c, front: f, nx, nz, ux, uz, W });
-  LABELS.push(['Ayuntamiento', f[0], f[1], 1]);
+  return { ux, uz, nx, nz, mx, mz };
+}
+/** (v1.1.7, code quality) part of buildAyuntamiento: the facade edge: the one of the block closest to the town hall's front on Calle Consistorio */
+function buildAyuntamientoPart1(pts) {
+  // the facade edge: the one of the block closest to the town hall's front on Calle Consistorio
+  let E = null,
+    bd = 1e9;
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i],
+      q = pts[(i + 1) % pts.length];
+    const L = Math.hypot(q[0] - p[0], q[1] - p[1]);
+    if (L < 8) continue;
+    const d = Math.hypot((p[0] + q[0]) / 2 - 102.5, (p[1] + q[1]) / 2 - 30.5);
+    if (d < bd) {
+      bd = d;
+      E = { p, q, L };
+    }
+  }
+  return { E, bd };
 }

@@ -13,42 +13,29 @@ function saveSettings() {
 const MAP = { scale: 0.45, x0: WORLD.x0 - 30, z0: WORLD.z0 - 30 }; // px per meter
 let MAPC = null;
 function buildMapCanvas() {
-  const W = Math.ceil((WORLD.x1 - WORLD.x0 + 60) * MAP.scale),
-    H = Math.ceil((WORLD.z1 - WORLD.z0 + 60) * MAP.scale);
-  const c = mkCanvas(W, H),
-    x = c.getContext('2d');
-  const s = MAP.scale;
-  const P = (px, pz) => [(px - MAP.x0) * s, (pz - MAP.z0) * s];
-  x.fillStyle = '#26362b';
-  x.fillRect(0, 0, W, H);
-  const path = (co, close) => {
-    x.beginPath();
-    for (let i = 0; i < co.length; i += 2) {
-      const p = P(co[i], co[i + 1]);
-      i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]);
-    }
-    if (close) x.closePath();
-  };
-  const AT = DATA.AT;
-  const col = {
-    park: '#3f6b3a',
-    garden: '#3c6536',
-    grass: '#43703c',
-    farmland: '#4d5a36',
-    meadow: '#44613a',
-    pitch: '#3f7a3b',
-    forest: '#2c4a2a',
-    scrub: '#3c4c33',
-    water: '#2f5f86',
-    cemetery: '#4a5446',
-    playground: '#5b5a44',
-    parking: '#3a3f42',
-    residential: '#34403a',
-    industrial: '#3b3e40',
-    square: '#5c5b56',
-    sports: '#4d4a3b',
-    orchard: '#3f5b35'
-  };
+  const { c, x, s, path, AT, col } = buildMapCanvasPart1();
+  const { order } = buildMapCanvasPart2(x, AT, path, col); // cool blues: yellow and magenta are kept for mission / GPS routes;
+  for (const [t, cc, k] of order) {
+    x.strokeStyle = cc;
+    for (const r of DATA.R)
+      if (RTN[r[0]] === t) {
+        x.lineWidth = Math.max(1, r[2] * s * k);
+        path(r[4]);
+        x.stroke();
+      }
+  }
+  if (DATA.T.length) {
+    x.setLineDash([6, 4]);
+    x.strokeStyle = '#e04848';
+    x.lineWidth = 2.2;
+    path(DATA.T);
+    x.stroke();
+    x.setLineDash([]);
+  }
+  MAPC = c;
+}
+/** (v1.1.7, code quality) part of buildMapCanvas */
+function buildMapCanvasPart2(x, AT, path, col) {
   for (const k of [
     'residential',
     'industrial',
@@ -101,25 +88,48 @@ function buildMapCanvas() {
     ['trunk', '#6fa9dc', 1],
     ['motorway_link', '#4f93d6', 1],
     ['motorway', '#3f86d0', 1]
-  ]; // cool blues: yellow and magenta are kept for mission / GPS routes;
-  for (const [t, cc, k] of order) {
-    x.strokeStyle = cc;
-    for (const r of DATA.R)
-      if (RTN[r[0]] === t) {
-        x.lineWidth = Math.max(1, r[2] * s * k);
-        path(r[4]);
-        x.stroke();
-      }
-  }
-  if (DATA.T.length) {
-    x.setLineDash([6, 4]);
-    x.strokeStyle = '#e04848';
-    x.lineWidth = 2.2;
-    path(DATA.T);
-    x.stroke();
-    x.setLineDash([]);
-  }
-  MAPC = c;
+  ];
+  return { order };
+}
+/** (v1.1.7, code quality) part of buildMapCanvas */
+function buildMapCanvasPart1() {
+  const W = Math.ceil((WORLD.x1 - WORLD.x0 + 60) * MAP.scale),
+    H = Math.ceil((WORLD.z1 - WORLD.z0 + 60) * MAP.scale);
+  const c = mkCanvas(W, H),
+    x = c.getContext('2d');
+  const s = MAP.scale;
+  const P = (px, pz) => [(px - MAP.x0) * s, (pz - MAP.z0) * s];
+  x.fillStyle = '#26362b';
+  x.fillRect(0, 0, W, H);
+  const path = (co, close) => {
+    x.beginPath();
+    for (let i = 0; i < co.length; i += 2) {
+      const p = P(co[i], co[i + 1]);
+      i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]);
+    }
+    if (close) x.closePath();
+  };
+  const AT = DATA.AT;
+  const col = {
+    park: '#3f6b3a',
+    garden: '#3c6536',
+    grass: '#43703c',
+    farmland: '#4d5a36',
+    meadow: '#44613a',
+    pitch: '#3f7a3b',
+    forest: '#2c4a2a',
+    scrub: '#3c4c33',
+    water: '#2f5f86',
+    cemetery: '#4a5446',
+    playground: '#5b5a44',
+    parking: '#3a3f42',
+    residential: '#34403a',
+    industrial: '#3b3e40',
+    square: '#5c5b56',
+    sports: '#4d4a3b',
+    orchard: '#3f5b35'
+  };
+  return { c, x, s, path, AT, col };
 }
 
 const LABELS = [];
@@ -546,60 +556,58 @@ const HUD = (() => {
       mx.fillText(PLAYER.interior.name.slice(0, 26), R, R + 26);
       return;
     }
-    const car = PLAYER.car;
-    const zoom = car ? clamp(1.0 - car.speed * 0.012, 0.5, 1.0) : 1.15;
-    mmScale = zoom * MAP.scale * (W / 230) * 0.9;
-    mx.save();
-    mx.clearRect(0, 0, W, H);
+    const { s } = drawMinimapPart1(W, H, R);
+    drawMinimapPart2(s, R);
+    drawMinimapPart3(s, R);
+  }
+  /** (v1.1.7, code quality) part of drawMinimap: north marker on the rim */
+  function drawMinimapPart3(s, R) {
+    mx.rotate(-(PLAYER.car ? PLAYER.car.h : PLAYER.h) + Math.PI);
+    const a = 11 * s * 1.6;
+    mx.fillStyle = '#fff';
+    mx.strokeStyle = '#000';
+    mx.lineWidth = 2.5 * s;
     mx.beginPath();
-    mx.arc(R, R, R, 0, 7);
-    mx.clip();
-    mx.fillStyle = '#1c2520';
-    mx.fillRect(0, 0, W, H);
-    mx.translate(R, R + R * 0.25);
-    mx.rotate(CAM.yaw - Math.PI);
-    mx.scale(mmScale / MAP.scale, mmScale / MAP.scale);
-    // map image (in meters space after scaling)
-    mx.save();
-    mx.translate(-PLAYER.x, -PLAYER.z);
-    mx.scale(1 / MAP.scale, 1 / MAP.scale);
-    mx.translate(MAP.x0 * MAP.scale, MAP.z0 * MAP.scale);
-    mx.drawImage(MAPC, 0, 0);
+    mx.moveTo(0, -a);
+    mx.lineTo(a * 0.7, a * 0.7);
+    mx.lineTo(0, a * 0.35);
+    mx.lineTo(-a * 0.7, a * 0.7);
+    mx.closePath();
+    mx.fill();
+    mx.stroke();
     mx.restore();
-    mx.translate(-PLAYER.x, -PLAYER.z);
-    const s = (1 / mmScale) * MAP.scale;
-    // GPS route
-    if (GPS.path) {
-      mx.strokeStyle = MISSIONS.target() || GPS.story ? '#f5b72e' : '#e040fb';
-      mx.lineWidth = 7 * s * 1.6;
-      mx.lineJoin = 'round';
-      mx.lineCap = 'round';
-      mx.beginPath();
-      const p = GPS.path;
-      for (let i = 0; i < p.length; i += 2) i ? mx.lineTo(p[i], p[i + 1]) : mx.moveTo(p[i], p[i + 1]);
-      mx.stroke();
-    }
-    // v0.75: races: the route of the next two controls, dimmer, with their dots
-    {
-      const ap = MISSIONS.aheadPath();
-      if (ap) {
-        mx.save();
-        mx.globalAlpha = 0.55;
-        mx.strokeStyle = '#f5d98a';
-        mx.lineWidth = 5 * s * 1.6;
-        mx.setLineDash([9 * s * 1.6, 6 * s * 1.6]);
-        mx.beginPath();
-        for (let i = 0; i < ap.length; i += 2) i ? mx.lineTo(ap[i], ap[i + 1]) : mx.moveTo(ap[i], ap[i + 1]);
-        mx.stroke();
-        mx.restore();
-        for (const q of MISSIONS.aheadPts() || []) blip(q[0], q[1], '#f5d98a', 6 * s * 1.6);
-      }
-    }
-    // tram
-    if (TRAM.parts) {
-      const t = TRAM.parts[0].position;
-      blip(t.x, t.z, '#e04848', 5 * s * 1.6, 'sq');
-    }
+    mx.restore();
+    // north marker on the rim
+    const ang = CAM.yaw - Math.PI;
+    const nx = R + Math.sin(-ang) * (R - 16) * -1,
+      nz = R - Math.cos(ang) * (R - 16);
+    const vx = Math.sin(ang),
+      vz = -Math.cos(ang); // north (0,-1) rotated
+    mx.fillStyle = '#111';
+    mx.beginPath();
+    const Nx = R + (R - 18) * -Math.sin(ang) * -1,
+      Nz = R + (R - 18) * -Math.cos(ang);
+    const px = R + (R - 18) * Math.sin(ang),
+      pz = R + (R - 18) * -Math.cos(ang) + R * 0.0;
+    mx.arc(px, pz, 15, 0, 7);
+    mx.fill();
+    mx.strokeStyle = '#fff';
+    mx.lineWidth = 2;
+    mx.stroke();
+    mx.fillStyle = '#fff';
+    mx.font = 'bold 18px Oswald, sans-serif';
+    mx.textAlign = 'center';
+    mx.textBaseline = 'middle';
+    mx.fillText('N', px, pz + 1);
+    // ring
+    mx.strokeStyle = 'rgba(0,0,0,.6)';
+    mx.lineWidth = 6;
+    mx.beginPath();
+    mx.arc(R, R, R - 3, 0, 7);
+    mx.stroke();
+  }
+  /** (v1.1.7, code quality) part of drawMinimap: police */
+  function drawMinimapPart2(s, R) {
     // police
     const fl = Math.floor(performance.now() / 250) % 2;
     for (const c of CARS) if (c.driver === 'police') blip(c.x, c.z, fl ? '#3d7bff' : '#ff3d3d', 6 * s * 1.6);
@@ -656,49 +664,64 @@ const HUD = (() => {
     // player arrow
     mx.save();
     mx.translate(PLAYER.x, PLAYER.z);
-    mx.rotate(-(PLAYER.car ? PLAYER.car.h : PLAYER.h) + Math.PI);
-    const a = 11 * s * 1.6;
-    mx.fillStyle = '#fff';
-    mx.strokeStyle = '#000';
-    mx.lineWidth = 2.5 * s;
+  }
+  /** (v1.1.7, code quality) part of drawMinimap: map image (in meters space after scaling) */
+  function drawMinimapPart1(W, H, R) {
+    const car = PLAYER.car;
+    const zoom = car ? clamp(1.0 - car.speed * 0.012, 0.5, 1.0) : 1.15;
+    mmScale = zoom * MAP.scale * (W / 230) * 0.9;
+    mx.save();
+    mx.clearRect(0, 0, W, H);
     mx.beginPath();
-    mx.moveTo(0, -a);
-    mx.lineTo(a * 0.7, a * 0.7);
-    mx.lineTo(0, a * 0.35);
-    mx.lineTo(-a * 0.7, a * 0.7);
-    mx.closePath();
-    mx.fill();
-    mx.stroke();
+    mx.arc(R, R, R, 0, 7);
+    mx.clip();
+    mx.fillStyle = '#1c2520';
+    mx.fillRect(0, 0, W, H);
+    mx.translate(R, R + R * 0.25);
+    mx.rotate(CAM.yaw - Math.PI);
+    mx.scale(mmScale / MAP.scale, mmScale / MAP.scale);
+    // map image (in meters space after scaling)
+    mx.save();
+    mx.translate(-PLAYER.x, -PLAYER.z);
+    mx.scale(1 / MAP.scale, 1 / MAP.scale);
+    mx.translate(MAP.x0 * MAP.scale, MAP.z0 * MAP.scale);
+    mx.drawImage(MAPC, 0, 0);
     mx.restore();
-    mx.restore();
-    // north marker on the rim
-    const ang = CAM.yaw - Math.PI;
-    const nx = R + Math.sin(-ang) * (R - 16) * -1,
-      nz = R - Math.cos(ang) * (R - 16);
-    const vx = Math.sin(ang),
-      vz = -Math.cos(ang); // north (0,-1) rotated
-    mx.fillStyle = '#111';
-    mx.beginPath();
-    const Nx = R + (R - 18) * -Math.sin(ang) * -1,
-      Nz = R + (R - 18) * -Math.cos(ang);
-    const px = R + (R - 18) * Math.sin(ang),
-      pz = R + (R - 18) * -Math.cos(ang) + R * 0.0;
-    mx.arc(px, pz, 15, 0, 7);
-    mx.fill();
-    mx.strokeStyle = '#fff';
-    mx.lineWidth = 2;
-    mx.stroke();
-    mx.fillStyle = '#fff';
-    mx.font = 'bold 18px Oswald, sans-serif';
-    mx.textAlign = 'center';
-    mx.textBaseline = 'middle';
-    mx.fillText('N', px, pz + 1);
-    // ring
-    mx.strokeStyle = 'rgba(0,0,0,.6)';
-    mx.lineWidth = 6;
-    mx.beginPath();
-    mx.arc(R, R, R - 3, 0, 7);
-    mx.stroke();
+    mx.translate(-PLAYER.x, -PLAYER.z);
+    const s = (1 / mmScale) * MAP.scale;
+    // GPS route
+    if (GPS.path) {
+      mx.strokeStyle = MISSIONS.target() || GPS.story ? '#f5b72e' : '#e040fb';
+      mx.lineWidth = 7 * s * 1.6;
+      mx.lineJoin = 'round';
+      mx.lineCap = 'round';
+      mx.beginPath();
+      const p = GPS.path;
+      for (let i = 0; i < p.length; i += 2) i ? mx.lineTo(p[i], p[i + 1]) : mx.moveTo(p[i], p[i + 1]);
+      mx.stroke();
+    }
+    // v0.75: races: the route of the next two controls, dimmer, with their dots
+    {
+      const ap = MISSIONS.aheadPath();
+      if (ap) {
+        mx.save();
+        mx.globalAlpha = 0.55;
+        mx.strokeStyle = '#f5d98a';
+        mx.lineWidth = 5 * s * 1.6;
+        mx.setLineDash([9 * s * 1.6, 6 * s * 1.6]);
+        mx.beginPath();
+        for (let i = 0; i < ap.length; i += 2) i ? mx.lineTo(ap[i], ap[i + 1]) : mx.moveTo(ap[i], ap[i + 1]);
+        mx.stroke();
+        mx.restore();
+        for (const q of MISSIONS.aheadPts() || []) blip(q[0], q[1], '#f5d98a', 6 * s * 1.6);
+      }
+    }
+    // tram
+    if (TRAM.parts) {
+      const t = TRAM.parts[0].position;
+      blip(t.x, t.z, '#e04848', 5 * s * 1.6, 'sq');
+    }
+    return { s };
   }
   function locationName() {
     const rd = ROADSEG.nearest(PLAYER.x, PLAYER.z, (r) => r[1] >= 0);
@@ -919,6 +942,90 @@ const BIGMAP = (() => {
     drag = null,
     moved = false;
   function draw() {
+    const { k, dot } = drawPart1();
+    drawPart2(k); // the toy shops (a little robot)
+    for (const m of MISSIONS.blips()) {
+      if (m[3] === 'tri') {
+        const a = (11 / k) * devicePixelRatio;
+        x.fillStyle = m[2];
+        x.strokeStyle = '#000';
+        x.lineWidth = (2 / k) * devicePixelRatio;
+        x.beginPath();
+        x.moveTo(m[0], m[1] - a);
+        x.lineTo(m[0] + a * 0.9, m[1] + a * 0.65);
+        x.lineTo(m[0] - a * 0.9, m[1] + a * 0.65);
+        x.closePath();
+        x.fill();
+        x.stroke();
+      } else dot(m[0], m[1], m[2] || '#f5b72e', 8);
+    }
+    for (const q of MISSIONS.aheadPts() || []) dot(q[0], q[1], '#f5d98a', 6);
+    if (GPS.target) dot(GPS.target[0], GPS.target[1], '#e040fb', 8);
+    x.save();
+    x.translate(PLAYER.x, PLAYER.z);
+    x.rotate(-(PLAYER.car ? PLAYER.car.h : PLAYER.h) + Math.PI);
+    const a = (12 / k) * devicePixelRatio;
+    x.fillStyle = '#fff';
+    x.strokeStyle = '#000';
+    x.lineWidth = (2 / k) * devicePixelRatio;
+    x.beginPath();
+    x.moveTo(0, -a);
+    x.lineTo(a * 0.7, a * 0.7);
+    x.lineTo(0, a * 0.35);
+    x.lineTo(-a * 0.7, a * 0.7);
+    x.closePath();
+    x.fill();
+    x.stroke();
+    x.restore();
+    x.restore();
+  }
+  /** (v1.1.7, code quality) part of draw */
+  function drawPart2(k) {
+    for (const f of FOOD.shops) {
+      x.fillStyle = '#e53935';
+      x.strokeStyle = '#fff';
+      x.lineWidth = (1.5 / k) * devicePixelRatio;
+      const sz = (5 * devicePixelRatio) / k;
+      x.fillRect(f.x - sz, f.z - sz, sz * 2, sz * 2);
+      x.strokeRect(f.x - sz, f.z - sz, sz * 2, sz * 2);
+    }
+    if (typeof ARCADE !== 'undefined' && ARCADE.data().invited)
+      for (const f of FOOD.shops)
+        if (f.type === 'C' || f.type === 'R') {
+          x.strokeStyle = '#b388ff';
+          x.lineWidth = (2.5 / k) * devicePixelRatio;
+          x.beginPath();
+          x.arc(f.x, f.z, (10 * devicePixelRatio) / k, 0, 7);
+          x.stroke();
+        } // v0.82.2: the Guerra de Naves bars
+    {
+      const sqm = (bx, bz, col) => {
+        const sz = (6 * devicePixelRatio) / k;
+        x.fillStyle = col;
+        x.strokeStyle = '#000';
+        x.lineWidth = (2 / k) * devicePixelRatio;
+        x.fillRect(bx - sz, bz - sz, sz * 2, sz * 2);
+        x.strokeRect(bx - sz, bz - sz, sz * 2, sz * 2);
+      };
+      if (typeof RECRE !== 'undefined') for (const b of RECRE.blips()) sqm(b[0], b[1], b[2]);
+      if (typeof CASA !== 'undefined')
+        for (const b of CASA.blips()) {
+          x.save();
+          x.translate(b[0], b[1]);
+          window.__mapIcon(b[3], x, (8 * devicePixelRatio) / k, (1.8 / k) * devicePixelRatio);
+          x.restore();
+        }
+    } // v0.83: El Blanco's, the estate agency, your homes
+    if (typeof AGUA !== 'undefined' && AGUA.isOpen())
+      for (const t of AGUA.shops) {
+        x.save();
+        x.translate(t.x, t.z);
+        window.__toyBear(x, (7 * devicePixelRatio) / k, (1.8 / k) * devicePixelRatio);
+        x.restore();
+      }
+  }
+  /** (v1.1.7, code quality) part of draw: v0.79 (Jonay): the markers go over the names (a mission dot hidden under «Centro de Salud…») */
+  function drawPart1() {
     const W = (cv.width = el.clientWidth * devicePixelRatio),
       H = (cv.height = el.clientHeight * devicePixelRatio);
     const k = zoom * devicePixelRatio;
@@ -972,82 +1079,7 @@ const BIGMAP = (() => {
       x.stroke();
     };
     for (const c of CARS) if (c.driver === 'police') dot(c.x, c.z, '#3d7bff', 5);
-    for (const f of FOOD.shops) {
-      x.fillStyle = '#e53935';
-      x.strokeStyle = '#fff';
-      x.lineWidth = (1.5 / k) * devicePixelRatio;
-      const sz = (5 * devicePixelRatio) / k;
-      x.fillRect(f.x - sz, f.z - sz, sz * 2, sz * 2);
-      x.strokeRect(f.x - sz, f.z - sz, sz * 2, sz * 2);
-    }
-    if (typeof ARCADE !== 'undefined' && ARCADE.data().invited)
-      for (const f of FOOD.shops)
-        if (f.type === 'C' || f.type === 'R') {
-          x.strokeStyle = '#b388ff';
-          x.lineWidth = (2.5 / k) * devicePixelRatio;
-          x.beginPath();
-          x.arc(f.x, f.z, (10 * devicePixelRatio) / k, 0, 7);
-          x.stroke();
-        } // v0.82.2: the Guerra de Naves bars
-    {
-      const sqm = (bx, bz, col) => {
-        const sz = (6 * devicePixelRatio) / k;
-        x.fillStyle = col;
-        x.strokeStyle = '#000';
-        x.lineWidth = (2 / k) * devicePixelRatio;
-        x.fillRect(bx - sz, bz - sz, sz * 2, sz * 2);
-        x.strokeRect(bx - sz, bz - sz, sz * 2, sz * 2);
-      };
-      if (typeof RECRE !== 'undefined') for (const b of RECRE.blips()) sqm(b[0], b[1], b[2]);
-      if (typeof CASA !== 'undefined')
-        for (const b of CASA.blips()) {
-          x.save();
-          x.translate(b[0], b[1]);
-          window.__mapIcon(b[3], x, (8 * devicePixelRatio) / k, (1.8 / k) * devicePixelRatio);
-          x.restore();
-        }
-    } // v0.83: El Blanco's, the estate agency, your homes
-    if (typeof AGUA !== 'undefined' && AGUA.isOpen())
-      for (const t of AGUA.shops) {
-        x.save();
-        x.translate(t.x, t.z);
-        window.__toyBear(x, (7 * devicePixelRatio) / k, (1.8 / k) * devicePixelRatio);
-        x.restore();
-      } // the toy shops (a little robot)
-    for (const m of MISSIONS.blips()) {
-      if (m[3] === 'tri') {
-        const a = (11 / k) * devicePixelRatio;
-        x.fillStyle = m[2];
-        x.strokeStyle = '#000';
-        x.lineWidth = (2 / k) * devicePixelRatio;
-        x.beginPath();
-        x.moveTo(m[0], m[1] - a);
-        x.lineTo(m[0] + a * 0.9, m[1] + a * 0.65);
-        x.lineTo(m[0] - a * 0.9, m[1] + a * 0.65);
-        x.closePath();
-        x.fill();
-        x.stroke();
-      } else dot(m[0], m[1], m[2] || '#f5b72e', 8);
-    }
-    for (const q of MISSIONS.aheadPts() || []) dot(q[0], q[1], '#f5d98a', 6);
-    if (GPS.target) dot(GPS.target[0], GPS.target[1], '#e040fb', 8);
-    x.save();
-    x.translate(PLAYER.x, PLAYER.z);
-    x.rotate(-(PLAYER.car ? PLAYER.car.h : PLAYER.h) + Math.PI);
-    const a = (12 / k) * devicePixelRatio;
-    x.fillStyle = '#fff';
-    x.strokeStyle = '#000';
-    x.lineWidth = (2 / k) * devicePixelRatio;
-    x.beginPath();
-    x.moveTo(0, -a);
-    x.lineTo(a * 0.7, a * 0.7);
-    x.lineTo(0, a * 0.35);
-    x.lineTo(-a * 0.7, a * 0.7);
-    x.closePath();
-    x.fill();
-    x.stroke();
-    x.restore();
-    x.restore();
+    return { k, dot };
   }
   // labels: drawn in screen space, by priority, skipping any that would overlap one already drawn (and repeated names).
   // Far away only the neighbourhoods and the main landmarks; zooming in adds big stores, entrances and then the shops.
@@ -1325,6 +1357,64 @@ const BIGMAP = (() => {
 function setupTouch() {
   const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
   if (!isTouch) return;
+  setupTouchPart1();
+  const btn = (id, down, up) => {
+    const b = $(id);
+    b.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      down();
+    });
+    if (up) {
+      b.addEventListener('pointerup', up);
+      b.addEventListener('pointercancel', up);
+    }
+  };
+  btn('tbF', () => PRESSED.add(!PLAYER.car && (nearestDoor() || FOOD.near()) && !nearestEnterable() ? 'KeyE' : 'KeyF'));
+  btn(
+    'tbJ',
+    () => {
+      INPUT.touch.jump = true;
+      INPUT.touch.hb = true;
+    },
+    () => {
+      INPUT.touch.hb = false;
+    }
+  );
+  btn(
+    'tbS',
+    () => {
+      if (PLAYER.car) PRESSED.add('KeyH');
+      else INPUT.touch.sprint = true;
+    },
+    () => (INPUT.touch.sprint = false)
+  );
+  btn('tbM', () => BIGMAP.toggle());
+  // labels follow what the button does (on foot / in a car)
+  let lastCar = null;
+  setInterval(() => {
+    const c = !!PLAYER.car;
+    if (c === lastCar) return;
+    lastCar = c;
+    $('tbF').textContent = c ? 'SALIR' : 'ENTRAR';
+    $('tbJ').innerHTML = c ? 'FRENO<br>MANO' : 'SALTO';
+    $('tbS').textContent = c ? 'CLAXON' : 'CORRER';
+  }, 250);
+  $('minimapwrap').addEventListener('pointerdown', (e) => {
+    e.stopPropagation();
+    BIGMAP.toggle();
+  }); // the minimap itself also opens the big map
+  btn('tbA', () => {
+    WEAPON.touchAim = !WEAPON.touchAim;
+    if (!WEAPON.touchAim) WEAPON.aiming = false;
+    $('tbA').style.borderColor = WEAPON.touchAim ? '#3ddc97' : '';
+  });
+  btn('tbD', () => {
+    if (canUse()) WEAPON.want = true;
+    else if (typeof rifleUsable === 'function' && rifleUsable()) RIFLE.touchT = 0.7;
+  });
+}
+/** (v1.1.7, code quality) part of setupTouch */
+function setupTouchPart1() {
   document.body.classList.add('touchmode');
   $('touch').style.display = 'block';
   const joy = $('joy'),
@@ -1379,59 +1469,5 @@ function setupTouch() {
   });
   t.addEventListener('pointerup', (e) => {
     if (e.pointerId === lookId) lookId = null;
-  });
-  const btn = (id, down, up) => {
-    const b = $(id);
-    b.addEventListener('pointerdown', (e) => {
-      e.stopPropagation();
-      down();
-    });
-    if (up) {
-      b.addEventListener('pointerup', up);
-      b.addEventListener('pointercancel', up);
-    }
-  };
-  btn('tbF', () => PRESSED.add(!PLAYER.car && (nearestDoor() || FOOD.near()) && !nearestEnterable() ? 'KeyE' : 'KeyF'));
-  btn(
-    'tbJ',
-    () => {
-      INPUT.touch.jump = true;
-      INPUT.touch.hb = true;
-    },
-    () => {
-      INPUT.touch.hb = false;
-    }
-  );
-  btn(
-    'tbS',
-    () => {
-      if (PLAYER.car) PRESSED.add('KeyH');
-      else INPUT.touch.sprint = true;
-    },
-    () => (INPUT.touch.sprint = false)
-  );
-  btn('tbM', () => BIGMAP.toggle());
-  // labels follow what the button does (on foot / in a car)
-  let lastCar = null;
-  setInterval(() => {
-    const c = !!PLAYER.car;
-    if (c === lastCar) return;
-    lastCar = c;
-    $('tbF').textContent = c ? 'SALIR' : 'ENTRAR';
-    $('tbJ').innerHTML = c ? 'FRENO<br>MANO' : 'SALTO';
-    $('tbS').textContent = c ? 'CLAXON' : 'CORRER';
-  }, 250);
-  $('minimapwrap').addEventListener('pointerdown', (e) => {
-    e.stopPropagation();
-    BIGMAP.toggle();
-  }); // the minimap itself also opens the big map
-  btn('tbA', () => {
-    WEAPON.touchAim = !WEAPON.touchAim;
-    if (!WEAPON.touchAim) WEAPON.aiming = false;
-    $('tbA').style.borderColor = WEAPON.touchAim ? '#3ddc97' : '';
-  });
-  btn('tbD', () => {
-    if (canUse()) WEAPON.want = true;
-    else if (typeof rifleUsable === 'function' && rifleUsable()) RIFLE.touchT = 0.7;
   });
 }

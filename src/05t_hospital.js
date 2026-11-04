@@ -127,61 +127,12 @@ function buildHUC(pts) {
   const R = minRect(pts);
   if (!R) return;
   const gy = heightAt(R.cx, R.cz) - 0.3;
-  // the tower goes at the end away from the green EAA building (to the east, as in the photos)
-  const eaa = BUILD.find((b) => b.name && /Actividades Ambulatorias/.test(b.name));
-  let dir = 1;
-  if (eaa && (eaa.cx - R.cx) * R.ux + (eaa.cz - R.cz) * R.uz > 0) dir = -1;
-  const g = new THREE.Group();
-  g.position.set(R.cx, gy, R.cz);
-  g.rotation.y = Math.atan2(-R.uz, R.ux);
-  scene.add(g); // local x = long axis
-  const L = Math.min(R.hl * 2 * 0.82, 150),
-    D = 16,
-    FL = 12,
-    H = FL * 3.5;
-  const band = hucBandTex();
-  const mk = (rx, ry) => {
-    const t = band.clone();
-    t.needsUpdate = true;
-    t.repeat.set(rx, ry);
-    return new THREE.MeshStandardMaterial({ map: t, roughness: 0.75 });
-  };
-  const roof = new THREE.MeshStandardMaterial({ color: 0xbfb8aa, roughness: 0.9 }),
-    end = new THREE.MeshStandardMaterial({ color: 0xe6e0d2, roughness: 0.85 });
-  const sideM = mk(L / 7, FL);
-  const slab = new THREE.Mesh(new THREE.BoxGeometry(L, H, D), [end, end, roof, roof, sideM, sideM]);
-  slab.position.set(-dir * 6, H / 2, 0);
-  slab.castShadow = slab.receiveShadow = true;
-  g.add(slab);
-  // white end cores and rooftop plant
-  for (const s of [-1, 1]) addMesh(g, new THREE.BoxGeometry(7, H + 3, D + 1.2), end, -dir * 6 + s * (L / 2 - 3.5), (H + 3) / 2, 0);
-  for (let k = 0; k < 4; k++) addMesh(g, new THREE.BoxGeometry(8, 3, 6), roof, -dir * 6 + (k - 1.5) * 22, H + 1.5, -2 + (k % 2) * 3);
-  // the cylindrical tower with its glass crown and the helipad «saucer»
-  const tx = -dir * 6 + dir * (L / 2 + 7),
-    TR = 11,
-    TH = H + 6;
-  const tw = new THREE.MeshStandardMaterial({
-    map: (() => {
-      const t = hucTowerTex();
-      t.repeat.set(10, 8);
-      return t;
-    })(),
-    roughness: 0.6
-  });
-  const glass = new THREE.MeshStandardMaterial({ color: 0x5f87a6, roughness: 0.15, metalness: 0.5 }),
-    dark = new THREE.MeshStandardMaterial({ color: 0x3b3f44, roughness: 0.6, metalness: 0.3 });
-  addMesh(g, new THREE.CylinderGeometry(TR, TR, TH - 7, 32), tw, tx, (TH - 7) / 2, 0);
-  addMesh(g, new THREE.CylinderGeometry(TR - 0.4, TR - 0.4, 7, 32), glass, tx, TH - 3.5, 0);
-  addMesh(g, new THREE.CylinderGeometry(TR + 0.4, TR + 0.4, 0.6, 32), end, tx, TH - 7, 0);
-  addMesh(g, new THREE.CylinderGeometry(16, TR, 3.2, 32, 1, true), dark, tx + dir * 3, TH + 1.6, 0); // the saucer's underside, off-centre
-  const pad = new THREE.Mesh(new THREE.CylinderGeometry(16, 16, 1, 32), [
-    dark,
-    new THREE.MeshStandardMaterial({ map: helipadTex(), roughness: 0.8 }),
-    dark
-  ]);
-  pad.position.set(tx + dir * 3, TH + 3.7, 0);
-  pad.castShadow = true;
-  g.add(pad);
+  let { dir, g, D, tx, TR, TH } = buildHUCPart1(R, gy);
+  buildHUCPart2(tx, dir, TH, g, R, gy, D, TR);
+  LABELS.push(['Hospital Universitario de Canarias', R.cx, R.cz, 1]);
+}
+/** (v1.1.7, code quality) part of buildHUC: garden in front: Canary palms and the rusty steel sculpture (if the spot is free) */
+function buildHUCPart2(tx, dir, TH, g, R, gy, D, TR) {
   const rail = new THREE.Mesh(
     new THREE.TorusGeometry(16.2, 0.12, 6, 48),
     new THREE.MeshStandardMaterial({ color: 0xd8dde2, metalness: 0.6, roughness: 0.4 })
@@ -237,7 +188,65 @@ function buildHUC(pts) {
   HUC.cx = R.cx;
   HUC.cz = R.cz;
   HUC.top = gy + TH + 4;
-  LABELS.push(['Hospital Universitario de Canarias', R.cx, R.cz, 1]);
+}
+/** (v1.1.7, code quality) part of buildHUC: the tower goes at the end away from the green EAA building (to the east, as in the photos) */
+function buildHUCPart1(R, gy) {
+  // the tower goes at the end away from the green EAA building (to the east, as in the photos)
+  const eaa = BUILD.find((b) => b.name && /Actividades Ambulatorias/.test(b.name));
+  let dir = 1;
+  if (eaa && (eaa.cx - R.cx) * R.ux + (eaa.cz - R.cz) * R.uz > 0) dir = -1;
+  const g = new THREE.Group();
+  g.position.set(R.cx, gy, R.cz);
+  g.rotation.y = Math.atan2(-R.uz, R.ux);
+  scene.add(g); // local x = long axis
+  const L = Math.min(R.hl * 2 * 0.82, 150),
+    D = 16,
+    FL = 12,
+    H = FL * 3.5;
+  const band = hucBandTex();
+  const mk = (rx, ry) => {
+    const t = band.clone();
+    t.needsUpdate = true;
+    t.repeat.set(rx, ry);
+    return new THREE.MeshStandardMaterial({ map: t, roughness: 0.75 });
+  };
+  const roof = new THREE.MeshStandardMaterial({ color: 0xbfb8aa, roughness: 0.9 }),
+    end = new THREE.MeshStandardMaterial({ color: 0xe6e0d2, roughness: 0.85 });
+  const sideM = mk(L / 7, FL);
+  const slab = new THREE.Mesh(new THREE.BoxGeometry(L, H, D), [end, end, roof, roof, sideM, sideM]);
+  slab.position.set(-dir * 6, H / 2, 0);
+  slab.castShadow = slab.receiveShadow = true;
+  g.add(slab);
+  // white end cores and rooftop plant
+  for (const s of [-1, 1]) addMesh(g, new THREE.BoxGeometry(7, H + 3, D + 1.2), end, -dir * 6 + s * (L / 2 - 3.5), (H + 3) / 2, 0);
+  for (let k = 0; k < 4; k++) addMesh(g, new THREE.BoxGeometry(8, 3, 6), roof, -dir * 6 + (k - 1.5) * 22, H + 1.5, -2 + (k % 2) * 3);
+  // the cylindrical tower with its glass crown and the helipad «saucer»
+  const tx = -dir * 6 + dir * (L / 2 + 7),
+    TR = 11,
+    TH = H + 6;
+  const tw = new THREE.MeshStandardMaterial({
+    map: (() => {
+      const t = hucTowerTex();
+      t.repeat.set(10, 8);
+      return t;
+    })(),
+    roughness: 0.6
+  });
+  const glass = new THREE.MeshStandardMaterial({ color: 0x5f87a6, roughness: 0.15, metalness: 0.5 }),
+    dark = new THREE.MeshStandardMaterial({ color: 0x3b3f44, roughness: 0.6, metalness: 0.3 });
+  addMesh(g, new THREE.CylinderGeometry(TR, TR, TH - 7, 32), tw, tx, (TH - 7) / 2, 0);
+  addMesh(g, new THREE.CylinderGeometry(TR - 0.4, TR - 0.4, 7, 32), glass, tx, TH - 3.5, 0);
+  addMesh(g, new THREE.CylinderGeometry(TR + 0.4, TR + 0.4, 0.6, 32), end, tx, TH - 7, 0);
+  addMesh(g, new THREE.CylinderGeometry(16, TR, 3.2, 32, 1, true), dark, tx + dir * 3, TH + 1.6, 0); // the saucer's underside, off-centre
+  const pad = new THREE.Mesh(new THREE.CylinderGeometry(16, 16, 1, 32), [
+    dark,
+    new THREE.MeshStandardMaterial({ map: helipadTex(), roughness: 0.8 }),
+    dark
+  ]);
+  pad.position.set(tx + dir * 3, TH + 3.7, 0);
+  pad.castShadow = true;
+  g.add(pad);
+  return { dir, g, D, tx, TR, TH };
 }
 // green glass curtain over a footprint (Edificio de Actividades Ambulatorias)
 function buildGlassSkin(pts, top, col = 0x3f8f7c) {
@@ -344,6 +353,91 @@ for (const c of EXTRA_SALUD)
       }
     }
 function buildExtraSalud() {
+  const { brick, grey, win, iron, roofM, prism } = buildExtraSaludPart1();
+  const lerp2 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+  for (const c of EXTRA_SALUD) {
+    buildExtraSaludEach(c, lerp2, prism, brick, grey, roofM, win, iron);
+  }
+}
+/** (v1.1.7, code quality) the body of a loop of buildExtraSalud, split out of it */
+function buildExtraSaludEach(c, lerp2, prism, brick, grey, roofM, win, iron) {
+  const P = c.poly;
+  if (!P.every(([x, z]) => inPlayArea(x, z, 0))) return;
+  const { gy, sw, L, ux, uz } = buildExtraSaludEachPart1(P, lerp2, c, prism, brick, grey, roofM);
+  let nx = -uz,
+    nz = ux;
+  const cx = P.reduce((a, p) => a + p[0], 0) / 4,
+    cz = P.reduce((a, p) => a + p[1], 0) / 4;
+  if ((sw[0] - cx) * nx + (sw[1] - cz) * nz < 0) {
+    nx = -nx;
+    nz = -nz;
+  }
+  const g = new THREE.Group();
+  g.position.set(sw[0], gy, sw[1]);
+  g.rotation.y = Math.atan2(nx, nz);
+  scene.add(g); // local x along the front (from sw), +z out to the avenue
+  const sgn = nz * ux - nx * uz > 0 ? 1 : -1,
+    sideX = (t) => sgn * t; // local +x is (nz, -nx): along u or against it
+  for (let t = 2.5; t < L - 2; t += 4.2) {
+    const main2 = t > L * c.split;
+    addMesh(g, new THREE.BoxGeometry(3, 1.5, 0.1), win, sideX(t), main2 ? 6.3 : 5.6, 0.06);
+    if (Math.abs(t - L * 0.68) > 3) addMesh(g, new THREE.BoxGeometry(2.4, 1.4, 0.1), win, sideX(t), 2.2, 0.06);
+  }
+  const doorT = L * 0.68;
+  addMesh(
+    g,
+    new THREE.BoxGeometry(3.6, 2.9, 0.14),
+    new THREE.MeshStandardMaterial({ color: 0x9fb8c6, roughness: 0.15, metalness: 0.4 }),
+    sideX(doorT),
+    1.9,
+    0.08
+  );
+  const sg = new THREE.Group();
+  sg.position.set(sideX(doorT), 0, 0.02);
+  g.add(sg);
+  const E = { L: 16, mx: sw[0] + ux * doorT, mz: sw[1] + uz * doorT, nx, nz };
+  saludDeco(sg, E, 8.2, c.name);
+  // railings 2.5 m out, gate in front of the door
+  const ry = 2.5;
+  for (const [t0, t1] of [
+    [0.5, doorT - 2.5],
+    [doorT + 2.5, L - 0.5]
+  ]) {
+    const len = t1 - t0,
+      mid = (t0 + t1) / 2;
+    addMesh(g, new THREE.BoxGeometry(len, 0.08, 0.08), iron, sideX(mid), 1.8, ry);
+    for (let t = t0; t <= t1; t += 0.5) addMesh(g, new THREE.BoxGeometry(0.05, 1.8, 0.05), iron, sideX(t), 0.9, ry);
+    COL.addSeg(sw[0] + ux * t0 + nx * ry, sw[1] + uz * t0 + nz * ry, sw[0] + ux * t1 + nx * ry, sw[1] + uz * t1 + nz * ry);
+  }
+  for (let i = 0; i < 4; i++) COL.addSeg(P[i][0], P[i][1], P[(i + 1) % 4][0], P[(i + 1) % 4][1]);
+  // part of the map: drawn on the minimap / map, nothing spawns inside (inAnyBuilding)
+  DATA.B.push([85, 6, 2, 0, -1, 500, P.flat()]);
+  LABELS.push([c.label, cx, cz, 1]);
+}
+/** (v1.1.7, code quality) part of buildExtraSaludEach: west wing (lower) and main block: split along the long sides */
+function buildExtraSaludEachPart1(P, lerp2, c, prism, brick, grey, roofM) {
+  const gy = Math.max(...P.map(([x, z]) => heightAt(x, z))) + 0.05,
+    gb = Math.min(...P.map(([x, z]) => heightAt(x, z))) - 1.5;
+  // west wing (lower) and main block: split along the long sides
+  const [nw, ne, se, sw] = P,
+    mN = lerp2(nw, ne, c.split),
+    mS = lerp2(sw, se, c.split);
+  const wing = [nw, mN, mS, sw],
+    main = [mN, ne, se, mS];
+  prism(wing, gb, gy + 4.2, brick);
+  prism(wing, gy + 4.2, gy + 7.0, grey);
+  prism(wing, gy + 7.0, gy + 7.3, roofM);
+  prism(main, gb, gy + 4.4, brick);
+  prism(main, gy + 4.4, gy + 8.2, grey);
+  prism(main, gy + 8.2, gy + 8.5, roofM);
+  // the front to the avenue (edge sw→se): windows, glass door, sign, railings with a gate, respawn spot
+  const L = Math.hypot(se[0] - sw[0], se[1] - sw[1]),
+    ux = (se[0] - sw[0]) / L,
+    uz = (se[1] - sw[1]) / L;
+  return { gy, sw, L, ux, uz };
+}
+/** (v1.1.7, code quality) part of buildExtraSalud */
+function buildExtraSaludPart1() {
   const brick = new THREE.MeshStandardMaterial({ color: 0x8a4b38, roughness: 0.9 }),
     grey = new THREE.MeshStandardMaterial({ color: 0xa9adb0, roughness: 0.8 }),
     win = new THREE.MeshStandardMaterial({ color: 0x2c3a44, roughness: 0.2, metalness: 0.4 });
@@ -360,76 +454,5 @@ function buildExtraSalud() {
     scene.add(mesh);
     return mesh;
   };
-  const lerp2 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
-  for (const c of EXTRA_SALUD) {
-    const P = c.poly;
-    if (!P.every(([x, z]) => inPlayArea(x, z, 0))) continue;
-    const gy = Math.max(...P.map(([x, z]) => heightAt(x, z))) + 0.05,
-      gb = Math.min(...P.map(([x, z]) => heightAt(x, z))) - 1.5;
-    // west wing (lower) and main block: split along the long sides
-    const [nw, ne, se, sw] = P,
-      mN = lerp2(nw, ne, c.split),
-      mS = lerp2(sw, se, c.split);
-    const wing = [nw, mN, mS, sw],
-      main = [mN, ne, se, mS];
-    prism(wing, gb, gy + 4.2, brick);
-    prism(wing, gy + 4.2, gy + 7.0, grey);
-    prism(wing, gy + 7.0, gy + 7.3, roofM);
-    prism(main, gb, gy + 4.4, brick);
-    prism(main, gy + 4.4, gy + 8.2, grey);
-    prism(main, gy + 8.2, gy + 8.5, roofM);
-    // the front to the avenue (edge sw→se): windows, glass door, sign, railings with a gate, respawn spot
-    const L = Math.hypot(se[0] - sw[0], se[1] - sw[1]),
-      ux = (se[0] - sw[0]) / L,
-      uz = (se[1] - sw[1]) / L;
-    let nx = -uz,
-      nz = ux;
-    const cx = P.reduce((a, p) => a + p[0], 0) / 4,
-      cz = P.reduce((a, p) => a + p[1], 0) / 4;
-    if ((sw[0] - cx) * nx + (sw[1] - cz) * nz < 0) {
-      nx = -nx;
-      nz = -nz;
-    }
-    const g = new THREE.Group();
-    g.position.set(sw[0], gy, sw[1]);
-    g.rotation.y = Math.atan2(nx, nz);
-    scene.add(g); // local x along the front (from sw), +z out to the avenue
-    const sgn = nz * ux - nx * uz > 0 ? 1 : -1,
-      sideX = (t) => sgn * t; // local +x is (nz, -nx): along u or against it
-    for (let t = 2.5; t < L - 2; t += 4.2) {
-      const main2 = t > L * c.split;
-      addMesh(g, new THREE.BoxGeometry(3, 1.5, 0.1), win, sideX(t), main2 ? 6.3 : 5.6, 0.06);
-      if (Math.abs(t - L * 0.68) > 3) addMesh(g, new THREE.BoxGeometry(2.4, 1.4, 0.1), win, sideX(t), 2.2, 0.06);
-    }
-    const doorT = L * 0.68;
-    addMesh(
-      g,
-      new THREE.BoxGeometry(3.6, 2.9, 0.14),
-      new THREE.MeshStandardMaterial({ color: 0x9fb8c6, roughness: 0.15, metalness: 0.4 }),
-      sideX(doorT),
-      1.9,
-      0.08
-    );
-    const sg = new THREE.Group();
-    sg.position.set(sideX(doorT), 0, 0.02);
-    g.add(sg);
-    const E = { L: 16, mx: sw[0] + ux * doorT, mz: sw[1] + uz * doorT, nx, nz };
-    saludDeco(sg, E, 8.2, c.name);
-    // railings 2.5 m out, gate in front of the door
-    const ry = 2.5;
-    for (const [t0, t1] of [
-      [0.5, doorT - 2.5],
-      [doorT + 2.5, L - 0.5]
-    ]) {
-      const len = t1 - t0,
-        mid = (t0 + t1) / 2;
-      addMesh(g, new THREE.BoxGeometry(len, 0.08, 0.08), iron, sideX(mid), 1.8, ry);
-      for (let t = t0; t <= t1; t += 0.5) addMesh(g, new THREE.BoxGeometry(0.05, 1.8, 0.05), iron, sideX(t), 0.9, ry);
-      COL.addSeg(sw[0] + ux * t0 + nx * ry, sw[1] + uz * t0 + nz * ry, sw[0] + ux * t1 + nx * ry, sw[1] + uz * t1 + nz * ry);
-    }
-    for (let i = 0; i < 4; i++) COL.addSeg(P[i][0], P[i][1], P[(i + 1) % 4][0], P[(i + 1) % 4][1]);
-    // part of the map: drawn on the minimap / map, nothing spawns inside (inAnyBuilding)
-    DATA.B.push([85, 6, 2, 0, -1, 500, P.flat()]);
-    LABELS.push([c.label, cx, cz, 1]);
-  }
+  return { brick, grey, win, iron, roofM, prism };
 }

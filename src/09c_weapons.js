@@ -373,6 +373,28 @@ function gripGun(H, mesh, aimDir) {
     ind = B('index_01_r'),
     pin = B('pinky_01_r');
   if (!hand || !mid) return;
+  let { fwd, qd, qw, qp, fist, nf } = gripGunPart1(hand, mid, ind, pin, aimDir, mesh, B);
+  if (nf) {
+    fist.multiplyScalar(1 / nf);
+    const hOff = GG.hOff.set(0, -0.025, 0).multiplyScalar(mesh.scale.x).applyQuaternion(mesh.quaternion);
+    mesh.position.copy(fist).sub(hOff);
+  }
+  // thumb wraps over the other side of the grip
+  for (const k of ['01', '02']) {
+    const b = B('thumb_' + k + '_r');
+    if (!b) continue;
+    b.updateWorldMatrix(true, false);
+    qd.setFromAxisAngle(fwd, GRIP.sgn * -0.45);
+    b.getWorldQuaternion(qw);
+    qw.premultiply(qd);
+    b.parent.getWorldQuaternion(qp);
+    b.quaternion.copy(qp.invert().multiply(qw));
+    b.updateWorldMatrix(false, true);
+  }
+  mesh.updateMatrixWorld(true);
+}
+/** (v1.1.7, code quality) part of gripGun: start every frame from the rest pose of the fingers/thumb (not every clip keys them: rotations would pile up and spin the hand) */
+function gripGunPart1(hand, mid, ind, pin, aimDir, mesh, B) {
   // start every frame from the rest pose of the fingers/thumb (not every clip keys them: rotations would pile up and spin the hand)
   for (const f of ['index', 'middle', 'ring', 'pinky', 'thumb'])
     for (const k of ['01', '02', '03']) {
@@ -425,24 +447,7 @@ function gripGun(H, mesh, aimDir) {
       fist.add(tmp);
       nf++;
     }
-  if (nf) {
-    fist.multiplyScalar(1 / nf);
-    const hOff = GG.hOff.set(0, -0.025, 0).multiplyScalar(mesh.scale.x).applyQuaternion(mesh.quaternion);
-    mesh.position.copy(fist).sub(hOff);
-  }
-  // thumb wraps over the other side of the grip
-  for (const k of ['01', '02']) {
-    const b = B('thumb_' + k + '_r');
-    if (!b) continue;
-    b.updateWorldMatrix(true, false);
-    qd.setFromAxisAngle(fwd, GRIP.sgn * -0.45);
-    b.getWorldQuaternion(qw);
-    qw.premultiply(qd);
-    b.parent.getWorldQuaternion(qp);
-    b.quaternion.copy(qp.invert().multiply(qw));
-    b.updateWorldMatrix(false, true);
-  }
-  mesh.updateMatrixWorld(true);
+  return { fwd, qd, qw, qp, fist, nf };
 }
 // switch between fists and the pistol: Tab toggles, 1 = fists, 2 = pistol, gamepad d-pad left/right, tap the weapon label on phones
 function setWeaponOut(v) {

@@ -1,82 +1,86 @@
 // ============ parque móvil canario (v1.1.6, Jonay: «que se alejen más» de las marcas reales; Pijó se queda): modelos parodia basados en los más vendidos en Canarias (2010-2025) ============
 // Base 3D: Kenney Car Kit (CC0, www.kenney.nl), reescalado a las medidas reales de cada modelo y recoloreado.
 // [id, nombre parodia, categoría, base Kenney, física, largo, ancho, alto, peso de aparición]
-const VMODELS_RAW = [
-  // utilitarios / urbanos
-  ['polo', 'Guagüen Pollito', 'Utilitario', 'sedan', 'compact', 4.05, 1.75, 1.46, 12],
-  ['ibiza', 'Butaca Isleña', 'Utilitario', 'sedan', 'compact', 4.06, 1.78, 1.44, 10],
-  ['yaris', 'Tagoror Lairis', 'Utilitario', 'sedan', 'compact', 3.95, 1.7, 1.5, 10],
-  ['picanto', 'Quillo Picante', 'Urbano', 'sedan', 'compact', 3.6, 1.6, 1.49, 7],
-  ['rio', 'Quillo Barranco', 'Utilitario', 'sedan', 'compact', 4.07, 1.73, 1.45, 5],
-  ['i20', 'Jandía i-Veinte', 'Utilitario', 'sedan', 'compact', 4.04, 1.78, 1.45, 5],
-  ['i10', 'Jandía i-Diez', 'Urbano', 'sedan', 'compact', 3.67, 1.68, 1.48, 4],
-  ['sandero', 'Datilera Sendero', 'Utilitario', 'sedan', 'compact', 4.09, 1.85, 1.5, 6],
-  ['clio', 'Reinona Tío', 'Utilitario', 'sedan', 'compact', 4.05, 1.8, 1.44, 5],
-  ['p208', 'Pijó 802', 'Utilitario', 'sedan', 'compact', 4.06, 1.75, 1.43, 4],
-  ['corsa', 'Copal Corsario', 'Utilitario', 'sedan', 'compact', 4.06, 1.77, 1.43, 4],
-  ['c3', 'Limonero Ce-Tres', 'Utilitario', 'sedan', 'compact', 3.99, 1.75, 1.47, 3],
-  ['f500', 'Fiao Quinientitos', 'Urbano', 'sedan', 'compact', 3.57, 1.63, 1.49, 4],
-  // compactos / berlinas
-  ['leon', 'Butaca Leona', 'Compacto', 'hatchback-sports', 'sedan', 4.28, 1.8, 1.46, 5],
-  ['corolla', 'Tagoror Corona', 'Berlina', 'hatchback-sports', 'sedan', 4.37, 1.79, 1.44, 5],
-  ['golf', 'Guagüen Golfo', 'Compacto', 'hatchback-sports', 'sedan', 4.28, 1.79, 1.46, 4],
-  // crossovers / SUV
-  ['troc', 'Guagüen Te-Roque', 'Crossover', 'suv-luxury', 'suv', 4.23, 1.82, 1.57, 8],
-  ['tcross', 'Guagüen Te-Cruz', 'Crossover', 'suv-luxury', 'suv', 4.11, 1.78, 1.58, 5],
-  ['tiguan', 'Guagüen Tiguanche', 'SUV', 'suv-luxury', 'suv', 4.49, 1.84, 1.67, 5],
-  ['tucson', 'Jandía Tacoronte', 'SUV', 'suv-luxury', 'suv', 4.5, 1.87, 1.65, 8],
-  ['kona', 'Jandía Kuna', 'Crossover', 'suv-luxury', 'suv', 4.2, 1.8, 1.55, 4],
-  ['sportage', 'Quillo Deportaje', 'SUV', 'suv-luxury', 'suv', 4.51, 1.86, 1.65, 8],
-  ['stonic', 'Quillo Estónica', 'Crossover', 'suv-luxury', 'suv', 4.14, 1.76, 1.52, 4],
-  ['xceed', 'Quillo Exceso', 'Crossover', 'suv-luxury', 'suv', 4.4, 1.83, 1.49, 3],
-  ['arona', 'Butaca Adeje', 'Crossover', 'suv-luxury', 'suv', 4.14, 1.78, 1.54, 5],
-  ['ateca', 'Butaca Atajo', 'SUV', 'suv-luxury', 'suv', 4.38, 1.84, 1.61, 3],
-  ['chr', 'Tagoror Ce-Jota', 'Crossover', 'suv-luxury', 'suv', 4.36, 1.8, 1.56, 5],
-  ['yariscross', 'Tagoror Lairis Cruz', 'Crossover', 'suv-luxury', 'suv', 4.18, 1.77, 1.59, 5],
-  ['qashqai', 'Nisperero Cascai', 'Crossover', 'suv-luxury', 'suv', 4.39, 1.81, 1.59, 5],
-  ['juke', 'Nisperero Yuke', 'Crossover', 'suv-luxury', 'suv', 4.21, 1.8, 1.59, 3],
-  ['captur', 'Reinona Captura', 'Crossover', 'suv-luxury', 'suv', 4.23, 1.8, 1.58, 3],
-  ['p2008', 'Pijó 8002', 'Crossover', 'suv-luxury', 'suv', 4.3, 1.77, 1.55, 3],
-  ['zs', 'MaGofio ZZ', 'SUV', 'suv-luxury', 'suv', 4.32, 1.81, 1.62, 4],
-  // todoterrenos
-  ['duster', 'Datilera Polvero', 'Todoterreno', 'suv', 'suv', 4.34, 1.8, 1.69, 5],
-  ['landcruiser', 'Tagoror Tierra Crucero', 'Todoterreno', 'suv', 'suv', 4.7, 1.88, 1.85, 3],
-  ['jimny', 'Susurro Yimi', 'Todoterreno', 'suv', 'suv', 3.48, 1.65, 1.72, 2],
-  // furgonetas
-  ['kangoo', 'Reinona Canguro', 'Furgoneta', 'van', 'van', 4.28, 1.83, 1.84, 4],
-  ['berlingo', 'Limonero Berlinga', 'Furgoneta', 'van', 'van', 4.4, 1.85, 1.84, 4],
-  ['partner', 'Pijó Compadre', 'Furgoneta', 'van', 'van', 4.4, 1.85, 1.84, 3],
-  ['caddy', 'Guagüen Cadi', 'Furgoneta', 'van', 'van', 4.5, 1.86, 1.82, 3],
-  ['doblo', 'Fiao Doblón', 'Furgoneta', 'van', 'van', 4.39, 1.83, 1.85, 2],
-  ['transit', 'Fardo Tránsito', 'Furgoneta', 'van', 'van', 4.97, 1.99, 1.98, 3],
-  ['vito', 'Mercadillo Vitó', 'Furgoneta', 'van', 'van', 5.14, 1.93, 1.91, 3],
-  // pick-ups
-  ['hilux', 'Tagoror Jailux', 'Pick-up', 'truck', 'suv', 5.33, 1.86, 1.82, 4],
-  ['navara', 'Nisperero Navajo', 'Pick-up', 'truck', 'suv', 5.26, 1.85, 1.8, 2],
-  // camiones
-  ['daily', 'Burrero Diario', 'Camión', 'delivery', 'truck', 6.5, 2.0, 2.8, 2],
-  ['canter', 'Mojo Bichi Cantero', 'Camión', 'delivery', 'truck', 6.0, 1.9, 2.6, 2],
-  ['sprinter', 'Mercadillo Esprínter', 'Furgón', 'delivery', 'truck', 5.93, 2.02, 2.7, 2],
-  ['grua', 'Grúas Ande Pepe', 'Grúa', 'delivery-flat', 'truck', 6.5, 2.1, 2.4, 1],
-  ['basura', 'Recogida Municipal', 'Camión de basura', 'garbage-truck', 'truck', 7.5, 2.5, 3.2, 1],
-  ['ambulancia', 'Ambulancia', 'Emergencias', 'ambulance', 'truck', 5.9, 2.1, 2.6, 0.6],
-  ['bomberos', 'Bomberos', 'Emergencias', 'firetruck', 'truck', 8.0, 2.5, 3.2, 0.3],
-  ['tractor', 'Tractor Garañón', 'Agrícola', 'tractor', 'truck', 3.8, 1.9, 2.6, 0],
-  // servicio público y especiales (no salen en el sorteo general)
-  ['taxi', 'Taxi Lagunero', 'Taxi', 'taxi', 'taxi', 4.55, 1.76, 1.49, 0],
-  ['policia', 'Policía Local', 'Patrulla', 'police', 'police', 4.6, 1.85, 1.5, 0],
-  ['guancheGT', 'Guanche GT', 'Deportivo', 'sedan-sports', 'sport', 4.3, 1.9, 1.25, 0],
-  // motos y ciclomotores (Canarias: el scooter manda)
-  ['pcx', 'Olita PeCeEquis 125', 'Scooter', 'scooter', 'moto', 1.93, 0.74, 1.1, 8],
-  ['forza', 'Olita Forzuda 125', 'Maxiscooter', 'maxi', 'moto', 2.14, 0.76, 1.35, 4],
-  ['nmax', 'Llamarada EneMax', 'Scooter', 'scooter', 'moto', 1.94, 0.74, 1.12, 4],
-  ['symphony', 'Sinsín Sinfonía', 'Scooter', 'scooter', 'moto', 1.88, 0.68, 1.1, 3],
-  ['agility', 'Quinqué Agilidad 50', 'Ciclomotor', 'scooter', 'moto', 1.8, 0.68, 1.08, 3],
-  ['vespa', 'Avispa Primavera', 'Scooter', 'vespa', 'moto', 1.85, 0.7, 1.12, 2],
-  ['xadv', 'Olita Equis-ADV', 'Maxiscooter', 'maxi', 'moto', 2.2, 0.84, 1.4, 2],
-  ['z900', 'Cachimba Zeta 900', 'Naked', 'naked', 'moto', 2.07, 0.83, 1.08, 2],
-  ['mt07', 'Llamarada EmeTe-Siete', 'Naked', 'naked', 'moto', 2.08, 0.78, 1.1, 2]
-];
+const VMODELS_RAW = `
+# utilitarios / urbanos
+polo|Guagüen Pollito|Utilitario|sedan|compact|4.05|1.75|1.46|12
+ibiza|Butaca Isleña|Utilitario|sedan|compact|4.06|1.78|1.44|10
+yaris|Tagoror Lairis|Utilitario|sedan|compact|3.95|1.7|1.5|10
+picanto|Quillo Picante|Urbano|sedan|compact|3.6|1.6|1.49|7
+rio|Quillo Barranco|Utilitario|sedan|compact|4.07|1.73|1.45|5
+i20|Jandía i-Veinte|Utilitario|sedan|compact|4.04|1.78|1.45|5
+i10|Jandía i-Diez|Urbano|sedan|compact|3.67|1.68|1.48|4
+sandero|Datilera Sendero|Utilitario|sedan|compact|4.09|1.85|1.5|6
+clio|Reinona Tío|Utilitario|sedan|compact|4.05|1.8|1.44|5
+p208|Pijó 802|Utilitario|sedan|compact|4.06|1.75|1.43|4
+corsa|Copal Corsario|Utilitario|sedan|compact|4.06|1.77|1.43|4
+c3|Limonero Ce-Tres|Utilitario|sedan|compact|3.99|1.75|1.47|3
+f500|Fiao Quinientitos|Urbano|sedan|compact|3.57|1.63|1.49|4
+# compactos / berlinas
+leon|Butaca Leona|Compacto|hatchback-sports|sedan|4.28|1.8|1.46|5
+corolla|Tagoror Corona|Berlina|hatchback-sports|sedan|4.37|1.79|1.44|5
+golf|Guagüen Golfo|Compacto|hatchback-sports|sedan|4.28|1.79|1.46|4
+# crossovers / SUV
+troc|Guagüen Te-Roque|Crossover|suv-luxury|suv|4.23|1.82|1.57|8
+tcross|Guagüen Te-Cruz|Crossover|suv-luxury|suv|4.11|1.78|1.58|5
+tiguan|Guagüen Tiguanche|SUV|suv-luxury|suv|4.49|1.84|1.67|5
+tucson|Jandía Tacoronte|SUV|suv-luxury|suv|4.5|1.87|1.65|8
+kona|Jandía Kuna|Crossover|suv-luxury|suv|4.2|1.8|1.55|4
+sportage|Quillo Deportaje|SUV|suv-luxury|suv|4.51|1.86|1.65|8
+stonic|Quillo Estónica|Crossover|suv-luxury|suv|4.14|1.76|1.52|4
+xceed|Quillo Exceso|Crossover|suv-luxury|suv|4.4|1.83|1.49|3
+arona|Butaca Adeje|Crossover|suv-luxury|suv|4.14|1.78|1.54|5
+ateca|Butaca Atajo|SUV|suv-luxury|suv|4.38|1.84|1.61|3
+chr|Tagoror Ce-Jota|Crossover|suv-luxury|suv|4.36|1.8|1.56|5
+yariscross|Tagoror Lairis Cruz|Crossover|suv-luxury|suv|4.18|1.77|1.59|5
+qashqai|Nisperero Cascai|Crossover|suv-luxury|suv|4.39|1.81|1.59|5
+juke|Nisperero Yuke|Crossover|suv-luxury|suv|4.21|1.8|1.59|3
+captur|Reinona Captura|Crossover|suv-luxury|suv|4.23|1.8|1.58|3
+p2008|Pijó 8002|Crossover|suv-luxury|suv|4.3|1.77|1.55|3
+zs|MaGofio ZZ|SUV|suv-luxury|suv|4.32|1.81|1.62|4
+# todoterrenos
+duster|Datilera Polvero|Todoterreno|suv|suv|4.34|1.8|1.69|5
+landcruiser|Tagoror Tierra Crucero|Todoterreno|suv|suv|4.7|1.88|1.85|3
+jimny|Susurro Yimi|Todoterreno|suv|suv|3.48|1.65|1.72|2
+# furgonetas
+kangoo|Reinona Canguro|Furgoneta|van|van|4.28|1.83|1.84|4
+berlingo|Limonero Berlinga|Furgoneta|van|van|4.4|1.85|1.84|4
+partner|Pijó Compadre|Furgoneta|van|van|4.4|1.85|1.84|3
+caddy|Guagüen Cadi|Furgoneta|van|van|4.5|1.86|1.82|3
+doblo|Fiao Doblón|Furgoneta|van|van|4.39|1.83|1.85|2
+transit|Fardo Tránsito|Furgoneta|van|van|4.97|1.99|1.98|3
+vito|Mercadillo Vitó|Furgoneta|van|van|5.14|1.93|1.91|3
+# pick-ups
+hilux|Tagoror Jailux|Pick-up|truck|suv|5.33|1.86|1.82|4
+navara|Nisperero Navajo|Pick-up|truck|suv|5.26|1.85|1.8|2
+# camiones
+daily|Burrero Diario|Camión|delivery|truck|6.5|2.0|2.8|2
+canter|Mojo Bichi Cantero|Camión|delivery|truck|6.0|1.9|2.6|2
+sprinter|Mercadillo Esprínter|Furgón|delivery|truck|5.93|2.02|2.7|2
+grua|Grúas Ande Pepe|Grúa|delivery-flat|truck|6.5|2.1|2.4|1
+basura|Recogida Municipal|Camión de basura|garbage-truck|truck|7.5|2.5|3.2|1
+ambulancia|Ambulancia|Emergencias|ambulance|truck|5.9|2.1|2.6|0.6
+bomberos|Bomberos|Emergencias|firetruck|truck|8.0|2.5|3.2|0.3
+tractor|Tractor Garañón|Agrícola|tractor|truck|3.8|1.9|2.6|0
+# servicio público y especiales (no salen en el sorteo general)
+taxi|Taxi Lagunero|Taxi|taxi|taxi|4.55|1.76|1.49|0
+policia|Policía Local|Patrulla|police|police|4.6|1.85|1.5|0
+guancheGT|Guanche GT|Deportivo|sedan-sports|sport|4.3|1.9|1.25|0
+# motos y ciclomotores (Canarias: el scooter manda)
+pcx|Olita PeCeEquis 125|Scooter|scooter|moto|1.93|0.74|1.1|8
+forza|Olita Forzuda 125|Maxiscooter|maxi|moto|2.14|0.76|1.35|4
+nmax|Llamarada EneMax|Scooter|scooter|moto|1.94|0.74|1.12|4
+symphony|Sinsín Sinfonía|Scooter|scooter|moto|1.88|0.68|1.1|3
+agility|Quinqué Agilidad 50|Ciclomotor|scooter|moto|1.8|0.68|1.08|3
+vespa|Avispa Primavera|Scooter|vespa|moto|1.85|0.7|1.12|2
+xadv|Olita Equis-ADV|Maxiscooter|maxi|moto|2.2|0.84|1.4|2
+z900|Cachimba Zeta 900|Naked|naked|moto|2.07|0.83|1.08|2
+mt07|Llamarada EmeTe-Siete|Naked|naked|moto|2.08|0.78|1.1|2
+`
+  .trim()
+  .split('\n')
+  .filter((l) => l && !l.startsWith('#'))
+  .map((l) => l.split('|').map((v, k) => (k >= 5 ? +v : v))); // (v1.1.7: one line per model, «id|name|category|Kenney base|physics|length|width|height|weight»; # = a heading)
 const VMODELS = {};
 VMODELS_RAW.forEach(([id, name, cat, base, phys, L, W, H, w]) => (VMODELS[id] = { id, name, cat, base, phys, L, W, H, w }));
 const VTYPES2 = {
@@ -265,6 +269,38 @@ function modelGeometry(model) {
   const zc = (bb[1][2] + bb[0][2]) / 2;
   const groups = { paint: [], glass: [], rest: [] };
   const wheels = [];
+  modelGeometryPart1(sy, sx, K, wheels, zc, sz, model, groups);
+  const mk = (arr) => {
+    if (!arr.length) return null;
+    const pos = new Float32Array(arr.length * 3),
+      nor = new Float32Array(arr.length * 3),
+      col = new Float32Array(arr.length * 3);
+    arr.forEach((v, i) => {
+      pos.set([v[0], v[1], v[2]], i * 3);
+      const l = Math.hypot(v[3], v[4], v[5]) || 1;
+      nor.set([v[3] / l, v[4] / l, v[5] / l], i * 3);
+      col.set(v[6], i * 3);
+    });
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    g.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+    g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    return g;
+  };
+  // rear face / roof heights for lights and roof props
+  let zmin = 1e9,
+    ymax = 0;
+  for (const grp of Object.values(groups))
+    for (const v of grp) {
+      zmin = Math.min(zmin, v[2]);
+      ymax = Math.max(ymax, v[1]);
+    }
+  const out = { paint: mk(groups.paint), glass: mk(groups.glass), rest: mk(groups.rest), wheels, zmin, ymax };
+  for (const g of [out.paint, out.glass, out.rest, ...wheels.map((w) => w.geo)]) if (g) g.userData.shared = true;
+  return (VGEO[model.id] = out);
+}
+/** (v1.1.7, code quality) part of modelGeometry: one geometry per wheel, centred on its own node (rotation axis = x) */
+function modelGeometryPart1(sy, sx, K, wheels, zc, sz, model, groups) {
   const wheelScale = Math.min(1.25, Math.max(0.9, sy * 0.92)),
     wheelX = sx * 0.72;
   for (const p of K.parts) {
@@ -320,34 +356,6 @@ function modelGeometry(model) {
       }
     }
   }
-  const mk = (arr) => {
-    if (!arr.length) return null;
-    const pos = new Float32Array(arr.length * 3),
-      nor = new Float32Array(arr.length * 3),
-      col = new Float32Array(arr.length * 3);
-    arr.forEach((v, i) => {
-      pos.set([v[0], v[1], v[2]], i * 3);
-      const l = Math.hypot(v[3], v[4], v[5]) || 1;
-      nor.set([v[3] / l, v[4] / l, v[5] / l], i * 3);
-      col.set(v[6], i * 3);
-    });
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    g.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
-    g.setAttribute('color', new THREE.BufferAttribute(col, 3));
-    return g;
-  };
-  // rear face / roof heights for lights and roof props
-  let zmin = 1e9,
-    ymax = 0;
-  for (const grp of Object.values(groups))
-    for (const v of grp) {
-      zmin = Math.min(zmin, v[2]);
-      ymax = Math.max(ymax, v[1]);
-    }
-  const out = { paint: mk(groups.paint), glass: mk(groups.glass), rest: mk(groups.rest), wheels, zmin, ymax };
-  for (const g of [out.paint, out.glass, out.rest, ...wheels.map((w) => w.geo)]) if (g) g.userData.shared = true;
-  return (VGEO[model.id] = out);
 }
 const restMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0.15 });
 const kGlassMat = new THREE.MeshStandardMaterial({ color: 0x1e2830, roughness: 0.12, metalness: 0.35 });
@@ -359,95 +367,75 @@ function makeKenneyMesh(model, color) {
   g.add(body);
   if (model.id === 'taxi' || model.id === 'policia' || model.id === 'ambulancia') color = 0xf6f6f4;
   const paint = new THREE.MeshStandardMaterial({ vertexColors: true, color, roughness: 0.3, metalness: 0.5 });
-  if (G.paint) body.add(new THREE.Mesh(G.paint, paint));
-  if (G.glass) body.add(new THREE.Mesh(G.glass, kGlassMat));
-  if (G.rest) body.add(new THREE.Mesh(G.rest, restMat));
-  const wheels = [];
-  for (const w of G.wheels) {
-    const piv = new THREE.Group();
-    piv.position.set(w.x, w.y, w.z);
-    g.add(piv);
-    const m = new THREE.Mesh(w.geo, wheelMat);
-    m.castShadow = true;
-    piv.add(m);
-    wheels.push({ piv, w: m, front: w.front });
-  }
-  // lights (brake lights must light up), plate
-  const hl = [],
-    tl = [];
-  const W = model.W,
-    L = model.L;
-  // body shape probes (so lights, stripes and lettering sit ON the bodywork instead of floating)
-  if (!G.probe) {
-    const P = [];
-    for (const gg of [G.paint, G.rest])
-      if (gg) {
-        const a = gg.attributes.position.array;
-        for (let i = 0; i < a.length; i += 3) P.push(a[i], a[i + 1], a[i + 2]);
+  const { wheels, hl, tl, W, L, halfW } = makeKenneyMeshPart1(G, body, paint, model, g);
+  makeKenneyMeshPart2(model, G, halfW, W, body, tl);
+  let { bar } = makeKenneyMeshPart3(model, G, body, L, halfW);
+  makeKenneyMeshPart4(model, G, body, L, halfW, W);
+  body.traverse((m) => {
+    if (m.isMesh) {
+      m.castShadow = true;
+      m.receiveShadow = false;
+    }
+  });
+  return { g, body, wheels, hl, tl, bar, paint };
+}
+/** (v1.1.7, code quality) part of makeKenneyMesh: company / service lettering on the box sides */
+function makeKenneyMeshPart4(model, G, body, L, halfW, W) {
+  if (model.id === 'taxi') {
+    {
+      const y = model.H * 0.48;
+      for (const side of [-1, 1]) {
+        const gg = shGeo('taxiStripe:' + model.id + ':' + side, () => {
+          const pos = [],
+            idx = [];
+          for (let i = 0; i <= 14; i++) {
+            const z = -L * 0.35 + (L * 0.7 * i) / 14;
+            const hw = halfW(y, z, 0.12, 0.2) + 0.012;
+            pos.push(side * hw, y - 0.035, z, side * hw, y + 0.035, z);
+            if (i) {
+              const a = (i - 1) * 2;
+              idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
+            }
+          }
+          const q = new THREE.BufferGeometry();
+          q.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+          q.setIndex(idx);
+          q.computeVertexNormals();
+          return q;
+        });
+        body.add(
+          new THREE.Mesh(
+            gg,
+            shMat('taxiStripe', () => new THREE.MeshStandardMaterial({ color: 0x1a8a3a, roughness: 0.4, side: THREE.DoubleSide }))
+          )
+        );
       }
-    G.probe = new Float32Array(P);
-  }
-  G.hwc = G.hwc || new Map();
-  const halfW = (y, z, dy = 0.12, dz = 0.3) => {
-    const key = y.toFixed(3) + z.toFixed(3) + dy + dz;
-    if (G.hwc.has(key)) return G.hwc.get(key);
-    const P = G.probe;
-    let m = 0;
-    for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 1] - y) < dy && Math.abs(P[i + 2] - z) < dz) m = Math.max(m, Math.abs(P[i]));
-    G.hwc.set(key, m);
-    return m;
-  };
-  // rear: the lights go on the rear face, at the upper part of it, near its outer edge
-  let ry0 = 1e9,
-    ry1 = -1e9;
-  {
-    const P = G.probe;
-    for (let i = 0; i < P.length; i += 3)
-      if (P[i + 2] < G.zmin + 0.12) {
-        ry0 = Math.min(ry0, P[i + 1]);
-        ry1 = Math.max(ry1, P[i + 1]);
-      }
-  }
-  const tly = ry1 > ry0 ? Math.min(ry0 + (ry1 - ry0) * 0.72, ry1 - 0.08) : Math.min(1.05, model.H * 0.55);
-  let rz = G.zmin;
-  {
-    const P = G.probe;
-    let zz = 1e9;
-    for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 1] - tly) < 0.06) zz = Math.min(zz, P[i + 2]);
-    if (zz < 1e8) rz = zz;
-  }
-  const rhw = halfW(tly, rz, 0.08, 0.12) || W / 2;
-  for (const x of [-1, 1]) {
-    const t = new THREE.Mesh(shBox(0.26, 0.1, 0.04), tailMat);
-    t.position.set(x * Math.max(0.2, rhw - 0.2), tly, rz + 0.012);
-    body.add(t);
-    tl.push(t);
-  }
-  if (PLATES.length < 10) {
-    const pl = textPlane(
-      Math.floor(1000 + Math.random() * 8999) + ' ' + pick(['KHT', 'LBC', 'MFZ', 'JRW', 'GPD', 'NCX']),
-      0.52,
-      0.12,
-      '#f4f4f4',
-      '#111',
-      'bold 40px Arial'
+    }
+    const lamp = new THREE.Mesh(
+      shBox(0.16, 0.09, 0.1),
+      shMat('taxiLamp', () => new THREE.MeshStandardMaterial({ color: 0x1fd15a, emissive: 0x1fd15a, emissiveIntensity: 1.2 }))
     );
-    pl.geometry.userData.shared = true;
-    pl.material.userData.shared = true;
-    PLATES.push(pl);
+    lamp.position.set(-0.35, G.ymax + 0.02, 0.6);
+    body.add(lamp);
   }
-  const plate = pick(PLATES).clone();
-  const ply = Math.min(0.7, model.H * 0.36);
-  let pz = G.zmin;
-  {
-    const P = G.probe;
-    let zz = 1e9;
-    for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 1] - ply) < 0.08 && Math.abs(P[i]) < 0.4) zz = Math.min(zz, P[i + 2]);
-    if (zz < 1e8) pz = zz;
+  if (model.id === 'basura' || model.id === 'grua' || model.id === 'daily' || model.id === 'sprinter' || model.id === 'canter') {
+    // company / service lettering on the box sides
+    const txt =
+      model.id === 'basura'
+        ? 'AYTO. LA LAGUNA'
+        : model.id === 'grua'
+          ? 'GRÚAS ANDE PEPE'
+          : pick(['PAPAS EL MAGO', 'GOFIO LA MOLINETA', 'TRANSPORTES CHACHO', 'REFRESCOS CLIPPER-ITO', 'MUEBLES EL CAMBULLÓN']);
+    for (const side of [-1, 1]) {
+      const t = sharedText(txt, Math.min(3.2, L * 0.5), 0.36, 'rgba(0,0,0,0)', '#1d2a33', 'bold 30px Arial');
+      t.position.set(side * (W / 2 + 0.02), model.H * 0.62, -L * 0.12);
+      t.rotation.y = (side * Math.PI) / 2;
+      body.add(t);
+    }
   }
-  plate.position.set(0, ply, pz - 0.012);
-  plate.rotation.y = Math.PI;
-  body.add(plate);
+}
+/** (v1.1.7, code quality) part of makeKenneyMesh: livery stripes as ribbons that follow the side of the body */
+function makeKenneyMeshPart3(model, G, body, L, halfW) {
   let bar = null;
   if (model.id === 'policia') {
     // livery stripes as ribbons that follow the side of the body
@@ -502,122 +490,111 @@ function makeKenneyMesh(model, color) {
       body.add(t);
     }
   }
-  if (model.id === 'taxi') {
-    {
-      const y = model.H * 0.48;
-      for (const side of [-1, 1]) {
-        const gg = shGeo('taxiStripe:' + model.id + ':' + side, () => {
-          const pos = [],
-            idx = [];
-          for (let i = 0; i <= 14; i++) {
-            const z = -L * 0.35 + (L * 0.7 * i) / 14;
-            const hw = halfW(y, z, 0.12, 0.2) + 0.012;
-            pos.push(side * hw, y - 0.035, z, side * hw, y + 0.035, z);
-            if (i) {
-              const a = (i - 1) * 2;
-              idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
-            }
-          }
-          const q = new THREE.BufferGeometry();
-          q.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-          q.setIndex(idx);
-          q.computeVertexNormals();
-          return q;
-        });
-        body.add(
-          new THREE.Mesh(
-            gg,
-            shMat('taxiStripe', () => new THREE.MeshStandardMaterial({ color: 0x1a8a3a, roughness: 0.4, side: THREE.DoubleSide }))
-          )
-        );
+  return { bar };
+}
+/** (v1.1.7, code quality) part of makeKenneyMesh: rear: the lights go on the rear face, at the upper part of it, near its outer edge */
+function makeKenneyMeshPart2(model, G, halfW, W, body, tl) {
+  // rear: the lights go on the rear face, at the upper part of it, near its outer edge
+  let ry0 = 1e9,
+    ry1 = -1e9;
+  {
+    const P = G.probe;
+    for (let i = 0; i < P.length; i += 3)
+      if (P[i + 2] < G.zmin + 0.12) {
+        ry0 = Math.min(ry0, P[i + 1]);
+        ry1 = Math.max(ry1, P[i + 1]);
       }
-    }
-    const lamp = new THREE.Mesh(
-      shBox(0.16, 0.09, 0.1),
-      shMat('taxiLamp', () => new THREE.MeshStandardMaterial({ color: 0x1fd15a, emissive: 0x1fd15a, emissiveIntensity: 1.2 }))
+  }
+  const tly = ry1 > ry0 ? Math.min(ry0 + (ry1 - ry0) * 0.72, ry1 - 0.08) : Math.min(1.05, model.H * 0.55);
+  let rz = G.zmin;
+  {
+    const P = G.probe;
+    let zz = 1e9;
+    for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 1] - tly) < 0.06) zz = Math.min(zz, P[i + 2]);
+    if (zz < 1e8) rz = zz;
+  }
+  const rhw = halfW(tly, rz, 0.08, 0.12) || W / 2;
+  for (const x of [-1, 1]) {
+    const t = new THREE.Mesh(shBox(0.26, 0.1, 0.04), tailMat);
+    t.position.set(x * Math.max(0.2, rhw - 0.2), tly, rz + 0.012);
+    body.add(t);
+    tl.push(t);
+  }
+  if (PLATES.length < 10) {
+    const pl = textPlane(
+      Math.floor(1000 + Math.random() * 8999) + ' ' + pick(['KHT', 'LBC', 'MFZ', 'JRW', 'GPD', 'NCX']),
+      0.52,
+      0.12,
+      '#f4f4f4',
+      '#111',
+      'bold 40px Arial'
     );
-    lamp.position.set(-0.35, G.ymax + 0.02, 0.6);
-    body.add(lamp);
+    pl.geometry.userData.shared = true;
+    pl.material.userData.shared = true;
+    PLATES.push(pl);
   }
-  if (model.id === 'basura' || model.id === 'grua' || model.id === 'daily' || model.id === 'sprinter' || model.id === 'canter') {
-    // company / service lettering on the box sides
-    const txt =
-      model.id === 'basura'
-        ? 'AYTO. LA LAGUNA'
-        : model.id === 'grua'
-          ? 'GRÚAS ANDE PEPE'
-          : pick(['PAPAS EL MAGO', 'GOFIO LA MOLINETA', 'TRANSPORTES CHACHO', 'REFRESCOS CLIPPER-ITO', 'MUEBLES EL CAMBULLÓN']);
-    for (const side of [-1, 1]) {
-      const t = sharedText(txt, Math.min(3.2, L * 0.5), 0.36, 'rgba(0,0,0,0)', '#1d2a33', 'bold 30px Arial');
-      t.position.set(side * (W / 2 + 0.02), model.H * 0.62, -L * 0.12);
-      t.rotation.y = (side * Math.PI) / 2;
-      body.add(t);
-    }
+  const plate = pick(PLATES).clone();
+  const ply = Math.min(0.7, model.H * 0.36);
+  let pz = G.zmin;
+  {
+    const P = G.probe;
+    let zz = 1e9;
+    for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 1] - ply) < 0.08 && Math.abs(P[i]) < 0.4) zz = Math.min(zz, P[i + 2]);
+    if (zz < 1e8) pz = zz;
   }
-  body.traverse((m) => {
-    if (m.isMesh) {
-      m.castShadow = true;
-      m.receiveShadow = false;
-    }
-  });
-  return { g, body, wheels, hl, tl, bar, paint };
+  plate.position.set(0, ply, pz - 0.012);
+  plate.rotation.y = Math.PI;
+  body.add(plate);
+}
+/** (v1.1.7, code quality) part of makeKenneyMesh: lights (brake lights must light up), plate */
+function makeKenneyMeshPart1(G, body, paint, model, g) {
+  if (G.paint) body.add(new THREE.Mesh(G.paint, paint));
+  if (G.glass) body.add(new THREE.Mesh(G.glass, kGlassMat));
+  if (G.rest) body.add(new THREE.Mesh(G.rest, restMat));
+  const wheels = [];
+  for (const w of G.wheels) {
+    const piv = new THREE.Group();
+    piv.position.set(w.x, w.y, w.z);
+    g.add(piv);
+    const m = new THREE.Mesh(w.geo, wheelMat);
+    m.castShadow = true;
+    piv.add(m);
+    wheels.push({ piv, w: m, front: w.front });
+  }
+  // lights (brake lights must light up), plate
+  const hl = [],
+    tl = [];
+  const W = model.W,
+    L = model.L;
+  // body shape probes (so lights, stripes and lettering sit ON the bodywork instead of floating)
+  if (!G.probe) {
+    const P = [];
+    for (const gg of [G.paint, G.rest])
+      if (gg) {
+        const a = gg.attributes.position.array;
+        for (let i = 0; i < a.length; i += 3) P.push(a[i], a[i + 1], a[i + 2]);
+      }
+    G.probe = new Float32Array(P);
+  }
+  G.hwc = G.hwc || new Map();
+  const halfW = (y, z, dy = 0.12, dz = 0.3) => {
+    const key = y.toFixed(3) + z.toFixed(3) + dy + dz;
+    if (G.hwc.has(key)) return G.hwc.get(key);
+    const P = G.probe;
+    let m = 0;
+    for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 1] - y) < dy && Math.abs(P[i + 2] - z) < dz) m = Math.max(m, Math.abs(P[i]));
+    G.hwc.set(key, m);
+    return m;
+  };
+  return { wheels, hl, tl, W, L, halfW };
 }
 
 // ---------- motos y scooters (modelados a mano)
 const motoMats = { dark: M(0x1b1d20, 0.6, 0.3), chrome: M(0xc8ccd0, 0.25, 0.9), seat: M(0x151515, 0.85), tire: tireMat, light: headMat };
 function makeMotoMesh(model, color) {
   const g = new THREE.Group();
-  const body = new THREE.Group();
-  g.add(body);
-  const paint = new THREE.MeshStandardMaterial({ color, roughness: 0.3, metalness: 0.5 });
-  const L = model.L,
-    kind = model.base;
-  const wr = kind === 'naked' ? 0.31 : kind === 'maxi' ? 0.27 : kind === 'vespa' ? 0.2 : 0.24;
-  const wheels = [];
-  for (const [z, front] of [
-    [L / 2 - wr - 0.05, 1],
-    [-L / 2 + wr + 0.08, 0]
-  ]) {
-    const piv = new THREE.Group();
-    piv.position.set(0, wr, z);
-    g.add(piv);
-    const tg = shGeo('motoTyre' + wr, () => {
-      const q = new THREE.TorusGeometry(wr - 0.045, 0.05, 8, 18);
-      q.rotateY(Math.PI / 2);
-      return q;
-    });
-    const w = new THREE.Mesh(tg, tireMat);
-    const hub = new THREE.Mesh(
-      shGeo('motoHub' + wr, () => new THREE.CylinderGeometry(wr * 0.6, wr * 0.6, 0.06, 12)),
-      motoMats.chrome
-    );
-    hub.rotation.z = Math.PI / 2;
-    w.add(hub);
-    w.castShadow = true;
-    piv.add(w);
-    wheels.push({ piv, w, front });
-  }
-  const box = (w, h, d, mat, x, y, z, rx = 0) => {
-    const m = new THREE.Mesh(shBox(w, h, d), mat);
-    m.position.set(x, y, z);
-    m.rotation.x = rx;
-    body.add(m);
-    return m;
-  };
-  // rounded volume: capsule stretched along z
-  const pod = (w, h, d, mat, x, y, z, rx = 0) => {
-    const m = new THREE.Mesh(
-      shGeo('capsule', () => new THREE.CapsuleGeometry(0.5, 1, 4, 10)),
-      mat
-    );
-    m.rotation.x = Math.PI / 2 + rx;
-    m.scale.set(w, d / 2, h);
-    m.position.set(x, y, z);
-    body.add(m);
-    return m;
-  };
-  const fz = L / 2 - wr - 0.05,
-    rz = -L / 2 + wr + 0.08;
+  const { body, paint, L, kind, wr, wheels } = makeMotoMeshPart1(g, color, model);
+  const { box, pod, fz, rz } = makeMotoMeshPart2(L, wr, body);
   if (kind === 'naked') {
     pod(0.34, 0.26, 0.5, paint, 0, 0.92, 0.15, -0.12); // tank
     box(0.28, 0.3, 0.46, motoMats.dark, 0, 0.56, 0.08); // engine
@@ -662,6 +639,65 @@ function makeMotoMesh(model, color) {
     if (m.isMesh) m.castShadow = true;
   });
   return { g, body, wheels, hl: [], tl, bar: null, paint, moto: true };
+}
+/** (v1.1.7, code quality) part of makeMotoMesh: rounded volume: capsule stretched along z */
+function makeMotoMeshPart2(L, wr, body) {
+  const box = (w, h, d, mat, x, y, z, rx = 0) => {
+    const m = new THREE.Mesh(shBox(w, h, d), mat);
+    m.position.set(x, y, z);
+    m.rotation.x = rx;
+    body.add(m);
+    return m;
+  };
+  // rounded volume: capsule stretched along z
+  const pod = (w, h, d, mat, x, y, z, rx = 0) => {
+    const m = new THREE.Mesh(
+      shGeo('capsule', () => new THREE.CapsuleGeometry(0.5, 1, 4, 10)),
+      mat
+    );
+    m.rotation.x = Math.PI / 2 + rx;
+    m.scale.set(w, d / 2, h);
+    m.position.set(x, y, z);
+    body.add(m);
+    return m;
+  };
+  const fz = L / 2 - wr - 0.05,
+    rz = -L / 2 + wr + 0.08;
+  return { box, pod, fz, rz };
+}
+/** (v1.1.7, code quality) part of makeMotoMesh */
+function makeMotoMeshPart1(g, color, model) {
+  const body = new THREE.Group();
+  g.add(body);
+  const paint = new THREE.MeshStandardMaterial({ color, roughness: 0.3, metalness: 0.5 });
+  const L = model.L,
+    kind = model.base;
+  const wr = kind === 'naked' ? 0.31 : kind === 'maxi' ? 0.27 : kind === 'vespa' ? 0.2 : 0.24;
+  const wheels = [];
+  for (const [z, front] of [
+    [L / 2 - wr - 0.05, 1],
+    [-L / 2 + wr + 0.08, 0]
+  ]) {
+    const piv = new THREE.Group();
+    piv.position.set(0, wr, z);
+    g.add(piv);
+    const tg = shGeo('motoTyre' + wr, () => {
+      const q = new THREE.TorusGeometry(wr - 0.045, 0.05, 8, 18);
+      q.rotateY(Math.PI / 2);
+      return q;
+    });
+    const w = new THREE.Mesh(tg, tireMat);
+    const hub = new THREE.Mesh(
+      shGeo('motoHub' + wr, () => new THREE.CylinderGeometry(wr * 0.6, wr * 0.6, 0.06, 12)),
+      motoMats.chrome
+    );
+    hub.rotation.z = Math.PI / 2;
+    w.add(hub);
+    w.castShadow = true;
+    piv.add(w);
+    wheels.push({ piv, w, front });
+  }
+  return { body, paint, L, kind, wr, wheels };
 }
 // rider for motos (AI) or the player sitting on it
 function seatHuman(H, model) {

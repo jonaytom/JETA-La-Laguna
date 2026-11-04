@@ -24,6 +24,54 @@ const PASAJE_TIENDAS = {
 // pedestrian ways marked as passages (tunnel flag) that stay at street level
 function pasajeSegs() {
   if (PASAJES.segs) return PASAJES.segs;
+  const { out, inB } = pasajeSegsPart1();
+  let nx = 0;
+  DATA.R.forEach((rd, ri) => {
+    if (rd[0] <= 12 || rd[3] & 6) return;
+    const c = rd[4],
+      hw = Math.max(1.3, Math.min(2.2, rd[2] / 2)),
+      name = ''; /* (no name: the shops and the Aguere galleries are only the tagged ones) */
+    for (let i = 0; i < c.length - 2; i += 2) {
+      const ax = c[i],
+        az = c[i + 1],
+        L = Math.hypot(c[i + 2] - ax, c[i + 3] - az);
+      if (L < 0.3) continue;
+      const ux = (c[i + 2] - ax) / L,
+        uz = (c[i + 3] - az) / L,
+        n = Math.max(1, Math.ceil(L / 0.75));
+      let a = -1;
+      for (let k = 0; k <= n; k++) {
+        const t = (k / n) * L,
+          ins = inB(ax + ux * t, az + uz * t);
+        if (ins && a < 0) a = t;
+        if ((!ins || k === n) && a >= 0) {
+          const b = ins ? t : ((k - 1) / n) * L;
+          if (b - a >= 3 && ![a, (a + b) / 2, b].some((t) => onCarriagewayEarly(ax + ux * t, az + uz * t, 1.0))) {
+            const t0 = Math.max(0, a - 0.6),
+              t1 = Math.min(L, b + 0.6);
+            /* (v0.99.7, auditor: no passage on a pavement that runs along a street: its walls stood in the carriageway) */ out.push({
+              ri,
+              ax: ax + ux * t0,
+              az: az + uz * t0,
+              bx: ax + ux * t1,
+              bz: az + uz * t1,
+              L: t1 - t0,
+              hw,
+              name,
+              extra: true
+            });
+            nx++;
+          }
+          a = -1;
+        }
+      }
+    }
+  });
+  console.log('passages through buildings: tagged', out.length - nx, 'footpaths inside buildings', nx);
+  return (PASAJES.segs = out);
+}
+/** (v1.1.7, code quality) part of pasajeSegs: v0.99.6 (Jonay: «hacer pasadizo»; agent: 23 «un edificio tapa el camino»): a footpath that runs through a building */
+function pasajeSegsPart1() {
   const out = [];
   DATA.R.forEach((rd, ri) => {
     if (rd[0] <= 12 || !(rd[3] & 4)) return;
@@ -71,50 +119,7 @@ function pasajeSegs() {
       }
     return false;
   };
-  let nx = 0;
-  DATA.R.forEach((rd, ri) => {
-    if (rd[0] <= 12 || rd[3] & 6) return;
-    const c = rd[4],
-      hw = Math.max(1.3, Math.min(2.2, rd[2] / 2)),
-      name = ''; /* (no name: the shops and the Aguere galleries are only the tagged ones) */
-    for (let i = 0; i < c.length - 2; i += 2) {
-      const ax = c[i],
-        az = c[i + 1],
-        L = Math.hypot(c[i + 2] - ax, c[i + 3] - az);
-      if (L < 0.3) continue;
-      const ux = (c[i + 2] - ax) / L,
-        uz = (c[i + 3] - az) / L,
-        n = Math.max(1, Math.ceil(L / 0.75));
-      let a = -1;
-      for (let k = 0; k <= n; k++) {
-        const t = (k / n) * L,
-          ins = inB(ax + ux * t, az + uz * t);
-        if (ins && a < 0) a = t;
-        if ((!ins || k === n) && a >= 0) {
-          const b = ins ? t : ((k - 1) / n) * L;
-          if (b - a >= 3 && ![a, (a + b) / 2, b].some((t) => onCarriagewayEarly(ax + ux * t, az + uz * t, 1.0))) {
-            const t0 = Math.max(0, a - 0.6),
-              t1 = Math.min(L, b + 0.6);
-            /* (v0.99.7, auditor: no passage on a pavement that runs along a street: its walls stood in the carriageway) */ out.push({
-              ri,
-              ax: ax + ux * t0,
-              az: az + uz * t0,
-              bx: ax + ux * t1,
-              bz: az + uz * t1,
-              L: t1 - t0,
-              hw,
-              name,
-              extra: true
-            });
-            nx++;
-          }
-          a = -1;
-        }
-      }
-    }
-  });
-  console.log('passages through buildings: tagged', out.length - nx, 'footpaths inside buildings', nx);
-  return (PASAJES.segs = out);
+  return { out, inB };
 }
 // v0.78.1: inside a passage under a building or in the lower gallery of Aguere (no street lamps there)
 function pasajeNear(x, z) {
@@ -268,27 +273,7 @@ function pasajeRun(s, t0, t1, cx, cz, wallCol, yf = heightAt, floor = false) {
     nz = ux;
   const len = (t1 - t0) * s.L;
   if (len < 0.8) return;
-  const pa = [s.ax + (s.bx - s.ax) * t0, s.az + (s.bz - s.az) * t0],
-    pb = [s.ax + (s.bx - s.ax) * t1, s.az + (s.bz - s.az) * t1];
-  const ga = yf(pa[0], pa[1]),
-    gb = yf(pb[0], pb[1]),
-    C = PASAJES.CLR,
-    low = yf !== heightAt;
-  PASAJES.zones.push({ ax: pa[0], az: pa[1], bx: pb[0], bz: pb[1], ga, gb, hw: s.hw });
-  for (const sd of [-1, 1]) {
-    const ox = nx * s.hw * sd,
-      oz = nz * s.hw * sd;
-    const inn = [-nx * sd, 0, -nz * sd],
-      outw = [nx * sd, 0, nz * sd];
-    const A0 = [pa[0] + ox, ga - 0.2, pa[1] + oz],
-      B0 = [pb[0] + ox, gb - 0.2, pb[1] + oz],
-      B1 = [pb[0] + ox, gb + C, pb[1] + oz],
-      A1 = [pa[0] + ox, ga + C, pa[1] + oz];
-    W.quad(A0, B0, B1, A1, [0, 0], [0, 0], [0, 0], [0, 0], wc, undefined, inn);
-    W.quad(A0, A1, B1, B0, [0, 0], [0, 0], [0, 0], [0, 0], wc, undefined, outw); // both faces (from outside it looked see-through)
-    if (low) COL.addSeg(pa[0] + ox * 0.92, pa[1] + oz * 0.92, pb[0] + ox * 0.92, pb[1] + oz * 0.92, Math.min(ga, gb) - 0.5, Math.max(ga, gb) + C);
-    else COL.addSeg(pa[0] + ox * 0.92, pa[1] + oz * 0.92, pb[0] + ox * 0.92, pb[1] + oz * 0.92);
-  }
+  const { pa, pb, ga, gb, C } = pasajeRunPart1(s, t0, t1, yf, nx, nz, W, wc);
   const hx = nx * s.hw,
     hz = nz * s.hw;
   W.quad(
@@ -317,35 +302,8 @@ function pasajeRun(s, t0, t1, cx, cz, wallCol, yf = heightAt, floor = false) {
     undefined,
     [0, 1, 0]
   );
-  if (floor)
-    W.quad(
-      [pb[0] + hx, gb + 0.03, pb[1] + hz],
-      [pb[0] - hx, gb + 0.03, pb[1] - hz],
-      [pa[0] - hx, ga + 0.03, pa[1] - hz],
-      [pa[0] + hx, ga + 0.03, pa[1] + hz],
-      [0, 0],
-      [0, 0],
-      [0, 0],
-      [0, 0],
-      [0.6, 0.32, 0.25],
-      undefined,
-      [0, 1, 0]
-    ); // red tiles (photos)
-  const lx = nx * 0.18,
-    lz = nz * 0.18;
-  Lt.quad(
-    [pb[0] + lx, gb + C - 0.03, pb[1] + lz],
-    [pb[0] - lx, gb + C - 0.03, pb[1] - lz],
-    [pa[0] - lx, ga + C - 0.03, pa[1] - lz],
-    [pa[0] + lx, ga + C - 0.03, pa[1] + lz],
-    [0, 0],
-    [0, 0],
-    [0, 0],
-    [0, 0],
-    null,
-    undefined,
-    [0, -1, 0]
-  );
+  pasajeRunPart2(floor, W, pb, hx, gb, hz, pa, ga); // red tiles (photos)
+  pasajeRunPart3(nx, nz, Lt, pb, gb, C, pa, ga);
   PASAJES.built.push({
     name: s.name,
     x: (pa[0] + pb[0]) / 2,
@@ -398,6 +356,66 @@ function pasajeRun(s, t0, t1, cx, cz, wallCol, yf = heightAt, floor = false) {
       sg.rotation.y = Math.atan2(-nx * sd, -nz * sd);
       scene.add(sg);
     }
+}
+/** (v1.1.7, code quality) part of pasajeRun */
+function pasajeRunPart3(nx, nz, Lt, pb, gb, C, pa, ga) {
+  const lx = nx * 0.18,
+    lz = nz * 0.18;
+  Lt.quad(
+    [pb[0] + lx, gb + C - 0.03, pb[1] + lz],
+    [pb[0] - lx, gb + C - 0.03, pb[1] - lz],
+    [pa[0] - lx, ga + C - 0.03, pa[1] - lz],
+    [pa[0] + lx, ga + C - 0.03, pa[1] + lz],
+    [0, 0],
+    [0, 0],
+    [0, 0],
+    [0, 0],
+    null,
+    undefined,
+    [0, -1, 0]
+  );
+}
+/** (v1.1.7, code quality) part of pasajeRun */
+function pasajeRunPart2(floor, W, pb, hx, gb, hz, pa, ga) {
+  if (floor)
+    W.quad(
+      [pb[0] + hx, gb + 0.03, pb[1] + hz],
+      [pb[0] - hx, gb + 0.03, pb[1] - hz],
+      [pa[0] - hx, ga + 0.03, pa[1] - hz],
+      [pa[0] + hx, ga + 0.03, pa[1] + hz],
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      [0.6, 0.32, 0.25],
+      undefined,
+      [0, 1, 0]
+    );
+}
+/** (v1.1.7, code quality) part of pasajeRun */
+function pasajeRunPart1(s, t0, t1, yf, nx, nz, W, wc) {
+  const pa = [s.ax + (s.bx - s.ax) * t0, s.az + (s.bz - s.az) * t0],
+    pb = [s.ax + (s.bx - s.ax) * t1, s.az + (s.bz - s.az) * t1];
+  const ga = yf(pa[0], pa[1]),
+    gb = yf(pb[0], pb[1]),
+    C = PASAJES.CLR,
+    low = yf !== heightAt;
+  PASAJES.zones.push({ ax: pa[0], az: pa[1], bx: pb[0], bz: pb[1], ga, gb, hw: s.hw });
+  for (const sd of [-1, 1]) {
+    const ox = nx * s.hw * sd,
+      oz = nz * s.hw * sd;
+    const inn = [-nx * sd, 0, -nz * sd],
+      outw = [nx * sd, 0, nz * sd];
+    const A0 = [pa[0] + ox, ga - 0.2, pa[1] + oz],
+      B0 = [pb[0] + ox, gb - 0.2, pb[1] + oz],
+      B1 = [pb[0] + ox, gb + C, pb[1] + oz],
+      A1 = [pa[0] + ox, ga + C, pa[1] + oz];
+    W.quad(A0, B0, B1, A1, [0, 0], [0, 0], [0, 0], [0, 0], wc, undefined, inn);
+    W.quad(A0, A1, B1, B0, [0, 0], [0, 0], [0, 0], [0, 0], wc, undefined, outw); // both faces (from outside it looked see-through)
+    if (low) COL.addSeg(pa[0] + ox * 0.92, pa[1] + oz * 0.92, pb[0] + ox * 0.92, pb[1] + oz * 0.92, Math.min(ga, gb) - 0.5, Math.max(ga, gb) + C);
+    else COL.addSeg(pa[0] + ox * 0.92, pa[1] + oz * 0.92, pb[0] + ox * 0.92, pb[1] + oz * 0.92);
+  }
+  return { pa, pb, ga, gb, C };
 }
 // ceiling over the player in a passage (null if not in one): the camera stays under it
 function pasajeCeilAt(x, z, py) {
@@ -488,31 +506,7 @@ function pasajeBlock(s, t0, t1, yf = heightAt, run = true) {
   const top = Math.max(ga, gb, heightAt(cx, cz)) + C + 7.2;
   const atlas = 0,
     [bay, fh] = FSTY[atlas];
-  const col = hex3('#e8dcc2');
-  const A = acc(cx, cz, 'facade'),
-    R = acc(cx, cz, 'roofFlat'),
-    T = acc(cx, cz, 'trim');
-  const P = (p, o) => [p[0] + nx * o, p[1] + nz * o];
-  const face = (p, q, g0, g1, y0, out) => {
-    const L = Math.hypot(q[0] - p[0], q[1] - p[1]);
-    if (L < 0.05) return;
-    const nb = Math.max(1, Math.round(L / bay));
-    const v0 = (y0 - g0) / fh,
-      v1 = (top - g0) / fh;
-    A.quad(
-      [p[0], g0 + (y0 - g0), p[1]],
-      [q[0], g1 + (y0 - g0), q[1]],
-      [q[0], top, q[1]],
-      [p[0], top, p[1]],
-      [0, v0],
-      [nb, v0],
-      [nb, v1],
-      [0, v1],
-      col,
-      [atlas, (made_ = (made_ + 7) % 97)],
-      out
-    );
-  };
+  const { col, A, R, T, P, face } = pasajeBlockPart1(cx, cz, nx, nz, bay, fh, top, atlas);
   // the block over the walkway: facades on all four sides from the gallery roof up, flat roof
   const a1 = P(pa, -HW),
     a2 = P(pa, HW),
@@ -522,21 +516,7 @@ function pasajeBlock(s, t0, t1, yf = heightAt, run = true) {
   face(b2, a2, gb, ga, ga + C, [nx, 0, nz]);
   face(a2, a1, ga, ga, ga + C, [-ux, 0, -uz]);
   face(b1, b2, gb, gb, gb + C, [ux, 0, uz]);
-  R.quad(
-    [a1[0], top, a1[1]],
-    [b1[0], top, b1[1]],
-    [b2[0], top, b2[1]],
-    [a2[0], top, a2[1]],
-    [a1[0] / 4, a1[1] / 4],
-    [b1[0] / 4, b1[1] / 4],
-    [b2[0] / 4, b2[1] / 4],
-    [a2[0] / 4, a2[1] / 4],
-    [0.78, 0.76, 0.72],
-    undefined,
-    [0, 1, 0]
-  );
-  // underside beyond the gallery walls and the piers at both ends (so the opening is the gallery, not the whole block)
-  const uc = [0.7, 0.68, 0.64];
+  const { uc } = pasajeBlockPart2(R, a1, top, b1, b2, a2);
   for (const sd of [-1, 1]) {
     const i0 = P(pa, s.hw * sd),
       o0 = P(pa, HW * sd),
@@ -579,6 +559,54 @@ function pasajeBlock(s, t0, t1, yf = heightAt, run = true) {
   }
   if (run) pasajeRun(s, t0, t1, cx, cz, col, yf);
   PASAJES.built.push({ name: s.name, cubierta: true, x: Math.round(cx), z: Math.round(cz), len: +((t1 - t0) * s.L).toFixed(1) });
+}
+/** (v1.1.7, code quality) part of pasajeBlock: underside beyond the gallery walls and the piers at both ends (so the opening is the gallery, not the whole block) */
+function pasajeBlockPart2(R, a1, top, b1, b2, a2) {
+  R.quad(
+    [a1[0], top, a1[1]],
+    [b1[0], top, b1[1]],
+    [b2[0], top, b2[1]],
+    [a2[0], top, a2[1]],
+    [a1[0] / 4, a1[1] / 4],
+    [b1[0] / 4, b1[1] / 4],
+    [b2[0] / 4, b2[1] / 4],
+    [a2[0] / 4, a2[1] / 4],
+    [0.78, 0.76, 0.72],
+    undefined,
+    [0, 1, 0]
+  );
+  // underside beyond the gallery walls and the piers at both ends (so the opening is the gallery, not the whole block)
+  const uc = [0.7, 0.68, 0.64];
+  return { uc };
+}
+/** (v1.1.7, code quality) part of pasajeBlock */
+function pasajeBlockPart1(cx, cz, nx, nz, bay, fh, top, atlas) {
+  const col = hex3('#e8dcc2');
+  const A = acc(cx, cz, 'facade'),
+    R = acc(cx, cz, 'roofFlat'),
+    T = acc(cx, cz, 'trim');
+  const P = (p, o) => [p[0] + nx * o, p[1] + nz * o];
+  const face = (p, q, g0, g1, y0, out) => {
+    const L = Math.hypot(q[0] - p[0], q[1] - p[1]);
+    if (L < 0.05) return;
+    const nb = Math.max(1, Math.round(L / bay));
+    const v0 = (y0 - g0) / fh,
+      v1 = (top - g0) / fh;
+    A.quad(
+      [p[0], g0 + (y0 - g0), p[1]],
+      [q[0], g1 + (y0 - g0), q[1]],
+      [q[0], top, q[1]],
+      [p[0], top, p[1]],
+      [0, v0],
+      [nb, v0],
+      [nb, v1],
+      [0, v1],
+      col,
+      [atlas, (made_ = (made_ + 7) % 97)],
+      out
+    );
+  };
+  return { col, A, R, T, P, face };
 }
 let made_ = 0;
 // the OSM ribbon of a passage path, without the parts that run in the patio or down in the lower gallery
@@ -846,32 +874,7 @@ function buildAtrio(a, top, cx, cz) {
     { pol, th, yL, yU, C, rs, sw, phi0, phi1 } = F,
     r = a.r,
     PI = Math.PI;
-  const W = acc(a.x, a.z, 'trim');
-  const up = [0, 1, 0];
-  const M = (tex, col = 0xffffff, rough = 0.85, emis = 0) =>
-    new THREE.MeshStandardMaterial({
-      map: tex || null,
-      color: col,
-      roughness: rough,
-      side: THREE.BackSide,
-      emissive: emis ? 0xffffff : 0x000000,
-      emissiveMap: emis ? tex : null,
-      emissiveIntensity: emis
-    });
-  // a piece of the ring (psi from A to B, height y0..y1), seen from inside
-  const arc = (A, B, y0, y1, mat, rr = r) => {
-    if (B - A < 1e-3 || y1 - y0 < 0.02) return null;
-    const m = new THREE.Mesh(
-      new THREE.CylinderGeometry(rr, rr, y1 - y0, Math.max(3, Math.ceil(((B - A) / (2 * PI)) * 56)), 1, true, th(B), B - A),
-      mat
-    );
-    m.position.set(a.x, (y0 + y1) / 2, a.z);
-    m.receiveShadow = true;
-    scene.add(m);
-    return m;
-  };
-  const mh = Math.asin(Math.min(0.95, (F.hw + 0.15) / r)),
-    Y0 = top + 0.4; // half width of the openings (Herradores at psi 0, the lower gallery at psi π)
+  const { W, up, M, arc, mh, Y0 } = buildAtrioPart1(a, F, r, top, PI, th); // half width of the openings (Herradores at psi 0, the lower gallery at psi π)
   const dark = M(null, 0x3a3c3f, 0.95),
     stoneM = M(null, 0x8a8178, 0.92);
   // lower storey (patio floor to the landing): all round but the mouth of the lower gallery; the cinema's band over it
@@ -891,49 +894,8 @@ function buildAtrio(a, top, cx, cz) {
   arc(g0, g1, yU + 3, yU + 4, M(atrioCanvas('band', 1024, 96, 'AGÜERITO'), 0xffffff, 0.9, 0.08), r - 0.05);
   arc(g0, g1, yU + 4, yU + 6.6, M(glassT, 0xffffff, 0.25, 0.1), r - 0.05);
   arc(g0, g1, yU + 6.6, Y0, dark);
-  {
-    const h = Math.min(7, top - yU - 7.6);
-    if (h > 2.5) arc(PI - 0.8, PI + 0.8, yU + 7.5, yU + 7.5 + h, M(atrioCanvas('mural', 512, 512), 0xffffff, 0.9), r - 0.1);
-  }
-  // patio floor (red tiles)
-  {
-    const fg = new THREE.CircleGeometry(r - 0.01, 48);
-    fg.rotateX(-PI / 2);
-    const fl = new THREE.Mesh(fg, new THREE.MeshStandardMaterial({ color: 0xa05a46, roughness: 0.8 }));
-    fl.position.set(a.x, yL + 0.03, a.z);
-    fl.receiveShadow = true;
-    scene.add(fl);
-  }
-  const stone = [0.56, 0.55, 0.52],
-    iron = [0.13, 0.13, 0.14],
-    pave = [0.64, 0.62, 0.58];
-  const V = (p, y) => [p[0], y, p[1]];
-  const both = (A, B, Cc, D, col) => {
-    W.quad(A, B, Cc, D, [0, 0], [0, 0], [0, 0], [0, 0], col);
-    W.quad(A, D, Cc, B, [0, 0], [0, 0], [0, 0], [0, 0], col);
-  };
-  const rail = (p, q, yp, yq) => {
-    // iron railing: top and middle bars, posts every ~1 m
-    for (const [h0, h1] of [
-      [0.95, 1.02],
-      [0.48, 0.53]
-    ])
-      both(V(p, yp + h0), V(q, yq + h0), V(q, yq + h1), V(p, yp + h1), iron);
-    const L = Math.hypot(q[0] - p[0], q[1] - p[1]),
-      n = Math.max(1, Math.round(L / 1.0)),
-      ex = ((q[0] - p[0]) / L) * 0.025,
-      ez = ((q[1] - p[1]) / L) * 0.025;
-    for (let k = 0; k <= n; k++) {
-      const f = k / n,
-        x = p[0] + (q[0] - p[0]) * f,
-        z = p[1] + (q[1] - p[1]) * f,
-        y = yp + (yq - yp) * f;
-      both([x - ex, y, z - ez], [x + ex, y, z + ez], [x + ex, y + 1.0, z + ez], [x - ex, y + 1.0, z - ez], iron);
-    }
-  };
-  // landing at street level on the Herradores side, between the tops of the two stairs, with its railing over the patio
-  const rin = rs - sw / 2,
-    rout = r - 0.08;
+  const { stone, iron, pave, V } = buildAtrioPart2(top, yU, arc, PI, M, r, a, yL);
+  const { both, rail, rin, rout } = buildAtrioPart3(rs, sw, r, W, V, iron);
   {
     const L = [pol(rin, -phi0), pol(rout, -phi0)];
     for (let k = 1; k < 20; k++) L.push(pol(rout, -phi0 + (2 * phi0 * k) / 20));
@@ -992,6 +954,24 @@ function buildAtrio(a, top, cx, cz) {
     }
     TUNNEL_DECKS.push({ type: 'path', pts, w: sw + 0.2, hw: sw / 2 + 0.25, tunnel: true, stairs: true });
   }
+  const { ring } = buildAtrioPart4(a, yL, r, F, C, mh, PI, pol);
+  ring(-mh, mh, -1e9, yU - 0.6);
+  ring(PI - mh, PI + mh, yL + C - 0.2, 1e9);
+  // (the lower gallery's walls, roof and shops are built by pasajeCovers, once every building is known)
+  a.built = {
+    x: Math.round(a.x),
+    z: Math.round(a.z),
+    r,
+    yU: +yU.toFixed(2),
+    yL: +yL.toFixed(2),
+    escaleras: 2,
+    peldanos: N,
+    galeria_baja: +F.segs.reduce((t, s) => t + s.L, 0).toFixed(1),
+    salida: F.line[F.line.length - 1].map((v) => Math.round(v))
+  };
+}
+/** (v1.1.7, code quality) part of buildAtrio: walkable floors: the patio (a disc) and the lower gallery out to Calle El Juego */
+function buildAtrioPart4(a, yL, r, F, C, mh, PI, pol) {
   // walkable floors: the patio (a disc) and the lower gallery out to Calle El Juego
   TUNNEL_DECKS.push({
     type: 'path',
@@ -1043,18 +1023,86 @@ function buildAtrio(a, top, cx, cz) {
   };
   ring(mh, PI - mh);
   ring(PI + mh, 2 * PI - mh);
-  ring(-mh, mh, -1e9, yU - 0.6);
-  ring(PI - mh, PI + mh, yL + C - 0.2, 1e9);
-  // (the lower gallery's walls, roof and shops are built by pasajeCovers, once every building is known)
-  a.built = {
-    x: Math.round(a.x),
-    z: Math.round(a.z),
-    r,
-    yU: +yU.toFixed(2),
-    yL: +yL.toFixed(2),
-    escaleras: 2,
-    peldanos: N,
-    galeria_baja: +F.segs.reduce((t, s) => t + s.L, 0).toFixed(1),
-    salida: F.line[F.line.length - 1].map((v) => Math.round(v))
+  return { ring };
+}
+/** (v1.1.7, code quality) part of buildAtrio: iron railing: top and middle bars, posts every ~1 m */
+function buildAtrioPart3(rs, sw, r, W, V, iron) {
+  const both = (A, B, Cc, D, col) => {
+    W.quad(A, B, Cc, D, [0, 0], [0, 0], [0, 0], [0, 0], col);
+    W.quad(A, D, Cc, B, [0, 0], [0, 0], [0, 0], [0, 0], col);
   };
+  const rail = (p, q, yp, yq) => {
+    // iron railing: top and middle bars, posts every ~1 m
+    for (const [h0, h1] of [
+      [0.95, 1.02],
+      [0.48, 0.53]
+    ])
+      both(V(p, yp + h0), V(q, yq + h0), V(q, yq + h1), V(p, yp + h1), iron);
+    const L = Math.hypot(q[0] - p[0], q[1] - p[1]),
+      n = Math.max(1, Math.round(L / 1.0)),
+      ex = ((q[0] - p[0]) / L) * 0.025,
+      ez = ((q[1] - p[1]) / L) * 0.025;
+    for (let k = 0; k <= n; k++) {
+      const f = k / n,
+        x = p[0] + (q[0] - p[0]) * f,
+        z = p[1] + (q[1] - p[1]) * f,
+        y = yp + (yq - yp) * f;
+      both([x - ex, y, z - ez], [x + ex, y, z + ez], [x + ex, y + 1.0, z + ez], [x - ex, y + 1.0, z - ez], iron);
+    }
+  };
+  // landing at street level on the Herradores side, between the tops of the two stairs, with its railing over the patio
+  const rin = rs - sw / 2,
+    rout = r - 0.08;
+  return { both, rail, rin, rout };
+}
+/** (v1.1.7, code quality) part of buildAtrio: patio floor (red tiles) */
+function buildAtrioPart2(top, yU, arc, PI, M, r, a, yL) {
+  {
+    const h = Math.min(7, top - yU - 7.6);
+    if (h > 2.5) arc(PI - 0.8, PI + 0.8, yU + 7.5, yU + 7.5 + h, M(atrioCanvas('mural', 512, 512), 0xffffff, 0.9), r - 0.1);
+  }
+  // patio floor (red tiles)
+  {
+    const fg = new THREE.CircleGeometry(r - 0.01, 48);
+    fg.rotateX(-PI / 2);
+    const fl = new THREE.Mesh(fg, new THREE.MeshStandardMaterial({ color: 0xa05a46, roughness: 0.8 }));
+    fl.position.set(a.x, yL + 0.03, a.z);
+    fl.receiveShadow = true;
+    scene.add(fl);
+  }
+  const stone = [0.56, 0.55, 0.52],
+    iron = [0.13, 0.13, 0.14],
+    pave = [0.64, 0.62, 0.58];
+  const V = (p, y) => [p[0], y, p[1]];
+  return { stone, iron, pave, V };
+}
+/** (v1.1.7, code quality) part of buildAtrio: a piece of the ring (psi from A to B, height y0..y1), seen from inside */
+function buildAtrioPart1(a, F, r, top, PI, th) {
+  const W = acc(a.x, a.z, 'trim');
+  const up = [0, 1, 0];
+  const M = (tex, col = 0xffffff, rough = 0.85, emis = 0) =>
+    new THREE.MeshStandardMaterial({
+      map: tex || null,
+      color: col,
+      roughness: rough,
+      side: THREE.BackSide,
+      emissive: emis ? 0xffffff : 0x000000,
+      emissiveMap: emis ? tex : null,
+      emissiveIntensity: emis
+    });
+  // a piece of the ring (psi from A to B, height y0..y1), seen from inside
+  const arc = (A, B, y0, y1, mat, rr = r) => {
+    if (B - A < 1e-3 || y1 - y0 < 0.02) return null;
+    const m = new THREE.Mesh(
+      new THREE.CylinderGeometry(rr, rr, y1 - y0, Math.max(3, Math.ceil(((B - A) / (2 * PI)) * 56)), 1, true, th(B), B - A),
+      mat
+    );
+    m.position.set(a.x, (y0 + y1) / 2, a.z);
+    m.receiveShadow = true;
+    scene.add(m);
+    return m;
+  };
+  const mh = Math.asin(Math.min(0.95, (F.hw + 0.15) / r)),
+    Y0 = top + 0.4;
+  return { W, up, M, arc, mh, Y0 };
 }

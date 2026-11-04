@@ -163,6 +163,35 @@ function pip(x, z, c) {
   return ins;
 }
 function scatterTrees() {
+  scatterTreesPart1();
+  // street trees along wider avenues
+  DATA.R.forEach((rd) => {
+    const t = RTN[rd[0]];
+    if (!['primary', 'secondary', 'tertiary'].includes(t) || Math.random() < 0.4) return;
+    const c = rd[4];
+    const w = rd[2];
+    for (let i = 0; i < c.length - 2; i += 2) {
+      const x1 = c[i],
+        z1 = c[i + 1],
+        x2 = c[i + 2],
+        z2 = c[i + 3],
+        L = Math.hypot(x2 - x1, z2 - z1);
+      const nx = -(z2 - z1) / L,
+        nz = (x2 - x1) / L;
+      for (let s = 6; s < L - 6; s += 14)
+        for (const side of [-1, 1]) {
+          const off = w / 2 + 1.4;
+          const x = x1 + ((x2 - x1) * s) / L + nx * off * side,
+            z = z1 + ((z2 - z1) * s) / L + nz * off * side;
+          if (COL.nearSeg(x, z, 1.6)) continue;
+          if (Math.random() < 0.3) continue;
+          TREES.push([x, z, Math.random() < 0.2 ? 1 : 3, rnd(0.6, 0.85), 1]);
+        }
+    }
+  });
+}
+/** (v1.1.7, code quality) part of scatterTrees */
+function scatterTreesPart1() {
   for (let i = 0; i < DATA.N.length; i += 2) {
     if (onCarriagewayEarly(DATA.N[i], DATA.N[i + 1], 0.6)) continue;
     /* v0.74: OSM trees standing in a street that is now driven (Calle Juan de Vera) */ TREES.push([
@@ -210,31 +239,6 @@ function scatterTrees() {
       TREES.push([x, z, t, rnd(0.75, 1.3) * (k === 'orchard' ? 0.6 : 1)]);
     }
   }
-  // street trees along wider avenues
-  DATA.R.forEach((rd) => {
-    const t = RTN[rd[0]];
-    if (!['primary', 'secondary', 'tertiary'].includes(t) || Math.random() < 0.4) return;
-    const c = rd[4];
-    const w = rd[2];
-    for (let i = 0; i < c.length - 2; i += 2) {
-      const x1 = c[i],
-        z1 = c[i + 1],
-        x2 = c[i + 2],
-        z2 = c[i + 3],
-        L = Math.hypot(x2 - x1, z2 - z1);
-      const nx = -(z2 - z1) / L,
-        nz = (x2 - x1) / L;
-      for (let s = 6; s < L - 6; s += 14)
-        for (const side of [-1, 1]) {
-          const off = w / 2 + 1.4;
-          const x = x1 + ((x2 - x1) * s) / L + nx * off * side,
-            z = z1 + ((z2 - z1) * s) / L + nz * off * side;
-          if (COL.nearSeg(x, z, 1.6)) continue;
-          if (Math.random() < 0.3) continue;
-          TREES.push([x, z, Math.random() < 0.2 ? 1 : 3, rnd(0.6, 0.85), 1]);
-        }
-    }
-  });
 }
 const GREEN_AREAS = () =>
   DATA.A.filter((a) => ['park', 'garden', 'grass', 'forest', 'scrub', 'meadow', 'orchard', 'cemetery', 'pitch'].includes(DATA.AT[a[0]]));
@@ -349,25 +353,7 @@ function nearTram(x, z, r) {
   return false;
 }
 function buildTrees() {
-  const types = [[], [], [], []];
-  let offTram = 0;
-  for (const t of TREES) {
-    if (!inPlayArea(t[0], t[1], -5)) continue;
-    if (overTunnel(t[0], t[1]) || inCut(t[0], t[1], 2.2)) continue;
-    if (onCarriagewayEarly(t[0], t[1], 0.9)) continue;
-    if (inPitch(t[0], t[1], 1.5 + t[3])) continue;
-    /* v0.65: never inside a court or pitch */ if (nearTram(t[0], t[1], 4.4 + (t[2] === 1 ? 0 : 0.8) * t[3])) {
-      offTram++;
-      continue;
-    }
-    /* no trunk or crown over the tram */ if (!t[4] && onAnyPaved(t[0], t[1], -0.3) && !isGreen(t[0], t[1])) continue;
-    types[t[2]].push(t);
-  }
-  console.log('trees kept off the tram track', offTram);
-  const barkMat = new THREE.MeshStandardMaterial({ color: 0x5a4636, roughness: 1 });
-  const leafMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85, flatShading: true });
-  const o = new THREE.Object3D();
-  const col = new THREE.Color();
+  const { types, barkMat, leafMat, o, col } = buildTreesPart1();
   const defs = [
     {
       // laurel de Indias: big dense round crown
@@ -463,6 +449,10 @@ function buildTrees() {
       color: [0x4f7a32, 0x5d8a3a, 0x6f8f3a, 0x46702d]
     }
   ];
+  buildTreesPart2(defs, types, barkMat, leafMat, o, col);
+}
+/** (v1.1.7, code quality) part of buildTrees */
+function buildTreesPart2(defs, types, barkMat, leafMat, o, col) {
   defs.forEach((d, ti) => {
     const list = types[ti];
     if (!list.length) return;
@@ -488,60 +478,64 @@ function buildTrees() {
     if (d.lo) cm.userData.lo = d.lo; // v0.77: far crowns with few triangles (05w_optimiza.js)
   });
 }
+/** (v1.1.7, code quality) part of buildTrees */
+function buildTreesPart1() {
+  const types = [[], [], [], []];
+  let offTram = 0;
+  for (const t of TREES) {
+    if (!inPlayArea(t[0], t[1], -5)) continue;
+    if (overTunnel(t[0], t[1]) || inCut(t[0], t[1], 2.2)) continue;
+    if (onCarriagewayEarly(t[0], t[1], 0.9)) continue;
+    if (inPitch(t[0], t[1], 1.5 + t[3])) continue;
+    /* v0.65: never inside a court or pitch */ if (nearTram(t[0], t[1], 4.4 + (t[2] === 1 ? 0 : 0.8) * t[3])) {
+      offTram++;
+      continue;
+    }
+    /* no trunk or crown over the tram */ if (!t[4] && onAnyPaved(t[0], t[1], -0.3) && !isGreen(t[0], t[1])) continue;
+    types[t[2]].push(t);
+  }
+  console.log('trees kept off the tram track', offTram);
+  const barkMat = new THREE.MeshStandardMaterial({ color: 0x5a4636, roughness: 1 });
+  const leafMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85, flatShading: true });
+  const o = new THREE.Object3D();
+  const col = new THREE.Color();
+  return { types, barkMat, leafMat, o, col };
+}
 
 // ---------- street lamps + light pools
 const LAMPS = [];
 let lampHeadMat, lampPoolMat;
 function buildLamps() {
-  DATA.R.forEach((rd) => {
-    const t = RTN[rd[0]];
-    if (!['primary', 'secondary', 'tertiary', 'residential', 'pedestrian', 'unclassified', 'living_street'].includes(t)) return;
-    const c = rd[4];
-    const w = rd[2];
-    let acc2 = Math.random() * 20;
-    let side = 1;
-    for (let i = 0; i < c.length - 2; i += 2) {
-      const x1 = c[i],
-        z1 = c[i + 1],
-        x2 = c[i + 2],
-        z2 = c[i + 3],
-        L = Math.hypot(x2 - x1, z2 - z1);
-      if (L < 1) continue;
-      const nx = -(z2 - z1) / L,
-        nz = (x2 - x1) / L;
-      while (acc2 < L) {
-        const off = t === 'pedestrian' ? w / 2 - 0.6 : w / 2 + 0.5;
-        const x = x1 + ((x2 - x1) * acc2) / L + nx * off * side,
-          z = z1 + ((z2 - z1) * acc2) / L + nz * off * side;
-        if (!COL.nearSeg(x, z, 0.5) && !onCarriagewayEarly(x, z, 0.35) && !overTunnel(x, z))
-          LAMPS.push([x, z, Math.atan2(-nx * side, -nz * side), isHistoric(x, z)]);
-        acc2 += 30;
-        side = -side;
-      }
-      acc2 -= L;
-    }
+  const { o, poleMat, histMat, modern, modernHead } = buildLampsPart1();
+  const { c, x, g } = buildLampsPart2(modern, modernHead, poleMat, histMat, o);
+  x.fillStyle = g;
+  x.fillRect(0, 0, 64, 64);
+  lampPoolMat = new THREE.MeshBasicMaterial({
+    map: canvasTex(c, { repeat: false }),
+    transparent: true,
+    opacity: 0,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    polygonOffset: true,
+    polygonOffsetFactor: -8,
+    polygonOffsetUnits: -8
   });
-  const o = new THREE.Object3D();
-  const poleMat = new THREE.MeshStandardMaterial({ color: 0x3a3c3e, roughness: 0.5, metalness: 0.6 });
-  const histMat = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.5, metalness: 0.5 });
-  lampHeadMat = new THREE.MeshStandardMaterial({ color: 0xfff4d6, emissive: 0xffc27a, emissiveIntensity: 0 });
-  const modern = mergeGeos([
-    (() => {
-      const g = new THREE.CylinderGeometry(0.07, 0.1, 7, 6);
-      g.translate(0, 3.5, 0);
-      return g;
-    })(),
-    (() => {
-      const g = new THREE.BoxGeometry(0.08, 0.08, 1.6);
-      g.translate(0, 7, 0.8);
-      return g;
-    })()
-  ]);
-  const modernHead = (() => {
-    const g = new THREE.BoxGeometry(0.35, 0.12, 0.7);
-    g.translate(0, 6.95, 1.5);
-    return g;
-  })();
+  const pg = new THREE.PlaneGeometry(11, 11);
+  pg.rotateX(-Math.PI / 2);
+  const pools = new THREE.InstancedMesh(pg, lampPoolMat, LAMPS.length);
+  LAMPS.forEach((l, i) => {
+    const fx = l[0] - Math.sin(l[2]) * (l[3] ? 0 : 1.5),
+      fz = l[1] - Math.cos(l[2]) * (l[3] ? 0 : 1.5);
+    o.position.set(fx, heightAt(fx, fz) + 0.3, fz);
+    o.rotation.set(0, 0, 0);
+    o.updateMatrix();
+    pools.setMatrixAt(i, o.matrix);
+  });
+  pools.renderOrder = 3;
+  scene.add(pools);
+}
+/** (v1.1.7, code quality) part of buildLamps: light pools (night) */
+function buildLampsPart2(modern, modernHead, poleMat, histMat, o) {
   const hist = mergeGeos([
     (() => {
       const g = new THREE.CylinderGeometry(0.06, 0.13, 3.6, 8);
@@ -597,31 +591,60 @@ function buildLamps() {
   const g = x.createRadialGradient(32, 32, 0, 32, 32, 32);
   g.addColorStop(0, 'rgba(255,200,130,1)');
   g.addColorStop(1, 'rgba(255,200,130,0)');
-  x.fillStyle = g;
-  x.fillRect(0, 0, 64, 64);
-  lampPoolMat = new THREE.MeshBasicMaterial({
-    map: canvasTex(c, { repeat: false }),
-    transparent: true,
-    opacity: 0,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    polygonOffset: true,
-    polygonOffsetFactor: -8,
-    polygonOffsetUnits: -8
+  return { c, x, g };
+}
+/** (v1.1.7, code quality) part of buildLamps */
+function buildLampsPart1() {
+  DATA.R.forEach((rd) => {
+    const t = RTN[rd[0]];
+    if (!['primary', 'secondary', 'tertiary', 'residential', 'pedestrian', 'unclassified', 'living_street'].includes(t)) return;
+    const c = rd[4];
+    const w = rd[2];
+    let acc2 = Math.random() * 20;
+    let side = 1;
+    for (let i = 0; i < c.length - 2; i += 2) {
+      const x1 = c[i],
+        z1 = c[i + 1],
+        x2 = c[i + 2],
+        z2 = c[i + 3],
+        L = Math.hypot(x2 - x1, z2 - z1);
+      if (L < 1) continue;
+      const nx = -(z2 - z1) / L,
+        nz = (x2 - x1) / L;
+      while (acc2 < L) {
+        const off = t === 'pedestrian' ? w / 2 - 0.6 : w / 2 + 0.5;
+        const x = x1 + ((x2 - x1) * acc2) / L + nx * off * side,
+          z = z1 + ((z2 - z1) * acc2) / L + nz * off * side;
+        if (!COL.nearSeg(x, z, 0.5) && !onCarriagewayEarly(x, z, 0.35) && !overTunnel(x, z))
+          LAMPS.push([x, z, Math.atan2(-nx * side, -nz * side), isHistoric(x, z)]);
+        acc2 += 30;
+        side = -side;
+      }
+      acc2 -= L;
+    }
   });
-  const pg = new THREE.PlaneGeometry(11, 11);
-  pg.rotateX(-Math.PI / 2);
-  const pools = new THREE.InstancedMesh(pg, lampPoolMat, LAMPS.length);
-  LAMPS.forEach((l, i) => {
-    const fx = l[0] - Math.sin(l[2]) * (l[3] ? 0 : 1.5),
-      fz = l[1] - Math.cos(l[2]) * (l[3] ? 0 : 1.5);
-    o.position.set(fx, heightAt(fx, fz) + 0.3, fz);
-    o.rotation.set(0, 0, 0);
-    o.updateMatrix();
-    pools.setMatrixAt(i, o.matrix);
-  });
-  pools.renderOrder = 3;
-  scene.add(pools);
+  const o = new THREE.Object3D();
+  const poleMat = new THREE.MeshStandardMaterial({ color: 0x3a3c3e, roughness: 0.5, metalness: 0.6 });
+  const histMat = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.5, metalness: 0.5 });
+  lampHeadMat = new THREE.MeshStandardMaterial({ color: 0xfff4d6, emissive: 0xffc27a, emissiveIntensity: 0 });
+  const modern = mergeGeos([
+    (() => {
+      const g = new THREE.CylinderGeometry(0.07, 0.1, 7, 6);
+      g.translate(0, 3.5, 0);
+      return g;
+    })(),
+    (() => {
+      const g = new THREE.BoxGeometry(0.08, 0.08, 1.6);
+      g.translate(0, 7, 0.8);
+      return g;
+    })()
+  ]);
+  const modernHead = (() => {
+    const g = new THREE.BoxGeometry(0.35, 0.12, 0.7);
+    g.translate(0, 6.95, 1.5);
+    return g;
+  })();
+  return { o, poleMat, histMat, modern, modernHead };
 }
 const HIST_CORE = [
   [-680, -420],
@@ -688,61 +711,47 @@ function buildTramPoles() {
 // ---------- sky + distant landscape (background scene)
 const SKY = {};
 function buildSky() {
-  const g = new THREE.SphereGeometry(80000, 48, 24);
-  const m = new THREE.ShaderMaterial({
-    side: THREE.BackSide,
-    depthWrite: false,
-    fog: false,
-    uniforms: {
-      sunDir: { value: new THREE.Vector3(0, 1, 0) },
-      uNight: U.uNight,
-      uTime: U.uTime,
-      uCloud: { value: 0.55 },
-      zen: { value: new THREE.Color() },
-      hor: { value: new THREE.Color() }
-    },
-    vertexShader:
-      'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); gl_Position.z = gl_Position.w; }',
-    fragmentShader: `varying vec3 vD; uniform vec3 sunDir; uniform float uNight; uniform float uTime; uniform float uCloud; uniform vec3 zen; uniform vec3 hor;
-      float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
-      float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
-      float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*n(p);p*=2.03;a*=.5;}return v;}
-      void main(){ vec3 d=normalize(vD); float y=max(d.y,0.0);
-        vec3 col = mix(hor, zen, pow(y,0.55));
-        float sd = max(dot(d,sunDir),0.0);
-        col += vec3(1.0,0.75,0.45) * pow(sd, 8.0) * 0.35 * (1.0-uNight);
-        col += vec3(1.0,0.95,0.85) * smoothstep(0.9993,0.9997,sd) * 6.0 * (1.0-uNight) * step(-0.02, sunDir.y);
-        // stars
-        if(uNight>0.01){ vec2 sp = d.xz/(d.y+0.3)*180.0; float s = step(0.997, h(floor(sp))); col += vec3(s)*uNight*0.8*y; }
-        // cloud deck (mar de nubes / panza de burro)
-        if(d.y>0.0){ vec2 cp = d.xz/(d.y+0.08)*1.3 + vec2(uTime*0.004, uTime*0.002);
-          float c = smoothstep(1.0-uCloud, 1.0-uCloud+0.35, fbm(cp));
-          vec3 cc = mix(vec3(0.95,0.95,0.97), vec3(0.55,0.58,0.62), fbm(cp*2.0+3.0)*0.8);
-          cc = mix(cc, hor*1.05, 0.25) * mix(1.0, 0.12, uNight);
-          cc += vec3(1.0,0.6,0.3)*pow(sd,4.0)*0.35*(1.0-uNight);
-          col = mix(col, cc, c * smoothstep(0.0, 0.18, d.y)); }
-        col = mix(hor, col, smoothstep(-0.05, 0.08, d.y));
-        gl_FragColor = vec4(col,1.0);
-        #include <tonemapping_fragment>
-        #include <colorspace_fragment>
-      }`
-  });
-  SKY.mat = m;
-  const sky = new THREE.Mesh(g, m);
-  sky.frustumCulled = false;
-  sky.renderOrder = -10;
-  bgScene.add(sky);
-  // ocean
-  const sea = new THREE.Mesh(
-    new THREE.PlaneGeometry(200000, 200000),
-    new THREE.MeshStandardMaterial({ color: 0x1d4a66, roughness: 0.25, metalness: 0.1 })
-  );
-  sea.rotation.x = -Math.PI / 2;
-  sea.position.y = -HM.base;
-  bgScene.add(sea);
-  // distant ring terrain (heights relative to La Laguna ~554m)
-  const nR = 60,
-    nA = 180;
+  const { nR, nA } = buildSkyPart1();
+  const { rg } = buildSkyPart2(nR, nA);
+  {
+    // bake simple lighting (sun from the SW, sky from above) into the vertex colours
+    const nrm = rg.attributes.normal.array,
+      cc = rg.attributes.color.array;
+    const L = new THREE.Vector3(-0.5, 0.75, 0.45).normalize();
+    for (let i = 0; i < nrm.length; i += 3) {
+      const d = Math.max(0, nrm[i] * L.x + nrm[i + 1] * L.y + nrm[i + 2] * L.z);
+      const k = 0.45 + d * 0.75;
+      cc[i] *= k;
+      cc[i + 1] *= k;
+      cc[i + 2] *= k;
+    }
+  }
+  const ringMesh = new THREE.Mesh(rg, new THREE.MeshBasicMaterial({ vertexColors: true, fog: true }));
+  ringMesh.frustumCulled = false;
+  bgScene.add(ringMesh);
+  SKY.ring = ringMesh;
+  // El Teide (real bearing & distance ~40 km WSW-SW)
+  const tx = (-16.6424 + 16.315) * 97864,
+    tz = -(28.2724 - 28.4875) * 110574;
+  const teide = new THREE.Group();
+  const cone = jitterGeo(new THREE.ConeGeometry(9000, 3200, 40, 6), 180, 5);
+  cone.translate(0, 1600, 0);
+  const cMat = new THREE.MeshStandardMaterial({ color: 0x7c6a5c, roughness: 1, flatShading: true });
+  teide.add(new THREE.Mesh(cone, cMat));
+  const base2 = jitterGeo(new THREE.CylinderGeometry(14000, 26000, 2400, 40, 3), 300, 6);
+  base2.translate(0, 1200, 0);
+  teide.add(new THREE.Mesh(base2, new THREE.MeshStandardMaterial({ color: 0x6d6552, roughness: 1, flatShading: true })));
+  const snow = new THREE.Mesh(new THREE.ConeGeometry(2000, 700, 24), new THREE.MeshStandardMaterial({ color: 0xece8e0, roughness: 0.8 }));
+  snow.position.y = 3250;
+  teide.add(snow);
+  cone.translate(0, 0, 0);
+  teide.children[0].position.y = 400;
+  teide.position.set(tx, -HM.base + 150, tz);
+  teide.scale.set(1, 1, 1);
+  bgScene.add(teide);
+}
+/** (v1.1.7, code quality) part of buildSky: directional profile */
+function buildSkyPart2(nR, nA) {
   const pos = [],
     col = [],
     idx = [];
@@ -798,40 +807,64 @@ function buildSky() {
   rg.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
   rg.setIndex(idx);
   rg.computeVertexNormals();
-  {
-    // bake simple lighting (sun from the SW, sky from above) into the vertex colours
-    const nrm = rg.attributes.normal.array,
-      cc = rg.attributes.color.array;
-    const L = new THREE.Vector3(-0.5, 0.75, 0.45).normalize();
-    for (let i = 0; i < nrm.length; i += 3) {
-      const d = Math.max(0, nrm[i] * L.x + nrm[i + 1] * L.y + nrm[i + 2] * L.z);
-      const k = 0.45 + d * 0.75;
-      cc[i] *= k;
-      cc[i + 1] *= k;
-      cc[i + 2] *= k;
-    }
-  }
-  const ringMesh = new THREE.Mesh(rg, new THREE.MeshBasicMaterial({ vertexColors: true, fog: true }));
-  ringMesh.frustumCulled = false;
-  bgScene.add(ringMesh);
-  SKY.ring = ringMesh;
-  // El Teide (real bearing & distance ~40 km WSW-SW)
-  const tx = (-16.6424 + 16.315) * 97864,
-    tz = -(28.2724 - 28.4875) * 110574;
-  const teide = new THREE.Group();
-  const cone = jitterGeo(new THREE.ConeGeometry(9000, 3200, 40, 6), 180, 5);
-  cone.translate(0, 1600, 0);
-  const cMat = new THREE.MeshStandardMaterial({ color: 0x7c6a5c, roughness: 1, flatShading: true });
-  teide.add(new THREE.Mesh(cone, cMat));
-  const base2 = jitterGeo(new THREE.CylinderGeometry(14000, 26000, 2400, 40, 3), 300, 6);
-  base2.translate(0, 1200, 0);
-  teide.add(new THREE.Mesh(base2, new THREE.MeshStandardMaterial({ color: 0x6d6552, roughness: 1, flatShading: true })));
-  const snow = new THREE.Mesh(new THREE.ConeGeometry(2000, 700, 24), new THREE.MeshStandardMaterial({ color: 0xece8e0, roughness: 0.8 }));
-  snow.position.y = 3250;
-  teide.add(snow);
-  cone.translate(0, 0, 0);
-  teide.children[0].position.y = 400;
-  teide.position.set(tx, -HM.base + 150, tz);
-  teide.scale.set(1, 1, 1);
-  bgScene.add(teide);
+  return { rg };
+}
+/** (v1.1.7, code quality) part of buildSky: stars */
+function buildSkyPart1() {
+  const g = new THREE.SphereGeometry(80000, 48, 24);
+  const m = new THREE.ShaderMaterial({
+    side: THREE.BackSide,
+    depthWrite: false,
+    fog: false,
+    uniforms: {
+      sunDir: { value: new THREE.Vector3(0, 1, 0) },
+      uNight: U.uNight,
+      uTime: U.uTime,
+      uCloud: { value: 0.55 },
+      zen: { value: new THREE.Color() },
+      hor: { value: new THREE.Color() }
+    },
+    vertexShader:
+      'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); gl_Position.z = gl_Position.w; }',
+    fragmentShader: `varying vec3 vD; uniform vec3 sunDir; uniform float uNight; uniform float uTime; uniform float uCloud; uniform vec3 zen; uniform vec3 hor;
+      float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+      float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
+      float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*n(p);p*=2.03;a*=.5;}return v;}
+      void main(){ vec3 d=normalize(vD); float y=max(d.y,0.0);
+        vec3 col = mix(hor, zen, pow(y,0.55));
+        float sd = max(dot(d,sunDir),0.0);
+        col += vec3(1.0,0.75,0.45) * pow(sd, 8.0) * 0.35 * (1.0-uNight);
+        col += vec3(1.0,0.95,0.85) * smoothstep(0.9993,0.9997,sd) * 6.0 * (1.0-uNight) * step(-0.02, sunDir.y);
+        // stars
+        if(uNight>0.01){ vec2 sp = d.xz/(d.y+0.3)*180.0; float s = step(0.997, h(floor(sp))); col += vec3(s)*uNight*0.8*y; }
+        // cloud deck (mar de nubes / panza de burro)
+        if(d.y>0.0){ vec2 cp = d.xz/(d.y+0.08)*1.3 + vec2(uTime*0.004, uTime*0.002);
+          float c = smoothstep(1.0-uCloud, 1.0-uCloud+0.35, fbm(cp));
+          vec3 cc = mix(vec3(0.95,0.95,0.97), vec3(0.55,0.58,0.62), fbm(cp*2.0+3.0)*0.8);
+          cc = mix(cc, hor*1.05, 0.25) * mix(1.0, 0.12, uNight);
+          cc += vec3(1.0,0.6,0.3)*pow(sd,4.0)*0.35*(1.0-uNight);
+          col = mix(col, cc, c * smoothstep(0.0, 0.18, d.y)); }
+        col = mix(hor, col, smoothstep(-0.05, 0.08, d.y));
+        gl_FragColor = vec4(col,1.0);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`
+  });
+  SKY.mat = m;
+  const sky = new THREE.Mesh(g, m);
+  sky.frustumCulled = false;
+  sky.renderOrder = -10;
+  bgScene.add(sky);
+  // ocean
+  const sea = new THREE.Mesh(
+    new THREE.PlaneGeometry(200000, 200000),
+    new THREE.MeshStandardMaterial({ color: 0x1d4a66, roughness: 0.25, metalness: 0.1 })
+  );
+  sea.rotation.x = -Math.PI / 2;
+  sea.position.y = -HM.base;
+  bgScene.add(sea);
+  // distant ring terrain (heights relative to La Laguna ~554m)
+  const nR = 60,
+    nA = 180;
+  return { nR, nA };
 }

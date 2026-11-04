@@ -181,26 +181,7 @@ const MUNDIALITO = (() => {
   };
   // ---------- the flags (drawn: the pixel font has no emoji)
   function flag(g, id, x, y, w, h) {
-    const R = (c, a, b, cw, ch) => {
-      g.fillStyle = c;
-      g.fillRect(x + a, y + b, cw, ch);
-    };
-    const V3 = (a, b, c) => {
-      R(a, 0, 0, w / 3, h);
-      R(b, w / 3, 0, w / 3 + 0.5, h);
-      R(c, (2 * w) / 3, 0, w / 3, h);
-    };
-    const H3 = (a, b, c, k = 1 / 3) => {
-      R(a, 0, 0, w, h * k);
-      R(b, 0, h * k, w, h * (1 - 2 * k) + 0.5);
-      R(c, 0, h * (1 - k), w, h * k);
-    };
-    const sun = (cx, cy, r) => {
-      g.fillStyle = '#f2b21b';
-      g.beginPath();
-      g.arc(x + cx, y + cy, r, 0, 7);
-      g.fill();
-    };
+    const { R, V3, H3, sun } = flagPart1(g, x, y, w, h);
     if (id === 'esp') H3('#c8102e', '#ffc400', '#c8102e', 0.25);
     else if (id === 'bra') {
       R('#1e9a3a', 0, 0, w, h);
@@ -245,6 +226,30 @@ const MUNDIALITO = (() => {
     g.strokeStyle = 'rgba(0,0,0,0.6)';
     g.lineWidth = 1;
     g.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+  }
+  /** (v1.1.7, code quality) part of flag */
+  function flagPart1(g, x, y, w, h) {
+    const R = (c, a, b, cw, ch) => {
+      g.fillStyle = c;
+      g.fillRect(x + a, y + b, cw, ch);
+    };
+    const V3 = (a, b, c) => {
+      R(a, 0, 0, w / 3, h);
+      R(b, w / 3, 0, w / 3 + 0.5, h);
+      R(c, (2 * w) / 3, 0, w / 3, h);
+    };
+    const H3 = (a, b, c, k = 1 / 3) => {
+      R(a, 0, 0, w, h * k);
+      R(b, 0, h * k, w, h * (1 - 2 * k) + 0.5);
+      R(c, 0, h * (1 - k), w, h * k);
+    };
+    const sun = (cx, cy, r) => {
+      g.fillStyle = '#f2b21b';
+      g.beginPath();
+      g.arc(x + cx, y + cy, r, 0, 7);
+      g.fill();
+    };
+    return { R, V3, H3, sun };
   }
   // a little player in the kit (shirt, stripe, shorts, socks)
   function kitMan(g, k, x, y, s = 1, bb = false) {

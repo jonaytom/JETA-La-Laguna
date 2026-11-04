@@ -141,90 +141,99 @@ ARCADE.GAMES.naves = (() => {
       return s / 233280;
     };
     for (let li = 0; li < 3; li++) {
-      const c = mkCanvas(1920, H * 2),
-        x = c.getContext('2d');
-      x.scale(2, 2);
-      Ls.push(c); // v0.82.2: at ×2 (sharper)
-      if (li === 0) {
-        const gr = x.createLinearGradient(0, 0, 0, H);
-        const sky = theme === 'cielo' ? ['#1d3f7a', '#e9a46a'] : theme === 'volcan' ? ['#1a0604', '#5a1408'] : ['#060a24', '#3b4f8a'];
-        gr.addColorStop(0, sky[0]);
-        gr.addColorStop(1, sky[1]);
-        x.fillStyle = gr;
-        x.fillRect(0, 0, 960, H);
-        if (theme !== 'volcan')
-          for (let i = 0; i < (theme === 'nubes' ? 140 : 40); i++) {
-            x.fillStyle = `rgba(255,255,255,${0.3 + rr() * 0.6})`;
-            x.fillRect((rr() * 960) | 0, (rr() * H * 0.6) | 0, 1, 1);
-          }
-        if (theme === 'cielo') {
-          x.fillStyle = '#ffe6b0';
-          x.beginPath();
-          x.arc(700, 210, 26, 0, 7);
-          x.fill();
-        }
-        if (theme !== 'volcan') {
-          x.fillStyle = theme === 'nubes' ? '#5a6a9a' : '#6a5a7a';
-          x.beginPath();
-          x.moveTo(300, H - 60);
-          x.lineTo(450, 150);
-          x.lineTo(476, 142);
-          x.lineTo(502, 150);
-          x.lineTo(660, H - 60);
-          x.fill(); // the Teide, always
-          x.fillStyle = '#eef';
-          x.beginPath();
-          x.moveTo(434, 166);
-          x.lineTo(450, 150);
-          x.lineTo(476, 142);
-          x.lineTo(502, 150);
-          x.lineTo(518, 166);
-          x.lineTo(490, 160);
-          x.lineTo(468, 168);
-          x.fill();
-        } else
-          for (let i = 0; i < 30; i++) {
-            x.fillStyle = `rgba(255,${(80 + rr() * 80) | 0},20,${0.1 + rr() * 0.2})`;
-            x.beginPath();
-            x.arc(rr() * 960, rr() * H, 10 + rr() * 40, 0, 7);
-            x.fill();
-          }
-      }
-      if (li === 1) {
-        if (theme === 'cielo') for (let i = 0; i < 12; i++) cloud(x, rr() * 960, 40 + rr() * 140, 30 + rr() * 40, 'rgba(255,240,230,0.45)');
-        else if (theme === 'volcan') {
-          x.fillStyle = '#2a0c06';
-          for (let i = 0; i < 16; i++) {
-            const cx0 = rr() * 960,
-              w = 20 + rr() * 40;
-            x.fillRect(cx0, 0, w, 30 + rr() * 80);
-            x.fillRect(cx0 + 6, H - 40 - rr() * 90, w, 200);
-          }
-        } else {
-          x.fillStyle = '#24305a';
-          for (let i = 0; i < 10; i++) {
-            const tx = rr() * 960,
-              th = 60 + rr() * 120;
-            x.fillRect(tx, H - 70 - th, 8, th);
-            x.fillRect(tx - 10, H - 70 - th, 28, 6);
-            x.fillStyle = '#ff5a8a';
-            x.fillRect(tx + 2, H - 76 - th, 4, 4);
-            x.fillStyle = '#24305a';
-          }
-        }
-      }
-      if (li === 2) {
-        if (theme === 'cielo') laguna(x, rr);
-        else if (theme === 'volcan') {
-          x.fillStyle = 'rgba(255,120,20,0.25)';
-          for (let i = 0; i < 6; i++) {
-            const lx = rr() * 960;
-            x.fillRect(lx, 0, 4 + rr() * 6, H);
-          }
-        } else for (let i = 0; i < 20; i++) cloud(x, i * 50 + rr() * 30, H - 30 - rr() * 20, 40 + rr() * 30, 'rgba(235,240,255,0.9)');
-      }
+      backgroundEach(Ls, li, theme, rr);
     }
     return (bgCache[theme] = Ls);
+  }
+  /** (v1.1.7, code quality) the body of a loop of background, split out of it */
+  function backgroundEach(Ls, li, theme, rr) {
+    const { x } = backgroundEachPart1(Ls, li, theme, rr);
+    if (li === 1) {
+      if (theme === 'cielo') for (let i = 0; i < 12; i++) cloud(x, rr() * 960, 40 + rr() * 140, 30 + rr() * 40, 'rgba(255,240,230,0.45)');
+      else if (theme === 'volcan') {
+        x.fillStyle = '#2a0c06';
+        for (let i = 0; i < 16; i++) {
+          const cx0 = rr() * 960,
+            w = 20 + rr() * 40;
+          x.fillRect(cx0, 0, w, 30 + rr() * 80);
+          x.fillRect(cx0 + 6, H - 40 - rr() * 90, w, 200);
+        }
+      } else {
+        x.fillStyle = '#24305a';
+        for (let i = 0; i < 10; i++) {
+          const tx = rr() * 960,
+            th = 60 + rr() * 120;
+          x.fillRect(tx, H - 70 - th, 8, th);
+          x.fillRect(tx - 10, H - 70 - th, 28, 6);
+          x.fillStyle = '#ff5a8a';
+          x.fillRect(tx + 2, H - 76 - th, 4, 4);
+          x.fillStyle = '#24305a';
+        }
+      }
+    }
+    if (li === 2) {
+      if (theme === 'cielo') laguna(x, rr);
+      else if (theme === 'volcan') {
+        x.fillStyle = 'rgba(255,120,20,0.25)';
+        for (let i = 0; i < 6; i++) {
+          const lx = rr() * 960;
+          x.fillRect(lx, 0, 4 + rr() * 6, H);
+        }
+      } else for (let i = 0; i < 20; i++) cloud(x, i * 50 + rr() * 30, H - 30 - rr() * 20, 40 + rr() * 30, 'rgba(235,240,255,0.9)');
+    }
+  }
+  /** (v1.1.7, code quality) part of backgroundEach */
+  function backgroundEachPart1(Ls, li, theme, rr) {
+    const c = mkCanvas(1920, H * 2),
+      x = c.getContext('2d');
+    x.scale(2, 2);
+    Ls.push(c); // v0.82.2: at ×2 (sharper)
+    if (li === 0) {
+      const gr = x.createLinearGradient(0, 0, 0, H);
+      const sky = theme === 'cielo' ? ['#1d3f7a', '#e9a46a'] : theme === 'volcan' ? ['#1a0604', '#5a1408'] : ['#060a24', '#3b4f8a'];
+      gr.addColorStop(0, sky[0]);
+      gr.addColorStop(1, sky[1]);
+      x.fillStyle = gr;
+      x.fillRect(0, 0, 960, H);
+      if (theme !== 'volcan')
+        for (let i = 0; i < (theme === 'nubes' ? 140 : 40); i++) {
+          x.fillStyle = `rgba(255,255,255,${0.3 + rr() * 0.6})`;
+          x.fillRect((rr() * 960) | 0, (rr() * H * 0.6) | 0, 1, 1);
+        }
+      if (theme === 'cielo') {
+        x.fillStyle = '#ffe6b0';
+        x.beginPath();
+        x.arc(700, 210, 26, 0, 7);
+        x.fill();
+      }
+      if (theme !== 'volcan') {
+        x.fillStyle = theme === 'nubes' ? '#5a6a9a' : '#6a5a7a';
+        x.beginPath();
+        x.moveTo(300, H - 60);
+        x.lineTo(450, 150);
+        x.lineTo(476, 142);
+        x.lineTo(502, 150);
+        x.lineTo(660, H - 60);
+        x.fill(); // the Teide, always
+        x.fillStyle = '#eef';
+        x.beginPath();
+        x.moveTo(434, 166);
+        x.lineTo(450, 150);
+        x.lineTo(476, 142);
+        x.lineTo(502, 150);
+        x.lineTo(518, 166);
+        x.lineTo(490, 160);
+        x.lineTo(468, 168);
+        x.fill();
+      } else
+        for (let i = 0; i < 30; i++) {
+          x.fillStyle = `rgba(255,${(80 + rr() * 80) | 0},20,${0.1 + rr() * 0.2})`;
+          x.beginPath();
+          x.arc(rr() * 960, rr() * H, 10 + rr() * 40, 0, 7);
+          x.fill();
+        }
+    }
+    return { x };
   }
   function cloud(x, cx0, cy, r, col) {
     x.fillStyle = col;
@@ -375,24 +384,7 @@ ARCADE.GAMES.naves = (() => {
       nextLife = 50000,
       gid = 0,
       fx = [];
-    const p = {
-      x: 70,
-      y: H / 2,
-      dead: 0,
-      inv: 0,
-      spd: 0,
-      missile: 0,
-      dbl: false,
-      laser: false,
-      opts: 0,
-      shield: 0,
-      cur: -1,
-      charge: 0,
-      mCD: 0,
-      hist: [],
-      tilt: 0
-    };
-    const mod = { have: false, st: 'front', x: 0, y: 0, vx: 0, a: 0 };
+    const { p, mod } = createPart1();
     const foes = [],
       shots = [],
       bul = [],
@@ -489,24 +481,7 @@ ARCADE.GAMES.naves = (() => {
         fx.push({ k: 'deb', t: 0.5 + rnd() * 0.3, x, y, vx: Math.cos(a) * 90, vy: Math.sin(a) * 90 });
       }
     }
-    // ---------- the ship
-    function die() {
-      if (p.dead || p.inv > 0 || g._god) return;
-      p.dead = 1.8;
-      boom(p.x, p.y, 20);
-      api.sfx('boom');
-      api.stopMusic();
-      api.sfx('die');
-      p.spd = 0;
-      p.missile = 0;
-      p.dbl = false;
-      p.laser = false;
-      p.opts = 0;
-      p.shield = 0;
-      p.cur = -1;
-      p.charge = 0;
-      mod.have = false;
-    }
+    const { die } = createPart2(p, g, boom, api, mod);
     function respawn() {
       if (opt.demo) lives = 3;
       lives--;
@@ -531,39 +506,7 @@ ARCADE.GAMES.naves = (() => {
       respawn();
       lives = 2;
     };
-    function fire() {
-      if (shots.filter((s) => s.k === 'shot' || s.k === 'laser').length > 16) return;
-      const srcs = [[p.x + 14, p.y]];
-      for (let i = 0; i < p.opts; i++) {
-        const h = p.hist[Math.min(p.hist.length - 1, (i + 1) * 14)];
-        srcs.push([h[0] + 4, h[1]]);
-      }
-      for (const [x, y] of srcs) {
-        if (p.laser) shots.push({ k: 'laser', x: x + 10, y, vx: 560, vy: 0, dmg: 1.2, r: 4, hits: new Set() });
-        else shots.push({ k: 'shot', x, y, vx: 440, vy: 0, dmg: 1, r: 4 });
-        if (p.dbl) shots.push({ k: 'shot', x, y, vx: 340, vy: -240, dmg: 1, r: 4 });
-        if (p.missile && p.mCD <= 0) {
-          shots.push({ k: 'mis', x, y: y + 6, vx: 120, vy: 160, dmg: 2, r: 5 });
-          if (p.missile >= 2) shots.push({ k: 'mis', up: true, x, y: y - 6, vx: 120, vy: -160, dmg: 2, r: 5 });
-        }
-      } // v1.1.3 (Jonay): level 2 also fires one upwards: along the cave ceiling, or out into the sky
-      if (p.missile && p.mCD <= 0) p.mCD = 0.6;
-      if (mod.have) {
-        if (mod.st === 'front') {
-          for (const a of [-0.35, 0, 0.35])
-            shots.push({ k: 'red', x: mod.x + 8, y: mod.y, vx: Math.cos(a) * 420, vy: Math.sin(a) * 420, dmg: 1, r: 4 });
-        } else if (mod.st === 'back') {
-          for (const a of [-0.25, 0.25])
-            shots.push({ k: 'red', x: mod.x - 8, y: mod.y, vx: -Math.cos(a) * 420, vy: Math.sin(a) * 420, dmg: 1, r: 4 });
-        } else shots.push({ k: 'red', x: mod.x + 8, y: mod.y, vx: 420, vy: 0, dmg: 1, r: 4 });
-      }
-      api.sfx(p.laser ? 'zap' : 'pew');
-    }
-    function beam(c) {
-      const lvl = c >= 1 ? 2 : 1;
-      shots.push({ k: 'beam', x: p.x + 20, y: p.y, vx: 600, vy: 0, dmg: lvl === 2 ? 9 : 4, r: lvl === 2 ? 13 : 8, lvl, hits: new Set() });
-      api.sfx('vault');
-    }
+    const { fire, beam } = createPart3(shots, p, mod, api);
     function power(i) {
       const can = [p.spd < 4, p.missile < 2, !p.dbl && !p.laser, !p.laser, p.opts < 2, p.shield <= 0][i];
       /* v1.1.3 (Jonay: «empeorar no tiene sentido»): no DOBLE once you have the LÁSER */ if (!can) {
@@ -700,6 +643,46 @@ ARCADE.GAMES.naves = (() => {
       if (e.k === 'm') ring(e.x, e.y, 8, 110);
     }
     function enemy(e, dt) {
+      const { s } = enemyPart1(e, dt);
+      if (e.k === 'b') {
+        if (e.st === 'in') {
+          e.x -= 40 * dt;
+          if (e.x < W - 70) e.st = 'stay';
+        } else if (e.st === 'stay') {
+          e.y = e.y0 + Math.sin(e.t * 0.8) * 50;
+          if (e.t > 12) e.st = 'out';
+        } else e.x -= 70 * dt;
+        e.cd -= dt;
+        if (e.cd <= 0 && e.st !== 'in') {
+          e.cd = 1.5 / s;
+          for (const a of [-0.25, 0, 0.25]) aimed(e.x - 24, e.y, 140, a);
+        }
+      }
+      if (e.k === 'l') {
+        e.vy += 220 * dt;
+        e.y += e.vy * dt;
+        e.x -= vScroll * 0.5 * dt;
+        if (e.vy > 0 && e.y > H + 20) e.dead = true;
+      }
+      if (e.k === 'm') {
+        e.x += e.vx * dt;
+        e.y += Math.sin(e.t * 2) * 10 * dt;
+        if (Math.hypot(p.x - e.x, p.y - e.y) < 60 && e.t > 1) {
+          e.k2 = (e.k2 || 0) + dt;
+          if (e.k2 > 0.8) kill(e);
+        }
+      }
+      if (e.x < -50 || e.x > W + 120 || e.y < -40 || e.y > H + 40) e.gone = true;
+      if (!p.dead && Math.hypot(e.x - p.x, e.y - p.y) < e.r + 5) {
+        if (p.shield > 0 && e.x > p.x) {
+          p.shield--;
+          damage(e, 3);
+          api.sfx('hit');
+        } else die();
+      }
+    }
+    /** (v1.1.7, code quality) part of enemy */
+    function enemyPart1(e, dt) {
       const s = sp();
       e.fl = Math.max(0, (e.fl || 0) - dt);
       e.t = (e.t || 0) + dt;
@@ -743,42 +726,7 @@ ARCADE.GAMES.naves = (() => {
           aimed(e.x, e.y + (e.ceil ? 4 : -4), 140);
         }
       }
-      if (e.k === 'b') {
-        if (e.st === 'in') {
-          e.x -= 40 * dt;
-          if (e.x < W - 70) e.st = 'stay';
-        } else if (e.st === 'stay') {
-          e.y = e.y0 + Math.sin(e.t * 0.8) * 50;
-          if (e.t > 12) e.st = 'out';
-        } else e.x -= 70 * dt;
-        e.cd -= dt;
-        if (e.cd <= 0 && e.st !== 'in') {
-          e.cd = 1.5 / s;
-          for (const a of [-0.25, 0, 0.25]) aimed(e.x - 24, e.y, 140, a);
-        }
-      }
-      if (e.k === 'l') {
-        e.vy += 220 * dt;
-        e.y += e.vy * dt;
-        e.x -= vScroll * 0.5 * dt;
-        if (e.vy > 0 && e.y > H + 20) e.dead = true;
-      }
-      if (e.k === 'm') {
-        e.x += e.vx * dt;
-        e.y += Math.sin(e.t * 2) * 10 * dt;
-        if (Math.hypot(p.x - e.x, p.y - e.y) < 60 && e.t > 1) {
-          e.k2 = (e.k2 || 0) + dt;
-          if (e.k2 > 0.8) kill(e);
-        }
-      }
-      if (e.x < -50 || e.x > W + 120 || e.y < -40 || e.y > H + 40) e.gone = true;
-      if (!p.dead && Math.hypot(e.x - p.x, e.y - p.y) < e.r + 5) {
-        if (p.shield > 0 && e.x > p.x) {
-          p.shield--;
-          damage(e, 3);
-          api.sfx('hit');
-        } else die();
-      }
+      return { s };
     }
     // ---------- bosses: big things made of round parts; only the weak part (when open) takes damage
     function spawnBoss() {
@@ -826,6 +774,43 @@ ARCADE.GAMES.naves = (() => {
         }
         return;
       }
+      const { P2 } = bossUpdPart1(b, dt, s);
+      if (b.k === 'B3') {
+        // the queen of the hive: the eye opens 3 s out of 5; drones from her pods; the eye laser
+        b.x = lerp(b.x, W - 80, Math.min(1, dt * 0.6));
+        b.y = H / 2 + Math.sin(b.t * 0.5) * 50;
+        b.open = b.t % 5 < 3;
+        P2.push(
+          { x: b.x + 20, y: b.y - 62, r: 38 },
+          { x: b.x + 20, y: b.y + 62, r: 38 },
+          { x: b.x + 30, y: b.y, r: 42 },
+          { x: b.x - 28, y: b.y, r: 15, weak: true, open: b.open }
+        );
+        if (b.cd <= 0) {
+          b.cd = 2 / s;
+          if (b.open) for (let i = -3; i <= 3; i++) aimed(b.x - 28, b.y, 130, i * 0.15);
+          else for (const yy of [-62, 62]) foes.push({ k: 'p', x: b.x - 10, y: b.y + yy, vx: -160, hp: 1, r: 7, pts: 50, cd: 1 });
+        }
+        if (b.cd2 <= 0 && !b.las) {
+          b.cd2 = 7 / s;
+          b.las = { t: 1.4, y: p.y };
+        }
+        if (b.las) {
+          b.las.t -= dt;
+          if (b.las.t < 0.6 && b.las.t > 0 && !p.dead && p.x < b.x && Math.abs(p.y - b.las.y) < 10) die();
+          if (b.las.t <= 0) b.las = null;
+        }
+      }
+      b.parts = P2;
+      if (!p.dead)
+        for (const q of P2)
+          if (Math.hypot(q.x - p.x, q.y - p.y) < q.r + 4) {
+            die();
+            break;
+          }
+    }
+    /** (v1.1.7, code quality) part of bossUpd: the mother ship: a saucer; the core at the front opens 2 s out of every 4 */
+    function bossUpdPart1(b, dt, s) {
       b.cd -= dt;
       b.cd2 -= dt;
       const P2 = [];
@@ -876,109 +861,85 @@ ARCADE.GAMES.naves = (() => {
           aimed(h.x, h.y, 120);
         }
       }
-      if (b.k === 'B3') {
-        // the queen of the hive: the eye opens 3 s out of 5; drones from her pods; the eye laser
-        b.x = lerp(b.x, W - 80, Math.min(1, dt * 0.6));
-        b.y = H / 2 + Math.sin(b.t * 0.5) * 50;
-        b.open = b.t % 5 < 3;
-        P2.push(
-          { x: b.x + 20, y: b.y - 62, r: 38 },
-          { x: b.x + 20, y: b.y + 62, r: 38 },
-          { x: b.x + 30, y: b.y, r: 42 },
-          { x: b.x - 28, y: b.y, r: 15, weak: true, open: b.open }
-        );
-        if (b.cd <= 0) {
-          b.cd = 2 / s;
-          if (b.open) for (let i = -3; i <= 3; i++) aimed(b.x - 28, b.y, 130, i * 0.15);
-          else for (const yy of [-62, 62]) foes.push({ k: 'p', x: b.x - 10, y: b.y + yy, vx: -160, hp: 1, r: 7, pts: 50, cd: 1 });
-        }
-        if (b.cd2 <= 0 && !b.las) {
-          b.cd2 = 7 / s;
-          b.las = { t: 1.4, y: p.y };
-        }
-        if (b.las) {
-          b.las.t -= dt;
-          if (b.las.t < 0.6 && b.las.t > 0 && !p.dead && p.x < b.x && Math.abs(p.y - b.las.y) < 10) die();
-          if (b.las.t <= 0) b.las = null;
-        }
-      }
-      b.parts = P2;
-      if (!p.dead)
-        for (const q of P2)
-          if (Math.hypot(q.x - p.x, q.y - p.y) < q.r + 4) {
-            die();
-            break;
-          }
+      return { P2 };
     }
     // ---------- shots, bullets, items
     function updShots(dt) {
       for (const s of shots) {
-        s.x += s.vx * dt;
-        s.y += s.vy * dt;
-        if (s.k === 'mis' && !s.up) {
-          const t = terr(s.x);
-          const fl = Math.min(t.f, BOT);
-          if (s.y > fl - 4) {
-            s.y = fl - 4;
-            s.vy = 0;
-            s.vx = 220;
-          }
-        } // the missiles run along the ground
-        if (s.k === 'mis' && s.up) {
-          const t = terr(s.x);
-          if (t.c > -1e3 && s.y < t.c + 4) {
-            s.y = t.c + 4;
-            s.vy = 0;
-            s.vx = 220;
-          } else if (s.y < -10) s.dead = true;
-        } // v1.1.3: the upper one along the ceiling, or gone into the sky
-        if (s.x > W + 30 || s.x < -30 || s.y < 0 || s.y > H) {
-          s.dead = true;
-          continue;
+        updShotsEach(s, dt);
+      }
+      updShotsPart1(dt);
+    }
+    /** (v1.1.7, code quality) the body of a loop of updShots, split out of it */
+    function updShotsEach(s, dt) {
+      s.x += s.vx * dt;
+      s.y += s.vy * dt;
+      if (s.k === 'mis' && !s.up) {
+        const t = terr(s.x);
+        const fl = Math.min(t.f, BOT);
+        if (s.y > fl - 4) {
+          s.y = fl - 4;
+          s.vy = 0;
+          s.vx = 220;
         }
-        if (s.k !== 'mis') {
-          const t = terr(s.x);
-          if (s.y < t.c || s.y > t.f) {
-            if (!(s.k === 'beam' && s.lvl === 2)) s.dead = true;
-            fx.push({ k: 'spark', t: 0.2, x: s.x, y: s.y });
-            continue;
-          }
+      } // the missiles run along the ground
+      if (s.k === 'mis' && s.up) {
+        const t = terr(s.x);
+        if (t.c > -1e3 && s.y < t.c + 4) {
+          s.y = t.c + 4;
+          s.vy = 0;
+          s.vx = 220;
+        } else if (s.y < -10) s.dead = true;
+      } // v1.1.3: the upper one along the ceiling, or gone into the sky
+      if (s.x > W + 30 || s.x < -30 || s.y < 0 || s.y > H) {
+        s.dead = true;
+        return;
+      }
+      if (s.k !== 'mis') {
+        const t = terr(s.x);
+        if (s.y < t.c || s.y > t.f) {
+          if (!(s.k === 'beam' && s.lvl === 2)) s.dead = true;
+          fx.push({ k: 'spark', t: 0.2, x: s.x, y: s.y });
+          return;
         }
-        for (const e of foes) {
-          if (e.dead || (s.hits && s.hits.has(e))) continue;
-          if (Math.hypot(e.x - s.x, e.y - s.y) < e.r + s.r) {
-            if (s.hits) s.hits.add(e);
-            damage(e, s.dmg);
-            if (!e.dead && !(s.k === 'beam' && s.lvl === 2)) {
-              s.dead = true;
-              break;
-            }
-            if (!s.hits) {
-              s.dead = true;
-              break;
-            }
-          }
-        }
-        if (s.dead || !boss || boss.dying) continue;
-        for (const q of boss.parts)
-          if (Math.hypot(q.x - s.x, q.y - s.y) < q.r + s.r) {
-            if (q.weak && q.open) {
-              if (s.hits && s.hits.has(boss)) break;
-              if (s.hits) s.hits.add(boss);
-              bossHit(s.dmg);
-              if (time - ticT > 0.06) {
-                ticT = time;
-                api.sfx('tic');
-              }
-              fx.push({ k: 'spark', t: 0.2, x: s.x, y: s.y });
-              if (!(s.k === 'beam')) s.dead = true;
-            } else {
-              s.dead = true;
-              fx.push({ k: 'tink', t: 0.15, x: s.x, y: s.y });
-            }
+      }
+      for (const e of foes) {
+        if (e.dead || (s.hits && s.hits.has(e))) continue;
+        if (Math.hypot(e.x - s.x, e.y - s.y) < e.r + s.r) {
+          if (s.hits) s.hits.add(e);
+          damage(e, s.dmg);
+          if (!e.dead && !(s.k === 'beam' && s.lvl === 2)) {
+            s.dead = true;
             break;
           }
+          if (!s.hits) {
+            s.dead = true;
+            break;
+          }
+        }
       }
+      if (s.dead || !boss || boss.dying) return;
+      for (const q of boss.parts)
+        if (Math.hypot(q.x - s.x, q.y - s.y) < q.r + s.r) {
+          if (q.weak && q.open) {
+            if (s.hits && s.hits.has(boss)) break;
+            if (s.hits) s.hits.add(boss);
+            bossHit(s.dmg);
+            if (time - ticT > 0.06) {
+              ticT = time;
+              api.sfx('tic');
+            }
+            fx.push({ k: 'spark', t: 0.2, x: s.x, y: s.y });
+            if (!(s.k === 'beam')) s.dead = true;
+          } else {
+            s.dead = true;
+            fx.push({ k: 'tink', t: 0.15, x: s.x, y: s.y });
+          }
+          break;
+        }
+    }
+    /** (v1.1.7, code quality) part of updShots */
+    function updShotsPart1(dt) {
       for (let i = shots.length - 1; i >= 0; i--) if (shots[i].dead) shots.splice(i, 1);
       for (const b of bul) {
         b.x += b.vx * dt;
@@ -1366,62 +1327,8 @@ ARCADE.GAMES.naves = (() => {
       c.globalAlpha = 1;
     }
     function drawBoss(c, b) {
-      if (b.fl > 0 && flick()) c.globalAlpha = 0.7;
-      if (b.k === 'B1') {
-        c.fillStyle = '#5a6478';
-        c.beginPath();
-        c.ellipse(b.x, b.y, 70, 20, 0, 0, 7);
-        c.fill();
-        c.fillStyle = '#8a96ae';
-        c.beginPath();
-        c.ellipse(b.x, b.y - 4, 66, 12, 0, 0, 7);
-        c.fill();
-        c.fillStyle = 'rgba(160,220,255,0.7)';
-        c.beginPath();
-        c.ellipse(b.x, b.y - 20, 22, 16, 0, Math.PI, 0);
-        c.fill();
-        c.fillStyle = '#3fa04a';
-        c.beginPath();
-        c.arc(b.x, b.y - 24, 6, 0, 7);
-        c.fill(); // the pilot, a little green one
-        for (let i = 0; i < 9; i++) {
-          c.fillStyle = (Math.floor(b.t * 6) + i) % 3 === 0 ? '#ffd400' : '#ff5a8a';
-          c.fillRect(b.x - 56 + i * 14, b.y + 6, 4, 3);
-        }
-        c.fillStyle = b.open ? (flick() ? '#ff3a3a' : '#ffd400') : '#3c4660';
-        c.beginPath();
-        c.arc(b.x - 58, b.y + 2, 11, 0, 7);
-        c.fill();
-        if (!b.open) {
-          c.fillStyle = '#7d8aa3';
-          c.fillRect(b.x - 69, b.y, 22, 4);
-        }
-      }
-      if (b.k === 'B2') {
-        for (const q of b.parts) {
-          if (q.head) continue;
-          c.fillStyle = '#7a1e0a';
-          c.beginPath();
-          c.arc(q.x, q.y, q.r, 0, 7);
-          c.fill();
-          c.fillStyle = '#ff7a1a';
-          c.beginPath();
-          c.arc(q.x - 2, q.y - 2, q.r * 0.55, 0, 7);
-          c.fill();
-        }
-        c.fillStyle = '#9a2a10';
-        c.beginPath();
-        c.arc(b.x, b.y, 16, 0, 7);
-        c.fill();
-        c.fillStyle = '#ffd400';
-        c.fillRect(b.x - 8, b.y - 7, 5, 4);
-        c.fillStyle = '#2a0c06';
-        c.beginPath();
-        c.moveTo(b.x - 16, b.y + 2);
-        c.lineTo(b.x - 4, b.y + 6 + Math.sin(b.t * 8) * 3);
-        c.lineTo(b.x - 16, b.y + 10);
-        c.fill();
-      }
+      drawBossPart1(b, c);
+      drawBossPart2(b, c);
       if (b.k === 'B3') {
         for (const q of b.parts) {
           if (q.weak) continue;
@@ -1459,6 +1366,68 @@ ARCADE.GAMES.naves = (() => {
         }
       }
       c.globalAlpha = 1;
+    }
+    /** (v1.1.7, code quality) part of drawBoss */
+    function drawBossPart2(b, c) {
+      if (b.k === 'B2') {
+        for (const q of b.parts) {
+          if (q.head) continue;
+          c.fillStyle = '#7a1e0a';
+          c.beginPath();
+          c.arc(q.x, q.y, q.r, 0, 7);
+          c.fill();
+          c.fillStyle = '#ff7a1a';
+          c.beginPath();
+          c.arc(q.x - 2, q.y - 2, q.r * 0.55, 0, 7);
+          c.fill();
+        }
+        c.fillStyle = '#9a2a10';
+        c.beginPath();
+        c.arc(b.x, b.y, 16, 0, 7);
+        c.fill();
+        c.fillStyle = '#ffd400';
+        c.fillRect(b.x - 8, b.y - 7, 5, 4);
+        c.fillStyle = '#2a0c06';
+        c.beginPath();
+        c.moveTo(b.x - 16, b.y + 2);
+        c.lineTo(b.x - 4, b.y + 6 + Math.sin(b.t * 8) * 3);
+        c.lineTo(b.x - 16, b.y + 10);
+        c.fill();
+      }
+    }
+    /** (v1.1.7, code quality) part of drawBoss */
+    function drawBossPart1(b, c) {
+      if (b.fl > 0 && flick()) c.globalAlpha = 0.7;
+      if (b.k === 'B1') {
+        c.fillStyle = '#5a6478';
+        c.beginPath();
+        c.ellipse(b.x, b.y, 70, 20, 0, 0, 7);
+        c.fill();
+        c.fillStyle = '#8a96ae';
+        c.beginPath();
+        c.ellipse(b.x, b.y - 4, 66, 12, 0, 0, 7);
+        c.fill();
+        c.fillStyle = 'rgba(160,220,255,0.7)';
+        c.beginPath();
+        c.ellipse(b.x, b.y - 20, 22, 16, 0, Math.PI, 0);
+        c.fill();
+        c.fillStyle = '#3fa04a';
+        c.beginPath();
+        c.arc(b.x, b.y - 24, 6, 0, 7);
+        c.fill(); // the pilot, a little green one
+        for (let i = 0; i < 9; i++) {
+          c.fillStyle = (Math.floor(b.t * 6) + i) % 3 === 0 ? '#ffd400' : '#ff5a8a';
+          c.fillRect(b.x - 56 + i * 14, b.y + 6, 4, 3);
+        }
+        c.fillStyle = b.open ? (flick() ? '#ff3a3a' : '#ffd400') : '#3c4660';
+        c.beginPath();
+        c.arc(b.x - 58, b.y + 2, 11, 0, 7);
+        c.fill();
+        if (!b.open) {
+          c.fillStyle = '#7d8aa3';
+          c.fillRect(b.x - 69, b.y, 22, 4);
+        }
+      }
     }
     function hud(c) {
       c.fillStyle = 'rgba(0,0,0,0.55)';
@@ -1563,6 +1532,87 @@ ARCADE.GAMES.naves = (() => {
       _stage: () => stageN
     }); // tests
     return g;
+  }
+  /** (v1.1.7, code quality) part of create */
+  function createPart3(shots, p, mod, api) {
+    function fire() {
+      if (shots.filter((s) => s.k === 'shot' || s.k === 'laser').length > 16) return;
+      const srcs = [[p.x + 14, p.y]];
+      for (let i = 0; i < p.opts; i++) {
+        const h = p.hist[Math.min(p.hist.length - 1, (i + 1) * 14)];
+        srcs.push([h[0] + 4, h[1]]);
+      }
+      for (const [x, y] of srcs) {
+        if (p.laser) shots.push({ k: 'laser', x: x + 10, y, vx: 560, vy: 0, dmg: 1.2, r: 4, hits: new Set() });
+        else shots.push({ k: 'shot', x, y, vx: 440, vy: 0, dmg: 1, r: 4 });
+        if (p.dbl) shots.push({ k: 'shot', x, y, vx: 340, vy: -240, dmg: 1, r: 4 });
+        if (p.missile && p.mCD <= 0) {
+          shots.push({ k: 'mis', x, y: y + 6, vx: 120, vy: 160, dmg: 2, r: 5 });
+          if (p.missile >= 2) shots.push({ k: 'mis', up: true, x, y: y - 6, vx: 120, vy: -160, dmg: 2, r: 5 });
+        }
+      } // v1.1.3 (Jonay): level 2 also fires one upwards: along the cave ceiling, or out into the sky
+      if (p.missile && p.mCD <= 0) p.mCD = 0.6;
+      if (mod.have) {
+        if (mod.st === 'front') {
+          for (const a of [-0.35, 0, 0.35])
+            shots.push({ k: 'red', x: mod.x + 8, y: mod.y, vx: Math.cos(a) * 420, vy: Math.sin(a) * 420, dmg: 1, r: 4 });
+        } else if (mod.st === 'back') {
+          for (const a of [-0.25, 0.25])
+            shots.push({ k: 'red', x: mod.x - 8, y: mod.y, vx: -Math.cos(a) * 420, vy: Math.sin(a) * 420, dmg: 1, r: 4 });
+        } else shots.push({ k: 'red', x: mod.x + 8, y: mod.y, vx: 420, vy: 0, dmg: 1, r: 4 });
+      }
+      api.sfx(p.laser ? 'zap' : 'pew');
+    }
+    function beam(c) {
+      const lvl = c >= 1 ? 2 : 1;
+      shots.push({ k: 'beam', x: p.x + 20, y: p.y, vx: 600, vy: 0, dmg: lvl === 2 ? 9 : 4, r: lvl === 2 ? 13 : 8, lvl, hits: new Set() });
+      api.sfx('vault');
+    }
+    return { fire, beam };
+  }
+  /** (v1.1.7, code quality) part of create: ---------- the ship */
+  function createPart2(p, g, boom, api, mod) {
+    // ---------- the ship
+    function die() {
+      if (p.dead || p.inv > 0 || g._god) return;
+      p.dead = 1.8;
+      boom(p.x, p.y, 20);
+      api.sfx('boom');
+      api.stopMusic();
+      api.sfx('die');
+      p.spd = 0;
+      p.missile = 0;
+      p.dbl = false;
+      p.laser = false;
+      p.opts = 0;
+      p.shield = 0;
+      p.cur = -1;
+      p.charge = 0;
+      mod.have = false;
+    }
+    return { die };
+  }
+  /** (v1.1.7, code quality) part of create */
+  function createPart1() {
+    const p = {
+      x: 70,
+      y: H / 2,
+      dead: 0,
+      inv: 0,
+      spd: 0,
+      missile: 0,
+      dbl: false,
+      laser: false,
+      opts: 0,
+      shield: 0,
+      cur: -1,
+      charge: 0,
+      mCD: 0,
+      hist: [],
+      tilt: 0
+    };
+    const mod = { have: false, st: 'front', x: 0, y: 0, vx: 0, a: 0 };
+    return { p, mod };
   }
   // ---------- title screen (attract) and the backdrop of the hi-score table
   function drawTitle(c, t) {

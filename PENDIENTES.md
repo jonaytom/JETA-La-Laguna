@@ -758,7 +758,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 ### Rendimiento, auditorías y código
 
 - [ ] ⚡ **Auditoría 1.1.6: «180 avisos nuevos» del análisis estático** (crear geometría en `buildRoofProps`, `buildTerrain`, `buildLamps`…): no son nuevos, son los de siempre con otro número de línea tras pasar el formateador. Comprobar en la próxima auditoría que vuelven a contar como conocidos; `03_collide.js` bajó de A a B (más líneas por función).
-- [~] ◐ v1.1.6 (todo `src/` con Prettier: nota de C 69 a B 84, sin líneas largas ni densas; quedan las funciones-módulo muy largas y el código repetido de 09ma/09eb/06b) v1.0.0 (`12m_mundialito.js`: la tabla de selecciones, una fila por equipo) **Partir funciones largas y ordenar
+- [~] ◐ v1.1.7 (nota A: 88 en local, 86 en la auditoría, que ahora cuenta sentencias y deja fuera los datos; piezas comunes del píxel en 09e_pixkit, funciones largas de 251 a 147; quedan los «módulos» enteros —MISSIONS, BASKET2D, create() de los juegos de la recreativa— y los cuerpos de bucle muy largos como el de cada edificio en buildBuildings) v1.1.6 (todo `src/` con Prettier: nota de C 69 a B 84, sin líneas largas ni densas; quedan las funciones-módulo muy largas y el código repetido de 09ma/09eb/06b) v1.0.0 (`12m_mundialito.js`: la tabla de selecciones, una fila por equipo) **Partir funciones largas y ordenar
   los archivos con nota D o C** (auditorías 0.75, 0.76, 0.90 y 0.99.8): quedan `09eb_pixbasket.js` y `09ma_pixguanche.js`
   (el dibujante de la propuesta en una función de ~155 líneas), `12k_agua.js` (líneas muy largas y densas), `12j_campos.js`
   (la Copa Laguna), `09ea_minijuegos.js` (el público) y `11_hud.js` (bajó de B a C por las líneas largas). Las «funciones de
@@ -789,6 +789,13 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   Los módulos ES (P2.5) no aportan nada al jugador; se deja salvo que Jonay quiera.
 - [~] ◐ v0.99.7 (el «poste» de Juan de Vera era el alcalde) **Auditoría v0.99.6 y v0.99.8 (APTO CON AVISOS)**: `09jz_sprx.js`
   bajó de A a B y `11_hud.js` de B a C; `prueba_076.py` falla en la carga compartida y pasa sola.
+
+- [ ] ◐ **Auditoría 1.1.7 (APTO CON AVISOS, calidad A 86)**: avisos de minijuegos que salen con el auditor nuevo:
+  - el mundo 3D se sigue pintando detrás de bencomo, naves y guanche (la pantalla del minijuego lo tapa entero): no pintar la escena mientras haya un minijuego a pantalla completa (`13_main.js`, `loop()`).
+  - baloncesto (9 imágenes, 0,11 MB), bencomo (19, 0,33 MB) y guanche (46, 1,53 MB) empiezan a cargar sus imágenes al abrirse: precargarlas (`img.decode()`) durante la carga o al acercarse a la máquina.
+  - el fútbol crea lienzos y lee píxeles en cada fotograma (0,21 por fotograma): crearlos una vez y reutilizarlos.
+  - 1 sombreador de sombras (depth) se prepara por el camino: precompilarlo al arrancar.
+  - métricas iguales a la 1.1.6 (pintar 16,1 ms, lógica 0,96 ms); el arranque sube de 12,1 a 13,2 s (comprobar en la próxima si se repite).
 
 - [ ] ◐ **Tirón al escaparse el maleante** (Jonay, 3-nov): a mitad de partida, cuando huía un maleante, el juego se quedó
   congelado un momento. Probablemente algo que se crea de golpe al empezar la huida (el coche, su conductor, sombreadores

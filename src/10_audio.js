@@ -22,6 +22,38 @@ const AUDIO = (() => {
     } catch (e) {
       return;
     }
+    const { lfo } = initPart1();
+    lfo.type = 'square';
+    const lg = ctx.createGain();
+    lg.gain.value = 180;
+    lfo.connect(lg);
+    lg.connect(sirenOsc.frequency);
+    const sf = ctx.createBiquadFilter();
+    sf.type = 'lowpass';
+    sf.frequency.value = 1800;
+    sirenG = ctx.createGain();
+    sirenG.gain.value = 0;
+    sirenOsc.connect(sf);
+    sf.connect(sirenG);
+    sirenG.connect(master);
+    sirenOsc.start();
+    lfo.start();
+    // city ambience
+    const am = ctx.createBufferSource();
+    am.buffer = noiseBuf;
+    am.loop = true;
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 350;
+    ambG = ctx.createGain();
+    ambG.gain.value = 0.05;
+    am.connect(lp);
+    lp.connect(ambG);
+    ambG.connect(master);
+    am.start();
+  }
+  /** (v1.1.7, code quality) part of init: engine */
+  function initPart1() {
     master = ctx.createGain();
     master.gain.value = A.vol;
     master.connect(ctx.destination);
@@ -77,34 +109,7 @@ const AUDIO = (() => {
     sirenOsc.frequency.value = 700;
     const lfo = ctx.createOscillator();
     lfo.frequency.value = 0.9;
-    lfo.type = 'square';
-    const lg = ctx.createGain();
-    lg.gain.value = 180;
-    lfo.connect(lg);
-    lg.connect(sirenOsc.frequency);
-    const sf = ctx.createBiquadFilter();
-    sf.type = 'lowpass';
-    sf.frequency.value = 1800;
-    sirenG = ctx.createGain();
-    sirenG.gain.value = 0;
-    sirenOsc.connect(sf);
-    sf.connect(sirenG);
-    sirenG.connect(master);
-    sirenOsc.start();
-    lfo.start();
-    // city ambience
-    const am = ctx.createBufferSource();
-    am.buffer = noiseBuf;
-    am.loop = true;
-    const lp = ctx.createBiquadFilter();
-    lp.type = 'lowpass';
-    lp.frequency.value = 350;
-    ambG = ctx.createGain();
-    ambG.gain.value = 0.05;
-    am.connect(lp);
-    lp.connect(ambG);
-    ambG.connect(master);
-    am.start();
+    return { lfo };
   }
   function burst(dur, freq, vol, type = 'lowpass') {
     if (!ctx) return;
