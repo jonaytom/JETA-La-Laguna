@@ -624,7 +624,7 @@ function trinidadArcades() {
   if (!T || !T.pz) return 0;
   let n = 0;
   const spots = [
-    { c: T.B, s: T.pz.b.s - 28, col: 0x5f7a3a },
+    // v1.1.9: the Dialprix block (odd side) has its arcade with the rest of that side (trinidadArcadeEdge)
     { c: T.A, s: T.A.len - 90, col: 0xb8a3a8 }
   ];
   for (const sp of spots) {
@@ -675,4 +675,165 @@ function trinidadArcades() {
     scene.add(beam);
   }
   return n;
+}
+// ---------- v1.1.9 (Jonay, 2-nov, 20 capturas en docs/referencias/av_trinidad/soportales_*.png: «en La Trinidad es todo por
+// un lado como una especie de paso bajo los edificios para los peatones»): the odd side of the avenue (carriageway B, the
+// Dialprix side) has arcades along every block: the ground floor goes ARC.D m back with the shops at the back, the floors
+// above stand on pillars at the pavement line. buildBuildingsEach asks which edges of a building are arcade edges.
+const TRI_ARC = { D: 2.8, edges: 0 };
+/** the edges of a building footprint that face the odd pavement of the avenue (null if none) */
+function trinidadArcadeEdges(pts, cx, cz) {
+  const T = trinidadGeo();
+  if (!T || !T.B) return null;
+  const c = T.B;
+  if (c.proj(cx, cz).d > 60) return null;
+  let set = null;
+  const n = pts.length;
+  for (let i = 0; i < n; i++) {
+    const p = pts[i],
+      q = pts[(i + 1) % n],
+      L = Math.hypot(q[0] - p[0], q[1] - p[1]);
+    if (L < 6) continue;
+    const mx = (p[0] + q[0]) / 2,
+      mz = (p[1] + q[1]) / 2,
+      r = c.proj(mx, mz);
+    if (r.s < 6 || r.s > c.len - 6) continue;
+    const k = trinidadClear(c, r.s);
+    if (r.d > k + 3 || r.d < k - 1.5) continue;
+    const a = c.at(r.s),
+      par = Math.abs(((q[0] - p[0]) * a.ux + (q[1] - p[1]) * a.uz) / L);
+    if (par < 0.9) continue;
+    const ox = (q[1] - p[1]) / L,
+      oz = -(q[0] - p[0]) / L; // outward normal of a counter-clockwise footprint
+    if (ox * (r.px - mx) + oz * (r.pz - mz) <= 0) continue; // it must face the avenue
+    if (![0.15, 0.5, 0.85].every((t) => !onCarriagewayEarly(p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t, 0.3))) continue;
+    (set || (set = new Set())).add(i);
+  }
+  return set;
+}
+/** the floor line the arcade reaches (a whole number of floors from y0, at least 3.4 m over the pavement) */
+function trinidadArcadeTop(p, q, y0, fh) {
+  const g = Math.max(heightAt(p[0], p[1]), heightAt(q[0], q[1]), heightAt((p[0] + q[0]) / 2, (p[1] + q[1]) / 2));
+  return y0 + Math.ceil((g + 3.4 - y0) / fh) * fh;
+}
+/** the collisions of an arcade edge: the shop fronts at the back, the two ends and the pillars */
+function trinidadArcadeCol(p, q) {
+  const L = Math.hypot(q[0] - p[0], q[1] - p[1]),
+    ux = (q[0] - p[0]) / L,
+    uz = (q[1] - p[1]) / L;
+  // inward = minus the outward normal (uz, −ux) of a counter-clockwise footprint
+  const a = [p[0] - uz * TRI_ARC.D, p[1] + ux * TRI_ARC.D],
+    b = [q[0] - uz * TRI_ARC.D, q[1] + ux * TRI_ARC.D];
+  COL.addSeg(a[0], a[1], b[0], b[1]);
+  COL.addSeg(p[0], p[1], a[0], a[1]);
+  COL.addSeg(q[0], q[1], b[0], b[1]);
+  for (const t of trinidadArcadePillars(L)) COL.addCirc(p[0] + ux * t - uz * 0.3, p[1] + uz * t + ux * 0.3, 0.32);
+}
+const trinidadArcadePillars = (L) => {
+  const k = Math.max(1, Math.round(L / 4.2)),
+    out = [];
+  for (let j = 0; j <= k; j++) out.push(0.35 + ((L - 0.7) * j) / k);
+  return out;
+};
+/** draws an arcade edge: the facade from the arcade's top up, the shop fronts at the back, the ceiling, the ends and the pillars */
+function trinidadArcadeEdge(A, T0, p, q, nb, fh, y0, bot, wallTop, col, tl, out, cx, cz) {
+  const L = Math.hypot(q[0] - p[0], q[1] - p[1]),
+    ux = (q[0] - p[0]) / L,
+    uz = (q[1] - p[1]) / L,
+    D = TRI_ARC.D;
+  const a = [p[0] - uz * D, p[1] + ux * D],
+    b = [q[0] - uz * D, q[1] + ux * D];
+  const top = Math.min(trinidadArcadeTop(p, q, y0, fh), wallTop - 0.5);
+  // the facade above the arcade
+  A.quad(
+    [p[0], top, p[1]],
+    [q[0], top, q[1]],
+    [q[0], wallTop, q[1]],
+    [p[0], wallTop, p[1]],
+    [0, (top - y0) / fh],
+    [nb, (top - y0) / fh],
+    [nb, (wallTop - y0) / fh],
+    [0, (wallTop - y0) / fh],
+    col,
+    tl,
+    out
+  );
+  // the shop fronts at the back (the ground floor of the same facade)
+  facadeWall(A, T0, a, b, nb, fh, y0, bot, top, col, tl, out);
+  const C = acc(cx, cz, 'trim'),
+    cc = [0.82, 0.8, 0.75],
+    pc = [0.74, 0.71, 0.66],
+    two = (v0, v1, v2, v3, c, nrm) => {
+      C.quad(v0, v1, v2, v3, [0, 0], [0, 0], [0, 0], [0, 0], c, undefined, nrm);
+      C.quad(
+        v3,
+        v2,
+        v1,
+        v0,
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        c,
+        undefined,
+        nrm.map((v) => -v)
+      );
+    };
+  // the ceiling and the beam along the front
+  two([p[0], top, p[1]], [q[0], top, q[1]], [b[0], top, b[1]], [a[0], top, a[1]], cc, [0, -1, 0]);
+  two(
+    [p[0] + out[0] * 0.05, top - 0.45, p[1] + out[2] * 0.05],
+    [q[0] + out[0] * 0.05, top - 0.45, q[1] + out[2] * 0.05],
+    [q[0] + out[0] * 0.05, top, q[1] + out[2] * 0.05],
+    [p[0] + out[0] * 0.05, top, p[1] + out[2] * 0.05],
+    pc,
+    out
+  );
+  // the two ends
+  for (const [e, f] of [
+    [p, a],
+    [q, b]
+  ])
+    two(
+      [e[0], heightAt(e[0], e[1]) - 0.6, e[1]],
+      [f[0], heightAt(f[0], f[1]) - 0.6, f[1]],
+      [f[0], top, f[1]],
+      [e[0], top, e[1]],
+      col.map((v) => v * 0.9),
+      [ux, 0, uz]
+    );
+  // the pillars
+  for (const t of trinidadArcadePillars(L)) {
+    const x = p[0] + ux * t - uz * 0.3,
+      z = p[1] + uz * t + ux * 0.3,
+      g = heightAt(x, z) - 0.2,
+      w = 0.24;
+    for (const [dx, dz, nx, nz] of [
+      [ux, uz, -uz, ux],
+      [-uz, ux, -ux, -uz],
+      [-ux, -uz, uz, -ux],
+      [uz, -ux, ux, uz]
+    ]) {
+      const c0 = [x + (dx + nx) * w, z + (dz + nz) * w],
+        c1 = [x + (dx - nx) * w, z + (dz - nz) * w];
+      C.quad(
+        [c0[0], g, c0[1]],
+        [c1[0], g, c1[1]],
+        [c1[0], top - 0.45, c1[1]],
+        [c0[0], top - 0.45, c0[1]],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        pc,
+        undefined,
+        [dx, 0, dz]
+      );
+    }
+  }
+  // the camera stays under the ceiling (like in the passages)
+  const m0 = [(p[0] + a[0]) / 2, (p[1] + a[1]) / 2],
+    m1 = [(q[0] + b[0]) / 2, (q[1] + b[1]) / 2];
+  PASAJES.zones.push({ ax: m0[0], az: m0[1], bx: m1[0], bz: m1[1], ga: top - PASAJES.CLR, gb: top - PASAJES.CLR, hw: D / 2 });
+  TRI_ARC.edges++;
 }

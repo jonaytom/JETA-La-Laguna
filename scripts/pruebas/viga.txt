@@ -1,0 +1,4 @@
+# v1.1.9: la viga sobre el puente de San Lázaro (2)
+herramientas/sonda_calzadas.py -1818 -185 30
+herramientas/sonda_alturas.py -1818 -185 25
+herramientas/sonda_rayos.py -1850 -182 90 2

@@ -450,16 +450,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Calles, túneles, puentes, enlaces y aeropuerto
 
-- [~] ⚡ v1.1.0 (red de seguridad que te devuelve a la calle; la sonda `sonda_caidas.py` no encuentra ahí un tablero sobre un tramo bajo, así que la causa sigue sin saberse: falta reproducirlo conduciendo por ese enlace) **¡Bloquea la misión! El coche se cae a través de la calzada en el enlace de la Autopista del Norte** (Jonay,
-  3-nov, X −3292, Y −161, captura de noche, misión del queso del aeropuerto: «me he caído por aquí con el coche mientras
-  seguía a la furgoneta del queso; él también se cayó pero pudo seguir; esto es súper bug porque impide hacer la misión,
-  me dejó bloqueado»): en la unión del puente con la calzada el suelo deja pasar el coche y queda atrapado debajo del
-  tablero. Dos arreglos:
-  - el sitio: mirar la altura del suelo en ese tramo (`ROADY`, tableros `DECKS`) y cerrar el hueco entre el puente y la
-    calzada; buscar con una sonda otras uniones donde el suelo de conducir dé un salto hacia abajo de más de 1 m;
-  - una red de seguridad general: si el coche (o el jugador) queda más de ~2 m por debajo de la calzada o atrapado sin poder
-    salir unos segundos, devolverlo a la calzada más cercana en su sentido (como hacen los GTA). Que valga también para los
-    coches de las misiones.
 
 - [~] ◐ v1.1.3 (de nuevo ~11–12 s y 15–17 ms a 720p; la nota del código bajó de B a C: líneas largas) **Arranque y pintado más lentos desde la 1.0.4** (auditoría 1.0.8): arranque 11 → 14 s y pintar a 720p
   13,6 → 24 ms (en la auditoría; la sonda con la tarjeta daba 14–18 ms en la 1.0.4). Medir qué pesa: los muros (cortes por
@@ -473,7 +463,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   tramo abierto de una trinchera o un paso inferior (Autopista del Norte X −1193, Y −28; Vía de Ronda X 537, Y 1371 y
   X 713, Y 1315; Av. de los Menceyes X 694, Y 1326; Camino La Rúa X 630, Y −1146; enlaces de la autopista X 1221, Y 2360…).
   Ahí la calle de arriba necesita una losa de puente (y la trinchera, cubrirse bajo ella), no un corte.
-- [ ] ◐ **Ninguna calle puede pasar por encima de una rampa o un túnel que baja (en todo el mapa)** (Jonay, 3-nov, Plaza
+- [~] ◐ v1.1.9 (las calles que cruzan una trinchera poco honda la dejan a nivel; la rampa del parking de La Trinidad es de doble sentido y se puede salir por ella en coche —dentro del aparcamiento no hay tráfico—; quedan 5 sitios, en el Cristo y en X 140, Y −628, donde la calle de servicio del OSM entra en la rampa de un aparcamiento: ahí no se pinta la calle) **Ninguna calle puede pasar por encima de una rampa o un túnel que baja (en todo el mapa)** (Jonay, 3-nov, Plaza
   del Cristo X 256, Y −552, captura: «la entrada al parking tiene una carretera encima; hay que revisar dónde se crucen
   carreteras a distinto nivel en todo el mapa, esto no puede pasar nunca»): la calzada de la plaza se pinta a ras de
   suelo por encima de la rampa del aparcamiento subterráneo, que se ve partida por debajo. Hacer una sonda para todo el
@@ -528,7 +518,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   otras, para que la cámara permita ver, y tenerlo en cuenta para dejar espacio»): la cámara se mete en el techo o en los
   muros y se ve el fondo marrón y piezas sueltas. Acercar la cámara y bajarla en túneles, pasos inferiores y bajo puentes
   (que no atraviese el techo), en todas esas zonas, y dejar altura libre suficiente al construirlas.
-- [~] ◐ v1.1.4 (San Honorato: líneas de la trinchera cortadas donde se junta con la glorieta; Vía de Ronda X 309: el ramal de bajada sube con la vía elevada; queda el ramal de subida, que está más alto que la vía y habría que bajar el terreno, y los quiebros de la Av. de La Trinidad) **Calles en zigzag y marcas que se quiebran** (Jonay, 3-nov, Av. de La Trinidad X −147, Y 220, captura: «las
+- [~] ◐ v1.1.9 (Vía de Ronda X 309: el ramal de subida sigue a la vía donde sus calzadas se pisan; calles repetidas del OSM —dos copias de la misma vía— quitadas al cargar; los quiebros de la Av. de La Trinidad no se ven ya en las fotos: falta que Jonay lo mire) v1.1.4 (San Honorato: líneas de la trinchera cortadas donde se junta con la glorieta; Vía de Ronda X 309: el ramal de bajada sube con la vía elevada; queda el ramal de subida, que está más alto que la vía y habría que bajar el terreno, y los quiebros de la Av. de La Trinidad) **Calles en zigzag y marcas que se quiebran** (Jonay, 3-nov, Av. de La Trinidad X −147, Y 220, captura: «las
   carreteras no pueden ser tan angulosas, y menos las marcas viales»): el carril de la avenida y su acera hacen quiebros
   bruscos (puntos del OSM movidos al separar sentidos o al ensanchar). Suavizar el trazado (curvas con radio mínimo, puntos
   intermedios) antes de dibujar calzada, aceras y líneas.
@@ -544,17 +534,12 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   circulan los coches. Que las plazas solo vayan en el carril de aparcamiento (junto al bordillo), nunca en los de paso.
 - [~] ● v0.99.6 (pasos inferiores cortos con la carretera de encima en terraplén, STOP solo en la incorporación, carriles de aceleración y deceleración, líneas en puentes, techo del intercambiador recortado) v0.99.5 (líneas por carriles, bionda en los bordes, sin aparcados en la autopista) **Marcas viales, arcenes y medianas de la autopista, la Vía de Ronda y sus enlaces** (Jonay, 27-oct: «las carreteras con cruces son un lío»; 15 capturas: X 386 Z −276, X 1534 Z 2739, X 1775 Z 3165, X −546 Z 470…):
   - Falta: mirar con Jonay las fotos nuevas de los 15 sitios (`tests/shots/v2_*.jpg`) y los cebreados pintados en las narices de las salidas.
-- [~] ◐ v0.78.0 (tramos elevados que bajan a la calle donde acaban: Travesía Andenes/Av. Ghandi X 820 Z 3494 y Vía de Ronda X 377 Z −268; rampa X −495 Z 683 de 1,2 m a 0,4 m; queda la **rampa del HUC X 2210 Z 3312**: la boca de la rampa empieza 2 m honda justo donde la cruza la calle de servicio, y el coche cae dentro: hay que acortar la rampa o mover el cruce) v0.55.0 **Uniones de túneles y puentes con la vía normal** (hecho: Vallado y boca de la Vía de Ronda) (Jonay, 7-oct): salida del túnel de Camino el Vallado
-      (X −942 Z 86 / X −928 Z 64): la losa de arriba se superpone a la salida y no deja salir, y por las paredes
-      laterales se ve a través (no debería verse el exterior a través de las paredes del túnel). Vía de Ronda
-      (X 388 Z 1499): en la boca confluyen calles y los coches se hunden/chocan. Revisar todas las uniones.
 - [~] ◐ v0.78.0 (repasado con fotos de glorietas, enlaces y la Autopista del Norte: las rayas en las entradas de las glorietas son las de ceda el paso, están bien; no se ve nada cruzado) v0.73.0 (ramales de un sentido sin línea central) v0.70.0 (sin líneas donde una calle está dentro de otra: cruces, incorporaciones, glorietas; mirar las fotos `faciles_*`) **Marcas viales** (apunte de Jonay): con los puentes y cruces hay líneas que se cruzan por todas partes; también
       en salidas e incorporaciones (autopista, Vía de Ronda) y en las glorietas.
 - [~] ◐ v0.78.0 (marquesina grande de la terminal sobre el carril de dejar pasajeros) v0.72.0 (rotonda-cúpula, depósitos, naves con carteles, P, valla y aviones despegando/aterrizando hechos; mirar fotos `grandes_aeropuerto_*`) Aeropuerto: afinar con las fotos (rotonda-cúpula, depósitos de combustible, naves SEUR/ITV/Binter, P de
       parking con rótulos, valla perimetral) y aviones despegando/aterrizando de vez en cuando.
-- [ ] ◐ **Av. de La Trinidad: soportales a lo largo de todo un lado** (Jonay, 2-nov; 20 capturas de Street View en `docs/referencias/av_trinidad/soportales_*.png`: impares n.º 1 a 61, pares 6 a 58 y, con soportales también, los pares 68 y 76; el 59 y el 74 son el cruce de Pedro Zerolo): «en La Trinidad es todo por un lado como una especie de paso bajo los edificios para los peatones que no está representado… además esto deja más espacio para las entradas del parking».
+- [~] ◐ v1.1.9 (soportales en toda la acera de los impares: planta baja 2,8 m hacia dentro con las tiendas al fondo, pilares a la línea de la acera, techo y colisiones; falta que Jonay lo mire y lo de las rampas Indigo) **Av. de La Trinidad: soportales a lo largo de todo un lado** (Jonay, 2-nov; 20 capturas de Street View en `docs/referencias/av_trinidad/soportales_*.png`: impares n.º 1 a 61, pares 6 a 58 y, con soportales también, los pares 68 y 76; el 59 y el 74 son el cruce de Pedro Zerolo): «en La Trinidad es todo por un lado como una especie de paso bajo los edificios para los peatones que no está representado… además esto deja más espacio para las entradas del parking».
   - Hoy solo hay soportales en el bloque del Dialprix y en el n.º 76 (`src/05u_trinidad.js`, «soportales»). Hacerlos en toda la acera de los impares (pilares a la línea de la acera, la planta baja metida 2–3 m con las tiendas al fondo), y aprovechar ese hueco para que las rampas Indigo (n.º 3 y 59) tengan sitio.
-- [~] ● v0.78.0 (comparado: la TF-5 pasa **a nivel** bajo el puente de Cam. San Lázaro; en la realidad va en trinchera: hundirla es un cambio grande, por decidir) Repasar con las fotos del aeropuerto la zona ya hecha alrededor (San Benito, El Coromoto, autopista TF-5). v0.72.0: visto en las fotos que la TF-5 pasa en trinchera bajo la Rotonda Sempiterno y bajo el puente de Cam. San Lázaro; queda por comparar en el juego.
 - [~] ● v0.78.0 (muros de la trinchera de basalto oscuro) v0.72.0 (rotonda partida en trinchera con dos túneles de bóveda bajo la TF-5, accesos en rampa, chalets de Guajara; mirar las fotos `grandes_tf13_*`) **TF-13 / Cam. San Bartolomé de Geneto / Urbanización Guajara** (junto a la TF-5, Museo de la Ciencia y el
       Cosmos): la zona está «fatal». Real: la TF-13 baja en trinchera con muros de piedra y pasa bajo la TF-5 por dos
       túneles de bóveda que salen a una rotonda partida; vía de servicio «C. dos Autopista Parl.», Cam. San Bartolomé
@@ -790,6 +775,9 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   - 1 sombreador de sombras (depth) se prepara por el camino: precompilarlo al arrancar.
   - métricas iguales a la 1.1.6 (pintar 16,1 ms, lógica 0,96 ms); el arranque sube de 12,1 a 13,2 s (comprobar en la próxima si se repite).
 
+  - Auditoría 1.1.8 (APTO CON AVISOS, A 86): todo sale ~20 % más lento a la vez —pintar 16,1 → 19,8 ms, lógica 0,96 → 1,14 ms y hasta los minijuegos 2D—, con las mismas llamadas, triángulos y memoria: parece el PC más cargado durante la medición, no el código. Comprobar en la próxima auditoría.
+  - Auditoría 1.1.9 (APTO CON AVISOS, A 86): de nuevo todo más lento a la vez (pintar 20 → 23,2 ms, lógica 0,98 → 1,55 ms, arranque 15,2 → 17,2 s, cada paso de la carga un 20–60 % más y el fútbol 2D 0,5 → 1,6 ms) con las mismas llamadas y triángulos. Repetir la auditoría con el PC descansado para saber cuánto es del código (la 1.1.9 añade al arrancar la búsqueda de calles repetidas y la trinchera de la TF-5).
+  - El fútbol aún prepara sus jugadores en los primeros 3 s del partido (1 lienzo por fotograma, luego para): dibujarlos al abrir el juego.
 - [ ] ◐ **Tirón al escaparse el maleante** (Jonay, 3-nov): a mitad de partida, cuando huía un maleante, el juego se quedó
   congelado un momento. Probablemente algo que se crea de golpe al empezar la huida (el coche, su conductor, sombreadores
   nuevos, la ruta). Medirlo con la sonda de tiempos al lanzar un maleante y crear eso antes (o en trozos).
@@ -850,6 +838,24 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Hecho
 
+- [x] v1.1.9 v1.1.0 (red de seguridad que te devuelve a la calle; la sonda `sonda_caidas.py` no encuentra ahí un tablero sobre un tramo bajo, así que la causa sigue sin saberse: falta reproducirlo conduciendo por ese enlace) **¡Bloquea la misión! El coche se cae a través de la calzada en el enlace de la Autopista del Norte** (Jonay,
+  3-nov, X −3292, Y −161, captura de noche, misión del queso del aeropuerto: «me he caído por aquí con el coche mientras
+  seguía a la furgoneta del queso; él también se cayó pero pudo seguir; esto es súper bug porque impide hacer la misión,
+  me dejó bloqueado»): en la unión del puente con la calzada el suelo deja pasar el coche y queda atrapado debajo del
+  tablero. Dos arreglos:
+  - el sitio: mirar la altura del suelo en ese tramo (`ROADY`, tableros `DECKS`) y cerrar el hueco entre el puente y la
+    calzada; buscar con una sonda otras uniones donde el suelo de conducir dé un salto hacia abajo de más de 1 m;
+  - una red de seguridad general: si el coche (o el jugador) queda más de ~2 m por debajo de la calzada o atrapado sin poder
+    salir unos segundos, devolverlo a la calzada más cercana en su sentido (como hacen los GTA). Que valga también para los
+    coches de las misiones.
+  - v1.1.9: la causa era el puente de la glorieta sobre la autopista: tenía que subir 5 m en 15 m y dejaba un escalón de 1,6 m donde se juntaba con la glorieta. Ahora la autopista va en trinchera ahí (6 m), como junto a Los Rodeos, y el puente queda a nivel (`TF5T`, `prueba_119.py`).
+- [x] v1.1.9 v0.78.0 (tramos elevados que bajan a la calle donde acaban: Travesía Andenes/Av. Ghandi X 820 Z 3494 y Vía de Ronda X 377 Z −268; rampa X −495 Z 683 de 1,2 m a 0,4 m; queda la **rampa del HUC X 2210 Z 3312**: la boca de la rampa empieza 2 m honda justo donde la cruza la calle de servicio, y el coche cae dentro: hay que acortar la rampa o mover el cruce) v0.55.0 **Uniones de túneles y puentes con la vía normal** (hecho: Vallado y boca de la Vía de Ronda) (Jonay, 7-oct): salida del túnel de Camino el Vallado
+      (X −942 Z 86 / X −928 Z 64): la losa de arriba se superpone a la salida y no deja salir, y por las paredes
+      laterales se ve a través (no debería verse el exterior a través de las paredes del túnel). Vía de Ronda
+      (X 388 Z 1499): en la boca confluyen calles y los coches se hunden/chocan. Revisar todas las uniones.
+  - v1.1.9: una calle a nivel que cruza o toca una trinchera de 0,3–3 m la deja a nivel debajo de ella y la trinchera empieza a bajar después (≤22 %) (`shallowCrossCaps`): la rampa del HUC ya no está hundida en el cruce.
+- [x] v1.1.9 v0.78.0 (comparado: la TF-5 pasa **a nivel** bajo el puente de Cam. San Lázaro; en la realidad va en trinchera: hundirla es un cambio grande, por decidir) Repasar con las fotos del aeropuerto la zona ya hecha alrededor (San Benito, El Coromoto, autopista TF-5). v0.72.0: visto en las fotos que la TF-5 pasa en trinchera bajo la Rotonda Sempiterno y bajo el puente de Cam. San Lázaro; queda por comparar en el juego.
+  - v1.1.9: la TF-5 va en trinchera de 6,5 m entre X −2470 y X −1620 (Rotonda Sempiterno y puente de Cam. San Lázaro, que quedan a nivel del suelo) con sus ramales bajando y subiendo; y otra de 6 m junto a la salida del aeropuerto (X −3290). Fotos `calzadas_-1815_-212_*`, `calzadas_-2270_-228_*`.
 - [x] v1.1.8 **Para mirar** (visto en las fotos de la 0.77, ya estaba antes): en la Plaza del Adelantado y en el casco hay **marcos
       grises flotando** sobre las fachadas (vigas horizontales a la altura del tejado y algún poste suelto), en
       X 105 Z −45 mirando a la plaza y en X −60 Z −230 mirando a X −10 Z −150. ¿Soportales/pérgolas mal colocados?

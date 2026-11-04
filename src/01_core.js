@@ -84,6 +84,77 @@ const inPlayArea = (x, z, m = 0) => worldEdgeDist(x, z) >= m;
     r[4] = c.slice(i0, i1 + 2);
     return true;
   });
+  // v1.1.9: the same street twice (two downloads of a zone joined by merge_zona keep both copies; at the TF-5 one copy sank
+  // with the trench and the other stayed up over it): a road that runs for more than 80 % of its length within 1.2 m of
+  // another one of the same type and level is left out (the longer copy stays)
+  {
+    const R = DATA.R,
+      G = new Map(),
+      segs = [],
+      CS = 20;
+    const lenOf = (c) => {
+      let L = 0;
+      for (let i = 2; i < c.length; i += 2) L += Math.hypot(c[i] - c[i - 2], c[i + 1] - c[i - 1]);
+      return L;
+    };
+    R.forEach((r, ri) => {
+      if (r[0] > 12) return;
+      const c = r[4];
+      for (let i = 0; i + 3 < c.length; i += 2) {
+        const k = segs.push([ri, c[i], c[i + 1], c[i + 2], c[i + 3]]) - 1;
+        for (let a = Math.floor(Math.min(c[i], c[i + 2]) / CS); a <= Math.floor(Math.max(c[i], c[i + 2]) / CS); a++)
+          for (let b = Math.floor(Math.min(c[i + 1], c[i + 3]) / CS); b <= Math.floor(Math.max(c[i + 1], c[i + 3]) / CS); b++) {
+            const kk = a * 100003 + b;
+            let l = G.get(kk);
+            if (!l) G.set(kk, (l = []));
+            l.push(k);
+          }
+      }
+    });
+    const near = (x, z, ri, out) => {
+      const l = G.get(Math.floor(x / CS) * 100003 + Math.floor(z / CS));
+      if (!l) return;
+      for (const k of l) {
+        const [rj, ax, az, bx, bz] = segs[k];
+        if (rj === ri || out.has(rj)) continue;
+        const dx = bx - ax,
+          dz = bz - az,
+          L2 = dx * dx + dz * dz || 1,
+          t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / L2));
+        if (Math.hypot(x - ax - dx * t, z - az - dz * t) < 1.2) out.add(rj);
+      }
+    };
+    const drop = new Set();
+    R.forEach((r, ri) => {
+      if (r[0] > 12) return;
+      const c = r[4],
+        cnt = new Map();
+      let n = 0;
+      for (let i = 0; i + 3 < c.length; i += 2) {
+        const L = Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]),
+          m = Math.max(1, Math.floor(L / 3));
+        for (let k = 0; k < m; k++) {
+          const seen = new Set();
+          near(c[i] + ((c[i + 2] - c[i]) * k) / m, c[i + 1] + ((c[i + 3] - c[i + 1]) * k) / m, ri, seen);
+          for (const rj of seen) cnt.set(rj, (cnt.get(rj) || 0) + 1);
+          n++;
+        }
+      }
+      if (n < 5) return;
+      for (const [rj, k] of cnt) {
+        const o = R[rj];
+        if (k / n <= 0.8 || o[0] !== r[0] || (o[3] & 6) !== (r[3] & 6) || drop.has(rj)) continue;
+        const a = lenOf(c),
+          b = lenOf(o[4]);
+        if (b > a || (b === a && rj < ri)) {
+          drop.add(ri);
+          return;
+        }
+      }
+    });
+    if (drop.size) DATA.R = R.filter((r, ri) => !drop.has(ri));
+    console.log('play area: repeated roads left out', drop.size);
+  }
   const N = DATA.G.n;
   DATA.G.e = DATA.G.e.filter((e) => inPlayArea(N[e[0] * 2], N[e[0] * 2 + 1], -M) && inPlayArea(N[e[1] * 2], N[e[1] * 2 + 1], -M));
   {

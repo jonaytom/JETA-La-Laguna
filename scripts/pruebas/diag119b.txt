@@ -1,0 +1,11 @@
+# v1.1.9: fotos y alturas tras los cambios
+herramientas/sonda_alturas.py 330 -10 45
+herramientas/sonda_calzadas.py -1815 -212 60
+herramientas/sonda_calzadas.py -2270 -228 60
+herramientas/sonda_calzadas.py -3292 -161 50
+herramientas/sonda_calzadas.py 2210 3312 45
+herramientas/sonda_calzadas.py -191 366 40
+herramientas/sonda_calzadas.py -147 220 40
+herramientas/sonda_conduccion.py p:-2000,-232
+herramientas/sonda_conduccion.py p:-3330,-200
+herramientas/sonda_rampas.py

@@ -2021,6 +2021,195 @@ function computeDepressionsPart5(ncap, sink, push) {
   } catch (e) {
     console.error('tf13', e);
   }
+  try {
+    tf5Trench();
+  } catch (e) {
+    TF5T.err = String(e && e.stack ? e.stack : e).slice(0, 400);
+    console.error('tf5', e);
+  }
+  shallowCrossCaps();
+}
+// v1.1.9 (rampa del HUC, X 2210, Y 3312: «la boca de la rampa empieza 2 m honda justo donde la cruza la calle de servicio,
+// y el coche cae dentro»): where a street at grade crosses an open sunk road that is still too shallow to pass under it
+// (0.3–3 m), the sunk road stays at grade under that street and only starts going down past it (at most ~22 %)
+function shallowCrossCaps() {
+  const skip = new Set([...TF13.ring, ...TF13.tubes, ...TF13.app, ...TF5T.mw, ...TF5T.links]);
+  const raw = (d) => (d <= 0 ? 0 : d / 1.12 + 0.5);
+  let n = 0;
+  for (const [ri, fs] of [...DEP.entries()]) {
+    const rd = DATA.R[ri];
+    if (skip.has(ri) || rd[0] > 12 || rd[3] & 4) continue; // tunnels: covered, the street passes over
+    const caps = [];
+    for (const X of crossingsOf(ri)) {
+      const r2 = DATA.R[X.rj];
+      if (r2[0] > 12 || r2[3] & 6 || DEP.has(X.rj)) continue;
+      const d = depthOf(ri, X.s);
+      if (d < 0.3 || d > 3) continue;
+      caps.push([X.s, r2[2] / 2 + 0.8]);
+    }
+    // a street that only touches it (its end, or a junction node on it) and runs across: found by sampling every 2 m
+    const c = rd[4],
+      depRows = new Set([...DEP.keys()].map((i) => DATA.R[i]));
+    let s0 = 0;
+    for (let i = 0; i + 3 < c.length; i += 2) {
+      const L = Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]);
+      if (L < 0.01) continue;
+      const tx = (c[i + 2] - c[i]) / L,
+        tz = (c[i + 3] - c[i + 1]) / L;
+      for (let u = 0; u <= L; u += 2) {
+        const q = s0 + u,
+          d = depthOf(ri, q);
+        if (d < 0.3 || d > 3) continue;
+        const rn = ROADSEG.nearest(c[i] + tx * u, c[i + 1] + tz * u, (r) => r !== rd && r[0] <= 12 && !(r[3] & 6) && !depRows.has(r));
+        if (!rn || rn.d > DATA.R[rn.ri][2] / 2 - 0.3) continue;
+        const Ln = Math.hypot(rn.dx, rn.dz) || 1;
+        if (Math.abs((rn.dx * tx + rn.dz * tz) / Ln) > 0.8) continue; // running along it (the street it starts from): not a crossing
+        caps.push([q, 1.5]);
+      }
+      s0 += L;
+    }
+    if (!caps.length) continue;
+    n += caps.length;
+    const f0 = fs.slice();
+    DEP.set(ri, [
+      (q) => {
+        let d = 0;
+        for (const f of f0) d = Math.max(d, f(q));
+        for (const [sx, hw] of caps) d = Math.min(d, raw(Math.max(0, Math.abs(q - sx) - hw) * 0.22));
+        return d;
+      }
+    ]);
+  }
+  console.log('sunk roads kept at grade under a street that crosses them', n);
+}
+// v1.1.9 (Jonay: «la TF-5 pasa en trinchera bajo la Rotonda Sempiterno y bajo el puente de Cam. San Lázaro»; fotos
+// `grandes_aeropuerto_*`): by Los Rodeos the motorway runs in a cutting and the roundabout and Cam. San Lázaro cross it at
+// ground level on their bridges (here it ran at grade and the bridges climbed over it on embankments). Set by position:
+// both carriageways sink up to D m between x0 and x1 (ramps of «ramp» m at each end), and the slip roads that join them
+// there ramp back to grade within LINK m of the junction (or before their far end, if it comes sooner).
+// v1.1.9 (Jonay, X −3292, Y −161: «me he caído por aquí con el coche… me dejó bloqueado»): by the airport exit the bridge from
+// the roundabout had to climb 5 m over the motorway in 15 m and the car fell into the step; there the motorway sinks too
+const TF5T = {
+  zones: [
+    { x0: -2470, x1: -1620, z0: -330, z1: -90, ramp: 140, D: 6.5 },
+    { x0: -3440, x1: -3150, z0: -260, z1: -120, ramp: 110, D: 6.0 }
+  ],
+  LINK: 130,
+  mw: [],
+  links: []
+};
+function tf5Trench() {
+  const R = DATA.R,
+    raw = (d) => (d <= 0 ? 0 : d / 1.12 + 0.5),
+    depthX = (x, z) => {
+      let d = 0;
+      for (const Z of TF5T.zones)
+        if (z > Z.z0 - 40 && z < Z.z1 + 40) d = Math.max(d, Z.D * smooth(0, 1, (x - Z.x0) / Z.ramp) * smooth(0, 1, (Z.x1 - x) / Z.ramp));
+      return d;
+    };
+  const inZone = (c) => {
+    // every 10 m along it, not only its points (a long motorway piece can cross a zone with no point inside)
+    for (let i = 0; i + 3 < c.length; i += 2) {
+      const L = Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]);
+      for (let u = 0; u <= L; u += 10) {
+        const x = c[i] + ((c[i + 2] - c[i]) * u) / (L || 1),
+          z = c[i + 1] + ((c[i + 3] - c[i + 1]) * u) / (L || 1);
+        for (const Z of TF5T.zones) if (x > Z.x0 && x < Z.x1 && z > Z.z0 && z < Z.z1) return true;
+      }
+    }
+    return false;
+  };
+  // a depth table every 2 m along a road (depthOf is called every frame)
+  const table = (ri, f) => {
+    const c = R[ri][4],
+      tab = [];
+    let s = 0;
+    for (let i = 0; i + 3 < c.length; i += 2) {
+      const L = Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]);
+      for (let u = (2 - (s % 2)) % 2; u < L; u += 2)
+        tab[Math.round((s + u) / 2)] = raw(f(c[i] + ((c[i + 2] - c[i]) * u) / (L || 1), s + u, c[i + 1] + ((c[i + 3] - c[i + 1]) * u) / (L || 1)));
+      s += L;
+    }
+    tab[Math.round(s / 2)] = raw(f(c[c.length - 2], s, c[c.length - 1]));
+    for (let i = 0; i < tab.length; i++) if (tab[i] === undefined) tab[i] = tab[i - 1] || 0;
+    return (q) => {
+      const g = clamp(q, 0, s) / 2,
+        i = Math.floor(g);
+      return lerp(tab[i], tab[Math.min(i + 1, tab.length - 1)], g - i);
+    };
+  };
+  const push = (ri, f) => {
+    let a = DEP.get(ri);
+    if (!a) DEP.set(ri, (a = []));
+    a.push(f);
+  };
+  R.forEach((r, ri) => {
+    if (r[0] !== 0 || r[3] & 6 || !inZone(r[4])) return;
+    TF5T.mw.push(ri);
+    push(
+      ri,
+      table(ri, (x, q, z) => depthX(x, z))
+    );
+  });
+  if (!TF5T.mw.length) return;
+  // the slip roads (motorway links) near the sunk carriageways: by distance to them (two OSM pieces that overlap get the
+  // same depth whatever their nodes), and never deeper than a ~12 % ramp from an end that meets a street at grade
+  const mwPts = [];
+  for (const ri of TF5T.mw) {
+    const c = R[ri][4];
+    for (let i = 0; i + 3 < c.length; i += 2) {
+      const L = Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]);
+      for (let u = 0; u <= L; u += 4) {
+        const x = c[i] + ((c[i + 2] - c[i]) * u) / (L || 1),
+          z = c[i + 1] + ((c[i + 3] - c[i + 1]) * u) / (L || 1),
+          d = depthX(x, z);
+        if (d > 0.6) mwPts.push([x, z, d]);
+      }
+    }
+  }
+  if (!mwPts.length) return;
+  const depthP = (x, z) => {
+    let d = 0;
+    for (const p of mwPts) {
+      const dd = Math.abs(p[0] - x) + Math.abs(p[1] - z);
+      if (dd > 70) continue;
+      d = Math.max(d, p[2] * smooth(0, 1, 1 - Math.max(0, Math.hypot(p[0] - x, p[1] - z) - 7) / 40));
+    }
+    return d;
+  };
+  const mwSet = new Set(TF5T.mw);
+  const cand = [];
+  R.forEach((r, ri) => {
+    if (r[0] !== 1 || r[3] & 6 || mwSet.has(ri)) return;
+    const c = r[4];
+    for (let i = 0; i < c.length; i += 2) if (depthP(c[i], c[i + 1]) > 0.6) return cand.push(ri);
+  });
+  const candSet = new Set(cand);
+  // does this end meet a street that stays at grade (not a sunk carriageway, not another sunk slip road)?
+  const atGradeEnd = (x, z, own) =>
+    R.some((r, rj) => {
+      if (rj === own || r[0] > 12 || mwSet.has(rj) || candSet.has(rj)) return false;
+      const c = r[4];
+      for (let i = 0; i < c.length; i += 2) if (Math.abs(c[i] - x) < 2 && Math.abs(c[i + 1] - z) < 2) return true;
+      return false;
+    });
+  for (const ri of cand) {
+    const c = R[ri][4],
+      L = polyLen(c),
+      capA = atGradeEnd(c[0], c[1], ri),
+      capB = atGradeEnd(c[c.length - 2], c[c.length - 1], ri);
+    TF5T.links.push(ri);
+    push(
+      ri,
+      table(ri, (x, q, z) => {
+        let d = depthP(x, z);
+        if (capA) d = Math.min(d, Math.max(0, q - 3) * 0.12);
+        if (capB) d = Math.min(d, Math.max(0, L - q - 3) * 0.12);
+        return d;
+      })
+    );
+  }
+  console.log('tf5: trinchera', TF5T.mw.length, 'tramos y', TF5T.links.length, 'ramales');
 }
 /** (v1.1.7, code quality) part of computeDepressions: where the trench still has to be deep there (it passes under something just after the mouth), the street that */
 function computeDepressionsPart4(OV, par, KEEPS) {
@@ -2725,7 +2914,9 @@ function raisedYOf(o, ss, x, z) {
   return o.isBr ? o.pf(ss, x, z) + raiseOf(o.ri, ss) : heightAt(x, z) + (ss >= o.sp[0] - 0.5 && ss <= o.sp[1] + 0.5 ? raiseOf(o.ri, ss) : 0);
 }
 /** the top of the raised road o where the point (x, z) of a road heading (tx, tz) overlaps it, or -1e9 (followOverlaps) */
-function overlapTopY(o, x, z, tx, tz) {
+/** ow: the width of the road asking (v1.1.9, Vía de Ronda X 309: a slip road 10 m from the axis of a 13 m road overlaps
+ *  its carriageway with its own half-width, and stayed down while the road rose beside it) */
+function overlapTopY(o, x, z, tx, tz, ow = 0) {
   if (x < o.b[0] - o.w || x > o.b[1] + o.w || z < o.b[2] - o.w || z > o.b[3] + o.w) return -1e9;
   const c2 = o.c;
   let acc = 0,
@@ -2737,7 +2928,7 @@ function overlapTopY(o, x, z, tx, tz) {
     const tr = ((x - c2[j]) * dx + (z - c2[j + 1]) * dz) / (L2 * L2);
     const d = Math.hypot(x - c2[j] - dx * tr, z - c2[j + 1] - dz * tr),
       along = Math.abs((dx * tx + dz * tz) / L2) > 0.6;
-    if (tr >= 0 && tr <= 1 && d < o.w / 2 + 1.2 && (d < o.w / 2 - 0.5 || along)) {
+    if (tr >= 0 && tr <= 1 && d < o.w / 2 + Math.max(1.2, along ? ow / 2 - 0.3 : 0) && (d < o.w / 2 - 0.5 || along)) {
       const px = c2[j] + dx * tr,
         pz = c2[j + 1] + dz * tr,
         yT = raisedYOf(o, acc + L2 * tr, px, pz);
@@ -2910,7 +3101,7 @@ function computeRaisesOnce() {
               z = c[i + 1] + tz * u,
               sj = s + u;
             let best = -1e9;
-            for (const o of RB) if (o.ri !== rj) best = Math.max(best, overlapTopY(o, x, z, tx, tz));
+            for (const o of RB) if (o.ri !== rj) best = Math.max(best, overlapTopY(o, x, z, tx, tz, rd[2]));
             if (best < -1e8) continue;
             const have = brJ ? raiseOf(rj, sj) : RAISE.has(rj) && spj && sj >= spj[0] - 0.5 && sj <= spj[1] + 0.5 ? raiseOf(rj, sj) : 0;
             const yJ = brJ ? pfJ(sj, x, z) + have : heightAt(x, z) + have;
@@ -4129,12 +4320,14 @@ function buildBuildingsEach(bi) {
   const r = mulberry(seed * 7 + 3);
   const PS = style !== 4 && style !== 5 ? pasajesOf(pts, H) : null; // v0.78: walkways under the building (05x_pasajes.js)
   BUILD.push({ pts, cx, cz, top, bmax, style, name, H, pasaje: !!PS });
+  const ARC = style !== 4 && style !== 5 && !LM && !PS ? trinidadArcadeEdges(pts, cx, cz) : null; // v1.1.9: the arcades of the Av. de La Trinidad (05u_trinidad.js)
   // collisions
   for (let i = 0; i < n; i++) {
     const p = pts[i],
       q = pts[(i + 1) % n];
     const cu = PS ? pasajeCuts(p, q, PS) : null;
     if (cu) pasajeCol(p, q, cu);
+    else if (ARC && ARC.has(i)) trinidadArcadeCol(p, q);
     else COL.addSeg(p[0], p[1], q[0], q[1]);
   }
   if (CONC_CARVE.pts === pts) {
@@ -4265,6 +4458,10 @@ function buildBuildingsEach(bi) {
     const out = [(q[1] - p[1]) / len, 0, -(q[0] - p[0]) / len];
     const v0 = (bot - bmin) / fh,
       v1 = (wallTop - bmin) / fh;
+    if (ARC && ARC.has(i)) {
+      trinidadArcadeEdge(A, T0, p, q, nb, fh, y0, bot, wallTop, col, [atlas, bi % 97], out, cx, cz);
+      continue;
+    }
     // long street fronts of terraced houses / blocks: split into parcels with their own colour (and facade for houses)
     const cuts = PS ? pasajeCuts(p, q, PS) : null;
     if (cuts) {

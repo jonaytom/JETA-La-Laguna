@@ -1,76 +1,87 @@
-# Pruebas 1.1.8 — 2026-11-04 16:46 — 1/1 OK
+# Pruebas 1.1.9 — 2026-11-04 20:43 — 3/3 OK
 
-Listas: gpu_b. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 108 s en total.
+Listas: viga. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 99 s en total.
 
 | # | Prueba | Resultado | Tiempo |
 |---|---|---|---|
-| 1 | `herramientas/sonda_pintado_gpu.py --noprecarga` | **OK** | 90 s |
+| 1 | `herramientas/sonda_calzadas.py -1818 -185 30` | **OK** | 56 s |
+| 2 | `herramientas/sonda_alturas.py -1818 -185 25` | **OK** | 0 s |
+| 3 | `herramientas/sonda_rayos.py -1850 -182 90 2` | **OK** | 22 s |
 
 ## Detalle
 
-### 1. herramientas/sonda_pintado_gpu.py --noprecarga — OK
+### 1. herramientas/sonda_calzadas.py -1818 -185 30 — OK
 
 ```
-   sin instanciadas             (    3):  19.40 ms ( +0.60)  llamadas  1485 (-1)  tri  1435191 (-80)
-   con terreno_simple           (    1):  19.40 ms ( +0.60)  llamadas  1486 (+0)  tri  1435271 (+0)
-   sin coches                   (    5):  19.30 ms ( +0.50)  llamadas  1486 (+0)  tri  1435271 (+0)
-   sin fondo                    (    6):  19.20 ms ( +0.40)  llamadas  1483 (-3)  tri  1411821 (-23450)
-   sin terreno                  (    1):  19.00 ms ( +0.20)  llamadas  1485 (-1)  tri  1032017 (-403254)
-   sin gente                    (    4):  18.60 ms ( -0.20)  llamadas  1467 (-19)  tri  1318129 (-117142)
-   con resolucion1              (    1):  19.00 ms ( +0.20)  llamadas  1486 (+0)  tri  1435271 (+0)
-   sin parked                   (  305):  18.90 ms ( +0.10)  llamadas  1458 (-28)  tri  1352955 (-82316)
-== La Trinidad a pie: 20 ms (mandar el trabajo 20.3 ms; a 480x270 20.1 ms)  llamadas 1627  tri 1424578
-   con sin_niebla_lejos         (    1):  15.00 ms ( -5.00)  llamadas   906 (-721)  tri  1304327 (-120251)
-   sin sueltas                  ( 2101):  15.50 ms ( -4.50)  llamadas  1167 (-460)  tri  1213925 (-210653)
-   sin ciudad                   ( 1114):  16.30 ms ( -3.70)  llamadas  1109 (-518)  tri  1162871 (-261707)
-   sin sombras                  (    1):  17.80 ms ( -2.20)  llamadas  1466 (-161)  tri  1177842 (-246736)
-   sin inst                     (  714):  18.20 ms ( -1.80)  llamadas  1308 (-319)  tri  1223724 (-200854)
-   sin coches                   (    5):  21.00 ms ( +1.00)  llamadas  1620 (-7)  tri  1422490 (-2088)
-   sin parked                   (  305):  19.40 ms ( -0.60)  llamadas  1578 (-49)  tri  1165396 (-259182)
-   sin instanciadas             (    3):  19.60 ms ( -0.40)  llamadas  1627 (+0)  tri  1424578 (+0)
-   sin fusion                   (  379):  19.70 ms ( -0.30)  llamadas  1390 (-237)  tri  1359180 (-65398)
-   sin gente                    (    3):  20.30 ms ( +0.30)  llamadas  1613 (-14)  tri  1341278 (-83300)
-   con terreno_una_cara         (    1):  20.30 ms ( +0.30)  llamadas  1627 (+0)  tri  1424578 (+0)
-   con terreno_simple           (    1):  20.20 ms ( +0.20)  llamadas  1627 (+0)  tri  1424578 (+0)
-   sin terreno                  (    1):  20.10 ms ( +0.10)  llamadas  1626 (-1)  tri  1021324 (-403254)
-   sin fondo                    (    6):  20.00 ms ( +0.00)  llamadas  1624 (-3)  tri  1401128 (-23450)
-   con sombras1024              (    1):  20.00 ms ( +0.00)  llamadas  1627 (+0)  tri  1424578 (+0)
-   con resolucion1              (    1):  20.00 ms ( +0.00)  llamadas  1627 (+0)  tri  1424578 (+0)
-== vista alta: 17.9 ms (mandar el trabajo 18.5 ms; a 480x270 19.2 ms)  llamadas 1362  tri 1877125
-   con sin_niebla_lejos         (    1):  14.90 ms ( -3.00)  llamadas   831 (-531)  tri  1489257 (-387868)
-   sin sueltas                  ( 2094):  15.00 ms ( -2.90)  llamadas  1084 (-278)  tri  1635821 (-241304)
-   sin ciudad                   ( 1104):  15.20 ms ( -2.70)  llamadas   966 (-396)  tri  1648526 (-228599)
-   sin inst                     (  709):  15.70 ms ( -2.20)  llamadas  1048 (-314)  tri  1635841 (-241284)
-   con terreno_una_cara         (    1):  19.50 ms ( +1.60)  llamadas  1362 (+0)  tri  1877125 (+0)
-   sin sombras                  (    1):  16.30 ms ( -1.60)  llamadas  1184 (-178)  tri  1508452 (-368673)
-   con resolucion1              (    1):  19.20 ms ( +1.30)  llamadas  1362 (+0)  tri  1877125 (+0)
-   sin fusion                   (  376):  16.80 ms ( -1.10)  llamadas  1225 (-137)  tri  1834821 (-42304)
-   sin parked                   (  309):  16.80 ms ( -1.10)  llamadas  1138 (-224)  tri  1180291 (-696834)
-   con sombras1024              (    1):  18.60 ms ( +0.70)  llamadas  1362 (+0)  tri  1877125 (+0)
-   sin terreno                  (    1):  18.40 ms ( +0.50)  llamadas  1361 (-1)  tri  1473871 (-403254)
-   sin coches                   (    4):  18.30 ms ( +0.40)  llamadas  1355 (-7)  tri  1875037 (-2088)
-   con terreno_simple           (    1):  18.30 ms ( +0.40)  llamadas  1362 (+0)  tri  1877125 (+0)
-   sin instanciadas             (    3):  18.20 ms ( +0.30)  llamadas  1361 (-1)  tri  1877045 (-80)
-   sin fondo                    (    6):  18.10 ms ( +0.20)  llamadas  1359 (-3)  tri  1853675 (-23450)
-   sin gente                    (    4):  17.90 ms ( -0.00)  llamadas  1342 (-20)  tri  1758821 (-118304)
-== autopista: 20.1 ms (mandar el trabajo 20.2 ms; a 480x270 20.6 ms)  llamadas 1648  tri 2092819
-   con sin_niebla_lejos         (    1):  10.20 ms ( -9.90)  llamadas   304 (-1344)  tri   764568 (-1328251)
-   sin sueltas                  ( 2092):  13.30 ms ( -6.80)  llamadas   907 (-741)  tri  1795449 (-297370)
-   sin ciudad                   (  626):  18.30 ms ( -1.80)  llamadas  1296 (-352)  tri  1909096 (-183723)
-   sin parked                   (  309):  18.50 ms ( -1.60)  llamadas  1339 (-309)  tri   968129 (-1124690)
-   sin instanciadas             (    3):  21.70 ms ( +1.60)  llamadas  1647 (-1)  tri  2092739 (-80)
-   sin sombras                  (    1):  19.10 ms ( -1.00)  llamadas  1592 (-56)  tri  1971249 (-121570)
-   sin inst                     (  331):  19.30 ms ( -0.80)  llamadas  1482 (-166)  tri  2033497 (-59322)
-   sin gente                    (    3):  20.90 ms ( +0.80)  llamadas  1633 (-15)  tri  2005671 (-87148)
-   con sombras1024              (    1):  20.80 ms ( +0.70)  llamadas  1648 (+0)  tri  2092819 (+0)
-   sin terreno                  (    1):  20.70 ms ( +0.60)  llamadas  1647 (-1)  tri  1689565 (-403254)
-   sin coches                   (    4):  20.70 ms ( +0.60)  llamadas  1648 (+0)  tri  2092819 (+0)
-   sin fondo                    (    6):  20.70 ms ( +0.60)  llamadas  1645 (-3)  tri  2069369 (-23450)
-   con terreno_simple           (    1):  20.40 ms ( +0.30)  llamadas  1648 (+0)  tri  2092819 (+0)
-   con terreno_una_cara         (    1):  20.40 ms ( +0.30)  llamadas  1648 (+0)  tri  2092819 (+0)
-   sin fusion                   (   34):  19.90 ms ( -0.20)  llamadas  1634 (-14)  tri  2092011 (-808)
-   con resolucion1              (    1):  19.90 ms ( -0.20)  llamadas  1648 (+0)  tri  2092819 (+0)
-SONDA PINTADO GPU OK
+vías (índice, nombre, tipo, ancho, puente/elevada/hundida, dist, X, Y, altura calzada, altura terreno, puntos):
+   [331, 'Camino San Lázaro', 'unclassified', 8, '', 5, -1823, -186, 31.29, 31.29, 4]
+   [332, 'Camino San Lázaro', 'unclassified', 8, 'puente', 10, -1821, -195, 31.22, 31.22, 2]
+   [1264, 'Autopista del Norte', 'motorway', 13.4, 'hundida', 20, -1813, -204, 24.39, 30.89, 12]
+   [1793, 'Calle Espinero', 'unclassified', 7.9, '', 27, -1809, -160, 30.58, 30.58, 10]
+   [1796, 'Calle el Amagante', 'service', 5.2, '', 28, -1801, -162, 30.22, 30.22, 2]
+   [2478, 'Autopista del Norte', 'motorway', 13.4, 'hundida', 29, -1793, -199, 23.67, 30.17, 58]
+   [4702, '', 'motorway_link', 7.8, 'hundida', 12, -1815, -196, 24.47, 30.95, 37]
+calzadas que se pisan (vía, otra vía, metros, diferencia de altura, dónde):
+   [331, 332, '6 m', 'dif. altura 0.02..0.05', [-1822, -189]]
+   [331, 1793, '4 m', 'dif. altura 0.10..0.13', [-1828, -157]]
+   [332, 1264, '12 m', 'dif. altura 6.41..6.55', [-1819, -202]]
+   [332, 2898, '2 m', 'dif. altura 6.57..6.57', [-1815, -213]]
+   [332, 4702, '6 m', 'dif. altura 6.43..6.50', [-1820, -197]]
+   [1264, 4702, '32 m', 'dif. altura 0.00..0.16', [-1834, -210]]
+   [1793, 1796, '12 m', 'dif. altura 0.00..0.30', [-1807, -160]]
+SONDA CALZADAS OK
 ```
 
-Fotos/archivos nuevos en `tests/shots/`: sonda_pintado_gpu.txt
+### 2. herramientas/sonda_alturas.py -1818 -185 25 — OK
+
+```
+{"ri": 331, "nombre": "Camino San Lázaro", "tipo": 9, "ancho": 8, "flags": 0, "raise": false, "span": null, "dep": false, "grade": false}
+     [11, -1827, -163, 31.55, 31.55, 0]
+     [15, -1826, -167, 31.51, 31.51, 0]
+     [19, -1826, -171, 31.48, 31.48, 0]
+     [23, -1825, -175, 31.44, 31.44, 0]
+     [27, -1824, -179, 31.39, 31.39, 0]
+     [31, -1823, -183, 31.33, 31.33, 0]
+     [35, -1823, -187, 31.29, 31.29, 0]
+     [39, -1822, -191, 31.26, 31.26, 0]
+     [43, -1821, -194, 31.22, 31.22, 0]
+{"ri": 332, "nombre": "Camino San Lázaro", "tipo": 9, "ancho": 8, "flags": 2, "raise": false, "span": null, "dep": false, "grade": true}
+     [0, -1821, -195, 31.22, 31.22, 0]
+     [4, -1820, -199, 31.13, 31.13, 0]
+     [8, -1818, -203, 31.06, 31.06, 0]
+     [12, -1817, -206, 31, 31, 0]
+{"ri": 1264, "nombre": "Autopista del Norte", "tipo": 0, "ancho": 13.4, "flags": 1, "raise": false, "span": null, "dep": true, "grade": false}
+     [115, -1825, -208, 24.74, 31.24, 0]
+     [119, -1821, -207, 24.62, 31.12, 0]
+     [123, -1817, -206, 24.51, 31.01, 0]
+     [123, -1817, -205, 24.5, 31, 0]
+     [127, -1813, -204, 24.4, 30.9, 0]
+     [131, -1809, -203, 24.27, 30.77, 0]
+     [135, -1805, -202, 24.12, 30.62, 0]
+     [136, -1805, -202, 24.1, 30.6, 0]
+     [140, -1801, -201, 23.95, 30.45, 0]
+{"ri": 4702, "nombre": "", "tipo": 1, "ancho": 7.8, "flags": 1, "raise": false, "span": null, "dep": true, "grade": false}
+     [417, -1832, -202, 24.99, 31.48, 0]
+     [419, -1830, -201, 24.96, 31.44, 0]
+     [423, -1827, -200, 24.85, 31.33, 0]
+     [427, -1823, -199, 24.75, 31.23, 0]
+     [431, -1819, -197, 24.64, 31.12, 0]
+     [435, -1815, -196, 24.49, 30.96, 0]
+     [436, -1814, -196, 24.44, 30.92, 0]
+     [440, -1810, -197, 24.27, 30.77, 0]
+     [444, -1806, -197, 24.12, 30.62, 0]
+     [448, -1802, -198, 23.98, 30.48, 0]
+     [452, -1798, -199, 23.83, 30.33, 0]
+SONDA ALTURAS OK
+```
+
+### 3. herramientas/sonda_rayos.py -1850 -182 90 2 — OK
+
+```
+rayos desde X -1850, Y -182, rumbo 90° (cosas a más de 2 m sobre el suelo y fuera de edificios: material | función | nombre: n · [x, y, altura, distancia])
+    19  ?ffffff | splitInstanced < optimizeCity < boot | inst   [[-1835, -175, 12, 19], [-1836, -175, 10.4, 18], [-1836, -175, 9.2, 17], [-1836, -174, 9.2, 18], [-1836, -175, 7.9, 16]]
+     2  ?5a4636 | splitInstanced < optimizeCity < boot | inst   [[-1835, -175, 3.7, 16], [-1835, -175, 2.7, 16]]
+SONDA RAYOS OK
+```
+
+Fotos/archivos nuevos en `tests/shots/`: calzadas_-1818_-185_arriba.jpg, calzadas_-1818_-185_calle0.jpg, calzadas_-1818_-185_calle1.jpg, rayos_-1850_-182_90.jpg, rayos_-1850_-182_90.txt

@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.1.8</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.1.9</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,22 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.1.9 — 2026-11-04 — Alpha 1.1.9: la TF-5 en trinchera, soportales en La Trinidad y adiós al coche que se caía</h2>
+<ul>
+<li><strong>La TF-5 en trinchera junto a Los Rodeos</strong> (Jonay: «pasa en trinchera bajo la Rotonda Sempiterno y bajo el puente de
+  Cam. San Lázaro»): 6,5 m por debajo entre la rotonda y San Lázaro, con muros, y los ramales bajando y subiendo; la
+  glorieta y el puente quedan a nivel del suelo en vez de subir en terraplén.</li>
+<li><strong>El coche ya no se cae en el enlace de la salida del aeropuerto</strong> (X −3292, Y −161, misión del queso): el puente de la
+  glorieta subía 5 m en 15 m y dejaba un escalón; ahora la autopista va en trinchera ahí también y el puente queda a nivel.</li>
+<li><strong>Rampa del HUC</strong>: donde la cruza la calle de servicio ya no está hundida; empieza a bajar después. Vale para todas las
+  trincheras poco hondas que cruza una calle a nivel.</li>
+<li><strong>Soportales en la Av. de La Trinidad</strong> (Jonay, 20 capturas): toda la acera de los impares, con la planta baja metida
+  2,8 m, las tiendas al fondo, pilares en la línea de la acera, techo, colisiones y la cámara por debajo del techo.</li>
+<li><strong>Calles repetidas</strong>: las vías que venían dos veces (al juntar descargas de zonas) se quedan en una; en la TF-5 una copia
+  se hundía con la trinchera y la otra se quedaba arriba.</li>
+<li><strong>Vía de Ronda (X 309)</strong>: el ramal de subida sube con la vía donde sus calzadas se pisan.</li>
+<li>Sonda nueva <code>sonda_alturas.py</code> (perfil de las calzadas que se pisan) y prueba <code>prueba_119.py</code>.</li>
+</ul>
 <h2>1.1.8 — 2026-11-04 — Alpha 1.1.8: tareas del auditor y sonda de «qué dibuja esto»</h2>
 <ul>
 <li><strong>Recreativas y consola sin el mundo 3D detrás</strong> (auditor): con Bencomo, Gufo, Guanche Warriors o la GOFIO-8 abiertos

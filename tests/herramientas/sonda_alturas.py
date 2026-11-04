@@ -1,17 +1,19 @@
-# Alturas de suelo/tablero en puntos; entrada JSON [[x,z],...] como 2º argumento.
-# Uso: cd tests && python run_test.py herramientas/sonda_alturas.py [entrada.json]
-import sys
-import json
-S='shots/'; import os, sys; os.makedirs(S, exist_ok=True)
-PTS=json.load(open(sys.argv[2] if len(sys.argv) > 2 else 'pts.json'))
-JS=r"""(pts)=>{ const d=__dbg, D=d.DATA; const out=[];
- for (const [x,z] of pts){ const g=d.heightAt(x,z); const dk=[]; for(let dy=-1;dy<=4;dy+=0.5) dk.push(+d.deckAt(x,z,g+dy,true).toFixed(2));
-   const rs=[]; D.R.forEach((rd,ri)=>{ const c=rd[4]; let s=0,best=1e9,bs=0; for(let i=0;i+3<c.length;i+=2){const ax=c[i],az=c[i+1],bx=c[i+2],bz=c[i+3],dx=bx-ax,dz=bz-az,L=Math.hypot(dx,dz)||1; const t=Math.max(0,Math.min(1,((x-ax)*dx+(z-az)*dz)/(L*L))); const dd=Math.hypot(x-ax-dx*t,z-az-dz*t); if(dd<best){best=dd;bs=s+L*t;} s+=L;}
-     if(best<rd[2]/2+10){ const y=d.ROADY[ri](bs,x,z); rs.push([ri,D.RT[rd[0]],rd[2],rd[3],+best.toFixed(1),+(y-g).toFixed(2), d.RAISE.has(ri)?'R':(d.DEP.has(ri)?'D':''), Math.round(bs), Math.round(s)]); } });
-   const lw=[]; for(let dy=-8;dy<=1;dy+=1){const l=d.lowAt(x,z,g+dy); lw.push(l?+l.y.toFixed(2):null);} out.push({x,z,g:+g.toFixed(2),dk,lw,rs}); }
- return JSON.stringify(out);}"""
+# Alturas de las calzadas que se pisan en un sitio (v1.1.9; ramal de subida de la Vía de Ronda en X 309, Y −40, y otros
+# enlaces donde una calzada queda por debajo de la que se le junta). Uso: herramientas/sonda_alturas.py x y [radio]
+# De cada vía de coches a menos de «radio» m: si es puente, si está elevada (RAISE, su tramo RAISE_SPAN), hundida (DEP) o
+# a nivel (AT_GRADE), y su perfil cada 4 m dentro del radio: [s, x, y, altura de la calzada, terreno, lo que sube].
+import json, sys
 async def run(pg):
-    r=json.loads(await pg.evaluate(JS,PTS))
-    for q in r:
-        print(q['x'],q['z'],'g',q['g'],'low(g-8..g+1)',q['lw'])
-        for a in q['rs']: print('   ',a)
+    x, z = float(sys.argv[2]), float(sys.argv[3]); R = float(sys.argv[4]) if len(sys.argv) > 4 else 40
+    r = json.loads(await pg.evaluate("""([x,z,R])=>JSON.stringify((()=>{ const d=__dbg, out=[];
+      d.DATA.R.forEach((rd,ri)=>{ if (rd[0]>12) return; const c=rd[4]; let s=0, prof=[], near=false;
+        for (let i=0;i+3<c.length;i+=2) { const L=Math.hypot(c[i+2]-c[i],c[i+3]-c[i+1]); for (let u=0;u<L;u+=4) { const px=c[i]+(c[i+2]-c[i])*u/(L||1), pz=c[i+1]+(c[i+3]-c[i+1])*u/(L||1);
+          if (Math.hypot(px-x,pz-z)>R) continue; near=true; let y=null; try { y=d.ROADY[ri](s+u,px,pz); } catch(e) {}
+          prof.push([Math.round(s+u), Math.round(px), Math.round(pz), y==null?null:Math.round(y*100)/100, Math.round(d.heightAt(px,pz)*100)/100, d.raiseOf? Math.round(d.raiseOf(ri,s+u)*100)/100 : null]); } s+=L; }
+        if (!near) return;
+        out.push({ ri, nombre: rd[1]>=0? d.STR[rd[1]] : '', tipo: rd[0], ancho: rd[2], flags: rd[3], raise: d.RAISE.has(ri), span: d.RAISE_SPAN && d.RAISE_SPAN.get(ri) || null, dep: d.DEP.has(ri), grade: d.AT_GRADE.has(ri), prof }); });
+      return out; })())""", [x, z, R]))
+    for v in r:
+        print(json.dumps({k: v[k] for k in v if k != 'prof'}, ensure_ascii=False))
+        for p in v['prof']: print('    ', p)
+    print('SONDA ALTURAS OK')

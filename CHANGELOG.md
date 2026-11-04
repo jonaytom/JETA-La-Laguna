@@ -3,6 +3,21 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.1.9 — 2026-11-04 — Alpha 1.1.9: la TF-5 en trinchera, soportales en La Trinidad y adiós al coche que se caía
+- **La TF-5 en trinchera junto a Los Rodeos** (Jonay: «pasa en trinchera bajo la Rotonda Sempiterno y bajo el puente de
+  Cam. San Lázaro»): 6,5 m por debajo entre la rotonda y San Lázaro, con muros, y los ramales bajando y subiendo; la
+  glorieta y el puente quedan a nivel del suelo en vez de subir en terraplén.
+- **El coche ya no se cae en el enlace de la salida del aeropuerto** (X −3292, Y −161, misión del queso): el puente de la
+  glorieta subía 5 m en 15 m y dejaba un escalón; ahora la autopista va en trinchera ahí también y el puente queda a nivel.
+- **Rampa del HUC**: donde la cruza la calle de servicio ya no está hundida; empieza a bajar después. Vale para todas las
+  trincheras poco hondas que cruza una calle a nivel.
+- **Soportales en la Av. de La Trinidad** (Jonay, 20 capturas): toda la acera de los impares, con la planta baja metida
+  2,8 m, las tiendas al fondo, pilares en la línea de la acera, techo, colisiones y la cámara por debajo del techo.
+- **Calles repetidas**: las vías que venían dos veces (al juntar descargas de zonas) se quedan en una; en la TF-5 una copia
+  se hundía con la trinchera y la otra se quedaba arriba.
+- **Vía de Ronda (X 309)**: el ramal de subida sube con la vía donde sus calzadas se pisan.
+- Sonda nueva `sonda_alturas.py` (perfil de las calzadas que se pisan) y prueba `prueba_119.py`.
+
 ## 1.1.8 — 2026-11-04 — Alpha 1.1.8: tareas del auditor y sonda de «qué dibuja esto»
 - **Recreativas y consola sin el mundo 3D detrás** (auditor): con Bencomo, Gufo, Guanche Warriors o la GOFIO-8 abiertos
   ya no se pinta la ciudad debajo de su pantalla (como en la pelea, el baloncesto y el fútbol).

@@ -1,0 +1,6 @@
+# v1.1.9: fotos de la trinchera de la TF-5, de los soportales y del enlace de la Vía de Ronda
+herramientas/sonda_rayos.py -1815 -186 180 3
+herramientas/sonda_rayos.py -2100 -200 270 3
+herramientas/sonda_rayos.py -3292 -160 180 3
+herramientas/sonda_calzadas.py 309 -40 45
+herramientas/sonda_calzadas.py -120 160 35
