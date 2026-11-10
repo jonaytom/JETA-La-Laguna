@@ -1,0 +1,5 @@
+# v1.2.0: Rotonda del Padre Anchieta y la pasarela (zona siguiente): vías, alturas y fotos
+herramientas/sonda_vias.py -347 700 110
+herramientas/foto_vista.py anchieta_cenital -347 700 140 -347 699
+herramientas/foto_vista.py anchieta_jonay -390 646 103 -347 740
+herramientas/foto_vista.py anchieta_trinidad -278 600 23 -330 700

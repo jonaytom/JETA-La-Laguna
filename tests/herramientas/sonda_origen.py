@@ -23,7 +23,7 @@ async def run(pg):
     # the spot that are above «up» m and outside every building footprint, by material kind (MAT key)
     f = json.loads(await pg.evaluate("""([x,z,R,up])=>JSON.stringify((()=>{ const d=__dbg, M=d.MATS, key=new Map(); for (const k in M) key.set(M[k], k); const out={};
       d.scene.traverse((o)=>{ if (!o.isMesh || o.isInstancedMesh) return; const g=o.geometry, pa=g && g.attributes.position; if (!pa || !pa.array || !pa.array.length) return;
-        const k=key.get(o.material) || ('?' + (o.material && o.material.color ? o.material.color.getHexString() : '')); o.updateMatrixWorld(); const e=o.matrixWorld.elements, I=g.index ? g.index.array : null, nt=I ? I.length/3 : pa.count/3;
+        let wq=o, who=''; while (wq && !who) { who=wq.__origen||''; wq=wq.parent; } const k=(key.get(o.material) || ('?' + (o.material && o.material.color ? o.material.color.getHexString() : ''))) + (who ? ' | ' + who : '') + (o.name ? ' | ' + o.name : ''); o.updateMatrixWorld(); const e=o.matrixWorld.elements, I=g.index ? g.index.array : null, nt=I ? I.length/3 : pa.count/3;
         const P=(i)=>{ const a=pa.array, j=i*3; const X=a[j], Y=a[j+1], Z=a[j+2]; return [e[0]*X+e[4]*Y+e[8]*Z+e[12], e[1]*X+e[5]*Y+e[9]*Z+e[13], e[2]*X+e[6]*Y+e[10]*Z+e[14]]; };
         for (let t=0; t<nt; t++) { const A=P(I?I[t*3]:t*3), B=P(I?I[t*3+1]:t*3+1), C=P(I?I[t*3+2]:t*3+2); const cx=(A[0]+B[0]+C[0])/3, cy=(A[1]+B[1]+C[1])/3, cz=(A[2]+B[2]+C[2])/3;
           if (Math.hypot(cx-x, cz-z) > R) continue; const gy=d.heightAt(cx,cz); if (cy < gy+up) continue; if (d.inAnyBuilding(cx, cz)) continue;

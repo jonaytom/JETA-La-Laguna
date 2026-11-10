@@ -991,6 +991,7 @@ window.__dbg = {
   RIOS,
   TRI,
   TRI_ARC,
+  corrState,
   PERAZA,
   MINI,
   KEYS,

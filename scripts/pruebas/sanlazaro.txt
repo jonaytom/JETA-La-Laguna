@@ -1,0 +1,6 @@
+# v1.2.0: la TF-5 en trinchera y el puente de Cam. San Lázaro (zona San Lázaro de los tramos)
+herramientas/foto_vista.py sanlazaro_puente -1790 -205 6 -1815 -212
+herramientas/foto_vista.py sanlazaro_jonay2 -1700 -176 68 -1815 -212
+herramientas/foto_vista.py sanlazaro_trinchera -1950 -232 4 -1820 -222
+herramientas/foto_vista.py sanlazaro_rotonda -1815 -140 90 -1815 -205
+herramientas/foto_vista.py sanlazaro_jonay3 -1795 -226 43 -1815 -212

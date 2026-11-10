@@ -1,0 +1,4 @@
+# v1.2.0: San Honorato, vistas desde la glorieta hacia la trinchera y desde la boca del túnel
+herramientas/sonda_rayos.py -1012 120 100 1
+herramientas/sonda_rayos.py -945 100 280 1
+herramientas/sonda_rayos.py -985 140 160 1

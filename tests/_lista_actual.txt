@@ -1,3 +1,8 @@
-herramientas/sonda_calzadas.py -1818 -185 30
-herramientas/sonda_alturas.py -1818 -185 25
-herramientas/sonda_rayos.py -1850 -182 90 2
+prueba_arranque.py
+prueba_bordes.py
+prueba_conduccion_tuneles_puentes.py
+prueba_parking_cristo.py
+prueba_grandes.py
+prueba_121.py
+prueba_120.py
+prueba_119.py

@@ -1,0 +1,6 @@
+# v1.2.0 (rediseño de túneles, puentes y trincheras): solapes de calzadas y los sitios de las capturas de Jonay
+herramientas/sonda_solapes.py 60
+herramientas/sonda_calzadas.py 146 1259 60
+herramientas/sonda_calzadas.py -998 121 45
+herramientas/sonda_calzadas.py -909 45 45
+herramientas/sonda_calzadas.py -1250 9 45

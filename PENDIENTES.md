@@ -491,6 +491,8 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
     banda de aparcamiento con coches aparcados; donde no, una regla por tipo y ancho de calle (residencial ancha = un carril
     por sentido + aparcamiento a los lados) en vez de pintar tres o cuatro carriles. Otra fuente posible: los datos
     abiertos del Ayuntamiento (zonas de aparcamiento regulado).
+  - Jonay (9-nov, 2 capturas en vuelo libre, X −268 Y 535 y C. Doctor Zamenhoff X −84 Y 401): «con los aparcamientos y el cambio de ancho de las calles las marcas viales están mal en muchos casos, pegadas a los aparcamientos en lugar de en el medio». En las dos capturas son calles de un sentido: la discontinua junto a los coches es la raya de la banda de aparcamiento (2,2 m desde el bordillo, `laneMkPart2`), no la línea central, y se confunde con ella; y los coches aparcados la pisan (van a 1,1 m del borde de la calzada, `buildParked`, pero el bordillo que se ve está más adentro). Por mirar: que la raya de la banda se distinga de la central (más corta, más fina o continua), que el coche quede dentro de la banda y, en calles de doble sentido con aparcamiento, que la central quede en el medio de lo que queda entre bandas.
+  - Jonay (9-nov, otra captura, X 122, Y 374, junto a la Plaza de San Cristóbal, `docs/referencias/calles_119/dos_carriles_un_sentido_X122_Y374.png`): ahí, con aparcamiento a los dos lados, las marcas están bien, «pero en otras no está centrado»; y **en una calle de dos carriles del mismo sentido tiene que haber flecha en los dos carriles** (hoy solo sale en uno). Buscar con una sonda las calles con aparcamiento cuya línea central (o de carriles) no queda en el medio de lo que queda entre bandas.
 - [~] ◐ v1.1.4 (los empedrados que se solapan, cada uno a unos mm; falta que Jonay lo mire) **Suelos que parpadean al correr (dos empedrados en el mismo sitio)** (Jonay, 3-nov, Plaza de La Concepción X −517,
   Y −289, 4 capturas: «hay suelos que dependiendo del fotograma hacen cambios y eso produce flicks cuando corres»): dos capas
   de suelo a la misma altura (la plaza, la calle peatonal y el bordillo de la acera que se solapan) se pelean por pintarse
@@ -518,6 +520,68 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   otras, para que la cámara permita ver, y tenerlo en cuenta para dejar espacio»): la cámara se mete en el techo o en los
   muros y se ve el fondo marrón y piezas sueltas. Acercar la cámara y bajarla en túneles, pasos inferiores y bajo puentes
   (que no atraviese el techo), en todas esas zonas, y dejar altura libre suficiente al construirlas.
+- [ ] ● **Túneles, puentes y trincheras: rehacerlos con continuidad** (Jonay, 9-nov, 3 capturas en `docs/referencias/calles_119/`: «hay que buscar una forma para que los túneles y puentes en general tengan mejor continuidad sin huecos; si es necesario los diseñamos de 0, porque se han ido amontonando cosas y no das con la solución»):
+  - Salida a la autopista en San Honorato (X −998, Y 121, C. Eduardo Westerdahl): la calzada que baja a la trinchera y sus líneas pierden la continuidad y se amontonan (líneas que se cortan, trozos de calzada encima de otros, el muro con huecos).
+  - Entrada al túnel (X −909, Y 45): carriles que no casan con la boca, la línea de borde que entra en curva, el techo del túnel como una losa suelta y paredes que no llegan.
+  - Túnel de C. Timanfaya (X −1250, Y 9): aceras raras que se cruzan con la boca y el pretil, y dentro del túnel se ve todo muy raro.
+  - Jonay (9-nov, X 146, Y 1259, `autopista_laterales_X146_Y1259.png`): la autopista se mezcla con los laterales («¿está más ancha de la cuenta?»). En los datos: los dos sentidos de la TF-5 tienen los ejes a 14 m y cada calzada mide 13,4 m en el juego (12 del OSM × 1,12), así que se tocan sin mediana; el ramal de al lado (eje a 7 m) y la vía de servicio (eje a 11 m, 9 → 11,7 m) se montan 3–4 m encima. Los anchos del juego no caben en el espacio que deja el OSM entre vías paralelas: hay que repartir el ancho del corredor (carriles × 3,5 m + arcenes, sin pasar del hueco que hay).
+  - Jonay (9-nov): «los cruces, rotondas, puentes, túneles, en general hay que revisarlos para que tengan continuidad». Entra todo en el rediseño: cruces y glorietas como piezas propias a una sola altura, con las líneas parándose en su borde.
+  - Jonay (9-nov, Av. Lora Tamayo X 207, Y 1091, `sentidos_cruzados_X207_Y1091.png`): «aquí se cruzan los dos sentidos»: las líneas de un sentido se meten en el otro, sin separación clara. Y **la autopista tiene que estar muy bien delimitada**: mediana y bionda continuas, sin que ninguna calle ni lateral se le meta encima, y que solo se entre y se salga por sus accesos y salidas (los ramales). Entra en los corredores: los dos sentidos de una vía desdoblada con su mediana o línea continua entre ellos, y la autopista cerrada salvo en sus ramales.
+  - v1.2.0 en prueba (San Honorato): los dos sentidos de la bajada al ancho de su carril, a la misma altura y en una sola trinchera; suelo en toda la trinchera (se veía el mar por el hueco); losas con pretil para las aceras que cruzan una trinchera. Jonay (9-nov, 4 capturas `honorato_v2_*`): «mejor, pero sigue habiendo gente caminando por una acera rara, muro en medio de la carretera y cosas blancas en medio de la calzada; por el otro lado no une bien: la línea continua está a un lado y en el túnel en el otro, como espejado, y se ve azul un hueco… hay que buscar una técnica mejor para las uniones». Causa: cada trozo del OSM sigue haciendo sus muros, sus líneas (con el lado de la raya según hacia dónde va el trozo) y su agujero en el terreno; donde se juntan varios trozos quedan muros dentro de la calzada, rayas de la calle de arriba sobre la trinchera y huecos. Siguiente paso: la técnica de «tramos» (un solo objeto por grupo de trozos unidos: eje único, ancho que cambia de forma continua en las bifurcaciones, muros solo en el borde exterior de la unión, rayas según los carriles y no según el sentido del trozo, y un solo agujero en el terreno).
+  - v1.2.0, «tramos» hecho en San Honorato (`corrBuildTramos`, `04c_corredores.js`): todas las vías hundidas de la zona son una sola pieza. Suelo, muros y agujero salen de la unión de sus huellas: rejilla de 1 m, distancia al eje menos el medio ancho, y el borde por *marching squares*. Así:
+    - ya no quedan muros dentro de la calzada donde se juntan los trozos;
+    - el agujero coincide con el suelo (las manchas azules eran trozos de suelo cortados por el agujero de otro trozo más hondo);
+    - las rayas de la glorieta sobre la trinchera se cortan donde no hay losa;
+    - el corte se para antes del techo del túnel;
+    - las mitades de la vía desdoblada llevan sus líneas de borde (antes no tenían ninguna);
+    - los trozos que siguen a una mitad estrechada toman su ancho.
+  - **Método por zonas (Jonay, 9-nov):** antes de empezar cada zona nueva, pedirle a Jonay capturas en 3D de Google Maps de la zona («cuando vayas a acometer una zona me pides fotos»), para recrearla de una pieza tal como es. Las de San Honorato están en `docs/referencias/calles_119/honorato_google_3d*.png`.
+  - Jonay (9-nov), sobre esas capturas: «trata de poner las marcas viales bien aprovechando la foto y la unión con las calles alrededor»; y «todas estas fotos deberían ser referencia para guía de los colores de los edificios y formas» (usarlas también al revisar fachadas y volúmenes de la zona).
+  - Con las fotos 3D de Jonay (`honorato_google_3d_*.png`, 9-nov): el paso inferior es **una sola calle de doble sentido con dos carriles**. Sale del lazo este de la doble glorieta (C. Espinero / Cam. el Vallado), pasa bajo la TF-5 y llega a la glorieta de C. San Antonio, junto a la estación. El OSM la parte en dos mitades de un sentido en la bajada norte. Siguiente paso: dibujarla de una pieza como en la foto, con un solo eje de doble sentido (línea central y bordes) que enlace con las dos glorietas y sus pasos de cebra; quitar el pavimento del suelo sobre la trinchera (hecho v1.2.0: «ahí sobra esa acera»).
+  - v1.2.0 (9-nov, tarde), hecho en San Honorato:
+    - la bajada norte es una sola calle de doble sentido con raya central continua (`corrMergeHalves`);
+    - muros de basalto con barandilla y acera a la derecha bajando, también dentro del túnel;
+    - alturas del suelo suavizadas;
+    - sin peatones por encima de la trinchera;
+    - flecha y «X» en el carril de bajada;
+    - glorietas de la zona (`corrRoundaboutMarks`): línea junto a la isleta, borde exterior abierto en cada calle, línea discontinua entre carriles y pasos de cebra en cada calle que llega a la glorieta.
+    - Falta: que los peatones bajen por la acera de la trinchera (hoy caminan a la altura del terreno), y los pasos de cebra en el resto del mapa.
+  - **Zona siguiente: Los Rodeos / TF-5 junto al aeropuerto** (Jonay, 9-nov; X −3138, Y −191 y X −3340, Y −316; capturas y Google 3D en `docs/referencias/losrodeos/`): «un poco mejor, pero hay muchas cosas mal, especialmente la separación de los carriles».
+    - Cómo es en realidad: la TF-5 pasa en trinchera bajo un puente. Junto a ella hay un lazo de enlace con isleta de tierra y árboles, y al otro lado la Carr. Gral. del Norte (TF-152), separada por una mediana. La Rotonda Los Rodeos está al norte, y abajo la Carr. Campo de Golf (TF-235) con una minirrotonda junto a las oficinas de Aena.
+    - En el juego: los sentidos y los ramales se mezclan; la isleta del lazo es un parque con muro; la minirrotonda tiene aceras rotas y es un mar de asfalto.
+    - Siguiente zona de «tramos», después de San Lázaro.
+  - **Zona: Rotonda del Padre Anchieta / Glorieta del Brasil y la pasarela** (Jonay, 9-nov; X −390, Y 646; capturas, Google 3D, GRAFCAN y Street View en `docs/referencias/anchieta/`): «las líneas de la carretera y la autopista hacen curvas raras; hay que ajustarla para que cuadre todo mejor».
+    - Fijarse en las marcas viales de la foto de GRAFCAN. Falta el «pico», una gran explanada peatonal en la parte superior derecha de esa foto, de la que baja una rampa a la Av. Trinidad.
+    - En el OSM el anillo son 12 trozos `primary` de 13 m, con el centro en X −338, Y 730 y radio 46 m. Lo cruzan la TF-5 en trinchera (1265/1279/2293 y 1275/1276/1285), los ramales 347, 2200, 2289, 2333, 2821 y 2822, y la Av. Trinidad (371, 2376, 2847).
+    - Siguiente zona de «tramos», junto con el puente de San Lázaro (barandilla de piedra) y Los Rodeos.
+  - **Cuestas de golpe en el Camino del Púlpito** (Jonay, 9-nov; X −3192, Y −341; captura `docs/referencias/sanlazaro/pulpito_cuesta.png`): «de golpe hiciste súper carreteras empinadas… debe ser todo más gradual desde mucho más atrás».
+    - No es de los tramos: el relieve del juego no ha cambiado (el mismo mapa de alturas de siempre).
+    - Ese mapa es de 16 m y tiene escalones: valores repetidos en 3–4 celdas seguidas, y luego saltos de 15–20 m en 20 m (de Y −340 a Y −380 sube unos 34 m).
+    - Arreglo: el MDT de 5 m del IGN (ya apuntado en «Barrancos y arbolado con la cartografía real»). Mientras tanto, se pueden suavizar las calles con una pendiente máxima: rebajar o levantar el terreno bajo ellas.
+  - **Zona: Av. Lora Tamayo y el Puente Cruz de Piedra sobre la TF-5** (Jonay, 9-nov; X 159, Y 1312 · X 200, Y 1207 · X 91, Y 1328; capturas y Google 3D en `docs/referencias/loratamayo/`): «el puente de Cruz de Piedra no está mal, pero luego la avenida es una locura; las marcas viales están fatal, y las separaciones de carriles; las rotondas también están raras».
+    - Cómo es en realidad:
+      - el enlace de la TF-5 tiene dos lazos con isletas de tierra y árboles, el puente Cruz de Piedra y una glorieta a cada lado del puente;
+      - la glorieta sur, junto al edificio redondo de Oceanocan, tiene la isleta con piedras y pasos de cebra en cada entrada;
+      - la Av. Lora Tamayo es una avenida de dos sentidos con mediana estrecha: dos carriles por sentido, con flechas, pasos de cebra y aparcamiento en batería en el lado este;
+      - el ramal de bajada pasa junto al colegio con un muro azul.
+    - En el juego:
+      - las glorietas tienen isleta con muro y barandilla;
+      - la avenida tiene rayas que se cruzan y carriles mezclados;
+      - salen vallas sueltas sobre la calzada.
+  - **TF-5 entre Lora Tamayo y Geneto** (Jonay, 9-nov; X 138, Y 1257 · X 200, Y 1341; capturas y Google 3D en `docs/referencias/loratamayo/tf5_geneto_*`): «esta parte de la autopista está fatal, es mucho más recta; los túneles de más adelante están bastante bien, pero no sus accesos y salidas, y mucho menos las marcas viales y las separaciones».
+    - Cómo es en realidad: la autopista va recta, con mediana de New Jersey. Los carriles de deceleración y aceleración salen en paralelo con cebreado en V y una raya discontinua. Hay glorietas a cada lado sobre el talud y los ramales van entre muros de roca.
+    - En el juego: los ejes ondulan (los empuja `separateCarriageways`), las rayas se cruzan, hay vallas entre los ramales y la autopista, y los ramales se pisan con las calles paralelas.
+  - **Pabellón Santiago Martín (CB Canarias) y la salida de la TF-5 antes del HUC** (Jonay, 9-nov; X 1771, Y 3085; Google 3D y Street View en `docs/referencias/santiagomartin/`): «falta hacer el pabellón del CB Canarias, Santiago Martín, y esa salida de la autopista antes del hospital cuidarla más».
+    - El pabellón: un cilindro con cúpula blanca baja y fachada de lamas grises, sobre un zócalo de bloque con el rótulo «Pabellón de Deportes de Tenerife Santiago Martín» y un cuerpo azul con ventanas. Por fuera lleva una estructura de pórtico metálico y escaleras, y a un lado una gran lona publicitaria (parodia). Calles alrededor: C. Las Mercedes, C. Garafía y C. Las Macetas.
+    - La salida: un carril de deceleración paralelo, con cebreado, que baja a una glorieta pequeña (la «rotonda de la Hamburguesa», junto a Jardín Osorio). La mediana de la TF-5 es de New Jersey con plantas.
+  - v1.2.0 (10-nov), tramo 1 de la TF-5 hecho, de Lora Tamayo al HUC (`corrMotorwayStraighten`, `prueba_121`):
+    - un solo eje suave, cada sentido a su lado a 7,9 m y con un solo ancho (13,4 m); entre ejes, 14,8–15,8 m;
+    - los carriles de aceleración y deceleración van paralelos y pegados, con raya discontinua en el lado de la autopista;
+    - 22/22 pruebas OK, conducción incluida.
+    - Falta: el enlace de Guajara, con los ramales que se cruzan junto al puente; el cebreado en V de las salidas; la salida antes del HUC con su glorieta; el Pabellón Santiago Martín; y ampliar el tramo hacia San Honorato y hacia Santa Cruz.
+  - Queda por ver con Jonay: la boca sur (X −908, Y 47) une una vía de un sentido de 3 carriles (13,4 m) con un túnel de doble sentido (10,4 m) según el OSM, así que las rayas siguen sin casar del todo. Pendiente también: aceras que cruzan donde la trinchera es poco honda (sin losa).
+
+  - Decidido (Jonay, 9-nov): rehacer por zonas, empezando por San Honorato (X −998 Y 121), la boca de X −909 Y 45, C. Timanfaya (X −1250 Y 9) y la autopista con laterales (X 146 Y 1259); cuando le guste, al resto del mapa. Base nueva: (1) juntar los trozos del OSM en recorridos continuos; (2) un perfil de alturas por recorrido en vez de los parches (hundir, levantar, seguir, topes); (3) una sección que se transforma de forma continua (calzada, líneas, aceras, muros, pretil, techo); (4) cruces y glorietas como piezas a una altura; (5) corredores de vías paralelas con el ancho repartido; (6) una prueba que mida escalones, solapes, huecos y líneas cruzadas con foto de cada sitio (`sonda_solapes.py`, `sonda_alturas.py`, `sonda_calzadas.py`).
 - [~] ◐ v1.1.9 (Vía de Ronda X 309: el ramal de subida sigue a la vía donde sus calzadas se pisan; calles repetidas del OSM —dos copias de la misma vía— quitadas al cargar; los quiebros de la Av. de La Trinidad no se ven ya en las fotos: falta que Jonay lo mire) v1.1.4 (San Honorato: líneas de la trinchera cortadas donde se junta con la glorieta; Vía de Ronda X 309: el ramal de bajada sube con la vía elevada; queda el ramal de subida, que está más alto que la vía y habría que bajar el terreno, y los quiebros de la Av. de La Trinidad) **Calles en zigzag y marcas que se quiebran** (Jonay, 3-nov, Av. de La Trinidad X −147, Y 220, captura: «las
   carreteras no pueden ser tan angulosas, y menos las marcas viales»): el carril de la avenida y su acera hacen quiebros
   bruscos (puntos del OSM movidos al separar sentidos o al ensanchar). Suavizar el trazado (curvas con radio mínimo, puntos
@@ -551,6 +615,10 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   Viene saliendo de un túnel (bajo el puente de la autopista, junto al Hospital Universitario) y termina en La Cuesta.
   - En las fotos: calzada de un carril por sentido a cada lado de la plataforma del tranvía, cruces con «prioridad
     tranvía», gasolinera DISO (nº 108), naves y el Lidl hacia el final.
+
+### Coches y tráfico
+
+- [ ] ⚡ **Coches un 10 % más pequeños** (Jonay, 9-nov: «no, coches más grandes no, más pequeños, un 10 % menos»): escalar los modelos (`06b_vmodels.js`, largo/ancho/alto, y sus colisiones) un 10 % hacia abajo; así caben mejor en la banda de aparcamiento (2,2 m) y dejan de pisar su raya.
 
 ### Casas, personaje y vida social
 
@@ -644,6 +712,12 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   - De 10 a 14 años: el morph «teen» que ya tenemos podría servir, con estas alturas.
 
 ### Árboles y vegetación
+
+- [ ] ● **Barrancos y arbolado con la cartografía real (GRAFCAN / IGN)** (Jonay, 9-nov: «hay muchas zonas que son barranco y están planas… ¿no tienes la cartografía real? ¿y vistas por satélite tipo GRAFCAN para ver zonas con árboles?»): el terreno del juego es una malla de **16 m** (`DATA.H`: 522 × 388 puntos), así que un barranco de 20–40 m de ancho se queda en una hondonada suave o plano.
+  - Terreno: bajar el MDT de 2–5 m (LiDAR del PNOA, IGN / GRAFCAN) con una orden nueva del trabajador y rehacer la malla a 4–8 m (o más fina solo en barrancos y bordes de calle, para no hacer el juego mucho más pesado); comprobar después calles, trincheras y edificios, que se apoyan en la altura.
+  - Fuentes (9-nov): el visor de IDECanarias es una página que pinta servicios públicos WMS de GRAFCAN: Ortofoto `https://idecan1.grafcan.es/ServicioWMS/Ortofoto?` (10 cm, Tenerife 2025), infrarroja `…/OrtofotoCIR?` (la vegetación sale roja: sirve para encontrar árboles), Modelo de Terreno LIDAR `…/MTL?` (2,5 m, en realidad de superficie, 2011–12) y sombras `…/MDSombras?`. Como WMS dan imágenes, no alturas: para el terreno, mejor el MDT de 5 m del IGN (centro de descargas del CNIG o su WCS INSPIRE). Mirar las condiciones de uso (aviso legal de GRAFCAN, licencia del IGN) antes de usarlo. Herramienta: una orden nueva del trabajador que baje por trozos la zona del mapa.
+  - Árboles: con la ortofoto de GRAFCAN (WMS) y la diferencia entre el modelo de superficies y el del terreno (altura de la copa) sacar dónde hay arbolado de verdad y plantarlo (pinar, laurisilva, palmeras en barrancos), en vez de repartirlo a ojo.
+
 
 - [ ] ● **Árboles con más detalle y varios modelos** (Jonay, 19-oct, «no para ya»). Muchas copas son un círculo feo. Fotos
       de Street View de lo que hay en La Laguna:

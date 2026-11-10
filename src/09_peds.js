@@ -79,6 +79,10 @@ function spawnPed(x, z, near = false) {
       return null;
     }
     const W = PEDWAYS[way];
+    if (W.dead) {
+      releaseHuman(can ? 'can' : 'ped', H);
+      return null;
+    } // v1.2.0: a way with no pavement at ground level (corrCutFootways)
     p.way = way;
     p.seg = rd.i / 2;
     p.dir = Math.random() < 0.5 ? 1 : -1;
@@ -126,7 +130,7 @@ function advancePed(p) {
   p.seg += p.dir;
   if (p.seg <= 0 || p.seg >= n - 1 || Math.random() < 0.12) {
     const k = W.c[p.seg * 2] + ',' + W.c[p.seg * 2 + 1];
-    const opts = (PEDKEY.get(k) || []).filter((o) => o[0] !== p.way || Math.random() < 0.1);
+    const opts = (PEDKEY.get(k) || []).filter((o) => (o[0] !== p.way || Math.random() < 0.1) && !PEDWAYS[o[0]].dead);
     if (opts.length) {
       const o = pick(opts);
       const NW = PEDWAYS[o[0]];

@@ -383,8 +383,8 @@ function buildSplatPart1() {
 let SPLATCANVAS;
 // tunnel cuttings: kept in a small float texture (mobile GPUs have few fragment uniforms)
 // rows: 0 = segment (x1,z1,x2,z2), 1 = (width,0,0,0), 2 = group bbox, 3 = group range (start,end)
-const NCUT = 512,
-  NGRP = 160;
+const NCUT = 1024,
+  NGRP = 256; // v1.2.0: room for the tramos (the TF-5 at San Lázaro)
 const TCUT_DATA = new Float32Array(NCUT * 4 * 4);
 const TCUT_TEX = new THREE.DataTexture(TCUT_DATA, NCUT, 4, THREE.RGBAFormat, THREE.FloatType);
 TCUT_TEX.magFilter = TCUT_TEX.minFilter = THREE.NearestFilter;
@@ -553,6 +553,7 @@ function buildTerrainPart1() {
   const m = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.97, side: THREE.DoubleSide }); // seen from below (from inside a cutting) it reads as earth, not as a hole
   const mtex = canvasTex(SPLAT.mask, { repeat: false, srgb: false });
   mtex.wrapS = mtex.wrapT = THREE.ClampToEdgeWrapping;
+  SPLAT.mtex = mtex; // (v1.2.0: corrBuildTramos clears the paving over its cuttings and tubes)
   return { g, m, mtex };
 }
 
@@ -593,8 +594,17 @@ function parkSides(rd) {
     ln = DATA.LN ? DATA.LN[RD_INDEX.get(rd)] : null;
   ps = { sides: [], lanes: ln && ln[0] > 0 ? ln[0] : -1, osm: false };
   const fast = rd[0] <= 4 || /V[ií]a de Ronda|Autopista|Autov[ií]a/i.test(rd[1] >= 0 ? STR[rd[1]] || '' : '');
+  // v1.2.0 (Jonay, boca sur de San Honorato: las rayas de la bajada no casaban con las del túnel): no parking lane in a
+  // tunnel, on a bridge or down a cutting (its band line looked like a third lane)
+  let sunk = !!(rd[3] & 6);
+  try {
+    sunk = sunk || DEP.has(RD_INDEX.get(rd));
+  } catch (e) {
+    /* (called before DEP exists) */
+  }
   if (
     !fast &&
+    !sunk &&
     ROADCLASS(rd) !== 'paving' &&
     ['secondary', 'secondary_link', 'tertiary', 'tertiary_link', 'unclassified', 'residential', 'living_street'].includes(t)
   ) {
@@ -720,7 +730,9 @@ function laneMk(rd, plain = false, hide = null) {
     (p0 ? 'p' : '') +
     (p1 ? 'q' : '') +
     (hide && hide.includes(1) ? 'H' : '') +
-    (hide && hide.includes(-1) ? 'J' : '');
+    (hide && hide.includes(-1) ? 'J' : '') +
+    (hide && hide.includes('in') ? 'I' : '') +
+    (hide && hide.includes('solid') ? 'S' : '');
   if (MAT[key]) return key;
   const { c } = laneMkPart2(w, p0, hide, p1, plain, ow, mot, n);
   MAT[key] = MAT.asphaltLines.clone();
@@ -761,7 +773,7 @@ function laneMkPart2(w, p0, hide, p1, plain, ow, mot, n) {
       b = w - p1 - (p1 ? 0.3 : si),
       lw = (b - a) / n; // right shoulder (u = 0) wider than the left one
     if (!p0) line(so, 0.18);
-    if (!p1) line(w - si, 0.18);
+    if (!p1 && !(hide && hide.includes('in'))) line(w - si, 0.18); // (v1.2.0: not on the inner side of a half of a dual road with no median: its centre line goes between both)
     for (let k = 1; k < n; k++) line(a + lw * k, 0.14, mot ? [0.38, 1] : [0.5, 2]);
   } else {
     const e = 0.35,
@@ -775,7 +787,7 @@ function laneMkPart2(w, p0, hide, p1, plain, ow, mot, n) {
       line(mid - 0.12, 0.1);
       line(mid + 0.12, 0.1);
       for (const sd of [-1, 1]) line(mid + (sd * half) / 2, 0.12, [0.4, 2]);
-    } else line(mid, 0.14, [0.5, 4]);
+    } else line(mid, 0.14, hide && hide.includes('solid') ? null : [0.5, 4]); // (v1.2.0: solid where overtaking is forbidden, e.g. the underpass of San Honorato)
   }
   return { c };
 }
@@ -1055,6 +1067,7 @@ function buildRoads() {
   for (let ri = 0; ri < DATA.R.length; ri++) {
     buildRoadsEach(ri);
   }
+  corrBuildTramos(); // v1.2.0: the cuttings of the corridor zones as one piece (04c_corredores.js)
   buildRoadsPart2();
 }
 /** (v1.1.7, code quality) the body of a loop of buildRoads, split out of it */
@@ -1079,7 +1092,9 @@ function buildRoadsEach(ri) {
         ? { H: 2.9, cover: 3.1 }
         : TF13.ring.includes(ri) || TF13.tubes.includes(ri) || TF13.app.includes(ri)
           ? { wc: [0.47, 0.41, 0.35] }
-          : {}
+          : corrTramoSet().has(ri)
+            ? corrTunnelOpt(ri)
+            : {} // v1.2.0: in the corridor zones its open cutting is part of one piece (corrBuildTramos)
     );
     TUN_RI = -1;
     return;
@@ -1106,10 +1121,12 @@ function buildRoadsEach(ri) {
     if (isLines(cls)) linedRibbon(ri, c, w, cls, tile, hf, 0);
     else ribbon(c, w, cls, YOFF[cls], tile, w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8), hf); // v0.99.6: on bridges too
     bridgeDressing(c, w, hf, rd[0] <= 12);
+    if (corrState().bridges && corrState().bridges.has(rd)) corrBridgeSidewalks(c, w, hf); // v1.2.0: the bridge of Cam. San Lázaro has a pavement on each side
     return;
   }
   buildRoadsEachPart2(cls, rd, ri, c, cls0, w, tile, yo);
   buildRoadsEachPart3(t, cls, c, w, ri);
+  if (corrState().bridges && corrState().bridges.has(rd)) corrBridgeSidewalks(c, w, (s, x, z) => heightAt(x, z)); // v1.2.0: a bridge left at grade (the ground carries it over the trench)
 }
 /** (v1.1.7, code quality) part of buildRoadsEach: junction discs */
 function buildRoadsEachPart3(t, cls, c, w, ri) {
@@ -1162,12 +1179,17 @@ function buildRoadsEachPart1(ri) {
   OBST_RI = (DEP.has(ri) || rd[3] & 2 || RAISE.has(ri)) && window.__AUDIT ? ri : -1;
   const t = RTN[rd[0]],
     cls0 = ROADCLASS(rd),
-    cls =
-      cls0 === 'asphaltLines'
-        ? laneMk(rd)
-        : cls0 === 'asphalt' && rd[0] <= 12 && rd[2] >= 5.5 && parkSides(rd).sides.length
-          ? laneMk(rd, true)
-          : cls0,
+    cls = corrPlainRing(rd) // v1.2.0: a roundabout of the corridor zones: plain, its lines are painted apart (corrRoundaboutMarks)
+      ? 'asphalt'
+      : corrState().paraLinks && corrState().paraLinks.has(rd) // v1.2.0: a slip lane alongside the TF-5: no edge line on the motorway side (a dashed line is painted there)
+        ? laneMk(rd, false, ['in'])
+        : corrIsTwin(rd) // v1.2.0: the halves of a dual road in the corridor zones: the outer edge line only (the centre line goes between both: corrBuildTramos)
+          ? laneMk(rd, false, ['in'])
+          : cls0 === 'asphaltLines'
+            ? laneMk(rd, false, corrTramoSet().has(ri) && !(rd[3] & 1) ? ['solid'] : null) // v1.2.0: a solid centre line down the underpass (Street View)
+            : cls0 === 'asphalt' && rd[0] <= 12 && rd[2] >= 5.5 && parkSides(rd).sides.length
+              ? laneMk(rd, true)
+              : cls0,
     w = rd[2],
     c = rd[4];
   return { rd, t, cls0, cls, w, c };
@@ -1712,7 +1734,7 @@ function bridgeDressingEachPart1(a, hw, b, T, i, w) {
 /** (v1.1.7, code quality) part of bridgeDressing */
 function bridgeDressingPart1(c, w, hf) {
   const T = acc(c[0], c[1], 'trim');
-  const col = [0.72, 0.71, 0.68];
+  const col = corrState().bridges && DRESS_RI >= 0 && corrState().bridges.has(DATA.R[DRESS_RI]) ? [0.48, 0.44, 0.38] : [0.72, 0.71, 0.68]; // v1.2.0: the old stone parapet of the bridge of Cam. San Lázaro (Street View)
   const pts = [];
   let dist = 0;
   const hw = w / 2 + 0.1;
@@ -2028,6 +2050,9 @@ function computeDepressionsPart5(ncap, sink, push) {
     console.error('tf5', e);
   }
   shallowCrossCaps();
+  for (const ri of DEP.keys()) PARKSIDE.delete(DATA.R[ri]); // v1.2.0: asked before the cuttings were known: ask again (no parking lane down a cutting)
+  corrShareDepth(); // v1.2.0
+  corrCutFootways(); // v1.2.0: no footway over the cuttings of the corridor zones: both halves of a dual road at one height (04c_corredores.js)
 }
 // v1.1.9 (rampa del HUC, X 2210, Y 3312: «la boca de la rampa empieza 2 m honda justo donde la cruza la calle de servicio,
 // y el coche cae dentro»): where a street at grade crosses an open sunk road that is still too shallow to pass under it
@@ -2604,14 +2629,15 @@ function trenchSlabs() {
     if (PED_TUN.has(ri)) continue;
     const hf = depressedHF(ri),
       w = Math.max(rd[2], 2.6),
-      hwT = w / 2 + 1.0;
+      hwT = w / 2 + 1.0 + corrCutExtra(ri) + corrSide(ri);
     for (const X of crossingsOf(ri)) {
       const r2 = DATA.R[X.rj];
-      if (r2[3] & 6 || DEP.has(X.rj) || RAISE.has(X.rj) || r2[0] > 13) continue;
+      if (r2[3] & 6 || DEP.has(X.rj) || RAISE.has(X.rj) || r2[0] > 14) continue; // v1.2.0: footways too (people walked in the air over the cutting)
       const g = heightAt(X.x, X.z),
         fl = hf(X.s, X.x, X.z),
         dep = g - fl;
-      if (!(dep > 3.2) || dep > 6.6) continue; /* covered (a tube with its roof) from ~6.6 m: no slab */
+      if (!(dep > (r2[0] > 12 ? 1.5 : 3.2)) || dep > 6.6)
+        continue; /* covered (a tube with its roof) from ~6.6 m: no slab; a footway already from 1.5 m */
       const c2 = r2[4];
       let best = null;
       for (let i = 0; i + 3 < c2.length; i += 2) {
@@ -3566,7 +3592,7 @@ function twinWall(x, z, y0, y1) {
       dz = g[3] - g[1],
       L2 = dx * dx + dz * dz || 1;
     const t = clamp(((x - g[0]) * dx + (z - g[1]) * dz) / L2, 0, 1);
-    if (Math.hypot(x - g[0] - dx * t, z - g[1] - dz * t) < g[4] + 0.6) {
+    if (Math.hypot(x - g[0] - dx * t, z - g[1] - dz * t) < g[4] + (corrTwins(TUN_RI, g[5]) ? 1.6 + corrCutExtra(g[5]) * 2 : 0.6)) {
       if (Math.abs(yAt(g, t, Math.sqrt(L2)) - yOwn) < 1.6) return true;
     }
   }
@@ -3672,10 +3698,14 @@ function tunnelRoad(c, w, cls, tile, hf, opt = {}) {
   const covered = opt.coveredAt || ((p) => dep(p) > Math.max(opt.cover || 3.4, H + 0.35));
   /* the roof must stay under the ground (it used to stick out as a white slab across the road) */ const wc = opt.wc || [0.66, 0.64, 0.6];
   const Pt = (p, sg, y, e = hw) => [p[0] - p[4] * e * sg, p[2] + y, p[1] + p[3] * e * sg];
+  // v1.2.0 (tramos, corrBuildTramos): in the corridor zones the tube starts where both ends are covered, and its portal
+  // stands right there, where the open cutting of the tramo stops (the cutting used to end up to 4 m short of the
+  // portal, and the strip of ground left over the road showed dark from below: «se ve azul»)
+  const tubeSeg = (i) => (opt.tramo ? covered(pts[i]) && covered(pts[i + 1]) : covered(pts[i]) || covered(pts[i + 1]));
   for (let i = 0; i < pts.length - 1; i++) {
     const a = pts[i],
       b = pts[i + 1];
-    if (covered(a) || covered(b)) {
+    if (tubeSeg(i)) {
       for (const sg of [1, -1])
         if (
           !twinWall((Pt(a, sg, 0)[0] + Pt(b, sg, 0)[0]) / 2, (Pt(a, sg, 0)[2] + Pt(b, sg, 0)[2]) / 2, Math.min(a[2], b[2]), Math.max(a[2], b[2]) + H)
@@ -3684,6 +3714,22 @@ function tunnelRoad(c, w, cls, tile, hf, opt = {}) {
       const roofOk =
         !inOtherRoad((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2 + H - 4.4, (a[2] + b[2]) / 2 + H + 0.3, TUN_RI, -hw + 0.2) || !TUN_RI;
       if (roofOk) T.quad(Pt(a, 1, H), Pt(b, 1, H), Pt(b, -1, H), Pt(a, -1, H), [0, 0], [1, 0], [1, 1], [0, 1], null, undefined, [0, -1, 0]);
+      // v1.2.0 (Jonay, boca sur de San Honorato: «se ve azul»): the hole of the cutting reaches a little over the tube at
+      // the mouth, and the roof only faced down: from above you saw through it to the sea; now it has a top too
+      if (roofOk && opt.tramo)
+        W.quad(
+          Pt(a, 1, H + 0.05),
+          Pt(b, 1, H + 0.05),
+          Pt(b, -1, H + 0.05),
+          Pt(a, -1, H + 0.05),
+          [0, 0],
+          [0, 0],
+          [0, 0],
+          [0, 0],
+          wc,
+          undefined,
+          [0, 1, 0]
+        );
       // lid slab so the tube reads from outside where the ground dips
       for (const sg of [1, -1])
         if (
@@ -3730,8 +3776,19 @@ function tunnelRoad(c, w, cls, tile, hf, opt = {}) {
           undefined,
           [0, -1, 0]
         );
-      if (covered(b) !== covered(a)) {
-        const p = covered(a) ? a : b;
+      const hp = opt.tramo
+        ? i === 0 || !tubeSeg(i - 1)
+          ? a
+          : i + 2 >= pts.length || !tubeSeg(i + 1)
+            ? b
+            : null
+        : covered(b) !== covered(a)
+          ? covered(a)
+            ? a
+            : b
+          : null;
+      if (hp) {
+        const p = hp;
         const P = acc(p[0], p[1], 'trim');
         const col = [0.58, 0.56, 0.53];
         const top = Math.max(H + 1.6, dep(p) + 0.6);
@@ -3764,7 +3821,7 @@ function tunnelRoad(c, w, cls, tile, hf, opt = {}) {
         if (sL && pt > 0.5) fr(ex, 1.0, -0.3, pt);
         if (sR && pt > 0.5) fr(-1.0, -ex, -0.3, pt);
       }
-    } else if (dep(a) > 0.3 || dep(b) > 0.3) {
+    } else if (!opt.tramo && (dep(a) > 0.3 || dep(b) > 0.3)) {
       // open cutting: retaining walls up to the ground, with a small parapet, and a hole in the terrain above
       for (const sg of [1, -1]) {
         if (
@@ -3871,12 +3928,18 @@ function tunnelRoadPart1(cls, c, w, tile, hf, opt) {
         ribbon(pc, w, ln ? cls : 'asphalt', ln ? YOFF[cls] : YOFF.asphalt, ln ? tile : 8, ln ? 1 : w / 8, (q, x, z) => hf(q + a, x, z), true);
     }
   } else ribbon(c, w, cls, YOFF[cls], tile, isLines(cls) ? 1 : w / 8, hf, true);
+  // v1.2.0 (Jonay, San Honorato: «¿eso azul a los lados qué es?»): the strip between the carriageway and the walls had no
+  // floor, and through the hole in the terrain the sea far below showed: a plain asphalt floor all across the cutting
+  if (!opt.tramo) {
+    const fw = w + 2 * ((opt.H ? 0.6 : 1.0) + (TUN_RI >= 0 && !opt.H ? corrCutExtra(TUN_RI) : 0)) + 0.4;
+    ribbon(c, fw, 'asphalt', YOFF.asphalt - 0.03, 8, fw / 8, hf, true);
+  }
   // covered stretch -> tube with walls, ceiling and lights; open stretch -> cutting with retaining walls
   const T = acc(c[0], c[1], 'tunnel');
   const L2 = acc(c[0], c[1], 'tunnelLight');
   const W = acc(c[0], c[1], 'trim');
-  const hw = w / 2 + (opt.H ? 0.6 : 1.0),
-    H = opt.H || 6.0; // roomier tubes and mouths
+  const hw = w / 2 + (opt.H ? 0.6 : 1.0) + (TUN_RI >= 0 && !opt.H ? corrCutExtra(TUN_RI) : 0) + (opt.tramo ? corrSide(TUN_RI) : 0),
+    H = opt.H || 6.0; // roomier tubes and mouths (v1.2.0: the two halves of a dual road share one cutting, 04c_corredores.js)
   const pts = [];
   let dist = 0;
   for (let i = 0; i < c.length - 2; i += 2) {
@@ -5312,6 +5375,10 @@ function buildMedians() {
         }
         for (const best of cands.values()) {
           if (nearJ(x, z, 16) || nearJ(best.px, best.pz, 16)) continue;
+          // v1.2.0 (Jonay, Los Rodeos: «carriles de aceleración… a los que has puesto valla, y son líneas discontinuas
+          // solo»): a slip lane running beside its motorway the same way is one more lane, no barrier between them
+          if (best.dot > 0 && rd[3] & 1 && R[best.rj][3] & 1 && Math.min(rd[0], R[best.rj][0]) === 0 && Math.max(rd[0], R[best.rj][0]) === 1)
+            continue;
           const kind = big(rd[0]) && big(R[best.rj][0]) ? 2 : big(rd[0]) || big(R[best.rj][0]) ? 3 : 1;
           const ya = ROADY[ri](s0 + t, x, z),
             yb = ROADY[best.rj](best.s2, best.px, best.pz);

@@ -1,0 +1,4 @@
+# v1.2.0: Los Rodeos (TF-5 bajo el puente junto al aeropuerto)
+herramientas/foto_vista.py rodeos_puente -3322 -193 18 -3330 -150
+herramientas/foto_vista.py rodeos_lado -3377 -200 11 -3330 -215
+herramientas/sonda_solapes.py 30

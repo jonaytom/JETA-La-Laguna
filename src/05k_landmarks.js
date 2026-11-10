@@ -83,7 +83,11 @@ const LANDMARK_AT = [
   { x: -210, z: -220, r: 9, o: { hip: true, atlas: 9, col: '#efe3c9', quoin: BASALT, deco: ['portal:grey'], label: 'Casa Museo Los Sabandeños' } }, // v0.78: callejero n.º 23 (OSM: museum point)
   { x: 33, z: -212, r: 9, o: { hip: true, atlas: 9, col: '#f2ede2', quoin: GSTONE, deco: ['portal:grey'], label: 'Fundación Cristino de Vera' } }, // n.º 29
   { x: 2097, z: 1968, r: 16, o: { atlas: 15, col: '#f4f6f8', deco: ['salud:QUIRÓFANO SALUD · CLÍNICA'], label: 'Clínica Quirófano Salud' } }, // v0.78: the private clinic by the TF-5 (OSM «Quirón Salud»), parody
-  { x: 150, z: -75, r: 12, o: { atlas: 6, col: '#f4f1e8', H: 10, deco: ['celosia'], label: 'Convento de Santa Catalina' } }
+  { x: 150, z: -75, r: 12, o: { atlas: 6, col: '#f4f1e8', H: 10, deco: ['celosia'], label: 'Convento de Santa Catalina' } },
+  // v1.2.0 (Jonay, 9-nov: «falta hacer el pabellón del CB Canarias, Santiago Martín»; fotos en docs/referencias/
+  // santiagomartin/): the low block of grey stone around it, and the round hall on top (built by the 'pabellon' deco)
+  { x: 1754, z: 3201, r: 4, o: { atlas: 15, col: '#a59d92', H: 6.5, label: 'Pabellón Santiago Martín (zócalo)' } },
+  { x: 1758, z: 3211, r: 4, o: { atlas: 15, col: '#a59d92', H: 6.5, deco: ['pabellon'], label: 'Pabellón de Deportes Santiago Martín' } }
 ];
 // Finca España, C. Tacoronte (zona del colega de Jonay): bloques de 3-4 plantas color arena / salmón
 const FINCA_COLS = ['#e8c9a0', '#e6b08f', '#dcc29a', '#eab7a0', '#e9d3b0'];
@@ -237,6 +241,7 @@ function buildLandmarkDecoEach(B) {
       pg.add(cap);
       pg.rotation.y = 0;
     }
+    if (kind === 'pabellon') pabellonSantiagoMartin(pts, cx, cz, top);
     if (kind === 'ayto') buildAyuntamiento(pts);
     if (kind === 'huc') buildHUC(pts);
     if (kind === 'glass') buildGlassSkin(pts, top);
@@ -343,4 +348,102 @@ function buildLandmarkDecoEach(B) {
     }
   }
   if (L.label) LABELS.push([L.label, cx, cz, 1]);
+}
+
+/** v1.2.0: the Pabellón de Deportes Santiago Martín (fotos de Jonay): a drum of grey vertical slats with a very low white
+ *  dome, on the stone base; a blue block with windows on one side, a big banner (parody) and the steel portal frame that
+ *  runs around it */
+function pabellonSantiagoMartin(pts, cx, cz, top) {
+  let rIn = 1e9;
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i],
+      q = pts[(i + 1) % pts.length],
+      L2 = (q[0] - p[0]) ** 2 + (q[1] - p[1]) ** 2 || 1,
+      t = Math.max(0, Math.min(1, ((cx - p[0]) * (q[0] - p[0]) + (cz - p[1]) * (q[1] - p[1])) / L2));
+    rIn = Math.min(rIn, Math.hypot(cx - p[0] - (q[0] - p[0]) * t, cz - p[1] - (q[1] - p[1]) * t));
+  }
+  const R = Math.max(14, Math.min(30, rIn * 0.92)),
+    Hd = 12,
+    g = new THREE.Group();
+  g.position.set(cx, top - 0.05, cz);
+  scene.add(g);
+  // the slats: a canvas of light and dark grey stripes wrapped round the drum
+  const c = mkCanvas(1024, 128),
+    x = c.getContext('2d');
+  for (let i = 0; i < 128; i++) {
+    x.fillStyle = i % 2 ? '#aeb3b5' : '#c9cdcf';
+    x.fillRect(i * 8, 0, 8, 128);
+  }
+  x.fillStyle = 'rgba(40,45,50,0.35)';
+  x.fillRect(0, 100, 1024, 28); // the dark band of glass at the foot
+  const tex = canvasTex(c, { repeat: true });
+  tex.repeat.set(3, 1);
+  const drum = new THREE.Mesh(
+    new THREE.CylinderGeometry(R, R, Hd, 64, 1, true),
+    new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6, side: THREE.DoubleSide })
+  );
+  drum.position.y = Hd / 2;
+  g.add(drum);
+  // the dome: a very flat white cap
+  const capH = R * 0.18,
+    sr = (R * R + capH * capH) / (2 * capH),
+    dome = new THREE.Mesh(
+      new THREE.SphereGeometry(sr, 64, 12, 0, Math.PI * 2, 0, Math.asin(R / sr)),
+      new THREE.MeshStandardMaterial({ color: 0xf1f1ec, roughness: 0.75 })
+    );
+  dome.position.y = Hd - (sr - capH);
+  g.add(dome);
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(R, 0.35, 6, 64), new THREE.MeshStandardMaterial({ color: 0x9da2a4, roughness: 0.6 }));
+  rim.rotation.x = Math.PI / 2;
+  rim.position.y = Hd;
+  g.add(rim);
+  // the dark vertical strip on the drum (the stair tower) and the banner (parody of the real ads)
+  const strip = new THREE.Mesh(new THREE.BoxGeometry(2.2, Hd + 1.5, 1.2), new THREE.MeshStandardMaterial({ color: 0x3b3a38, roughness: 0.8 }));
+  strip.position.set(Math.sin(0.4) * R, (Hd + 1.5) / 2, Math.cos(0.4) * R);
+  strip.rotation.y = 0.4;
+  g.add(strip);
+  const bc = mkCanvas(1024, 384),
+    bx = bc.getContext('2d');
+  bx.fillStyle = '#1f3f8f';
+  bx.fillRect(0, 0, 1024, 384);
+  bx.fillStyle = '#ffffff';
+  bx.font = '800 150px Oswald, Impact, sans-serif';
+  bx.textAlign = 'center';
+  bx.textBaseline = 'middle';
+  bx.fillText('¡HOLA, AGUERE!', 512, 150);
+  bx.font = '600 60px Oswald, sans-serif';
+  bx.fillText('LANOVO · TENERIFE CON TODO', 512, 300);
+  const banA = 0.9,
+    banW = R * 0.7,
+    banner = new THREE.Mesh(
+      new THREE.PlaneGeometry(banW, Hd * 0.45),
+      new THREE.MeshStandardMaterial({ map: canvasTex(bc, { repeat: false }), roughness: 0.6 })
+    );
+  banner.position.set(Math.sin(banA) * (R + 0.15), Hd * 0.55, Math.cos(banA) * (R + 0.15));
+  banner.rotation.y = banA;
+  g.add(banner);
+  // the blue block with windows on one side
+  const blue = new THREE.Mesh(new THREE.BoxGeometry(R * 0.7, 7, 8), new THREE.MeshStandardMaterial({ color: 0x2f5fb3, roughness: 0.5 }));
+  blue.position.set(Math.sin(-0.6) * (R + 2), 3.5 - 0.05, Math.cos(-0.6) * (R + 2));
+  blue.rotation.y = -0.6;
+  g.add(blue);
+  // the steel portal frame around it: posts and a ring beam
+  const steel = new THREE.MeshStandardMaterial({ color: 0x6a6660, roughness: 0.55, metalness: 0.4 }),
+    Rp = R + 6,
+    n = 28;
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2,
+      post = new THREE.Mesh(new THREE.BoxGeometry(0.35, 9, 0.35), steel);
+    post.position.set(Math.sin(a) * Rp, 4.5, Math.cos(a) * Rp);
+    g.add(post);
+  }
+  const beam = new THREE.Mesh(new THREE.TorusGeometry(Rp, 0.22, 4, 64), steel);
+  beam.rotation.x = Math.PI / 2;
+  beam.position.y = 9;
+  g.add(beam);
+  // the name, on the base facing the motorway (the real name: a public sports hall)
+  const sign = signPlate('PABELLÓN DE DEPORTES DE TENERIFE SANTIAGO MARTÍN', 26, 1.6);
+  sign.position.set(Math.sin(-2.4) * (Rp + 0.4), 2.2, Math.cos(-2.4) * (Rp + 0.4));
+  sign.rotation.y = -2.4;
+  g.add(sign);
 }

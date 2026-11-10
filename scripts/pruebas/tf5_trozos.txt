@@ -1,0 +1,3 @@
+# v1.2.0: la TF-5 de Lora Tamayo al HUC, trozos y ramales (para rehacerla de una pieza)
+herramientas/sonda_autopista.py 50 1150 1300 2700
+herramientas/sonda_autopista.py 1300 2700 2300 3400

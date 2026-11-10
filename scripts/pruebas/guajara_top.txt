@@ -1,0 +1,3 @@
+# v1.2.0: el enlace de Guajara desde arriba
+herramientas/foto_vista.py guajara_cenital 1150 2400 160 1150 2399
+herramientas/foto_vista.py guajara_cenital2 1000 2230 110 1000 2229

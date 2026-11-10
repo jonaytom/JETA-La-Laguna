@@ -1,0 +1,5 @@
+# v1.2.0: San Honorato (corredores, primera zona): fotos y alturas
+prueba_120.py
+herramientas/sonda_calzadas.py -998 121 45
+herramientas/sonda_calzadas.py -970 112 35
+herramientas/sonda_alturas.py -975 112 30

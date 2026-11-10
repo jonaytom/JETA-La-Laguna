@@ -1,0 +1,2 @@
+# v1.2.0: ¿caben todos los agujeros del terreno? (la TF-5 en San Lázaro salía tapada)
+herramientas/sonda_cortes.py -2060 -235 60

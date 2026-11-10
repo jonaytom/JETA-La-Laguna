@@ -1,0 +1,3 @@
+# v1.2.0: la acera que sobra sobre la boca norte (captura de Jonay X -946, Y 82)
+herramientas/sonda_origen.py -949 80 9 -3
+herramientas/sonda_origen.py -952 74 9 -3

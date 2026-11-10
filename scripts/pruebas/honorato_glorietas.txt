@@ -1,0 +1,4 @@
+# v1.2.0: las glorietas de alrededor de San Honorato desde arriba (marcas viales)
+herramientas/foto_vista.py glorieta_doble -1000 150 70 -1005 120
+herramientas/foto_vista.py glorieta_sanantonio -880 40 70 -895 10
+herramientas/foto_vista.py honorato_flechas -968 114 3 -940 85

@@ -1,0 +1,13 @@
+# v1.2.0: San Honorato como en las capturas de Jonay (glorieta, boca norte del túnel, acera sobre la trinchera)
+herramientas/foto_vista.py honorato_jonay -1004 128 13 -958 100
+herramientas/foto_vista.py honorato_tunel_sur -918 50 2 -935 75
+herramientas/foto_vista.py honorato_acera -951 90 5 -985 110
+herramientas/foto_vista.py honorato_boca -935 120 9 -952 98
+herramientas/foto_vista.py honorato_muro -975 112 8 -955 98
+herramientas/foto_vista.py honorato_sur_n -906 38 4 -912 62
+herramientas/foto_vista.py honorato_cenital -985 105 45 -950 85
+herramientas/foto_vista.py honorato_acera2 -941 86 12 -948 110
+herramientas/foto_vista.py honorato_jonay3 -962 108 2 -925 70
+herramientas/foto_vista.py honorato_jonay4 -965 109 6 -935 75
+herramientas/foto_vista.py honorato_peatones -951 104 2 -985 125
+herramientas/foto_vista.py honorato_ondas -968 114 2 -935 80

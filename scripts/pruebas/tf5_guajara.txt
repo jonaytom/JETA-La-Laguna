@@ -1,0 +1,8 @@
+# v1.2.0: la TF-5 de Lora Tamayo al HUC de una pieza
+prueba_121.py
+herramientas/sonda_solapes.py 30
+herramientas/foto_vista.py tf5_guajara1 445 1604 30 470 1700
+herramientas/foto_vista.py tf5_lora 200 1341 34 230 1420
+herramientas/foto_vista.py tf5_hornera 797 1995 57 850 2100
+herramientas/foto_vista.py tf5_guajara3 1136 2372 65 1180 2440
+herramientas/foto_vista.py tf5_huc 1771 3085 44 1820 3150

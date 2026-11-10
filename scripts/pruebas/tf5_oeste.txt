@@ -1,0 +1,7 @@
+# v1.2.0: la TF-5 pasado el puente de San Lázaro hacia el aeropuerto (mediana y Carretera General al lado)
+herramientas/sonda_solapes.py 40
+herramientas/foto_vista.py tf5_oeste1 -2460 -209 11 -2440 -190
+herramientas/foto_vista.py tf5_oeste2 -2548 -214 15 -2470 -205
+herramientas/foto_vista.py tf5_valla -2132 -257 14 -2100 -200
+herramientas/foto_vista.py sanlazaro_puente2 -1787 -189 9 -1815 -230
+herramientas/sonda_origen.py -2115 -245 10 0.3

@@ -1,0 +1,4 @@
+# v1.2.0: San Honorato desde arriba (antes / después)
+herramientas/foto_vista.py honorato_a -1030 150 18 -975 112
+herramientas/foto_vista.py honorato_b -930 140 16 -975 108
+herramientas/foto_vista.py honorato_c -985 60 14 -965 110

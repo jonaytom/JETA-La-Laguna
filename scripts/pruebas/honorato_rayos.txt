@@ -1,0 +1,2 @@
+# v1.2.0: qué se ve azul en la boca sur del túnel de San Honorato (captura de Jonay X -909, Y 49, a 3 m)
+herramientas/sonda_rayos.py -909 49 307 -40 3 4

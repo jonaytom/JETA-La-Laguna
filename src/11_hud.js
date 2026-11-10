@@ -562,7 +562,7 @@ const HUD = (() => {
   }
   /** (v1.1.7, code quality) part of drawMinimap: north marker on the rim */
   function drawMinimapPart3(s, R) {
-    mx.rotate(-(PLAYER.car ? PLAYER.car.h : PLAYER.h) + Math.PI);
+    mx.rotate(-(typeof ACH !== 'undefined' && ACH.on ? ACH.yaw : PLAYER.car ? PLAYER.car.h : PLAYER.h) + Math.PI); // v1.2.0 (Jonay: «en modo Achamán la flecha del minimapa no apunta a donde mira»): there, where the camera looks
     const a = 11 * s * 1.6;
     mx.fillStyle = '#fff';
     mx.strokeStyle = '#000';

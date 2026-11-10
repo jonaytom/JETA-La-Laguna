@@ -149,10 +149,11 @@ function buildTrafficSigns() {
 /** (v1.1.7, code quality) part of buildTrafficSigns: --- painted markings (one merged mesh) */
 function buildTrafficSignsPart6(MK) {
   // --- painted markings (one merged mesh)
+  if (typeof CORR_MARKS !== 'undefined') MK.push(...CORR_MARKS); // v1.2.0: the marks of the corridor zones (04c_corredores.js), with their own height
   if (MK.length) {
     const pos = [],
       uv = [];
-    for (const [cell, x, z, dx, dz, len, wid] of MK) {
+    for (const [cell, x, z, dx, dz, len, wid, y0] of MK) {
       const rx = -dz,
         rz = dx;
       const u0 = cell / 4 + 0.004,
@@ -162,7 +163,7 @@ function buildTrafficSignsPart6(MK) {
       const P = (a, b) => {
         const px = x + dx * a + rx * b,
           pz = z + dz * a + rz * b;
-        return [px, heightAt(px, pz) + 0.2, pz];
+        return [px, y0 !== undefined ? y0 : heightAt(px, pz) + 0.2, pz];
       };
       const lb = P(-hl, -hw),
         rb2 = P(-hl, hw),

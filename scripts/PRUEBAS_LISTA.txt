@@ -1,6 +1,7 @@
 # Pruebas de ESTA versión (scripts\PRUEBAS.bat las junta con las de lo cambiado).
-# v1.1.9: calles, túneles y puentes (TF-5 en trinchera, rampa del HUC, soportales de La Trinidad, calles repetidas)
+# v1.2.0: corredores (San Honorato, San Lázaro, Los Rodeos, TF-5 Lora Tamayo – HUC)
+prueba_121.py
+prueba_120.py
 prueba_119.py
-prueba_trinidad.py
 prueba_conduccion_tuneles_puentes.py
 prueba_arranque.py

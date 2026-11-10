@@ -3,6 +3,26 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.2.0 — 2026-11-10 — Alpha 1.2.0: túneles, trincheras y la TF-5 de una pieza
+- **San Honorato rehecho de una pieza** (Jonay, con sus fotos 3D): toda la trinchera es un solo objeto, sin muros dentro de
+  la calzada ni huecos azules. La bajada norte es una sola calle de doble sentido, con raya central continua, flecha y
+  «X». Lleva muros de basalto con barandilla, acera a la derecha bajando (también dentro del túnel) y el suelo con alturas
+  suaves. Ya no hay peatones caminando por encima de la trinchera ni aceras que la cruzan por arriba.
+- **Glorietas de la zona con sus marcas** (San Honorato, C. San Antonio, Lora Tamayo, Guajara, salida del HUC y Padre
+  Anchieta): línea junto a la isleta, borde exterior abierto en cada calle, línea discontinua entre carriles y pasos de
+  cebra en cada entrada.
+- **TF-5 bajo Cam. San Lázaro y en Los Rodeos**: trinchera abierta de piedra oscura, sin bocas de túnel falsas. Los
+  carriles de enlace van pegados a la autopista y la Carretera General queda apartada. El puente de San Lázaro tiene
+  aceras y pretil de piedra.
+- **TF-5 de Lora Tamayo al HUC de una pieza** (Jonay: «está fatal, es mucho más recta»): un solo eje suave, los dos
+  sentidos a distancia fija con la mediana de hormigón y un solo ancho. Los carriles de aceleración y deceleración van
+  paralelos, con raya discontinua y cebreado en V donde se separan, sin valla entre ellos y la autopista.
+- **Pabellón de Deportes Santiago Martín**: tambor de lamas grises con cúpula blanca baja, cuerpo azul, pórtico de acero,
+  lona publicitaria (parodia) y el rótulo.
+- **Minimapa en modo Achamán**: la flecha apunta hacia donde mira la cámara.
+- Herramientas nuevas: `sonda_vias.py`, `sonda_cortes.py`, `sonda_autopista.py` y `sonda_edificios.py`; pruebas
+  `prueba_120.py` y `prueba_121.py`.
+
 ## 1.1.9 — 2026-11-04 — Alpha 1.1.9: la TF-5 en trinchera, soportales en La Trinidad y adiós al coche que se caía
 - **La TF-5 en trinchera junto a Los Rodeos** (Jonay: «pasa en trinchera bajo la Rotonda Sempiterno y bajo el puente de
   Cam. San Lázaro»): 6,5 m por debajo entre la rotonda y San Lázaro, con muros, y los ramales bajando y subiendo; la

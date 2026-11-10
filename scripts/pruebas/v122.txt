@@ -1,0 +1,7 @@
+# v1.2.0: el Pabellón Santiago Martín, marcas de la TF-5 y glorietas
+herramientas/sonda_edificios.py 1840 3130 120
+herramientas/foto_vista.py tf5_guajara1 445 1604 30 470 1700
+herramientas/foto_vista.py tf5_gore 520 1660 25 600 1760
+herramientas/foto_vista.py huc_glorieta 1771 3085 44 1820 3150
+herramientas/foto_vista.py lora_glorieta 160 1330 60 200 1380
+herramientas/foto_vista.py pabellon 1700 3150 30 1758 3211

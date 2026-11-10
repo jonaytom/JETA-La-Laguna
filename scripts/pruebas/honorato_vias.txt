@@ -1,0 +1,3 @@
+# v1.2.0: vías de San Honorato con sus puntos (para rehacer la bajada norte de una pieza)
+herramientas/sonda_vias.py -965 105 60
+herramientas/sonda_vias.py -905 45 45
