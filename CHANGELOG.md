@@ -3,6 +3,12 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.3.1 — 2026-11-10 — Alpha 1.3.1: hierba y matojos
+- **Hierba** (Jonay: «algo de hierba en los descampados»): matas de hierba verde en parques, jardines y zonas de hierba
+  (también los del casco), y hierba seca con matojos en los descampados y laderas, por manchas. Hechas en Blender
+  (`tools/blender/hierba_blender.py`). Se plantan solo alrededor de la cámara (hasta unos 65 m), siempre las mismas en
+  cada sitio.
+
 ## 1.3.0 — 2026-11-10 — Alpha 1.3.0: árboles hechos en Blender y dragos
 - **Árboles nuevos, hechos en Blender** (ahora Claude trabaja también con Blender): laurel de Indias de copa grande y
   densa con ramas, palmera canaria de tronco grueso con anillos, copa redonda de 34 hojas y dátiles, pino canario

@@ -1,26 +1,26 @@
-# Pruebas 1.3.0 — 2026-11-10 18:52 — 8/8 OK
+# Pruebas 1.3.1 — 2026-11-10 19:11 — 8/8 OK
 
-Listas: cambios, version. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 141 s en total.
+Listas: cambios, version. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 179 s en total.
 
 | # | Prueba | Resultado | Tiempo |
 |---|---|---|---|
-| 1 | `prueba_arranque.py` | **OK** | 0 s |
-| 2 | `prueba_bordes.py` | **OK** | 42 s |
-| 3 | `prueba_conduccion_tuneles_puentes.py` | **OK** | 63 s |
-| 4 | `prueba_parking_cristo.py` | **OK** | 1 s |
-| 5 | `prueba_grandes.py` | **OK** | 11 s |
+| 1 | `prueba_arranque.py` | **OK** | 1 s |
+| 2 | `prueba_bordes.py` | **OK** | 48 s |
+| 3 | `prueba_conduccion_tuneles_puentes.py` | **OK** | 98 s |
+| 4 | `prueba_parking_cristo.py` | **OK** | 2 s |
+| 5 | `prueba_guardar_cargar.py` | **OK** | 3 s |
 | 6 | `prueba_121.py` | **OK** | 0 s |
 | 7 | `prueba_120.py` | **OK** | 0 s |
 | 8 | `prueba_119.py` | **OK** | 0 s |
 
 ## Detalle
 
-**Archivos cambiados desde la última tanda de pruebas** (eligen las pruebas): `src/05_scenery.js`
+**Archivos cambiados desde la última tanda de pruebas** (eligen las pruebas): `data/arboles.json`, `scripts/pruebas/hierba.txt`, `scripts/pruebas/hierba_s.txt`, `scripts/pruebas/mdt.txt`, `scripts/publicar.log`, `src/05z_hierba.js`, `src/13_main.js`, `tests/herramientas/mdt_ign.py`, `tests/herramientas/sonda_hierba.py`, `tools/blender/exportar_arboles.py`, `tools/blender/hierba_blender.py`
 
 ### 1. prueba_arranque.py — OK
 
 ```
-30 pasos (ms): {'mediana': 28, 'peor': 110, 'estado': 'play'}
+30 pasos (ms): {'mediana': 32, 'peor': 95, 'estado': 'play'}
 errores JS []
 ARRANQUE OK
 ```
@@ -53,29 +53,13 @@ coche {'rampa': [260, -552], 'hueco_min_techo': 99, 'profundidad': 0, 'en_sala':
 coche {'rampa': [120, -640], 'hueco_min_techo': 99, 'profundidad': 0, 'en_sala': False, 'fin': [118, -641]}
 ```
 
-### 5. prueba_grandes.py — OK
+### 5. prueba_guardar_cargar.py — OK
 
 ```
-obispado {'vanos': 2, 'largo': 17, 'puerta': [-42, -237]}
-tranvia {'prof_600': 6.4, 'prof_400': 0, 'cubierta': 1, 'cortes': 505, 'p520': [-282, 606], 'punto': [-307, 682], 'bajo_suelo': 6.3}
-tf13 {'anillo': 8, 'tuneles': 2, 'accesos': 17, 'anillo_prof': 6, 'tunel_prof': 7.4}
-aeropuerto {'rotonda': True, 'depositos': [-2340, 20], 'naves': ['SEURRO PAQUETERÍA', 'GUANCHAVÍA · HANGAR', 'ITV LOS RODEOS'], 'carteles_p': 2, 'valla_tramos': 691}
-callejero [['Calle Bencomo', True], ['Calle Juan de Vera', True], ['Calle Rodriguez Moure', True], ['Calle Ascanio y Nieves', True]]
-avion {'despega': True, 'pasos': [[-1118, 0, True], [-1149, 0, True], [-1228, 0, True], [-1355, 0, True], [-1529, 0, True], [-1752, 0, True], [-2023, 26, True], [-2315, 70, True], [-2607, 114, True], [-2899, 157, True]]}
-foto grandes_obispado
-foto grandes_tranvia_trinchera
-foto grandes_tranvia_cenital
-foto grandes_tranvia_dentro
-foto grandes_tranvia_alto
-foto grandes_tf13_suelo
-foto grandes_tf13_alto
-foto grandes_guajara
-foto grandes_aeropuerto_terminal
-foto grandes_aeropuerto_naves
-foto grandes_aeropuerto_depositos
-foto grandes_callejero_bencomo
-errores JS []
-GRANDES OK
+saved {"v":1,"t":1794337901144,"label":"test","player":{"x":-188.85220316222484,"z":783.1196180571543,"h":1.0993965462316455,"health":77,"money":1234},"car":{"type":"bus","model":null,"color":2067020,"h":-0.1292194454060533,"x":-190.85220316222484,"z":783.1196180571543},"weapon":{"has":true,"ammo":4,"out"
+after {"st":"play","m":{"v":3,"story":3,"skip":[],"storyDone":false,"side":0,"sideOpen":false,"obispo":0,"torneo":0,"copa":0,"secreta":0,"carreras":0,"log":{},"gang":{"formed":false,"name":"","members":[],"casa":{"intro":false,"owned":[],"rent":null,"day":0,"lastTod":12.00111111111111},"arcade":{"scores":{},"bought":[],"console":false,"invited":false},"sastronTut":false,"defenders":false,"patrol":false,"basketTut":false,"futbolTut":false,"jugueterias":false,"maleIntro":false,"rifleTut":false},"active":null},"money":1234,"hp":77,"tod":15.5,"car":true,"w":true,"ammo":4,"title":"La firma de la banda"}
+latest 2
+ERR []
 ```
 
 ### 6. prueba_121.py — OK
@@ -108,4 +92,4 @@ errores []
 PRUEBA 119 OK
 ```
 
-Fotos/archivos nuevos en `tests/shots/`: conduccion.json, grandes_aeropuerto_depositos.jpg, grandes_aeropuerto_naves.jpg, grandes_aeropuerto_terminal.jpg, grandes_callejero_bencomo.jpg, grandes_guajara.jpg, grandes_obispado.jpg, grandes_tf13_alto.jpg, grandes_tf13_suelo.jpg, grandes_tranvia_alto.jpg, grandes_tranvia_cenital.jpg, grandes_tranvia_dentro.jpg, grandes_tranvia_trinchera.jpg
+Fotos/archivos nuevos en `tests/shots/`: conduccion.json

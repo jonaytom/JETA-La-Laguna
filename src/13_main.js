@@ -491,6 +491,7 @@ function render() {
   const tt = performance.now();
   updateUnderground();
   updateCityLOD();
+  updateHierba(); // v1.3.1: the grass around the camera (05z_hierba.js)
   renderer.clear();
   renderer.render(bgScene, bgCamera);
   renderer.clearDepth();
@@ -593,6 +594,7 @@ function logic(dt, now) {
         manageTraffic();
         updateParkedLOD();
         updateCityLOD();
+        updateHierba();
       }
       pm('manage', tt);
       tt = performance.now();
@@ -669,6 +671,7 @@ function logic(dt, now) {
         manageTraffic();
         updateParkedLOD();
         updateCityLOD();
+        updateHierba();
       }
       updateTram(dt);
       updatePeds(dt);
@@ -809,7 +812,7 @@ async function boot() {
         buildInteriorsAll();
       }
     ],
-    ['Plantando laureles de Indias…', [scatterTrees, buildPlazasParks, buildTrees, buildWalls]], // v1.0.4: walls and fences (05y_muros.js)
+    ['Plantando laureles de Indias…', [scatterTrees, buildPlazasParks, buildTrees, buildWalls, buildHierba]], // v1.0.4: walls and fences (05y_muros.js); v1.3.1: grass (05z_hierba.js)
     [
       'Encendiendo farolas…',
       () => {
@@ -998,6 +1001,10 @@ window.__dbg = {
   TRI,
   TRI_ARC,
   PASARELA,
+  HIERBA,
+  updateHierba,
+  hierbaClass,
+  hierbaCell,
   corrState,
   PERAZA,
   MINI,
@@ -1167,6 +1174,7 @@ window.__dbg = {
 window.__snap = () => {
   updateUnderground();
   updateCityLOD();
+  updateHierba();
   bgCamera.position.copy(camera.position);
   bgCamera.quaternion.copy(camera.quaternion);
   bgCamera.fov = camera.fov;
