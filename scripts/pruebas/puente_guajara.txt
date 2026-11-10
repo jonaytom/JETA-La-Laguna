@@ -1,0 +1,4 @@
+# v1.2.3: puente de Guajara unido (una pieza, doble sentido, aceras)
+herramientas/foto_vista.py guajara_puente 1170 2410 22 1144 2380
+herramientas/foto_vista.py guajara_puente_cen 1144 2380 70 1144 2379
+herramientas/foto_vista.py guajara_cenital 1150 2400 160 1150 2399

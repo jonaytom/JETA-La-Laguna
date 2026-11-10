@@ -3,6 +3,11 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.2.3 — 2026-11-10 — Alpha 1.2.3: el puente de Guajara de una pieza
+- **Puente de Guajara** (Jonay, con sus capturas): el mapa lo dibujaba como dos medios puentes de un sentido más dos
+  pasarelas sueltas al lado. Ahora es un solo tablero de doble sentido (dos carriles por sentido), con aceras a los dos
+  lados y pretil de piedra, igual que el de San Lázaro. Lo mismo para cualquier pareja de medios puentes en Lora Tamayo.
+
 ## 1.2.2 — 2026-11-10 — Alpha 1.2.2: el pico de la pasarela del Padre Anchieta
 - **El «pico» de la pasarela del Padre Anchieta** (Jonay: «apunta a la recta de la Avenida Trinidad y baja por una bajada
   paralela a la Trinidad, a un lado de las vías del tranvía»): una explanada en punta que sale del anillo hacia la

@@ -233,6 +233,7 @@ for (const e of DATA.G.e) {
   e[4] = WIDEN2(e[2], e[4], e[3], DATA.G.n[a], DATA.G.n[a + 1]);
 }
 narrowToGap(); // v1.0.0: residential and service streets meet the buildings halfway (04b_recorte.js)
+corrMergeBridgeTwins(); // v1.2.3: the bridges drawn as two halves, as one (Puente de Guajara)
 corrFitTwins(); // v1.2.0: the two halves of a dual road at the width of their lanes (04c_corredores.js), in the zones done so far
 trinidadWidths(); // v0.68: Av. de La Trinidad, one lane + parking per carriageway (05u_trinidad.js); after the widening
 // v0.91 (Jonay, with a Street View of the TF-5: «separando los sentidos»): OSM gives the motorway as two one-way ways
@@ -8607,7 +8608,7 @@ function corrFitTwins() {
  *  the short street bridges over the trench of an open zone get room for a pavement on each side */
 function corrWidenBridges() {
   const CORR = corrState();
-  CORR.bridges = new Set();
+  CORR.bridges = CORR.bridges || new Set();
   for (const r of DATA.R) {
     if (!(r[3] & 2) || r[3] & 32 || r[0] < 2 || r[0] > 11) continue;
     const m = corrMid(r),
@@ -9026,6 +9027,93 @@ function corrSideLanes() {
   );
   console.log('corredores: ramales apartados entre sí', c2);
   console.log('corredores: carriles laterales de la TF-5', a, 'puntos; Carretera General apartada', b);
+}
+/** v1.2.3 (Jonay, fotos del Puente de Guajara): the OSM draws some street bridges as two one-way halves side by side and
+ *  their pavements as two loose footbridges; in reality each is ONE bridge, two lanes each way with a pavement on each
+ *  side. In these boxes the two halves become one two-way deck along the middle (the traffic keeps its two lines, both
+ *  inside the deck) and the loose footbridges go. */
+function corrMergeBridgeTwins() {
+  const boxes = [
+      [880, 2120, 1360, 2660], // Guajara
+      [-60, 1150, 420, 1520] // Lora Tamayo – Cruz de Piedra
+    ],
+    inB = (x, z) => boxes.some((b) => x > b[0] && x < b[2] && z > b[1] && z < b[3]),
+    R = DATA.R,
+    CORR = corrState(),
+    mid = (r) => {
+      const c = r[4],
+        m = (c.length >> 2) << 1;
+      return [c[m], c[m + 1]];
+    },
+    len = (c) => {
+      let L = 0;
+      for (let k = 2; k < c.length; k += 2) L += Math.hypot(c[k] - c[k - 2], c[k + 1] - c[k - 1]);
+      return L;
+    };
+  CORR.bridges = CORR.bridges || new Set();
+  CORR.puentesUnidos = [];
+  const cand = R.filter((r) => r[3] & 2 && r[3] & 1 && r[0] >= 2 && r[0] <= 9 && inB(...mid(r)));
+  const used = new Set();
+  for (const a of cand) {
+    if (used.has(a)) continue;
+    const ca = a[4],
+      da = [ca[ca.length - 2] - ca[0], ca[ca.length - 1] - ca[1]],
+      ma = mid(a);
+    let b = null;
+    for (const q of cand) {
+      if (q === a || used.has(q)) continue;
+      const cq = q[4],
+        dq = [cq[cq.length - 2] - cq[0], cq[cq.length - 1] - cq[1]],
+        mq = mid(q),
+        cos = (da[0] * dq[0] + da[1] * dq[1]) / (Math.hypot(...da) * Math.hypot(...dq) || 1);
+      if (cos < -0.85 && Math.hypot(ma[0] - mq[0], ma[1] - mq[1]) < 16 && Math.abs(len(ca) - len(cq)) < 0.5 * len(ca) + 10) b = q;
+    }
+    if (!b) continue;
+    used.add(a).add(b);
+    // the middle line: a's points with the nearest point of b, averaged; its ends from both ends
+    const cb = b[4],
+      out = [];
+    const nearB = (x, z) => {
+      let best = null;
+      for (let k = 0; k + 3 < cb.length; k += 2) {
+        const ex = cb[k + 2] - cb[k],
+          ez = cb[k + 3] - cb[k + 1],
+          t = Math.max(0, Math.min(1, ((x - cb[k]) * ex + (z - cb[k + 1]) * ez) / (ex * ex + ez * ez || 1))),
+          px = cb[k] + ex * t,
+          pz = cb[k + 1] + ez * t,
+          d = Math.hypot(x - px, z - pz);
+        if (!best || d < best[2]) best = [px, pz, d];
+      }
+      return best;
+    };
+    for (let i = 0; i < ca.length; i += 2) {
+      const p = nearB(ca[i], ca[i + 1]);
+      out.push(Math.round(((ca[i] + p[0]) / 2) * 100) / 100, Math.round(((ca[i + 1] + p[1]) / 2) * 100) / 100);
+    }
+    const lanesW = 4 * 3.3 + 1.0;
+    a[4] = out;
+    a[3] = a[3] & ~1;
+    a[2] = Math.round((lanesW + 2 * 1.9) * 10) / 10;
+    const ia = R.indexOf(a);
+    if (DATA.LN && ia >= 0) DATA.LN[ia] = [4, -1, -1];
+    b[4] = [cb[0], cb[1], cb[0] + 0.01, cb[1]];
+    b[3] = b[3] & ~2; // (a dot, no deck)
+    CORR.bridges.add(a);
+    // the loose footbridges along it
+    const mm = mid(a);
+    let fb = 0;
+    for (const r of R) {
+      if (r[0] < 13 || !(r[3] & 2)) continue;
+      const m = mid(r);
+      if (Math.hypot(m[0] - mm[0], m[1] - mm[1]) < 18) {
+        r[4] = [r[4][0], r[4][1], r[4][0] + 0.01, r[4][1]];
+        r[3] = r[3] & ~2;
+        fb++;
+      }
+    }
+    CORR.puentesUnidos.push([ia, R.indexOf(b), fb]);
+  }
+  console.log('corredores: puentes de dos mitades hechos uno', JSON.stringify(CORR.puentesUnidos));
 }
 /** the two pavements of such a bridge (1.9 m, a kerb), on its deck */
 function corrBridgeSidewalks(c, w, hf) {
