@@ -1,51 +1,35 @@
-# Pruebas 1.2.8 — 2026-11-10 16:56 — 10/10 OK
+# Pruebas 1.2.9 — 2026-11-10 17:56 — 9/9 OK
 
-Listas: cambios, version. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 237 s en total.
+Listas: cambios, version. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 169 s en total.
 
 | # | Prueba | Resultado | Tiempo |
 |---|---|---|---|
 | 1 | `prueba_arranque.py` | **OK** | 1 s |
-| 2 | `prueba_pasos.py` | **OK** | 46 s |
-| 3 | `prueba_bordes.py` | **OK** (repetida aparte) | 62 s |
-| 4 | `herramientas/foto_jugador.py` | **OK** | 2 s |
-| 5 | `prueba_077.py` | **OK** | 12 s |
-| 6 | `prueba_misiones_guardado.py` | **OK** | 18 s |
+| 2 | `prueba_bordes.py` | **OK** | 42 s |
+| 3 | `prueba_conduccion_tuneles_puentes.py` | **OK** | 79 s |
+| 4 | `prueba_parking_cristo.py` | **OK** | 1 s |
+| 5 | `prueba_078.py` | **OK** | 15 s |
+| 6 | `prueba_trinidad.py` | **OK** | 6 s |
 | 7 | `prueba_121.py` | **OK** | 0 s |
 | 8 | `prueba_120.py` | **OK** | 0 s |
 | 9 | `prueba_119.py` | **OK** | 0 s |
-| 10 | `prueba_conduccion_tuneles_puentes.py` | **OK** | 70 s |
 
 ## Detalle
 
-**Archivos cambiados desde la última tanda de pruebas** (eligen las pruebas): `scripts/publicar.log`, `src/06_actors.js`, `src/06a_humans.js`
+**Archivos cambiados desde la última tanda de pruebas** (eligen las pruebas): `scripts/pruebas/calles129.txt`, `scripts/pruebas/calles129b.txt`, `scripts/publicar.log`, `src/04c_corredores.js`, `src/05f_anchieta.js`
 
 ### 1. prueba_arranque.py — OK
 
 ```
-30 pasos (ms): {'mediana': 33, 'peor': 104, 'estado': 'play'}
+30 pasos (ms): {'mediana': 33, 'peor': 81, 'estado': 'play'}
 errores JS []
 ARRANQUE OK
 ```
 
-### 2. prueba_pasos.py — OK
+### 2. prueba_bordes.py — OK
 
 ```
-trote clip Jog_Fwd_Loop vel 4.3 pasos 11 en 4.32 s -> 2.55 pasos/s lados [-1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1] intervalos (ms) [383, 400, 383, 400, 383, 400, 383, 400, 383, 383] desfase hasta el apoyo (ms) [-17, 0, -17, -17, -17, -17, -17, -17, -17, -17, -17]
-sprint clip Sprint_Loop vel 7.4 pasos 13 en 4.32 s -> 3.01 pasos/s lados [-1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1] intervalos (ms) [417, 367, 317, 250, 417, 367, 317, 250, 433, 350, 317, 250] desfase hasta el apoyo (ms) [83, 67, -33, 0, 83, 67, -33, 67, 83, 50, -17, 67, 83]
-andar clip Walk_Loop vel 1.6 pasos 7 en 4.32 s -> 1.62 pasos/s lados [-1, 1, -1, 1, -1, 1, -1] intervalos (ms) [550, 567, 567, 567, 550, 567] desfase hasta el apoyo (ms) [-33, -33, -33, -33, -33, -33, -33]
-muestras listas: True
-reproducción sin errores
-```
-
-### 3. prueba_bordes.py — OK (repetida aparte)
-
-```
-En la carga compartida falló por:
-Traceback (prueba): Error("Page.evaluate: TypeError: Cannot set properties of undefined (setting 'alive')\n    at activateParked (http://localhost:8765/test.html?q=baja:27523:11)\n    at Object.enterCar (http://localhost:8765/test.html?q=baja:27908:11)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:113)\n    at eval (eval at evaluate (:311:30), <anonymous>:3:247)\n    at eval (<anonymous>)\n    at UtilityScr
---- repetida aparte:
-shot ms 39.900000005960464
-{"frame":564,"calls":1231,"triangles":1816900,"points":0,"lines":0} calls:1231
-{"inicio":[-1850,-300],"borde0":158.1,"ahora":[-1850,-300],"borde":158,"calle":25.9,"coche":false,"aviso":""}
+{"inicio":[-1850,-300],"borde0":158.1,"ahora":[-1850,-300],"borde":158,"calle":25.9,"coche":false,"aviso":"RADIO: Gofio FM 90.1 · boom bap lagunero  (Q: cambiar de emisora)"}
 {"inicio":[500,3950],"borde0":30,"ahora":[500,3950],"borde":30,"calle":5.9,"coche":false,"aviso":"⚠ Saliendo del mundo — da la vuelta"}
 {"inicio":[1500,700],"borde0":305,"ahora":[1500,700],"borde":305,"calle":10,"coche":false,"aviso":"⚠ Saliendo del mundo — da la vuelta"}
 {"inicio":[-300,1600],"borde0":900,"ahora":[-300,1600],"borde":900,"calle":64.2,"coche":true,"aviso":"RADIO: Gofio FM 90.1 · boom bap lagunero  (Q: cambiar de emisora)"}
@@ -53,55 +37,72 @@ shot ms 39.900000005960464
 {"edificios_en_zonas_quitadas":1852}
 ```
 
-### 4. herramientas/foto_jugador.py — OK
+### 3. prueba_conduccion_tuneles_puentes.py — OK
 
 ```
-de pie [["CylinderGeometry",-0.21,0.88,-0.17,"lowerarm_l"],["CylinderGeometry",-0.23,0.89,-0.19,"lowerarm_l"]]
-puños apuntando [["CylinderGeometry",-0.23,0.91,-0.15,"lowerarm_l"],["CylinderGeometry",-0.25,0.92,-0.17,"lowerarm_l"]]
-pistola apuntando [["CylinderGeometry",0.27,0.89,0.03,"lowerarm_l"],["CylinderGeometry",0.29,0.89,0.04,"lowerarm_l"]]
+roads 132
+failed 0 of 132 · conocidos 0
+CONDUCCION OK
 ```
 
-### 5. prueba_077.py — OK
+### 4. prueba_parking_cristo.py — OK
 
 ```
-juntado {'stats': {'sueltas': 8423, 'juntadas': 7747, 'mallas': 1765, 'ms': 550, 'no': {'con hijos (se juntan desde v1.0.0)': 564, 'grupo con nombre': 4681, 'varios materiales': 2, 'userData': 462, 'onBeforeRender': 2}, 'ejemplos': {'con hijos (se juntan desde v1.0.0)': [[169, -622, 'CylinderGeometry'], [168, -623, 'CylinderGeometry'], [168, -620, 'CylinderGeometry'], [167, -621, 'CylinderGeometry'], [180, -617, 'CylinderGeometry'], [179, -617, 'CylinderGeometry']], 'varios materiales': [[2269, 3389, 'BoxGeometry'], [2238, 3460, 'CylinderGeometry']], 'userData': [[-399, 749, 'BoxGeometry'], [-399, 749, 'BoxGeometry'], [-399, 749, 'BoxGeometry'], [-400, 749, 'BoxGeometry'], [-400, 749, 'BoxGeometry'], [-400, 749, 'BoxGeometry']], 'onBeforeRender': [[143, 5, 'CylinderGeometry'], [-147, -618, 'ShapeGeometry']]}, 'ultimoId': 27907}, 'fusion': 1765, 'celdas': 5348, 'lod': 11698, 'peatones_enteros': 0}
-distancia {'cerca': [5, 5], 'lejos': [0, 11347], 'niebla': 520}
-aparcados {'grupos': 2603, 'coches': 7616, 'instanciados': True, 'escala_antes': 1, 'escala_despues': 0, 'color': True, 'shaders_rotos': 0}
-carga total 17912 ms; plazas [533] aparcados [181]
-junta piezas 7747
-foto v077_adelantado_junta
-foto v077_adelantado_suelo_junta
-foto v077_casco_junta
-foto v077_alto_junta
-foto v077_constitucion_junta
-suelta piezas 7747
-foto v077_adelantado_suelta
-foto v077_adelantado_suelo_suelta
-foto v077_casco_suelta
-foto v077_alto_suelta
-foto v077_constitucion_suelta
-errores [] shader []
-PRUEBA 077 OK
+{'escalera': [161, -595], 'fin': [170, -590.6], 'sobre_suelo': -5.32, 'salio': False, 'stuck': {'at': [170.01, -590.57, -5.32], 'dbg': []}}
+{'escalera': [219, -597], 'fin': [210, -601.2], 'sobre_suelo': -5.01, 'salio': False, 'stuck': {'at': [209.98, -601.17, -5.01], 'dbg': []}}
+coche {'rampa': [260, -552], 'hueco_min_techo': 99, 'profundidad': 0, 'en_sala': False, 'fin': [262, -551]}
+coche {'rampa': [120, -640], 'hueco_min_techo': 99, 'profundidad': 0, 'en_sala': False, 'fin': [118, -641]}
 ```
 
-### 6. prueba_misiones_guardado.py — OK
+### 5. prueba_078.py — OK
 
 ```
-a mitad: {"act":"Atraco en la farmacia","m":{"v":3,"story":6,"skip":[],"storyDone":false,"side":0,"sideOpen":false,"obispo":0,"torneo":0,"copa":0,"secreta":0,"carreras":0,"log":{"Atraco en la farmacia":[["Rayco «El Blanco»","«Brrr... Chopa... mmm... la pistola... psss... bolas... de plástico.»",1794329643871],["El Chopa","Ya, Blanco, ya me lo dijiste: aire comprimido, bolas de plástico. Pupa sí, pero no mata.",1794329643896],["Rayco «El Blanco»","«Mmm... radio... ¡brrr!... farmacia... atraco... ¡ahora!»",1794329643910],["Radio de la Local (en el escáner de El Blanco)","Atraco en curso en Guacimara C. Hernandez. Dos individuos. Todas las patrullas ocupadas en las fiestas.",1794329643934],["El Chopa","Nadie va a ir... Vamos nosotros. Una banda que defiende su barrio. ¡Al lío!",1794329643961],["Ladrón con pasamontañas","¿Y tú quién eres, el de la nariz? ¡Esto no va contigo, pibe!",1794329644046],["El Chopa","Suelta la caja de las tiritas y ven p'acá.",1794329644076],["Ladrón (en el suelo)","¡Ay, ay! ¡Vale, vale, me rindo! Pero mi colega ya se va con la caja...",1794329653092]]},"gang":{"formed":false,"name":"","members":[],"casa":{"intro":false,"owned":[],"rent":null,"day":0,"lastTod":12.035999999999948},"arcade":{"scores":{},"bought":[],"console":false,"invited":false}},"active":"Atraco en la farmacia"},"blips":2,"lawful":true,"tg":0,"dlg":false,"toast":"⚠ Saliendo del mundo — da la vuelta"}
-cargada: {'act': None, 'm': {'v': 3, 'story': 6, 'skip': [], 'storyDone': False, 'side': 0, 'sideOpen': False, 'obispo': 0, 'torneo': 0, 'copa': 0, 'secreta': 0, 'carreras': 0, 'log': {'Atraco en la farmacia': [['Rayco «El Blanco»', '«Brrr... Chopa... mmm... la pistola... psss... bolas... de plástico.»', 1794329643871], ['El Chopa', 'Ya, Blanco, ya me lo dijiste: aire comprimido, bolas de plástico. Pupa sí, pero no mata.', 1794329643896], ['Rayco «El Blanco»', '«Mmm... radio... ¡brrr!... farmacia... atraco... ¡ahora!»', 1794329643910], ['Radio de la Local (en el escáner de El Blanco)', 'Atraco en curso en Guacimara C. Hernandez. Dos individuos. Todas las patrullas ocupadas en las fiestas.', 1794329643934], ['El Chopa', 'Nadie va a ir... Vamos nosotros. Una banda que defiende su barrio. ¡Al lío!', 1794329643961], ['Ladrón con pasamontañas', '¿Y tú quién eres, el de la nariz? ¡Esto no va contigo, pibe!', 1794329644046], ['El Chopa', "Suelta la caja de las tiritas y ven p'acá.", 1794329644076], ['Ladrón (en el suelo)', '¡Ay, ay! ¡Vale, vale, me rindo! Pero mi colega ya se va con la caja...', 1794329653092]]}, 'gang': {'formed': False, 'name': '', 'members': [], 'casa': {'intro': False, 'owned': [], 'rent': None, 'day': 0, 'lastTod': 12.037111111111058}, 'arcade': {'scores': {}, 'bought': [], 'console': False, 'invited': False}, 'sastronTut': False, 'defenders': False, 'patrol': False, 'basketTut': False, 'futbolTut': False, 'jugueterias': False, 'maleIntro': False, 'rifleTut': False}, 'active': None}, 'blips': 2, 'lawful': False, 'tg': 0, 'dlg': False, 'toast': 'RADIO: Gofio FM 90.1 · boom bap lagunero (Q: cambiar de emisora)'}
-1 guardar a mitad: OK (coches de misión sueltos: 0)
-tras fallar: {'act': None, 'm': {'v': 3, 'story': 6, 'skip': [], 'storyDone': False, 'side': 0, 'sideOpen': False, 'obispo': 0, 'torneo': 0, 'copa': 0, 'secreta': 0, 'carreras': 0, 'log': {'Atraco en la farmacia': [['Rayco «El Blanco»', '«Brrr... Chopa... mmm... la pistola... psss... bolas... de plástico.»', 1794329658394], ['El Chopa', 'Ya, Blanco, ya me lo dijiste: aire comprimido, bolas de plástico. Pupa sí, pero no mata.', 1794329658406]]}, 'gang': {'formed': False, 'name': '', 'members': [], 'casa': {'intro': False, 'owned': [], 'rent': None, 'day': 0, 'lastTod': 12.041555555555496}, 'arcade': {'scores': {}, 'bought': [], 'console': False, 'invited': False}, 'sastronTut': False, 'defenders': False, 'patrol': False, 'basketTut': False, 'futbolTut': False, 'jugueterias': False, 'maleIntro': False, 'rifleTut': False}, 'active': None}, 'blips': 2, 'lawful': False, 'tg': 0, 'dlg': True, 'toast': 'prueba de reintento'}
-2 reintentar: OK Atraco en la farmacia
-3 partida antigua: OK {'v': 3, 'story': 6, 'skip': [], 'storyDone': False, 'side': 1, 'sideOpen': True, 'obispo': 0, 'torneo': 0, 'copa': 0, 'secreta': 0, 'carreras': 0, 'log': {}, 'gang': {'formed': True, 'name': 'Los Chopas', 'members': ['boca'], 'sastronTut': False, 'defenders': False, 'patrol': False, 'basketTut': False, 'futbolTut': False, 'jugueterias': False, 'maleIntro': False, 'rifleTut': False, 'casa': {'intro': False, 'owned': [], 'rent': None, 'day': 0, 'lastTod': 12.043999999999937}, 'arcade': {'scores': {}, 'bought': [], 'console': False, 'invited': False}}, 'active': None}
-4 orden por zonas (partida de antes): OK {'sig': 'Los bancos del Adelantado', 'skip': ['El carterista del Cristo', 'Baches en la Vía de Ronda'], 'sig2': 'Los bancos del Adelantado', 'skip2': ['El carterista del Cristo', 'Baches en la Vía de Ronda']}
-ERRORES JS: []
-CONTINUIDAD OK
+pasajes {"hechos": [{"name": "", "x": 456.1740007076505, "z": 428.92684097599704, "len": 22.3, "ancho": 2.6, "y": -35}, {"name": "", "x": 256.8213465101952, "z": 1082.6010280097707, "len": 10.2, "ancho": 2.6, "y": -40.3}, {"name": "", "x": 251.25, "z": 1088.75, "len": 6.4, "ancho": 2.6, "y": -40.2}, {"name": "", "x": 245.8949364078257, "z": 1093.6614830790065, "len": 8.2, "ancho": 2.6, "y": -40}, {"name": "", "x": 276.6701233150776, "z": 1056.9134720601267, "len": 24.2, "ancho": 2.6, "y": -41.2}, {"name": "", "x": 267.5, "z": 1070, "len": 7.8, "ancho": 2.6, "y": -40.7}, {"name": "", "x": 482.9126336264246, "z": 1258.136450345903, "len": 16.6, "ancho": 2.6, "y": -64.8}, {"name": "", "x": 490.75, "z": 1250.5, "len": 5.3, "ancho": 2.6, "y": -65.6}, {"name": "", "x": 493.75, "z": 1247, "len": 3.9, "ancho": 2.6, "y": -65.8}, {"name": "", "x": 497.5, "z": 1242.25, "len": 8.2, "ancho": 2.6, "y": -66.1}, {"name": "", "x": 504, "z": 1234.75, "len": 11.7, "ancho": 2.6, "y": -66.6}, {"name": "", "x": 285.19469321603094, "z": 1000.175595715388, "len": 19.4, "ancho": 2.6, "y": -42.9}, {"name": "", "x": 237.9345819323408, "z": 1052.098127101489, "len": 18.3, "ancho": 2.6, "y": -40.9}, {"name": "", "x": 245, "z": 1041.25, "len": 7.6, "ancho": 2.6, "y": -41.1}, {"name": "", "x": 250.75, "z": 1032.5, "len": 13.3, "ancho": 2.6, "y": -41.4}, {"name": "", "x": 257.75, "z": 1021.75, "len": 12.3, "ancho": 2.6, "y": -41.8}, {"name": "", "x": 268.5, "z": 1005, "len": 27.5, "ancho": 2.6, "y": -42.3}, {"name"
+andando arriba [{'a': [-177, -60], 'llega': True, 'cerca': None, 'falta': 0.9, 'y': 2.53, 'bajo': False, 'camY': 4.98, 'techo': None, 'donde': [-176.5, -60.7], 'delante': None}, {'a': [-168, -54], 'llega': True, 'cerca': None, 'falta': 0.8, 'y': 2.5, 'bajo': False, 'camY': 4.94, 'techo': None, 'donde': [-168.6, -54.5], 'delante': None}]
+camara bajo techo [(4.95, 5.247257559348862)]
+bajando [([-174.9, -38.9], True, 1.79, False, 4.81), ([-176.9, -34.6], True, 1.56, False, 7.12), ([-173.6, -31.4], True, 1.47, False, 9.76), ([-173.5, -30.1], True, 1.43, False, 9.71), ([-173.6, -29.5], True, 1.41, False, 9.69), ([-173.7, -28.9], True, 1.14, True, 9.42), ([-173.9, -28.3], True, 0.61, True, 8.89), ([-174.2, -27.7], True, -0.16, True, 7.74), ([-174.6, -27.2], True, -0.33, True, 7.46), ([-175, -26.7], True, -0.96, True, 7), ([-175.5, -26.3], True, -1.18, True, 6.69), ([-176, -25.9], True, -1.57, True, 6.21), ([-176.6, -25.6], True, -2.03, True, 5.93), ([-177.1, -25.4], True, -2.35, True, 5.48), ([-177.8, -25.2], True, -2.91, True, 4.88), ([-178.4, -25.1], True, -3.17, True, 4.78), ([-178.7, -25.1], True, -3.4, True, 4.46), ([-180.9, -25.8], True, -3.92, True, -1.07), ([-184, -19], True, -3.92, True, -1.07), ([-188, -9], True, -3.92, True, -1.07), ([-217.5, 58.5], True, -3.81, False, 4.47)]
+patio {'x': -179, 'z': -30, 'r': 6.3, 'yU': 1.33, 'yL': -4.02, 'escaleras': 2, 'peldanos': 30, 'galeria_baja': 91.9, 'salida': [-217, 59]} bajada maxima entre puntos 0.77 llega abajo True
+foto v078_teide_entrada
+foto v078_teide_dentro
+foto v078_herradores
+foto v078_patio_suelo
+foto v078_patio_mural
+foto v078_patio_escalera
+foto v078_patio_alto
+foto v078_juego
+foto v0781_juego_cerca
+foto v0781_patio_desde_rellano
+foto v0781_patio_desde_abajo
+foto v0781_escalera_abajo
+foto v0781_galeria_baja
+foto v0781_galeria_hacia_juego
+errores []
+PRUEBA 078 OK
+```
+
+### 6. prueba_trinidad.py — OK
+
+```
+widths [6.6]
+invaden []
+aparcamientos [{'name': 'Parking Trinidad', 'x': -113, 'z': 106, 'yF': -13.5}, {'name': 'Parking Trinidad', 'x': -133, 'z': 163, 'yF': -14.2}, {'name': 'Parking Trinidad', 'x': -153, 'z': 221, 'yF': -14.2}, {'name': 'Parking Trinidad', 'x': -173, 'z': 278, 'yF': -14.2}, {'name': 'Parking Trinidad', 'x': -193, 'z': 336, 'yF': -14}, {'name': 'Parking Trinidad', 'x': -213, 'z': 394, 'yF': -13.7}, {'name': 'Parking Trinidad', 'x': -232, 'z': 451, 'yF': -13.2}]
+nuevas 8
+coche {'aparcamiento': 'Parking Trinidad', 'rampa': [-85, 28], 'profundidad': 8.2, 'en_sala': True, 'fin': [-106, 82]}
+coche {'aparcamiento': 'Parking Trinidad', 'rampa': [-244, 524], 'profundidad': 7.3, 'en_sala': True, 'fin': [-227, 468]}
+foto trinidad_rampa_1
+foto trinidad_rampa_1_alto
+foto trinidad_rampa_7
+foto trinidad_rampa_7_alto
+foto trinidad_pedrozerolo
+foto trinidad_pedrozerolo_calle
+errores JS []
+TRINIDAD OK
 ```
 
 ### 7. prueba_121.py — OK
 
 ```
-autopista {'autopista': [{'tramo': 'Lora Tamayo – HUC', 'trozos': 30, 'puntos': 511, 'eje': 3199, 'lado': 1, 'ramales': 14, 'tramosParalelos': 77}], 'anchos': [13.4], 'n': 539, 'min': 14.6, 'p10': 14.8, 'p90': 15.8, 'max': 57.5}
+autopista {'autopista': [{'tramo': 'Lora Tamayo – HUC – Santa Cruz', 'trozos': 37, 'puntos': 588, 'eje': 3748, 'lado': 1, 'ramales': 19, 'tramosParalelos': 99}], 'anchos': [13.4], 'n': 539, 'min': 14.6, 'p10': 14.8, 'p90': 15.8, 'max': 57.5}
 TF5_RECTA OK
 errores []
 PRUEBA 121 OK
@@ -128,12 +129,4 @@ errores []
 PRUEBA 119 OK
 ```
 
-### 10. prueba_conduccion_tuneles_puentes.py — OK
-
-```
-roads 132
-failed 0 of 132 · conocidos 0
-CONDUCCION OK
-```
-
-Fotos/archivos nuevos en `tests/shots/`: conduccion.json, jugador_pie.jpg, jugador_pistola.jpg, jugador_punos.jpg, v077_adelantado_junta.jpg, v077_adelantado_suelo_junta.jpg, v077_adelantado_suelo_suelta.jpg, v077_adelantado_suelta.jpg, v077_alto_junta.jpg, v077_alto_suelta.jpg, v077_casco_junta.jpg, v077_casco_suelta.jpg, v077_constitucion_junta.jpg, v077_constitucion_suelta.jpg
+Fotos/archivos nuevos en `tests/shots/`: conduccion.json, trinidad_pedrozerolo.jpg, trinidad_pedrozerolo_calle.jpg, trinidad_rampa_1.jpg, trinidad_rampa_1_alto.jpg, trinidad_rampa_7.jpg, trinidad_rampa_7_alto.jpg, v0781_escalera_abajo.jpg, v0781_galeria_baja.jpg, v0781_galeria_hacia_juego.jpg, v0781_juego_cerca.jpg, v0781_patio_desde_abajo.jpg, v0781_patio_desde_rellano.jpg, v078_herradores.jpg, v078_juego.jpg, v078_patio_alto.jpg, v078_patio_escalera.jpg, v078_patio_mural.jpg, v078_patio_suelo.jpg, v078_teide_dentro.jpg, v078_teide_entrada.jpg

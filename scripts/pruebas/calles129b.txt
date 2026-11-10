@@ -1,0 +1,8 @@
+# v1.2.9: pico de Anchieta al lado libre de las vías; TF-5 recta pasado el HUC
+herramientas/sonda_pico.py
+herramientas/foto_vista.py pico_cenital -285 640 90 -285 639
+herramientas/foto_vista.py pico_bajada -270 560 7 -295 650
+herramientas/foto_vista.py tf5_sur1 2150 3700 160 2150 3699
+herramientas/foto_vista.py tf5_sur2 2280 4080 160 2280 4079
+herramientas/foto_vista.py tf5_sur3 2180 3560 25 2260 3800
+prueba_121.py

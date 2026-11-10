@@ -185,10 +185,12 @@ function corrMotorwayStretches() {
   return [
     // tramo 1: Lora Tamayo – Puente de Guajara – HUC (Pabellón Santiago Martín)
     {
-      name: 'Lora Tamayo – HUC',
+      name: 'Lora Tamayo – HUC – Santa Cruz',
       boxes: [
         { x0: -60, x1: 1340, z0: 1060, z1: 2620 },
-        { x0: 1280, x1: 2140, z0: 2540, z1: 3470 }
+        { x0: 1280, x1: 2140, z0: 2540, z1: 3470 },
+        // v1.2.9: and on past the HUC towards Santa Cruz, to the edge of the map
+        { x0: 1950, x1: 2450, z0: 3400, z1: 4330 }
       ],
       W: 13.4,
       MED: 2.4

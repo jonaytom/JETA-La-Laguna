@@ -215,9 +215,18 @@ function buildPasarelaPico(R, hw, y, white, floorM, concrete) {
     for (let u = 0; u < L; u += 4) res.push([x0 + ((x1 - x0) * u) / L, z0 + ((z1 - z0) * u) / L, (x1 - x0) / L, (z1 - z0) / L, acc + u]);
     acc += L;
   }
-  const t0 = res[0],
-    side = -t0[3] > 0 ? 1 : -1, // (the east side of the tracks, between them and the carriageway going up the avenue)
-    off = 3.6 + 0.3 + 1.6;
+  const off = 3.6 + 0.3 + 1.6;
+  // v1.2.9 (sonda: on the east side the ramp lay on the carriageway going up the avenue, 3.3 m from the tracks): the side
+  // of the tracks where the ramp keeps off both carriageways (the one with fewer points on asphalt)
+  const onRoad = (sd) => {
+    let k = 0;
+    for (const p of res) {
+      if (p[4] > 90) break;
+      if (onCarriagewayEarly(p[0] - p[3] * sd * off, p[1] + p[2] * sd * off, 1.6)) k++;
+    }
+    return k;
+  };
+  const side = onRoad(1) <= onRoad(-1) ? 1 : -1;
   const g0 = heightAt(res[0][0], res[0][1]),
     need = Math.max(20, (y - g0) / 0.08),
     pts = [[ax, az, y]];
@@ -232,7 +241,13 @@ function buildPasarelaPico(R, hw, y, white, floorM, concrete) {
   if (pts.length < 3) return;
   DECKS.push({ type: 'path', pts, w: 3.2 });
   buildRampMesh(pts, 3.2, white, floorM, concrete);
-  PASARELA.pico = { tip: [Math.round(ax), Math.round(az)], ramp: pts.length, end: pts[pts.length - 1].map((v) => Math.round(v)) };
+  PASARELA.pico = {
+    tip: [Math.round(ax), Math.round(az)],
+    lado: side,
+    enCalzada: [onRoad(1), onRoad(-1)],
+    ramp: pts.length,
+    end: pts[pts.length - 1].map((v) => Math.round(v))
+  };
 }
 /** (v1.1.7, code quality) part of buildPasarela: south-east: a level walkway leaves the ring towards the campus pavement and the stairs come down onto it */
 function buildPasarelaPart6(SE_ANG, R, hw, SE_STAIR, y, white, floorM, concrete) {

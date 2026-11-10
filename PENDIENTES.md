@@ -579,6 +579,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
     - los carriles de aceleración y deceleración van paralelos y pegados, con raya discontinua en el lado de la autopista;
     - 22/22 pruebas OK, conducción incluida.
     - v1.2.3–1.2.4: puente de Guajara de una pieza (doble sentido, aceras, pretil); la TF-5 recta bajo el puente: la Autovía de Interconexión (TF-2) entraba en el eje y lo torcía 9 m justo ahí, que es lo que hacía que los ramales y las calzadas se cruzaran.
+    - v1.2.9: el tramo recto sigue pasado el HUC hasta el borde del mapa (Santa Cruz); la bajada del pico de Anchieta va al lado de las vías que no pisa la calzada (`PASARELA.pico.lado`).
     - Falta: la salida antes del HUC con su glorieta (en el juego ya baja un ramal a la glorieta pequeña, con cebreado; falta que Jonay diga qué ve mal) y ampliar el tramo hacia San Honorato y hacia Santa Cruz.
   - Queda por ver con Jonay: la boca sur (X −908, Y 47) une una vía de un sentido de 3 carriles (13,4 m) con un túnel de doble sentido (10,4 m) según el OSM, así que las rayas siguen sin casar del todo. Pendiente también: aceras que cruzan donde la trinchera es poco honda (sin losa).
 

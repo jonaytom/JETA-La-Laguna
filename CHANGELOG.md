@@ -3,6 +3,12 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.2.9 — 2026-11-10 — Alpha 1.2.9: la TF-5 recta hasta Santa Cruz y la bajada del pico
+- **TF-5 recta y paralela también pasado el HUC**, hasta el borde del mapa hacia Santa Cruz: un solo eje suave, cada
+  sentido a su lado y los carriles de aceleración y deceleración pegados con su raya discontinua (19 ramales, antes 13).
+- **Bajada del pico de la pasarela del Padre Anchieta**: va por el lado de las vías del tranvía que menos pisa la
+  calzada (antes se montaba sobre la que sube por la Av. de La Trinidad).
+
 ## 1.2.8 — 2026-11-10 — Alpha 1.2.8: personajes un 5 % más pequeños
 - **Todas las personas un 5 % más pequeñas** (Jonay: «reduce todos los pj un 5 % también»), igual que los coches de la
   1.2.7: el jugador, la gente de la calle y los personajes de las misiones (estos guardan su tamaño respecto al resto).

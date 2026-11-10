@@ -1,0 +1,9 @@
+# v1.2.9: pico de Anchieta, puente de Los Rodeos, Vía de Ronda sin valla
+herramientas/sonda_pico.py
+herramientas/sonda_vias.py -275 600 70
+herramientas/foto_vista.py pico_cenital -280 630 110 -280 629
+herramientas/foto_vista.py pico_bajada -250 560 6 -280 640
+herramientas/sonda_vias.py -3200 -230 160
+herramientas/foto_vista.py rodeos_cenital -3200 -230 170 -3200 -229
+herramientas/foto_vista.py rodeos_puente -3150 -150 18 -3200 -230
+herramientas/foto_vista.py ronda_valla 510 -480 10 498 -493
