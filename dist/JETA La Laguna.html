@@ -205,7 +205,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="tb" id="tbS">CORRER</div>
 <div class="tb" id="tbM">MAPA</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">Alpha 1.3.1</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">Alpha 1.3.2</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -480,6 +480,7 @@ for (const e of DATA.G.e) {
 narrowToGap(); // v1.0.0: residential and service streets meet the buildings halfway (04b_recorte.js)
 corrFitTwins(); // v1.2.0: the two halves of a dual road at the width of their lanes (04c_corredores.js), in the zones done so far
 trinidadWidths(); // v0.68: Av. de La Trinidad, one lane + parking per carriageway (05u_trinidad.js); after the widening
+verdelladaWidths(); // v1.3.2: the Vía de Ronda, its service roads and the roundabout of La Verdellada at their real widths (04d_verdellada.js)
 // v0.91 (Jonay, with a Street View of the TF-5: «separando los sentidos»): OSM gives the motorway as two one-way ways
 // that are often only 7–10 m apart, so the two carriageways (13 m each here) overlapped into one slab with the lines
 // mixed and no room for the barrier. Where they run side by side the points are pushed apart until there are MED
@@ -3254,9 +3255,11 @@ function buildRoadsEach(ri) {
         ? { H: 2.9, cover: 3.1 }
         : TF13.ring.includes(ri) || TF13.tubes.includes(ri) || TF13.app.includes(ri)
           ? { wc: [0.47, 0.41, 0.35] }
-          : corrTramoSet().has(ri)
-            ? corrTunnelOpt(ri)
-            : {} // v1.2.0: in the corridor zones its open cutting is part of one piece (corrBuildTramos)
+          : DATA.VERD && DATA.VERD.cut === ri
+            ? { coveredAt: () => false, wc: [0.47, 0.41, 0.35] } // v1.3.2: an open cutting with basalt walls, under the bridge too
+            : corrTramoSet().has(ri)
+              ? corrTunnelOpt(ri)
+              : {} // v1.2.0: in the corridor zones its open cutting is part of one piece (corrBuildTramos)
     );
     TUN_RI = -1;
     return;
@@ -4211,6 +4214,11 @@ function computeDepressionsPart5(ncap, sink, push) {
     tf13Bowl();
   } catch (e) {
     console.error('tf13', e);
+  }
+  try {
+    verdelladaCut(); // v1.3.2: the TF-13 down a cutting under the roundabout of La Verdellada (04d_verdellada.js)
+  } catch (e) {
+    console.error('verdellada', e);
   }
   try {
     tf5Trench();
@@ -10919,6 +10927,149 @@ function hmSmoothZones() {
   }
 }
 
+// ============ La glorieta de La Verdellada y la Vía de Ronda (v1.3.2) ============
+// Jonay (10-nov, con fotos de Google Maps): «la rotonda de la Verdellada hay que mejorarla, así como los carriles de la
+// Vía de Ronda». Real: la TF-13 (Vía de Ronda) pasa en trinchera, 2 + 2 carriles, por debajo del puente que une la
+// glorieta con C. Arturo Vergara y C. Emilio Gutiérrez Salazar; la glorieta y las dos vías de servicio (un carril cada
+// una, que bajan a la TF-13 al norte y al sur) están a nivel de la calle. En el juego la TF-13 iba a ras de suelo, y para
+// dejar paso por debajo del puente se subían el puente, la glorieta y sus calles 4–5 m sobre taludes; las vías de
+// servicio tenían 9 m (dos carriles con raya) y la TF-13 17 m.
+// Aquí: anchos de verdad (antes de construir nada) y la TF-13 hundida 6,5 m bajo el puente (como tf13Bowl, por sitio).
+// (01_core.js calls in here before 04_world.js has defined polyLen)
+function verdLen(c) {
+  let L = 0;
+  for (let i = 2; i < c.length; i += 2) L += Math.hypot(c[i] - c[i - 2], c[i + 1] - c[i - 1]);
+  return L;
+}
+// the box of the zone: x0, x1, z0, z1 (X, Y of the game); a function, not a const (01_core.js runs before this file)
+function verdBox() {
+  return [640, 760, 690, 960];
+}
+function verdInBox(c) {
+  const [x0, x1, z0, z1] = verdBox();
+  for (let i = 0; i < c.length; i += 2) if (c[i] < x0 || c[i] > x1 || c[i + 1] < z0 || c[i + 1] > z1) return false;
+  return true;
+}
+// called from 01_core.js after the general widening (the state goes in DATA.VERD: this file is read after 01_core)
+function verdelladaWidths() {
+  const S = DATA.S,
+    V = (DATA.VERD = { ronda: -1, side: [], ring: [], cut: -1, bridge: -1 });
+  DATA.R.forEach((r, ri) => {
+    const nm = r[1] >= 0 ? S[r[1]] : '';
+    if (r[0] === 3 && nm === 'Vía de Ronda de La Laguna' && verdInBox(r[4]) && verdLen(r[4]) > 150) {
+      V.ronda = ri;
+      r[2] = 14.4; // 2 + 2 lanes (was 17.2)
+    } else if (r[0] === 4 && r[3] & 1 && nm === '' && verdInBox(r[4])) {
+      V.side.push(ri);
+      r[2] = 5.2; // the service roads: one lane (were 9.1, drawn as two)
+    } else if (r[3] & 32 && r[0] <= 12 && verdInBox(r[4]) && verdLen(r[4]) < 60) {
+      V.ring.push(ri);
+      r[2] = Math.min(r[2], 8.5); // the ring of the roundabout, a lane and a half like the real one (was 11)
+    }
+  });
+  // the traffic graph: the same widths on its edges along these roads
+  const W = new Map();
+  [V.ronda, ...V.side, ...V.ring].forEach((ri) => ri >= 0 && W.set(ri, DATA.R[ri][2]));
+  const N = DATA.G.n;
+  for (const e of DATA.G.e) {
+    const P = [N[e[0] * 2], N[e[0] * 2 + 1], ...(e[6] || []), N[e[1] * 2], N[e[1] * 2 + 1]],
+      h = (P.length >> 2) << 1,
+      x = (P[h] + P[h - 2]) / 2,
+      z = (P[h + 1] + P[h - 1]) / 2;
+    const B = verdBox();
+    if (x < B[0] || x > B[1] || z < B[2] || z > B[3]) continue;
+    for (const [ri, w] of W) if (polyMinDist(DATA.R[ri][4], x, z) < 1.5) e[4] = Math.min(e[4], w);
+  }
+  console.log('verdellada: anchos', JSON.stringify(V));
+  menceyesWidths();
+}
+// v1.3.2 (Jonay, X 251, Y 854 y X 578, Y 1244: «la avenida de los Menceyes es dos carriles en cada sentido; en el sentido
+// de bajada no hay aparcamiento, ni en el de subida por la zona central que divide ambos sentidos; solo hay aparcamiento
+// en algunas zonas a la derecha del sentido de marcha»): each one-way half at 2 lanes (it was 11.7 m, with a parking
+// lane on both sides); parking only on the right, and only where the OSM says so (DATA.LN [lanes, left, right])
+function menceyesWidths() {
+  const S = DATA.S;
+  DATA.LN = DATA.LN || {};
+  const W = new Map();
+  DATA.R.forEach((r, ri) => {
+    if (r[1] < 0 || S[r[1]] !== 'Avenida de los Menceyes' || !(r[3] & 1) || (r[0] !== 5 && r[0] !== 6)) return;
+    const ln = DATA.LN[ri],
+      lanes = r[0] === 6 ? (ln && ln[0] > 0 ? ln[0] : 1) : 2,
+      right = ln && ln[2] > 0 ? 1 : 0;
+    DATA.LN[ri] = [lanes, 0, right];
+    r[2] = Math.round((lanes * 3.3 + 0.8 + right * 2.3) * 10) / 10;
+    W.set(ri, r[2]);
+  });
+  const N = DATA.G.n;
+  if (W.size)
+    for (const e of DATA.G.e) {
+      if (e[2] !== 5 && e[2] !== 6) continue;
+      const P = [N[e[0] * 2], N[e[0] * 2 + 1], ...(e[6] || []), N[e[1] * 2], N[e[1] * 2 + 1]],
+        h = (P.length >> 2) << 1,
+        x = (P[h] + P[h - 2]) / 2,
+        z = (P[h + 1] + P[h - 1]) / 2;
+      for (const [ri, w] of W) if (polyMinDist(DATA.R[ri][4], x, z) < 1.5) e[4] = Math.min(e[4], w);
+    }
+  console.log('menceyes: calzadas a 2 carriles', W.size);
+}
+// called from computeDepressions (04_world.js), like tf13Bowl: the TF-13 down a cutting under the bridge of the roundabout
+function verdelladaCut() {
+  const V = DATA.VERD;
+  if (!V || V.ronda < 0) return;
+  const c = DATA.R[V.ronda][4],
+    L = polyLen(c);
+  // where a bridge crosses it
+  let s0 = -1,
+    acc = 0;
+  for (let i = 0; i + 3 < c.length && s0 < 0; i += 2) {
+    const ax = c[i],
+      az = c[i + 1],
+      bx = c[i + 2],
+      bz = c[i + 3],
+      sl = Math.hypot(bx - ax, bz - az);
+    DATA.R.forEach((r, rj) => {
+      if (s0 >= 0 || !(r[3] & 2) || r[0] > 12) return;
+      const d = r[4];
+      for (let k = 0; k + 3 < d.length; k += 2) {
+        const t = segX(ax, az, bx, bz, d[k], d[k + 1], d[k + 2], d[k + 3]);
+        if (t !== null) {
+          s0 = acc + t * sl;
+          V.bridge = rj;
+          return;
+        }
+      }
+    });
+    acc += sl;
+  }
+  if (s0 < 0) return;
+  const D = 6.5,
+    P = 16, // flat bottom each side of the bridge
+    Ra = Math.max(30, s0 - P - 10), // ramps back to grade 10 m before the junctions at both ends
+    Rb = Math.max(30, L - s0 - P - 10);
+  const raw = (d) => (d <= 0 ? 0 : d / 1.12 + 0.5); // (depthOf() flattens the first 0.5 m and scales by 1.12)
+  DEP.set(V.ronda, [
+    (s) => {
+      const f = s < s0 - P ? smooth(0, 1, (s - (s0 - P - Ra)) / Ra) : s > s0 + P ? smooth(0, 1, (s0 + P + Rb - s) / Rb) : 1;
+      return raw(D * f);
+    }
+  ]);
+  V.cut = V.ronda;
+  V.s0 = Math.round(s0);
+  console.log('verdellada: TF-13 en trinchera bajo el puente', V.bridge, 's', V.s0, 'de', Math.round(L));
+}
+// where segment a-b crosses segment c-d: t along a-b, or null
+function segX(ax, az, bx, bz, cx, cz, dx, dz) {
+  const rx = bx - ax,
+    rz = bz - az,
+    sx = dx - cx,
+    sz = dz - cz,
+    den = rx * sz - rz * sx;
+  if (Math.abs(den) < 1e-9) return null;
+  const t = ((cx - ax) * sz - (cz - az) * sx) / den,
+    u = ((cx - ax) * rz - (cz - az) * rx) / den;
+  return t >= 0 && t <= 1 && u >= 0 && u <= 1 ? t : null;
+}
+
 // ============ landmarks, vegetation, street furniture, sky ============
 const stoneTex = (() => {
   const c = mkCanvas(256, 256),
@@ -11487,6 +11638,106 @@ function buildTreesPart2(defs, types, barkMat, leafMat, o, col) {
     if (d.lo) cm.userData.lo = d.lo; // v0.77: far crowns with few triangles (05w_optimiza.js)
   });
 }
+// ---------- v1.3.2: where a tree fits (Jonay: trees inside buildings, mid-pavement and in the middle of a road)
+// buildings by 40 m cells, to ask «is this point inside one?» quickly
+const TREEFIT = { grid: null, R: null, last: '' };
+function treeInBuilding(x, z) {
+  if (!TREEFIT.grid) {
+    const m = new Map();
+    DATA.B.forEach((b, bi) => {
+      const c = b[6];
+      let x0 = 1e9,
+        x1 = -1e9,
+        z0 = 1e9,
+        z1 = -1e9;
+      for (let i = 0; i < c.length; i += 2) {
+        x0 = Math.min(x0, c[i]);
+        x1 = Math.max(x1, c[i]);
+        z0 = Math.min(z0, c[i + 1]);
+        z1 = Math.max(z1, c[i + 1]);
+      }
+      b._bb = [x0, x1, z0, z1];
+      for (let a = Math.floor(x0 / 40); a <= Math.floor(x1 / 40); a++)
+        for (let q = Math.floor(z0 / 40); q <= Math.floor(z1 / 40); q++) {
+          const k = a * 4096 + q;
+          let l = m.get(k);
+          if (!l) m.set(k, (l = []));
+          l.push(b);
+        }
+    });
+    TREEFIT.grid = m;
+  }
+  const l = TREEFIT.grid.get(Math.floor(x / 40) * 4096 + Math.floor(z / 40));
+  if (!l) return false;
+  for (const b of l) {
+    const bb = b._bb;
+    if (x < bb[0] || x > bb[1] || z < bb[2] || z > bb[3]) continue;
+    if (pip(x, z, b[6])) return true;
+  }
+  return false;
+}
+// on any street at all (also bridges and tunnels), up to the 4 nearest
+function treeOnRoad(x, z, m) {
+  const seen = new Set();
+  for (let k = 0; k < 4; k++) {
+    const rd = ROADSEG.nearest(x, z, (r) => r[0] <= 12 && !seen.has(r));
+    if (!rd || rd.d > 20) return false;
+    if (rd.d < DATA.R[rd.ri][2] / 2 + m) return true;
+    seen.add(DATA.R[rd.ri]);
+  }
+  return false;
+}
+// on a pavement (the 2.4 m beside a street): null = not on one; false = no room; else the spot of its tree pit, 0.8 m
+// in from the kerb
+function treeKerb(x, z) {
+  const rd = ROADSEG.nearest(x, z, (r) => r[0] >= 3 && r[0] <= 11 && !(r[3] & 6)); // (the streets drawn with pavements)
+  if (!rd) return null;
+  const w = DATA.R[rd.ri][2] / 2;
+  if (rd.d > w + 2.4) return null;
+  if (DATA.R[rd.ri][0] >= 9 && w < 4) return false; // (narrow residential streets: no trees on the pavement)
+  const ux = (x - rd.x) / (rd.d || 1),
+    uz = (z - rd.z) / (rd.d || 1),
+    px = rd.x + ux * (w + 0.8),
+    pz = rd.z + uz * (w + 0.8);
+  if (onCarriagewayEarly(px, pz, 0.5) || treeInBuilding(px, pz)) return false;
+  return [px, pz];
+}
+// the crown radius of each kind (from the Blender models)
+function treeCrownR(k) {
+  if (!TREEFIT.R)
+    TREEFIT.R = ARB_KINDS.map((n) => {
+      const p = DATA.ARB[n] && DATA.ARB[n].crown.p;
+      if (!p) return 4;
+      let r = 0;
+      for (let i = 0; i < p.length; i += 3) r = Math.max(r, Math.hypot(p[i], p[i + 2]));
+      return r / 100;
+    });
+  return TREEFIT.R[k];
+}
+// [kind, scale] that fits at x,z: the crown (95 % of its radius, all round) out of buildings and away from bridge decks;
+// if not, smaller; then a street tree; else null (TREEFIT.last says why). 'keep' (the famous dragos): only smaller.
+function treeFit(x, z, k, s, keep) {
+  for (let n = 0; n < 10; n++) {
+    const R = treeCrownR(k) * s;
+    let bad = '';
+    const br = ROADSEG.nearest(x, z, (r) => r[3] & 2);
+    if (br && br.d < DATA.R[br.ri][2] / 2 + R + 1) bad = 'puente';
+    for (let i = 0; i < 12 && !bad; i++) {
+      const a = (i / 12) * 6.283,
+        f = i % 2 ? 0.95 : 0.55;
+      if (treeInBuilding(x + Math.cos(a) * R * f, z + Math.sin(a) * R * f)) bad = 'copa';
+    }
+    if (!bad) return [k, s];
+    TREEFIT.last = bad;
+    s *= 0.82;
+    if (s < (keep ? 0.45 : 0.6)) {
+      if (keep || k === 3) return null;
+      k = 3;
+      s = 0.9;
+    }
+  }
+  return null;
+}
 /** (v1.1.7, code quality) part of buildTrees */
 function buildTreesPart1() {
   const types = [[], [], [], [], [], [], []];
@@ -11504,13 +11755,27 @@ function buildTreesPart1() {
             z = z0 + Math.sin(a) * r;
           if (!inAnyBuilding(x, z) && !onCarriagewayEarly(x, z, 2)) spot = [x, z];
         }
-      if (spot) types[k].push([spot[0], spot[1], k, s, 1]);
+      if (spot) {
+        const f = treeFit(spot[0], spot[1], k, s, true);
+        if (f) types[f[0]].push([spot[0], spot[1], f[0], f[1], 1]);
+      }
     }
   let offTram = 0;
-  for (const t of TREES) {
+  const why = { calzada: 0, edificio: 0, acera: 0, copa: 0, puente: 0 };
+  for (const t0 of TREES) {
+    let t = t0;
     if (!inPlayArea(t[0], t[1], -5)) continue;
     if (overTunnel(t[0], t[1]) || inCut(t[0], t[1], 2.2)) continue;
-    if (onCarriagewayEarly(t[0], t[1], 0.9)) continue;
+    // v1.3.2 (Jonay: «árboles dentro de edificios, en mitad de aceras… y en medio de una carretera»): the trunk never on
+    // any street (bridges and tunnels too, which onCarriagewayEarly leaves out) nor inside a building
+    if (onCarriagewayEarly(t[0], t[1], 0.9) || treeOnRoad(t[0], t[1], 0.9)) {
+      why.calzada++;
+      continue;
+    }
+    if (treeInBuilding(t[0], t[1])) {
+      why.edificio++;
+      continue;
+    }
     if (inPitch(t[0], t[1], 1.5 + t[3])) continue;
     /* v0.65: never inside a court or pitch */ if (nearTram(t[0], t[1], 4.4 + (t[2] === 1 ? 0 : 0.8) * t[3])) {
       offTram++;
@@ -11518,14 +11783,38 @@ function buildTreesPart1() {
     }
     /* no trunk or crown over the tram */ if (!t[4] && onAnyPaved(t[0], t[1], -0.3) && !isGreen(t[0], t[1])) continue;
     let k = t[2];
+    // v1.3.2: on a pavement only in a tree pit by the kerb, and only a street tree (or a palm), never mid-pavement
+    if (DATA.ARB && !isGreen(t[0], t[1])) {
+      const kb = treeKerb(t[0], t[1]);
+      if (kb === false) {
+        why.acera++;
+        continue;
+      }
+      if (kb) {
+        t = [kb[0], kb[1], t[2], t[3], t[4]];
+        if (k !== 1) k = 3;
+        t[3] = Math.min(t[3], 0.8);
+      }
+    }
     // v1.3.0: some dragos among the trees of parks and green areas (small and medium; the big ones go where they are)
     if (DATA.ARB && (k === 0 || k === 3) && isGreen(t[0], t[1])) {
       const h = Math.abs(Math.sin(t[0] * 12.9898 + t[1] * 78.233) * 43758.5453) % 1;
       if (h < 0.05) k = h < 0.03 ? 4 : 5;
     }
+    if (DATA.ARB) {
+      // v1.3.2: the crown must not go into a building nor over a bridge: smaller tree, or a street tree, or none
+      const f = treeFit(t[0], t[1], k, t[3], false);
+      if (!f) {
+        why[TREEFIT.last]++;
+        continue;
+      }
+      if (f[0] !== k || f[1] !== t[3]) t = [t[0], t[1], f[0], f[1], t[4]];
+      k = f[0];
+    }
     types[k].push(t);
   }
-  console.log('trees kept off the tram track', offTram);
+  window.__arbWhy = why;
+  console.log('trees kept off the tram track', offTram, 'and off streets, buildings, pavements, bridges', why);
   const barkMat = new THREE.MeshStandardMaterial({ color: 0x5a4636, roughness: 1 });
   const leafMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85, flatShading: true });
   const o = new THREE.Object3D();
@@ -12125,6 +12414,41 @@ function espadana(x, z, y, ang, w = 4.2) {
   g.rotation.y = ang;
   scene.add(g);
 }
+// the point of the footprint's outline nearest to x,z, 0.35 m inside, and the turn of an espadaña standing along that wall
+function espadanaOnWall(pts, x, z) {
+  let best = null,
+    bd = 1e9;
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i],
+      b = pts[(i + 1) % pts.length],
+      dx = b[0] - a[0],
+      dz = b[1] - a[1],
+      L2 = dx * dx + dz * dz || 1,
+      t = clamp(((x - a[0]) * dx + (z - a[1]) * dz) / L2, 0.15, 0.85),
+      px = a[0] + dx * t,
+      pz = a[1] + dz * t,
+      d = Math.hypot(px - x, pz - z);
+    if (d < bd && L2 > 25) {
+      bd = d;
+      best = [px, pz, dx, dz];
+    }
+  }
+  if (!best) return [x, z, 0];
+  const L = Math.hypot(best[2], best[3]);
+  let nx = -best[3] / L,
+    nz = best[2] / L;
+  if (!pipXZ(best[0] + nx * 0.5, best[1] + nz * 0.5, pts)) {
+    nx = -nx;
+    nz = -nz;
+  }
+  return [best[0] + nx * 0.35, best[1] + nz * 0.35, Math.atan2(-best[3], best[2])];
+}
+function pipXZ(x, z, pts) {
+  let ins = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++)
+    if (pts[i][1] > z !== pts[j][1] > z && x < ((pts[j][0] - pts[i][0]) * (z - pts[i][1])) / (pts[j][1] - pts[i][1]) + pts[i][0]) ins = !ins;
+  return ins;
+}
 function buildChurches() {
   for (const ch of CHURCHES) {
     buildChurchesEach(ch);
@@ -12143,7 +12467,10 @@ function buildChurchesEach(ch) {
     }
     if (/Santo Domingo/.test(nm)) {
       const e = F.W(fu + back * 0.3, F.v1 - 2.5);
-      espadana(e[0], e[1], top - 0.3, F.ang, 3.8);
+      // v1.3.2 (Jonay, C. Santo Domingo X 102, Y 232: «campanario flotando en la nada»): the convent's footprint is not a
+      // rectangle, and that corner of its frame fell out over the low annex: on the nearest wall, along it
+      const w = espadanaOnWall(ch.pts, e[0], e[1]);
+      espadana(w[0], w[1], top - 0.3, w[2], 3.8);
     }
     return;
   }
@@ -24577,16 +24904,27 @@ function hierbaRaster() {
     else if (['meadow', 'scrub'].includes(t)) poly(a[2], C[2]);
     else if (['pitch', 'water', 'farmland', 'cemetery', 'square', 'parking', 'sports', 'forest', 'orchard'].includes(t)) poly(a[2], C[3]);
   }
-  for (const b of DATA.B) poly(b[6], C[3], 3);
+  for (const b of DATA.B) poly(b[6], C[3], 6);
   x.lineCap = 'round';
   x.strokeStyle = C[3];
   for (const r of DATA.R) {
     const cc = r[4];
     if (cc.length < 4) continue;
-    x.lineWidth = (r[0] <= 13 ? r[2] + 3 : 2.5) * sx;
+    x.lineWidth = (r[0] <= 13 ? r[2] + 5 : Math.max(2.4, r[2]) + 1.5) * sx; // (v1.3.2: the pavements too, 2.1 m each side, and the whole path)
     x.beginPath();
     for (let i = 0; i < cc.length; i += 2) {
       const p = P(cc[i], cc[i + 1]);
+      i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]);
+    }
+    x.stroke();
+  }
+  // v1.3.2 (Jonay, Av. de los Menceyes X 251, Y 854: «más hierba en edificios, vías del tren»): none on the tram track
+  // and its stops (the track, 7.2 m, and the platforms beside it)
+  if (DATA.T && DATA.T.length > 3) {
+    x.lineWidth = 16 * sx;
+    x.beginPath();
+    for (let i = 0; i < DATA.T.length; i += 2) {
+      const p = P(DATA.T[i], DATA.T[i + 1]);
       i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]);
     }
     x.stroke();
@@ -24597,6 +24935,36 @@ function hierbaRaster() {
     const v = d[i * 4];
     R[i] = v < 40 ? 0 : v < 125 ? 1 : v < 210 ? 2 : 3;
   }
+  // v1.3.2 (Jonay: «la hierba no puede crecer en las aceras ni en las carreteras ni adoquines», Av. Leonardo Torriani
+  // X 113, Y 432): in town the open land between a street and the façades is paved (wide pavements, forecourts), not
+  // a descampado: no open-land grass within 12 m of a street or 8 m of a building (parks and gardens keep theirs)
+  x.fillStyle = '#000';
+  x.fillRect(0, 0, W, H);
+  x.strokeStyle = '#fff';
+  for (const b of DATA.B) {
+    const cc = b[6];
+    x.lineWidth = 16 * sx;
+    x.beginPath();
+    for (let i = 0; i < cc.length; i += 2) {
+      const p = P(cc[i], cc[i + 1]);
+      i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]);
+    }
+    x.closePath();
+    x.stroke();
+  }
+  for (const r of DATA.R) {
+    const cc = r[4];
+    if (cc.length < 4 || r[0] > 13) continue;
+    x.lineWidth = (r[2] + 24) * sx;
+    x.beginPath();
+    for (let i = 0; i < cc.length; i += 2) {
+      const p = P(cc[i], cc[i + 1]);
+      i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]);
+    }
+    x.stroke();
+  }
+  const u = x.getImageData(0, 0, W, H).data;
+  for (let i = 0; i < R.length; i++) if (R[i] === 0 && u[i * 4] > 127) R[i] = 3;
   return { W, H, sx, R };
 }
 function hierbaClass(x, z) {
@@ -24626,6 +24994,8 @@ function hierbaCell(ci, cj) {
     else if (cl === 2) kind = u < 0.35 ? 1 : u < 0.55 ? 0 : u < 0.62 ? 2 : -1;
     else kind = patch < 0.4 ? -1 : u < 0.5 ? 1 : u < 0.56 ? 2 : -1;
     if (kind < 0) continue;
+    // v1.3.2: the 4 m raster is coarse: each tuft checked for real off streets and pavements, the tram and buildings
+    if (onAnyPaved(x, z, 2.6) || nearTram(x, z, 6) || treeInBuilding(x, z)) continue;
     L.push([kind, x, heightAt(x, z), z, rnd() * 6.28, kind === 2 ? 0.8 + rnd() * 0.7 : 1.0 + rnd() * 0.8]);
   }
   HIERBA.cache.set(key, L);

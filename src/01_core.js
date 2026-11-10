@@ -235,6 +235,7 @@ for (const e of DATA.G.e) {
 narrowToGap(); // v1.0.0: residential and service streets meet the buildings halfway (04b_recorte.js)
 corrFitTwins(); // v1.2.0: the two halves of a dual road at the width of their lanes (04c_corredores.js), in the zones done so far
 trinidadWidths(); // v0.68: Av. de La Trinidad, one lane + parking per carriageway (05u_trinidad.js); after the widening
+verdelladaWidths(); // v1.3.2: the Vía de Ronda, its service roads and the roundabout of La Verdellada at their real widths (04d_verdellada.js)
 // v0.91 (Jonay, with a Street View of the TF-5: «separando los sentidos»): OSM gives the motorway as two one-way ways
 // that are often only 7–10 m apart, so the two carriageways (13 m each here) overlapped into one slab with the lines
 // mixed and no room for the barrier. Where they run side by side the points are pushed apart until there are MED

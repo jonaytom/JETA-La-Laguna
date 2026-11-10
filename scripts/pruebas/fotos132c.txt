@@ -1,0 +1,5 @@
+herramientas/sonda_edificio_punto.py 578 1244 80
+herramientas/foto_vista.py menceyes_edif2 578 1244 22 610 1290
+herramientas/foto_vista.py menceyes_edif3 578 1244 22 560 1290
+herramientas/foto_vista.py ronda_puente 720 1335 13 700 1290
+herramientas/sonda_vias.py 715 1320 60

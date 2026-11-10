@@ -7,4 +7,6 @@ async def run(pg):
     if r:
         tot = sum((v[0] + v[1]) * v[3] for v in r['tris'].values())
         print('triángulos de cerca si se vieran todos', tot)
+    why = json.loads(await pg.evaluate("JSON.stringify(window.__arbWhy || null)"))
+    print('QUITADOS O CAMBIADOS (v1.3.2)', json.dumps(why))
     open('shots/sonda_arboles.txt', 'w').write(json.dumps(r))

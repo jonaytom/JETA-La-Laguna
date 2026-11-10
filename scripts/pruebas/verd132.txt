@@ -1,0 +1,8 @@
+herramientas/sonda_arboles.py
+herramientas/foto_vista.py verdellada_cen 738 845 110 739 846
+herramientas/foto_vista.py verdellada_n 760 760 40 738 846
+herramientas/foto_vista.py verdellada_s 700 930 40 738 846
+herramientas/foto_vista.py verdellada_o 680 860 25 740 846
+herramientas/foto_vista.py ronda_trinchera 712 800 14 717 860
+herramientas/foto_vista.py arb_casco 130 40 25 144 80
+herramientas/sonda_vias.py 738 846 90

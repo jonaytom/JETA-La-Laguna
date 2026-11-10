@@ -1157,9 +1157,11 @@ function buildRoadsEach(ri) {
         ? { H: 2.9, cover: 3.1 }
         : TF13.ring.includes(ri) || TF13.tubes.includes(ri) || TF13.app.includes(ri)
           ? { wc: [0.47, 0.41, 0.35] }
-          : corrTramoSet().has(ri)
-            ? corrTunnelOpt(ri)
-            : {} // v1.2.0: in the corridor zones its open cutting is part of one piece (corrBuildTramos)
+          : DATA.VERD && DATA.VERD.cut === ri
+            ? { coveredAt: () => false, wc: [0.47, 0.41, 0.35] } // v1.3.2: an open cutting with basalt walls, under the bridge too
+            : corrTramoSet().has(ri)
+              ? corrTunnelOpt(ri)
+              : {} // v1.2.0: in the corridor zones its open cutting is part of one piece (corrBuildTramos)
     );
     TUN_RI = -1;
     return;
@@ -2114,6 +2116,11 @@ function computeDepressionsPart5(ncap, sink, push) {
     tf13Bowl();
   } catch (e) {
     console.error('tf13', e);
+  }
+  try {
+    verdelladaCut(); // v1.3.2: the TF-13 down a cutting under the roundabout of La Verdellada (04d_verdellada.js)
+  } catch (e) {
+    console.error('verdellada', e);
   }
   try {
     tf5Trench();

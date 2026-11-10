@@ -1,0 +1,6 @@
+herramientas/foto_vista.py hierba_torriani 113 470 10 118 420
+herramientas/foto_vista.py hierba_menceyes 251 890 9 251 840
+herramientas/foto_vista.py sdomingo 102 232 28 175 180
+herramientas/foto_vista.py arb_casa 180 -270 18 202 -240
+herramientas/foto_vista.py hierba_desc1 600 700 12 640 740
+herramientas/sonda_hierba.py

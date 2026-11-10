@@ -1,0 +1,6 @@
+herramientas/sonda_edificio_punto.py 578 1244 35
+herramientas/sonda_vias.py 578 1230 60
+herramientas/foto_vista.py menceyes_edif 560 1290 22 600 1230
+herramientas/foto_vista.py menceyes_b 251 900 12 270 820
+herramientas/foto_vista.py arb_casa 180 -270 18 202 -240
+herramientas/foto_vista.py hierba_torriani 113 470 10 118 420

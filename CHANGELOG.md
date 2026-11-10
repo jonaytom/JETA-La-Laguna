@@ -3,6 +3,21 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.3.2 — 2026-11-10 — Alpha 1.3.2: árboles en su sitio y la glorieta de La Verdellada
+- **Árboles en su sitio** (Jonay: «árboles dentro de edificios, en mitad de aceras… y en medio de una carretera»): ningún
+  tronco en una calle, puente o túnel ni dentro de un edificio; las copas no se meten en edificios ni atraviesan puentes
+  (si no caben, el árbol sale más pequeño o se cambia por uno de calle); en las aceras, solo en alcorque junto al
+  bordillo. La hierba tampoco sale ya en las aceras.
+- **Glorieta de La Verdellada** (con fotos de Google Maps de Jonay): la Vía de Ronda (TF-13) baja en trinchera con
+  muros de basalto por debajo del puente de la glorieta, y la glorieta y sus calles quedan a nivel de la calle (antes
+  estaban subidas 4–5 m sobre taludes).
+- **Avenida de los Menceyes**: dos carriles por sentido, sin aparcamiento junto a la mediana (solo a la derecha donde lo
+  hay de verdad).
+- **Hierba**: ya no sale en aceras, calles, adoquines, vías del tranvía ni pegada a los edificios.
+- **Espadaña de Santo Domingo** sobre su pared (antes flotaba en una esquina).
+- **Carriles de la Vía de Ronda** en ese tramo: 2 + 2 carriles (antes 17 m de calzada), las vías de servicio de un carril
+  (antes dos con raya) y el anillo de la glorieta más estrecho, como el real.
+
 ## 1.3.1 — 2026-11-10 — Alpha 1.3.1: hierba y matojos
 - **Hierba** (Jonay: «algo de hierba en los descampados»): matas de hierba verde en parques, jardines y zonas de hierba
   (también los del casco), y hierba seca con matojos en los descampados y laderas, por manchas. Hechas en Blender

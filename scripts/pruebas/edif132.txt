@@ -1,0 +1,1 @@
+herramientas/sonda_edificio_punto.py 640 1290 150

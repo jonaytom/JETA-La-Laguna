@@ -566,6 +566,106 @@ function buildTreesPart2(defs, types, barkMat, leafMat, o, col) {
     if (d.lo) cm.userData.lo = d.lo; // v0.77: far crowns with few triangles (05w_optimiza.js)
   });
 }
+// ---------- v1.3.2: where a tree fits (Jonay: trees inside buildings, mid-pavement and in the middle of a road)
+// buildings by 40 m cells, to ask «is this point inside one?» quickly
+const TREEFIT = { grid: null, R: null, last: '' };
+function treeInBuilding(x, z) {
+  if (!TREEFIT.grid) {
+    const m = new Map();
+    DATA.B.forEach((b, bi) => {
+      const c = b[6];
+      let x0 = 1e9,
+        x1 = -1e9,
+        z0 = 1e9,
+        z1 = -1e9;
+      for (let i = 0; i < c.length; i += 2) {
+        x0 = Math.min(x0, c[i]);
+        x1 = Math.max(x1, c[i]);
+        z0 = Math.min(z0, c[i + 1]);
+        z1 = Math.max(z1, c[i + 1]);
+      }
+      b._bb = [x0, x1, z0, z1];
+      for (let a = Math.floor(x0 / 40); a <= Math.floor(x1 / 40); a++)
+        for (let q = Math.floor(z0 / 40); q <= Math.floor(z1 / 40); q++) {
+          const k = a * 4096 + q;
+          let l = m.get(k);
+          if (!l) m.set(k, (l = []));
+          l.push(b);
+        }
+    });
+    TREEFIT.grid = m;
+  }
+  const l = TREEFIT.grid.get(Math.floor(x / 40) * 4096 + Math.floor(z / 40));
+  if (!l) return false;
+  for (const b of l) {
+    const bb = b._bb;
+    if (x < bb[0] || x > bb[1] || z < bb[2] || z > bb[3]) continue;
+    if (pip(x, z, b[6])) return true;
+  }
+  return false;
+}
+// on any street at all (also bridges and tunnels), up to the 4 nearest
+function treeOnRoad(x, z, m) {
+  const seen = new Set();
+  for (let k = 0; k < 4; k++) {
+    const rd = ROADSEG.nearest(x, z, (r) => r[0] <= 12 && !seen.has(r));
+    if (!rd || rd.d > 20) return false;
+    if (rd.d < DATA.R[rd.ri][2] / 2 + m) return true;
+    seen.add(DATA.R[rd.ri]);
+  }
+  return false;
+}
+// on a pavement (the 2.4 m beside a street): null = not on one; false = no room; else the spot of its tree pit, 0.8 m
+// in from the kerb
+function treeKerb(x, z) {
+  const rd = ROADSEG.nearest(x, z, (r) => r[0] >= 3 && r[0] <= 11 && !(r[3] & 6)); // (the streets drawn with pavements)
+  if (!rd) return null;
+  const w = DATA.R[rd.ri][2] / 2;
+  if (rd.d > w + 2.4) return null;
+  if (DATA.R[rd.ri][0] >= 9 && w < 4) return false; // (narrow residential streets: no trees on the pavement)
+  const ux = (x - rd.x) / (rd.d || 1),
+    uz = (z - rd.z) / (rd.d || 1),
+    px = rd.x + ux * (w + 0.8),
+    pz = rd.z + uz * (w + 0.8);
+  if (onCarriagewayEarly(px, pz, 0.5) || treeInBuilding(px, pz)) return false;
+  return [px, pz];
+}
+// the crown radius of each kind (from the Blender models)
+function treeCrownR(k) {
+  if (!TREEFIT.R)
+    TREEFIT.R = ARB_KINDS.map((n) => {
+      const p = DATA.ARB[n] && DATA.ARB[n].crown.p;
+      if (!p) return 4;
+      let r = 0;
+      for (let i = 0; i < p.length; i += 3) r = Math.max(r, Math.hypot(p[i], p[i + 2]));
+      return r / 100;
+    });
+  return TREEFIT.R[k];
+}
+// [kind, scale] that fits at x,z: the crown (95 % of its radius, all round) out of buildings and away from bridge decks;
+// if not, smaller; then a street tree; else null (TREEFIT.last says why). 'keep' (the famous dragos): only smaller.
+function treeFit(x, z, k, s, keep) {
+  for (let n = 0; n < 10; n++) {
+    const R = treeCrownR(k) * s;
+    let bad = '';
+    const br = ROADSEG.nearest(x, z, (r) => r[3] & 2);
+    if (br && br.d < DATA.R[br.ri][2] / 2 + R + 1) bad = 'puente';
+    for (let i = 0; i < 12 && !bad; i++) {
+      const a = (i / 12) * 6.283,
+        f = i % 2 ? 0.95 : 0.55;
+      if (treeInBuilding(x + Math.cos(a) * R * f, z + Math.sin(a) * R * f)) bad = 'copa';
+    }
+    if (!bad) return [k, s];
+    TREEFIT.last = bad;
+    s *= 0.82;
+    if (s < (keep ? 0.45 : 0.6)) {
+      if (keep || k === 3) return null;
+      k = 3;
+      s = 0.9;
+    }
+  }
+  return null;
+}
 /** (v1.1.7, code quality) part of buildTrees */
 function buildTreesPart1() {
   const types = [[], [], [], [], [], [], []];
@@ -583,13 +683,27 @@ function buildTreesPart1() {
             z = z0 + Math.sin(a) * r;
           if (!inAnyBuilding(x, z) && !onCarriagewayEarly(x, z, 2)) spot = [x, z];
         }
-      if (spot) types[k].push([spot[0], spot[1], k, s, 1]);
+      if (spot) {
+        const f = treeFit(spot[0], spot[1], k, s, true);
+        if (f) types[f[0]].push([spot[0], spot[1], f[0], f[1], 1]);
+      }
     }
   let offTram = 0;
-  for (const t of TREES) {
+  const why = { calzada: 0, edificio: 0, acera: 0, copa: 0, puente: 0 };
+  for (const t0 of TREES) {
+    let t = t0;
     if (!inPlayArea(t[0], t[1], -5)) continue;
     if (overTunnel(t[0], t[1]) || inCut(t[0], t[1], 2.2)) continue;
-    if (onCarriagewayEarly(t[0], t[1], 0.9)) continue;
+    // v1.3.2 (Jonay: «árboles dentro de edificios, en mitad de aceras… y en medio de una carretera»): the trunk never on
+    // any street (bridges and tunnels too, which onCarriagewayEarly leaves out) nor inside a building
+    if (onCarriagewayEarly(t[0], t[1], 0.9) || treeOnRoad(t[0], t[1], 0.9)) {
+      why.calzada++;
+      continue;
+    }
+    if (treeInBuilding(t[0], t[1])) {
+      why.edificio++;
+      continue;
+    }
     if (inPitch(t[0], t[1], 1.5 + t[3])) continue;
     /* v0.65: never inside a court or pitch */ if (nearTram(t[0], t[1], 4.4 + (t[2] === 1 ? 0 : 0.8) * t[3])) {
       offTram++;
@@ -597,14 +711,38 @@ function buildTreesPart1() {
     }
     /* no trunk or crown over the tram */ if (!t[4] && onAnyPaved(t[0], t[1], -0.3) && !isGreen(t[0], t[1])) continue;
     let k = t[2];
+    // v1.3.2: on a pavement only in a tree pit by the kerb, and only a street tree (or a palm), never mid-pavement
+    if (DATA.ARB && !isGreen(t[0], t[1])) {
+      const kb = treeKerb(t[0], t[1]);
+      if (kb === false) {
+        why.acera++;
+        continue;
+      }
+      if (kb) {
+        t = [kb[0], kb[1], t[2], t[3], t[4]];
+        if (k !== 1) k = 3;
+        t[3] = Math.min(t[3], 0.8);
+      }
+    }
     // v1.3.0: some dragos among the trees of parks and green areas (small and medium; the big ones go where they are)
     if (DATA.ARB && (k === 0 || k === 3) && isGreen(t[0], t[1])) {
       const h = Math.abs(Math.sin(t[0] * 12.9898 + t[1] * 78.233) * 43758.5453) % 1;
       if (h < 0.05) k = h < 0.03 ? 4 : 5;
     }
+    if (DATA.ARB) {
+      // v1.3.2: the crown must not go into a building nor over a bridge: smaller tree, or a street tree, or none
+      const f = treeFit(t[0], t[1], k, t[3], false);
+      if (!f) {
+        why[TREEFIT.last]++;
+        continue;
+      }
+      if (f[0] !== k || f[1] !== t[3]) t = [t[0], t[1], f[0], f[1], t[4]];
+      k = f[0];
+    }
     types[k].push(t);
   }
-  console.log('trees kept off the tram track', offTram);
+  window.__arbWhy = why;
+  console.log('trees kept off the tram track', offTram, 'and off streets, buildings, pavements, bridges', why);
   const barkMat = new THREE.MeshStandardMaterial({ color: 0x5a4636, roughness: 1 });
   const leafMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85, flatShading: true });
   const o = new THREE.Object3D();

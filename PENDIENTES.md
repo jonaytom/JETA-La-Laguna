@@ -502,6 +502,15 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   capturas): un salto brusco del terreno junto a la calzada y la glorieta; en la realidad la bajada es mucho más suave.
   Suavizar el terreno y la rasante ahí (y buscar otros saltos parecidos con el revisor).
   - v1.1.5 (sonda_calzadas): es el terraplén de subida al puente de la Av. República de Venezuela sobre la Autopista del Norte: la calzada va 4–5 m por encima del terreno y el muro cae de golpe. Hay que subir el terreno de alrededor en rampa suave (no solo el muro).
+- [~] ◐ v1.3.2 (TF-13 en trinchera de 6,5 m con muros de basalto bajo el puente, sin subir la glorieta ni sus calles; TF-13 a 2 + 2 carriles —14,4 m, antes 17,2—, vías de servicio a un carril —5,2 m, antes 9,1 con raya— y anillo de la glorieta a 8,5 m; falta comprobarlo con fotos y en coche) **Glorieta de La Verdellada y carriles de la Vía de Ronda** (Jonay, 10-nov, X 775, Y 826 y X 738, Y 778, capturas del juego y de Google Maps: «la rotonda de la Verdellada hay que mejorarla, así como los carriles de vía de ronda»).
+  - Real: la TF-13 pasa en trinchera bajo el puente que une la glorieta con C. Arturo Vergara / C. Emilio Gutiérrez Salazar; la glorieta, pequeña y con un árbol grande en medio, y las dos vías de servicio (un carril, mediana con palmeras) van a nivel de calle.
+  - En el juego: la TF-13 a ras de suelo, y el puente, la glorieta y sus calles subidos 4–5 m sobre taludes verdes; isla con pretiles; vías de servicio de dos carriles.
+  - Falta: el árbol de la isla y las palmeras de las medianas; que la trinchera siga hacia el norte como la real (muros largos); revisar si hay más tramos de la Vía de Ronda con los mismos anchos de más. Código: `src/04d_verdellada.js`.
+
+- [ ] ◐ **Paso inferior de la Vía de Ronda bajo la glorieta de los Menceyes: muros que salen en medio de la vía del tranvía** (Jonay, 10-nov, X 720, Y 1335, captura: «este puente/túnel toca revisarlo, salen cosas en medio de la vía del tren, creo que son muros del túnel de debajo»).
+  - La Vía de Ronda (vías 444 en túnel y 1022 que baja) pasa por debajo de la glorieta (anillo 2317/2318/2319/435, a nivel) y del tranvía; la boca abierta de la trinchera empieza en X 720, Y 1309 a 2,5 m y llega a 4,4 m en X 708, Y 1319, justo bajo el anillo y la vía: sus muros y pretiles asoman por encima.
+  - Qué hacer: cubrir la trinchera (losa / túnel) en todo lo que pasa por debajo de la glorieta y del tranvía, y que los muros y pretiles de la boca no se dibujen dentro de una calzada o de la vía a nivel. Mirar también la entrada del otro lado (X 537, Y 1371, ya apuntada en «Tramos abiertos de trinchera con una calle por encima»).
+
 - [ ] ● **Ampliar el mapa por el norte** (Jonay, 3-nov): que entren **Mesa Mota** y la parte que une con la **Vía de
   Ronda**, y que el mapa acabe en la carretera que va a **Las Mercedes, Las Canteras y Tegueste** (esa es la última). Bajar
   la zona con `descargar_zona.ps1` + `merge_zona.py`, terreno incluido, y mover el borde (`08b_border.js`).
@@ -821,6 +830,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   más de 400 líneas» de la tabla (`BASKET2D()`, `MISSIONS()`…) son los módulos enteros, no funciones de verdad. Lo más
   cómodo sería pasar un formateador (Prettier) a esos archivos; en la nube no se puede instalar, en el PC habría que
   añadirlo al trabajador.
+- [ ] ⚡ **Pintado más lento con la hierba** (auditoría 1.3.1, APTO CON AVISOS): pintar a 720p 17,8 → 21,6 ms y 78 000 triángulos más; arranque 17,1 → 18,9 s. La hierba va en celdas de 40 m hasta 110 m de la cámara: bajar el radio o la densidad de lejos, o un LOD de matas más simples. Los avisos de la auditoría son de minijuegos (baloncesto, fútbol, naves y guanche +0,1–0,2 ms), ruido de medida como en otras tandas.
 - [~] ● v1.0.0 **Pintar a 1080p y 60 fps en «alta» con la RX 6600** (Jonay, 3-nov: «el objetivo es jugar a 1080 a 60 fps
   en mi gráfica con los gráficos al máximo»; antes: «pintar ~30 ms desde la 0.89»). Sonda con la tarjeta de verdad:
   `tests/herramientas/sonda_pintado_gpu.py`, en 5 sitios. La tarjeta va sobrada: a 480×270 tarda lo mismo que a 1080p ×1,5;
@@ -911,6 +921,12 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   - Por comprobar: si el Artifact deja abrir conexiones WebRTC y al servidor de emparejamiento (si no, se juega con el HTML descargado); servidor TURN para las redes que no conectan directo.
 
 ## Hecho
+
+- [x] v1.3.2 **Avenida de los Menceyes: dos carriles por sentido y sin aparcamiento junto a la mediana** (Jonay, 10-nov, X 578, Y 1244: «es dos carriles en cada sentido; en el sentido de bajada no hay aparcamiento ni en el de subida por la zona central; solo hay aparcamiento en algunas zonas a la derecha del sentido de marcha»): cada calzada a 2 carriles (7,4 m, antes 11,7 con aparcamiento a los dos lados); aparcamiento solo a la derecha donde el OSM lo marca. Con la calzada más estrecha el Edificio El Valle (X 569, Y 1214) ya casi no la pisa.
+- [x] v1.3.2 **Hierba en aceras, calles, adoquines, vías del tranvía y junto a edificios** (Jonay, 10-nov, Av. Leonardo Torriani X 113, Y 432 y Av. de los Menceyes X 251, Y 854): cada mata se comprueba contra calzadas y aceras, el tranvía y sus paradas y los edificios; en los descampados, ninguna a menos de 12 m de una calle ni de 8 m de un edificio (en ciudad eso es acera ancha o explanada).
+- [x] v1.3.2 **Espadaña de Santo Domingo flotando** (Jonay, 10-nov, C. Santo Domingo X 102, Y 232): se pone sobre la pared más cercana de la planta del convento, a lo largo de ella (antes caía en una esquina vacía del rectángulo).
+
+- [x] v1.3.2 **Árboles dentro de edificios, en mitad de aceras y en la carretera** (Jonay, 10-nov, X 144, Y 80 y X 284, Y 155, capturas: «eso no puede pasar, y mucho menos en medio de una carretera»): el tronco nunca en una calle (también puentes y túneles) ni dentro de un edificio; la copa no entra en edificios ni en tableros de puente (si no cabe, árbol más pequeño o de calle, o ninguno); en las aceras, solo árbol de calle o palmera en alcorque junto al bordillo, y ninguno en aceras de calles estrechas. Quitados o cambiados: 367 en calzada, 95 en edificios, 74 en aceras, 33 por copa y 17 junto a puentes.
 
 - [x] v1.2.8 **Personajes un 5 % más pequeños** (Jonay, 10-nov, tras los coches): `HUMAN_SCALE` en `06_actors.js` (vale para el modelo con huesos y el antiguo).
 - [x] v1.2.7 **Coches más pequeños** (Jonay, 9-nov: un 10 %; 10-nov: «por ahora un 5 %… en todas sus dimensiones»): todos los modelos, guaguas y motos un 5 % menos de largo, ancho y alto (`CAR_SCALE` en `06b_vmodels.js`), también su física y su choque. Si hace falta, el otro 5 % es cambiar ese número.

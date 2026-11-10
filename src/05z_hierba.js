@@ -50,16 +50,27 @@ function hierbaRaster() {
     else if (['meadow', 'scrub'].includes(t)) poly(a[2], C[2]);
     else if (['pitch', 'water', 'farmland', 'cemetery', 'square', 'parking', 'sports', 'forest', 'orchard'].includes(t)) poly(a[2], C[3]);
   }
-  for (const b of DATA.B) poly(b[6], C[3], 3);
+  for (const b of DATA.B) poly(b[6], C[3], 6);
   x.lineCap = 'round';
   x.strokeStyle = C[3];
   for (const r of DATA.R) {
     const cc = r[4];
     if (cc.length < 4) continue;
-    x.lineWidth = (r[0] <= 13 ? r[2] + 3 : 2.5) * sx;
+    x.lineWidth = (r[0] <= 13 ? r[2] + 5 : Math.max(2.4, r[2]) + 1.5) * sx; // (v1.3.2: the pavements too, 2.1 m each side, and the whole path)
     x.beginPath();
     for (let i = 0; i < cc.length; i += 2) {
       const p = P(cc[i], cc[i + 1]);
+      i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]);
+    }
+    x.stroke();
+  }
+  // v1.3.2 (Jonay, Av. de los Menceyes X 251, Y 854: «más hierba en edificios, vías del tren»): none on the tram track
+  // and its stops (the track, 7.2 m, and the platforms beside it)
+  if (DATA.T && DATA.T.length > 3) {
+    x.lineWidth = 16 * sx;
+    x.beginPath();
+    for (let i = 0; i < DATA.T.length; i += 2) {
+      const p = P(DATA.T[i], DATA.T[i + 1]);
       i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]);
     }
     x.stroke();
@@ -70,6 +81,36 @@ function hierbaRaster() {
     const v = d[i * 4];
     R[i] = v < 40 ? 0 : v < 125 ? 1 : v < 210 ? 2 : 3;
   }
+  // v1.3.2 (Jonay: «la hierba no puede crecer en las aceras ni en las carreteras ni adoquines», Av. Leonardo Torriani
+  // X 113, Y 432): in town the open land between a street and the façades is paved (wide pavements, forecourts), not
+  // a descampado: no open-land grass within 12 m of a street or 8 m of a building (parks and gardens keep theirs)
+  x.fillStyle = '#000';
+  x.fillRect(0, 0, W, H);
+  x.strokeStyle = '#fff';
+  for (const b of DATA.B) {
+    const cc = b[6];
+    x.lineWidth = 16 * sx;
+    x.beginPath();
+    for (let i = 0; i < cc.length; i += 2) {
+      const p = P(cc[i], cc[i + 1]);
+      i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]);
+    }
+    x.closePath();
+    x.stroke();
+  }
+  for (const r of DATA.R) {
+    const cc = r[4];
+    if (cc.length < 4 || r[0] > 13) continue;
+    x.lineWidth = (r[2] + 24) * sx;
+    x.beginPath();
+    for (let i = 0; i < cc.length; i += 2) {
+      const p = P(cc[i], cc[i + 1]);
+      i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]);
+    }
+    x.stroke();
+  }
+  const u = x.getImageData(0, 0, W, H).data;
+  for (let i = 0; i < R.length; i++) if (R[i] === 0 && u[i * 4] > 127) R[i] = 3;
   return { W, H, sx, R };
 }
 function hierbaClass(x, z) {
@@ -99,6 +140,8 @@ function hierbaCell(ci, cj) {
     else if (cl === 2) kind = u < 0.35 ? 1 : u < 0.55 ? 0 : u < 0.62 ? 2 : -1;
     else kind = patch < 0.4 ? -1 : u < 0.5 ? 1 : u < 0.56 ? 2 : -1;
     if (kind < 0) continue;
+    // v1.3.2: the 4 m raster is coarse: each tuft checked for real off streets and pavements, the tram and buildings
+    if (onAnyPaved(x, z, 2.6) || nearTram(x, z, 6) || treeInBuilding(x, z)) continue;
     L.push([kind, x, heightAt(x, z), z, rnd() * 6.28, kind === 2 ? 0.8 + rnd() * 0.7 : 1.0 + rnd() * 0.8]);
   }
   HIERBA.cache.set(key, L);

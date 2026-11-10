@@ -223,6 +223,41 @@ function espadana(x, z, y, ang, w = 4.2) {
   g.rotation.y = ang;
   scene.add(g);
 }
+// the point of the footprint's outline nearest to x,z, 0.35 m inside, and the turn of an espadaña standing along that wall
+function espadanaOnWall(pts, x, z) {
+  let best = null,
+    bd = 1e9;
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i],
+      b = pts[(i + 1) % pts.length],
+      dx = b[0] - a[0],
+      dz = b[1] - a[1],
+      L2 = dx * dx + dz * dz || 1,
+      t = clamp(((x - a[0]) * dx + (z - a[1]) * dz) / L2, 0.15, 0.85),
+      px = a[0] + dx * t,
+      pz = a[1] + dz * t,
+      d = Math.hypot(px - x, pz - z);
+    if (d < bd && L2 > 25) {
+      bd = d;
+      best = [px, pz, dx, dz];
+    }
+  }
+  if (!best) return [x, z, 0];
+  const L = Math.hypot(best[2], best[3]);
+  let nx = -best[3] / L,
+    nz = best[2] / L;
+  if (!pipXZ(best[0] + nx * 0.5, best[1] + nz * 0.5, pts)) {
+    nx = -nx;
+    nz = -nz;
+  }
+  return [best[0] + nx * 0.35, best[1] + nz * 0.35, Math.atan2(-best[3], best[2])];
+}
+function pipXZ(x, z, pts) {
+  let ins = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++)
+    if (pts[i][1] > z !== pts[j][1] > z && x < ((pts[j][0] - pts[i][0]) * (z - pts[i][1])) / (pts[j][1] - pts[i][1]) + pts[i][0]) ins = !ins;
+  return ins;
+}
 function buildChurches() {
   for (const ch of CHURCHES) {
     buildChurchesEach(ch);
@@ -241,7 +276,10 @@ function buildChurchesEach(ch) {
     }
     if (/Santo Domingo/.test(nm)) {
       const e = F.W(fu + back * 0.3, F.v1 - 2.5);
-      espadana(e[0], e[1], top - 0.3, F.ang, 3.8);
+      // v1.3.2 (Jonay, C. Santo Domingo X 102, Y 232: «campanario flotando en la nada»): the convent's footprint is not a
+      // rectangle, and that corner of its frame fell out over the low annex: on the nearest wall, along it
+      const w = espadanaOnWall(ch.pts, e[0], e[1]);
+      espadana(w[0], w[1], top - 0.3, w[2], 3.8);
     }
     return;
   }
