@@ -354,6 +354,7 @@ function nearTram(x, z, r) {
 }
 function buildTrees() {
   const { types, barkMat, leafMat, o, col } = buildTreesPart1();
+  if (DATA.ARB) return buildTreesBlender(types, o, col); // v1.3.0: the trees made in Blender
   const defs = [
     {
       // laurel de Indias: big dense round crown
@@ -451,6 +452,93 @@ function buildTrees() {
   ];
   buildTreesPart2(defs, types, barkMat, leafMat, o, col);
 }
+// v1.3.0 (Jonay: «tenemos Blender conectado… deberías ser capaz de hacer cosas mejor»): the trees are made in Blender
+// (tools/blender/arboles_blender.py; the pine is Quaternius's «Pine», CC0) and come in DATA.ARB: per kind a trunk
+// (smooth, shared vertices), a crown (loose triangles, shaded flat) and a far crown, all with their colours per vertex.
+// Kinds: 0 laurel de Indias, 1 palmera canaria, 2 pino canario, 3 árbol de calle, 4–6 drago pequeño, mediano y grande.
+const ARB_KINDS = ['laurel', 'palm', 'pine', 'gen', 'drago', 'dragom', 'dragol'];
+function arbGeo(d) {
+  const g = new THREE.BufferGeometry(),
+    P = new Float32Array(d.p.length),
+    C = new Float32Array(d.c.length);
+  for (let i = 0; i < P.length; i++) P[i] = d.p[i] / 100;
+  for (let i = 0; i < C.length; i++) C[i] = Math.pow(d.c[i] / 255, 2.2); // (the colours are picked as on screen, sRGB; the renderer wants them linear)
+  g.setAttribute('position', new THREE.BufferAttribute(P, 3));
+  g.setAttribute('color', new THREE.BufferAttribute(C, 3));
+  if (d.i) {
+    const N = new Float32Array(d.n.length);
+    for (let i = 0; i < N.length; i++) N[i] = d.n[i] / 100;
+    g.setAttribute('normal', new THREE.BufferAttribute(N, 3));
+    g.setIndex(d.i);
+  } else g.computeVertexNormals(); // (loose triangles: one normal each)
+  g.computeBoundingSphere();
+  return g;
+}
+function buildTreesBlender(types, o, col) {
+  // (for the tests: how many of each kind and where some dragos are)
+  window.__arb = {
+    n: types.map((l) => l.length),
+    tris: {},
+    dragos: []
+      .concat(types[4], types[5], types[6])
+      .slice(0, 12)
+      .map((t) => [Math.round(t[0]), Math.round(t[1]), t[3]])
+  };
+  const bark = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 }),
+    leaf = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, flatShading: true, side: THREE.DoubleSide });
+  ARB_KINDS.forEach((k, ti) => {
+    const list = types[ti],
+      A = DATA.ARB[k];
+    if (!list || !list.length || !A) return;
+    const trunk = arbGeo(A.trunk),
+      crown = arbGeo(A.crown),
+      lo = A.lo ? arbGeo(A.lo) : null;
+    const tm = new THREE.InstancedMesh(trunk, bark, list.length),
+      cm = new THREE.InstancedMesh(crown, leaf, list.length);
+    const drago = ti >= 4;
+    window.__arb.tris[k] = [A.trunk.tris, A.crown.tris, A.lo ? A.lo.tris : 0, list.length];
+    list.forEach((t, i) => {
+      o.position.set(t[0], heightAt(t[0], t[1]), t[1]);
+      o.rotation.y = Math.random() * 6.28;
+      o.scale.setScalar(t[3]);
+      o.updateMatrix();
+      tm.setMatrixAt(i, o.matrix);
+      cm.setMatrixAt(i, o.matrix);
+      col.setScalar(0.88 + Math.random() * 0.24); // (each tree a little lighter or darker; the colours come from Blender)
+      cm.setColorAt(i, col);
+      COL.addCirc(t[0], t[1], (ti === 3 ? 0.25 : drago ? [0.45, 0.65, 1.0][ti - 4] : ti === 1 ? 0.6 : 0.45) * t[3]);
+    });
+    [tm, cm].forEach((m) => {
+      m.castShadow = true;
+      m.receiveShadow = true;
+      m.userData.tree = true;
+      scene.add(m);
+    });
+    if (lo) cm.userData.lo = lo; // far crowns with few triangles (05w_optimiza.js)
+    tm.userData.lo = arbTrunkLo(trunk); // and far trunks: a plain 5-sided post
+  });
+}
+// a far trunk: a 5-sided post as tall as the trunk's first 3/4 and as thick as its foot
+function arbTrunkLo(g) {
+  const p = g.attributes.position.array;
+  let h = 0,
+    r = 0.15;
+  for (let i = 0; i < p.length; i += 3) {
+    h = Math.max(h, p[i + 1]);
+    if (p[i + 1] < 0.4) r = Math.max(r, Math.hypot(p[i], p[i + 2]));
+  }
+  const c = new THREE.CylinderGeometry(r * 0.6, r, h * 0.75, 5, 1, true);
+  c.translate(0, h * 0.375, 0);
+  const n = c.attributes.position.count,
+    C = new Float32Array(n * 3);
+  for (let i = 0; i < n * 3; i += 3) {
+    C[i] = 0.07;
+    C[i + 1] = 0.055;
+    C[i + 2] = 0.04;
+  }
+  c.setAttribute('color', new THREE.BufferAttribute(C, 3));
+  return c;
+}
 /** (v1.1.7, code quality) part of buildTrees */
 function buildTreesPart2(defs, types, barkMat, leafMat, o, col) {
   defs.forEach((d, ti) => {
@@ -480,7 +568,23 @@ function buildTreesPart2(defs, types, barkMat, leafMat, o, col) {
 }
 /** (v1.1.7, code quality) part of buildTrees */
 function buildTreesPart1() {
-  const types = [[], [], [], []];
+  const types = [[], [], [], [], [], [], []];
+  // v1.3.0: the dragos people know (PENDIENTES, Street View): the one of the Instituto Cabrera Pinto (C. San Agustín)
+  // and the one of Av. Lucas Vega 16; each at the nearest spot that is neither a building nor a street
+  if (DATA.ARB)
+    for (const [x0, z0, k, s] of [
+      [-255, -345, 6, 1.0],
+      [-468, -398, 5, 1.1]
+    ]) {
+      let spot = null;
+      for (let r = 0; r <= 30 && !spot; r += 1.5)
+        for (let a = 0; a < 6.28 && !spot; a += 0.4) {
+          const x = x0 + Math.cos(a) * r,
+            z = z0 + Math.sin(a) * r;
+          if (!inAnyBuilding(x, z) && !onCarriagewayEarly(x, z, 2)) spot = [x, z];
+        }
+      if (spot) types[k].push([spot[0], spot[1], k, s, 1]);
+    }
   let offTram = 0;
   for (const t of TREES) {
     if (!inPlayArea(t[0], t[1], -5)) continue;
@@ -492,7 +596,13 @@ function buildTreesPart1() {
       continue;
     }
     /* no trunk or crown over the tram */ if (!t[4] && onAnyPaved(t[0], t[1], -0.3) && !isGreen(t[0], t[1])) continue;
-    types[t[2]].push(t);
+    let k = t[2];
+    // v1.3.0: some dragos among the trees of parks and green areas (small and medium; the big ones go where they are)
+    if (DATA.ARB && (k === 0 || k === 3) && isGreen(t[0], t[1])) {
+      const h = Math.abs(Math.sin(t[0] * 12.9898 + t[1] * 78.233) * 43758.5453) % 1;
+      if (h < 0.05) k = h < 0.03 ? 4 : 5;
+    }
+    types[k].push(t);
   }
   console.log('trees kept off the tram track', offTram);
   const barkMat = new THREE.MeshStandardMaterial({ color: 0x5a4636, roughness: 1 });

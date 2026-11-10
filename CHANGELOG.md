@@ -3,6 +3,16 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.3.0 — 2026-11-10 — Alpha 1.3.0: árboles hechos en Blender y dragos
+- **Árboles nuevos, hechos en Blender** (ahora Claude trabaja también con Blender): laurel de Indias de copa grande y
+  densa con ramas, palmera canaria de tronco grueso con anillos, copa redonda de 34 hojas y dátiles, pino canario
+  (modelo «Pine» de Quaternius, CC0) y árbol de calle. Cada uno con su copa simplificada para lejos.
+- **Dragos** (con las fotos de Jonay): tronco gris grueso que se abre de dos en dos en brazos, y rosetas de hojas en
+  punta, con las de abajo amarillas y colgando. En tres tamaños: pequeño y mediano repartidos por parques y zonas verdes,
+  y el grande en el patio del Instituto Cabrera Pinto (C. San Agustín); otro mediano en la Av. Lucas Vega.
+- Los modelos se rehacen con `tools/blender/arboles_blender.py` y se exportan con `exportar_arboles.py` a
+  `data/arboles.json`. Créditos en `CREDITOS.md`.
+
 ## 1.2.9 — 2026-11-10 — Alpha 1.2.9: la TF-5 recta hasta Santa Cruz y la bajada del pico
 - **TF-5 recta y paralela también pasado el HUC**, hasta el borde del mapa hacia Santa Cruz: un solo eje suave, cada
   sentido a su lado y los carriles de aceleración y deceleración pegados con su raya discontinua (19 ramales, antes 13).

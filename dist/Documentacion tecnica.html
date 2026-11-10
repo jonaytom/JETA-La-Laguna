@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.2.9</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.3.0</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,17 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.3.0 — 2026-11-10 — Alpha 1.3.0: árboles hechos en Blender y dragos</h2>
+<ul>
+<li><strong>Árboles nuevos, hechos en Blender</strong> (ahora Claude trabaja también con Blender): laurel de Indias de copa grande y
+  densa con ramas, palmera canaria de tronco grueso con anillos, copa redonda de 34 hojas y dátiles, pino canario
+  (modelo «Pine» de Quaternius, CC0) y árbol de calle. Cada uno con su copa simplificada para lejos.</li>
+<li><strong>Dragos</strong> (con las fotos de Jonay): tronco gris grueso que se abre de dos en dos en brazos, y rosetas de hojas en
+  punta, con las de abajo amarillas y colgando. En tres tamaños: pequeño y mediano repartidos por parques y zonas verdes,
+  y el grande en el patio del Instituto Cabrera Pinto (C. San Agustín); otro mediano en la Av. Lucas Vega.</li>
+<li>Los modelos se rehacen con <code>tools/blender/arboles_blender.py</code> y se exportan con <code>exportar_arboles.py</code> a
+  <code>data/arboles.json</code>. Créditos en <code>CREDITOS.md</code>.</li>
+</ul>
 <h2>1.2.9 — 2026-11-10 — Alpha 1.2.9: la TF-5 recta hasta Santa Cruz y la bajada del pico</h2>
 <ul>
 <li><strong>TF-5 recta y paralela también pasado el HUC</strong>, hasta el borde del mapa hacia Santa Cruz: un solo eje suave, cada

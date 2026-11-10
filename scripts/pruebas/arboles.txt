@@ -1,0 +1,7 @@
+# v1.3.0: árboles hechos en Blender
+herramientas/sonda_arboles.py
+herramientas/foto_vista.py drago_lucasvega -455 -390 5 -470 -400
+herramientas/foto_vista.py drago_cabrerapinto -240 -335 9 -258 -347
+herramientas/foto_vista.py drago_parque -5 -545 6 -18 -557
+herramientas/foto_vista.py arb_parque_alto 20 -520 25 -10 -560
+herramientas/foto_vista.py arb_calle -60 -230 3 -20 -170

@@ -49,6 +49,8 @@ D['LN']=json.load(open('data/carriles.json',encoding='utf-8')) if os.path.exists
 # v1.1.4: Mapillary's no-parking / no-stopping signs on each street (tools/mapillary.py): {index of DATA.R: [[x, z, side], ...]} (side 1 left, -1 right)
 D['MP']={k:[[round(p[0],1),round(p[1],1),p[2]] for p in v.get('nop',[])] for k,v in (json.load(open('data/mapillary_aparca.json',encoding='utf-8')) if os.path.exists('data/mapillary_aparca.json') else {}).items() if v.get('nop')}
 D['HUM']=json.load(open('data/chars.json',encoding='utf-8'))
+# v1.3.0: the trees made in Blender (tools/blender/arboles_blender.py + exportar_arboles.py): trunk, crown and far crown per kind
+D['ARB']=json.load(open('data/arboles.json',encoding='utf-8')) if os.path.exists('data/arboles.json') else None
 import base64
 D['PLASTER']=['data:image/jpeg;base64,'+base64.b64encode(open(f,'rb').read()).decode() for f in ['assets/textures/plaster_det.jpg','assets/textures/plaster_n1.jpg','assets/textures/plaster_n2.jpg']]
 data=json.dumps(D,separators=(',',':'),ensure_ascii=False).replace('</','<\\/')

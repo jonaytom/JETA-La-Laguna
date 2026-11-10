@@ -720,7 +720,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   - Árboles: con la ortofoto de GRAFCAN (WMS) y la diferencia entre el modelo de superficies y el del terreno (altura de la copa) sacar dónde hay arbolado de verdad y plantarlo (pinar, laurisilva, palmeras en barrancos), en vez de repartirlo a ojo.
 
 
-- [ ] ● **Árboles con más detalle y varios modelos** (Jonay, 19-oct, «no para ya»). Muchas copas son un círculo feo. Fotos
+- [~] ● v1.3.0 (laurel, palmera canaria, pino, árbol de calle y dragos en tres tamaños, hechos en Blender; faltan los de Lucas Vega tipo acacia/jacaranda, los arbolitos jóvenes de alcorque y colocar los dragos donde están de verdad) **Árboles con más detalle y varios modelos** (Jonay, 19-oct, «no para ya»). Muchas copas son un círculo feo. Fotos
       de Street View de lo que hay en La Laguna:
       - En la Av. de Lucas Vega:
         - árboles grandes de hoja compuesta y fina (tipo acacia o jacaranda), con varios troncos que se abren en «V» y
