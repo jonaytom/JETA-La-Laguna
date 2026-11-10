@@ -3,6 +3,15 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.2.7 — 2026-11-10 — Alpha 1.2.7: calles al ancho entre fachadas y coches un 5 % más pequeños
+- **Calles más estrechas donde los edificios se metían en ellas** (Jonay: «ha sido un fallo ampliarlas de inicio»): toda
+  calle desde las principales hacia abajo (también en el casco; no autopistas, enlaces, vías rápidas ni glorietas) se
+  estrecha hasta el hueco que dejan las fachadas, sin bajar de lo que piden sus carriles. Antes solo se estrechaban las
+  residenciales y de servicio, y solo hasta la mitad del hueco. C. Barcelona era el peor caso: una calle de un carril
+  que medía 10,4 m.
+- **Coches un 5 % más pequeños** en largo, ancho y alto (todos los modelos, guaguas y motos incluidas), también al
+  conducir y al chocar.
+
 ## 1.2.6 — 2026-11-10 — Alpha 1.2.6: auditoría limpia
 - **El Blanco ya no está en mitad de la C. Adelantado** (la auditoría lo veía como «árbol, farola o poste»): los
   personajes y marcas de misión se colocan primero fuera de la calzada; solo si no hay sitio cerca se quedan donde iban.

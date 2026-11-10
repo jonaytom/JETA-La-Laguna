@@ -619,7 +619,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Coches y tráfico
 
-- [ ] ⚡ **Coches un 10 % más pequeños** (Jonay, 9-nov: «no, coches más grandes no, más pequeños, un 10 % menos»): escalar los modelos (`06b_vmodels.js`, largo/ancho/alto, y sus colisiones) un 10 % hacia abajo; así caben mejor en la banda de aparcamiento (2,2 m) y dejan de pisar su raya.
 
 ### Casas, personaje y vida social
 
@@ -737,6 +736,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 ### Agente revisor (avisos de mapa)
 
 - [ ] ● **Edificios: recortar solo lo que pisa la calzada, sin romperlos** (v1.0.0–1.0.2, deshecho en la 1.0.3; Jonay, 3-nov: «te
+  - v1.2.7: las calles ya se estrechan hasta las fachadas en todo el mapa (94 → 58 choques). Quedan 2 críticos y la punta de cinco calles de servicio que entran 2–4 m en el edificio #77 (X −640, Y 955; aparecieron al estrecharlas).
   has cargado demasiados edificios», «los recortes fueron mal, empeoraron mucho», manzanas del casco convertidas en plazas
   en C. el Juego X −259, Y 47 y C. San Juan X −276, Y 102, y un edificio sin paredes en X −191, Y 366). Lo que falló: quitar la
   regla de no perder más de la mitad (con el corte recto, más ancho que la calle donde esta tuerce) y la muesca / el
@@ -809,25 +809,8 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
         X 243 Z −352, X −291 Z 2699), un servicio del aeropuerto en una ladera de pendiente imposible (X −3247 Z −359).
 
 ### Rendimiento, auditorías y código
-- [ ] ◐ **Avisos de la auditoría de la 1.2.1** (10-nov, APTO CON AVISOS):
-  - Un obstáculo nuevo en la calzada: árbol, farola o poste en C. Juan de Vera (X −149, Y −235).
-  - El fútbol va de 1,5 a 4,6 ms y prepara dibujos los primeros 3 s. (v1.2.4: todos sus dibujos se preparan al empezar el partido, `prewarmSprites()`; comprobar en la próxima auditoría.)
-  - La pelea, el baloncesto, las naves y Guanche suben entre 0,1 y 0,2 ms: probablemente es ruido del PC, comprobar con el PC descansado.
-- [ ] ⚡ **Avisos de la auditoría de la 1.2.5** (10-nov, APTO CON AVISOS, calidad A 85/100; pinta 20,9 → 19,8 ms; el obstáculo de C. Juan de Vera ya no sale):
-  - Tres avisos nuevos del análisis de código. Ninguno corre en cada fotograma: `captureStage()` crea un vector al empezar cada pelea (sacarlo fuera), `prewarm()` hace un JSON al apuntar un luchador y `setCans()` ya hace las latas una sola vez (el analizador ve el `new` en el código).
-  - El fútbol va de 0,3 a 0,4 ms (probablemente ruido del PC).
-  - `12f_story2.js` baja de A a B (la comprobación de calles del alcalde se parece a `onCarriagewayEarly`: se podría usar esa).
-- [ ] ⚡ **Avisos de la auditoría de la 1.2.3** (10-nov, APTO CON AVISOS, calidad A 85/100; métricas iguales que la 1.2.2):
-  - Solo el del fútbol (dibujos los primeros 3 s): v1.2.4 los prepara todos antes del primer fotograma.
-  - Auditoría 1.2.4 (APTO CON AVISOS): el aviso del fútbol ya no sale. Pinta algo más rápido (22,6 → 20,9 ms).
-  - v1.2.5: el «poste» de C. Juan de Vera (X −149, Y −235) era el alcalde (su puerta está entre dos calles); ahora mira todas las calles cercanas. Comprobar en la próxima auditoría.
-  - Pendiente (◐): las otras peleas callejeras (con un peatón cualquiera) tardan ~0,14 s en empezar, porque sus figuras se dibujan al momento.
-  - Nota: `huella_mundo_cmp` salió distinta una vez (161 vértices) y bien las dos siguientes con el mismo código: algo de la carga no es del todo fijo.
-- [ ] ◐ **Avisos de la auditoría de la 1.2.0** (10-nov, APTO CON AVISOS, calidad A 85/100):
-  - Vértices +6 % (7,55 M → 7,98 M), por las trincheras de una pieza y el pabellón. Pinta más rápido: 23,2 → 19,1 ms.
-  - Cinco edificios nuevos invaden la calzada: Carretera del Campo de Golf (X −3675, Y −224), San Honorato (X −925, Y 108), Travesía Enlace Andenes Sobradillo (X 589, Y 3657 y X 627) y uno más.
-  - El fútbol prepara dibujos los primeros 3 s del partido: hay que prepararlos al abrir el juego.
-  - `04_world.js` baja de B a C.
+- [ ] ⚡ **Peleas callejeras con un peatón cualquiera: ~0,14 s al empezar** (v1.2.5, sonda `sonda_maleante_gpu.py`): sus figuras se dibujan al momento (las del jugador y las de los maleantes ya se preparan antes). Se podrían «calentar» las del peatón al acercarte a él.
+- [ ] ⚡ **`huella_mundo_cmp` no es del todo fija** (v1.2.4): salió distinta una vez (161 vértices) y bien las dos siguientes con el mismo código; algo de la carga (gente o coches) entra en la cuenta.
 
 - [x] v1.2.4 (la auditoría 1.2.4 ya no da avisos nuevos críticos o altos: cuentan como conocidos) **Auditoría 1.1.6: «180 avisos nuevos» del análisis estático** (crear geometría en `buildRoofProps`, `buildTerrain`, `buildLamps`…): no son nuevos, son los de siempre con otro número de línea tras pasar el formateador. Comprobar en la próxima auditoría que vuelven a contar como conocidos; `03_collide.js` bajó de A a B (más líneas por función).
 - [~] ◐ v1.1.7 (nota A: 88 en local, 86 en la auditoría, que ahora cuenta sentencias y deja fuera los datos; piezas comunes del píxel en 09e_pixkit, funciones largas de 251 a 147; quedan los «módulos» enteros —MISSIONS, BASKET2D, create() de los juegos de la recreativa— y los cuerpos de bucle muy largos como el de cada edificio en buildBuildings) v1.1.6 (todo `src/` con Prettier: nota de C 69 a B 84, sin líneas largas ni densas; quedan las funciones-módulo muy largas y el código repetido de 09ma/09eb/06b) v1.0.0 (`12m_mundialito.js`: la tabla de selecciones, una fila por equipo) **Partir funciones largas y ordenar
@@ -928,6 +911,13 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Hecho
 
+- [x] v1.2.7 **Coches más pequeños** (Jonay, 9-nov: un 10 %; 10-nov: «por ahora un 5 %… en todas sus dimensiones»): todos los modelos, guaguas y motos un 5 % menos de largo, ancho y alto (`CAR_SCALE` en `06b_vmodels.js`), también su física y su choque. Si hace falta, el otro 5 % es cambiar ese número.
+- [x] v1.2.7 **Calles al ancho entre fachadas** (Jonay, 10-nov: «las calles que corten como la de C. Barcelona haz más estrecha la calle, ha sido un fallo ampliarlas de inicio»): `narrowToGap` (04b_recorte.js) vale ya para toda calle de principal hacia abajo, también en el casco (salvo autopistas, enlaces, vías rápidas, glorietas, puentes y túneles y la Av. de La Trinidad, que tiene lo suyo), y estrecha hasta el hueco real (el 10 % más estrecho de lo medido; si el eje cae dentro de un edificio, al mínimo de sus carriles). C. Barcelona: de 10,4 a 4 m. Auditoría: choques con edificios 94 → 58 (críticos 3 → 2).
+- [x] v1.2.6 **Auditorías 1.2.0–1.2.5 limpias** (Jonay, 10-nov: «termina todo lo de las auditorías»): la de la 1.2.6 sale **APTO** sin avisos. Hecho: fútbol sin dibujos al jugar (1.2.4), tirón del maleante (1.2.5), alcalde y El Blanco fuera de la calzada (`safeSpot` busca primero sitio fuera de ella), latas del tiro, vector de la pelea y figuras «calentadas» (sin avisos nuevos del análisis), `prueba_076` más robusta (el chorro probaba con 4 peatones; ahora 8). Lo que queda en los informes no son avisos nuevos:
+  - Mapa: 94 edificios que invaden la calzada (3 críticos: C. Barcelona X −15, Y 217, donde la calle de un sentido mide 10,4 m; y un servicio en X −858, Y 70) → es el apunte ● «Edificios: recortar solo lo que pisa la calzada». Obstáculos: quedan 7 «bajos» (contenedores de Teobaldo Power pegados al bordillo, a propósito; señales de la isleta de Marqués de Celada; dos postes de un servicio en X −3018, Y −49).
+  - Análisis de código: ~40 avisos altos conocidos en funciones que el analizador cree de cada fotograma por el nombre (`get`/`set` del guardado, sprites con caché de los minijuegos, `geo()` de la ciudad, `cBox`…); se hacen una vez. Cambiarles el nombre los haría «nuevos» una vez.
+  - Las métricas de los minijuegos (0,3 ↔ 0,4 ms) bailan de una medición a otra: ruido.
+  - Los vértices pasan de 7,94 M a 7,98 M en la 1.2.6 sin cambios en la ciudad (huella igual): probablemente gente o coches a la vista al medir.
 - [x] v1.2.5 **Tirón al escaparse el maleante** (Jonay, 3-nov): era el comienzo de la pelea 2D (0,9 s: figuras dibujadas de golpe y la ciudad lejana del fondo subida a la GPU). Figuras dibujadas antes en ratos libres y fondo solo con lo cercano: 0,06 s. Sonda `tests/herramientas/sonda_maleante_gpu.py`.
 - [x] v1.1.9 v1.1.0 (red de seguridad que te devuelve a la calle; la sonda `sonda_caidas.py` no encuentra ahí un tablero sobre un tramo bajo, así que la causa sigue sin saberse: falta reproducirlo conduciendo por ese enlace) **¡Bloquea la misión! El coche se cae a través de la calzada en el enlace de la Autopista del Norte** (Jonay,
   3-nov, X −3292, Y −161, captura de noche, misión del queso del aeropuerto: «me he caído por aquí con el coche mientras

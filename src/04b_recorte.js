@@ -147,16 +147,36 @@ function selfCross(P) {
 function narrowToGap() {
   const { E, G, cell, stamp } = narrowToGapPart1();
   const { ray, MINW, nearBT, narrowed } = narrowToGapPart2(cell, G, stamp, E);
+  // v1.2.7: is (x, z) inside a building footprint? (crossings of a ray towards +X, up to 200 m, through the edge grid)
+  const insideB = (x, z) => {
+    const seen = new Set();
+    let k = 0;
+    for (let t = 0; t <= 200; t += 8) {
+      const l = G[cell(x + t, z)];
+      if (!l) continue;
+      for (const id of l) {
+        if (seen.has(id)) continue;
+        seen.add(id);
+        const e = E[id];
+        if (e[1] > z === e[3] > z) continue;
+        const xi = e[0] + ((z - e[1]) * (e[2] - e[0])) / (e[3] - e[1]);
+        if (xi > x && xi <= x + 200) k++;
+      }
+    }
+    return k % 2 === 1;
+  };
   let n = 0;
   DATA.R.forEach((r, ri) => {
     const t = r[0];
-    if (t < 9 || t > 12 || r[3] & 6) return;
+    // v1.2.7 (Jonay: «las calles que corten como la de C. Barcelona haz más estrecha la calle, ha sido un fallo
+    // ampliarlas de inicio»): every street from primary down (not motorways, links, trunk roads, roundabouts), also in
+    // the old town, and right to the gap between the façades
+    if (t < 3 || t > 12 || r[3] & 6 || r[3] & 32) return;
+    if (r[1] >= 0 && DATA.S[r[1]] === 'Avenida de La Trinidad') return; // its own widths and pavements (05u_trinidad.js)
     const c = r[4],
       W = r[2],
       one = r[3] & 1,
       half = W / 2;
-    const m = (c.length >> 2) << 1;
-    if (inCore0(c[m], c[m + 1])) return;
     for (let i = 0; i < c.length; i += 2) if (nearBT(c[i], c[i + 1])) return;
     const room = [];
     let samples = 0;
@@ -171,14 +191,22 @@ function narrowToGap() {
         const x = ax + ux * s,
           z = az + uz * s;
         samples++;
+        // v1.2.7: the axis itself inside a footprint (C. Barcelona): the street goes to its narrowest, and the building is
+        // cut back for the rest (roadClip)
+        if (insideB(x, z)) {
+          room.push(0);
+          continue;
+        }
         const d = Math.min(ray(x, z, -uz, ux, half + 1), ray(x, z, uz, -ux, half + 1)) + 0.75;
         if (d < half) room.push(2 * d);
       }
     }
-    if (room.length < 3 || room.length < samples * 0.25) return; // one garage on a corner does not narrow the whole street (it gets cut)
+    if (room.length < 2 || room.length < samples * 0.1) return; // one garage on a corner does not narrow the whole street (it gets cut)
     room.sort((a, b) => a - b);
-    const gap = room[Math.floor(room.length * 0.3)];
-    const w = Math.round(Math.max(MINW(t, one), Math.min(W, (W + gap) / 2)) * 10) / 10;
+    const gap = room[Math.floor(room.length * 0.1)]; // v1.2.7: the tight spots (it was the 30 %)
+    const ln = DATA.LN && DATA.LN[ri] ? DATA.LN[ri][0] : 0,
+      minW = Math.max(MINW(t, one), ln > 0 ? ln * 3 + 0.4 : t <= 8 ? (one ? 4 : 6) : 0);
+    const w = Math.round(Math.max(minW, Math.min(W, gap)) * 10) / 10;
     if (w < W - 0.2) {
       r[2] = w;
       narrowed.set(ri, w);
@@ -204,7 +232,7 @@ function narrowToGapPart3(narrowed) {
     }
     const N = DATA.G.n;
     for (const e of DATA.G.e) {
-      if (e[2] < 9 || e[2] > 12) continue;
+      if (e[2] < 3 || e[2] > 12) continue;
       const P = [N[e[0] * 2], N[e[0] * 2 + 1], ...(e[6] || []), N[e[1] * 2], N[e[1] * 2 + 1]],
         h = (P.length >> 2) << 1;
       const x = (P[h] + P[h - 2]) / 2,

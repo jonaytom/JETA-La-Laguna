@@ -1,0 +1,5 @@
+# v1.2.7: calles al hueco entre fachadas (C. Barcelona y el casco) y coches un 5 % más pequeños
+herramientas/sonda_vias.py -15 217 40
+herramientas/foto_vista.py barcelona_calle 20 205 4 -40 220
+herramientas/foto_vista.py barcelona_alto -5 235 30 -15 217
+herramientas/foto_vista.py casco_calle -60 -230 4 -10 -150

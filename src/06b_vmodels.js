@@ -82,12 +82,24 @@ mt07|Llamarada EmeTe-Siete|Naked|naked|moto|2.08|0.78|1.1|2
   .filter((l) => l && !l.startsWith('#'))
   .map((l) => l.split('|').map((v, k) => (k >= 5 ? +v : v))); // (v1.1.7: one line per model, «id|name|category|Kenney base|physics|length|width|height|weight»; # = a heading)
 const VMODELS = {};
-VMODELS_RAW.forEach(([id, name, cat, base, phys, L, W, H, w]) => (VMODELS[id] = { id, name, cat, base, phys, L, W, H, w }));
+// v1.2.7 (Jonay: «reducimos el tamaño de los coches por ahora un 5 %… en todas sus dimensiones»): every vehicle is drawn
+// and driven 5 % smaller in length, width and height (the table keeps the real sizes)
+const CAR_SCALE = 0.95;
+VMODELS_RAW.forEach(
+  ([id, name, cat, base, phys, L, W, H, w]) =>
+    (VMODELS[id] = { id, name, cat, base, phys, L: +(L * CAR_SCALE).toFixed(3), W: +(W * CAR_SCALE).toFixed(3), H: +(H * CAR_SCALE).toFixed(3), w })
+);
 const VTYPES2 = {
   truck: { name: 'Camión', L: 6.5, W: 2.1, H: 2.8, maxV: 30, acc: 5, grip: 6, mass: 3, prof: 'van' },
   moto: { name: 'Moto', L: 2.0, W: 0.8, H: 1.1, maxV: 36, acc: 12, grip: 9, mass: 0.5, prof: 'sedan' }
 };
 Object.assign(VTYPES, VTYPES2);
+for (const k in VTYPES) {
+  const T = VTYPES[k];
+  T.L = +(T.L * CAR_SCALE).toFixed(3);
+  T.W = +(T.W * CAR_SCALE).toFixed(3);
+  T.H = +(T.H * CAR_SCALE).toFixed(3);
+}
 // popular colours in Canarias: white and greys dominate (rent-a-car fleets too)
 const CARCOL_W = [
   [0xf2f2f2, 30],
