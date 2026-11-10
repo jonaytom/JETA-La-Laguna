@@ -278,6 +278,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   la luz ambiente de noche para que no se vea todo negro. Sin añadir luces de verdad (cuestan mucho): con el brillo de las
   texturas, manchas de luz pintadas en el suelo y la luz ambiente.
 
+- [ ] ◐ **Una franja verde de monte flotando en el cielo** (fotos de las pruebas y captura de Jonay en X 769, Y 1541, 10-nov): en vuelo libre y en las fotos se ve una tira de ladera verde suspendida en el aire, delante del cielo. Parece el fondo de montes lejanos colocado a la altura del jugador y no de la cámara. Buscar qué malla es (`__ORIGEN`) y ponerla a su altura.
 ### HUD y minimapa
 
 
@@ -511,6 +512,13 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   - La Vía de Ronda (vías 444 en túnel y 1022 que baja) pasa por debajo de la glorieta (anillo 2317/2318/2319/435, a nivel) y del tranvía; la boca abierta de la trinchera empieza en X 720, Y 1309 a 2,5 m y llega a 4,4 m en X 708, Y 1319, justo bajo el anillo y la vía: sus muros y pretiles asoman por encima.
   - Qué hacer: cubrir la trinchera (losa / túnel) en todo lo que pasa por debajo de la glorieta y del tranvía, y que los muros y pretiles de la boca no se dibujen dentro de una calzada o de la vía a nivel. Mirar también la entrada del otro lado (X 537, Y 1371, ya apuntada en «Tramos abiertos de trinchera con una calle por encima»).
 
+- [~] ● v1.3.3 (relieve del MDT de 5 m del IGN en las zonas con más diferencia: ladera noreste de San Roque a La Cuesta, barranco junto a la Carretera General del Norte y la montaña junto al aeropuerto, 25 000 celdas de la malla de 16 m; sin tocar el suelo a menos de 20 m de calles, tranvía y edificios; herramienta `tests/herramientas/mdt_zonas.py`, mapa de zonas en `docs/referencias/barrancos_zonas.png`) **Barrancos con el relieve real** (Jonay, 10-nov: «habrá zonas que no hay ni que tocar; vamos a centrarnos en las zonas donde hay más desnivel respecto a lo que tenemos»).
+  - Falta: los barrancos estrechos dentro de la ciudad (Gracia junto al IES Domingo Pérez Minik, el de detrás de la Vía de Ronda) no caben en la malla de 16 m: harían falta trozos de malla más fina o bajar calles; y el sur (zonas 2, 3, 15: Taco y La Cuesta), con muchas calles dentro.
+
+- [ ] ● **IES Domingo Pérez Minik y su entorno (Gracia): muros, calle sin salida bajo el puente, barranco y desnivel** (Jonay, 10-nov, X 774, Y 1365 y X 769, Y 1541, capturas del juego, de Google Maps y de Street View de C. Galaxia 12, C. Saturno 30, C. Neptuno 2, Av. de los Menceyes 108 y C. Prof. José Luis Moreno Becerra): «esto es un instituto y tiene muros alrededor; además por detrás del instituto hay una calle sin salida y pasa por encima la carretera, no como está; después de la calle sin salida hay un barranco; donde dice Brum Brum MotorSport es terreno que está por debajo».
+  - Real: todo el recinto del instituto (edificio en forma de peine, canchas y aparcamiento) va cerrado con muros altos (de piedra basáltica o bloque, pintados por arriba de rojo, azul o con murales) y valla metálica encima; dos canchas grises de hormigón dentro del muro, no verdes ni naranjas. Entradas por la Av. de los Menceyes (puerta junto a la glorieta) y por C. Saturno.
+  - Detrás (C. Clemencia Hardisson / C. Neptuno) la calle sin salida baja y pasa **por debajo** de la C. Prof. José Luis Moreno Becerra (puente), y después hay un barranco con muros y vegetación; la zona de Brum Brum MotorSport está más baja que la calle.
+  - Juntar con el paso inferior de la Vía de Ronda bajo la glorieta (apunte de arriba, X 720, Y 1335), que está al lado: es la misma zona. Con el MDT de 5 m del IGN (ya bajado a `data/mdt/`) se puede sacar el barranco y el desnivel de verdad.
 - [ ] ● **Ampliar el mapa por el norte** (Jonay, 3-nov): que entren **Mesa Mota** y la parte que une con la **Vía de
   Ronda**, y que el mapa acabe en la carretera que va a **Las Mercedes, Las Canteras y Tegueste** (esa es la última). Bajar
   la zona con `descargar_zona.ps1` + `merge_zona.py`, terreno incluido, y mover el borde (`08b_border.js`).
@@ -830,7 +838,8 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   más de 400 líneas» de la tabla (`BASKET2D()`, `MISSIONS()`…) son los módulos enteros, no funciones de verdad. Lo más
   cómodo sería pasar un formateador (Prettier) a esos archivos; en la nube no se puede instalar, en el PC habría que
   añadirlo al trabajador.
-- [ ] ⚡ **Pintado más lento con la hierba** (auditoría 1.3.1, APTO CON AVISOS): pintar a 720p 17,8 → 21,6 ms y 78 000 triángulos más; arranque 17,1 → 18,9 s. La hierba va en celdas de 40 m hasta 110 m de la cámara: bajar el radio o la densidad de lejos, o un LOD de matas más simples. Los avisos de la auditoría son de minijuegos (baloncesto, fútbol, naves y guanche +0,1–0,2 ms), ruido de medida como en otras tandas.
+- [ ] ⚡ **Arranque 2 s más lento en la 1.3.2** (auditoría 1.3.2, APTO): 18,9 → 20,9 s. Sospechosos: la comprobación de sitio de cada árbol (`treeFit`, `treeKerb`, 05_scenery.js) y el mapa de hierba con las franjas junto a calles y edificios (05z_hierba.js). Medir y, si es eso, usar una rejilla para las calles.
+- [ ] ⚡ **Quedan algunas matas en la acera ancha de la Av. Leonardo Torriani** (foto de la 1.3.2, X 113, Y 450): la franja gris entre la acera y la fachada; mirar qué es en el OSM (área verde o explanada) y quitarla de la hierba.
 - [~] ● v1.0.0 **Pintar a 1080p y 60 fps en «alta» con la RX 6600** (Jonay, 3-nov: «el objetivo es jugar a 1080 a 60 fps
   en mi gráfica con los gráficos al máximo»; antes: «pintar ~30 ms desde la 0.89»). Sonda con la tarjeta de verdad:
   `tests/herramientas/sonda_pintado_gpu.py`, en 5 sitios. La tarjeta va sobrada: a 480×270 tarda lo mismo que a 1080p ×1,5;
@@ -921,6 +930,8 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   - Por comprobar: si el Artifact deja abrir conexiones WebRTC y al servidor de emparejamiento (si no, se juega con el HTML descargado); servidor TURN para las redes que no conectan directo.
 
 ## Hecho
+
+- [x] v1.3.2 **Pintado más lento con la hierba** (auditoría 1.3.1: 17,8 → 21,6 ms): en la 1.3.2, con la hierba fuera de aceras y calles, 16,8 ms y 18 000 triángulos menos.
 
 - [x] v1.3.2 **Avenida de los Menceyes: dos carriles por sentido y sin aparcamiento junto a la mediana** (Jonay, 10-nov, X 578, Y 1244: «es dos carriles en cada sentido; en el sentido de bajada no hay aparcamiento ni en el de subida por la zona central; solo hay aparcamiento en algunas zonas a la derecha del sentido de marcha»): cada calzada a 2 carriles (7,4 m, antes 11,7 con aparcamiento a los dos lados); aparcamiento solo a la derecha donde el OSM lo marca. Con la calzada más estrecha el Edificio El Valle (X 569, Y 1214) ya casi no la pisa.
 - [x] v1.3.2 **Hierba en aceras, calles, adoquines, vías del tranvía y junto a edificios** (Jonay, 10-nov, Av. Leonardo Torriani X 113, Y 432 y Av. de los Menceyes X 251, Y 854): cada mata se comprueba contra calzadas y aceras, el tranvía y sus paradas y los edificios; en los descampados, ninguna a menos de 12 m de una calle ni de 8 m de un edificio (en ciudad eso es acera ancha o explanada).

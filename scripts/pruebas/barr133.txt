@@ -1,0 +1,5 @@
+herramientas/foto_vista.py ladera_ne 500 400 40 1300 -200
+herramientas/foto_vista.py ladera_ne2 1100 1000 50 1700 300
+herramientas/foto_vista.py sanroque 300 100 40 700 -500
+herramientas/foto_vista.py barr_norte -2900 -150 40 -3160 -348
+herramientas/foto_vista.py gracia 760 1600 40 1030 870

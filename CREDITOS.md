@@ -7,3 +7,4 @@ nombrar al autor.
 |---|---|---|---|
 | «Pine» (https://poly.pizza/m/igSu0cPoBz) | Quaternius | CC0 1.0 | Pino canario (`data/arboles.json`, v1.3.0) |
 | Coches (Car Kit) | Kenney | CC0 1.0 | Modelos de coches (`data/kenney_cars.json`) |
+| Modelo Digital del Terreno de 5 m (MDT05), servicio WCS de IDEE | © Instituto Geográfico Nacional | CC BY 4.0 | Relieve de barrancos y laderas (`data/terreno_mdt.json`, v1.3.3) |

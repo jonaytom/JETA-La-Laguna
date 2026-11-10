@@ -1,0 +1,2 @@
+herramientas/foto_vista.py barr16 960 1000 25 1034 871
+herramientas/foto_vista.py barr13 1500 600 25 1601 455

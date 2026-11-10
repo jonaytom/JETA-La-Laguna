@@ -51,6 +51,15 @@ D['MP']={k:[[round(p[0],1),round(p[1],1),p[2]] for p in v.get('nop',[])] for k,v
 D['HUM']=json.load(open('data/chars.json',encoding='utf-8'))
 # v1.3.0: the trees made in Blender (tools/blender/arboles_blender.py + exportar_arboles.py): trunk, crown and far crown per kind
 D['ARB']=json.load(open('data/arboles.json',encoding='utf-8')) if os.path.exists('data/arboles.json') else None
+# v1.3.3: barrancos and slopes from the IGN 5 m DEM where the game's 16 m relief was furthest off (data/terreno_mdt.json:
+# cell indexes of the heightmap and the change in decimetres; made with tests/herramientas/mdt_zonas.py from data/mdt/)
+if os.path.exists('data/terreno_mdt.json'):
+    import base64 as _b64, array as _arr
+    _T=json.load(open('data/terreno_mdt.json',encoding='utf-8'))
+    _h=_arr.array('h'); _h.frombytes(_b64.b64decode(D['H']['d']))
+    for _i,_d in zip(_T['i'],_T['d']): _h[_i]=max(-32768,min(32767,_h[_i]+_d))
+    D['H']['d']=_b64.b64encode(_h.tobytes()).decode()
+    print('terreno: MDT del IGN en', len(_T['i']), 'celdas')
 import base64
 D['PLASTER']=['data:image/jpeg;base64,'+base64.b64encode(open(f,'rb').read()).decode() for f in ['assets/textures/plaster_det.jpg','assets/textures/plaster_n1.jpg','assets/textures/plaster_n2.jpg']]
 data=json.dumps(D,separators=(',',':'),ensure_ascii=False).replace('</','<\\/')
