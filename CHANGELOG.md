@@ -3,6 +3,19 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.2.5 — 2026-11-10 — Alpha 1.2.5: sin tirón al pillar a un maleante
+- **El tirón al pillar a un maleante** (Jonay: «el juego se quedó congelado un momento»): la sonda nueva midió casi 0,9 s
+  al empezar la pelea. Se iban en dibujar de golpe las figuras de los dos luchadores y en subir a la tarjeta gráfica
+  toda la ciudad lejana que sale de fondo. Ahora las figuras del jugador y las de cada maleante se dibujan antes, poco
+  a poco en ratos libres, y el fondo solo recoge la ciudad cercana: la primera pelea con un maleante empieza en
+  ~0,06 s.
+- **El alcalde ya no se queda en mitad de la C. Juan de Vera** (aviso de la auditoría): su puerta está entre dos calles
+  y solo se miraba la más cercana.
+- **Latas de la misión del tiro**: las piezas de las latas se hacen una vez y se reutilizan en cada reinicio (aviso
+  del análisis de código).
+- **Código**: `buildBuildingsEach` (`04_world.js`) partido en cuatro (invernaderos, paredes y azotea aparte) y otros tres
+  trozos largos separados; la ciudad construida sale idéntica (huella del mundo).
+
 ## 1.2.4 — 2026-11-10 — Alpha 1.2.4: la TF-5 recta bajo el puente de Guajara
 - **Enlace de Guajara**: la TF-5 hacía un quiebro de 9 m justo bajo el puente y las calzadas y los ramales se montaban.
   Era la Autovía de Interconexión (TF-2), que sale ahí de la TF-5 y entraba en el cálculo del eje recto de la autopista.

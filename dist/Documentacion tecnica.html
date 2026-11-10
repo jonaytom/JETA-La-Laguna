@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.2.4</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.2.5</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,20 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.2.5 — 2026-11-10 — Alpha 1.2.5: sin tirón al pillar a un maleante</h2>
+<ul>
+<li><strong>El tirón al pillar a un maleante</strong> (Jonay: «el juego se quedó congelado un momento»): la sonda nueva midió casi 0,9 s
+  al empezar la pelea. Se iban en dibujar de golpe las figuras de los dos luchadores y en subir a la tarjeta gráfica
+  toda la ciudad lejana que sale de fondo. Ahora las figuras del jugador y las de cada maleante se dibujan antes, poco
+  a poco en ratos libres, y el fondo solo recoge la ciudad cercana: la primera pelea con un maleante empieza en
+  ~0,06 s.</li>
+<li><strong>El alcalde ya no se queda en mitad de la C. Juan de Vera</strong> (aviso de la auditoría): su puerta está entre dos calles
+  y solo se miraba la más cercana.</li>
+<li><strong>Latas de la misión del tiro</strong>: las piezas de las latas se hacen una vez y se reutilizan en cada reinicio (aviso
+  del análisis de código).</li>
+<li><strong>Código</strong>: <code>buildBuildingsEach</code> (<code>04_world.js</code>) partido en cuatro (invernaderos, paredes y azotea aparte) y otros tres
+  trozos largos separados; la ciudad construida sale idéntica (huella del mundo).</li>
+</ul>
 <h2>1.2.4 — 2026-11-10 — Alpha 1.2.4: la TF-5 recta bajo el puente de Guajara</h2>
 <ul>
 <li><strong>Enlace de Guajara</strong>: la TF-5 hacía un quiebro de 9 m justo bajo el puente y las calzadas y los ramales se montaban.

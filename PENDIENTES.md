@@ -815,13 +815,17 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   - La pelea, el baloncesto, las naves y Guanche suben entre 0,1 y 0,2 ms: probablemente es ruido del PC, comprobar con el PC descansado.
 - [ ] ⚡ **Avisos de la auditoría de la 1.2.3** (10-nov, APTO CON AVISOS, calidad A 85/100; métricas iguales que la 1.2.2):
   - Solo el del fútbol (dibujos los primeros 3 s): v1.2.4 los prepara todos antes del primer fotograma.
+  - Auditoría 1.2.4 (APTO CON AVISOS): el aviso del fútbol ya no sale. Pinta algo más rápido (22,6 → 20,9 ms).
+  - v1.2.5: el «poste» de C. Juan de Vera (X −149, Y −235) era el alcalde (su puerta está entre dos calles); ahora mira todas las calles cercanas. Comprobar en la próxima auditoría.
+  - Pendiente (◐): las otras peleas callejeras (con un peatón cualquiera) tardan ~0,14 s en empezar, porque sus figuras se dibujan al momento.
+  - Nota: `huella_mundo_cmp` salió distinta una vez (161 vértices) y bien las dos siguientes con el mismo código: algo de la carga no es del todo fijo.
 - [ ] ◐ **Avisos de la auditoría de la 1.2.0** (10-nov, APTO CON AVISOS, calidad A 85/100):
   - Vértices +6 % (7,55 M → 7,98 M), por las trincheras de una pieza y el pabellón. Pinta más rápido: 23,2 → 19,1 ms.
   - Cinco edificios nuevos invaden la calzada: Carretera del Campo de Golf (X −3675, Y −224), San Honorato (X −925, Y 108), Travesía Enlace Andenes Sobradillo (X 589, Y 3657 y X 627) y uno más.
   - El fútbol prepara dibujos los primeros 3 s del partido: hay que prepararlos al abrir el juego.
   - `04_world.js` baja de B a C.
 
-- [ ] ⚡ **Auditoría 1.1.6: «180 avisos nuevos» del análisis estático** (crear geometría en `buildRoofProps`, `buildTerrain`, `buildLamps`…): no son nuevos, son los de siempre con otro número de línea tras pasar el formateador. Comprobar en la próxima auditoría que vuelven a contar como conocidos; `03_collide.js` bajó de A a B (más líneas por función).
+- [x] v1.2.4 (la auditoría 1.2.4 ya no da avisos nuevos críticos o altos: cuentan como conocidos) **Auditoría 1.1.6: «180 avisos nuevos» del análisis estático** (crear geometría en `buildRoofProps`, `buildTerrain`, `buildLamps`…): no son nuevos, son los de siempre con otro número de línea tras pasar el formateador. Comprobar en la próxima auditoría que vuelven a contar como conocidos; `03_collide.js` bajó de A a B (más líneas por función).
 - [~] ◐ v1.1.7 (nota A: 88 en local, 86 en la auditoría, que ahora cuenta sentencias y deja fuera los datos; piezas comunes del píxel en 09e_pixkit, funciones largas de 251 a 147; quedan los «módulos» enteros —MISSIONS, BASKET2D, create() de los juegos de la recreativa— y los cuerpos de bucle muy largos como el de cada edificio en buildBuildings) v1.1.6 (todo `src/` con Prettier: nota de C 69 a B 84, sin líneas largas ni densas; quedan las funciones-módulo muy largas y el código repetido de 09ma/09eb/06b) v1.0.0 (`12m_mundialito.js`: la tabla de selecciones, una fila por equipo) **Partir funciones largas y ordenar
   los archivos con nota D o C** (auditorías 0.75, 0.76, 0.90 y 0.99.8): quedan `09eb_pixbasket.js` y `09ma_pixguanche.js`
   (el dibujante de la propuesta en una función de ~155 líneas), `12k_agua.js` (líneas muy largas y densas), `12j_campos.js`
@@ -864,10 +868,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   - Auditoría 1.1.8 (APTO CON AVISOS, A 86): todo sale ~20 % más lento a la vez —pintar 16,1 → 19,8 ms, lógica 0,96 → 1,14 ms y hasta los minijuegos 2D—, con las mismas llamadas, triángulos y memoria: parece el PC más cargado durante la medición, no el código. Comprobar en la próxima auditoría.
   - Auditoría 1.1.9 (APTO CON AVISOS, A 86): de nuevo todo más lento a la vez (pintar 20 → 23,2 ms, lógica 0,98 → 1,55 ms, arranque 15,2 → 17,2 s, cada paso de la carga un 20–60 % más y el fútbol 2D 0,5 → 1,6 ms) con las mismas llamadas y triángulos. Repetir la auditoría con el PC descansado para saber cuánto es del código (la 1.1.9 añade al arrancar la búsqueda de calles repetidas y la trinchera de la TF-5).
   - El fútbol aún prepara sus jugadores en los primeros 3 s del partido (1 lienzo por fotograma, luego para): dibujarlos al abrir el juego.
-- [ ] ◐ **Tirón al escaparse el maleante** (Jonay, 3-nov): a mitad de partida, cuando huía un maleante, el juego se quedó
-  congelado un momento. Probablemente algo que se crea de golpe al empezar la huida (el coche, su conductor, sombreadores
-  nuevos, la ruta). Medirlo con la sonda de tiempos al lanzar un maleante y crear eso antes (o en trozos).
-
 ### Móvil
 
 - [ ] ● **Móvil: repasar todos los controles táctiles siguiendo el estándar** (Jonay; 2-nov: «hay que repasar los controles para móvil para que sea posible usar todas las funciones del juego, usando recomendaciones para ajustarnos al estándar de controles y fijándose en lo que ya hacen otros, no reinventemos la pólvora»): desde el móvil no se llega a las opciones, y todo lo que se hace con teclado —pausa, opciones, guardar, radio, armas, mapa…— tiene que tener botón o gesto.
@@ -924,6 +924,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Hecho
 
+- [x] v1.2.5 **Tirón al escaparse el maleante** (Jonay, 3-nov): era el comienzo de la pelea 2D (0,9 s: figuras dibujadas de golpe y la ciudad lejana del fondo subida a la GPU). Figuras dibujadas antes en ratos libres y fondo solo con lo cercano: 0,06 s. Sonda `tests/herramientas/sonda_maleante_gpu.py`.
 - [x] v1.1.9 v1.1.0 (red de seguridad que te devuelve a la calle; la sonda `sonda_caidas.py` no encuentra ahí un tablero sobre un tramo bajo, así que la causa sigue sin saberse: falta reproducirlo conduciendo por ese enlace) **¡Bloquea la misión! El coche se cae a través de la calzada en el enlace de la Autopista del Norte** (Jonay,
   3-nov, X −3292, Y −161, captura de noche, misión del queso del aeropuerto: «me he caído por aquí con el coche mientras
   seguía a la furgoneta del queso; él también se cayó pero pudo seguir; esto es súper bug porque impide hacer la misión,

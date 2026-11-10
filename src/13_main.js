@@ -939,7 +939,13 @@ function preloadMinigameImages() {
   const idle = window.requestIdleCallback || ((f) => setTimeout(f, 50));
   const next = () => {
     const im = list.shift();
-    if (!im) return;
+    if (!im) {
+      // v1.2.4: then the player's figures for the street fights (the first fight drew them all at once: a freeze)
+      try {
+        if (typeof playerHuman !== 'undefined' && playerHuman) FIGHT2D.prewarm(playerHuman.look || {}, true);
+      } catch (e) {}
+      return;
+    }
     (im.decode ? im.decode() : Promise.resolve()).catch(() => {}).then(() => idle(next));
   };
   idle(next);

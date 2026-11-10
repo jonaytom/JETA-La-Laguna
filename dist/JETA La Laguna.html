@@ -205,7 +205,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="tb" id="tbS">CORRER</div>
 <div class="tb" id="tbM">MAPA</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">Alpha 1.2.4</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">Alpha 1.2.5</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -2203,7 +2203,11 @@ function acc(x, z, mk) {
 const MAT = {};
 (function makeMaterials() {
   // facade material with atlas logic
-  const fm = new THREE.MeshStandardMaterial({ map: TEX.facade, roughness: 0.88, metalness: 0.0 });
+  const fm = new THREE.MeshStandardMaterial({
+    map: TEX.facade,
+    roughness: 0.88,
+    metalness: 0.0
+  });
   fm.userData.aCol = true;
   fm.onBeforeCompile = (sh) => {
     sh.uniforms.maskMap = { value: TEX.facadeMask };
@@ -2212,7 +2216,9 @@ const MAT = {};
     sh.uniforms.plDet = { value: PLASTER.det };
     sh.uniforms.plN1 = { value: PLASTER.n1 };
     sh.uniforms.plN2 = { value: PLASTER.n2 };
-    sh.uniforms.uSty = { value: FSTY.map((d) => new THREE.Vector2(d[0], d[1])) };
+    sh.uniforms.uSty = {
+      value: FSTY.map((d) => new THREE.Vector2(d[0], d[1]))
+    };
     sh.vertexShader = sh.vertexShader
       .replace(
         '#include <common>',
@@ -2262,11 +2268,28 @@ const MAT = {};
       );
   };
   MAT.facade = fm;
-  MAT.roofTile = new THREE.MeshStandardMaterial({ map: TEX.roofTile, roughness: 0.8 });
-  MAT.roofFlat = new THREE.MeshStandardMaterial({ map: TEX.roofFlat, roughness: 0.95, vertexColors: true });
-  MAT.trim = new THREE.MeshStandardMaterial({ roughness: 0.8, vertexColors: true });
-  MAT.stone = new THREE.MeshStandardMaterial({ map: null, roughness: 0.9, color: 0x9a948a });
-  MAT.balcony = new THREE.MeshStandardMaterial({ map: TEX.balcony, roughness: 0.8 });
+  MAT.roofTile = new THREE.MeshStandardMaterial({
+    map: TEX.roofTile,
+    roughness: 0.8
+  });
+  MAT.roofFlat = new THREE.MeshStandardMaterial({
+    map: TEX.roofFlat,
+    roughness: 0.95,
+    vertexColors: true
+  });
+  MAT.trim = new THREE.MeshStandardMaterial({
+    roughness: 0.8,
+    vertexColors: true
+  });
+  MAT.stone = new THREE.MeshStandardMaterial({
+    map: null,
+    roughness: 0.9,
+    color: 0x9a948a
+  });
+  MAT.balcony = new THREE.MeshStandardMaterial({
+    map: TEX.balcony,
+    roughness: 0.8
+  });
   MAT.wood = new THREE.MeshStandardMaterial({ map: TEX.wood, roughness: 0.85 });
   MAT.grass = new THREE.MeshStandardMaterial({
     map: (() => {
@@ -2284,10 +2307,26 @@ const MAT = {};
     emissive: 0x2a2620,
     emissiveIntensity: 0.6
   });
-  MAT.tunnelLight = new THREE.MeshBasicMaterial({ color: 0xffe2a8, side: THREE.DoubleSide });
-  MAT.glassHouse = new THREE.MeshStandardMaterial({ color: 0xf1f4f1, roughness: 0.6, transparent: true, opacity: 0.9, side: THREE.DoubleSide }); // milky plastic: reads as a greenhouse, not as an invisible building
+  MAT.tunnelLight = new THREE.MeshBasicMaterial({
+    color: 0xffe2a8,
+    side: THREE.DoubleSide
+  });
+  MAT.glassHouse = new THREE.MeshStandardMaterial({
+    color: 0xf1f4f1,
+    roughness: 0.6,
+    transparent: true,
+    opacity: 0.9,
+    side: THREE.DoubleSide
+  }); // milky plastic: reads as a greenhouse, not as an invisible building
   const road = (map, off, extra = {}) =>
-    new THREE.MeshStandardMaterial({ map, roughness: 0.92, polygonOffset: true, polygonOffsetFactor: -off, polygonOffsetUnits: -off * 2, ...extra });
+    new THREE.MeshStandardMaterial({
+      map,
+      roughness: 0.92,
+      polygonOffset: true,
+      polygonOffsetFactor: -off,
+      polygonOffsetUnits: -off * 2,
+      ...extra
+    });
   MAT.asphalt = road(TEX.asphalt, 3);
   MAT.asphaltLines = road(TEX.asphaltLines, 4);
   MAT.paving = road(TEX.paving, 3);
@@ -2300,7 +2339,14 @@ const MAT = {};
 })();
 
 // ---------- terrain with splat map
-const SPLAT = { x0: HM.x0, z0: HM.z0, w: (HM.nx - 1) * HM.dx, h: (HM.nz - 1) * HM.dx, W: 2048, H: Math.round(2048 * ((HM.nz - 1) / (HM.nx - 1))) };
+const SPLAT = {
+  x0: HM.x0,
+  z0: HM.z0,
+  w: (HM.nx - 1) * HM.dx,
+  h: (HM.nz - 1) * HM.dx,
+  W: 2048,
+  H: Math.round(2048 * ((HM.nz - 1) / (HM.nx - 1)))
+};
 function buildSplat() {
   const { c, x, sx, P, poly, AT } = buildSplatPart1();
   const { areaCol, order } = buildSplatPart2();
@@ -2647,7 +2693,11 @@ function buildTerrainPart1() {
   g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
   g.setIndex(idx);
   g.computeVertexNormals();
-  const m = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.97, side: THREE.DoubleSide }); // seen from below (from inside a cutting) it reads as earth, not as a hole
+  const m = new THREE.MeshStandardMaterial({
+    map: tex,
+    roughness: 0.97,
+    side: THREE.DoubleSide
+  }); // seen from below (from inside a cutting) it reads as earth, not as a hole
   const mtex = canvasTex(SPLAT.mask, { repeat: false, srgb: false });
   mtex.wrapS = mtex.wrapT = THREE.ClampToEdgeWrapping;
   SPLAT.mtex = mtex; // (v1.2.0: corrBuildTramos clears the paving over its cuttings and tubes)
@@ -2665,7 +2715,17 @@ const ROADCLASS = (rd) => {
   if (rd[0] <= 8 && rd[2] >= 6.5) return 'asphaltLines'; // v0.99.5: every lined road with its own lanes (laneMk); a one-way slip road with its edge lines only
   return 'asphalt';
 };
-const YOFF = { sidewalk: 0.09, dirt: 0.08, footway: 0.1, asphalt: 0.13, paving: 0.13, asphaltLines: 0.15, disc: 0.14, discPave: 0.135, tram: 0.17 }; // v0.99.5: the junction discs under the lines
+const YOFF = {
+  sidewalk: 0.09,
+  dirt: 0.08,
+  footway: 0.1,
+  asphalt: 0.13,
+  paving: 0.13,
+  asphaltLines: 0.15,
+  disc: 0.14,
+  discPave: 0.135,
+  tram: 0.17
+}; // v0.99.5: the junction discs under the lines
 // v0.99.5 (Jonay: «las marcas viales deben ser coherentes»): each lined road with the marks of its lanes, made to its
 // width: a one-way carriageway (motorway, slip road, the Vía de Ronda's directions) has its solid edge lines with the
 // wider hard shoulder on the right and dashed lines between its lanes; a two-way road has a centre line (double and
@@ -3024,26 +3084,7 @@ function ribbonBand(pts, o0, o1, mk, yoff, tileLen, own = -1) {
   }
   P.push([pts[pts.length - 2], pts[pts.length - 1]]);
   if (P.length < 2) return;
-  const A = acc(P[0][0], P[0][1], mk);
-  let dist = 0;
-  const E = [];
-  for (let i = 0; i < P.length; i++) {
-    const p = P[i],
-      a = P[Math.max(0, i - 1)],
-      b = P[Math.min(P.length - 1, i + 1)];
-    let tx = b[0] - a[0],
-      tz = b[1] - a[1];
-    const tl = Math.hypot(tx, tz) || 1;
-    tx /= tl;
-    tz /= tl;
-    const nx = -tz,
-      nz = tx;
-    if (i > 0) dist += Math.hypot(p[0] - P[i - 1][0], p[1] - P[i - 1][1]);
-    const q0 = [p[0] + nx * o0, p[1] + nz * o0],
-      q1 = [p[0] + nx * o1, p[1] + nz * o1];
-    E.push([[q0[0], heightAt(q0[0], q0[1]) + yoff, q0[1]], [q1[0], heightAt(q1[0], q1[1]) + yoff, q1[1]], dist / tileLen]);
-  }
-  const u = Math.abs(o1 - o0) / tileLen;
+  const { A, E, u } = ribbonBandPart1(P, mk, o1, o0, tileLen, yoff);
   for (let i = 0; i < E.length - 1; i++) {
     const a = E[i],
       b = E[i + 1];
@@ -3066,6 +3107,30 @@ function ribbonBand(pts, o0, o1, mk, yoff, tileLen, own = -1) {
     if (o1 > o0) A.quad(a[1], a[0], b[0], b[1], [u, a[2]], [0, a[2]], [0, b[2]], [u, b[2]], null, undefined, [0, 1, 0]);
     else A.quad(a[0], a[1], b[1], b[0], [0, a[2]], [u, a[2]], [u, b[2]], [0, b[2]], null, undefined, [0, 1, 0]);
   }
+}
+/** (v1.1.7, code quality) part of ribbonBand */
+function ribbonBandPart1(P, mk, o1, o0, tileLen, yoff) {
+  const A = acc(P[0][0], P[0][1], mk);
+  let dist = 0;
+  const E = [];
+  for (let i = 0; i < P.length; i++) {
+    const p = P[i],
+      a = P[Math.max(0, i - 1)],
+      b = P[Math.min(P.length - 1, i + 1)];
+    let tx = b[0] - a[0],
+      tz = b[1] - a[1];
+    const tl = Math.hypot(tx, tz) || 1;
+    tx /= tl;
+    tz /= tl;
+    const nx = -tz,
+      nz = tx;
+    if (i > 0) dist += Math.hypot(p[0] - P[i - 1][0], p[1] - P[i - 1][1]);
+    const q0 = [p[0] + nx * o0, p[1] + nz * o0],
+      q1 = [p[0] + nx * o1, p[1] + nz * o1];
+    E.push([[q0[0], heightAt(q0[0], q0[1]) + yoff, q0[1]], [q1[0], heightAt(q1[0], q1[1]) + yoff, q1[1]], dist / tileLen]);
+  }
+  const u = Math.abs(o1 - o0) / tileLen;
+  return { A, E, u };
 }
 function disc(x, z, r, mk, yoff) {
   const A = acc(x, z, mk);
@@ -3581,7 +3646,14 @@ function bridgeDressing(c, w, hf, road, bank = false) {
   for (let i = 0; i < pts.length - 1; i++) {
     bridgeDressingEach(pts, i, hw, T, bank, col, w);
   }
-  BRIDGE_DECKS.push({ ri: DRESS_RI, type: 'path', pts: pts.map((p) => [p[0], p[1], p[2] + 0.12]), w: w + 0.4, road, bridge: true });
+  BRIDGE_DECKS.push({
+    ri: DRESS_RI,
+    type: 'path',
+    pts: pts.map((p) => [p[0], p[1], p[2] + 0.12]),
+    w: w + 0.4,
+    road,
+    bridge: true
+  });
 }
 /** (v1.1.7, code quality) the body of a loop of bridgeDressing, split out of it */
 function bridgeDressingEach(pts, i, hw, T, bank, col, w) {
@@ -4383,6 +4455,22 @@ function computeDepressionsPart4(OV, par, KEEPS) {
 }
 /** (v1.1.7, code quality) part of computeDepressions */
 function computeDepressionsPart3(joined, par, depRows, OV) {
+  const { KEEPS } = computeDepressionsPart3Part1(joined, par, depRows, OV); // component -> [[x, z, depth], ...] where something passes over the sunk road
+  for (const [ri, fs0] of DEP.entries()) {
+    if (!OV.has(par(ri))) continue;
+    for (const X of crossingsOf(ri)) {
+      let d = 0;
+      for (const f of fs0) d = Math.max(d, f(X.s));
+      const k = par(ri);
+      let a = KEEPS.get(k);
+      if (!a) KEEPS.set(k, (a = []));
+      a.push([X.x, X.z, d]);
+    }
+  }
+  return { KEEPS };
+}
+/** (v1.1.7, code quality) part of computeDepressionsPart3 */
+function computeDepressionsPart3Part1(joined, par, depRows, OV) {
   for (const [ri, fs0] of DEP.entries()) {
     const rd = DATA.R[ri];
     if (rd[0] > 12 || PED_TUN.has(ri)) continue;
@@ -4418,18 +4506,7 @@ function computeDepressionsPart3(joined, par, depRows, OV) {
       s += L;
     }
   }
-  const KEEPS = new Map(); // component -> [[x, z, depth], ...] where something passes over the sunk road
-  for (const [ri, fs0] of DEP.entries()) {
-    if (!OV.has(par(ri))) continue;
-    for (const X of crossingsOf(ri)) {
-      let d = 0;
-      for (const f of fs0) d = Math.max(d, f(X.s));
-      const k = par(ri);
-      let a = KEEPS.get(k);
-      if (!a) KEEPS.set(k, (a = []));
-      a.push([X.x, X.z, d]);
-    }
-  }
+  const KEEPS = new Map();
   return { KEEPS };
 }
 /** (v1.1.7, code quality) part of computeDepressions: trench mouths where another street at grade overlaps the carriageway (merges, side streets that run into the ramp, */
@@ -4624,7 +4701,11 @@ function tf13BowlPart1() {
 // stone vaults at the four mouths of the two tunnels (the tube itself is the generic tunnelRoad box)
 function tf13Portals() {
   if (!TF13.ok) return;
-  const st = new THREE.MeshStandardMaterial({ color: 0x6e6a63, map: typeof aytoStoneTex === 'function' ? aytoStoneTex() : null, roughness: 0.95 });
+  const st = new THREE.MeshStandardMaterial({
+    color: 0x6e6a63,
+    map: typeof aytoStoneTex === 'function' ? aytoStoneTex() : null,
+    roughness: 0.95
+  });
   if (st.map) st.map.repeat.set(0.25, 0.25);
   for (const ri of TF13.tubes) {
     const c = DATA.R[ri][4],
@@ -4646,7 +4727,11 @@ function tf13Portals() {
       sh.lineTo(-w / 2 - 3, top);
       sh.closePath();
       sh.holes.push(archPath(w, h));
-      const g = new THREE.ExtrudeGeometry(sh, { depth: 0.9, bevelEnabled: false, curveSegments: 14 });
+      const g = new THREE.ExtrudeGeometry(sh, {
+        depth: 0.9,
+        bevelEnabled: false,
+        curveSegments: 14
+      });
       g.translate(0, 0, -0.45);
       const mesh = new THREE.Mesh(g, st);
       mesh.position.set(m[0], y - 0.1, m[1]);
@@ -5110,7 +5195,14 @@ function computeRaisesOnce() {
       }
       if (pass === 1) {
         const m = Math.floor(c.length / 4) * 2;
-        NEEDS.push({ ri, need, x: c[m], z: c[m + 1], dx: c[c.length - 2] - c[0], dz: c[c.length - 1] - c[1] });
+        NEEDS.push({
+          ri,
+          need,
+          x: c[m],
+          z: c[m + 1],
+          dx: c[c.length - 2] - c[0],
+          dz: c[c.length - 1] - c[1]
+        });
         return;
       }
       need = Math.max(need, TWIN_NEED.get(ri) || 0, EXTRA_NEED.get(ri) || 0);
@@ -5164,7 +5256,10 @@ function computeRaisesOnce() {
           oz /= ol;
           if (lastX < 0 && uOff > 90) break;
         }
-        chains.push({ hops, plateau: lastX >= 0 ? Math.min(lastX + 7, 120) : 0 });
+        chains.push({
+          hops,
+          plateau: lastX >= 0 ? Math.min(lastX + 7, 120) : 0
+        });
       }
       let H = need;
       if (chains.some((ch) => ch.plateau > 0)) H = Math.max(H, 5.4);
@@ -5204,7 +5299,15 @@ function computeRaisesOnce() {
         if (!isBr && !sp) continue;
         let b = [1e9, -1e9, 1e9, -1e9];
         for (let i = 0; i < c.length; i += 2) b = [Math.min(b[0], c[i]), Math.max(b[1], c[i]), Math.min(b[2], c[i + 1]), Math.max(b[3], c[i + 1])];
-        RB.push({ ri, c, w: rd[2], isBr, sp, pf: isBr ? bridgeProfile(c) : null, b });
+        RB.push({
+          ri,
+          c,
+          w: rd[2],
+          isBr,
+          sp,
+          pf: isBr ? bridgeProfile(c) : null,
+          b
+        });
       }
       const ovl = new Map();
       DATA.R.forEach((rd, rj) => {
@@ -5268,6 +5371,20 @@ function computeRaisesOnce() {
 }
 /** (v1.1.7, code quality) part of computeRaisesOnce: side roads that meet a raised approach / deck at one of its nodes (slip roads, junctions on the ramp) climb to meet it */
 function computeRaisesOncePart2(followOverlaps, push) {
+  const { extra } = computeRaisesOncePart2Part1(followOverlaps);
+  for (const [rj, s0, h] of extra) {
+    const Lj = polyLen(DATA.R[rj][4]);
+    const avail = s0 < 1 || s0 > Lj - 1 ? Lj : Math.min(s0, Lj - s0);
+    const Rr = clamp(Math.min(h * 18, 80), 6, Math.max(6, avail - 3));
+    push(rj, (q) => h * smooth(0, 1, (Rr - Math.abs(q - s0)) / Rr));
+    let a = RAISE_SPAN.get(rj) || [Lj, 0];
+    a = [Math.min(a[0], Math.max(0, s0 - Rr)), Math.max(a[1], Math.min(Lj, s0 + Rr))];
+    RAISE_SPAN.set(rj, a);
+  }
+  if (extra.length) followOverlaps(1);
+}
+/** (v1.1.7, code quality) part of computeRaisesOncePart2: side roads that meet a raised approach / deck at one of its nodes (slip roads, junctions on the ramp) climb to meet it */
+function computeRaisesOncePart2Part1(followOverlaps) {
   followOverlaps(2);
   // side roads that meet a raised approach / deck at one of its nodes (slip roads, junctions on the ramp) climb to meet it
   // instead of staying at grade under it (agent: "deck floating over the road", "parapet in the carriageway")
@@ -5308,16 +5425,7 @@ function computeRaisesOncePart2(followOverlaps, push) {
       }
     }
   }
-  for (const [rj, s0, h] of extra) {
-    const Lj = polyLen(DATA.R[rj][4]);
-    const avail = s0 < 1 || s0 > Lj - 1 ? Lj : Math.min(s0, Lj - s0);
-    const Rr = clamp(Math.min(h * 18, 80), 6, Math.max(6, avail - 3));
-    push(rj, (q) => h * smooth(0, 1, (Rr - Math.abs(q - s0)) / Rr));
-    let a = RAISE_SPAN.get(rj) || [Lj, 0];
-    a = [Math.min(a[0], Math.max(0, s0 - Rr)), Math.max(a[1], Math.min(Lj, s0 + Rr))];
-    RAISE_SPAN.set(rj, a);
-  }
-  if (extra.length) followOverlaps(1);
+  return { extra };
 }
 /** (v1.1.7, code quality) part of computeRaisesOnce */
 function computeRaisesOncePart1() {
@@ -5487,7 +5595,14 @@ function mergeDecks(ri, c) {
         p = polyAt(c, s);
       pts.push([p[0], p[1], m(s, p[0], p[1]) + 0.12]);
     }
-    BRIDGE_DECKS.push({ ri, type: 'path', pts, w: DATA.R[ri][2], road: true, bridge: true });
+    BRIDGE_DECKS.push({
+      ri,
+      type: 'path',
+      pts,
+      w: DATA.R[ri][2],
+      road: true,
+      bridge: true
+    });
   }
 }
 function roadYFn(ri) {
@@ -6252,7 +6367,17 @@ PAL[15] = ['#e9e6de'];
 PAL[7] = ['#efe3c4', '#f1e6cb', '#ead9b6']; // regionalist cream
 PAL[8] = PAL[0];
 PAL[9] = ['#f4f1e8', '#f3efe6', '#efe9dc', '#e9dfc6'];
-const PALV = { 7: 7, 8: 8, 9: 9, 10: 10, 11: 11, 12: 12, 13: 13, 14: 14, 15: 15 };
+const PALV = {
+  7: 7,
+  8: 8,
+  9: 9,
+  10: 10,
+  11: 11,
+  12: 12,
+  13: 13,
+  14: 14,
+  15: 15
+};
 // which facade variant a building gets (style + neighbourhood + randomness)
 function chooseAtlas(style, r, name, cx, cz, lv, area) {
   const x = r();
@@ -6322,7 +6447,15 @@ function carveConcTower(pts) {
   }
   const fx = CONC_TOWER_FIX ? CONC_TOWER_FIX[0] : best.mx,
     fz = CONC_TOWER_FIX ? CONC_TOWER_FIX[1] : best.mz;
-  Object.assign(CONC_CARVE, { ok: true, x: fx, z: fz, ang: Math.atan2(b[0] - a[0], b[1] - a[1]), w: 7.3, corners: [a, b, c, e], pts: out });
+  Object.assign(CONC_CARVE, {
+    ok: true,
+    x: fx,
+    z: fz,
+    ang: Math.atan2(b[0] - a[0], b[1] - a[1]),
+    w: 7.3,
+    corners: [a, b, c, e],
+    pts: out
+  });
   return out;
 }
 const BIGSTORES = [];
@@ -6491,82 +6624,22 @@ function buildBuildingsEach(bi) {
     else COL.addSeg(p[0], p[1], q[0], q[1]);
   }
   if (CONC_CARVE.pts === pts) {
-    CHURCHES.push({ pts, cx, cz, top, bmin, bmax, H, name, area: Math.abs(polyArea(pts)), custom: true });
+    CHURCHES.push({
+      pts,
+      cx,
+      cz,
+      top,
+      bmin,
+      bmax,
+      H,
+      name,
+      area: Math.abs(polyArea(pts)),
+      custom: true
+    });
     return;
   } // La Concepción: modelled in 05o_concepcion.js
   if (style === 5) {
-    // greenhouse
-    const A = acc(cx, cz, 'glassHouse');
-    // greenhouses follow the slope (a flat top over a 13 m slope made a huge glass box)
-    const gy = pts.map((p) => heightAt(p[0], p[1])),
-      Hh = H,
-      ty = gy.map((g) => g + Hh);
-    for (let i = 0; i < n; i++) {
-      const j = (i + 1) % n,
-        p = pts[i],
-        q = pts[j];
-      A.quad([p[0], gy[i] - 0.6, p[1]], [q[0], gy[j] - 0.6, q[1]], [q[0], ty[j], q[1]], [p[0], ty[i], p[1]], [0, 0], [1, 0], [1, 1], [0, 1]);
-    }
-    const tris = THREE.ShapeUtils.triangulateShape(
-      pts.map((p) => new THREE.Vector2(p[0], p[1])),
-      []
-    );
-    for (const t of tris)
-      A.tri(
-        [pts[t[0]][0], ty[t[0]], pts[t[0]][1]],
-        [pts[t[1]][0], ty[t[1]], pts[t[1]][1]],
-        [pts[t[2]][0], ty[t[2]], pts[t[2]][1]],
-        [0, 0],
-        [0, 0],
-        [0, 0],
-        null,
-        undefined,
-        [0, 1, 0]
-      );
-    // white steel frame: posts every ~4 m and a ridge band along the top edge
-    const F = acc(cx, cz, 'trim');
-    const fc = [0.93, 0.94, 0.93];
-    for (let i = 0; i < n; i++) {
-      const p = pts[i],
-        q = pts[(i + 1) % n];
-      const L = Math.hypot(q[0] - p[0], q[1] - p[1]);
-      const ux = (q[0] - p[0]) / (L || 1),
-        uz = (q[1] - p[1]) / (L || 1),
-        nx = -uz * 0.06,
-        nz = ux * 0.06;
-      for (let k = 0; k <= Math.floor(L / 4); k++) {
-        const x = p[0] + ux * Math.min(L, k * 4),
-          z = p[1] + uz * Math.min(L, k * 4);
-        const g = heightAt(x, z) - 0.1,
-          tp = g + 0.1 + Hh;
-        F.quad(
-          [x - ux * 0.07 + nx, g, z - uz * 0.07 + nz],
-          [x + ux * 0.07 + nx, g, z + uz * 0.07 + nz],
-          [x + ux * 0.07 + nx, tp, z + uz * 0.07 + nz],
-          [x - ux * 0.07 + nx, tp, z - uz * 0.07 + nz],
-          [0, 0],
-          [0, 0],
-          [0, 0],
-          [0, 0],
-          fc,
-          undefined,
-          [nx * 16, 0, nz * 16]
-        );
-      }
-      F.quad(
-        [p[0] + nx, ty[i] - 0.18, p[1] + nz],
-        [q[0] + nx, ty[(i + 1) % n] - 0.18, q[1] + nz],
-        [q[0] + nx, ty[(i + 1) % n] + 0.02, q[1] + nz],
-        [p[0] + nx, ty[i] + 0.02, p[1] + nz],
-        [0, 0],
-        [0, 0],
-        [0, 0],
-        [0, 0],
-        fc,
-        undefined,
-        [nx * 16, 0, nz * 16]
-      );
-    }
+    buildGreenhouse(pts, n, cx, cz, H);
     return;
   }
   const store = name && DATA.BRAND[name] ? DATA.BRAND[name] : null;
@@ -6596,7 +6669,17 @@ function buildBuildingsEach(bi) {
   const A = acc(cx, cz, 'facade'),
     T0 = acc(cx, cz, 'trim');
   const area = polyArea(pts);
-  if (store) BIGSTORES.push({ pts, cx, cz, top, bmax, name, parody: store, area: Math.abs(area) });
+  if (store)
+    BIGSTORES.push({
+      pts,
+      cx,
+      cz,
+      top,
+      bmax,
+      name,
+      parody: store,
+      area: Math.abs(area)
+    });
   // decide roof
   const hl = hull(pts);
   const hullA = Math.abs(polyArea(hl));
@@ -6609,53 +6692,30 @@ function buildBuildingsEach(bi) {
     if (ip && ip.length === n && Math.abs(polyArea(ip)) > Math.abs(area) * 0.35) atico = ip;
   }
   const wallTop = atico ? top - fh : top;
-  for (let i = 0; i < n; i++) {
-    const p = pts[i],
-      q = pts[(i + 1) % n];
-    const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
-    if (len < 0.05) continue;
-    const nb = len > 1.6 ? Math.max(1, Math.round(len / bay)) : 0.1;
-    const out = [(q[1] - p[1]) / len, 0, -(q[0] - p[0]) / len];
-    const v0 = (bot - bmin) / fh,
-      v1 = (wallTop - bmin) / fh;
-    if (ARC && ARC.has(i)) {
-      trinidadArcadeEdge(A, T0, p, q, nb, fh, y0, bot, wallTop, col, [atlas, bi % 97], out, cx, cz);
-      continue;
-    }
-    // long street fronts of terraced houses / blocks: split into parcels with their own colour (and facade for houses)
-    const cuts = PS ? pasajeCuts(p, q, PS) : null;
-    if (cuts) {
-      pasajeWall(A, p, q, cuts, bot, wallTop, bmin, fh, nb, col, [atlas, bi % 97], out);
-      continue;
-    }
-    const parcel = !LM && !store && (style === 0 || style === 1 || style === 2) && len > (style === 2 ? 24 : 12);
-    if (!parcel) {
-      facadeWall(A, T0, p, q, nb, fh, y0, bot, wallTop, col, [atlas, bi % 97], out);
-      continue;
-    }
-    const pr = mulberry(seed * 13 + i * 7 + 1);
-    const segL = style === 2 ? 14 + pr() * 10 : 6 + pr() * 6;
-    const k = Math.max(2, Math.round(len / segL));
-    const grp = style === 0 ? [0, 8, 9, 0, 8] : style === 1 ? [1, 10, 1, 8, 1] : [atlas, atlas, 11, 2, atlas];
-    for (let j = 0; j < k; j++) {
-      const t0 = j / k,
-        t1 = (j + 1) / k;
-      const a = [p[0] + (q[0] - p[0]) * t0, p[1] + (q[1] - p[1]) * t0],
-        b = [p[0] + (q[0] - p[0]) * t1, p[1] + (q[1] - p[1]) * t1];
-      const at = j === 0 ? atlas : grp[Math.floor(pr() * grp.length)];
-      const [bay2, fh2] = FSTY[at];
-      const sl = len / k;
-      const nb2 = Math.max(1, Math.round(sl / bay2));
-      const pk = at === 8 && style !== 0 ? 1 : PALV[at] || style;
-      const pl = PAL[pk] || PAL[1];
-      const c2 = j === 0 ? col : hex3(pl[Math.floor(pr() * pl.length)]).map((v) => v * (0.93 + pr() * 0.1));
-      const w0 = (bot - bmin) / fh2,
-        w1 = (wallTop - bmin) / fh2;
-      facadeWall(A, T0, a, b, nb2, fh2, bmax - Math.ceil((bmax - bmin) / fh2 - 0.08) * fh2, bot, wallTop, c2, [at, (bi + j * 31) % 97], out);
-      void w0;
-      void w1;
-    }
-  }
+  buildBuildingWalls({
+    n,
+    pts,
+    bay,
+    bot,
+    bmin,
+    fh,
+    wallTop,
+    ARC,
+    PS,
+    LM,
+    store,
+    style,
+    seed,
+    atlas,
+    A,
+    T0,
+    y0,
+    col,
+    bi,
+    cx,
+    cz,
+    bmax
+  });
   if (PS) pasajeInterior(PS, pts, cx, cz, col);
   if (LM) LMQ.push({ L: LM, pts, top, bmin, bmax, cx, cz, name });
   if (LM && LM.quoin) addQuoins(pts, bot, wallTop, 0.75, LM.quoin);
@@ -6664,7 +6724,17 @@ function buildBuildingsEach(bi) {
   if (quoin) addQuoins(pts, bot, wallTop, style === 4 ? 0.7 : 0.5);
   if (style === 0 && lv >= 2 && r() < 0.42) addBalcony(pts, bmin, fh, r);
   if (style === 4) {
-    CHURCHES.push({ pts, cx, cz, top, bmin, bmax, H, name, area: Math.abs(area) });
+    CHURCHES.push({
+      pts,
+      cx,
+      cz,
+      top,
+      bmin,
+      bmax,
+      H,
+      name,
+      area: Math.abs(area)
+    });
     return;
   }
   // roofs
@@ -6761,110 +6831,251 @@ function buildBuildingsEach(bi) {
   if (AH) buildAtrio(AH.a, top, cx, cz);
   if (hip) {
     hipRoof(pts, cx, cz, top, area, tris);
-  } else {
-    const R = acc(cx, cz, 'roofFlat');
-    const ry = parapet ? top - 0.85 : top;
-    const g = 0.7 + r() * 0.2;
-    const rc = [g, g * 0.98, g * 0.95];
-    for (const t of tris) {
-      const a = TP[t[0]],
-        b2 = TP[t[1]],
-        c2 = TP[t[2]];
-      R.tri(
-        [a[0], ry, a[1]],
-        [b2[0], ry, b2[1]],
-        [c2[0], ry, c2[1]],
-        [a[0] / 4, a[1] / 4],
-        [b2[0] / 4, b2[1] / 4],
-        [c2[0] / 4, c2[1] / 4],
-        rc,
+  } else
+    buildFlatRoof({
+      cx,
+      cz,
+      parapet,
+      top,
+      r,
+      tris,
+      TP,
+      col,
+      style,
+      area,
+      n,
+      pts
+    });
+}
+/** (v1.2.4, code quality) part of buildBuildingsEach: a greenhouse (style 5) */
+function buildGreenhouse(pts, n, cx, cz, H) {
+  // greenhouse
+  const A = acc(cx, cz, 'glassHouse');
+  // greenhouses follow the slope (a flat top over a 13 m slope made a huge glass box)
+  const gy = pts.map((p) => heightAt(p[0], p[1])),
+    Hh = H,
+    ty = gy.map((g) => g + Hh);
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n,
+      p = pts[i],
+      q = pts[j];
+    A.quad([p[0], gy[i] - 0.6, p[1]], [q[0], gy[j] - 0.6, q[1]], [q[0], ty[j], q[1]], [p[0], ty[i], p[1]], [0, 0], [1, 0], [1, 1], [0, 1]);
+  }
+  const tris = THREE.ShapeUtils.triangulateShape(
+    pts.map((p) => new THREE.Vector2(p[0], p[1])),
+    []
+  );
+  for (const t of tris)
+    A.tri(
+      [pts[t[0]][0], ty[t[0]], pts[t[0]][1]],
+      [pts[t[1]][0], ty[t[1]], pts[t[1]][1]],
+      [pts[t[2]][0], ty[t[2]], pts[t[2]][1]],
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      null,
+      undefined,
+      [0, 1, 0]
+    );
+  // white steel frame: posts every ~4 m and a ridge band along the top edge
+  const F = acc(cx, cz, 'trim');
+  const fc = [0.93, 0.94, 0.93];
+  for (let i = 0; i < n; i++) {
+    const p = pts[i],
+      q = pts[(i + 1) % n];
+    const L = Math.hypot(q[0] - p[0], q[1] - p[1]);
+    const ux = (q[0] - p[0]) / (L || 1),
+      uz = (q[1] - p[1]) / (L || 1),
+      nx = -uz * 0.06,
+      nz = ux * 0.06;
+    for (let k = 0; k <= Math.floor(L / 4); k++) {
+      const x = p[0] + ux * Math.min(L, k * 4),
+        z = p[1] + uz * Math.min(L, k * 4);
+      const g = heightAt(x, z) - 0.1,
+        tp = g + 0.1 + Hh;
+      F.quad(
+        [x - ux * 0.07 + nx, g, z - uz * 0.07 + nz],
+        [x + ux * 0.07 + nx, g, z + uz * 0.07 + nz],
+        [x + ux * 0.07 + nx, tp, z + uz * 0.07 + nz],
+        [x - ux * 0.07 + nx, tp, z - uz * 0.07 + nz],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        fc,
+        undefined,
+        [nx * 16, 0, nz * 16]
+      );
+    }
+    F.quad(
+      [p[0] + nx, ty[i] - 0.18, p[1] + nz],
+      [q[0] + nx, ty[(i + 1) % n] - 0.18, q[1] + nz],
+      [q[0] + nx, ty[(i + 1) % n] + 0.02, q[1] + nz],
+      [p[0] + nx, ty[i] + 0.02, p[1] + nz],
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      fc,
+      undefined,
+      [nx * 16, 0, nz * 16]
+    );
+  }
+}
+/** (v1.2.4, code quality) part of buildBuildingsEach: the walls, floor by floor, with their windows */
+function buildBuildingWalls({ n, pts, bay, bot, bmin, fh, wallTop, ARC, PS, LM, store, style, seed, atlas, A, T0, y0, col, bi, cx, cz, bmax }) {
+  for (let i = 0; i < n; i++) {
+    const p = pts[i],
+      q = pts[(i + 1) % n];
+    const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
+    if (len < 0.05) continue;
+    const nb = len > 1.6 ? Math.max(1, Math.round(len / bay)) : 0.1;
+    const out = [(q[1] - p[1]) / len, 0, -(q[0] - p[0]) / len];
+    const v0 = (bot - bmin) / fh,
+      v1 = (wallTop - bmin) / fh;
+    if (ARC && ARC.has(i)) {
+      trinidadArcadeEdge(A, T0, p, q, nb, fh, y0, bot, wallTop, col, [atlas, bi % 97], out, cx, cz);
+      continue;
+    }
+    // long street fronts of terraced houses / blocks: split into parcels with their own colour (and facade for houses)
+    const cuts = PS ? pasajeCuts(p, q, PS) : null;
+    if (cuts) {
+      pasajeWall(A, p, q, cuts, bot, wallTop, bmin, fh, nb, col, [atlas, bi % 97], out);
+      continue;
+    }
+    const parcel = !LM && !store && (style === 0 || style === 1 || style === 2) && len > (style === 2 ? 24 : 12);
+    if (!parcel) {
+      facadeWall(A, T0, p, q, nb, fh, y0, bot, wallTop, col, [atlas, bi % 97], out);
+      continue;
+    }
+    const pr = mulberry(seed * 13 + i * 7 + 1);
+    const segL = style === 2 ? 14 + pr() * 10 : 6 + pr() * 6;
+    const k = Math.max(2, Math.round(len / segL));
+    const grp = style === 0 ? [0, 8, 9, 0, 8] : style === 1 ? [1, 10, 1, 8, 1] : [atlas, atlas, 11, 2, atlas];
+    for (let j = 0; j < k; j++) {
+      const t0 = j / k,
+        t1 = (j + 1) / k;
+      const a = [p[0] + (q[0] - p[0]) * t0, p[1] + (q[1] - p[1]) * t0],
+        b = [p[0] + (q[0] - p[0]) * t1, p[1] + (q[1] - p[1]) * t1];
+      const at = j === 0 ? atlas : grp[Math.floor(pr() * grp.length)];
+      const [bay2, fh2] = FSTY[at];
+      const sl = len / k;
+      const nb2 = Math.max(1, Math.round(sl / bay2));
+      const pk = at === 8 && style !== 0 ? 1 : PALV[at] || style;
+      const pl = PAL[pk] || PAL[1];
+      const c2 = j === 0 ? col : hex3(pl[Math.floor(pr() * pl.length)]).map((v) => v * (0.93 + pr() * 0.1));
+      const w0 = (bot - bmin) / fh2,
+        w1 = (wallTop - bmin) / fh2;
+      facadeWall(A, T0, a, b, nb2, fh2, bmax - Math.ceil((bmax - bmin) / fh2 - 0.08) * fh2, bot, wallTop, c2, [at, (bi + j * 31) % 97], out);
+      void w0;
+      void w1;
+    }
+  }
+}
+/** (v1.2.4, code quality) part of buildBuildingsEach: the flat roof, its parapet and what stands on it */
+function buildFlatRoof({ cx, cz, parapet, top, r, tris, TP, col, style, area, n, pts }) {
+  const R = acc(cx, cz, 'roofFlat');
+  const ry = parapet ? top - 0.85 : top;
+  const g = 0.7 + r() * 0.2;
+  const rc = [g, g * 0.98, g * 0.95];
+  for (const t of tris) {
+    const a = TP[t[0]],
+      b2 = TP[t[1]],
+      c2 = TP[t[2]];
+    R.tri(
+      [a[0], ry, a[1]],
+      [b2[0], ry, b2[1]],
+      [c2[0], ry, c2[1]],
+      [a[0] / 4, a[1] / 4],
+      [b2[0] / 4, b2[1] / 4],
+      [c2[0] / 4, c2[1] / 4],
+      rc,
+      undefined,
+      [0, 1, 0]
+    );
+  }
+  if (parapet) {
+    const T = acc(cx, cz, 'trim');
+    const pc = [col[0] * 0.95, col[1] * 0.95, col[2] * 0.95];
+    const tc = style === 0 ? [0.45, 0.44, 0.42] : [0.93, 0.92, 0.9];
+    for (let i = 0; i < n; i++) {
+      const p = pts[i],
+        q = pts[(i + 1) % n];
+      const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
+      if (len < 0.05) continue;
+      const ix = (-(q[1] - p[1]) / len) * 0.22,
+        iz = ((q[0] - p[0]) / len) * 0.22;
+      T.quad(
+        [p[0] + ix, ry, p[1] + iz],
+        [q[0] + ix, ry, q[1] + iz],
+        [q[0] + ix, top, q[1] + iz],
+        [p[0] + ix, top, p[1] + iz],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        pc,
+        undefined,
+        [ix, 0, iz]
+      );
+      T.quad(
+        [p[0], top, p[1]],
+        [q[0], top, q[1]],
+        [q[0] + ix, top, q[1] + iz],
+        [p[0] + ix, top, p[1] + iz],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        tc,
         undefined,
         [0, 1, 0]
       );
+      // cornice band
+      const ox = -ix * 1.1,
+        oz = -iz * 1.1;
+      T.quad(
+        [p[0] + ox, top - 0.35, p[1] + oz],
+        [q[0] + ox, top - 0.35, q[1] + oz],
+        [q[0] + ox, top + 0.05, q[1] + oz],
+        [p[0] + ox, top + 0.05, p[1] + oz],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        tc,
+        undefined,
+        [ox, 0, oz]
+      );
+      T.quad(
+        [p[0], top + 0.05, p[1]],
+        [q[0], top + 0.05, q[1]],
+        [q[0] + ox, top + 0.05, q[1] + oz],
+        [p[0] + ox, top + 0.05, p[1] + oz],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        tc,
+        undefined,
+        [0, 1, 0]
+      );
+      T.quad(
+        [p[0], top - 0.35, p[1]],
+        [q[0], top - 0.35, q[1]],
+        [q[0] + ox, top - 0.35, q[1] + oz],
+        [p[0] + ox, top - 0.35, p[1] + oz],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        tc,
+        undefined,
+        [0, -1, 0]
+      );
     }
-    if (parapet) {
-      const T = acc(cx, cz, 'trim');
-      const pc = [col[0] * 0.95, col[1] * 0.95, col[2] * 0.95];
-      const tc = style === 0 ? [0.45, 0.44, 0.42] : [0.93, 0.92, 0.9];
-      for (let i = 0; i < n; i++) {
-        const p = pts[i],
-          q = pts[(i + 1) % n];
-        const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
-        if (len < 0.05) continue;
-        const ix = (-(q[1] - p[1]) / len) * 0.22,
-          iz = ((q[0] - p[0]) / len) * 0.22;
-        T.quad(
-          [p[0] + ix, ry, p[1] + iz],
-          [q[0] + ix, ry, q[1] + iz],
-          [q[0] + ix, top, q[1] + iz],
-          [p[0] + ix, top, p[1] + iz],
-          [0, 0],
-          [0, 0],
-          [0, 0],
-          [0, 0],
-          pc,
-          undefined,
-          [ix, 0, iz]
-        );
-        T.quad(
-          [p[0], top, p[1]],
-          [q[0], top, q[1]],
-          [q[0] + ix, top, q[1] + iz],
-          [p[0] + ix, top, p[1] + iz],
-          [0, 0],
-          [0, 0],
-          [0, 0],
-          [0, 0],
-          tc,
-          undefined,
-          [0, 1, 0]
-        );
-        // cornice band
-        const ox = -ix * 1.1,
-          oz = -iz * 1.1;
-        T.quad(
-          [p[0] + ox, top - 0.35, p[1] + oz],
-          [q[0] + ox, top - 0.35, q[1] + oz],
-          [q[0] + ox, top + 0.05, q[1] + oz],
-          [p[0] + ox, top + 0.05, p[1] + oz],
-          [0, 0],
-          [0, 0],
-          [0, 0],
-          [0, 0],
-          tc,
-          undefined,
-          [ox, 0, oz]
-        );
-        T.quad(
-          [p[0], top + 0.05, p[1]],
-          [q[0], top + 0.05, q[1]],
-          [q[0] + ox, top + 0.05, q[1] + oz],
-          [p[0] + ox, top + 0.05, p[1] + oz],
-          [0, 0],
-          [0, 0],
-          [0, 0],
-          [0, 0],
-          tc,
-          undefined,
-          [0, 1, 0]
-        );
-        T.quad(
-          [p[0], top - 0.35, p[1]],
-          [q[0], top - 0.35, q[1]],
-          [q[0] + ox, top - 0.35, q[1] + oz],
-          [p[0] + ox, top - 0.35, p[1] + oz],
-          [0, 0],
-          [0, 0],
-          [0, 0],
-          [0, 0],
-          tc,
-          undefined,
-          [0, -1, 0]
-        );
-      }
-      // rooftop clutter: water tanks & antennas (Canarian azoteas)
-      if ((style === 1 || style === 2) && Math.abs(area) > 50 && r() < 0.7) ROOFPROPS.push([cx + (r() - 0.5) * 3, ry, cz + (r() - 0.5) * 3, r()]);
-    }
+    // rooftop clutter: water tanks & antennas (Canarian azoteas)
+    if ((style === 1 || style === 2) && Math.abs(area) > 50 && r() < 0.7) ROOFPROPS.push([cx + (r() - 0.5) * 3, ry, cz + (r() - 0.5) * 3, r()]);
   }
 }
 /** (v1.1.7, code quality) part of buildBuildings */
@@ -29484,6 +29695,7 @@ const FIGHT2D = (() => {
   let FIGHTS_DONE = 0;
   // ---------------- pixel sprites ----------------
   const SPR = new Map();
+  const PREWARM = new Set(); // v1.2.4: keys being drawn ahead (prewarm)
   const shade = (hex, k) => {
     const c = new THREE.Color(hex);
     c.multiplyScalar(k);
@@ -29846,6 +30058,28 @@ const FIGHT2D = (() => {
       x.stroke();
     };
     return { belly, hx, hy, neck, seg, line };
+  }
+  /** v1.2.4 (Jonay: «se quedó congelado un momento» al pillar a un maleante; la sonda: 70 lienzos y 140 ms leyendo píxeles
+   * en la primera pelea): the figures of a fighter drawn ahead of time, one pose per quiet moment, so the fight finds
+   * them ready. Same key as spritesFor. */
+  function prewarm(look, nose) {
+    const key = JSON.stringify(look) + nose;
+    if (SPR.has(key) || PREWARM.has(key)) return;
+    PREWARM.add(key);
+    const s = {},
+      ks = Object.keys(POSES),
+      idle = window.requestIdleCallback || ((f) => setTimeout(f, 40));
+    let i = 0;
+    const step = () => {
+      if (SPR.has(key)) return PREWARM.delete(key);
+      s[ks[i]] = drawFigure(look, POSES[ks[i]], nose);
+      if (++i < ks.length) idle(step);
+      else {
+        SPR.set(key, s);
+        PREWARM.delete(key);
+      }
+    };
+    idle(step);
   }
   function spritesFor(look, nose) {
     const key = JSON.stringify(look) + nose;
@@ -30756,12 +30990,20 @@ const FIGHT2D = (() => {
     const nx = -dz / L,
       nz = dx / L;
     let best = null;
+    // v1.2.4 (the probe: 690 ms and 860 geometries uploaded in the first fight): of the two sides, the one whose view
+    // looks the way the game camera looks (what it sees is already on the GPU), unless it has a wall much closer
+    const fw = new THREE.Vector3();
+    camera.getWorldDirection(fw);
+    const fl = Math.hypot(fw.x, fw.z) || 1;
     for (const s of [1, -1]) {
       const px = mx + nx * s * 10,
         pz = mz + nz * s * 10;
-      const free = COL.raycast(mx, mz, px, pz);
-      if (!best || free > best.f)
+      const look = (-nx * s * fw.x - nz * s * fw.z) / fl; // capture direction (towards the middle) · camera forward
+      const free = COL.raycast(mx, mz, px, pz),
+        score = free + 0.25 * look;
+      if (!best || score > best.sc)
         best = {
+          sc: score,
           f: free,
           px: mx + nx * s * 10 * Math.max(0.35, Math.min(1, free) - 0.05),
           pz: mz + nz * s * 10 * Math.max(0.35, Math.min(1, free) - 0.05)
@@ -30792,12 +31034,14 @@ const FIGHT2D = (() => {
       p: camera.position.clone(),
       q: camera.quaternion.clone(),
       fov: camera.fov,
+      far: camera.far,
       bp: bgCamera.position.clone(),
       bq: bgCamera.quaternion.clone()
     };
     camera.position.copy(cam.position);
     camera.quaternion.copy(cam.quaternion);
     camera.fov = 62;
+    camera.far = Math.min(prev.far, 160); // v1.2.4: only the near city in the backdrop (what lies beyond was sent to the GPU all at once: a freeze)
     camera.updateProjectionMatrix();
     camera.updateMatrixWorld();
     bgCamera.position.copy(cam.position);
@@ -30814,6 +31058,7 @@ const FIGHT2D = (() => {
     camera.position.copy(prev.p);
     camera.quaternion.copy(prev.q);
     camera.fov = prev.fov;
+    camera.far = prev.far;
     camera.updateProjectionMatrix();
     camera.updateMatrixWorld();
     bgCamera.position.copy(prev.bp);
@@ -30994,6 +31239,7 @@ const FIGHT2D = (() => {
     _st: () => st,
     POSES,
     spritesFor,
+    prewarm,
     figure: drawFigure,
     bodyK
   }; // figure/bodyK: also used by the basketball game (09f)
@@ -36961,6 +37207,8 @@ const MALEANTES = (() => {
     const lv = st.won < 2 ? 1 : st.won < 5 ? (Math.random() < 0.6 ? 1 : 2) : 1 + Math.floor(Math.random() * 3);
     p.maleante = { lv, name: NAMES[Math.floor(Math.random() * NAMES.length)], t: 240 };
     st.cur = p;
+    // v1.2.4: his figures for the 2D fight, drawn ahead in quiet moments (the first fight froze the game ~0.9 s)
+    if (typeof FIGHT2D !== 'undefined' && FIGHT2D.prewarm) FIGHT2D.prewarm({ ...(p.H.look || {}), strong: true }, false);
     HUD.toast(`Se busca: ${p.maleante.name} (nivel ${lv}) · recompensa $${LV[lv].pay}. Es el triángulo rojo del minimapa`, COL_, 6);
     return true;
   }
@@ -51027,6 +51275,7 @@ const lookCopy = (l) => ({ ...(l || {}) });
 /** a fighter that only defends (Sastrón's tutorial fight) */
 const passiveAI = () => ({ lv: 0, t: 0, blockT: 0, passive: true });
 const MISSIONS = (() => {
+  let canKit = null; // v1.2.4: the pieces of the shooting-range cans, made once
   let active = null,
     activeTrack = null,
     step = 0,
@@ -51865,12 +52114,18 @@ const MISSIONS = (() => {
       setCans() {
         for (const t of data.cans || []) scene.remove(t.mesh);
         data.cans = [];
-        const mat = M(0xc0392b, 0.35, 0.6),
-          top = M(0xdadada, 0.3, 0.8);
+        // v1.2.4 (auditor: «crea geometría en código que corre cada fotograma»): the can's pieces are made once and
+        // shared; every reset of the range only places new meshes
+        const K = (canKit = canKit || {
+          mat: M(0xc0392b, 0.35, 0.6),
+          top: M(0xdadada, 0.3, 0.8),
+          gb: new THREE.CylinderGeometry(0.06, 0.06, 0.16, 12),
+          gt: new THREE.CylinderGeometry(0.058, 0.058, 0.01, 12)
+        });
         for (const [x, y, z] of data.range.cans) {
           const g = new THREE.Group();
-          const b = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.16, 12), mat);
-          const t = new THREE.Mesh(new THREE.CylinderGeometry(0.058, 0.058, 0.01, 12), top);
+          const b = new THREE.Mesh(K.gb, K.mat);
+          const t = new THREE.Mesh(K.gt, K.top);
           t.position.y = 0.085;
           g.add(b, t);
           g.position.set(x, y, z);
@@ -54034,12 +54289,24 @@ function story2Init() {
   }
   let [x, z] = AYTO.door;
   let col = true; // v0.99.6 (auditor: «poste en la Calle Juan de Vera»): he stands in the porch, not in the street
+  // v1.2.4 (the auditor still saw him in the middle of C. Juan de Vera): not only the nearest street; the door is
+  // between two, and the nearest one alone said «off the road» while he stood in the other
+  const onCarriageway = (qx, qz, m) => {
+    const seen = new Set();
+    for (let k = 0; k < 3; k++) {
+      const rd = ROADSEG.nearest(qx, qz, (r) => DRIVABLE(r) && !seen.has(r));
+      if (!rd || rd.d > 14) return false;
+      if (rd.d < DATA.R[rd.ri][2] / 2 + m) return true;
+      seen.add(DATA.R[rd.ri]);
+    }
+    return false;
+  };
   if (onCarriageway(x, z, 0.3)) {
     col = false;
     for (const sg of [-1, 1]) {
       let qx = x,
         qz = z;
-      for (let k = 0; k < 8 && onCarriageway(qx, qz, 0.3); k++) {
+      for (let k = 0; k < 16 && onCarriageway(qx, qz, 0.3); k++) {
         qx += sg * AYTO.nx * 0.3;
         qz += sg * AYTO.nz * 0.3;
       }
@@ -61078,7 +61345,13 @@ function preloadMinigameImages() {
   const idle = window.requestIdleCallback || ((f) => setTimeout(f, 50));
   const next = () => {
     const im = list.shift();
-    if (!im) return;
+    if (!im) {
+      // v1.2.4: then the player's figures for the street fights (the first fight drew them all at once: a freeze)
+      try {
+        if (typeof playerHuman !== 'undefined' && playerHuman) FIGHT2D.prewarm(playerHuman.look || {}, true);
+      } catch (e) {}
+      return;
+    }
     (im.decode ? im.decode() : Promise.resolve()).catch(() => {}).then(() => idle(next));
   };
   idle(next);

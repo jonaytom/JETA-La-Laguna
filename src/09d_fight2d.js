@@ -21,6 +21,7 @@ const FIGHT2D = (() => {
   let FIGHTS_DONE = 0;
   // ---------------- pixel sprites ----------------
   const SPR = new Map();
+  const PREWARM = new Set(); // v1.2.4: keys being drawn ahead (prewarm)
   const shade = (hex, k) => {
     const c = new THREE.Color(hex);
     c.multiplyScalar(k);
@@ -383,6 +384,28 @@ const FIGHT2D = (() => {
       x.stroke();
     };
     return { belly, hx, hy, neck, seg, line };
+  }
+  /** v1.2.4 (Jonay: «se quedó congelado un momento» al pillar a un maleante; la sonda: 70 lienzos y 140 ms leyendo píxeles
+   * en la primera pelea): the figures of a fighter drawn ahead of time, one pose per quiet moment, so the fight finds
+   * them ready. Same key as spritesFor. */
+  function prewarm(look, nose) {
+    const key = JSON.stringify(look) + nose;
+    if (SPR.has(key) || PREWARM.has(key)) return;
+    PREWARM.add(key);
+    const s = {},
+      ks = Object.keys(POSES),
+      idle = window.requestIdleCallback || ((f) => setTimeout(f, 40));
+    let i = 0;
+    const step = () => {
+      if (SPR.has(key)) return PREWARM.delete(key);
+      s[ks[i]] = drawFigure(look, POSES[ks[i]], nose);
+      if (++i < ks.length) idle(step);
+      else {
+        SPR.set(key, s);
+        PREWARM.delete(key);
+      }
+    };
+    idle(step);
   }
   function spritesFor(look, nose) {
     const key = JSON.stringify(look) + nose;
@@ -1293,12 +1316,20 @@ const FIGHT2D = (() => {
     const nx = -dz / L,
       nz = dx / L;
     let best = null;
+    // v1.2.4 (the probe: 690 ms and 860 geometries uploaded in the first fight): of the two sides, the one whose view
+    // looks the way the game camera looks (what it sees is already on the GPU), unless it has a wall much closer
+    const fw = new THREE.Vector3();
+    camera.getWorldDirection(fw);
+    const fl = Math.hypot(fw.x, fw.z) || 1;
     for (const s of [1, -1]) {
       const px = mx + nx * s * 10,
         pz = mz + nz * s * 10;
-      const free = COL.raycast(mx, mz, px, pz);
-      if (!best || free > best.f)
+      const look = (-nx * s * fw.x - nz * s * fw.z) / fl; // capture direction (towards the middle) · camera forward
+      const free = COL.raycast(mx, mz, px, pz),
+        score = free + 0.25 * look;
+      if (!best || score > best.sc)
         best = {
+          sc: score,
           f: free,
           px: mx + nx * s * 10 * Math.max(0.35, Math.min(1, free) - 0.05),
           pz: mz + nz * s * 10 * Math.max(0.35, Math.min(1, free) - 0.05)
@@ -1329,12 +1360,14 @@ const FIGHT2D = (() => {
       p: camera.position.clone(),
       q: camera.quaternion.clone(),
       fov: camera.fov,
+      far: camera.far,
       bp: bgCamera.position.clone(),
       bq: bgCamera.quaternion.clone()
     };
     camera.position.copy(cam.position);
     camera.quaternion.copy(cam.quaternion);
     camera.fov = 62;
+    camera.far = Math.min(prev.far, 160); // v1.2.4: only the near city in the backdrop (what lies beyond was sent to the GPU all at once: a freeze)
     camera.updateProjectionMatrix();
     camera.updateMatrixWorld();
     bgCamera.position.copy(cam.position);
@@ -1351,6 +1384,7 @@ const FIGHT2D = (() => {
     camera.position.copy(prev.p);
     camera.quaternion.copy(prev.q);
     camera.fov = prev.fov;
+    camera.far = prev.far;
     camera.updateProjectionMatrix();
     camera.updateMatrixWorld();
     bgCamera.position.copy(prev.bp);
@@ -1531,6 +1565,7 @@ const FIGHT2D = (() => {
     _st: () => st,
     POSES,
     spritesFor,
+    prewarm,
     figure: drawFigure,
     bodyK
   }; // figure/bodyK: also used by the basketball game (09f)

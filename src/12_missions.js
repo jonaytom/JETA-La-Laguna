@@ -306,6 +306,7 @@ const lookCopy = (l) => ({ ...(l || {}) });
 /** a fighter that only defends (Sastrón's tutorial fight) */
 const passiveAI = () => ({ lv: 0, t: 0, blockT: 0, passive: true });
 const MISSIONS = (() => {
+  let canKit = null; // v1.2.4: the pieces of the shooting-range cans, made once
   let active = null,
     activeTrack = null,
     step = 0,
@@ -1144,12 +1145,18 @@ const MISSIONS = (() => {
       setCans() {
         for (const t of data.cans || []) scene.remove(t.mesh);
         data.cans = [];
-        const mat = M(0xc0392b, 0.35, 0.6),
-          top = M(0xdadada, 0.3, 0.8);
+        // v1.2.4 (auditor: «crea geometría en código que corre cada fotograma»): the can's pieces are made once and
+        // shared; every reset of the range only places new meshes
+        const K = (canKit = canKit || {
+          mat: M(0xc0392b, 0.35, 0.6),
+          top: M(0xdadada, 0.3, 0.8),
+          gb: new THREE.CylinderGeometry(0.06, 0.06, 0.16, 12),
+          gt: new THREE.CylinderGeometry(0.058, 0.058, 0.01, 12)
+        });
         for (const [x, y, z] of data.range.cans) {
           const g = new THREE.Group();
-          const b = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.16, 12), mat);
-          const t = new THREE.Mesh(new THREE.CylinderGeometry(0.058, 0.058, 0.01, 12), top);
+          const b = new THREE.Mesh(K.gb, K.mat);
+          const t = new THREE.Mesh(K.gt, K.top);
           t.position.y = 0.085;
           g.add(b, t);
           g.position.set(x, y, z);

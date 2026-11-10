@@ -1,0 +1,2 @@
+herramientas/sonda_choque.py -149 -235 3
+herramientas/foto_vista.py juandevera -160 -245 6 -149 -235
