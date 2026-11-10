@@ -1,6 +1,7 @@
 // ============ «JETA FIGHTER»: 2D pixel-art street fight, 90s style. Starts when you punch someone ============
 // The 3D view of the place where you are is captured, pixelated and posterized as the stage background; both fighters are
 // pixel-art sprites generated from their real clothes. Best of 3 rounds, punches, kicks, block, jump, crouch, chains & specials.
+const FIGHT_FW = new THREE.Vector3(); // v1.2.5: the game camera's direction when a fight starts (captureStage), reused
 const FIGHT2D = (() => {
   const W = 320,
     H = 180,
@@ -388,7 +389,7 @@ const FIGHT2D = (() => {
   /** v1.2.4 (Jonay: «se quedó congelado un momento» al pillar a un maleante; la sonda: 70 lienzos y 140 ms leyendo píxeles
    * en la primera pelea): the figures of a fighter drawn ahead of time, one pose per quiet moment, so the fight finds
    * them ready. Same key as spritesFor. */
-  function prewarm(look, nose) {
+  function warmFigures(look, nose) {
     const key = JSON.stringify(look) + nose;
     if (SPR.has(key) || PREWARM.has(key)) return;
     PREWARM.add(key);
@@ -1318,7 +1319,7 @@ const FIGHT2D = (() => {
     let best = null;
     // v1.2.4 (the probe: 690 ms and 860 geometries uploaded in the first fight): of the two sides, the one whose view
     // looks the way the game camera looks (what it sees is already on the GPU), unless it has a wall much closer
-    const fw = new THREE.Vector3();
+    const fw = FIGHT_FW;
     camera.getWorldDirection(fw);
     const fl = Math.hypot(fw.x, fw.z) || 1;
     for (const s of [1, -1]) {
@@ -1565,7 +1566,7 @@ const FIGHT2D = (() => {
     _st: () => st,
     POSES,
     spritesFor,
-    prewarm,
+    warmFigures,
     figure: drawFigure,
     bodyK
   }; // figure/bodyK: also used by the basketball game (09f)

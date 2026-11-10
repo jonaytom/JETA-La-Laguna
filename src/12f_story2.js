@@ -382,18 +382,10 @@ function story2Init() {
   }
   let [x, z] = AYTO.door;
   let col = true; // v0.99.6 (auditor: «poste en la Calle Juan de Vera»): he stands in the porch, not in the street
-  // v1.2.4 (the auditor still saw him in the middle of C. Juan de Vera): not only the nearest street; the door is
-  // between two, and the nearest one alone said «off the road» while he stood in the other
-  const onCarriageway = (qx, qz, m) => {
-    const seen = new Set();
-    for (let k = 0; k < 3; k++) {
-      const rd = ROADSEG.nearest(qx, qz, (r) => DRIVABLE(r) && !seen.has(r));
-      if (!rd || rd.d > 14) return false;
-      if (rd.d < DATA.R[rd.ri][2] / 2 + m) return true;
-      seen.add(DATA.R[rd.ri]);
-    }
-    return false;
-  };
+  // v1.2.5 (the auditor still saw him in the middle of C. Juan de Vera): not only the nearest street; the door is
+  // between two, and the nearest one alone said «off the road» while he stood in the other (onCarriagewayEarly looks
+  // at the three nearest)
+  const onCarriageway = onCarriagewayEarly;
   if (onCarriageway(x, z, 0.3)) {
     col = false;
     for (const sg of [-1, 1]) {

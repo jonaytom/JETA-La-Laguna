@@ -29430,6 +29430,7 @@ function weaponSwitchInput() {
 // ============ «JETA FIGHTER»: 2D pixel-art street fight, 90s style. Starts when you punch someone ============
 // The 3D view of the place where you are is captured, pixelated and posterized as the stage background; both fighters are
 // pixel-art sprites generated from their real clothes. Best of 3 rounds, punches, kicks, block, jump, crouch, chains & specials.
+const FIGHT_FW = new THREE.Vector3(); // v1.2.5: the game camera's direction when a fight starts (captureStage), reused
 const FIGHT2D = (() => {
   const W = 320,
     H = 180,
@@ -29817,7 +29818,7 @@ const FIGHT2D = (() => {
   /** v1.2.4 (Jonay: «se quedó congelado un momento» al pillar a un maleante; la sonda: 70 lienzos y 140 ms leyendo píxeles
    * en la primera pelea): the figures of a fighter drawn ahead of time, one pose per quiet moment, so the fight finds
    * them ready. Same key as spritesFor. */
-  function prewarm(look, nose) {
+  function warmFigures(look, nose) {
     const key = JSON.stringify(look) + nose;
     if (SPR.has(key) || PREWARM.has(key)) return;
     PREWARM.add(key);
@@ -30747,7 +30748,7 @@ const FIGHT2D = (() => {
     let best = null;
     // v1.2.4 (the probe: 690 ms and 860 geometries uploaded in the first fight): of the two sides, the one whose view
     // looks the way the game camera looks (what it sees is already on the GPU), unless it has a wall much closer
-    const fw = new THREE.Vector3();
+    const fw = FIGHT_FW;
     camera.getWorldDirection(fw);
     const fl = Math.hypot(fw.x, fw.z) || 1;
     for (const s of [1, -1]) {
@@ -30994,7 +30995,7 @@ const FIGHT2D = (() => {
     _st: () => st,
     POSES,
     spritesFor,
-    prewarm,
+    warmFigures,
     figure: drawFigure,
     bodyK
   }; // figure/bodyK: also used by the basketball game (09f)
@@ -36963,7 +36964,7 @@ const MALEANTES = (() => {
     p.maleante = { lv, name: NAMES[Math.floor(Math.random() * NAMES.length)], t: 240 };
     st.cur = p;
     // v1.2.4: his figures for the 2D fight, drawn ahead in quiet moments (the first fight froze the game ~0.9 s)
-    if (typeof FIGHT2D !== 'undefined' && FIGHT2D.prewarm) FIGHT2D.prewarm({ ...(p.H.look || {}), strong: true }, false);
+    if (typeof FIGHT2D !== 'undefined' && FIGHT2D.warmFigures) FIGHT2D.warmFigures({ ...(p.H.look || {}), strong: true }, false);
     HUD.toast(`Se busca: ${p.maleante.name} (nivel ${lv}) · recompensa $${LV[lv].pay}. Es el triángulo rojo del minimapa`, COL_, 6);
     return true;
   }
@@ -50919,7 +50920,9 @@ function ringClear(x, z, r) {
 function safeSpot(x, z, clear = 0.7) {
   const ok = (a, b, strict) =>
     !inAnyBuilding(a, b) && !COL.nearSeg(a, b, clear) && (!strict || !onCarriageway(a, b, 0.3)) && !lowAt(a, b, heightAt(a, b));
-  if (ok(x, z, false)) return [x, z];
+  // v1.2.6 (auditor: «árbol, farola o poste» en mitad de la C. Adelantado: era El Blanco): off the carriageway first; the
+  // point as given only if nothing nearby is off it
+  if (ok(x, z, true)) return [x, z];
   for (const strict of [true, false])
     for (let r = 1; r <= 80; r += 1)
       for (let k = 0; k < 24; k++) {
@@ -51029,8 +51032,15 @@ window.addEventListener(
 const lookCopy = (l) => ({ ...(l || {}) });
 /** a fighter that only defends (Sastrón's tutorial fight) */
 const passiveAI = () => ({ lv: 0, t: 0, blockT: 0, passive: true });
+// v1.2.4: the pieces of the shooting-range cans, made once when the game loads (they were made again at every reset of
+// the range); the materials come from M(), which keeps one of each
+const CAN_KIT = {
+  gb: new THREE.CylinderGeometry(0.06, 0.06, 0.16, 12),
+  gt: new THREE.CylinderGeometry(0.058, 0.058, 0.01, 12),
+  mat: null,
+  top: null
+};
 const MISSIONS = (() => {
-  let canKit = null; // v1.2.4: the pieces of the shooting-range cans, made once
   let active = null,
     activeTrack = null,
     step = 0,
@@ -51871,12 +51881,9 @@ const MISSIONS = (() => {
         data.cans = [];
         // v1.2.4 (auditor: «crea geometría en código que corre cada fotograma»): the can's pieces are made once and
         // shared; every reset of the range only places new meshes
-        const K = (canKit = canKit || {
-          mat: M(0xc0392b, 0.35, 0.6),
-          top: M(0xdadada, 0.3, 0.8),
-          gb: new THREE.CylinderGeometry(0.06, 0.06, 0.16, 12),
-          gt: new THREE.CylinderGeometry(0.058, 0.058, 0.01, 12)
-        });
+        const K = CAN_KIT;
+        K.mat = K.mat || M(0xc0392b, 0.35, 0.6);
+        K.top = K.top || M(0xdadada, 0.3, 0.8);
         for (const [x, y, z] of data.range.cans) {
           const g = new THREE.Group();
           const b = new THREE.Mesh(K.gb, K.mat);
@@ -54044,18 +54051,10 @@ function story2Init() {
   }
   let [x, z] = AYTO.door;
   let col = true; // v0.99.6 (auditor: «poste en la Calle Juan de Vera»): he stands in the porch, not in the street
-  // v1.2.4 (the auditor still saw him in the middle of C. Juan de Vera): not only the nearest street; the door is
-  // between two, and the nearest one alone said «off the road» while he stood in the other
-  const onCarriageway = (qx, qz, m) => {
-    const seen = new Set();
-    for (let k = 0; k < 3; k++) {
-      const rd = ROADSEG.nearest(qx, qz, (r) => DRIVABLE(r) && !seen.has(r));
-      if (!rd || rd.d > 14) return false;
-      if (rd.d < DATA.R[rd.ri][2] / 2 + m) return true;
-      seen.add(DATA.R[rd.ri]);
-    }
-    return false;
-  };
+  // v1.2.5 (the auditor still saw him in the middle of C. Juan de Vera): not only the nearest street; the door is
+  // between two, and the nearest one alone said «off the road» while he stood in the other (onCarriagewayEarly looks
+  // at the three nearest)
+  const onCarriageway = onCarriagewayEarly;
   if (onCarriageway(x, z, 0.3)) {
     col = false;
     for (const sg of [-1, 1]) {
@@ -61103,7 +61102,7 @@ function preloadMinigameImages() {
     if (!im) {
       // v1.2.4: then the player's figures for the street fights (the first fight drew them all at once: a freeze)
       try {
-        if (typeof playerHuman !== 'undefined' && playerHuman) FIGHT2D.prewarm(playerHuman.look || {}, true);
+        if (typeof playerHuman !== 'undefined' && playerHuman) FIGHT2D.warmFigures(playerHuman.look || {}, true);
       } catch (e) {}
       return;
     }

@@ -3,6 +3,13 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.2.6 — 2026-11-10 — Alpha 1.2.6: auditoría limpia
+- **El Blanco ya no está en mitad de la C. Adelantado** (la auditoría lo veía como «árbol, farola o poste»): los
+  personajes y marcas de misión se colocan primero fuera de la calzada; solo si no hay sitio cerca se quedan donde iban.
+- **Avisos del análisis de código de la 1.2.5**: el vector de la cámara al empezar una pelea se reutiliza, las figuras
+  de los luchadores se preparan con una función de «calentar» y las piezas de las latas del tiro se hacen al cargar el
+  juego; el alcalde usa la misma comprobación de calles que el resto del juego.
+
 ## 1.2.5 — 2026-11-10 — Alpha 1.2.5: sin tirón al pillar a un maleante
 - **El tirón al pillar a un maleante** (Jonay: «el juego se quedó congelado un momento»): la sonda nueva midió casi 0,9 s
   al empezar la pelea. Se iban en dibujar de golpe las figuras de los dos luchadores y en subir a la tarjeta gráfica

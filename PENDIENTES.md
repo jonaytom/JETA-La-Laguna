@@ -813,6 +813,10 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   - Un obstáculo nuevo en la calzada: árbol, farola o poste en C. Juan de Vera (X −149, Y −235).
   - El fútbol va de 1,5 a 4,6 ms y prepara dibujos los primeros 3 s. (v1.2.4: todos sus dibujos se preparan al empezar el partido, `prewarmSprites()`; comprobar en la próxima auditoría.)
   - La pelea, el baloncesto, las naves y Guanche suben entre 0,1 y 0,2 ms: probablemente es ruido del PC, comprobar con el PC descansado.
+- [ ] ⚡ **Avisos de la auditoría de la 1.2.5** (10-nov, APTO CON AVISOS, calidad A 85/100; pinta 20,9 → 19,8 ms; el obstáculo de C. Juan de Vera ya no sale):
+  - Tres avisos nuevos del análisis de código. Ninguno corre en cada fotograma: `captureStage()` crea un vector al empezar cada pelea (sacarlo fuera), `prewarm()` hace un JSON al apuntar un luchador y `setCans()` ya hace las latas una sola vez (el analizador ve el `new` en el código).
+  - El fútbol va de 0,3 a 0,4 ms (probablemente ruido del PC).
+  - `12f_story2.js` baja de A a B (la comprobación de calles del alcalde se parece a `onCarriagewayEarly`: se podría usar esa).
 - [ ] ⚡ **Avisos de la auditoría de la 1.2.3** (10-nov, APTO CON AVISOS, calidad A 85/100; métricas iguales que la 1.2.2):
   - Solo el del fútbol (dibujos los primeros 3 s): v1.2.4 los prepara todos antes del primer fotograma.
   - Auditoría 1.2.4 (APTO CON AVISOS): el aviso del fútbol ya no sale. Pinta algo más rápido (22,6 → 20,9 ms).

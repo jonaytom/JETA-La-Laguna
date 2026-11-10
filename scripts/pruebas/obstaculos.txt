@@ -1,0 +1,10 @@
+# v1.2.6: obstáculos de la auditoría 1.2.5 dentro de la calzada
+herramientas/sonda_choque.py -754 -362 1.5
+herramientas/sonda_choque.py -776 -352 1.5
+herramientas/sonda_choque.py -768 -385 3
+herramientas/sonda_choque.py -772 -353 1.5
+herramientas/sonda_choque.py -3018 -49 6
+herramientas/foto_vista.py obst_adelantado -745 -370 8 -754 -362
+herramientas/foto_vista.py obst_celada -768 -345 8 -776 -352
+herramientas/foto_vista.py obst_teobaldo -760 -392 8 -768 -385
+herramientas/foto_vista.py obst_servicio -3010 -60 8 -3018 -49

@@ -195,7 +195,9 @@ function ringClear(x, z, r) {
 function safeSpot(x, z, clear = 0.7) {
   const ok = (a, b, strict) =>
     !inAnyBuilding(a, b) && !COL.nearSeg(a, b, clear) && (!strict || !onCarriageway(a, b, 0.3)) && !lowAt(a, b, heightAt(a, b));
-  if (ok(x, z, false)) return [x, z];
+  // v1.2.6 (auditor: «árbol, farola o poste» en mitad de la C. Adelantado: era El Blanco): off the carriageway first; the
+  // point as given only if nothing nearby is off it
+  if (ok(x, z, true)) return [x, z];
   for (const strict of [true, false])
     for (let r = 1; r <= 80; r += 1)
       for (let k = 0; k < 24; k++) {
@@ -305,8 +307,15 @@ window.addEventListener(
 const lookCopy = (l) => ({ ...(l || {}) });
 /** a fighter that only defends (Sastrón's tutorial fight) */
 const passiveAI = () => ({ lv: 0, t: 0, blockT: 0, passive: true });
+// v1.2.4: the pieces of the shooting-range cans, made once when the game loads (they were made again at every reset of
+// the range); the materials come from M(), which keeps one of each
+const CAN_KIT = {
+  gb: new THREE.CylinderGeometry(0.06, 0.06, 0.16, 12),
+  gt: new THREE.CylinderGeometry(0.058, 0.058, 0.01, 12),
+  mat: null,
+  top: null
+};
 const MISSIONS = (() => {
-  let canKit = null; // v1.2.4: the pieces of the shooting-range cans, made once
   let active = null,
     activeTrack = null,
     step = 0,
@@ -1147,12 +1156,9 @@ const MISSIONS = (() => {
         data.cans = [];
         // v1.2.4 (auditor: «crea geometría en código que corre cada fotograma»): the can's pieces are made once and
         // shared; every reset of the range only places new meshes
-        const K = (canKit = canKit || {
-          mat: M(0xc0392b, 0.35, 0.6),
-          top: M(0xdadada, 0.3, 0.8),
-          gb: new THREE.CylinderGeometry(0.06, 0.06, 0.16, 12),
-          gt: new THREE.CylinderGeometry(0.058, 0.058, 0.01, 12)
-        });
+        const K = CAN_KIT;
+        K.mat = K.mat || M(0xc0392b, 0.35, 0.6);
+        K.top = K.top || M(0xdadada, 0.3, 0.8);
         for (const [x, y, z] of data.range.cans) {
           const g = new THREE.Group();
           const b = new THREE.Mesh(K.gb, K.mat);

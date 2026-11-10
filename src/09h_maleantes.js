@@ -82,7 +82,7 @@ const MALEANTES = (() => {
     p.maleante = { lv, name: NAMES[Math.floor(Math.random() * NAMES.length)], t: 240 };
     st.cur = p;
     // v1.2.4: his figures for the 2D fight, drawn ahead in quiet moments (the first fight froze the game ~0.9 s)
-    if (typeof FIGHT2D !== 'undefined' && FIGHT2D.prewarm) FIGHT2D.prewarm({ ...(p.H.look || {}), strong: true }, false);
+    if (typeof FIGHT2D !== 'undefined' && FIGHT2D.warmFigures) FIGHT2D.warmFigures({ ...(p.H.look || {}), strong: true }, false);
     HUD.toast(`Se busca: ${p.maleante.name} (nivel ${lv}) · recompensa $${LV[lv].pay}. Es el triángulo rojo del minimapa`, COL_, 6);
     return true;
   }

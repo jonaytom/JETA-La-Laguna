@@ -942,7 +942,7 @@ function preloadMinigameImages() {
     if (!im) {
       // v1.2.4: then the player's figures for the street fights (the first fight drew them all at once: a freeze)
       try {
-        if (typeof playerHuman !== 'undefined' && playerHuman) FIGHT2D.prewarm(playerHuman.look || {}, true);
+        if (typeof playerHuman !== 'undefined' && playerHuman) FIGHT2D.warmFigures(playerHuman.look || {}, true);
       } catch (e) {}
       return;
     }

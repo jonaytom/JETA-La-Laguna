@@ -1,0 +1,7 @@
+# v1.2.6: quién pone el obstáculo de C. Adelantado y los edificios críticos de la auditoría
+herramientas/sonda_origen.py -754 -362 1.5 0
+herramientas/sonda_origen.py -15 217 6 0
+herramientas/foto_vista.py edif_barcelona -5 235 25 -15 217
+herramientas/foto_vista.py edif_3221 -850 95 30 -860 78
+herramientas/sonda_vias.py -15 217 40
+herramientas/sonda_vias.py -860 78 40
