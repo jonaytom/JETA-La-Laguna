@@ -1,0 +1,6 @@
+# v1.2.1: Av. Lora Tamayo y la cuesta del Púlpito
+prueba_120.py
+herramientas/foto_vista.py lora_av 200 1207 40 260 1120
+herramientas/foto_vista.py lora_av2 240 1000 30 190 1100
+herramientas/foto_vista.py pulpito -3192 -300 20 -3192 -400
+herramientas/foto_vista.py pulpito2 -3100 -341 25 -3250 -341

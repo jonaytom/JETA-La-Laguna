@@ -808,6 +808,11 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
         X 243 Z −352, X −291 Z 2699), un servicio del aeropuerto en una ladera de pendiente imposible (X −3247 Z −359).
 
 ### Rendimiento, auditorías y código
+- [ ] ◐ **Avisos de la auditoría de la 1.2.0** (10-nov, APTO CON AVISOS, calidad A 85/100):
+  - Vértices +6 % (7,55 M → 7,98 M), por las trincheras de una pieza y el pabellón. Pinta más rápido: 23,2 → 19,1 ms.
+  - Cinco edificios nuevos invaden la calzada: Carretera del Campo de Golf (X −3675, Y −224), San Honorato (X −925, Y 108), Travesía Enlace Andenes Sobradillo (X 589, Y 3657 y X 627) y uno más.
+  - El fútbol prepara dibujos los primeros 3 s del partido: hay que prepararlos al abrir el juego.
+  - `04_world.js` baja de B a C.
 
 - [ ] ⚡ **Auditoría 1.1.6: «180 avisos nuevos» del análisis estático** (crear geometría en `buildRoofProps`, `buildTerrain`, `buildLamps`…): no son nuevos, son los de siempre con otro número de línea tras pasar el formateador. Comprobar en la próxima auditoría que vuelven a contar como conocidos; `03_collide.js` bajó de A a B (más líneas por función).
 - [~] ◐ v1.1.7 (nota A: 88 en local, 86 en la auditoría, que ahora cuenta sentencias y deja fuera los datos; piezas comunes del píxel en 09e_pixkit, funciones largas de 251 a 147; quedan los «módulos» enteros —MISSIONS, BASKET2D, create() de los juegos de la recreativa— y los cuerpos de bucle muy largos como el de cada edificio en buildBuildings) v1.1.6 (todo `src/` con Prettier: nota de C 69 a B 84, sin líneas largas ni densas; quedan las funciones-módulo muy largas y el código repetido de 09ma/09eb/06b) v1.0.0 (`12m_mundialito.js`: la tabla de selecciones, una fila por equipo) **Partir funciones largas y ordenar

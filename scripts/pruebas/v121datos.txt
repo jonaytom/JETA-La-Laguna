@@ -1,0 +1,5 @@
+# v1.2.1: datos para Los Rodeos (puente), Av. Lora Tamayo y la cuesta del Púlpito
+herramientas/sonda_vias.py -3330 -190 70
+herramientas/sonda_vias.py 230 1230 110
+herramientas/foto_vista.py lora_av 200 1207 40 260 1120
+herramientas/foto_vista.py rodeos_puente2 -3300 -150 25 -3330 -190

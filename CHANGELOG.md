@@ -3,6 +3,13 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.2.1 — 2026-11-10 — Alpha 1.2.1: Av. Lora Tamayo, cuesta del Púlpito y ramales del enlace de Guajara
+- **Av. Lora Tamayo** (Jonay: «la avenida es una locura… las separaciones de carriles»): cada sentido al ancho de sus dos
+  carriles y separados por la mediana, en vez de dos calzadas de 11,7 m montadas.
+- **Cuesta del Camino del Púlpito** (X −3192, Y −341: «de golpe hiciste súper carreteras empinadas»): el relieve de esa
+  zona va a escalones en el mapa de alturas; ahora está suavizado y la cuesta pasa de un 120 % en el peor punto a un 45 %.
+- **Ramales de la TF-5**: los que el mapa dibuja uno encima de otro se apartan entre sí (enlace de Guajara).
+
 ## 1.2.0 — 2026-11-10 — Alpha 1.2.0: túneles, trincheras y la TF-5 de una pieza
 - **San Honorato rehecho de una pieza** (Jonay, con sus fotos 3D): toda la trinchera es un solo objeto, sin muros dentro de
   la calzada ni huecos azules. La bajada norte es una sola calle de doble sentido, con raya central continua, flecha y

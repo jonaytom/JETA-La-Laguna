@@ -600,6 +600,7 @@ const HM = (() => {
   for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
   return { ...H, a: new Int16Array(buf) };
 })();
+hmSmoothZones(); // v1.2.1: the stepped relief of the 16 m heightmap, softened where it showed (04c_corredores.js)
 function heightAt(x, z) {
   let gx = (x - HM.x0) / HM.dx,
     gz = (z - HM.z0) / HM.dx;

@@ -600,6 +600,7 @@ const HM = (() => {
   for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
   return { ...H, a: new Int16Array(buf) };
 })();
+hmSmoothZones(); // v1.2.1: the stepped relief of the 16 m heightmap, softened where it showed (04c_corredores.js)
 function heightAt(x, z) {
   let gx = (x - HM.x0) / HM.dx,
     gz = (z - HM.z0) / HM.dx;
@@ -8463,6 +8464,9 @@ function corrZones() {
       { name: 'San Lázaro', x0: -2470, x1: -1620, z0: -330, z1: -90, pave: false, twins: false, open: true, wall: [0.26, 0.26, 0.25] },
       // (Jonay, Los Rodeos, X −3322, Y −193: «este puente también tiene valla a los lados del estilo de San Lázaro, y la
       // autopista se monta con la calle paralela»): the TF-5 under the bridge by the airport, the same way
+      // v1.2.1 (Jonay: «la avenida es una locura… las separaciones de carriles»): the Av. Lora Tamayo, two carriageways of
+      // two lanes with a narrow median (Google 3D): each half at the width of its lanes
+      { name: 'Lora Tamayo', x0: 140, x1: 260, z0: 790, z1: 1190, pave: false, twins: true, wall: [0.36, 0.33, 0.3] },
       { name: 'Los Rodeos', x0: -3440, x1: -3150, z0: -260, z1: -120, pave: false, twins: false, open: true, wall: [0.26, 0.26, 0.25] }
     ])
   );
@@ -8927,7 +8931,7 @@ function corrSideLanes() {
     near = () => true, // (v1.2.0, Jonay: «antes del puente de Guajara la autopista está fatal», Lora Tamayo…: all along the motorways)
     shifts = new Map(),
     key = (x, z) => x + ',' + z;
-  const pass = (moving, fixed, gap) => {
+  const pass = (moving, fixed, gap, share = 1) => {
     const F = [];
     R.forEach((r) => {
       if (!fixed(r)) return;
@@ -8956,6 +8960,7 @@ function corrSideLanes() {
         dz /= dl;
         let best = null;
         for (const g of F) {
+          if (g[4] === r) continue;
           const ex = g[2] - g[0],
             ez = g[3] - g[1],
             L2 = ex * ex + ez * ez || 1,
@@ -8982,7 +8987,7 @@ function corrSideLanes() {
             de = Math.min(de, Math.hypot(x - e[0], z - e[1]));
         const f = clamp((de - 8) / 40, 0, 1);
         if (f <= 0) continue;
-        shifts.set(key(x, z), [best.ux * best.need * f, best.uz * best.need * f]);
+        shifts.set(key(x, z), [best.ux * best.need * f * share, best.uz * best.need * f * share]);
         n++;
       }
     });
@@ -9012,6 +9017,14 @@ function corrSideLanes() {
     (r) => r[0] <= 1,
     3.5
   );
+  // (v1.2.1, enlace de Guajara: two slip roads drawn one over the other, side by side: each goes half the way apart)
+  const c2 = pass(
+    (r) => r[0] === 1,
+    (r) => r[0] === 1,
+    0.3,
+    0.5
+  );
+  console.log('corredores: ramales apartados entre sí', c2);
   console.log('corredores: carriles laterales de la TF-5', a, 'puntos; Carretera General apartada', b);
 }
 /** the two pavements of such a bridge (1.9 m, a kerb), on its deck */
@@ -10231,6 +10244,57 @@ function corrBuildTramosZone(segs, Z) {
         [0, 1, 0]
       );
     }
+  }
+}
+
+/** v1.2.1 (Jonay, Camino del Púlpito, X −3192, Y −341: «de golpe hiciste súper carreteras empinadas… debe ser todo más
+ *  gradual desde mucho más atrás»): the 16 m heightmap comes from a coarser one and goes in terraces (3–4 equal cells and
+ *  then 15–20 m up in one): a Gaussian blur of ~3 cells inside these boxes, fading out over 4 cells around them. (Until
+ *  the IGN 5 m relief replaces it.) */
+function hmSmoothZones() {
+  const Z = [{ x0: -3330, x1: -3040, z0: -470, z1: -235, r: 5 }],
+    nx = HM.nx,
+    nz = HM.nz,
+    a = HM.a;
+  for (const B of Z) {
+    const i0 = Math.max(0, Math.floor((B.x0 - HM.x0) / HM.dx) - 4),
+      i1 = Math.min(nx - 1, Math.ceil((B.x1 - HM.x0) / HM.dx) + 4),
+      j0 = Math.max(0, Math.floor((B.z0 - HM.z0) / HM.dx) - 4),
+      j1 = Math.min(nz - 1, Math.ceil((B.z1 - HM.z0) / HM.dx) + 4),
+      R = B.r,
+      w = [];
+    for (let k = -R; k <= R; k++) w.push(Math.exp(-(k * k) / (2 * (R / 2) * (R / 2))));
+    const src = new Float32Array((i1 - i0 + 1 + 2 * R) * (j1 - j0 + 1 + 2 * R)),
+      W = i1 - i0 + 1 + 2 * R;
+    const get = (i, j) => a[Math.max(0, Math.min(nz - 1, j)) * nx + Math.max(0, Math.min(nx - 1, i))];
+    for (let j = j0 - R; j <= j1 + R; j++) for (let i = i0 - R; i <= i1 + R; i++) src[(j - j0 + R) * W + (i - i0 + R)] = get(i, j);
+    // separable blur: along X then along Z
+    const tmp = new Float32Array(src.length);
+    const H2 = j1 - j0 + 1 + 2 * R;
+    for (let j = 0; j < H2; j++)
+      for (let i = R; i < W - R; i++) {
+        let sv = 0,
+          sw = 0;
+        for (let k = -R; k <= R; k++) {
+          sv += src[j * W + i + k] * w[k + R];
+          sw += w[k + R];
+        }
+        tmp[j * W + i] = sv / sw;
+      }
+    for (let j = j0; j <= j1; j++)
+      for (let i = i0; i <= i1; i++) {
+        let sv = 0,
+          sw = 0;
+        for (let k = -R; k <= R; k++) {
+          sv += tmp[(j - j0 + R + k) * W + (i - i0 + R)] * w[k + R];
+          sw += w[k + R];
+        }
+        const x = HM.x0 + i * HM.dx,
+          z = HM.z0 + j * HM.dx,
+          dout = Math.max(B.x0 - x, x - B.x1, B.z0 - z, z - B.z1, 0),
+          f = Math.max(0, 1 - dout / (4 * HM.dx));
+        if (f > 0) a[j * nx + i] = Math.round(a[j * nx + i] + (sv / sw - a[j * nx + i]) * f);
+      }
   }
 }
 
