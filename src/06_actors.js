@@ -1,4 +1,7 @@
 // ============ humans & vehicle meshes ============
+// v1.2.8 (Jonay, after the cars went 5 % down: «reduce todos los pj un 5 % también»): every person (player, people in the
+// street, mission characters) is drawn 5 % smaller; the mission people keep their sizes relative to the rest
+const HUMAN_SCALE = 0.95;
 const matCache = new Map();
 function M(color, rough = 0.8, metal = 0, extra) {
   const k = color + ':' + rough + ':' + metal + (extra ? JSON.stringify(extra) : '');
@@ -121,7 +124,7 @@ function makeHumanLegacyPart2(hips, mShirt, mSkin, o, mHair) {
 function makeHumanLegacyPart1(root, body, o, skin, shirt, pants, hair) {
   root.add(body);
   const s = o.scale ?? rnd(0.92, 1.06);
-  body.scale.setScalar(s);
+  body.scale.setScalar(s * HUMAN_SCALE);
   const mSkin = M(skin, 0.7),
     mShirt = M(shirt, 0.9),
     mPants = M(pants, 0.9),

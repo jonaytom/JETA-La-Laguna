@@ -3,6 +3,11 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.2.8 — 2026-11-10 — Alpha 1.2.8: personajes un 5 % más pequeños
+- **Todas las personas un 5 % más pequeñas** (Jonay: «reduce todos los pj un 5 % también»), igual que los coches de la
+  1.2.7: el jugador, la gente de la calle y los personajes de las misiones (estos guardan su tamaño respecto al resto).
+  Al conducir, el conductor baja con el asiento.
+
 ## 1.2.7 — 2026-11-10 — Alpha 1.2.7: calles al ancho entre fachadas y coches un 5 % más pequeños
 - **Calles más estrechas donde los edificios se metían en ellas** (Jonay: «ha sido un fallo ampliarlas de inicio»): toda
   calle desde las principales hacia abajo (también en el casco; no autopistas, enlaces, vías rápidas ni glorietas) se

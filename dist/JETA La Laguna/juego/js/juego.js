@@ -24154,6 +24154,9 @@ function buildWallsPart1() {
 }
 
 // ============ humans & vehicle meshes ============
+// v1.2.8 (Jonay, after the cars went 5 % down: «reduce todos los pj un 5 % también»): every person (player, people in the
+// street, mission characters) is drawn 5 % smaller; the mission people keep their sizes relative to the rest
+const HUMAN_SCALE = 0.95;
 const matCache = new Map();
 function M(color, rough = 0.8, metal = 0, extra) {
   const k = color + ':' + rough + ':' + metal + (extra ? JSON.stringify(extra) : '');
@@ -24276,7 +24279,7 @@ function makeHumanLegacyPart2(hips, mShirt, mSkin, o, mHair) {
 function makeHumanLegacyPart1(root, body, o, skin, shirt, pants, hair) {
   root.add(body);
   const s = o.scale ?? rnd(0.92, 1.06);
-  body.scale.setScalar(s);
+  body.scale.setScalar(s * HUMAN_SCALE);
   const mSkin = M(skin, 0.7),
     mShirt = M(shirt, 0.9),
     mPants = M(pants, 0.9),
@@ -25010,7 +25013,7 @@ function makeHumanSkinnedPart6(o, bodyMesh, bones, fem, body) {
   // the scale makes up for it. Teens are 10 % shorter, old people 2 %. A given o.scale (mission people) stays as it was.
   const s =
     o.scale ?? (realHeight(fem) * (1 - 0.1 * teen) * (1 - 0.02 * oldK)) / (((fem ? 1.656 : 1.699) + 0.11) * (o.thin ? 0.9 : 1) * (fem ? 0.97 : 1));
-  body.scale.setScalar(s * (fem ? 0.97 : 1));
+  body.scale.setScalar(s * (fem ? 0.97 : 1) * HUMAN_SCALE); // v1.2.8: every person 5 % smaller (HUMAN_SCALE, 06_actors.js)
   if (fatK > 0.5)
     for (const n of ['spine_01', 'spine_02', 'pelvis']) {
       const b = bones.find((x) => x.name === n);

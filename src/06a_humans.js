@@ -309,7 +309,7 @@ function makeHumanSkinnedPart6(o, bodyMesh, bones, fem, body) {
   // the scale makes up for it. Teens are 10 % shorter, old people 2 %. A given o.scale (mission people) stays as it was.
   const s =
     o.scale ?? (realHeight(fem) * (1 - 0.1 * teen) * (1 - 0.02 * oldK)) / (((fem ? 1.656 : 1.699) + 0.11) * (o.thin ? 0.9 : 1) * (fem ? 0.97 : 1));
-  body.scale.setScalar(s * (fem ? 0.97 : 1));
+  body.scale.setScalar(s * (fem ? 0.97 : 1) * HUMAN_SCALE); // v1.2.8: every person 5 % smaller (HUMAN_SCALE, 06_actors.js)
   if (fatK > 0.5)
     for (const n of ['spine_01', 'spine_02', 'pelvis']) {
       const b = bones.find((x) => x.name === n);
