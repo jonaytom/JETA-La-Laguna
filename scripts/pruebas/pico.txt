@@ -1,0 +1,6 @@
+# v1.2.2: el pico de la pasarela del Padre Anchieta y su bajada junto al tranvía
+herramientas/foto_vista.py pico_alto -260 700 60 -320 700
+herramientas/foto_vista.py pico_cenital -320 690 120 -320 689
+herramientas/foto_vista.py pico_bajada -280 610 8 -300 700
+herramientas/sonda_pico.py
+herramientas/sonda_vias.py 1100 2400 200

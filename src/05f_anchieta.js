@@ -117,6 +117,122 @@ function buildPasarela() {
   });
   buildPasarelaPart5(ramp, white, floorM, concrete, R, hw, y);
   buildPasarelaPart6(SE_ANG, R, hw, SE_STAIR, y, white, floorM, concrete);
+  try {
+    buildPasarelaPico(R, hw, y, white, floorM, concrete);
+  } catch (e) {
+    console.error('pasarela pico', e);
+  }
+}
+/** v1.2.1 (Jonay: «le falta el pico, que es un gran espacio… de ese pico baja a la Trinidad una bajada»; «apunta a la recta
+ *  de la Avenida Trinidad y baja por una bajada paralela a la Trinidad, a un lado de las vías del tranvía»): a wide
+ *  triangular deck that leaves the ring pointing down the straight of the avenue, and from its tip a long ramp that goes
+ *  down beside the tram tracks */
+function buildPasarelaPico(R, hw, y, white, floorM, concrete) {
+  const aim = [-306, 712],
+    ang = Math.atan2(aim[1] - RING.cz, aim[0] - RING.cx),
+    span = 0.24,
+    reach = 20,
+    ax = RING.cx + Math.cos(ang) * (R + hw + reach),
+    az = RING.cz + Math.sin(ang) * (R + hw + reach);
+  // the deck: a fan of triangles from the arc of the ring to the tip
+  const fl = [],
+    wall = [],
+    q = (arr, p1, p2, p3, p4) => arr.push(...p1, ...p2, ...p3, ...p1, ...p3, ...p4),
+    n = 8,
+    arc = [];
+  for (let k = 0; k <= n; k++) {
+    const a = ang - span + (2 * span * k) / n;
+    arc.push([RING.cx + Math.cos(a) * (R + hw - 0.2), RING.cz + Math.sin(a) * (R + hw - 0.2)]);
+  }
+  for (let k = 0; k < n; k++) fl.push(arc[k][0], y, arc[k][1], arc[k + 1][0], y, arc[k + 1][1], ax, y, az);
+  // its two edges: white parapets and a fascia under them
+  for (const e of [arc[0], arc[n]]) {
+    q(wall, [e[0], y - 0.7, e[1]], [ax, y - 0.7, az], [ax, y + 1.15, az], [e[0], y + 1.15, e[1]]);
+  }
+  for (let k = 0; k < n; k++) fl.push(arc[k][0], y - 0.7, arc[k][1], ax, y - 0.7, az, arc[k + 1][0], y - 0.7, arc[k + 1][1]); // the underside
+  for (const [arr, m] of [
+    [wall, white],
+    [fl, floorM]
+  ]) {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3));
+    g.computeVertexNormals();
+    const me = new THREE.Mesh(g, m);
+    me.castShadow = true;
+    me.receiveShadow = true;
+    scene.add(me);
+  }
+  // walkable: a wide path from the ring to the tip
+  const mx = RING.cx + Math.cos(ang) * (R + hw),
+    mz = RING.cz + Math.sin(ang) * (R + hw);
+  DECKS.push({
+    type: 'path',
+    pts: [
+      [mx, mz, y],
+      [(mx + ax) / 2, (mz + az) / 2, y]
+    ],
+    w: 2 * (R + hw) * Math.sin(span) * 0.8
+  });
+  DECKS.push({
+    type: 'path',
+    pts: [
+      [(mx + ax) / 2, (mz + az) / 2, y],
+      [ax, az, y]
+    ],
+    w: 4
+  });
+  // the ramp: along the tram line, on the tip's side, going away from the roundabout
+  const T = DATA.T;
+  if (!T || T.length < 4) return;
+  let bi = 0,
+    bd = 1e9;
+  for (let i = 0; i < T.length; i += 2) {
+    const d = Math.hypot(T[i] - ax, T[i + 1] - az);
+    if (d < bd) {
+      bd = d;
+      bi = i;
+    }
+  }
+  if (bd > 60) return;
+  // the direction along the tram that leads away from the ring
+  // the direction along the tram that goes down the straight of the avenue (south, towards X −274, Y 585)
+  const south = [-274, 585],
+    step =
+      Math.hypot(T[Math.min(T.length - 2, bi + 2)] - south[0], T[Math.min(T.length - 1, bi + 3)] - south[1]) <
+      Math.hypot(T[Math.max(0, bi - 2)] - south[0], T[Math.max(1, bi - 1)] - south[1])
+        ? 2
+        : -2;
+  const tp = [];
+  for (let i = bi; i >= 0 && i < T.length - 1 && tp.length < 40; i += step) tp.push([T[i], T[i + 1]]);
+  if (tp.length < 2) return;
+  // resample every 4 m, offset to the side where the tip is
+  const res = [];
+  let acc = 0;
+  for (let i = 0; i + 1 < tp.length; i++) {
+    const [x0, z0] = tp[i],
+      [x1, z1] = tp[i + 1],
+      L = Math.hypot(x1 - x0, z1 - z0) || 1;
+    for (let u = 0; u < L; u += 4) res.push([x0 + ((x1 - x0) * u) / L, z0 + ((z1 - z0) * u) / L, (x1 - x0) / L, (z1 - z0) / L, acc + u]);
+    acc += L;
+  }
+  const t0 = res[0],
+    side = -t0[3] > 0 ? 1 : -1, // (the east side of the tracks, between them and the carriageway going up the avenue)
+    off = 3.6 + 0.3 + 1.6;
+  const g0 = heightAt(res[0][0], res[0][1]),
+    need = Math.max(20, (y - g0) / 0.08),
+    pts = [[ax, az, y]];
+  for (const p of res) {
+    if (p[4] > need + 8) break;
+    const x = p[0] - p[3] * side * off,
+      z = p[1] + p[2] * side * off,
+      g = heightAt(x, z) + 0.15,
+      t = Math.min(1, p[4] / need);
+    pts.push([x, z, lerp(y, g, t)]);
+  }
+  if (pts.length < 3) return;
+  DECKS.push({ type: 'path', pts, w: 3.2 });
+  buildRampMesh(pts, 3.2, white, floorM, concrete);
+  PASARELA.pico = { tip: [Math.round(ax), Math.round(az)], ramp: pts.length, end: pts[pts.length - 1].map((v) => Math.round(v)) };
 }
 /** (v1.1.7, code quality) part of buildPasarela: south-east: a level walkway leaves the ring towards the campus pavement and the stairs come down onto it */
 function buildPasarelaPart6(SE_ANG, R, hw, SE_STAIR, y, white, floorM, concrete) {

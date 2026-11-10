@@ -3,6 +3,14 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.2.2 — 2026-11-10 — Alpha 1.2.2: el pico de la pasarela del Padre Anchieta
+- **El «pico» de la pasarela del Padre Anchieta** (Jonay: «apunta a la recta de la Avenida Trinidad y baja por una bajada
+  paralela a la Trinidad, a un lado de las vías del tranvía»): una explanada en punta que sale del anillo hacia la
+  avenida, con pretiles, y desde la punta una rampa larga que baja junto al tranvía hasta el suelo. Las dos se pueden
+  andar.
+- Glorietas de Guajara, a los dos lados del puente, con las marcas de la 1.2.0 (línea junto a la isleta, borde abierto en
+  cada calle, pasos de cebra).
+
 ## 1.2.1 — 2026-11-10 — Alpha 1.2.1: Av. Lora Tamayo, cuesta del Púlpito y ramales del enlace de Guajara
 - **Av. Lora Tamayo** (Jonay: «la avenida es una locura… las separaciones de carriles»): cada sentido al ancho de sus dos
   carriles y separados por la mediana, en vez de dos calzadas de 11,7 m montadas.

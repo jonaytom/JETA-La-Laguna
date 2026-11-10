@@ -808,6 +808,10 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
         X 243 Z −352, X −291 Z 2699), un servicio del aeropuerto en una ladera de pendiente imposible (X −3247 Z −359).
 
 ### Rendimiento, auditorías y código
+- [ ] ◐ **Avisos de la auditoría de la 1.2.1** (10-nov, APTO CON AVISOS):
+  - Un obstáculo nuevo en la calzada: árbol, farola o poste en C. Juan de Vera (X −149, Y −235).
+  - El fútbol va de 1,5 a 4,6 ms y prepara dibujos los primeros 3 s.
+  - La pelea, el baloncesto, las naves y Guanche suben entre 0,1 y 0,2 ms: probablemente es ruido del PC, comprobar con el PC descansado.
 - [ ] ◐ **Avisos de la auditoría de la 1.2.0** (10-nov, APTO CON AVISOS, calidad A 85/100):
   - Vértices +6 % (7,55 M → 7,98 M), por las trincheras de una pieza y el pabellón. Pinta más rápido: 23,2 → 19,1 ms.
   - Cinco edificios nuevos invaden la calzada: Carretera del Campo de Golf (X −3675, Y −224), San Honorato (X −925, Y 108), Travesía Enlace Andenes Sobradillo (X 589, Y 3657 y X 627) y uno más.
