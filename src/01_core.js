@@ -233,7 +233,6 @@ for (const e of DATA.G.e) {
   e[4] = WIDEN2(e[2], e[4], e[3], DATA.G.n[a], DATA.G.n[a + 1]);
 }
 narrowToGap(); // v1.0.0: residential and service streets meet the buildings halfway (04b_recorte.js)
-corrMergeBridgeTwins(); // v1.2.3: the bridges drawn as two halves, as one (Puente de Guajara)
 corrFitTwins(); // v1.2.0: the two halves of a dual road at the width of their lanes (04c_corredores.js), in the zones done so far
 trinidadWidths(); // v0.68: Av. de La Trinidad, one lane + parking per carriageway (05u_trinidad.js); after the widening
 // v0.91 (Jonay, with a Street View of the TF-5: «separando los sentidos»): OSM gives the motorway as two one-way ways
@@ -578,6 +577,7 @@ const SEPAR = []; // [ax, az, bx, bz, kind] midline runs for medians (kind: 2 = 
   console.log('carriageways separated: vertices', shifts.size, 'samples', nPairs);
 })();
 corrMotorwayStraighten(); // v1.2.0: the TF-5 from Lora Tamayo to the HUC, straight and parallel (04c_corredores.js)
+corrMergeBridgeTwins(); // v1.2.4: the bridges drawn as two halves, side by side (Puente de Guajara); here, with the roads at their final widths
 corrSideLanes(); // v1.2.0: the slip lanes beside the TF-5 and the Carretera General beyond them (04c_corredores.js)
 function mulberry(a) {
   return function () {

@@ -1121,12 +1121,12 @@ function buildRoadsEach(ri) {
     if (isLines(cls)) linedRibbon(ri, c, w, cls, tile, hf, 0);
     else ribbon(c, w, cls, YOFF[cls], tile, w / (cls === 'paving' ? 5 : cls === 'footway' ? 2.4 : 8), hf); // v0.99.6: on bridges too
     bridgeDressing(c, w, hf, rd[0] <= 12);
-    if (corrState().bridges && corrState().bridges.has(rd)) corrBridgeSidewalks(c, w, hf); // v1.2.0: the bridge of Cam. San Lázaro has a pavement on each side
+    if (corrState().bridges && corrState().bridges.has(rd)) corrBridgeSidewalks(c, w, hf, rd); // v1.2.0: the bridge of Cam. San Lázaro has a pavement on each side
     return;
   }
   buildRoadsEachPart2(cls, rd, ri, c, cls0, w, tile, yo);
   buildRoadsEachPart3(t, cls, c, w, ri);
-  if (corrState().bridges && corrState().bridges.has(rd)) corrBridgeSidewalks(c, w, (s, x, z) => heightAt(x, z)); // v1.2.0: a bridge left at grade (the ground carries it over the trench)
+  if (corrState().bridges && corrState().bridges.has(rd)) corrBridgeSidewalks(c, w, (s, x, z) => heightAt(x, z), rd); // v1.2.0: a bridge left at grade (the ground carries it over the trench)
 }
 /** (v1.1.7, code quality) part of buildRoadsEach: junction discs */
 function buildRoadsEachPart3(t, cls, c, w, ri) {

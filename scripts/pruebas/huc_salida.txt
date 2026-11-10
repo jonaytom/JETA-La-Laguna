@@ -1,0 +1,4 @@
+# v1.2.4: la salida de la TF-5 antes del HUC (X 1771, Y 3085)
+herramientas/sonda_vias.py 1771 3085 200
+herramientas/foto_vista.py huc_salida_cen 1771 3085 170 1771 3084
+herramientas/foto_vista.py huc_salida 1690 3020 30 1771 3085

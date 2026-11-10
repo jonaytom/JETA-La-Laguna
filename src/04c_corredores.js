@@ -163,7 +163,7 @@ function corrWidenBridges() {
   const CORR = corrState();
   CORR.bridges = CORR.bridges || new Set();
   for (const r of DATA.R) {
-    if (!(r[3] & 2) || r[3] & 32 || r[0] < 2 || r[0] > 11) continue;
+    if (!(r[3] & 2) || r[3] & 32 || r[0] < 2 || r[0] > 11 || (CORR.bridgeSide && CORR.bridgeSide.has(r))) continue;
     const m = corrMid(r),
       Z = m && inCorr(m[0], m[1]);
     if (!Z || !Z.open) continue;
@@ -213,6 +213,21 @@ function corrMotorwayStraighten() {
       for (let i = 0; i < c.length; i += 2) if (inB(c[i], c[i + 1])) k++;
       if (k) pieces.push({ r, ri, inside: k / (c.length / 2) });
     });
+    // v1.2.4: only the motorway of the stretch (its most common name). The Autovía de Interconexión (TF-2), which
+    // leaves the TF-5 in Guajara, also fell in the box: its points pulled the axis 100 m to one side right under the
+    // Guajara bridge, and both carriageways got a 9 m jog there (Jonay: «los ramales que se cruzan»)
+    {
+      const byName = new Map();
+      for (const p of pieces) byName.set(p.r[1], (byName.get(p.r[1]) || 0) + p.r[4].length);
+      let main = null,
+        bestN = -1;
+      for (const [k, v] of byName)
+        if (v > bestN) {
+          bestN = v;
+          main = k;
+        }
+      for (let i = pieces.length - 1; i >= 0; i--) if (pieces[i].r[1] !== main && pieces[i].r[1] >= 0) pieces.splice(i, 1);
+    }
     if (pieces.length < 2) continue;
     // the main direction of the stretch: from the first box's corner to the last one's (it runs SW→NE here)
     const pts = [];
@@ -594,9 +609,21 @@ function corrMergeBridgeTwins() {
     R = DATA.R,
     CORR = corrState(),
     mid = (r) => {
-      const c = r[4],
-        m = (c.length >> 2) << 1;
-      return [c[m], c[m + 1]];
+      // v1.2.4: the middle by length (with 2 or 3 points the «middle point» was one end: the Guajara halves were 16.6 m
+      // apart that way and were never joined)
+      const c = r[4];
+      let L = 0;
+      for (let k = 2; k < c.length; k += 2) L += Math.hypot(c[k] - c[k - 2], c[k + 1] - c[k - 1]);
+      let acc = 0;
+      for (let k = 2; k < c.length; k += 2) {
+        const l = Math.hypot(c[k] - c[k - 2], c[k + 1] - c[k - 1]);
+        if (acc + l >= L / 2 && l > 0) {
+          const t = (L / 2 - acc) / l;
+          return [c[k - 2] + (c[k] - c[k - 2]) * t, c[k - 1] + (c[k + 1] - c[k - 1]) * t];
+        }
+        acc += l;
+      }
+      return [c[0], c[1]];
     },
     len = (c) => {
       let L = 0;
@@ -605,6 +632,9 @@ function corrMergeBridgeTwins() {
     };
   CORR.bridges = CORR.bridges || new Set();
   CORR.puentesUnidos = [];
+  CORR.bridgeSide = CORR.bridgeSide || new Map();
+  const shift = new Map(),
+    key = (x, z) => x + ',' + z;
   const cand = R.filter((r) => r[3] & 2 && r[3] & 1 && r[0] >= 2 && r[0] <= 9 && inB(...mid(r)));
   const used = new Set();
   for (const a of cand) {
@@ -619,57 +649,74 @@ function corrMergeBridgeTwins() {
         dq = [cq[cq.length - 2] - cq[0], cq[cq.length - 1] - cq[1]],
         mq = mid(q),
         cos = (da[0] * dq[0] + da[1] * dq[1]) / (Math.hypot(...da) * Math.hypot(...dq) || 1);
-      if (cos < -0.85 && Math.hypot(ma[0] - mq[0], ma[1] - mq[1]) < 16 && Math.abs(len(ca) - len(cq)) < 0.5 * len(ca) + 10) b = q;
+      if (cos < -0.85 && Math.hypot(ma[0] - mq[0], ma[1] - mq[1]) < 22 && Math.abs(len(ca) - len(cq)) < 0.5 * len(ca) + 10) b = q;
     }
     if (!b) continue;
     used.add(a).add(b);
-    // the middle line: a's points with the nearest point of b, averaged; its ends from both ends
-    const cb = b[4],
-      out = [];
-    const nearB = (x, z) => {
-      let best = null;
-      for (let k = 0; k + 3 < cb.length; k += 2) {
-        const ex = cb[k + 2] - cb[k],
-          ez = cb[k + 3] - cb[k + 1],
-          t = Math.max(0, Math.min(1, ((x - cb[k]) * ex + (z - cb[k + 1]) * ez) / (ex * ex + ez * ez || 1))),
-          px = cb[k] + ex * t,
-          pz = cb[k + 1] + ez * t,
-          d = Math.hypot(x - px, z - pz);
-        if (!best || d < best[2]) best = [px, pz, d];
-      }
-      return best;
-    };
-    for (let i = 0; i < ca.length; i += 2) {
-      const p = nearB(ca[i], ca[i + 1]);
-      out.push(Math.round(((ca[i] + p[0]) / 2) * 100) / 100, Math.round(((ca[i + 1] + p[1]) / 2) * 100) / 100);
+    // v1.2.4: the two halves stay as they are (each one way, each with its own deck: one middle line had its ends away
+    // from the junctions, the approaches were no longer lifted and the deck became a hump the cars fell off). They are
+    // moved towards each other until their inner edges touch, each one 1.9 m wider on its outer side for the pavement.
+    // Every copy of a moved point (approach roads, traffic graph) moves with it.
+    const mb = mid(b),
+      L = Math.hypot(...da) || 1,
+      nx = -da[1] / L,
+      nz = da[0] / L,
+      gap = Math.abs((ma[0] - mb[0]) * nx + (ma[1] - mb[1]) * nz),
+      move = (gap - (a[2] + b[2]) / 2) / 2 - 0.95 - 0.05;
+    if (move < 0 || move > 8) {
+      CORR.puentesUnidos.push(['no', R.indexOf(a), R.indexOf(b), +gap.toFixed(1), a[2], b[2]]);
+      continue;
     }
-    const lanesW = 4 * 3.3 + 1.0;
-    a[4] = out;
-    a[3] = a[3] & ~1;
-    a[2] = Math.round((lanesW + 2 * 1.9) * 10) / 10;
-    const ia = R.indexOf(a);
-    if (DATA.LN && ia >= 0) DATA.LN[ia] = [4, -1, -1];
-    b[4] = [cb[0], cb[1], cb[0] + 0.01, cb[1]];
-    b[3] = b[3] & ~2; // (a dot, no deck)
-    CORR.bridges.add(a);
+    for (const [r, o] of [
+      [a, mb],
+      [b, ma]
+    ]) {
+      const m = mid(r),
+        sg = Math.sign((o[0] - m[0]) * nx + (o[1] - m[1]) * nz),
+        c = r[4];
+      for (let i = 0; i < c.length; i += 2)
+        if (!shift.has(key(c[i], c[i + 1])))
+          shift.set(key(c[i], c[i + 1]), [Math.round((c[i] + nx * sg * move) * 100) / 100, Math.round((c[i + 1] + nz * sg * move) * 100) / 100]);
+      r[2] = Math.round((r[2] + 1.9) * 10) / 10;
+      // the outer side, in corrBridgeSidewalks' terms (its normal is (−tz, tx) of the road's own direction)
+      const cd = [c[c.length - 2] - c[0], c[c.length - 1] - c[1]],
+        own = Math.sign(-cd[1] * nx + cd[0] * nz) || 1;
+      CORR.bridgeSide.set(r, -sg * own);
+      CORR.bridges.add(r);
+    }
     // the loose footbridges along it
-    const mm = mid(a);
+    const mm = [(ma[0] + mb[0]) / 2, (ma[1] + mb[1]) / 2];
     let fb = 0;
     for (const r of R) {
       if (r[0] < 13 || !(r[3] & 2)) continue;
       const m = mid(r);
-      if (Math.hypot(m[0] - mm[0], m[1] - mm[1]) < 18) {
+      if (Math.hypot(m[0] - mm[0], m[1] - mm[1]) < 20) {
         r[4] = [r[4][0], r[4][1], r[4][0] + 0.01, r[4][1]];
         r[3] = r[3] & ~2;
         fb++;
       }
     }
-    CORR.puentesUnidos.push([ia, R.indexOf(b), fb]);
+    CORR.puentesUnidos.push([R.indexOf(a), R.indexOf(b), +move.toFixed(2), fb]);
   }
-  console.log('corredores: puentes de dos mitades hechos uno', JSON.stringify(CORR.puentesUnidos));
+  const mv = (arr) => {
+    for (let i = 0; i + 1 < arr.length; i += 2) {
+      const o = shift.get(key(arr[i], arr[i + 1]));
+      if (o) {
+        arr[i] = o[0];
+        arr[i + 1] = o[1];
+      }
+    }
+  };
+  if (shift.size) {
+    for (const r of R) mv(r[4]);
+    mv(DATA.G.n);
+    for (const e of DATA.G.e) if (e[6]) mv(e[6]);
+  }
+  console.log('corredores: puentes de dos mitades juntados', JSON.stringify(CORR.puentesUnidos));
 }
 /** the two pavements of such a bridge (1.9 m, a kerb), on its deck */
-function corrBridgeSidewalks(c, w, hf) {
+function corrBridgeSidewalks(c, w, hf, rd) {
+  const side = rd && corrState().bridgeSide ? corrState().bridgeSide.get(rd) : 0; // v1.2.4: a joined half has it on its outer side only
   const S = acc(c[0], c[1], 'sidewalk'),
     K = acc(c[0], c[1], 'trim'),
     kc = [0.7, 0.69, 0.66],
@@ -685,7 +732,7 @@ function corrBridgeSidewalks(c, w, hf) {
     for (let k = 0; k < n; k++) {
       const u0 = (L * k) / n,
         u1 = (L * (k + 1)) / n;
-      for (const sg of [1, -1]) {
+      for (const sg of side ? [side] : [1, -1]) {
         const P = (u, o) => {
           const x = c[i] + tx * u + nx * o * sg,
             z = c[i + 1] + tz * u + nz * o * sg;

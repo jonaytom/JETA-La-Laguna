@@ -578,7 +578,8 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
     - un solo eje suave, cada sentido a su lado a 7,9 m y con un solo ancho (13,4 m); entre ejes, 14,8–15,8 m;
     - los carriles de aceleración y deceleración van paralelos y pegados, con raya discontinua en el lado de la autopista;
     - 22/22 pruebas OK, conducción incluida.
-    - Falta: el enlace de Guajara, con los ramales que se cruzan junto al puente; el cebreado en V de las salidas; la salida antes del HUC con su glorieta; el Pabellón Santiago Martín; y ampliar el tramo hacia San Honorato y hacia Santa Cruz.
+    - v1.2.3–1.2.4: puente de Guajara de una pieza (doble sentido, aceras, pretil); la TF-5 recta bajo el puente: la Autovía de Interconexión (TF-2) entraba en el eje y lo torcía 9 m justo ahí, que es lo que hacía que los ramales y las calzadas se cruzaran.
+    - Falta: la salida antes del HUC con su glorieta (en el juego ya baja un ramal a la glorieta pequeña, con cebreado; falta que Jonay diga qué ve mal) y ampliar el tramo hacia San Honorato y hacia Santa Cruz.
   - Queda por ver con Jonay: la boca sur (X −908, Y 47) une una vía de un sentido de 3 carriles (13,4 m) con un túnel de doble sentido (10,4 m) según el OSM, así que las rayas siguen sin casar del todo. Pendiente también: aceras que cruzan donde la trinchera es poco honda (sin losa).
 
   - Decidido (Jonay, 9-nov): rehacer por zonas, empezando por San Honorato (X −998 Y 121), la boca de X −909 Y 45, C. Timanfaya (X −1250 Y 9) y la autopista con laterales (X 146 Y 1259); cuando le guste, al resto del mapa. Base nueva: (1) juntar los trozos del OSM en recorridos continuos; (2) un perfil de alturas por recorrido en vez de los parches (hundir, levantar, seguir, topes); (3) una sección que se transforma de forma continua (calzada, líneas, aceras, muros, pretil, techo); (4) cruces y glorietas como piezas a una altura; (5) corredores de vías paralelas con el ancho repartido; (6) una prueba que mida escalones, solapes, huecos y líneas cruzadas con foto de cada sitio (`sonda_solapes.py`, `sonda_alturas.py`, `sonda_calzadas.py`).
@@ -810,8 +811,10 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 ### Rendimiento, auditorías y código
 - [ ] ◐ **Avisos de la auditoría de la 1.2.1** (10-nov, APTO CON AVISOS):
   - Un obstáculo nuevo en la calzada: árbol, farola o poste en C. Juan de Vera (X −149, Y −235).
-  - El fútbol va de 1,5 a 4,6 ms y prepara dibujos los primeros 3 s.
+  - El fútbol va de 1,5 a 4,6 ms y prepara dibujos los primeros 3 s. (v1.2.4: todos sus dibujos se preparan al empezar el partido, `prewarmSprites()`; comprobar en la próxima auditoría.)
   - La pelea, el baloncesto, las naves y Guanche suben entre 0,1 y 0,2 ms: probablemente es ruido del PC, comprobar con el PC descansado.
+- [ ] ⚡ **Avisos de la auditoría de la 1.2.3** (10-nov, APTO CON AVISOS, calidad A 85/100; métricas iguales que la 1.2.2):
+  - Solo el del fútbol (dibujos los primeros 3 s): v1.2.4 los prepara todos antes del primer fotograma.
 - [ ] ◐ **Avisos de la auditoría de la 1.2.0** (10-nov, APTO CON AVISOS, calidad A 85/100):
   - Vértices +6 % (7,55 M → 7,98 M), por las trincheras de una pieza y el pabellón. Pinta más rápido: 23,2 → 19,1 ms.
   - Cinco edificios nuevos invaden la calzada: Carretera del Campo de Golf (X −3675, Y −224), San Honorato (X −925, Y 108), Travesía Enlace Andenes Sobradillo (X 589, Y 3657 y X 627) y uno más.

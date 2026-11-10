@@ -1,0 +1,6 @@
+# v1.2.4: TF-5 recta bajo el puente de Guajara (sin la TF-2 en el eje) y el puente unido
+herramientas/sonda_vias.py 1150 2400 170
+herramientas/sonda_vias.py 2050 2950 230
+herramientas/foto_vista.py guajara_puente 1170 2410 22 1144 2380
+herramientas/foto_vista.py guajara_cenital 1150 2400 160 1150 2399
+herramientas/foto_vista.py huc_cenital 2050 2950 200 2050 2949

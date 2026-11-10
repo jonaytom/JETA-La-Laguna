@@ -1744,6 +1744,7 @@ const FUTBOL2D = (() => {
     for (let i = 0; i < FORM.length; i++) st.p.push(mkPlayer(t0[i] || { name: 'JUG ' + (i + 1) }, 0, i, k0));
     for (let i = 0; i < FORM.length; i++) st.p.push(mkPlayer(t1[i] || { name: 'RIV ' + (i + 1) }, 1, i, k1));
     for (const q of st.p) q.lv = q.team === 1 ? (opt.lv ?? 0.5) : (opt.mateLv ?? 0.6);
+    prewarmSprites(); // v1.2.4 (auditor: «futbol prepara dibujos mientras se juega»): every sprite drawn before the first frame
     kickoff(0);
     st.ctl = st.p.find((q) => q.team === 0 && q.role === 'fwd');
     updateCam(1);
@@ -1751,6 +1752,27 @@ const FUTBOL2D = (() => {
     document.exitPointerLock?.();
     MINI.show(cv, 'futbol2d');
     if (CR) CR.stop();
+  }
+  /** v1.2.4: the run cycle uses (round(3·ph), round(2·ph)) with ph in [-1, 1]; with the 3 views and the dive/slide poses
+   * that is every sprite a player can need, so the match never builds one (canvas + pixel read) while it is being played */
+  function prewarmSprites() {
+    const steps = new Set();
+    for (let i = 0; i <= 200; i++) {
+      const ph = -1 + i / 100;
+      steps.add(Math.round(ph * 3) + ',' + Math.round(ph * 2));
+    }
+    steps.add('0,0');
+    for (const p of st.p) {
+      const num = p.role === 'gk' ? 1 : p.idx + 1,
+        gk = p.role === 'gk';
+      for (const v of ['up', 'down', 'side'])
+        for (const s of steps) {
+          const [l, a] = s.split(',').map(Number);
+          manSprite(p.kit, p.look, v, l, a, num, gk);
+        }
+      manSprite(p.kit, p.look, 'dive', 0, 0, num, gk);
+      manSprite(p.kit, p.look, 'slide', 0, 0, num, gk);
+    }
   }
   function finish() {
     if (!st || st.fadeDir > 0) return;

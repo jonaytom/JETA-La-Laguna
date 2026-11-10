@@ -3,6 +3,15 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.2.4 — 2026-11-10 — Alpha 1.2.4: la TF-5 recta bajo el puente de Guajara
+- **Enlace de Guajara**: la TF-5 hacía un quiebro de 9 m justo bajo el puente y las calzadas y los ramales se montaban.
+  Era la Autovía de Interconexión (TF-2), que sale ahí de la TF-5 y entraba en el cálculo del eje recto de la autopista.
+  Ahora el eje solo usa la TF-5 y pasa recta por debajo del puente.
+- **Puente de Guajara**: ahora sí queda de una pieza. En la 1.2.3 las dos mitades no se llegaban a juntar. Ahora las dos
+  calzadas van pegadas, cada una con su acera y su pretil de piedra por fuera, y sin las dos pasarelas sueltas de al lado.
+- **Fútbol**: todos los dibujos de los jugadores se preparan antes de empezar el partido, sin tirones al principio
+  (aviso de la auditoría).
+
 ## 1.2.3 — 2026-11-10 — Alpha 1.2.3: el puente de Guajara de una pieza
 - **Puente de Guajara** (Jonay, con sus capturas): el mapa lo dibujaba como dos medios puentes de un sentido más dos
   pasarelas sueltas al lado. Ahora es un solo tablero de doble sentido (dos carriles por sentido), con aceras a los dos

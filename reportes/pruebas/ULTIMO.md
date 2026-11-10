@@ -1,14 +1,14 @@
-# Pruebas 1.2.3 — 2026-11-10 11:19 — 5/5 OK
+# Pruebas 1.2.4 — 2026-11-10 12:25 — 5/5 OK
 
-Listas: cambios, version. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 157 s en total.
+Listas: cambios, version. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 313 s en total.
 
 | # | Prueba | Resultado | Tiempo |
 |---|---|---|---|
-| 1 | `prueba_arranque.py` | **OK** | 1 s |
+| 1 | `prueba_arranque.py` | **OK** | 8 s |
 | 2 | `prueba_121.py` | **OK** | 0 s |
-| 3 | `prueba_120.py` | **OK** | 57 s |
-| 4 | `prueba_119.py` | **OK** | 0 s |
-| 5 | `prueba_conduccion_tuneles_puentes.py` | **OK** | 74 s |
+| 3 | `prueba_120.py` | **OK** | 0 s |
+| 4 | `prueba_119.py` | **OK** | 50 s |
+| 5 | `prueba_conduccion_tuneles_puentes.py` | **OK** (repetida aparte) | 151 s |
 
 ## Detalle
 
@@ -17,7 +17,7 @@ Listas: cambios, version. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 157 s en t
 ### 1. prueba_arranque.py — OK
 
 ```
-30 pasos (ms): {'mediana': 32, 'peor': 98, 'estado': 'play'}
+30 pasos (ms): {'mediana': 49, 'peor': 156, 'estado': 'play'}
 errores JS []
 ARRANQUE OK
 ```
@@ -25,7 +25,7 @@ ARRANQUE OK
 ### 2. prueba_121.py — OK
 
 ```
-autopista {'autopista': [{'tramo': 'Lora Tamayo – HUC', 'trozos': 34, 'puntos': 497, 'eje': 3332, 'lado': 1, 'ramales': 13, 'tramosParalelos': 74}], 'anchos': [13.4], 'n': 539, 'min': 14.6, 'p10': 14.8, 'p90': 15.8, 'max': 57.5}
+autopista {'autopista': [{'tramo': 'Lora Tamayo – HUC', 'trozos': 30, 'puntos': 511, 'eje': 3199, 'lado': 1, 'ramales': 14, 'tramosParalelos': 77}], 'anchos': [13.4], 'n': 539, 'min': 14.6, 'p10': 14.8, 'p90': 15.8, 'max': 57.5}
 TF5_RECTA OK
 errores []
 PRUEBA 121 OK
@@ -52,12 +52,17 @@ errores []
 PRUEBA 119 OK
 ```
 
-### 5. prueba_conduccion_tuneles_puentes.py — OK
+### 5. prueba_conduccion_tuneles_puentes.py — OK (repetida aparte)
 
 ```
+En la carga compartida falló por:
+CONDUCCION FALLA
+--- repetida aparte:
+shot ms 24.599999997764826
+{"frame":566,"calls":1501,"triangles":2562083,"points":0,"lines":0} calls:1501
 roads 132
 failed 0 of 132 · conocidos 0
 CONDUCCION OK
 ```
 
-Fotos/archivos nuevos en `tests/shots/`: conduccion.json
+Fotos/archivos nuevos en `tests/shots/`: conduccion.json, df_2899.jpg
