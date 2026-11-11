@@ -1,18 +1,18 @@
-# Pruebas 1.4.11 — 2026-11-11 19:26 — 1/1 OK
+# Pruebas 1.4.12 — 2026-11-11 23:10 — 1/1 OK
 
-Listas: propios144. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 301 s en total.
+Listas: propios144. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 308 s en total.
 
 | # | Prueba | Resultado | Tiempo |
 |---|---|---|---|
-| 1 | `herramientas/foto_propios.py` | **OK** | 273 s |
+| 1 | `herramientas/foto_propios.py` | **OK** | 276 s |
 
 ## Detalle
 
 ### 1. herramientas/foto_propios.py — OK
 
 ```
-triángulos {'troceen': 11891, 'troceenC44': 11105, 'carlota': 10455, 'yaiza': 11165, 'trex': 10954, 'di55': 11366, 'jtm3': 11889, 'guancheGT': 11491, 'reniego': 11963, 'cartabon': 10394, 'tipoe': 12824, 'ltg': 12224, 'fierilla': 12131, 'piki': 11988, 'oalgo': 11637, 'gomera': 11618, 'teypan': 12033, 'chayan': 12245, 'olecorsa': 11459, 'mocco': 11913, 'tyaiza': 12754, 'helado': 12082, 'dsendero': 12732, 'beluga': 12395, 'vivita': 13617, 'newton3': 12132}
-aparcados {'di55': 112, 'helado': 517, 'tipoe': 228, 'gomera': 445, 'beluga': 200, 'vivita': 173, 'carlota': 276, 'tyaiza': 427, 'newton3': 297, 'cartabon': 110, 'jtm3': 290, 'oalgo': 161, 'troceen': 294, 'dsendero': 253, 'reniego': 101, 'piki': 298, 'yaiza': 117, 'troceenC44': 69, 'olecorsa': 172, 'teypan': 108, 'chayan': 68, 'mocco': 86, 'trex': 103, 'ltg': 75, 'fierilla': 11}
+triángulos {'troceen': 11891, 'troceenC44': 11105, 'carlota': 10455, 'yaiza': 11165, 'trex': 10954, 'di55': 11366, 'jtm3': 11889, 'guancheGT': 11491, 'reniego': 11963, 'cartabon': 10394, 'tipoe': 12824, 'ltg': 12224, 'fierilla': 12131, 'piki': 12299, 'oalgo': 11871, 'gomera': 11618, 'teypan': 12245, 'chayan': 12483, 'olecorsa': 11681, 'mocco': 12161, 'tyaiza': 12754, 'helado': 12082, 'dsendero': 12732, 'beluga': 12395, 'vivita': 13617, 'newton3': 12132}
+aparcados {'vivita': 151, 'helado': 463, 'tipoe': 245, 'oalgo': 148, 'troceenC44': 61, 'piki': 327, 'jtm3': 280, 'tyaiza': 453, 'newton3': 260, 'mocco': 92, 'cartabon': 120, 'gomera': 414, 'olecorsa': 167, 'teypan': 123, 'carlota': 298, 'beluga': 214, 'reniego': 108, 'troceen': 267, 'trex': 124, 'dsendero': 247, 'ltg': 52, 'di55': 107, 'chayan': 77, 'yaiza': 111, 'fierilla': 16}
 FOTO PROPIOS OK
 ```
 

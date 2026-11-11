@@ -3,6 +3,13 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.12 — 2026-11-11 — Alpha 1.4.12: seis coches propios rehechos con las fotos de frente
+- Rehechos con la receta (silueta medida de la foto lateral, saledizos delantero y trasero ajustados a las cotas reales,
+  hombros de la cabina más estrechos según la foto frontal, parabrisas, faros y pasos de rueda): **Piki Crocante**,
+  **Totuya O Algo**, **Pancho Teypan**, **Pancho Chayan**, **Ole Corsario** y **Ole Mocco**. Mismas medidas
+  exteriores en el juego.
+- El **Seta Gomera** se queda como estaba (Jonay: la versión nueva salía peor).
+
 ## 1.4.11 — 2026-11-11 — Alpha 1.4.11: seis coches propios más
 - Seis coches nuevos hechos con la receta de `Blender/coche/RECETA_COCHES.md` (silueta medida de la foto, faros y
   frontal desde las fotos de frente, ruedas a ras, techo del color de la carrocería): **Totuya Yaiza** (sustituye
