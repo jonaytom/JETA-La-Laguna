@@ -1,0 +1,8 @@
+herramientas/foto_vista.py muros_despues_verdellada 712 800 6 717 860
+herramientas/foto_vista.py muros_despues_sanlazaro -2058 -235 8 -2000 -250
+herramientas/foto_vista.py muros_despues_honorato -960 100 5 -930 70
+herramientas/foto_vista.py muros_despues_geneto 346 1501 30 346 1530
+herramientas/foto_vista.py cebra_vh 1840 1905 6 1868 1925
+herramientas/foto_vista.py cebra_fe 1450 1660 7 1480 1700
+herramientas/foto_vista.py cebra_gracia 740 1300 8 715 1335
+herramientas/foto_vista.py cebra_isleta 1330 2154 20 1331 2155

@@ -1015,6 +1015,16 @@ const TEX = {};
     TEX.grassC = cb;
     TEX.grass = canvasTex(cb);
   }
+  // ---------------- basalt (v1.4.0: the grain of the walls of basalt, a photo of Poly Haven when it loads; plain grey till then)
+  {
+    const c = mkCanvas(128, 128),
+      x = c.getContext('2d');
+    noiseFill(x, 128, 128, [100, 100, 100], 30, 91, 2);
+    const cb = mkCanvas(512, 512);
+    cb.getContext('2d').drawImage(c, 0, 0, 512, 512);
+    TEX.basaltC = cb;
+    TEX.basalt = canvasTex(cb);
+  }
   // ---------------- dirt
   {
     const c = mkCanvas(256, 256),
@@ -1663,7 +1673,8 @@ const GROUND = { listo: 0 };
     ['cesped', TEX.grassC, TEX.grass],
     ['tierra', TEX.dirtC, TEX.dirt], // v1.3.9: brown_mud_dry (tracks and paths; and the open ground of the terrain, 04_world.js)
     ['teja', TEX.roofTileC, TEX.roofTile], // v1.3.9: clay_roof_tiles_02, teja árabe (2,5 m: hipRoof)
-    ['azotea', TEX.roofFlatC, TEX.roofFlat] // v1.3.9: concrete_floor_02, light (4 m)
+    ['azotea', TEX.roofFlatC, TEX.roofFlat], // v1.3.9: concrete_floor_02, light (4 m)
+    ['basalto', TEX.basaltC, TEX.basalt] // v1.4.0: rock_wall_08, grey (2 m: stoneWorld)
   ]) {
     if (!S[k] || !c) continue;
     const im = new Image();
@@ -1675,6 +1686,36 @@ const GROUND = { listo: 0 };
     im.src = S[k];
   }
 })();
+/** v1.4.0 (Jonay: «sigue con las texturas»): stone walls get the grain of the photo of basalt, laid by world position
+ *  (on the face the wall looks at: no UVs needed), multiplying their own colour (divided by the photo's mean, so the
+ *  tint stays). darkOnly: only where the colour is dark (the basalt walls of cuttings, retaining walls), not on the
+ *  white kerbs and trims that share the material. 2 m per tile. */
+function stoneWorld(mat, darkOnly) {
+  mat.onBeforeCompile = (sh) => {
+    sh.uniforms.uStone = { value: TEX.basalt };
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vSW; varying vec3 vSN;')
+      .replace(
+        '#include <worldpos_vertex>',
+        '#include <worldpos_vertex>\nvSW = (modelMatrix * vec4(transformed, 1.0)).xyz; vSN = normalize(mat3(modelMatrix) * objectNormal);'
+      );
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nuniform sampler2D uStone; varying vec3 vSW; varying vec3 vSN;')
+      .replace(
+        '#include <color_fragment>',
+        `#include <color_fragment>
+        {
+          vec3 an = abs(vSN);
+          vec2 suv = an.y > 0.7 ? vSW.xz : (an.x > an.z ? vSW.zy : vSW.xy);
+          vec3 st = texture2D(uStone, suv / 2.0).rgb / 0.13;
+          float k = ${darkOnly ? 'smoothstep(0.42, 0.22, dot(diffuseColor.rgb, vec3(0.333)))' : '1.0'};
+          diffuseColor.rgb *= mix(vec3(1.0), clamp(st, 0.0, 2.6), 0.9 * k);
+        }`
+      );
+  };
+  mat.customProgramCacheKey = () => 'stoneWorld' + (darkOnly ? 1 : 0);
+  mat.needsUpdate = true;
+}
 const PLASTER = { on: { value: 0 }, det: null, n1: null, n2: null };
 (function loadPlaster() {
   const P = DATA.PLASTER;
@@ -2094,6 +2135,7 @@ const MAT = {};
     roughness: 0.8,
     vertexColors: true
   });
+  stoneWorld(MAT.trim, true); // v1.4.0: the dark (basalt) walls of cuttings and banks with the grain of stone (02_textures.js)
   MAT.stone = new THREE.MeshStandardMaterial({
     map: null,
     roughness: 0.9,
@@ -2142,6 +2184,7 @@ const MAT = {};
   MAT.footway = road(TEX.sidewalk, 2);
   MAT.dirt = road(TEX.dirt, 1);
   MAT.tram = road(TEX.tram, 5);
+  MAT.asphaltTop = road(TEX.asphalt, 4); // v1.4.0: plain asphalt over the lane lines, under zebra crossings and hatched areas (04f_cebreados.js, markClear)
   MAT.disc = road(TEX.asphalt, 3.5); // v0.99.5: under the lines (the discs at the joints of a lined road cut its lines in circles)
   MAT.discPave = road(TEX.paving, 3.5);
 })();
@@ -2546,7 +2589,8 @@ const YOFF = {
   asphaltLines: 0.15,
   disc: 0.14,
   discPave: 0.135,
-  tram: 0.17
+  tram: 0.17,
+  asphaltTop: 0.165
 }; // v0.99.5: the junction discs under the lines
 // v0.99.5 (Jonay: «las marcas viales deben ser coherentes»): each lined road with the marks of its lanes, made to its
 // width: a one-way carriageway (motorway, slip road, the Vía de Ronda's directions) has its solid edge lines with the
@@ -7273,7 +7317,7 @@ function finalizeChunks() {
       const isRoad =
         isLines(mk) ||
         mk === 'auxLane' ||
-        ['asphalt', 'paving', 'sidewalk', 'footway', 'dirt', 'tram', 'disc', 'discPave', 'tunnelLight', 'grass'].includes(mk);
+        ['asphalt', 'asphaltTop', 'paving', 'sidewalk', 'footway', 'dirt', 'tram', 'disc', 'discPave', 'tunnelLight', 'grass'].includes(mk);
       m.receiveShadow = true;
       m.castShadow = !isRoad && mk !== 'glassHouse';
       if (isRoad) {
@@ -9848,6 +9892,7 @@ function corrRoundaboutMarks() {
       const nx = -dz,
         nz = dx,
         hw = A.w / 2 - 0.3;
+      markClear(x, z, dx, dz, 3.0, A.w - 0.4); // v1.4.0: no lane line or arrow under the zebra crossing
       for (let o = -hw + 0.25; o <= hw - 0.25; o += 1.0) line(x + nx * o, z + nz * o, dx, dz, 3.0, 0.5);
     }
     rbArrows(rb, arms); // v1.3.6: lane arrows on the entries of two lanes (04f_cebreados.js)
@@ -11264,8 +11309,18 @@ function cebArea(P, wp, Q, wq, u0, maxU, maxGap = 7, raised = false) {
   if (E.length < 4) return false;
   const em = E[E.length >> 1];
   CEB.last = [Math.round((em[0][0] + em[1][0]) / 2), Math.round((em[0][1] + em[1][1]) / 2)];
-  const F = acc(E[0][0][0], E[0][0][1], 'asphalt'),
-    y = (p) => heightAt(p[0], p[1]) + YOFF.asphalt - 0.004;
+  const F = acc(E[0][0][0], E[0][0][1], 'asphaltTop'), // v1.4.0: over the lane lines (they must not show through the hatching)
+    y = (p) => heightAt(p[0], p[1]) + YOFF.asphaltTop;
+  for (let i = 0; i + 1 < E.length; i++) {
+    const [a0, b0] = E[i],
+      [a1, b1] = E[i + 1],
+      mx = (a0[0] + b0[0] + a1[0] + b1[0]) / 4,
+      mz = (a0[1] + b0[1] + a1[1] + b1[1]) / 4,
+      tx = (a1[0] + b1[0] - a0[0] - b0[0]) / 2,
+      tz = (a1[1] + b1[1] - a0[1] - b0[1]) / 2,
+      tl = Math.hypot(tx, tz) || 1;
+    markClear(mx, mz, tx / tl, tz / tl, tl, Math.max(Math.hypot(b0[0] - a0[0], b0[1] - a0[1]), Math.hypot(b1[0] - a1[0], b1[1] - a1[1])), false);
+  }
   for (let i = 0; i + 1 < E.length; i++) {
     const [a0, b0] = E[i],
       [a1, b1] = E[i + 1];
@@ -11632,6 +11687,65 @@ function rbArrows(rb, arms) {
     }
   }
   CEB.flechas = (CEB.flechas || 0) + n;
+}
+
+// ---------- v1.4.0 (Jonay: «donde haya un paso de peatones o zonas con cebrado no puede quedar debajo otras marcas viales
+// como flechas o separaciones de carril»): each zebra crossing and hatched area is a «clear» area: plain asphalt over the
+// lane lines of the road's texture, and no arrow, STOP or «ceda» painted inside it (buildTrafficSignsPart6, 05j_signals.js)
+const CLEAR = [];
+if (typeof window !== 'undefined') window.__clear = CLEAR; // (sonda_pasos_cebra.py)
+/** a clear rectangle: centre x, z, along dx, dz (unit), length along, width across */
+function markClear(x, z, dx, dz, len, wid, patch = true) {
+  CLEAR.push([x, z, dx, dz, len / 2 + 0.3, wid / 2 + 0.2]);
+  if (!patch) return;
+  const rx = -dz,
+    rz = dx,
+    hl = len / 2 + 0.3,
+    hw = wid / 2,
+    A = acc(x, z, 'asphaltTop'),
+    P = (a, b) => {
+      const px = x + dx * a + rx * b,
+        pz = z + dz * a + rz * b;
+      return [px, heightAt(px, pz) + YOFF.asphaltTop, pz];
+    },
+    q = [P(-hl, -hw), P(-hl, hw), P(hl, hw), P(hl, -hw)];
+  A.quad(
+    q[0],
+    q[1],
+    q[2],
+    q[3],
+    [q[0][0] / 8, q[0][2] / 8],
+    [q[1][0] / 8, q[1][2] / 8],
+    [q[2][0] / 8, q[2][2] / 8],
+    [q[3][0] / 8, q[3][2] / 8],
+    null,
+    undefined,
+    [0, 1, 0]
+  );
+  A.quad(
+    q[0],
+    q[3],
+    q[2],
+    q[1],
+    [q[0][0] / 8, q[0][2] / 8],
+    [q[3][0] / 8, q[3][2] / 8],
+    [q[2][0] / 8, q[2][2] / 8],
+    [q[1][0] / 8, q[1][2] / 8],
+    null,
+    undefined,
+    [0, 1, 0]
+  );
+}
+/** is x, z inside a clear area (grown by m)? */
+function inClear(x, z, m = 0) {
+  for (const [cx, cz, dx, dz, hl, hw] of CLEAR) {
+    const ox = x - cx,
+      oz = z - cz,
+      a = ox * dx + oz * dz,
+      b = -ox * dz + oz * dx;
+    if (Math.abs(a) <= hl + m && Math.abs(b) <= hw + m) return true;
+  }
+  return false;
 }
 
 // ============ landmarks, vegetation, street furniture, sky ============
@@ -16092,6 +16206,15 @@ function buildTrafficSigns() {
 /** (v1.1.7, code quality) part of buildTrafficSigns: --- painted markings (one merged mesh) */
 function buildTrafficSignsPart6(MK) {
   // --- painted markings (one merged mesh)
+  // v1.4.0 (Jonay): no arrow, STOP or «ceda» painted on a zebra crossing or a hatched area (04f_cebreados.js)
+  if (typeof inClear === 'function')
+    for (let i = MK.length - 1; i >= 0; i--) {
+      const k = MK[i];
+      if ((k[0] === 0 || k[0] === 1 || k[0] === 2 || k[0] === 4 || k[0] === 5) && inClear(k[1], k[2], k[5] / 2)) {
+        MK.splice(i, 1);
+        window.__clearQuitadas = (window.__clearQuitadas || 0) + 1;
+      }
+    }
   if (typeof CORR_MARKS !== 'undefined') MK.push(...CORR_MARKS); // v1.2.0: the marks of the corridor zones (04c_corredores.js), with their own height
   if (MK.length) {
     const pos = [],
@@ -22715,6 +22838,7 @@ function trinidadParking() {
     ])
       for (const ds of [-6, 6]) {
         const p = c.at(j.s + ds);
+        markClear(p.x, p.z, p.ux, p.uz, 3.2, c.w - 0.4); // v1.4.0: no lane lines nor arrows under it (04f_cebreados.js)
         triDecal(p.x, p.z, p.ux, p.uz, 3.2, c.w - 0.4, (x, w, h, k) => zebra(x, w, h, k));
       }
     const pzr = DATA.R[b.ri][4];
@@ -22724,6 +22848,7 @@ function trinidadParking() {
       uz = pzr[nxt + 1] - pzr[st + 1],
       Lp = Math.hypot(ux, uz) || 1;
     const q = [b.px + (ux / Lp) * (T.B.w / 2 + 3.5), b.pz + (uz / Lp) * (T.B.w / 2 + 3.5)];
+    markClear(q[0], q[1], ux / Lp, uz / Lp, 3.2, DATA.R[b.ri][2] - 0.4);
     triDecal(q[0], q[1], ux / Lp, uz / Lp, 3.2, DATA.R[b.ri][2] - 0.4, (x, w, h, k) => zebra(x, w, h, k));
   }
 }
@@ -25414,7 +25539,11 @@ function buildWallsPart1() {
   };
   const MAT = {
     cal: new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.95 }),
-    piedra: new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 1 }),
+    piedra: (() => {
+      const m = new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 1 });
+      stoneWorld(m, false); // v1.4.0: stone walls with the photo of basalt (02_textures.js)
+      return m;
+    })(),
     valla: new THREE.MeshStandardMaterial({
       color: 0x343a36,
       roughness: 0.55,

@@ -3,6 +3,15 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.0 — 2026-11-11 — Alpha 1.4.0: muros de basalto y pasos de cebra limpios
+- **Muros de basalto** (texturas de Poly Haven): los muros oscuros de trincheras, taludes y muros de contención, y los
+  muros de piedra del mapa, llevan el grano de una foto de piedra (`rock_wall_08`), puesto por su posición (no hace falta
+  desplegar cada muro). Los bordillos y remates blancos no cambian.
+- **Nada debajo de los pasos de cebra ni de los cebreados** (Jonay: «donde haya un paso de peatones o zonas con cebrado no
+  puede quedar debajo otras marcas viales como flechas o separaciones de carril»): bajo cada paso de cebra y cada isleta o
+  cuña cebreada va asfalto liso que tapa las rayas de los carriles, y se quitan las flechas, los STOP y los «ceda» que
+  caían dentro (598 zonas, 154 marcas quitadas).
+
 ## 1.3.9 — 2026-11-11 — Alpha 1.3.9: terreno y tejados con texturas de Poly Haven
 - **Terreno** (descampados, parques, laderas): sobre el color del mapa, el grano de una foto de tierra seca con piedras
   (`brown_mud_dry`) donde no es verde y de césped (`grass_ground`) donde lo es. Los caminos de tierra usan la misma foto.

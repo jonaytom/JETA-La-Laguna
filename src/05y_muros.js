@@ -449,7 +449,11 @@ function buildWallsPart1() {
   };
   const MAT = {
     cal: new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.95 }),
-    piedra: new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 1 }),
+    piedra: (() => {
+      const m = new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 1 });
+      stoneWorld(m, false); // v1.4.0: stone walls with the photo of basalt (02_textures.js)
+      return m;
+    })(),
     valla: new THREE.MeshStandardMaterial({
       color: 0x343a36,
       roughness: 0.55,

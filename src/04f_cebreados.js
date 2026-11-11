@@ -151,8 +151,18 @@ function cebArea(P, wp, Q, wq, u0, maxU, maxGap = 7, raised = false) {
   if (E.length < 4) return false;
   const em = E[E.length >> 1];
   CEB.last = [Math.round((em[0][0] + em[1][0]) / 2), Math.round((em[0][1] + em[1][1]) / 2)];
-  const F = acc(E[0][0][0], E[0][0][1], 'asphalt'),
-    y = (p) => heightAt(p[0], p[1]) + YOFF.asphalt - 0.004;
+  const F = acc(E[0][0][0], E[0][0][1], 'asphaltTop'), // v1.4.0: over the lane lines (they must not show through the hatching)
+    y = (p) => heightAt(p[0], p[1]) + YOFF.asphaltTop;
+  for (let i = 0; i + 1 < E.length; i++) {
+    const [a0, b0] = E[i],
+      [a1, b1] = E[i + 1],
+      mx = (a0[0] + b0[0] + a1[0] + b1[0]) / 4,
+      mz = (a0[1] + b0[1] + a1[1] + b1[1]) / 4,
+      tx = (a1[0] + b1[0] - a0[0] - b0[0]) / 2,
+      tz = (a1[1] + b1[1] - a0[1] - b0[1]) / 2,
+      tl = Math.hypot(tx, tz) || 1;
+    markClear(mx, mz, tx / tl, tz / tl, tl, Math.max(Math.hypot(b0[0] - a0[0], b0[1] - a0[1]), Math.hypot(b1[0] - a1[0], b1[1] - a1[1])), false);
+  }
   for (let i = 0; i + 1 < E.length; i++) {
     const [a0, b0] = E[i],
       [a1, b1] = E[i + 1];
@@ -519,4 +529,63 @@ function rbArrows(rb, arms) {
     }
   }
   CEB.flechas = (CEB.flechas || 0) + n;
+}
+
+// ---------- v1.4.0 (Jonay: «donde haya un paso de peatones o zonas con cebrado no puede quedar debajo otras marcas viales
+// como flechas o separaciones de carril»): each zebra crossing and hatched area is a «clear» area: plain asphalt over the
+// lane lines of the road's texture, and no arrow, STOP or «ceda» painted inside it (buildTrafficSignsPart6, 05j_signals.js)
+const CLEAR = [];
+if (typeof window !== 'undefined') window.__clear = CLEAR; // (sonda_pasos_cebra.py)
+/** a clear rectangle: centre x, z, along dx, dz (unit), length along, width across */
+function markClear(x, z, dx, dz, len, wid, patch = true) {
+  CLEAR.push([x, z, dx, dz, len / 2 + 0.3, wid / 2 + 0.2]);
+  if (!patch) return;
+  const rx = -dz,
+    rz = dx,
+    hl = len / 2 + 0.3,
+    hw = wid / 2,
+    A = acc(x, z, 'asphaltTop'),
+    P = (a, b) => {
+      const px = x + dx * a + rx * b,
+        pz = z + dz * a + rz * b;
+      return [px, heightAt(px, pz) + YOFF.asphaltTop, pz];
+    },
+    q = [P(-hl, -hw), P(-hl, hw), P(hl, hw), P(hl, -hw)];
+  A.quad(
+    q[0],
+    q[1],
+    q[2],
+    q[3],
+    [q[0][0] / 8, q[0][2] / 8],
+    [q[1][0] / 8, q[1][2] / 8],
+    [q[2][0] / 8, q[2][2] / 8],
+    [q[3][0] / 8, q[3][2] / 8],
+    null,
+    undefined,
+    [0, 1, 0]
+  );
+  A.quad(
+    q[0],
+    q[3],
+    q[2],
+    q[1],
+    [q[0][0] / 8, q[0][2] / 8],
+    [q[3][0] / 8, q[3][2] / 8],
+    [q[2][0] / 8, q[2][2] / 8],
+    [q[1][0] / 8, q[1][2] / 8],
+    null,
+    undefined,
+    [0, 1, 0]
+  );
+}
+/** is x, z inside a clear area (grown by m)? */
+function inClear(x, z, m = 0) {
+  for (const [cx, cz, dx, dz, hl, hw] of CLEAR) {
+    const ox = x - cx,
+      oz = z - cz,
+      a = ox * dx + oz * dz,
+      b = -ox * dz + oz * dx;
+    if (Math.abs(a) <= hl + m && Math.abs(b) <= hw + m) return true;
+  }
+  return false;
 }

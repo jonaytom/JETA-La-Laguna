@@ -904,7 +904,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 - [ ] ● **Mixamo** como fuente de animaciones extra (gratis para juegos; no subir los FBX originales al repo; hay que
       retargetear a nuestro esqueleto; la descarga la hace Jonay con su cuenta de Adobe).
 
-- [~] ● v1.3.7 (v1.3.7 suelo: asfalto, acera, adoquín y césped; v1.3.9 terreno, caminos de tierra, tejados de teja y azoteas; todo con `tests/herramientas/suelo_polyhaven.py`; faltan muros, piedra basáltica y las fachadas —ya llevan detalle de enfoscado de Poly Haven desde antes—) **Texturas de Poly Haven (CC0) para todo el juego** (Jonay, 11-nov: «ahora que tenemos Blender con Poly, ¿no podrás usar esas texturas y mejorar todo en general?»): hoy casi todas las texturas se pintan a mano en el código (asfalto, aceras, adoquín, fachadas de colores, tejados, césped, piedra). Con el add-on de Blender se pueden bajar texturas CC0 de Poly Haven (asfalto, baldosa de acera, adoquín, enfoscado, teja, piedra basáltica, césped, tierra) y meterlas en el HTML a 512 px (≈1 MB más en total). Hacerlo por tandas: suelo (asfalto, acera, adoquín, césped) → fachadas y tejados → muros y piedra, con fotos antes/después y midiendo el pintado; créditos en `CREDITOS.md`.
+- [~] ● v1.3.7 (v1.3.7 suelo: asfalto, acera, adoquín y césped; v1.3.9 terreno, caminos de tierra, tejados de teja y azoteas; v1.4.0 muros de basalto; todo con `tests/herramientas/suelo_polyhaven.py`; faltan la piedra de iglesias y casas canarias (cantería) y las fachadas —ya llevan detalle de enfoscado de Poly Haven desde antes—) **Texturas de Poly Haven (CC0) para todo el juego** (Jonay, 11-nov: «ahora que tenemos Blender con Poly, ¿no podrás usar esas texturas y mejorar todo en general?»): hoy casi todas las texturas se pintan a mano en el código (asfalto, aceras, adoquín, fachadas de colores, tejados, césped, piedra). Con el add-on de Blender se pueden bajar texturas CC0 de Poly Haven (asfalto, baldosa de acera, adoquín, enfoscado, teja, piedra basáltica, césped, tierra) y meterlas en el HTML a 512 px (≈1 MB más en total). Hacerlo por tandas: suelo (asfalto, acera, adoquín, césped) → fachadas y tejados → muros y piedra, con fotos antes/después y midiendo el pintado; créditos en `CREDITOS.md`.
 ### Extras para el final
 
 - [ ] ● **DLC Santa Cruz** (Jonay, 12-oct): se une por el sur a partir del final del mapa actual; carga aparte, con aviso,
@@ -934,6 +934,8 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   - Por comprobar: si el Artifact deja abrir conexiones WebRTC y al servidor de emparejamiento (si no, se juega con el HTML descargado); servidor TURN para las redes que no conectan directo.
 
 ## Hecho
+
+- [x] v1.4.0 **Nada debajo de los pasos de cebra y cebreados** (Jonay, 11-nov): asfalto liso encima de las rayas de los carriles y sin flechas/STOP/ceda dentro (`markClear`, 04f_cebreados.js; sonda `sonda_pasos_cebra.py`).
 
 - [x] v1.3.8 **Flechas sobre la raya entre carriles** (Jonay, 11-nov, Av. de los Menceyes X 1600, Y 1820): una flecha en medio de cada carril (`laneCentres`, 07_vehicles.js).
 

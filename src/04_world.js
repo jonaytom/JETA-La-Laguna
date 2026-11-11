@@ -184,6 +184,7 @@ const MAT = {};
     roughness: 0.8,
     vertexColors: true
   });
+  stoneWorld(MAT.trim, true); // v1.4.0: the dark (basalt) walls of cuttings and banks with the grain of stone (02_textures.js)
   MAT.stone = new THREE.MeshStandardMaterial({
     map: null,
     roughness: 0.9,
@@ -232,6 +233,7 @@ const MAT = {};
   MAT.footway = road(TEX.sidewalk, 2);
   MAT.dirt = road(TEX.dirt, 1);
   MAT.tram = road(TEX.tram, 5);
+  MAT.asphaltTop = road(TEX.asphalt, 4); // v1.4.0: plain asphalt over the lane lines, under zebra crossings and hatched areas (04f_cebreados.js, markClear)
   MAT.disc = road(TEX.asphalt, 3.5); // v0.99.5: under the lines (the discs at the joints of a lined road cut its lines in circles)
   MAT.discPave = road(TEX.paving, 3.5);
 })();
@@ -636,7 +638,8 @@ const YOFF = {
   asphaltLines: 0.15,
   disc: 0.14,
   discPave: 0.135,
-  tram: 0.17
+  tram: 0.17,
+  asphaltTop: 0.165
 }; // v0.99.5: the junction discs under the lines
 // v0.99.5 (Jonay: «las marcas viales deben ser coherentes»): each lined road with the marks of its lanes, made to its
 // width: a one-way carriageway (motorway, slip road, the Vía de Ronda's directions) has its solid edge lines with the
@@ -5363,7 +5366,7 @@ function finalizeChunks() {
       const isRoad =
         isLines(mk) ||
         mk === 'auxLane' ||
-        ['asphalt', 'paving', 'sidewalk', 'footway', 'dirt', 'tram', 'disc', 'discPave', 'tunnelLight', 'grass'].includes(mk);
+        ['asphalt', 'asphaltTop', 'paving', 'sidewalk', 'footway', 'dirt', 'tram', 'disc', 'discPave', 'tunnelLight', 'grass'].includes(mk);
       m.receiveShadow = true;
       m.castShadow = !isRoad && mk !== 'glassHouse';
       if (isRoad) {

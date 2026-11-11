@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.3.9</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.0</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,16 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.4.0 — 2026-11-11 — Alpha 1.4.0: muros de basalto y pasos de cebra limpios</h2>
+<ul>
+<li><strong>Muros de basalto</strong> (texturas de Poly Haven): los muros oscuros de trincheras, taludes y muros de contención, y los
+  muros de piedra del mapa, llevan el grano de una foto de piedra (<code>rock_wall_08</code>), puesto por su posición (no hace falta
+  desplegar cada muro). Los bordillos y remates blancos no cambian.</li>
+<li><strong>Nada debajo de los pasos de cebra ni de los cebreados</strong> (Jonay: «donde haya un paso de peatones o zonas con cebrado no
+  puede quedar debajo otras marcas viales como flechas o separaciones de carril»): bajo cada paso de cebra y cada isleta o
+  cuña cebreada va asfalto liso que tapa las rayas de los carriles, y se quitan las flechas, los STOP y los «ceda» que
+  caían dentro (598 zonas, 154 marcas quitadas).</li>
+</ul>
 <h2>1.3.9 — 2026-11-11 — Alpha 1.3.9: terreno y tejados con texturas de Poly Haven</h2>
 <ul>
 <li><strong>Terreno</strong> (descampados, parques, laderas): sobre el color del mapa, el grano de una foto de tierra seca con piedras

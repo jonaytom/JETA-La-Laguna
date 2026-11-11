@@ -443,6 +443,7 @@ function trinidadParking() {
     ])
       for (const ds of [-6, 6]) {
         const p = c.at(j.s + ds);
+        markClear(p.x, p.z, p.ux, p.uz, 3.2, c.w - 0.4); // v1.4.0: no lane lines nor arrows under it (04f_cebreados.js)
         triDecal(p.x, p.z, p.ux, p.uz, 3.2, c.w - 0.4, (x, w, h, k) => zebra(x, w, h, k));
       }
     const pzr = DATA.R[b.ri][4];
@@ -452,6 +453,7 @@ function trinidadParking() {
       uz = pzr[nxt + 1] - pzr[st + 1],
       Lp = Math.hypot(ux, uz) || 1;
     const q = [b.px + (ux / Lp) * (T.B.w / 2 + 3.5), b.pz + (uz / Lp) * (T.B.w / 2 + 3.5)];
+    markClear(q[0], q[1], ux / Lp, uz / Lp, 3.2, DATA.R[b.ri][2] - 0.4);
     triDecal(q[0], q[1], ux / Lp, uz / Lp, 3.2, DATA.R[b.ri][2] - 0.4, (x, w, h, k) => zebra(x, w, h, k));
   }
 }

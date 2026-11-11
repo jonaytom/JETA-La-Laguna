@@ -135,6 +135,16 @@ const TEX = {};
     TEX.grassC = cb;
     TEX.grass = canvasTex(cb);
   }
+  // ---------------- basalt (v1.4.0: the grain of the walls of basalt, a photo of Poly Haven when it loads; plain grey till then)
+  {
+    const c = mkCanvas(128, 128),
+      x = c.getContext('2d');
+    noiseFill(x, 128, 128, [100, 100, 100], 30, 91, 2);
+    const cb = mkCanvas(512, 512);
+    cb.getContext('2d').drawImage(c, 0, 0, 512, 512);
+    TEX.basaltC = cb;
+    TEX.basalt = canvasTex(cb);
+  }
   // ---------------- dirt
   {
     const c = mkCanvas(256, 256),
@@ -783,7 +793,8 @@ const GROUND = { listo: 0 };
     ['cesped', TEX.grassC, TEX.grass],
     ['tierra', TEX.dirtC, TEX.dirt], // v1.3.9: brown_mud_dry (tracks and paths; and the open ground of the terrain, 04_world.js)
     ['teja', TEX.roofTileC, TEX.roofTile], // v1.3.9: clay_roof_tiles_02, teja árabe (2,5 m: hipRoof)
-    ['azotea', TEX.roofFlatC, TEX.roofFlat] // v1.3.9: concrete_floor_02, light (4 m)
+    ['azotea', TEX.roofFlatC, TEX.roofFlat], // v1.3.9: concrete_floor_02, light (4 m)
+    ['basalto', TEX.basaltC, TEX.basalt] // v1.4.0: rock_wall_08, grey (2 m: stoneWorld)
   ]) {
     if (!S[k] || !c) continue;
     const im = new Image();
@@ -795,6 +806,36 @@ const GROUND = { listo: 0 };
     im.src = S[k];
   }
 })();
+/** v1.4.0 (Jonay: «sigue con las texturas»): stone walls get the grain of the photo of basalt, laid by world position
+ *  (on the face the wall looks at: no UVs needed), multiplying their own colour (divided by the photo's mean, so the
+ *  tint stays). darkOnly: only where the colour is dark (the basalt walls of cuttings, retaining walls), not on the
+ *  white kerbs and trims that share the material. 2 m per tile. */
+function stoneWorld(mat, darkOnly) {
+  mat.onBeforeCompile = (sh) => {
+    sh.uniforms.uStone = { value: TEX.basalt };
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vSW; varying vec3 vSN;')
+      .replace(
+        '#include <worldpos_vertex>',
+        '#include <worldpos_vertex>\nvSW = (modelMatrix * vec4(transformed, 1.0)).xyz; vSN = normalize(mat3(modelMatrix) * objectNormal);'
+      );
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nuniform sampler2D uStone; varying vec3 vSW; varying vec3 vSN;')
+      .replace(
+        '#include <color_fragment>',
+        `#include <color_fragment>
+        {
+          vec3 an = abs(vSN);
+          vec2 suv = an.y > 0.7 ? vSW.xz : (an.x > an.z ? vSW.zy : vSW.xy);
+          vec3 st = texture2D(uStone, suv / 2.0).rgb / 0.13;
+          float k = ${darkOnly ? 'smoothstep(0.42, 0.22, dot(diffuseColor.rgb, vec3(0.333)))' : '1.0'};
+          diffuseColor.rgb *= mix(vec3(1.0), clamp(st, 0.0, 2.6), 0.9 * k);
+        }`
+      );
+  };
+  mat.customProgramCacheKey = () => 'stoneWorld' + (darkOnly ? 1 : 0);
+  mat.needsUpdate = true;
+}
 const PLASTER = { on: { value: 0 }, det: null, n1: null, n2: null };
 (function loadPlaster() {
   const P = DATA.PLASTER;

@@ -22,6 +22,7 @@ JOBS = {'asfalto': ('asphalt_floor_1k.jpg', 4, 512, (72, 73, 76), 1.35, 0.9), 'a
         'adoquin': ('square_cobblestone_1k.jpg', 2, 512, (82, 81, 80), 1.9, 0.5), 'cesped': ('grass_ground_1k.jpg', 2, 256, (88, 118, 60), 1.0, 0.0),
         'tierra': ('brown_mud_dry_1k.jpg', 2, 512, (128, 104, 78), 1.15, 0.2)}  # (v1.3.9: descampados y caminos de tierra)
 JOBS['teja'] = ('clay_roof_tiles_02_1k.jpg', 1, 512, (158, 84, 58), 1.0, 0.0)  # (v1.3.9: teja árabe, 2,5 m)
+JOBS['basalto'] = ('rock_wall_08_1k.jpg', 1, 512, (100, 100, 100), 1.25, 0.85)  # (v1.4.0: muros y taludes de basalto, 2 m)
 JOBS['azotea'] = ('concrete_floor_02_1k.jpg', 2, 512, (178, 170, 160), 0.75, 0.7)  # (v1.3.9: azoteas, 4 m)
 for k, (f, N, s, mean, c, g) in JOBS.items():
     match(tile(os.path.join(SRC, f), N, s), mean, c, g).resize(((512 if s > 300 else 256),) * 2, Image.LANCZOS).save(os.path.join(OUT, 'suelo_%s.jpg' % k), quality=82, optimize=True)

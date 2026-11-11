@@ -1088,6 +1088,7 @@ function corrRoundaboutMarks() {
       const nx = -dz,
         nz = dx,
         hw = A.w / 2 - 0.3;
+      markClear(x, z, dx, dz, 3.0, A.w - 0.4); // v1.4.0: no lane line or arrow under the zebra crossing
       for (let o = -hw + 0.25; o <= hw - 0.25; o += 1.0) line(x + nx * o, z + nz * o, dx, dz, 3.0, 0.5);
     }
     rbArrows(rb, arms); // v1.3.6: lane arrows on the entries of two lanes (04f_cebreados.js)

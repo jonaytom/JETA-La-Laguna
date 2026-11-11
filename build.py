@@ -62,7 +62,7 @@ if os.path.exists('data/terreno_mdt.json'):
     print('terreno: MDT del IGN en', len(_T['i']), 'celdas')
 import base64
 # v1.3.7: the ground from photos of Poly Haven (CC0), tiled and toned (assets/textures/suelo/, tests/herramientas/suelo_polyhaven.py)
-D['SUELO']={k:'data:image/jpeg;base64,'+base64.b64encode(open('assets/textures/suelo/suelo_%s.jpg'%k,'rb').read()).decode() for k in ['asfalto','acera','adoquin','cesped','tierra','teja','azotea'] if os.path.exists('assets/textures/suelo/suelo_%s.jpg'%k)}
+D['SUELO']={k:'data:image/jpeg;base64,'+base64.b64encode(open('assets/textures/suelo/suelo_%s.jpg'%k,'rb').read()).decode() for k in ['asfalto','acera','adoquin','cesped','tierra','teja','azotea','basalto'] if os.path.exists('assets/textures/suelo/suelo_%s.jpg'%k)}
 D['PLASTER']=['data:image/jpeg;base64,'+base64.b64encode(open(f,'rb').read()).decode() for f in ['assets/textures/plaster_det.jpg','assets/textures/plaster_n1.jpg','assets/textures/plaster_n2.jpg']]
 data=json.dumps(D,separators=(',',':'),ensure_ascii=False).replace('</','<\\/')
 # fonts inside the HTML (audit P2.3: the game works offline) — latin subsets in data/fonts.json

@@ -174,6 +174,15 @@ function buildTrafficSigns() {
 /** (v1.1.7, code quality) part of buildTrafficSigns: --- painted markings (one merged mesh) */
 function buildTrafficSignsPart6(MK) {
   // --- painted markings (one merged mesh)
+  // v1.4.0 (Jonay): no arrow, STOP or «ceda» painted on a zebra crossing or a hatched area (04f_cebreados.js)
+  if (typeof inClear === 'function')
+    for (let i = MK.length - 1; i >= 0; i--) {
+      const k = MK[i];
+      if ((k[0] === 0 || k[0] === 1 || k[0] === 2 || k[0] === 4 || k[0] === 5) && inClear(k[1], k[2], k[5] / 2)) {
+        MK.splice(i, 1);
+        window.__clearQuitadas = (window.__clearQuitadas || 0) + 1;
+      }
+    }
   if (typeof CORR_MARKS !== 'undefined') MK.push(...CORR_MARKS); // v1.2.0: the marks of the corridor zones (04c_corredores.js), with their own height
   if (MK.length) {
     const pos = [],
