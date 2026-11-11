@@ -10,6 +10,7 @@ function buildCustomHouses() {
   root.name = 'casas';
   const white = new THREE.MeshStandardMaterial({ map: M.plaster.map, color: 0xffffff, roughness: 0.9 });
   white.color.setRGB(1.08, 1.09, 1.1);
+  plasterWorld(white, 0, 1.5, 'enlucido', 2.4); // v1.4.1: Poly Haven plaster
   const grey = new THREE.MeshStandardMaterial({ color: 0x6d7378, roughness: 0.6, metalness: 0.2 });
   const frame = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.5 });
   const glass = new THREE.MeshStandardMaterial({ color: 0x2b3640, roughness: 0.15, metalness: 0.5 });

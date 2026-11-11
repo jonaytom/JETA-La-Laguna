@@ -448,7 +448,7 @@ function buildWallsPart1() {
     hedge: [1.4, 0.9, 'seto']
   };
   const MAT = {
-    cal: new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.95 }),
+    cal: plasterWorld(new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.95 }), 1, 0.95, 'cal', 2.4), // v1.4.1: whitewash (Poly Haven plaster)
     piedra: (() => {
       const m = new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 1 });
       stoneWorld(m, false); // v1.4.0: stone walls with the photo of basalt (02_textures.js)

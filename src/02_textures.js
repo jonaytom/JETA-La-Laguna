@@ -810,9 +810,11 @@ const GROUND = { listo: 0 };
  *  (on the face the wall looks at: no UVs needed), multiplying their own colour (divided by the photo's mean, so the
  *  tint stays). darkOnly: only where the colour is dark (the basalt walls of cuttings, retaining walls), not on the
  *  white kerbs and trims that share the material. 2 m per tile. */
-function stoneWorld(mat, darkOnly) {
+function stoneWorld(mat, darkOnly, amt = 0.9) {
+  mat.userData.texw = 'piedra';
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.uStone = { value: TEX.basalt };
+    sh.uniforms.uTexW = TEXW;
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', '#include <common>\nvarying vec3 vSW; varying vec3 vSN;')
       .replace(
@@ -820,7 +822,7 @@ function stoneWorld(mat, darkOnly) {
         '#include <worldpos_vertex>\nvSW = (modelMatrix * vec4(transformed, 1.0)).xyz; vSN = normalize(mat3(modelMatrix) * objectNormal);'
       );
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform sampler2D uStone; varying vec3 vSW; varying vec3 vSN;')
+      .replace('#include <common>', '#include <common>\nuniform sampler2D uStone; uniform float uTexW; varying vec3 vSW; varying vec3 vSN;')
       .replace(
         '#include <color_fragment>',
         `#include <color_fragment>
@@ -829,14 +831,15 @@ function stoneWorld(mat, darkOnly) {
           vec2 suv = an.y > 0.7 ? vSW.xz : (an.x > an.z ? vSW.zy : vSW.xy);
           vec3 st = texture2D(uStone, suv / 2.0).rgb / 0.13;
           float k = ${darkOnly ? 'smoothstep(0.42, 0.22, dot(diffuseColor.rgb, vec3(0.333)))' : '1.0'};
-          diffuseColor.rgb *= mix(vec3(1.0), clamp(st, 0.0, 2.6), 0.9 * k);
+          diffuseColor.rgb *= mix(vec3(1.0), clamp(st, 0.0, 2.6), ${amt.toFixed(2)} * k * uTexW);
         }`
       );
   };
-  mat.customProgramCacheKey = () => 'stoneWorld' + (darkOnly ? 1 : 0);
+  mat.customProgramCacheKey = () => 'stoneWorld' + (darkOnly ? 1 : 0) + amt;
   mat.needsUpdate = true;
 }
 const PLASTER = { on: { value: 0 }, det: null, n1: null, n2: null };
+const TEXW = { value: 1 }; // v1.4.1: 0 turns off the photo grain of stoneWorld/plasterWorld (before/after photos: foto_texturas.py)
 (function loadPlaster() {
   const P = DATA.PLASTER;
   if (!P) return;
@@ -859,3 +862,40 @@ const PLASTER = { on: { value: 0 }, det: null, n1: null, n2: null };
   PLASTER.n1 = mk(P[1]);
   PLASTER.n2 = mk(P[2]);
 })();
+/** v1.4.1 (Jonay: «sigue con las texturas»): whitewashed walls, church plaster and the white of the hand-made houses with
+ *  the same Poly Haven plaster as the façades (PLASTER.det: R stucco liso, G enlucido pintado, B enlucido gastado), laid by
+ *  world position like stoneWorld (no UVs needed) and multiplying their own colour. 3.2 m per tile; fades in when the
+ *  photo has loaded. kind: 0, 1 or 2 (the channel). */
+function plasterWorld(mat, kind = 1, amt = 1.1, tag = 'enlucido', tile = 3.2) {
+  const ch = ['r', 'g', 'b'][kind] || 'g';
+  mat.userData.texw = tag;
+  mat.onBeforeCompile = (sh) => {
+    sh.uniforms.plOn = PLASTER.on;
+    sh.uniforms.uTexW = TEXW;
+    sh.uniforms.plDet = { value: PLASTER.det };
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vPW; varying vec3 vPN;')
+      .replace(
+        '#include <worldpos_vertex>',
+        '#include <worldpos_vertex>\nvPW = (modelMatrix * vec4(transformed, 1.0)).xyz; vPN = normalize(mat3(modelMatrix) * objectNormal);'
+      );
+    sh.fragmentShader = sh.fragmentShader
+      .replace(
+        '#include <common>',
+        '#include <common>\nuniform float plOn; uniform float uTexW; uniform sampler2D plDet; varying vec3 vPW; varying vec3 vPN;'
+      )
+      .replace(
+        '#include <color_fragment>',
+        `#include <color_fragment>
+        {
+          vec3 an = abs(vPN);
+          vec2 puv = an.y > 0.7 ? vPW.xz : (an.x > an.z ? vPW.zy : vPW.xy);
+          float pd = texture2D(plDet, puv / ${tile.toFixed(2)}).${ch};
+          diffuseColor.rgb *= mix(1.0, 1.0 + (pd - 0.5) * ${amt.toFixed(2)}, plOn * uTexW);
+        }`
+      );
+  };
+  mat.customProgramCacheKey = () => 'plasterWorld' + kind + amt + tile;
+  mat.needsUpdate = true;
+  return mat;
+}

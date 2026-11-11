@@ -205,7 +205,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="tb" id="tbS">CORRER</div>
 <div class="tb" id="tbM">MAPA</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">Alpha 1.4.0</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">Alpha 1.4.1</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -1935,9 +1935,11 @@ const GROUND = { listo: 0 };
  *  (on the face the wall looks at: no UVs needed), multiplying their own colour (divided by the photo's mean, so the
  *  tint stays). darkOnly: only where the colour is dark (the basalt walls of cuttings, retaining walls), not on the
  *  white kerbs and trims that share the material. 2 m per tile. */
-function stoneWorld(mat, darkOnly) {
+function stoneWorld(mat, darkOnly, amt = 0.9) {
+  mat.userData.texw = 'piedra';
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.uStone = { value: TEX.basalt };
+    sh.uniforms.uTexW = TEXW;
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', '#include <common>\nvarying vec3 vSW; varying vec3 vSN;')
       .replace(
@@ -1945,7 +1947,7 @@ function stoneWorld(mat, darkOnly) {
         '#include <worldpos_vertex>\nvSW = (modelMatrix * vec4(transformed, 1.0)).xyz; vSN = normalize(mat3(modelMatrix) * objectNormal);'
       );
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform sampler2D uStone; varying vec3 vSW; varying vec3 vSN;')
+      .replace('#include <common>', '#include <common>\nuniform sampler2D uStone; uniform float uTexW; varying vec3 vSW; varying vec3 vSN;')
       .replace(
         '#include <color_fragment>',
         `#include <color_fragment>
@@ -1954,14 +1956,15 @@ function stoneWorld(mat, darkOnly) {
           vec2 suv = an.y > 0.7 ? vSW.xz : (an.x > an.z ? vSW.zy : vSW.xy);
           vec3 st = texture2D(uStone, suv / 2.0).rgb / 0.13;
           float k = ${darkOnly ? 'smoothstep(0.42, 0.22, dot(diffuseColor.rgb, vec3(0.333)))' : '1.0'};
-          diffuseColor.rgb *= mix(vec3(1.0), clamp(st, 0.0, 2.6), 0.9 * k);
+          diffuseColor.rgb *= mix(vec3(1.0), clamp(st, 0.0, 2.6), ${amt.toFixed(2)} * k * uTexW);
         }`
       );
   };
-  mat.customProgramCacheKey = () => 'stoneWorld' + (darkOnly ? 1 : 0);
+  mat.customProgramCacheKey = () => 'stoneWorld' + (darkOnly ? 1 : 0) + amt;
   mat.needsUpdate = true;
 }
 const PLASTER = { on: { value: 0 }, det: null, n1: null, n2: null };
+const TEXW = { value: 1 }; // v1.4.1: 0 turns off the photo grain of stoneWorld/plasterWorld (before/after photos: foto_texturas.py)
 (function loadPlaster() {
   const P = DATA.PLASTER;
   if (!P) return;
@@ -1984,6 +1987,43 @@ const PLASTER = { on: { value: 0 }, det: null, n1: null, n2: null };
   PLASTER.n1 = mk(P[1]);
   PLASTER.n2 = mk(P[2]);
 })();
+/** v1.4.1 (Jonay: «sigue con las texturas»): whitewashed walls, church plaster and the white of the hand-made houses with
+ *  the same Poly Haven plaster as the façades (PLASTER.det: R stucco liso, G enlucido pintado, B enlucido gastado), laid by
+ *  world position like stoneWorld (no UVs needed) and multiplying their own colour. 3.2 m per tile; fades in when the
+ *  photo has loaded. kind: 0, 1 or 2 (the channel). */
+function plasterWorld(mat, kind = 1, amt = 1.1, tag = 'enlucido', tile = 3.2) {
+  const ch = ['r', 'g', 'b'][kind] || 'g';
+  mat.userData.texw = tag;
+  mat.onBeforeCompile = (sh) => {
+    sh.uniforms.plOn = PLASTER.on;
+    sh.uniforms.uTexW = TEXW;
+    sh.uniforms.plDet = { value: PLASTER.det };
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vPW; varying vec3 vPN;')
+      .replace(
+        '#include <worldpos_vertex>',
+        '#include <worldpos_vertex>\nvPW = (modelMatrix * vec4(transformed, 1.0)).xyz; vPN = normalize(mat3(modelMatrix) * objectNormal);'
+      );
+    sh.fragmentShader = sh.fragmentShader
+      .replace(
+        '#include <common>',
+        '#include <common>\nuniform float plOn; uniform float uTexW; uniform sampler2D plDet; varying vec3 vPW; varying vec3 vPN;'
+      )
+      .replace(
+        '#include <color_fragment>',
+        `#include <color_fragment>
+        {
+          vec3 an = abs(vPN);
+          vec2 puv = an.y > 0.7 ? vPW.xz : (an.x > an.z ? vPW.zy : vPW.xy);
+          float pd = texture2D(plDet, puv / ${tile.toFixed(2)}).${ch};
+          diffuseColor.rgb *= mix(1.0, 1.0 + (pd - 0.5) * ${amt.toFixed(2)}, plOn * uTexW);
+        }`
+      );
+  };
+  mat.customProgramCacheKey = () => 'plasterWorld' + kind + amt + tile;
+  mat.needsUpdate = true;
+  return mat;
+}
 
 // ============ static collision grid ============
 const COL = (() => {
@@ -13114,14 +13154,17 @@ function buildSkyPart1() {
 
 // ============ historic churches: Catedral, La Concepción & the rest ============
 const leadMat = new THREE.MeshStandardMaterial({ color: 0x6f7a80, roughness: 0.45, metalness: 0.55 });
-const plasterMat = new THREE.MeshStandardMaterial({ color: 0xf4f1e8, roughness: 0.9 });
+const plasterMat = plasterWorld(new THREE.MeshStandardMaterial({ color: 0xf4f1e8, roughness: 0.9 }), 1, 1.7, 'iglesia', 2.4); // v1.4.1: Poly Haven plaster
 const greyStone = new THREE.MeshStandardMaterial({ color: 0xb9b4aa, roughness: 0.85 });
 const bellMat = new THREE.MeshStandardMaterial({ color: 0x7a5a2a, roughness: 0.35, metalness: 0.8 });
 function stoneFor(w, h) {
   const t = stoneTex.clone();
   t.repeat.set(Math.max(1, w / 3), Math.max(1, h / 3));
   t.needsUpdate = true;
-  return new THREE.MeshStandardMaterial({ map: t, roughness: 0.92 });
+  const m = new THREE.MeshStandardMaterial({ map: t, roughness: 0.92 });
+  stoneWorld(m, false, 0.85); // v1.4.1: the grain of the photo of basalt over the painted ashlar
+  m.userData.texw = 'canteria';
+  return m;
 }
 function centroidOfNamedWays(name) {
   let sx = 0,
@@ -19317,6 +19360,9 @@ function concMaterialsPart1() {
     });
   CONCM.basalt = new THREE.MeshStandardMaterial({ map: ashlar(true), roughness: 0.95 });
   CONCM.stone = new THREE.MeshStandardMaterial({ map: ashlar(false), roughness: 0.9 }); // lighter mouldings / cornices
+  stoneWorld(CONCM.basalt, false, 0.85); // v1.4.1: the grain of the photo of basalt over the painted blocks (02_textures.js)
+  stoneWorld(CONCM.stone, false, 0.7);
+  CONCM.basalt.userData.texw = CONCM.stone.userData.texw = 'canteria';
   CONCM.plaster = new THREE.MeshStandardMaterial({
     map: tex(256, 256, (x, W, H) => {
       x.fillStyle = '#efe5cc';
@@ -19329,6 +19375,8 @@ function concMaterialsPart1() {
     roughness: 0.92
   });
   CONCM.white = new THREE.MeshStandardMaterial({ map: CONCM.plaster.map, color: 0xffffff, roughness: 0.9 });
+  plasterWorld(CONCM.plaster, 1, 1.7, 'iglesia', 2.4); // v1.4.1: Poly Haven plaster (02_textures.js)
+  plasterWorld(CONCM.white, 0, 1.5, 'enlucido', 2.4);
   return { tex, R, ashlar };
 }
 
@@ -20031,6 +20079,7 @@ function buildCustomHouses() {
   root.name = 'casas';
   const white = new THREE.MeshStandardMaterial({ map: M.plaster.map, color: 0xffffff, roughness: 0.9 });
   white.color.setRGB(1.08, 1.09, 1.1);
+  plasterWorld(white, 0, 1.5, 'enlucido', 2.4); // v1.4.1: Poly Haven plaster
   const grey = new THREE.MeshStandardMaterial({ color: 0x6d7378, roughness: 0.6, metalness: 0.2 });
   const frame = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.5 });
   const glass = new THREE.MeshStandardMaterial({ color: 0x2b3640, roughness: 0.15, metalness: 0.5 });
@@ -25783,7 +25832,7 @@ function buildWallsPart1() {
     hedge: [1.4, 0.9, 'seto']
   };
   const MAT = {
-    cal: new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.95 }),
+    cal: plasterWorld(new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.95 }), 1, 0.95, 'cal', 2.4), // v1.4.1: whitewash (Poly Haven plaster)
     piedra: (() => {
       const m = new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 1 });
       stoneWorld(m, false); // v1.4.0: stone walls with the photo of basalt (02_textures.js)
@@ -63088,6 +63137,7 @@ function preloadMinigameImages() {
 boot();
 window.__bg = [bgScene, bgCamera];
 window.__dbg = {
+  TEXW,
   WALLS,
   parkStats,
   parkSides,

@@ -956,6 +956,7 @@ function preloadMinigameImages() {
 boot();
 window.__bg = [bgScene, bgCamera];
 window.__dbg = {
+  TEXW,
   WALLS,
   parkStats,
   parkSides,

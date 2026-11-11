@@ -1,13 +1,16 @@
 // ============ historic churches: Catedral, La Concepción & the rest ============
 const leadMat = new THREE.MeshStandardMaterial({ color: 0x6f7a80, roughness: 0.45, metalness: 0.55 });
-const plasterMat = new THREE.MeshStandardMaterial({ color: 0xf4f1e8, roughness: 0.9 });
+const plasterMat = plasterWorld(new THREE.MeshStandardMaterial({ color: 0xf4f1e8, roughness: 0.9 }), 1, 1.7, 'iglesia', 2.4); // v1.4.1: Poly Haven plaster
 const greyStone = new THREE.MeshStandardMaterial({ color: 0xb9b4aa, roughness: 0.85 });
 const bellMat = new THREE.MeshStandardMaterial({ color: 0x7a5a2a, roughness: 0.35, metalness: 0.8 });
 function stoneFor(w, h) {
   const t = stoneTex.clone();
   t.repeat.set(Math.max(1, w / 3), Math.max(1, h / 3));
   t.needsUpdate = true;
-  return new THREE.MeshStandardMaterial({ map: t, roughness: 0.92 });
+  const m = new THREE.MeshStandardMaterial({ map: t, roughness: 0.92 });
+  stoneWorld(m, false, 0.85); // v1.4.1: the grain of the photo of basalt over the painted ashlar
+  m.userData.texw = 'canteria';
+  return m;
 }
 function centroidOfNamedWays(name) {
   let sx = 0,

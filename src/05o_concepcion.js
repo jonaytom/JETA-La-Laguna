@@ -216,6 +216,9 @@ function concMaterialsPart1() {
     });
   CONCM.basalt = new THREE.MeshStandardMaterial({ map: ashlar(true), roughness: 0.95 });
   CONCM.stone = new THREE.MeshStandardMaterial({ map: ashlar(false), roughness: 0.9 }); // lighter mouldings / cornices
+  stoneWorld(CONCM.basalt, false, 0.85); // v1.4.1: the grain of the photo of basalt over the painted blocks (02_textures.js)
+  stoneWorld(CONCM.stone, false, 0.7);
+  CONCM.basalt.userData.texw = CONCM.stone.userData.texw = 'canteria';
   CONCM.plaster = new THREE.MeshStandardMaterial({
     map: tex(256, 256, (x, W, H) => {
       x.fillStyle = '#efe5cc';
@@ -228,6 +231,8 @@ function concMaterialsPart1() {
     roughness: 0.92
   });
   CONCM.white = new THREE.MeshStandardMaterial({ map: CONCM.plaster.map, color: 0xffffff, roughness: 0.9 });
+  plasterWorld(CONCM.plaster, 1, 1.7, 'iglesia', 2.4); // v1.4.1: Poly Haven plaster (02_textures.js)
+  plasterWorld(CONCM.white, 0, 1.5, 'enlucido', 2.4);
   return { tex, R, ashlar };
 }
 
