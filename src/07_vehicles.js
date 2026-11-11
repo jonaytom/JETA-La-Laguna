@@ -1112,7 +1112,15 @@ function buildParkedPart3(template, cc) {
     m.matrixAutoUpdate = false;
     m.userData.noMerge = true;
     scene.add(m);
-    PARKED.chunks.push({ mesh: m, x: cx / list.length, z: cz / list.length, r: m.boundingSphere.radius });
+    const lod = VMODELS[list[0].type] && VMODELS[list[0].type].lod; // v1.4.3: light version far away (Troceen C33: 11.900 → 1.200 triangles)
+    PARKED.chunks.push({
+      mesh: m,
+      x: cx / list.length,
+      z: cz / list.length,
+      r: m.boundingSphere.radius,
+      hi: lod ? m.geometry : null,
+      lo: lod ? geoOfModel(lod) : null
+    });
   }
 }
 /** (v1.1.7, code quality) part of buildParked: simplified per-model template: body (paint flagged) + 4 low-poly wheels */
@@ -1231,8 +1239,11 @@ function buildParkedPart1() {
 function updateParkedLOD() {
   if (!PARKED.chunks) return;
   const far = Q.far * 0.45 + 60;
-  /* v1.0.0: ~580 m in «alta» (a parked car there is 3 pixels) */ for (const c of PARKED.chunks)
-    c.mesh.visible = Math.hypot(c.x - camera.position.x, c.z - camera.position.z) - (c.r || 0) < far;
+  /* v1.0.0: ~580 m in «alta» (a parked car there is 3 pixels) */ for (const c of PARKED.chunks) {
+    const d = Math.hypot(c.x - camera.position.x, c.z - camera.position.z) - (c.r || 0);
+    c.mesh.visible = d < far;
+    if (c.lo) c.mesh.geometry = d > 90 ? c.lo : c.hi; // v1.4.3: our own models, light version beyond ~90 m
+  }
 }
 function parkedNear(x, z, r) {
   const res = [];

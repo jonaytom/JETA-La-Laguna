@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.2</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.3</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,19 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.4.3 — 2026-11-11 — Alpha 1.4.3: el Troceen C33, primer coche propio</h2>
+<ul>
+<li><strong>Troceen C33</strong> (Jonay: «diseñar un coche nuevo en Blender… un Citroën ë-C3 como el mío»; nombre de Jonay): utilitario
+  eléctrico tipo SUV pequeño, parodia, modelado desde cero en Blender con las medidas sacadas de las fotos del coche de
+  Jonay (perfil medido píxel a píxel; morro corto y achatado). Techo, pilares y plásticos negros; el color de la
+  carrocería se sortea como en el resto (blancos y grises, negro, azul, rojo, arena, verde, naranja…).</li>
+<li>Tres versiones: la detallada (103.000 triángulos, para fotos) en <code>E:\Claude\GTA La Laguna\Blender\coche\troceen_c33.blend</code>;
+    la del juego (11.900) y una ligera (1.200) para los aparcados lejanos (más allá de ~90 m). Las dos del juego van en
+    <code>data/kenney_cars.json</code> (bases <code>troceen</code> y <code>troceen-lejos</code>).</li>
+<li>Sustituye al Limonero Ce-Tres (ya no sale) y sale algo más (peso 7): unos 140 aparcados en el mapa y en el tráfico.</li>
+<li>Los pilotos de freno se encienden sobre sus propios pilotos (<code>model.tail</code>).</li>
+<li>Herramienta <code>foto_troceen.py</code> (lista <code>troceen143</code>).</li>
+</ul>
 <h2>1.4.2 — 2026-11-11 — Alpha 1.4.2: menos programas de shader</h2>
 <ul>
 <li>La auditoría de la 1.4.1 avisó de 8 programas de shader más (67 → 75): cada fuerza y tamaño del grano de piedra y de

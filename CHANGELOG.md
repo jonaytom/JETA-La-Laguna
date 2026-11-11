@@ -3,6 +3,18 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.3 — 2026-11-11 — Alpha 1.4.3: el Troceen C33, primer coche propio
+- **Troceen C33** (Jonay: «diseñar un coche nuevo en Blender… un Citroën ë-C3 como el mío»; nombre de Jonay): utilitario
+  eléctrico tipo SUV pequeño, parodia, modelado desde cero en Blender con las medidas sacadas de las fotos del coche de
+  Jonay (perfil medido píxel a píxel; morro corto y achatado). Techo, pilares y plásticos negros; el color de la
+  carrocería se sortea como en el resto (blancos y grises, negro, azul, rojo, arena, verde, naranja…).
+  - Tres versiones: la detallada (103.000 triángulos, para fotos) en `E:\Claude\GTA La Laguna\Blender\coche\troceen_c33.blend`;
+    la del juego (11.900) y una ligera (1.200) para los aparcados lejanos (más allá de ~90 m). Las dos del juego van en
+    `data/kenney_cars.json` (bases `troceen` y `troceen-lejos`).
+  - Sustituye al Limonero Ce-Tres (ya no sale) y sale algo más (peso 7): unos 140 aparcados en el mapa y en el tráfico.
+  - Los pilotos de freno se encienden sobre sus propios pilotos (`model.tail`).
+- Herramienta `foto_troceen.py` (lista `troceen143`).
+
 ## 1.4.2 — 2026-11-11 — Alpha 1.4.2: menos programas de shader
 - La auditoría de la 1.4.1 avisó de 8 programas de shader más (67 → 75): cada fuerza y tamaño del grano de piedra y de
   enlucido compilaba su propio programa. Ahora van como valores del material (uniforms): un programa para todo el

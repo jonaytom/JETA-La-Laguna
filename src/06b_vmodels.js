@@ -14,7 +14,10 @@ sandero|Datilera Sendero|Utilitario|sedan|compact|4.09|1.85|1.5|6
 clio|Reinona Tío|Utilitario|sedan|compact|4.05|1.8|1.44|5
 p208|Pijó 802|Utilitario|sedan|compact|4.06|1.75|1.43|4
 corsa|Copal Corsario|Utilitario|sedan|compact|4.06|1.77|1.43|4
-c3|Limonero Ce-Tres|Utilitario|sedan|compact|3.99|1.75|1.47|3
+c3|Limonero Ce-Tres|Utilitario|sedan|compact|3.99|1.75|1.47|0
+# v1.4.3: modelos propios hechos en Blender (Jonay: «iremos sustituyendo poco a poco a los actuales con los nuestros»); el Troceen C33 sustituye al Limonero Ce-Tres
+troceen|Troceen C33|Crossover|troceen|suv|3.968|1.765|1.62|7
+troceenL|Troceen C33|Crossover|troceen-lejos|suv|3.968|1.765|1.62|0
 f500|Fiao Quinientitos|Urbano|sedan|compact|3.57|1.63|1.49|4
 # compactos / berlinas
 leon|Butaca Leona|Compacto|hatchback-sports|sedan|4.28|1.8|1.46|5
@@ -89,6 +92,10 @@ VMODELS_RAW.forEach(
   ([id, name, cat, base, phys, L, W, H, w]) =>
     (VMODELS[id] = { id, name, cat, base, phys, L: +(L * CAR_SCALE).toFixed(3), W: +(W * CAR_SCALE).toFixed(3), H: +(H * CAR_SCALE).toFixed(3), w })
 );
+// v1.4.3: our own models (Blender, assets/modelos/): the light version for far parked cars, and where the tail lights go
+VMODELS.troceen.lod = 'troceenL';
+VMODELS.troceen.tail = [0.68, 0.95];
+VMODELS.troceenL.tail = VMODELS.troceen.tail;
 const VTYPES2 = {
   truck: { name: 'Camión', L: 6.5, W: 2.1, H: 2.8, maxV: 30, acc: 5, grip: 6, mass: 3, prof: 'van' },
   moto: { name: 'Moto', L: 2.0, W: 0.8, H: 1.1, maxV: 36, acc: 12, grip: 9, mass: 0.5, prof: 'sedan' }
@@ -529,6 +536,15 @@ function makeKenneyMeshPart2(model, G, halfW, W, body, tl) {
   for (const x of [-1, 1]) {
     const t = new THREE.Mesh(shBox(0.26, 0.1, 0.04), tailMat);
     t.position.set(x * Math.max(0.2, rhw - 0.2), tly, rz + 0.012);
+    if (model.tail) {
+      // v1.4.3: our own models say where their tail lights are (the brake light goes on top of them)
+      const ty = model.tail[1];
+      let tz = G.zmin;
+      for (let i = 0; i < G.probe.length; i += 3)
+        if (Math.abs(G.probe[i + 1] - ty) < 0.04 && Math.abs(Math.abs(G.probe[i]) - model.tail[0]) < 0.1)
+          tz = Math.min(tz === G.zmin ? 1e9 : tz, G.probe[i + 2]);
+      t.position.set(x * model.tail[0], ty, tz - 0.008);
+    }
     body.add(t);
     tl.push(t);
   }

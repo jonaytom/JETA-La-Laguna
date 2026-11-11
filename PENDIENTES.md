@@ -10,6 +10,10 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Pendientes por categoría
 
+### Coches propios (Blender)
+
+- [ ] ● **Ir sustituyendo los coches de Kenney por modelos propios** (Jonay, 11-nov: «iremos sustituyendo poco a poco a los actuales con los nuestros»): hay 66 modelos pero salen de 15 formas base de Kenney; con 6–8 propios (utilitario, compacto, SUV mediano, furgoneta, pick-up, camión) se cubre casi todo. Hecho el primero: Troceen C33 (v1.4.3). Cada uno: detallado + versión de juego de ~10.000–12.000 triángulos + lejana de ~1.200, exportados con `car_export` (Blender) a `data/kenney_cars.json`.
+
 ### Minijuegos: controles, pausa y sonido
 
 
@@ -830,6 +834,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
         X 243 Z −352, X −291 Z 2699), un servicio del aeropuerto en una ladera de pendiente imposible (X −3247 Z −359).
 
 ### Rendimiento, auditorías y código
+- [ ] ◐ **Pintado 15,3 → 18,1 ms entre la 1.4.0 y la 1.4.2** (auditorías 11-nov; programas 67 → 73): mirar si es el grano de enlucido/piedra (`plasterWorld`/`stoneWorld`, 02_textures.js) o ruido de la medida (en la 1.3.5–1.3.7 subió y volvió a bajar solo). Aviso menor: «futbol» 0,2 → 0,3 ms.
 - [ ] ⚡ **Peleas callejeras con un peatón cualquiera: ~0,14 s al empezar** (v1.2.5, sonda `sonda_maleante_gpu.py`): sus figuras se dibujan al momento (las del jugador y las de los maleantes ya se preparan antes). Se podrían «calentar» las del peatón al acercarte a él.
 - [ ] ⚡ **`huella_mundo_cmp` no es del todo fija** (v1.2.4): salió distinta una vez (161 vértices) y bien las dos siguientes con el mismo código; algo de la carga (gente o coches) entra en la cuenta.
 
@@ -935,7 +940,9 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Hecho
 
-- [x] v1.4.2 **Auditoría 1.4.1: programas de shader 67 → 75** (APTO CON AVISOS; también pintar_ms 15,3 → 17,5): `stoneWorld`/`plasterWorld` compilaban un programa por cada fuerza y tamaño; ahora son uniforms (02_textures.js).
+- [x] v1.4.3 **Troceen C33, primer coche propio hecho en Blender** (Jonay, 11-nov): versión del juego de 11.900 triángulos y lejana de 1.200; sustituye al Limonero Ce-Tres.
+
+- [x] v1.4.2 **Auditoría 1.4.1 (en la 1.4.2 bajan a 73): programas de shader 67 → 75** (APTO CON AVISOS; también pintar_ms 15,3 → 17,5): `stoneWorld`/`plasterWorld` compilaban un programa por cada fuerza y tamaño; ahora son uniforms (02_textures.js).
 
 - [x] v1.4.0 **Nada debajo de los pasos de cebra y cebreados** (Jonay, 11-nov): asfalto liso encima de las rayas de los carriles y sin flechas/STOP/ceda dentro (`markClear`, 04f_cebreados.js; sonda `sonda_pasos_cebra.py`).
 
