@@ -3,6 +3,13 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.3.8 — 2026-11-11 — Alpha 1.3.8: flechas en medio de cada carril
+- **Flechas de dirección centradas en cada carril** (Jonay: «la flecha de dirección superpuesta a la línea discontinua
+  separadora de carriles… las flechas van centradas en los carriles, no en medio de toda la vía»): en las calles de un
+  sentido con dos o más carriles la flecha iba en el centro de la calzada, justo sobre la raya; ahora hay una en medio de
+  cada carril (y en las de doble sentido con dos carriles por sentido, una en cada uno). Los coches del tráfico van por el
+  carril derecho en vez de por el centro.
+
 ## 1.3.7 — 2026-11-11 — Alpha 1.3.7: suelo con texturas de Poly Haven
 - **Texturas reales para el suelo** (Jonay: «ahora que tenemos Blender con Poly, ¿no podrás usar esas texturas y mejorar
   todo en general?»): el asfalto, las aceras, el adoquín del casco y el césped de isletas y parterres son ahora fotos de

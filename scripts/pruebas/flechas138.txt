@@ -1,0 +1,3 @@
+herramientas/foto_vista.py flechas_menceyes 1600 1820 4 1500 1730
+herramientas/foto_vista.py flechas_alto 1560 1780 25 1500 1730
+herramientas/sonda_marcas_aparca.py flechas

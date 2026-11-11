@@ -753,10 +753,35 @@ function edgePark(E) {
   E.park = { sh: (left - right) / 2, we: Math.max(3, E.w - left - right) };
   return E.park;
 }
+/** v1.3.7 (Jonay: «la flecha de dirección superpuesta a la línea discontinua separadora de carriles… las flechas van
+ *  centradas en los carriles, no en medio de toda la vía»): the lanes of an edge for the way dir goes, as offsets of
+ *  their middles to the right of that way (the same count laneMk paints: 04_world.js) */
+function laneCentres(E, dir = 1) {
+  const { sh, we } = edgePark(E);
+  if (E.nl === undefined) {
+    E.nl = E.oneway ? (we >= 6.4 ? 2 : 1) : we >= 12.5 ? 4 : 2;
+    try {
+      const P = E.pts,
+        h = (P.length >> 2) << 1,
+        rn = ROADSEG.nearest((P[Math.max(0, h - 2)] + P[h]) / 2, (P[Math.max(1, h - 1)] + P[h + 1]) / 2, (r) => r[0] <= 12);
+      if (rn && rn.d < DATA.R[rn.ri][2] / 2) E.nl = laneMkPart1(DATA.R[rn.ri]).n;
+    } catch (e) {
+      /* (before the roads are indexed) */
+    }
+  }
+  const out = [];
+  if (E.oneway) for (let k = 0; k < E.nl; k++) out.push(sh * dir + (k + 0.5) * (we / E.nl) - we / 2);
+  else {
+    const n = Math.max(1, E.nl >> 1); // (lanes each way, on the right half)
+    for (let k = 0; k < n; k++) out.push(sh * dir + (k + 0.5) * (we / 2 / n));
+  }
+  return out;
+}
 /** the lateral offset (to the right of the way the car goes, dir) of the middle of its lane */
 function laneOff(E, dir = 1) {
-  const { sh, we } = edgePark(E);
-  return sh * dir + (E.oneway ? (we >= 10 ? 1.8 : 0) : clamp(we / 4, 1.3, we >= 13 ? 2.4 : 1.7));
+  // v1.3.7: the right-hand lane of the way (it was the middle of a one-way street, on the line between two lanes)
+  const L = laneCentres(E, dir);
+  return L[L.length - 1];
 }
 /** the middle of the half of the carriageway for dir (two-way) or of the whole one (one-way), and its width: for the
  *  lines painted across it (stop, «ceda») */

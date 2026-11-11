@@ -283,7 +283,7 @@ function buildTrafficSignsPart4(inc, place, paint) {
     if (nb && nb.length >= 3 && !nb.every((o) => o.oneway)) place('prohib', E, -1, 2.5, 1);
     const na = inc.get(E.a);
     if (na && na.length >= 3 && E.len > 45 && Math.random() < 0.45) place('unico', E, 1, 4, -1);
-    for (let s = 12; s < E.len - 10; s += 38) paint(0, E, 1, s, laneOff(E, 1), 4.5, 1.3);
+    for (let s = 12; s < E.len - 10; s += 38) for (const o of laneCentres(E, 1)) paint(0, E, 1, s, o, 4.5, 1.3); // v1.3.7: one in the middle of each lane
   }
   // two-way streets: lane arrows before busy junctions
   for (const E of GRAPH.edges) {
@@ -293,7 +293,7 @@ function buildTrafficSignsPart4(inc, place, paint) {
       [-1, E.a]
     ]) {
       const l = inc.get(n);
-      if (l && l.length >= 3) paint(0, E, dir, E.len - 16, laneOff(E, dir), 4.5, 1.3);
+      if (l && l.length >= 3) for (const o of laneCentres(E, dir)) paint(0, E, dir, E.len - 16, o, 4.5, 1.3);
     }
   }
   // --- meshes: poles + plates (front and back) as instanced meshes per sign type
