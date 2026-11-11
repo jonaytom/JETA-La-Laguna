@@ -1,0 +1,3 @@
+herramientas/sonda_cebreados.py 10
+herramientas/foto_vista.py h_villa_hilaria 1874 1937 65 1875 1938
+herramientas/foto_vista.py h_verdellada 740 848 50 741 849

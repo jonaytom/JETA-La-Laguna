@@ -581,6 +581,7 @@ corrMotorwayStraighten(); // v1.2.0: the TF-5 from Lora Tamayo to the HUC, strai
 corrMergeBridgeTwins(); // v1.2.4: the bridges drawn as two halves, side by side (Puente de Guajara); here, with the roads at their final widths
 corrSideLanes(); // v1.2.0: the slip lanes beside the TF-5 and the Carretera General beyond them (04c_corredores.js)
 fincaEspana(); // v1.3.4: the three carriageways of the Av. de los Menceyes at Finca España side by side (04e_fincaespana.js)
+ringsMissing(); // v1.3.5: roundabouts whose ring the list of the map missed (La Verdellada) (04f_cebreados.js)
 function mulberry(a) {
   return function () {
     a |= 0;

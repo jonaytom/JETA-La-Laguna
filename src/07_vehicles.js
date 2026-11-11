@@ -727,8 +727,42 @@ class Car {
 }
 
 // ---------- traffic (kinematic along graph)
-function laneOff(E) {
-  return E.oneway ? (E.w >= 10 ? 1.8 : 0) : clamp(E.w / 4, 1.3, E.w >= 13 ? 2.4 : 1.7);
+// v1.3.5 (Jonay: «las separaciones de carriles, las flechas de sentido y demás marcas viales salen mal centradas desde que
+// añadimos aparcamientos»): a street with a parking band on one side (parkSides, 04_world.js) has its lanes between the
+// bands, not centred on its axis: the lane of the traffic and the arrows, stop lines and «ceda» teeth move with them.
+// edgePark(E): {sh, we}: the shift of the middle of the carriageway to the right of the edge's own direction, and its width
+function edgePark(E) {
+  if (E.park) return E.park;
+  E.park = { sh: 0, we: E.w };
+  if (typeof ROADSEG === 'undefined' || !E.pts || E.pts.length < 4) return E.park;
+  const P = E.pts,
+    h = (P.length >> 2) << 1,
+    x = (P[Math.max(0, h - 2)] + P[h]) / 2,
+    z = (P[Math.max(1, h - 1)] + P[h + 1]) / 2,
+    ex = P[h] - P[Math.max(0, h - 2)],
+    ez = P[h + 1] - P[Math.max(1, h - 1)];
+  const rn = ROADSEG.nearest(x, z, (r) => r[0] <= 12);
+  if (!rn) return E.park;
+  const rd = DATA.R[rn.ri];
+  if (rn.d > rd[2] / 2) return E.park;
+  const sides = parkSides(rd).sides;
+  if (!sides.length) return E.park;
+  const same = rn.dx * ex + rn.dz * ez >= 0,
+    right = sides.includes(same ? 1 : -1) ? 2.2 : 0, // (side +1 = u 0 of the ribbon = the right of the way's own direction, as the parked cars)
+    left = sides.includes(same ? -1 : 1) ? 2.2 : 0;
+  E.park = { sh: (left - right) / 2, we: Math.max(3, E.w - left - right) };
+  return E.park;
+}
+/** the lateral offset (to the right of the way the car goes, dir) of the middle of its lane */
+function laneOff(E, dir = 1) {
+  const { sh, we } = edgePark(E);
+  return sh * dir + (E.oneway ? (we >= 10 ? 1.8 : 0) : clamp(we / 4, 1.3, we >= 13 ? 2.4 : 1.7));
+}
+/** the middle of the half of the carriageway for dir (two-way) or of the whole one (one-way), and its width: for the
+ *  lines painted across it (stop, «ceda») */
+function laneHalf(E, dir = 1) {
+  const { sh, we } = edgePark(E);
+  return { off: sh * dir + (E.oneway ? 0 : we / 4), wid: E.oneway ? we : we / 2 };
 }
 // v1.1.0: safety net (Jonay: «esto es súper bug porque impide hacer la misión»): a car that has fallen well below the road
 // it was on, or that cannot move for a while with the throttle down, goes back to the nearest street, in its sense
@@ -746,7 +780,7 @@ function unstuck(car, dt) {
   const E = GRAPH.edges[ne.e],
     fwd = Math.sin(car.h) * ne.dx + Math.cos(car.h) * ne.dz >= 0,
     dir = fwd || E.oneway ? 1 : -1;
-  GRAPH.sample(ne.e, dir, clamp((dir > 0 ? ne.s : E.len - ne.s) + 4, 1, Math.max(1, E.len - 1)), laneOff(E), UNSTUCK_S); // (s counts along the way the car goes)
+  GRAPH.sample(ne.e, dir, clamp((dir > 0 ? ne.s : E.len - ne.s) + 4, 1, Math.max(1, E.len - 1)), laneOff(E, dir), UNSTUCK_S); // (s counts along the way the car goes)
   car.x = UNSTUCK_S.x;
   car.z = UNSTUCK_S.z;
   car.h = Math.atan2(UNSTUCK_S.dx, UNSTUCK_S.dz);
@@ -760,7 +794,7 @@ function unstuck(car, dt) {
 function spawnTraffic(car, e, dir, s) {
   car.mode = 'traffic';
   car.driver = 'ai';
-  car.tr = { e, dir, s, v: GRAPH.edges[e].speed * 0.8, off: laneOff(GRAPH.edges[e]) };
+  car.tr = { e, dir, s, v: GRAPH.edges[e].speed * 0.8, off: laneOff(GRAPH.edges[e], dir) };
   GRAPH.sample(e, dir, s, car.tr.off, tmpS);
   car.x = tmpS.x;
   car.z = tmpS.z;
@@ -814,7 +848,7 @@ function nextEdge(car) {
   tr.s -= E.len;
   tr.e = best.e;
   tr.dir = best.dir;
-  tr.off = laneOff(GRAPH.edges[best.e]);
+  tr.off = laneOff(GRAPH.edges[best.e], best.dir);
   return true;
 }
 function updateTraffic(car, dt) {
@@ -936,7 +970,7 @@ function trafficSpawnPoint(minD, maxD, avoidView = true) {
     if (E.len < 6) continue;
     const s = E.len > 30 ? E.len * rnd(0.3, 0.6) : Math.min(E.len * 0.5, 4);
     // don't spawn on top of other cars, nor where traffic is already dense
-    GRAPH.sample(o.e, o.dir, s, laneOff(E), tmpS);
+    GRAPH.sample(o.e, o.dir, s, laneOff(E, o.dir), tmpS);
     let near = 0,
       clash = false;
     for (const c of CARS) {

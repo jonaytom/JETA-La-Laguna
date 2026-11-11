@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.3.4</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.3.5</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,37 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.3.5 — 2026-11-11 — Alpha 1.3.5: glorietas, cebreados y marcas centradas</h2>
+<ul>
+<li><strong>Glorietas de todo el mapa</strong> (Jonay: «revisa las glorietas y las zonas cebradas»): todas llevan ya sus marcas como en
+  las fotos: línea continua junto a la isleta y por fuera (abierta en cada calle), discontinua en los anillos de dos
+  carriles y paso de cebra en las calles. Antes solo las tenían las de las zonas rehechas. La isleta se ajusta al ancho
+  real del anillo, y la glorieta de La Verdellada, que faltaba en la lista, ya tiene la suya.</li>
+<li><strong>Zonas cebradas</strong>: isleta pintada con rayas oblicuas entre la entrada y la salida de cada calle en las glorietas, y
+  cuña cebreada donde una avenida se abre en dos calzadas o dos se juntan (17 isletas y 12 cuñas).</li>
+<li><strong>Marcas centradas con el aparcamiento</strong> (Jonay: «las flechas de sentido y demás marcas salen mal centradas desde que
+  añadimos aparcamientos»): en las calles con banda de aparcamiento a un lado, las flechas, las líneas de STOP y «ceda» y
+  el carril por el que van los coches se centran entre las bandas, no en el eje de la calle.</li>
+</ul>
+<h2>1.3.4 — 2026-11-11 — Alpha 1.3.4: la Av. de los Menceyes en Finca España</h2>
+<ul>
+<li><strong>Avenida de los Menceyes entre Finca España y Villa Hilaria</strong> (Jonay: «se cruzan carriles, es un jaleo»): las tres
+  calzadas van ahora una al lado de otra, como en la realidad: en medio, la de doble sentido (un carril por sentido)
+  que baja en trinchera bajo la glorieta de Finca España; a cada lado, la de un sentido con dos carriles, y medianas
+  entre ellas. Antes las laterales pisaban media calzada central y las líneas se cruzaban.</li>
+<li><strong>Relieve real en esa zona</strong> (Jonay: «cuando reconstruyas una zona aprovecha para ser más fiel a la malla de
+  relieve»): el terreno, con las calles y los edificios encima, sigue el MDT de 5 m del IGN (hasta 11 m más bajo en
+  algunos puntos).</li>
+</ul>
+<h2>1.3.3 — 2026-11-10 — Alpha 1.3.3: barrancos de verdad</h2>
+<ul>
+<li><strong>Barrancos y laderas con el relieve real</strong> (Jonay: «vamos a centrarnos en las zonas donde hay más desnivel respecto a lo
+  que tenemos»): con el Modelo Digital del Terreno de 5 m del IGN se rehacen las zonas donde el terreno del juego se
+  apartaba más de la realidad: los barrancos y lomos de la ladera de Anaga al noreste (de San Roque a Las Mercedes y
+  La Cuesta), un barranco junto a la Carretera General del Norte y la montaña junto al aeropuerto. Las calles, el
+  tranvía y los edificios no se mueven: a menos de 20 m de ellos el suelo queda como estaba y el cambio se funde hasta
+  los 60 m. Créditos del IGN en <code>CREDITOS.md</code>.</li>
+</ul>
 <h2>1.3.2 — 2026-11-10 — Alpha 1.3.2: árboles en su sitio y la glorieta de La Verdellada</h2>
 <ul>
 <li><strong>Árboles en su sitio</strong> (Jonay: «árboles dentro de edificios, en mitad de aceras… y en medio de una carretera»): ningún

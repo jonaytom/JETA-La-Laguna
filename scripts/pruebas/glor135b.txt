@@ -1,0 +1,16 @@
+herramientas/foto_vista.py h_verdellada 740 848 70 741 849
+herramientas/foto_vista.py h_menceyes_gracia 708 1352 80 709 1353
+herramientas/foto_vista.py h_finca_espana 1486 1707 70 1487 1708
+herramientas/foto_vista.py h_villa_hilaria 1874 1937 65 1875 1938
+herramientas/foto_vista.py h_anchieta -338 730 120 -337 731
+herramientas/foto_vista.py h_geneto 346 1501 120 347 1502
+herramientas/foto_vista.py h_lora_tamayo 171 1175 70 172 1176
+herramientas/foto_vista.py h_guajara_9 1062 2475 110 1063 2476
+herramientas/foto_vista.py h_guajara_8 1207 2315 90 1208 2316
+herramientas/foto_vista.py h_san_antonio -842 0 80 -841 1
+herramientas/foto_vista.py h_candelaria -1256 -277 80 -1255 -276
+herramientas/foto_vista.py h_huc_13 1868 3251 70 1869 3252
+herramientas/foto_vista.py h_huc_43 1600 3471 70 1601 3472
+herramientas/foto_vista.py h_torriani 198 789 80 199 790
+herramientas/foto_vista.py h_cruz_piedra_ronda 883 1417 70 884 1418
+herramientas/sonda_marcas_aparca.py despues

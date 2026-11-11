@@ -3,6 +3,34 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.3.5 — 2026-11-11 — Alpha 1.3.5: glorietas, cebreados y marcas centradas
+- **Glorietas de todo el mapa** (Jonay: «revisa las glorietas y las zonas cebradas»): todas llevan ya sus marcas como en
+  las fotos: línea continua junto a la isleta y por fuera (abierta en cada calle), discontinua en los anillos de dos
+  carriles y paso de cebra en las calles. Antes solo las tenían las de las zonas rehechas. La isleta se ajusta al ancho
+  real del anillo, y la glorieta de La Verdellada, que faltaba en la lista, ya tiene la suya.
+- **Zonas cebradas**: isleta pintada con rayas oblicuas entre la entrada y la salida de cada calle en las glorietas, y
+  cuña cebreada donde una avenida se abre en dos calzadas o dos se juntan (17 isletas y 12 cuñas).
+- **Marcas centradas con el aparcamiento** (Jonay: «las flechas de sentido y demás marcas salen mal centradas desde que
+  añadimos aparcamientos»): en las calles con banda de aparcamiento a un lado, las flechas, las líneas de STOP y «ceda» y
+  el carril por el que van los coches se centran entre las bandas, no en el eje de la calle.
+
+## 1.3.4 — 2026-11-11 — Alpha 1.3.4: la Av. de los Menceyes en Finca España
+- **Avenida de los Menceyes entre Finca España y Villa Hilaria** (Jonay: «se cruzan carriles, es un jaleo»): las tres
+  calzadas van ahora una al lado de otra, como en la realidad: en medio, la de doble sentido (un carril por sentido)
+  que baja en trinchera bajo la glorieta de Finca España; a cada lado, la de un sentido con dos carriles, y medianas
+  entre ellas. Antes las laterales pisaban media calzada central y las líneas se cruzaban.
+- **Relieve real en esa zona** (Jonay: «cuando reconstruyas una zona aprovecha para ser más fiel a la malla de
+  relieve»): el terreno, con las calles y los edificios encima, sigue el MDT de 5 m del IGN (hasta 11 m más bajo en
+  algunos puntos).
+
+## 1.3.3 — 2026-11-10 — Alpha 1.3.3: barrancos de verdad
+- **Barrancos y laderas con el relieve real** (Jonay: «vamos a centrarnos en las zonas donde hay más desnivel respecto a lo
+  que tenemos»): con el Modelo Digital del Terreno de 5 m del IGN se rehacen las zonas donde el terreno del juego se
+  apartaba más de la realidad: los barrancos y lomos de la ladera de Anaga al noreste (de San Roque a Las Mercedes y
+  La Cuesta), un barranco junto a la Carretera General del Norte y la montaña junto al aeropuerto. Las calles, el
+  tranvía y los edificios no se mueven: a menos de 20 m de ellos el suelo queda como estaba y el cambio se funde hasta
+  los 60 m. Créditos del IGN en `CREDITOS.md`.
+
 ## 1.3.2 — 2026-11-10 — Alpha 1.3.2: árboles en su sitio y la glorieta de La Verdellada
 - **Árboles en su sitio** (Jonay: «árboles dentro de edificios, en mitad de aceras… y en medio de una carretera»): ningún
   tronco en una calle, puente o túnel ni dentro de un edificio; las copas no se meten en edificios ni atraviesan puentes

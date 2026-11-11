@@ -452,6 +452,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 ### Calles, túneles, puentes, enlaces y aeropuerto
 
 
+- [ ] ◐ **Glorietas: lo que falta tras la revisión de la 1.3.5** (fotos de Google 3D de Villa Hilaria, Finca España, Guajara, HUC): isletas con bordillo y vegetación en vez de solo pintadas donde en la realidad son elevadas; flechas de giro en las entradas de dos carriles; la glorieta del Padre Anchieta (X −338, Y 730) tiene la pasarela encima y no se ha tocado.
 - [~] ◐ v1.1.3 (de nuevo ~11–12 s y 15–17 ms a 720p; la nota del código bajó de B a C: líneas largas) **Arranque y pintado más lentos desde la 1.0.4** (auditoría 1.0.8): arranque 11 → 14 s y pintar a 720p
   13,6 → 24 ms (en la auditoría; la sonda con la tarjeta daba 14–18 ms en la 1.0.4). Medir qué pesa: los muros (cortes por
   calzada, 0,75 m cada muestra), las tapias, los edificios del Catastro y el recorte de calles sobre rampas (`cutAware`).
@@ -511,6 +512,9 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 - [ ] ◐ **Paso inferior de la Vía de Ronda bajo la glorieta de los Menceyes: muros que salen en medio de la vía del tranvía** (Jonay, 10-nov, X 720, Y 1335, captura: «este puente/túnel toca revisarlo, salen cosas en medio de la vía del tren, creo que son muros del túnel de debajo»).
   - La Vía de Ronda (vías 444 en túnel y 1022 que baja) pasa por debajo de la glorieta (anillo 2317/2318/2319/435, a nivel) y del tranvía; la boca abierta de la trinchera empieza en X 720, Y 1309 a 2,5 m y llega a 4,4 m en X 708, Y 1319, justo bajo el anillo y la vía: sus muros y pretiles asoman por encima.
   - Qué hacer: cubrir la trinchera (losa / túnel) en todo lo que pasa por debajo de la glorieta y del tranvía, y que los muros y pretiles de la boca no se dibujen dentro de una calzada o de la vía a nivel. Mirar también la entrada del otro lado (X 537, Y 1371, ya apuntada en «Tramos abiertos de trinchera con una calle por encima»).
+
+- [~] ◐ v1.3.4 (las tres calzadas una al lado de otra: central de doble sentido a 1 + 1 carriles en trinchera bajo la glorieta, laterales de dos carriles a 8,9 m de su eje, ramales de un carril en los extremos; relieve del MDT del IGN en toda la zona, calles incluidas; `src/04e_fincaespana.js`) **Av. de los Menceyes entre Finca España y Villa Hilaria: carriles cruzados** (Jonay, 11-nov, X 1287–1732, Y 1591–1880, capturas del juego y de Google Maps: «se cruzan carriles, es un jaleo; cuando reconstruyas una zona aprovecha para ser más fiel a la malla de relieve»).
+  - Falta: las medianas con palmeras (ahora son 1,5 m de asfalto entre calzadas) y las rayas de cebra / isletas de los extremos; la glorieta de Villa Hilaria (X 1874, Y 1937) no se ha tocado.
 
 - [~] ● v1.3.3 (relieve del MDT de 5 m del IGN en las zonas con más diferencia: ladera noreste de San Roque a La Cuesta, barranco junto a la Carretera General del Norte y la montaña junto al aeropuerto, 25 000 celdas de la malla de 16 m; sin tocar el suelo a menos de 20 m de calles, tranvía y edificios; herramienta `tests/herramientas/mdt_zonas.py`, mapa de zonas en `docs/referencias/barrancos_zonas.png`) **Barrancos con el relieve real** (Jonay, 10-nov: «habrá zonas que no hay ni que tocar; vamos a centrarnos en las zonas donde hay más desnivel respecto a lo que tenemos»).
   - Falta: los barrancos estrechos dentro de la ciudad (Gracia junto al IES Domingo Pérez Minik, el de detrás de la Vía de Ronda) no caben en la malla de 16 m: harían falta trozos de malla más fina o bajar calles; y el sur (zonas 2, 3, 15: Taco y La Cuesta), con muchas calles dentro.
@@ -827,7 +831,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
         X 243 Z −352, X −291 Z 2699), un servicio del aeropuerto en una ladera de pendiente imposible (X −3247 Z −359).
 
 ### Rendimiento, auditorías y código
-- [ ] ⚡ **Pintado 16,8 → 20,1 ms en la auditoría 1.3.3 con los mismos triángulos y llamadas** (APTO CON AVISOS; aviso: «fútbol» 0,2 → 0,3 ms, ruido): solo cambió la altura del terreno en las laderas, así que puede ser ruido de medida; repetir la auditoría y, si se mantiene, mirar si la hierba planta más matas en las laderas nuevas.
 - [ ] ⚡ **Peleas callejeras con un peatón cualquiera: ~0,14 s al empezar** (v1.2.5, sonda `sonda_maleante_gpu.py`): sus figuras se dibujan al momento (las del jugador y las de los maleantes ya se preparan antes). Se podrían «calentar» las del peatón al acercarte a él.
 - [ ] ⚡ **`huella_mundo_cmp` no es del todo fija** (v1.2.4): salió distinta una vez (161 vértices) y bien las dos siguientes con el mismo código; algo de la carga (gente o coches) entra en la cuenta.
 
@@ -931,6 +934,11 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   - Por comprobar: si el Artifact deja abrir conexiones WebRTC y al servidor de emparejamiento (si no, se juega con el HTML descargado); servidor TURN para las redes que no conectan directo.
 
 ## Hecho
+
+- [x] v1.3.5 **Glorietas y zonas cebradas de todo el mapa** (Jonay, 11-nov): marcas de glorieta en las 52, isletas cebreadas en las entradas/salidas y cuñas donde una calzada se abre o se junta (`src/04f_cebreados.js`, sonda `sonda_cebreados.py`).
+- [x] v1.3.5 **Flechas, líneas de STOP/ceda y carril de los coches centrados entre las bandas de aparcamiento** (Jonay, 11-nov): `edgePark`/`laneOff`/`laneHalf` en `07_vehicles.js`; sonda `sonda_marcas_aparca.py`.
+
+- [x] v1.3.4 **Pintado 16,8 → 20,1 ms en la auditoría 1.3.3**: era ruido de medida; en la 1.3.4 vuelve a 16,9 ms.
 
 - [x] v1.3.2 **Pintado más lento con la hierba** (auditoría 1.3.1: 17,8 → 21,6 ms): en la 1.3.2, con la hierba fuera de aceras y calles, 16,8 ms y 18 000 triángulos menos.
 

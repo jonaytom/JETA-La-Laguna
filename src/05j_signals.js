@@ -256,7 +256,7 @@ function buildTrafficSignsPart4(inc, place, paint) {
     if (nb && nb.length >= 3 && !nb.every((o) => o.oneway)) place('prohib', E, -1, 2.5, 1);
     const na = inc.get(E.a);
     if (na && na.length >= 3 && E.len > 45 && Math.random() < 0.45) place('unico', E, 1, 4, -1);
-    for (let s = 12; s < E.len - 10; s += 38) paint(0, E, 1, s, laneOff(E), 4.5, 1.3);
+    for (let s = 12; s < E.len - 10; s += 38) paint(0, E, 1, s, laneOff(E, 1), 4.5, 1.3);
   }
   // two-way streets: lane arrows before busy junctions
   for (const E of GRAPH.edges) {
@@ -266,7 +266,7 @@ function buildTrafficSignsPart4(inc, place, paint) {
       [-1, E.a]
     ]) {
       const l = inc.get(n);
-      if (l && l.length >= 3) paint(0, E, dir, E.len - 16, laneOff(E), 4.5, 1.3);
+      if (l && l.length >= 3) paint(0, E, dir, E.len - 16, laneOff(E, dir), 4.5, 1.3);
     }
   }
   // --- meshes: poles + plates (front and back) as instanced meshes per sign type
@@ -309,7 +309,10 @@ function buildTrafficSignsPart3(inc, nearRB, imp, out, onBigger, place, paint) {
         const far = dir > 0 ? [E.pts[0], E.pts[1]] : [E.pts[E.pts.length - 2], E.pts[E.pts.length - 1]];
         if (Math.hypot(far[0] - rb[0], far[1] - rb[1]) < rb[2] + 3) continue; // ring itself
         if (place('ceda', E, dir, s)) place('rotonda', E, dir, s - 5);
-        paint(2, E, dir, s + 0.2, E.oneway ? 0 : E.w / 4, 0.9, E.oneway ? E.w * 0.8 : E.w / 2 - 0.3);
+        {
+          const H = laneHalf(E, dir); // v1.3.5: between the parking bands
+          paint(2, E, dir, s + 0.2, H.off, 0.9, E.oneway ? H.wid * 0.8 : H.wid - 0.3);
+        }
         continue;
       }
       const mine = imp(E.type);
@@ -330,8 +333,9 @@ function buildTrafficSignsPart3(inc, nearRB, imp, out, onBigger, place, paint) {
       const kind = maxImp >= 4 || (maxImp >= 3 && mine <= 1 && Math.random() < 0.5) ? 'stop' : 'ceda';
       if (!place(kind, E, dir, s2)) continue;
       TSIGN.stops.set(E.i + ':' + dir, { s: s2, kind });
-      const off = E.oneway ? 0 : E.w / 4,
-        lw = E.oneway ? E.w * 0.85 : E.w / 2 - 0.3;
+      const H = laneHalf(E, dir), // v1.3.5: between the parking bands
+        off = H.off,
+        lw = E.oneway ? H.wid * 0.85 : H.wid - 0.3;
       if (kind === 'stop') {
         paint(3, E, dir, s2 + 0.9, off, 0.45, lw);
         paint(1, E, dir, s2 - 2.2, off, 3.4, Math.min(2.6, lw));

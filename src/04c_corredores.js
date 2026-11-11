@@ -1001,9 +1001,7 @@ function corrCutExtra(ri) {
 /** v1.2.0 (Jonay: «las marcas viales de los alrededores», con las fotos de Google): the ring of a roundabout in the box is
  *  drawn plain (its lane texture came out in loose bits where so many ways overlap) and corrRoundaboutMarks paints it */
 function corrPlainRing(rd) {
-  if (!(rd[3] & 32)) return false;
-  const m = corrMid(rd);
-  return !!m && inMarkBox(m[0], m[1]) && (DATA.RB || []).some((r) => Math.hypot(m[0] - r[0], m[1] - r[1]) < r[2] + 8);
+  return isRbRing(rd); // v1.3.5: every roundabout of the map, not only those of the corridor zones (04f_cebreados.js)
 }
 /** the markings of the roundabouts in the box, as in the photos: a solid line along the island and along the outer edge
  *  (open where each street comes in or goes out), a dashed line between the two lanes of a wide ring, and a zebra crossing
@@ -1013,8 +1011,7 @@ function corrRoundaboutMarks() {
   let n = 0;
   for (const rb of DATA.RB || []) {
     const [cx, cz, Rc] = rb;
-    if (!inMarkBox(cx, cz)) continue;
-    const W = WIDEN(3, rb[3], 1),
+    const W = ringWidth(rb), // v1.3.5: every roundabout (it was only those of the boxes), at its ring's own width
       Ro = Rc + W / 2,
       Ri = Rc - W / 2;
     // the streets that meet the ring: an end of theirs on it
@@ -1061,7 +1058,7 @@ function corrRoundaboutMarks() {
         const [x, z] = at(Ro - 0.35);
         line(x, z, tx, tz, seg(Ro), 0.15);
       }
-      if (W >= 8 && k % 2 === 0) {
+      if (W >= 9 && k % 2 === 0) {
         const [x, z] = at(Rc);
         line(x, z, tx, tz, seg(Rc) * 0.6, 0.12);
       }
@@ -1362,6 +1359,7 @@ function corrBuildTramos() {
     if (segs.length) corrBuildTramosZone(segs, Z);
   }
   corrRoundaboutMarks();
+  cebreados(); // v1.3.5: splitter islands and wedges, painted (04f_cebreados.js)
   // the dashed line between the TF-5 and its parallel slip lanes (corrMotorwayStraighten): 4.5 m dashes every 9 m
   for (const [ax, az, bx, bz, nx, nz, lw] of corrState().paraSegs || []) {
     const L = Math.hypot(bx - ax, bz - az);

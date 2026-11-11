@@ -581,6 +581,7 @@ corrMotorwayStraighten(); // v1.2.0: the TF-5 from Lora Tamayo to the HUC, strai
 corrMergeBridgeTwins(); // v1.2.4: the bridges drawn as two halves, side by side (Puente de Guajara); here, with the roads at their final widths
 corrSideLanes(); // v1.2.0: the slip lanes beside the TF-5 and the Carretera General beyond them (04c_corredores.js)
 fincaEspana(); // v1.3.4: the three carriageways of the Av. de los Menceyes at Finca España side by side (04e_fincaespana.js)
+ringsMissing(); // v1.3.5: roundabouts whose ring the list of the map missed (La Verdellada) (04f_cebreados.js)
 function mulberry(a) {
   return function () {
     a |= 0;
@@ -3130,7 +3131,7 @@ function buildRoadsPart2() {
   } catch (e) {
     console.error('tf13 portals', e);
   }
-  for (const r of DATA.RB || []) roundaboutIsland(r[0], r[1], r[2], WIDEN(3, r[3], 1));
+  for (const r of DATA.RB || []) roundaboutIsland(r[0], r[1], r[2], ringWidth(r)); // v1.3.5: the ring's own width (04f_cebreados.js)
   // tram track
   if (DATA.T.length > 3) {
     const L = polyLen(DATA.T),
@@ -9696,9 +9697,7 @@ function corrCutExtra(ri) {
 /** v1.2.0 (Jonay: «las marcas viales de los alrededores», con las fotos de Google): the ring of a roundabout in the box is
  *  drawn plain (its lane texture came out in loose bits where so many ways overlap) and corrRoundaboutMarks paints it */
 function corrPlainRing(rd) {
-  if (!(rd[3] & 32)) return false;
-  const m = corrMid(rd);
-  return !!m && inMarkBox(m[0], m[1]) && (DATA.RB || []).some((r) => Math.hypot(m[0] - r[0], m[1] - r[1]) < r[2] + 8);
+  return isRbRing(rd); // v1.3.5: every roundabout of the map, not only those of the corridor zones (04f_cebreados.js)
 }
 /** the markings of the roundabouts in the box, as in the photos: a solid line along the island and along the outer edge
  *  (open where each street comes in or goes out), a dashed line between the two lanes of a wide ring, and a zebra crossing
@@ -9708,8 +9707,7 @@ function corrRoundaboutMarks() {
   let n = 0;
   for (const rb of DATA.RB || []) {
     const [cx, cz, Rc] = rb;
-    if (!inMarkBox(cx, cz)) continue;
-    const W = WIDEN(3, rb[3], 1),
+    const W = ringWidth(rb), // v1.3.5: every roundabout (it was only those of the boxes), at its ring's own width
       Ro = Rc + W / 2,
       Ri = Rc - W / 2;
     // the streets that meet the ring: an end of theirs on it
@@ -9756,7 +9754,7 @@ function corrRoundaboutMarks() {
         const [x, z] = at(Ro - 0.35);
         line(x, z, tx, tz, seg(Ro), 0.15);
       }
-      if (W >= 8 && k % 2 === 0) {
+      if (W >= 9 && k % 2 === 0) {
         const [x, z] = at(Rc);
         line(x, z, tx, tz, seg(Rc) * 0.6, 0.12);
       }
@@ -10057,6 +10055,7 @@ function corrBuildTramos() {
     if (segs.length) corrBuildTramosZone(segs, Z);
   }
   corrRoundaboutMarks();
+  cebreados(); // v1.3.5: splitter islands and wedges, painted (04f_cebreados.js)
   // the dashed line between the TF-5 and its parallel slip lanes (corrMotorwayStraighten): 4.5 m dashes every 9 m
   for (const [ax, az, bx, bz, nx, nz, lw] of corrState().paraSegs || []) {
     const L = Math.hypot(bx - ax, bz - az);
@@ -11043,6 +11042,274 @@ function fincaEspana() {
   out.eje = Math.round(L);
   out.glorieta = rc && rc.map(Math.round);
   console.log('finca españa:', JSON.stringify(out));
+}
+
+// ============ Glorietas y zonas cebradas de todo el mapa (v1.3.5) ============
+// Jonay (11-nov): «revisa las glorietas y las zonas cebradas de todo el mapa para las que tengas fotos». En las fotos
+// (Google 3D de Villa Hilaria, Finca España, La Verdellada, Gracia, Guajara, el HUC…): cada glorieta lleva su isleta,
+// una línea continua junto a la isleta y otra por fuera (abierta en cada calle), raya discontinua si el anillo tiene dos
+// carriles y paso de cebra en las calles; entre la entrada y la salida de una misma calle, una isleta pintada con rayas
+// oblicuas (el «cebreado»), y donde una calzada se abre en dos (o dos se juntan), el triángulo entre ellas también.
+// Antes solo tenían marcas las glorietas de las zonas rehechas (corrRoundaboutMarks, 04c_corredores.js).
+// (functions only: some run from 01_core.js before this file's constants exist)
+
+/** v1.3.5: rings of the OSM that the map's roundabout list (DATA.RB) misses (La Verdellada: its ring comes in two pieces
+ *  joined through a bridge): closed loops of roundabout pieces, added to DATA.RB so they get their island and marks */
+function ringsMissing() {
+  const R = DATA.R,
+    K = (x, z) => Math.round(x * 2) + ',' + Math.round(z * 2),
+    ring = [];
+  R.forEach((r, ri) => {
+    if (r[3] & 32 && r[0] <= 12 && r[4].length >= 4) ring.push(ri);
+  });
+  // components by shared ends
+  const par = new Map(ring.map((ri) => [ri, ri])),
+    find = (i) => {
+      while (par.get(i) !== i) i = par.get(i);
+      return i;
+    },
+    byNode = new Map();
+  for (const ri of ring) {
+    const c = R[ri][4];
+    for (const k of [K(c[0], c[1]), K(c[c.length - 2], c[c.length - 1])]) {
+      const o = byNode.get(k);
+      if (o !== undefined) par.set(find(ri), find(o));
+      else byNode.set(k, ri);
+    }
+  }
+  const comp = new Map();
+  for (const ri of ring) {
+    const k = find(ri);
+    if (!comp.has(k)) comp.set(k, []);
+    comp.get(k).push(ri);
+  }
+  DATA.RB = DATA.RB || [];
+  const added = [];
+  for (const l of comp.values()) {
+    const P = [];
+    let w = 0;
+    for (const ri of l) {
+      const c = R[ri][4];
+      for (let i = 0; i < c.length; i += 2) P.push([c[i], c[i + 1]]);
+      w += R[ri][2];
+    }
+    if (P.length < 5) continue;
+    // closed: every end node shared by two pieces of the loop
+    const cnt = new Map();
+    for (const ri of l) {
+      const c = R[ri][4];
+      for (const k of [K(c[0], c[1]), K(c[c.length - 2], c[c.length - 1])]) cnt.set(k, (cnt.get(k) || 0) + 1);
+    }
+    if ([...cnt.values()].some((v) => v !== 2)) continue;
+    const cx = P.reduce((a, p) => a + p[0], 0) / P.length,
+      cz = P.reduce((a, p) => a + p[1], 0) / P.length,
+      rs = P.map((p) => Math.hypot(p[0] - cx, p[1] - cz)),
+      Rc = rs.reduce((a, b) => a + b, 0) / rs.length;
+    if (Rc < 6 || Rc > 30 || Math.max(...rs) - Math.min(...rs) > Rc * 0.95) continue; // (not round: a loop of some other shape)
+    if (DATA.RB.some((rb) => Math.hypot(rb[0] - cx, rb[1] - cz) < Math.max(10, rb[2] * 0.6))) continue;
+    const rb = [Math.round(cx * 10) / 10, Math.round(cz * 10) / 10, Math.round(Rc * 10) / 10, Math.round((w / l.length / 1.3) * 10) / 10];
+    DATA.RB.push(rb);
+    added.push(rb);
+  }
+  console.log('glorietas que faltaban en DATA.RB', JSON.stringify(added));
+}
+/** the width of a roundabout's ring as drawn (its pieces' own width; the list only has the OSM width before widening) */
+function ringWidth(rb) {
+  if (rb.rw) return rb.rw;
+  let s = 0,
+    n = 0;
+  for (const r of DATA.R) {
+    if (!(r[3] & 32) || r[0] > 12) continue;
+    const c = r[4],
+      m = (c.length >> 2) << 1;
+    if (Math.abs(Math.hypot(c[m] - rb[0], c[m + 1] - rb[1]) - rb[2]) < 7) {
+      s += r[2];
+      n++;
+    }
+  }
+  rb.rw = n ? s / n : WIDEN(3, rb[3], 1);
+  return rb.rw;
+}
+/** is this ring piece part of one of the roundabouts? (then it is drawn plain and its lines are painted apart) */
+function isRbRing(rd) {
+  if (!(rd[3] & 32)) return false;
+  const c = rd[4],
+    m = (c.length >> 2) << 1;
+  return (DATA.RB || []).some((r) => Math.abs(Math.hypot(c[m] - r[0], c[m + 1] - r[1]) - r[2]) < ringWidth(r) / 2 + 3);
+}
+
+// ---------- the hatched areas: between the way in and the way out of an arm, and where a carriageway splits or merges
+/** a point at arc length u along a polyline (flat [x, z, …]) and its unit direction */
+function cebAt(c, u) {
+  let k = 0;
+  for (; k + 3 < c.length; k += 2) {
+    const l = Math.hypot(c[k + 2] - c[k], c[k + 3] - c[k + 1]);
+    if (u <= l || k + 4 >= c.length) {
+      const t = l ? Math.min(u, l) / l : 0,
+        dx = (c[k + 2] - c[k]) / (l || 1),
+        dz = (c[k + 3] - c[k + 1]) / (l || 1);
+      return [c[k] + (c[k + 2] - c[k]) * t, c[k + 1] + (c[k + 3] - c[k + 1]) * t, dx, dz, u <= l];
+    }
+    u -= l;
+  }
+  return null;
+}
+/** a polyline from its end backwards */
+function cebRev(c) {
+  const o = [];
+  for (let i = c.length - 2; i >= 0; i -= 2) o.push(c[i], c[i + 1]);
+  return o;
+}
+const CEB = { isletas: 0, cunas: 0, tramos: [] };
+/** the area between two ways leaving the same place (P and Q from there outward, widths wp and wq), from where their
+ *  edges part until it is 7 m wide (or they go apart): asphalt, its two edge lines and oblique stripes */
+function cebArea(P, wp, Q, wq, u0, maxU, maxGap = 7) {
+  const E = [];
+  for (let u = u0; u <= maxU; u += 1) {
+    const a = cebAt(P, u),
+      b = cebAt(Q, u);
+    if (!a || !b || !a[4] || !b[4]) break;
+    // each one's inner edge: the side towards the other
+    const na = [-a[3], a[2]],
+      nb = [-b[3], b[2]],
+      sa = Math.sign((b[0] - a[0]) * na[0] + (b[1] - a[1]) * na[1]) || 1,
+      sb = Math.sign((a[0] - b[0]) * nb[0] + (a[1] - b[1]) * nb[1]) || 1;
+    const ea = [a[0] + na[0] * sa * (wp / 2), a[1] + na[1] * sa * (wp / 2)],
+      eb = [b[0] + nb[0] * sb * (wq / 2), b[1] + nb[1] * sb * (wq / 2)],
+      gap = Math.hypot(eb[0] - ea[0], eb[1] - ea[1]),
+      axes = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if (axes < (wp + wq) / 2 + 0.4) {
+      if (E.length) break; // (they meet again)
+      continue; // (still overlapping: not parted yet)
+    }
+    const mx = (ea[0] + eb[0]) / 2,
+      mz = (ea[1] + eb[1]) / 2;
+    if (gap > maxGap) {
+      if (E.length) break; // (a wedge that has opened up: done)
+      continue; // (an island still too wide near the ring: it narrows further out)
+    }
+    if (onCarriagewayEarly(mx, mz, -0.3) || inAnyBuilding(mx, mz)) {
+      if (E.length) break;
+      continue;
+    }
+    E.push([ea, eb, gap]);
+  }
+  if (E.length < 4) return false;
+  const em = E[E.length >> 1];
+  CEB.last = [Math.round((em[0][0] + em[1][0]) / 2), Math.round((em[0][1] + em[1][1]) / 2)];
+  const F = acc(E[0][0][0], E[0][0][1], 'asphalt'),
+    y = (p) => heightAt(p[0], p[1]) + YOFF.asphalt - 0.004;
+  for (let i = 0; i + 1 < E.length; i++) {
+    const [a0, b0] = E[i],
+      [a1, b1] = E[i + 1];
+    const A = [a0[0], y(a0), a0[1]],
+      B = [b0[0], y(b0), b0[1]],
+      C = [b1[0], y(b1), b1[1]],
+      D = [a1[0], y(a1), a1[1]];
+    F.quad(A, B, C, D, [A[0] / 8, A[2] / 8], [B[0] / 8, B[2] / 8], [C[0] / 8, C[2] / 8], [D[0] / 8, D[2] / 8], null, undefined, [0, 1, 0]);
+    F.quad(A, D, C, B, [A[0] / 8, A[2] / 8], [D[0] / 8, D[2] / 8], [C[0] / 8, C[2] / 8], [B[0] / 8, B[2] / 8], null, undefined, [0, 1, 0]);
+  }
+  const line = (p, q, wid) => {
+    const dx = q[0] - p[0],
+      dz = q[1] - p[1],
+      l = Math.hypot(dx, dz);
+    if (l < 0.2) return;
+    CORR_MARKS.push([3, (p[0] + q[0]) / 2, (p[1] + q[1]) / 2, dx / l, dz / l, l, wid]);
+  };
+  // edge lines (0.2 m in from each edge) and the oblique stripes every 2 m
+  const inset = (e, k) => {
+    const [a, b, g] = E[e];
+    const t = Math.min(0.5, 0.2 / (g || 1));
+    return k ? [b[0] + (a[0] - b[0]) * t, b[1] + (a[1] - b[1]) * t] : [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+  };
+  for (let i = 0; i + 1 < E.length; i++) for (const k of [0, 1]) line(inset(i, k), inset(i + 1, k), 0.15);
+  for (let i = 1; i + 2 < E.length; i += 2) {
+    const j = Math.min(E.length - 1, i + 2);
+    if (E[i][2] < 1.0) continue;
+    line(inset(i, 0), inset(j, 1), 0.4);
+  }
+  return true;
+}
+/** called with the corridor marks (04c_corredores.js, while the roads are built): the splitter islands of every
+ *  roundabout and the wedges where a carriageway splits in two or two join */
+function cebreados() {
+  const R = DATA.R,
+    oneway = (r) => r[0] >= 2 && r[0] <= 10 && r[3] & 1 && !(r[3] & (32 | 6)),
+    major = (r) => r[0] <= 8, // (wedges only where a main road splits: two one-way residential streets leaving a corner are not one)
+    ri0 = (r) => R.indexOf(r);
+  // 1. splitter islands: the way in and the way out of the same street at a roundabout
+  for (const rb of DATA.RB || []) {
+    const [cx, cz, Rc] = rb,
+      Ro = Rc + ringWidth(rb) / 2;
+    const ins = [],
+      outs = [];
+    R.forEach((r, ri) => {
+      if (!oneway(r) || DEP.has(ri)) return;
+      const c = r[4],
+        de = Math.hypot(c[c.length - 2] - cx, c[c.length - 1] - cz),
+        ds = Math.hypot(c[0] - cx, c[1] - cz);
+      if (Math.abs(de - Rc) < ringWidth(rb) / 2 + 2) ins.push({ r, c: cebRev(c), ang: Math.atan2(c[c.length - 1] - cz, c[c.length - 2] - cx) });
+      else if (Math.abs(ds - Rc) < ringWidth(rb) / 2 + 2) outs.push({ r, c, ang: Math.atan2(c[1] - cz, c[0] - cx) });
+    });
+    for (const a of ins) {
+      let best = null,
+        bd = 0.9;
+      for (const b of outs) {
+        let d = Math.abs(a.ang - b.ang);
+        if (d > Math.PI) d = 2 * Math.PI - d;
+        if (d < bd) {
+          bd = d;
+          best = b;
+        }
+      }
+      if (!best) continue;
+      // start where both are out of the ring
+      let u0 = 0;
+      for (; u0 < 20; u0 += 0.5) {
+        const p = cebAt(a.c, u0),
+          q = cebAt(best.c, u0);
+        if (!p || !q) break;
+        if (Math.hypot(p[0] - cx, p[1] - cz) > Ro + 0.8 && Math.hypot(q[0] - cx, q[1] - cz) > Ro + 0.8) break;
+      }
+      if (cebArea(a.c, a.r[2], best.c, best.r[2], u0, u0 + 30, 10)) {
+        CEB.isletas++;
+        CEB.tramos.push(['isleta', ri0(a.r), ri0(best.r), ...CEB.last]);
+      }
+    }
+  }
+  // 2. wedges: two one-way carriageways leaving one node (a split) or arriving at one (a merge), at a narrow angle
+  const K = (x, z) => Math.round(x * 2) + ',' + Math.round(z * 2),
+    starts = new Map(),
+    ends = new Map();
+  for (const r of R) {
+    if (!oneway(r)) continue;
+    const c = r[4];
+    (starts.get(K(c[0], c[1])) || starts.set(K(c[0], c[1]), []).get(K(c[0], c[1]))).push(r);
+    const ke = K(c[c.length - 2], c[c.length - 1]);
+    (ends.get(ke) || ends.set(ke, []).get(ke)).push(r);
+  }
+  const nearRb = (x, z) => (DATA.RB || []).some((rb) => Math.hypot(rb[0] - x, rb[1] - z) < rb[2] + ringWidth(rb) / 2 + 6);
+  for (const [map, rev] of [
+    [starts, false],
+    [ends, true]
+  ])
+    for (const l of map.values()) {
+      if (l.length !== 2 || !major(l[0]) || !major(l[1])) continue;
+      const [p, q] = l,
+        cp = rev ? cebRev(p[4]) : p[4],
+        cq = rev ? cebRev(q[4]) : q[4];
+      if (nearRb(cp[0], cp[1]) || DEP.has(ri0(p)) || DEP.has(ri0(q))) continue;
+      const a = cebAt(cp, 6),
+        b = cebAt(cq, 6);
+      if (!a || !b) continue;
+      if (a[2] * b[2] + a[3] * b[3] < Math.cos(0.6)) continue; // (a junction, not a split)
+      if (cebArea(cp, p[2], cq, q[2], 0, 45)) {
+        CEB.cunas++;
+        CEB.tramos.push([rev ? 'junta' : 'abre', ri0(p), ri0(q), ...CEB.last]);
+      }
+    }
+  window.__ceb = CEB;
+  console.log('cebreados: isletas', CEB.isletas, 'cuñas', CEB.cunas);
 }
 
 // ============ landmarks, vegetation, street furniture, sky ============
@@ -15585,7 +15852,7 @@ function buildTrafficSignsPart4(inc, place, paint) {
     if (nb && nb.length >= 3 && !nb.every((o) => o.oneway)) place('prohib', E, -1, 2.5, 1);
     const na = inc.get(E.a);
     if (na && na.length >= 3 && E.len > 45 && Math.random() < 0.45) place('unico', E, 1, 4, -1);
-    for (let s = 12; s < E.len - 10; s += 38) paint(0, E, 1, s, laneOff(E), 4.5, 1.3);
+    for (let s = 12; s < E.len - 10; s += 38) paint(0, E, 1, s, laneOff(E, 1), 4.5, 1.3);
   }
   // two-way streets: lane arrows before busy junctions
   for (const E of GRAPH.edges) {
@@ -15595,7 +15862,7 @@ function buildTrafficSignsPart4(inc, place, paint) {
       [-1, E.a]
     ]) {
       const l = inc.get(n);
-      if (l && l.length >= 3) paint(0, E, dir, E.len - 16, laneOff(E), 4.5, 1.3);
+      if (l && l.length >= 3) paint(0, E, dir, E.len - 16, laneOff(E, dir), 4.5, 1.3);
     }
   }
   // --- meshes: poles + plates (front and back) as instanced meshes per sign type
@@ -15638,7 +15905,10 @@ function buildTrafficSignsPart3(inc, nearRB, imp, out, onBigger, place, paint) {
         const far = dir > 0 ? [E.pts[0], E.pts[1]] : [E.pts[E.pts.length - 2], E.pts[E.pts.length - 1]];
         if (Math.hypot(far[0] - rb[0], far[1] - rb[1]) < rb[2] + 3) continue; // ring itself
         if (place('ceda', E, dir, s)) place('rotonda', E, dir, s - 5);
-        paint(2, E, dir, s + 0.2, E.oneway ? 0 : E.w / 4, 0.9, E.oneway ? E.w * 0.8 : E.w / 2 - 0.3);
+        {
+          const H = laneHalf(E, dir); // v1.3.5: between the parking bands
+          paint(2, E, dir, s + 0.2, H.off, 0.9, E.oneway ? H.wid * 0.8 : H.wid - 0.3);
+        }
         continue;
       }
       const mine = imp(E.type);
@@ -15659,8 +15929,9 @@ function buildTrafficSignsPart3(inc, nearRB, imp, out, onBigger, place, paint) {
       const kind = maxImp >= 4 || (maxImp >= 3 && mine <= 1 && Math.random() < 0.5) ? 'stop' : 'ceda';
       if (!place(kind, E, dir, s2)) continue;
       TSIGN.stops.set(E.i + ':' + dir, { s: s2, kind });
-      const off = E.oneway ? 0 : E.w / 4,
-        lw = E.oneway ? E.w * 0.85 : E.w / 2 - 0.3;
+      const H = laneHalf(E, dir), // v1.3.5: between the parking bands
+        off = H.off,
+        lw = E.oneway ? H.wid * 0.85 : H.wid - 0.3;
       if (kind === 'stop') {
         paint(3, E, dir, s2 + 0.9, off, 0.45, lw);
         paint(1, E, dir, s2 - 2.2, off, 3.4, Math.min(2.6, lw));
@@ -27684,8 +27955,42 @@ class Car {
 }
 
 // ---------- traffic (kinematic along graph)
-function laneOff(E) {
-  return E.oneway ? (E.w >= 10 ? 1.8 : 0) : clamp(E.w / 4, 1.3, E.w >= 13 ? 2.4 : 1.7);
+// v1.3.5 (Jonay: «las separaciones de carriles, las flechas de sentido y demás marcas viales salen mal centradas desde que
+// añadimos aparcamientos»): a street with a parking band on one side (parkSides, 04_world.js) has its lanes between the
+// bands, not centred on its axis: the lane of the traffic and the arrows, stop lines and «ceda» teeth move with them.
+// edgePark(E): {sh, we}: the shift of the middle of the carriageway to the right of the edge's own direction, and its width
+function edgePark(E) {
+  if (E.park) return E.park;
+  E.park = { sh: 0, we: E.w };
+  if (typeof ROADSEG === 'undefined' || !E.pts || E.pts.length < 4) return E.park;
+  const P = E.pts,
+    h = (P.length >> 2) << 1,
+    x = (P[Math.max(0, h - 2)] + P[h]) / 2,
+    z = (P[Math.max(1, h - 1)] + P[h + 1]) / 2,
+    ex = P[h] - P[Math.max(0, h - 2)],
+    ez = P[h + 1] - P[Math.max(1, h - 1)];
+  const rn = ROADSEG.nearest(x, z, (r) => r[0] <= 12);
+  if (!rn) return E.park;
+  const rd = DATA.R[rn.ri];
+  if (rn.d > rd[2] / 2) return E.park;
+  const sides = parkSides(rd).sides;
+  if (!sides.length) return E.park;
+  const same = rn.dx * ex + rn.dz * ez >= 0,
+    right = sides.includes(same ? 1 : -1) ? 2.2 : 0, // (side +1 = u 0 of the ribbon = the right of the way's own direction, as the parked cars)
+    left = sides.includes(same ? -1 : 1) ? 2.2 : 0;
+  E.park = { sh: (left - right) / 2, we: Math.max(3, E.w - left - right) };
+  return E.park;
+}
+/** the lateral offset (to the right of the way the car goes, dir) of the middle of its lane */
+function laneOff(E, dir = 1) {
+  const { sh, we } = edgePark(E);
+  return sh * dir + (E.oneway ? (we >= 10 ? 1.8 : 0) : clamp(we / 4, 1.3, we >= 13 ? 2.4 : 1.7));
+}
+/** the middle of the half of the carriageway for dir (two-way) or of the whole one (one-way), and its width: for the
+ *  lines painted across it (stop, «ceda») */
+function laneHalf(E, dir = 1) {
+  const { sh, we } = edgePark(E);
+  return { off: sh * dir + (E.oneway ? 0 : we / 4), wid: E.oneway ? we : we / 2 };
 }
 // v1.1.0: safety net (Jonay: «esto es súper bug porque impide hacer la misión»): a car that has fallen well below the road
 // it was on, or that cannot move for a while with the throttle down, goes back to the nearest street, in its sense
@@ -27703,7 +28008,7 @@ function unstuck(car, dt) {
   const E = GRAPH.edges[ne.e],
     fwd = Math.sin(car.h) * ne.dx + Math.cos(car.h) * ne.dz >= 0,
     dir = fwd || E.oneway ? 1 : -1;
-  GRAPH.sample(ne.e, dir, clamp((dir > 0 ? ne.s : E.len - ne.s) + 4, 1, Math.max(1, E.len - 1)), laneOff(E), UNSTUCK_S); // (s counts along the way the car goes)
+  GRAPH.sample(ne.e, dir, clamp((dir > 0 ? ne.s : E.len - ne.s) + 4, 1, Math.max(1, E.len - 1)), laneOff(E, dir), UNSTUCK_S); // (s counts along the way the car goes)
   car.x = UNSTUCK_S.x;
   car.z = UNSTUCK_S.z;
   car.h = Math.atan2(UNSTUCK_S.dx, UNSTUCK_S.dz);
@@ -27717,7 +28022,7 @@ function unstuck(car, dt) {
 function spawnTraffic(car, e, dir, s) {
   car.mode = 'traffic';
   car.driver = 'ai';
-  car.tr = { e, dir, s, v: GRAPH.edges[e].speed * 0.8, off: laneOff(GRAPH.edges[e]) };
+  car.tr = { e, dir, s, v: GRAPH.edges[e].speed * 0.8, off: laneOff(GRAPH.edges[e], dir) };
   GRAPH.sample(e, dir, s, car.tr.off, tmpS);
   car.x = tmpS.x;
   car.z = tmpS.z;
@@ -27771,7 +28076,7 @@ function nextEdge(car) {
   tr.s -= E.len;
   tr.e = best.e;
   tr.dir = best.dir;
-  tr.off = laneOff(GRAPH.edges[best.e]);
+  tr.off = laneOff(GRAPH.edges[best.e], best.dir);
   return true;
 }
 function updateTraffic(car, dt) {
@@ -27893,7 +28198,7 @@ function trafficSpawnPoint(minD, maxD, avoidView = true) {
     if (E.len < 6) continue;
     const s = E.len > 30 ? E.len * rnd(0.3, 0.6) : Math.min(E.len * 0.5, 4);
     // don't spawn on top of other cars, nor where traffic is already dense
-    GRAPH.sample(o.e, o.dir, s, laneOff(E), tmpS);
+    GRAPH.sample(o.e, o.dir, s, laneOff(E, o.dir), tmpS);
     let near = 0,
       clash = false;
     for (const c of CARS) {
