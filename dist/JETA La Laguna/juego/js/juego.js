@@ -27013,15 +27013,15 @@ function animHuman(H, dt, speed, state = 'ground') {
 // [id, nombre parodia, categoría, base Kenney, física, largo, ancho, alto, peso de aparición]
 const VMODELS_RAW = `
 # utilitarios / urbanos
-polo|Guagüen Pollito|Utilitario|sedan|compact|4.05|1.75|1.46|12
+polo|Guagüen Pollito|Utilitario|sedan|compact|4.05|1.75|1.46|0
 ibiza|Butaca Isleña|Utilitario|sedan|compact|4.06|1.78|1.44|0
-yaris|Tagoror Lairis|Utilitario|sedan|compact|3.95|1.7|1.5|10
+yaris|Tagoror Lairis|Utilitario|sedan|compact|3.95|1.7|1.5|0
 picanto|Quillo Picante|Urbano|sedan|compact|3.6|1.6|1.49|0
 rio|Quillo Barranco|Utilitario|sedan|compact|4.07|1.73|1.45|0
 i20|Jandía i-Veinte|Utilitario|sedan|compact|4.04|1.78|1.45|5
 i10|Jandía i-Diez|Urbano|sedan|compact|3.67|1.68|1.48|0
-sandero|Datilera Sendero|Utilitario|sedan|compact|4.09|1.85|1.5|6
-clio|Reinona Tío|Utilitario|sedan|compact|4.05|1.8|1.44|5
+sandero|Datilera Sendero|Utilitario|sedan|compact|4.09|1.85|1.5|0
+clio|Reinona Tío|Utilitario|sedan|compact|4.05|1.8|1.44|0
 p208|Pijó 802|Utilitario|sedan|compact|4.06|1.75|1.43|4
 corsa|Copal Corsario|Utilitario|sedan|compact|4.06|1.77|1.43|0
 c3|Limonero Ce-Tres|Utilitario|sedan|compact|3.99|1.75|1.47|0
@@ -27066,6 +27066,18 @@ olecorsa|Ole Corsario|Utilitario|ole-corsario|compact|4.061|1.764|1.462|4
 olecorsaL|Ole Corsario|Utilitario|ole-corsario-lejos|compact|4.061|1.764|1.462|0
 mocco|Ole Mocco|Crossover|ole-mocco|suv|4.151|1.79|1.559|4
 moccoL|Ole Mocco|Crossover|ole-mocco-lejos|suv|4.151|1.79|1.559|0
+tyaiza|Totuya Yaiza|Utilitario|totuya-yaiza|compact|3.94|1.746|1.526|10
+tyaizaL|Totuya Yaiza|Utilitario|totuya-yaiza-lejos|compact|3.94|1.746|1.526|0
+helado|Guanchazen Helado|Utilitario|guanchazen-helado|compact|4.074|1.75|1.478|12
+heladoL|Guanchazen Helado|Utilitario|guanchazen-helado-lejos|compact|4.074|1.75|1.478|0
+dsendero|Damian Sendero|Utilitario|damian-sendero|compact|4.102|1.8|1.503|6
+dsenderoL|Damian Sendero|Utilitario|damian-sendero-lejos|compact|4.102|1.8|1.503|0
+beluga|Troceen Beluga|Monovolumen|troceen-beluga|van|4.753|1.848|1.835|4
+belugaL|Troceen Beluga|Monovolumen|troceen-beluga-lejos|van|4.753|1.848|1.835|0
+vivita|Antonias Vivita|Furgoneta|antonias-vivita|van|5.14|1.928|1.936|3
+vivitaL|Antonias Vivita|Furgoneta|antonias-vivita-lejos|van|5.14|1.928|1.936|0
+newton3|Newton Style 3|Berlina eléctrica|newton-style-3|sedan|4.72|1.85|1.467|5
+newton3L|Newton Style 3|Berlina eléctrica|newton-style-3-lejos|sedan|4.72|1.85|1.467|0
 f500|Fiao Quinientitos|Urbano|sedan|compact|3.57|1.63|1.49|4
 # compactos / berlinas
 leon|Butaca Leona|Compacto|hatchback-sports|sedan|4.28|1.8|1.46|0
@@ -27095,12 +27107,12 @@ landcruiser|Tagoror Tierra Crucero|Todoterreno|suv|suv|4.7|1.88|1.85|0
 jimny|Susurro Yimi|Todoterreno|suv|suv|3.48|1.65|1.72|2
 # furgonetas
 kangoo|Reinona Canguro|Furgoneta|van|van|4.28|1.83|1.84|4
-berlingo|Limonero Berlinga|Furgoneta|van|van|4.4|1.85|1.84|4
+berlingo|Limonero Berlinga|Furgoneta|van|van|4.4|1.85|1.84|0
 partner|Pijó Compadre|Furgoneta|van|van|4.4|1.85|1.84|3
 caddy|Guagüen Cadi|Furgoneta|van|van|4.5|1.86|1.82|3
 doblo|Fiao Doblón|Furgoneta|van|van|4.39|1.83|1.85|2
 transit|Fardo Tránsito|Furgoneta|van|van|4.97|1.99|1.98|3
-vito|Mercadillo Vitó|Furgoneta|van|van|5.14|1.93|1.91|3
+vito|Mercadillo Vitó|Furgoneta|van|van|5.14|1.93|1.91|0
 # pick-ups
 hilux|Tagoror Jailux|Pick-up|truck|suv|5.33|1.86|1.82|4
 navara|Nisperero Navajo|Pick-up|truck|suv|5.26|1.85|1.8|2
@@ -27164,7 +27176,13 @@ for (const [id, x, y] of [
   ['teypan', 0.8, 1.01],
   ['chayan', 0.85, 1.04],
   ['olecorsa', 0.72, 0.96],
-  ['mocco', 0.7, 0.99]
+  ['mocco', 0.7, 0.99],
+  ['tyaiza', 0.66, 1.0],
+  ['helado', 0.7, 0.98],
+  ['dsendero', 0.72, 1.0],
+  ['beluga', 0.8, 1.12],
+  ['vivita', 0.85, 1.2],
+  ['newton3', 0.78, 0.95]
 ]) {
   VMODELS[id].lod = id + 'L';
   VMODELS[id].tail = VMODELS[id + 'L'].tail = [x * CAR_SCALE, y * CAR_SCALE];

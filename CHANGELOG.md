@@ -3,6 +3,15 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.11 — 2026-11-11 — Alpha 1.4.11: seis coches propios más
+- Seis coches nuevos hechos con la receta de `Blender/coche/RECETA_COCHES.md` (silueta medida de la foto, faros y
+  frontal desde las fotos de frente, ruedas a ras, techo del color de la carrocería): **Totuya Yaiza** (sustituye
+  al Tagoror Lairis), **Guanchazen Helado** (al Guagüen Pollito), **Damian Sendero** (a la Datilera Sendero),
+  **Troceen Beluga** (a la Limonero Berlinga), **Antonias Vivita** (a la Mercadillo Vitó) y **Newton Style 3**
+  (a la Reinona Tío). Ya son 27 coches propios.
+- Generador: techo del color de la carrocería por defecto; ventanillas cuyo borde sigue la línea del techo (sin
+  bordes rotos); perfil del techo suavizado; faros que pueden doblar la esquina.
+
 ## 1.4.10 — 2026-11-11 — Alpha 1.4.10: el Troceen C33 sale más
 - El **Troceen C33** pasa de peso 7 a 12 en el sorteo de coches: ahora es ~5,3 % de los coches de la calle (antes
   3,2 %). Jonay: «el C33 debería salir bastante, en torno a un 5-6».
