@@ -35,11 +35,18 @@ reniego|Yoos Reniego|Todoterreno|yoos-reniego|suv|4.174|1.8|1.587|5
 reniegoL|Yoos Reniego|Todoterreno|yoos-reniego-lejos|suv|4.174|1.8|1.587|0
 cartabon|Yoos Cartabon|SUV|yoos-cartabon|suv|4.454|1.88|1.647|5
 cartabonL|Yoos Cartabon|SUV|yoos-cartabon-lejos|suv|4.454|1.88|1.647|0
+# v1.4.5: tres más (Antonias Tipo E sustituye al Guagüen Golfo; LTG Scupe al Butaca Atajo; Fierilla 440 al Quillo Exceso, y sale poco)
+tipoe|Antonias Tipo E|Berlina|antonias-tipo-e|sedan|4.826|1.88|1.482|4
+tipoeL|Antonias Tipo E|Berlina|antonias-tipo-e-lejos|sedan|4.826|1.88|1.482|0
+ltg|Antonias LTG Scupe|SUV coupé|antonias-ltg-scupe|suv|4.792|2.0|1.732|3
+ltgL|Antonias LTG Scupe|SUV coupé|antonias-ltg-scupe-lejos|suv|4.792|2.0|1.732|0
+fierilla|Fierilla 440|Superdeportivo|fierilla-440|sport|4.57|1.95|1.212|1
+fierillaL|Fierilla 440|Superdeportivo|fierilla-440-lejos|sport|4.57|1.95|1.212|0
 f500|Fiao Quinientitos|Urbano|sedan|compact|3.57|1.63|1.49|4
 # compactos / berlinas
 leon|Butaca Leona|Compacto|hatchback-sports|sedan|4.28|1.8|1.46|0
 corolla|Tagoror Corona|Berlina|hatchback-sports|sedan|4.37|1.79|1.44|0
-golf|Guagüen Golfo|Compacto|hatchback-sports|sedan|4.28|1.79|1.46|4
+golf|Guagüen Golfo|Compacto|hatchback-sports|sedan|4.28|1.79|1.46|0
 # crossovers / SUV
 troc|Guagüen Te-Roque|Crossover|suv-luxury|suv|4.23|1.82|1.57|8
 tcross|Guagüen Te-Cruz|Crossover|suv-luxury|suv|4.11|1.78|1.58|0
@@ -48,9 +55,9 @@ tucson|Jandía Tacoronte|SUV|suv-luxury|suv|4.5|1.87|1.65|8
 kona|Jandía Kuna|Crossover|suv-luxury|suv|4.2|1.8|1.55|4
 sportage|Quillo Deportaje|SUV|suv-luxury|suv|4.51|1.86|1.65|8
 stonic|Quillo Estónica|Crossover|suv-luxury|suv|4.14|1.76|1.52|4
-xceed|Quillo Exceso|Crossover|suv-luxury|suv|4.4|1.83|1.49|3
+xceed|Quillo Exceso|Crossover|suv-luxury|suv|4.4|1.83|1.49|0
 arona|Butaca Adeje|Crossover|suv-luxury|suv|4.14|1.78|1.54|5
-ateca|Butaca Atajo|SUV|suv-luxury|suv|4.38|1.84|1.61|3
+ateca|Butaca Atajo|SUV|suv-luxury|suv|4.38|1.84|1.61|0
 chr|Tagoror Ce-Jota|Crossover|suv-luxury|suv|4.36|1.8|1.56|5
 yariscross|Tagoror Lairis Cruz|Crossover|suv-luxury|suv|4.18|1.77|1.59|0
 qashqai|Nisperero Cascai|Crossover|suv-luxury|suv|4.39|1.81|1.59|0
@@ -123,7 +130,10 @@ for (const [id, x, y] of [
   ['jtm3', 0.7, 0.96],
   ['guancheGT', 0.78, 0.95],
   ['reniego', 0.74, 1.09],
-  ['cartabon', 0.75, 1.13]
+  ['cartabon', 0.75, 1.13],
+  ['tipoe', 0.7, 0.97],
+  ['ltg', 0.75, 1.05],
+  ['fierilla', 0.7, 0.78]
 ]) {
   VMODELS[id].lod = id + 'L';
   VMODELS[id].tail = VMODELS[id + 'L'].tail = [x * CAR_SCALE, y * CAR_SCALE];

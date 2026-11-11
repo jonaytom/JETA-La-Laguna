@@ -3,6 +3,13 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.5 — 2026-11-11 — Alpha 1.4.5: Antonias Tipo E, LTG Scupe y Fierilla 440
+- Tres coches propios más (Blender, mismo generador): **Antonias Tipo E** (berlina grande; rejilla con puntos y faros
+  muy finos) sustituye al Guagüen Golfo; **Antonias LTG Scupe** (SUV coupé grande) al Butaca Atajo; **Fierilla 440**
+  (superdeportivo de motor central: morro bajo, cabina pequeña, tapa del motor larga, pilotos redondos; sale poco)
+  al Quillo Exceso. Emblemas inventados: Antonias (aro con travesaño) y Fierilla (escudo).
+- Ya son 13 modelos propios.
+
 ## 1.4.4 — 2026-11-11 — Alpha 1.4.4: nueve coches propios más
 - **Nueve modelos nuevos hechos en Blender** (Jonay, con fotos de cada uno; lo que más importa: la silueta, los frontales
   y los faros), cada uno con su versión de juego (10.300–11.900 triángulos) y la lejana para aparcados (~1.150). Sale
