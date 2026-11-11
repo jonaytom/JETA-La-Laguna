@@ -3,6 +3,11 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.10 — 2026-11-11 — Alpha 1.4.10: el Troceen C33 sale más
+- El **Troceen C33** pasa de peso 7 a 12 en el sorteo de coches: ahora es ~5,3 % de los coches de la calle (antes
+  3,2 %). Jonay: «el C33 debería salir bastante, en torno a un 5-6».
+- Ya no se publica la página del juego en claude.ai: Jonay usa el zip con todo separado.
+
 ## 1.4.9 — 2026-11-11 — Alpha 1.4.9: coches comprimidos y ruedas a ras
 - **Los modelos de coche van comprimidos**: con los 20 coches propios la página del juego pasaba de 16 MB y no se
   podía publicar (17,6 MB). Ahora cada modelo va en un bloque DEFLATE (`tools/comprimir_coches.py`) y el juego lo

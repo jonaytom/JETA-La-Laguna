@@ -27026,7 +27026,7 @@ p208|Pijó 802|Utilitario|sedan|compact|4.06|1.75|1.43|4
 corsa|Copal Corsario|Utilitario|sedan|compact|4.06|1.77|1.43|0
 c3|Limonero Ce-Tres|Utilitario|sedan|compact|3.99|1.75|1.47|0
 # v1.4.3: modelos propios hechos en Blender (Jonay: «iremos sustituyendo poco a poco a los actuales con los nuestros»); el Troceen C33 sustituye al Limonero Ce-Tres
-troceen|Troceen C33|Crossover|troceen|suv|3.968|1.765|1.62|7
+troceen|Troceen C33|Crossover|troceen|suv|3.968|1.765|1.62|12
 troceenL|Troceen C33|Crossover|troceen-lejos|suv|3.968|1.765|1.62|0
 # v1.4.4: seis más (Jonay, 11-nov: «ve eliminando un modelo de los actuales por cada modelo añadido»); cada uno sale tanto como el que sustituye
 troceenC44|Troceen C44|Crossover coupé|troceen-c44|suv|4.109|1.8|1.532|3
