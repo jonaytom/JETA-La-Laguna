@@ -1083,7 +1083,8 @@ function buildParkedPart3(template, cc) {
   };
   const cells = new Map();
   for (const s of PARKED.slots) {
-    const key = Math.floor(s.x / 400) + ',' + Math.floor(s.z / 400) + ',' + s.type;
+    const cs = VMODELS[s.type] && VMODELS[s.type].lod ? 120 : 400; // v1.4.3: our own models in 120 m cells, so their light version takes over sooner
+    const key = Math.floor(s.x / cs) + ',' + Math.floor(s.z / cs) + ',' + s.type;
     /* v1.0.0: 400 m cells (800 m ones were drawn whole for one car in sight: 110–140 draw calls a frame) */ let c = cells.get(key);
     if (!c) cells.set(key, (c = []));
     c.push(s);
@@ -1242,7 +1243,7 @@ function updateParkedLOD() {
   /* v1.0.0: ~580 m in «alta» (a parked car there is 3 pixels) */ for (const c of PARKED.chunks) {
     const d = Math.hypot(c.x - camera.position.x, c.z - camera.position.z) - (c.r || 0);
     c.mesh.visible = d < far;
-    if (c.lo) c.mesh.geometry = d > 90 ? c.lo : c.hi; // v1.4.3: our own models, light version beyond ~90 m
+    if (c.lo) c.mesh.geometry = d > 40 ? c.lo : c.hi; // v1.4.3: our own models, light version beyond ~40 m from the edge of their 120 m cell
   }
 }
 function parkedNear(x, z, r) {

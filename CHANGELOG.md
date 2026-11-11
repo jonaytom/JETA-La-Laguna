@@ -3,6 +3,28 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.4 — 2026-11-11 — Alpha 1.4.4: nueve coches propios más
+- **Nueve modelos nuevos hechos en Blender** (Jonay, con fotos de cada uno; lo que más importa: la silueta, los frontales
+  y los faros), cada uno con su versión de juego (10.300–11.900 triángulos) y la lejana para aparcados (~1.150). Sale
+  cada uno tanto como el modelo al que sustituye (Jonay: «ve eliminando un modelo de los actuales por cada modelo añadido»):
+  | Nuevo | Sustituye a |
+  |---|---|
+  | Troceen C44 (SUV coupé) | Pijó 8002 |
+  | Totuya Carlota (compacto) | Tagoror Corona |
+  | Totuya Yaiza Cross | Tagoror Lairis Cruz |
+  | Guanchazen T-Rex | Guagüen Te-Cruz |
+  | Guanchazen D.I 55 (SUV coupé eléctrico) | Guagüen Tiguanche |
+  | JTM Capítulo 3 (berlina) | Butaca Leona |
+  | JTM H4 (coupé deportivo) | Guanche GT (mismo id `guancheGT`: misiones y carreras siguen igual) |
+  | Yoos Reniego (todoterreno pequeño) | Datilera Polvero |
+  | Yoos Cartabon (SUV) | Nisperero Cascai |
+- Hechos con un generador común (`E:\Claude\GTA La Laguna\Blender\coche\generador.py`, `otros.py`, `morros.py`,
+  `exportar.py`): silueta medida de la foto lateral, voladizos y morros repasados (frontal alto, esquinas cerradas), ópticas
+  y rejillas con su forma (faros redondos y siete ranuras del Reniego, doble rejilla de los JTM, barra de luz del D.I 55…),
+  pasos de rueda cuadrados en los todocamino, y un emblema inventado por marca (Troceen, Totuya, Guanchazen, JTM, Yoos).
+- Los colores se sortean como en el resto. Aparcados de modelos propios en celdas de 120 m: la versión ligera entra antes.
+- Herramienta `foto_propios.py` (lista `propios144`): todos en cuatro colores en el aeropuerto y de cerca.
+
 ## 1.4.3 — 2026-11-11 — Alpha 1.4.3: el Troceen C33, primer coche propio
 - **Troceen C33** (Jonay: «diseñar un coche nuevo en Blender… un Citroën ë-C3 como el mío»; nombre de Jonay): utilitario
   eléctrico tipo SUV pequeño, parodia, modelado desde cero en Blender con las medidas sacadas de las fotos del coche de

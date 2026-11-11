@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.3</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.4</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,29 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.4.4 — 2026-11-11 — Alpha 1.4.4: nueve coches propios más</h2>
+<ul>
+<li><strong>Nueve modelos nuevos hechos en Blender</strong> (Jonay, con fotos de cada uno; lo que más importa: la silueta, los frontales
+  y los faros), cada uno con su versión de juego (10.300–11.900 triángulos) y la lejana para aparcados (~1.150). Sale
+  cada uno tanto como el modelo al que sustituye (Jonay: «ve eliminando un modelo de los actuales por cada modelo añadido»):
+  | Nuevo | Sustituye a |
+  |---|---|
+  | Troceen C44 (SUV coupé) | Pijó 8002 |
+  | Totuya Carlota (compacto) | Tagoror Corona |
+  | Totuya Yaiza Cross | Tagoror Lairis Cruz |
+  | Guanchazen T-Rex | Guagüen Te-Cruz |
+  | Guanchazen D.I 55 (SUV coupé eléctrico) | Guagüen Tiguanche |
+  | JTM Capítulo 3 (berlina) | Butaca Leona |
+  | JTM H4 (coupé deportivo) | Guanche GT (mismo id <code>guancheGT</code>: misiones y carreras siguen igual) |
+  | Yoos Reniego (todoterreno pequeño) | Datilera Polvero |
+  | Yoos Cartabon (SUV) | Nisperero Cascai |</li>
+<li>Hechos con un generador común (<code>E:\Claude\GTA La Laguna\Blender\coche\generador.py</code>, <code>otros.py</code>, <code>morros.py</code>,
+  <code>exportar.py</code>): silueta medida de la foto lateral, voladizos y morros repasados (frontal alto, esquinas cerradas), ópticas
+  y rejillas con su forma (faros redondos y siete ranuras del Reniego, doble rejilla de los JTM, barra de luz del D.I 55…),
+  pasos de rueda cuadrados en los todocamino, y un emblema inventado por marca (Troceen, Totuya, Guanchazen, JTM, Yoos).</li>
+<li>Los colores se sortean como en el resto. Aparcados de modelos propios en celdas de 120 m: la versión ligera entra antes.</li>
+<li>Herramienta <code>foto_propios.py</code> (lista <code>propios144</code>): todos en cuatro colores en el aeropuerto y de cerca.</li>
+</ul>
 <h2>1.4.3 — 2026-11-11 — Alpha 1.4.3: el Troceen C33, primer coche propio</h2>
 <ul>
 <li><strong>Troceen C33</strong> (Jonay: «diseñar un coche nuevo en Blender… un Citroën ë-C3 como el mío»; nombre de Jonay): utilitario

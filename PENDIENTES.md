@@ -12,7 +12,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Coches propios (Blender)
 
-- [ ] ● **Ir sustituyendo los coches de Kenney por modelos propios** (Jonay, 11-nov: «iremos sustituyendo poco a poco a los actuales con los nuestros»): hay 66 modelos pero salen de 15 formas base de Kenney; con 6–8 propios (utilitario, compacto, SUV mediano, furgoneta, pick-up, camión) se cubre casi todo. Hecho el primero: Troceen C33 (v1.4.3). Cada uno: detallado + versión de juego de ~10.000–12.000 triángulos + lejana de ~1.200, exportados con `car_export` (Blender) a `data/kenney_cars.json`.
+- [~] ● v1.4.3–1.4.4 (Troceen C33, C44; Totuya Carlota, Yaiza Cross; Guanchazen T-Rex, D.I 55; JTM Capítulo 3, H4; Yoos Reniego, Cartabon) **Ir sustituyendo los coches de Kenney por modelos propios** (Jonay, 11-nov: «iremos sustituyendo poco a poco a los actuales con los nuestros»; «ve eliminando un modelo de los actuales por cada modelo añadido»; «lo más importante es recrear la silueta y los frontales y sus ópticas delanteras»): generador en `E:\Claude\GTA La Laguna\Blender\coche\` (`generador.py` + `otros.py`/`c44.py` con los datos de cada coche + `morros.py` + `exportar.py`); fotos de referencia de Jonay en el chat. Falta: segunda pasada a traseras y pilotos; más modelos según mande Jonay.
 
 ### Minijuegos: controles, pausa y sonido
 
@@ -834,6 +834,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
         X 243 Z −352, X −291 Z 2699), un servicio del aeropuerto en una ladera de pendiente imposible (X −3247 Z −359).
 
 ### Rendimiento, auditorías y código
+- [ ] ◐ **Coches propios y rendimiento** (11-nov): cada modelo propio son ~11.000 triángulos (los de Kenney, ~1.000–2.000); en la 1.4.3 el pintado pasó de 18,1 a 22,6 ms (¿ruido?). Mirar con la auditoría de la 1.4.4 (10 modelos propios); si sube, versión lejana también para el tráfico y celdas de aparcados más pequeñas. Ojo: al poner a 0 los sedanes de Kenney, Carlota y Capítulo 3 salen ~400 aparcados cada uno (`modelForType('sedan')`).
 - [ ] ◐ **Pintado 15,3 → 18,1 ms entre la 1.4.0 y la 1.4.2** (auditorías 11-nov; programas 67 → 73): mirar si es el grano de enlucido/piedra (`plasterWorld`/`stoneWorld`, 02_textures.js) o ruido de la medida (en la 1.3.5–1.3.7 subió y volvió a bajar solo). Aviso menor: «futbol» 0,2 → 0,3 ms.
 - [ ] ⚡ **Peleas callejeras con un peatón cualquiera: ~0,14 s al empezar** (v1.2.5, sonda `sonda_maleante_gpu.py`): sus figuras se dibujan al momento (las del jugador y las de los maleantes ya se preparan antes). Se podrían «calentar» las del peatón al acercarte a él.
 - [ ] ⚡ **`huella_mundo_cmp` no es del todo fija** (v1.2.4): salió distinta una vez (161 vértices) y bien las dos siguientes con el mismo código; algo de la carga (gente o coches) entra en la cuenta.

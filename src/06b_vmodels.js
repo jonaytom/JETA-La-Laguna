@@ -18,15 +18,32 @@ c3|Limonero Ce-Tres|Utilitario|sedan|compact|3.99|1.75|1.47|0
 # v1.4.3: modelos propios hechos en Blender (Jonay: «iremos sustituyendo poco a poco a los actuales con los nuestros»); el Troceen C33 sustituye al Limonero Ce-Tres
 troceen|Troceen C33|Crossover|troceen|suv|3.968|1.765|1.62|7
 troceenL|Troceen C33|Crossover|troceen-lejos|suv|3.968|1.765|1.62|0
+# v1.4.4: seis más (Jonay, 11-nov: «ve eliminando un modelo de los actuales por cada modelo añadido»); cada uno sale tanto como el que sustituye
+troceenC44|Troceen C44|Crossover coupé|troceen-c44|suv|4.109|1.8|1.532|3
+troceenC44L|Troceen C44|Crossover coupé|troceen-c44-lejos|suv|4.109|1.8|1.532|0
+carlota|Totuya Carlota|Compacto|totuya-carlota|sedan|4.268|1.79|1.447|5
+carlotaL|Totuya Carlota|Compacto|totuya-carlota-lejos|sedan|4.268|1.79|1.447|0
+yaiza|Totuya Yaiza Cross|Crossover|totuya-yaiza-cross|suv|4.109|1.76|1.602|5
+yaizaL|Totuya Yaiza Cross|Crossover|totuya-yaiza-cross-lejos|suv|4.109|1.76|1.602|0
+trex|Guanchazen T-Rex|Crossover|guanchazen-t-rex|suv|4.085|1.78|1.582|5
+trexL|Guanchazen T-Rex|Crossover|guanchazen-t-rex-lejos|suv|4.085|1.78|1.582|0
+di55|Guanchazen D.I 55|SUV coupé eléctrico|guanchazen-di-55|suv|4.479|1.852|1.627|5
+di55L|Guanchazen D.I 55|SUV coupé eléctrico|guanchazen-di-55-lejos|suv|4.479|1.852|1.627|0
+jtm3|JTM Capítulo 3|Berlina|jtm-capitulo-3|sedan|4.597|1.81|1.452|5
+jtm3L|JTM Capítulo 3|Berlina|jtm-capitulo-3-lejos|sedan|4.597|1.81|1.452|0
+reniego|Yoos Reniego|Todoterreno|yoos-reniego|suv|4.174|1.8|1.587|5
+reniegoL|Yoos Reniego|Todoterreno|yoos-reniego-lejos|suv|4.174|1.8|1.587|0
+cartabon|Yoos Cartabon|SUV|yoos-cartabon|suv|4.454|1.88|1.647|5
+cartabonL|Yoos Cartabon|SUV|yoos-cartabon-lejos|suv|4.454|1.88|1.647|0
 f500|Fiao Quinientitos|Urbano|sedan|compact|3.57|1.63|1.49|4
 # compactos / berlinas
-leon|Butaca Leona|Compacto|hatchback-sports|sedan|4.28|1.8|1.46|5
-corolla|Tagoror Corona|Berlina|hatchback-sports|sedan|4.37|1.79|1.44|5
+leon|Butaca Leona|Compacto|hatchback-sports|sedan|4.28|1.8|1.46|0
+corolla|Tagoror Corona|Berlina|hatchback-sports|sedan|4.37|1.79|1.44|0
 golf|Guagüen Golfo|Compacto|hatchback-sports|sedan|4.28|1.79|1.46|4
 # crossovers / SUV
 troc|Guagüen Te-Roque|Crossover|suv-luxury|suv|4.23|1.82|1.57|8
-tcross|Guagüen Te-Cruz|Crossover|suv-luxury|suv|4.11|1.78|1.58|5
-tiguan|Guagüen Tiguanche|SUV|suv-luxury|suv|4.49|1.84|1.67|5
+tcross|Guagüen Te-Cruz|Crossover|suv-luxury|suv|4.11|1.78|1.58|0
+tiguan|Guagüen Tiguanche|SUV|suv-luxury|suv|4.49|1.84|1.67|0
 tucson|Jandía Tacoronte|SUV|suv-luxury|suv|4.5|1.87|1.65|8
 kona|Jandía Kuna|Crossover|suv-luxury|suv|4.2|1.8|1.55|4
 sportage|Quillo Deportaje|SUV|suv-luxury|suv|4.51|1.86|1.65|8
@@ -35,14 +52,14 @@ xceed|Quillo Exceso|Crossover|suv-luxury|suv|4.4|1.83|1.49|3
 arona|Butaca Adeje|Crossover|suv-luxury|suv|4.14|1.78|1.54|5
 ateca|Butaca Atajo|SUV|suv-luxury|suv|4.38|1.84|1.61|3
 chr|Tagoror Ce-Jota|Crossover|suv-luxury|suv|4.36|1.8|1.56|5
-yariscross|Tagoror Lairis Cruz|Crossover|suv-luxury|suv|4.18|1.77|1.59|5
-qashqai|Nisperero Cascai|Crossover|suv-luxury|suv|4.39|1.81|1.59|5
+yariscross|Tagoror Lairis Cruz|Crossover|suv-luxury|suv|4.18|1.77|1.59|0
+qashqai|Nisperero Cascai|Crossover|suv-luxury|suv|4.39|1.81|1.59|0
 juke|Nisperero Yuke|Crossover|suv-luxury|suv|4.21|1.8|1.59|3
 captur|Reinona Captura|Crossover|suv-luxury|suv|4.23|1.8|1.58|3
-p2008|Pijó 8002|Crossover|suv-luxury|suv|4.3|1.77|1.55|3
+p2008|Pijó 8002|Crossover|suv-luxury|suv|4.3|1.77|1.55|0
 zs|MaGofio ZZ|SUV|suv-luxury|suv|4.32|1.81|1.62|4
 # todoterrenos
-duster|Datilera Polvero|Todoterreno|suv|suv|4.34|1.8|1.69|5
+duster|Datilera Polvero|Todoterreno|suv|suv|4.34|1.8|1.69|0
 landcruiser|Tagoror Tierra Crucero|Todoterreno|suv|suv|4.7|1.88|1.85|3
 jimny|Susurro Yimi|Todoterreno|suv|suv|3.48|1.65|1.72|2
 # furgonetas
@@ -68,7 +85,8 @@ tractor|Tractor Garañón|Agrícola|tractor|truck|3.8|1.9|2.6|0
 # servicio público y especiales (no salen en el sorteo general)
 taxi|Taxi Lagunero|Taxi|taxi|taxi|4.55|1.76|1.49|0
 policia|Policía Local|Patrulla|police|police|4.6|1.85|1.5|0
-guancheGT|Guanche GT|Deportivo|sedan-sports|sport|4.3|1.9|1.25|0
+guancheGT|JTM H4|Deportivo|jtm-h4|sport|4.644|1.89|1.402|0
+guancheGTL|JTM H4|Deportivo|jtm-h4-lejos|sport|4.644|1.89|1.402|0
 # motos y ciclomotores (Canarias: el scooter manda)
 pcx|Olita PeCeEquis 125|Scooter|scooter|moto|1.93|0.74|1.1|8
 forza|Olita Forzuda 125|Maxiscooter|maxi|moto|2.14|0.76|1.35|4
@@ -93,9 +111,23 @@ VMODELS_RAW.forEach(
     (VMODELS[id] = { id, name, cat, base, phys, L: +(L * CAR_SCALE).toFixed(3), W: +(W * CAR_SCALE).toFixed(3), H: +(H * CAR_SCALE).toFixed(3), w })
 );
 // v1.4.3: our own models (Blender, assets/modelos/): the light version for far parked cars, and where the tail lights go
-VMODELS.troceen.lod = 'troceenL';
-VMODELS.troceen.tail = [0.68, 0.95];
-VMODELS.troceenL.tail = VMODELS.troceen.tail;
+// v1.4.3/v1.4.4: our own models (Blender): the light version for far parked cars, and where the tail lights are
+// (half width, height, already at the game's 0.95 scale)
+for (const [id, x, y] of [
+  ['troceen', 0.72, 1.0],
+  ['troceenC44', 0.7, 1.06],
+  ['carlota', 0.72, 0.92],
+  ['yaiza', 0.66, 1.05],
+  ['trex', 0.66, 1.05],
+  ['di55', 0.7, 1.09],
+  ['jtm3', 0.7, 0.96],
+  ['guancheGT', 0.78, 0.95],
+  ['reniego', 0.74, 1.09],
+  ['cartabon', 0.75, 1.13]
+]) {
+  VMODELS[id].lod = id + 'L';
+  VMODELS[id].tail = VMODELS[id + 'L'].tail = [x * CAR_SCALE, y * CAR_SCALE];
+}
 const VTYPES2 = {
   truck: { name: 'Camión', L: 6.5, W: 2.1, H: 2.8, maxV: 30, acc: 5, grip: 6, mass: 3, prof: 'van' },
   moto: { name: 'Moto', L: 2.0, W: 0.8, H: 1.1, maxV: 36, acc: 12, grip: 9, mass: 0.5, prof: 'sedan' }
