@@ -3,6 +3,11 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.2 — 2026-11-11 — Alpha 1.4.2: menos programas de shader
+- La auditoría de la 1.4.1 avisó de 8 programas de shader más (67 → 75): cada fuerza y tamaño del grano de piedra y de
+  enlucido compilaba su propio programa. Ahora van como valores del material (uniforms): un programa para todo el
+  enlucido y uno por tipo de piedra.
+
 ## 1.4.1 — 2026-11-11 — Alpha 1.4.1: tapias encaladas, iglesias y cantería con texturas de Poly Haven
 - **Tapias y muros encalados**, el enlucido de las **iglesias** (Concepción y las demás) y el blanco de las casas hechas a
   mano llevan el grano del enlucido de Poly Haven (el mismo de las fachadas), puesto por su posición (`plasterWorld`,

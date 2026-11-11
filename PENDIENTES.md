@@ -935,6 +935,8 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Hecho
 
+- [x] v1.4.2 **Auditoría 1.4.1: programas de shader 67 → 75** (APTO CON AVISOS; también pintar_ms 15,3 → 17,5): `stoneWorld`/`plasterWorld` compilaban un programa por cada fuerza y tamaño; ahora son uniforms (02_textures.js).
+
 - [x] v1.4.0 **Nada debajo de los pasos de cebra y cebreados** (Jonay, 11-nov): asfalto liso encima de las rayas de los carriles y sin flechas/STOP/ceda dentro (`markClear`, 04f_cebreados.js; sonda `sonda_pasos_cebra.py`).
 
 - [x] v1.3.8 **Flechas sobre la raya entre carriles** (Jonay, 11-nov, Av. de los Menceyes X 1600, Y 1820): una flecha en medio de cada carril (`laneCentres`, 07_vehicles.js).
