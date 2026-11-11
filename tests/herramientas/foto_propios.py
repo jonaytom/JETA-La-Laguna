@@ -2,7 +2,7 @@
 # cuatro colores, y hace fotos de conjunto y de cerca de cada uno; cuenta cuántos hay aparcados de cada modelo.
 # Fotos en shots/propios_<n>.jpg. Uso: herramientas/foto_propios.py
 import base64, json
-MODELOS = ['troceen', 'troceenC44', 'carlota', 'yaiza', 'trex', 'di55', 'jtm3', 'guancheGT', 'reniego', 'cartabon', 'tipoe', 'ltg', 'fierilla', 'piki']
+MODELOS = ['troceen', 'troceenC44', 'carlota', 'yaiza', 'trex', 'di55', 'jtm3', 'guancheGT', 'reniego', 'cartabon', 'tipoe', 'ltg', 'fierilla', 'piki', 'oalgo', 'gomera', 'teypan', 'chayan', 'olecorsa', 'mocco']
 COLORES = [0xf2f2f2, 0x1f4e8c, 0xb3261e, 0x1b1b1b]
 async def snap(pg, name):
     open('shots/propios_%s.jpg' % name, 'wb').write(base64.b64decode((await pg.evaluate("window.__snap()")).split(',')[1]))
@@ -18,7 +18,7 @@ async def run(pg):
       const cx = best.cx, cz = best.cz, out = { cx, cz, tri: {}, aparcados: {} };
       d.PLAYER.x = cx + 40; d.PLAYER.z = cz + 40; __step(2);
       M.forEach((id, i) => C.forEach((col, j) => {
-        const car = new d.Car(null, col, cx + (i - 6) * 6.5, cz + j * 4.2, 0, d.VMODELS[id]); car.mode = 'parked';
+        const car = new d.Car(null, col, cx + (i - 10) * 6.5, cz + j * 4.2, 0, d.VMODELS[id]); car.mode = 'parked';
         if (j === 0) { let t = 0; car.mesh.traverse((m) => { if (m.isMesh) { const g = m.geometry; t += (g.index ? g.index.count : g.attributes.position.count) / 3; } }); out.tri[id] = Math.round(t); }
       }));
       for (const s of d.PARKED.slots) if (M.includes(s.type)) out.aparcados[s.type] = (out.aparcados[s.type] || 0) + 1;
@@ -30,7 +30,7 @@ async def run(pg):
         await pg.evaluate("""([x,z,h,tx,tz])=>{ const d=__dbg; __step(1); const y=d.heightAt(tx,tz); d.camera.position.set(x, y+h, z); d.camera.lookAt(tx, y+0.6, tz); d.camera.updateMatrixWorld(); }""", [x, z, h, tx, tz])
         await snap(pg, n)
     for i, m in enumerate(MODELOS):
-        x = cx + (i - 6) * 6.5
+        x = cx + (i - 10) * 6.5
         await pg.evaluate("""([x,z])=>{ const d=__dbg; __step(1); const y=d.heightAt(x,z); d.camera.position.set(x+4.2, y+1.9, z+5.4); d.camera.lookAt(x, y+0.75, z); d.camera.updateMatrixWorld(); }""", [x, cz])
         await snap(pg, m)
     print('FOTO PROPIOS OK')

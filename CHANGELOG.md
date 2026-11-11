@@ -3,6 +3,21 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.8 — 2026-11-11 — Alpha 1.4.8: siete coches propios más y pasos de rueda limpios
+- **Pasos de rueda sin dientes** (Jonay: «el recorte de la rueda está fatal, se ven dientes»): el hueco de la rueda
+  quitaba caras enteras y el borde quedaba en escalera; ahora los vértices del borde se colocan sobre la curva del
+  paso, que queda redondo. Rehechos con el arreglo los 19 coches propios del generador (falta el Troceen C33).
+- **Piki Crocante rehecho** (Jonay: «la silueta no encaja; el morro es más corto, las líneas más redondeadas, la
+  trasera tiene otro ángulo»): el perfil se saca ahora directamente de la silueta de la foto de cotas.
+- **Nueva forma de hacer los coches**: `auto/builder.py` (Blender) mide la silueta lateral de la foto (fondo liso
+  o transparente) y la convierte en el perfil del coche con las medidas reales; las ventanillas, pilares, juntas y
+  manillas salen de 4 cotas por coche.
+- Seis coches nuevos: **Totuya O Algo** (crossover urbano bicolor, sustituye al Jandía i-Diez), **Seta Gomera**
+  (utilitario, al Butaca Isleña), **Pancho Teypan** (berlina eléctrica, al Quillo Barranco; sale poco),
+  **Pancho Chayan** (SUV grande, al Tagoror Tierra Crucero), **Ole Corsario** (utilitario, al Copal Corsario) y
+  **Ole Mocco** (crossover bicolor, al Quillo Estónica). Emblemas inventados para Seta, Pancho y Ole.
+- Ya son 20 coches propios.
+
 ## 1.4.7 — 2026-11-11 — Alpha 1.4.7: Piki Crocante
 - Nuevo coche propio, el **Piki Crocante** (urbano de 3,6 m; batalla 2,40 m y voladizos de las cotas de Jonay): morro
   corto que sube hasta el parabrisas, techo plano con alerón, portón casi vertical, faros en las esquinas con LED

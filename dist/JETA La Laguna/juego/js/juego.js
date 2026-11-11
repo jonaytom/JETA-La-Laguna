@@ -27014,16 +27014,16 @@ function animHuman(H, dt, speed, state = 'ground') {
 const VMODELS_RAW = `
 # utilitarios / urbanos
 polo|Guagüen Pollito|Utilitario|sedan|compact|4.05|1.75|1.46|12
-ibiza|Butaca Isleña|Utilitario|sedan|compact|4.06|1.78|1.44|10
+ibiza|Butaca Isleña|Utilitario|sedan|compact|4.06|1.78|1.44|0
 yaris|Tagoror Lairis|Utilitario|sedan|compact|3.95|1.7|1.5|10
 picanto|Quillo Picante|Urbano|sedan|compact|3.6|1.6|1.49|0
-rio|Quillo Barranco|Utilitario|sedan|compact|4.07|1.73|1.45|5
+rio|Quillo Barranco|Utilitario|sedan|compact|4.07|1.73|1.45|0
 i20|Jandía i-Veinte|Utilitario|sedan|compact|4.04|1.78|1.45|5
-i10|Jandía i-Diez|Urbano|sedan|compact|3.67|1.68|1.48|4
+i10|Jandía i-Diez|Urbano|sedan|compact|3.67|1.68|1.48|0
 sandero|Datilera Sendero|Utilitario|sedan|compact|4.09|1.85|1.5|6
 clio|Reinona Tío|Utilitario|sedan|compact|4.05|1.8|1.44|5
 p208|Pijó 802|Utilitario|sedan|compact|4.06|1.75|1.43|4
-corsa|Copal Corsario|Utilitario|sedan|compact|4.06|1.77|1.43|4
+corsa|Copal Corsario|Utilitario|sedan|compact|4.06|1.77|1.43|0
 c3|Limonero Ce-Tres|Utilitario|sedan|compact|3.99|1.75|1.47|0
 # v1.4.3: modelos propios hechos en Blender (Jonay: «iremos sustituyendo poco a poco a los actuales con los nuestros»); el Troceen C33 sustituye al Limonero Ce-Tres
 troceen|Troceen C33|Crossover|troceen|suv|3.968|1.765|1.62|7
@@ -27052,8 +27052,20 @@ ltg|Antonias LTG Scupe|SUV coupé|antonias-ltg-scupe|suv|4.792|2.0|1.732|3
 ltgL|Antonias LTG Scupe|SUV coupé|antonias-ltg-scupe-lejos|suv|4.792|2.0|1.732|0
 fierilla|Fierilla 440|Superdeportivo|fierilla-440|sport|4.57|1.95|1.212|1
 fierillaL|Fierilla 440|Superdeportivo|fierilla-440-lejos|sport|4.57|1.95|1.212|0
-piki|Piki Crocante|Urbano|piki-crocante|compact|3.605|1.594|1.494|7
-pikiL|Piki Crocante|Urbano|piki-crocante-lejos|compact|3.605|1.594|1.494|0
+piki|Piki Crocante|Urbano|piki-crocante|compact|3.605|1.594|1.505|7
+pikiL|Piki Crocante|Urbano|piki-crocante-lejos|compact|3.605|1.594|1.505|0
+oalgo|Totuya O Algo|Crossover urbano|totuya-o-algo|compact|3.7|1.74|1.552|4
+oalgoL|Totuya O Algo|Crossover urbano|totuya-o-algo-lejos|compact|3.7|1.74|1.552|0
+gomera|Seta Gomera|Utilitario|seta-gomera|compact|4.059|1.78|1.466|10
+gomeraL|Seta Gomera|Utilitario|seta-gomera-lejos|compact|4.059|1.78|1.466|0
+teypan|Pancho Teypan|Berlina eléctrica|pancho-teypan|sedan|4.963|1.966|1.405|2
+teypanL|Pancho Teypan|Berlina eléctrica|pancho-teypan-lejos|sedan|4.963|1.966|1.405|0
+chayan|Pancho Chayan|SUV|pancho-chayan|suv|4.985|1.98|1.701|3
+chayanL|Pancho Chayan|SUV|pancho-chayan-lejos|suv|4.985|1.98|1.701|0
+olecorsa|Ole Corsario|Utilitario|ole-corsario|compact|4.061|1.764|1.462|4
+olecorsaL|Ole Corsario|Utilitario|ole-corsario-lejos|compact|4.061|1.764|1.462|0
+mocco|Ole Mocco|Crossover|ole-mocco|suv|4.151|1.79|1.559|4
+moccoL|Ole Mocco|Crossover|ole-mocco-lejos|suv|4.151|1.79|1.559|0
 f500|Fiao Quinientitos|Urbano|sedan|compact|3.57|1.63|1.49|4
 # compactos / berlinas
 leon|Butaca Leona|Compacto|hatchback-sports|sedan|4.28|1.8|1.46|0
@@ -27066,7 +27078,7 @@ tiguan|Guagüen Tiguanche|SUV|suv-luxury|suv|4.49|1.84|1.67|0
 tucson|Jandía Tacoronte|SUV|suv-luxury|suv|4.5|1.87|1.65|8
 kona|Jandía Kuna|Crossover|suv-luxury|suv|4.2|1.8|1.55|4
 sportage|Quillo Deportaje|SUV|suv-luxury|suv|4.51|1.86|1.65|8
-stonic|Quillo Estónica|Crossover|suv-luxury|suv|4.14|1.76|1.52|4
+stonic|Quillo Estónica|Crossover|suv-luxury|suv|4.14|1.76|1.52|0
 xceed|Quillo Exceso|Crossover|suv-luxury|suv|4.4|1.83|1.49|0
 arona|Butaca Adeje|Crossover|suv-luxury|suv|4.14|1.78|1.54|5
 ateca|Butaca Atajo|SUV|suv-luxury|suv|4.38|1.84|1.61|0
@@ -27079,7 +27091,7 @@ p2008|Pijó 8002|Crossover|suv-luxury|suv|4.3|1.77|1.55|0
 zs|MaGofio ZZ|SUV|suv-luxury|suv|4.32|1.81|1.62|4
 # todoterrenos
 duster|Datilera Polvero|Todoterreno|suv|suv|4.34|1.8|1.69|0
-landcruiser|Tagoror Tierra Crucero|Todoterreno|suv|suv|4.7|1.88|1.85|3
+landcruiser|Tagoror Tierra Crucero|Todoterreno|suv|suv|4.7|1.88|1.85|0
 jimny|Susurro Yimi|Todoterreno|suv|suv|3.48|1.65|1.72|2
 # furgonetas
 kangoo|Reinona Canguro|Furgoneta|van|van|4.28|1.83|1.84|4
@@ -27146,7 +27158,13 @@ for (const [id, x, y] of [
   ['tipoe', 0.7, 0.97],
   ['ltg', 0.75, 1.05],
   ['fierilla', 0.7, 0.78],
-  ['piki', 0.66, 1.03]
+  ['piki', 0.7, 1.0],
+  ['oalgo', 0.65, 1.05],
+  ['gomera', 0.72, 1.0],
+  ['teypan', 0.8, 1.01],
+  ['chayan', 0.85, 1.04],
+  ['olecorsa', 0.72, 0.96],
+  ['mocco', 0.7, 0.99]
 ]) {
   VMODELS[id].lod = id + 'L';
   VMODELS[id].tail = VMODELS[id + 'L'].tail = [x * CAR_SCALE, y * CAR_SCALE];

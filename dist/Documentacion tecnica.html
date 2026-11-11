@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.7</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.8</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,22 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.4.8 — 2026-11-11 — Alpha 1.4.8: siete coches propios más y pasos de rueda limpios</h2>
+<ul>
+<li><strong>Pasos de rueda sin dientes</strong> (Jonay: «el recorte de la rueda está fatal, se ven dientes»): el hueco de la rueda
+  quitaba caras enteras y el borde quedaba en escalera; ahora los vértices del borde se colocan sobre la curva del
+  paso, que queda redondo. Rehechos con el arreglo los 19 coches propios del generador (falta el Troceen C33).</li>
+<li><strong>Piki Crocante rehecho</strong> (Jonay: «la silueta no encaja; el morro es más corto, las líneas más redondeadas, la
+  trasera tiene otro ángulo»): el perfil se saca ahora directamente de la silueta de la foto de cotas.</li>
+<li><strong>Nueva forma de hacer los coches</strong>: <code>auto/builder.py</code> (Blender) mide la silueta lateral de la foto (fondo liso
+  o transparente) y la convierte en el perfil del coche con las medidas reales; las ventanillas, pilares, juntas y
+  manillas salen de 4 cotas por coche.</li>
+<li>Seis coches nuevos: <strong>Totuya O Algo</strong> (crossover urbano bicolor, sustituye al Jandía i-Diez), <strong>Seta Gomera</strong>
+  (utilitario, al Butaca Isleña), <strong>Pancho Teypan</strong> (berlina eléctrica, al Quillo Barranco; sale poco),
+  <strong>Pancho Chayan</strong> (SUV grande, al Tagoror Tierra Crucero), <strong>Ole Corsario</strong> (utilitario, al Copal Corsario) y
+  <strong>Ole Mocco</strong> (crossover bicolor, al Quillo Estónica). Emblemas inventados para Seta, Pancho y Ole.</li>
+<li>Ya son 20 coches propios.</li>
+</ul>
 <h2>1.4.7 — 2026-11-11 — Alpha 1.4.7: Piki Crocante</h2>
 <ul>
 <li>Nuevo coche propio, el <strong>Piki Crocante</strong> (urbano de 3,6 m; batalla 2,40 m y voladizos de las cotas de Jonay): morro

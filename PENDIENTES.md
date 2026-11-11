@@ -10,9 +10,17 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Pendientes por categoría
 
+### Avisos nuevos de Jonay (11-nov, sin clasificar del todo)
+
+- [ ] ◐ **Hierba solo en el campo** (Jonay, 11-nov, captura en C. Profesor José Luis Moreno Becerra, X 918, Y 1532, Gracia: «sigue habiendo hierba en aceras; solo puede haber hierba en zonas de campo»): en los solares junto a la acera salen matas de hierba y alguna invade la acera. Que las matas solo salgan en zonas de campo (fuera de la ciudad), nunca en aceras ni solares urbanos.
+- [ ] ◐ **Pasarela del tranvía: la subida va por el otro lado** (Jonay, 11-nov, captura en X −259, Y 547: «la subida a la pasarela es por el lado contrario… pasa justo encima de lo que ahora es una acera»): la rampa de subida a la pasarela está del lado equivocado; en la realidad sube por donde hoy hay una acera.
+- [ ] ◐ **Trinchera del tranvía en la Glorieta del Brasil: el jugador camina por encima** (Jonay, 11-nov, captura en X −281, Y 719, Campus Central ULL: «por aquí te deberías de caer»): el tranvía va en una trinchera con muros, pero el jugador anda a la altura de la calle sobre ella, como si hubiera suelo invisible. Debería caer a la trinchera (o no poder entrar).
+
 ### Coches propios (Blender)
 
-- [~] ● v1.4.3–1.4.4 (Troceen C33, C44; Totuya Carlota, Yaiza Cross; Guanchazen T-Rex, D.I 55; JTM Capítulo 3, H4; Yoos Reniego, Cartabon; v1.4.5 Antonias Tipo E, LTG Scupe; Fierilla 440; v1.4.7 Piki Crocante) **Ir sustituyendo los coches de Kenney por modelos propios** (Jonay, 11-nov: «iremos sustituyendo poco a poco a los actuales con los nuestros»; «ve eliminando un modelo de los actuales por cada modelo añadido»; «lo más importante es recrear la silueta y los frontales y sus ópticas delanteras»): generador en `E:\Claude\GTA La Laguna\Blender\coche\` (`generador.py` + `otros.py`/`c44.py` con los datos de cada coche + `morros.py` + `exportar.py`); fotos de referencia de Jonay en el chat. Falta: segunda pasada a traseras y pilotos; más modelos según mande Jonay.
+- [ ] ⚡ **Troceen C33 con el paso de rueda nuevo** (11-nov): es el único coche propio que no se ha rehecho con el arreglo de los «dientes» del paso de rueda (su receta está en `troceen_c33.blend`, no en `otros.py`). Pasarlo al generador actual y volver a exportarlo.
+- [ ] ◐ **Revisar con Jonay los 7 coches de la v1.4.8** (Piki Crocante rehecho; Totuya O Algo, Seta Gomera, Pancho Teypan, Pancho Chayan, Ole Corsario, Ole Mocco): hechos con la silueta de las fotos (`auto/coches7.py`). Lo más flojo: el Chayan sale bajo y alargado; el morro del Corsario y del Gomera, largo; el negro de la zaga del O Algo y del techo del Mocco solo está en el techo.
+- [~] ● v1.4.3–1.4.4 (Troceen C33, C44; Totuya Carlota, Yaiza Cross; Guanchazen T-Rex, D.I 55; JTM Capítulo 3, H4; Yoos Reniego, Cartabon; v1.4.5 Antonias Tipo E, LTG Scupe; Fierilla 440; v1.4.7 Piki Crocante; v1.4.8 Totuya O Algo, Seta Gomera, Pancho Teypan, Pancho Chayan, Ole Corsario, Ole Mocco) **Ir sustituyendo los coches de Kenney por modelos propios** (Jonay, 11-nov: «iremos sustituyendo poco a poco a los actuales con los nuestros»; «ve eliminando un modelo de los actuales por cada modelo añadido»; «lo más importante es recrear la silueta y los frontales y sus ópticas delanteras»): generador en `E:\Claude\GTA La Laguna\Blender\coche\` (`generador.py` + `otros.py`/`c44.py` con los datos de cada coche + `morros.py` + `exportar.py`); fotos de referencia de Jonay en el chat. Falta: segunda pasada a traseras y pilotos; más modelos según mande Jonay.
 
 ### Minijuegos: controles, pausa y sonido
 
