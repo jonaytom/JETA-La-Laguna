@@ -195,12 +195,7 @@ const MAT = {};
   });
   MAT.wood = new THREE.MeshStandardMaterial({ map: TEX.wood, roughness: 0.85 });
   MAT.grass = new THREE.MeshStandardMaterial({
-    map: (() => {
-      const c = mkCanvas(128, 128),
-        x = c.getContext('2d');
-      noiseFill(x, 128, 128, [86, 128, 60], 34, 77, 2);
-      return canvasTex(c);
-    })(),
+    map: TEX.grass, // v1.3.7: 02_textures.js (a photo of Poly Haven when it has loaded)
     roughness: 0.95
   });
   MAT.tunnel = new THREE.MeshStandardMaterial({
@@ -805,8 +800,8 @@ function laneMk(rd, plain = false, hide = null) {
 function laneMkPart2(w, p0, hide, p1, plain, ow, mot, n) {
   const c = mkCanvas(256, 512),
     y = c.getContext('2d');
-  y.drawImage(TEX.asphaltC, 0, 0);
-  y.drawImage(TEX.asphaltC, 0, 256);
+  y.drawImage(TEX.asphaltC, 0, 0, 256, 256);
+  y.drawImage(TEX.asphaltC, 0, 256, 256, 256);
   const px = 256 / w,
     line = (m, wd, dash) => {
       const x = Math.round(m * px - (wd * px) / 2),

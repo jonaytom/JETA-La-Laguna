@@ -57,13 +57,16 @@ const TEX = {};
     x.fillStyle = '#2a2a2c';
     for (let i = 0; i < 5; i++) x.fillRect(Math.random() * 256, Math.random() * 256, 30 + Math.random() * 60, 20 + Math.random() * 40);
     x.globalAlpha = 1;
-    TEX.asphaltC = c;
-    TEX.asphalt = canvasTex(c);
+    // v1.3.7: at 512 px (the photo of Poly Haven goes in here, loadGround)
+    const cb = mkCanvas(512, 512);
+    cb.getContext('2d').drawImage(c, 0, 0, 512, 512);
+    TEX.asphaltC = cb;
+    TEX.asphalt = canvasTex(cb);
     // marked version (u across road, v along)
     const c2 = mkCanvas(256, 512),
       y = c2.getContext('2d');
-    y.drawImage(c, 0, 0);
-    y.drawImage(c, 0, 256);
+    y.drawImage(c, 0, 0, 256, 256);
+    y.drawImage(c, 0, 256, 256, 256);
     y.fillStyle = '#e8e6de';
     y.fillRect(6, 0, 5, 512);
     y.fillRect(245, 0, 5, 512);
@@ -95,7 +98,10 @@ const TEX = {};
       }
     }
     speckle(x, 256, 256, 700, ['rgba(40,40,42,.45)', 'rgba(150,148,145,.3)'], 1, 2, 9);
-    TEX.paving = canvasTex(c);
+    const cb = mkCanvas(512, 512);
+    cb.getContext('2d').drawImage(c, 0, 0, 512, 512);
+    TEX.pavingC = cb;
+    TEX.paving = canvasTex(cb);
   }
   // ---------------- sidewalk tiles (panot-like)
   {
@@ -114,7 +120,20 @@ const TEX = {};
       x.lineTo(128, i);
       x.stroke();
     }
-    TEX.sidewalk = canvasTex(c);
+    const cb = mkCanvas(256, 256);
+    cb.getContext('2d').drawImage(c, 0, 0, 256, 256);
+    TEX.sidewalkC = cb;
+    TEX.sidewalk = canvasTex(cb);
+  }
+  // ---------------- grass (v1.3.7: here, so the photo can go in; it was made in 04_world.js)
+  {
+    const c = mkCanvas(128, 128),
+      x = c.getContext('2d');
+    noiseFill(x, 128, 128, [86, 128, 60], 34, 77, 2);
+    const cb = mkCanvas(256, 256);
+    cb.getContext('2d').drawImage(c, 0, 0, 256, 256);
+    TEX.grassC = cb;
+    TEX.grass = canvasTex(cb);
   }
   // ---------------- dirt
   {
@@ -740,6 +759,30 @@ const FSTY = [
   [3.2, 3.7]
 ];
 // real plaster detail (Poly Haven, CC0): R/G/B = stucco liso, enlucido pintado, enlucido gastado; normals packed in two images
+// v1.3.7 (Jonay: «ahora que tenemos Blender con Poly, ¿no podrás usar esas texturas y mejorar todo en general?»): the ground
+// from photos of Poly Haven (CC0): asphalt_02, concrete_pavement, square_cobblestone and grass_ground, tiled and toned to
+// the game's colours in assets/textures/suelo/ (tests/herramientas/suelo_polyhaven.py). Each is drawn over the painted
+// canvas of its texture as soon as it decodes (well before the streets are built, which copy the asphalt canvas)
+const GROUND = { listo: 0 };
+(function loadGround() {
+  const S = DATA.SUELO;
+  if (!S) return;
+  for (const [k, c, t] of [
+    ['asfalto', TEX.asphaltC, TEX.asphalt],
+    ['acera', TEX.sidewalkC, TEX.sidewalk],
+    ['adoquin', TEX.pavingC, TEX.paving],
+    ['cesped', TEX.grassC, TEX.grass]
+  ]) {
+    if (!S[k] || !c) continue;
+    const im = new Image();
+    im.onload = () => {
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      t.needsUpdate = true;
+      GROUND.listo++;
+    };
+    im.src = S[k];
+  }
+})();
 const PLASTER = { on: { value: 0 }, det: null, n1: null, n2: null };
 (function loadPlaster() {
   const P = DATA.PLASTER;

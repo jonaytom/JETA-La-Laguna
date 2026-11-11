@@ -3,6 +3,13 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.3.7 — 2026-11-11 — Alpha 1.3.7: suelo con texturas de Poly Haven
+- **Texturas reales para el suelo** (Jonay: «ahora que tenemos Blender con Poly, ¿no podrás usar esas texturas y mejorar
+  todo en general?»): el asfalto, las aceras, el adoquín del casco y el césped de isletas y parterres son ahora fotos de
+  Poly Haven (CC0: `asphalt_floor`, `concrete_pavement`, `square_cobblestone`, `grass_ground`), repetidas a la escala de
+  cada calle y ajustadas al color del juego. Antes se dibujaban con ruido en el código. Las rayas de los carriles se
+  pintan encima como siempre. Unos 200 KB más.
+
 ## 1.3.6 — 2026-11-11 — Alpha 1.3.6: glorietas con bordillo y flechas, y la del Padre Anchieta
 - **Isletas con bordillo** (Jonay: «que tengan bordillo»): las isletas entre la entrada y la salida de cada calle en las
   glorietas son ahora elevadas, con bordillo y choque, donde tienen 1,4 m o más; la punta estrecha sigue pintada con su

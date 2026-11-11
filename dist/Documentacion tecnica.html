@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.3.6</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.3.7</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,14 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.3.7 — 2026-11-11 — Alpha 1.3.7: suelo con texturas de Poly Haven</h2>
+<ul>
+<li><strong>Texturas reales para el suelo</strong> (Jonay: «ahora que tenemos Blender con Poly, ¿no podrás usar esas texturas y mejorar
+  todo en general?»): el asfalto, las aceras, el adoquín del casco y el césped de isletas y parterres son ahora fotos de
+  Poly Haven (CC0: <code>asphalt_floor</code>, <code>concrete_pavement</code>, <code>square_cobblestone</code>, <code>grass_ground</code>), repetidas a la escala de
+  cada calle y ajustadas al color del juego. Antes se dibujaban con ruido en el código. Las rayas de los carriles se
+  pintan encima como siempre. Unos 200 KB más.</li>
+</ul>
 <h2>1.3.6 — 2026-11-11 — Alpha 1.3.6: glorietas con bordillo y flechas, y la del Padre Anchieta</h2>
 <ul>
 <li><strong>Isletas con bordillo</strong> (Jonay: «que tengan bordillo»): las isletas entre la entrada y la salida de cada calle en las

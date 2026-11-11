@@ -1002,6 +1002,7 @@ window.__dbg = {
   TRI_ARC,
   PASARELA,
   HIERBA,
+  GROUND,
   updateHierba,
   hierbaClass,
   hierbaCell,

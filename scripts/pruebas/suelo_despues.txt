@@ -1,0 +1,5 @@
+herramientas/foto_vista.py suelo_despues_casco -404 -290 2.2 -380 -275
+herramientas/foto_vista.py suelo_despues_torriani 113 470 2.5 118 440
+herramientas/foto_vista.py suelo_despues_menceyes 1600 1820 4 1500 1730
+herramientas/foto_vista.py suelo_despues_parque 600 700 2.5 640 740
+herramientas/foto_vista.py suelo_despues_alto 140 60 30 200 120
