@@ -827,6 +827,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
         X 243 Z −352, X −291 Z 2699), un servicio del aeropuerto en una ladera de pendiente imposible (X −3247 Z −359).
 
 ### Rendimiento, auditorías y código
+- [ ] ⚡ **Pintado 16,8 → 20,1 ms en la auditoría 1.3.3 con los mismos triángulos y llamadas** (APTO CON AVISOS; aviso: «fútbol» 0,2 → 0,3 ms, ruido): solo cambió la altura del terreno en las laderas, así que puede ser ruido de medida; repetir la auditoría y, si se mantiene, mirar si la hierba planta más matas en las laderas nuevas.
 - [ ] ⚡ **Peleas callejeras con un peatón cualquiera: ~0,14 s al empezar** (v1.2.5, sonda `sonda_maleante_gpu.py`): sus figuras se dibujan al momento (las del jugador y las de los maleantes ya se preparan antes). Se podrían «calentar» las del peatón al acercarte a él.
 - [ ] ⚡ **`huella_mundo_cmp` no es del todo fija** (v1.2.4): salió distinta una vez (161 vértices) y bien las dos siguientes con el mismo código; algo de la carga (gente o coches) entra en la cuenta.
 

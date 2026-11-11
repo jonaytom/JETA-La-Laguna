@@ -1,2 +1,9 @@
-herramientas/foto_vista.py barr16 960 1000 25 1034 871
-herramientas/foto_vista.py barr13 1500 600 25 1601 455
+prueba_arranque.py
+prueba_guardar_cargar.py
+prueba_bordes.py
+prueba_conduccion_tuneles_puentes.py
+prueba_parking_cristo.py
+prueba_grandes.py
+prueba_121.py
+prueba_120.py
+prueba_119.py

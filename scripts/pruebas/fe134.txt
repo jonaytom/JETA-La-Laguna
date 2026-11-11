@@ -1,0 +1,7 @@
+herramientas/foto_vista.py fe_cen 1485 1720 160 1486 1721
+herramientas/foto_vista.py fe_a 1745 1895 12 1690 1860
+herramientas/foto_vista.py fe_b 1690 1872 10 1600 1810
+herramientas/foto_vista.py fe_c 1600 1820 12 1500 1730
+herramientas/foto_vista.py fe_d 1560 1780 30 1485 1706
+herramientas/foto_vista.py fe_e 1270 1600 12 1380 1640
+herramientas/sonda_vias.py 1485 1706 60

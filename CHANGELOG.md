@@ -3,14 +3,6 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
-## 1.3.3 — 2026-11-10 — Alpha 1.3.3: barrancos de verdad
-- **Barrancos y laderas con el relieve real** (Jonay: «vamos a centrarnos en las zonas donde hay más desnivel respecto a lo
-  que tenemos»): con el Modelo Digital del Terreno de 5 m del IGN se rehacen las zonas donde el terreno del juego se
-  apartaba más de la realidad: los barrancos y lomos de la ladera de Anaga al noreste (de San Roque a Las Mercedes y
-  La Cuesta), un barranco junto a la Carretera General del Norte y la montaña junto al aeropuerto. Las calles, el
-  tranvía y los edificios no se mueven: a menos de 20 m de ellos el suelo queda como estaba y el cambio se funde hasta
-  los 60 m. Créditos del IGN en `CREDITOS.md`.
-
 ## 1.3.2 — 2026-11-10 — Alpha 1.3.2: árboles en su sitio y la glorieta de La Verdellada
 - **Árboles en su sitio** (Jonay: «árboles dentro de edificios, en mitad de aceras… y en medio de una carretera»): ningún
   tronco en una calle, puente o túnel ni dentro de un edificio; las copas no se meten en edificios ni atraviesan puentes
