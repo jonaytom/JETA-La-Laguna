@@ -1,0 +1,9 @@
+herramientas/sonda_cebreados.py 6
+herramientas/foto_vista.py i_anchieta -338 730 110 -337 731
+herramientas/foto_vista.py i_anchieta_b -300 800 14 -330 750
+herramientas/foto_vista.py i_villa_hilaria 1874 1937 55 1875 1938
+herramientas/foto_vista.py i_vh_entrada 1820 1915 9 1860 1930
+herramientas/foto_vista.py i_candelaria -1256 -277 70 -1255 -276
+herramientas/foto_vista.py i_gracia 708 1352 70 709 1353
+herramientas/foto_vista.py i_torriani 198 789 70 199 790
+herramientas/foto_vista.py i_huc 1868 3251 60 1869 3252

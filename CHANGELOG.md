@@ -3,6 +3,17 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.3.6 — 2026-11-11 — Alpha 1.3.6: glorietas con bordillo y flechas, y la del Padre Anchieta
+- **Isletas con bordillo** (Jonay: «que tengan bordillo»): las isletas entre la entrada y la salida de cada calle en las
+  glorietas son ahora elevadas, con bordillo y choque, donde tienen 1,4 m o más; la punta estrecha sigue pintada con su
+  cebreado (16 isletas).
+- **Flechas de carril** en las entradas de dos carriles a las glorietas: recto y derecha en el carril derecho, recto e
+  izquierda en el izquierdo (156 flechas).
+- **Glorieta del Padre Anchieta** (bajo la pasarela): funciona como las demás. Su anillo es un óvalo y ahora la isleta,
+  con bordillo y césped, y las líneas siguen el anillo de verdad; antes era un círculo y el centro se veía oscuro por el
+  túnel de la Av. de La Trinidad que pasa debajo. Lo mismo en las demás glorietas que no son redondas (La Candelaria,
+  Gracia, Torriani…).
+
 ## 1.3.5 — 2026-11-11 — Alpha 1.3.5: glorietas, cebreados y marcas centradas
 - **Glorietas de todo el mapa** (Jonay: «revisa las glorietas y las zonas cebradas»): todas llevan ya sus marcas como en
   las fotos: línea continua junto a la isleta y por fuera (abierta en cada calle), discontinua en los anillos de dos

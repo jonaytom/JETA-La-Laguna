@@ -1,0 +1,2 @@
+herramientas/foto_vista.py i_anchieta -338 730 110 -337 731
+herramientas/foto_vista.py i_anchieta_b -300 800 14 -330 750

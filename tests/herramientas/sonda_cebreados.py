@@ -5,7 +5,7 @@ async def run(pg):
     n = int(sys.argv[2]) if len(sys.argv) > 2 else 8
     r = json.loads(await pg.evaluate("JSON.stringify(window.__ceb || null)"))
     if not r: print('sin __ceb'); return
-    print('isletas', r['isletas'], 'cuñas', r['cunas'])
+    print('isletas', r['isletas'], 'cuñas', r['cunas'], 'con bordillo', r.get('bordillos'), 'flechas', r.get('flechas'))
     for t in r['tramos']: print(' ', t)
     await pg.evaluate("(()=>{window.__manual=true; document.getElementById('menu').style.display='none'; __dbg.GAME.state='play'; __dbg.GAME.tod=12; __step(2);})()")
     sel = [t for t in r['tramos'] if t[0] == 'isleta'][: n // 2] + [t for t in r['tramos'] if t[0] != 'isleta'][: n - n // 2]

@@ -103,10 +103,11 @@ function signCanvas(kind, back) {
   }
   return c;
 }
+const MK_CELLS = 6; // v1.3.6: + 4 right-turn arrow, 5 straight-and-right arrow
 function marksAtlas() {
-  const c = mkCanvas(512, 128),
+  const c = mkCanvas(128 * MK_CELLS, 128),
     x = c.getContext('2d');
-  x.clearRect(0, 0, 512, 128);
+  x.clearRect(0, 0, 128 * MK_CELLS, 128);
   x.fillStyle = 'rgba(245,245,238,0.92)';
   // 0: arrow (points to +v = top of the texture after flip → draw pointing up)
   x.fillRect(52, 50, 24, 74);
@@ -134,6 +135,30 @@ function marksAtlas() {
   x.fill();
   // 3: solid line
   x.fillRect(388, 0, 120, 128);
+  // 4: arrow turning right (shaft from the driver, then a bend to the right and its head)
+  x.fillRect(512 + 38, 62, 20, 66);
+  x.fillRect(512 + 38, 50, 52, 20);
+  x.beginPath();
+  x.moveTo(512 + 122, 60);
+  x.lineTo(512 + 88, 28);
+  x.lineTo(512 + 88, 92);
+  x.closePath();
+  x.fill();
+  // 5: straight and right (the straight arrow with a branch to the right)
+  x.fillRect(640 + 30, 40, 18, 88);
+  x.beginPath();
+  x.moveTo(640 + 39, 2);
+  x.lineTo(640 + 14, 42);
+  x.lineTo(640 + 64, 42);
+  x.closePath();
+  x.fill();
+  x.fillRect(640 + 46, 74, 46, 16);
+  x.beginPath();
+  x.moveTo(640 + 124, 82);
+  x.lineTo(640 + 90, 58);
+  x.lineTo(640 + 90, 106);
+  x.closePath();
+  x.fill();
   const t = canvasTex(c, { repeat: false });
   return t;
 }
@@ -153,11 +178,13 @@ function buildTrafficSignsPart6(MK) {
   if (MK.length) {
     const pos = [],
       uv = [];
-    for (const [cell, x, z, dx, dz, len, wid, y0] of MK) {
+    for (const [cell, x, z, dx, dz, len, wid0, y0] of MK) {
       const rx = -dz,
-        rz = dx;
-      const u0 = cell / 4 + 0.004,
-        u1 = (cell + 1) / 4 - 0.004;
+        rz = dx,
+        wid = Math.abs(wid0); // v1.3.6: a negative width draws the mark mirrored (the left-hand lane arrows)
+      let u0 = cell / MK_CELLS + 0.002,
+        u1 = (cell + 1) / MK_CELLS - 0.002;
+      if (wid0 < 0) [u0, u1] = [u1, u0];
       const hl = len / 2,
         hw = wid / 2;
       const P = (a, b) => {

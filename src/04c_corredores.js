@@ -1023,12 +1023,11 @@ function corrRoundaboutMarks() {
         [0, 1],
         [c.length - 2, -1]
       ]) {
-        const d = Math.hypot(c[i] - cx, c[i + 1] - cz);
-        if (Math.abs(d - Rc) > W / 2 + 2) continue;
+        if (rbDist(rb, c[i], c[i + 1]) > W / 2 + 2) continue; // v1.3.6: the ring as drawn (an oval too: Padre Anchieta)
         // walk out along the street to a point clear of the ring
         const P = [];
         for (let k = i; k >= 0 && k < c.length; k += 2 * sg) P.push([c[k], c[k + 1]]);
-        arms.push({ ri, w: rd[2], P, ang: Math.atan2(c[i + 1] - cz, c[i] - cx), oneway: !!(rd[3] & 1) });
+        arms.push({ ri, w: rd[2], P, ang: Math.atan2(c[i + 1] - cz, c[i] - cx), oneway: !!(rd[3] & 1), entry: !(rd[3] & 1) || i !== 0 });
       }
     });
     const line = (x, z, dx, dz, len, wid) => {
@@ -1036,31 +1035,34 @@ function corrRoundaboutMarks() {
       n++;
     };
     // arcs: inner solid, outer solid with gaps at the arms, middle dashed on a two-lane ring
-    const N = Math.max(24, Math.round((2 * Math.PI * Ro) / 1.5));
-    for (let k = 0; k < N; k++) {
-      const a0 = (k / N) * 2 * Math.PI,
-        a1 = ((k + 1) / N) * 2 * Math.PI,
-        am = (a0 + a1) / 2,
-        tx = -Math.sin(am),
-        tz = Math.cos(am);
-      const at = (r) => [cx + Math.cos(am) * r, cz + Math.sin(am) * r];
-      const seg = (r) => (2 * Math.PI * r) / N + 0.05;
-      if (Ri > 2) {
-        const [x, z] = at(Ri + 0.35);
-        line(x, z, tx, tz, seg(Ri), 0.15);
-      }
-      const gap = arms.some((A) => {
-        let da = Math.abs(am - A.ang);
-        if (da > Math.PI) da = 2 * Math.PI - da;
-        return da < (A.w / 2 + 1.5) / Ro;
-      });
-      if (!gap) {
-        const [x, z] = at(Ro - 0.35);
-        line(x, z, tx, tz, seg(Ro), 0.15);
-      }
-      if (W >= 9 && k % 2 === 0) {
-        const [x, z] = at(Rc);
-        line(x, z, tx, tz, seg(Rc) * 0.6, 0.12);
+    if (rbOval(rb)) rbLoopMarks(rb, arms, line);
+    else {
+      const N = Math.max(24, Math.round((2 * Math.PI * Ro) / 1.5));
+      for (let k = 0; k < N; k++) {
+        const a0 = (k / N) * 2 * Math.PI,
+          a1 = ((k + 1) / N) * 2 * Math.PI,
+          am = (a0 + a1) / 2,
+          tx = -Math.sin(am),
+          tz = Math.cos(am);
+        const at = (r) => [cx + Math.cos(am) * r, cz + Math.sin(am) * r];
+        const seg = (r) => (2 * Math.PI * r) / N + 0.05;
+        if (Ri > 2) {
+          const [x, z] = at(Ri + 0.35);
+          line(x, z, tx, tz, seg(Ri), 0.15);
+        }
+        const gap = arms.some((A) => {
+          let da = Math.abs(am - A.ang);
+          if (da > Math.PI) da = 2 * Math.PI - da;
+          return da < (A.w / 2 + 1.5) / Ro;
+        });
+        if (!gap) {
+          const [x, z] = at(Ro - 0.35);
+          line(x, z, tx, tz, seg(Ro), 0.15);
+        }
+        if (W >= 9 && k % 2 === 0) {
+          const [x, z] = at(Rc);
+          line(x, z, tx, tz, seg(Rc) * 0.6, 0.12);
+        }
       }
     }
     // zebra crossings on the arms
@@ -1074,7 +1076,7 @@ function corrRoundaboutMarks() {
         for (let u = 0; u <= L; u += 0.5) {
           const x = ax + ((bx - ax) * u) / L,
             z = az + ((bz - az) * u) / L;
-          if (Math.hypot(x - cx, z - cz) > Ro + 4.5) {
+          if (rbDist(rb, x, z) > W / 2 + 4.5) {
             pt = [x, z, (bx - ax) / L, (bz - az) / L];
             break;
           }
@@ -1088,6 +1090,7 @@ function corrRoundaboutMarks() {
         hw = A.w / 2 - 0.3;
       for (let o = -hw + 0.25; o <= hw - 0.25; o += 1.0) line(x + nx * o, z + nz * o, dx, dz, 3.0, 0.5);
     }
+    rbArrows(rb, arms); // v1.3.6: lane arrows on the entries of two lanes (04f_cebreados.js)
   }
   console.log('corredores: marcas de glorietas', n);
 }

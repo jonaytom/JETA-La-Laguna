@@ -452,7 +452,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 ### Calles, túneles, puentes, enlaces y aeropuerto
 
 
-- [ ] ◐ **Glorietas: lo que falta tras la revisión de la 1.3.5** (fotos de Google 3D de Villa Hilaria, Finca España, Guajara, HUC): isletas con bordillo y vegetación en vez de solo pintadas donde en la realidad son elevadas; flechas de giro en las entradas de dos carriles; la glorieta del Padre Anchieta (X −338, Y 730) tiene la pasarela encima y no se ha tocado.
 - [~] ◐ v1.1.3 (de nuevo ~11–12 s y 15–17 ms a 720p; la nota del código bajó de B a C: líneas largas) **Arranque y pintado más lentos desde la 1.0.4** (auditoría 1.0.8): arranque 11 → 14 s y pintar a 720p
   13,6 → 24 ms (en la auditoría; la sonda con la tarjeta daba 14–18 ms en la 1.0.4). Medir qué pesa: los muros (cortes por
   calzada, 0,75 m cada muestra), las tapias, los edificios del Catastro y el recorte de calles sobre rampas (`cutAware`).
@@ -831,6 +830,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
         X 243 Z −352, X −291 Z 2699), un servicio del aeropuerto en una ladera de pendiente imposible (X −3247 Z −359).
 
 ### Rendimiento, auditorías y código
+- [ ] ⚡ **Auditoría 1.3.5: pintado 16,9 → 21,1 ms y p95 del recorrido 15,1 → 21,4 ms, con menos triángulos (1,37 → 1,31 M) y llamadas (394 → 368)** (APTO CON AVISOS): todos los minijuegos salen también un 50–100 % más lentos a la vez, como en la 1.3.3 (que fue ruido: el PC ocupado). Repetir la auditoría con el PC libre antes de tocar nada.
 - [ ] ⚡ **Peleas callejeras con un peatón cualquiera: ~0,14 s al empezar** (v1.2.5, sonda `sonda_maleante_gpu.py`): sus figuras se dibujan al momento (las del jugador y las de los maleantes ya se preparan antes). Se podrían «calentar» las del peatón al acercarte a él.
 - [ ] ⚡ **`huella_mundo_cmp` no es del todo fija** (v1.2.4): salió distinta una vez (161 vértices) y bien las dos siguientes con el mismo código; algo de la carga (gente o coches) entra en la cuenta.
 
@@ -905,6 +905,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 - [ ] ● **Mixamo** como fuente de animaciones extra (gratis para juegos; no subir los FBX originales al repo; hay que
       retargetear a nuestro esqueleto; la descarga la hace Jonay con su cuenta de Adobe).
 
+- [ ] ● **Texturas de Poly Haven (CC0) para todo el juego** (Jonay, 11-nov: «ahora que tenemos Blender con Poly, ¿no podrás usar esas texturas y mejorar todo en general?»): hoy casi todas las texturas se pintan a mano en el código (asfalto, aceras, adoquín, fachadas de colores, tejados, césped, piedra). Con el add-on de Blender se pueden bajar texturas CC0 de Poly Haven (asfalto, baldosa de acera, adoquín, enfoscado, teja, piedra basáltica, césped, tierra) y meterlas en el HTML a 512 px (≈1 MB más en total). Hacerlo por tandas: suelo (asfalto, acera, adoquín, césped) → fachadas y tejados → muros y piedra, con fotos antes/después y midiendo el pintado; créditos en `CREDITOS.md`.
 ### Extras para el final
 
 - [ ] ● **DLC Santa Cruz** (Jonay, 12-oct): se une por el sur a partir del final del mapa actual; carga aparte, con aviso,
@@ -934,6 +935,8 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   - Por comprobar: si el Artifact deja abrir conexiones WebRTC y al servidor de emparejamiento (si no, se juega con el HTML descargado); servidor TURN para las redes que no conectan directo.
 
 ## Hecho
+
+- [x] v1.3.6 **Glorietas: isletas con bordillo, flechas de carril y la del Padre Anchieta** (Jonay, 11-nov): isletas de las calles elevadas con bordillo, flechas recto+derecha / recto+izquierda en las entradas de dos carriles, y los anillos ovalados (Padre Anchieta, La Candelaria, Gracia…) con isleta y líneas a lo largo del anillo real (`src/04f_cebreados.js`).
 
 - [x] v1.3.5 **Glorietas y zonas cebradas de todo el mapa** (Jonay, 11-nov): marcas de glorieta en las 52, isletas cebreadas en las entradas/salidas y cuñas donde una calzada se abre o se junta (`src/04f_cebreados.js`, sonda `sonda_cebreados.py`).
 - [x] v1.3.5 **Flechas, líneas de STOP/ceda y carril de los coches centrados entre las bandas de aparcamiento** (Jonay, 11-nov): `edgePark`/`laneOff`/`laneHalf` en `07_vehicles.js`; sonda `sonda_marcas_aparca.py`.

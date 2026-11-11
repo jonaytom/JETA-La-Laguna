@@ -117,7 +117,7 @@ function cebRev(c) {
 const CEB = { isletas: 0, cunas: 0, tramos: [] };
 /** the area between two ways leaving the same place (P and Q from there outward, widths wp and wq), from where their
  *  edges part until it is 7 m wide (or they go apart): asphalt, its two edge lines and oblique stripes */
-function cebArea(P, wp, Q, wq, u0, maxU, maxGap = 7) {
+function cebArea(P, wp, Q, wq, u0, maxU, maxGap = 7, raised = false) {
   const E = [];
   for (let u = u0; u <= maxU; u += 1) {
     const a = cebAt(P, u),
@@ -176,10 +176,35 @@ function cebArea(P, wp, Q, wq, u0, maxU, maxGap = 7) {
     const t = Math.min(0.5, 0.2 / (g || 1));
     return k ? [b[0] + (a[0] - b[0]) * t, b[1] + (a[1] - b[1]) * t] : [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
   };
-  for (let i = 0; i + 1 < E.length; i++) for (const k of [0, 1]) line(inset(i, k), inset(i + 1, k), 0.15);
+  // v1.3.6 (Jonay: «que tengan bordillo»): a splitter island is raised with its kerb where it is 1.4 m wide or more; the
+  // narrow nose before it stays painted
+  const up = (i) => raised && E[i][2] >= 1.4 && E[i + 1] && E[i + 1][2] >= 1.4;
+  if (raised) {
+    let i = 0;
+    while (i + 1 < E.length) {
+      if (!up(i)) {
+        i++;
+        continue;
+      }
+      let j = i;
+      while (j + 1 < E.length && up(j)) j++;
+      const ins = (e, k) => {
+        const [a, b, g] = E[e],
+          t = Math.min(0.5, 0.3 / (g || 1));
+        return k ? [b[0] + (a[0] - b[0]) * t, b[1] + (a[1] - b[1]) * t] : [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+      };
+      const Q = [];
+      for (let e = i; e <= j; e++) Q.push(ins(e, 0));
+      for (let e = j; e >= i; e--) Q.push(ins(e, 1));
+      raisedIsland(Q, 'sidewalk', 0.15);
+      CEB.bordillos = (CEB.bordillos || 0) + 1;
+      i = j + 1;
+    }
+  }
+  for (let i = 0; i + 1 < E.length; i++) if (!up(i)) for (const k of [0, 1]) line(inset(i, k), inset(i + 1, k), 0.15);
   for (let i = 1; i + 2 < E.length; i += 2) {
     const j = Math.min(E.length - 1, i + 2);
-    if (E[i][2] < 1.0) continue;
+    if (E[i][2] < 1.0 || up(i) || up(i + 1)) continue;
     line(inset(i, 0), inset(j, 1), 0.4);
   }
   return true;
@@ -200,10 +225,10 @@ function cebreados() {
     R.forEach((r, ri) => {
       if (!oneway(r) || DEP.has(ri)) return;
       const c = r[4],
-        de = Math.hypot(c[c.length - 2] - cx, c[c.length - 1] - cz),
-        ds = Math.hypot(c[0] - cx, c[1] - cz);
-      if (Math.abs(de - Rc) < ringWidth(rb) / 2 + 2) ins.push({ r, c: cebRev(c), ang: Math.atan2(c[c.length - 1] - cz, c[c.length - 2] - cx) });
-      else if (Math.abs(ds - Rc) < ringWidth(rb) / 2 + 2) outs.push({ r, c, ang: Math.atan2(c[1] - cz, c[0] - cx) });
+        de = rbDist(rb, c[c.length - 2], c[c.length - 1]),
+        ds = rbDist(rb, c[0], c[1]);
+      if (de < ringWidth(rb) / 2 + 2) ins.push({ r, c: cebRev(c), ang: Math.atan2(c[c.length - 1] - cz, c[c.length - 2] - cx) });
+      else if (ds < ringWidth(rb) / 2 + 2) outs.push({ r, c, ang: Math.atan2(c[1] - cz, c[0] - cx) });
     });
     for (const a of ins) {
       let best = null,
@@ -223,9 +248,9 @@ function cebreados() {
         const p = cebAt(a.c, u0),
           q = cebAt(best.c, u0);
         if (!p || !q) break;
-        if (Math.hypot(p[0] - cx, p[1] - cz) > Ro + 0.8 && Math.hypot(q[0] - cx, q[1] - cz) > Ro + 0.8) break;
+        if (rbDist(rb, p[0], p[1]) > ringWidth(rb) / 2 + 0.8 && rbDist(rb, q[0], q[1]) > ringWidth(rb) / 2 + 0.8) break;
       }
-      if (cebArea(a.c, a.r[2], best.c, best.r[2], u0, u0 + 30, 10)) {
+      if (cebArea(a.c, a.r[2], best.c, best.r[2], u0, u0 + 30, 10, true)) {
         CEB.isletas++;
         CEB.tramos.push(['isleta', ri0(a.r), ri0(best.r), ...CEB.last]);
       }
@@ -262,6 +287,236 @@ function cebreados() {
         CEB.tramos.push([rev ? 'junta' : 'abre', ri0(p), ri0(q), ...CEB.last]);
       }
     }
-  window.__ceb = CEB;
+  window.__ceb = CEB; // (+ CEB.bordillos, CEB.flechas)
   console.log('cebreados: isletas', CEB.isletas, 'cuñas', CEB.cunas);
+}
+
+// ---------- v1.3.6 (Jonay: «toca las glorietas para que tengan bordillo, las flechas, y la de la pasarela aunque tenga
+// pasarela encima también funciona igual»): the ring as drawn (a loop of its pieces, round or not: the Padre Anchieta is
+// an oval of 36–57 m), raised islands with a kerb (the centre one and the splitter islands of the arms) and lane arrows
+// on the entries of two lanes
+/** the ring of a roundabout as one closed polyline [[x, z], …] (its pieces chained end to end), or null */
+function rbLoop(rb) {
+  if (rb.loop !== undefined) return rb.loop;
+  rb.loop = null;
+  const R = DATA.R,
+    K = (x, z) => Math.round(x * 2) + ',' + Math.round(z * 2),
+    pcs = [];
+  R.forEach((r) => {
+    if (!(r[3] & 32) || r[0] > 12 || r[4].length < 4) return;
+    const c = r[4],
+      m = (c.length >> 2) << 1,
+      d = Math.hypot(c[m] - rb[0], c[m + 1] - rb[1]);
+    if (d < rb[2] * 1.45 + 6 && d > rb[2] * 0.5 - 4) pcs.push(r);
+  });
+  if (pcs.length < 2) return null;
+  // chain from the first piece; on each end, the piece that starts there
+  if (pcs[0][3] & 6) return null;
+  const used = new Set([pcs[0]]),
+    P = [];
+  let cur = pcs[0];
+  for (let i = 0; i < cur[4].length; i += 2) P.push([cur[4][i], cur[4][i + 1]]);
+  const start = K(P[0][0], P[0][1]);
+  for (let guard = 0; guard < 40; guard++) {
+    const end = P[P.length - 1],
+      ke = K(end[0], end[1]);
+    if (ke === start && P.length > 4) break;
+    const nx = pcs.find((r) => !used.has(r) && K(r[4][0], r[4][1]) === ke);
+    if (!nx) return null; // (not a closed loop)
+    if (nx[3] & 6) return null; // (a ring that goes over a bridge or through a tunnel: Geneto, La Verdellada: kept round)
+    used.add(nx);
+    for (let i = 2; i < nx[4].length; i += 2) P.push([nx[4][i], nx[4][i + 1]]);
+  }
+  if (K(P[P.length - 1][0], P[P.length - 1][1]) !== start) return null;
+  P.pop();
+  rb.loop = P;
+  rb.lc = [P.reduce((a, p) => a + p[0], 0) / P.length, P.reduce((a, p) => a + p[1], 0) / P.length];
+  return P;
+}
+/** is the ring clearly not round (then its island and lines follow the loop instead of a circle)? */
+function rbOval(rb) {
+  const P = rbLoop(rb);
+  if (!P) return false;
+  const rs = P.map((p) => Math.hypot(p[0] - rb.lc[0], p[1] - rb.lc[1]));
+  return Math.max(...rs) / Math.max(1, Math.min(...rs)) > 1.25;
+}
+/** distance from x, z to the middle of the ring (the loop for an oval, the circle otherwise) */
+function rbDist(rb, x, z) {
+  if (!rbOval(rb)) return Math.abs(Math.hypot(x - rb[0], z - rb[1]) - rb[2]);
+  const P = rb.loop;
+  let m = 1e9;
+  for (let i = 0; i < P.length; i++) {
+    const a = P[i],
+      b = P[(i + 1) % P.length],
+      ex = b[0] - a[0],
+      ez = b[1] - a[1],
+      L2 = ex * ex + ez * ez || 1,
+      t = Math.max(0, Math.min(1, ((x - a[0]) * ex + (z - a[1]) * ez) / L2));
+    m = Math.min(m, Math.hypot(x - a[0] - ex * t, z - a[1] - ez * t));
+  }
+  return m;
+}
+/** the loop moved sideways by off (+ outwards), point by point along its normal */
+function rbOffset(rb, off) {
+  const P = rb.loop,
+    n = P.length,
+    [cx, cz] = rb.lc,
+    out = [];
+  for (let i = 0; i < n; i++) {
+    const a = P[(i + n - 1) % n],
+      b = P[(i + 1) % n];
+    let nx = -(b[1] - a[1]),
+      nz = b[0] - a[0];
+    const l = Math.hypot(nx, nz) || 1;
+    nx /= l;
+    nz /= l;
+    if ((P[i][0] - cx) * nx + (P[i][1] - cz) * nz < 0) {
+      nx = -nx;
+      nz = -nz;
+    }
+    out.push([P[i][0] + nx * off, P[i][1] + nz * off]);
+  }
+  return out;
+}
+/** a raised island with a kerb over the polygon Q ([[x, z], …], closed), its top of grass (or paving), with collision */
+function raisedIsland(Q, top = 'grass', h = 0.32) {
+  if (Q.length < 3) return;
+  const cx = Q.reduce((a, p) => a + p[0], 0) / Q.length,
+    cz = Q.reduce((a, p) => a + p[1], 0) / Q.length,
+    G = acc(cx, cz, top),
+    T = acc(cx, cz, 'trim'),
+    kc = [0.85, 0.84, 0.8],
+    yr = (x, z) => heightAt(x, z) + 0.05,
+    C = [cx, heightAt(cx, cz) + h, cz];
+  for (let i = 0; i < Q.length; i++) {
+    const p = Q[i],
+      q = Q[(i + 1) % Q.length],
+      A = [p[0], yr(p[0], p[1]) + h, p[1]],
+      B = [q[0], yr(q[0], q[1]) + h, q[1]];
+    // top: a fan from the middle (both windings, so it shows whichever way the polygon turns)
+    G.tri(C, A, B, [C[0] / 4, C[2] / 4], [A[0] / 4, A[2] / 4], [B[0] / 4, B[2] / 4], null, undefined, [0, 1, 0]);
+    G.tri(C, B, A, [C[0] / 4, C[2] / 4], [B[0] / 4, B[2] / 4], [A[0] / 4, A[2] / 4], null, undefined, [0, 1, 0]);
+    const g0 = yr(p[0], p[1]),
+      g1 = yr(q[0], q[1]),
+      ex = q[0] - p[0],
+      ez = q[1] - p[1],
+      l = Math.hypot(ex, ez) || 1;
+    let nx = ez / l,
+      nz = -ex / l;
+    if ((p[0] - cx) * nx + (p[1] - cz) * nz < 0) {
+      nx = -nx;
+      nz = -nz;
+    }
+    T.quad([p[0], g0, p[1]], [q[0], g1, q[1]], [q[0], g1 + h, q[1]], [p[0], g0 + h, p[1]], [0, 0], [0, 0], [0, 0], [0, 0], kc, undefined, [
+      nx,
+      0,
+      nz
+    ]);
+    T.quad([q[0], g1, q[1]], [p[0], g0, p[1]], [p[0], g0 + h, p[1]], [q[0], g1 + h, q[1]], [0, 0], [0, 0], [0, 0], [0, 0], kc, undefined, [
+      -nx,
+      0,
+      -nz
+    ]);
+    COL.addSeg(p[0], p[1], q[0], q[1], g0 - 1, g0 + h + 0.2);
+  }
+}
+/** the centre island of an oval roundabout (the circle one is roundaboutIsland, 04_world.js) */
+function roundaboutIslandLoop(rb) {
+  const P = rbLoop(rb);
+  if (!P) return;
+  const w = ringWidth(rb);
+  let off = -(w / 2 + 0.4),
+    Q = rbOffset(rb, off);
+  // (only streets at ground level: the Padre Anchieta has the tunnel of the Av. de La Trinidad right under its middle)
+  const onGround = (x, z) => {
+    const seen = new Set();
+    for (let k = 0; k < 3; k++) {
+      const rd = ROADSEG.nearest(x, z, (r) => r[0] <= 12 && !(r[3] & 6) && !(r[3] & 32) && !seen.has(r));
+      if (!rd || rd.d > 14) return false;
+      if (!DEP.has(rd.ri) && rd.d < DATA.R[rd.ri][2] / 2 - 0.6) return true;
+      seen.add(DATA.R[rd.ri]);
+    }
+    return false;
+  };
+  const bad = (Q) => Q.some((p) => onGround(p[0], p[1]));
+  for (let k = 0; k < 12 && bad(Q); k++) Q = rbOffset(rb, (off -= 0.5));
+  if (bad(Q)) return; // (something runs across the middle: no island)
+  raisedIsland(Q, 'grass', 0.35);
+  const [cx, cz] = rb.lc;
+  TREES.push([cx, cz, 1, 1.1, 1]);
+  for (let k = 0; k < Q.length; k += Math.max(1, Math.floor(Q.length / 6))) TREES.push([(Q[k][0] * 2 + cx) / 3, (Q[k][1] * 2 + cz) / 3, 1, 0.9, 1]);
+}
+/** the lines of an oval ring along its loop: solid by the island, solid outside (open at the arms), dashed in between */
+function rbLoopMarks(rb, arms, line) {
+  const W = ringWidth(rb),
+    open = (x, z) => arms.some((A) => Math.hypot(A.P[0][0] - x, A.P[0][1] - z) < A.w / 2 + 2.5);
+  const run = (Q, wid, dash, isOuter) => {
+    for (let i = 0; i < Q.length; i++) {
+      const a = Q[i],
+        b = Q[(i + 1) % Q.length],
+        l = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      if (l < 0.1) continue;
+      const dx = (b[0] - a[0]) / l,
+        dz = (b[1] - a[1]) / l;
+      for (let u = 0; u < l; u += 1.5) {
+        const s = Math.min(1.5, l - u),
+          x = a[0] + dx * (u + s / 2),
+          z = a[1] + dz * (u + s / 2);
+        if (dash && Math.floor(u / 1.5) % 2) continue;
+        if (isOuter && open(x, z)) continue;
+        line(x, z, dx, dz, dash ? s * 0.6 : s + 0.05, wid);
+      }
+    }
+  };
+  run(rbOffset(rb, -(W / 2 - 0.35)), 0.15, false, false);
+  run(rbOffset(rb, W / 2 - 0.35), 0.15, false, true);
+  if (W >= 9) run(rb.loop, 0.12, true, false);
+}
+/** lane arrows on the entries of two lanes (straight + right on the right lane, straight + left on the left one) */
+function rbArrows(rb, arms) {
+  const W = ringWidth(rb);
+  let n = 0;
+  for (const A of arms) {
+    if (!A.entry || DEP.has(A.ri)) continue;
+    const rd = DATA.R[A.ri],
+      ln = DATA.LN && DATA.LN[A.ri] && DATA.LN[A.ri][0] > 0 ? DATA.LN[A.ri][0] : 0,
+      lanes = A.oneway ? ln || (A.w >= 6.6 ? 2 : 1) : A.w >= 13 ? 2 : 1;
+    if (lanes < 2 || ROADCLASS(rd) === 'paving') continue;
+    // a point 13 m out from the ring along the arm
+    let pt = null;
+    const P = A.P;
+    for (let k = 0; k + 1 < P.length && !pt; k++) {
+      const [ax, az] = P[k],
+        [bx, bz] = P[k + 1],
+        L = Math.hypot(bx - ax, bz - az) || 1;
+      for (let u = 0; u <= L; u += 0.5) {
+        const x = ax + ((bx - ax) * u) / L,
+          z = az + ((bz - az) * u) / L;
+        if (rbDist(rb, x, z) > W / 2 + 13) {
+          pt = [x, z, (bx - ax) / L, (bz - az) / L];
+          break;
+        }
+      }
+    }
+    if (!pt) continue;
+    const [x, z, ox, oz] = pt,
+      dx = -ox,
+      dz = -oz, // (towards the ring)
+      rx = -dz,
+      rz = dx; // (the driver's right)
+    const half = A.oneway ? 0 : A.w / 4,
+      lw = A.oneway ? A.w / 4 : A.w / 8;
+    for (const [sg, wid] of [
+      [1, 1.7],
+      [-1, -1.7]
+    ]) {
+      const o = half + sg * lw,
+        px = x + rx * o,
+        pz = z + rz * o;
+      if (!onCarriagewayEarly(px, pz, -0.5)) continue;
+      CORR_MARKS.push([5, px, pz, dx, dz, 5, wid]);
+      n++;
+    }
+  }
+  CEB.flechas = (CEB.flechas || 0) + n;
 }

@@ -1276,7 +1276,7 @@ function buildRoadsPart2() {
   } catch (e) {
     console.error('tf13 portals', e);
   }
-  for (const r of DATA.RB || []) roundaboutIsland(r[0], r[1], r[2], ringWidth(r)); // v1.3.5: the ring's own width (04f_cebreados.js)
+  for (const r of DATA.RB || []) rbOval(r) ? roundaboutIslandLoop(r) : roundaboutIsland(r[0], r[1], r[2], ringWidth(r)); // v1.3.6: an oval ring (Padre Anchieta) gets its island along the loop // v1.3.5: the ring's own width (04f_cebreados.js)
   // tram track
   if (DATA.T.length > 3) {
     const L = polyLen(DATA.T),
