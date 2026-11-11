@@ -12,7 +12,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Coches propios (Blender)
 
-- [~] ● v1.4.3–1.4.4 (Troceen C33, C44; Totuya Carlota, Yaiza Cross; Guanchazen T-Rex, D.I 55; JTM Capítulo 3, H4; Yoos Reniego, Cartabon; v1.4.5 Antonias Tipo E, LTG Scupe; Fierilla 440) **Ir sustituyendo los coches de Kenney por modelos propios** (Jonay, 11-nov: «iremos sustituyendo poco a poco a los actuales con los nuestros»; «ve eliminando un modelo de los actuales por cada modelo añadido»; «lo más importante es recrear la silueta y los frontales y sus ópticas delanteras»): generador en `E:\Claude\GTA La Laguna\Blender\coche\` (`generador.py` + `otros.py`/`c44.py` con los datos de cada coche + `morros.py` + `exportar.py`); fotos de referencia de Jonay en el chat. Falta: segunda pasada a traseras y pilotos; más modelos según mande Jonay.
+- [~] ● v1.4.3–1.4.4 (Troceen C33, C44; Totuya Carlota, Yaiza Cross; Guanchazen T-Rex, D.I 55; JTM Capítulo 3, H4; Yoos Reniego, Cartabon; v1.4.5 Antonias Tipo E, LTG Scupe; Fierilla 440; v1.4.7 Piki Crocante) **Ir sustituyendo los coches de Kenney por modelos propios** (Jonay, 11-nov: «iremos sustituyendo poco a poco a los actuales con los nuestros»; «ve eliminando un modelo de los actuales por cada modelo añadido»; «lo más importante es recrear la silueta y los frontales y sus ópticas delanteras»): generador en `E:\Claude\GTA La Laguna\Blender\coche\` (`generador.py` + `otros.py`/`c44.py` con los datos de cada coche + `morros.py` + `exportar.py`); fotos de referencia de Jonay en el chat. Falta: segunda pasada a traseras y pilotos; más modelos según mande Jonay.
 
 ### Minijuegos: controles, pausa y sonido
 

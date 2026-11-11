@@ -3,6 +3,12 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.7 — 2026-11-11 — Alpha 1.4.7: Piki Crocante
+- Nuevo coche propio, el **Piki Crocante** (urbano de 3,6 m; batalla 2,40 m y voladizos de las cotas de Jonay): morro
+  corto que sube hasta el parabrisas, techo plano con alerón, portón casi vertical, faros en las esquinas con LED
+  vertical y barra cromada, pilotos en L con banda roja en el portón. Emblema inventado (hexágono plano).
+  Sustituye al Quillo Picante. Ya son 14 coches propios.
+
 ## 1.4.6 — 2026-11-11 — Alpha 1.4.6: Antonias Tipo E más redondeado
 - Rehecha la forma del **Antonias Tipo E** (Jonay: «es mucho más redondeado, no curvas tan rectas»): fuera el morro
   vertical, morro y zaga redondeados en planta y perfil, techo en un arco continuo del parabrisas al maletero,

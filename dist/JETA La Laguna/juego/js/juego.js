@@ -27016,7 +27016,7 @@ const VMODELS_RAW = `
 polo|Guagüen Pollito|Utilitario|sedan|compact|4.05|1.75|1.46|12
 ibiza|Butaca Isleña|Utilitario|sedan|compact|4.06|1.78|1.44|10
 yaris|Tagoror Lairis|Utilitario|sedan|compact|3.95|1.7|1.5|10
-picanto|Quillo Picante|Urbano|sedan|compact|3.6|1.6|1.49|7
+picanto|Quillo Picante|Urbano|sedan|compact|3.6|1.6|1.49|0
 rio|Quillo Barranco|Utilitario|sedan|compact|4.07|1.73|1.45|5
 i20|Jandía i-Veinte|Utilitario|sedan|compact|4.04|1.78|1.45|5
 i10|Jandía i-Diez|Urbano|sedan|compact|3.67|1.68|1.48|4
@@ -27052,6 +27052,8 @@ ltg|Antonias LTG Scupe|SUV coupé|antonias-ltg-scupe|suv|4.792|2.0|1.732|3
 ltgL|Antonias LTG Scupe|SUV coupé|antonias-ltg-scupe-lejos|suv|4.792|2.0|1.732|0
 fierilla|Fierilla 440|Superdeportivo|fierilla-440|sport|4.57|1.95|1.212|1
 fierillaL|Fierilla 440|Superdeportivo|fierilla-440-lejos|sport|4.57|1.95|1.212|0
+piki|Piki Crocante|Urbano|piki-crocante|compact|3.605|1.594|1.494|7
+pikiL|Piki Crocante|Urbano|piki-crocante-lejos|compact|3.605|1.594|1.494|0
 f500|Fiao Quinientitos|Urbano|sedan|compact|3.57|1.63|1.49|4
 # compactos / berlinas
 leon|Butaca Leona|Compacto|hatchback-sports|sedan|4.28|1.8|1.46|0
@@ -27143,7 +27145,8 @@ for (const [id, x, y] of [
   ['cartabon', 0.75, 1.13],
   ['tipoe', 0.7, 0.97],
   ['ltg', 0.75, 1.05],
-  ['fierilla', 0.7, 0.78]
+  ['fierilla', 0.7, 0.78],
+  ['piki', 0.66, 1.03]
 ]) {
   VMODELS[id].lod = id + 'L';
   VMODELS[id].tail = VMODELS[id + 'L'].tail = [x * CAR_SCALE, y * CAR_SCALE];
