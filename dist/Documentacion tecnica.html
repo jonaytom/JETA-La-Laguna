@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.8</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.9</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,16 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.4.9 — 2026-11-11 — Alpha 1.4.9: coches comprimidos y ruedas a ras</h2>
+<ul>
+<li><strong>Los modelos de coche van comprimidos</strong>: con los 20 coches propios la página del juego pasaba de 16 MB y no se
+  podía publicar (17,6 MB). Ahora cada modelo va en un bloque DEFLATE (<code>tools/comprimir_coches.py</code>) y el juego lo
+  abre al cargar con un descompresor propio pequeño (<code>inflateRaw</code> en <code>src/06b_vmodels.js</code>): <code>data/kenney_cars.json</code>
+  pasa de 5,7 a 2,6 MB.</li>
+<li><strong>Ruedas a ras del paso de rueda</strong> (Jonay: «las ruedas no pueden sobresalir de los coches»): en el generador la
+  rueda se mete hacia dentro hasta que el neumático queda dentro del costado a la altura del eje. Rehechos los 19
+  coches propios del generador. El Pancho Chayan baja los paragolpes (se veía hueco debajo y parecía flotar).</li>
+</ul>
 <h2>1.4.8 — 2026-11-11 — Alpha 1.4.8: siete coches propios más y pasos de rueda limpios</h2>
 <ul>
 <li><strong>Pasos de rueda sin dientes</strong> (Jonay: «el recorte de la rueda está fatal, se ven dientes»): el hueco de la rueda

@@ -3,6 +3,15 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.9 — 2026-11-11 — Alpha 1.4.9: coches comprimidos y ruedas a ras
+- **Los modelos de coche van comprimidos**: con los 20 coches propios la página del juego pasaba de 16 MB y no se
+  podía publicar (17,6 MB). Ahora cada modelo va en un bloque DEFLATE (`tools/comprimir_coches.py`) y el juego lo
+  abre al cargar con un descompresor propio pequeño (`inflateRaw` en `src/06b_vmodels.js`): `data/kenney_cars.json`
+  pasa de 5,7 a 2,6 MB.
+- **Ruedas a ras del paso de rueda** (Jonay: «las ruedas no pueden sobresalir de los coches»): en el generador la
+  rueda se mete hacia dentro hasta que el neumático queda dentro del costado a la altura del eje. Rehechos los 19
+  coches propios del generador. El Pancho Chayan baja los paragolpes (se veía hueco debajo y parecía flotar).
+
 ## 1.4.8 — 2026-11-11 — Alpha 1.4.8: siete coches propios más y pasos de rueda limpios
 - **Pasos de rueda sin dientes** (Jonay: «el recorte de la rueda está fatal, se ven dientes»): el hueco de la rueda
   quitaba caras enteras y el borde quedaba en escalera; ahora los vértices del borde se colocan sobre la curva del
