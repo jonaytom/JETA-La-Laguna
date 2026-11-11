@@ -36,8 +36,8 @@ reniegoL|Yoos Reniego|Todoterreno|yoos-reniego-lejos|suv|4.174|1.8|1.587|0
 cartabon|Yoos Cartabon|SUV|yoos-cartabon|suv|4.454|1.88|1.647|5
 cartabonL|Yoos Cartabon|SUV|yoos-cartabon-lejos|suv|4.454|1.88|1.647|0
 # v1.4.5: tres más (Antonias Tipo E sustituye al Guagüen Golfo; LTG Scupe al Butaca Atajo; Fierilla 440 al Quillo Exceso, y sale poco)
-tipoe|Antonias Tipo E|Berlina|antonias-tipo-e|sedan|4.826|1.88|1.482|4
-tipoeL|Antonias Tipo E|Berlina|antonias-tipo-e-lejos|sedan|4.826|1.88|1.482|0
+tipoe|Antonias Tipo E|Berlina|antonias-tipo-e|sedan|4.95|1.89|1.502|4
+tipoeL|Antonias Tipo E|Berlina|antonias-tipo-e-lejos|sedan|4.95|1.89|1.502|0
 ltg|Antonias LTG Scupe|SUV coupé|antonias-ltg-scupe|suv|4.792|2.0|1.732|3
 ltgL|Antonias LTG Scupe|SUV coupé|antonias-ltg-scupe-lejos|suv|4.792|2.0|1.732|0
 fierilla|Fierilla 440|Superdeportivo|fierilla-440|sport|4.57|1.95|1.212|1

@@ -3,6 +3,12 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.6 — 2026-11-11 — Alpha 1.4.6: Antonias Tipo E más redondeado
+- Rehecha la forma del **Antonias Tipo E** (Jonay: «es mucho más redondeado, no curvas tan rectas»): fuera el morro
+  vertical, morro y zaga redondeados en planta y perfil, techo en un arco continuo del parabrisas al maletero,
+  ventanillas con más caída y techo abombado. Mide 4,95 m (antes 4,83). Mismo número de triángulos.
+- El generador de Blender admite `cupula` (cuánto se abomban las ventanillas) y `corona` (techo abombado).
+
 ## 1.4.5 — 2026-11-11 — Alpha 1.4.5: Antonias Tipo E, LTG Scupe y Fierilla 440
 - Tres coches propios más (Blender, mismo generador): **Antonias Tipo E** (berlina grande; rejilla con puntos y faros
   muy finos) sustituye al Guagüen Golfo; **Antonias LTG Scupe** (SUV coupé grande) al Butaca Atajo; **Fierilla 440**
