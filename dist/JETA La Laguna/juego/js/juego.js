@@ -1021,7 +1021,10 @@ const TEX = {};
       x = c.getContext('2d');
     noiseFill(x, 256, 256, [128, 104, 78], 30, 41, 2);
     speckle(x, 256, 256, 700, ['#6b5540', '#a08770', '#8a7a60'], 1, 3, 13);
-    TEX.dirt = canvasTex(c);
+    const cb = mkCanvas(512, 512);
+    cb.getContext('2d').drawImage(c, 0, 0, 512, 512);
+    TEX.dirtC = cb;
+    TEX.dirt = canvasTex(cb);
   }
   // ---------------- tram track (u across 7m, v along)
   {
@@ -1057,7 +1060,10 @@ const TEX = {};
         x.fillRect(col * 16, row * 16 + (col % 2) * 2, 16, 15);
       }
     speckle(x, 256, 256, 300, ['rgba(60,70,40,.35)', 'rgba(40,40,40,.3)'], 2, 5, 19); // moss
-    TEX.roofTile = canvasTex(c);
+    const cb = mkCanvas(512, 512);
+    cb.getContext('2d').drawImage(c, 0, 0, 512, 512);
+    TEX.roofTileC = cb;
+    TEX.roofTile = canvasTex(cb);
   }
   // ---------------- flat roof (azotea)
   {
@@ -1076,7 +1082,10 @@ const TEX = {};
       x.stroke();
     }
     speckle(x, 256, 256, 120, ['rgba(60,60,60,.25)'], 4, 12, 23);
-    TEX.roofFlat = canvasTex(c);
+    const cb = mkCanvas(512, 512);
+    cb.getContext('2d').drawImage(c, 0, 0, 512, 512);
+    TEX.roofFlatC = cb;
+    TEX.roofFlat = canvasTex(cb);
   }
   // ---------------- terrain detail
   {
@@ -1651,7 +1660,10 @@ const GROUND = { listo: 0 };
     ['asfalto', TEX.asphaltC, TEX.asphalt],
     ['acera', TEX.sidewalkC, TEX.sidewalk],
     ['adoquin', TEX.pavingC, TEX.paving],
-    ['cesped', TEX.grassC, TEX.grass]
+    ['cesped', TEX.grassC, TEX.grass],
+    ['tierra', TEX.dirtC, TEX.dirt], // v1.3.9: brown_mud_dry (tracks and paths; and the open ground of the terrain, 04_world.js)
+    ['teja', TEX.roofTileC, TEX.roofTile], // v1.3.9: clay_roof_tiles_02, teja árabe (2,5 m: hipRoof)
+    ['azotea', TEX.roofFlatC, TEX.roofFlat] // v1.3.9: concrete_floor_02, light (4 m)
   ]) {
     if (!S[k] || !c) continue;
     const im = new Image();
@@ -2419,13 +2431,15 @@ function buildTerrain() {
     sh.uniforms.uDetail = { value: TEX.detail };
     sh.uniforms.uMask = { value: mtex };
     sh.uniforms.uPave = { value: TEX.paving };
+    sh.uniforms.uGrassT = { value: TEX.grass }; // v1.3.9: photo detail on the terrain (Poly Haven)
+    sh.uniforms.uDirtT = { value: TEX.dirt };
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', '#include <common>\nvarying vec2 vW;')
       .replace('#include <uv_vertex>', '#include <uv_vertex>\nvW = position.xz;');
     sh.fragmentShader = sh.fragmentShader
       .replace(
         '#include <common>',
-        '#include <common>\nuniform sampler2D uDetail; uniform sampler2D uMask; uniform sampler2D uPave; varying vec2 vW;'
+        '#include <common>\nuniform sampler2D uDetail; uniform sampler2D uMask; uniform sampler2D uPave; uniform sampler2D uGrassT; uniform sampler2D uDirtT; varying vec2 vW;'
       )
       .replace(
         'void main() {',
@@ -2444,7 +2458,19 @@ function buildTerrain() {
       .replace(
         '#include <map_fragment>',
         `#include <map_fragment>
-        diffuseColor.rgb *= (texture2D(uDetail, vW / 7.0).r * 0.55 + texture2D(uDetail, vW / 53.0).g * 0.55 + 0.35) * 0.95;
+        // v1.3.9 (Jonay: «sigue con las texturas»): the colour of the map (splat) keeps its hue, and the photo of grass (where it
+        // is green) or of dry earth (elsewhere) gives it its grain, divided by its own mean (suelo_polyhaven.py) so the
+        // brightness stays; the old painted noise only for the big patches now
+        {
+          vec3 bc = diffuseColor.rgb;
+          float gr = clamp((bc.g - max(bc.r, bc.b)) * 9.0, 0.0, 1.0);
+          vec3 tg = texture2D(uGrassT, vW / 4.0).rgb / vec3(0.0966, 0.1814, 0.0409);
+          vec3 td = texture2D(uDirtT, vW / 4.0).rgb / vec3(0.2304, 0.1488, 0.0828);
+          vec3 ph = mix(td, tg, gr);
+          ph = mix(vec3(dot(ph, vec3(0.3333))), ph, 0.35); // (mostly the grain, a little of the photo's tint)
+          diffuseColor.rgb *= mix(vec3(1.0), clamp(ph, 0.0, 2.5), 0.85);
+        }
+        diffuseColor.rgb *= (texture2D(uDetail, vW / 7.0).r * 0.15 + texture2D(uDetail, vW / 53.0).g * 0.55 + 0.62) * 0.95;
         float pm = texture2D(uMask, vMapUv).r;
         vec3 pv = texture2D(uPave, vW / 4.0).rgb * vec3(1.0, 0.98, 0.95);
         diffuseColor.rgb = mix(diffuseColor.rgb, pv * mix(0.8, 1.0, pm), smoothstep(0.3, 0.8, pm));`
@@ -6961,8 +6987,8 @@ function hipRoofPart2(pts, n, din, top, outer, R, tris) {
     const ux = ex / el,
       uz = ez / el;
     const U = (P) => [
-      ((P[0] - o1[0]) * ux + (P[2] - o1[2]) * uz) / 1.6,
-      (Math.abs((P[0] - o1[0]) * uz - (P[2] - o1[2]) * ux) + (P[1] - o1[1])) / 1.6
+      ((P[0] - o1[0]) * ux + (P[2] - o1[2]) * uz) / 2.5, // v1.3.9: 2,5 m, the size of the photo of the tiles (it was 1,6)
+      (Math.abs((P[0] - o1[0]) * uz - (P[2] - o1[2]) * ux) + (P[1] - o1[1])) / 2.5
     ];
     const want = [uz, 1, -ux];
     R.quad(o1, o2, i2, i1, U(o1), U(o2), U(i2), U(i1), null, undefined, want);

@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.3.8</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.3.9</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,13 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.3.9 — 2026-11-11 — Alpha 1.3.9: terreno y tejados con texturas de Poly Haven</h2>
+<ul>
+<li><strong>Terreno</strong> (descampados, parques, laderas): sobre el color del mapa, el grano de una foto de tierra seca con piedras
+  (<code>brown_mud_dry</code>) donde no es verde y de césped (<code>grass_ground</code>) donde lo es. Los caminos de tierra usan la misma foto.</li>
+<li><strong>Tejados de teja árabe</strong> con una foto de teja de verdad (<code>clay_roof_tiles_02</code>), a su tamaño real (2,5 m), y
+  <strong>azoteas</strong> de hormigón claro (<code>concrete_floor_02</code>).</li>
+</ul>
 <h2>1.3.8 — 2026-11-11 — Alpha 1.3.8: flechas en medio de cada carril</h2>
 <ul>
 <li><strong>Flechas de dirección centradas en cada carril</strong> (Jonay: «la flecha de dirección superpuesta a la línea discontinua

@@ -3,6 +3,12 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.3.9 — 2026-11-11 — Alpha 1.3.9: terreno y tejados con texturas de Poly Haven
+- **Terreno** (descampados, parques, laderas): sobre el color del mapa, el grano de una foto de tierra seca con piedras
+  (`brown_mud_dry`) donde no es verde y de césped (`grass_ground`) donde lo es. Los caminos de tierra usan la misma foto.
+- **Tejados de teja árabe** con una foto de teja de verdad (`clay_roof_tiles_02`), a su tamaño real (2,5 m), y
+  **azoteas** de hormigón claro (`concrete_floor_02`).
+
 ## 1.3.8 — 2026-11-11 — Alpha 1.3.8: flechas en medio de cada carril
 - **Flechas de dirección centradas en cada carril** (Jonay: «la flecha de dirección superpuesta a la línea discontinua
   separadora de carriles… las flechas van centradas en los carriles, no en medio de toda la vía»): en las calles de un

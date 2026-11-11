@@ -1,0 +1,5 @@
+herramientas/foto_vista.py terreno_antes_parque 600 700 2.5 640 740
+herramientas/foto_vista.py terreno_antes_descampado 1300 2300 2 1260 2340
+herramientas/foto_vista.py terreno_antes_ladera 900 900 30 1300 400
+herramientas/foto_vista.py terreno_antes_vega -800 2300 6 -700 2400
+herramientas/foto_vista.py terreno_antes_parque2 -1500 -100 1.8 -1470 -70

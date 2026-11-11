@@ -141,7 +141,10 @@ const TEX = {};
       x = c.getContext('2d');
     noiseFill(x, 256, 256, [128, 104, 78], 30, 41, 2);
     speckle(x, 256, 256, 700, ['#6b5540', '#a08770', '#8a7a60'], 1, 3, 13);
-    TEX.dirt = canvasTex(c);
+    const cb = mkCanvas(512, 512);
+    cb.getContext('2d').drawImage(c, 0, 0, 512, 512);
+    TEX.dirtC = cb;
+    TEX.dirt = canvasTex(cb);
   }
   // ---------------- tram track (u across 7m, v along)
   {
@@ -177,7 +180,10 @@ const TEX = {};
         x.fillRect(col * 16, row * 16 + (col % 2) * 2, 16, 15);
       }
     speckle(x, 256, 256, 300, ['rgba(60,70,40,.35)', 'rgba(40,40,40,.3)'], 2, 5, 19); // moss
-    TEX.roofTile = canvasTex(c);
+    const cb = mkCanvas(512, 512);
+    cb.getContext('2d').drawImage(c, 0, 0, 512, 512);
+    TEX.roofTileC = cb;
+    TEX.roofTile = canvasTex(cb);
   }
   // ---------------- flat roof (azotea)
   {
@@ -196,7 +202,10 @@ const TEX = {};
       x.stroke();
     }
     speckle(x, 256, 256, 120, ['rgba(60,60,60,.25)'], 4, 12, 23);
-    TEX.roofFlat = canvasTex(c);
+    const cb = mkCanvas(512, 512);
+    cb.getContext('2d').drawImage(c, 0, 0, 512, 512);
+    TEX.roofFlatC = cb;
+    TEX.roofFlat = canvasTex(cb);
   }
   // ---------------- terrain detail
   {
@@ -771,7 +780,10 @@ const GROUND = { listo: 0 };
     ['asfalto', TEX.asphaltC, TEX.asphalt],
     ['acera', TEX.sidewalkC, TEX.sidewalk],
     ['adoquin', TEX.pavingC, TEX.paving],
-    ['cesped', TEX.grassC, TEX.grass]
+    ['cesped', TEX.grassC, TEX.grass],
+    ['tierra', TEX.dirtC, TEX.dirt], // v1.3.9: brown_mud_dry (tracks and paths; and the open ground of the terrain, 04_world.js)
+    ['teja', TEX.roofTileC, TEX.roofTile], // v1.3.9: clay_roof_tiles_02, teja árabe (2,5 m: hipRoof)
+    ['azotea', TEX.roofFlatC, TEX.roofFlat] // v1.3.9: concrete_floor_02, light (4 m)
   ]) {
     if (!S[k] || !c) continue;
     const im = new Image();

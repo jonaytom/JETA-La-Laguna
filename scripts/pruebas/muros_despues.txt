@@ -1,0 +1,4 @@
+herramientas/foto_vista.py muros_despues_verdellada 712 800 6 717 860
+herramientas/foto_vista.py muros_despues_sanlazaro -2058 -235 8 -2000 -250
+herramientas/foto_vista.py muros_despues_honorato -960 100 5 -930 70
+herramientas/foto_vista.py muros_despues_geneto 346 1501 30 346 1530

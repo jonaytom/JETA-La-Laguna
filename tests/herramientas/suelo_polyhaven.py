@@ -19,7 +19,14 @@ def match(im, mean, contrast=1.0, gris=0.0):
     m = a.reshape(-1, 3).mean(0)
     return Image.fromarray(np.clip((a - m) * contrast + np.array(mean), 0, 255).astype('uint8'))
 JOBS = {'asfalto': ('asphalt_floor_1k.jpg', 4, 512, (72, 73, 76), 1.35, 0.9), 'acera': ('concrete_pavement_1k.jpg', 1, 512, (166, 163, 156), 1.7, 0.6),
-        'adoquin': ('square_cobblestone_1k.jpg', 3, 510, (82, 81, 80), 1.9, 0.5), 'cesped': ('grass_ground_1k.jpg', 2, 256, (88, 118, 60), 1.0, 0.0)}
+        'adoquin': ('square_cobblestone_1k.jpg', 2, 512, (82, 81, 80), 1.9, 0.5), 'cesped': ('grass_ground_1k.jpg', 2, 256, (88, 118, 60), 1.0, 0.0),
+        'tierra': ('brown_mud_dry_1k.jpg', 2, 512, (128, 104, 78), 1.15, 0.2)}  # (v1.3.9: descampados y caminos de tierra)
+JOBS['teja'] = ('clay_roof_tiles_02_1k.jpg', 1, 512, (158, 84, 58), 1.0, 0.0)  # (v1.3.9: teja árabe, 2,5 m)
+JOBS['azotea'] = ('concrete_floor_02_1k.jpg', 2, 512, (178, 170, 160), 0.75, 0.7)  # (v1.3.9: azoteas, 4 m)
 for k, (f, N, s, mean, c, g) in JOBS.items():
     match(tile(os.path.join(SRC, f), N, s), mean, c, g).resize(((512 if s > 300 else 256),) * 2, Image.LANCZOS).save(os.path.join(OUT, 'suelo_%s.jpg' % k), quality=82, optimize=True)
     print('ok', k)
+# v1.3.9: the mean of each one in linear light, for the terrain shader (04_world.js divides the photo by it)
+for k in JOBS:
+    a = (np.asarray(Image.open(os.path.join(OUT, 'suelo_%s.jpg' % k))).astype(float) / 255) ** 2.2
+    print('media lineal', k, [round(v, 4) for v in a.reshape(-1, 3).mean(0)])

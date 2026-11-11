@@ -1,38 +1,47 @@
-# Pruebas 1.3.7 — 2026-11-11 10:51 — 12/12 OK
+# Pruebas 1.3.9 — 2026-11-11 11:17 — 12/12 OK
 
-Listas: cambios, version. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 158 s en total.
+Listas: cambios, version. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 189 s en total.
 
 | # | Prueba | Resultado | Tiempo |
 |---|---|---|---|
 | 1 | `prueba_arranque.py` | **OK** | 1 s |
-| 2 | `prueba_bordes.py` | **OK** | 41 s |
-| 3 | `prueba_conduccion_tuneles_puentes.py` | **OK** | 67 s |
-| 4 | `prueba_parking_cristo.py` | **OK** | 1 s |
-| 5 | `prueba_coche_y_boca.py` | **OK** | 1 s |
-| 6 | `prueba_freno_mano.py` | **OK** | 1 s |
-| 7 | `prueba_peralte.py` | **OK** | 0 s |
-| 8 | `prueba_muerte_coche.py` | **OK** | 7 s |
-| 9 | `prueba_grandes.py` | **OK** | 12 s |
+| 2 | `prueba_guardar_cargar.py` | **OK** | 3 s |
+| 3 | `prueba_bordes.py` | **OK** | 42 s |
+| 4 | `prueba_conduccion_tuneles_puentes.py` | **OK** | 76 s |
+| 5 | `prueba_parking_cristo.py` | **OK** | 1 s |
+| 6 | `prueba_pendientes_faciles.py` | **OK** | 5 s |
+| 7 | `prueba_grandes.py` | **OK** | 11 s |
+| 8 | `prueba_078.py` | **OK** | 14 s |
+| 9 | `prueba_trinidad.py` | **OK** | 6 s |
 | 10 | `prueba_121.py` | **OK** | 0 s |
 | 11 | `prueba_120.py` | **OK** | 0 s |
 | 12 | `prueba_119.py` | **OK** | 0 s |
 
 ## Detalle
 
-**Archivos cambiados desde la última tanda de pruebas** (eligen las pruebas): `scripts/pruebas/flechas138.txt`, `scripts/publicar.log`, `src/05j_signals.js`, `src/07_vehicles.js`
+**Archivos cambiados desde la última tanda de pruebas** (eligen las pruebas): `build.py`, `scripts/pruebas/tejados_antes.txt`, `scripts/pruebas/tejados_despues.txt`, `scripts/pruebas/terreno_antes.txt`, `scripts/pruebas/terreno_despues.txt`, `scripts/publicar.log`, `src/02_textures.js`, `src/04_world.js`, `tests/herramientas/suelo_polyhaven.py`
 
 ### 1. prueba_arranque.py — OK
 
 ```
-30 pasos (ms): {'mediana': 29, 'peor': 94, 'estado': 'play'}
+30 pasos (ms): {'mediana': 32, 'peor': 169, 'estado': 'play'}
 errores JS []
 ARRANQUE OK
 ```
 
-### 2. prueba_bordes.py — OK
+### 2. prueba_guardar_cargar.py — OK
 
 ```
-{"inicio":[-1850,-300],"borde0":158.1,"ahora":[-1850,-300],"borde":158,"calle":25.9,"coche":false,"aviso":"RADIO: Gofio FM 90.1 · boom bap lagunero  (Q: cambiar de emisora)"}
+saved {"v":1,"t":1794395671140,"label":"test","player":{"x":-188.85220316222484,"z":783.1196180571543,"h":0,"health":77,"money":1234},"car":{"type":"bus","model":null,"color":2067020,"h":-0.1292194454060533,"x":-190.85220316222484,"z":783.1196180571543},"weapon":{"has":true,"ammo":4,"out":true},"rifle":{"
+after {"st":"play","m":{"v":3,"story":3,"skip":[],"storyDone":false,"side":0,"sideOpen":false,"obispo":0,"torneo":0,"copa":0,"secreta":0,"carreras":0,"log":{},"gang":{"formed":false,"name":"","members":[],"casa":{"intro":false,"owned":[],"rent":null,"day":0,"lastTod":12.00111111111111},"arcade":{"scores":{},"bought":[],"console":false,"invited":false},"sastronTut":false,"defenders":false,"patrol":false,"basketTut":false,"futbolTut":false,"jugueterias":false,"maleIntro":false,"rifleTut":false},"active":null},"money":1234,"hp":77,"tod":15.5,"car":true,"w":true,"ammo":4,"title":"La firma de la banda"}
+latest 2
+ERR []
+```
+
+### 3. prueba_bordes.py — OK
+
+```
+{"inicio":[-1850,-300],"borde0":158.1,"ahora":[-1850,-300],"borde":158,"calle":25.9,"coche":false,"aviso":"Misión: La firma de la banda"}
 {"inicio":[500,3950],"borde0":30,"ahora":[500,3950],"borde":30,"calle":5.9,"coche":false,"aviso":"⚠ Saliendo del mundo — da la vuelta"}
 {"inicio":[1500,700],"borde0":305,"ahora":[1500,700],"borde":305,"calle":10,"coche":false,"aviso":"⚠ Saliendo del mundo — da la vuelta"}
 {"inicio":[-300,1600],"borde0":900,"ahora":[-300,1600],"borde":900,"calle":64.2,"coche":true,"aviso":"RADIO: Gofio FM 90.1 · boom bap lagunero  (Q: cambiar de emisora)"}
@@ -40,7 +49,7 @@ ARRANQUE OK
 {"edificios_en_zonas_quitadas":1852}
 ```
 
-### 3. prueba_conduccion_tuneles_puentes.py — OK
+### 4. prueba_conduccion_tuneles_puentes.py — OK
 
 ```
 roads 133
@@ -48,7 +57,7 @@ failed 0 of 133 · conocidos 0
 CONDUCCION OK
 ```
 
-### 4. prueba_parking_cristo.py — OK
+### 5. prueba_parking_cristo.py — OK
 
 ```
 {'escalera': [161, -595], 'fin': [170, -590.6], 'sobre_suelo': -5.32, 'salio': False, 'stuck': {'at': [170.01, -590.57, -5.32], 'dbg': []}}
@@ -57,45 +66,27 @@ coche {'rampa': [260, -552], 'hueco_min_techo': 99, 'profundidad': 0, 'en_sala':
 coche {'rampa': [120, -640], 'hueco_min_techo': 99, 'profundidad': 0, 'en_sala': False, 'fin': [118, -641]}
 ```
 
-### 5. prueba_coche_y_boca.py — OK
+### 6. prueba_pendientes_faciles.py — OK
 
 ```
-{"modelo":"Guanche GT","t0a100":null,"punta":"0","maxV":"194","boca":["-531.4","-351.8"],"inicio":["-532.0","-353.7"],"coords":"X 119 · Y -642 · 547 m"}
+lineas {'vias': 797, 'con_lineas': 64339, 'lisas': 20660, 'pct_lisas': 24.3}
+aviones 17
+aviones_en_via []
+telepisa_gran_tienda False
+telepisa [-213, 440]
+telepisa_edificio {'alto': 11.6, 'cx': -240, 'cz': 422}
+edificios [[73, 234, 1.55], [-909, -408, 1.17]]
+recortados 3129
+foto faciles_cruce_brasil
+foto faciles_rotonda_alto
+foto faciles_telepisa
+foto faciles_plaza_sancristobal
+foto faciles_aviones
+errores JS []
+FACILES OK
 ```
 
-### 6. prueba_freno_mano.py — OK
-
-```
-sin freno de mano {'derrape_1s': 0, 'kmh_1s': 52, 'giro_1s_grados': 90, 'derrape_final': 0, 'kmh_3s': 36, 'giro_3s_grados': 284, 'derrape_max_grados': 0}
-con freno de mano {'derrape_1s': 56, 'kmh_1s': 37, 'giro_1s_grados': 145, 'derrape_final': 90, 'kmh_3s': 7, 'giro_3s_grados': 184, 'derrape_max_grados': 90}
-toque de 0,5 s y suelta {'derrape_1s': 32, 'kmh_1s': 43, 'giro_1s_grados': 118, 'derrape_final': 0, 'kmh_3s': 57, 'giro_3s_grados': 186, 'derrape_max_grados': 32}
-OK
-```
-
-### 7. prueba_peralte.py — OK
-
-```
-{'pendLat': '71%', 'ruedas_altura_eje_sobre_suelo': [0.53, 0.54, 0.53, 0.52], 'dif': 0.02}
-{'pendLat': '67%', 'ruedas_altura_eje_sobre_suelo': [0.54, 0.53, 0.53, 0.55], 'dif': 0.02}
-{'pendLat': '67%', 'ruedas_altura_eje_sobre_suelo': [0.55, 0.54, 0.52, 0.54], 'dif': 0.03}
-{'pendLat': '64%', 'ruedas_altura_eje_sobre_suelo': [0.58, 0.56, 0.54, 0.58], 'dif': 0.04}
-{'pendLat': '54%', 'ruedas_altura_eje_sobre_suelo': [0.63, 0.56, 0.55, 0.55], 'dif': 0.08}
-{'pendLat': '54%', 'ruedas_altura_eje_sobre_suelo': [0.52, 0.51, 0.51, 0.51], 'dif': 0.01}
-```
-
-### 8. prueba_muerte_coche.py — OK
-
-```
-t 0 {"st":"cutscene","dead":true,"car":true,"hp":-49}
-t 1 {"st":"cutscene","dead":true,"car":true,"hp":-49}
-t 2 {"st":"cutscene","dead":true,"car":true,"hp":-49}
-t 3 {"st":"play","dead":false,"car":false,"hp":100}
-t 4 {"st":"play","dead":false,"car":false,"hp":100}
-t 5 {"st":"play","dead":false,"car":false,"hp":100}
-ERR []
-```
-
-### 9. prueba_grandes.py — OK
+### 7. prueba_grandes.py — OK
 
 ```
 obispado {'vanos': 2, 'largo': 17, 'puerta': [-42, -237]}
@@ -118,6 +109,51 @@ foto grandes_aeropuerto_depositos
 foto grandes_callejero_bencomo
 errores JS []
 GRANDES OK
+```
+
+### 8. prueba_078.py — OK
+
+```
+pasajes {"hechos": [{"name": "", "x": 456.1740007076505, "z": 428.92684097599704, "len": 22.3, "ancho": 2.6, "y": -35}, {"name": "", "x": 256.8213465101952, "z": 1082.6010280097707, "len": 10.2, "ancho": 2.6, "y": -40.3}, {"name": "", "x": 251.25, "z": 1088.75, "len": 6.4, "ancho": 2.6, "y": -40.2}, {"name": "", "x": 245.8949364078257, "z": 1093.6614830790065, "len": 8.2, "ancho": 2.6, "y": -40}, {"name": "", "x": 276.6701233150776, "z": 1056.9134720601267, "len": 24.2, "ancho": 2.6, "y": -41.2}, {"name": "", "x": 267.5, "z": 1070, "len": 7.8, "ancho": 2.6, "y": -40.7}, {"name": "", "x": 482.9126336264246, "z": 1258.136450345903, "len": 16.6, "ancho": 2.6, "y": -64.8}, {"name": "", "x": 490.75, "z": 1250.5, "len": 5.3, "ancho": 2.6, "y": -65.6}, {"name": "", "x": 493.75, "z": 1247, "len": 3.9, "ancho": 2.6, "y": -65.8}, {"name": "", "x": 497.5, "z": 1242.25, "len": 8.2, "ancho": 2.6, "y": -66.1}, {"name": "", "x": 504, "z": 1234.75, "len": 11.7, "ancho": 2.6, "y": -66.6}, {"name": "", "x": 285.19469321603094, "z": 1000.175595715388, "len": 19.4, "ancho": 2.6, "y": -42.9}, {"name": "", "x": 237.9345819323408, "z": 1052.098127101489, "len": 18.3, "ancho": 2.6, "y": -40.9}, {"name": "", "x": 245, "z": 1041.25, "len": 7.6, "ancho": 2.6, "y": -41.1}, {"name": "", "x": 250.75, "z": 1032.5, "len": 13.3, "ancho": 2.6, "y": -41.4}, {"name": "", "x": 257.75, "z": 1021.75, "len": 12.3, "ancho": 2.6, "y": -41.8}, {"name": "", "x": 268.5, "z": 1005, "len": 27.5, "ancho": 2.6, "y": -42.3}, {"name"
+andando arriba [{'a': [-177, -60], 'llega': True, 'cerca': None, 'falta': 0.9, 'y': 2.53, 'bajo': False, 'camY': 4.98, 'techo': None, 'donde': [-176.5, -60.7], 'delante': None}, {'a': [-168, -54], 'llega': True, 'cerca': None, 'falta': 0.8, 'y': 2.5, 'bajo': False, 'camY': 4.94, 'techo': None, 'donde': [-168.6, -54.5], 'delante': None}]
+camara bajo techo [(4.95, 5.247257559348862)]
+bajando [([-174.9, -38.9], True, 1.79, False, 4.81), ([-176.9, -34.6], True, 1.56, False, 7.12), ([-173.6, -31.4], True, 1.47, False, 9.76), ([-173.5, -30.1], True, 1.43, False, 9.71), ([-173.6, -29.5], True, 1.41, False, 9.69), ([-173.7, -28.9], True, 1.14, True, 9.42), ([-173.9, -28.3], True, 0.61, True, 8.89), ([-174.2, -27.7], True, -0.16, True, 7.74), ([-174.6, -27.2], True, -0.33, True, 7.46), ([-175, -26.7], True, -0.96, True, 7), ([-175.5, -26.3], True, -1.18, True, 6.69), ([-176, -25.9], True, -1.57, True, 6.21), ([-176.6, -25.6], True, -2.03, True, 5.93), ([-177.1, -25.4], True, -2.35, True, 5.48), ([-177.8, -25.2], True, -2.91, True, 4.88), ([-178.4, -25.1], True, -3.17, True, 4.78), ([-178.7, -25.1], True, -3.4, True, 4.46), ([-180.9, -25.8], True, -3.92, True, -1.07), ([-184, -19], True, -3.92, True, -1.07), ([-188, -9], True, -3.92, True, -1.07), ([-217.5, 58.5], True, -3.86, False, 4.42)]
+patio {'x': -179, 'z': -30, 'r': 6.3, 'yU': 1.33, 'yL': -4.02, 'escaleras': 2, 'peldanos': 30, 'galeria_baja': 91.9, 'salida': [-217, 59]} bajada maxima entre puntos 0.77 llega abajo True
+foto v078_teide_entrada
+foto v078_teide_dentro
+foto v078_herradores
+foto v078_patio_suelo
+foto v078_patio_mural
+foto v078_patio_escalera
+foto v078_patio_alto
+foto v078_juego
+foto v0781_juego_cerca
+foto v0781_patio_desde_rellano
+foto v0781_patio_desde_abajo
+foto v0781_escalera_abajo
+foto v0781_galeria_baja
+foto v0781_galeria_hacia_juego
+errores []
+PRUEBA 078 OK
+```
+
+### 9. prueba_trinidad.py — OK
+
+```
+widths [6.6]
+invaden []
+aparcamientos [{'name': 'Parking Trinidad', 'x': -113, 'z': 106, 'yF': -13.5}, {'name': 'Parking Trinidad', 'x': -133, 'z': 163, 'yF': -14.2}, {'name': 'Parking Trinidad', 'x': -153, 'z': 221, 'yF': -14.2}, {'name': 'Parking Trinidad', 'x': -173, 'z': 278, 'yF': -14.2}, {'name': 'Parking Trinidad', 'x': -193, 'z': 336, 'yF': -14}, {'name': 'Parking Trinidad', 'x': -213, 'z': 394, 'yF': -13.7}, {'name': 'Parking Trinidad', 'x': -232, 'z': 451, 'yF': -13.2}]
+nuevas 8
+coche {'aparcamiento': 'Parking Trinidad', 'rampa': [-85, 28], 'profundidad': 8.2, 'en_sala': True, 'fin': [-105, 82]}
+coche {'aparcamiento': 'Parking Trinidad', 'rampa': [-244, 524], 'profundidad': 7.3, 'en_sala': True, 'fin': [-227, 468]}
+foto trinidad_rampa_1
+foto trinidad_rampa_1_alto
+foto trinidad_rampa_7
+foto trinidad_rampa_7_alto
+foto trinidad_pedrozerolo
+foto trinidad_pedrozerolo_calle
+errores JS []
+TRINIDAD OK
 ```
 
 ### 10. prueba_121.py — OK
@@ -150,4 +186,4 @@ errores []
 PRUEBA 119 OK
 ```
 
-Fotos/archivos nuevos en `tests/shots/`: conduccion.json, grandes_aeropuerto_depositos.jpg, grandes_aeropuerto_naves.jpg, grandes_aeropuerto_terminal.jpg, grandes_callejero_bencomo.jpg, grandes_guajara.jpg, grandes_obispado.jpg, grandes_tf13_alto.jpg, grandes_tf13_suelo.jpg, grandes_tranvia_alto.jpg, grandes_tranvia_cenital.jpg, grandes_tranvia_dentro.jpg, grandes_tranvia_trinchera.jpg
+Fotos/archivos nuevos en `tests/shots/`: conduccion.json, faciles_aviones.jpg, faciles_cruce_brasil.jpg, faciles_plaza_sancristobal.jpg, faciles_rotonda_alto.jpg, faciles_telepisa.jpg, grandes_aeropuerto_depositos.jpg, grandes_aeropuerto_naves.jpg, grandes_aeropuerto_terminal.jpg, grandes_callejero_bencomo.jpg, grandes_guajara.jpg, grandes_obispado.jpg, grandes_tf13_alto.jpg, grandes_tf13_suelo.jpg, grandes_tranvia_alto.jpg, grandes_tranvia_cenital.jpg, grandes_tranvia_dentro.jpg, grandes_tranvia_trinchera.jpg, trinidad_pedrozerolo.jpg, trinidad_pedrozerolo_calle.jpg, trinidad_rampa_1.jpg, trinidad_rampa_1_alto.jpg, trinidad_rampa_7.jpg, trinidad_rampa_7_alto.jpg, v0781_escalera_abajo.jpg, v0781_galeria_baja.jpg, v0781_galeria_hacia_juego.jpg, v0781_juego_cerca.jpg, v0781_patio_desde_abajo.jpg, v0781_patio_desde_rellano.jpg, v078_herradores.jpg, v078_juego.jpg, v078_patio_alto.jpg, v078_patio_escalera.jpg, v078_patio_mural.jpg, v078_patio_suelo.jpg, v078_teide_dentro.jpg, v078_teide_entrada.jpg
