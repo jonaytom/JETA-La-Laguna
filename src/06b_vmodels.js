@@ -8,93 +8,123 @@ ibiza|Butaca Isleña|Utilitario|sedan|compact|4.06|1.78|1.44|0
 yaris|Tagoror Lairis|Utilitario|sedan|compact|3.95|1.7|1.5|0
 picanto|Quillo Picante|Urbano|sedan|compact|3.6|1.6|1.49|0
 rio|Quillo Barranco|Utilitario|sedan|compact|4.07|1.73|1.45|0
-i20|Jandía i-Veinte|Utilitario|sedan|compact|4.04|1.78|1.45|5
+i20|Jandía i-Veinte|Utilitario|sedan|compact|4.04|1.78|1.45|0
 i10|Jandía i-Diez|Urbano|sedan|compact|3.67|1.68|1.48|0
 sandero|Datilera Sendero|Utilitario|sedan|compact|4.09|1.85|1.5|0
 clio|Reinona Tío|Utilitario|sedan|compact|4.05|1.8|1.44|0
-p208|Pijó 802|Utilitario|sedan|compact|4.06|1.75|1.43|4
+p208|Pijó 802|Utilitario|sedan|compact|4.06|1.75|1.43|0
 corsa|Copal Corsario|Utilitario|sedan|compact|4.06|1.77|1.43|0
 c3|Limonero Ce-Tres|Utilitario|sedan|compact|3.99|1.75|1.47|0
 # v1.4.3: modelos propios hechos en Blender (Jonay: «iremos sustituyendo poco a poco a los actuales con los nuestros»); el Troceen C33 sustituye al Limonero Ce-Tres
-troceen|Troceen C33|Crossover|troceen|suv|3.968|1.765|1.62|12
-troceenL|Troceen C33|Crossover|troceen-lejos|suv|3.968|1.765|1.62|0
+troceen|Troceen C33|Crossover|c33|suv|4.015|1.755|1.567|12
+troceenL|Troceen C33|Crossover|c33-lejos|suv|4.015|1.755|1.567|0
 # v1.4.4: seis más (Jonay, 11-nov: «ve eliminando un modelo de los actuales por cada modelo añadido»); cada uno sale tanto como el que sustituye
-troceenC44|Troceen C44|Crossover coupé|troceen-c44|suv|4.109|1.8|1.532|3
-troceenC44L|Troceen C44|Crossover coupé|troceen-c44-lejos|suv|4.109|1.8|1.532|0
-carlota|Totuya Carlota|Compacto|totuya-carlota|sedan|4.268|1.79|1.447|5
-carlotaL|Totuya Carlota|Compacto|totuya-carlota-lejos|sedan|4.268|1.79|1.447|0
-yaiza|Totuya Yaiza Cross|Crossover|totuya-yaiza-cross|suv|4.109|1.76|1.602|5
-yaizaL|Totuya Yaiza Cross|Crossover|totuya-yaiza-cross-lejos|suv|4.109|1.76|1.602|0
-trex|Guanchazen T-Rex|Crossover|guanchazen-t-rex|suv|4.085|1.78|1.582|5
-trexL|Guanchazen T-Rex|Crossover|guanchazen-t-rex-lejos|suv|4.085|1.78|1.582|0
-di55|Guanchazen D.I 55|SUV coupé eléctrico|guanchazen-di-55|suv|4.479|1.852|1.627|5
-di55L|Guanchazen D.I 55|SUV coupé eléctrico|guanchazen-di-55-lejos|suv|4.479|1.852|1.627|0
-jtm3|JTM Capítulo 3|Berlina|jtm-capitulo-3|sedan|4.597|1.81|1.452|5
-jtm3L|JTM Capítulo 3|Berlina|jtm-capitulo-3-lejos|sedan|4.597|1.81|1.452|0
-reniego|Yoos Reniego|Todoterreno|yoos-reniego|suv|4.174|1.8|1.587|5
-reniegoL|Yoos Reniego|Todoterreno|yoos-reniego-lejos|suv|4.174|1.8|1.587|0
-cartabon|Yoos Cartabon|SUV|yoos-cartabon|suv|4.454|1.88|1.647|5
-cartabonL|Yoos Cartabon|SUV|yoos-cartabon-lejos|suv|4.454|1.88|1.647|0
+troceenC44|Troceen C44|Crossover coupé|c44|suv|4.355|1.8|1.52|3
+troceenC44L|Troceen C44|Crossover coupé|c44-lejos|suv|4.355|1.8|1.52|0
+carlota|Totuya Carlota|Compacto|carlota|sedan|4.379|1.79|1.435|5
+carlotaL|Totuya Carlota|Compacto|carlota-lejos|sedan|4.379|1.79|1.435|0
+yaiza|Totuya Yaiza Cross|Crossover|yaizacross|suv|4.18|1.765|1.595|5
+yaizaL|Totuya Yaiza Cross|Crossover|yaizacross-lejos|suv|4.18|1.765|1.595|0
+trex|Guanchazen T-Rex|Crossover|trex|suv|4.108|1.79|1.584|5
+trexL|Guanchazen T-Rex|Crossover|trex-lejos|suv|4.108|1.79|1.584|0
+di55|Guanchazen D.I 55|SUV coupé eléctrico|di55|suv|4.599|1.852|1.615|5
+di55L|Guanchazen D.I 55|SUV coupé eléctrico|di55-lejos|suv|4.599|1.852|1.615|0
+jtm3|JTM Capítulo 3|Berlina|cap3|sedan|4.824|1.83|1.508|5
+jtm3L|JTM Capítulo 3|Berlina|cap3-lejos|sedan|4.824|1.83|1.508|0
+reniego|Yoos Reniego|Todoterreno|reniego|suv|4.236|1.805|1.684|5
+reniegoL|Yoos Reniego|Todoterreno|reniego-lejos|suv|4.236|1.805|1.684|0
+cartabon|Yoos Cartabon|SUV|cartabon|suv|4.394|1.819|1.629|5
+cartabonL|Yoos Cartabon|SUV|cartabon-lejos|suv|4.394|1.819|1.629|0
 # v1.4.5: tres más (Antonias Tipo E sustituye al Guagüen Golfo; LTG Scupe al Butaca Atajo; Fierilla 440 al Quillo Exceso, y sale poco)
-tipoe|Antonias Tipo E|Berlina|antonias-tipo-e|sedan|4.95|1.89|1.502|4
-tipoeL|Antonias Tipo E|Berlina|antonias-tipo-e-lejos|sedan|4.95|1.89|1.502|0
-ltg|Antonias LTG Scupe|SUV coupé|antonias-ltg-scupe|suv|4.792|2.0|1.732|3
-ltgL|Antonias LTG Scupe|SUV coupé|antonias-ltg-scupe-lejos|suv|4.792|2.0|1.732|0
-fierilla|Fierilla 440|Superdeportivo|fierilla-440|sport|4.57|1.95|1.212|1
-fierillaL|Fierilla 440|Superdeportivo|fierilla-440-lejos|sport|4.57|1.95|1.212|0
-piki|Piki Crocante|Urbano|piki-crocante|compact|3.605|1.594|1.505|7
-pikiL|Piki Crocante|Urbano|piki-crocante-lejos|compact|3.605|1.594|1.505|0
-oalgo|Totuya O Algo|Crossover urbano|totuya-o-algo|compact|3.7|1.74|1.552|4
-oalgoL|Totuya O Algo|Crossover urbano|totuya-o-algo-lejos|compact|3.7|1.74|1.552|0
-gomera|Seta Gomera|Utilitario|seta-gomera|compact|4.059|1.78|1.466|10
-gomeraL|Seta Gomera|Utilitario|seta-gomera-lejos|compact|4.059|1.78|1.466|0
-teypan|Pancho Teypan|Berlina eléctrica|pancho-teypan|sedan|4.963|1.966|1.405|2
-teypanL|Pancho Teypan|Berlina eléctrica|pancho-teypan-lejos|sedan|4.963|1.966|1.405|0
-chayan|Pancho Chayan|SUV|pancho-chayan|suv|4.985|1.98|1.701|3
-chayanL|Pancho Chayan|SUV|pancho-chayan-lejos|suv|4.985|1.98|1.701|0
-olecorsa|Ole Corsario|Utilitario|ole-corsario|compact|4.061|1.764|1.462|4
-olecorsaL|Ole Corsario|Utilitario|ole-corsario-lejos|compact|4.061|1.764|1.462|0
-mocco|Ole Mocco|Crossover|ole-mocco|suv|4.151|1.79|1.559|4
-moccoL|Ole Mocco|Crossover|ole-mocco-lejos|suv|4.151|1.79|1.559|0
-tyaiza|Totuya Yaiza|Utilitario|totuya-yaiza|compact|3.94|1.746|1.526|10
-tyaizaL|Totuya Yaiza|Utilitario|totuya-yaiza-lejos|compact|3.94|1.746|1.526|0
-helado|Guanchazen Helado|Utilitario|guanchazen-helado|compact|4.074|1.75|1.478|12
-heladoL|Guanchazen Helado|Utilitario|guanchazen-helado-lejos|compact|4.074|1.75|1.478|0
-dsendero|Damian Sendero|Utilitario|damian-sendero|compact|4.102|1.8|1.503|6
-dsenderoL|Damian Sendero|Utilitario|damian-sendero-lejos|compact|4.102|1.8|1.503|0
-beluga|Troceen Beluga|Monovolumen|troceen-beluga|van|4.753|1.848|1.835|4
-belugaL|Troceen Beluga|Monovolumen|troceen-beluga-lejos|van|4.753|1.848|1.835|0
-vivita|Antonias Vivita|Furgoneta|antonias-vivita|van|5.14|1.928|1.936|3
-vivitaL|Antonias Vivita|Furgoneta|antonias-vivita-lejos|van|5.14|1.928|1.936|0
-newton3|Newton Style 3|Berlina eléctrica|newton-style-3|sedan|4.72|1.85|1.467|5
-newton3L|Newton Style 3|Berlina eléctrica|newton-style-3-lejos|sedan|4.72|1.85|1.467|0
-f500|Fiao Quinientitos|Urbano|sedan|compact|3.57|1.63|1.49|4
+tipoe|Antonias Tipo E|Berlina|tipoe|sedan|4.935|1.852|1.46|4
+tipoeL|Antonias Tipo E|Berlina|tipoe-lejos|sedan|4.935|1.852|1.46|0
+ltg|Antonias LTG Scupe|SUV coupé|scupe|suv|4.961|2.01|1.73|3
+ltgL|Antonias LTG Scupe|SUV coupé|scupe-lejos|suv|4.961|2.01|1.73|0
+fierilla|Fierilla 440|Superdeportivo|fierilla|sport|4.704|1.973|1.186|1
+fierillaL|Fierilla 440|Superdeportivo|fierilla-lejos|sport|4.704|1.973|1.186|0
+piki|Piki Crocante|Urbano|crocante|compact|3.595|1.595|1.485|7
+pikiL|Piki Crocante|Urbano|crocante-lejos|compact|3.595|1.595|1.485|0
+oalgo|Totuya O Algo|Crossover urbano|oalgo|compact|3.7|1.74|1.51|4
+oalgoL|Totuya O Algo|Crossover urbano|oalgo-lejos|compact|3.7|1.74|1.51|0
+gomera|Seta Gomera|Utilitario|gomera|compact|4.059|1.78|1.444|10
+gomeraL|Seta Gomera|Utilitario|gomera-lejos|compact|4.059|1.78|1.444|0
+teypan|Pancho Teypan|Berlina eléctrica|teypan|sedan|4.963|1.966|1.395|2
+teypanL|Pancho Teypan|Berlina eléctrica|teypan-lejos|sedan|4.963|1.966|1.395|0
+chayan|Pancho Chayan|SUV|chayan|suv|4.931|1.983|1.676|3
+chayanL|Pancho Chayan|SUV|chayan-lejos|suv|4.931|1.983|1.676|0
+olecorsa|Ole Corsario|Utilitario|corsario|compact|4.06|1.765|1.433|4
+olecorsaL|Ole Corsario|Utilitario|corsario-lejos|compact|4.06|1.765|1.433|0
+mocco|Ole Mocco|Crossover|mocco|suv|4.151|1.791|1.534|4
+moccoL|Ole Mocco|Crossover|mocco-lejos|suv|4.151|1.791|1.534|0
+tyaiza|Totuya Yaiza|Utilitario|yaiza|compact|3.94|1.745|1.5|10
+tyaizaL|Totuya Yaiza|Utilitario|yaiza-lejos|compact|3.94|1.745|1.5|0
+helado|Guanchazen Helado|Utilitario|helado|compact|4.053|1.751|1.448|12
+heladoL|Guanchazen Helado|Utilitario|helado-lejos|compact|4.053|1.751|1.448|0
+dsendero|Damian Sendero|Utilitario|sendero|compact|4.057|1.733|1.523|6
+dsenderoL|Damian Sendero|Utilitario|sendero-lejos|compact|4.057|1.733|1.523|0
+beluga|Troceen Beluga|Monovolumen|beluga|van|4.38|1.81|1.801|4
+belugaL|Troceen Beluga|Monovolumen|beluga-lejos|van|4.38|1.81|1.801|0
+vivita|Antonias Vivita|Furgoneta|vivita|van|5.14|1.928|1.89|3
+vivitaL|Antonias Vivita|Furgoneta|vivita-lejos|van|5.14|1.928|1.89|0
+newton3|Newton Style 3|Berlina eléctrica|style3|sedan|4.694|1.849|1.443|5
+newton3L|Newton Style 3|Berlina eléctrica|style3-lejos|sedan|4.694|1.849|1.443|0
+# v1.4.13: Raul Cactus (modelo de Fable) sustituye al Guagüen Te-Roque y sale igual que él
+cactus|Raul Cactus|Crossover|raul-cactus|suv|4.249|1.9|1.603|8
+cactusL|Raul Cactus|Crossover|raul-cactus-lejos|suv|4.249|1.9|1.603|0
+# v1.4.14 (Jonay, 16-nov: «debemos ir quitando los de kenney»): 13 coches propios más; cada uno sustituye a uno de Kenney y sale igual que él
+clip|Raul Clip|Utilitario|clip|compact|4.05|1.798|1.44|5
+clipL|Raul Clip|Utilitario|clip-lejos|compact|4.05|1.798|1.44|0
+nano|Niza Nano|Utilitario|nano|compact|3.78|1.665|1.515|4
+nanoL|Niza Nano|Utilitario|nano-lejos|compact|3.78|1.665|1.515|0
+pimbo|Raul Pimbo|Urbano|pimbo|compact|3.789|1.72|1.491|4
+pimboL|Raul Pimbo|Urbano|pimbo-lejos|compact|3.789|1.72|1.491|0
+torson|Junway Torson|SUV|torson|suv|4.5|1.865|1.65|8
+torsonL|Junway Torson|SUV|torson-lejos|suv|4.5|1.865|1.65|0
+queguay|Niza Queguay|Crossover|queguay|suv|4.425|1.835|1.625|8
+queguayL|Niza Queguay|Crossover|queguay-lejos|suv|4.425|1.835|1.625|0
+mphs|MP HS|SUV|mphs|suv|4.323|1.809|1.6|4
+mphsL|MP HS|SUV|mphs-lejos|suv|4.323|1.809|1.6|0
+vengator|Yoos Vengator|Crossover|vengator|suv|4.084|1.776|1.536|4
+vengatorL|Yoos Vengator|Crossover|vengator-lejos|suv|4.084|1.776|1.536|0
+ficus|Farm Ficus|Compacto|ficus|sedan|4.337|1.84|1.497|5
+ficusL|Farm Ficus|Compacto|ficus-lejos|sedan|4.337|1.84|1.497|0
+mepierdo|Raul Mepierdo|Compacto|mepierdo|sedan|4.209|1.777|1.5|5
+mepierdoL|Raul Mepierdo|Compacto|mepierdo-lejos|sedan|4.209|1.777|1.5|0
+padelgti|Guanchazen Padel GTI|Compacto deportivo|padelgti|sedan|4.213|1.786|1.469|3
+padelgtiL|Guanchazen Padel GTI|Compacto deportivo|padelgti-lejos|sedan|4.213|1.786|1.469|0
+pantera|Seta Pantera|Familiar|pantera|sedan|4.549|1.816|1.459|3
+panteraL|Seta Pantera|Familiar|pantera-lejos|sedan|4.549|1.816|1.459|0
+hubli|Martini Hubli|Berlina|hubli|sedan|4.971|1.945|1.461|2
+hubliL|Martini Hubli|Berlina|hubli-lejos|sedan|4.971|1.945|1.461|0
+reventon|Linguini Reventon|Superdeportivo|reventon|sport|4.78|2.03|1.136|1
+reventonL|Linguini Reventon|Superdeportivo|reventon-lejos|sport|4.78|2.03|1.136|0
+f500|Fiao Quinientitos|Urbano|sedan|compact|3.57|1.63|1.49|0
 # compactos / berlinas
 leon|Butaca Leona|Compacto|hatchback-sports|sedan|4.28|1.8|1.46|0
 corolla|Tagoror Corona|Berlina|hatchback-sports|sedan|4.37|1.79|1.44|0
 golf|Guagüen Golfo|Compacto|hatchback-sports|sedan|4.28|1.79|1.46|0
 # crossovers / SUV
-troc|Guagüen Te-Roque|Crossover|suv-luxury|suv|4.23|1.82|1.57|8
+troc|Guagüen Te-Roque|Crossover|suv-luxury|suv|4.23|1.82|1.57|0
 tcross|Guagüen Te-Cruz|Crossover|suv-luxury|suv|4.11|1.78|1.58|0
 tiguan|Guagüen Tiguanche|SUV|suv-luxury|suv|4.49|1.84|1.67|0
-tucson|Jandía Tacoronte|SUV|suv-luxury|suv|4.5|1.87|1.65|8
-kona|Jandía Kuna|Crossover|suv-luxury|suv|4.2|1.8|1.55|4
-sportage|Quillo Deportaje|SUV|suv-luxury|suv|4.51|1.86|1.65|8
+tucson|Jandía Tacoronte|SUV|suv-luxury|suv|4.5|1.87|1.65|0
+kona|Jandía Kuna|Crossover|suv-luxury|suv|4.2|1.8|1.55|0
+sportage|Quillo Deportaje|SUV|suv-luxury|suv|4.51|1.86|1.65|0
 stonic|Quillo Estónica|Crossover|suv-luxury|suv|4.14|1.76|1.52|0
 xceed|Quillo Exceso|Crossover|suv-luxury|suv|4.4|1.83|1.49|0
-arona|Butaca Adeje|Crossover|suv-luxury|suv|4.14|1.78|1.54|5
+arona|Butaca Adeje|Crossover|suv-luxury|suv|4.14|1.78|1.54|0
 ateca|Butaca Atajo|SUV|suv-luxury|suv|4.38|1.84|1.61|0
-chr|Tagoror Ce-Jota|Crossover|suv-luxury|suv|4.36|1.8|1.56|5
+chr|Tagoror Ce-Jota|Crossover|suv-luxury|suv|4.36|1.8|1.56|0
 yariscross|Tagoror Lairis Cruz|Crossover|suv-luxury|suv|4.18|1.77|1.59|0
 qashqai|Nisperero Cascai|Crossover|suv-luxury|suv|4.39|1.81|1.59|0
-juke|Nisperero Yuke|Crossover|suv-luxury|suv|4.21|1.8|1.59|3
-captur|Reinona Captura|Crossover|suv-luxury|suv|4.23|1.8|1.58|3
+juke|Nisperero Yuke|Crossover|suv-luxury|suv|4.21|1.8|1.59|0
+captur|Reinona Captura|Crossover|suv-luxury|suv|4.23|1.8|1.58|0
 p2008|Pijó 8002|Crossover|suv-luxury|suv|4.3|1.77|1.55|0
-zs|MaGofio ZZ|SUV|suv-luxury|suv|4.32|1.81|1.62|4
+zs|MaGofio ZZ|SUV|suv-luxury|suv|4.32|1.81|1.62|0
 # todoterrenos
 duster|Datilera Polvero|Todoterreno|suv|suv|4.34|1.8|1.69|0
 landcruiser|Tagoror Tierra Crucero|Todoterreno|suv|suv|4.7|1.88|1.85|0
-jimny|Susurro Yimi|Todoterreno|suv|suv|3.48|1.65|1.72|2
+jimny|Susurro Yimi|Todoterreno|suv|suv|3.48|1.65|1.72|0
 # furgonetas
 kangoo|Reinona Canguro|Furgoneta|van|van|4.28|1.83|1.84|4
 berlingo|Limonero Berlinga|Furgoneta|van|van|4.4|1.85|1.84|0
@@ -118,8 +148,8 @@ tractor|Tractor Garañón|Agrícola|tractor|truck|3.8|1.9|2.6|0
 # servicio público y especiales (no salen en el sorteo general)
 taxi|Taxi Lagunero|Taxi|taxi|taxi|4.55|1.76|1.49|0
 policia|Policía Local|Patrulla|police|police|4.6|1.85|1.5|0
-guancheGT|JTM H4|Deportivo|jtm-h4|sport|4.644|1.89|1.402|0
-guancheGTL|JTM H4|Deportivo|jtm-h4-lejos|sport|4.644|1.89|1.402|0
+guancheGT|JTM H4|Deportivo|h4|sport|4.783|1.852|1.442|0
+guancheGTL|JTM H4|Deportivo|h4-lejos|sport|4.783|1.852|1.442|0
 # motos y ciclomotores (Canarias: el scooter manda)
 pcx|Olita PeCeEquis 125|Scooter|scooter|moto|1.93|0.74|1.1|8
 forza|Olita Forzuda 125|Maxiscooter|maxi|moto|2.14|0.76|1.35|4
@@ -147,32 +177,46 @@ VMODELS_RAW.forEach(
 // v1.4.3/v1.4.4: our own models (Blender): the light version for far parked cars, and where the tail lights are
 // (half width, height, already at the game's 0.95 scale)
 for (const [id, x, y] of [
-  ['troceen', 0.72, 1.0],
-  ['troceenC44', 0.7, 1.06],
-  ['carlota', 0.72, 0.92],
-  ['yaiza', 0.66, 1.05],
-  ['trex', 0.66, 1.05],
-  ['di55', 0.7, 1.09],
-  ['jtm3', 0.7, 0.96],
-  ['guancheGT', 0.78, 0.95],
-  ['reniego', 0.74, 1.09],
-  ['cartabon', 0.75, 1.13],
-  ['tipoe', 0.7, 0.97],
-  ['ltg', 0.75, 1.05],
-  ['fierilla', 0.7, 0.78],
-  ['piki', 0.7, 1.0],
-  ['oalgo', 0.65, 1.05],
-  ['gomera', 0.72, 1.0],
-  ['teypan', 0.8, 1.01],
-  ['chayan', 0.85, 1.04],
-  ['olecorsa', 0.72, 0.96],
-  ['mocco', 0.7, 0.99],
-  ['tyaiza', 0.66, 1.0],
-  ['helado', 0.7, 0.98],
-  ['dsendero', 0.72, 1.0],
-  ['beluga', 0.8, 1.12],
-  ['vivita', 0.85, 1.2],
-  ['newton3', 0.78, 0.95]
+  ['troceen', 0.62, 1.04],
+  ['troceenC44', 0.74, 0.98],
+  ['carlota', 0.74, 0.86],
+  ['yaiza', 0.73, 1.02],
+  ['trex', 0.74, 0.98],
+  ['di55', 0.77, 1.01],
+  ['jtm3', 0.76, 0.99],
+  ['guancheGT', 0.77, 0.91],
+  ['reniego', 0.75, 0.94],
+  ['cartabon', 0.65, 1.07],
+  ['tipoe', 0.77, 0.9],
+  ['ltg', 0.83, 1.11],
+  ['fierilla', 0.7, 0.82],
+  ['piki', 0.66, 0.95],
+  ['oalgo', 0.72, 0.68],
+  ['gomera', 0.74, 0.78],
+  ['teypan', 0.68, 0.87],
+  ['chayan', 0.82, 1.08],
+  ['olecorsa', 0.73, 0.75],
+  ['mocco', 0.74, 0.95],
+  ['tyaiza', 0.66, 0.91],
+  ['helado', 0.72, 0.9],
+  ['dsendero', 0.75, 0.77],
+  ['beluga', 0.75, 0.96],
+  ['vivita', 0.93, 1.05],
+  ['newton3', 0.68, 0.92],
+  ['cactus', 0.76, 1.04],
+  ['clip', 0.63, 0.94],
+  ['nano', 0.66, 0.88],
+  ['pimbo', 0.71, 0.94],
+  ['torson', 0.77, 1.05],
+  ['queguay', 0.65, 1.07],
+  ['mphs', 0.7, 1.0],
+  ['vengator', 0.73, 0.95],
+  ['ficus', 0.67, 0.99],
+  ['mepierdo', 0.73, 0.91],
+  ['padelgti', 0.61, 0.89],
+  ['pantera', 0.6, 0.91],
+  ['hubli', 0.71, 0.93],
+  ['reventon', 0.65, 0.74]
 ]) {
   VMODELS[id].lod = id + 'L';
   VMODELS[id].tail = VMODELS[id + 'L'].tail = [x * CAR_SCALE, y * CAR_SCALE];

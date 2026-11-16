@@ -17,7 +17,8 @@
 #   subir_git                  sube ya a GitHub (scripts\publicar.ps1; necesita «publicar <versión>» antes)
 #   descargar <clave>          baja una referencia de la lista cerrada DESCARGAS (p. ej. callejero) a docs/referencias/
 #   mover_old                  v1.0.1: mueve (nunca borra) lo que dice scripts\old_borrar.txt a E:\Claude\GTA La Laguna\OLD-Borrar\
-#   zip_testers                v1.0.1: comprime dist\JETA La Laguna (la versión en carpeta) en E:\Claude\GTA La Laguna\JETA La Laguna v<versión>.zip
+#   zip_testers                v1.4.13: la versión web para Cloudflare Pages (tools/web_testers.py): carpeta E:\Claude\GTA La Laguna\Cloudflare\
+#                              y «JETA La Laguna web v<versión>.zip» (antes: el zip de la versión en carpeta con Jugar.bat)
 #   catastro [--sin-bajar]     v1.0.4: tools/catastro.py (edificios INSPIRE del Catastro → data/catastro_bu.json)
 #   barreras                   v1.0.4: tools/barreras.py (muros y vallas de OSM → data/barreras.json)
 #   revisor [--solo-zonas|--todo|--lote N]   tests/agente_revisor.py (agente que conduce y anda por el mapa; solo si Jonay lo pide)
@@ -94,14 +95,8 @@ def orden(linea):
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req, timeout=120) as r, open(dst, 'wb') as f: f.write(r.read())
         return 0, f'{dst} ({os.path.getsize(dst) // 1024} KB)', int(time.time() - t0)
-    if o == 'zip_testers':  # v1.0.1 (Jonay): the folder version (dist/JETA La Laguna, made by build.py) zipped for the testers
-        import zipfile; t0 = time.time(); src = os.path.join(ROOT, 'dist', 'JETA La Laguna'); ver = open(os.path.join(ROOT, 'VERSION')).read().strip()
-        if not os.path.isdir(src): return 1, 'no existe ' + src + ' (haz «build» antes)', 0
-        dst = os.path.join(JUEGO, 'JETA La Laguna v' + ver + '.zip')
-        with zipfile.ZipFile(dst, 'w', zipfile.ZIP_DEFLATED) as z:
-            for base, _, fs in os.walk(src):
-                for f in fs: p = os.path.join(base, f); z.write(p, os.path.join('JETA La Laguna', os.path.relpath(p, src)))
-        return 0, f'{dst} ({os.path.getsize(dst) // 1048576} MB)', int(time.time() - t0)
+    if o == 'zip_testers':  # v1.4.13 (Jonay, 16-nov): the web version for Cloudflare Pages instead of the .bat zip
+        return run([PY, os.path.join('tools', 'web_testers.py')], 600)
     if o == 'mover_old':  # v1.0.1 (Jonay: «lo antiguo lo mueves a una carpeta OLD-Borrar»): moves (never deletes) what
         # scripts/old_borrar.txt lists, keeping its folders, into E:\Claude\GTA La Laguna\OLD-Borrar\. Lines: a path from
         # E:\Claude\GTA La Laguna (file or folder), or «antiguos <carpeta> <días>» for the files older than that in a folder

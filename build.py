@@ -124,8 +124,21 @@ def make_folder():
         t = open(os.path.join('lanzador', f), encoding='utf-8').read().replace('\r\n', '\n')
         open(os.path.join(J, f), 'w', encoding=enc, errors='replace', newline='\r\n').write(t.replace('__VERSION__', open('VERSION').read().strip()))
     return J
-try: print('carpeta', make_folder())
-except Exception as e: print('Aviso: no se pudo hacer la versión en carpeta:', e)
+# v1.4.13 (Jonay, 16-nov: «ahora harás la versión de Cloudflare para yo subirla, así es más fácil para mis testers»):
+# dist/web/ = the folder version without the launcher (.bat/.ps1), ready to upload to Cloudflare Pages: index.html at the
+# root. The game already skips the local server's heartbeat when it is not on port 8790. No source map (its paths point
+# to this PC's src/, useless on the web). The worker's «zip_testers» copies it out (tools/web_testers.py).
+def make_web(J):
+    G = os.path.join(J, 'juego'); W = os.path.join('dist', 'web')
+    shutil.rmtree(W, ignore_errors=True)
+    shutil.copytree(G, W, ignore=shutil.ignore_patterns('lanzador', '*.map'))
+    p = os.path.join(W, 'js', 'juego.js'); t = open(p, encoding='utf-8').read()
+    open(p, 'w', encoding='utf-8').write(t.replace('\n//# sourceMappingURL=juego.js.map\n', '\n'))
+    return W
+try:
+    J = make_folder(); print('carpeta', J)
+    print('web', make_web(J))
+except Exception as e: print('Aviso: no se pudo hacer la versión en carpeta o la web:', e)
 print('ok', len(js))
 # documentación técnica en una sola página (dist/Documentacion tecnica.html)
 try:

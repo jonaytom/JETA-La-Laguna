@@ -1,6 +1,7 @@
 # Instrucciones para Claude — JETA La Laguna
 
 - Háblame siempre en español.
+- **Al empezar, leer `TRASPASO.md`** (resumen de cómo se trabaja, trucos y estado; 12-nov-2026) y, para coches propios, `E:\Claude\GTA La Laguna\Blender\coche\RECETA_COCHES.md`.
 - No preguntes por permisos de acceso a la carpeta de Descargas ni por descargar cosas: en este proyecto tienes permiso siempre.
 - **Feedback de pruebas**: cuando Jonay comente fallos o mejoras sueltas, NO hacerlos directamente: anotarlos en
   `PENDIENTES.md` y revisarlos juntos después (así no se toca lo mismo dos veces). Solo se hace al momento lo que pida
@@ -63,8 +64,8 @@
 `scripts\TRABAJADOR.bat` (ventana abierta en el PC de Jonay) ejecuta los encargos que Claude deja en
 `E:\Claude\GTA La Laguna\repo\cola\<id>.txt` y escribe el resultado en `cola\hecho\<id>.md`. Solo órdenes de una lista
 cerrada (`tools/trabajador.py`): `build`, `pruebas [listas…]` (sin nada = `cambios version`), `prep`, `merge_zona <zona>`, `copiar_html`,
-`publicar <versión>` (escribe `PUBLICAR.txt`: siempre la última), `esperar <s>`, `zip_testers` (v1.0.1: el zip de la versión en
-carpeta para los testers), `catastro` y `barreras` (v1.0.4: bajan los edificios del Catastro y los muros y vallas de OSM a `data/`) y `mover_old` (v1.0.1: mueve a `OLD-Borrar\` lo de `scripts/old_borrar.txt`; nunca borra). Si no está abierto, pedirle a Jonay que
+`publicar <versión>` (escribe `PUBLICAR.txt`: siempre la última), `esperar <s>`, `zip_testers` (v1.4.13: la versión web para
+Cloudflare Pages en `E:\Claude\GTA La Laguna\Cloudflare\` y su zip; Jonay la sube a mano. Ya no se hace el zip con `Jugar.bat`), `catastro` y `barreras` (v1.0.4: bajan los edificios del Catastro y los muros y vallas de OSM a `data/`) y `mover_old` (v1.0.1: mueve a `OLD-Borrar\` lo de `scripts/old_borrar.txt`; nunca borra). Si no está abierto, pedirle a Jonay que
 lo abra (o que lance el `.bat` que toque).
 
 **Esperar al trabajador (Jonay, 26-oct: «metes un sleep de 5 min y tardo segundos»)**: nada de esperas largas a

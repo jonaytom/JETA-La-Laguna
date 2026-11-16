@@ -38,6 +38,12 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 - [ ] ⚡ **Troceen C33 con el paso de rueda nuevo** (11-nov): es el único coche propio que no se ha rehecho con el arreglo de los «dientes» del paso de rueda (su receta está en `troceen_c33.blend`, no en `otros.py`). Pasarlo al generador actual y volver a exportarlo.
 - [ ] ◐ **Revisar con Jonay los 7 coches de la v1.4.8** (Piki Crocante rehecho; Totuya O Algo, Seta Gomera, Pancho Teypan, Pancho Chayan, Ole Corsario, Ole Mocco): hechos con la silueta de las fotos (`auto/coches7.py`). Lo más flojo: el Chayan sale bajo y alargado; el morro del Corsario y del Gomera, largo; el negro de la zaga del O Algo y del techo del Mocco solo está en el techo.
 - [~] ● v1.4.3–1.4.4 (Troceen C33, C44; Totuya Carlota, Yaiza Cross; Guanchazen T-Rex, D.I 55; JTM Capítulo 3, H4; Yoos Reniego, Cartabon; v1.4.5 Antonias Tipo E, LTG Scupe; Fierilla 440; v1.4.7 Piki Crocante; v1.4.8 Totuya O Algo, Seta Gomera, Pancho Teypan, Pancho Chayan, Ole Corsario, Ole Mocco) **Ir sustituyendo los coches de Kenney por modelos propios** (Jonay, 11-nov: «iremos sustituyendo poco a poco a los actuales con los nuestros»; «ve eliminando un modelo de los actuales por cada modelo añadido»; «lo más importante es recrear la silueta y los frontales y sus ópticas delanteras»): generador en `E:\Claude\GTA La Laguna\Blender\coche\` (`generador.py` + `otros.py`/`c44.py` con los datos de cada coche + `morros.py` + `exportar.py`); fotos de referencia de Jonay en el chat. Falta: segunda pasada a traseras y pilotos; más modelos según mande Jonay.
+- [ ] ● **Quitar los últimos de Kenney: faltan 17 modelos propios** (Jonay, 16-nov: «dime cuántos modelos más necesitas para quitar todos los de kenney»): tras la v1.4.14 Kenney solo pone:
+  - 5 furgonetas: Reinona Canguro (Renault Kangoo), Pijó Compadre (Peugeot Partner), Guagüen Cadi (VW Caddy), Fiao Doblón (Fiat Doblò), Fardo Tránsito (Ford Transit);
+  - 2 pick-ups: Tagoror Jailux (Toyota Hilux), Nisperero Navajo (Nissan Navara);
+  - 5 camiones y furgones: Burrero Diario (Iveco Daily), Mojo Bichi Cantero (Mitsubishi Canter), Mercadillo Esprínter (Mercedes Sprinter), Grúas Ande Pepe (grúa), Recogida Municipal (camión de basura);
+  - 5 de servicio: Taxi Lagunero, Policía Local, Ambulancia, Bomberos, Tractor Garañón.
+  Las motos no son de Kenney. Al llegar cada uno: mismo id y peso que el de Kenney al que sustituye.
 
 ### Minijuegos: controles, pausa y sonido
 
@@ -965,6 +971,12 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   - Por comprobar: si el Artifact deja abrir conexiones WebRTC y al servidor de emparejamiento (si no, se juega con el HTML descargado); servidor TURN para las redes que no conectan directo.
 
 ## Hecho
+
+- [x] v1.4.14 **40 coches propios con la librería nueva y 13 de Kenney menos** (Jonay, 16-nov): los 27 ya integrados con su versión nueva y 13 nuevos que sustituyen a 12 de Kenney (+ el Reventon). Para quitar del todo Kenney faltan furgonetas, pick-ups, camiones y servicios (ver la entrada de PENDIENTES).
+
+- [x] v1.4.14 **Versión web para Cloudflare Pages** (Jonay, 16-nov): `build.py` hace `dist/web/`; `zip_testers` la deja en `E:\Claude\GTA La Laguna\Cloudflare\` y en zip (`tools/web_testers.py`). Ya no se hace el zip con `Jugar.bat`.
+
+- [x] v1.4.13 **Raul Cactus, el modelo de Fable, en el juego** (Jonay, 12-nov): 13.508 triángulos de cerca y 1.170 de lejos (`Blender\coche\cactus_modelo2.json`, comprimido en `kenney_cars.json`); sustituye al Guagüen Te-Roque (peso 8 → 0) y sale igual que él.
 
 - [x] v1.4.3 **Troceen C33, primer coche propio hecho en Blender** (Jonay, 11-nov): versión del juego de 11.900 triángulos y lejana de 1.200; sustituye al Limonero Ce-Tres.
 
