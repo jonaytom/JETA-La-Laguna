@@ -880,6 +880,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   añadirlo al trabajador.
 - [ ] ⚡ **Arranque 2 s más lento en la 1.3.2** (auditoría 1.3.2, APTO): 18,9 → 20,9 s. Sospechosos: la comprobación de sitio de cada árbol (`treeFit`, `treeKerb`, 05_scenery.js) y el mapa de hierba con las franjas junto a calles y edificios (05z_hierba.js). Medir y, si es eso, usar una rejilla para las calles.
 - [ ] ⚡ **Quedan algunas matas en la acera ancha de la Av. Leonardo Torriani** (foto de la 1.3.2, X 113, Y 450): la franja gris entre la acera y la fachada; mirar qué es en el OSM (área verde o explanada) y quitarla de la hierba.
+- [ ] ◐ **Auditoría 1.4.14 (APTO CON AVISOS): pintar un fotograma 14,2 → 19,1 ms y memoria JS 359 → 377 MB** (16-nov): tras pasar a 40 coches propios (unos 11.000-13.500 triángulos cada uno). Siguiente paso previsto: usar la versión lejana también en el tráfico, no solo en los aparcados.
 - [~] ● v1.0.0 **Pintar a 1080p y 60 fps en «alta» con la RX 6600** (Jonay, 3-nov: «el objetivo es jugar a 1080 a 60 fps
   en mi gráfica con los gráficos al máximo»; antes: «pintar ~30 ms desde la 0.89»). Sonda con la tarjeta de verdad:
   `tests/herramientas/sonda_pintado_gpu.py`, en 5 sitios. La tarjeta va sobrada: a 480×270 tarda lo mismo que a 1080p ×1,5;

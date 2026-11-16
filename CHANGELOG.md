@@ -3,6 +3,26 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.14 — 2026-11-16 — Alpha 1.4.14: 40 coches propios con la librería nueva y 13 de Kenney menos
+- Los **27 coches propios** que ya estaban se sustituyen por la versión nueva de la librería `fable_coches.py`
+  (`Blender\coche\para_programador\`), con sus medidas y pilotos traseros nuevos; mismos nombres, ids y pesos.
+- **13 coches propios nuevos**, cada uno en lugar de uno de Kenney (que queda con peso 0) y saliendo igual que él (Jonay:
+  «debemos ir quitando los de kenney que no tienen nada que ver con los nuevos»): Raul Clip (por el Jandía i-Veinte), Niza
+  Nano (Pijó 802), Raul Pimbo (Fiao Quinientitos), Junway Torson (Jandía Tacoronte), Niza Queguay (Quillo Deportaje), MP HS
+  (MaGofio ZZ), Yoos Vengator (Jandía Kuna), Farm Ficus (Tagoror Ce-Jota), Raul Mepierdo (Butaca Adeje), Guanchazen Padel GTI
+  (Nisperero Yuke), Seta Pantera (Reinona Captura), Martini Hubli (Susurro Yimi) y Linguini Reventon (nuevo, peso 1).
+- Se quitan de `kenney_cars.json` los 26 modelos propios antiguos (y sus versiones lejanas). Ya son 40 coches propios
+  (unos 10.800-13.500 triángulos de cerca y ~830 de lejos cada uno). Kenney ya solo pone furgonetas, pick-ups, camiones y
+  vehículos de servicio.
+- Testers: el paquete para ellos es ahora la **versión web para Cloudflare Pages** (`build.py` hace `dist/web/`;
+  `zip_testers` la deja en `E:\Claude\GTA La Laguna\Cloudflare\` y en zip), sin `Jugar.bat`.
+- Auditoría: APTO CON AVISOS (memoria JS 359 → 377 MB; pintar un fotograma 14,2 → 19,1 ms).
+
+## 1.4.13 — 2026-11-12 — Alpha 1.4.13: Raul Cactus (modelo de Fable)
+- Nuevo coche propio, el **Raul Cactus** (crossover de 4,25 m hecho con la técnica de Fable), 13.508 triángulos de cerca y
+  1.170 de lejos. Sustituye al **Guagüen Te-Roque** (queda con peso 0) y sale igual que él (peso 8). No llegó a publicarse
+  sola: va con la 1.4.14.
+
 ## 1.4.12 — 2026-11-11 — Alpha 1.4.12: seis coches propios rehechos con las fotos de frente
 - Rehechos con la receta (silueta medida de la foto lateral, saledizos delantero y trasero ajustados a las cotas reales,
   hombros de la cabina más estrechos según la foto frontal, parabrisas, faros y pasos de rueda): **Piki Crocante**,
