@@ -1139,7 +1139,7 @@ function buildParkedPart2() {
   });
   const glassC = new THREE.Color(0x26313a);
   const cc = new THREE.Color();
-  // simplified per-model template: body (paint flagged) + 4 low-poly wheels
+  // simplified per-model template: body (paint flagged) + 4 wheels (low-poly cylinders for Kenney's; our own models' own)
   const TPL = {};
   const lowWheel = (() => {
     const g = new THREE.CylinderGeometry(1, 1, 1, 10);
@@ -1171,6 +1171,15 @@ function buildParkedPart2() {
     const wr = (G.wheels[0] && G.wheels[0].y) || 0.33;
     const tire = new THREE.Color(0x1a1a1a);
     for (const w of G.wheels) {
+      if (model.tail) {
+        // v1.4.15 (Jonay, 16-nov: «los coches aparcados siempre llevan cilindros en lugar de las ruedas del modelo»): our own
+        // models (Blender) bring their own wheels (~580 triangles near, ~44 in the far version): use them as they are
+        const g = w.geo.toNonIndexed();
+        g.translate(w.x, w.y, w.z);
+        push(g, 0);
+        g.dispose();
+        continue;
+      }
       const g = lowWheel.clone();
       g.scale(0.2, wr, wr);
       g.translate(w.x + (w.left ? 0.12 : -0.12), w.y, w.z);

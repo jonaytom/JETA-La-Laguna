@@ -205,7 +205,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="tb" id="tbS">CORRER</div>
 <div class="tb" id="tbM">MAPA</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">Alpha 1.4.14</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">Alpha 1.4.15</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -29411,7 +29411,7 @@ function buildParkedPart2() {
   });
   const glassC = new THREE.Color(0x26313a);
   const cc = new THREE.Color();
-  // simplified per-model template: body (paint flagged) + 4 low-poly wheels
+  // simplified per-model template: body (paint flagged) + 4 wheels (low-poly cylinders for Kenney's; our own models' own)
   const TPL = {};
   const lowWheel = (() => {
     const g = new THREE.CylinderGeometry(1, 1, 1, 10);
@@ -29443,6 +29443,15 @@ function buildParkedPart2() {
     const wr = (G.wheels[0] && G.wheels[0].y) || 0.33;
     const tire = new THREE.Color(0x1a1a1a);
     for (const w of G.wheels) {
+      if (model.tail) {
+        // v1.4.15 (Jonay, 16-nov: «los coches aparcados siempre llevan cilindros en lugar de las ruedas del modelo»): our own
+        // models (Blender) bring their own wheels (~580 triangles near, ~44 in the far version): use them as they are
+        const g = w.geo.toNonIndexed();
+        g.translate(w.x, w.y, w.z);
+        push(g, 0);
+        g.dispose();
+        continue;
+      }
       const g = lowWheel.clone();
       g.scale(0.2, wr, wr);
       g.translate(w.x + (w.left ? 0.12 : -0.12), w.y, w.z);

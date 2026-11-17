@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.14</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.15</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,35 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.4.15 — 2026-11-16 — Alpha 1.4.15: los coches propios aparcados con sus ruedas</h2>
+<ul>
+<li>Los coches aparcados (que se dibujan juntos, por celdas) llevaban siempre un cilindro de 10 lados en lugar de cada
+  rueda. Ahora los coches propios usan las ruedas de su modelo (unos 580 triángulos de cerca y 44 en la versión lejana);
+  el cilindro queda solo para los de Kenney (Jonay, 16-nov). <code>template()</code> de <code>buildParkedPart2</code> (<code>07_vehicles.js</code>).</li>
+<li><code>foto_propios.py</code> saca también <code>propios_aparcado.jpg</code>: un coche propio aparcado de verdad, de cerca.</li>
+</ul>
+<h2>1.4.14 — 2026-11-16 — Alpha 1.4.14: 40 coches propios con la librería nueva y 13 de Kenney menos</h2>
+<ul>
+<li>Los <strong>27 coches propios</strong> que ya estaban se sustituyen por la versión nueva de la librería <code>fable_coches.py</code>
+  (<code>Blender\coche\para_programador\</code>), con sus medidas y pilotos traseros nuevos; mismos nombres, ids y pesos.</li>
+<li><strong>13 coches propios nuevos</strong>, cada uno en lugar de uno de Kenney (que queda con peso 0) y saliendo igual que él (Jonay:
+  «debemos ir quitando los de kenney que no tienen nada que ver con los nuevos»): Raul Clip (por el Jandía i-Veinte), Niza
+  Nano (Pijó 802), Raul Pimbo (Fiao Quinientitos), Junway Torson (Jandía Tacoronte), Niza Queguay (Quillo Deportaje), MP HS
+  (MaGofio ZZ), Yoos Vengator (Jandía Kuna), Farm Ficus (Tagoror Ce-Jota), Raul Mepierdo (Butaca Adeje), Guanchazen Padel GTI
+  (Nisperero Yuke), Seta Pantera (Reinona Captura), Martini Hubli (Susurro Yimi) y Linguini Reventon (nuevo, peso 1).</li>
+<li>Se quitan de <code>kenney_cars.json</code> los 26 modelos propios antiguos (y sus versiones lejanas). Ya son 40 coches propios
+  (unos 10.800-13.500 triángulos de cerca y ~830 de lejos cada uno). Kenney ya solo pone furgonetas, pick-ups, camiones y
+  vehículos de servicio.</li>
+<li>Testers: el paquete para ellos es ahora la <strong>versión web para Cloudflare Pages</strong> (<code>build.py</code> hace <code>dist/web/</code>;
+  <code>zip_testers</code> la deja en <code>E:\Claude\GTA La Laguna\Cloudflare\</code> y en zip), sin <code>Jugar.bat</code>.</li>
+<li>Auditoría: APTO CON AVISOS (memoria JS 359 → 377 MB; pintar un fotograma 14,2 → 19,1 ms).</li>
+</ul>
+<h2>1.4.13 — 2026-11-12 — Alpha 1.4.13: Raul Cactus (modelo de Fable)</h2>
+<ul>
+<li>Nuevo coche propio, el <strong>Raul Cactus</strong> (crossover de 4,25 m hecho con la técnica de Fable), 13.508 triángulos de cerca y
+  1.170 de lejos. Sustituye al <strong>Guagüen Te-Roque</strong> (queda con peso 0) y sale igual que él (peso 8). No llegó a publicarse
+  sola: va con la 1.4.14.</li>
+</ul>
 <h2>1.4.12 — 2026-11-11 — Alpha 1.4.12: seis coches propios rehechos con las fotos de frente</h2>
 <ul>
 <li>Rehechos con la receta (silueta medida de la foto lateral, saledizos delantero y trasero ajustados a las cotas reales,

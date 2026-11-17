@@ -3,6 +3,12 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.15 — 2026-11-16 — Alpha 1.4.15: los coches propios aparcados con sus ruedas
+- Los coches aparcados (que se dibujan juntos, por celdas) llevaban siempre un cilindro de 10 lados en lugar de cada
+  rueda. Ahora los coches propios usan las ruedas de su modelo (unos 580 triángulos de cerca y 44 en la versión lejana);
+  el cilindro queda solo para los de Kenney (Jonay, 16-nov). `template()` de `buildParkedPart2` (`07_vehicles.js`).
+- `foto_propios.py` saca también `propios_aparcado.jpg`: un coche propio aparcado de verdad, de cerca.
+
 ## 1.4.14 — 2026-11-16 — Alpha 1.4.14: 40 coches propios con la librería nueva y 13 de Kenney menos
 - Los **27 coches propios** que ya estaban se sustituyen por la versión nueva de la librería `fable_coches.py`
   (`Blender\coche\para_programador\`), con sus medidas y pilotos traseros nuevos; mismos nombres, ids y pesos.
