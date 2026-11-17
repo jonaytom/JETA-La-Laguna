@@ -3,6 +3,12 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.18 — 2026-11-17 — Alpha 1.4.18: la huida de la farmacia va hacia el Ayuntamiento
+- **Atraco en la farmacia** (Jonay: «cambia también la de la farmacia, de modo que termine más cerca del ayuntamiento, que
+  sería la siguiente»): el coche negro ya no huye hacia Las Gavias ni el ladrón corre por el camino de tierra hasta el
+  Camino Tornero. El coche va hacia el Ayuntamiento (donde empieza «Defensores de La Laguna»), y al bajarse el ladrón huye a
+  pie por las calles de por allí. El camino de tierra queda solo por si no sale ninguna ruta hacia el Ayuntamiento.
+
 ## 1.4.17 — 2026-11-17 — Alpha 1.4.17: las misiones te llevan hacia la siguiente y 5 coches propios más
 - **Fuera los encuentros en la acera de la 1.4.16** (Jonay: «no me gusta eso de quedar en una acera... el comienzo y final de
   la misión en una zona fijada, pero que vaya en un sentido que nos acerque a la siguiente... la idea es ir recorriendo la

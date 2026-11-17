@@ -971,6 +971,8 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Hecho
 
+- [x] v1.4.18 **La huida de la farmacia va hacia el Ayuntamiento** (Jonay, 17-nov): coche hacia la siguiente misión y huida a pie por la calle; el camino del Camino Tornero solo de reserva.
+
 - [x] v1.4.17 **Las misiones te llevan hacia la siguiente** (Jonay, 17-nov: «el comienzo y final de la misión en una zona fijada, pero que vaya en un sentido que nos acerque a la siguiente... ir recorriendo la ciudad»): los recorridos de las misiones acaban en la siguiente de la misma línea, o lo más cerca posible (`routeToward`); se quitan los encuentros en la acera de la 1.4.16. Torneo y Copa con canchas en cadena (`chainCourts`).
 
 - [x] v1.4.17 **5 coches propios más** (Raul Koala, Piyo Compi, Guanchazen Cassi, Farm Traficc, Seta 128): 4 sustituyen furgonetas de Kenney.

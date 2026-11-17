@@ -541,22 +541,22 @@ const M_FARMACIA = {
         S.car.mode = 'physics';
         S.car.driver = null;
         S.car.ctl.brk = 1;
-        const [a, bb] = [S.car.x + 2, S.car.z];
+        const [a, bb] = S.toTown ? safeSpot(S.car.x + 2, S.car.z) : [S.car.x + 2, S.car.z]; // v1.4.18: in town, off the road
         S.t2.x = a;
         S.t2.z = bb;
         S.t2.H.root.visible = true;
         S.t2.H.root.position.set(a, heightAt(a, bb) + 0.17, bb);
-        S.P2 = s2Path([a, bb, ...FARM_ESCAPE]);
+        S.P2 = S.toTown ? s2RunPath(S.t2, 150, 260) : s2Path([a, bb, ...FARM_ESCAPE]); // v1.4.18: on foot through the streets
         S.hits = 0;
         S.trk = 0;
         S.tg = s2Target(S.t2, () => this.hit());
         s2Mark(S.t2, 8);
         K.setObjective(
-          '¡Se baja y huye por el camino! Dale ' +
+          (S.toTown ? '¡Se baja y huye a pie! Dale ' : '¡Se baja y huye por el camino! Dale ') +
             b2('dos tiros') +
             ' con la pistola de bolas (' +
             (document.body.classList.contains('touchmode') ? 'APUNTAR y DISPARAR' : 'clic derecho y clic izquierdo') +
-            ') antes de que llegue al Camino Tornero'
+            (S.toTown ? ') antes de que se te escape' : ') antes de que llegue al Camino Tornero')
         );
         HUD.toast('¡Se ha bajado del coche!', '#f5b72e', 2.5);
       }
@@ -569,7 +569,7 @@ const M_FARMACIA = {
         S.trk = 0.8;
         K.track(S.t2.x, S.t2.z, 3);
       }
-      if (end) s2Fail('El ladrón se ha escapado por el Camino Tornero');
+      if (end) s2Fail(S.toTown ? 'El ladrón se te ha escapado' : 'El ladrón se ha escapado por el Camino Tornero');
     }
     if (S.step === 6 && s2Near(S.t2.x, S.t2.z, 2.2) && !PLAYER.car) this.caught();
   },
@@ -627,7 +627,13 @@ const M_FARMACIA = {
     if (S.step !== 3) return;
     S.t2.H.root.visible = false;
     AUDIO.horn && AUDIO.horn();
-    S.P = s2Path(s2Route2(S.car.x, S.car.z, FARM_ESCAPE[0], FARM_ESCAPE[1]));
+    // v1.4.18 (Jonay, 17-nov: «cambia también la de la farmacia, de modo que termine más cerca del ayuntamiento, que sería
+    // la siguiente»): the getaway car heads for the start of the next mission (the Ayuntamiento); the dirt path to the
+    // Camino Tornero only if no route there works
+    const T = K2().nextStart(),
+      R = T ? routeToward(S.car.x, S.car.z, T[0], T[1], 700, 1700, (q) => s2FarFromEdge(q)) : null;
+    S.toTown = !!R;
+    S.P = s2Path(R || s2Route2(S.car.x, S.car.z, FARM_ESCAPE[0], FARM_ESCAPE[1]));
     S.P.s = 0;
     S.car.mode = 'race';
     S.car.driver = 'race';
