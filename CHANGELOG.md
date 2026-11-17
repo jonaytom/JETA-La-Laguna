@@ -3,6 +3,23 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.17 — 2026-11-17 — Alpha 1.4.17: las misiones te llevan hacia la siguiente y 5 coches propios más
+- **Fuera los encuentros en la acera de la 1.4.16** (Jonay: «no me gusta eso de quedar en una acera... el comienzo y final de
+  la misión en una zona fijada, pero que vaya en un sentido que nos acerque a la siguiente... la idea es ir recorriendo la
+  ciudad con las misiones e irla viendo toda»). Las misiones vuelven a empezar siempre en su sitio.
+- **Recorridos hacia la siguiente misión**: los que se hacen durante una misión (persecuciones en coche y a pie, carreras,
+  rally, baches, huidas; `s2Route` y la carrera del Canarión) van hacia donde empieza la siguiente misión de la misma línea
+  (`routeToward`, `MISSIONS.kit.nextStart`): si está a su alcance acaban en ella; si está más lejos, tan cerca como dejen;
+  si está muy cerca (las revanchas del Canarión, la Secreta, el Obispo), dan una vuelta y terminan allí. Un fugitivo nunca
+  corre hacia ti por esto: si la siguiente queda a tu espalda, huye como antes. La huida fija de la farmacia (hasta el
+  Camino Tornero) no cambia.
+- Siguen de la 1.4.16: El Blanco accesible al empezar, ruta a los siguientes controles más visible, pilotos traseros
+  propios y canchas del Torneo y campos de la Copa en cadena.
+- **5 coches propios más** (librería `fable_coches.py`), cada uno en lugar de uno de Kenney y saliendo igual que él: Raul
+  Koala (por la Reinona Canguro), Piyo Compi (Pijó Compadre), Guanchazen Cassi (Guagüen Cadi), Farm Traficc (Fardo
+  Tránsito) y Seta 128 (clásico, nuevo, peso 1: ya no quedan turismos de Kenney a los que sustituir). Ya son 45 coches
+  propios. La foto de prueba (`foto_propios.py`) vuelve a incluirlos a todos (en la 1.4.15 se quedó con la lista antigua).
+
 ## 1.4.16 — 2026-11-17 — Alpha 1.4.16: misiones que quedan contigo cerca, El Blanco accesible y pilotos de verdad
 - **Misiones más próximas** (Jonay: «tras una carrera o persecución, la siguiente misión debería estar a no más de un km.
   Siempre en la línea que estemos tratando»): cada línea (historia, Canarión, Obispo, Torneo, Copa, Secreta, carreras)

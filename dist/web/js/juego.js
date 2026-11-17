@@ -27108,6 +27108,17 @@ hubli|Martini Hubli|Berlina|hubli|sedan|4.971|1.945|1.461|2
 hubliL|Martini Hubli|Berlina|hubli-lejos|sedan|4.971|1.945|1.461|0
 reventon|Linguini Reventon|Superdeportivo|reventon|sport|4.78|2.03|1.136|1
 reventonL|Linguini Reventon|Superdeportivo|reventon-lejos|sport|4.78|2.03|1.136|0
+# v1.4.16 (Jonay, 17-nov: «incorpora los 5 nuevos vehículos sustituyendo de kenney viejotes»): cada uno sale igual que el de Kenney al que sustituye; el Seta 128 no tiene uno parecido (ya no quedan turismos de Kenney): poco, como el Reventon
+koala|Raul Koala|Monovolumen|koala|van|4.486|1.919|1.838|4
+koalaL|Raul Koala|Monovolumen|koala-lejos|van|4.486|1.919|1.838|0
+compi|Piyo Compi|Monovolumen|compi|van|4.38|1.81|1.803|3
+compiL|Piyo Compi|Monovolumen|compi-lejos|van|4.38|1.81|1.803|0
+cassi|Guanchazen Cassi|Monovolumen|cassi|van|4.408|1.793|1.822|3
+cassiL|Guanchazen Cassi|Monovolumen|cassi-lejos|van|4.408|1.793|1.822|0
+traficc|Farm Traficc|Furgoneta|traficc|van|5.05|2.032|1.958|3
+traficcL|Farm Traficc|Furgoneta|traficc-lejos|van|5.05|2.032|1.958|0
+seta128|Seta 128|Urbano clásico|seta128|compact|3.595|1.527|1.37|1
+seta128L|Seta 128|Urbano clásico|seta128-lejos|compact|3.595|1.527|1.37|0
 f500|Fiao Quinientitos|Urbano|sedan|compact|3.57|1.63|1.49|0
 # compactos / berlinas
 leon|Butaca Leona|Compacto|hatchback-sports|sedan|4.28|1.8|1.46|0
@@ -27136,12 +27147,12 @@ duster|Datilera Polvero|Todoterreno|suv|suv|4.34|1.8|1.69|0
 landcruiser|Tagoror Tierra Crucero|Todoterreno|suv|suv|4.7|1.88|1.85|0
 jimny|Susurro Yimi|Todoterreno|suv|suv|3.48|1.65|1.72|0
 # furgonetas
-kangoo|Reinona Canguro|Furgoneta|van|van|4.28|1.83|1.84|4
+kangoo|Reinona Canguro|Furgoneta|van|van|4.28|1.83|1.84|0
 berlingo|Limonero Berlinga|Furgoneta|van|van|4.4|1.85|1.84|0
-partner|Pijó Compadre|Furgoneta|van|van|4.4|1.85|1.84|3
-caddy|Guagüen Cadi|Furgoneta|van|van|4.5|1.86|1.82|3
+partner|Pijó Compadre|Furgoneta|van|van|4.4|1.85|1.84|0
+caddy|Guagüen Cadi|Furgoneta|van|van|4.5|1.86|1.82|0
 doblo|Fiao Doblón|Furgoneta|van|van|4.39|1.83|1.85|2
-transit|Fardo Tránsito|Furgoneta|van|van|4.97|1.99|1.98|3
+transit|Fardo Tránsito|Furgoneta|van|van|4.97|1.99|1.98|0
 vito|Mercadillo Vitó|Furgoneta|van|van|5.14|1.93|1.91|0
 # pick-ups
 hilux|Tagoror Jailux|Pick-up|truck|suv|5.33|1.86|1.82|4
@@ -27226,7 +27237,12 @@ for (const [id, x, y] of [
   ['padelgti', 0.61, 0.89],
   ['pantera', 0.6, 0.91],
   ['hubli', 0.71, 0.93],
-  ['reventon', 0.65, 0.74]
+  ['reventon', 0.65, 0.74],
+  ['koala', 0.88, 1.02],
+  ['compi', 0.84, 0.93],
+  ['cassi', 0.8, 0.9],
+  ['traficc', 0.94, 0.9],
+  ['seta128', 0.62, 0.68]
 ]) {
   VMODELS[id].lod = id + 'L';
   VMODELS[id].tail = VMODELS[id + 'L'].tail = [x * CAR_SCALE, y * CAR_SCALE];
@@ -53061,24 +53077,75 @@ function reachNear(x, z, rs = [4, 5, 3.5, 6, 7, 8, 3], ring = 1.2) {
     }
   return null;
 }
-// a pavement spot next to the nearest street (not a motorway, tunnel or bridge), on the side of (x,z), reachable from the street
-function kerbSpot(x, z) {
-  const rd = ROADSEG.nearest(x, z, (r) => r[0] <= 12 && !(r[3] & 6));
-  if (!rd) return safeSpot(x, z);
-  const w = DATA.R[rd.ri][2],
-    L = Math.hypot(rd.dx, rd.dz) || 1,
-    nx = -rd.dz / L,
-    nz = rd.dx / L,
-    side = (x - rd.x) * nx + (z - rd.z) * nz >= 0 ? 1 : -1;
-  for (const sd of [side, -side])
-    for (const o of [w / 2 + 1.6, w / 2 + 1.0, w / 2 + 2.4]) {
-      const px = rd.x + nx * sd * o,
-        pz = rd.z + nz * sd * o;
-      if (inAnyBuilding(px, pz) || COL.nearSeg(px, pz, 0.9) || onCarriageway(px, pz, 0.3) || lowAt(px, pz, heightAt(px, pz))) continue;
-      if (!clearWalk(rd.x, rd.z, px, pz)) continue;
-      return [px, pz];
+// v1.4.16 (Jonay, 17-nov: «que vaya en un sentido que nos acerque a la siguiente... ir recorriendo la ciudad con las
+// misiones»): a road route from (x,z) of minL-maxL m ending as near (tx,tz) as it can: through a point on the way when
+// the target is in range (it ends at it), a loop through a point around when it is nearer than minL, and as far towards
+// it as allowed when it is too far. No U-turns at the joint. ok(r): extra condition (e.g. far from the edge of the map).
+function routeToward(x, z, tx, tz, minL, maxL, ok) {
+  const from = GRAPH.nearestNode(x, z);
+  // a few end nodes within ~40 m of the target (the nearest one may be the exit of a one-way street: nothing can end on it)
+  const tos = [GRAPH.nearestNode(tx, tz)];
+  for (const [ox, oz] of [
+    [40, 0],
+    [-40, 0],
+    [0, 40],
+    [0, -40]
+  ]) {
+    const n = GRAPH.nearestNode(tx + ox, tz + oz);
+    if (!tos.includes(n)) tos.push(n);
+  }
+  const len = (r) => {
+    let L = 0;
+    for (let i = 2; i < r.length; i += 2) L += Math.hypot(r[i] - r[i - 2], r[i + 1] - r[i - 1]);
+    return L;
+  };
+  let best = null;
+  const consider = (r) => {
+    if (!r || r.length < 4 || (ok && !ok(r))) return;
+    const L = len(r);
+    if (L < minL || L > maxL) return;
+    const e = Math.hypot(r[r.length - 2] - tx, r[r.length - 1] - tz);
+    if (!best || e < best.e) best = { r, e };
+  };
+  const join = (r1, r2) => {
+    if (!r1 || !r2 || r1.length < 4 || r2.length < 4) return null;
+    const n = r1.length,
+      ax = r1[n - 2] - r1[n - 4],
+      az = r1[n - 1] - r1[n - 3],
+      bx = r2[2] - r2[0],
+      bz = r2[3] - r2[1];
+    if ((ax * bx + az * bz) / (Math.hypot(ax, az) * Math.hypot(bx, bz) || 1) < -0.85) return null; // a U-turn
+    return [...r1, ...r2.slice(2)];
+  };
+  const D = Math.hypot(tx - x, tz - z);
+  for (let k = 0; k < 40 && !(best && best.e < 40); k++) {
+    const a = Math.random() * 6.283,
+      to = tos[k % tos.length];
+    if (D > maxL * 0.75) {
+      const f = (rnd(0.55, 0.95) * maxL) / D;
+      consider(GRAPH.route(from, GRAPH.nearestNode(x + (tx - x) * f, z + (tz - z) * f)));
+      continue;
     }
-  return safeSpot(rd.x + nx * side * (w / 2 + 1.6), rd.z + nz * side * (w / 2 + 1.6));
+    if (D >= minL * 0.7) {
+      const t = rnd(0.3, 0.7),
+        off = rnd(0, 0.45) * D;
+      const v = GRAPH.nearestNode(x + (tx - x) * t + Math.sin(a) * off, z + (tz - z) * t + Math.cos(a) * off);
+      consider(join(GRAPH.route(from, v), GRAPH.route(v, to)));
+    } else if (k % 2 === 0) {
+      // a loop out through a point around and back by another way
+      const rr = rnd(0.3, 0.45) * (minL + maxL) * 0.5,
+        v = GRAPH.nearestNode(x + Math.sin(a) * rr, z + Math.cos(a) * rr);
+      consider(join(GRAPH.route(from, v), GRAPH.route(v, to)));
+    } else {
+      // a loop through two points (a triangle: out and back by the same street would be a U-turn)
+      const rr = rnd(0.16, 0.28) * (minL + maxL) * 0.5,
+        a2 = a + rnd(0.9, 1.5) * (Math.random() < 0.5 ? 1 : -1);
+      const v1 = GRAPH.nearestNode(x + Math.sin(a) * rr, z + Math.cos(a) * rr),
+        v2 = GRAPH.nearestNode(x + Math.sin(a2) * rr, z + Math.cos(a2) * rr);
+      consider(join(join(GRAPH.route(from, v1), GRAPH.route(v1, v2)), GRAPH.route(v2, to)));
+    }
+  }
+  return best && best.r;
 }
 // ============ STORY: Ayoze «El Chopa» vuelve al barrio ============
 // Ayoze «El Chopa» (por su narizota): listo, pero acabó preso por robar. Sale de la cárcel y quiere redimirse en La Laguna.
@@ -53363,13 +53430,8 @@ const MISSIONS = (() => {
     return tr;
   }
   function pass(title, money, keepIdx) {
-    const k = activeTrack;
     const tr = finish();
     if (!keepIdx) tr.idx++;
-    if (k) {
-      ENDS[k] = [PLAYER.x, PLAYER.z]; // v1.4.16: where this line's last mission ended
-      planMeet(k);
-    }
     PLAYER.money += money;
     setTimeout(() => {
       try {
@@ -53422,7 +53484,7 @@ const MISSIONS = (() => {
         exitCar();
       } catch (e) {}
     }
-    const sp = startOf(k, m);
+    const sp = m.startPos();
     const r = COL.resolve(sp[0], sp[1], 0.4);
     PLAYER.x = r.x;
     PLAYER.z = r.z;
@@ -54124,7 +54186,18 @@ const MISSIONS = (() => {
     const sx = NPC.canarion.road[0],
       sz = NPC.canarion.road[1];
     const from = GRAPH.nearestNode(sx, sz);
-    let pts = null;
+    // v1.4.16: the course ends at the start of the line's next mission (the rematch: back here, a loop)
+    const T = nextStart();
+    let pts = T
+      ? routeToward(sx, sz, T[0], T[1], 1700, 2900, (r) => {
+          for (let i = 0; i < r.length; i += 4) if (worldEdgeDist(r[i], r[i + 1]) < 90) return false;
+          return true;
+        })
+      : null;
+    if (pts) {
+      data.L = 0;
+      for (let i = 2; i < pts.length; i += 2) data.L += Math.hypot(pts[i] - pts[i - 2], pts[i + 1] - pts[i - 1]);
+    }
     for (let k = 0; k < 40 && !pts; k++) {
       const a = Math.random() * Math.PI * 2,
         d = rnd(900, 1500);
@@ -54415,99 +54488,7 @@ const MISSIONS = (() => {
     const i = STORY.findIndex((m) => m.who === 'Don Yovoy Gofiérrez' || /farmacia/i.test(m.title));
     return TRACKS.story.done || (i >= 0 && TRACKS.story.idx >= i);
   };
-  // v1.4.16 (Jonay, 17-nov: «toca reasignar las misiones para que sean más próximas unas a otras y vayan terminando cerca
-  // de la siguiente... tras una carrera o persecución, la siguiente misión debería estar a no más de un km. Siempre en la
-  // línea que estemos tratando: la principal, la del obispo, etc.»): every line remembers where its last mission ended
-  // (ENDS); if its next one starts more than MEET_MAX m from there, whoever gives it comes to meet you on a pavement
-  // MEET_AT m away, on the way to their usual spot (MEET). Missions tied to a place keep it: fixedStart (the ceremony in
-  // the Ayuntamiento) and the Torneo / Copa matches (court).
-  const MEET_MAX = 1000,
-    MEET_AT = 400;
-  const ENDS = {},
-    MEET = {};
-  const NPC_KEYS = ['blanco', 'boca', 'coco', 'sastron', 'canarion', 'alcalde', 'secreta', 'obispo'];
-  function npcKeyOf(m) {
-    const w = m.who || '';
-    for (const k of NPC_KEYS) if (NPC[k] && NPC[k].name && NPC[k].name === w) return k;
-    if (/Blanco/.test(w)) return 'blanco';
-    if (/^Coco/.test(w)) return 'coco';
-    if (/Sastr[oó]n/.test(w)) return 'sastron';
-    if (/Boca Papa/.test(w)) return 'boca';
-    if (/Canari[oó]n/i.test(w)) return 'canarion';
-    if (/Gofi[eé]rrez/.test(w)) return 'alcalde';
-    if (/Tost[oó]n/.test(w)) return 'secreta';
-    if (/Obispo/i.test(w)) return 'obispo';
-    return null;
-  }
-  // the start of a mission as usual: if it is relative to its character and he is away (a previous meeting), as if he were home
-  function usualStart(m, n) {
-    const s = m.startPos();
-    if (n && n.away && n.home && Math.hypot(s[0] - n.x, s[1] - n.z) < 6) return [s[0] - n.x + n.home[0], s[1] - n.z + n.home[1]];
-    return s;
-  }
-  // where mission m would meet you if the last one ended at e (null: its usual start is near enough, or it is tied to a place)
-  function meetFor(m, e) {
-    if (m.fixedStart || m.court) return null;
-    const key = npcKeyOf(m),
-      n = key && NPC[key];
-    if (!n || !n.H) return null;
-    let s;
-    try {
-      s = usualStart(m, n);
-    } catch (er) {
-      return null;
-    }
-    const D = Math.hypot(s[0] - e[0], s[1] - e[1]);
-    if (D <= MEET_MAX) return null;
-    // the first of a few distances on the way whose pavement you can walk to (if you can walk to their usual spot at all):
-    // beside a fast road there is no pavement in the walking network
-    const onFoot = !!WALKG.route(e[0], e[1], s[0], s[1]);
-    let first = null;
-    for (const a of [MEET_AT, 600, 250, 800]) {
-      const f = a / D,
-        [x, z] = kerbSpot(e[0] + (s[0] - e[0]) * f, e[1] + (s[1] - e[1]) * f);
-      if (!first) first = { m, key, x, z };
-      if (!onFoot || WALKG.route(e[0], e[1], x, z)) return { m, key, x, z };
-    }
-    return first;
-  }
-  function planMeet(k) {
-    delete MEET[k];
-    const tr = TRACKS[k],
-      e = ENDS[k];
-    if (!tr || !e || tr.idx >= tr.list.length) return;
-    const mt = meetFor(tr.list[tr.idx], e);
-    if (mt) MEET[k] = mt;
-  }
-  const startOf = (k, m) => (MEET[k] && MEET[k].m === m ? [MEET[k].x, MEET[k].z] : m.startPos());
-  // characters where their next mission needs them: at the meeting spot (next to its ring) or back at their usual spot
-  function placeNPCs() {
-    if (active) return;
-    const want = {};
-    for (const k in MEET) {
-      const mt = MEET[k],
-        tr = TRACKS[k];
-      if (tr && tr.list[tr.idx] === mt.m && !want[mt.key]) want[mt.key] = mt;
-    }
-    for (const key of NPC_KEYS) {
-      const n = NPC[key];
-      if (!n || !n.H) continue;
-      const mt = want[key];
-      if (mt) {
-        if (!n.orig) n.orig = { x: n.x, z: n.z, y: n.H.root.position.y, r: n.H.root.rotation.y };
-        if (!n.away || Math.hypot(n.x - (mt.x - 1.3), n.z - (mt.z - 1.3)) > 3) moveNPC(n, mt.x - 1.3, mt.z - 1.3, [mt.x, mt.z]);
-        n.away = true;
-      } else if (n.away && n.orig) {
-        n.x = n.orig.x;
-        n.z = n.orig.z;
-        n.H.root.position.set(n.x, n.orig.y, n.z);
-        n.H.root.rotation.y = n.orig.r;
-        n.away = false;
-      }
-    }
-  }
   function placeStarts() {
-    placeNPCs();
     while (TRACKS.story.idx < STORY.length && STORY_SKIP.has(STORY[TRACKS.story.idx].title)) TRACKS.story.idx++;
     for (const k in TRACKS) {
       const tr = TRACKS[k];
@@ -54525,15 +54506,11 @@ const MISSIONS = (() => {
         const m = tr.list[tr.idx];
         if (m.requires && !m.requires()) continue;
       }
-      const sp = ringClear(...startOf(k, tr.list[tr.idx]), 1.4);
+      const sp = ringClear(...tr.list[tr.idx].startPos(), 1.4);
       tr.beacon = BEACON.make(sp[0], sp[1], 1.4, 3, tr.color);
       if (k === 'story' && !active) {
         const h = tr.list[tr.idx].hint;
-        if (MEET[k] && MEET[k].m === tr.list[tr.idx])
-          setObjective(
-            'Siguiente: ' + bold(tr.list[tr.idx].who || '') + ' ha quedado contigo más cerca, para que no cruces media Laguna: ve al círculo'
-          );
-        else if (h) setObjective('Siguiente: ' + h());
+        if (h) setObjective('Siguiente: ' + h());
         setWaypoint(sp[0], sp[1], true);
       }
     }
@@ -54600,7 +54577,26 @@ const MISSIONS = (() => {
     return { x: r.x, z: r.z, H: h, home: [r.x, r.z] };
   }
   // toolkit for the missions defined in other files (12f_story2.js): they are appended to STORY
+  // v1.4.16 (Jonay, 17-nov: «el comienzo y final de la misión en una zona fijada, pero que vaya en un sentido que nos
+  // acerque a la siguiente... la idea es ir recorriendo la ciudad con las misiones»): where the next mission of the same
+  // line starts (null if it is the last one). Routes made during a mission (chases, races, escapes: s2Route, the
+  // Canarión's race) end as near to it as they can.
+  function nextStart(k = activeTrack, idx) {
+    const tr = k && TRACKS[k];
+    if (!tr) return null;
+    for (let i = (idx ?? tr.idx) + 1; i < tr.list.length; i++) {
+      const m = tr.list[i];
+      if (k === 'story' && STORY_SKIP.has(m.title)) continue;
+      try {
+        return m.startPos();
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  }
   const KIT = {
+    nextStart,
     talk,
     chat,
     goto,
@@ -54634,41 +54630,6 @@ const MISSIONS = (() => {
   };
   return {
     kit: KIT,
-    // v1.4.16, for the tests: where every mission of every line would meet you if the previous one ended at e
-    meetCheck(e) {
-      const out = [];
-      for (const k in TRACKS)
-        for (const m of TRACKS[k].list) {
-          let s = null;
-          try {
-            s = m.startPos();
-          } catch (er) {}
-          const mt = meetFor(m, e);
-          out.push({
-            line: k,
-            title: m.title,
-            start: s && [Math.round(s[0]), Math.round(s[1])],
-            meet: mt && [Math.round(mt.x), Math.round(mt.z)],
-            fromEnd: mt ? Math.round(Math.hypot(mt.x - e[0], mt.z - e[1])) : s ? Math.round(Math.hypot(s[0] - e[0], s[1] - e[1])) : null,
-            inside: mt ? inAnyBuilding(mt.x, mt.z) : false,
-            road: mt ? onCarriageway(mt.x, mt.z, 0.2) : false,
-            walk: mt ? !!WALKG.route(e[0], e[1], mt.x, mt.z) : true,
-            walkStart: s ? !!WALKG.route(e[0], e[1], s[0], s[1]) : true,
-            fixed: !!(m.fixedStart || m.court)
-          });
-        }
-      return out;
-    },
-    blancoCheck() {
-      const b = NPC.blanco;
-      if (!b || !b.from) return null;
-      return {
-        from: b.from,
-        at: [b.x, b.z],
-        walk: clearWalk(b.from[0], b.from[1], b.x, b.z),
-        ring: clearWalk(b.from[0], b.from[1], b.x + 1.2, b.z + 1.2)
-      };
-    },
     addStory(list) {
       STORY.push(...list);
     },
@@ -55103,10 +55064,43 @@ const MISSIONS = (() => {
       placeStarts();
       return true;
     },
-    // v1.4.16: where a line's next mission circle is (its usual start or the meeting spot)
+    nextStart,
+    // v1.4.16, for the tests: from each mission's start, a 900-2200 m route towards the next one of its line: how far from it it ends
+    routeCheck() {
+      const out = [];
+      for (const k in TRACKS)
+        TRACKS[k].list.forEach((m, i) => {
+          let s = null;
+          try {
+            s = m.startPos();
+          } catch (e) {}
+          const T = nextStart(k, i);
+          if (!s || !T) return;
+          const r = routeToward(s[0], s[1], T[0], T[1], 900, 2200);
+          const D = Math.hypot(T[0] - s[0], T[1] - s[1]);
+          out.push({
+            line: k,
+            title: m.title,
+            D: Math.round(D),
+            end: r ? Math.round(Math.hypot(r[r.length - 2] - T[0], r[r.length - 1] - T[1])) : null
+          });
+        });
+      return out;
+    },
+    // v1.4.16: where a line's next mission circle is
     beaconPos(k = 'story') {
       const b = TRACKS[k] && TRACKS[k].beacon;
       return b ? [b.position.x, b.position.z] : null;
+    },
+    blancoCheck() {
+      const b = NPC.blanco;
+      if (!b || !b.from) return null;
+      return {
+        from: b.from,
+        at: [b.x, b.z],
+        walk: clearWalk(b.from[0], b.from[1], b.x, b.z),
+        ring: clearWalk(b.from[0], b.from[1], b.x + 1.2, b.z + 1.2)
+      };
     },
     _setIdx(i, track = 'story') {
       TRACKS[track].idx = i;
@@ -55128,8 +55122,7 @@ const MISSIONS = (() => {
         carreras: TRACKS.carreras.idx,
         log: LOG,
         gang: { ...GANG, members: GANG.members.slice() } /* v0.76: every flag of the gang (jugueterías, maleantes, secreta…) */,
-        active: active ? active.title : null,
-        ends: { ...ENDS } /* v1.4.16 */
+        active: active ? active.title : null
       };
     },
     setState(st) {
@@ -55158,9 +55151,6 @@ const MISSIONS = (() => {
       TRACKS.copa.idx = st.copa | 0;
       TRACKS.secreta.idx = st.secreta | 0;
       TRACKS.carreras.idx = st.carreras | 0;
-      for (const k in ENDS) delete ENDS[k];
-      Object.assign(ENDS, st.ends || {});
-      for (const k in TRACKS) planMeet(k); // v1.4.16
       for (const k in LOG) delete LOG[k];
       Object.assign(LOG, st.log || {});
       TRACKS.side.open = !!st.sideOpen;
@@ -56041,6 +56031,13 @@ function s2FarFromEdge(r, m = 90) {
   return true;
 }
 function s2Route(x, z, minL, maxL, away) {
+  // v1.4.16 (Jonay: «que vaya en un sentido que nos acerque a la siguiente»): towards the start of the line's next
+  // mission, unless that means running at the player (away = the direction they flee in)
+  const T = K2().nextStart();
+  if (T && (away == null || Math.abs(angDiff(away, Math.atan2(T[0] - x, T[1] - z))) < 1.6)) {
+    const r = routeToward(x, z, T[0], T[1], minL, maxL, (q) => s2FarFromEdge(q));
+    if (r) return r;
+  }
   const from = GRAPH.nearestNode(x, z);
   let best = null;
   for (let k = 0; k < 50; k++) {
@@ -56646,7 +56643,6 @@ function s2Route2(x0, z0, x1, z1) {
 const M_CEREMONIA = {
   title: 'Defensores de La Laguna',
   who: ALC,
-  fixedStart: true /* v1.4.16: the ceremony is in the Ayuntamiento */,
   hint() {
     return 'Ve al ' + b2('Ayuntamiento') + ' (Plaza del Adelantado): ' + ALC + ' os espera con toda la banda';
   },

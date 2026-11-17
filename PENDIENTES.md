@@ -38,8 +38,8 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 - [ ] ⚡ **Troceen C33 con el paso de rueda nuevo** (11-nov): es el único coche propio que no se ha rehecho con el arreglo de los «dientes» del paso de rueda (su receta está en `troceen_c33.blend`, no en `otros.py`). Pasarlo al generador actual y volver a exportarlo.
 - [ ] ◐ **Revisar con Jonay los 7 coches de la v1.4.8** (Piki Crocante rehecho; Totuya O Algo, Seta Gomera, Pancho Teypan, Pancho Chayan, Ole Corsario, Ole Mocco): hechos con la silueta de las fotos (`auto/coches7.py`). Lo más flojo: el Chayan sale bajo y alargado; el morro del Corsario y del Gomera, largo; el negro de la zaga del O Algo y del techo del Mocco solo está en el techo.
 - [~] ● v1.4.3–1.4.4 (Troceen C33, C44; Totuya Carlota, Yaiza Cross; Guanchazen T-Rex, D.I 55; JTM Capítulo 3, H4; Yoos Reniego, Cartabon; v1.4.5 Antonias Tipo E, LTG Scupe; Fierilla 440; v1.4.7 Piki Crocante; v1.4.8 Totuya O Algo, Seta Gomera, Pancho Teypan, Pancho Chayan, Ole Corsario, Ole Mocco) **Ir sustituyendo los coches de Kenney por modelos propios** (Jonay, 11-nov: «iremos sustituyendo poco a poco a los actuales con los nuestros»; «ve eliminando un modelo de los actuales por cada modelo añadido»; «lo más importante es recrear la silueta y los frontales y sus ópticas delanteras»): generador en `E:\Claude\GTA La Laguna\Blender\coche\` (`generador.py` + `otros.py`/`c44.py` con los datos de cada coche + `morros.py` + `exportar.py`); fotos de referencia de Jonay en el chat. Falta: segunda pasada a traseras y pilotos; más modelos según mande Jonay.
-- [ ] ● **Quitar los últimos de Kenney: faltan 17 modelos propios** (Jonay, 16-nov: «dime cuántos modelos más necesitas para quitar todos los de kenney»): tras la v1.4.14 Kenney solo pone:
-  - 5 furgonetas: Reinona Canguro (Renault Kangoo), Pijó Compadre (Peugeot Partner), Guagüen Cadi (VW Caddy), Fiao Doblón (Fiat Doblò), Fardo Tránsito (Ford Transit);
+- [ ] ● **Quitar los últimos de Kenney: faltan 13 modelos propios** (Jonay, 16-nov; actualizado en la v1.4.17): Kenney ya solo pone:
+  - 1 furgoneta: Fiao Doblón (Fiat Doblò);
   - 2 pick-ups: Tagoror Jailux (Toyota Hilux), Nisperero Navajo (Nissan Navara);
   - 5 camiones y furgones: Burrero Diario (Iveco Daily), Mojo Bichi Cantero (Mitsubishi Canter), Mercadillo Esprínter (Mercedes Sprinter), Grúas Ande Pepe (grúa), Recogida Municipal (camión de basura);
   - 5 de servicio: Taxi Lagunero, Policía Local, Ambulancia, Bomberos, Tractor Garañón.
@@ -971,7 +971,9 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Hecho
 
-- [x] v1.4.16 **Misiones que quedan contigo cerca** (Jonay, 17-nov: «tras una carrera o persecución, la siguiente misión debería estar a no más de un km. Siempre en la línea que estemos tratando»): si la siguiente de una línea empieza a más de 1 km de donde acabó la anterior, su personaje queda contigo a ~400 m (`MEET`/`ENDS` en `12_missions.js`); Torneo y Copa con canchas en cadena (`chainCourts`).
+- [x] v1.4.17 **Las misiones te llevan hacia la siguiente** (Jonay, 17-nov: «el comienzo y final de la misión en una zona fijada, pero que vaya en un sentido que nos acerque a la siguiente... ir recorriendo la ciudad»): los recorridos de las misiones acaban en la siguiente de la misma línea, o lo más cerca posible (`routeToward`); se quitan los encuentros en la acera de la 1.4.16. Torneo y Copa con canchas en cadena (`chainCourts`).
+
+- [x] v1.4.17 **5 coches propios más** (Raul Koala, Piyo Compi, Guanchazen Cassi, Farm Traficc, Seta 128): 4 sustituyen furgonetas de Kenney.
 
 - [x] v1.4.16 **El Blanco accesible al empezar** (Jonay, 16-nov; captura `docs/referencias/capturas/2026-11-16_inicio_circulo_blanco.png`): `reachNear` lo pone donde se llega andando en línea recta, con su círculo.
 

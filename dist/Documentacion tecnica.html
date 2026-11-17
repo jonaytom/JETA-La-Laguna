@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.16</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.17</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,24 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.4.17 — 2026-11-17 — Alpha 1.4.17: las misiones te llevan hacia la siguiente y 5 coches propios más</h2>
+<ul>
+<li><strong>Fuera los encuentros en la acera de la 1.4.16</strong> (Jonay: «no me gusta eso de quedar en una acera... el comienzo y final de
+  la misión en una zona fijada, pero que vaya en un sentido que nos acerque a la siguiente... la idea es ir recorriendo la
+  ciudad con las misiones e irla viendo toda»). Las misiones vuelven a empezar siempre en su sitio.</li>
+<li><strong>Recorridos hacia la siguiente misión</strong>: los que se hacen durante una misión (persecuciones en coche y a pie, carreras,
+  rally, baches, huidas; <code>s2Route</code> y la carrera del Canarión) van hacia donde empieza la siguiente misión de la misma línea
+  (<code>routeToward</code>, <code>MISSIONS.kit.nextStart</code>): si está a su alcance acaban en ella; si está más lejos, tan cerca como dejen;
+  si está muy cerca (las revanchas del Canarión, la Secreta, el Obispo), dan una vuelta y terminan allí. Un fugitivo nunca
+  corre hacia ti por esto: si la siguiente queda a tu espalda, huye como antes. La huida fija de la farmacia (hasta el
+  Camino Tornero) no cambia.</li>
+<li>Siguen de la 1.4.16: El Blanco accesible al empezar, ruta a los siguientes controles más visible, pilotos traseros
+  propios y canchas del Torneo y campos de la Copa en cadena.</li>
+<li><strong>5 coches propios más</strong> (librería <code>fable_coches.py</code>), cada uno en lugar de uno de Kenney y saliendo igual que él: Raul
+  Koala (por la Reinona Canguro), Piyo Compi (Pijó Compadre), Guanchazen Cassi (Guagüen Cadi), Farm Traficc (Fardo
+  Tránsito) y Seta 128 (clásico, nuevo, peso 1: ya no quedan turismos de Kenney a los que sustituir). Ya son 45 coches
+  propios. La foto de prueba (<code>foto_propios.py</code>) vuelve a incluirlos a todos (en la 1.4.15 se quedó con la lista antigua).</li>
+</ul>
 <h2>1.4.16 — 2026-11-17 — Alpha 1.4.16: misiones que quedan contigo cerca, El Blanco accesible y pilotos de verdad</h2>
 <ul>
 <li><strong>Misiones más próximas</strong> (Jonay: «tras una carrera o persecución, la siguiente misión debería estar a no más de un km.

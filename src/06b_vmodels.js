@@ -98,6 +98,17 @@ hubli|Martini Hubli|Berlina|hubli|sedan|4.971|1.945|1.461|2
 hubliL|Martini Hubli|Berlina|hubli-lejos|sedan|4.971|1.945|1.461|0
 reventon|Linguini Reventon|Superdeportivo|reventon|sport|4.78|2.03|1.136|1
 reventonL|Linguini Reventon|Superdeportivo|reventon-lejos|sport|4.78|2.03|1.136|0
+# v1.4.16 (Jonay, 17-nov: «incorpora los 5 nuevos vehículos sustituyendo de kenney viejotes»): cada uno sale igual que el de Kenney al que sustituye; el Seta 128 no tiene uno parecido (ya no quedan turismos de Kenney): poco, como el Reventon
+koala|Raul Koala|Monovolumen|koala|van|4.486|1.919|1.838|4
+koalaL|Raul Koala|Monovolumen|koala-lejos|van|4.486|1.919|1.838|0
+compi|Piyo Compi|Monovolumen|compi|van|4.38|1.81|1.803|3
+compiL|Piyo Compi|Monovolumen|compi-lejos|van|4.38|1.81|1.803|0
+cassi|Guanchazen Cassi|Monovolumen|cassi|van|4.408|1.793|1.822|3
+cassiL|Guanchazen Cassi|Monovolumen|cassi-lejos|van|4.408|1.793|1.822|0
+traficc|Farm Traficc|Furgoneta|traficc|van|5.05|2.032|1.958|3
+traficcL|Farm Traficc|Furgoneta|traficc-lejos|van|5.05|2.032|1.958|0
+seta128|Seta 128|Urbano clásico|seta128|compact|3.595|1.527|1.37|1
+seta128L|Seta 128|Urbano clásico|seta128-lejos|compact|3.595|1.527|1.37|0
 f500|Fiao Quinientitos|Urbano|sedan|compact|3.57|1.63|1.49|0
 # compactos / berlinas
 leon|Butaca Leona|Compacto|hatchback-sports|sedan|4.28|1.8|1.46|0
@@ -126,12 +137,12 @@ duster|Datilera Polvero|Todoterreno|suv|suv|4.34|1.8|1.69|0
 landcruiser|Tagoror Tierra Crucero|Todoterreno|suv|suv|4.7|1.88|1.85|0
 jimny|Susurro Yimi|Todoterreno|suv|suv|3.48|1.65|1.72|0
 # furgonetas
-kangoo|Reinona Canguro|Furgoneta|van|van|4.28|1.83|1.84|4
+kangoo|Reinona Canguro|Furgoneta|van|van|4.28|1.83|1.84|0
 berlingo|Limonero Berlinga|Furgoneta|van|van|4.4|1.85|1.84|0
-partner|Pijó Compadre|Furgoneta|van|van|4.4|1.85|1.84|3
-caddy|Guagüen Cadi|Furgoneta|van|van|4.5|1.86|1.82|3
+partner|Pijó Compadre|Furgoneta|van|van|4.4|1.85|1.84|0
+caddy|Guagüen Cadi|Furgoneta|van|van|4.5|1.86|1.82|0
 doblo|Fiao Doblón|Furgoneta|van|van|4.39|1.83|1.85|2
-transit|Fardo Tránsito|Furgoneta|van|van|4.97|1.99|1.98|3
+transit|Fardo Tránsito|Furgoneta|van|van|4.97|1.99|1.98|0
 vito|Mercadillo Vitó|Furgoneta|van|van|5.14|1.93|1.91|0
 # pick-ups
 hilux|Tagoror Jailux|Pick-up|truck|suv|5.33|1.86|1.82|4
@@ -216,7 +227,12 @@ for (const [id, x, y] of [
   ['padelgti', 0.61, 0.89],
   ['pantera', 0.6, 0.91],
   ['hubli', 0.71, 0.93],
-  ['reventon', 0.65, 0.74]
+  ['reventon', 0.65, 0.74],
+  ['koala', 0.88, 1.02],
+  ['compi', 0.84, 0.93],
+  ['cassi', 0.8, 0.9],
+  ['traficc', 0.94, 0.9],
+  ['seta128', 0.62, 0.68]
 ]) {
   VMODELS[id].lod = id + 'L';
   VMODELS[id].tail = VMODELS[id + 'L'].tail = [x * CAR_SCALE, y * CAR_SCALE];

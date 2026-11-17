@@ -79,6 +79,13 @@ function s2FarFromEdge(r, m = 90) {
   return true;
 }
 function s2Route(x, z, minL, maxL, away) {
+  // v1.4.16 (Jonay: «que vaya en un sentido que nos acerque a la siguiente»): towards the start of the line's next
+  // mission, unless that means running at the player (away = the direction they flee in)
+  const T = K2().nextStart();
+  if (T && (away == null || Math.abs(angDiff(away, Math.atan2(T[0] - x, T[1] - z))) < 1.6)) {
+    const r = routeToward(x, z, T[0], T[1], minL, maxL, (q) => s2FarFromEdge(q));
+    if (r) return r;
+  }
   const from = GRAPH.nearestNode(x, z);
   let best = null;
   for (let k = 0; k < 50; k++) {
@@ -684,7 +691,6 @@ function s2Route2(x0, z0, x1, z1) {
 const M_CEREMONIA = {
   title: 'Defensores de La Laguna',
   who: ALC,
-  fixedStart: true /* v1.4.16: the ceremony is in the Ayuntamiento */,
   hint() {
     return 'Ve al ' + b2('Ayuntamiento') + ' (Plaza del Adelantado): ' + ALC + ' os espera con toda la banda';
   },
