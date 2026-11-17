@@ -200,7 +200,7 @@ function copaInitPart1() {
   const ob = obispoCampo();
   const pub = COURTS.filter((c) => c.sport === 'fut' && !c.final && c !== ob && c.kind !== 'fs').sort((a, b) => a.dist - b.dist);
   // v1.4.16: a chain of pitches, each the nearest to the previous (chainCourts, 12i_canchas.js)
-  const chosen = chainCourts(pub, [450, 300, 150, 0]);
+  const chosen = chainCourts(pub, [300, 150, 0], 4, fin ? [fin.x, fin.z] : null); // v1.4.23: towards the final
   return { fin, chosen };
 }
 // the Obispo's pitch: the nearest real football field (11 or 7) you can walk onto, else any

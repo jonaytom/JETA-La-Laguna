@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.22</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.23</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,17 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.4.23 — 2026-11-17 — Alpha 1.4.23: el Torneo y la Copa recorren la ciudad hacia su final</h2>
+<ul>
+<li><strong>Revisión de por dónde llevan las misiones</strong> (Jonay, 17-nov): mapa de dónde empieza cada misión de cada línea
+  (<code>tests/herramientas/mapa_misiones.py</code>, que guarda <code>shots/misiones_mapa.json</code>). La historia va y viene por el casco
+  (casa de El Blanco, Ayuntamiento, La Concepción, Juan de Vera; ningún salto de más de 1 km) y sus huidas y
+  persecuciones ya acaban hacia la siguiente; el Obispo, la Secreta y las carreras salen siempre de su sitio.</li>
+<li><strong>Torneo Lagunero y Copa Laguna</strong>: los partidos se eligen como un recorrido hacia el campo de la final (el Pabellón
+  Juan Ríos Tejera y el Estadio Francisco Peraza), con saltos cortos entre uno y otro. Antes se encadenaban sin mirar
+  dónde estaba la final: la Copa saltaba 1,5 km y luego 3 km hasta el Peraza; ahora, saltos de 430–520 m y 1,45 km
+  hasta el Peraza, que no tiene campos cerca. El Torneo, saltos de 370–460 m (antes hasta 1,2 km).</li>
+</ul>
 <h2>1.4.22 — 2026-11-17 — Alpha 1.4.22: rivales que conducen como coches, campos vallados, móvil completo, euros y noche más clara</h2>
 <ul>
 <li><strong>Conducción de rivales y enemigos</strong> (Jonay: «corren bien en recta pero frenan muy rápido y trazan las curvas girando

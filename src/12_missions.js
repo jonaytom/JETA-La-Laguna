@@ -2272,6 +2272,19 @@ const MISSIONS = (() => {
         });
       return out;
     },
+    // v1.4.23: where every mission of every line starts (for the map of the missions, tests/herramientas/mapa_misiones.py)
+    startsMap() {
+      const out = {};
+      for (const k in TRACKS)
+        out[k] = TRACKS[k].list.map((m) => {
+          let s = null;
+          try {
+            s = m.startPos();
+          } catch (e) {}
+          return { title: m.title, who: m.who || '', s: s ? [Math.round(s[0]), Math.round(s[1])] : null };
+        });
+      return out;
+    },
     // v1.4.16: where a line's next mission circle is
     beaconPos(k = 'story') {
       const b = TRACKS[k] && TRACKS[k].beacon;

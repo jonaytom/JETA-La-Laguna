@@ -353,11 +353,7 @@ Los diseña otro chat (Jonay, 17-nov: «eso ya lo hace otro chat»); aquí solo 
       Pack de **misiones secundarias** que se desbloquea a la vez que las del alcalde; no hacen falta para acabar el juego
       («solo si eres religioso»), pero dan dinero: mejoras en las iglesias que ya hay (Catedral, La Concepción, Santo
       Domingo, El Cristo…), p. ej. apagar un incendio con la escopeta de agua.
-- [ ] ● **Reubicar las misiones por zonas, con sentido de avance** (Jonay, 2-nov: «hay que reordenar las misiones y acotarlas por zonas, de manera que te vayan llevando por el mapa y avances sin tener que ir de punta a punta… más que reordenar, reubicar para que tenga un sentido de avance»).
-  - Hacer primero el mapa de dónde ocurre hoy cada misión (inicio, objetivos, entrega) y proponer a Jonay un recorrido por zonas: casco → Trinidad / Padre Anchieta → San Benito / La Verdellada → Ofra / Autopista → aeropuerto / Geneto…, cada tramo de la historia en un barrio y el siguiente al lado. `src/12_missions.js`, `src/12f_story2.js`, `src/12g_obispo.js`, `src/12k_agua.js`.
-  - Jonay (3-nov): «importantísimo, una vez corregidos los edificios, glitches gráficos y demás»; que vayas conociendo la
-    ciudad poco a poco sin ir de esquina a esquina nada más empezar. Ejemplo con captura del mapa: la de los **bancos de
-    Gofiérrez** te manda desde Las Gavias (X −1235, Y −227) hasta la Casa de la Alhóndiga (X 106, Y 32), media ciudad.
+- [ ] ◐ **Misiones por zonas: decidir con Jonay si la historia sale del casco** (revisión de la v1.4.23, mapa en `shots/misiones_mapa.json`): hoy todas las misiones de la historia empiezan en el casco (casa de El Blanco, Ayuntamiento, La Concepción, Juan de Vera) y es en sus huidas y persecuciones donde se recorre la ciudad (desde la v1.4.17 acaban hacia la siguiente). Si se quiere que la historia avance de barrio en barrio, habría que mover a quien da cada misión (el alcalde, la banda) a otros sitios a partir de cierto punto. La Secreta sale siempre de Tostón, en la Av. de los Menceyes, a ~2 km del casco.
 
 ### Tiendas y edificios del casco
 
@@ -809,6 +805,7 @@ Los diseña otro chat (Jonay, 17-nov: «eso ya lo hace otro chat»); aquí solo 
         X 243 Z −352, X −291 Z 2699), un servicio del aeropuerto en una ladera de pendiente imposible (X −3247 Z −359).
 
 ### Rendimiento, auditorías y código
+- [ ] ⚡ **Auditoría 1.4.22 (APTO CON AVISOS)**: geometrías nuevas por cada tramo de valla de campos y canchas (`buildSportsEachPart3`, se hace una vez al cargar: compartir una caja de 1 m escalada) y por el banco de Boca Papa (`k3Bench`); `12f_story2.js` baja de A a B (la conducción nueva: partir `drivePlan`). Métricas sin cambios (pintar 17 ms, 333 llamadas).
 - [ ] ◐ **Coches propios y rendimiento** (11-nov; auditoría 1.4.4: APTO CON AVISOS, pintado 18,5 ms (el 22,6 de la 1.4.3 era ruido), memoria JS 285,7 → 309,1 MB (+8 %), el juego pesa 13,5 → 15,4 MB por los modelos en `data/kenney_cars.json`): cada modelo propio son ~11.000–12.800 triángulos (los de Kenney, ~1.000–2.000). Si sigue subiendo: versión lejana también para el tráfico, y guardar los modelos más comprimidos (los vértices van sin compartir entre caras de distinto material). Ojo: al poner a 0 los sedanes de Kenney, Carlota, Capítulo 3 y Tipo E salen ~400 aparcados cada uno (`modelForType('sedan')`).
 - [ ] ◐ **Pintado 15,3 → 18,1 ms entre la 1.4.0 y la 1.4.2** (auditorías 11-nov; programas 67 → 73): mirar si es el grano de enlucido/piedra (`plasterWorld`/`stoneWorld`, 02_textures.js) o ruido de la medida (en la 1.3.5–1.3.7 subió y volvió a bajar solo). Aviso menor: «futbol» 0,2 → 0,3 ms.
 - [ ] ⚡ **`huella_mundo_cmp` no es del todo fija** (v1.2.4): salió distinta una vez (161 vértices) y bien las dos siguientes con el mismo código; algo de la carga (gente o coches) entra en la cuenta.
@@ -907,6 +904,7 @@ Los diseña otro chat (Jonay, 17-nov: «eso ya lo hace otro chat»); aquí solo 
 
 ## Hecho
 
+- [x] v1.4.23 **Revisión de por dónde llevan las misiones; el Torneo y la Copa van hacia su final con saltos cortos** (Jonay, 17-nov).
 - [x] v1.4.22 **Obispo presentado al firmar la banda; rifle de agua (postura, chorro continuo hacia la mira, banco de Boca Papa, aviso de acierto); euros y precios del rifle y las bolitas; misiones de camino a la siguiente; noche más clara; sin franja de monte flotando; hierba solo en el campo y nunca flotando; peleas sin parón al empezar** (Jonay, 17-nov).
 - [x] v1.4.22 **Rivales que conducen como coches (curvas con radio, frenada real, derrapes); campos y canchas vallados con accesos hacia la calle; controles de móvil (pausa, diario, golpe/radio, enderezar, mando de minijuegos)** (Jonay, 17-nov).
 - [x] v1.4.22 **El coche de los malos traza fatal las curvas** (Jonay, 3-nov): resuelto con la conducción nueva.

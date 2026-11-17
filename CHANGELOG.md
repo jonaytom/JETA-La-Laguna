@@ -3,6 +3,16 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.23 — 2026-11-17 — Alpha 1.4.23: el Torneo y la Copa recorren la ciudad hacia su final
+- **Revisión de por dónde llevan las misiones** (Jonay, 17-nov): mapa de dónde empieza cada misión de cada línea
+  (`tests/herramientas/mapa_misiones.py`, que guarda `shots/misiones_mapa.json`). La historia va y viene por el casco
+  (casa de El Blanco, Ayuntamiento, La Concepción, Juan de Vera; ningún salto de más de 1 km) y sus huidas y
+  persecuciones ya acaban hacia la siguiente; el Obispo, la Secreta y las carreras salen siempre de su sitio.
+- **Torneo Lagunero y Copa Laguna**: los partidos se eligen como un recorrido hacia el campo de la final (el Pabellón
+  Juan Ríos Tejera y el Estadio Francisco Peraza), con saltos cortos entre uno y otro. Antes se encadenaban sin mirar
+  dónde estaba la final: la Copa saltaba 1,5 km y luego 3 km hasta el Peraza; ahora, saltos de 430–520 m y 1,45 km
+  hasta el Peraza, que no tiene campos cerca. El Torneo, saltos de 370–460 m (antes hasta 1,2 km).
+
 ## 1.4.22 — 2026-11-17 — Alpha 1.4.22: rivales que conducen como coches, campos vallados, móvil completo, euros y noche más clara
 - **Conducción de rivales y enemigos** (Jonay: «corren bien en recta pero frenan muy rápido y trazan las curvas girando
   90 grados; el giro debe ser normal como cualquier coche, incluso usando freno de mano, porque es una persecución»):

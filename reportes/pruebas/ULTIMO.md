@@ -1,14 +1,13 @@
-# Pruebas 1.4.22 — 2026-11-17 14:35 — 5/5 OK
+# Pruebas 1.4.23 — 2026-11-17 15:01 — 4/4 OK
 
-Listas: v1422. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 449 s en total.
+Listas: v1423. En el PC de Jonay (`scripts\PRUEBAS*.bat`), 402 s en total.
 
 | # | Prueba | Resultado | Tiempo |
 |---|---|---|---|
-| 1 | `prueba_1422.py` | **OK** | 17 s |
-| 2 | `prueba_persecuciones.py` | **OK** | 331 s |
-| 3 | `prueba_misiones.py` | **OK** | 71 s |
-| 4 | `prueba_canchas.py` | **OK** | 1 s |
-| 5 | `prueba_arranque.py` | **OK** | 1 s |
+| 1 | `prueba_1422.py` | **OK** | 0 s |
+| 2 | `prueba_canchas.py` | **OK** | 304 s |
+| 3 | `prueba_misiones.py` | **OK** | 69 s |
+| 4 | `prueba_arranque.py` | **OK** | 1 s |
 
 ## Detalle
 
@@ -27,40 +26,7 @@ errores []
 PRUEBA 1422 OK
 ```
 
-### 2. prueba_persecuciones.py — OK
-
-```
-[6] Atraco en la farmacia: a pie: a 0 m, recorre 0 m en 3 s, salto máx 0.29 m OK
-[8] Los bancos del Adelantado: a pie: a 7 m, recorre 13 m en 3 s, salto máx 0.31 m OK
-[10] El carterista del Cristo: a pie: a 4 m, recorre 8 m en 3 s, salto máx 0.15 m OK
-[12] El rally de La Esperanza: coche: a 6 m, recorre 0 m en 3 s, salto máx 0.00 m OK
-[14] Escolta a la guagua del Romero: coche: a 4 m, recorre 0 m en 3 s, salto máx 0.00 m OK
-[15] La guagua de la broma: coche: a 1367 m, recorre 8 m en 3 s, salto máx 0.16 m OK
-[16] Grafiteros en el tranvía: a pie: a 4 m, recorre 10 m en 3 s, salto máx 0.16 m OK | a pie: a 10 m, recorre 12 m en 3 s, salto máx 0.16 m OK
-[17] Noche en el aeropuerto: coche: a 23 m, recorre 24 m en 3 s, salto máx 0.50 m OK
-PERSECUCIONES OK
-```
-
-### 3. prueba_misiones.py — OK
-
-```
-[6] Atraco en la farmacia: PASA · dinero +1500 · pasos talk>goto>talk>fight>talk>goto>follow>shot>talk>grab>talk>idle
-[7] Defensores de La Laguna: PASA · dinero +1000 · pasos dlg>idle
-[8] Los bancos del Adelantado: PASA · dinero +900 · pasos talk>goto>talk>fight>shot>talk>idle
-[9] El gofio robado: PASA · dinero +1100 · pasos talk>goto>talk>goto>talk>goto>talk>fight>enter>goto>talk>idle
-[10] El carterista del Cristo: PASA · dinero +600 · pasos talk>goto>chase>talk>fight>idle
-[11] Carrera solidaria del casco: PASA · dinero +700 · pasos talk>goto>idle
-[12] El rally de La Esperanza: PASA · dinero +1200 · pasos talk>car>goto>countdown>goto>idle
-[13] Baches en la Vía de Ronda: PASA · dinero +900 · pasos talk>enter>goto>idle
-[14] Escolta a la guagua del Romero: PASA · dinero +1000 · pasos talk>car>escort>talk>idle
-[15] La guagua de la broma: PASA · dinero +900 · pasos talk>car>escort>talk>idle
-[16] Grafiteros en el tranvía: PASA · dinero +800 · pasos talk>goto>shot>talk>idle
-[17] Noche en el aeropuerto: PASA · dinero +2000 · pasos talk>goto>damage>shot>talk>idle
-[18] El rifle de agua: PASA · dinero +-2200 · pasos talk>goto>shop>dlg>goto>talk>douse>goto>douse>goto>douse>talk>goto>shop>talk>soak>talk>idle
-MISIONES OK
-```
-
-### 4. prueba_canchas.py — OK
+### 2. prueba_canchas.py — OK
 
 ```
    ['c7', 'door', 'la cancha (entrada por Calle Llombet)', 3, -177, 1133]
@@ -125,10 +91,29 @@ errores JS []
 CANCHAS OK
 ```
 
-### 5. prueba_arranque.py — OK
+### 3. prueba_misiones.py — OK
 
 ```
-30 pasos (ms): {'mediana': 46, 'peor': 70, 'estado': 'play'}
+[6] Atraco en la farmacia: PASA · dinero +1500 · pasos talk>goto>talk>fight>talk>goto>follow>shot>talk>grab>talk>idle
+[7] Defensores de La Laguna: PASA · dinero +1000 · pasos dlg>idle
+[8] Los bancos del Adelantado: PASA · dinero +900 · pasos talk>goto>talk>fight>shot>talk>idle
+[9] El gofio robado: PASA · dinero +1100 · pasos talk>goto>talk>goto>talk>goto>talk>fight>enter>goto>talk>idle
+[10] El carterista del Cristo: PASA · dinero +600 · pasos talk>goto>chase>talk>fight>idle
+[11] Carrera solidaria del casco: PASA · dinero +700 · pasos talk>goto>idle
+[12] El rally de La Esperanza: PASA · dinero +1200 · pasos talk>car>goto>countdown>goto>idle
+[13] Baches en la Vía de Ronda: PASA · dinero +900 · pasos talk>enter>goto>idle
+[14] Escolta a la guagua del Romero: PASA · dinero +1000 · pasos talk>car>escort>talk>idle
+[15] La guagua de la broma: PASA · dinero +900 · pasos talk>car>escort>talk>idle
+[16] Grafiteros en el tranvía: PASA · dinero +800 · pasos talk>goto>shot>talk>idle
+[17] Noche en el aeropuerto: PASA · dinero +2000 · pasos talk>goto>damage>shot>talk>idle
+[18] El rifle de agua: PASA · dinero +-2200 · pasos talk>goto>shop>dlg>goto>talk>douse>goto>douse>goto>douse>talk>goto>shop>talk>soak>talk>idle
+MISIONES OK
+```
+
+### 4. prueba_arranque.py — OK
+
+```
+30 pasos (ms): {'mediana': 53, 'peor': 83, 'estado': 'play'}
 errores JS []
 ARRANQUE OK
 ```

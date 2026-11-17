@@ -491,7 +491,43 @@ function torneoInit() {
 /** (v1.1.7, code quality) part of torneoInit */
 // courts in a chain: the first the nearest to the start (c.dist), then each the nearest to the previous one at least
 // sp m from every chosen court (sp relaxes if there are not enough)
-function chainCourts(pub, spacings, n = 4) {
+function chainCourts(pub, spacings, n = 4, end = null) {
+  // v1.4.23 (Jonay: «la idea es ir recorriendo la ciudad con las misiones»): with the final's ground (end), the chain
+  // walks there from where you start: of all the ways of going start → n grounds → final, the one with the shortest
+  // hops (sum of squared hops, so one long jump costs more than several short ones); consecutive grounds at least sp m
+  // apart so they aren't all the same corner, and none used twice
+  if (end) {
+    const m = pub.length,
+      d2 = (a, b) => (a.cx - b.cx) ** 2 + (a.cz - b.cz) ** 2;
+    for (const sp of spacings) {
+      // (the first ground may be a bit further from you: what matters is that the hops between them are short)
+      let f = pub.map((c) => ({ cost: c.dist * c.dist * 0.25, path: [c] }));
+      for (let k = 1; k < n; k++) {
+        const g = [];
+        for (let j = 0; j < m; j++) {
+          let best = null;
+          for (let i = 0; i < m; i++) {
+            const p = f[i];
+            if (!p || p.path.includes(pub[j])) continue;
+            const dd = d2(pub[i], pub[j]);
+            if (dd < sp * sp) continue;
+            const c = p.cost + dd;
+            if (!best || c < best.cost) best = { cost: c, path: [...p.path, pub[j]] };
+          }
+          g.push(best);
+        }
+        f = g;
+      }
+      let best = null;
+      for (let j = 0; j < m; j++) {
+        const p = f[j];
+        if (!p) continue;
+        const c = p.cost + (pub[j].cx - end[0]) ** 2 + (pub[j].cz - end[1]) ** 2;
+        if (!best || c < best.cost) best = { cost: c, path: p.path };
+      }
+      if (best) return best.path;
+    }
+  }
   for (const sp of spacings) {
     const chosen = [];
     while (chosen.length < n) {
@@ -521,7 +557,9 @@ function torneoInitPart1() {
   // so they aren't all the same corner) to the previous; the first, the nearest to where you start
   const chosen = chainCourts(
     pub.filter((c) => !used.has(c.cx)),
-    [350, 220, 120, 0]
+    [350, 220, 120, 0],
+    4,
+    fin ? [fin.x, fin.z] : null
   );
   return { chosen, fin };
 }
