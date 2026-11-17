@@ -1,4 +1,3 @@
-prueba_1419.py
-prueba_1416.py
+prueba_1420.py
 prueba_arranque.py
 herramientas/foto_propios.py

@@ -3,6 +3,24 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.20 — 2026-11-17 — Alpha 1.4.20: adiós a Kenney (camiones, grúa, bomberos y taxis propios) y pesos para verlos todos
+- **Camiones y furgones propios**: Ivizco Nightly (Iveco Daily de caja) e Ivizco Evening (Daily furgón), Michu Singer
+  (Canter de caja abierta) y Antonias Runner (Sprinter). Se tiñen como los coches; los furgones y la caja llevan los
+  rótulos de empresas de siempre.
+- **Grúa propia** (Niza Cabestrante, plataforma con su rótulo GRÚA): amarilla fija. **Bomberos propios** (Escania
+  Manguera): rojo fijo, sus luces azules del techo se encienden con la sirena. **Taxis de La Laguna, 3 modelos** (Antonias
+  Tipo E, JTM Capítulo 3 y Totuya Carlota Taxi): blancos, con su cartel y sus vinilos; ya no se les añade la franja ni
+  la lucecita del juego.
+- **Fuera todos los modelos de Kenney** salvo el camión de la basura (todavía no hay uno propio). El tractor, que no se
+  usaba, también fuera. Los ids viejos (los coches de la historia como 'clio', 'transit' o 'vito', y las partidas
+  guardadas) siguen funcionando con el modelo propio más parecido.
+- **Pesos revisados** (Jonay: «que salga de todo un poco aunque siempre más los coches comunes en Tenerife... que se
+  pueda ver relativamente fácil todos los modelos»): los más comunes (Yaris, C3, Ibiza, Polo, Clio, Sandero, Corsa,
+  Corolla, Qashqai, Yaris Cross, Picanto) entre 7 y 11; ningún coche por debajo de 2 (deportivos, berlinas de lujo y el
+  Seta 128 incluidos, también el JTM H4, que antes no circulaba); los camiones y furgones, el doble que antes en las
+  vías principales (7 % del tráfico); ambulancia y bomberos también circulan.
+- Prueba nueva `prueba_1420.py`.
+
 ## 1.4.19 — 2026-11-17 — Alpha 1.4.19: sirena más suave, policía y ambulancia propias, pick-ups y Fita Triplon
 - **Sirena** (Jonay: «el sonido de los policías es demasiado molesto... debería ser más suave y sonar más bajo cuanto más
   lejos esté la policía»): onda triangular en vez de cuadrada, los dos tonos más juntos, mucho más baja (0,035 como

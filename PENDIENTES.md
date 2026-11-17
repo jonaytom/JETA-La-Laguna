@@ -38,10 +38,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 - [ ] ⚡ **Troceen C33 con el paso de rueda nuevo** (11-nov): es el único coche propio que no se ha rehecho con el arreglo de los «dientes» del paso de rueda (su receta está en `troceen_c33.blend`, no en `otros.py`). Pasarlo al generador actual y volver a exportarlo.
 - [ ] ◐ **Revisar con Jonay los 7 coches de la v1.4.8** (Piki Crocante rehecho; Totuya O Algo, Seta Gomera, Pancho Teypan, Pancho Chayan, Ole Corsario, Ole Mocco): hechos con la silueta de las fotos (`auto/coches7.py`). Lo más flojo: el Chayan sale bajo y alargado; el morro del Corsario y del Gomera, largo; el negro de la zaga del O Algo y del techo del Mocco solo está en el techo.
 - [~] ● v1.4.3–1.4.4 (Troceen C33, C44; Totuya Carlota, Yaiza Cross; Guanchazen T-Rex, D.I 55; JTM Capítulo 3, H4; Yoos Reniego, Cartabon; v1.4.5 Antonias Tipo E, LTG Scupe; Fierilla 440; v1.4.7 Piki Crocante; v1.4.8 Totuya O Algo, Seta Gomera, Pancho Teypan, Pancho Chayan, Ole Corsario, Ole Mocco) **Ir sustituyendo los coches de Kenney por modelos propios** (Jonay, 11-nov: «iremos sustituyendo poco a poco a los actuales con los nuestros»; «ve eliminando un modelo de los actuales por cada modelo añadido»; «lo más importante es recrear la silueta y los frontales y sus ópticas delanteras»): generador en `E:\Claude\GTA La Laguna\Blender\coche\` (`generador.py` + `otros.py`/`c44.py` con los datos de cada coche + `morros.py` + `exportar.py`); fotos de referencia de Jonay en el chat. Falta: segunda pasada a traseras y pilotos; más modelos según mande Jonay.
-- [ ] ● **Quitar los últimos de Kenney: faltan 8 modelos propios** (Jonay, 16-nov; actualizado en la v1.4.19): Kenney ya solo pone:
-  - 5 camiones y furgones: Burrero Diario (Iveco Daily), Mojo Bichi Cantero (Mitsubishi Canter), Mercadillo Esprínter (Mercedes Sprinter), Grúas Ande Pepe (grúa), Recogida Municipal (camión de basura);
-  - 3 de servicio: Taxi Lagunero, Bomberos, Tractor Garañón.
-  Las motos no son de Kenney. Al llegar cada uno: mismo id y peso que el de Kenney al que sustituye. El taxi, como la policía: sin teñir, con sus rótulos.
+- [ ] ● **Camión de la basura propio** (último de Kenney; v1.4.20): Recogida Municipal (id `basura`), camión compactador del Ayuntamiento, librea fija (blanco/verde con rótulo AYTO. LA LAGUNA). Pedírselo al creador de coches.
 
 ### Minijuegos: controles, pausa y sonido
 
@@ -968,6 +965,8 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   - Por comprobar: si el Artifact deja abrir conexiones WebRTC y al servidor de emparejamiento (si no, se juega con el HTML descargado); servidor TURN para las redes que no conectan directo.
 
 ## Hecho
+
+- [x] v1.4.20 **Fuera Kenney (salvo la basura): camiones, furgones, grúa, bomberos y 3 taxis propios; pesos para ver todos los modelos** (Jonay, 17-nov).
 
 - [x] v1.4.19 **Sirena más suave y que baja con la distancia; policía (3 modelos) y ambulancia propias sin teñir; Fita Triplon, Totuya Hilos y Niza Navarra** (Jonay, 17-nov).
 

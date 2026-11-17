@@ -3,84 +3,72 @@
 // [id, nombre parodia, categoría, base Kenney, física, largo, ancho, alto, peso de aparición]
 const VMODELS_RAW = `
 # utilitarios / urbanos
-polo|Guagüen Pollito|Utilitario|sedan|compact|4.05|1.75|1.46|0
-ibiza|Butaca Isleña|Utilitario|sedan|compact|4.06|1.78|1.44|0
-yaris|Tagoror Lairis|Utilitario|sedan|compact|3.95|1.7|1.5|0
-picanto|Quillo Picante|Urbano|sedan|compact|3.6|1.6|1.49|0
-rio|Quillo Barranco|Utilitario|sedan|compact|4.07|1.73|1.45|0
-i20|Jandía i-Veinte|Utilitario|sedan|compact|4.04|1.78|1.45|0
-i10|Jandía i-Diez|Urbano|sedan|compact|3.67|1.68|1.48|0
-sandero|Datilera Sendero|Utilitario|sedan|compact|4.09|1.85|1.5|0
-clio|Reinona Tío|Utilitario|sedan|compact|4.05|1.8|1.44|0
-p208|Pijó 802|Utilitario|sedan|compact|4.06|1.75|1.43|0
-corsa|Copal Corsario|Utilitario|sedan|compact|4.06|1.77|1.43|0
-c3|Limonero Ce-Tres|Utilitario|sedan|compact|3.99|1.75|1.47|0
 # v1.4.3: modelos propios hechos en Blender (Jonay: «iremos sustituyendo poco a poco a los actuales con los nuestros»); el Troceen C33 sustituye al Limonero Ce-Tres
-troceen|Troceen C33|Crossover|c33|suv|4.015|1.755|1.567|12
+troceen|Troceen C33|Crossover|c33|suv|4.015|1.755|1.567|10
 troceenL|Troceen C33|Crossover|c33-lejos|suv|4.015|1.755|1.567|0
 # v1.4.4: seis más (Jonay, 11-nov: «ve eliminando un modelo de los actuales por cada modelo añadido»); cada uno sale tanto como el que sustituye
-troceenC44|Troceen C44|Crossover coupé|c44|suv|4.355|1.8|1.52|3
+troceenC44|Troceen C44|Crossover coupé|c44|suv|4.355|1.8|1.52|4
 troceenC44L|Troceen C44|Crossover coupé|c44-lejos|suv|4.355|1.8|1.52|0
-carlota|Totuya Carlota|Compacto|carlota|sedan|4.379|1.79|1.435|5
+carlota|Totuya Carlota|Compacto|carlota|sedan|4.379|1.79|1.435|8
 carlotaL|Totuya Carlota|Compacto|carlota-lejos|sedan|4.379|1.79|1.435|0
-yaiza|Totuya Yaiza Cross|Crossover|yaizacross|suv|4.18|1.765|1.595|5
+yaiza|Totuya Yaiza Cross|Crossover|yaizacross|suv|4.18|1.765|1.595|7
 yaizaL|Totuya Yaiza Cross|Crossover|yaizacross-lejos|suv|4.18|1.765|1.595|0
 trex|Guanchazen T-Rex|Crossover|trex|suv|4.108|1.79|1.584|5
 trexL|Guanchazen T-Rex|Crossover|trex-lejos|suv|4.108|1.79|1.584|0
-di55|Guanchazen D.I 55|SUV coupé eléctrico|di55|suv|4.599|1.852|1.615|5
+di55|Guanchazen D.I 55|SUV coupé eléctrico|di55|suv|4.599|1.852|1.615|3
 di55L|Guanchazen D.I 55|SUV coupé eléctrico|di55-lejos|suv|4.599|1.852|1.615|0
-jtm3|JTM Capítulo 3|Berlina|cap3|sedan|4.824|1.83|1.508|5
+jtm3|JTM Capítulo 3|Berlina|cap3|sedan|4.824|1.83|1.508|4
 jtm3L|JTM Capítulo 3|Berlina|cap3-lejos|sedan|4.824|1.83|1.508|0
-reniego|Yoos Reniego|Todoterreno|reniego|suv|4.236|1.805|1.684|5
+reniego|Yoos Reniego|Todoterreno|reniego|suv|4.236|1.805|1.684|4
 reniegoL|Yoos Reniego|Todoterreno|reniego-lejos|suv|4.236|1.805|1.684|0
-cartabon|Yoos Cartabon|SUV|cartabon|suv|4.394|1.819|1.629|5
+cartabon|Yoos Cartabon|SUV|cartabon|suv|4.394|1.819|1.629|4
 cartabonL|Yoos Cartabon|SUV|cartabon-lejos|suv|4.394|1.819|1.629|0
 # v1.4.5: tres más (Antonias Tipo E sustituye al Guagüen Golfo; LTG Scupe al Butaca Atajo; Fierilla 440 al Quillo Exceso, y sale poco)
 tipoe|Antonias Tipo E|Berlina|tipoe|sedan|4.935|1.852|1.46|4
 tipoeL|Antonias Tipo E|Berlina|tipoe-lejos|sedan|4.935|1.852|1.46|0
-ltg|Antonias LTG Scupe|SUV coupé|scupe|suv|4.961|2.01|1.73|3
+ltg|Antonias LTG Scupe|SUV coupé|scupe|suv|4.961|2.01|1.73|2.5
 ltgL|Antonias LTG Scupe|SUV coupé|scupe-lejos|suv|4.961|2.01|1.73|0
-fierilla|Fierilla 440|Superdeportivo|fierilla|sport|4.704|1.973|1.186|1
+fierilla|Fierilla 440|Superdeportivo|fierilla|sport|4.704|1.973|1.186|2
 fierillaL|Fierilla 440|Superdeportivo|fierilla-lejos|sport|4.704|1.973|1.186|0
 piki|Piki Crocante|Urbano|crocante|compact|3.595|1.595|1.485|7
 pikiL|Piki Crocante|Urbano|crocante-lejos|compact|3.595|1.595|1.485|0
-oalgo|Totuya O Algo|Crossover urbano|oalgo|compact|3.7|1.74|1.51|4
+oalgo|Totuya O Algo|Crossover urbano|oalgo|compact|3.7|1.74|1.51|5
 oalgoL|Totuya O Algo|Crossover urbano|oalgo-lejos|compact|3.7|1.74|1.51|0
 gomera|Seta Gomera|Utilitario|gomera|compact|4.059|1.78|1.444|10
 gomeraL|Seta Gomera|Utilitario|gomera-lejos|compact|4.059|1.78|1.444|0
 teypan|Pancho Teypan|Berlina eléctrica|teypan|sedan|4.963|1.966|1.395|2
 teypanL|Pancho Teypan|Berlina eléctrica|teypan-lejos|sedan|4.963|1.966|1.395|0
-chayan|Pancho Chayan|SUV|chayan|suv|4.931|1.983|1.676|3
+chayan|Pancho Chayan|SUV|chayan|suv|4.931|1.983|1.676|2.5
 chayanL|Pancho Chayan|SUV|chayan-lejos|suv|4.931|1.983|1.676|0
-olecorsa|Ole Corsario|Utilitario|corsario|compact|4.06|1.765|1.433|4
+olecorsa|Ole Corsario|Utilitario|corsario|compact|4.06|1.765|1.433|8
 olecorsaL|Ole Corsario|Utilitario|corsario-lejos|compact|4.06|1.765|1.433|0
 mocco|Ole Mocco|Crossover|mocco|suv|4.151|1.791|1.534|4
 moccoL|Ole Mocco|Crossover|mocco-lejos|suv|4.151|1.791|1.534|0
-tyaiza|Totuya Yaiza|Utilitario|yaiza|compact|3.94|1.745|1.5|10
+tyaiza|Totuya Yaiza|Utilitario|yaiza|compact|3.94|1.745|1.5|11
 tyaizaL|Totuya Yaiza|Utilitario|yaiza-lejos|compact|3.94|1.745|1.5|0
-helado|Guanchazen Helado|Utilitario|helado|compact|4.053|1.751|1.448|12
+helado|Guanchazen Helado|Utilitario|helado|compact|4.053|1.751|1.448|9
 heladoL|Guanchazen Helado|Utilitario|helado-lejos|compact|4.053|1.751|1.448|0
-dsendero|Damian Sendero|Utilitario|sendero|compact|4.057|1.733|1.523|6
+dsendero|Damian Sendero|Utilitario|sendero|compact|4.057|1.733|1.523|9
 dsenderoL|Damian Sendero|Utilitario|sendero-lejos|compact|4.057|1.733|1.523|0
 beluga|Troceen Beluga|Monovolumen|beluga|van|4.38|1.81|1.801|4
 belugaL|Troceen Beluga|Monovolumen|beluga-lejos|van|4.38|1.81|1.801|0
 vivita|Antonias Vivita|Furgoneta|vivita|van|5.14|1.928|1.89|3
 vivitaL|Antonias Vivita|Furgoneta|vivita-lejos|van|5.14|1.928|1.89|0
-newton3|Newton Style 3|Berlina eléctrica|style3|sedan|4.694|1.849|1.443|5
+newton3|Newton Style 3|Berlina eléctrica|style3|sedan|4.694|1.849|1.443|4
 newton3L|Newton Style 3|Berlina eléctrica|style3-lejos|sedan|4.694|1.849|1.443|0
 # v1.4.13: Raul Cactus (modelo de Fable) sustituye al Guagüen Te-Roque y sale igual que él
-cactus|Raul Cactus|Crossover|raul-cactus|suv|4.249|1.9|1.603|8
+cactus|Raul Cactus|Crossover|raul-cactus|suv|4.249|1.9|1.603|4
 cactusL|Raul Cactus|Crossover|raul-cactus-lejos|suv|4.249|1.9|1.603|0
 # v1.4.14 (Jonay, 16-nov: «debemos ir quitando los de kenney»): 13 coches propios más; cada uno sustituye a uno de Kenney y sale igual que él
-clip|Raul Clip|Utilitario|clip|compact|4.05|1.798|1.44|5
+clip|Raul Clip|Utilitario|clip|compact|4.05|1.798|1.44|9
 clipL|Raul Clip|Utilitario|clip-lejos|compact|4.05|1.798|1.44|0
-nano|Niza Nano|Utilitario|nano|compact|3.78|1.665|1.515|4
+nano|Niza Nano|Utilitario|nano|compact|3.78|1.665|1.515|5
 nanoL|Niza Nano|Utilitario|nano-lejos|compact|3.78|1.665|1.515|0
-pimbo|Raul Pimbo|Urbano|pimbo|compact|3.789|1.72|1.491|4
+pimbo|Raul Pimbo|Urbano|pimbo|compact|3.789|1.72|1.491|5
 pimboL|Raul Pimbo|Urbano|pimbo-lejos|compact|3.789|1.72|1.491|0
-torson|Junway Torson|SUV|torson|suv|4.5|1.865|1.65|8
+torson|Junway Torson|SUV|torson|suv|4.5|1.865|1.65|6
 torsonL|Junway Torson|SUV|torson-lejos|suv|4.5|1.865|1.65|0
-queguay|Niza Queguay|Crossover|queguay|suv|4.425|1.835|1.625|8
+queguay|Niza Queguay|Crossover|queguay|suv|4.425|1.835|1.625|7
 queguayL|Niza Queguay|Crossover|queguay-lejos|suv|4.425|1.835|1.625|0
 mphs|MP HS|SUV|mphs|suv|4.323|1.809|1.6|4
 mphsL|MP HS|SUV|mphs-lejos|suv|4.323|1.809|1.6|0
@@ -90,89 +78,68 @@ ficus|Farm Ficus|Compacto|ficus|sedan|4.337|1.84|1.497|5
 ficusL|Farm Ficus|Compacto|ficus-lejos|sedan|4.337|1.84|1.497|0
 mepierdo|Raul Mepierdo|Compacto|mepierdo|sedan|4.209|1.777|1.5|5
 mepierdoL|Raul Mepierdo|Compacto|mepierdo-lejos|sedan|4.209|1.777|1.5|0
-padelgti|Guanchazen Padel GTI|Compacto deportivo|padelgti|sedan|4.213|1.786|1.469|3
+padelgti|Guanchazen Padel GTI|Compacto deportivo|padelgti|sedan|4.213|1.786|1.469|4
 padelgtiL|Guanchazen Padel GTI|Compacto deportivo|padelgti-lejos|sedan|4.213|1.786|1.469|0
-pantera|Seta Pantera|Familiar|pantera|sedan|4.549|1.816|1.459|3
+pantera|Seta Pantera|Familiar|pantera|sedan|4.549|1.816|1.459|4
 panteraL|Seta Pantera|Familiar|pantera-lejos|sedan|4.549|1.816|1.459|0
 hubli|Martini Hubli|Berlina|hubli|sedan|4.971|1.945|1.461|2
 hubliL|Martini Hubli|Berlina|hubli-lejos|sedan|4.971|1.945|1.461|0
-reventon|Linguini Reventon|Superdeportivo|reventon|sport|4.78|2.03|1.136|1
+reventon|Linguini Reventon|Superdeportivo|reventon|sport|4.78|2.03|1.136|2
 reventonL|Linguini Reventon|Superdeportivo|reventon-lejos|sport|4.78|2.03|1.136|0
 # v1.4.16 (Jonay, 17-nov: «incorpora los 5 nuevos vehículos sustituyendo de kenney viejotes»): cada uno sale igual que el de Kenney al que sustituye; el Seta 128 no tiene uno parecido (ya no quedan turismos de Kenney): poco, como el Reventon
-koala|Raul Koala|Monovolumen|koala|van|4.486|1.919|1.838|4
+koala|Raul Koala|Monovolumen|koala|van|4.486|1.919|1.838|5
 koalaL|Raul Koala|Monovolumen|koala-lejos|van|4.486|1.919|1.838|0
-compi|Piyo Compi|Monovolumen|compi|van|4.38|1.81|1.803|3
+compi|Piyo Compi|Monovolumen|compi|van|4.38|1.81|1.803|4
 compiL|Piyo Compi|Monovolumen|compi-lejos|van|4.38|1.81|1.803|0
-cassi|Guanchazen Cassi|Monovolumen|cassi|van|4.408|1.793|1.822|3
+cassi|Guanchazen Cassi|Monovolumen|cassi|van|4.408|1.793|1.822|4
 cassiL|Guanchazen Cassi|Monovolumen|cassi-lejos|van|4.408|1.793|1.822|0
-traficc|Farm Traficc|Furgoneta|traficc|van|5.05|2.032|1.958|3
+traficc|Farm Traficc|Furgoneta|traficc|van|5.05|2.032|1.958|4
 traficcL|Farm Traficc|Furgoneta|traficc-lejos|van|5.05|2.032|1.958|0
-seta128|Seta 128|Urbano clásico|seta128|compact|3.595|1.527|1.37|1
+seta128|Seta 128|Urbano clásico|seta128|compact|3.595|1.527|1.37|2
 seta128L|Seta 128|Urbano clásico|seta128-lejos|compact|3.595|1.527|1.37|0
 # v1.4.19 (Jonay, 17-nov): Fita Triplon, Totuya Hilos y Niza Navarra en lugar de los de Kenney (mismo peso); la policía (3 modelos: Seta Pantera, Niza Queguay y Ole Corsario) y la ambulancia (Farm Traficc), propios: no se tiñen, traen sus vinilos
-triplon|Fita Triplon|Furgoneta|triplon|van|4.756|1.832|1.845|2
+triplon|Fita Triplon|Furgoneta|triplon|van|4.756|1.832|1.845|3
 triplonL|Fita Triplon|Furgoneta|triplon-lejos|van|4.756|1.832|1.845|0
-hilos|Totuya Hilos|Pick-up|hilos|suv|5.33|1.855|1.815|4
+hilos|Totuya Hilos|Pick-up|hilos|suv|5.33|1.855|1.815|5
 hilosL|Totuya Hilos|Pick-up|hilos-lejos|suv|5.33|1.855|1.815|0
-navarra|Niza Navarra|Pick-up|navarra|suv|5.33|1.85|1.805|2
+navarra|Niza Navarra|Pick-up|navarra|suv|5.33|1.85|1.805|3
 navarraL|Niza Navarra|Pick-up|navarra-lejos|suv|5.33|1.85|1.805|0
+# v1.4.20 (Jonay, 17-nov: «ya hay todos los coches listos para quitar lo viejo»): camiones, furgones, grúa, bomberos y los 3 taxis propios; fuera todos los de Kenney salvo el camión de la basura (no hay modelo propio todavía) y el tractor (no se usa)
+daily|Ivizco Nightly|Camión|nightly|truck|5.6|2.052|2.75|3
+dailyL|Ivizco Nightly|Camión|nightly-lejos|truck|5.6|2.052|2.75|0
+daily2|Ivizco Evening|Furgón|evening|truck|5.67|2.052|2.68|3
+daily2L|Ivizco Evening|Furgón|evening-lejos|truck|5.67|2.052|2.68|0
+canter|Michu Singer|Camión|singer|truck|5.57|1.995|2.13|3
+canterL|Michu Singer|Camión|singer-lejos|truck|5.57|1.995|2.13|0
+sprinter|Antonias Runner|Furgón|runner|truck|5.932|2.02|2.62|3
+sprinterL|Antonias Runner|Furgón|runner-lejos|truck|5.932|2.02|2.62|0
+grua|Niza Cabestrante|Grúa|grua|truck|6.3|1.95|2.3|2
+gruaL|Niza Cabestrante|Grúa|grua-lejos|truck|6.3|1.95|2.3|0
+bomberos|Escania Manguera|Bomberos|bombero|truck|7.57|2.5|3.2|1.2
+bomberosL|Escania Manguera|Bomberos|bombero-lejos|truck|7.57|2.5|3.2|0
+taxi|Taxi Lagunero|Taxi|taxitipoe|taxi|4.935|1.852|1.46|1
+taxiL|Taxi Lagunero|Taxi|taxitipoe-lejos|taxi|4.935|1.852|1.46|0
+taxi2|Taxi Lagunero|Taxi|taxicap3|taxi|4.824|1.83|1.508|1
+taxi2L|Taxi Lagunero|Taxi|taxicap3-lejos|taxi|4.824|1.83|1.508|0
+taxi3|Taxi Lagunero|Taxi|taxicarlota|taxi|4.379|1.79|1.435|1
+taxi3L|Taxi Lagunero|Taxi|taxicarlota-lejos|taxi|4.379|1.79|1.435|0
 policiaL|Policía Local|Patrulla|polpantera-lejos|police|4.549|1.816|1.459|0
 policia2|Policía Local|Patrulla|polqueguay|police|4.425|1.835|1.625|0
 policia2L|Policía Local|Patrulla|polqueguay-lejos|police|4.425|1.835|1.625|0
 policia3|Policía Local|Patrulla|polcorsario|police|4.06|1.765|1.433|0
 policia3L|Policía Local|Patrulla|polcorsario-lejos|police|4.06|1.765|1.433|0
 ambulanciaL|Ambulancia|Emergencias|ambtraficc-lejos|truck|5.05|2.032|1.958|0
-f500|Fiao Quinientitos|Urbano|sedan|compact|3.57|1.63|1.49|0
 # compactos / berlinas
-leon|Butaca Leona|Compacto|hatchback-sports|sedan|4.28|1.8|1.46|0
-corolla|Tagoror Corona|Berlina|hatchback-sports|sedan|4.37|1.79|1.44|0
-golf|Guagüen Golfo|Compacto|hatchback-sports|sedan|4.28|1.79|1.46|0
 # crossovers / SUV
-troc|Guagüen Te-Roque|Crossover|suv-luxury|suv|4.23|1.82|1.57|0
-tcross|Guagüen Te-Cruz|Crossover|suv-luxury|suv|4.11|1.78|1.58|0
-tiguan|Guagüen Tiguanche|SUV|suv-luxury|suv|4.49|1.84|1.67|0
-tucson|Jandía Tacoronte|SUV|suv-luxury|suv|4.5|1.87|1.65|0
-kona|Jandía Kuna|Crossover|suv-luxury|suv|4.2|1.8|1.55|0
-sportage|Quillo Deportaje|SUV|suv-luxury|suv|4.51|1.86|1.65|0
-stonic|Quillo Estónica|Crossover|suv-luxury|suv|4.14|1.76|1.52|0
-xceed|Quillo Exceso|Crossover|suv-luxury|suv|4.4|1.83|1.49|0
-arona|Butaca Adeje|Crossover|suv-luxury|suv|4.14|1.78|1.54|0
-ateca|Butaca Atajo|SUV|suv-luxury|suv|4.38|1.84|1.61|0
-chr|Tagoror Ce-Jota|Crossover|suv-luxury|suv|4.36|1.8|1.56|0
-yariscross|Tagoror Lairis Cruz|Crossover|suv-luxury|suv|4.18|1.77|1.59|0
-qashqai|Nisperero Cascai|Crossover|suv-luxury|suv|4.39|1.81|1.59|0
-juke|Nisperero Yuke|Crossover|suv-luxury|suv|4.21|1.8|1.59|0
-captur|Reinona Captura|Crossover|suv-luxury|suv|4.23|1.8|1.58|0
-p2008|Pijó 8002|Crossover|suv-luxury|suv|4.3|1.77|1.55|0
-zs|MaGofio ZZ|SUV|suv-luxury|suv|4.32|1.81|1.62|0
 # todoterrenos
-duster|Datilera Polvero|Todoterreno|suv|suv|4.34|1.8|1.69|0
-landcruiser|Tagoror Tierra Crucero|Todoterreno|suv|suv|4.7|1.88|1.85|0
-jimny|Susurro Yimi|Todoterreno|suv|suv|3.48|1.65|1.72|0
 # furgonetas
-kangoo|Reinona Canguro|Furgoneta|van|van|4.28|1.83|1.84|0
-berlingo|Limonero Berlinga|Furgoneta|van|van|4.4|1.85|1.84|0
-partner|Pijó Compadre|Furgoneta|van|van|4.4|1.85|1.84|0
-caddy|Guagüen Cadi|Furgoneta|van|van|4.5|1.86|1.82|0
-doblo|Fiao Doblón|Furgoneta|van|van|4.39|1.83|1.85|0
-transit|Fardo Tránsito|Furgoneta|van|van|4.97|1.99|1.98|0
-vito|Mercadillo Vitó|Furgoneta|van|van|5.14|1.93|1.91|0
 # pick-ups
-hilux|Tagoror Jailux|Pick-up|truck|suv|5.33|1.86|1.82|0
-navara|Nisperero Navajo|Pick-up|truck|suv|5.26|1.85|1.8|0
 # camiones
-daily|Burrero Diario|Camión|delivery|truck|6.5|2.0|2.8|2
-canter|Mojo Bichi Cantero|Camión|delivery|truck|6.0|1.9|2.6|2
-sprinter|Mercadillo Esprínter|Furgón|delivery|truck|5.93|2.02|2.7|2
-grua|Grúas Ande Pepe|Grúa|delivery-flat|truck|6.5|2.1|2.4|1
-basura|Recogida Municipal|Camión de basura|garbage-truck|truck|7.5|2.5|3.2|1
-ambulancia|Ambulancia|Emergencias|ambtraficc|truck|5.05|2.032|1.958|0.6
-bomberos|Bomberos|Emergencias|firetruck|truck|8.0|2.5|3.2|0.3
-tractor|Tractor Garañón|Agrícola|tractor|truck|3.8|1.9|2.6|0
+basura|Recogida Municipal|Camión de basura|garbage-truck|truck|7.5|2.5|3.2|2
+ambulancia|Ambulancia|Emergencias|ambtraficc|truck|5.05|2.032|1.958|1.5
 # servicio público y especiales (no salen en el sorteo general)
-taxi|Taxi Lagunero|Taxi|taxi|taxi|4.55|1.76|1.49|0
 policia|Policía Local|Patrulla|polpantera|police|4.549|1.816|1.459|0
-guancheGT|JTM H4|Deportivo|h4|sport|4.783|1.852|1.442|0
+guancheGT|JTM H4|Deportivo|h4|sport|4.783|1.852|1.442|2
 guancheGTL|JTM H4|Deportivo|h4-lejos|sport|4.783|1.852|1.442|0
 # motos y ciclomotores (Canarias: el scooter manda)
 pcx|Olita PeCeEquis 125|Scooter|scooter|moto|1.93|0.74|1.1|8
@@ -255,7 +222,16 @@ for (const [id, x, y] of [
   ['policia', 0.73, 0.92],
   ['policia2', 0.75, 1.07],
   ['policia3', 0.73, 0.75],
-  ['ambulancia', 0.95, 0.9]
+  ['ambulancia', 0.95, 0.9],
+  ['daily', 0.88, 0.75],
+  ['daily2', 0.97, 1.15],
+  ['canter', 0.89, 0.71],
+  ['sprinter', 0.94, 1.25],
+  ['grua', 0.98, 1.04],
+  ['bomberos', 1.15, 0.79],
+  ['taxi', 0.77, 0.9],
+  ['taxi2', 0.76, 0.97],
+  ['taxi3', 0.75, 0.87]
 ]) {
   VMODELS[id].lod = id + 'L';
   VMODELS[id].tail = VMODELS[id + 'L'].tail = [x * CAR_SCALE, y * CAR_SCALE];
@@ -263,7 +239,61 @@ for (const [id, x, y] of [
   OWN_BASES.add(VMODELS[id + 'L'].base);
 }
 // v1.4.19: the police and the ambulance keep their own colours and vinyls (white body, never the random paint)
-const isLivery = (m) => !!m && /^(taxi|policia\d*|ambulancia)$/.test(m.id);
+// v1.4.20: also the taxis (white), the fire engine (red) and the tow truck (yellow)
+const LIVERY = { bomberos: 0xb3141c, grua: 0xf2b21a };
+const isLivery = (m) => !!m && /^(taxi\d*|policia\d*|ambulancia|bomberos|grua)$/.test(m.id) && !!m.lod;
+const liveryColor = (m) => LIVERY[m.id] || 0xf6f6f4;
+// v1.4.20: the ids of the old Kenney models still answer (saved games, story cars: s2Car('clio'), 'transit', 'vito'…), with
+// the own model closest to them; not enumerable, so they never count twice when picking at random
+for (const [a, b] of Object.entries({
+  'polo': 'helado',
+  'ibiza': 'gomera',
+  'yaris': 'tyaiza',
+  'picanto': 'piki',
+  'rio': 'clip',
+  'i20': 'clip',
+  'i10': 'pimbo',
+  'sandero': 'dsendero',
+  'clio': 'clip',
+  'p208': 'clip',
+  'corsa': 'olecorsa',
+  'c3': 'troceen',
+  'f500': 'seta128',
+  'leon': 'pantera',
+  'corolla': 'carlota',
+  'golf': 'padelgti',
+  'troc': 'trex',
+  'tcross': 'trex',
+  'tiguan': 'torson',
+  'tucson': 'torson',
+  'kona': 'torson',
+  'sportage': 'torson',
+  'stonic': 'vengator',
+  'xceed': 'vengator',
+  'arona': 'trex',
+  'ateca': 'cartabon',
+  'chr': 'yaiza',
+  'yariscross': 'yaiza',
+  'qashqai': 'queguay',
+  'juke': 'queguay',
+  'captur': 'cactus',
+  'p2008': 'mocco',
+  'zs': 'mphs',
+  'duster': 'reniego',
+  'landcruiser': 'hilos',
+  'jimny': 'reniego',
+  'kangoo': 'koala',
+  'berlingo': 'beluga',
+  'partner': 'compi',
+  'caddy': 'cassi',
+  'doblo': 'triplon',
+  'transit': 'traficc',
+  'vito': 'vivita',
+  'hilux': 'hilos',
+  'navara': 'navarra',
+  'tractor': 'hilos'
+}))
+  if (!VMODELS[a] && VMODELS[b]) Object.defineProperty(VMODELS, a, { value: VMODELS[b], enumerable: false });
 const VTYPES2 = {
   truck: { name: 'Camión', L: 6.5, W: 2.1, H: 2.8, maxV: 30, acc: 5, grip: 6, mass: 3, prof: 'van' },
   moto: { name: 'Moto', L: 2.0, W: 0.8, H: 1.1, maxV: 36, acc: 12, grip: 9, mass: 0.5, prof: 'sedan' }
@@ -309,7 +339,7 @@ function pickModel(filter) {
 }
 // which physics type a legacy type string maps to when picking a model
 function modelForType(type) {
-  if (type === 'taxi') return VMODELS.taxi;
+  if (type === 'taxi') return pickModel((m) => m.phys === 'taxi') || VMODELS.taxi; // v1.4.20: 3 taxis
   if (type === 'police') return pick([VMODELS.policia, VMODELS.policia2, VMODELS.policia3].filter(Boolean)) || VMODELS.policia; // v1.4.19: 3 models
   if (type === 'sport') return VMODELS.guancheGT;
   if (type === 'bus') return null;
@@ -320,10 +350,11 @@ function modelForType(type) {
 function trafficModel(edgeType) {
   const r = Math.random();
   if (r < 0.15) return pickModel((m) => m.phys === 'moto');
-  if (r < 0.2) return VMODELS.taxi;
-  if (r < 0.235 && ['primary', 'secondary', 'tertiary', 'trunk', 'motorway', 'motorway_link'].includes(edgeType))
+  if (r < 0.2) return pickModel((m) => m.phys === 'taxi') || VMODELS.taxi;
+  // v1.4.20 (Jonay: «que se pueda ver relativamente fácil todos los modelos»): more lorries and vans on the main roads (7 %, before 3.5 %)
+  if (r < 0.27 && ['primary', 'secondary', 'tertiary', 'trunk', 'motorway', 'motorway_link'].includes(edgeType))
     return pickModel((m) => m.phys === 'truck');
-  return pickModel((m) => m.phys !== 'moto' && m.phys !== 'truck');
+  return pickModel((m) => m.phys !== 'moto' && m.phys !== 'truck' && m.phys !== 'taxi');
 }
 
 // Raw DEFLATE decoder (RFC 1951), synchronous and small; used to unpack the car models (v1.4.9)
@@ -691,7 +722,7 @@ function modelGeometryPart1(sy, sx, K, wheels, zc, sz, model, groups) {
         const hv = hsv(rgb565(p.C[i]));
         if (p.C[i] === 47234 || (!hasTailRed && (hv[0] < 16 || hv[0] > 344) && hv[1] > 0.55 && hv[2] > 0.22)) cls[i] = 'tail';
         // v1.4.19: the police / ambulance roof lights (exactly 543, bright blue): they flash with the siren
-        else if (p.C[i] === 543 && /^(policia|ambulancia)/.test(model.id)) cls[i] = 'beacon';
+        else if (p.C[i] === 543 && /^(policia|ambulancia|bomberos)/.test(model.id)) cls[i] = 'beacon';
       }
     }
     for (let t = 0; t < p.I.length; t += 3) {
@@ -720,7 +751,7 @@ function makeKenneyMesh(model, color) {
   const g = new THREE.Group();
   const body = new THREE.Group();
   g.add(body);
-  if (isLivery(model)) color = 0xf6f6f4;
+  if (isLivery(model)) color = liveryColor(model);
   const paint = new THREE.MeshStandardMaterial({ vertexColors: true, color, roughness: 0.3, metalness: 0.5 });
   const { wheels, hl, tl, W, L, halfW } = makeKenneyMeshPart1(G, body, paint, model, g);
   makeKenneyMeshPart2(model, G, halfW, W, body, tl);
@@ -736,7 +767,7 @@ function makeKenneyMesh(model, color) {
 }
 /** (v1.1.7, code quality) part of makeKenneyMesh: company / service lettering on the box sides */
 function makeKenneyMeshPart4(model, G, body, L, halfW, W) {
-  if (model.id === 'taxi') {
+  if (model.id === 'taxi' && !model.lod) {
     {
       const y = model.H * 0.48;
       for (const side of [-1, 1]) {
@@ -773,7 +804,8 @@ function makeKenneyMeshPart4(model, G, body, L, halfW, W) {
     lamp.position.set(-0.35, G.ymax + 0.02, 0.6);
     body.add(lamp);
   }
-  if (model.id === 'basura' || model.id === 'grua' || model.id === 'daily' || model.id === 'sprinter' || model.id === 'canter') {
+  // v1.4.20: the own tow truck brings its lettering; the open-bodied Michu Singer has no box sides to letter
+  if (model.id === 'basura' || model.id === 'daily' || model.id === 'daily2' || model.id === 'sprinter') {
     // company / service lettering on the box sides
     const txt =
       model.id === 'basura'

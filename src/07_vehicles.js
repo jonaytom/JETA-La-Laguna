@@ -325,7 +325,7 @@ class Car {
     m.g.userData.noMerge = true;
     ACTORS.set(m.g, { r: 360, dr: 70, thr: 0.3 }); // v0.77: a car you can drive is never fused (05w_optimiza.js); v1.0.0: not drawn past 360 m
     if (pooled) {
-      if (m.paint && !isLivery(model)) m.paint.color.set(this.color); // v1.4.19: police (3 models), ambulance and taxi keep their livery
+      if (m.paint && !isLivery(model)) m.paint.color.set(this.color); // v1.4.19: police (3 models), ambulance, taxis, fire engine and tow truck keep their livery
       m.g.visible = true;
       this.rider = pooled.rider || null;
       if (this.rider) this.rider.root.visible = false;
@@ -1234,7 +1234,7 @@ function buildParkedPart1() {
             z = z1 + dz * s + dx * off * side;
           if (COL.nearSeg(x, z, 1.3) || onBigRoad(x, z) || onFootpath(x, z)) continue; // v0.99.5 (Jonay): never on the motorway, its slip roads or the Vía de Ronda
           const h = Math.atan2(dx, dz) + (side < 0 ? Math.PI : 0);
-          const mdl = KGEO ? pickModel((m) => m.phys !== 'truck' && m.phys !== 'moto') : null;
+          const mdl = KGEO ? pickModel((m) => m.phys !== 'truck' && m.phys !== 'moto' && m.phys !== 'taxi') : null;
           PARKED.slots.push({ x, z, h, type: mdl ? mdl.id : pick(types), color: pickColor(), alive: true });
         }
     }
@@ -1245,7 +1245,7 @@ function buildParkedPart1() {
     for (const s of PARKED.slots)
       if (!VMODELS[s.type]) {
         const m = modelForType(s.type);
-        s.type = m ? m.id : 'polo';
+        s.type = m ? m.id : 'helado';
       }
   return { lt };
 }
