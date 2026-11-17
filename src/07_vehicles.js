@@ -325,7 +325,7 @@ class Car {
     m.g.userData.noMerge = true;
     ACTORS.set(m.g, { r: 360, dr: 70, thr: 0.3 }); // v0.77: a car you can drive is never fused (05w_optimiza.js); v1.0.0: not drawn past 360 m
     if (pooled) {
-      if (m.paint && !['taxi', 'policia', 'ambulancia'].includes(model.id)) m.paint.color.set(this.color);
+      if (m.paint && !isLivery(model)) m.paint.color.set(this.color); // v1.4.19: police (3 models), ambulance and taxi keep their livery
       m.g.visible = true;
       this.rider = pooled.rider || null;
       if (this.rider) this.rider.root.visible = false;
@@ -1169,6 +1169,8 @@ function buildParkedPart2() {
     if (G.rest) push(G.rest, 0);
     if (G.glass) push(G.glass, 0, glassC);
     if (G.tail) push(G.tail, 0); // v1.4.16: our own models' tail lights (their own red faces)
+    if (G.beaconL) push(G.beaconL, 0); // v1.4.19: the roof lights of our police cars and ambulance
+    if (G.beaconR) push(G.beaconR, 0);
     const wr = (G.wheels[0] && G.wheels[0].y) || 0.33;
     const tire = new THREE.Color(0x1a1a1a);
     for (const w of G.wheels) {

@@ -109,6 +109,19 @@ traficc|Farm Traficc|Furgoneta|traficc|van|5.05|2.032|1.958|3
 traficcL|Farm Traficc|Furgoneta|traficc-lejos|van|5.05|2.032|1.958|0
 seta128|Seta 128|Urbano clásico|seta128|compact|3.595|1.527|1.37|1
 seta128L|Seta 128|Urbano clásico|seta128-lejos|compact|3.595|1.527|1.37|0
+# v1.4.19 (Jonay, 17-nov): Fita Triplon, Totuya Hilos y Niza Navarra en lugar de los de Kenney (mismo peso); la policía (3 modelos: Seta Pantera, Niza Queguay y Ole Corsario) y la ambulancia (Farm Traficc), propios: no se tiñen, traen sus vinilos
+triplon|Fita Triplon|Furgoneta|triplon|van|4.756|1.832|1.845|2
+triplonL|Fita Triplon|Furgoneta|triplon-lejos|van|4.756|1.832|1.845|0
+hilos|Totuya Hilos|Pick-up|hilos|suv|5.33|1.855|1.815|4
+hilosL|Totuya Hilos|Pick-up|hilos-lejos|suv|5.33|1.855|1.815|0
+navarra|Niza Navarra|Pick-up|navarra|suv|5.33|1.85|1.805|2
+navarraL|Niza Navarra|Pick-up|navarra-lejos|suv|5.33|1.85|1.805|0
+policiaL|Policía Local|Patrulla|polpantera-lejos|police|4.549|1.816|1.459|0
+policia2|Policía Local|Patrulla|polqueguay|police|4.425|1.835|1.625|0
+policia2L|Policía Local|Patrulla|polqueguay-lejos|police|4.425|1.835|1.625|0
+policia3|Policía Local|Patrulla|polcorsario|police|4.06|1.765|1.433|0
+policia3L|Policía Local|Patrulla|polcorsario-lejos|police|4.06|1.765|1.433|0
+ambulanciaL|Ambulancia|Emergencias|ambtraficc-lejos|truck|5.05|2.032|1.958|0
 f500|Fiao Quinientitos|Urbano|sedan|compact|3.57|1.63|1.49|0
 # compactos / berlinas
 leon|Butaca Leona|Compacto|hatchback-sports|sedan|4.28|1.8|1.46|0
@@ -141,24 +154,24 @@ kangoo|Reinona Canguro|Furgoneta|van|van|4.28|1.83|1.84|0
 berlingo|Limonero Berlinga|Furgoneta|van|van|4.4|1.85|1.84|0
 partner|Pijó Compadre|Furgoneta|van|van|4.4|1.85|1.84|0
 caddy|Guagüen Cadi|Furgoneta|van|van|4.5|1.86|1.82|0
-doblo|Fiao Doblón|Furgoneta|van|van|4.39|1.83|1.85|2
+doblo|Fiao Doblón|Furgoneta|van|van|4.39|1.83|1.85|0
 transit|Fardo Tránsito|Furgoneta|van|van|4.97|1.99|1.98|0
 vito|Mercadillo Vitó|Furgoneta|van|van|5.14|1.93|1.91|0
 # pick-ups
-hilux|Tagoror Jailux|Pick-up|truck|suv|5.33|1.86|1.82|4
-navara|Nisperero Navajo|Pick-up|truck|suv|5.26|1.85|1.8|2
+hilux|Tagoror Jailux|Pick-up|truck|suv|5.33|1.86|1.82|0
+navara|Nisperero Navajo|Pick-up|truck|suv|5.26|1.85|1.8|0
 # camiones
 daily|Burrero Diario|Camión|delivery|truck|6.5|2.0|2.8|2
 canter|Mojo Bichi Cantero|Camión|delivery|truck|6.0|1.9|2.6|2
 sprinter|Mercadillo Esprínter|Furgón|delivery|truck|5.93|2.02|2.7|2
 grua|Grúas Ande Pepe|Grúa|delivery-flat|truck|6.5|2.1|2.4|1
 basura|Recogida Municipal|Camión de basura|garbage-truck|truck|7.5|2.5|3.2|1
-ambulancia|Ambulancia|Emergencias|ambulance|truck|5.9|2.1|2.6|0.6
+ambulancia|Ambulancia|Emergencias|ambtraficc|truck|5.05|2.032|1.958|0.6
 bomberos|Bomberos|Emergencias|firetruck|truck|8.0|2.5|3.2|0.3
 tractor|Tractor Garañón|Agrícola|tractor|truck|3.8|1.9|2.6|0
 # servicio público y especiales (no salen en el sorteo general)
 taxi|Taxi Lagunero|Taxi|taxi|taxi|4.55|1.76|1.49|0
-policia|Policía Local|Patrulla|police|police|4.6|1.85|1.5|0
+policia|Policía Local|Patrulla|polpantera|police|4.549|1.816|1.459|0
 guancheGT|JTM H4|Deportivo|h4|sport|4.783|1.852|1.442|0
 guancheGTL|JTM H4|Deportivo|h4-lejos|sport|4.783|1.852|1.442|0
 # motos y ciclomotores (Canarias: el scooter manda)
@@ -187,6 +200,9 @@ VMODELS_RAW.forEach(
 // v1.4.3: our own models (Blender, assets/modelos/): the light version for far parked cars, and where the tail lights go
 // v1.4.3/v1.4.4: our own models (Blender): the light version for far parked cars, and where the tail lights are
 // (half width, height, already at the game's 0.95 scale)
+// v1.4.19: the bases of our own models: their paint is exactly the «Pintura» colour (not every similar blue: the police
+// vinyls and lights are blue too)
+const OWN_BASES = new Set();
 for (const [id, x, y] of [
   ['troceen', 0.62, 1.04],
   ['troceenC44', 0.74, 0.98],
@@ -232,11 +248,22 @@ for (const [id, x, y] of [
   ['compi', 0.84, 0.93],
   ['cassi', 0.8, 0.9],
   ['traficc', 0.94, 0.9],
-  ['seta128', 0.62, 0.68]
+  ['seta128', 0.62, 0.68],
+  ['triplon', 0.84, 1.09],
+  ['hilos', 0.86, 0.97],
+  ['navarra', 0.81, 0.97],
+  ['policia', 0.73, 0.92],
+  ['policia2', 0.75, 1.07],
+  ['policia3', 0.73, 0.75],
+  ['ambulancia', 0.95, 0.9]
 ]) {
   VMODELS[id].lod = id + 'L';
   VMODELS[id].tail = VMODELS[id + 'L'].tail = [x * CAR_SCALE, y * CAR_SCALE];
+  OWN_BASES.add(VMODELS[id].base);
+  OWN_BASES.add(VMODELS[id + 'L'].base);
 }
+// v1.4.19: the police and the ambulance keep their own colours and vinyls (white body, never the random paint)
+const isLivery = (m) => !!m && /^(taxi|policia\d*|ambulancia)$/.test(m.id);
 const VTYPES2 = {
   truck: { name: 'Camión', L: 6.5, W: 2.1, H: 2.8, maxV: 30, acc: 5, grip: 6, mass: 3, prof: 'van' },
   moto: { name: 'Moto', L: 2.0, W: 0.8, H: 1.1, maxV: 36, acc: 12, grip: 9, mass: 0.5, prof: 'sedan' }
@@ -283,7 +310,7 @@ function pickModel(filter) {
 // which physics type a legacy type string maps to when picking a model
 function modelForType(type) {
   if (type === 'taxi') return VMODELS.taxi;
-  if (type === 'police') return VMODELS.policia;
+  if (type === 'police') return pick([VMODELS.policia, VMODELS.policia2, VMODELS.policia3].filter(Boolean)) || VMODELS.policia; // v1.4.19: 3 models
   if (type === 'sport') return VMODELS.guancheGT;
   if (type === 'bus') return null;
   if (type === 'moto') return pickModel((m) => m.phys === 'moto');
@@ -480,7 +507,7 @@ function paintRef(base) {
       const c = rgb565(k),
         h = hsv(c);
       if (h[1] > 0.35 && h[2] > 0.3) {
-        ref = { h: h[0], l: lum(c) };
+        ref = { h: h[0], l: lum(c), k, own: OWN_BASES.has(base) };
         break;
       }
     }
@@ -497,7 +524,9 @@ function classify0(base, k) {
     ref = base === 'wheel' ? null : paintRef(base);
   // glass: light, cool, low saturation (Kenney windows are pale blue)
   if ((c[2] > 0.9 && c[1] > 0.85 && c[0] > 0.75 && c[0] < 0.88) || (lum(c) > 0.78 && c[2] - c[0] > 0.035 && h[1] < 0.16)) return ['glass', c];
-  if (ref && !ref.grey && h[1] > 0.25 && Math.min(Math.abs(h[0] - ref.h), 360 - Math.abs(h[0] - ref.h)) < 22)
+  if (ref && ref.own) {
+    if (k === ref.k) return ['paint', [lum(c) / ref.l, lum(c) / ref.l, lum(c) / ref.l]];
+  } else if (ref && !ref.grey && h[1] > 0.25 && Math.min(Math.abs(h[0] - ref.h), 360 - Math.abs(h[0] - ref.h)) < 22)
     return ['paint', [lum(c) / ref.l, lum(c) / ref.l, lum(c) / ref.l]];
   if (ref && ref.grey && h[1] < 0.22 && lum(c) > ref.l[0] && lum(c) < ref.l[1]) return ['paint', [lum(c) / 0.45, lum(c) / 0.45, lum(c) / 0.45]];
   // de-cartoon the purple-ish greys and keep the rest
@@ -556,7 +585,7 @@ function modelGeometry(model) {
     sy = model.H / kH,
     sz = model.L / kL;
   const zc = (bb[1][2] + bb[0][2]) / 2;
-  const groups = { paint: [], glass: [], rest: [], tail: [] };
+  const groups = { paint: [], glass: [], rest: [], tail: [], beacon: [] };
   const wheels = [];
   modelGeometryPart1(sy, sx, K, wheels, zc, sz, model, groups);
   const mk = (arr) => {
@@ -593,8 +622,25 @@ function modelGeometry(model) {
     }
     groups.tail = keep;
   }
-  const out = { paint: mk(groups.paint), glass: mk(groups.glass), rest: mk(groups.rest), tail: mk(groups.tail), wheels, zmin, ymax };
-  for (const g of [out.paint, out.glass, out.rest, out.tail, ...wheels.map((w) => w.geo)]) if (g) g.userData.shared = true;
+  // the roof lights, left and right (they flash in turn)
+  const bl = [],
+    br = [];
+  for (let i = 0; i + 2 < groups.beacon.length; i += 3) {
+    const t = groups.beacon.slice(i, i + 3);
+    (t[0][0] + t[1][0] + t[2][0] < 0 ? bl : br).push(...t);
+  }
+  const out = {
+    paint: mk(groups.paint),
+    glass: mk(groups.glass),
+    rest: mk(groups.rest),
+    tail: mk(groups.tail),
+    beaconL: mk(bl),
+    beaconR: mk(br),
+    wheels,
+    zmin,
+    ymax
+  };
+  for (const g of [out.paint, out.glass, out.rest, out.tail, out.beaconL, out.beaconR, ...wheels.map((w) => w.geo)]) if (g) g.userData.shared = true;
   return (VGEO[model.id] = out);
 }
 /** (v1.1.7, code quality) part of modelGeometry: one geometry per wheel, centred on its own node (rotation axis = x) */
@@ -630,6 +676,7 @@ function modelGeometryPart1(sy, sx, K, wheels, zc, sz, model, groups) {
     }
     // body parts: split triangles by material group, bake transform + scale
     const n = p.P.length / 3;
+    const hasTailRed = model.tail && p.C.includes(47234);
     const cls = new Array(n);
     const cols = new Array(n);
     for (let i = 0; i < n; i++) {
@@ -640,8 +687,11 @@ function modelGeometryPart1(sy, sx, K, wheels, zc, sz, model, groups) {
       // (the ones with 'tail') bring their tail lights in saturated red: those faces go to their own group (kept at the rear
       // below), which lights up when braking instead of the two boxes Kenney's cars get
       if (model.tail && k === 'rest') {
+        // v1.4.19: the tail-light red of our models is exactly 47234 (an ambulance's red vinyl is not a light)
         const hv = hsv(rgb565(p.C[i]));
-        if ((hv[0] < 16 || hv[0] > 344) && hv[1] > 0.55 && hv[2] > 0.22) cls[i] = 'tail';
+        if (p.C[i] === 47234 || (!hasTailRed && (hv[0] < 16 || hv[0] > 344) && hv[1] > 0.55 && hv[2] > 0.22)) cls[i] = 'tail';
+        // v1.4.19: the police / ambulance roof lights (exactly 543, bright blue): they flash with the siren
+        else if (p.C[i] === 543 && /^(policia|ambulancia)/.test(model.id)) cls[i] = 'beacon';
       }
     }
     for (let t = 0; t < p.I.length; t += 3) {
@@ -670,7 +720,7 @@ function makeKenneyMesh(model, color) {
   const g = new THREE.Group();
   const body = new THREE.Group();
   g.add(body);
-  if (model.id === 'taxi' || model.id === 'policia' || model.id === 'ambulancia') color = 0xf6f6f4;
+  if (isLivery(model)) color = 0xf6f6f4;
   const paint = new THREE.MeshStandardMaterial({ vertexColors: true, color, roughness: 0.3, metalness: 0.5 });
   const { wheels, hl, tl, W, L, halfW } = makeKenneyMeshPart1(G, body, paint, model, g);
   makeKenneyMeshPart2(model, G, halfW, W, body, tl);
@@ -742,7 +792,14 @@ function makeKenneyMeshPart4(model, G, body, L, halfW, W) {
 /** (v1.1.7, code quality) part of makeKenneyMesh: livery stripes as ribbons that follow the side of the body */
 function makeKenneyMeshPart3(model, G, body, L, halfW) {
   let bar = null;
-  if (model.id === 'policia') {
+  if (G.beaconL || G.beaconR) {
+    // v1.4.19: our own police cars and ambulance bring their vinyls and roof lights: their lights flash, nothing is added
+    bar = new THREE.Group();
+    const L0 = G.beaconL || G.beaconR,
+      R0 = G.beaconR || G.beaconL;
+    bar.add(new THREE.Mesh(L0, policeBlue), new THREE.Mesh(R0, policeRed));
+    body.add(bar);
+  } else if (/^policia/.test(model.id)) {
     // livery stripes as ribbons that follow the side of the body
     const ribbon = (y0, y1, mat) => {
       const zs = [];

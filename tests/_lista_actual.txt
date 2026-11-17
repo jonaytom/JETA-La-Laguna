@@ -1,3 +1,4 @@
+prueba_1419.py
 prueba_1416.py
-prueba_misiones.py
-prueba_persecuciones.py
+prueba_arranque.py
+herramientas/foto_propios.py

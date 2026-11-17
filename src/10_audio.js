@@ -9,6 +9,7 @@ const AUDIO = (() => {
     skidG,
     sirenG,
     sirenOsc,
+    sirenF,
     ambG,
     noiseBuf;
   const A = { vol: 0.8 };
@@ -25,12 +26,13 @@ const AUDIO = (() => {
     const { lfo } = initPart1();
     lfo.type = 'square';
     const lg = ctx.createGain();
-    lg.gain.value = 180;
+    lg.gain.value = 120; // v1.4.19: two tones closer together (≈ 530 / 770 Hz, before 520 / 880)
     lfo.connect(lg);
     lg.connect(sirenOsc.frequency);
     const sf = ctx.createBiquadFilter();
     sf.type = 'lowpass';
-    sf.frequency.value = 1800;
+    sf.frequency.value = 1400;
+    sirenF = sf; // v1.4.19: duller the further away it is
     sirenG = ctx.createGain();
     sirenG.gain.value = 0;
     sirenOsc.connect(sf);
@@ -105,8 +107,8 @@ const AUDIO = (() => {
     sk.start();
     // siren
     sirenOsc = ctx.createOscillator();
-    sirenOsc.type = 'square';
-    sirenOsc.frequency.value = 700;
+    sirenOsc.type = 'triangle'; // v1.4.19 (Jonay: «el sonido de los policías es demasiado molesto»): softer than a square wave
+    sirenOsc.frequency.value = 650;
     const lfo = ctx.createOscillator();
     lfo.frequency.value = 0.9;
     return { lfo };
@@ -327,7 +329,12 @@ const AUDIO = (() => {
       }
       let sd = 1e9;
       for (const c of CARS) if (c.siren) sd = Math.min(sd, Math.hypot(c.x - PLAYER.x, c.z - PLAYER.z));
-      sirenG.gain.setTargetAtTime(sd < 400 ? clamp(0.09 * (1 - sd / 400), 0, 0.09) : 0, t, 0.1);
+      // v1.4.19 (Jonay: «debería ser más suave y sonar más bajo cuanto más lejos esté la policía»): quieter (0.035 at
+      // most, before 0.09) and fading with distance like a real sound (half at 25 m, a tenth at ~90 m, silent past 450 m),
+      // and muffled when far
+      const sv = sd < 450 ? (0.035 / (1 + Math.pow(sd / 25, 1.5))) * clamp((450 - sd) / 80, 0, 1) : 0;
+      sirenG.gain.setTargetAtTime(sv, t, 0.25);
+      if (sirenF) sirenF.frequency.setTargetAtTime(sd < 450 ? 500 + 900 / (1 + sd / 60) : 500, t, 0.3);
       ambG.gain.setTargetAtTime(0.035 + CARS.length * 0.0006, t, 0.5);
       // birds, traffic, voices, bells: see 10d_ambience.js
     },

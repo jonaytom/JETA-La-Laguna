@@ -3,6 +3,22 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.19 — 2026-11-17 — Alpha 1.4.19: sirena más suave, policía y ambulancia propias, pick-ups y Fita Triplon
+- **Sirena** (Jonay: «el sonido de los policías es demasiado molesto... debería ser más suave y sonar más bajo cuanto más
+  lejos esté la policía»): onda triangular en vez de cuadrada, los dos tonos más juntos, mucho más baja (0,035 como
+  mucho; antes 0,09) y bajando con la distancia como un sonido de verdad (la mitad a 25 m, una décima a ~90 m, nada a
+  partir de 450 m); de lejos además suena apagada.
+- **Policía propia, 3 modelos** (Seta Pantera, Niza Queguay y Ole Corsario de la Policía Local): las patrullas salen de
+  uno de ellos al azar. **Ambulancia propia** (Farm Traficc). No se tiñen: chapa blanca con sus vinilos y rótulos del
+  modelo; las luces del techo son las del modelo y se encienden por turnos con la sirena. Ya no se les añaden las
+  franjas, el rótulo ni la barra de luces del juego.
+- La pintura que se tiñe en los coches propios es ahora exactamente el color «Pintura» del modelo (antes, cualquier azul
+  parecido: se habrían teñido también los vinilos y las luces de la policía).
+- **Fita Triplon** (Fiat Doblò Maxi), **Totuya Hilos** (Toyota Hilux) y **Niza Navarra** (Nissan Navara), en lugar del
+  Fiao Doblón, el Tagoror Jailux y el Nisperero Navajo de Kenney, saliendo igual que ellos. Ya son 52 coches propios.
+- Fuera de `kenney_cars.json` los modelos de Kenney que ya no se usan: policía, ambulancia, `sedan-sports` y `truck-flat`.
+- Prueba nueva `prueba_1419.py`.
+
 ## 1.4.18 — 2026-11-17 — Alpha 1.4.18: la huida de la farmacia va hacia el Ayuntamiento
 - **Atraco en la farmacia** (Jonay: «cambia también la de la farmacia, de modo que termine más cerca del ayuntamiento, que
   sería la siguiente»): el coche negro ya no huye hacia Las Gavias ni el ladrón corre por el camino de tierra hasta el

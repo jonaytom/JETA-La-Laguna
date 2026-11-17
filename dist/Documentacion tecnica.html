@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.18</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.19</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,23 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.4.19 — 2026-11-17 — Alpha 1.4.19: sirena más suave, policía y ambulancia propias, pick-ups y Fita Triplon</h2>
+<ul>
+<li><strong>Sirena</strong> (Jonay: «el sonido de los policías es demasiado molesto... debería ser más suave y sonar más bajo cuanto más
+  lejos esté la policía»): onda triangular en vez de cuadrada, los dos tonos más juntos, mucho más baja (0,035 como
+  mucho; antes 0,09) y bajando con la distancia como un sonido de verdad (la mitad a 25 m, una décima a ~90 m, nada a
+  partir de 450 m); de lejos además suena apagada.</li>
+<li><strong>Policía propia, 3 modelos</strong> (Seta Pantera, Niza Queguay y Ole Corsario de la Policía Local): las patrullas salen de
+  uno de ellos al azar. <strong>Ambulancia propia</strong> (Farm Traficc). No se tiñen: chapa blanca con sus vinilos y rótulos del
+  modelo; las luces del techo son las del modelo y se encienden por turnos con la sirena. Ya no se les añaden las
+  franjas, el rótulo ni la barra de luces del juego.</li>
+<li>La pintura que se tiñe en los coches propios es ahora exactamente el color «Pintura» del modelo (antes, cualquier azul
+  parecido: se habrían teñido también los vinilos y las luces de la policía).</li>
+<li><strong>Fita Triplon</strong> (Fiat Doblò Maxi), <strong>Totuya Hilos</strong> (Toyota Hilux) y <strong>Niza Navarra</strong> (Nissan Navara), en lugar del
+  Fiao Doblón, el Tagoror Jailux y el Nisperero Navajo de Kenney, saliendo igual que ellos. Ya son 52 coches propios.</li>
+<li>Fuera de <code>kenney_cars.json</code> los modelos de Kenney que ya no se usan: policía, ambulancia, <code>sedan-sports</code> y <code>truck-flat</code>.</li>
+<li>Prueba nueva <code>prueba_1419.py</code>.</li>
+</ul>
 <h2>1.4.18 — 2026-11-17 — Alpha 1.4.18: la huida de la farmacia va hacia el Ayuntamiento</h2>
 <ul>
 <li><strong>Atraco en la farmacia</strong> (Jonay: «cambia también la de la farmacia, de modo que termine más cerca del ayuntamiento, que
