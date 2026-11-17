@@ -38,7 +38,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 - [ ] ⚡ **Troceen C33 con el paso de rueda nuevo** (11-nov): es el único coche propio que no se ha rehecho con el arreglo de los «dientes» del paso de rueda (su receta está en `troceen_c33.blend`, no en `otros.py`). Pasarlo al generador actual y volver a exportarlo.
 - [ ] ◐ **Revisar con Jonay los 7 coches de la v1.4.8** (Piki Crocante rehecho; Totuya O Algo, Seta Gomera, Pancho Teypan, Pancho Chayan, Ole Corsario, Ole Mocco): hechos con la silueta de las fotos (`auto/coches7.py`). Lo más flojo: el Chayan sale bajo y alargado; el morro del Corsario y del Gomera, largo; el negro de la zaga del O Algo y del techo del Mocco solo está en el techo.
 - [~] ● v1.4.3–1.4.4 (Troceen C33, C44; Totuya Carlota, Yaiza Cross; Guanchazen T-Rex, D.I 55; JTM Capítulo 3, H4; Yoos Reniego, Cartabon; v1.4.5 Antonias Tipo E, LTG Scupe; Fierilla 440; v1.4.7 Piki Crocante; v1.4.8 Totuya O Algo, Seta Gomera, Pancho Teypan, Pancho Chayan, Ole Corsario, Ole Mocco) **Ir sustituyendo los coches de Kenney por modelos propios** (Jonay, 11-nov: «iremos sustituyendo poco a poco a los actuales con los nuestros»; «ve eliminando un modelo de los actuales por cada modelo añadido»; «lo más importante es recrear la silueta y los frontales y sus ópticas delanteras»): generador en `E:\Claude\GTA La Laguna\Blender\coche\` (`generador.py` + `otros.py`/`c44.py` con los datos de cada coche + `morros.py` + `exportar.py`); fotos de referencia de Jonay en el chat. Falta: segunda pasada a traseras y pilotos; más modelos según mande Jonay.
-- [ ] ● **Camión de la basura propio** (último de Kenney; v1.4.20): Recogida Municipal (id `basura`), camión compactador del Ayuntamiento, librea fija (blanco/verde con rótulo AYTO. LA LAGUNA). Pedírselo al creador de coches.
 
 ### Minijuegos: controles, pausa y sonido
 
@@ -965,6 +964,9 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   - Por comprobar: si el Artifact deja abrir conexiones WebRTC y al servidor de emparejamiento (si no, se juega con el HTML descargado); servidor TURN para las redes que no conectan directo.
 
 ## Hecho
+
+- [x] v1.4.21 **Camión de la basura y guagua propios: ya no queda nada de Kenney** (Jonay, 17-nov).
+- [x] v1.4.20 auditoría APTO CON AVISOS: +5 % de geometría en RAM (59,8 → 62,8 MB) por los camiones, bomberos y taxis propios, más detallados que los de Kenney. Aceptado.
 
 - [x] v1.4.20 **Fuera Kenney (salvo la basura): camiones, furgones, grúa, bomberos y 3 taxis propios; pesos para ver todos los modelos** (Jonay, 17-nov).
 

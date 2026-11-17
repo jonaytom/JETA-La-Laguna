@@ -25,7 +25,7 @@ async def run(pg):
     chk('GRUA_AMARILLA', c['grua']['paint'] == 0xf2b21a)
     chk('CAMIONES_SE_TINEN', all(c[k]['paint'] == 0xff2200 for k in ('daily', 'daily2', 'canter', 'sprinter', 'clip')))
     chk('IDS_VIEJOS', r['alias'] == ['clip', 'traficc', 'vivita', 'carlota', 'helado', 'hilos'])
-    chk('SOLO_BASURA_DE_KENNEY', r['kenney'] == ['basura'])
+    chk('SOLO_BASURA_DE_KENNEY', r['kenney'] in (['basura'], []))  # v1.4.21: ni la basura
     chk('VARIOS_TAXIS', len(set(r['taxis']) & {'taxi', 'taxi2', 'taxi3'}) >= 2)
     if 'nunca' in r: chk('TODOS_SE_VEN_CIRCULANDO', not r['nunca'])
     else: print('(trafficModel no accesible: no se comprueba que salgan todos)')

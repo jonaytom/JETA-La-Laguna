@@ -2,7 +2,7 @@
 # cuatro colores, y hace fotos de conjunto y de cerca de cada uno; cuenta cuántos hay aparcados de cada modelo.
 # Fotos en shots/propios_<n>.jpg. Uso: herramientas/foto_propios.py
 import base64, json
-MODELOS = ['troceen', 'troceenC44', 'carlota', 'yaiza', 'trex', 'di55', 'jtm3', 'guancheGT', 'reniego', 'cartabon', 'tipoe', 'ltg', 'fierilla', 'piki', 'oalgo', 'gomera', 'teypan', 'chayan', 'olecorsa', 'mocco', 'tyaiza', 'helado', 'dsendero', 'beluga', 'vivita', 'newton3', 'cactus', 'clip', 'nano', 'pimbo', 'torson', 'queguay', 'mphs', 'vengator', 'ficus', 'mepierdo', 'padelgti', 'pantera', 'hubli', 'reventon', 'koala', 'compi', 'cassi', 'traficc', 'seta128', 'triplon', 'hilos', 'navarra', 'policia', 'policia2', 'policia3', 'ambulancia', 'daily', 'daily2', 'canter', 'sprinter', 'grua', 'bomberos', 'taxi', 'taxi2', 'taxi3']
+MODELOS = ['troceen', 'troceenC44', 'carlota', 'yaiza', 'trex', 'di55', 'jtm3', 'guancheGT', 'reniego', 'cartabon', 'tipoe', 'ltg', 'fierilla', 'piki', 'oalgo', 'gomera', 'teypan', 'chayan', 'olecorsa', 'mocco', 'tyaiza', 'helado', 'dsendero', 'beluga', 'vivita', 'newton3', 'cactus', 'clip', 'nano', 'pimbo', 'torson', 'queguay', 'mphs', 'vengator', 'ficus', 'mepierdo', 'padelgti', 'pantera', 'hubli', 'reventon', 'koala', 'compi', 'cassi', 'traficc', 'seta128', 'triplon', 'hilos', 'navarra', 'policia', 'policia2', 'policia3', 'ambulancia', 'daily', 'daily2', 'canter', 'sprinter', 'grua', 'bomberos', 'taxi', 'taxi2', 'taxi3', 'basura', 'guagua']
 COLORES = [0xf2f2f2, 0x1f4e8c, 0xb3261e, 0x1b1b1b]
 async def snap(pg, name):
     open('shots/propios_%s.jpg' % name, 'wb').write(base64.b64decode((await pg.evaluate("window.__snap()")).split(',')[1]))

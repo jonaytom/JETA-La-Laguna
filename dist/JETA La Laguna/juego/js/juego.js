@@ -27145,7 +27145,11 @@ ambulanciaL|Ambulancia|Emergencias|ambtraficc-lejos|truck|5.05|2.032|1.958|0
 # furgonetas
 # pick-ups
 # camiones
-basura|Recogida Municipal|Camión de basura|garbage-truck|truck|7.5|2.5|3.2|2
+basura|Antonias Basurón|Camión de basura|basura|truck|7.6|2.5|3.05|2
+basuraL|Antonias Basurón|Camión de basura|basura-lejos|truck|7.6|2.5|3.05|0
+# v1.4.21 (Jonay, 17-nov: «ya hay camión de basura y guagua»): las guaguas, propias (antes hechas con cajas por el juego)
+guagua|Escania Guagua|Guagua|guagua|bus|12|2.55|3.3|0
+guaguaL|Escania Guagua|Guagua|guagua-lejos|bus|12|2.55|3.3|0
 ambulancia|Ambulancia|Emergencias|ambtraficc|truck|5.05|2.032|1.958|1.5
 # servicio público y especiales (no salen en el sorteo general)
 policia|Policía Local|Patrulla|polpantera|police|4.549|1.816|1.459|0
@@ -27241,7 +27245,9 @@ for (const [id, x, y] of [
   ['bomberos', 1.15, 0.79],
   ['taxi', 0.77, 0.9],
   ['taxi2', 0.76, 0.97],
-  ['taxi3', 0.75, 0.87]
+  ['taxi3', 0.75, 0.87],
+  ['basura', 1.0, 0.95],
+  ['guagua', 0.95, 0.9]
 ]) {
   VMODELS[id].lod = id + 'L';
   VMODELS[id].tail = VMODELS[id + 'L'].tail = [x * CAR_SCALE, y * CAR_SCALE];
@@ -27250,8 +27256,8 @@ for (const [id, x, y] of [
 }
 // v1.4.19: the police and the ambulance keep their own colours and vinyls (white body, never the random paint)
 // v1.4.20: also the taxis (white), the fire engine (red) and the tow truck (yellow)
-const LIVERY = { bomberos: 0xb3141c, grua: 0xf2b21a };
-const isLivery = (m) => !!m && /^(taxi\d*|policia\d*|ambulancia|bomberos|grua)$/.test(m.id) && !!m.lod;
+const LIVERY = { bomberos: 0xb3141c, grua: 0xf2b21a, guagua: 0x1f8a4c }; // v1.4.21: the guagua in TITSA green, the rubbish lorry white
+const isLivery = (m) => !!m && /^(taxi\d*|policia\d*|ambulancia|bomberos|grua|basura|guagua)$/.test(m.id) && !!m.lod;
 const liveryColor = (m) => LIVERY[m.id] || 0xf6f6f4;
 // v1.4.20: the ids of the old Kenney models still answer (saved games, story cars: s2Car('clio'), 'transit', 'vito'…), with
 // the own model closest to them; not enumerable, so they never count twice when picking at random
@@ -27352,7 +27358,7 @@ function modelForType(type) {
   if (type === 'taxi') return pickModel((m) => m.phys === 'taxi') || VMODELS.taxi; // v1.4.20: 3 taxis
   if (type === 'police') return pick([VMODELS.policia, VMODELS.policia2, VMODELS.policia3].filter(Boolean)) || VMODELS.policia; // v1.4.19: 3 models
   if (type === 'sport') return VMODELS.guancheGT;
-  if (type === 'bus') return null;
+  if (type === 'bus') return VMODELS.guagua || null; // v1.4.21: our own guagua (before: the boxes of makeCarMesh)
   if (type === 'moto') return pickModel((m) => m.phys === 'moto');
   if (type === 'truck') return pickModel((m) => m.phys === 'truck' && m.id !== 'bomberos' && m.id !== 'ambulancia');
   return pickModel((m) => m.phys === type);

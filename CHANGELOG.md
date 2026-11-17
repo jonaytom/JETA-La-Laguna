@@ -3,6 +3,14 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.21 — 2026-11-17 — Alpha 1.4.21: camión de la basura y guagua propios; ni un modelo de Kenney
+- **Antonias Basurón** (camión de basura de carga trasera): blanco fijo con el rótulo AYTO. LA LAGUNA.
+- **Escania Guagua** (Scania Citywide de 12 m, como las de TITSA): en verde TITSA fijo. Es la de todo el juego: el
+  tráfico, las del Intercambiador y las de las misiones («La guagua de la broma», «Escolta a la guagua del Romero»).
+  Antes las guaguas eran cajas hechas por el juego.
+- Fuera el último modelo de Kenney (`garbage-truck`): todos los vehículos son ya propios.
+- Prueba nueva `prueba_1421.py`.
+
 ## 1.4.20 — 2026-11-17 — Alpha 1.4.20: adiós a Kenney (camiones, grúa, bomberos y taxis propios) y pesos para verlos todos
 - **Camiones y furgones propios**: Ivizco Nightly (Iveco Daily de caja) e Ivizco Evening (Daily furgón), Michu Singer
   (Canter de caja abierta) y Antonias Runner (Sprinter). Se tiñen como los coches; los furgones y la caja llevan los
