@@ -704,16 +704,20 @@ const HUD = (() => {
     {
       const ap = MISSIONS.aheadPath();
       if (ap) {
+        // v1.4.16 (Jonay, 16-nov: «el siguiente se ve de un amarillo muy tenue»): a strong yellow with a dark edge, still
+        // dashed so it isn't taken for the route to the current control
         mx.save();
-        mx.globalAlpha = 0.55;
-        mx.strokeStyle = '#f5d98a';
-        mx.lineWidth = 5 * s * 1.6;
         mx.setLineDash([9 * s * 1.6, 6 * s * 1.6]);
         mx.beginPath();
         for (let i = 0; i < ap.length; i += 2) i ? mx.lineTo(ap[i], ap[i + 1]) : mx.moveTo(ap[i], ap[i + 1]);
+        mx.strokeStyle = 'rgba(0,0,0,.6)';
+        mx.lineWidth = 7.5 * s * 1.6;
+        mx.stroke();
+        mx.strokeStyle = '#ffd23f';
+        mx.lineWidth = 5 * s * 1.6;
         mx.stroke();
         mx.restore();
-        for (const q of MISSIONS.aheadPts() || []) blip(q[0], q[1], '#f5d98a', 6 * s * 1.6);
+        for (const q of MISSIONS.aheadPts() || []) blip(q[0], q[1], '#ffd23f', 6 * s * 1.6);
       }
     }
     // tram
@@ -959,7 +963,7 @@ const BIGMAP = (() => {
         x.stroke();
       } else dot(m[0], m[1], m[2] || '#f5b72e', 8);
     }
-    for (const q of MISSIONS.aheadPts() || []) dot(q[0], q[1], '#f5d98a', 6);
+    for (const q of MISSIONS.aheadPts() || []) dot(q[0], q[1], '#ffd23f', 6);
     if (GPS.target) dot(GPS.target[0], GPS.target[1], '#e040fb', 8);
     x.save();
     x.translate(PLAYER.x, PLAYER.z);
@@ -1052,12 +1056,14 @@ const BIGMAP = (() => {
       const ap = MISSIONS.aheadPath();
       if (ap) {
         x.save();
-        x.globalAlpha = 0.6;
-        x.strokeStyle = '#f5d98a';
-        x.lineWidth = (4 / k) * devicePixelRatio;
         x.setLineDash([(10 / k) * devicePixelRatio, (7 / k) * devicePixelRatio]);
         x.beginPath();
         for (let i = 0; i < ap.length; i += 2) i ? x.lineTo(ap[i], ap[i + 1]) : x.moveTo(ap[i], ap[i + 1]);
+        x.strokeStyle = 'rgba(0,0,0,.6)';
+        x.lineWidth = (6.5 / k) * devicePixelRatio;
+        x.stroke();
+        x.strokeStyle = '#ffd23f'; // v1.4.16: as on the minimap
+        x.lineWidth = (4 / k) * devicePixelRatio;
         x.stroke();
         x.restore();
       }

@@ -199,15 +199,8 @@ function copaInitPart1() {
   const fin = COURTS.find((c) => c.sport === 'fut' && c.final);
   const ob = obispoCampo();
   const pub = COURTS.filter((c) => c.sport === 'fut' && !c.final && c !== ob && c.kind !== 'fs').sort((a, b) => a.dist - b.dist);
-  const chosen = [];
-  for (const sp of [450, 300, 150, 0]) {
-    for (const c of pub) {
-      if (chosen.length >= 4) break;
-      if (chosen.includes(c)) continue;
-      if (chosen.every((q) => Math.hypot(q.cx - c.cx, q.cz - c.cz) >= sp)) chosen.push(c);
-    }
-    if (chosen.length >= 4) break;
-  }
+  // v1.4.16: a chain of pitches, each the nearest to the previous (chainCourts, 12i_canchas.js)
+  const chosen = chainCourts(pub, [450, 300, 150, 0]);
   return { fin, chosen };
 }
 // the Obispo's pitch: the nearest real football field (11 or 7) you can walk onto, else any

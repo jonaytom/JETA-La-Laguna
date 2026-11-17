@@ -208,6 +208,55 @@ function safeSpot(x, z, clear = 0.7) {
       }
   return [x, z];
 }
+// v1.4.16 (Jonay, 16-nov: «el círculo del Blanco sale en una zona casi inaccesible»): a straight walk from (x1,z1) to
+// (x2,z2) with no wall, building, big step or tunnel deck in between
+function clearWalk(x1, z1, x2, z2) {
+  if (COL.raycast(x1, z1, x2, z2) < 0.999) return false;
+  const h0 = heightAt(x1, z1),
+    n = Math.ceil(Math.hypot(x2 - x1, z2 - z1) / 0.5);
+  for (let i = 1; i <= n; i++) {
+    const x = x1 + ((x2 - x1) * i) / n,
+      z = z1 + ((z2 - z1) * i) / n,
+      h = heightAt(x, z);
+    if (inAnyBuilding(x, z) || Math.abs(h - h0) > 1.2 || lowAt(x, z, h)) return false;
+  }
+  return true;
+}
+// a spot r m from (x,z) on open ground you can walk straight to, with a clear mission ring next to it (+ring, +ring)
+function reachNear(x, z, rs = [4, 5, 3.5, 6, 7, 8, 3], ring = 1.2) {
+  for (const r of rs)
+    for (let k = 0; k < 24; k++) {
+      const a = (k / 24) * Math.PI * 2,
+        px = x + Math.sin(a) * r,
+        pz = z + Math.cos(a) * r;
+      if (inAnyBuilding(px, pz) || COL.nearSeg(px, pz, 0.8) || onCarriageway(px, pz, 0.3) || lowAt(px, pz, heightAt(px, pz))) continue;
+      const rx = px + ring,
+        rz = pz + ring;
+      if (inAnyBuilding(rx, rz) || COL.nearSeg(rx, rz, 1.2) || onCarriageway(rx, rz, 0.3)) continue;
+      if (!clearWalk(x, z, px, pz) || !clearWalk(x, z, rx, rz)) continue;
+      return [px, pz];
+    }
+  return null;
+}
+// a pavement spot next to the nearest street (not a motorway, tunnel or bridge), on the side of (x,z), reachable from the street
+function kerbSpot(x, z) {
+  const rd = ROADSEG.nearest(x, z, (r) => r[0] <= 12 && !(r[3] & 6));
+  if (!rd) return safeSpot(x, z);
+  const w = DATA.R[rd.ri][2],
+    L = Math.hypot(rd.dx, rd.dz) || 1,
+    nx = -rd.dz / L,
+    nz = rd.dx / L,
+    side = (x - rd.x) * nx + (z - rd.z) * nz >= 0 ? 1 : -1;
+  for (const sd of [side, -side])
+    for (const o of [w / 2 + 1.6, w / 2 + 1.0, w / 2 + 2.4]) {
+      const px = rd.x + nx * sd * o,
+        pz = rd.z + nz * sd * o;
+      if (inAnyBuilding(px, pz) || COL.nearSeg(px, pz, 0.9) || onCarriageway(px, pz, 0.3) || lowAt(px, pz, heightAt(px, pz))) continue;
+      if (!clearWalk(rd.x, rd.z, px, pz)) continue;
+      return [px, pz];
+    }
+  return safeSpot(rd.x + nx * side * (w / 2 + 1.6), rd.z + nz * side * (w / 2 + 1.6));
+}
 // ============ STORY: Ayoze «El Chopa» vuelve al barrio ============
 // Ayoze «El Chopa» (por su narizota): listo, pero acabó preso por robar. Sale de la cárcel y quiere redimirse en La Laguna.
 // El Blanco es su amigo de la infancia de verdad (exmilitar, se le fue la cabeza, vive con sus padres, entiende de armas);
@@ -491,8 +540,13 @@ const MISSIONS = (() => {
     return tr;
   }
   function pass(title, money, keepIdx) {
+    const k = activeTrack;
     const tr = finish();
     if (!keepIdx) tr.idx++;
+    if (k) {
+      ENDS[k] = [PLAYER.x, PLAYER.z]; // v1.4.16: where this line's last mission ended
+      planMeet(k);
+    }
     PLAYER.money += money;
     setTimeout(() => {
       try {
@@ -545,7 +599,7 @@ const MISSIONS = (() => {
         exitCar();
       } catch (e) {}
     }
-    const sp = m.startPos();
+    const sp = startOf(k, m);
     const r = COL.resolve(sp[0], sp[1], 0.4);
     PLAYER.x = r.x;
     PLAYER.z = r.z;
@@ -1538,7 +1592,99 @@ const MISSIONS = (() => {
     const i = STORY.findIndex((m) => m.who === 'Don Yovoy Gofiérrez' || /farmacia/i.test(m.title));
     return TRACKS.story.done || (i >= 0 && TRACKS.story.idx >= i);
   };
+  // v1.4.16 (Jonay, 17-nov: «toca reasignar las misiones para que sean más próximas unas a otras y vayan terminando cerca
+  // de la siguiente... tras una carrera o persecución, la siguiente misión debería estar a no más de un km. Siempre en la
+  // línea que estemos tratando: la principal, la del obispo, etc.»): every line remembers where its last mission ended
+  // (ENDS); if its next one starts more than MEET_MAX m from there, whoever gives it comes to meet you on a pavement
+  // MEET_AT m away, on the way to their usual spot (MEET). Missions tied to a place keep it: fixedStart (the ceremony in
+  // the Ayuntamiento) and the Torneo / Copa matches (court).
+  const MEET_MAX = 1000,
+    MEET_AT = 400;
+  const ENDS = {},
+    MEET = {};
+  const NPC_KEYS = ['blanco', 'boca', 'coco', 'sastron', 'canarion', 'alcalde', 'secreta', 'obispo'];
+  function npcKeyOf(m) {
+    const w = m.who || '';
+    for (const k of NPC_KEYS) if (NPC[k] && NPC[k].name && NPC[k].name === w) return k;
+    if (/Blanco/.test(w)) return 'blanco';
+    if (/^Coco/.test(w)) return 'coco';
+    if (/Sastr[oó]n/.test(w)) return 'sastron';
+    if (/Boca Papa/.test(w)) return 'boca';
+    if (/Canari[oó]n/i.test(w)) return 'canarion';
+    if (/Gofi[eé]rrez/.test(w)) return 'alcalde';
+    if (/Tost[oó]n/.test(w)) return 'secreta';
+    if (/Obispo/i.test(w)) return 'obispo';
+    return null;
+  }
+  // the start of a mission as usual: if it is relative to its character and he is away (a previous meeting), as if he were home
+  function usualStart(m, n) {
+    const s = m.startPos();
+    if (n && n.away && n.home && Math.hypot(s[0] - n.x, s[1] - n.z) < 6) return [s[0] - n.x + n.home[0], s[1] - n.z + n.home[1]];
+    return s;
+  }
+  // where mission m would meet you if the last one ended at e (null: its usual start is near enough, or it is tied to a place)
+  function meetFor(m, e) {
+    if (m.fixedStart || m.court) return null;
+    const key = npcKeyOf(m),
+      n = key && NPC[key];
+    if (!n || !n.H) return null;
+    let s;
+    try {
+      s = usualStart(m, n);
+    } catch (er) {
+      return null;
+    }
+    const D = Math.hypot(s[0] - e[0], s[1] - e[1]);
+    if (D <= MEET_MAX) return null;
+    // the first of a few distances on the way whose pavement you can walk to (if you can walk to their usual spot at all):
+    // beside a fast road there is no pavement in the walking network
+    const onFoot = !!WALKG.route(e[0], e[1], s[0], s[1]);
+    let first = null;
+    for (const a of [MEET_AT, 600, 250, 800]) {
+      const f = a / D,
+        [x, z] = kerbSpot(e[0] + (s[0] - e[0]) * f, e[1] + (s[1] - e[1]) * f);
+      if (!first) first = { m, key, x, z };
+      if (!onFoot || WALKG.route(e[0], e[1], x, z)) return { m, key, x, z };
+    }
+    return first;
+  }
+  function planMeet(k) {
+    delete MEET[k];
+    const tr = TRACKS[k],
+      e = ENDS[k];
+    if (!tr || !e || tr.idx >= tr.list.length) return;
+    const mt = meetFor(tr.list[tr.idx], e);
+    if (mt) MEET[k] = mt;
+  }
+  const startOf = (k, m) => (MEET[k] && MEET[k].m === m ? [MEET[k].x, MEET[k].z] : m.startPos());
+  // characters where their next mission needs them: at the meeting spot (next to its ring) or back at their usual spot
+  function placeNPCs() {
+    if (active) return;
+    const want = {};
+    for (const k in MEET) {
+      const mt = MEET[k],
+        tr = TRACKS[k];
+      if (tr && tr.list[tr.idx] === mt.m && !want[mt.key]) want[mt.key] = mt;
+    }
+    for (const key of NPC_KEYS) {
+      const n = NPC[key];
+      if (!n || !n.H) continue;
+      const mt = want[key];
+      if (mt) {
+        if (!n.orig) n.orig = { x: n.x, z: n.z, y: n.H.root.position.y, r: n.H.root.rotation.y };
+        if (!n.away || Math.hypot(n.x - (mt.x - 1.3), n.z - (mt.z - 1.3)) > 3) moveNPC(n, mt.x - 1.3, mt.z - 1.3, [mt.x, mt.z]);
+        n.away = true;
+      } else if (n.away && n.orig) {
+        n.x = n.orig.x;
+        n.z = n.orig.z;
+        n.H.root.position.set(n.x, n.orig.y, n.z);
+        n.H.root.rotation.y = n.orig.r;
+        n.away = false;
+      }
+    }
+  }
   function placeStarts() {
+    placeNPCs();
     while (TRACKS.story.idx < STORY.length && STORY_SKIP.has(STORY[TRACKS.story.idx].title)) TRACKS.story.idx++;
     for (const k in TRACKS) {
       const tr = TRACKS[k];
@@ -1556,11 +1702,15 @@ const MISSIONS = (() => {
         const m = tr.list[tr.idx];
         if (m.requires && !m.requires()) continue;
       }
-      const sp = ringClear(...tr.list[tr.idx].startPos(), 1.4);
+      const sp = ringClear(...startOf(k, tr.list[tr.idx]), 1.4);
       tr.beacon = BEACON.make(sp[0], sp[1], 1.4, 3, tr.color);
       if (k === 'story' && !active) {
         const h = tr.list[tr.idx].hint;
-        if (h) setObjective('Siguiente: ' + h());
+        if (MEET[k] && MEET[k].m === tr.list[tr.idx])
+          setObjective(
+            'Siguiente: ' + bold(tr.list[tr.idx].who || '') + ' ha quedado contigo más cerca, para que no cruces media Laguna: ve al círculo'
+          );
+        else if (h) setObjective('Siguiente: ' + h());
         setWaypoint(sp[0], sp[1], true);
       }
     }
@@ -1661,6 +1811,41 @@ const MISSIONS = (() => {
   };
   return {
     kit: KIT,
+    // v1.4.16, for the tests: where every mission of every line would meet you if the previous one ended at e
+    meetCheck(e) {
+      const out = [];
+      for (const k in TRACKS)
+        for (const m of TRACKS[k].list) {
+          let s = null;
+          try {
+            s = m.startPos();
+          } catch (er) {}
+          const mt = meetFor(m, e);
+          out.push({
+            line: k,
+            title: m.title,
+            start: s && [Math.round(s[0]), Math.round(s[1])],
+            meet: mt && [Math.round(mt.x), Math.round(mt.z)],
+            fromEnd: mt ? Math.round(Math.hypot(mt.x - e[0], mt.z - e[1])) : s ? Math.round(Math.hypot(s[0] - e[0], s[1] - e[1])) : null,
+            inside: mt ? inAnyBuilding(mt.x, mt.z) : false,
+            road: mt ? onCarriageway(mt.x, mt.z, 0.2) : false,
+            walk: mt ? !!WALKG.route(e[0], e[1], mt.x, mt.z) : true,
+            walkStart: s ? !!WALKG.route(e[0], e[1], s[0], s[1]) : true,
+            fixed: !!(m.fixedStart || m.court)
+          });
+        }
+      return out;
+    },
+    blancoCheck() {
+      const b = NPC.blanco;
+      if (!b || !b.from) return null;
+      return {
+        from: b.from,
+        at: [b.x, b.z],
+        walk: clearWalk(b.from[0], b.from[1], b.x, b.z),
+        ring: clearWalk(b.from[0], b.from[1], b.x + 1.2, b.z + 1.2)
+      };
+    },
     addStory(list) {
       STORY.push(...list);
     },
@@ -1702,9 +1887,10 @@ const MISSIONS = (() => {
           shoes: 0x2f3b55,
           watch: 0x2f3a2a
         });
-        let p = safeSpot(PLAYER.x + 4, PLAYER.z + 1.5);
+        // v1.4.16: next to the player, on ground he can walk straight to (before: 4 m away even if behind a wall)
+        let p = reachNear(PLAYER.x, PLAYER.z) || safeSpot(PLAYER.x + 4, PLAYER.z + 1.5);
         const r = COL.resolve(p[0], p[1], 0.5);
-        NPC.blanco = { x: r.x, z: r.z, H: b, home: [r.x, r.z] };
+        NPC.blanco = { x: r.x, z: r.z, H: b, home: [r.x, r.z], from: [PLAYER.x, PLAYER.z] };
         b.root.position.set(r.x, heightAt(r.x, r.z) + 0.17, r.z);
         b.root.rotation.y = Math.atan2(PLAYER.x - r.x, PLAYER.z - r.z);
         scene.add(b.root);
@@ -2094,6 +2280,11 @@ const MISSIONS = (() => {
       placeStarts();
       return true;
     },
+    // v1.4.16: where a line's next mission circle is (its usual start or the meeting spot)
+    beaconPos(k = 'story') {
+      const b = TRACKS[k] && TRACKS[k].beacon;
+      return b ? [b.position.x, b.position.z] : null;
+    },
     _setIdx(i, track = 'story') {
       TRACKS[track].idx = i;
       placeStarts();
@@ -2114,7 +2305,8 @@ const MISSIONS = (() => {
         carreras: TRACKS.carreras.idx,
         log: LOG,
         gang: { ...GANG, members: GANG.members.slice() } /* v0.76: every flag of the gang (jugueterías, maleantes, secreta…) */,
-        active: active ? active.title : null
+        active: active ? active.title : null,
+        ends: { ...ENDS } /* v1.4.16 */
       };
     },
     setState(st) {
@@ -2143,6 +2335,9 @@ const MISSIONS = (() => {
       TRACKS.copa.idx = st.copa | 0;
       TRACKS.secreta.idx = st.secreta | 0;
       TRACKS.carreras.idx = st.carreras | 0;
+      for (const k in ENDS) delete ENDS[k];
+      Object.assign(ENDS, st.ends || {});
+      for (const k in TRACKS) planMeet(k); // v1.4.16
       for (const k in LOG) delete LOG[k];
       Object.assign(LOG, st.log || {});
       TRACKS.side.open = !!st.sideOpen;

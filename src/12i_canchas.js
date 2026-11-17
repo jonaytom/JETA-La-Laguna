@@ -489,18 +489,39 @@ function torneoInit() {
   MISSIONS.addTorneo(list);
 }
 /** (v1.1.7, code quality) part of torneoInit */
+// courts in a chain: the first the nearest to the start (c.dist), then each the nearest to the previous one at least
+// sp m from every chosen court (sp relaxes if there are not enough)
+function chainCourts(pub, spacings, n = 4) {
+  for (const sp of spacings) {
+    const chosen = [];
+    while (chosen.length < n) {
+      const last = chosen[chosen.length - 1];
+      let best = null,
+        bd = 1e18;
+      for (const c of pub) {
+        if (chosen.includes(c) || !chosen.every((q) => Math.hypot(q.cx - c.cx, q.cz - c.cz) >= sp)) continue;
+        const d = last ? Math.hypot(last.cx - c.cx, last.cz - c.cz) : c.dist;
+        if (d < bd) {
+          bd = d;
+          best = c;
+        }
+      }
+      if (!best) break;
+      chosen.push(best);
+    }
+    if (chosen.length >= Math.min(n, pub.length)) return chosen;
+  }
+  return pub.slice(0, n);
+}
 function torneoInitPart1() {
   const pub = COURTS.filter((c) => c.gate === 'court' && !c.final && c.sport !== 'fut').sort((a, b) => a.dist - b.dist);
   const used = new Set(typeof obispoCourt === 'function' ? [(obispoCourt(true) || {}).cx] : []);
-  const chosen = [];
-  for (const sp of [350, 220, 120, 0]) {
-    for (const c of pub) {
-      if (chosen.length >= 4) break;
-      if (used.has(c.cx) || chosen.includes(c)) continue;
-      if (chosen.every((q) => Math.hypot(q.cx - c.cx, q.cz - c.cz) >= sp)) chosen.push(c);
-    }
-    if (chosen.length >= 4) break;
-  }
   const fin = COURTS.find((c) => c.final);
+  // v1.4.16 (Jonay: «misiones más próximas unas a otras»): a chain, each court the nearest one (but at least sp m away,
+  // so they aren't all the same corner) to the previous; the first, the nearest to where you start
+  const chosen = chainCourts(
+    pub.filter((c) => !used.has(c.cx)),
+    [350, 220, 120, 0]
+  );
   return { chosen, fin };
 }

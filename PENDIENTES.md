@@ -316,7 +316,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 - [ ] ◐ **Una franja verde de monte flotando en el cielo** (fotos de las pruebas y captura de Jonay en X 769, Y 1541, 10-nov): en vuelo libre y en las fotos se ve una tira de ladera verde suspendida en el aire, delante del cielo. Parece el fondo de montes lejanos colocado a la altura del jugador y no de la cámara. Buscar qué malla es (`__ORIGEN`) y ponerla a su altura.
 ### HUD y minimapa
 
-- [ ] ⚡ **La ruta hasta el siguiente objetivo se ve de un amarillo muy tenue** (Jonay, 16-nov): en la carrera contra el Canarión la ruta se ve bien, pero la del siguiente objetivo (misiones normales) sale de un amarillo tan claro que casi no se ve. Darle más fuerza: color más saturado, más ancho o borde oscuro, al menos como la de la carrera.
 
 - [~] ◐ v1.0.9 (sin sentidos únicos salvo en vías rápidas, como pidió Jonay; quedan la vuelta en el sitio, la rebaja de las autopistas y los giros) **La ruta del GPS da vueltas enormes** (Jonay, 3-nov: «las indicaciones de ruta hacen unas vueltas terribles, como
   si no quisieran coger dirección prohibida… ¿cómo se decide la ruta?»). Cómo va hoy (`07_vehicles.js`, `GRAPH.routeFrom`):
@@ -332,8 +331,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Misiones, historia y economía
 
-- [ ] ◐ **Primera misión: el círculo de El Blanco sale en una zona casi inaccesible** (Jonay, 16-nov; captura `docs/referencias/capturas/2026-11-16_inicio_circulo_blanco.png`, X −749, Y −358, 563 m): al empezar el juego («Ayoze «El Chopa» vuelve al barrio»), el punto donde está Rayco «El Blanco» queda detrás de un muro, metido entre casas y difícil de alcanzar. Moverlo a la acera o a la puerta de la casa de sus padres, en un sitio al que se llegue andando desde donde empieza el jugador.
-  - Comprobar con una sonda que el círculo está en suelo pisable y con camino a pie desde la salida.
 - [ ] ◐ **Rifle de agua: postura, puntería y chorro** (Jonay, 3-nov, misiones del agua con El Blanco y Boca Papa, X −599,
   Y −525 y X −573, Y −513, 4 capturas).
   - Al apuntar, el rifle se mete dentro del cuerpo del Chopa (se ve el arma atravesándole el pecho y el hombro): repasar
@@ -677,9 +674,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Coches y tráfico
 
-- [ ] ◐ **Pilotos traseros: quitar el rectángulo añadido en los coches propios** (Jonay, 16-nov: «los coches tienen como un piloto trasero rectangular pegado a los pilotos que ya tiene el coche en su modelo… ¿no es posible iluminar esos pilotos sin añadir el rectángulo?»): hoy `makeKenneyMeshPart2` (`06b_vmodels.js`) pone a cada coche dos cajas rojas de 0,26 × 0,10 m (`tailMat`) y `07_vehicles.js` les cambia el material al frenar (`tailBrakeMat`).
-  - En los coches propios (los que tienen `tail`), separar al construir la geometría las caras rojas de sus pilotos en un grupo propio (`classify0`: rojo saturado = piloto) y encender ese grupo al frenar, sin añadir cajas. Los de Kenney siguen con la caja.
-  - Comprobar con `pruebas propios144` y una foto de un coche frenando de noche.
 ### Casas, personaje y vida social
 
 - [ ] ◐ **El pisito alquilado, más grande y con habitaciones** (Jonay, 3-nov: «la casa alquilada debería ser un poquito más
@@ -976,6 +970,14 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   - Por comprobar: si el Artifact deja abrir conexiones WebRTC y al servidor de emparejamiento (si no, se juega con el HTML descargado); servidor TURN para las redes que no conectan directo.
 
 ## Hecho
+
+- [x] v1.4.16 **Misiones que quedan contigo cerca** (Jonay, 17-nov: «tras una carrera o persecución, la siguiente misión debería estar a no más de un km. Siempre en la línea que estemos tratando»): si la siguiente de una línea empieza a más de 1 km de donde acabó la anterior, su personaje queda contigo a ~400 m (`MEET`/`ENDS` en `12_missions.js`); Torneo y Copa con canchas en cadena (`chainCourts`).
+
+- [x] v1.4.16 **El Blanco accesible al empezar** (Jonay, 16-nov; captura `docs/referencias/capturas/2026-11-16_inicio_circulo_blanco.png`): `reachNear` lo pone donde se llega andando en línea recta, con su círculo.
+
+- [x] v1.4.16 **Ruta a los siguientes controles más visible** (Jonay, 16-nov: «el siguiente se ve de un amarillo muy tenue»): amarillo fuerte con borde oscuro.
+
+- [x] v1.4.16 **Pilotos traseros sin rectángulo en los coches propios** (Jonay, 16-nov): se encienden sus propias caras rojas (`G.tail`); Kenney sigue con las cajas.
 
 - [x] v1.4.15 **Coches propios aparcados con sus propias ruedas** (Jonay, 16-nov: «los coches aparcados siempre llevan cilindros en lugar de las ruedas del modelo»): `template()` usa las ruedas del modelo en los coches propios y deja el cilindro para los de Kenney.
 

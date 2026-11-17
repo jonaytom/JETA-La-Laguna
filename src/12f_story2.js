@@ -684,6 +684,7 @@ function s2Route2(x0, z0, x1, z1) {
 const M_CEREMONIA = {
   title: 'Defensores de La Laguna',
   who: ALC,
+  fixedStart: true /* v1.4.16: the ceremony is in the Ayuntamiento */,
   hint() {
     return 'Ve al ' + b2('Ayuntamiento') + ' (Plaza del Adelantado): ' + ALC + ' os espera con toda la banda';
   },

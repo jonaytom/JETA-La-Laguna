@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.15</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.16</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,24 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.4.16 — 2026-11-17 — Alpha 1.4.16: misiones que quedan contigo cerca, El Blanco accesible y pilotos de verdad</h2>
+<ul>
+<li><strong>Misiones más próximas</strong> (Jonay: «tras una carrera o persecución, la siguiente misión debería estar a no más de un km.
+  Siempre en la línea que estemos tratando»): cada línea (historia, Canarión, Obispo, Torneo, Copa, Secreta, carreras)
+  recuerda dónde acabó su última misión. Si la siguiente empieza a más de 1 km de ahí, quien la da (El Blanco, Coco,
+  Sastrón, Boca Papa con su caja, el Canarión, el alcalde, el Obispo, Tostón) queda contigo en una acera a ~400 m, camino
+  de su sitio de siempre, y vuelve a su sitio cuando ya no hace falta. Se guarda en la partida. Las que tienen sitio fijo
+  lo mantienen: la ceremonia del Ayuntamiento y los partidos del Torneo y la Copa.</li>
+<li><strong>Torneo Lagunero y Copa Laguna</strong>: sus 4 canchas y campos se eligen en cadena (cada uno el más cercano al anterior,
+  sin repetir barrio) en vez de repartidos por la ciudad.</li>
+<li><strong>El Blanco, accesible</strong>: al empezar aparece a 3-8 m de ti, donde se llega andando en línea recta (sin muro, edificio ni
+  escalón en medio), con su círculo igual (antes, 4 m al lado aunque fuera detrás de un muro; captura del 16-nov).</li>
+<li><strong>Ruta a los siguientes controles</strong> (carreras): amarillo fuerte con borde oscuro en el minimapa y el mapa grande; antes
+  era un amarillo pálido al 55 % que casi no se veía.</li>
+<li><strong>Pilotos traseros</strong>: los coches propios encienden al frenar sus propios pilotos (las caras rojas de atrás del modelo),
+  sin las dos cajas rojas que se les pegaban encima; los de Kenney siguen con ellas. También en los aparcados.</li>
+<li>Prueba nueva <code>prueba_1416.py</code>.</li>
+</ul>
 <h2>1.4.15 — 2026-11-16 — Alpha 1.4.15: los coches propios aparcados con sus ruedas</h2>
 <ul>
 <li>Los coches aparcados (que se dibujan juntos, por celdas) llevaban siempre un cilindro de 10 lados en lugar de cada

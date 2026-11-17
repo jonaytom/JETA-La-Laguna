@@ -48,7 +48,7 @@ async def run(pg):
     ok_all = True
     for i in range(a, b + 1):
         n0 = len(errs)
-        await pg.evaluate("""(i)=>{const d=__dbg, M=d.MISSIONS; if (d.PLAYER.car) d.exitCar(); if (d.DLG.open) d.DLG.hide(); M._setIdx(i); const p=M._story[i].startPos(); d.PLAYER.x=p[0]; d.PLAYER.z=p[1]; d.PLAYER.health=100; d.GAME.tod=12; __step(10);}""", i)
+        await pg.evaluate("""(i)=>{const d=__dbg, M=d.MISSIONS; if (d.PLAYER.car) d.exitCar(); if (d.DLG.open) d.DLG.hide(); M._setIdx(i); const p=(M.beaconPos && M.beaconPos('story')) || M._story[i].startPos(); /* v1.4.16: the circle may be at a meeting spot */ d.PLAYER.x=p[0]; d.PLAYER.z=p[1]; d.PLAYER.health=100; d.GAME.tod=12; __step(10);}""", i)
         money0 = await pg.evaluate("__dbg.PLAYER.money")
         log, res, last = [], 'TIEMPO', ''
         for it in range(700):

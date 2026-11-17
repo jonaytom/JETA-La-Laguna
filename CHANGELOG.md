@@ -3,6 +3,23 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.16 — 2026-11-17 — Alpha 1.4.16: misiones que quedan contigo cerca, El Blanco accesible y pilotos de verdad
+- **Misiones más próximas** (Jonay: «tras una carrera o persecución, la siguiente misión debería estar a no más de un km.
+  Siempre en la línea que estemos tratando»): cada línea (historia, Canarión, Obispo, Torneo, Copa, Secreta, carreras)
+  recuerda dónde acabó su última misión. Si la siguiente empieza a más de 1 km de ahí, quien la da (El Blanco, Coco,
+  Sastrón, Boca Papa con su caja, el Canarión, el alcalde, el Obispo, Tostón) queda contigo en una acera a ~400 m, camino
+  de su sitio de siempre, y vuelve a su sitio cuando ya no hace falta. Se guarda en la partida. Las que tienen sitio fijo
+  lo mantienen: la ceremonia del Ayuntamiento y los partidos del Torneo y la Copa.
+- **Torneo Lagunero y Copa Laguna**: sus 4 canchas y campos se eligen en cadena (cada uno el más cercano al anterior,
+  sin repetir barrio) en vez de repartidos por la ciudad.
+- **El Blanco, accesible**: al empezar aparece a 3-8 m de ti, donde se llega andando en línea recta (sin muro, edificio ni
+  escalón en medio), con su círculo igual (antes, 4 m al lado aunque fuera detrás de un muro; captura del 16-nov).
+- **Ruta a los siguientes controles** (carreras): amarillo fuerte con borde oscuro en el minimapa y el mapa grande; antes
+  era un amarillo pálido al 55 % que casi no se veía.
+- **Pilotos traseros**: los coches propios encienden al frenar sus propios pilotos (las caras rojas de atrás del modelo),
+  sin las dos cajas rojas que se les pegaban encima; los de Kenney siguen con ellas. También en los aparcados.
+- Prueba nueva `prueba_1416.py`.
+
 ## 1.4.15 — 2026-11-16 — Alpha 1.4.15: los coches propios aparcados con sus ruedas
 - Los coches aparcados (que se dibujan juntos, por celdas) llevaban siempre un cilindro de 10 lados en lugar de cada
   rueda. Ahora los coches propios usan las ruedas de su modelo (unos 580 triángulos de cerca y 44 en la versión lejana);

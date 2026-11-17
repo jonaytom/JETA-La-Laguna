@@ -540,7 +540,7 @@ function modelGeometry(model) {
     sy = model.H / kH,
     sz = model.L / kL;
   const zc = (bb[1][2] + bb[0][2]) / 2;
-  const groups = { paint: [], glass: [], rest: [] };
+  const groups = { paint: [], glass: [], rest: [], tail: [] };
   const wheels = [];
   modelGeometryPart1(sy, sx, K, wheels, zc, sz, model, groups);
   const mk = (arr) => {
@@ -568,8 +568,17 @@ function modelGeometry(model) {
       zmin = Math.min(zmin, v[2]);
       ymax = Math.max(ymax, v[1]);
     }
-  const out = { paint: mk(groups.paint), glass: mk(groups.glass), rest: mk(groups.rest), wheels, zmin, ymax };
-  for (const g of [out.paint, out.glass, out.rest, ...wheels.map((w) => w.geo)]) if (g) g.userData.shared = true;
+  // tail lights: only the red faces at the rear (a red reflector or detail elsewhere stays in 'rest')
+  if (groups.tail.length) {
+    const keep = [];
+    for (let i = 0; i + 2 < groups.tail.length; i += 3) {
+      const t = groups.tail.slice(i, i + 3);
+      (Math.min(t[0][2], t[1][2], t[2][2]) < zmin + 0.45 ? keep : groups.rest).push(...t);
+    }
+    groups.tail = keep;
+  }
+  const out = { paint: mk(groups.paint), glass: mk(groups.glass), rest: mk(groups.rest), tail: mk(groups.tail), wheels, zmin, ymax };
+  for (const g of [out.paint, out.glass, out.rest, out.tail, ...wheels.map((w) => w.geo)]) if (g) g.userData.shared = true;
   return (VGEO[model.id] = out);
 }
 /** (v1.1.7, code quality) part of modelGeometry: one geometry per wheel, centred on its own node (rotation axis = x) */
@@ -611,6 +620,13 @@ function modelGeometryPart1(sy, sx, K, wheels, zc, sz, model, groups) {
       const [k, c] = classify(model.base, p.C[i]);
       cls[i] = k;
       cols[i] = c;
+      // v1.4.16 (Jonay, 16-nov: «¿no es posible iluminar esos pilotos traseros sin añadir el rectángulo?»): our own models
+      // (the ones with 'tail') bring their tail lights in saturated red: those faces go to their own group (kept at the rear
+      // below), which lights up when braking instead of the two boxes Kenney's cars get
+      if (model.tail && k === 'rest') {
+        const hv = hsv(rgb565(p.C[i]));
+        if ((hv[0] < 16 || hv[0] > 344) && hv[1] > 0.55 && hv[2] > 0.22) cls[i] = 'tail';
+      }
     }
     for (let t = 0; t < p.I.length; t += 3) {
       const a = p.I[t];
@@ -787,21 +803,27 @@ function makeKenneyMeshPart2(model, G, halfW, W, body, tl) {
     if (zz < 1e8) rz = zz;
   }
   const rhw = halfW(tly, rz, 0.08, 0.12) || W / 2;
-  for (const x of [-1, 1]) {
-    const t = new THREE.Mesh(shBox(0.26, 0.1, 0.04), tailMat);
-    t.position.set(x * Math.max(0.2, rhw - 0.2), tly, rz + 0.012);
-    if (model.tail) {
-      // v1.4.3: our own models say where their tail lights are (the brake light goes on top of them)
-      const ty = model.tail[1];
-      let tz = G.zmin;
-      for (let i = 0; i < G.probe.length; i += 3)
-        if (Math.abs(G.probe[i + 1] - ty) < 0.04 && Math.abs(Math.abs(G.probe[i]) - model.tail[0]) < 0.1)
-          tz = Math.min(tz === G.zmin ? 1e9 : tz, G.probe[i + 2]);
-      t.position.set(x * model.tail[0], ty, tz - 0.008);
-    }
+  if (G.tail) {
+    // v1.4.16: our own models light up their own tail lights (no boxes on top)
+    const t = new THREE.Mesh(G.tail, tailMat);
     body.add(t);
     tl.push(t);
-  }
+  } else
+    for (const x of [-1, 1]) {
+      const t = new THREE.Mesh(shBox(0.26, 0.1, 0.04), tailMat);
+      t.position.set(x * Math.max(0.2, rhw - 0.2), tly, rz + 0.012);
+      if (model.tail) {
+        // v1.4.3: our own models say where their tail lights are (the brake light goes on top of them)
+        const ty = model.tail[1];
+        let tz = G.zmin;
+        for (let i = 0; i < G.probe.length; i += 3)
+          if (Math.abs(G.probe[i + 1] - ty) < 0.04 && Math.abs(Math.abs(G.probe[i]) - model.tail[0]) < 0.1)
+            tz = Math.min(tz === G.zmin ? 1e9 : tz, G.probe[i + 2]);
+        t.position.set(x * model.tail[0], ty, tz - 0.008);
+      }
+      body.add(t);
+      tl.push(t);
+    }
   if (PLATES.length < 10) {
     const pl = textPlane(
       Math.floor(1000 + Math.random() * 8999) + ' ' + pick(['KHT', 'LBC', 'MFZ', 'JRW', 'GPD', 'NCX']),

@@ -1168,6 +1168,7 @@ function buildParkedPart2() {
     if (G.paint) push(G.paint, 1);
     if (G.rest) push(G.rest, 0);
     if (G.glass) push(G.glass, 0, glassC);
+    if (G.tail) push(G.tail, 0); // v1.4.16: our own models' tail lights (their own red faces)
     const wr = (G.wheels[0] && G.wheels[0].y) || 0.33;
     const tire = new THREE.Color(0x1a1a1a);
     for (const w of G.wheels) {

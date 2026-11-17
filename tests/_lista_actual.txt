@@ -1,1 +1,2 @@
-herramientas/foto_propios.py
+prueba_1416.py
+prueba_misiones.py
