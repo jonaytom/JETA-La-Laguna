@@ -120,7 +120,9 @@ function holdRiflePart1(H, aim, dir, fx, fz, m) {
   sh.getWorldPosition(HR.sh);
   // right hand target: the grip, 30 cm along the aim from the shoulder (aiming) or by the right hip (carried)
   if (aim)
-    HR.T.copy(HR.sh).addScaledVector(dir, 0.22).addScaledVector(HR.r, -0.08).y -= 0.06; // close to the shoulder, a bit to the centre: the left hand reaches
+    // v1.4.22 (Jonay, 3-nov: «al apuntar, el rifle se mete dentro del cuerpo»): the grip 34 cm out along the aim and a
+    // little to the right, so the stock ends at the shoulder instead of going through the chest
+    HR.T.copy(HR.sh).addScaledVector(dir, 0.34).addScaledVector(HR.r, 0.03).y -= 0.05;
   else HR.T.set(PLAYER.x + HR.r.x * 0.15 + fx * 0.14, PLAYER.y + 1.08, PLAYER.z + HR.r.z * 0.15 + fz * 0.14);
   armIK(
     H,
@@ -165,12 +167,18 @@ function holdRiflePart1(H, aim, dir, fx, fz, m) {
   );
 }
 const AGUA = (() => {
-  const N = 110;
+  const N = 260; // v1.4.22: a continuous jet (more, smaller drops in between)
   let inst = null,
     spawnT = 0,
+    jetN = 0,
     sndT = 0,
     shopT = 0;
-  const D = []; // drops: [x, y, z, vx, vy, vz, alive]
+  const D = []; // drops: [x, y, z, vx, vy, vz, alive, wet]
+  const jetQ = new THREE.Quaternion(),
+    jetV = new THREE.Vector3(),
+    jetP = new THREE.Vector3(),
+    jetS = new THREE.Vector3(),
+    Y1 = new THREE.Vector3(0, 1, 0);
   const PUD = [];
   let pudGeo = null;
   const tmpM = new THREE.Matrix4(),
@@ -248,7 +256,7 @@ const AGUA = (() => {
   // ---------- drops and puddles
   function init() {
     if (inst) return;
-    const geo = new THREE.SphereGeometry(0.055, 6, 4);
+    const geo = new THREE.SphereGeometry(0.045, 6, 4);
     geo.userData.shared = true;
     inst = new THREE.InstancedMesh(
       geo,
@@ -258,7 +266,7 @@ const AGUA = (() => {
     inst.count = 0;
     inst.frustumCulled = false;
     scene.add(inst);
-    for (let i = 0; i < N; i++) D.push([0, 0, 0, 0, 0, 0, 0]);
+    for (let i = 0; i < N; i++) D.push([0, 0, 0, 0, 0, 0, 0, 1]);
     pudGeo = new THREE.CircleGeometry(1, 14);
     pudGeo.rotateX(-Math.PI / 2);
     pudGeo.userData.shared = true;
@@ -343,26 +351,71 @@ const AGUA = (() => {
       2.2
     );
   }
-  function spawnDrop() {
+  // v1.4.22 (Jonay, 3-nov: «las gotas caen a la izquierda de donde apuntas»): aimed, the jet leaves the muzzle towards
+  // the point under the crosshair (the first thing the camera ray meets, at most 14 m away) on the arc that lands there,
+  // instead of parallel to the camera ray (the muzzle is off to the right of it, so the water fell to one side)
+  const aimT = new THREE.Vector3(),
+    camD = new THREE.Vector3();
+  function aimPoint() {
+    camera.getWorldDirection(camD);
+    const o = camera.position;
+    let lx = o.x,
+      lz = o.z;
+    for (let t = 2; t <= 14; t += 0.5) {
+      const x = o.x + camD.x * t,
+        y = o.y + camD.y * t,
+        z = o.z + camD.z * t;
+      const hitT = RIFLE.targets.some(
+        (q) =>
+          !q.done &&
+          Math.hypot(q.x - x, q.z - z) < (q.r || 0.45) &&
+          y > (q.y0 ?? heightAt(q.x, q.z)) &&
+          y < (q.y0 ?? heightAt(q.x, q.z)) + (q.h || 1.8)
+      );
+      if (hitT || y <= heightAt(x, z) + 0.05 || (t > 2 && COL.raycast(lx, lz, x, z) < 1)) return aimT.set(x, y, z);
+      lx = x;
+      lz = z;
+    }
+    return aimT.set(o.x + camD.x * 11, o.y + camD.y * 11, o.z + camD.z * 11);
+  }
+  function spawnDrop(wet = true) {
     const m = RIFLE.mesh;
     if (!m) return;
     const d = D.find((q) => !q[6]);
     if (!d) return;
-    const dir = aimV;
-    if (WEAPON.aiming) camera.getWorldDirection(dir);
-    else dir.set(Math.sin(PLAYER.h), 0, Math.cos(PLAYER.h));
-    const up = (WEAPON.aiming ? 0.22 : 0.13) + (Math.random() - 0.5) * 0.04;
-    /* from the hip the jet lands ~8 m ahead; aimed, ~11 m */ dir.y += up;
-    dir.normalize();
     const sp = 13 + Math.random() * 0.8; // ~10–11 m when aimed straight (v0.76: 11.5 m/s only reached ~5 m)
     tmpV.set(0, 0.012, 0.55).applyMatrix4(m.matrixWorld);
+    const dir = aimV;
+    let done = false;
+    if (WEAPON.aiming) {
+      const T = aimPoint(),
+        hx = T.x - tmpV.x,
+        hz = T.z - tmpV.z,
+        dx = Math.hypot(hx, hz),
+        dy = T.y - tmpV.y,
+        g = 9.8,
+        v2 = sp * sp,
+        disc = v2 * v2 - g * (g * dx * dx + 2 * dy * v2);
+      if (dx > 0.5 && disc >= 0) {
+        const th = Math.atan((v2 - Math.sqrt(disc)) / (g * dx));
+        dir.set((hx / dx) * Math.cos(th), Math.sin(th), (hz / dx) * Math.cos(th));
+        done = true;
+      }
+      if (!done) camera.getWorldDirection(dir);
+    } else dir.set(Math.sin(PLAYER.h), 0, Math.cos(PLAYER.h));
+    if (!done) {
+      const up = (WEAPON.aiming ? 0.22 : 0.13) + (Math.random() - 0.5) * 0.04;
+      /* from the hip the jet lands ~8 m ahead; aimed, ~11 m */ dir.y += up;
+      dir.normalize();
+    }
     d[0] = tmpV.x;
     d[1] = tmpV.y;
     d[2] = tmpV.z;
-    d[3] = dir.x * sp + (Math.random() - 0.5) * 0.25;
-    d[4] = dir.y * sp;
-    d[5] = dir.z * sp + (Math.random() - 0.5) * 0.25;
+    d[3] = dir.x * sp + (Math.random() - 0.5) * 0.12;
+    d[4] = dir.y * sp + (Math.random() - 0.5) * 0.08;
+    d[5] = dir.z * sp + (Math.random() - 0.5) * 0.12;
     d[6] = 2.4;
+    d[7] = wet ? 1 : 0; // the drops in between only draw the jet: they don't put out fires or hit anybody
   }
   function hitTargets(d) {
     // mission targets (Boca Papa's head…) and the people in the street
@@ -428,7 +481,8 @@ const AGUA = (() => {
       const g = heightAt(d[0], d[2]),
         sf = surfAt(d[0], d[2]);
       const fl = Math.max(g, deckAt(d[0], d[2], d[1] + 0.5), sf - g < 1.6 ? sf : -1e9);
-      if (!end)
+      const wet = d[7] !== 0;
+      if (!end && wet)
         for (const f of FIRES) {
           if (f.out || Math.abs(f.x - d[0]) > f.r || Math.abs(f.z - d[2]) > f.r) continue;
           if (Math.hypot(f.x - d[0], f.z - d[2]) < f.r && d[1] < f.y + f.h + 0.6) {
@@ -438,23 +492,28 @@ const AGUA = (() => {
             break;
           }
         }
-      if (!end && hitTargets(d)) {
+      if (!end && wet && hitTargets(d)) {
         end = true;
         AUDIO.splash && Math.random() < 0.3 && AUDIO.splash();
       }
       if (!end && d[1] <= fl + 0.02) {
-        puddle(d[0], d[2]);
+        if (wet) puddle(d[0], d[2]);
         end = true;
       }
       if (!end && COL.raycast(px, pz, d[0], d[2]) < 1 && d[1] < fl + 3) {
-        puddle(px, pz);
+        if (wet) puddle(px, pz);
         end = true;
       } // against a wall: it runs down to its foot
       if (end) {
         d[6] = 0;
         continue;
       }
-      tmpM.makeTranslation(d[0], d[1], d[2]);
+      // stretched along its speed: together they draw a continuous stream
+      {
+        const v = Math.hypot(d[3], d[4], d[5]) || 1;
+        jetQ.setFromUnitVectors(Y1, jetV.set(d[3] / v, d[4] / v, d[5] / v));
+        tmpM.compose(jetP.set(d[0], d[1], d[2]), jetQ, jetS.set(0.8, 2.6, 0.8));
+      }
       inst.setMatrixAt(n++, tmpM);
     }
     inst.count = n;
@@ -473,9 +532,12 @@ const AGUA = (() => {
       RIFLE.emptyMsg = false;
       FIGHT.blockPunch = true;
       spawnT -= dt;
+      // v1.4.22 (Jonay: «me gustaría que fuera un chorro continuo»): a drop every 13 ms, one in three a «wet» one (the
+      // fires and the targets get as much water as before)
       while (spawnT <= 0) {
-        spawnT += 0.04;
-        spawnDrop();
+        spawnT += 0.0133;
+        jetN = (jetN + 1) % 3;
+        spawnDrop(jetN === 0);
       }
       RIFLE.water = Math.max(0, RIFLE.water - dt * 7.5);
       sndT -= dt;
@@ -631,14 +693,16 @@ const AGUA = (() => {
     for (const f of PK2.fountains) if (Math.hypot(PLAYER.x - f[0], PLAYER.z - f[1]) < (f[2] || 4.6)) return f;
     return null;
   }
-  const PRICE = 350,
-    BALLS = 20;
+  // v1.4.22 (Jonay, 12-oct: «bolitas baratas; la escopeta de agua cara: hacen falta varias misiones para poder
+  // comprarla»): 2.500 € the rifle (two or three missions), 8 € a bag of 6 balls
+  const PRICE = 2500,
+    BALLS = 8;
   function openShop(s) {
     const { items, A_, CART } = openShopPart1();
     DLG.show(
       s.name,
       'Juguetería',
-      `Tienes <b>$${PLAYER.money}</b>.${RIFLE.has ? '' : ' En el escaparate: un rifle de agua eléctrico, «diez metros de chorro, depósito transparente».'}`,
+      `Tienes <b>${eur(PLAYER.money)}</b>.${RIFLE.has ? '' : ' En el escaparate: un rifle de agua eléctrico, «diez metros de chorro, depósito transparente».'}`,
       '¿Qué te llevas?',
       [...items.map((q) => q[1]), 'Nada, gracias'],
       (i) => {
@@ -692,7 +756,7 @@ const AGUA = (() => {
         }
         if (it[0] === 'arc') {
           ARCADE.open({ id: 'guanche', key: 'jug_' + s.name, where: String(s.name).toUpperCase(), price: 1 }, (r) => {
-            if (r && r.paid) HUD.toast(`Te has dejado $${r.paid} en la máquina`, '#9fd7ff', 3);
+            if (r && r.paid) HUD.toast(`Te has dejado ${eur(r.paid)} en la máquina`, '#9fd7ff', 3);
           });
           return;
         }
@@ -723,18 +787,18 @@ const AGUA = (() => {
   /** (v1.1.7, code quality) part of openShop: v0.83: the GOFIO-8 console for the TV at home and its cartridges (once El Blanco has told you about the arcades) */
   function openShopPart1() {
     const items = [];
-    if (ARCADE.data().invited) items.push(['arc', '🕹 Echar una partida a la máquina: <b>GUANCHE GUARRIORS</b> · <b>$1</b> la partida']); // v0.82: the toy shops' machine
+    if (ARCADE.data().invited) items.push(['arc', '🕹 Echar una partida a la máquina: <b>GUANCHE GUARRIORS</b> · <b>1 €</b> la partida']); // v0.82: the toy shops' machine
     // v0.83: the GOFIO-8 console for the TV at home and its cartridges (once El Blanco has told you about the arcades)
     const A_ = ARCADE.data(),
       CART = { bencomo: 90, naves: 120, guanche: 150, pachanga: 140, furbito: 140 }; // v0.85: + the two sports cartridges
-    if (A_.invited && !A_.console) items.push(['console', '🎮 Consola <b>GOFIO-8</b> para la tele de casa · <b>$1.200</b>']);
+    if (A_.invited && !A_.console) items.push(['console', '🎮 Consola <b>GOFIO-8</b> para la tele de casa · <b>1.200 €</b>']);
     if (A_.console)
       for (const id in CART)
         if (!A_.bought.includes(id) && ARCADE.GAMES[id])
-          items.push(['cart_' + id, `💾 Cartucho «${ARCADE.GAMES[id].title}» para la GOFIO-8 · <b>$${CART[id]}</b>`, CART[id], id]);
-    if (!RIFLE.has) items.push(['rifle', `Rifle de agua «Guepardo SK-9» eléctrico · <b>$${PRICE}</b>`]);
-    else items.push(['fill', 'Llenar el rifle de agua (del grifo de la tienda) · <b>$2</b>']);
-    if (WEAPON.has) items.push(['balls', `Bolsa de bolitas para la pistola (6) · <b>$${BALLS}</b>`]);
+          items.push(['cart_' + id, `💾 Cartucho «${ARCADE.GAMES[id].title}» para la GOFIO-8 · <b>${eur(CART[id])}</b>`, CART[id], id]);
+    if (!RIFLE.has) items.push(['rifle', `Rifle de agua «Guepardo SK-9» eléctrico · <b>${eur(PRICE)}</b>`]);
+    else items.push(['fill', 'Llenar el rifle de agua (del grifo de la tienda) · <b>2 €</b>']);
+    if (WEAPON.has) items.push(['balls', `Bolsa de bolitas para la pistola (6) · <b>${eur(BALLS)}</b>`]);
     return { items, A_, CART };
   }
   function use() {

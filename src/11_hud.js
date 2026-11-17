@@ -768,7 +768,7 @@ const HUD = (() => {
         hh = Math.floor(h),
         mm2 = Math.floor((h - hh) * 60);
       setT('clock', String(hh).padStart(2, '0') + ':' + String(mm2).padStart(2, '0'));
-      setT('money', '$' + String(Math.floor(PLAYER.money)).padStart(8, '0'));
+      setT('money', eur(Math.floor(PLAYER.money)));
       const st = Math.ceil(WANTED.level),
         fl = WANTED.flash > 2;
       if (st !== lastStars) {
@@ -1395,15 +1395,37 @@ function setupTouch() {
     () => (INPUT.touch.sprint = false)
   );
   btn('tbM', () => BIGMAP.toggle());
+  // v1.4.22 (Jonay, 2-nov: «que sea posible usar todas las funciones del juego»; 17-nov: «repaso de todos los controles
+  // para móvil»): pause (and with it the options, the controls and saving), the diary, a punch with bare hands, the radio
+  // and righting the car had no button on a phone. Like GTA on phones: pause at the top, the action buttons under the
+  // right thumb, the map and the diary under the minimap.
+  const vkey = (code) => {
+    window.dispatchEvent(new KeyboardEvent('keydown', { code, bubbles: true }));
+    window.dispatchEvent(new KeyboardEvent('keyup', { code, bubbles: true }));
+  };
+  btn('tbP', () => {
+    if (GAME.state === 'play' && !BIGMAP.open) GAME.pause(true);
+  });
+  btn('tbDi', () => {
+    if (GAME.state === 'play') vkey('KeyJ');
+  });
+  btn('tbQ', () => PRESSED.add('KeyQ')); // on foot: punch · in a car: next radio station
+  btn('tbR', () => PRESSED.add('KeyR')); // right the car
+  setupTouchPart2();
   // labels follow what the button does (on foot / in a car)
   let lastCar = null;
   setInterval(() => {
     const c = !!PLAYER.car;
+    // the punch button where the gun's FIRE goes when the gun is out
+    const armed = $('tbD') && $('tbD').style.display === 'flex';
+    $('tbQ').style.display = c || !armed ? 'flex' : 'none';
+    $('tbR').style.display = c ? 'flex' : 'none';
     if (c === lastCar) return;
     lastCar = c;
     $('tbF').textContent = c ? 'SALIR' : 'ENTRAR';
     $('tbJ').innerHTML = c ? 'FRENO<br>MANO' : 'SALTO';
     $('tbS').textContent = c ? 'CLAXON' : 'CORRER';
+    $('tbQ').textContent = c ? 'RADIO' : 'GOLPE';
   }, 250);
   $('minimapwrap').addEventListener('pointerdown', (e) => {
     e.stopPropagation();
@@ -1418,6 +1440,44 @@ function setupTouch() {
     if (canUse()) WEAPON.want = true;
     else if (typeof rifleUsable === 'function' && rifleUsable()) RIFLE.touchT = 0.7;
   });
+}
+/** v1.4.22: the touch pad of the minigames (basketball, football, the arcade machines, Bencomo, the naves...): the same
+ * buttons as on the keyboard (A = E, B = Espacio, C = Q, the arrows) sent as key presses, so every minigame works with
+ * it as it is; ❚❚ = P (pause; paused, C leaves the minigame). The street fight has its own pad (#fightPad): then only ❚❚. */
+function setupTouchPart2() {
+  const pad = $('miniPad');
+  if (!pad) return;
+  const codes = { mpL: 'ArrowLeft', mpR: 'ArrowRight', mpU: 'ArrowUp', mpD: 'ArrowDown', mpA: 'KeyE', mpB: 'Space', mpC: 'KeyQ', mpP: 'KeyP' };
+  for (const id in codes) {
+    const b = $(id);
+    if (!b) continue;
+    const code = codes[id];
+    let down = false;
+    b.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (down) return;
+      down = true;
+      b.classList.add('on');
+      window.dispatchEvent(new KeyboardEvent('keydown', { code, bubbles: true }));
+    });
+    const up = () => {
+      if (!down) return;
+      down = false;
+      b.classList.remove('on');
+      window.dispatchEvent(new KeyboardEvent('keyup', { code, bubbles: true }));
+    };
+    b.addEventListener('pointerup', up);
+    b.addEventListener('pointercancel', up);
+    b.addEventListener('pointerleave', up);
+  }
+  setInterval(() => {
+    const on = document.body.classList.contains('fighting');
+    const fp = $('fightPad'),
+      fight = fp && fp.style.display === 'block';
+    pad.style.display = on ? 'block' : 'none';
+    pad.querySelectorAll('.mpd').forEach((b) => (b.style.display = on && !fight ? 'flex' : 'none'));
+  }, 200);
 }
 /** (v1.1.7, code quality) part of setupTouch */
 function setupTouchPart1() {

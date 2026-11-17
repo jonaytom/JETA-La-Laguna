@@ -369,6 +369,8 @@ const CW_LOCK = new Set(); // the points of the motorway already set apart: the 
 const $ = (id) => document.getElementById(id);
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const lerp = (a, b, t) => a + (b - a) * t;
+// v1.4.22 (Jonay, 12-oct: «el dinero va en euros, no dólares»): an amount of money as it is written in Spain: «1.250 €»
+const eur = (n) => Math.round(n).toLocaleString('es-ES', { useGrouping: true }) + ' €';
 const smooth = (e0, e1, x) => {
   const t = clamp((x - e0) / (e1 - e0), 0, 1);
   return t * t * (3 - 2 * t);

@@ -588,7 +588,7 @@ const ARCADE = (() => {
   }
   function coin() {
     if (PLAYER.money < M.price) {
-      st.msg = ['NO TE LLEGA', '$' + M.price + ' POR PARTIDA'];
+      st.msg = ['NO TE LLEGA', M.price + ' EUR POR PARTIDA'];
       st.msgT = 2;
       sfx('hurt');
       return;

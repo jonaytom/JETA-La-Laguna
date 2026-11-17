@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.21</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.22</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2120,6 +2120,40 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.4.22 — 2026-11-17 — Alpha 1.4.22: rivales que conducen como coches, campos vallados, móvil completo, euros y noche más clara</h2>
+<ul>
+<li><strong>Conducción de rivales y enemigos</strong> (Jonay: «corren bien en recta pero frenan muy rápido y trazan las curvas girando
+  90 grados; el giro debe ser normal como cualquier coche, incluso usando freno de mano, porque es una persecución»):
+  la ruta se convierte en una trazada de coche (cada esquina con un radio de giro de verdad, tan abierto como deja la
+  calle), con un plan de velocidad: en cada curva tan rápido como da el agarre, frenando a tiempo con los frenos de un
+  coche (nada de pararse en seco) y acelerando como un coche. En las persecuciones derrapan en las curvas cerradas
+  (el morro se mete en la curva, las ruedas contravolantean, freno de mano). Vale para todas las misiones (huidas,
+  rally, guaguas, agua) y para la carrera del Canarión; las guaguas, más suaves.</li>
+<li><strong>Campos de fútbol y canchas vallados</strong> (Jonay: «muro y valla alta alrededor con uno o dos accesos»): muro bajo con
+  valla metálica alta encima; la entrada, hacia la calle por la que se llega (antes siempre el mismo lado, a veces
+  contra una pared); los campos grandes, otra puerta en el lado opuesto si hay sitio. Arreglado también un fallo por el
+  que casi ninguna valla de cancha llegaba a dibujarse.</li>
+<li><strong>Móvil</strong> (Jonay: «repaso de todos los controles para móvil»): botón de pausa (con ella, opciones, controles y
+  guardar: antes no había forma de llegar), diario, GOLPE a pie (RADIO en el coche) y ENDEREZAR el coche. Los
+  minijuegos (baloncesto, fútbol, recreativas, Bencomo, naves...) tienen por fin mando táctil: cruceta, A, B, C y pausa
+  (en pausa, C sale del minijuego).</li>
+<li><strong>Misiones</strong>: el Obispo se abre al firmar la banda (antes, con las del alcalde y sin que nadie lo dijera): llama Don
+  Celestino, el párroco de La Concepción, y lo marca en el mapa. Los sitios a los que te mandan algunas misiones (la
+  nave de los bancos del Adelantado, la del gofio, la del pirómano) quedan de camino a la siguiente misión, a menos de
+  un kilómetro (antes, de Las Gavias a la Alhóndiga).</li>
+<li><strong>Rifle de agua</strong>: chorro continuo (antes, gotas sueltas); sale hacia el punto exacto de la mira, en la curva que cae
+  ahí (antes caía a un lado); al apuntar la culata queda en el hombro, sin meterse en el pecho. Boca Papa duerme en un
+  banco de verdad y cada acierto dice «¡En la cabeza!» o «¡En el cuerpo!».</li>
+<li><strong>Euros</strong>: todo el dinero del juego en euros («1.250 €»; antes «$»). El rifle de agua cuesta 2.500 € en la juguetería
+  (hacen falta varias misiones) y las bolitas, 8 € la bolsa.</li>
+<li><strong>Noche más clara</strong>: charcos de luz de las farolas más grandes y claros, ventanas, rótulos y faros más brillantes y algo
+  más de luz ambiente.</li>
+<li><strong>La franja verde de monte flotando en el cielo</strong>, fuera: el paisaje lejano empieza ya fuera del mapa.</li>
+<li><strong>Hierba</strong>: solo en el campo (a 30 m de casas y calles; antes 8 y 12) y nunca en rampas, trincheras ni bajo puentes
+  (la que flotaba en la rampa del aparcamiento de Trinidad Centro).</li>
+<li>Las peleas con un peatón cualquiera ya no se paran un instante al empezar: sus figuras se dibujan antes, al acercarte.</li>
+<li>Prueba nueva <code>prueba_1422.py</code>.</li>
+</ul>
 <h2>1.4.21 — 2026-11-17 — Alpha 1.4.21: camión de la basura y guagua propios; ni un modelo de Kenney</h2>
 <ul>
 <li><strong>Antonias Basurón</strong> (camión de basura de carga trasera): blanco fijo con el rótulo AYTO. LA LAGUNA.</li>

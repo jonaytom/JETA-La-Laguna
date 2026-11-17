@@ -78,6 +78,20 @@ function s2FarFromEdge(r, m = 90) {
   for (let i = 0; i < r.length; i += 4) if (worldEdgeDist(r[i], r[i + 1]) < m) return false;
   return true;
 }
+// v1.4.22 (Jonay, 2-nov: «la de los bancos de Gofiérrez te manda desde Las Gavias hasta la Alhóndiga, media
+// ciudad»): of the places a mission can send you to (industrial buildings...), the one on the way to the start of the
+// line's next mission, within minD–maxD of where you are; a random one when there is no next mission
+function s2TowardNext(list, minD, maxD) {
+  const ok = list.filter((b) => {
+    const d = Math.hypot(b.cx - PLAYER.x, b.cz - PLAYER.z);
+    return d > minD && d < maxD && worldEdgeDist(b.cx, b.cz) > 120;
+  });
+  if (!ok.length) return null;
+  const T = K2().nextStart && K2().nextStart();
+  if (!T) return ok[Math.floor(Math.random() * ok.length)];
+  ok.sort((a, b) => Math.hypot(a.cx - T[0], a.cz - T[1]) - Math.hypot(b.cx - T[0], b.cz - T[1]));
+  return ok[Math.floor(Math.random() * Math.min(3, ok.length))];
+}
 function s2Route(x, z, minL, maxL, away) {
   // v1.4.16 (Jonay: «que vaya en un sentido que nos acerque a la siguiente»): towards the start of the line's next
   // mission, unless that means running at the player (away = the direction they flee in)
@@ -119,39 +133,180 @@ function s2Path(pts) {
   };
   return { pts, cum, tot, at, s: 0, v: 0 };
 }
-// a point of a car's route with the corners rounded: the middle of the points R m behind and R m ahead (R grows with
-// speed); the plain route at the start and the end so the car doesn't jump (v0.70, Jonay: chased cars turned on the spot)
-function roundedAt(at, s, v, tot) {
-  const R = clamp(3 + v * 0.25, 3, 7),
-    q0 = at(s - R),
-    q1 = at(s + R),
-    qh = Math.atan2(q1[0] - q0[0], q1[1] - q0[1]);
-  const qs = at(s),
-    f = Math.min(clamp(s / R, 0, 1), clamp((tot - s) / R, 0, 1));
-  return [lerp(qs[0], (q0[0] + q1[0]) / 2, f), lerp(qs[1], (q0[1] + q1[1]) / 2, f), qs[2] + angDiff(qs[2], qh) * f];
+// v1.4.22 (Jonay, 17-nov: «corren bien en recta pero frenan muy rápido y trazan las curvas girando 90 grados; el giro
+// debe ser normal como cualquier coche, incluso usando freno de mano, porque es una persecución»): the route is turned
+// into a drivable line once (every corner rounded with a real turning radius, as wide as the street lets it be) with
+// a speed plan along it: as fast as the grip allows in each bend, braking for it in time with a car's brakes (no more
+// stopping dead), and speeding up again with a car's pick-up. In a chase the tail slides out in the tight bends (a
+// handbrake turn): the nose points into the bend, the wheels counter-steer.
+const DRIVE_PROF = {
+  chase: { R: 13, lat: 8.5, brake: 8.5, acc: 5.2, drift: 1 },
+  car: { R: 12, lat: 6.5, brake: 6.5, acc: 3.8, drift: 0.35 },
+  bus: { R: 15, lat: 2.8, brake: 3.2, acc: 1.6, drift: 0 }
+};
+function drivePlan(pts, pf) {
+  // 1) clean polyline (no repeated points)
+  const P = [pts[0], pts[1]];
+  for (let i = 2; i < pts.length; i += 2) if (Math.hypot(pts[i] - P[P.length - 2], pts[i + 1] - P[P.length - 1]) > 0.5) P.push(pts[i], pts[i + 1]);
+  const n = P.length / 2;
+  // 2) every corner replaced by an arc: radius pf.R, or less when the legs are short (the tangent length can take at
+  // most 45 % of each leg, so two corners never overlap)
+  const out = [P[0], P[1]];
+  for (let i = 1; i < n - 1; i++) {
+    const x = P[i * 2],
+      z = P[i * 2 + 1];
+    const ax = x - P[i * 2 - 2],
+      az = z - P[i * 2 - 1],
+      bx = P[i * 2 + 2] - x,
+      bz = P[i * 2 + 3] - z;
+    const la = Math.hypot(ax, az),
+      lb = Math.hypot(bx, bz);
+    const th = Math.abs(angDiff(Math.atan2(ax, az), Math.atan2(bx, bz)));
+    if (th < 0.04) {
+      out.push(x, z);
+      continue;
+    }
+    const tth = Math.tan(Math.min(th, 2.6) / 2);
+    const t = Math.min(pf.R * tth, la * 0.45, lb * 0.45);
+    const p0x = x - (ax / la) * t,
+      p0z = z - (az / la) * t,
+      p1x = x + (bx / lb) * t,
+      p1z = z + (bz / lb) * t;
+    // the arc as a quadratic Bézier through the corner (close to a circle, and tangent to both legs)
+    const k = Math.max(3, Math.ceil(th * 7));
+    for (let j = 0; j <= k; j++) {
+      const u = j / k,
+        w0 = (1 - u) * (1 - u),
+        w1 = 2 * u * (1 - u),
+        w2 = u * u;
+      out.push(w0 * p0x + w1 * x + w2 * p1x, w0 * p0z + w1 * z + w2 * p1z);
+    }
+  }
+  out.push(P[n * 2 - 2], P[n * 2 - 1]);
+  // 3) resampled every metre: position, heading and signed curvature
+  const src = s2Path(out),
+    tot = src.tot,
+    N = Math.max(2, Math.ceil(tot) + 1),
+    ds = tot / (N - 1);
+  const X = new Float32Array(N),
+    Z = new Float32Array(N),
+    H = new Float32Array(N),
+    K = new Float32Array(N),
+    V = new Float32Array(N);
+  for (let i = 0; i < N; i++) {
+    const q = src.at(i * ds);
+    X[i] = q[0];
+    Z[i] = q[1];
+  }
+  // where several corners come close together (roundabouts, short links) the arcs alone stay tight: a few passes of a
+  // moving average (±3 m) open them up, moving the line at most a metre or two inside the street
+  {
+    const tx = new Float32Array(N),
+      tz = new Float32Array(N),
+      w = Math.max(1, Math.round(3 / ds));
+    for (let pass = 0; pass < 3; pass++) {
+      for (let i = 0; i < N; i++) {
+        if (i < w || i >= N - w) {
+          tx[i] = X[i];
+          tz[i] = Z[i];
+          continue;
+        }
+        let sx = 0,
+          sz = 0;
+        for (let j = -w; j <= w; j++) {
+          sx += X[i + j];
+          sz += Z[i + j];
+        }
+        tx[i] = sx / (2 * w + 1);
+        tz[i] = sz / (2 * w + 1);
+      }
+      X.set(tx);
+      Z.set(tz);
+    }
+  }
+  for (let i = 0; i < N; i++) {
+    const a = Math.max(0, i - 1),
+      b = Math.min(N - 1, i + 1);
+    H[i] = Math.atan2(X[b] - X[a], Z[b] - Z[a]);
+  }
+  for (let i = 0; i < N; i++) {
+    const a = Math.max(0, i - 2),
+      b = Math.min(N - 1, i + 2);
+    K[i] = b > a ? angDiff(H[a], H[b]) / ((b - a) * ds) : 0;
+  }
+  // 4) speed plan: the grip limit in each bend, then backwards so the car brakes for it in time
+  for (let i = 0; i < N; i++) V[i] = Math.sqrt(pf.lat / Math.max(Math.abs(K[i]), 1e-4));
+  for (let i = N - 2; i >= 0; i--) V[i] = Math.min(V[i], Math.sqrt(V[i + 1] * V[i + 1] + 2 * pf.brake * ds));
+  const idx = (s) => clamp(s / ds, 0, N - 1);
+  const at = (s) => {
+    const f = idx(s),
+      i = Math.min(N - 2, Math.floor(f)),
+      t = f - i;
+    return [lerp(X[i], X[i + 1], t), lerp(Z[i], Z[i + 1], t), H[i] + angDiff(H[i], H[i + 1]) * t];
+  };
+  const cum = [];
+  for (let i = 0; i < N; i++) cum.push(i * ds);
+  return { pts: out, cum, tot, at, X, Z, H, K, V, ds, N, idx };
 }
-// car driven along the path (kinematic, like the Canarión's): brakes for bends, keeps a gap to the player
+// the plan of a route, made the first time it is driven (s2Path objects keep their s, v and tot meaning: they now run
+// along the drivable line)
+function s2Plan(P, pf) {
+  if (P.D && P.D.pf === pf) return P.D;
+  const D = drivePlan(P.pts, pf);
+  D.pf = pf;
+  if (P.s > 0) {
+    // where along the new line the car already is
+    const q = P.at(P.s);
+    let bi = 0,
+      bd = 1e9;
+    for (let i = 0; i < D.N; i += 2) {
+      const d = (D.X[i] - q[0]) ** 2 + (D.Z[i] - q[1]) ** 2;
+      if (d < bd) {
+        bd = d;
+        bi = i;
+      }
+    }
+    P.s = bi * D.ds;
+  }
+  Object.assign(P, { pts: D.pts, cum: D.cum, tot: D.tot, at: D.at, D });
+  return D;
+}
+// one step of a car on its plan: speed (pick-up and brakes of a car), pose on the line (off: metres to the right of
+// it), heading with the slide of the tail, steering of the front wheels
+function driveOnPlan(c, D, st, dt, vt, off) {
+  const pf = D.pf;
+  const f = D.idx(st.s),
+    i = Math.min(D.N - 1, Math.round(f));
+  vt = Math.min(vt, D.V[i]);
+  if (vt > st.v) st.v = Math.min(vt, st.v + pf.acc * dt * (1 - 0.45 * clamp(st.v / 40, 0, 1)));
+  else st.v = Math.max(vt, st.v - pf.brake * 1.15 * dt);
+  st.s = Math.min(D.tot, st.s + st.v * dt);
+  const q = D.at(st.s),
+    k = D.K[Math.min(D.N - 1, Math.round(D.idx(st.s)))];
+  // the slide: grows with how hard the bend is taken (lateral acceleration over ~5 m/s²), and settles with a lag
+  const lat = st.v * st.v * Math.abs(k);
+  const want = pf.drift * Math.sign(k) * clamp((lat - 4.5) / 9, 0, 1) * 0.42;
+  st.dr = lerp(st.dr || 0, want, clamp(dt * (Math.abs(want) > Math.abs(st.dr || 0) ? 4 : 2.2), 0, 1));
+  c.x = q[0] + Math.cos(q[2]) * off;
+  c.z = q[1] - Math.sin(q[2]) * off;
+  c.h = q[2] + st.dr;
+  c.fwdV = st.v;
+  c.vx = Math.sin(q[2]) * st.v;
+  c.vz = Math.cos(q[2]) * st.v;
+  // front wheels: the bend (wheelbase ≈ 2.7 m), minus the counter-steer while sliding
+  c.steer = clamp(Math.atan(2.7 * k) - st.dr * 1.4, -0.6, 0.6);
+  if (c.ctl) c.ctl.hb = Math.abs(st.dr) > 0.14 ? 1 : 0;
+  return q;
+}
+// car driven along the path (kinematic): grip-limited bends, real braking, keeps a gap to the player
 function s2DriveCar(c, P, dt, top, gapRule, chase = false) {
-  // v0.85.1 (Jonay: chases too easy): a car running away from you brakes less in bends and goes a bit faster
+  // v0.85.1 (Jonay: chases too easy): a car running away from you goes a bit faster
   if (chase) top *= 1.1;
-  // v0.70 (Jonay: they turned on the spot): brake for the sharpest bend in the next 12–35 m (further when fast) and
-  // drive through it on a rounded line (the middle of the points R m behind and R m ahead) instead of the polyline corner
-  const a = P.at(P.s),
-    look = 12 + P.v * 1.2;
-  let bend = 0;
-  for (const d of [look * 0.5, look, look * 1.5]) bend = Math.max(bend, Math.abs(angDiff(a[2], P.at(Math.min(P.tot, P.s + d))[2])));
-  let vt =
-    (chase ? (bend > 1.0 ? 0.42 : bend > 0.5 ? 0.62 : bend > 0.25 ? 0.82 : 1) : bend > 1.0 ? 0.32 : bend > 0.5 ? 0.5 : bend > 0.25 ? 0.72 : 1) * top;
+  const pf = c.type === 'bus' ? DRIVE_PROF.bus : chase ? DRIVE_PROF.chase : DRIVE_PROF.car;
+  const D = s2Plan(P, pf);
+  let vt = top;
   if (gapRule) vt *= gapRule(Math.hypot(PLAYER.x - c.x, PLAYER.z - c.z));
-  P.v = lerp(P.v, vt, clamp(dt * (vt < P.v ? (chase ? 2.0 : 2.5) : chase ? 1.0 : 0.8), 0, 1));
-  P.s = Math.min(P.tot, P.s + P.v * dt);
-  const q = roundedAt(P.at, P.s, P.v, P.tot);
-  c.x = q[0] + Math.cos(q[2]) * 1.6;
-  c.z = q[1] - Math.sin(q[2]) * 1.6;
-  c.h += angDiff(c.h, q[2]) * clamp(dt * 4, 0, 1);
-  c.fwdV = P.v;
-  c.vx = Math.sin(q[2]) * P.v;
-  c.vz = Math.cos(q[2]) * P.v;
+  driveOnPlan(c, D, P, dt, vt, 1.6);
   return P.s >= P.tot - 1;
 }
 function s2Runner(n, P, dt, speed, off = 0) {
@@ -1013,10 +1168,11 @@ const M_BANCOS = {
       ],
       () => {
         if (!K.isActive(this)) return;
-        const ind = BUILD.filter(
-          (b) => b.style === 3 && Math.hypot(b.cx - PLAYER.x, b.cz - PLAYER.z) > 500 && Math.hypot(b.cx - PLAYER.x, b.cz - PLAYER.z) < 1600
-        );
-        const b = ind.length ? ind[Math.floor(Math.random() * ind.length)] : { cx: PLAYER.x + 700, cz: PLAYER.z + 300 };
+        const b = s2TowardNext(
+          BUILD.filter((q) => q.style === 3),
+          350,
+          1000
+        ) || { cx: PLAYER.x + 600, cz: PLAYER.z + 300 };
         this.st.p = s2Spot(b.cx, b.cz);
         this.st.step = 1;
         K.goto(this.st.p[0], this.st.p[1], 6, 0xe53935);
@@ -1400,10 +1556,11 @@ const M_GOFIO = {
             this.clue();
             return;
           }
-          const ind = BUILD.filter(
-            (b) => b.style === 3 && Math.hypot(b.cx - PLAYER.x, b.cz - PLAYER.z) > 400 && Math.hypot(b.cx - PLAYER.x, b.cz - PLAYER.z) < 1400
-          );
-          const b = ind.length ? ind[Math.floor(Math.random() * ind.length)] : { cx: PLAYER.x + 600, cz: PLAYER.z };
+          const b = s2TowardNext(
+            BUILD.filter((q) => q.style === 3),
+            350,
+            1000
+          ) || { cx: PLAYER.x + 600, cz: PLAYER.z };
           S.w = s2Spot(b.cx, b.cz);
           S.step = 2;
           K.goto(S.w[0], S.w[1], 6, 0xe53935);

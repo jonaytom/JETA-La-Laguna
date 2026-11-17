@@ -186,7 +186,7 @@ const SAVE = (() => {
     const f = (n) => String(n).padStart(2, '0');
     const hh = Math.floor(s.tod || 0),
       mm = Math.floor(((s.tod || 0) - hh) * 60);
-    return `<b>${s.mission || ''}</b><br><span style="opacity:.8">$${s.player.money} · salud ${s.player.health}% · ${f(hh)}:${f(mm)} en el juego${s.weapon && s.weapon.has ? ' · pistola' : ''}${s.missions && s.missions.gang && s.missions.gang.name ? ' · banda «' + s.missions.gang.name + '»' : ''}</span><br><span style="opacity:.55;font-size:12px">${f(d.getDate())}/${f(d.getMonth() + 1)}/${d.getFullYear()} ${f(d.getHours())}:${f(d.getMinutes())}${s.label ? ' · ' + s.label : ''}</span>`;
+    return `<b>${s.mission || ''}</b><br><span style="opacity:.8">${eur(s.player.money)} · salud ${s.player.health}% · ${f(hh)}:${f(mm)} en el juego${s.weapon && s.weapon.has ? ' · pistola' : ''}${s.missions && s.missions.gang && s.missions.gang.name ? ' · banda «' + s.missions.gang.name + '»' : ''}</span><br><span style="opacity:.55;font-size:12px">${f(d.getDate())}/${f(d.getMonth() + 1)}/${d.getFullYear()} ${f(d.getHours())}:${f(d.getMinutes())}${s.label ? ' · ' + s.label : ''}</span>`;
   }
   // ---- UI
   function build() {

@@ -59,6 +59,32 @@ function k3Ring(x, z, n, r) {
   }
   return out;
 }
+// a wooden park bench under someone sitting (o: an s2Human), facing the way they face
+function k3Bench(o) {
+  const g = new THREE.Group(),
+    wood = M(0x8a5a32, 0.8),
+    iron = M(0x2d2f31, 0.5, 0.6);
+  const seat = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.06, 0.42), wood);
+  seat.position.set(0, 0.43, -0.05);
+  const back = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.36, 0.05), wood);
+  back.position.set(0, 0.7, -0.27);
+  back.rotation.x = -0.12;
+  g.add(seat, back);
+  for (const x of [-0.7, 0.7]) {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.43, 0.4), iron);
+    leg.position.set(x, 0.215, -0.07);
+    g.add(leg);
+  }
+  const ry = o.H.root.rotation.y;
+  g.position.set(o.x, heightAt(o.x, o.z), o.z);
+  g.rotation.y = ry;
+  g.traverse((m) => {
+    if (m.isMesh) m.castShadow = true;
+  });
+  scene.add(g);
+  S2.extras.push(g);
+  return g;
+}
 function k3RifleReady() {
   if (!RIFLE.has) giveRifle(true);
   if (RIFLE.water < RIFLE.max * 0.5) RIFLE.water = RIFLE.max;
@@ -189,6 +215,7 @@ const M_RIFLE = {
       const [bx, bz] = safeSpot(f[0] - 7, f[1] + 6, 0.8);
       S.boca = s2Human(lookOfNpc('boca'), bx, bz);
       S.boca.H.pose = 'sit';
+      k3Bench(S.boca); // v1.4.22 (Jonay: «Boca Papa se ve sentado en la nada»): on a park bench
       S.boca.sleep = true;
       k3RifleReady();
       S.n = 0;
@@ -278,6 +305,9 @@ const M_RIFLE = {
             setTimeout(() => {
               t.cd = 0;
             }, 1200);
+            // v1.4.22 (Jonay: «no se sabe si le das a la cabeza»): every hit says where it went
+            AUDIO.splash && AUDIO.splash();
+            HUD.toast(head ? '¡En la cabeza!' : '¡En el cuerpo!', head ? '#7fd3ff' : '#ffd166', 1.2);
             if (!head) {
               SUB.show('<b>El Blanco:</b> «Brrr... ¡la cabeza!»', 1.8);
               return;
@@ -820,13 +850,11 @@ const S_GOFIO = {
         k3RifleReady();
         s2Armed();
         AGUA.setRifleOut(false, true);
-        const b = BUILD.filter(
-          (q) =>
-            q.style === 3 &&
-            Math.hypot(q.cx - PLAYER.x, q.cz - PLAYER.z) > 500 &&
-            Math.hypot(q.cx - PLAYER.x, q.cz - PLAYER.z) < 1300 &&
-            worldEdgeDist(q.cx, q.cz) > 150
-        ).sort(() => Math.random() - 0.5)[0];
+        const b = s2TowardNext(
+          BUILD.filter((q) => q.style === 3),
+          400,
+          1100
+        ); // v1.4.22: on the way to the next mission
         const [x, z] = b ? s2Spot(b.cx, b.cz) : k3Street(PLAYER.x, PLAYER.z, 600, 900);
         this.st.w = [x, z];
         this.st.step = 1;

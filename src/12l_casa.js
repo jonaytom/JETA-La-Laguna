@@ -464,13 +464,13 @@ const CASA = (() => {
     const lab = (P) => {
       if (c.owned.includes(P.id)) return `${P.name} · <b style="color:#7fe08a">es tuyo</b>`;
       if (P.rent)
-        return `${P.name} · alquiler <b>$${P.rent}</b> a la semana${c.rent && c.rent.id === P.id && c.rent.until > c.day ? ` · <span style="color:#7fe08a">alquilado ${c.rent.until - c.day} días más</span>` : ''}`;
-      return `${P.name} · <b>$${P.price.toLocaleString('es-ES')}</b>`;
+        return `${P.name} · alquiler <b>${eur(P.rent)}</b> a la semana${c.rent && c.rent.id === P.id && c.rent.until > c.day ? ` · <span style="color:#7fe08a">alquilado ${c.rent.until - c.day} días más</span>` : ''}`;
+      return `${P.name} · <b>${eur(P.price)}</b>`;
     };
     DLG.show(
       INMO.name,
       'Inmobiliaria',
-      `«¡Pisos Chachi, los más chachis de Aguere!» Tienes <b>$${PLAYER.money.toLocaleString('es-ES')}</b>.`,
+      `«¡Pisos Chachi, los más chachis de Aguere!» Tienes <b>${eur(PLAYER.money)}</b>.`,
       '¿Qué piso le enseño?',
       [...list.map(lab), 'Nada, solo miraba'],
       (i) => {
@@ -495,14 +495,10 @@ const CASA = (() => {
     DLG.show(
       INMO.name,
       P.name,
-      `${P.sub}<br><br>${P.rent ? `Alquiler: <b>$${P.rent}</b> por ${WEEK} días del juego.` : `Precio: <b>$${P.price.toLocaleString('es-ES')}</b>. Es tuyo para siempre.`} Tienes <b>$${PLAYER.money.toLocaleString('es-ES')}</b>.`,
+      `${P.sub}<br><br>${P.rent ? `Alquiler: <b>${eur(P.rent)}</b> por ${WEEK} días del juego.` : `Precio: <b>${eur(P.price)}</b>. Es tuyo para siempre.`} Tienes <b>${eur(PLAYER.money)}</b>.`,
       '',
       [
-        P.rent
-          ? rentMine
-            ? `Pagar otra semana ($${P.rent})`
-            : `Alquilarlo ($${P.rent} la semana)`
-          : `Comprarlo ($${P.price.toLocaleString('es-ES')})`,
+        P.rent ? (rentMine ? `Pagar otra semana (${eur(P.rent)})` : `Alquilarlo (${eur(P.rent)} la semana)`) : `Comprarlo (${eur(P.price)})`,
         'Ver dónde está (GPS)',
         'Volver'
       ],
@@ -521,7 +517,7 @@ const CASA = (() => {
           DLG.show(
             INMO.name,
             'No te llega',
-            `Mi niño, esto cuesta <b>$${cost.toLocaleString('es-ES')}</b> y tienes <b>$${PLAYER.money.toLocaleString('es-ES')}</b>. ¡Vuelva cuando lo tenga, que aquí no se fía!`,
+            `Mi niño, esto cuesta <b>${eur(cost)}</b> y tienes <b>${eur(PLAYER.money)}</b>. ¡Vuelva cuando lo tenga, que aquí no se fía!`,
             '',
             ['Vale'],
             () => DLG.hide()

@@ -42,7 +42,7 @@ const DIARIO = (() => {
       what:
         'La Policía Local paga una recompensa por cada maleante que le entregues. Cuando hay uno cerca sale en el ' +
         'minimapa como un <b>triángulo rojo</b>: vas, le das una buena tunda (pelea, como siempre) y cobras. Pegan ' +
-        'más fuerte que la gente normal; cuanto más nivel, más pagan ($150, $300 o $600). Si te gana, sigue ' +
+        'más fuerte que la gente normal; cuanto más nivel, más pagan (150, 300 o 600 €). Si te gana, sigue ' +
         'marcado un rato: vuelve a por él.',
       where: 'Por la calle, cuando sale el triángulo rojo en el minimapa.'
     },
@@ -70,7 +70,7 @@ const DIARIO = (() => {
       what:
         'La máquina de los bares (GUFO: Guanche Unknown Flying Object… y en canario, un pedo): un matamarcianos de ' +
         'naves por el cielo de Aguere, el Teide y el mar de nubes. A dispara (mantenlo para el disparo cargado), B ' +
-        'lanza y recoge el módulo y Q coge la mejora marcada. <b>$1 la partida</b>; cada bar tiene sus récords.',
+        'lanza y recoge el módulo y Q coge la mejora marcada. <b>1 € la partida</b>; cada bar tiene sus récords.',
       where:
         'En las cafeterías y las tascas: en el minimapa y en el mapa (M) llevan un aro violeta alrededor de su cuadrado rojo. Pídela en la barra o en el mostrador (E).'
     },
@@ -82,7 +82,7 @@ const DIARIO = (() => {
       near: () => AGUA.nearestShop(),
       what:
         "La máquina de las jugueterías: un beat'em up contra Guayota. Eliges al Magote, al Mencey o a la " +
-        'Mirladora. A pega, B salta (y monta el lagarto), Q lanza la magia; doble toque para correr. <b>$1 la ' +
+        'Mirladora. A pega, B salta (y monta el lagarto), Q lanza la magia; doble toque para correr. <b>1 € la ' +
         'partida</b>; cada tienda tiene sus récords.',
       where: 'En las jugueterías: el robot del minimapa y del mapa (M). Pídela en la tienda (E).',
       icon: 'toy'
@@ -181,8 +181,7 @@ const DIARIO = (() => {
           .map((P) => P.name + (P.rent ? ' (alquilado ' + Math.max(0, CASA.data().rent.until - CASA.data().day) + ' días más)' : ''))
           .join(', ')
       : '';
-  const pisosTxt = () =>
-    CASA.PISOS.map((P) => `<b>${P.name}</b>: ${P.rent ? '$' + P.rent + ' a la semana' : '$' + P.price.toLocaleString('es-ES')}`).join(' · ');
+  const pisosTxt = () => CASA.PISOS.map((P) => `<b>${P.name}</b>: ${P.rent ? eur(P.rent) + ' a la semana' : eur(P.price)}`).join(' · ');
   const mundTxt = () => {
     const sp = ARC().sports || {};
     return `Pachanga 3x3 ${(sp.pachanga || {}).won || 0} · Play Furbito ${(sp.furbito || {}).won || 0}`;

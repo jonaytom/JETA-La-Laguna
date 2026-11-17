@@ -601,7 +601,7 @@ const MISSIONS = (() => {
     }, 1500);
     MUSIC.jingle();
     HUD.big('¡MISIÓN SUPERADA!', '#f5b72e', 4);
-    HUD.toast(title + (money ? '  +$' + money : ''), '#7fe08a', 4);
+    HUD.toast(title + (money ? '  +' + eur(money) : ''), '#7fe08a', 4);
     setTimeout(placeStarts, 2500);
   }
   function fail(reason, noRetry) {
@@ -988,7 +988,7 @@ const MISSIONS = (() => {
           DLG.show(
             'Sastrón',
             'No tienes suficiente',
-            `Tienes <b>$${PLAYER.money}</b> y Sastrón pide <b>$${SASTRON_FEE}</b>.<br>Lo más rápido: el <b>Canarión</b> paga bien si le ganas una carrera en la Avenida de La Trinidad (círculo azul, opcional). También puedes reunirlo <b>peleando por la calle</b>, pero tardarás bastante más.`,
+            `Tienes <b>${eur(PLAYER.money)}</b> y Sastrón pide <b>${eur(SASTRON_FEE)}</b>.<br>Lo más rápido: el <b>Canarión</b> paga bien si le ganas una carrera en la Avenida de La Trinidad (círculo azul, opcional). También puedes reunirlo <b>peleando por la calle</b>, pero tardarás bastante más.`,
             '',
             ['Carrera con el Canarión (recomendado)', 'Lo reuniré peleando'],
             (i) => {
@@ -1005,9 +1005,9 @@ const MISSIONS = (() => {
         DLG.show(
           'Sastrón',
           '¿Pagas?',
-          `Sastrón extiende la mano. Con la otra sujeta unas tijeras enormes y una cinta métrica que le cuelga del cuello.<br>Tienes <b>$${PLAYER.money}</b>.`,
+          `Sastrón extiende la mano. Con la otra sujeta unas tijeras enormes y una cinta métrica que le cuelga del cuello.<br>Tienes <b>${eur(PLAYER.money)}</b>.`,
           '',
-          [`Pagar $${SASTRON_FEE} y meterle en la banda`, 'Todavía no'],
+          [`Pagar ${eur(SASTRON_FEE)} y meterle en la banda`, 'Todavía no'],
           (i) => {
             DLG.hide();
             if (i !== 0) {
@@ -1436,6 +1436,7 @@ const MISSIONS = (() => {
           rc.fwdV = 0;
           data.rival = rc;
           data.rs = 0;
+          data.D = null; // v1.4.22: the drivable line is made at the start
           data.rv = 0;
           data.roff = 3;
         }
@@ -1464,37 +1465,21 @@ const MISSIONS = (() => {
           p = data.pts,
           cum = data.cum,
           tot = cum[cum.length - 1];
-        const at = (s) => {
-          let k = 1;
-          while (k < cum.length - 1 && cum[k] < s) k++;
-          const t = (s - cum[k - 1]) / (cum[k] - cum[k - 1] || 1);
-          return [
-            lerp(p[(k - 1) * 2], p[k * 2], t),
-            lerp(p[(k - 1) * 2 + 1], p[k * 2 + 1], t),
-            Math.atan2(p[k * 2] - p[(k - 1) * 2], p[k * 2 + 1] - p[(k - 1) * 2 + 1])
-          ];
-        };
-        const a = at(data.rs),
-          look = 12 + data.rv * 1.2;
-        let bend = 0;
-        for (const d of [look * 0.5, look, look * 1.5]) bend = Math.max(bend, Math.abs(angDiff(a[2], at(Math.min(tot, data.rs + d))[2])));
         // player progress along the route (nearest checkpoint index as a proxy)
         const pS = data.cp > 0 ? Math.min(tot, data.cp * 300) : 0;
-        const gap = data.rs - pS;
-        let vt = (bend > 1.0 ? 9 : bend > 0.5 ? 14 : bend > 0.25 ? 20 : 27) * (gap > 120 ? 0.82 : gap < -120 ? 1.18 : 1);
-        data.rv = lerp(data.rv, vt, clamp(dt * (vt < data.rv ? 2.5 : 0.7), 0, 1));
-        data.rs = Math.min(tot, data.rs + data.rv * dt);
+        // v1.4.22 (Jonay: «frenan muy rápido y trazan las curvas girando 90 grados»): the Canarión drives the drivable
+        // line of 12f_story2.js (rounded corners, grip-limited bends, real braking, sliding the tail in tight ones)
+        if (!data.D) {
+          data.D = drivePlan(p, DRIVE_PROF.chase);
+          data.D.pf = DRIVE_PROF.chase;
+          data.rst = { s: data.rs, v: data.rv };
+        }
+        const gap = data.rst.s - pS;
         data.roff = lerp(data.roff, 1.6, dt * 0.3);
-        const q = roundedAt((s) => at(clamp(s, 0, tot)), data.rs, data.rv, tot),
-          dx = Math.sin(q[2]),
-          dz = Math.cos(q[2]);
-        rc.x = q[0] + dz * data.roff;
-        rc.z = q[1] - dx * data.roff;
-        rc.h += angDiff(rc.h, q[2]) * clamp(dt * 4, 0, 1);
-        rc.fwdV = data.rv;
-        rc.vx = dx * data.rv;
-        rc.vz = dz * data.rv;
-        if (data.rs >= tot - 1) {
+        driveOnPlan(rc, data.D, data.rst, dt, 28 * (gap > 120 ? 0.82 : gap < -120 ? 1.18 : 1), data.roff);
+        data.rs = data.rst.s;
+        data.rv = data.rst.v;
+        if (data.rs >= data.D.tot - 1) {
           if (WANTED) {
           }
           talk([['El Canarión (por el móvil)', '¡Jajaja! ¡Llegué primero, chicharrero! Te espero con las papas arrugadas... que pagas tú.']]);
@@ -1514,7 +1499,7 @@ const MISSIONS = (() => {
         data.cp++;
         AUDIO.cash();
         if (data.cp >= data.cps.length) {
-          const left = Math.round((data.cum[data.cum.length - 1] - data.rs) / Math.max(8, data.rv));
+          const left = Math.round(((data.D ? data.D.tot : data.cum[data.cum.length - 1]) - data.rs) / Math.max(8, data.rv));
           if (data.rival) {
             data.rival.mode = 'physics';
             data.rival.driver = null;
@@ -1625,7 +1610,7 @@ const MISSIONS = (() => {
       }
     }
   ];
-  const OBISPO_LIST = []; // v0.65: the bishop's optional pack (12g_obispo.js), opens with the mayor's missions
+  const OBISPO_LIST = []; // v0.65: the bishop's optional pack (12g_obispo.js), opens when the gang is signed (v1.4.22)
   const SECRETA_LIST = [],
     CARRERAS_LIST = []; // v0.76: el policía secreta (12k_agua.js) and the Canarión's car races
   const COPA_LIST = []; // v0.75: Copa Laguna de fútbol (12j_campos.js), opens after your first football game
@@ -1644,11 +1629,49 @@ const MISSIONS = (() => {
     return TRACKS.story.done || STORY_SKIP.has(title) || (i >= 0 && TRACKS.story.idx > i);
   };
   const trackOpen = (k) => (k === 'secreta' ? !!GANG.rifleTut : k === 'carreras' ? storyPast('El rally de La Esperanza') : true);
+  // v1.4.22 (Jonay, 3-nov: «en ningún momento te dicen lo del obispo… deberíamos desbloquearlo ya cuando se firma la
+  // banda; inventa alguna manera para que te lo presenten, sin tener que desbloquear al alcalde»): the bishop's pack opens
+  // when the gang is signed (before: with the mayor's missions, and nobody said so), and the parish priest of La
+  // Concepción phones to introduce him (obispoIntro below)
   const obispoOpen = () => {
     if (!NPC.obispo) return false;
-    const i = STORY.findIndex((m) => m.who === 'Don Yovoy Gofiérrez' || /farmacia/i.test(m.title));
-    return TRACKS.story.done || (i >= 0 && TRACKS.story.idx >= i);
+    return GANG.formed || storyPast('La firma de la banda');
   };
+  function obispoIntro() {
+    if (GANG.obispoIntro || active || !obispoOpen() || TRACKS.obispo.idx > 0 || !TRACKS.obispo.list.length) return;
+    GANG.obispoIntro = true;
+    setTimeout(() => {
+      if (active || GAME.state !== 'play') {
+        GANG.obispoIntro = false;
+        return;
+      }
+      AUDIO.cash && AUDIO.cash();
+      talk(
+        [
+          [
+            'Don Celestino, párroco de La Concepción (por el móvil)',
+            '¿Ayoze? Soy Don Celestino, el cura de La Concepción. Me han dicho que ahora tenéis una banda... una banda de las buenas, espero.'
+          ],
+          [
+            'Don Celestino, párroco de La Concepción (por el móvil)',
+            'El señor Obispo, Monseñor Fermín Truchas, anda buscando gente joven y despierta para unos encarguitos de la diócesis. Partidos benéficos, alguna cosilla más...'
+          ],
+          [
+            'Don Celestino, párroco de La Concepción (por el móvil)',
+            'Pasaos por el Obispado, en la Casa Salazar de la calle San Agustín. Os lo marco en el mapa. ¡Y portaos, que os conozco!'
+          ],
+          [CH, 'Un obispo pidiéndonos favores... Esto se pone serio, mi niño.']
+        ],
+        () => {
+          const o = NPC.obispo;
+          if (o) {
+            setWaypoint(o.x, o.z, true);
+            HUD.toast('Nuevas misiones: el Obispo (morado en el mapa)', '#b388ff', 6);
+          }
+        }
+      );
+    }, 2500);
+  }
   function placeStarts() {
     while (TRACKS.story.idx < STORY.length && STORY_SKIP.has(STORY[TRACKS.story.idx].title)) TRACKS.story.idx++;
     for (const k in TRACKS) {
@@ -1675,6 +1698,7 @@ const MISSIONS = (() => {
         setWaypoint(sp[0], sp[1], true);
       }
     }
+    obispoIntro();
     if (TRACKS.story.idx >= STORY.length && !TRACKS.story.done) {
       TRACKS.story.done = true;
       setObjective(null);

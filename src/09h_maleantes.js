@@ -83,7 +83,7 @@ const MALEANTES = (() => {
     st.cur = p;
     // v1.2.4: his figures for the 2D fight, drawn ahead in quiet moments (the first fight froze the game ~0.9 s)
     if (typeof FIGHT2D !== 'undefined' && FIGHT2D.warmFigures) FIGHT2D.warmFigures({ ...(p.H.look || {}), strong: true }, false);
-    HUD.toast(`Se busca: ${p.maleante.name} (nivel ${lv}) · recompensa $${LV[lv].pay}. Es el triángulo rojo del minimapa`, COL_, 6);
+    HUD.toast(`Se busca: ${p.maleante.name} (nivel ${lv}) · recompensa ${eur(LV[lv].pay)}. Es el triángulo rojo del minimapa`, COL_, 6);
     return true;
   }
   function clear(msg) {
@@ -125,7 +125,7 @@ const MALEANTES = (() => {
       const pay = LV[p.maleante.lv].pay;
       PLAYER.money += pay;
       AUDIO.cash();
-      HUD.toast(`¡${p.maleante.name} capturado! Recompensa +$${pay}`, COL_, 5);
+      HUD.toast(`¡${p.maleante.name} capturado! Recompensa +${eur(pay)}`, COL_, 5);
       st.won++;
       clear();
       p.paid = true;

@@ -16,28 +16,13 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 - [ ] ◐ **Choque con algo invisible en el paso inferior de San Honorato** (Jonay, 11-nov, captura en X −928, Y 59): yendo en coche por la bajada al túnel, el coche se para contra algo que no se ve.
 - [ ] ◐ **Barras en el suelo que cortan la calle en la glorieta de la Vía de Ronda** (Jonay, 11-nov, captura en X 688, Y 1309, Av. de los Menceyes): los muros y pretiles de la boca de la trinchera asoman sobre la calzada y el coche choca con ellos (ver «Tramos abiertos de trinchera con una calle por encima» y la entrada de la Verdellada).
 - [ ] ◐ **Barandillas y paradas del tranvía que aparecen al acercarse** (Jonay, 11-nov, captura en C. Pedro Zerolo, X 7, Y 631: «van dibujándose según vas avanzando y se ven cortadas; queda un efecto raro»): la distancia a la que se dibujan es corta; que se vean enteras desde más lejos o que aparezcan sin cortes.
-- [ ] ⚡ **Hierba en la calzada y flotando** (Jonay, 11-nov, captura en la rampa del aparcamiento Trinidad Centro, X −244, Y 521: «no puede haber hierba en la carretera y menos flotando»): matas sobre la rampa del aparcamiento, a la altura del terreno de antes. Va con «Hierba solo en el campo».
 
-- [ ] ◐ **Hierba solo en el campo** (Jonay, 11-nov, captura en C. Profesor José Luis Moreno Becerra, X 918, Y 1532, Gracia: «sigue habiendo hierba en aceras; solo puede haber hierba en zonas de campo»): en los solares junto a la acera salen matas de hierba y alguna invade la acera. Que las matas solo salgan en zonas de campo (fuera de la ciudad), nunca en aceras ni solares urbanos.
 - [ ] ◐ **Pasarela del tranvía: la subida va por el otro lado** (Jonay, 11-nov, captura en X −259, Y 547: «la subida a la pasarela es por el lado contrario… pasa justo encima de lo que ahora es una acera»): la rampa de subida a la pasarela está del lado equivocado; en la realidad sube por donde hoy hay una acera.
 - [ ] ◐ **Trinchera del tranvía en la Glorieta del Brasil: el jugador camina por encima** (Jonay, 11-nov, captura en X −281, Y 719, Campus Central ULL: «por aquí te deberías de caer»): el tranvía va en una trinchera con muros, pero el jugador anda a la altura de la calle sobre ella, como si hubiera suelo invisible. Debería caer a la trinchera (o no poder entrar).
 
 ### Coches propios (Blender)
 
-- [ ] ◐ **Raul V por hacer** (Jonay, 11-nov, fotos `Blender/coche/fotos/raul_v_*`): urbano eléctrico retro de 3,922 × 1,808 × 1,498 m (cotas en `raul_v_cotas.png`, que trae lado, frente y zaga). Faros rectangulares inclinados unidos por una línea fina con el emblema, piezas cuadradas de LED abajo en las esquinas, pilotos verticales finos, techo negro con alerón (como en las fotos), paso de rueda con moldura negra. Sustituye a la Reinona Tío (o al Pijó 802 si el Newton se queda la Tío).
-- [ ] ◐ **Ventanillas de lado: uniones raras con la de atrás y con el techo** (Jonay, 11-nov, coches de la v1.4.11): revisar en el render de lado el pilar C (unión ventanilla trasera / cuarto) y el borde de arriba contra el techo (`auto/builder.py`, `side_win` en `generador.py`).
-- [ ] ● **Pasar la receta (`Blender/coche/RECETA_COCHES.md`) a todos los coches propios ya hechos** (Jonay, 11-nov): silueta, frontal y ópticas clavados, ruedas a ras, formas redondeadas, techo como en la foto, ventanillas limpias, colores. Para los 13 primeros, pedir otra vez sus fotos.
-- [ ] ◐ **Seis coches hechos, pendientes de que Jonay los apruebe** (renders en `coches19`): Totuya Yaiza, Guanchazen Helado, Damian Sendero, Troceen Beluga, Antonias Vivita, Newton Style 3 (`nuevos8.py`, `auto/coches8.py`).
-- [ ] ◐ **Damian Sendero por hacer** (Jonay, 11-nov, fotos `Blender/coche/fotos/damian_sendero_*`): utilitario de 4,102 × 1,853 (con espejos 2,012) × 1,496 m; sustituye a la Datilera Sendero (peso 6). Foto lateral con fondo blanco (versión con barras de techo y moldura negra): sirve `auto/builder.py`. Frontal: rejilla ancha con barras horizontales y emblema en el centro unidos a faros en Y; pilotos traseros en Y oscuros.
-- [ ] ◐ **Totuya Yaiza por hacer** (Jonay, 11-nov, fotos `Blender/coche/fotos/totuya_yaiza_*`): utilitario pequeño: 3,940 × 1,745 × 1,500 m, batalla 2,560, voladizos 0,800 delante / 0,580 detrás, vías 1,520–1,530 (cotas de Jonay en `totuya_yaiza_cotas.png`); sustituye al Tagoror Lairis (peso 10). Foto lateral con fondo blanco: sirve `auto/builder.py`. Faros rasgados hacia atrás, rejilla grande en trapecio, zaga con banda negra entre pilotos.
-- [ ] ◐ **Guanchazen Helado por hacer** (Jonay, 11-nov, fotos `Blender/coche/fotos/guanchazen_helado_*`): utilitario de 4,074 × 1,751 × 1,451 m; sustituye al Guagüen Pollito (peso 12, el turismo antiguo que más sale). Foto lateral con fondo blanco: sirve `auto/builder.py`.
-- [ ] ◐ **Tres coches nuevos por hacer** (Jonay, 11-nov, fotos en `Blender/coche/fotos/`): **Troceen Beluga** (monovolumen largo; 4,753 m, batalla 2,975, voladizos 0,892 / 0,866, alto 1,812; sustituiría a la Limonero Berlinga), **Antonias Vivita** (furgoneta de pasajeros; sustituiría a la Mercadillo Vitó) y **Newton Style 3** (berlina eléctrica; 4,694 × 1,850 × 1,443). Hacerlos con `auto/builder.py` (silueta de la foto lateral) y cuidar faros y frontal desde las fotos de frente.
-- [ ] ◐ **Ópticas y frontales de todos los coches propios** (Jonay, 11-nov: «en todos los coches repasa las ópticas, para eso te pasé fotos frontales; la óptica de los faros es lo que más define a un coche junto con el frontal, eso debes trabajarlo más en todos»): faros con su forma real (contorno, firma de LED, módulos) y frontal (rejilla, tomas, paragolpes) de cada coche desde sus fotos de frente.
-- [ ] ◐ **Coches que parecen flotar** (Jonay, 11-nov, captura en X −1015, Y 148, coche blanco visto desde atrás): se ve el hueco bajo la carrocería hasta las ruedas. En v1.4.9 se bajaron los paragolpes del Chayan; mirar en el juego si el coche va más alto que sus ruedas (suspensión / altura del modelo) y revisar los demás.
-- [ ] ⚡ **Troceen C33: ruedas a ras** (11-nov): como el paso de rueda sin dientes, falta pasarle el arreglo de las ruedas (v1.4.9).
-- [ ] ⚡ **Troceen C33 con el paso de rueda nuevo** (11-nov): es el único coche propio que no se ha rehecho con el arreglo de los «dientes» del paso de rueda (su receta está en `troceen_c33.blend`, no en `otros.py`). Pasarlo al generador actual y volver a exportarlo.
-- [ ] ◐ **Revisar con Jonay los 7 coches de la v1.4.8** (Piki Crocante rehecho; Totuya O Algo, Seta Gomera, Pancho Teypan, Pancho Chayan, Ole Corsario, Ole Mocco): hechos con la silueta de las fotos (`auto/coches7.py`). Lo más flojo: el Chayan sale bajo y alargado; el morro del Corsario y del Gomera, largo; el negro de la zaga del O Algo y del techo del Mocco solo está en el techo.
-- [~] ● v1.4.3–1.4.4 (Troceen C33, C44; Totuya Carlota, Yaiza Cross; Guanchazen T-Rex, D.I 55; JTM Capítulo 3, H4; Yoos Reniego, Cartabon; v1.4.5 Antonias Tipo E, LTG Scupe; Fierilla 440; v1.4.7 Piki Crocante; v1.4.8 Totuya O Algo, Seta Gomera, Pancho Teypan, Pancho Chayan, Ole Corsario, Ole Mocco) **Ir sustituyendo los coches de Kenney por modelos propios** (Jonay, 11-nov: «iremos sustituyendo poco a poco a los actuales con los nuestros»; «ve eliminando un modelo de los actuales por cada modelo añadido»; «lo más importante es recrear la silueta y los frontales y sus ópticas delanteras»): generador en `E:\Claude\GTA La Laguna\Blender\coche\` (`generador.py` + `otros.py`/`c44.py` con los datos de cada coche + `morros.py` + `exportar.py`); fotos de referencia de Jonay en el chat. Falta: segunda pasada a traseras y pilotos; más modelos según mande Jonay.
+Los diseña otro chat (Jonay, 17-nov: «eso ya lo hace otro chat»); aquí solo se integran los paquetes de `Blender/coche/para_programador/`.
 
 ### Minijuegos: controles, pausa y sonido
 
@@ -300,14 +285,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Cielo, luz y hora del día
 
-- [ ] ◐ **Más luz de noche: farolas, ventanas y demás luces** (Jonay, 3-nov: «la iluminación de las farolas por la noche
-  debería cubrir un poco más, y la luz de las ventanas y todas las fuentes de luz en general, para que compense un poco la
-  oscuridad que hay»): que el charco de luz de cada farola sea más grande y más claro en el suelo, que las ventanas
-  encendidas se vean más y den algo de luz a la calle, y lo mismo con escaparates, rótulos y faros. Subir también un poco
-  la luz ambiente de noche para que no se vea todo negro. Sin añadir luces de verdad (cuestan mucho): con el brillo de las
-  texturas, manchas de luz pintadas en el suelo y la luz ambiente.
 
-- [ ] ◐ **Una franja verde de monte flotando en el cielo** (fotos de las pruebas y captura de Jonay en X 769, Y 1541, 10-nov): en vuelo libre y en las fotos se ve una tira de ladera verde suspendida en el aire, delante del cielo. Parece el fondo de montes lejanos colocado a la altura del jugador y no de la cámara. Buscar qué malla es (`__ORIGEN`) y ponerla a su altura.
 ### HUD y minimapa
 
 
@@ -325,30 +303,9 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Misiones, historia y economía
 
-- [ ] ◐ **Rifle de agua: postura, puntería y chorro** (Jonay, 3-nov, misiones del agua con El Blanco y Boca Papa, X −599,
-  Y −525 y X −573, Y −513, 4 capturas).
-  - Al apuntar, el rifle se mete dentro del cuerpo del Chopa (se ve el arma atravesándole el pecho y el hombro): repasar
-    la postura y dónde va el arma (en las manos, delante, con la culata al hombro).
-  - Las gotas caen a la izquierda de donde apuntas: el chorro debe salir hacia la mira (desde la boca del arma, corregido
-    hacia el punto que marca la cruz) y la mira centrada en donde va a caer.
-  - «Boca Papa se ve sentado en la nada y no se sabe si le das a la cabeza»: sentarlo en un banco o una silla de verdad, y
-    que se vea claro cuándo le aciertas (salpicadura en la cabeza, sonido, texto).
-  - Chorro continuo en vez de gotas sueltas (Jonay: «me gustaría que fuera un chorro continuo»): una tira de agua en
-    parábola que sigue al arma mientras disparas, con el charco donde cae. `09i_agua.js` / `12k_agua.js`.
-  - El cilindro azul de la fuente donde se rellena se ve muy grande y opaco de noche; hacerlo más discreto.
 
-- [ ] ◐ **El coche de los malos traza fatal las curvas** (Jonay, 3-nov, la persecución antes de la misión del alcalde:
-  «estuvo bien», pero «tengo que frenar y esperar a que gire, es muy mal conductor; además gira raro, de golpe, no es
-  natural»): que frene antes de las curvas, use el freno de mano en las cerradas y gire con el volante suavizado (no
-  cambiar de rumbo de golpe). Mirar cómo conduce el huido en `09h_maleantes.js` / `12f_story2.js`.
-- [ ] ◐ **Presentar al Obispo al firmar la banda** (Jonay, 3-nov: «en ningún momento te dicen lo del obispo… deberíamos
-  desbloquearlo ya cuando se firma la banda; inventa alguna manera para que te lo presenten, sin tener que desbloquear al
-  alcalde»): hoy se desbloquea con las del alcalde y nadie lo cuenta. Una escena o llamada al firmar la banda (p. ej. el
-  cura de La Concepción os pide ayuda y os manda a la Casa Salazar), icono en el mapa y las misiones disponibles desde
-  ahí; las que necesitan el rifle de agua (el incendio) se quedan con candado y aviso («te hace falta un rifle de agua,
-  se vende en las jugueterías») hasta tenerlo. `12g_obispo.js`.
 
-- [~] ◐ v0.76.0 (rifle de agua, bolitas en las jugueterías, Tab entre puños/pistola/rifle; faltan euros, tabla de economía y patada en 3D) **Economía y armas** (Jonay, 12-oct), junto con las jugueterías:
+- [~] ◐ v0.76.0 (rifle de agua, bolitas en las jugueterías, Tab entre puños/pistola/rifle; hechos los euros y los precios del rifle y las bolitas en la v1.4.22; falta la patada en 3D y repasar con una tabla las recompensas) **Economía y armas** (Jonay, 12-oct), junto con las jugueterías:
       - El dinero va en **euros, no dólares** (HUD «$00000350» → euros; textos «+$1500», multas, precios, docs).
       - **Bolitas baratas**; la **escopeta de agua cara**: hacen falta varias misiones para poder comprarla.
       - **Recompensas proporcionadas** (misiones, peleas, baloncesto, fútbol): que no haya munición infinita tras unas
@@ -470,12 +427,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ### Canchas y campos
 
-- [ ] ◐ **Campos de fútbol y canchas vallados** (Jonay, 19-oct, captura en X 485 Z 728 y Street View de C. Arturo Vergara
-      Rodríguez 2, La Verdellada): deben tener muro y valla alta alrededor con uno o dos accesos. Ahora están abiertos.
-- [ ] ● **Canchas: repasar accesos y diseño de todas** (v0.76.0: Ríos Tejera rehecho; falta el Colegio Máyex y repasar las demás) (Jonay, 12-oct; v0.66.0: hecha la entrada por puerta en las
-      encerradas y el Máyex): revisar una a una con `prueba_canchas.py` (lista y fotos) cuáles son públicas y cuáles de
-      colegio, y mejorar su aspecto. Recrear mejor por fuera el **Pabellón Juan Ríos Tejera** (nave blanca, cubierta
-      gris, valla morada; fotos en `docs/referencias/rios_tejera/`) y el **Colegio Máyex** (`docs/referencias/colegio_mayex/`).
+- [ ] ◐ **Canchas: recrear por fuera el Pabellón Juan Ríos Tejera y el Colegio Máyex** (resto de «repasar accesos y diseño de todas»; los accesos de todas se rehicieron en la v1.4.22): nave blanca, cubierta gris, valla morada (fotos en `docs/referencias/rios_tejera/` y `docs/referencias/colegio_mayex/`).
 
 ### Calles, túneles, puentes, enlaces y aeropuerto
 
@@ -859,7 +811,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 ### Rendimiento, auditorías y código
 - [ ] ◐ **Coches propios y rendimiento** (11-nov; auditoría 1.4.4: APTO CON AVISOS, pintado 18,5 ms (el 22,6 de la 1.4.3 era ruido), memoria JS 285,7 → 309,1 MB (+8 %), el juego pesa 13,5 → 15,4 MB por los modelos en `data/kenney_cars.json`): cada modelo propio son ~11.000–12.800 triángulos (los de Kenney, ~1.000–2.000). Si sigue subiendo: versión lejana también para el tráfico, y guardar los modelos más comprimidos (los vértices van sin compartir entre caras de distinto material). Ojo: al poner a 0 los sedanes de Kenney, Carlota, Capítulo 3 y Tipo E salen ~400 aparcados cada uno (`modelForType('sedan')`).
 - [ ] ◐ **Pintado 15,3 → 18,1 ms entre la 1.4.0 y la 1.4.2** (auditorías 11-nov; programas 67 → 73): mirar si es el grano de enlucido/piedra (`plasterWorld`/`stoneWorld`, 02_textures.js) o ruido de la medida (en la 1.3.5–1.3.7 subió y volvió a bajar solo). Aviso menor: «futbol» 0,2 → 0,3 ms.
-- [ ] ⚡ **Peleas callejeras con un peatón cualquiera: ~0,14 s al empezar** (v1.2.5, sonda `sonda_maleante_gpu.py`): sus figuras se dibujan al momento (las del jugador y las de los maleantes ya se preparan antes). Se podrían «calentar» las del peatón al acercarte a él.
 - [ ] ⚡ **`huella_mundo_cmp` no es del todo fija** (v1.2.4): salió distinta una vez (161 vértices) y bien las dos siguientes con el mismo código; algo de la carga (gente o coches) entra en la cuenta.
 
 - [x] v1.2.4 (la auditoría 1.2.4 ya no da avisos nuevos críticos o altos: cuentan como conocidos) **Auditoría 1.1.6: «180 avisos nuevos» del análisis estático** (crear geometría en `buildRoofProps`, `buildTerrain`, `buildLamps`…): no son nuevos, son los de siempre con otro número de línea tras pasar el formateador. Comprobar en la próxima auditoría que vuelven a contar como conocidos; `03_collide.js` bajó de A a B (más líneas por función).
@@ -871,7 +822,6 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   cómodo sería pasar un formateador (Prettier) a esos archivos; en la nube no se puede instalar, en el PC habría que
   añadirlo al trabajador.
 - [ ] ⚡ **Arranque 2 s más lento en la 1.3.2** (auditoría 1.3.2, APTO): 18,9 → 20,9 s. Sospechosos: la comprobación de sitio de cada árbol (`treeFit`, `treeKerb`, 05_scenery.js) y el mapa de hierba con las franjas junto a calles y edificios (05z_hierba.js). Medir y, si es eso, usar una rejilla para las calles.
-- [ ] ⚡ **Quedan algunas matas en la acera ancha de la Av. Leonardo Torriani** (foto de la 1.3.2, X 113, Y 450): la franja gris entre la acera y la fachada; mirar qué es en el OSM (área verde o explanada) y quitarla de la hierba.
 - [ ] ◐ **Auditoría 1.4.14 (APTO CON AVISOS): pintar un fotograma 14,2 → 19,1 ms y memoria JS 359 → 377 MB** (16-nov): tras pasar a 40 coches propios (unos 11.000-13.500 triángulos cada uno). Siguiente paso previsto: usar la versión lejana también en el tráfico, no solo en los aparcados.
 - [~] ● v1.0.0 **Pintar a 1080p y 60 fps en «alta» con la RX 6600** (Jonay, 3-nov: «el objetivo es jugar a 1080 a 60 fps
   en mi gráfica con los gráficos al máximo»; antes: «pintar ~30 ms desde la 0.89»). Sonda con la tarjeta de verdad:
@@ -910,15 +860,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
   - El fútbol aún prepara sus jugadores en los primeros 3 s del partido (1 lienzo por fotograma, luego para): dibujarlos al abrir el juego.
 ### Móvil
 
-- [ ] ● **Móvil: repasar todos los controles táctiles siguiendo el estándar** (Jonay; 2-nov: «hay que repasar los controles para móvil para que sea posible usar todas las funciones del juego, usando recomendaciones para ajustarnos al estándar de controles y fijándose en lo que ya hacen otros, no reinventemos la pólvora»): desde el móvil no se llega a las opciones, y todo lo que se hace con teclado —pausa, opciones, guardar, radio, armas, mapa…— tiene que tener botón o gesto.
-  - Primero: inventario de cada acción del teclado/ratón (`src/01b_controls.js`) y si tiene equivalente táctil hoy, por modo (a pie, en coche, apuntando, minijuegos, recreativa, menús).
-  - Referencia: los esquemas de GTA San Andreas / GTA III / Vice City para móvil (joystick virtual a la izquierda, cámara arrastrando a la derecha, botones de acción contextual a la derecha, cambio de arma tocando el icono del arma, mapa tocando el minimapa, pausa arriba) y las pautas de Android/Apple para juegos (botones ≥ 44–48 px, zona del pulgar, nada importante en los bordes con gesto del sistema, opacidad y tamaño ajustables).
-  - Proponer a Jonay el esquema por modo antes de tocar nada.
-  - **Imagen en 16:9** (Jonay, 3-nov: «para móvil también será 1080; si el móvil tiene una resolución más alargada,
-    sobrará espacio por los lados, que vendrá bien para los controles»): el juego se pinta en un recuadro 16:9 (como
-    mucho 1080 de alto) centrado. En los móviles más alargados (19,5:9, 20:9…) las franjas de los lados quedan libres para
-    el joystick y los botones, que así no tapan la imagen. Hay que pensarlo junto con el rendimiento del móvil (resolución
-    dinámica, `DYN` en `13_main.js`).
+- [ ] ◐ **Móvil: lo que queda del repaso de controles** (v1.4.22 hecho: pausa, diario, golpe/radio, enderezar y mando de los minijuegos): imagen en 16:9 con los botones en las franjas de los lados en móviles alargados (Jonay, 3-nov); tamaño y opacidad de los botones ajustables; en «CONTROLES» del menú de pausa, en el móvil, la explicación de los botones táctiles en vez de las teclas.
 
 ### Recursos externos (animaciones, modelos)
 
@@ -965,6 +907,9 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Hecho
 
+- [x] v1.4.22 **Obispo presentado al firmar la banda; rifle de agua (postura, chorro continuo hacia la mira, banco de Boca Papa, aviso de acierto); euros y precios del rifle y las bolitas; misiones de camino a la siguiente; noche más clara; sin franja de monte flotando; hierba solo en el campo y nunca flotando; peleas sin parón al empezar** (Jonay, 17-nov).
+- [x] v1.4.22 **Rivales que conducen como coches (curvas con radio, frenada real, derrapes); campos y canchas vallados con accesos hacia la calle; controles de móvil (pausa, diario, golpe/radio, enderezar, mando de minijuegos)** (Jonay, 17-nov).
+- [x] v1.4.22 **El coche de los malos traza fatal las curvas** (Jonay, 3-nov): resuelto con la conducción nueva.
 - [x] v1.4.21 **Camión de la basura y guagua propios: ya no queda nada de Kenney** (Jonay, 17-nov).
 - [x] v1.4.20 auditoría APTO CON AVISOS: +5 % de geometría en RAM (59,8 → 62,8 MB) por los camiones, bomberos y taxis propios, más detallados que los de Kenney. Aceptado.
 

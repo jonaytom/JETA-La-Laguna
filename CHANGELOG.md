@@ -3,6 +3,39 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.22 — 2026-11-17 — Alpha 1.4.22: rivales que conducen como coches, campos vallados, móvil completo, euros y noche más clara
+- **Conducción de rivales y enemigos** (Jonay: «corren bien en recta pero frenan muy rápido y trazan las curvas girando
+  90 grados; el giro debe ser normal como cualquier coche, incluso usando freno de mano, porque es una persecución»):
+  la ruta se convierte en una trazada de coche (cada esquina con un radio de giro de verdad, tan abierto como deja la
+  calle), con un plan de velocidad: en cada curva tan rápido como da el agarre, frenando a tiempo con los frenos de un
+  coche (nada de pararse en seco) y acelerando como un coche. En las persecuciones derrapan en las curvas cerradas
+  (el morro se mete en la curva, las ruedas contravolantean, freno de mano). Vale para todas las misiones (huidas,
+  rally, guaguas, agua) y para la carrera del Canarión; las guaguas, más suaves.
+- **Campos de fútbol y canchas vallados** (Jonay: «muro y valla alta alrededor con uno o dos accesos»): muro bajo con
+  valla metálica alta encima; la entrada, hacia la calle por la que se llega (antes siempre el mismo lado, a veces
+  contra una pared); los campos grandes, otra puerta en el lado opuesto si hay sitio. Arreglado también un fallo por el
+  que casi ninguna valla de cancha llegaba a dibujarse.
+- **Móvil** (Jonay: «repaso de todos los controles para móvil»): botón de pausa (con ella, opciones, controles y
+  guardar: antes no había forma de llegar), diario, GOLPE a pie (RADIO en el coche) y ENDEREZAR el coche. Los
+  minijuegos (baloncesto, fútbol, recreativas, Bencomo, naves...) tienen por fin mando táctil: cruceta, A, B, C y pausa
+  (en pausa, C sale del minijuego).
+- **Misiones**: el Obispo se abre al firmar la banda (antes, con las del alcalde y sin que nadie lo dijera): llama Don
+  Celestino, el párroco de La Concepción, y lo marca en el mapa. Los sitios a los que te mandan algunas misiones (la
+  nave de los bancos del Adelantado, la del gofio, la del pirómano) quedan de camino a la siguiente misión, a menos de
+  un kilómetro (antes, de Las Gavias a la Alhóndiga).
+- **Rifle de agua**: chorro continuo (antes, gotas sueltas); sale hacia el punto exacto de la mira, en la curva que cae
+  ahí (antes caía a un lado); al apuntar la culata queda en el hombro, sin meterse en el pecho. Boca Papa duerme en un
+  banco de verdad y cada acierto dice «¡En la cabeza!» o «¡En el cuerpo!».
+- **Euros**: todo el dinero del juego en euros («1.250 €»; antes «$»). El rifle de agua cuesta 2.500 € en la juguetería
+  (hacen falta varias misiones) y las bolitas, 8 € la bolsa.
+- **Noche más clara**: charcos de luz de las farolas más grandes y claros, ventanas, rótulos y faros más brillantes y algo
+  más de luz ambiente.
+- **La franja verde de monte flotando en el cielo**, fuera: el paisaje lejano empieza ya fuera del mapa.
+- **Hierba**: solo en el campo (a 30 m de casas y calles; antes 8 y 12) y nunca en rampas, trincheras ni bajo puentes
+  (la que flotaba en la rampa del aparcamiento de Trinidad Centro).
+- Las peleas con un peatón cualquiera ya no se paran un instante al empezar: sus figuras se dibujan antes, al acercarte.
+- Prueba nueva `prueba_1422.py`.
+
 ## 1.4.21 — 2026-11-17 — Alpha 1.4.21: camión de la basura y guagua propios; ni un modelo de Kenney
 - **Antonias Basurón** (camión de basura de carga trasera): blanco fijo con el rótulo AYTO. LA LAGUNA.
 - **Escania Guagua** (Scania Citywide de 12 m, como las de TITSA): en verde TITSA fijo. Es la de todo el juego: el

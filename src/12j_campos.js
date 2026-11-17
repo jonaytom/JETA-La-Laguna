@@ -274,7 +274,7 @@ function useFieldGate(c) {
   DLG.show(
     c.label,
     'Partido 5 contra 5',
-    `Los del barrio os retan: la banda contra ellos. <b>Nivel ${c.level}/5</b>. Si ganáis: <b>$${prize}</b>.`,
+    `Los del barrio os retan: la banda contra ellos. <b>Nivel ${c.level}/5</b>. Si ganáis: <b>${eur(prize)}</b>.`,
     '¿Jugáis?',
     ['Jugar', 'Ahora no'],
     (i) => {
@@ -292,7 +292,7 @@ function useFieldGate(c) {
           if (r.won) {
             PLAYER.money += prize;
             AUDIO.cash && AUDIO.cash();
-            HUD.toast(`¡Ganado! +$${prize}`, '#7fe08a', 4);
+            HUD.toast(`¡Ganado! +${eur(prize)}`, '#7fe08a', 4);
           } else
             HUD.toast(
               r.score[0] === r.score[1] ? 'Empate. Vuelve cuando quieras.' : 'Os han ganado. Vuelve cuando quieras la revancha.',

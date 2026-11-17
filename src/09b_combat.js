@@ -109,7 +109,7 @@ function hitPed(p) {
       const cash = Math.round(rnd(80, 160));
       PLAYER.money += cash;
       AUDIO.cash();
-      HUD.toast('+$' + cash + ' (el canarión se ha rajado)', '#ffd400', 3);
+      HUD.toast('+' + eur(cash) + ' (el canarión se ha rajado)', '#ffd400', 3);
       SUB.show('<b>Canarión (llorando):</b> ' + pick(LINES.canCry), 4.5);
       p.flee = 10;
       p.fleeFrom = [PLAYER.x, PLAYER.z];
@@ -132,7 +132,7 @@ function hitPed(p) {
       p.paid = true;
       PLAYER.money += cash;
       AUDIO.cash();
-      HUD.toast('+$' + cash, '#7fe08a', 2);
+      HUD.toast('+' + eur(cash), '#7fe08a', 2);
       SUB.show('<b>Peatón:</b> ' + pick(LINES.pay), 3);
       p.fight = 0;
       p.flee = 8;
@@ -224,6 +224,26 @@ function updateCombat(dt) {
   FIGHT.want = false;
   FIGHT.blockPunch = false;
   animPunch(playerHuman, dt);
+  // v1.4.22 (sonda v1.2.5: a street fight with any passer-by froze ~0,14 s while its figures were drawn): the figures of
+  // the person nearest to you on foot are drawn beforehand, a little at a time, when you get within 6 m of them
+  FIGHT.warmT = (FIGHT.warmT || 0) - dt;
+  if (FIGHT.warmT <= 0 && !PLAYER.car && typeof FIGHT2D !== 'undefined' && FIGHT2D.warmFigures) {
+    FIGHT.warmT = 0.5;
+    let best = null,
+      bd = 6;
+    for (const p of PEDS) {
+      if (p.down > 0 || p.fought || p.warmed || !p.H) continue;
+      const d = Math.hypot(p.x - PLAYER.x, p.z - PLAYER.z);
+      if (d < bd) {
+        bd = d;
+        best = p;
+      }
+    }
+    if (best) {
+      best.warmed = true;
+      FIGHT2D.warmFigures({ ...(best.H.look || {}) }, false);
+    }
+  }
   // slow health regeneration when nobody is fighting you
   // no free regeneration any more: you get your health back by eating (see FOOD)
 }

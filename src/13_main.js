@@ -82,14 +82,14 @@ const GAME = {
       T(() => MISSIONS.fail('Has perdido el encargo.'));
       $('fade').style.opacity = 0;
       if (GAME.state === 'cutscene' || GAME.state === 'dialog') GAME.state = 'play';
-      HUD.toast(cost ? '-$' + cost : 'Vuelves a empezar', '#ffb3b3');
+      HUD.toast(cost ? '-' + eur(cost) : 'Vuelves a empezar', '#ffb3b3');
       GAME.lock();
       PLAYER.safeT = 4;
     };
     GAME._respawnFinish = finish;
     setTimeout(finish, 3200);
   },
-  // dying: back where the story starts (El Blanco's street), $100 less; finished missions stay finished
+  // dying: back where the story starts (El Blanco's street), 100 € less; finished missions stay finished
   wasted() {
     if (GAME.state !== 'play') return;
     PLAYER.dead = true;
@@ -205,10 +205,12 @@ function updateSun() {
   sun.position.copy(sun.target.position).addScaledVector(ldir, 320);
   sun.castShadow = Q.shadow > 0 && sun.intensity > 0.3;
   // street lights & car lamps
-  for (const m of SIGN.mats) m.emissiveIntensity = night * 0.85;
+  // v1.4.22 (Jonay, 3-nov: «la luz de las ventanas y todas las fuentes de luz en general, para que compense la
+  // oscuridad»): brighter signs, lamp pools and car lights at night (windows: 04_world.js; pools: 05_scenery.js)
+  for (const m of SIGN.mats) m.emissiveIntensity = night * 1.25;
   lampHeadMat.emissiveIntensity = night * 2.5 + overcast * 0.2 * (1 - night);
-  lampPoolMat.opacity = night * 0.55;
-  headMat.emissiveIntensity = 0.2 + night * 3 + (w === 2 ? 1.5 : 0);
+  lampPoolMat.opacity = night * 0.8;
+  headMat.emissiveIntensity = 0.2 + night * 3.6 + (w === 2 ? 1.5 : 0);
   tailMat.emissiveIntensity = 0.3 + night * 1.2;
 }
 /** (v1.1.7, code quality) part of updateSun: palette interpolation */
@@ -246,7 +248,7 @@ function updateSunPart1() {
   sun.intensity = Math.max((2.9 * dayI * (1 - overcast * 0.75) + 0.05) * (1 - night), 0.35 * night);
   hemi.color.copy(cZen).lerp(tmpC.set(0xffffff), 0.35);
   hemi.groundColor.set(0x5b5140).multiplyScalar(0.45 + dayI * 0.55);
-  hemi.intensity = 0.42 + dayI * (0.58 + overcast * 0.5); /* night floor raised (v0.60: it was too dark) */
+  hemi.intensity = 0.42 + night * 0.16 + dayI * (0.58 + overcast * 0.5); /* night floor raised (v0.60: it was too dark; v1.4.22: a bit more) */
   if (SKY.ring) SKY.ring.material.color.setScalar(0.18 + dayI * 0.72 * (1 - overcast * 0.3));
   bgSun.color.copy(sun.color);
   bgSun.intensity = sun.intensity * 0.9;
@@ -261,7 +263,7 @@ function updateSunPart1() {
   scene.fog.near = w === 2 ? 15 : 90;
   bgScene.fog.near = w === 2 ? 300 : w === 1 ? 1000 : 1400;
   bgScene.fog.far = w === 2 ? 900 : w === 1 ? 12000 : 22000;
-  renderer.toneMappingExposure = 1.0 + night * 0.5;
+  renderer.toneMappingExposure = 1.0 + night * 0.62;
   return { w, overcast, night, ldir };
 }
 // player headlights at night
@@ -979,6 +981,8 @@ window.__dbg = {
   MUNDIALITO,
   s2Path,
   s2DriveCar,
+  drivePlan,
+  DRIVE_PROF,
   pitchRects,
   rectsOverlap,
   STR,

@@ -264,7 +264,7 @@ function buildSportsEach(a, sportsAreas, white, fenceMat, dark, orange) {
   if (!pr) return;
   const { kind, at, add } = buildSportsEachPart1(pr, len, wid, F);
   buildSportsEachPart2(kind, F, add, white, fenceMat, at, dark, orange);
-  buildSportsEachPart3(area, F, fenceMat);
+  buildSportsEachPart3(area, F, fenceMat, cx, cz, sportsAreas);
   // floodlights on football pitches
   if (kind === 'f11' || kind === 'f7') {
     for (const [u, v] of [
@@ -316,63 +316,138 @@ function buildSportsEach(a, sportsAreas, white, fenceMat, dark, orange) {
   }
   SPORTS.pitches.push({ cx, cz, kind, F, len, wid });
 }
-/** (v1.1.7, code quality) part of buildSportsEach: chain-link fence around small courts (with a gap to walk in) */
-function buildSportsEachPart3(area, F, fenceMat) {
-  // chain-link fence around small courts (with a gap to walk in)
-  if (area < 1700) {
-    const e = 1.2;
-    const cor = [
-      [F.u0 - e, F.v0 - e],
-      [F.u1 + e, F.v0 - e],
-      [F.u1 + e, F.v1 + e],
-      [F.u0 - e, F.v1 + e]
-    ];
-    for (let i = 0; i < 4; i++) {
-      const [ua, va] = cor[i],
-        [ub, vb] = cor[(i + 1) % 4];
-      const segs0 =
-        i === 0
-          ? [
-              [0, 0.42],
-              [0.58, 1]
-            ]
-          : [[0, 1]];
-      // no fence on a carriageway (agent: court fence across C. Castellón / Valencia): split the side into runs off the road
-      const Ls = Math.hypot(ub - ua, vb - va) || 1,
-        st = Math.min(0.5, 1 / Ls),
-        segs = [];
-      for (const [a0, a1] of segs0) {
-        let r0 = null;
-        for (let t = a0; t <= a1 + 1e-6; t += st) {
-          const tt = Math.min(t, a1),
-            q = F.W(ua + (ub - ua) * tt, va + (vb - va) * tt),
-            ok = !onCarriageway(q[0], q[1], 0.3);
-          if (ok && r0 === null) r0 = tt;
-          if ((!ok || tt >= a1) && r0 !== null) {
-            if (tt - r0 > 0) segs.push([r0, ok ? tt : Math.max(r0, tt - st)]);
-            r0 = null;
-          }
+/** (v1.1.7, code quality) part of buildSportsEach: the fence: a low wall with a high chain-link fence on it */
+// v1.4.22 (Jonay, 19-oct: «deben tener muro y valla alta alrededor con uno o dos accesos. Ahora están abiertos»; 17-nov:
+// «haz vallas de campos y accesos a canchas»): the football pitches too (before only the small courts had a fence),
+// and the way in faces the street the pitch is reached from (before: always the same side, sometimes against a wall);
+// the big pitches get a second gate on the opposite side when there is room outside it.
+let SPORT_WALL_MAT = null;
+function buildSportsEachPart3(area, F, fenceMat, cx, cz, sportsAreas) {
+  if (sportsAreas.some((s2) => s2[1] >= 0 && /Francisco Peraza/.test(STR[s2[1]]) && pip(cx, cz, s2[2]))) return; // its own walls (05v_peraza.js)
+  const big = area >= 1700;
+  const e = big ? 2.4 : 1.2,
+    wallH = big ? 0.8 : 0.5,
+    topH = big ? 4.6 : 3.6,
+    gateW = big ? 4 : 2.4;
+  if (!SPORT_WALL_MAT) SPORT_WALL_MAT = M(0xc9c4b8, 0.9);
+  const cor = [
+    [F.u0 - e, F.v0 - e],
+    [F.u1 + e, F.v0 - e],
+    [F.u1 + e, F.v1 + e],
+    [F.u0 - e, F.v1 + e]
+  ];
+  // the sides by how well they face the street (local frame of the pitch: u along, v across)
+  const o = F.W(0, 0),
+    pu = F.W(1, 0),
+    pv = F.W(0, 1);
+  const toLocal = (x, z) => [(x - o[0]) * (pu[0] - o[0]) + (z - o[1]) * (pu[1] - o[1]), (x - o[0]) * (pv[0] - o[0]) + (z - o[1]) * (pv[1] - o[1])];
+  const uc = (F.u0 + F.u1) / 2,
+    vc = (F.v0 + F.v1) / 2;
+  let du = 0,
+    dv = -1;
+  try {
+    const rd = roadNear(cx, cz);
+    if (rd) {
+      const [ru, rv] = toLocal(rd.x, rd.z);
+      du = (ru - uc) / ((F.u1 - F.u0) / 2);
+      dv = (rv - vc) / ((F.v1 - F.v0) / 2);
+    }
+  } catch (err) {}
+  const facing = [-dv, du, dv, -du]; // side 0: v = v0, 1: u = u1, 2: v = v1, 3: u = u0
+  const order = [0, 1, 2, 3].sort((a, b) => facing[b] - facing[a]);
+  // a gate needs open ground outside it (not a building, a wall or the carriageway)
+  const outward = [
+    [0, -1],
+    [1, 0],
+    [0, 1],
+    [-1, 0]
+  ];
+  const free = (i) => {
+    const [ua, va] = cor[i],
+      [ub, vb] = cor[(i + 1) % 4],
+      [ou, ov] = outward[i];
+    for (const d of [1.5, 3]) {
+      const q = F.W((ua + ub) / 2 + ou * d, (va + vb) / 2 + ov * d);
+      if ((typeof inAnyBuilding === 'function' && inAnyBuilding(q[0], q[1])) || COL.nearSeg(q[0], q[1], 0.5)) return false;
+    }
+    return true;
+  };
+  const gates = [];
+  for (const i of order)
+    if (free(i)) {
+      gates.push(i);
+      break;
+    }
+  if (!gates.length) gates.push(order[0]);
+  if (big && free((gates[0] + 2) % 4)) gates.push((gates[0] + 2) % 4);
+  for (let i = 0; i < 4; i++) {
+    const [ua, va] = cor[i],
+      [ub, vb] = cor[(i + 1) % 4];
+    const Ls = Math.hypot(ub - ua, vb - va) || 1;
+    const g = Math.min(0.4, gateW / 2 / Ls);
+    const segs0 = gates.includes(i)
+      ? [
+          [0, 0.5 - g],
+          [0.5 + g, 1]
+        ]
+      : [[0, 1]];
+    // no fence on a carriageway (agent: court fence across C. Castellón / Valencia): split the side into runs off the road
+    const st = Math.min(0.5, 1 / Ls),
+      segs = [];
+    for (const [a0, a1] of segs0) {
+      let r0 = null;
+      // v1.4.22: stepped by count (stepping t by st could stop just short of a1, and then that run was never drawn)
+      const ns = Math.max(1, Math.ceil((a1 - a0) / st));
+      for (let k = 0; k <= ns; k++) {
+        const tt = a0 + ((a1 - a0) * k) / ns,
+          q = F.W(ua + (ub - ua) * tt, va + (vb - va) * tt),
+          ok = !onCarriageway(q[0], q[1], 0.3);
+        if (ok && r0 === null) r0 = tt;
+        if ((!ok || tt >= a1) && r0 !== null) {
+          if (tt - r0 > 0) segs.push([r0, ok ? tt : Math.max(r0, tt - (a1 - a0) / ns)]);
+          r0 = null;
         }
-      }
-      for (const [t0, t1] of segs) {
-        const pa = F.W(ua + (ub - ua) * t0, va + (vb - va) * t0),
-          pb = F.W(ua + (ub - ua) * t1, va + (vb - va) * t1);
-        const L = Math.hypot(pb[0] - pa[0], pb[1] - pa[1]);
-        if (L < 0.5) continue;
-        const fg = new THREE.PlaneGeometry(L, 3.5);
-        {
-          const uvA = fg.attributes.uv;
-          for (let q = 0; q < uvA.count; q++) uvA.setXY(q, (uvA.getX(q) * L) / 1.5, (uvA.getY(q) * 3.5) / 1.5);
-        }
-        const f = new THREE.Mesh(fg, fenceMat);
-        const mx = (pa[0] + pb[0]) / 2,
-          mz = (pa[1] + pb[1]) / 2;
-        f.position.set(mx, heightAt(mx, mz) + 1.9, mz);
-        f.rotation.y = Math.atan2(pb[0] - pa[0], pb[1] - pa[1]) + Math.PI / 2;
-        scene.add(f);
-        COL.addSeg(pa[0], pa[1], pb[0], pb[1]);
       }
     }
+    for (const [t0, t1] of segs) {
+      const pa = F.W(ua + (ub - ua) * t0, va + (vb - va) * t0),
+        pb = F.W(ua + (ub - ua) * t1, va + (vb - va) * t1);
+      const L = Math.hypot(pb[0] - pa[0], pb[1] - pa[1]);
+      if (L < 0.5) continue;
+      const mx = (pa[0] + pb[0]) / 2,
+        mz = (pa[1] + pb[1]) / 2,
+        y0 = Math.min(heightAt(pa[0], pa[1]), heightAt(mx, mz), heightAt(pb[0], pb[1])),
+        ry = Math.atan2(pb[0] - pa[0], pb[1] - pa[1]) + Math.PI / 2;
+      // the low wall (a little into the ground, so it never floats on a slope)
+      const w = new THREE.Mesh(new THREE.BoxGeometry(L, wallH + 0.4, 0.22), SPORT_WALL_MAT);
+      w.position.set(mx, y0 + (wallH - 0.4) / 2, mz);
+      w.rotation.y = ry;
+      w.castShadow = true;
+      w.receiveShadow = true;
+      scene.add(w);
+      // the chain-link fence on it
+      const fh = topH - wallH;
+      const fg = new THREE.PlaneGeometry(L, fh);
+      {
+        const uvA = fg.attributes.uv;
+        for (let q = 0; q < uvA.count; q++) uvA.setXY(q, (uvA.getX(q) * L) / 1.5, (uvA.getY(q) * fh) / 1.5);
+      }
+      const f = new THREE.Mesh(fg, fenceMat);
+      f.position.set(mx, y0 + wallH + fh / 2, mz);
+      f.rotation.y = ry;
+      scene.add(f);
+      COL.addSeg(pa[0], pa[1], pb[0], pb[1]);
+    }
+    // the gate posts
+    if (gates.includes(i))
+      for (const t of [0.5 - g, 0.5 + g]) {
+        const q = F.W(ua + (ub - ua) * t, va + (vb - va) * t);
+        if (onCarriageway(q[0], q[1], 0.3)) continue;
+        const p = new THREE.Mesh(new THREE.BoxGeometry(0.3, topH + 0.3, 0.3), SPORT_WALL_MAT);
+        p.position.set(q[0], heightAt(q[0], q[1]) + topH / 2 - 0.1, q[1]);
+        scene.add(p);
+        COL.addCirc(q[0], q[1], 0.2);
+      }
   }
 }
 /** (v1.1.7, code quality) part of buildSportsEach: goals */

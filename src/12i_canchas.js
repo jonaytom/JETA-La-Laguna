@@ -404,7 +404,7 @@ function useCourtGate(c) {
   DLG.show(
     c.label,
     'Partido 3 contra 3',
-    `Los de aquí os retan a ti, a Coco y a El Blanco. <b>Nivel ${c.level}/5</b>. Si ganáis: <b>$${prize}</b>.`,
+    `Los de aquí os retan a ti, a Coco y a El Blanco. <b>Nivel ${c.level}/5</b>. Si ganáis: <b>${eur(prize)}</b>.`,
     '¿Jugáis?',
     ['Jugar', 'Ahora no'],
     (i) => {
@@ -422,7 +422,7 @@ function useCourtGate(c) {
           if (r.won) {
             PLAYER.money += prize;
             AUDIO.cash && AUDIO.cash();
-            HUD.toast(`¡Ganado! +$${prize}`, '#7fe08a', 4);
+            HUD.toast(`¡Ganado! +${eur(prize)}`, '#7fe08a', 4);
           } else HUD.toast('Os han ganado. Vuelve cuando quieras la revancha.', '#ffb3b3', 4);
         }
       });

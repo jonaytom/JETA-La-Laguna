@@ -87,9 +87,11 @@ function hierbaRaster() {
   x.fillStyle = '#000';
   x.fillRect(0, 0, W, H);
   x.strokeStyle = '#fff';
+  // v1.4.22 (Jonay, 11-nov: «sigue habiendo hierba en aceras; solo puede haber hierba en zonas de campo»): open land
+  // only counts as a descampado 30 m away from any building or street (before 8 and 12 m)
   for (const b of DATA.B) {
     const cc = b[6];
-    x.lineWidth = 16 * sx;
+    x.lineWidth = 60 * sx;
     x.beginPath();
     for (let i = 0; i < cc.length; i += 2) {
       const p = P(cc[i], cc[i + 1]);
@@ -101,7 +103,7 @@ function hierbaRaster() {
   for (const r of DATA.R) {
     const cc = r[4];
     if (cc.length < 4 || r[0] > 13) continue;
-    x.lineWidth = (r[2] + 24) * sx;
+    x.lineWidth = (r[2] + 60) * sx;
     x.beginPath();
     for (let i = 0; i < cc.length; i += 2) {
       const p = P(cc[i], cc[i + 1]);
@@ -142,6 +144,15 @@ function hierbaCell(ci, cj) {
     if (kind < 0) continue;
     // v1.3.2: the 4 m raster is coarse: each tuft checked for real off streets and pavements, the tram and buildings
     if (onAnyPaved(x, z, 2.6) || nearTram(x, z, 6) || treeInBuilding(x, z)) continue;
+    // v1.4.22 (Jonay, 11-nov, rampa del aparcamiento Trinidad Centro: «no puede haber hierba en la carretera y menos
+    // flotando»): none in a cutting, a sunken ramp or under/on a deck (the ground there is not the terrain)
+    const gy = heightAt(x, z);
+    if (
+      (typeof inCut === 'function' && inCut(x, z)) ||
+      (typeof lowAt === 'function' && lowAt(x, z, gy)) ||
+      (typeof deckAt === 'function' && deckAt(x, z, gy + 6) > gy - 50)
+    )
+      continue;
     L.push([kind, x, heightAt(x, z), z, rnd() * 6.28, kind === 2 ? 0.8 + rnd() * 0.7 : 1.0 + rnd() * 0.8]);
   }
   HIERBA.cache.set(key, L);

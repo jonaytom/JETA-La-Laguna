@@ -167,7 +167,7 @@ const MAT = {};
       .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\nmetalnessFactor = mix(metalnessFactor, 0.6, mk.g * 0.6);')
       .replace(
         '#include <emissivemap_fragment>',
-        '#include <emissivemap_fragment>\ntotalEmissiveRadiance += mk.g * lit * uNight * vec3(1.0, 0.72, 0.42) * 1.4;'
+        '#include <emissivemap_fragment>\ntotalEmissiveRadiance += mk.g * lit * uNight * vec3(1.0, 0.72, 0.42) * 2.1;'
       );
   };
   MAT.facade = fm;

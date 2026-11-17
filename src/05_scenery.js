@@ -768,7 +768,8 @@ function buildLamps() {
     polygonOffsetFactor: -8,
     polygonOffsetUnits: -8
   });
-  const pg = new THREE.PlaneGeometry(11, 11);
+  // v1.4.22 (Jonay, 3-nov: «la iluminación de las farolas por la noche debería cubrir un poco más»): 16 m pools (before 11)
+  const pg = new THREE.PlaneGeometry(16, 16);
   pg.rotateX(-Math.PI / 2);
   const pools = new THREE.InstancedMesh(pg, lampPoolMat, LAMPS.length);
   LAMPS.forEach((l, i) => {
@@ -1009,8 +1010,14 @@ function buildSkyPart2(nR, nA) {
     cRock = new THREE.Color(0x7a6a5a),
     cTown = new THREE.Color(0xb8b0a2);
   const nz2 = (a, b) => Math.sin(a * 3.1 + b * 0.0011) * 0.5 + Math.sin(a * 7.3 + b * 0.0023) * 0.25 + Math.sin(a * 17 + b * 0.005) * 0.12;
+  // v1.4.22 («una franja verde de monte flotando en el cielo», Jonay, X 769, Y 1541): the ring began 1.8 km from the
+  // centre, inside the map (which reaches ~4 km): where the near terrain was lower or not drawn, its inner edge showed as
+  // a green strip in the air. It now begins just outside the terrain of the map
+  const hx1 = HM.x0 + (HM.nx - 1) * HM.dx,
+    hz1 = HM.z0 + (HM.nz - 1) * HM.dx;
+  const R0 = Math.max(1800, Math.hypot(Math.max(-HM.x0, hx1), Math.max(-HM.z0, hz1)) + 150);
   for (let i = 0; i < nR; i++) {
-    const r = 1800 * Math.pow(60000 / 1800, i / (nR - 1));
+    const r = R0 * Math.pow(60000 / R0, i / (nR - 1));
     for (let j = 0; j < nA; j++) {
       const a = (j / nA) * Math.PI * 2;
       const x = Math.sin(a) * r,
@@ -1030,7 +1037,7 @@ function buildSkyPart2(nR, nA) {
       h -= (1 - anaga) * (1 - dorsal) * smooth(11000, 22000, r) * 640;
       // blend with real heightmap at the inner edge
       const inner = heightAt(clamp(x, HM.x0, HM.x0 + (HM.nx - 1) * HM.dx), clamp(z, HM.z0, HM.z0 + (HM.nz - 1) * HM.dx));
-      h = lerp(inner - 25, h, smooth(2500, 5200, r));
+      h = lerp(inner - 25, h, smooth(R0 + 700, R0 + 3400, r));
       h = Math.max(h, -HM.base - 30);
       pos.push(x, h, z);
       const hh = h + HM.base;

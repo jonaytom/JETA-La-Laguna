@@ -22,6 +22,16 @@ const FIGHT2D = (() => {
   let FIGHTS_DONE = 0;
   // ---------------- pixel sprites ----------------
   const SPR = new Map();
+  // v1.4.22: the figures of passers-by are now drawn ahead of time (09b_combat.js): keep at most 24 rivals' sets, the
+  // oldest go (the player's own, «…true», stay)
+  const sprKeep = () => {
+    if (SPR.size <= 26) return;
+    for (const k of SPR.keys())
+      if (!k.endsWith('true')) {
+        SPR.delete(k);
+        if (SPR.size <= 26) break;
+      }
+  };
   const PREWARM = new Set(); // v1.2.4: keys being drawn ahead (prewarm)
   const shade = (hex, k) => {
     const c = new THREE.Color(hex);
@@ -403,6 +413,7 @@ const FIGHT2D = (() => {
       if (++i < ks.length) idle(step);
       else {
         SPR.set(key, s);
+        sprKeep();
         PREWARM.delete(key);
       }
     };
@@ -977,7 +988,7 @@ const FIGHT2D = (() => {
     bar(st.a, 10, false);
     bar(st.b, W - 94, true);
     txt('KO', W / 2, 9, 7, '#ffd400');
-    if (st.stake) txt('$' + st.stake, W / 2, 28, 8, '#7fe08a');
+    if (st.stake) txt(st.stake + ' EUR', W / 2, 28, 8, '#7fe08a');
     if (st.comboT > 0 && st.comboBy && st.comboBy.combo >= 2) txt(st.comboBy.combo + ' HITS', st.comboBy === st.a ? 60 : W - 60, 52, 10, '#ff8a3d');
     if (st.banner) txt(st.banner, W / 2, 68, st.bannerSize || 16, st.bannerCol || '#fff');
     if (st.phase === 'ready') {
@@ -1622,7 +1633,7 @@ function startStreetFight(p) {
         const cash = Math.random() < 0.05 ? 100 : Math.round(rnd(5, 25));
         PLAYER.money += cash;
         AUDIO.cash();
-        HUD.toast(`¡Pelea ganada! +$${cash}`, cash >= 100 ? '#ffd400' : '#7fe08a', 3);
+        HUD.toast(`¡Pelea ganada! +${eur(cash)}`, cash >= 100 ? '#ffd400' : '#7fe08a', 3);
         p.down = 6;
         p.fight = 0;
         p.paid = true;
