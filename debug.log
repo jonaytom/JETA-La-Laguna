@@ -1,0 +1,11 @@
+[1120/170425.886:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/183010.901:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/221701.753:ERROR:ui\gl\angle_platform_impl.cc:37] vulkan_icd.cpp:157 (angle::vk::ScopedVkLoaderEnvironment::ScopedVkLoaderEnvironment): Error setting CWD for Vulkan layers init.
+[1120/221701.911:WARNING:ui\gl\angle_platform_impl.cc:42] vulkan_icd.cpp:389 (angle::vk::ChoosePhysicalDevice): Preferred device ICD not found. Using default physicalDevice instead.
+[1121/170332.182:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1121/171009.160:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1121/171423.236:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1121/183041.944:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1121/183216.721:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1121/183322.675:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1121/184627.754:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)

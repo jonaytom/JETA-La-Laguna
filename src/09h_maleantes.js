@@ -27,7 +27,7 @@ const MALEANTES = (() => {
   // v0.76 (Jonay: «no sé cuándo te dicen lo de los maleantes»): when you have learnt to fight, Sastrón phones you and
   // explains it; only then do they start to turn up, as red triangles on the minimap
   const unlocked = () => !!(window.GANG && window.GANG.sastronTut && window.GANG.maleIntro);
-  const COL_ = '#ff1744';
+  const COL_ = MAP_MARK.wanted;
   function intro() {
     const G = window.GANG;
     if (

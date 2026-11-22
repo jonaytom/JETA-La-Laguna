@@ -300,11 +300,19 @@ const WALKG = (() => {
   }
   return { route, nearest };
 })();
-const GPS = { target: null, path: null, t: 0, story: false };
+const GPS = { target: null, path: null, t: 0, story: false, follow: null, followPoint: null };
+function followMission(key, index) {
+  GPS.follow = key === null ? null : { key, index };
+  updateGPS(true);
+}
+function gpsRouteColor() {
+  return GPS.followPoint?.[2] ?? (MISSIONS.target() || GPS.story ? MAP_MARK.objective : MAP_MARK.destination);
+}
 function setWaypoint(x, z, story) {
+  if (!story) GPS.follow = GPS.followPoint = null;
   if (x === null) {
     GPS.target = null;
-    GPS.path = null;
+    GPS.path = GPS.route = null;
     GPS.story = false;
     return;
   }
@@ -314,64 +322,51 @@ function setWaypoint(x, z, story) {
   updateGPS(true);
 }
 function updateGPS(force) {
-  const tgt = MISSIONS.target() || GPS.target;
+  const mission = MISSIONS.target();
+  GPS.followPoint = GPS.follow ? MISSIONS.diaryDestination(GPS.follow.key, GPS.follow.index) : null;
+  if (GPS.follow && !GPS.followPoint) GPS.follow = null;
+  if (!GPS.followPoint && !mission && GPS.target && Math.hypot(GPS.target[0] - PLAYER.x, GPS.target[1] - PLAYER.z) < 25) {
+    if (!GPS.story) HUD.toast('Has llegado al destino', '#e040fb');
+    setWaypoint(null);
+  }
+  const tgt = GPS.followPoint || mission || GPS.target;
   if (!tgt) {
-    GPS.path = null;
+    GPS.path = GPS.route = null;
     return;
   }
-  GPS.t -= 1;
-  if (!force && GPS.t > 0) return;
+  if (!force && --GPS.t > 0) return;
   GPS.t = 30;
-  // keep the current route while you follow it and the target hasn't moved much: only cut off the part already done
-  // (recomputing every time from the nearest junction made the line jump about, go backwards or onto other streets)
-  const mode = PLAYER.car ? 'car' : 'foot',
-    P = GPS.path;
-  if (P && GPS.mode === mode && GPS.tgt && Math.hypot(GPS.tgt[0] - tgt[0], GPS.tgt[1] - tgt[1]) < 12) {
-    let bi = -1,
-      bd = 14,
-      bx = 0,
-      bz = 0;
-    for (let i = 2; i < Math.min(P.length, 400); i += 2) {
+  const mode = PLAYER.car ? 'car' : 'foot';
+  const P = GPS.route;
+  if (!force && P && GPS.mode === mode && GPS.tgt && Math.hypot(GPS.tgt[0] - tgt[0], GPS.tgt[1] - tgt[1]) < 12) {
+    let best = null;
+    let remaining = 180;
+    for (let i = 2; i < P.length && remaining > 0; i += 2) {
       const ax = P[i - 2],
         az = P[i - 1],
         dx = P[i] - ax,
-        dz = P[i + 1] - az,
-        L2 = dx * dx + dz * dz || 1;
-      const t = clamp(((PLAYER.x - ax) * dx + (PLAYER.z - az) * dz) / L2, 0, 1);
-      const qx = ax + dx * t,
-        qz = az + dz * t,
-        d = Math.hypot(PLAYER.x - qx, PLAYER.z - qz);
-      if (d < bd) {
-        bd = d;
-        bi = i;
-        bx = qx;
-        bz = qz;
-      }
+        dz = P[i + 1] - az;
+      const length = Math.hypot(dx, dz);
+      if (length < 0.02) continue;
+      const f = clamp(((PLAYER.x - ax) * dx + (PLAYER.z - az) * dz) / (length * length), 0, 1);
+      const x = ax + f * dx,
+        z = az + f * dz;
+      const d = Math.hypot(PLAYER.x - x, PLAYER.z - z);
+      if (d < (best?.distance ?? 14)) best = { x, z, i, distance: d };
+      remaining -= length;
     }
-    if (bi > 0) {
-      const q = [PLAYER.x, PLAYER.z, bx, bz, ...P.slice(bi)];
-      q[q.length - 2] = tgt[0];
-      q[q.length - 1] = tgt[1];
-      /* a moving target drags the end along */ GPS.path = q;
+    if (best) {
+      GPS.route = [best.x, best.z, ...P.slice(best.i)];
+      GPS.path = [PLAYER.x, PLAYER.z, ...GPS.route, tgt[0], tgt[1]];
       return;
     }
   }
-  // on foot: shortest walk (squares, pedestrian streets, footways, stairs); driving: the road graph from your own street,
-  // in the direction you are going
-  let p = null;
-  if (!PLAYER.car) {
-    p = WALKG.route(PLAYER.x, PLAYER.z, tgt[0], tgt[1]);
-    if (p) p = [PLAYER.x, PLAYER.z, ...p, tgt[0], tgt[1]];
-  }
-  if (!p) p = GRAPH.routeFrom(PLAYER.x, PLAYER.z, PLAYER.car ? PLAYER.car.h : PLAYER.h, tgt[0], tgt[1]);
-  GPS.path = p;
+  const walk = mode === 'foot' && WALKG.route(PLAYER.x, PLAYER.z, tgt[0], tgt[1]);
+  const road = walk ? null : GRAPH.routeFrom(PLAYER.x, PLAYER.z, PLAYER.car ? PLAYER.car.h : PLAYER.h, tgt[0], tgt[1]);
+  GPS.route = walk || road?.slice(2, -2) || null;
+  GPS.path = walk ? [PLAYER.x, PLAYER.z, ...walk, tgt[0], tgt[1]] : road;
   GPS.mode = mode;
   GPS.tgt = [tgt[0], tgt[1]];
-  if (GPS.target && Math.hypot(GPS.target[0] - PLAYER.x, GPS.target[1] - PLAYER.z) < 25) {
-    if (!GPS.story) HUD.toast('Has llegado al destino', '#e040fb');
-    GPS.target = null;
-    GPS.story = false;
-  }
 }
 
 // cached DOM writes for the HUD (audit P1.1)
@@ -393,6 +388,19 @@ function setS(id, p, v) {
     if (e) e.style[p] = v;
   }
 }
+const SPEED_LUXURY = new Set(['tipoe', 'cap3', 'scupe', 'teypan', 'chayan', 'hubli', 'style3', 'di55']);
+const SPEED_BY_TYPE = {
+  compact: 'basic',
+  moto: 'basic',
+  van: 'work',
+  truck: 'work',
+  bus: 'work',
+  taxi: 'work',
+  suv: 'trail',
+  sport: 'sport'
+};
+const SPEED_RANGE = { basic: 160, work: 140, street: 200, trail: 200, luxury: 240, sport: 300 };
+let speedRange = SPEED_RANGE.street;
 let lastStars = -1,
   lastFlash = null,
   lastPrompt = null;
@@ -403,7 +411,6 @@ const HUD = (() => {
     locPendN = 0,
     locLast = '',
     locT = 0,
-    vehT = 0,
     toastT = 0,
     subT = 0,
     bigT = 0;
@@ -610,7 +617,7 @@ const HUD = (() => {
   function drawMinimapPart2(s, R) {
     // police
     const fl = Math.floor(performance.now() / 250) % 2;
-    for (const c of CARS) if (c.driver === 'police') blip(c.x, c.z, fl ? '#3d7bff' : '#ff3d3d', 6 * s * 1.6);
+    for (const c of CARS) if (c.driver === 'police') blip(c.x, c.z, fl ? MAP_MARK.police : '#ff3d3d', 6 * s * 1.6);
     // mission markers & waypoint (clamped to edge)
     const edge = (x, z, col, sz, shape) => {
       const dx = x - PLAYER.x,
@@ -627,10 +634,10 @@ const HUD = (() => {
     };
     for (const it of INTERIORS)
       for (const d of it.doors) {
-        if (Math.abs(d.x - PLAYER.x) < 400 && Math.abs(d.z - PLAYER.z) < 400) blip(d.x, d.z, '#3ddc97', 6 * s * 1.6, 'sq');
+        if (Math.abs(d.x - PLAYER.x) < 400 && Math.abs(d.z - PLAYER.z) < 400) blip(d.x, d.z, MAP_MARK.entrance, 6 * s * 1.6, 'sq');
       }
     for (const f of FOOD.shops) {
-      if (Math.abs(f.x - PLAYER.x) < 400 && Math.abs(f.z - PLAYER.z) < 400) blip(f.x, f.z, '#e53935', 6 * s * 1.6, 'sq');
+      if (Math.abs(f.x - PLAYER.x) < 400 && Math.abs(f.z - PLAYER.z) < 400) blip(f.x, f.z, MAP_MARK.food, 6 * s * 1.6, 'sq');
     }
     if (typeof RECRE !== 'undefined') for (const b of RECRE.blips()) edge(b[0], b[1], b[2], 7 * s * 1.6, 'sq'); // v0.80: El Blanco's arcade
     if (typeof CASA !== 'undefined') for (const b of CASA.blips()) edge(b[0], b[1], b[2], 8 * s * 1.6, b[3]); // v0.83: the estate agency (a little house) and your homes (El Chopa's face)
@@ -652,7 +659,7 @@ const HUD = (() => {
     if (typeof ARCADE !== 'undefined' && ARCADE.data().invited)
       for (const f of FOOD.shops) {
         if ((f.type === 'C' || f.type === 'R') && Math.abs(f.x - PLAYER.x) < 400 && Math.abs(f.z - PLAYER.z) < 400) {
-          mx.strokeStyle = '#b388ff';
+          mx.strokeStyle = MAP_MARK.gufo;
           mx.lineWidth = 3 * s;
           mx.beginPath();
           mx.arc(f.x, f.z, 11 * s * 1.6, 0, 7);
@@ -660,7 +667,8 @@ const HUD = (() => {
         }
       }
     for (const m of MISSIONS.blips()) edge(m[0], m[1], m[2] || '#f5b72e', 9 * s * 1.6, m[3]);
-    if (GPS.target) edge(GPS.target[0], GPS.target[1], '#e040fb', 9 * s * 1.6);
+    if (GPS.followPoint) edge(GPS.followPoint[0], GPS.followPoint[1], GPS.followPoint[2], 9 * s * 1.6);
+    else if (GPS.target) edge(GPS.target[0], GPS.target[1], MAP_MARK.destination, 9 * s * 1.6);
     // player arrow
     mx.save();
     mx.translate(PLAYER.x, PLAYER.z);
@@ -691,7 +699,7 @@ const HUD = (() => {
     const s = (1 / mmScale) * MAP.scale;
     // GPS route
     if (GPS.path) {
-      mx.strokeStyle = MISSIONS.target() || GPS.story ? '#f5b72e' : '#e040fb';
+      mx.strokeStyle = gpsRouteColor();
       mx.lineWidth = 7 * s * 1.6;
       mx.lineJoin = 'round';
       mx.lineCap = 'round';
@@ -717,7 +725,7 @@ const HUD = (() => {
         mx.lineWidth = 5 * s * 1.6;
         mx.stroke();
         mx.restore();
-        for (const q of MISSIONS.aheadPts() || []) blip(q[0], q[1], '#ffd23f', 6 * s * 1.6);
+        for (const q of MISSIONS.aheadPts() || []) blip(q[0], q[1], MAP_MARK.checkpoints, 6 * s * 1.6);
       }
     }
     // tram
@@ -803,8 +811,6 @@ const HUD = (() => {
       if (locT < -10 && (PLAYER.speed > 1 || (PLAYER.car && PLAYER.car.speed > 1))) locT = 10;
       locT -= dt;
       setS('loc', 'opacity', locT > 0 ? 1 : 0);
-      vehT -= dt;
-      setS('veh', 'opacity', vehT > 0 ? 1 : 0);
       toastT -= dt;
       setS('toast', 'opacity', toastT > 0 ? 1 : 0);
       subT -= dt;
@@ -813,7 +819,11 @@ const HUD = (() => {
       setS('big', 'opacity', bigT > 0 ? 1 : 0);
       if (PLAYER.car) {
         setS('speed', 'display', 'block');
-        setT('kmh', String(Math.round(PLAYER.car.speed * 3.6)));
+        const kmh = Math.round(Math.abs(PLAYER.car.speed) * 3.6);
+        setT('kmh', String(kmh));
+        const fraction = Math.min(kmh / speedRange, 1);
+        setS('speedNeedle', 'transform', `rotate(${-130 + fraction * 260}deg)`);
+        setS('speedBar', 'transform', `scaleX(${fraction})`);
       } else setS('speed', 'display', 'none');
       // prompt (nearest car / door / food stall: linear searches, so not every frame — audit P1.4)
       if (tick % 6 === 0) {
@@ -849,6 +859,10 @@ const HUD = (() => {
           const cp = typeof CASA !== 'undefined' ? CASA.prompt() : '';
           if (cp) pr = cp;
         } // v0.83: the estate agency, the TV and the bed at home
+        {
+          const gp = typeof GARAJE !== 'undefined' ? GARAJE.prompt() : '';
+          if (gp) pr = gp;
+        } // v1.4.41: the garage button at C. Tacoronte 67
         const mp = MISSIONS.prompt();
         if (mp) pr = mp;
         if (pr !== lastPrompt) {
@@ -861,9 +875,14 @@ const HUD = (() => {
         }
       }
     },
-    vehicle(n, cat) {
-      $('veh').innerHTML = `<small>${cat || ''}</small>${n}`;
-      vehT = 5;
+    vehicle(car, cat) {
+      const base = car.model?.base.replace(/-lejos$/, '');
+      const face =
+        base === 'padelgti' ? 'sport' : base === 'mpyou' ? 'street' : SPEED_LUXURY.has(base) ? 'luxury' : SPEED_BY_TYPE[car.type] || 'street';
+      hudEl('speed').dataset.face = face;
+      speedRange = Math.max(SPEED_RANGE[face], Math.ceil((car.T.maxV * 3.6) / 20) * 20);
+      setT('veh', car.T.name);
+      $('veh').title = cat || '';
     },
     toast(t, color = '#fff', dur = 3) {
       const e = $('toast');
@@ -898,43 +917,36 @@ $('sub').addEventListener('pointerdown', (e) => {
 
 // ---------- big map
 const BIGMAP = (() => {
-  // v0.83 (Jonay: «adaptar la leyenda del mapa»): the legend says what each mark is, and like the diary only what you
-  // can already use (the maleantes, the arcades, the toy shops, the estate agency, your homes…)
   function legend() {
-    const L = $('bmLeg');
-    if (!L) return;
-    const G = window.GANG || {},
-      A = typeof ARCADE !== 'undefined' ? ARCADE.data() : {},
-      C = typeof CASA !== 'undefined' ? CASA.data() : {};
-    const it = (shape, col, txt) => {
-      const st =
-        shape === 'sq'
-          ? `background:${col};border-radius:2px`
-          : shape === 'ring'
-            ? `background:#e53935;border-radius:2px;box-shadow:0 0 0 2px #11181a,0 0 0 4px ${col}`
-            : shape === 'tri'
-              ? `background:transparent;width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:11px solid ${col};border-radius:0`
-              : shape === 'drop'
-                ? `background:${col};border-radius:50% 50% 50% 0;transform:rotate(-45deg)`
-                : `background:${col}`;
-      return `<span style="white-space:nowrap;margin-right:12px"><span class="dot" style="${st}"></span>${txt}</span>`;
-    };
-    const out = [it('dot', '#fff', 'Tú')];
-    /* v1.1.3 (Jonay: «las misiones secundarias no salen en la leyenda»): one line per mission chain already open, in its colour */
-    for (const t of typeof MISSIONS !== 'undefined' && MISSIONS.diary ? MISSIONS.diary() : [])
-      if (!t.locked && t.list.some((m) => m.state !== 'hecha')) out.push(it('dot', t.css, t.key === 'story' ? 'Misión: Historia' : t.name));
-    out.push(it('dot', '#e040fb', 'Destino (GPS)'), it('sq', '#e53935', 'Comida'), it('dot', '#3d7bff', 'Policía'));
-    if (G.maleIntro) out.push(it('tri', '#ff1744', 'Maleante'));
-    if (A.invited) {
-      out.push(it('sq', '#ffb347', 'Casa de El Blanco'));
-      out.push(it('ring', '#b388ff', 'Bar con la máquina del GUFO'));
-    }
-    const ic = (kind, txt) =>
-      `<span style="white-space:nowrap;margin-right:12px"><img src="${window.__mapIconURL(kind)}" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px">${txt}</span>`;
-    if (G.jugueterias) out.push(ic('toy', 'Juguetería'));
-    if (C.intro) out.push(ic('house', 'Inmobiliaria Pisos Chachi'));
-    if (typeof CASA !== 'undefined' && CASA.ownsAny()) out.push(ic('chopa', 'Tu casa'));
-    L.innerHTML = out.join('');
+    const item = (shape, color, label) =>
+      `<span class="map-key-item"><span class="map-key-mark" data-shape="${shape}" style="--key-color:${color}" aria-hidden="true"></span>${label}</span>`;
+    const icon = (kind, label) => `<span class="map-key-item"><img src="${window.__mapIconURL(kind)}" width="18" height="18" alt="">${label}</span>`;
+    const group = (title, entries) => (entries.length ? `<section class="map-key-group"><h4>${title}</h4>${entries.join('')}</section>` : '');
+    const navigation = [
+      item('player', '#fff', 'Tú'),
+      item('dot', MAP_MARK.destination, 'Destino GPS'),
+      item('line', MAP_MARK.destination, 'Ruta GPS'),
+      item('line', MAP_MARK.objective, 'Ruta de misión'),
+      item('dot', MAP_MARK.objective, 'Objetivo activo'),
+      item('dash', MAP_MARK.checkpoints, 'Trazado de misión'),
+      item('dot', MAP_MARK.checkpoints, 'Controles de misión'),
+      item('dot', MAP_MARK.chase, 'Fugitivo'),
+      item('dot', MAP_MARK.police, 'Policía'),
+      item('tri', MAP_MARK.wanted, 'Maleante')
+    ];
+    const places = [
+      item('square', MAP_MARK.food, 'Comida'),
+      item('square', MAP_MARK.entrance, 'Entrada'),
+      icon('toy', 'Juguetería'),
+      item('square', MAP_MARK.bencomo, 'Casa de El Blanco · Bencomo'),
+      item('ring', MAP_MARK.gufo, 'Bar con GUFO'),
+      icon('house', 'Inmobiliaria Pisos Chachi'),
+      icon('chopa', 'Tu vivienda')
+    ];
+    const missions = MISSIONS.diary()
+      .filter((t) => !t.locked && t.list.some((m) => m.state !== 'hecha'))
+      .map((t) => item('dot', t.css, t.name));
+    $('bmLeg').innerHTML = group('Rutas y avisos', navigation) + group('Lugares', places) + group('Líneas de misión abiertas', missions);
   }
   const el = $('bigmap'),
     cv = $('bmc'),
@@ -947,7 +959,7 @@ const BIGMAP = (() => {
     moved = false;
   function draw() {
     const { k, dot } = drawPart1();
-    drawPart2(k); // the toy shops (a little robot)
+    drawPart2(k);
     for (const m of MISSIONS.blips()) {
       if (m[3] === 'tri') {
         const a = (11 / k) * devicePixelRatio;
@@ -963,8 +975,9 @@ const BIGMAP = (() => {
         x.stroke();
       } else dot(m[0], m[1], m[2] || '#f5b72e', 8);
     }
-    for (const q of MISSIONS.aheadPts() || []) dot(q[0], q[1], '#ffd23f', 6);
-    if (GPS.target) dot(GPS.target[0], GPS.target[1], '#e040fb', 8);
+    for (const q of MISSIONS.aheadPts() || []) dot(q[0], q[1], MAP_MARK.checkpoints, 6);
+    if (GPS.followPoint) dot(GPS.followPoint[0], GPS.followPoint[1], GPS.followPoint[2], 8);
+    else if (GPS.target) dot(GPS.target[0], GPS.target[1], MAP_MARK.destination, 8);
     x.save();
     x.translate(PLAYER.x, PLAYER.z);
     x.rotate(-(PLAYER.car ? PLAYER.car.h : PLAYER.h) + Math.PI);
@@ -986,7 +999,7 @@ const BIGMAP = (() => {
   /** (v1.1.7, code quality) part of draw */
   function drawPart2(k) {
     for (const f of FOOD.shops) {
-      x.fillStyle = '#e53935';
+      x.fillStyle = MAP_MARK.food;
       x.strokeStyle = '#fff';
       x.lineWidth = (1.5 / k) * devicePixelRatio;
       const sz = (5 * devicePixelRatio) / k;
@@ -996,7 +1009,7 @@ const BIGMAP = (() => {
     if (typeof ARCADE !== 'undefined' && ARCADE.data().invited)
       for (const f of FOOD.shops)
         if (f.type === 'C' || f.type === 'R') {
-          x.strokeStyle = '#b388ff';
+          x.strokeStyle = MAP_MARK.gufo;
           x.lineWidth = (2.5 / k) * devicePixelRatio;
           x.beginPath();
           x.arc(f.x, f.z, (10 * devicePixelRatio) / k, 0, 7);
@@ -1045,7 +1058,7 @@ const BIGMAP = (() => {
     x.drawImage(MAPC, 0, 0);
     x.restore();
     if (GPS.path) {
-      x.strokeStyle = MISSIONS.target() || GPS.story ? '#f5b72e' : '#e040fb';
+      x.strokeStyle = gpsRouteColor();
       x.lineWidth = (6 / k) * devicePixelRatio;
       x.beginPath();
       const p = GPS.path;
@@ -1062,7 +1075,7 @@ const BIGMAP = (() => {
         x.strokeStyle = 'rgba(0,0,0,.6)';
         x.lineWidth = (6.5 / k) * devicePixelRatio;
         x.stroke();
-        x.strokeStyle = '#ffd23f'; // v1.4.16: as on the minimap
+        x.strokeStyle = MAP_MARK.checkpoints; // as on the minimap
         x.lineWidth = (4 / k) * devicePixelRatio;
         x.stroke();
         x.restore();
@@ -1084,13 +1097,13 @@ const BIGMAP = (() => {
       x.fill();
       x.stroke();
     };
-    for (const c of CARS) if (c.driver === 'police') dot(c.x, c.z, '#3d7bff', 5);
+    for (const c of CARS) if (c.driver === 'police') dot(c.x, c.z, MAP_MARK.police, 5);
     return { k, dot };
   }
   // labels: drawn in screen space, by priority, skipping any that would overlap one already drawn (and repeated names).
   // Far away only the neighbourhoods and the main landmarks; zooming in adds big stores, entrances and then the shops.
   // Text colours avoid the route / blip colours (yellow story, blue side jobs, magenta waypoint, red goals).
-  const LBL = { hood: '#e6dcc8', main: '#ffffff', store: '#dcdcdc', door: '#3ddc97', shop: '#c9c9c9' };
+  const LBL = { hood: '#e6dcc8', main: '#ffffff', store: '#dcdcdc', door: MAP_MARK.entrance, shop: '#c9c9c9' };
   function drawLabels(W, H, k) {
     const d = devicePixelRatio,
       boxes = [],
@@ -1197,6 +1210,7 @@ const BIGMAP = (() => {
     cz = drag[3] - dy / zoom;
     draw();
   });
+  $('bmLegend').addEventListener('wheel', (e) => e.stopPropagation(), { passive: true });
   const up = (e) => {
     ptrs.delete(e.pointerId);
     if (ptrs.size < 2) pinch = null;
@@ -1211,6 +1225,13 @@ const BIGMAP = (() => {
       e.preventDefault();
       f();
     });
+  tap('bmLegendToggle', () => {
+    const panel = $('bmLegend');
+    panel.open = !panel.open;
+  });
+  $('bmLegendToggle').addEventListener('click', (e) => {
+    if (e.detail) e.preventDefault(); // pointerdown already toggled it; keep the native keyboard action
+  });
   tap('bmClose', () => {
     if (open) BIGMAP.toggle();
   });
@@ -1256,6 +1277,36 @@ const BIGMAP = (() => {
     get open() {
       return open;
     },
+    updatePad(gp, dt) {
+      if (!open || !gp) return;
+      if (gp.down(PAD_BUTTON.B)) {
+        BIGMAP.toggle();
+        return;
+      }
+      const left = gp.hold(PAD_BUTTON.LEFT),
+        right = gp.hold(PAD_BUTTON.RIGHT);
+      const up = gp.hold(PAD_BUTTON.UP),
+        down = gp.hold(PAD_BUTTON.DOWN);
+      const x = gp.lx || +right - +left,
+        z = gp.ly || +down - +up;
+      const zoomChange = gp.rt - gp.lt;
+      if (x || z || zoomChange) {
+        cx += (x * 390 * dt) / zoom;
+        cz += (z * 390 * dt) / zoom;
+        zoom = clamp(zoom * Math.exp(zoomChange * dt * 1.8), 0.2, 4);
+      }
+      if (gp.down(PAD_BUTTON.A)) {
+        setWaypoint(cx, cz);
+        AUDIO.cash();
+        $('bmCoords').textContent = 'Destino: X ' + Math.round(cx) + '   Z ' + Math.round(cz);
+      }
+      if (gp.down(PAD_BUTTON.Y)) {
+        BIGMAP.teleport();
+        return;
+      }
+      if (gp.down(PAD_BUTTON.X)) setWaypoint(null);
+      if (x || z || zoomChange || gp.down(PAD_BUTTON.A) || gp.down(PAD_BUTTON.X)) draw();
+    },
     get zoom() {
       return zoom;
     },
@@ -1268,6 +1319,7 @@ const BIGMAP = (() => {
       el.style.display = open ? 'block' : 'none';
       if (open) {
         legend();
+        $('bmLegend').open = !document.body.classList.contains('touchmode');
         cx = PLAYER.x;
         cz = PLAYER.z;
         zoom = 1.2;
@@ -1375,7 +1427,9 @@ function setupTouch() {
       b.addEventListener('pointercancel', up);
     }
   };
-  btn('tbF', () => PRESSED.add(!PLAYER.car && (nearestDoor() || FOOD.near()) && !nearestEnterable() ? 'KeyE' : 'KeyF'));
+  btn('tbF', () => PRESSED.add('KeyF'));
+  btn('tbUse', () => PRESSED.add('KeyE'));
+  btn('tbG', () => PRESSED.add('KeyG'));
   btn(
     'tbJ',
     () => {
@@ -1399,15 +1453,11 @@ function setupTouch() {
   // para móvil»): pause (and with it the options, the controls and saving), the diary, a punch with bare hands, the radio
   // and righting the car had no button on a phone. Like GTA on phones: pause at the top, the action buttons under the
   // right thumb, the map and the diary under the minimap.
-  const vkey = (code) => {
-    window.dispatchEvent(new KeyboardEvent('keydown', { code, bubbles: true }));
-    window.dispatchEvent(new KeyboardEvent('keyup', { code, bubbles: true }));
-  };
   btn('tbP', () => {
     if (GAME.state === 'play' && !BIGMAP.open) GAME.pause(true);
   });
   btn('tbDi', () => {
-    if (GAME.state === 'play') vkey('KeyJ');
+    if (GAME.state === 'play') tapControlKey('KeyJ');
   });
   btn('tbQ', () => PRESSED.add('KeyQ')); // on foot: punch · in a car: next radio station
   btn('tbR', () => PRESSED.add('KeyR')); // right the car
@@ -1420,6 +1470,7 @@ function setupTouch() {
     const armed = $('tbD') && $('tbD').style.display === 'flex';
     $('tbQ').style.display = c || !armed ? 'flex' : 'none';
     $('tbR').style.display = c ? 'flex' : 'none';
+    $('tbUse').style.display = c ? 'none' : 'flex';
     if (c === lastCar) return;
     lastCar = c;
     $('tbF').textContent = c ? 'SALIR' : 'ENTRAR';
@@ -1437,7 +1488,7 @@ function setupTouch() {
     $('tbA').style.borderColor = WEAPON.touchAim ? '#3ddc97' : '';
   });
   btn('tbD', () => {
-    if (canUse()) WEAPON.want = true;
+    if (canUse()) WEAPON.want = !!WEAPON.touchAim;
     else if (typeof rifleUsable === 'function' && rifleUsable()) RIFLE.touchT = 0.7;
   });
 }
@@ -1447,7 +1498,17 @@ function setupTouch() {
 function setupTouchPart2() {
   const pad = $('miniPad');
   if (!pad) return;
-  const codes = { mpL: 'ArrowLeft', mpR: 'ArrowRight', mpU: 'ArrowUp', mpD: 'ArrowDown', mpA: 'KeyE', mpB: 'Space', mpC: 'KeyQ', mpP: 'KeyP' };
+  const codes = {
+    mpL: 'ArrowLeft',
+    mpR: 'ArrowRight',
+    mpU: 'ArrowUp',
+    mpD: 'ArrowDown',
+    mpA: 'KeyE',
+    mpB: 'Space',
+    mpC: 'KeyQ',
+    mpP: 'KeyP',
+    mpExit: 'Escape'
+  };
   for (const id in codes) {
     const b = $(id);
     if (!b) continue;
@@ -1459,13 +1520,13 @@ function setupTouchPart2() {
       if (down) return;
       down = true;
       b.classList.add('on');
-      window.dispatchEvent(new KeyboardEvent('keydown', { code, bubbles: true }));
+      sendControlKey(code, true);
     });
     const up = () => {
       if (!down) return;
       down = false;
       b.classList.remove('on');
-      window.dispatchEvent(new KeyboardEvent('keyup', { code, bubbles: true }));
+      sendControlKey(code, false);
     };
     b.addEventListener('pointerup', up);
     b.addEventListener('pointercancel', up);

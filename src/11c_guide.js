@@ -108,6 +108,7 @@ const GUIDE = (() => {
     const add = (x, z, css) => {
       if (!L.some((q) => Math.abs(q[0] - x) + Math.abs(q[1] - z) < 4)) L.push([x, z, css]);
     };
+    if (GPS.followPoint) add(...GPS.followPoint);
     for (const b of MISSIONS.blips()) add(b[0], b[1], b[2] || '#f5b72e'); // mission goal, story / side beacons, chased people and cars
     if (GPS.target && !GPS.story) add(GPS.target[0], GPS.target[1], '#e040fb');
     else if (GPS.target) add(GPS.target[0], GPS.target[1], '#f5b72e');
@@ -143,7 +144,8 @@ const GUIDE = (() => {
         const red = MISSIONS.isRace()
           ? null
           : L.filter((q) => q[2] === '#ff3b30').sort((p, q) => Math.hypot(p[0] - car.x, p[1] - car.z) - Math.hypot(q[0] - car.x, q[1] - car.z))[0];
-        const lead = L.find((q) => q[2] === '#e040fb') || red || L.find((q) => q[2] === '#f5b72e') || L[0];
+        const lead = (GPS.followPoint && L.find((q) => q[0] === GPS.followPoint[0] && q[1] === GPS.followPoint[1])) ||
+          L.find((q) => q[2] === '#e040fb') || red || L.find((q) => q[2] === '#f5b72e') || L[0];
         lastLead = lead;
         bob += 0.05;
         const H = (car.T && car.T.H) || 1.5;
@@ -195,6 +197,7 @@ const GUIDE = (() => {
       }
       // the ring takes the colour of the leading goal: your own map mark (pink) if you set one, else the main mission (yellow)
       const lead =
+        (GPS.followPoint && L.find((q) => q[0] === GPS.followPoint[0] && q[1] === GPS.followPoint[1])) ||
         L.find((q) => q[2] === '#e040fb') || (!MISSIONS.isRace() && L.find((q) => q[2] === '#ff3b30')) || L.find((q) => q[2] === '#f5b72e') || L[0];
       ring.material = ringMat(lead[2]);
       L.slice(0, 6).forEach((q, i) => {

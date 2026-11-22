@@ -32,7 +32,7 @@ const FIGHT2D = (() => {
         if (SPR.size <= 26) break;
       }
   };
-  const PREWARM = new Set(); // v1.2.4: keys being drawn ahead (prewarm)
+  const PREWARM = new Map(); // v1.2.4: keys being drawn ahead (prewarm)
   const shade = (hex, k) => {
     const c = new THREE.Color(hex);
     c.multiplyScalar(k);
@@ -399,33 +399,46 @@ const FIGHT2D = (() => {
   /** v1.2.4 (Jonay: «se quedó congelado un momento» al pillar a un maleante; la sonda: 70 lienzos y 140 ms leyendo píxeles
    * en la primera pelea): the figures of a fighter drawn ahead of time, one pose per quiet moment, so the fight finds
    * them ready. Same key as spritesFor. */
+  let warming = false;
+  const poseKeys = Object.keys(POSES);
+  const idle = window.requestIdleCallback || ((f) => setTimeout(f, 40));
+  function scheduleWarm() {
+    if (warming || running || !PREWARM.size) return;
+    warming = true;
+    idle(() => {
+      warming = false;
+      if (running || !PREWARM.size) return;
+      const [key, job] = PREWARM.entries().next().value;
+      const pose = poseKeys[job.next++];
+      job.sprites[pose] = drawFigure(job.look, POSES[pose], job.nose);
+      if (job.next === poseKeys.length) {
+        SPR.set(key, job.sprites);
+        PREWARM.delete(key);
+        sprKeep();
+      }
+      scheduleWarm();
+    });
+  }
   function warmFigures(look, nose) {
     const key = JSON.stringify(look) + nose;
     if (SPR.has(key) || PREWARM.has(key)) return;
-    PREWARM.add(key);
-    const s = {},
-      ks = Object.keys(POSES),
-      idle = window.requestIdleCallback || ((f) => setTimeout(f, 40));
-    let i = 0;
-    const step = () => {
-      if (SPR.has(key)) return PREWARM.delete(key);
-      s[ks[i]] = drawFigure(look, POSES[ks[i]], nose);
-      if (++i < ks.length) idle(step);
-      else {
-        SPR.set(key, s);
-        sprKeep();
-        PREWARM.delete(key);
-      }
-    };
-    idle(step);
+    if (PREWARM.size >= 8) PREWARM.delete(PREWARM.keys().next().value);
+    PREWARM.set(key, { look, nose, sprites: {}, next: 0 });
+    scheduleWarm();
   }
   function spritesFor(look, nose) {
     const key = JSON.stringify(look) + nose;
     if (SPR.has(key)) return SPR.get(key);
-    const s = {};
-    for (const k in POSES) s[k] = drawFigure(look, POSES[k], nose);
-    SPR.set(key, s);
-    return s;
+    const job = PREWARM.get(key);
+    const sprites = job?.sprites || {};
+    PREWARM.delete(key);
+    for (let i = job?.next || 0; i < poseKeys.length; i++) {
+      const pose = poseKeys[i];
+      sprites[pose] = drawFigure(look, POSES[pose], nose);
+    }
+    SPR.set(key, sprites);
+    sprKeep();
+    return sprites;
   }
   // CPU rivals: hit 25% softer and wind up their attacks 1.6x slower (time to see it coming and block)
   const AI_DEAL = 0.75,
@@ -592,20 +605,20 @@ const FIGHT2D = (() => {
   // gamepad: A kick, X punch, Y jump, stick / d-pad to move
   const GPK = {};
   function pollPad() {
-    const gp = navigator.getGamepads ? [...navigator.getGamepads()].find((g) => g) : null;
-    if (!gp) return;
-    const b = (i) => !!(gp.buttons[i] && gp.buttons[i].pressed);
-    const ax = gp.axes[0] || 0,
-      ay = gp.axes[1] || 0;
+    const gp = connectedPad();
+    const b = (i) => !!gp?.buttons[i]?.pressed;
+    const ax = gp?.axes[PAD_STICK.LEFT_X] ?? 0,
+      ay = gp?.axes[PAD_STICK.LEFT_Y] ?? 0;
+    const { A, X, Y, UP, LEFT, RIGHT, DOWN, LB, LT, MENU } = PAD_BUTTON;
     const want = {
-      vK: b(0),
-      vP: b(2),
-      vU: b(3) || b(12),
-      vL: b(14) || ax < -0.5,
-      vR: b(15) || ax > 0.5,
-      vD: b(13) || ay > 0.5,
-      vB: b(4) || b(6),
-      vS: b(9)
+      vK: b(A),
+      vP: b(X),
+      vU: b(Y) || b(UP),
+      vL: b(LEFT) || ax < -0.5,
+      vR: b(RIGHT) || ax > 0.5,
+      vD: b(DOWN) || ay > 0.5,
+      vB: b(LB) || b(LT),
+      vS: b(MENU)
     };
     for (const k in want) {
       if (want[k] && !GPK[k]) vk(k, true);
@@ -1082,7 +1095,11 @@ const FIGHT2D = (() => {
     cx.fillRect(bx, by, bw, 2);
     cx.fillRect(bx, by + bh - 2, bw, 2);
     txt('CONTROLES', W / 2, by + 6, 7, '#ffd400');
-    const rows = touch
+    const pad = controlMedium() === 'pad';
+    const rows = pad ? [
+        ['PUÑO', 'X', '#ffd400'], ['PATADA', 'A', '#ff5252'],
+        ['SALTO', 'Y / ↑', '#5ec8ff'], ['CUBRIRSE', 'LB / LT / atrás', '#9fd7ff']
+      ] : touch
       ? [
           ['PUÑO', 'P', '#ffd400'],
           ['PATADA', 'K', '#ff5252'],
@@ -1103,7 +1120,7 @@ const FIGHT2D = (() => {
     txt(touch ? 'Más en Opciones' : 'Más en Opciones › Controles', W / 2, by + 59, 4, '#bbb');
     if (st.frame % 50 < 34)
       txt(
-        touch ? 'TOCA LA PANTALLA PARA EMPEZAR' : 'PULSA ' + CONTROLS.keyName('f_punch').toUpperCase() + ' PARA EMPEZAR',
+        pad ? 'PULSA X PARA EMPEZAR' : touch ? 'TOCA LA PANTALLA PARA EMPEZAR' : 'PULSA ' + CONTROLS.keyName('f_punch').toUpperCase() + ' PARA EMPEZAR',
         W / 2,
         by + 67,
         5,
@@ -1257,15 +1274,16 @@ const FIGHT2D = (() => {
     st.bannerSize = 16;
   }
   let PZ = { on: false, off() {} }; // v0.89: P = pause (made in start(): MINI is defined after this file)
+  const frameDue = makeFrameGate();
   function loop(now) {
     if (!running) return;
     raf = requestAnimationFrame(loop);
-    now = performance.now();
+    if (!frameDue(now)) return;
     if (PZ.on && st && !st.trans) {
       last = now;
       draw();
       cx.setTransform(R, 0, 0, R, 0, 0);
-      MINI.pauseOverlay(cx, W, H);
+      MINI.pauseOverlay(cx, W, H, false);
       return;
     }
     const dt = clamp((now - last) / 1000, 0, 0.1);
@@ -1523,6 +1541,7 @@ const FIGHT2D = (() => {
         document.body.classList.remove('fighting');
         MINI.clearWorldInput();
         GAME.state = 'play';
+        scheduleWarm();
         GAME.lock();
         if (onEnd) onEnd(res);
       }
@@ -1566,6 +1585,7 @@ const FIGHT2D = (() => {
     if (fp) fp.style.display = 'none';
     document.body.classList.remove('fighting');
     if (GAME.state === 'fight2d') GAME.state = 'play';
+    scheduleWarm();
   } // tests only
   return {
     start,

@@ -1,21 +1,12 @@
 # Exporta los árboles de la colección JETA_Arboles (arboles_blender.py) y el pino de Quaternius (Poly Pizza, CC0) a
 # data/arboles.json para el juego (v1.3.0). Se ejecuta dentro de Blender.
-# Formato: { tipo: { trunk|crown|lo: { p: [x,y,z cm…], n: [nx,ny,nz ×100…], c: [r,g,b 0-255 lineal…] } } }, triángulos
+# Formato: { tipo: { trunk|crown|lo: { p: [x,y,z cm…], n: [nx,ny,nz ×100…], c: [r,g,b 0-255, en el espacio de color que espera el juego…] } } }, triángulos
 # sueltos (sin índices), en coordenadas del juego (Y arriba): x = X de Blender, y = Z, z = −Y; el pie del tronco en 0.
 import bpy, bmesh, json, math
 from mathutils import Vector
 
 OUT = r'E:\Claude\GTA La Laguna\repo\data\arboles.json'
 col = bpy.data.collections['JETA_Arboles']
-
-
-def mat_color(m):
-    if m and m.use_nodes:
-        for n in m.node_tree.nodes:
-            if n.bl_idname == 'ShaderNodeBsdfPrincipled':
-                c = n.inputs['Base Color'].default_value
-                return (c[0], c[1], c[2])
-    return (0.5, 0.5, 0.5)
 
 
 def dump(obj, origin, flat, only_mat=None, ratio=None, colour=None):
@@ -101,10 +92,12 @@ li = next(i for i, m in enumerate(mats) if 'Leaves' in m.name)
 dg = bpy.context.evaluated_depsgraph_get()
 ws = [pine.matrix_world @ v.co for v in pine.data.vertices]
 org = Vector(((min(v.x for v in ws) + max(v.x for v in ws)) / 2, (min(v.y for v in ws) + max(v.y for v in ws)) / 2, min(v.z for v in ws)))
-bc = mat_color(mats[bi])
-lc = mat_color(mats[li])
+# The imported material's default Base Color can be neutral even with a texture.
+# Use the game's bark and needle colours for both levels of detail.
+bc = tuple(c / 255 for c in (107, 83, 64))
+lc = tuple(c / 255 for c in (66, 102, 48))
 out['pine'] = {
-    'trunk': dump(pine, org, False, only_mat=bi, ratio=0.4, colour=(bc[0] * 0.9, bc[1] * 0.9, bc[2] * 0.9)),
+    'trunk': dump(pine, org, False, only_mat=bi, ratio=0.4, colour=bc),
     'crown': dump(pine, org, True, only_mat=li, ratio=0.45, colour=lc),
     'lo': dump(pine, org, True, only_mat=li, ratio=0.06, colour=lc),
 }

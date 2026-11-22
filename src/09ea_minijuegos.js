@@ -280,8 +280,8 @@ const MINI = (() => {
   // v0.89 (Jonay: «todos los minijuegos necesitan pausa con la P, que se reanuda al volver a pulsarla»): P toggles the pause
   // of the minigame that is running (the sound stops too); pauseOverlay() darkens the frame and says PAUSA
   // v1.1.3 (Jonay: «al darle a Esc no me saca del furbito, ni pausa ni nada»): in full screen the browser keeps Esc for
-  // itself (it leaves the full screen and drops the mouse) and the game never sees it: leaving the full screen or losing the
-  // mouse pauses too, and Esc pauses when it does arrive. Paused, Q (or Esc) quits the minigame when it has a way out (quit)
+  // itself (it leaves the full screen and drops the mouse) and the game never sees it: leaving the full screen
+  // pauses too, and Esc pauses when it does arrive. Paused, Q (or Esc) quits the minigame when it has a way out (quit)
   function pauser(isRunning, quit) {
     const o = { on: false, quit: !!quit };
     const set = (v) => {
@@ -319,24 +319,24 @@ const MINI = (() => {
       },
       true
     );
-    const lost = () => {
-      if (isRunning() && !o.on && !document.fullscreenElement && !document.pointerLockElement && !window.__JETA_TEST) set(true);
-    };
-    document.addEventListener('fullscreenchange', lost);
-    document.addEventListener('pointerlockchange', () => {
-      if (!document.pointerLockElement && document.fullscreenElement === null && !document.body.classList.contains('touchmode')) lost();
+    // Every 2D game releases the mouse on entry. Only leaving fullscreen signals a browser-handled Escape.
+    document.addEventListener('fullscreenchange', () => {
+      if (isRunning() && !o.on && !document.fullscreenElement && !window.__JETA_TEST) set(true);
     });
     o.off = () => {
       if (o.on) set(false);
     };
     return o;
   }
-  function pauseOverlay(cx, W, H) {
+  function pauseOverlay(cx, W, H, canQuit = true) {
     cx.fillStyle = 'rgba(0,0,0,0.55)';
     cx.fillRect(0, 0, W, H);
     txt(cx, 'PAUSA', W / 2, H / 2 - 14, 16, '#ffd400');
-    txt(cx, 'PULSA P PARA SEGUIR', W / 2, H / 2 + 10, 6, '#fff');
-    txt(cx, 'Q: SALIR', W / 2, H / 2 + 22, 6, '#bbb');
+    txt(cx, `${miniKeyLabel('pause').toUpperCase()}: SEGUIR`, W / 2, H / 2 + 10, 6, '#fff');
+    if (canQuit) {
+      const exit = controlMedium() === 'keyboard' ? 'Q / ESC' : miniKeyLabel('exit').toUpperCase();
+      txt(cx, `${exit}: SALIR`, W / 2, H / 2 + 22, 6, '#bbb');
+    }
   }
   // ---------- v0.90 (Jonay: «en basket y fútbol, más que música, efectos del público: el organillo, el furor»). The crowd of
   // a match, all synthesised: the murmur underneath (it rises with the play), the «¡uuuh!» of a near miss, the roar and the

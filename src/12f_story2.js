@@ -148,17 +148,31 @@ function drivePlan(pts, pf) {
   // 1) clean polyline (no repeated points)
   const P = [pts[0], pts[1]];
   for (let i = 2; i < pts.length; i += 2) if (Math.hypot(pts[i] - P[P.length - 2], pts[i + 1] - P[P.length - 1]) > 0.5) P.push(pts[i], pts[i + 1]);
-  const n = P.length / 2;
+  // Collinear map samples are not junctions. Keeping them as corners used to cap
+  // the radius at 45% of a tiny segment even when the approach was a long straight.
+  const clean = [];
+  for (let j = 0; j < P.length; j += 2) {
+    const x = P[j], z = P[j + 1], n = clean.length;
+    if (n >= 4) {
+      const ax = clean[n - 2] - clean[n - 4], az = clean[n - 1] - clean[n - 3];
+      const bx = x - clean[n - 2], bz = z - clean[n - 1];
+      const cross = Math.abs(ax * bz - az * bx);
+      if (ax * bx + az * bz > 0 && cross < 0.008 * Math.hypot(ax, az) * Math.hypot(bx, bz)
+          && cross < 0.08 * Math.hypot(ax + bx, az + bz)) clean.length -= 2;
+    }
+    clean.push(x, z);
+  }
+  const n = clean.length / 2;
   // 2) every corner replaced by an arc: radius pf.R, or less when the legs are short (the tangent length can take at
   // most 45 % of each leg, so two corners never overlap)
-  const out = [P[0], P[1]];
+  const out = [clean[0], clean[1]];
   for (let i = 1; i < n - 1; i++) {
-    const x = P[i * 2],
-      z = P[i * 2 + 1];
-    const ax = x - P[i * 2 - 2],
-      az = z - P[i * 2 - 1],
-      bx = P[i * 2 + 2] - x,
-      bz = P[i * 2 + 3] - z;
+    const x = clean[i * 2],
+      z = clean[i * 2 + 1];
+    const ax = x - clean[i * 2 - 2],
+      az = z - clean[i * 2 - 1],
+      bx = clean[i * 2 + 2] - x,
+      bz = clean[i * 2 + 3] - z;
     const la = Math.hypot(ax, az),
       lb = Math.hypot(bx, bz);
     const th = Math.abs(angDiff(Math.atan2(ax, az), Math.atan2(bx, bz)));
@@ -172,22 +186,21 @@ function drivePlan(pts, pf) {
       p0z = z - (az / la) * t,
       p1x = x + (bx / lb) * t,
       p1z = z + (bz / lb) * t;
-    // the arc as a quadratic Bézier through the corner (close to a circle, and tangent to both legs)
+    // a rational quadratic traces the circular arc tangent to both streets
     const k = Math.max(3, Math.ceil(th * 7));
     for (let j = 0; j <= k; j++) {
       const u = j / k,
         w0 = (1 - u) * (1 - u),
-        w1 = 2 * u * (1 - u),
+        w1 = 2 * u * (1 - u) * Math.cos(th / 2),
         w2 = u * u;
-      out.push(w0 * p0x + w1 * x + w2 * p1x, w0 * p0z + w1 * z + w2 * p1z);
+      const sum = w0 + w1 + w2;
+      out.push((w0 * p0x + w1 * x + w2 * p1x) / sum, (w0 * p0z + w1 * z + w2 * p1z) / sum);
     }
   }
-  out.push(P[n * 2 - 2], P[n * 2 - 1]);
+  out.push(clean[n * 2 - 2], clean[n * 2 - 1]);
   // 3) resampled every metre: position, heading and signed curvature
-  const src = s2Path(out),
-    tot = src.tot,
-    N = Math.max(2, Math.ceil(tot) + 1),
-    ds = tot / (N - 1);
+  const src = s2Path(out), N = Math.max(2, Math.ceil(src.tot) + 1);
+  const tot = src.tot, ds = tot / (N - 1) || 1;
   const X = new Float32Array(N),
     Z = new Float32Array(N),
     H = new Float32Array(N),
@@ -224,6 +237,23 @@ function drivePlan(pts, pf) {
       Z.set(tz);
     }
   }
+  const idx = (s) => clamp(s / ds, 0, N - 1);
+  const at = (s) => {
+    const f = idx(s),
+      i = Math.min(N - 2, Math.floor(f)),
+      t = f - i;
+    return [lerp(X[i], X[i + 1], t), lerp(Z[i], Z[i + 1], t), H[i] + angDiff(H[i], H[i + 1]) * t];
+  };
+  const plan = { pts: out, tot, at, X, Z, H, K, V, ds, N, idx, pf };
+  measureDriveLine(plan);
+  const cum = [];
+  for (let i = 0; i < N; i++) cum.push(i * ds);
+  plan.cum = cum;
+  return plan;
+}
+// the plan of a route, made the first time it is driven (s2Path objects keep their s, v and tot meaning: they now run
+// along the drivable line)
+function measureDriveLine({N, X, Z, H, K, V, ds, pf}) {
   for (let i = 0; i < N; i++) {
     const a = Math.max(0, i - 1),
       b = Math.min(N - 1, i + 1);
@@ -237,19 +267,7 @@ function drivePlan(pts, pf) {
   // 4) speed plan: the grip limit in each bend, then backwards so the car brakes for it in time
   for (let i = 0; i < N; i++) V[i] = Math.sqrt(pf.lat / Math.max(Math.abs(K[i]), 1e-4));
   for (let i = N - 2; i >= 0; i--) V[i] = Math.min(V[i], Math.sqrt(V[i + 1] * V[i + 1] + 2 * pf.brake * ds));
-  const idx = (s) => clamp(s / ds, 0, N - 1);
-  const at = (s) => {
-    const f = idx(s),
-      i = Math.min(N - 2, Math.floor(f)),
-      t = f - i;
-    return [lerp(X[i], X[i + 1], t), lerp(Z[i], Z[i + 1], t), H[i] + angDiff(H[i], H[i + 1]) * t];
-  };
-  const cum = [];
-  for (let i = 0; i < N; i++) cum.push(i * ds);
-  return { pts: out, cum, tot, at, X, Z, H, K, V, ds, N, idx };
 }
-// the plan of a route, made the first time it is driven (s2Path objects keep their s, v and tot meaning: they now run
-// along the drivable line)
 function s2Plan(P, pf) {
   if (P.D && P.D.pf === pf) return P.D;
   const D = drivePlan(P.pts, pf);
@@ -275,6 +293,7 @@ function s2Plan(P, pf) {
 // it), heading with the slide of the tail, steering of the front wheels
 function driveOnPlan(c, D, st, dt, vt, off) {
   const pf = D.pf;
+  const previousV = st.v;
   const f = D.idx(st.s),
     i = Math.min(D.N - 1, Math.round(f));
   vt = Math.min(vt, D.V[i]);
@@ -287,14 +306,26 @@ function driveOnPlan(c, D, st, dt, vt, off) {
   const lat = st.v * st.v * Math.abs(k);
   const want = pf.drift * Math.sign(k) * clamp((lat - 4.5) / 9, 0, 1) * 0.42;
   st.dr = lerp(st.dr || 0, want, clamp(dt * (Math.abs(want) > Math.abs(st.dr || 0) ? 4 : 2.2), 0, 1));
-  c.x = q[0] + Math.cos(q[2]) * off;
-  c.z = q[1] - Math.sin(q[2]) * off;
-  c.h = q[2] + st.dr;
+  const x = q[0] + Math.cos(q[2]) * off;
+  const z = q[1] - Math.sin(q[2]) * off;
+  // Anticipate the bend, then turn the body with a finite yaw speed and yaw acceleration.
+  // The rendered chassis, its roll and the front wheels now follow the same manoeuvre.
+  const ahead = D.at(st.s + Math.min(4, 1 + st.v * 0.15));
+  const target = q[2] + 0.5 * angDiff(q[2], ahead[2]) + st.dr;
+  const maxRate = Math.min(1.35, st.v * 0.27);
+  const rate = clamp(angDiff(c.h, target) * 5 + st.v * k, -maxRate, maxRate);
+  c.yawRate += clamp(rate - c.yawRate, -3.2 * dt, 3.2 * dt);
+  const heading = c.h + c.yawRate * dt;
+  c.ctl.brk = st.v < previousV ? 1 : 0;
+  c.x = x;
+  c.z = z;
+  c.h = heading;
   c.fwdV = st.v;
   c.vx = Math.sin(q[2]) * st.v;
   c.vz = Math.cos(q[2]) * st.v;
   // front wheels: the bend (wheelbase ≈ 2.7 m), minus the counter-steer while sliding
-  c.steer = clamp(Math.atan(2.7 * k) - st.dr * 1.4, -0.6, 0.6);
+  const steer = clamp(Math.atan(2.7 * k) - st.dr * 1.4, -0.6, 0.6);
+  c.steer += clamp(steer - c.steer, -1.8 * dt, 1.8 * dt);
   if (c.ctl) c.ctl.hb = Math.abs(st.dr) > 0.14 ? 1 : 0;
   return q;
 }
@@ -386,7 +417,7 @@ function s2Blips() {
   const b = [];
   for (const o of S2.chase) {
     if (o.down || o.dead || (o.H && !o.H.root.visible)) continue;
-    b.push([o.x, o.z, '#ff3b30']);
+    b.push([o.x, o.z, MAP_MARK.chase]);
   }
   return b;
 }
@@ -696,22 +727,23 @@ const M_FARMACIA = {
         S.car.mode = 'physics';
         S.car.driver = null;
         S.car.ctl.brk = 1;
-        const [a, bb] = S.toTown ? safeSpot(S.car.x + 2, S.car.z) : [S.car.x + 2, S.car.z]; // v1.4.18: in town, off the road
+        const [a, bb] = S.exit;
+        S.t2.down = false;
         S.t2.x = a;
         S.t2.z = bb;
         S.t2.H.root.visible = true;
         S.t2.H.root.position.set(a, heightAt(a, bb) + 0.17, bb);
-        S.P2 = S.toTown ? s2RunPath(S.t2, 150, 260) : s2Path([a, bb, ...FARM_ESCAPE]); // v1.4.18: on foot through the streets
+        S.P2 = s2Path(S.walk);
         S.hits = 0;
         S.trk = 0;
         S.tg = s2Target(S.t2, () => this.hit());
         s2Mark(S.t2, 8);
         K.setObjective(
-          (S.toTown ? '¡Se baja y huye a pie! Dale ' : '¡Se baja y huye por el camino! Dale ') +
+          '¡Se baja y cruza Las Quinteras a pie! Dale ' +
             b2('dos tiros') +
             ' con la pistola de bolas (' +
             (document.body.classList.contains('touchmode') ? 'APUNTAR y DISPARAR' : 'clic derecho y clic izquierdo') +
-            (S.toTown ? ') antes de que se te escape' : ') antes de que llegue al Camino Tornero')
+            ') antes de que se te escape'
         );
         HUD.toast('¡Se ha bajado del coche!', '#f5b72e', 2.5);
       }
@@ -724,7 +756,7 @@ const M_FARMACIA = {
         S.trk = 0.8;
         K.track(S.t2.x, S.t2.z, 3);
       }
-      if (end) s2Fail(S.toTown ? 'El ladrón se te ha escapado' : 'El ladrón se ha escapado por el Camino Tornero');
+      if (end) s2Fail('El ladrón se te ha escapado en Las Quinteras');
     }
     if (S.step === 6 && s2Near(S.t2.x, S.t2.z, 2.2) && !PLAYER.car) this.caught();
   },
@@ -782,13 +814,13 @@ const M_FARMACIA = {
     if (S.step !== 3) return;
     S.t2.H.root.visible = false;
     AUDIO.horn && AUDIO.horn();
-    // v1.4.18 (Jonay, 17-nov: «cambia también la de la farmacia, de modo que termine más cerca del ayuntamiento, que sería
-    // la siguiente»): the getaway car heads for the start of the next mission (the Ayuntamiento); the dirt path to the
-    // Camino Tornero only if no route there works
-    const T = K2().nextStart(),
-      R = T ? routeToward(S.car.x, S.car.z, T[0], T[1], 700, 1700, (q) => s2FarFromEdge(q)) : null;
-    S.toTown = !!R;
-    S.P = s2Path(R || s2Route2(S.car.x, S.car.z, FARM_ESCAPE[0], FARM_ESCAPE[1]));
+    const escape = farmEscapePlan(S.car);
+    if (!escape) {
+      S.t2.H.root.visible = true;
+      s2Fail('No hay una salida hacia Las Quinteras');
+      return;
+    }
+    Object.assign(S, escape);
     S.P.s = 0;
     S.car.mode = 'race';
     S.car.driver = 'race';
@@ -836,16 +868,22 @@ const M_FARMACIA = {
     );
   }
 };
-// where the getaway car goes (up towards the outskirts, Las Gavias) and the dirt path the thief runs along to the
-// Camino Tornero (OSM path ways 5359 / 2424); if he reaches the last point, he's gone
-const FARM_ESCAPE = [
-  -1548, -693, -1532, -706, -1579, -776, -1629, -841, -1637, -857, -1639, -863, -1646.5, -862.5, -1655.5, -860, -1660.5, -860.5, -1673, -866, -1679.5,
-  -869, -1689.5, -878.5, -1696, -883
-];
-// road route between two points (start and end included)
-function s2Route2(x0, z0, x1, z1) {
-  const r = GRAPH.route(GRAPH.nearestNode(x0, z0), GRAPH.nearestNode(x1, z1));
-  return r && r.length >= 4 ? [x0, z0, ...r, x1, z1] : [x0, z0, x1, z1];
+// The open car park and its service aisles, on the Ayuntamiento side of the city.
+function farmEscapePlan(car) {
+  const choices = [
+    { entry: [213, 132], stop: [238.5, 119], aisle: [220, 134, 233.5, 134, 237, 130.5],
+      foot: [235.5, 118.8, 224.5, 118, 222.5, 103, 220.5, 87.5, 219, 72.5, 217.5, 63, 221, 57.5] },
+    { entry: [216, 141], stop: [251, 135.5], aisle: [222, 138, 224, 137.5, 246.5, 137],
+      foot: [247, 134.8, 242, 134, 237, 130.5, 238.5, 119, 224.5, 118, 222.5, 103, 220.5, 87.5, 219, 72.5] }
+  ];
+  for (const place of choices) {
+    const route = GRAPH.routeFrom(car.x, car.z, car.h, ...place.entry);
+    if (!route || route.length < 4) continue;
+    const P = s2Path([...route, ...place.aisle, ...place.stop]);
+    if (P.tot < 30 || !s2FarFromEdge(P.pts)) continue;
+    return { P, exit: place.foot.slice(0, 2), walk: place.foot };
+  }
+  return null;
 }
 
 // ---------- 2. Defensores de La Laguna (ceremonia en el Ayuntamiento)

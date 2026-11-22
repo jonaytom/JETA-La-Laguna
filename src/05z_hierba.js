@@ -143,7 +143,7 @@ function hierbaCell(ci, cj) {
     else kind = patch < 0.4 ? -1 : u < 0.5 ? 1 : u < 0.56 ? 2 : -1;
     if (kind < 0) continue;
     // v1.3.2: the 4 m raster is coarse: each tuft checked for real off streets and pavements, the tram and buildings
-    if (onAnyPaved(x, z, 2.6) || nearTram(x, z, 6) || treeInBuilding(x, z)) continue;
+    if (onAnyPaved(x, z, 2.6) || nearTram(x, z, 6) || treeInBuilding(x, z) || tac67Yard(x, z)) continue; // v1.4.41: not in the drive of C. Tacoronte 67
     // v1.4.22 (Jonay, 11-nov, rampa del aparcamiento Trinidad Centro: «no puede haber hierba en la carretera y menos
     // flotando»): none in a cutting, a sunken ramp or under/on a deck (the ground there is not the terrain)
     const gy = heightAt(x, z);

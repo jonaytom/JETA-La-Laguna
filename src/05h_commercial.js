@@ -98,12 +98,13 @@ function buildParkingLotsEach(a, pos, uv) {
       // parked cars in every other row (aisles in between), about 60% occupancy
       const row = Math.round((v - F.v0) / T);
       if (row % 3 !== 1 && Math.random() < 0.6 && !COL.nearSeg(mx, mz, 2) && !onCarriageway(mx, mz, 0.5)) {
+        const model = parkedModel();
         PARKED.slots.push({
           x: mx,
           z: mz,
           h: Math.atan2(F.vx, F.vz) + (Math.random() < 0.5 ? Math.PI : 0),
-          type: pick(['compact', 'sedan', 'suv', 'compact', 'van']),
-          color: pick(CARCOL),
+          type: model ? model.id : pick(['compact', 'sedan', 'suv', 'van']),
+          color: pickColor(model),
           alive: true
         });
         lot.slots++;

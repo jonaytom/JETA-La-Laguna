@@ -362,14 +362,15 @@ function fightTutorial() {
 }
 /** (v1.1.7, code quality) part of fightTutorial: v0.64: the keys shown are the ones set in Opciones › Controles */
 function fightTutorialPart1() {
-  const T = document.body.classList.contains('touchmode');
+  const medium = controlMedium();
+  const T = medium === 'touch', pad = medium === 'pad';
   const steps = [
-    ['walk', T ? 'Muévete con ◀ ▶' : `Muévete con ${CONTROLS.keyName('left')} y ${CONTROLS.keyName('right')}`, (e) => (e.walk || 0) > 50],
+    ['walk', pad ? 'Muévete con el stick izquierdo o la cruceta' : T ? 'Muévete con ◀ ▶' : `Muévete con ${CONTROLS.keyName('left')} y ${CONTROLS.keyName('right')}`, (e) => (e.walk || 0) > 50],
     // v0.64: the keys shown are the ones set in Opciones › Controles
-    ['jab', T ? 'Puñetazo: P' : `Puñetazo: ${CONTROLS.keyName('f_punch')} o clic izquierdo`, (e) => e.jab],
-    ['kick', T ? 'Patada: K' : `Patada: ${CONTROLS.keyName('f_kick')} o clic derecho`, (e) => e.kick],
-    ['jump', T ? 'Salta: ▲' : `Salta: ${CONTROLS.keyName('f_jump')}`, (e) => e.jump],
-    ['sweep', T ? 'Barrido: ▼ + K' : `Barrido: ${CONTROLS.keyName('back')} + patada`, (e) => e.sweep],
+    ['jab', pad ? 'Puñetazo: X' : T ? 'Puñetazo: P' : `Puñetazo: ${CONTROLS.keyName('f_punch')} o clic izquierdo`, (e) => e.jab],
+    ['kick', pad ? 'Patada: A' : T ? 'Patada: K' : `Patada: ${CONTROLS.keyName('f_kick')} o clic derecho`, (e) => e.kick],
+    ['jump', pad ? 'Salta: Y o ↑' : T ? 'Salta: ▲' : `Salta: ${CONTROLS.keyName('f_jump')}`, (e) => e.jump],
+    ['sweep', pad ? 'Barrido: ↓ + A' : T ? 'Barrido: ▼ + K' : `Barrido: ${CONTROLS.keyName('back')} + patada`, (e) => e.sweep],
     ['blocked', T ? 'Cúbrete: atrás cuando ataque' : 'Cúbrete: mantén atrás cuando Sastrón ataque', (e) => e.blocked],
     ['combo', 'Combo: puño, puño, patada', (e) => e.combo],
     ['gofio', T ? 'Bola de gofio: ◀ ▶ + P' : 'Bola de gofio: atrás, adelante + puñetazo', (e) => e.gofio],
@@ -767,7 +768,7 @@ const MISSIONS = (() => {
             'Mensaje descifrado',
             '«Ve a la torre de La Concepción y busca a Boca Papa»',
             'El Blanco asiente muy despacio, se cuadra como en el cuartel, te hace un saludo militar torcido y te mete en el bolsillo una libreta vieja de la mili. «Brrr... misiones... apunta.» <b>Con la ' +
-              CONTROLS.keyName('diary') +
+              CONTROLS.hintName('diary') +
               ' ves el diario de misiones.</b>',
             '',
             ['Vale, voy para allá'],
@@ -779,7 +780,7 @@ const MISSIONS = (() => {
               setTimeout(
                 () =>
                   HUD.toast(
-                    `El Blanco te mete en el bolsillo una libreta vieja de la mili: «brrr... misiones... apunta». Pulsa ${CONTROLS.keyName('diary')} para ver el diario de misiones.`,
+                    `El Blanco te mete en el bolsillo una libreta vieja de la mili: «brrr... misiones... apunta». Pulsa ${CONTROLS.hintName('diary')} para ver el diario de misiones.`,
                     '#f5b72e',
                     7
                   ),
@@ -889,7 +890,7 @@ const MISSIONS = (() => {
       update() {
         if (step === 0 && data.bar && PLAYER.interior === data.bar && beacon) {
           clearBeacon();
-          setObjective(`Acércate a la ${bold('barra')} y pulsa ${CONTROLS.kbd('use')} / ENTRAR para pedir`);
+          setObjective(`Acércate a la ${bold('barra')} y pulsa ${CONTROLS.kbd('use')} para pedir`);
         }
         if (step === 1 && near(NPC.coco)) {
           step = 2;
@@ -1023,7 +1024,7 @@ const MISSIONS = (() => {
                   'Sastrón',
                   '¡Trato hecho! Las tijeras dicen que eres de fiar, aunque vengas del talego. Os voy a hacer unos uniformes que vais a parecer de la Guardia Real... de Taco.'
                 ],
-                ['Sastrón', 'Nos vemos en la torre de La Concepción. Boca Papa ya me ha mandado un audio de doce minutos.']
+                ['Sastrón', 'Boca Papa viene para acá. Firmamos aquí al lado, camino de La Trinidad. Ya me ha mandado un audio de doce minutos.']
               ],
               () => pass('Sastrón se une a la banda', 0)
             );
@@ -1036,14 +1037,15 @@ const MISSIONS = (() => {
       title: 'La firma de la banda',
       who: 'Boca Papa',
       hint() {
-        return 'Vuelve con ' + bold('Boca Papa') + ' a la ' + bold('torre de La Concepción') + ' para firmar la banda';
+        return 'Reúnete con ' + bold('Boca Papa') + ' junto a ' + bold('La Trinidad') + ' para firmar la banda';
       },
       startPos() {
-        return NPC.boca.start || [NPC.boca.x + 1.4, NPC.boca.z + 1.4];
+        return bandMeeting();
       },
       start() {
         step = 0;
         const b = NPC.boca;
+        moveNPC(b, ...bandMeeting());
         const ring = [
           [NPC.blanco, 2.6, 0.4],
           [NPC.coco, 2.6, 1.9],
@@ -1139,13 +1141,14 @@ const MISSIONS = (() => {
       title: 'Boca Papa te enseña a comer',
       who: 'Boca Papa',
       hint() {
-        return 'Habla con ' + bold('Boca Papa') + ' en la ' + bold('torre de La Concepción');
+        return 'Habla con ' + bold('Boca Papa') + ' junto a ' + bold('La Trinidad');
       },
       startPos() {
-        return NPC.boca.start || [NPC.boca.x + 1.4, NPC.boca.z + 1.4];
+        return bandMeeting();
       },
       start() {
         step = 0;
+        moveNPC(NPC.boca, ...bandMeeting());
         const s = FOOD.nearest(PLAYER.x, PLAYER.z);
         data.shop = s;
         talk([
@@ -1164,15 +1167,16 @@ const MISSIONS = (() => {
         ]);
         if (s) {
           goto(s.x, s.z, 2.2, 0xe53935);
-          setObjective(`Ve a ${bold(s.name)} y compra algo de comer (${CONTROLS.kbd('use')} / ENTRAR)`);
+          setObjective(`Ve a ${bold(s.name)} y compra algo de comer (${CONTROLS.kbd('use')})`);
         }
       },
       onEvent(t) {
         if (t === 'ate' && step === 0) {
           step = 1;
-          talk([['Boca Papa (gritando desde lejos)', '¡Eso es, Chopa! Barriga llena, jefe contento. ¡Y ahora ve a ver a El Blanco!']], () =>
-            pass('Ya sabes recuperar salud', 50)
-          );
+          talk([['Boca Papa (gritando desde lejos)', '¡Eso es, Chopa! Barriga llena, jefe contento. ¡Y ahora ve a ver a El Blanco!']], () => {
+            moveNPC(NPC.boca, ...NPC.boca.home);
+            pass('Ya sabes recuperar salud', 50);
+          });
         }
       },
       update() {}
@@ -1305,8 +1309,55 @@ const MISSIONS = (() => {
     }
   ];
   // ===== the Canarión's time trial (story mission + repeatable rematch when you're short of money for Sastrón)
+  // Place the grid downstream from the parked car, on the same directed carriageway.
+  function canarionRunup() {
+    const projection = GRAPH.nearestEdge(...NPC.canarion.road, 22);
+    if (!projection) return null;
+    const road = GRAPH.edges[projection.e];
+    const forward = road.oneway || Math.sin(NPC.canarion.parkHeading) * projection.dx + Math.cos(NPC.canarion.parkHeading) * projection.dz >= 0;
+    const distance = (forward ? projection.s : road.len - projection.s) + 17;
+    if (distance > road.len - 8) return null;
+    const grid = GRAPH.sample(road.i, forward ? 1 : -1, distance, 0, {});
+    const points = [grid.x, grid.z];
+    const order = forward ? road.cum.keys() : [...road.cum.keys()].reverse();
+    for (const i of order) {
+      const fromStart = forward ? road.cum[i] : road.len - road.cum[i];
+      if (fromStart > distance + 0.05) points.push(road.pts[i * 2], road.pts[i * 2 + 1]);
+    }
+    return { points, node: forward ? road.b : road.a };
+  }
+  function tailorRaceRoute(from) {
+    const [tx, tz] = NPC.sastron.home;
+    const stops = [GRAPH.nearestNode(tx, tz, false), GRAPH.nearestNode(-114.5, 90, false), GRAPH.nearestNode(-153, 78, false)];
+    let nearby = null;
+    for (const end of new Set(stops)) {
+      if (end < 0) continue;
+      const stop = GRAPH.nodes[end];
+      if (Math.hypot(stop.x - tx, stop.z - tz) > 95) continue;
+      const direct = GRAPH.route(from, end);
+      if (!nearby && direct?.length > 2) nearby = direct;
+      for (const [x, z] of [[-437.5, 70], [-569, 33.5], [-249.5, 481]]) {
+        const node = GRAPH.nearestNode(x, z);
+        const out = GRAPH.route(from, node), back = GRAPH.route(node, end);
+        if (!out || !back || out.length < 4 || back.length < 4) continue;
+        const seen = new Set();
+        for (let i = 0; i < out.length; i += 2) seen.add(out[i] + ',' + out[i + 1]);
+        const route = [...out];
+        for (let i = 2; i < back.length; i += 2) {
+          if (seen.has(back[i] + ',' + back[i + 1])) break;
+          route.push(back[i], back[i + 1]);
+        }
+        if (route.length !== out.length + back.length - 2) continue;
+        const distance = s2Path(route).tot;
+        if (distance >= 750 && distance <= 1600) return route;
+      }
+    }
+    return nearby;
+  }
   function startRace(m, first) {
-    let { pts, cps } = startRacePart1(first, m);
+    const runup = canarionRunup();
+    let { pts, cps } = startRacePart1(first, m, runup?.node);
+    if (runup) pts = [...runup.points, ...pts.slice(2)];
     let acc = 0,
       nextAt = 300;
     for (let i = 2; i < pts.length; i += 2) {
@@ -1322,9 +1373,10 @@ const MISSIONS = (() => {
     data.pts = pts;
     data.cum = [0];
     for (let i = 2; i < pts.length; i += 2) data.cum.push(data.cum[data.cum.length - 1] + Math.hypot(pts[i] - pts[i - 2], pts[i + 1] - pts[i - 1]));
+    data.L = acc;
   }
   /** (v1.1.7, code quality) part of startRace */
-  function startRacePart1(first, m) {
+  function startRacePart1(first, m, startNode) {
     step = 0;
     data.first = first;
     if (first)
@@ -1336,7 +1388,7 @@ const MISSIONS = (() => {
         ['El Canarión', 'Yo vengo de la isla redonda a enseñaros a conducir, que aquí vais todos a cuarenta y con el intermitente puesto.'],
         [
           'El Canarión',
-          'Te propongo una carrera por La Laguna, tú y yo, coche contra coche. Si llegas primero, te llevas 2.000 pavos. Si no, me invitas a unas papas arrugadas... que aquí no saben hacerlas.'
+          `Carrera por el barrio, coche contra coche. Acabamos junto a Sastrón. Si ganas, te llevas ${eur(SASTRON_FEE)}. Si pierdes, me invitas a unas papas arrugadas.`
         ],
         ['El Canarión', '¿Que no tienes coche? Coge uno, que La Laguna está llena. O el mío, si te atreves.']
       ]);
@@ -1344,9 +1396,16 @@ const MISSIONS = (() => {
     setTimeout(() => {
       if (active === m && step === 0) setObjective('Súbete a un coche y ve a la ' + bold('salida') + ' junto al Canarión');
     }, 3000);
-    const sx = NPC.canarion.road[0],
-      sz = NPC.canarion.road[1];
-    const from = GRAPH.nearestNode(sx, sz);
+    const node = startNode === undefined ? null : GRAPH.nodes[startNode];
+    const [sx, sz] = node ? [node.x, node.z] : NPC.canarion.road;
+    const from = startNode ?? GRAPH.nearestNode(sx, sz);
+    if (first || TRACKS.story.list[TRACKS.story.idx]?.title === 'Sastrón') {
+      const pts = tailorRaceRoute(from);
+      if (pts) {
+        data.L = s2Path(pts).tot;
+        return { pts, cps: [] };
+      }
+    }
     // v1.4.16: the course ends at the start of the line's next mission (the rematch: back here, a loop)
     const T = nextStart();
     let pts = T
@@ -1421,6 +1480,10 @@ const MISSIONS = (() => {
             L = Math.hypot(dx, dz) || 1;
           const ox = (-dz / L) * 3,
             oz = (dx / L) * 3;
+          const heading = Math.atan2(dx, dz);
+          const startingCar = PLAYER.car;
+          startingCar.h = CAM.yaw = heading;
+          startingCar.vx = startingCar.vz = startingCar.fwdV = startingCar.yawRate = 0;
           let rc = NPC.canarionCar;
           if (!rc || rc.dead || rc === PLAYER.car) {
             rc = new Car(null, 0xffd200, 0, 0, 0, VMODELS.guancheGT || undefined);
@@ -1431,14 +1494,14 @@ const MISSIONS = (() => {
           rc.mission = true;
           rc.x = p[0] + ox;
           rc.z = p[1] + oz;
-          rc.h = Math.atan2(dx, dz);
+          rc.h = heading;
           rc.vx = rc.vz = 0;
           rc.fwdV = 0;
           data.rival = rc;
           data.rs = 0;
           data.D = null; // v1.4.22: the drivable line is made at the start
           data.rv = 0;
-          data.roff = 3;
+          data.roff = -3; // grid offset above is to the left of the route
         }
         ['3', '2', '1'].forEach((t, i) =>
           setTimeout(() => {
@@ -1507,13 +1570,17 @@ const MISSIONS = (() => {
           }
           if (data.first) {
             talk([
-              ['El Canarión (por el móvil)', `¡Ños! ¿Me sacaste ${left} segundos? ¡Tú no eres de aquí, Chopa! Toma, 2.000 pavos, bien ganados.`],
-              ['El Canarión (por el móvil)', 'Y cuando quieras revancha, ya sabes dónde estoy. Si te hace falta dinero, claro.']
+              ['El Canarión (por el móvil)', `¡Ños! ¿Me sacaste ${left} segundos? Toma, ${eur(SASTRON_FEE)}, bien ganados.`],
+              ['El Canarión (por el móvil)', 'Sastrón está aquí al lado. Ve a llevarle el dinero.']
             ]);
-            pass('Le has ganado al Canarión', 2000);
+            pass('Le has ganado al Canarión', SASTRON_FEE);
+            if (TRACKS.story.list[TRACKS.story.idx]?.title === 'Sastrón') setWaypoint(...NPC.sastron.home, true);
           } else {
             talk([['El Canarión (por el móvil)', '¡Otra vez! Me vas a arruinar, chicharrero. Toma tus 400.']]);
             pass('Revancha ganada', 400, true);
+            if (TRACKS.story.list[TRACKS.story.idx]?.title === 'Sastrón' && PLAYER.money >= SASTRON_FEE) {
+              setWaypoint(...NPC.sastron.home, true);
+            }
           }
           return;
         }
@@ -1706,37 +1773,20 @@ const MISSIONS = (() => {
       HUD.toast('Ya puedes moverte libremente por La Laguna. La historia continuará…', '#f5b72e', 8);
     }
   }
-  // interesting spots of the historic centre: Coco and Sastrón show up near two of them (random every game)
-  const SPOTS = [
-    ['Catedral', 'la Catedral'],
-    ['Teatro Leal', 'el Teatro Leal'],
-    ['Casas Capitulares', 'las Casas Capitulares'],
-    ['Iglesia de Santo Domingo', 'Santo Domingo'],
-    ['Palacio Nava', 'el Palacio de Nava'],
-    ['Casa Lercaro', 'la Casa Lercaro'],
-    ['Santuario del Cristo', 'el Santuario del Cristo'],
-    ['Antigua Iglesia de San Agustín', 'las ruinas de San Agustín'],
-    ['Casa Salazar', 'la Casa Salazar'],
-    ['Ermita de San Miguel', 'la Ermita de San Miguel'],
-    ['Mercado de La Laguna', 'el Mercado'],
-    ['Casa Montañés', 'la Casa Montañés'],
-    ['Casa Ossuna', 'la Casa Ossuna']
-  ];
-  function spotNear(key) {
-    const b = findBuilding(key);
-    if (!b) return null;
-    const rd = ROADSEG.nearest(b.cx, b.cz, (r) => r[0] <= 14);
-    if (!rd) return null;
-    const dx = b.cx - rd.x,
-      dz = b.cz - rd.z,
-      L = Math.hypot(dx, dz) || 1;
-    const w = DATA.R[rd.ri][2];
-    for (const o of [w / 2 + 1.4, w / 2 + 0.8, -(w / 2 + 1.4)]) {
-      const x = rd.x + (dx / L) * o,
-        z = rd.z + (dz / L) * o;
-      if (!inAnyBuilding(x, z) && !COL.nearSeg(x, z, 0.6)) return [x, z];
-    }
-    return safeSpot(rd.x, rd.z, 0.6);
+  // El Blanco → La Concepción → Café Brasilito → Calle el Juego → La Trinidad.
+  function openingStops() {
+    const cafe = INTERIORS.find((i) => i.id === 'cafe');
+    const sastre = safeSpot(-170, 82, 1);
+    if (!cafe) return { coco: safeSpot(-249, -248, 1), sastre };
+    const { x, z, nx, nz } = cafe.door;
+    const side = (sastre[0] - x) * nz - (sastre[1] - z) * nx > 0 ? 1 : -1;
+    return { coco: safeSpot(x + nx * 3 + nz * side * 16, z + nz * 3 - nx * side * 16, .9), sastre };
+  }
+  // The signing and the food lesson take place near the tailor, towards the avenue.
+  function bandMeeting() {
+    const [x, z] = NPC.sastron.home;
+    const [a, b] = safeSpot(x + 13, z + 7, 1.1);
+    return openSpotNear(a, b, 0);
   }
   function mkNPC(o, x, z, extra) {
     const h = makeHuman(o);
@@ -1927,18 +1977,9 @@ const MISSIONS = (() => {
         scene.add(h.root);
         COL.addCirc(r.x, r.z, 0.5);
       }
-      // two random interesting spots of the historic centre for Coco and Sastrón
-      const B0 = NPC.boca || { x: -150, z: -150 }; // v0.62: the first missions stay near the start (Jonay): two of the three spots closest to Boca Papa, at random
-      const avail = SPOTS.map(([k, n]) => {
-        const p = spotNear(k);
-        return p ? { p, n, d: Math.hypot(p[0] - B0.x, p[1] - B0.z) } : null;
-      })
-        .filter(Boolean)
-        .sort((a, b) => a.d - b.d)
-        .slice(0, 3)
-        .sort(() => Math.random() - 0.5);
-      const sc = avail[0] || { p: [-150, -150], n: 'el casco' },
-        ss = avail[1] || { p: [-200, -300], n: 'la Calle Herradores' };
+      const stops = openingStops();
+      const sc = { p: stops.coco, n: 'el Café Brasilito' };
+      const ss = { p: stops.sastre, n: 'la calle el Juego, junto a La Trinidad' };
       // Coco: bald ex-boxer, sleeps rough
       NPC.coco = mkNPC(
         {
@@ -2063,7 +2104,8 @@ const MISSIONS = (() => {
         const m = VMODELS && VMODELS.guancheGT;
         const cx = rx - uz * (w / 2 - 1.2) * sd + ux * 5,
           cz = rz + ux * (w / 2 - 1.2) * sd + uz * 5;
-        const car = new Car(m ? null : 'sport', 0xffd200, cx, cz, Math.atan2(ux, uz), m || undefined);
+        NPC.canarion.parkHeading = Math.atan2(ux, uz);
+        const car = new Car(m ? null : 'sport', 0xffd200, cx, cz, NPC.canarion.parkHeading, m || undefined);
         car.driver = null;
         car.mode = 'physics';
         car.persist = true;
@@ -2138,6 +2180,13 @@ const MISSIONS = (() => {
     target() {
       return active && data.goal ? data.goal : null;
     },
+    diaryDestination(key, index) {
+      const tr = TRACKS[key], m = tr?.list[index];
+      if (!m || index !== tr.idx || tr.done || (key === 'story' && STORY_SKIP.has(m.title))) return null;
+      const position = active === m && data.goal ? data.goal :
+        tr.beacon ? [tr.beacon.position.x, tr.beacon.position.z] : m.startPos?.();
+      return position && position.slice(0, 2).every(Number.isFinite) ? [position[0], position[1], tr.css] : null;
+    },
     aheadPath() {
       return active && data.aheadPath ? data.aheadPath : null;
     },
@@ -2153,7 +2202,7 @@ const MISSIONS = (() => {
         const tr = TRACKS[k];
         if (tr.beacon) b.push([tr.beacon.position.x, tr.beacon.position.z, tr.css]);
       }
-      if (active && data.goal) b.push([data.goal[0], data.goal[1], '#f5b72e']);
+      if (active && data.goal) b.push([data.goal[0], data.goal[1], MAP_MARK.objective]);
       if (active && typeof s2Blips === 'function') b.push(...s2Blips());
       b.push(...MALEANTES.blips());
       return b;
@@ -2228,8 +2277,8 @@ const MISSIONS = (() => {
     logLine,
     LOOSE,
     resetFrom(k, i) {
-      const tr = TRACKS[k];
-      if (!tr || i < 0 || i >= tr.list.length) return false;
+      const tr = TRACKS[k], mission = tr?.list[i];
+      if (!mission || active === mission || !(i < tr.idx || (k === 'story' && (tr.done || STORY_SKIP.has(mission.title))))) return false;
       if (active) {
         try {
           if (WEAPON.training) takeWeapon();

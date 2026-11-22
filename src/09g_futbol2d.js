@@ -1035,14 +1035,14 @@ const FUTBOL2D = (() => {
     return { b, me };
   }
   // ---------- tutorial (first game, against the seminarians who stand still)
-  const K_ = (id) => CONTROLS.keyName(id);
+  const K_ = miniKeyLabel;
   const TUT = [
     ['walk', () => `Muévete: ${K_('left')} ${K_('right')} ${K_('fwd')} ${K_('back')}`, (e) => (e.walk || 0) > 1.2],
     ['turbo', () => `Corre: mantén ${K_('f_kick')} mientras te mueves (gasta la barra)`, (e) => (e.turbo || 0) > 0.8],
-    ['pass', () => `Pasa al compañero al que miras: clic derecho (o ${K_('b_pass')}); mantenido, más fuerte y bombeado`, (e) => e.pass],
-    ['shot', () => `Chuta: mantén clic izquierdo (o ${K_('f_punch')}) y suelta; cuanto más, más fuerte`, (e) => e.shot],
+    ['pass', () => `Pasa al compañero al que miras: ${miniActionLabel('b_pass', 'clic dcho.')}; mantenido, más fuerte y bombeado`, (e) => e.pass],
+    ['shot', () => `Chuta: mantén ${miniActionLabel('f_punch', 'clic izq.')} y suelta; cuanto más, más fuerte`, (e) => e.shot],
     ['goal', () => `¡Mete un gol! (después de chutar, ${K_('left')}/${K_('right')} le dan efecto)`, (e) => e.goal],
-    ['slide', () => `Sin balón, clic izquierdo (o ${K_('f_punch')}) es una entrada: quítale el balón al rival`, (e) => e.tackle]
+    ['slide', () => `Sin balón, ${miniActionLabel('f_punch', 'clic izq.')} es una entrada: quítale el balón al rival`, (e) => e.tackle]
   ];
   function tutorial(dt) {
     const t = st.tut;
@@ -1575,16 +1575,16 @@ const FUTBOL2D = (() => {
       txt('JETA SOCCER · 5 CONTRA 5', W / 2, 56, 9, '#ffd400');
       const rows = [
         ['MOVERSE', `${K_('left')} ${K_('right')} ${K_('fwd')} ${K_('back')}`],
-        ['CHUTAR (mantén y suelta)', `clic izq. · ${K_('f_punch')}`],
+        ['CHUTAR (mantén y suelta)', miniActionLabel('f_punch', 'clic izq.')],
         ['EFECTO (tras chutar)', `${K_('left')} / ${K_('right')}`],
-        ['PASAR (mantén: más fuerte y bombeado)', `clic dcho. · ${K_('b_pass')}`],
-        ['ENTRADA (sin balón)', `clic izq. · ${K_('f_punch')}`],
-        ['CAMBIAR DE JUGADOR', `clic dcho. · ${K_('b_pass')}`],
+        ['PASAR (mantén: más fuerte y bombeado)', miniActionLabel('b_pass', 'clic dcho.')],
+        ['ENTRADA (sin balón)', miniActionLabel('f_punch', 'clic izq.')],
+        ['CAMBIAR DE JUGADOR', miniActionLabel('b_pass', 'clic dcho.')],
         ['CORRER (turbo)', K_('f_kick')],
         ['REGATE (con balón)', `${K_('f_kick')} dos veces`]
       ];
       MINI.rows(cx, W, rows, 74);
-      if (Math.floor(st.time0 * 2) % 2 === 0) txt(`CLIC IZQ. O ${K_('f_punch').toUpperCase()} PARA EMPEZAR`, W / 2, 184, 7, '#7fe08a');
+      if (Math.floor(st.time0 * 2) % 2 === 0) txt(`${miniActionLabel('f_punch', 'clic izq.').toUpperCase()} PARA EMPEZAR`, W / 2, 184, 7, '#7fe08a');
     }
     if (st.phase === 'end') MINI.endScreen(cx, W, st.score);
     if (st.fade > 0) {
@@ -1651,14 +1651,16 @@ const FUTBOL2D = (() => {
     }
   }
   // ---------- loop
+  const frameDue = makeFrameGate();
   function loop(now) {
     if (!running) return;
     raf = requestAnimationFrame(loop);
+    if (!frameDue(now)) return;
     if (PZ.on) {
       last = now;
       draw();
       cx.setTransform(R, 0, 0, R, 0, 0);
-      MINI.pauseOverlay(cx, W, H);
+      MINI.pauseOverlay(cx, W, H, PZ.quit);
       return;
     } // v0.89: P = pause
     const dt = Math.min(0.1, (now - last) / 1000);

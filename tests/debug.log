@@ -1,0 +1,71 @@
+[1119/165422.692:ERROR:ui\gl\angle_platform_impl.cc:37] vulkan_icd.cpp:157 (angle::vk::ScopedVkLoaderEnvironment::ScopedVkLoaderEnvironment): Error setting CWD for Vulkan layers init.
+[1119/165422.982:WARNING:ui\gl\angle_platform_impl.cc:42] vulkan_icd.cpp:389 (angle::vk::ChoosePhysicalDevice): Preferred device ICD not found. Using default physicalDevice instead.
+[1119/165529.736:ERROR:gpu\command_buffer\service\shared_image\shared_image_manager.cc:254] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[1119/170012.358:ERROR:ui\gl\angle_platform_impl.cc:37] vulkan_icd.cpp:157 (angle::vk::ScopedVkLoaderEnvironment::ScopedVkLoaderEnvironment): Error setting CWD for Vulkan layers init.
+[1119/170012.386:WARNING:ui\gl\angle_platform_impl.cc:42] vulkan_icd.cpp:389 (angle::vk::ChoosePhysicalDevice): Preferred device ICD not found. Using default physicalDevice instead.
+[1119/170239.801:ERROR:gpu\ipc\client\command_buffer_proxy_impl.cc:490] GPU state invalid after WaitForGetOffsetInRange.
+[1119/170302.247:ERROR:ui\gl\angle_platform_impl.cc:37] vulkan_icd.cpp:157 (angle::vk::ScopedVkLoaderEnvironment::ScopedVkLoaderEnvironment): Error setting CWD for Vulkan layers init.
+[1119/170302.279:WARNING:ui\gl\angle_platform_impl.cc:42] vulkan_icd.cpp:389 (angle::vk::ChoosePhysicalDevice): Preferred device ICD not found. Using default physicalDevice instead.
+[1119/170358.287:WARNING:services\audio\sync_reader.cc:154] ASR: No room in socket buffer.: Se está cerrando la canalización. (0xE8)
+[1119/175542.438:ERROR:ui\gl\angle_platform_impl.cc:37] vulkan_icd.cpp:157 (angle::vk::ScopedVkLoaderEnvironment::ScopedVkLoaderEnvironment): Error setting CWD for Vulkan layers init.
+[1119/175542.463:WARNING:ui\gl\angle_platform_impl.cc:42] vulkan_icd.cpp:389 (angle::vk::ChoosePhysicalDevice): Preferred device ICD not found. Using default physicalDevice instead.
+[1119/190835.908:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1119/190943.032:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1119/223946.197:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1119/224212.122:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1119/224344.001:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1119/224950.954:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1119/230523.011:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1119/230647.131:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/155258.454:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/155429.000:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/163803.345:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/165325.514:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/165832.644:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/165943.798:ERROR:ui\gl\angle_platform_impl.cc:37] vulkan_icd.cpp:157 (angle::vk::ScopedVkLoaderEnvironment::ScopedVkLoaderEnvironment): Error setting CWD for Vulkan layers init.
+[1120/165943.936:WARNING:ui\gl\angle_platform_impl.cc:42] vulkan_icd.cpp:389 (angle::vk::ChoosePhysicalDevice): Preferred device ICD not found. Using default physicalDevice instead.
+[1120/170117.012:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/174300.838:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/175210.438:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/180520.731:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/182125.329:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/182213.070:ERROR:ui\gl\angle_platform_impl.cc:37] vulkan_icd.cpp:157 (angle::vk::ScopedVkLoaderEnvironment::ScopedVkLoaderEnvironment): Error setting CWD for Vulkan layers init.
+[1120/182213.190:WARNING:ui\gl\angle_platform_impl.cc:42] vulkan_icd.cpp:389 (angle::vk::ChoosePhysicalDevice): Preferred device ICD not found. Using default physicalDevice instead.
+[1120/182340.941:WARNING:services\audio\sync_reader.cc:154] ASR: No room in socket buffer.: Se está cerrando la canalización. (0xE8)
+[1120/182533.002:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/182645.957:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/182734.461:ERROR:ui\gl\angle_platform_impl.cc:37] vulkan_icd.cpp:157 (angle::vk::ScopedVkLoaderEnvironment::ScopedVkLoaderEnvironment): Error setting CWD for Vulkan layers init.
+[1120/182734.491:WARNING:ui\gl\angle_platform_impl.cc:42] vulkan_icd.cpp:389 (angle::vk::ChoosePhysicalDevice): Preferred device ICD not found. Using default physicalDevice instead.
+[1120/182808.232:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/183221.271:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/183338.721:ERROR:ui\gl\angle_platform_impl.cc:37] vulkan_icd.cpp:157 (angle::vk::ScopedVkLoaderEnvironment::ScopedVkLoaderEnvironment): Error setting CWD for Vulkan layers init.
+[1120/183338.749:WARNING:ui\gl\angle_platform_impl.cc:42] vulkan_icd.cpp:389 (angle::vk::ChoosePhysicalDevice): Preferred device ICD not found. Using default physicalDevice instead.
+[1120/183447.443:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/183513.610:WARNING:services\audio\sync_reader.cc:154] ASR: No room in socket buffer.: Se está cerrando la canalización. (0xE8)
+[1120/184610.700:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/184722.711:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/184911.251:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/185052.784:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/185252.598:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/185316.473:WARNING:services\audio\sync_reader.cc:154] ASR: No room in socket buffer.: Se está cerrando la canalización. (0xE8)
+[1120/185317.473:WARNING:services\audio\sync_reader.cc:154] ASR: No room in socket buffer.: Se está cerrando la canalización. (0xE8)
+[1120/190047.050:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/211152.817:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/211521.776:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1120/211605.002:ERROR:gpu\command_buffer\service\shared_image\shared_image_manager.cc:254] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[1120/211605.002:ERROR:gpu\command_buffer\service\shared_image\shared_image_manager.cc:254] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[1120/211605.003:ERROR:gpu\command_buffer\service\shared_image\shared_image_manager.cc:254] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[1120/211605.003:ERROR:gpu\command_buffer\service\shared_image\shared_image_manager.cc:254] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[1120/211605.004:ERROR:gpu\command_buffer\service\shared_image\shared_image_manager.cc:254] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[1120/212901.320:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1121/115837.748:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1121/120206.267:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1121/120603.647:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1121/171244.089:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1121/171644.864:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1121/171921.101:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1121/172412.432:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1121/172648.352:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1121/173102.841:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1121/173226.561:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)
+[1121/173619.586:ERROR:ui\gl\direct_composition_support.cc:625] AMD VideoProcessorGetOutputExtension failed: El parámetro no es correcto. (0x80070057)

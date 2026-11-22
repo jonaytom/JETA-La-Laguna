@@ -1,12 +1,35 @@
-// ============ RADIO: procedural 90s/2000s hip hop, made up on the spot (beats, bass, keys, G-funk whistles, scratches, ad-libs)
+// ============ RADIO: recorded playlists and the original procedural stations
 // Plays on the car radio (Q / tap the speedometer changes station) and a short chorus when a mission is done.
 const MUSIC = (() => {
   const STATIONS = [
-    { name: 'Gofio FM 90.1', tag: 'boom bap lagunero', bpm: 88, swing: 0.16, style: 'boombap' },
-    { name: 'Radio Aguere 96.6', tag: 'G-funk guanche', bpm: 94, swing: 0.1, style: 'gfunk' },
-    { name: 'Mojo Picón 102.3', tag: 'rap duro canario', bpm: 97, swing: 0.06, style: 'hard' },
+    { name: 'Gofio FM 90.1', tag: 'hip hop en inglés · 90 y 2000', tracks: DATA.RADIO?.gofio, bpm: 88, swing: 0.16, style: 'boombap' },
+    { name: 'Radio Aguere 96.6', tag: 'reggaetón en español', tracks: DATA.RADIO?.aguere },
+    { name: 'Mojo Picón 102.3', tag: 'trap', tracks: DATA.RADIO?.mojo, bpm: 97, swing: 0.06, style: 'hard' },
     { name: 'Radio apagada', off: true }
   ];
+  const radioHud = document.getElementById('radioHud'),
+    radioStation = document.getElementById('radioStation'),
+    radioTrackFrame = document.getElementById('radioTrackFrame'),
+    radioTrack = document.getElementById('radioTrack');
+  function measureTrackTitle() {
+    const overflow = Math.ceil(radioTrack.scrollWidth - radioTrackFrame.clientWidth);
+    radioTrack.classList.toggle('is-scrolling', overflow > 0 && radioTrackFrame.clientWidth > 0);
+    if (overflow > 0) {
+      radioTrack.style.setProperty('--radio-travel', `-${overflow}px`);
+      radioTrack.style.setProperty('--radio-duration', `${2 + overflow / 28}s`);
+    }
+  }
+  const measureRadio = new ResizeObserver(measureTrackTitle);
+  measureRadio.observe(radioTrackFrame);
+  measureRadio.observe(radioTrack);
+
+  function showStation(track) {
+    radioStation.textContent = STATIONS[st].name;
+    const text = track?.a ? `${track.t} — ${track.a}` : (track?.t ?? '');
+    radioTrack.textContent = text;
+    radioTrack.title = text;
+    measureTrackTitle();
+  }
   const ADLIBS = {
     boombap: ['Yeah!', 'Uh!', 'Check it!', 'Aguere!', 'Lagoon City!', 'One, two'],
     gfunk: ['Yeah, yeah', 'Uh huh', 'Smooth', 'West side island', 'Oh yeah', 'Take it slow'],
@@ -131,7 +154,7 @@ const MUSIC = (() => {
       ['Loud, loud, let the whole block know', 'Rocks in the rhymes and we hitting them slow']
     ]
   };
-  // 20 songs (titles and fictional artists made up for the game), spread over the music stations; every song has its
+  // Procedural songs have fictional titles and artists. Every song has its
   // own voice (one of the browser's English voices, plus its own pitch and pace) and always the same beat and verses
   const PLAYLIST = [
     // Gofio FM — boom bap
@@ -204,77 +227,6 @@ const MUSIC = (() => {
       v: 6,
       p: 0.9,
       r: 0.95
-    },
-    // Radio Aguere — G-funk / funk / R&B
-    {
-      st: 1,
-      t: 'Cruising Trinidad',
-      a: 'Smooth Mencey',
-      g: ['ow', 'ay', 'ight', 'ace'],
-      h: ['Cruising down the avenue with the sun in my face', 'Take it slow, my friend, this is our place'],
-      v: 7,
-      p: 1.05,
-      r: 0.9
-    },
-    {
-      st: 1,
-      t: 'Laguna Nights',
-      a: 'Guayota & The Funk',
-      g: ['ight', 'own', 'eal', 'ore'],
-      h: ['Windows rolling down on the boulevard', 'Laguna nights, baby, living large'],
-      v: 0,
-      p: 1.15,
-      r: 0.92
-    },
-    {
-      st: 1,
-      t: 'Purple Teide',
-      a: 'Lady Tajinaste',
-      g: ['ow', 'ace', 'ay', 'eal'],
-      h: ['Purple Teide sleeping in the evening glow', 'Baby, hold my hand and we can take it slow'],
-      v: 1,
-      p: 1.25,
-      r: 0.88
-    },
-    {
-      st: 1,
-      t: 'Mojo Groove',
-      a: 'Papa Arrugá',
-      g: ['eet', 'ow', 'ack', 'ight'],
-      h: ['Mojo groove, let it move, let it slide', 'Funky on the island, come along for the ride'],
-      v: 2,
-      p: 0.9,
-      r: 0.95
-    },
-    {
-      st: 1,
-      t: 'Fog on the Mountain',
-      a: 'Soul de la Mercedes',
-      g: ['ight', 'ore', 'ow', 'own'],
-      h: ['Fog on the mountain and the lights down low', 'Sweet soul music on the radio'],
-      v: 3,
-      p: 1.1,
-      r: 0.85
-    },
-    {
-      st: 1,
-      t: 'Sunday at the Market',
-      a: 'R&B Barranco',
-      g: ['ay', 'eet', 'ace', 'eal'],
-      h: ['Sunday at the market and the sun is out', 'That’s what this island is all about'],
-      v: 4,
-      p: 1.2,
-      r: 0.9
-    },
-    {
-      st: 1,
-      t: 'Slow Ride Tacoronte',
-      a: 'The Cumbre Funk Band',
-      g: ['ow', 'ack', 'ame', 'ore'],
-      h: ['Slow ride, slow ride, all the way to the sea', 'Funky little island, it’s just you and me'],
-      v: 5,
-      p: 0.95,
-      r: 0.88
     },
     // Mojo Picón — hard rap
     {
@@ -424,22 +376,29 @@ const MUSIC = (() => {
     duck = 1,
     playing = false,
     wantOn = false,
-    scratchBuf = null;
+    scratchBuf = null,
+    recorded = null,
+    jingleActive = false;
   const N = (m) => 440 * Math.pow(2, (m - 69) / 12);
   // ---------- song generator (a new tune every 32 bars)
   // each station plays its songs in turn (shuffled once); a song keeps its beat and verses every time (seed from its title)
   const QUEUE = {},
     QI = {};
-  function nextDef(stIdx) {
+  function nextDef(stIdx, direction = 1) {
     if (!QUEUE[stIdx]) {
-      QUEUE[stIdx] = PLAYLIST.filter((x) => x.st === stIdx).sort(() => Math.random() - 0.5);
-      QI[stIdx] = 0;
+      const tracks = STATIONS[stIdx].tracks ?? PLAYLIST.filter((x) => x.st === stIdx);
+      const queue = tracks.slice();
+      for (let i = queue.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [queue[i], queue[j]] = [queue[j], queue[i]];
+      }
+      QUEUE[stIdx] = queue;
+      QI[stIdx] = -1;
     }
     const q = QUEUE[stIdx];
     if (!q.length) return null;
-    const d = q[QI[stIdx] % q.length];
-    QI[stIdx]++;
-    return d;
+    QI[stIdx] = (QI[stIdx] + direction + q.length) % q.length;
+    return q[QI[stIdx]];
   }
   function makeSong(style, def) {
     let { seed, R, root, prog, K, kicks } = makeSongPart1(def, style);
@@ -857,12 +816,51 @@ const MUSIC = (() => {
   function newSong() {
     const d = nextDef(st);
     song = makeSong(STATIONS[st].style, d);
-    if (d && PLAYER.car) HUD.toast(`♪ ${d.t} — ${d.a}`, '#f5b72e', 3);
+    showStation(d);
+  }
+  function setRecordedVolume() {
+    if (recorded) recorded.volume = clamp(0.55 * (SETTINGS.music ?? 1) * (AUDIO.master?.gain.value ?? 1), 0, 1);
+  }
+  function playRecorded(direction = 1) {
+    const track = nextDef(st, direction);
+    if (!track) return;
+    releaseRecorded();
+    const audio = document.createElement('audio');
+    audio.id = 'radioAudio';
+    audio.preload = 'none';
+    radioHud.append(audio);
+    recorded = audio;
+    setRecordedVolume();
+    const failed = () => {
+      if (recorded !== audio) return;
+      stop();
+      showStation({ t: 'Audio no disponible' });
+    };
+    audio.addEventListener('error', failed, { once: true });
+    audio.addEventListener('ended', () => {
+      if (wantOn && playing && recorded === audio) playRecorded();
+    }, { once: true });
+    showStation(track);
+    audio.src = new URL(`radio/${track.file}`, document.baseURI).href;
+    audio.play().catch(failed);
+  }
+  function releaseRecorded() {
+    if (!recorded) return;
+    const audio = recorded;
+    recorded = null;
+    audio.pause();
+    audio.removeAttribute('src');
+    audio.load();
+    audio.remove();
   }
   function start() {
-    if (!ensure() || STATIONS[st].off) return;
-    if (playing) return;
+    const station = STATIONS[st];
+    if (playing || jingleActive || station.off || !ensure()) return;
     playing = true;
+    if (station.tracks) {
+      playRecorded();
+      return;
+    }
     newSong();
     step = 0;
     bar = 0;
@@ -872,6 +870,7 @@ const MUSIC = (() => {
   }
   function stop() {
     playing = false;
+    releaseRecorded();
     clearInterval(timer);
     timer = null;
     try {
@@ -881,23 +880,21 @@ const MUSIC = (() => {
   }
   function setStation(i, announce = true) {
     st = (i + STATIONS.length) % STATIONS.length;
-    const S = STATIONS[st];
+    const selected = st, S = STATIONS[st];
     const was = playing;
     stop();
-    if (S.off) {
-      HUD.toast('RADIO APAGADA', '#ccc', 1.6);
-      return;
+    showStation(null);
+    if (S.off) return;
+    if (S.tracks) {
+      if (wantOn) start();
+    } else {
+      setTimeout(() => {
+        if (wantOn && st === selected) start();
+      }, was ? 250 : 0);
     }
-    setTimeout(
-      () => {
-        if (wantOn) start();
-      },
-      was ? 250 : 0
-    );
-    if (announce) {
-      HUD.toast(`RADIO: ${S.name} · ${S.tag}`, '#f5b72e', 2.5);
-      setTimeout(() => adlib(`${S.name.replace('.', ' point ')}`), 400);
-    }
+    if (announce && !S.tracks) setTimeout(() => {
+      if (wantOn && st === selected && !jingleActive) adlib(`${S.name.replace('.', ' point ')}`);
+    }, 400);
   }
   return {
     STATIONS,
@@ -909,27 +906,35 @@ const MUSIC = (() => {
       const inCar = !!PLAYER.car && GAME.state === 'play';
       if (inCar && !wantOn) {
         wantOn = true;
-        const tip = this.changes < 2 ? `  (${document.body.classList.contains('touchmode') ? 'toca el velocímetro' : 'Q'}: cambiar de emisora)` : '';
-        /* the tip stops once the player has changed station twice (saved with the game) */ if (!STATIONS[st].off) {
-          start();
-          HUD.toast(`RADIO: ${STATIONS[st].name} · ${STATIONS[st].tag}${tip}`, '#f5b72e', 3);
-        } else if (tip) HUD.toast(`RADIO APAGADA${tip}`, '#ccc', 3);
+        radioHud.hidden = false;
+        showStation(null);
+        start();
       } else if (!inCar && wantOn) {
         wantOn = false;
+        radioHud.hidden = true;
         stop();
       }
-      if (inCar && pressed('KeyQ')) this.next();
+      if (!inCar || BIGMAP.open || DLG.open) return;
+      const pad = INPUT.gp;
+      if (pressed('KeyQ') || pad?.down(PAD_BUTTON.RB)) this.next();
+      else if (pad?.down(PAD_BUTTON.LEFT)) this.skipTrack(-1);
+      else if (pad?.down(PAD_BUTTON.RIGHT)) this.skipTrack(1);
     },
     changes: 0,
     next() {
       this.changes++;
       setStation(st + 1);
     },
+    skipTrack(direction) {
+      if (!wantOn || jingleActive || !STATIONS[st].tracks?.length || !ensure()) return;
+      playing = true;
+      playRecorded(direction);
+    },
     // 5-second chorus when a mission is passed (radio ducks under it)
     jingle() {
-      if (!ensure()) return;
-      const resume = playing;
+      if (!ensure() || jingleActive) return;
       stop();
+      jingleActive = true;
       const t0 = ctx.currentTime + 0.2;
       const jb = ctx.createGain();
       jb.gain.value = 0.85 * (SETTINGS.music ?? 1);
@@ -966,13 +971,16 @@ const MUSIC = (() => {
       setTimeout(
         () => {
           bus = prev;
-          if (resume && wantOn) start();
+          jb.disconnect();
+          jingleActive = false;
+          if (wantOn) start();
         },
         (8 * spb + 1.8) * 1000
       );
     },
     setVol() {
-      if (bus && playing) bus.gain.setTargetAtTime(0.55 * (SETTINGS.music ?? 1) * duck, ctx.currentTime, 0.1);
+      setRecordedVolume();
+      if (bus && playing && !recorded) bus.gain.setTargetAtTime(0.55 * (SETTINGS.music ?? 1) * duck, ctx.currentTime, 0.1);
     }
   };
 })();
@@ -983,3 +991,30 @@ document.getElementById('speed')?.addEventListener('pointerdown', (e) => {
     MUSIC.next();
   }
 });
+
+const radioNext = document.getElementById('radioNext');
+radioNext.addEventListener('mousedown', (e) => e.stopPropagation());
+radioNext.addEventListener('click', () => {
+  if (PLAYER.car && GAME.state === 'play') MUSIC.next();
+});
+
+document.addEventListener('mousedown', (event) => {
+  if (
+    (event.button !== 0 && event.button !== 2) ||
+    document.pointerLockElement !== renderer.domElement ||
+    GAME.state !== 'play' ||
+    !PLAYER.car ||
+    BIGMAP.open ||
+    DLG.open ||
+    window.__TALK?.cur
+  ) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  MUSIC.skipTrack(event.button === 2 ? 1 : -1);
+}, true);
+
+for (const [id, direction] of [['radioPrevTrack', -1], ['radioSkipTrack', 1]]) {
+  document.getElementById(id).addEventListener('click', () => {
+    if (PLAYER.car && GAME.state === 'play' && !BIGMAP.open && !DLG.open) MUSIC.skipTrack(direction);
+  });
+}

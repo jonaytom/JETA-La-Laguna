@@ -3,6 +3,101 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.41 — 2026-11-22 — Alpha 1.4.41: Linguini Gold Edition, autopista sin golpes invisibles y Niza Nano nuevo
+- **El golpe invisible de la Autopista del Norte** (X 1898, Y 3225, a 300 km/h «estás muerto»): donde una rampa va pegada a la autopista, el morro del coche quedaba más cerca del tablero de la rampa y su baranda lo frenaba en seco (un golpe de 75 m/s). Ahora cada tablero solo sujeta al coche que va encima de él.
+- **Menos giro a gran velocidad**: el volante nunca gira más de lo que aguantan las ruedas (unos 15 m/s² de lado). En ciudad se nota poco; a 300 km/h la curva más cerrada tiene unos 460 m de radio. El freno de mano sigue dejando cruzar la cola.
+- **Peatones fuera de los puentes**: nadie camina ya por puentes, calles elevadas ni calles hundidas en trinchera (se les ponía a la altura del suelo de debajo y parecían andar por el aire).
+- **C. Tacoronte 67 (Finca España)**: la casa recreada con las fotos de Jonay. Tiene cuatro plantas color melocotón, balcones volados con balaustrada blanca, zócalo de granito, puerta blanca con el 67, ventana con reja de forja y jardinera, y un murete con balaustrada y pilares con bolas. Se abre un hueco en el bloque del OSM. Delante no aparcan coches ni crecen matas.
+- **Linguini Gold Edition**, el coche secreto: el Reventón en oro pulido y un 10 % más rápido (297 km/h). Espera en el garaje de la casa. El botón junto al portón lo abre y lo cierra (el portón seccional sube y se recoge bajo el techo). Si se deja lejos, vuelve solo a su garaje.
+- **Niza Nano** rehecho con la librería nueva (aprobado por Jonay): malla nueva de cerca y de lejos y medidas del Micra real.
+- **Créditos** de la pantalla inicial y `CREDITOS.md` al día: fuera Kenney (no queda ningún modelo suyo desde la v1.4.21). Se añaden el Catastro, Mapillary, el MDT05 del IGN, Poly Haven, three.js y las tipografías. La música es original de Jonay, hecha con Suno.
+
+## 1.4.40 — 2026-11-21 — Alpha 1.4.40: límite de 60 FPS
+- El render del mundo 3D y de los minijuegos queda limitado a 60 FPS también en monitores de alta frecuencia. Las simulaciones mantienen sus pasos de tiempo.
+
+## 1.4.39 — 2026-11-21 — Alpha 1.4.39: Reventón, calzadas y garajes
+- Linguini Reventón híbrido con el capó corregido, las ópticas a ras y las llantas aprobadas. La malla lejana conserva su perfil de juego.
+- Las vallas, quitamiedos y pretiles de trinchera comprueban la calzada y los carriles auxiliares a la altura que corresponde. Se despeja el cruce de la avenida de los Menceyes y la auditoría busca barreras lineales también después de construir el mapa. San Antonio lleva una marca plana sin colisión y se descartan construcciones auxiliares pequeñas que aún entran en una vía rápida.
+- Los coches aparcados en los garajes subterráneos se eligen del catálogo y se pueden conducir. El acceso distingue la planta del vehículo. Los aparcados conservan sus llantas detalladas a media distancia y se amplía la distancia de los detalles del escenario.
+- Los peatones usan arcenes exteriores y aceras, cruzan deprisa y evitan autopistas y enlaces. Los avisos de zona peatonal se limitan a las calles peatonales del casco, plazas y canchas.
+- El diario permite seguir una misión en curso o la siguiente de una línea y dibuja su ruta con su color en el mapa y minimapa. Reiniciar queda disponible en las misiones completadas.
+- Los peatones que reciben un chorro de agua tienen frases distintas. La mitad huye y la otra mitad persigue al jugador y puede iniciar la pelea 2D si lo alcanza.
+- Las luces de freno suben de intensidad conservando el rojo de la óptica.
+- Las paradas siguen la curva y el desnivel de la vía, las rampas se apoyan en el suelo y el cebreado amarillo de Pedro Zerolo queda por encima de la plataforma. Se descartan plazas de aparcamiento cuyo vehículo invadiría las vías a nivel de calle. Los contenedores de Teobaldo Power se colocan en la acera con espacio para toda la caja.
+
+## 1.4.38 — 2026-11-21 — Alpha 1.4.38: doce coches y sus llantas revisadas
+- Nuevas mallas activas de Troceen C33, JTM Capítulo 3, Yoos Cartabón, Pancho Teypan, Piki Crocante, Totuya Yaiza Cross, Guanchazen Helado, Totuya Carlota, Newton Style 3, Martini Hubli, Fierilla 440 y Seta Gomera.
+- Las llantas de estos modelos llevan diseños propios y centros lisos. El aro y el neumático de cerca comparten la misma resolución circular. Sus ruedas mantienen las proporciones de Blender en tráfico, aparcadas y al conducir. Cada coche tiene una malla detallada y otra para la distancia.
+- El C33 lleva techo negro fijo, barras, llantas de seis huecos y ópticas enrasadas.
+
+## 1.4.37 — 2026-11-20 — Alpha 1.4.37: faros visibles y pisadas más suaves
+- Los faros delanteros de los coches de Blender emiten luz cuando oscurece. Se iluminan sus propias superficies con el material de la carrocería.
+- Las pisadas de asfalto usan la muestra A elegida por Jonay. El resto de los suelos conserva su carácter con menos agudos. Las pisadas al caminar y correr se reproducen con la mitad de ganancia.
+
+## 1.4.36 — 2026-11-20 — Alpha 1.4.36: leyenda del mapa y HUD al conducir
+- La leyenda del mapa identifica las jugueterías, entradas, casas y sitios con recreativas. Distingue las rutas del GPS, los objetivos, los controles y los fugitivos.
+- La leyenda se puede plegar. En móvil abre plegada para dejar libre el mapa y la ayuda explica los gestos táctiles.
+- El indicador de arma se oculta al subir a un vehículo y reaparece al salir. La radio queda libre de cruces.
+
+## 1.4.35 — 2026-11-20 — Alpha 1.4.35: controles de Xbox, móvil y radio
+- Xbox usa los sticks para moverse y mirar, A para saltar o frenar de mano, X para usar y Y para entrar o salir. Los gatillos sirven para apuntar y disparar a pie, o frenar y acelerar en coche. Añade navegación en menús, diario y GPS.
+- La radio muestra los clics anterior/siguiente y Q en PC, y los controles de cruceta y RB con mando. En móvil hay botones para ambas direcciones.
+- Móvil separa Usar de Entrar, añade acceso a la brújula y un botón Atrás en los minijuegos que permiten salir. Las guías de controles, deportes y recreativas muestran los botones del dispositivo.
+
+- La salida del Canarión queda por delante de su coche en el sentido de La Trinidad. La cuenta atrás alinea a ambos coches con el trazado.
+
+## 1.4.34 — 2026-11-20 — Alpha 1.4.34: dos temas más en Mojo Picón
+- Mojo Picón suma Sin Piedad en el Radar y Llamada a Deshora. La emisora de trap tiene cuatro canciones.
+
+## 1.4.33 — 2026-11-20 — Alpha 1.4.33: cambiar de canción al volante
+- Con el ratón capturado al conducir, el clic izquierdo vuelve al tema anterior y el derecho pasa al siguiente. Q cambia de emisora. La rueda mantiene el zoom y el volumen se ajusta en Opciones.
+- Gofio FM añade Empty Seat y pasa a siete canciones.
+
+## 1.4.32 — 2026-11-20 — Alpha 1.4.32: cinco temas más en Gofio FM
+- Gofio FM suma Broke & Famous, Lowrider Breeze, No Brakes, No Favors y Still Running the Island. La emisora tiene seis canciones.
+
+## 1.4.31 — 2026-11-20 — Alpha 1.4.31: canciones originales e indicador de la radio
+- Sobre el indicador del arma se muestran la emisora y el tema que suena. Los títulos largos se desplazan y el botón Cambiar muestra el atajo Q en PC.
+- Las tres emisoras estrenan canciones originales: una de hip hop en Gofio FM, siete de reggaetón en Radio Aguere y dos de trap en Mojo Picón. Los MP3 se cargan al sintonizar la emisora y respetan los ajustes de volumen.
+
+## 1.4.30 — 2026-11-20 — Alpha 1.4.30: pinos de Camino Tornero
+- Los pinos canarios recuperan la copa verde y la corteza marrón. La copa lejana lleva el mismo color.
+- El exportador de Blender asigna estos colores al pino para conservarlos en futuras exportaciones.
+
+## 1.4.29 — 2026-11-20 — Alpha 1.4.29: dibujo agrupado de monumentos
+- La Concepción, el barrio inicial, los edificios singulares y el aeropuerto pueden compartir una llamada de dibujo entre piezas estáticas opacas del mismo material y celda, dentro de su grupo original.
+- Las piezas conservan sus triángulos, el orden de dibujo y las propiedades de sombra. Se mantienen la resolución y el filtrado de las sombras.
+- En las vistas de prueba a 1080p, el estadio pasa de 509 a 501 llamadas de dibujo y el barrio inicial de 725 a 723. La Concepción y el aeropuerto ya agrupaban sus piezas compatibles.
+
+## 1.4.28 — 2026-11-19 — Alpha 1.4.28: visibilidad de la ciudad por celdas
+- Se comprueba la distancia de grupos estáticos juntos y se vuelve a medir cada malla solo en los bordes o cuando cambia su visibilidad.
+- La bruma de cielo despejado termina 75 m antes en alta y 45 m en media. El paisaje lejano, las sombras y los umbrales de detalle cercano conservan sus valores.
+- El recorte de coches aparcados usa distancias al cuadrado y cambia la malla solo al cruzar el umbral existente.
+
+## 1.4.27 — 2026-11-19 — Alpha 1.4.27: Clever OneTwo y huida por Las Quinteras
+- Clever OneTwo en calles y aparcamientos, con célula plateada y paneles repintables. 14.845 triángulos de cerca y 2.222 de lejos.
+- Los coches civiles que circulan y los aparcados, también los de aparcamientos grandes, comparten 21 pinturas. El blanco baja a aproximadamente un 4,5 % de la paleta. Los servicios conservan su librea.
+- Las presentaciones avanzan desde La Concepción hacia La Trinidad. Sastrón espera en la calle el Juego, allí se firma la banda y la carrera del Canarión acaba cerca con dinero suficiente para pagarle.
+- El atraco en la farmacia termina en el aparcamiento abierto de Las Quinteras, a pocos minutos a pie del Ayuntamiento.
+- El GPS permite dar la vuelta en calles normales si ahorra un rodeo, calcula las rutas directas en la misma calle y prefiere menos la autopista. Respeta el sentido en vías rápidas.
+- GUFO, Bencomo y Guanche Guarriors guardan las iniciales antes de CONTINUE. La preparación de dibujos de peleas queda en el mundo y en la entrada; se pausa durante el combate.
+- La pistola exige apuntar antes de disparar con el ratón o mediante los botones táctiles.
+
+## 1.4.26 — 2026-11-19 — Alpha 1.4.26: MP YOU y variedad de vehículos
+- MP YOU de Blender, con 13.887 triángulos de cerca y 1.721 de lejos. Aparece aparcado y en circulación.
+- 17 colores para los vehículos civiles. El blanco baja al 9 % del sorteo de pintura y los servicios conservan su librea.
+- Los pesos de aparición se acercan entre sí y hay más vehículos pesados en las vías principales.
+- Velocidad punta y aceleración por categoría, con ajustes por modelo. El Linguini Reventon encabeza el catálogo y el Antonias Basurón es el automóvil más lento.
+
+## 1.4.25 — 2026-11-19 — Alpha 1.4.25: seis cuadros de velocidad
+- Cada vehículo lleva un cuadro según su modelo: básico, de trabajo, urbano, todoterreno, de lujo o deportivo. Conservan el nombre, la lectura en km/h y el acceso a la radio.
+
+## 1.4.24 — 2026-11-19 — Alpha 1.4.24: velocímetro, vallas deportivas y marcadores 2D
+- Persecuciones y carreras: los puntos intermedios en rectas ya no cierran las curvas. La carrocería y las ruedas del rival giran progresivamente al entrar en curva.
+- A petición de Jonay, el velocímetro tiene esfera, aguja y lectura digital y nombre del vehículo junto al minimapa en PC. Se conserva el cambio de emisora al pulsarlo.
+- Los muros y postes deportivos comparten una caja y la malla metálica se construye por recinto, conservando accesos y colisiones.
+- GUFO reserva una fila para los créditos. Los minijuegos 2D arrancan al soltar el ratón y se pausan al salir de pantalla completa.
+
 ## 1.4.23 — 2026-11-17 — Alpha 1.4.23: el Torneo y la Copa recorren la ciudad hacia su final
 - **Revisión de por dónde llevan las misiones** (Jonay, 17-nov): mapa de dónde empieza cada misión de cada línea
   (`tests/herramientas/mapa_misiones.py`, que guarda `shots/misiones_mapa.json`). La historia va y viene por el casco

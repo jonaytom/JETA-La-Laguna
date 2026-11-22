@@ -369,6 +369,7 @@ function buildInicioDetails() {
   const B = concBuckets();
   const root = new THREE.Group();
   root.name = 'inicio';
+  root.userData.batchLandmark = true;
   const rail = new THREE.MeshStandardMaterial({ color: 0x2d3236, roughness: 0.5, metalness: 0.5 });
   const { woodB, ochre, plinth, tileC, yb, underPortal } = buildInicioDetailsPart1(M);
   buildInicioDetailsPart2(yb, B, plinth, underPortal, ochre, rail);
@@ -570,38 +571,46 @@ function buildInicioDetails() {
     pole(-759.5, -349.2, 3.2);
     disc(-759.5, -349.2 + 0.05, Math.atan2(-0.3, -1), '20', 2.75);
     disc(-759.4, -349.6, Math.atan2(1, -0.2), 'stop', 2.0);
-    // bollards along the yellow block corner and recycling containers on Teobaldo Power
+    // Keep the containers on the pavement. The width here includes the side parking strip.
     const bol = new THREE.CylinderGeometry(0.09, 0.11, 0.9, 10);
     for (let k = 0; k < 6; k++) {
       const x = -763.5 - k * 1.6 * 0.25,
-        z = -364 - k * 1.6;
-      B.geo(bol.clone(), rail, new THREE.Matrix4().makeTranslation(x, heightAt(x, z) + 0.45, z));
+        z = -364 - k * 1.6,
+        y = heightAt(x, z);
+      if (!roadAtBarrier(x, z, y - 0.7, y + 0.9, 0.15))
+        B.geo(bol.clone(), rail, new THREE.Matrix4().makeTranslation(x, y + 0.45, z));
     }
-    for (let [x, z, col] of [
+    for (const [x, z, col] of [
       [-769.3, -383, 0x9a9fa5],
       [-769.9, -385.2, 0x3e8f3e],
       [-770.4, -387.4, 0xf2f2f2]
     ]) {
-      let ry = 0.25;
-      /* v1.1.3 (Jonay: «contenedores en medio de la calzada»): against the kerb of the nearest street, long side along it */
       const rn = ROADSEG.nearest(x, z, (r) => r[0] <= 12 && !(r[3] & 6));
-      if (rn) {
-        const hw = DATA.R[rn.ri][2] / 2,
-          L = Math.hypot(rn.dx, rn.dz) || 1,
-          nx = -rn.dz / L,
-          nz = rn.dx / L,
-          sd = (x - rn.x) * nx + (z - rn.z) * nz >= 0 ? 1 : -1;
-        if (rn.d < hw + 0.6) {
-          x = rn.x + nx * sd * (hw - 0.75);
-          z = rn.z + nz * sd * (hw - 0.75);
-        }
-        ry = Math.atan2(-rn.dz, rn.dx);
+      if (!rn) continue;
+      const half = DATA.R[rn.ri][2] / 2,
+        length = Math.hypot(rn.dx, rn.dz) || 1,
+        dx = rn.dx / length,
+        dz = rn.dz / length,
+        side = Math.sign((z - rn.z) * dx - (x - rn.x) * dz) || 1;
+      for (const distance of [0.78, 1.05, 1.32]) {
+        const px = rn.x - dz * side * (half + distance),
+          pz = rn.z + dx * side * (half + distance),
+          base = heightAt(px, pz);
+        if (COL.nearSeg(px, pz, 0.65)) continue;
+        const clear = [-0.95, 0, 0.95].every((u) => [-0.6, 0, 0.6].every((v) => {
+          const wx = px + dx * u - dz * v,
+            wz = pz + dz * u + dx * v;
+          return !roadAtBarrier(wx, wz, base - 0.8, base + 1.4, 0.12) && !wallBuildingAt(wx, wz);
+        }));
+        if (!clear) continue;
+        const m = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.5, 1.2), new THREE.MeshStandardMaterial({ color: col, roughness: 0.7 }));
+        m.name = 'contenedor_teobaldo_power';
+        m.position.set(px, base + 0.75, pz);
+        m.rotation.y = Math.atan2(-dz, dx);
+        root.add(m);
+        COL.addCirc(px, pz, 0.67);
+        break;
       }
-      const m = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.5, 1.2), new THREE.MeshStandardMaterial({ color: col, roughness: 0.7 }));
-      m.position.set(x, heightAt(x, z) + 0.75, z);
-      m.rotation.y = ry;
-      root.add(m);
-      COL.addCirc(x, z, 0.8);
     }
   }
   B.finish(root);

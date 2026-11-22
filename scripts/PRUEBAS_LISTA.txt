@@ -1,7 +1,8 @@
-# Pruebas de ESTA versión (scripts\PRUEBAS.bat las junta con las de lo cambiado).
-# v1.4.16: El Blanco accesible, misiones que quedan contigo cerca, pilotos propios, canchas en cadena
-prueba_1416.py
-prueba_misiones.py
-prueba_misiones_guardado.py
-prueba_canchas.py
-prueba_arranque.py
+prueba_mapa_reventon_1439_gpu.py
+prueba_modelos_1438_gpu.py
+prueba_luces_pasos_1437_gpu.py
+prueba_trinidad.py
+prueba_parking_cristo.py
+audit_obstaculos.py
+prueba_reacciones_agua_gpu.py
+prueba_diario_gps_gpu.py

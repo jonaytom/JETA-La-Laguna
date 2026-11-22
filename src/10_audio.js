@@ -228,7 +228,7 @@ const AUDIO = (() => {
   // footsteps: pre-rendered samples per surface (see 10c_steps.js); kept the old signature for NPC callers
   function footstep(run, soft, surface, vol = 1) {
     if (!ctx) return;
-    STEPS.play(surface || (soft ? 'soft' : 'hard'), run ? 'run' : 'walk', vol);
+    STEPS.play(surface || (soft ? 'soft' : 'hard'), run ? 'run' : 'walk', vol * 0.5);
   }
   function jumpSfx() {
     if (!ctx) return;

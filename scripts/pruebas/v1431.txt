@@ -1,0 +1,2 @@
+prueba_radio_1431_gpu.py
+prueba_1427_gpu.py

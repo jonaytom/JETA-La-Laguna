@@ -535,11 +535,13 @@ function rbArrows(rb, arms) {
 // como flechas o separaciones de carril»): each zebra crossing and hatched area is a «clear» area: plain asphalt over the
 // lane lines of the road's texture, and no arrow, STOP or «ceda» painted inside it (buildTrafficSignsPart6, 05j_signals.js)
 const CLEAR = [];
+const PED_CROSSINGS = [];
 if (typeof window !== 'undefined') window.__clear = CLEAR; // (sonda_pasos_cebra.py)
 /** a clear rectangle: centre x, z, along dx, dz (unit), length along, width across */
 function markClear(x, z, dx, dz, len, wid, patch = true) {
   CLEAR.push([x, z, dx, dz, len / 2 + 0.3, wid / 2 + 0.2]);
   if (!patch) return;
+  PED_CROSSINGS.push([x, z, dx, dz, wid]);
   const rx = -dz,
     rz = dx,
     hl = len / 2 + 0.3,

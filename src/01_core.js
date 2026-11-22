@@ -1,3 +1,8 @@
+const MAP_MARK = {
+  food: '#e53935', entrance: '#3ddc97', police: '#3d7bff', destination: '#e040fb',
+  objective: '#f5b72e', checkpoints: '#ffd23f', chase: '#ff3b30', wanted: '#ff1744',
+  bencomo: '#ffb347', gufo: '#b388ff'
+};
 // ============ GTA La Laguna — core ============
 import * as THREE from 'three';
 // v1.1.8 («¿qué código dibuja esto?», tests/herramientas/sonda_origen.py): with window.__ORIGEN set before the page loads,
@@ -626,6 +631,19 @@ function heightAt(x, z) {
   return (fx + fz <= 1 ? h00 + (h10 - h00) * fx + (h01 - h00) * fz : h11 + (h01 - h11) * (1 - fx) + (h10 - h11) * (1 - fz)) / 10;
 }
 
+// A phase-based 60 FPS ceiling for the independent 3D and 2D render loops.
+function makeFrameGate() {
+  const interval = 1000 / 60;
+  let next = -Infinity;
+  return (now) => {
+    if (now + 0.35 < next) return false;
+    // Skip missed slots on slow frames or after switching tabs. Never catch them up with extra renders.
+    if (now - next >= interval) next = now;
+    next += interval;
+    return true;
+  };
+}
+
 // ---------- quality
 const QUALITY = {
   baja: { pr: 0.75, shadow: 0, far: 520, peds: 12, traffic: 10, trees: 0.5 },
@@ -671,7 +689,11 @@ const scene = new THREE.Scene();
 const bgScene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.25, 3200);
 const bgCamera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 50, 90000);
-scene.fog = new THREE.Fog(0xc9d6e0, 120, Q.far);
+// Leave the distant land and skyline in bgScene. Finish the foreground haze a little earlier.
+function cityFogFar() {
+  return Q.far - (Q === QUALITY.alta ? 75 : Q === QUALITY.media ? 45 : 0);
+}
+scene.fog = new THREE.Fog(0xc9d6e0, 120, cityFogFar());
 bgScene.fog = new THREE.Fog(0xc9d6e0, 2500, 60000);
 
 window.addEventListener('resize', () => {

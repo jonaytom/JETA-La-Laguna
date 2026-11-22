@@ -2249,7 +2249,7 @@ ARCADE.GAMES.bencomo = (() => {
     create,
     drawTitle,
     drawBack,
-    help: (K) => `A GOLPE: ${K('f_punch')}  B SALTO/VARA: ${K('f_kick')}  ↓ AGACHARSE / PICADO PIEDRA/MONEDA: ${K('b_pass')}  ESC SALIR`
+    help: (K) => `A GOLPE: ${K('f_punch')}  B SALTO/VARA: ${K('f_kick')}  ↓ AGACHARSE / PICADO PIEDRA/MONEDA: ${K('b_pass')}  ${K('exit')} SALIR`
   };
   return ART;
 })();

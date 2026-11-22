@@ -95,7 +95,12 @@ function deckSide(x, z, py) {
       if (dd > d.w / 2 + 2.5) continue;
       const y = lerp(a[2], b[2], t);
       if (py > y + 1.5 || py < y - 5) continue;
-      if (!best || dd < best.d) best = { px, pz, d: dd, hw: d.w / 2 - 0.35, y };
+      // v1.4.41: also the distance across the segment's line (ld, and its normal ln): past a joint where the deck turns away
+      // (or ends), the nearest point is the corner of the deck and pushing towards it stopped cars dead (07_vehicles.js)
+      const nl = Math.sqrt(L2),
+        sl = ((x - a[0]) * dz - (z - a[1]) * dx) / nl,
+        sg = sl < 0 ? -1 : 1;
+      if (!best || dd < best.d) best = { px, pz, d: dd, hw: d.w / 2 - 0.35, y, deck: d, ld: Math.abs(sl), lnx: (dz / nl) * sg, lnz: (-dx / nl) * sg };
     }
   }
   return best;

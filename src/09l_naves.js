@@ -1481,17 +1481,17 @@ ARCADE.GAMES.naves = (() => {
           'left',
           false
         ); // what the marked box does
-      A.txt(c, 'BEAM', 330, BOT + 9, '#9fd7ff', 6);
+      A.txt(c, 'BEAM', 330, BOT + 3, '#9fd7ff', 6);
       c.fillStyle = '#1d2440';
-      c.fillRect(360, BOT + 8, 80, 8);
+      c.fillRect(360, BOT + 2, 80, 8);
       c.fillStyle = p.charge >= 1 ? (flick() ? '#fff' : '#38e0e0') : '#2f7fe0';
-      c.fillRect(360, BOT + 8, 80 * Math.min(1, p.charge), 8);
+      c.fillRect(360, BOT + 2, 80 * Math.min(1, p.charge), 8);
       if (mod.have) {
         c.fillStyle = '#ff8a3a';
         c.beginPath();
-        c.arc(458, BOT + 12, 6, 0, 7);
+        c.arc(458, BOT + 7, 6, 0, 7);
         c.fill();
-        A.txt(c, mod.st === 'front' ? '▶' : mod.st === 'back' ? '◀' : '•', 470, BOT + 8, '#fff', 6);
+        A.txt(c, mod.st === 'front' ? '▶' : mod.st === 'back' ? '◀' : '•', 470, BOT + 2, '#fff', 6);
       }
       if (boss && !boss.dying && boss.t > 1.5) {
         c.fillStyle = '#000';
@@ -1671,6 +1671,6 @@ ARCADE.GAMES.naves = (() => {
     create,
     drawTitle,
     drawBack,
-    help: (K) => `A DISPARO (MANTÉN = BEAM): ${K('f_punch')}  B MÓDULO: ${K('f_kick')}  MEJORA/MONEDA: ${K('b_pass')}  ESC SALIR`
+    help: (K) => `A DISPARO (MANTÉN = BEAM): ${K('f_punch')}  B MÓDULO: ${K('f_kick')}  MEJORA/MONEDA: ${K('b_pass')}  ${K('exit')} SALIR`
   };
 })();

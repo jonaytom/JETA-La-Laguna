@@ -1,0 +1,80 @@
+{
+  "aguere": [
+    {
+      "t": "Desde San Cristóbal al Teide",
+      "file": "aguere/desde-san-cristobal-al-teide.mp3"
+    },
+    {
+      "t": "Dueña de la pista",
+      "file": "aguere/duena-de-la-pista.mp3"
+    },
+    {
+      "t": "El bacilón",
+      "file": "aguere/el-bacilon.mp3"
+    },
+    {
+      "t": "No sé contar",
+      "file": "aguere/no-se-contar.mp3"
+    },
+    {
+      "t": "Nube de barrio",
+      "file": "aguere/nube-de-barrio.mp3"
+    },
+    {
+      "t": "Perreo triste",
+      "file": "aguere/perreo-triste.mp3"
+    },
+    {
+      "t": "Tú y yo en la pista",
+      "file": "aguere/tu-y-yo-en-la-pista.mp3"
+    }
+  ],
+  "gofio": [
+    {
+      "t": "West Coast Rhythm",
+      "file": "gofio/west-coast-rhythm.mp3"
+    },
+    {
+      "t": "Broke & Famous",
+      "file": "gofio/broke-and-famous.mp3"
+    },
+    {
+      "t": "Lowrider Breeze",
+      "file": "gofio/lowrider-breeze.mp3"
+    },
+    {
+      "t": "No Brakes",
+      "file": "gofio/no-brakes.mp3"
+    },
+    {
+      "t": "No Favors",
+      "file": "gofio/no-favors.mp3"
+    },
+    {
+      "t": "Still Running the Island",
+      "file": "gofio/still-running-the-island.mp3"
+    },
+    {
+      "t": "Empty Seat",
+      "file": "gofio/empty-seat.mp3"
+    }
+  ],
+  "mojo": [
+    {
+      "t": "Brillo Puro",
+      "file": "mojo/brillo-puro.mp3"
+    },
+    {
+      "t": "Luces Azules",
+      "file": "mojo/luces-azules.mp3"
+    },
+    {
+      "t": "Sin Piedad en el Radar",
+      "file": "mojo/sin-piedad-en-el-radar.mp3"
+    },
+    {
+      "t": "Llamada a Deshora",
+      "file": "mojo/llamada-a-deshora.mp3"
+    }
+  ]
+}

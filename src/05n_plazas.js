@@ -2,6 +2,7 @@
 // Squares get a ring of trees, benches facing in, lanterns and a centrepiece; parks get paved paths (a loop and cross paths),
 // benches and lamps along them, lawns, and in the bigger ones a playground. Hand-made pieces for the famous places.
 const PK2 = { fountains: [], ducks: [] };
+const ADELANTADO_PLAZA = [110.5, 33.5, 183.0, 37.5, 178.0, -26.5, 127.5, -37.0, 114.0, 16.5];
 function flatArea(c) {
   let a = 0;
   for (let i = 0, j = c.length - 2; i < c.length; j = i, i += 2) a += (c[j] - c[i]) * (c[j + 1] + c[i + 1]);
@@ -59,14 +60,8 @@ function buildPlazasParks() {
 
   // ---------------- Plaza del Adelantado (the block ringed by the streets of the same name)
   {
-    const corners = [
-      [110.5, 33.5],
-      [183.0, 37.5],
-      [178.0, -26.5],
-      [127.5, -37.0],
-      [114.0, 16.5]
-    ];
-    const poly = corners.flat();
+    const poly = ADELANTADO_PLAZA;
+    const corners = Array.from({ length: poly.length / 2 }, (_, i) => poly.slice(2 * i, 2 * i + 2));
     const C = flatInset(poly, 1.0) || poly;
     const [cx, cz] = flatCentroid(C);
     // paving: light stone walks from the fountain to the middle of each side, and a ring round the fountain

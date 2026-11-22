@@ -62,8 +62,9 @@ cactusL|Raul Cactus|Crossover|raul-cactus-lejos|suv|4.249|1.9|1.603|0
 # v1.4.14 (Jonay, 16-nov: «debemos ir quitando los de kenney»): 13 coches propios más; cada uno sustituye a uno de Kenney y sale igual que él
 clip|Raul Clip|Utilitario|clip|compact|4.05|1.798|1.44|9
 clipL|Raul Clip|Utilitario|clip-lejos|compact|4.05|1.798|1.44|0
-nano|Niza Nano|Utilitario|nano|compact|3.78|1.665|1.515|5
-nanoL|Niza Nano|Utilitario|nano-lejos|compact|3.78|1.665|1.515|0
+# v1.4.41 (Jonay, 22-nov): Niza Nano rehecho con la librería nueva (Nissan Micra; 11 691 / 828 triángulos)
+nano|Niza Nano|Utilitario|nano|compact|3.818|1.665|1.476|5
+nanoL|Niza Nano|Utilitario|nano-lejos|compact|3.818|1.665|1.476|0
 pimbo|Raul Pimbo|Urbano|pimbo|compact|3.789|1.72|1.491|5
 pimboL|Raul Pimbo|Urbano|pimbo-lejos|compact|3.789|1.72|1.491|0
 torson|Junway Torson|SUV|torson|suv|4.5|1.865|1.65|6
@@ -72,6 +73,8 @@ queguay|Niza Queguay|Crossover|queguay|suv|4.425|1.835|1.625|7
 queguayL|Niza Queguay|Crossover|queguay-lejos|suv|4.425|1.835|1.625|0
 mphs|MP HS|SUV|mphs|suv|4.323|1.809|1.6|4
 mphsL|MP HS|SUV|mphs-lejos|suv|4.323|1.809|1.6|0
+mpyou|MP YOU|Compacto eléctrico|mpyou|compact|4.30|1.82|1.59|5
+mpyouL|MP YOU|Compacto eléctrico|mpyou-lejos|compact|4.30|1.82|1.59|0
 vengator|Yoos Vengator|Crossover|vengator|suv|4.084|1.776|1.536|4
 vengatorL|Yoos Vengator|Crossover|vengator-lejos|suv|4.084|1.776|1.536|0
 ficus|Farm Ficus|Compacto|ficus|sedan|4.337|1.84|1.497|5
@@ -86,6 +89,9 @@ hubli|Martini Hubli|Berlina|hubli|sedan|4.971|1.945|1.461|2
 hubliL|Martini Hubli|Berlina|hubli-lejos|sedan|4.971|1.945|1.461|0
 reventon|Linguini Reventon|Superdeportivo|reventon|sport|4.78|2.03|1.136|2
 reventonL|Linguini Reventon|Superdeportivo|reventon-lejos|sport|4.78|2.03|1.136|0
+# v1.4.41 (Jonay, 22-nov): el coche secreto, el Reventón en dorado y un 10 % más rápido; solo en el garaje de la C. Tacoronte 67
+reventonGold|Linguini Gold Edition|Superdeportivo|reventon|sport|4.78|2.03|1.136|0
+reventonGoldL|Linguini Gold Edition|Superdeportivo|reventon-lejos|sport|4.78|2.03|1.136|0
 # v1.4.16 (Jonay, 17-nov: «incorpora los 5 nuevos vehículos sustituyendo de kenney viejotes»): cada uno sale igual que el de Kenney al que sustituye; el Seta 128 no tiene uno parecido (ya no quedan turismos de Kenney): poco, como el Reventon
 koala|Raul Koala|Monovolumen|koala|van|4.486|1.919|1.838|5
 koalaL|Raul Koala|Monovolumen|koala-lejos|van|4.486|1.919|1.838|0
@@ -95,6 +101,8 @@ cassi|Guanchazen Cassi|Monovolumen|cassi|van|4.408|1.793|1.822|4
 cassiL|Guanchazen Cassi|Monovolumen|cassi-lejos|van|4.408|1.793|1.822|0
 traficc|Farm Traficc|Furgoneta|traficc|van|5.05|2.032|1.958|4
 traficcL|Farm Traficc|Furgoneta|traficc-lejos|van|5.05|2.032|1.958|0
+clever|Clever OneTwo|Microcoche|clever|compact|2.695|1.663|1.555|5
+cleverL|Clever OneTwo|Microcoche|clever-lejos|compact|2.695|1.663|1.555|0
 seta128|Seta 128|Urbano clásico|seta128|compact|3.595|1.527|1.37|2
 seta128L|Seta 128|Urbano clásico|seta128-lejos|compact|3.595|1.527|1.37|0
 # v1.4.19 (Jonay, 17-nov): Fita Triplon, Totuya Hilos y Niza Navarra en lugar de los de Kenney (mismo peso); la policía (3 modelos: Seta Pantera, Niza Queguay y Ole Corsario) y la ambulancia (Farm Traficc), propios: no se tiñen, traen sus vinilos
@@ -208,6 +216,7 @@ for (const [id, x, y] of [
   ['torson', 0.77, 1.05],
   ['queguay', 0.65, 1.07],
   ['mphs', 0.7, 1.0],
+  ['mpyou', 0.67, 0.95],
   ['vengator', 0.73, 0.95],
   ['ficus', 0.67, 0.99],
   ['mepierdo', 0.73, 0.91],
@@ -215,10 +224,12 @@ for (const [id, x, y] of [
   ['pantera', 0.6, 0.91],
   ['hubli', 0.71, 0.93],
   ['reventon', 0.65, 0.74],
+  ['reventonGold', 0.65, 0.74],
   ['koala', 0.88, 1.02],
   ['compi', 0.84, 0.93],
   ['cassi', 0.8, 0.9],
   ['traficc', 0.94, 0.9],
+  ['clever', 0.64, 0.94],
   ['seta128', 0.62, 0.68],
   ['triplon', 0.84, 1.09],
   ['hilos', 0.86, 0.97],
@@ -246,8 +257,8 @@ for (const [id, x, y] of [
 }
 // v1.4.19: the police and the ambulance keep their own colours and vinyls (white body, never the random paint)
 // v1.4.20: also the taxis (white), the fire engine (red) and the tow truck (yellow)
-const LIVERY = { bomberos: 0xb3141c, grua: 0xf2b21a, guagua: 0x1f8a4c }; // v1.4.21: the guagua in TITSA green, the rubbish lorry white
-const isLivery = (m) => !!m && /^(taxi\d*|policia\d*|ambulancia|bomberos|grua|basura|guagua)$/.test(m.id) && !!m.lod;
+const LIVERY = { bomberos: 0xb3141c, grua: 0xf2b21a, guagua: 0x1f8a4c, reventonGold: 0xd9a520 }; // v1.4.41: the Gold Edition, gold // v1.4.21: the guagua in TITSA green, the rubbish lorry white
+const isLivery = (m) => !!m && /^(taxi\d*|policia\d*|ambulancia|bomberos|grua|basura|guagua|reventonGold)$/.test(m.id) && !!m.lod;
 const liveryColor = (m) => LIVERY[m.id] || 0xf6f6f4;
 // v1.4.20: the ids of the old Kenney models still answer (saved games, story cars: s2Car('clio'), 'transit', 'vito'…), with
 // the own model closest to them; not enumerable, so they never count twice when picking at random
@@ -311,22 +322,29 @@ for (const k in VTYPES) {
   T.W = +(T.W * CAR_SCALE).toFixed(3);
   T.H = +(T.H * CAR_SCALE).toFixed(3);
 }
-// popular colours in Canarias: white and greys dominate (rent-a-car fleets too)
+// White is one of many finishes. Fixed liveries bypass this palette.
 const CARCOL_W = [
-  [0xf2f2f2, 30],
-  [0x9aa0a6, 13],
-  [0x5b6770, 10],
-  [0x1b1b1b, 10],
-  [0xc9ccd0, 8],
-  [0x1f4e8c, 6],
-  [0xb3261e, 6],
-  [0x2a6f97, 3],
-  [0x7a1f2b, 3],
-  [0xd8c7a3, 3],
-  [0x2d5a3d, 2],
-  [0xc97b2a, 2],
-  [0x6e8fb3, 2],
-  [0xe8dcc0, 2]
+  [0xf2f2f2, 5], // white
+  [0xb7bec9, 5], // silver
+  [0x525c68, 7], // graphite
+  [0x231f25, 6], // black
+  [0x1d4893, 8], // deep blue
+  [0x1484c5, 6], // bright blue
+  [0x63a6c9, 5], // pale blue
+  [0x167a79, 5], // teal
+  [0xb9202b, 8], // red
+  [0x781b3b, 5], // burgundy
+  [0xc94a18, 6], // orange
+  [0xd99f22, 4], // yellow
+  [0x365d35, 5], // forest green
+  [0x82952f, 4], // olive
+  [0xa28158, 5], // bronze
+  [0xb69a68, 4], // beige
+  [0x694793, 5], // violet
+  [0x40559d, 5], // indigo
+  [0x16a08d, 5], // turquoise
+  [0x9e424b, 4], // rose
+  [0xad5429, 4] // copper
 ];
 function pickW(list) {
   let t = 0;
@@ -334,14 +352,23 @@ function pickW(list) {
   let r = Math.random() * t;
   for (const e of list) {
     r -= e[1];
-    if (r <= 0) return e[0];
+    if (r < 0) return e[0];
   }
-  return list[0][0];
+  return null;
 }
-const pickColor = () => pickW(CARCOL_W);
+const pickColor = (model) => (isLivery(model) ? liveryColor(model) : pickW(CARCOL_W));
+// Give every active variant a base chance and retain its relative frequency above that floor.
+// The zero weights used for LODs and scripted-only models stay out of the lottery.
+const MODEL_WEIGHTS = Object.values(VMODELS)
+  .filter((m) => m.w > 0)
+  .map((m) => [m, 4 + 0.4 * (m.w - 1)]);
+const STREET_CARS = MODEL_WEIGHTS.filter(([m]) => !['moto', 'truck', 'taxi'].includes(m.phys));
+const STREET_TRUCKS = MODEL_WEIGHTS.filter(([m]) => m.phys === 'truck');
 function pickModel(filter) {
-  const L = Object.values(VMODELS).filter((m) => m.w > 0 && (!filter || filter(m)));
-  return pickW(L.map((m) => [m, m.w]));
+  return pickW(filter ? MODEL_WEIGHTS.filter(([m]) => filter(m)) : MODEL_WEIGHTS);
+}
+function parkedModel() {
+  return pickW(STREET_CARS);
 }
 // which physics type a legacy type string maps to when picking a model
 function modelForType(type) {
@@ -357,10 +384,8 @@ function trafficModel(edgeType) {
   const r = Math.random();
   if (r < 0.15) return pickModel((m) => m.phys === 'moto');
   if (r < 0.2) return pickModel((m) => m.phys === 'taxi') || VMODELS.taxi;
-  // v1.4.20 (Jonay: «que se pueda ver relativamente fácil todos los modelos»): more lorries and vans on the main roads (7 %, before 3.5 %)
-  if (r < 0.27 && ['primary', 'secondary', 'tertiary', 'trunk', 'motorway', 'motorway_link'].includes(edgeType))
-    return pickModel((m) => m.phys === 'truck');
-  return pickModel((m) => m.phys !== 'moto' && m.phys !== 'truck' && m.phys !== 'taxi');
+  if (r < 0.32 && ['primary', 'secondary', 'tertiary', 'trunk', 'motorway', 'motorway_link'].includes(edgeType)) return pickW(STREET_TRUCKS);
+  return pickW(STREET_CARS);
 }
 
 // Raw DEFLATE decoder (RFC 1951), synchronous and small; used to unpack the car models (v1.4.9)
@@ -500,9 +525,9 @@ const KGEO = (() => {
           N = new Int8Array(take(p.nn)),
           C = new Uint16Array(take(p.nc)),
           I = new Uint16Array(take(p.ni));
-        return { name: p.name, t: p.t, P, N, C, I };
+        return { name: p.name, t: p.t, P, N, C, I, lamps: p.lamps };
       });
-      out[name] = { bb: M0.bb, rank: M0.rank, parts };
+      out[name] = { bb: M0.bb, rank: M0.rank, parts, ruedasDimensionadas: M0.ruedasDimensionadas };
       continue;
     }
     const parts = M0.parts.map((p) => {
@@ -510,9 +535,9 @@ const KGEO = (() => {
         N = new Int8Array(b64(p.n)),
         C = new Uint16Array(b64(p.c)),
         I = new Uint16Array(b64(p.i));
-      return { name: p.name, t: p.t, P, N, C, I };
+      return { name: p.name, t: p.t, P, N, C, I, lamps: p.lamps };
     });
-    out[name] = { bb: M0.bb, rank: M0.rank, parts };
+    out[name] = { bb: M0.bb, rank: M0.rank, parts, ruedasDimensionadas: M0.ruedasDimensionadas };
   }
   return out;
 })();
@@ -532,11 +557,14 @@ function hsv(c) {
 }
 // per base: decide the paint family (main saturated colour)
 const PAINTREF = {};
+// RGB565 marker written by Fable's game exporter for paintable panels.
+const OWN_PAINT = 10973;
 function paintRef(base) {
   if (PAINTREF[base] !== undefined) return PAINTREF[base];
   const K = KGEO[base];
   let ref = null;
-  if (base === 'police')
+  if (OWN_BASES.has(base)) ref = { k: OWN_PAINT, l: lum(rgb565(OWN_PAINT)), own: true };
+  else if (base === 'police')
     ref = { grey: true, l: [0.35, 0.62] }; // dark-grey panels -> white
   else if (base === 'tractor' || base === 'delivery-flat' || base === 'ambulance' || base === 'firetruck' || base === 'garbage-truck') ref = null;
   else
@@ -544,7 +572,7 @@ function paintRef(base) {
       const c = rgb565(k),
         h = hsv(c);
       if (h[1] > 0.35 && h[2] > 0.3) {
-        ref = { h: h[0], l: lum(c), k, own: OWN_BASES.has(base) };
+        ref = { h: h[0], l: lum(c), k };
         break;
       }
     }
@@ -625,21 +653,28 @@ function modelGeometry(model) {
   const groups = { paint: [], glass: [], rest: [], tail: [], beacon: [] };
   const wheels = [];
   modelGeometryPart1(sy, sx, K, wheels, zc, sz, model, groups);
-  const mk = (arr) => {
+  const mk = (arr, lampMask = false) => {
     if (!arr.length) return null;
     const pos = new Float32Array(arr.length * 3),
       nor = new Float32Array(arr.length * 3),
       col = new Float32Array(arr.length * 3);
+    const lamps = lampMask ? new Uint8Array(arr.length) : null;
+    let hasLamps = false;
     arr.forEach((v, i) => {
       pos.set([v[0], v[1], v[2]], i * 3);
       const l = Math.hypot(v[3], v[4], v[5]) || 1;
       nor.set([v[3] / l, v[4] / l, v[5] / l], i * 3);
       col.set(v[6], i * 3);
+      if (lamps && v[7]) {
+        lamps[i] = 1;
+        hasLamps = true;
+      }
     });
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     g.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
     g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    if (hasLamps) g.setAttribute('lampMask', new THREE.BufferAttribute(lamps, 1));
     return g;
   };
   // rear face / roof heights for lights and roof props
@@ -669,7 +704,7 @@ function modelGeometry(model) {
   const out = {
     paint: mk(groups.paint),
     glass: mk(groups.glass),
-    rest: mk(groups.rest),
+    rest: mk(groups.rest, true),
     tail: mk(groups.tail),
     beaconL: mk(bl),
     beaconR: mk(br),
@@ -682,7 +717,8 @@ function modelGeometry(model) {
 }
 /** (v1.1.7, code quality) part of modelGeometry: one geometry per wheel, centred on its own node (rotation axis = x) */
 function modelGeometryPart1(sy, sx, K, wheels, zc, sz, model, groups) {
-  const wheelScale = Math.min(1.25, Math.max(0.9, sy * 0.92)),
+  // The exporter stores wheels with an inverse scale of 0.72 in width and 0.9/0.95 in radius.
+  const wheelScale = K.ruedasDimensionadas ? sy * (0.9 / 0.95) : Math.min(1.25, Math.max(0.9, sy * 0.92)),
     wheelX = sx * 0.72;
   for (const p of K.parts) {
     const isWheel = p.name.startsWith('wheel');
@@ -731,9 +767,16 @@ function modelGeometryPart1(sy, sx, K, wheels, zc, sz, model, groups) {
         else if (p.C[i] === 543 && /^(policia|ambulancia|bomberos)/.test(model.id)) cls[i] = 'beacon';
       }
     }
+    const lamps = p.lamps ? new Uint8Array(p.I.length / 3) : null;
+    if (lamps) for (const [first, count] of p.lamps) lamps.fill(1, first, first + count);
     for (let t = 0; t < p.I.length; t += 3) {
       const a = p.I[t];
       const grp = groups[cls[a]];
+      const lamp =
+        grp === groups.rest &&
+        OWN_BASES.has(model.base) &&
+        (lamps?.[t / 3] ||
+          (p.C[a] === 61341 && ((p.P[a * 3 + 2] + p.P[p.I[t + 1] * 3 + 2] + p.P[p.I[t + 2] * 3 + 2]) / 6000 + p.t[2] - zc) * sz > model.L * 0.28));
       for (let j = 0; j < 3; j++) {
         const v = p.I[t + j];
         grp.push([
@@ -743,13 +786,28 @@ function modelGeometryPart1(sy, sx, K, wheels, zc, sz, model, groups) {
           p.N[v * 3] / 127 / sx,
           p.N[v * 3 + 1] / 127 / sy,
           p.N[v * 3 + 2] / 127 / sz,
-          cols[v]
+          cols[v],
+          lamp
         ]);
       }
     }
   }
 }
 const restMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0.15 });
+const headlightLevel = { value: 0 };
+const litCarBodyMat = restMat.clone();
+litCarBodyMat.onBeforeCompile = (shader) => {
+  shader.uniforms.carHeadlightLevel = headlightLevel;
+  shader.vertexShader = shader.vertexShader
+    .replace('#include <common>', '#include <common>\nattribute float lampMask; varying float vLampMask;')
+    .replace('#include <begin_vertex>', '#include <begin_vertex>\nvLampMask = lampMask;');
+  shader.fragmentShader = shader.fragmentShader
+    .replace('#include <common>', '#include <common>\nuniform float carHeadlightLevel; varying float vLampMask;')
+    .replace(
+      '#include <emissivemap_fragment>',
+      '#include <emissivemap_fragment>\ntotalEmissiveRadiance += vec3(1.0, 0.92, 0.80) * vLampMask * carHeadlightLevel;'
+    );
+};
 const kGlassMat = new THREE.MeshStandardMaterial({ color: 0x1e2830, roughness: 0.12, metalness: 0.35 });
 const wheelMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8, metalness: 0.1 });
 function makeKenneyMesh(model, color) {
@@ -759,7 +817,12 @@ function makeKenneyMesh(model, color) {
   g.add(body);
   if (isLivery(model)) color = liveryColor(model);
   const paint = new THREE.MeshStandardMaterial({ vertexColors: true, color, roughness: 0.3, metalness: 0.5 });
-  const { wheels, hl, tl, W, L, halfW } = makeKenneyMeshPart1(G, body, paint, model, g);
+  if (model.id === 'reventonGold') {
+    // v1.4.41: polished gold
+    paint.metalness = 0.95;
+    paint.roughness = 0.18;
+  }
+  const { wheels, hl, tl, W, L, halfW, lightBody } = makeKenneyMeshPart1(G, body, paint, model, g);
   makeKenneyMeshPart2(model, G, halfW, W, body, tl);
   let { bar } = makeKenneyMeshPart3(model, G, body, L, halfW);
   makeKenneyMeshPart4(model, G, body, L, halfW, W);
@@ -769,7 +832,7 @@ function makeKenneyMesh(model, color) {
       m.receiveShadow = false;
     }
   });
-  return { g, body, wheels, hl, tl, bar, paint };
+  return { g, body, wheels, hl, tl, bar, paint, lightBody };
 }
 /** (v1.1.7, code quality) part of makeKenneyMesh: company / service lettering on the box sides */
 function makeKenneyMeshPart4(model, G, body, L, halfW, W) {
@@ -965,7 +1028,9 @@ function makeKenneyMeshPart2(model, G, halfW, W, body, tl) {
 function makeKenneyMeshPart1(G, body, paint, model, g) {
   if (G.paint) body.add(new THREE.Mesh(G.paint, paint));
   if (G.glass) body.add(new THREE.Mesh(G.glass, kGlassMat));
-  if (G.rest) body.add(new THREE.Mesh(G.rest, restMat));
+  const rest = G.rest ? new THREE.Mesh(G.rest, restMat) : null;
+  if (rest) body.add(rest);
+  const lightBody = G.rest?.attributes.lampMask ? rest : null;
   const wheels = [];
   for (const w of G.wheels) {
     const piv = new THREE.Group();
@@ -1001,7 +1066,7 @@ function makeKenneyMeshPart1(G, body, paint, model, g) {
     G.hwc.set(key, m);
     return m;
   };
-  return { wheels, hl, tl, W, L, halfW };
+  return { wheels, hl, tl, W, L, halfW, lightBody };
 }
 
 // ---------- motos y scooters (modelados a mano)

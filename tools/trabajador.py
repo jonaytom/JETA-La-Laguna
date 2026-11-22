@@ -129,6 +129,9 @@ def orden(linea):
     if o == 'merge_zona' and len(a) == 1: return run([PY, os.path.join('tools', 'merge_zona.py'), a[0]])
     if o == 'copiar_html':
         t0 = time.time()
+        radio = os.path.join(ROOT, 'dist', 'JETA La Laguna', 'juego', 'radio')
+        if os.path.isdir(radio):
+            shutil.copytree(radio, os.path.join(JUEGO, 'radio'), dirs_exist_ok=True)
         shutil.copy(os.path.join(ROOT, 'dist', 'JETA La Laguna.html'), os.path.join(JUEGO, 'JETA La Laguna.html'))
         doc = os.path.join(ROOT, 'dist', 'Documentacion tecnica.html')
         if os.path.exists(doc): shutil.copy(doc, os.path.join(JUEGO, 'Documentación técnica.html'))

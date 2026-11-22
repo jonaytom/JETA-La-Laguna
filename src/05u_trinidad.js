@@ -342,15 +342,15 @@ function triRampZone(x, z, R = 4.6) {
   return Math.hypot(x - r.x0 - dx * t, z - r.z0 - dz * t) < R;
 }
 // ---------- paint on the asphalt: a canvas texture on a grid that follows the ground
-function triDecal(cx, cz, ux, uz, len, wid, draw, y0 = 0.19) {
+function triDecal(cx, cz, ux, uz, len, wid, draw, y0 = 0.19, spacing = 2) {
   const px = 40,
     cw = Math.max(16, Math.round(wid * px)),
     ch = Math.max(16, Math.round(len * px));
   const c = mkCanvas(cw, ch),
     x = c.getContext('2d');
   draw(x, cw, ch, px);
-  const nu = Math.max(1, Math.ceil(len / 2)),
-    nv = Math.max(1, Math.ceil(wid / 2));
+  const nu = Math.max(1, Math.ceil(len / spacing)),
+    nv = Math.max(1, Math.ceil(wid / spacing));
   const g = new THREE.PlaneGeometry(wid, len, nv, nu);
   const p = g.attributes.position;
   for (let i = 0; i < p.count; i++) {
@@ -436,7 +436,9 @@ function trinidadParking() {
       dz = b.pz - a.pz,
       L = Math.hypot(dx, dz) || 1;
     const along = T.A.at(a.s);
-    triDecal(cx, cz, along.ux, along.uz, 12, Math.max(4, L - T.A.w - 0.6), (x, w, h, k) => yellowBox(x, w, h, k));
+    // The grid covers the track bed, which is higher than the adjacent asphalt.
+    const grid = triDecal(cx, cz, along.ux, along.uz, 12, Math.max(4, L - T.A.w - 0.6), yellowBox, YOFF.tram + 0.07, 0.65);
+    grid.name = 'cebreado_pedro_zerolo';
     for (const [c, j] of [
       [T.A, a],
       [T.B, b]

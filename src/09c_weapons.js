@@ -4,13 +4,16 @@ const WEAPON = { has: false, ammo: 0, max: 6, aiming: false, cd: 0, mesh: null, 
   document.addEventListener('mousedown', (e) => {
     if (GAME.state !== 'play' || !document.pointerLockElement) return;
     if (e.button === 2 && canUse()) WEAPON.aiming = true;
-    if (e.button === 0 && canUse() && (WEAPON.ammo > 0 || WEAPON.aiming)) {
-      WEAPON.want = true;
+    if (e.button === 0 && canUse()) {
+      WEAPON.want = WEAPON.aiming;
       FIGHT.blockPunch = true;
     }
   });
   document.addEventListener('mouseup', (e) => {
     if (e.button === 2) WEAPON.aiming = false;
+  });
+  document.addEventListener('pointerlockchange', () => {
+    if (!document.pointerLockElement && !WEAPON.touchAim) WEAPON.aiming = WEAPON.want = false;
   });
   document.addEventListener('contextmenu', (e) => {
     if (document.pointerLockElement) e.preventDefault();
@@ -30,7 +33,7 @@ function giveWeapon(ammo = 6, training = false) {
 function takeWeapon() {
   WEAPON.has = false;
   WEAPON.ammo = 0;
-  WEAPON.aiming = false;
+  WEAPON.aiming = WEAPON.touchAim = WEAPON.want = false;
   if (WEAPON.mesh) WEAPON.mesh.visible = false;
   updateWeaponHUD();
 }
@@ -66,20 +69,22 @@ function updateWeaponHUD() {
   const w = $('weap');
   if (!w) return;
   const rifle = typeof RIFLE !== 'undefined' && RIFLE.has;
-  w.style.display = WEAPON.has || rifle ? 'block' : 'none';
-  const tm = document.body.classList.contains('touchmode');
+  w.style.display = !PLAYER.car && (WEAPON.has || rifle) ? 'block' : 'none';
+  const medium = controlMedium();
+  const tm = medium === 'touch';
+  const padHint = medium === 'pad' ? 'Cruceta →: cambiar' : '';
   if (rifle && RIFLE.out)
-    w.innerHTML = `RIFLE DE AGUA <b>${Math.round((100 * RIFLE.water) / RIFLE.max)}%</b><br><small style="font-size:12px;opacity:.75">${tm ? 'toca: cambiar' : CONTROLS.keyName('weap').toUpperCase() + ' / 1: puños' + (WEAPON.has ? ' · 2: pistola' : '')}</small>`;
+    w.innerHTML = `RIFLE DE AGUA <b>${Math.round((100 * RIFLE.water) / RIFLE.max)}%</b><br><small style="font-size:12px;opacity:.75">${padHint || (tm ? 'toca: cambiar' : CONTROLS.keyName('weap').toUpperCase() + ' / 1: puños' + (WEAPON.has ? ' · 2: pistola' : ''))}</small>`;
   else if (rifle && !WEAPON.has)
-    w.innerHTML = `PUÑOS<br><small style="font-size:12px;opacity:.75">${tm ? 'toca: rifle de agua' : CONTROLS.keyName('weap').toUpperCase() + ' / 3: rifle de agua'}</small>`;
+    w.innerHTML = `PUÑOS<br><small style="font-size:12px;opacity:.75">${padHint || (tm ? 'toca: rifle de agua' : CONTROLS.keyName('weap').toUpperCase() + ' / 3: rifle de agua')}</small>`;
   else if (WEAPON.has)
     w.innerHTML = WEAPON.out
-      ? `PISTOLA <b>${WEAPON.ammo}</b><small>/${WEAPON.max}</small><br><small style="font-size:12px;opacity:.75">${tm ? 'toca: puños' : CONTROLS.keyName('weap').toUpperCase() + ' / 1: puños'}</small>`
-      : `PUÑOS<br><small style="font-size:12px;opacity:.75">${tm ? 'toca: pistola' : CONTROLS.keyName('weap').toUpperCase() + ' / 2: pistola'}</small>`;
+      ? `PISTOLA <b>${WEAPON.ammo}</b><small>/${WEAPON.max}</small><br><small style="font-size:12px;opacity:.75">${padHint || (tm ? 'toca: puños' : CONTROLS.keyName('weap').toUpperCase() + ' / 1: puños')}</small>`
+      : `PUÑOS<br><small style="font-size:12px;opacity:.75">${padHint || (tm ? 'toca: pistola' : CONTROLS.keyName('weap').toUpperCase() + ' / 2: pistola')}</small>`;
   const t = document.body.classList.contains('touchmode');
   for (const id of ['tbA', 'tbD']) {
     const b = $(id);
-    if (b) b.style.display = ((WEAPON.has && WEAPON.out) || (rifle && RIFLE.out)) && t ? 'flex' : 'none';
+    if (b) b.style.display = ((WEAPON.has && WEAPON.out) || (rifle && RIFLE.out)) && t && !PLAYER.car ? 'flex' : 'none';
   }
 }
 // ray from the camera through the crosshair; returns the first thing hit
@@ -131,7 +136,7 @@ function shootRay() {
   return best;
 }
 function fireWeapon() {
-  if (WEAPON.cd > 0) return;
+  if (!canUse() || !WEAPON.aiming || WEAPON.cd > 0) return;
   if (WEAPON.ammo <= 0) {
     AUDIO.empty && AUDIO.empty();
     HUD.toast(WEAPON.training ? 'Sin bolas' : 'Sin bolas. El Blanco te conseguirá más… algún día.', '#ffb3b3', 1.5);
@@ -296,15 +301,29 @@ function armIK(H, side, T, pole) {
   boneAim(lo, ha, I.v.subVectors(I.W, I.E).normalize());
   return true;
 }
+let padAiming = false;
+function updatePadWeapon() {
+  const gp = INPUT.gp;
+  const armed = GAME.state === 'play' && !BIGMAP.open && !DLG.open && (canUse() || rifleUsable());
+  if (gp && armed && gp.lt >= 0.45) {
+    padAiming = true;
+    WEAPON.aiming = true;
+    if (gp.fireDown && canUse()) WEAPON.want = true;
+  } else if (padAiming) {
+    padAiming = false;
+    WEAPON.aiming = WEAPON.touchAim;
+  }
+}
 function updateWeapons(dt) {
   weaponSwitchInput();
+  updatePadWeapon();
   if (WEAPON.cd > 0) WEAPON.cd -= dt;
   if (!canUse() && !(typeof rifleUsable === 'function' && rifleUsable())) {
     WEAPON.aiming = WEAPON.touchAim = false;
   } else if (WEAPON.touchAim) WEAPON.aiming = true;
   const xh = $('xhair');
-  if (xh) xh.style.display = WEAPON.aiming || ((canUse() || rifleUsable()) && document.body.classList.contains('touchmode')) ? 'block' : 'none';
-  if (WEAPON.want && canUse()) fireWeapon();
+  if (xh) xh.style.display = WEAPON.aiming || (rifleUsable() && document.body.classList.contains('touchmode')) ? 'block' : 'none';
+  if (WEAPON.want) fireWeapon();
   WEAPON.want = false;
   if (WEAPON.has && WEAPON.mesh) {
     WEAPON.mesh.visible = !PLAYER.car && !PLAYER.interior && !!WEAPON.out;
@@ -454,7 +473,7 @@ function setWeaponOut(v) {
   if (v && typeof RIFLE !== 'undefined' && RIFLE.out) AGUA.setRifleOut(false, true);
   if (!WEAPON.has || WEAPON.out === v) return;
   WEAPON.out = v;
-  WEAPON.aiming = false;
+  WEAPON.aiming = WEAPON.touchAim = WEAPON.want = false;
   if (WEAPON.mesh) WEAPON.mesh.visible = v;
   AUDIO.pickup && AUDIO.pickup();
   updateWeaponHUD();
@@ -464,7 +483,7 @@ function weaponSwitchInput() {
   const rifle = typeof RIFLE !== 'undefined' && RIFLE.has;
   if (GAME.state !== 'play' || (!WEAPON.has && !rifle)) return;
   const gp = INPUT.gp;
-  if (pressed('Tab') || (gp && (gp.down(14) || gp.down(15)))) {
+  if (pressed('Tab') || (!PLAYER.car && !BIGMAP.open && !DLG.open && gp?.down(PAD_BUTTON.RIGHT))) {
     if (rifle) AGUA.cycle();
     else setWeaponOut(!WEAPON.out);
   } // v0.76: fists → pistol → water rifle

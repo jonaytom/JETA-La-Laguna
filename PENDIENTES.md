@@ -10,6 +10,8 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Pendientes por categoría
 
+Revisado con el historial de cambios y las pruebas hasta la v1.4.41 (22-nov: añadidos a «Hecho» la v1.4.39 y la v1.4.40, que se hicieron fuera de Claude, y la v1.4.41). Los avisos de mapa con un punto concreto siguen abiertos si necesitan comprobarse en partida.
+
 ### Avisos nuevos de Jonay (11-nov, sin clasificar del todo)
 
 - [ ] ◐ **Pasarela del tranvía en la Av. de La Trinidad** (Jonay, 11-nov, 4 capturas, X −299, Y 653 a X −312, Y 697): la trinchera del tranvía debería estar vallada (así es peligrosa); la farola atraviesa la pasarela (X −298, Y 633); al final de la subida hay un muro que se puede atravesar: ahí debe haber una entrada libre (X −312, Y 697); el pilar del puente debería estar más a la derecha, fuera de la carretera (X −680, Y 324).
@@ -20,12 +22,16 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 - [ ] ◐ **Pasarela del tranvía: la subida va por el otro lado** (Jonay, 11-nov, captura en X −259, Y 547: «la subida a la pasarela es por el lado contrario… pasa justo encima de lo que ahora es una acera»): la rampa de subida a la pasarela está del lado equivocado; en la realidad sube por donde hoy hay una acera.
 - [ ] ◐ **Trinchera del tranvía en la Glorieta del Brasil: el jugador camina por encima** (Jonay, 11-nov, captura en X −281, Y 719, Campus Central ULL: «por aquí te deberías de caer»): el tranvía va en una trinchera con muros, pero el jugador anda a la altura de la calle sobre ella, como si hubiera suelo invisible. Debería caer a la trinchera (o no poder entrar).
 
+### Pruebas antiguas que fallan (22-nov)
+
+- [ ] ◐ **Revisar 13 pruebas que fallan en la batería completa** (al publicar la 1.4.40 el 22-nov, 65 de 78 OK). Varias son de antes de los cambios hechos fuera de Claude y probablemente están desfasadas: prueba_0851, 076, pelea_especiales (pastor), 079 (rifle), 080/081/082 (récords), 083 (tienda, guardar, leyenda), 1419 (KENNEY_SUSTITUIDOS), 1426_gpu (MP YOU), 1427_gpu, horizonte_1428_gpu y prologo_1427 (legalGrid). Mientras, se publica con listas de pruebas escogidas.
+
 ### Coches propios (Blender)
 
-Los diseña otro chat (Jonay, 17-nov: «eso ya lo hace otro chat»); aquí solo se integran los paquetes de `Blender/coche/para_programador/`.
+Los coches nuevos se modelan con la biblioteca de Blender y se prueban con Jonay antes de integrar los paquetes de `Blender/coche/para_programador/`.
 
-### Minijuegos: controles, pausa y sonido
-
+- [~] ● v1.4.39 (13 coches revisados ya integrados) **Revisar el resto del catálogo civil en tandas de tres** (Jonay, 21-nov). De 50 turismos, SUV, furgonetas y pick-ups civiles, 12 se integraron en v1.4.38 y el Linguini Reventón híbrido aprobado en v1.4.39. MP YOU y Clever OneTwo ya estaban aprobados e integrados. Totuya O Algo conserva su carrocería actual. El Niza Nano rehecho entró en la v1.4.41. Quedan 33 modelos por revisar. Los vehículos de servicio y las motos se cuentan aparte.
+- [ ] ◐ **Revisar el contacto de las ruedas con el suelo al integrar los coches.** La prueba del Helado, el Carlota y el Style3 confirma que los dos ejes quedan a la misma altura en las mallas cercanas y lejanas. El juego eleva el vehículo 17 cm respecto al terreno base. En asfalto plano, la calzada se dibuja 13–15 cm por encima del terreno y quedan unos 2–4 cm de separación. Revisar por superficie y con el coche aparcado y en marcha.
 
 ### Recreativas, consola GOFIO-8 y torneo
 
@@ -38,13 +44,6 @@ Los diseña otro chat (Jonay, 17-nov: «eso ya lo hace otro chat»); aquí solo 
   hacia abajo, útil al caer sobre el enemigo) y patada (fotogramas de la patada en carrera; alcance más largo hacia
   delante). Ninguno de los dos derriba, solo quitan vida. Los tres héroes. `09m_guanche.js`.
 
-
-- [ ] ◐ **Récords con iniciales antes del «CONTINUE»** (Jonay, 3-nov: «al acabar la partida del minijuego, antes del
-  continue, que ya de por sí reinicia el marcador, debería dejar poner las iniciales de la puntuación y grabar si es que
-  hay récord, y luego se da la opción continue»): al perder la última vida, si la puntuación entra en la tabla de récords,
-  pantalla de iniciales (3 letras, ↑/↓ cambian la letra, A/E confirma, como las recreativas) y se guarda; después sale el
-  «CONTINUE» con su cuenta atrás. Si no hay récord, directamente el continue. En todas las máquinas (Guanche Guarriors,
-  Bencomo, Naves/GUFO…) y con la tabla guardada en la partida.
 
 - [ ] ◐ **Bencomo: listón de salto con pértiga antes de cada tagoror** (Jonay, 3-nov: «antes de llegar a cada tagoror
   debería tener un listón de salto cada vez más alto, por el que te dan puntos extra si lo saltas en lugar de pasarlo por
@@ -70,94 +69,9 @@ Los diseña otro chat (Jonay, 17-nov: «eso ya lo hace otro chat»); aquí solo 
   - **Perros → el lobo del GIF** que pasó Jonay (sacado fotograma a fotograma: parado, correr, morder, morir, aullar;
     `tools/sprites_ext/wolf.py`). Falta confirmar de qué pack es y su licencia, y pulir el fondo entre las patas.
   - Licencias por mirar: Gollux, RAt, Free Mythic Monsters.
-- [ ] ◐ **Guerra de Naves, para pulir**: abajo a la derecha, «CREDIT 0» se monta sobre la barra del BEAM y el icono del
-  módulo. También quedan una cuarta fase, jefes más grandes, más enemigos y sprites más trabajados.
-- [ ] ● **PAQUETE «RECREATIVAS Y MINIJUEGOS» (Jonay, 19-oct: «para acometer YA», plan v0.79 → v0.84)**:
-  Hecho en v0.80.0: el motor de recreativas y BENCOMO en casa de El Blanco (llamada tras «Defensores»).
-  Hecho en v0.81.0: **GUERRA DE NAVES** en cafeterías y tascas (primera versión, para pulir).
-  Hecho en v0.82.0: **GUANCHE GUARRIORS** en las jugueterías (primera versión, para pulir).
-  Hecho en v0.83.0: la inmobiliaria, los pisos y la consola GOFIO-8 con su menú de cartuchos.
-  Hecho en v0.84.0: el basket a 3 contra 3.
-  Hecho en v0.85.0: Pachanga 3x3 y Play Furbito (el mundialito de 8 selecciones), el «superfriki jugón» y la
-  apertura del torneo.
-  Falta: el tipo Metal Slug, y la lógica del torneo (comprobar los récords batidos) con su premio.
-  - Jonay, 20-oct: Pachanga 3x3 y Play Furbito también se compran en la juguetería como cartuchos. Están basados en lo
-    que ya tenemos: al empezar eliges país entre **8 selecciones** y se juega por eliminatorias hasta la final.
-  - **El torneo de videojuegos** (Jonay, 20-oct): se desbloquea cuando te has comprado **todos** los cartuchos, también
-    Pachanga 3x3 y Play Furbito.
-    - Consiste en superar los récords de todos los juegos.
-    - En Pachanga 3x3 y Play Furbito: ganar las eliminatorias del mundialito, es decir, ganar el juego. Esos tienen fin;
-      los demás van por puntos.
-    - Al batir un récord, el juego te deja poner tus iniciales. Las máquinas ya lo hacen; falta en los dos de deportes
-      y en la consola.
-    - Jonay: cuando lo compras todo, en la juguetería te dicen que eres un «superfriki jugón» y que puedes participar
-      en el torneo. Pendiente: el premio.
-  Jonay probará todas las máquinas y dirá impresiones.
-  - Jonay, 20-oct: los nombres son «Guerra de Naves» (el tipo R-Type) y «Guanche Guarriors» (el tipo Golden Axe:
-    beat'em up, no plataformas, con varias fases). En Guanche Guarriors se elige personaje al empezar:
-    - El Mencey: el bárbaro, con garrote canario.
-    - El Pastor: más ágil y menos fuerte.
-    - La Mirladora: una chica que hace magia; menos física, pero ágil.
-    Propuesta completa en `docs/11_recreativas.md`.
-  - Jonay, 20-oct: controles de siempre (Espacio, clic izquierdo y derecho). Guanche Guarriors: personajes al tamaño
-    del Bencomo grande descartado. Naves: pequeño, con mucha visión.
-  - Jonay, 20-oct:
-    - **Guanche Guarriors se juega en las jugueterías** (de pago).
-    - En la juguetería se pueden comprar **todos los juegos** y la **consola**, para jugarlos en casa.
-    - **Pisos**: el pisito de alquiler y, mejor aún, **varios pisos en venta**. Eliges el que te permita tu dinero, y
-      los pisos son caros.
-    - En la consola se juega a todos los minijuegos, también a los de las canchas:
-      - **«Pachanga 3x3»**: el basket, que hay que **pasar a 3 contra 3**.
-      - **«Play Furbito»**: el fútbol.
-      - Los dos son por fases: eliges un país al principio, te sale su equipo y hay eliminatorias hasta la final.
-      - Las equipaciones de los dos equipos no pueden coincidir en colores.
-  Hecho en v0.79.0: armas (rifle a dos manos), minimapa (puntos encima), fútbol (palomitas, saque de centro, fuerza
-  del tiro, regate) y basket (combos de la CPU, 4 mates animados, pases en arco). Falta lo de recreativas en adelante
-  (plan en `docs/11_recreativas.md`).
-  - **Armas**: el rifle de agua atraviesa el brazo, y al apuntar también se ve mal. La pistola está bien: orientar el
-    rifle igual y ponerlo bien en la mano (capturas en X 189 Z 7).
-  - **Minimapa**: los puntos de misión no pueden quedar bajo las letras (el punto azul tapado por los nombres de calles
-    y sitios). Pintarlos encima.
-  - **Fútbol**:
-    - El portero hace palomitas para parar algunos tiros.
-    - Tras un gol saca de centro con el pie el que lo recibió. El rival no puede quitarle la pelota hasta que la toca,
-      y debe guardar distancia hasta que la pasa o corre con ella (como en el saque de banda).
-    - Tiro: cerca de la portería, si mantienes mucho el botón, el balón se va por encima. Hay que buscar la fuerza
-      buena para cada distancia. Desde muy lejos (bastante fuera del área, casi en el medio campo) sí se puede tirar
-      a tope.
-    - Doble pulsación de Espacio = regate.
-  - **Basket**:
-    - El rival hace combos de mates, más cuanto mejor es. No se le ve el combo y también puede fallarlo.
-    - Cada mate de combo tiene su animación espectacular. Con puños: el **360** y el **windmill/tomahawk**. Con
-      patada: el **de espaldas abriendo las piernas y bajando el balón primero**, y el **entre las piernas de frente**
-      (pasa el balón entre las piernas en el salto).
-    - Los pases largos van en parábola (ahora van rectísimos).
-  - **Recreativas 2D estilo años 80**:
-    - Puntos mientras juegas, récord en la máquina con 3 iniciales y niveles cada vez más difíciles.
-    - **Se desbloquean cuando se desbloquea el alcalde**: te llama el Blanco y te explica todo.
-    - **Casa del Blanco**: **Bencomo, Acentejo's Revenge** (el del guanche), gratis. Cambio de orden de Jonay: el tipo
-      Metal Slug pasa a ser de pago. La primera vez te invita a su casa. Luego vas
-      cuando quieras (no es misión ni obligatorio) y le pides jugar. Él te cuenta lo de los bares y las jugueterías.
-    - **Bares y cafeterías** (donde se compra comida ahora; se podrá entrar): máquinas de pago con el de naves tipo
-      R-Type/Nemesis.
-    - **Jugueterías**: de pago, el shooter tipo Metal Slug.
-    - **El juego del guanche** (casa de El Blanco): plataformas tipo Mario/Sonic/Prehistorik.
-      - Título: **«Bencomo, Acentejo's Revenge»**. Bencomo es el mencey de Taoro, líder de la resistencia. Acentejo es
-        la Matanza de Acentejo (mayo de 1494), la emboscada guanche a las tropas de Alonso Fernández de Lugo en el
-        barranco. Es la «venganza» de los videojuegos clásicos.
-      - El guanche salta con la **vara del salto del pastor** y también golpea con ella.
-      - Ambientado en la conquista de Tenerife: la **Matanza de Acentejo**.
-      - Enemigos: conquistadores de varios tipos que van saliendo, y perros y cosas así de la época.
-      - Tono satírico y caricaturesco, con elementos reales de la cultura guanche:
-        - **Salto del pastor**: la vara (asta) que usaban para cruzar barrancos y riscos.
-        - Varazos con el **banot**: lanza de madera con la punta endurecida al fuego.
-        - Comida: el plátano llegó después, así que quizá **gofio en vez de plátanos** (también comían cabra y
-          cebada).
-    - Otro beat'em up tipo Golden Axe: **Guanche Guarriors**.
-  - **Inmobiliaria y pisito**:
-    - En la inmobiliaria se alquila tu pisito: una casita chula cerca del Pasaje Teide.
-    - En el piso, una consola comprada en la juguetería (vale una pasta). Los juegos se compran también en la
-      juguetería y en casa se juegan gratis. Al encenderla sale un menú con los juegos que tengas.
+- [~] ◐ v1.4.24 **Guerra de Naves, para pulir**: créditos separados de BEAM y módulo. Quedan una cuarta fase, jefes más grandes, más enemigos y sprites más trabajados.
+- [ ] ● **Completar el torneo de la GOFIO-8**. Comprobar los récords de puntuación, las victorias en Pachanga 3×3 y Play Furbito, el registro de iniciales desde consola y deportes, y decidir el premio.
+- [ ] ● **Recreativa de acción con disparos**. Decidir si se retoma la propuesta de un juego de acción lateral para las jugueterías.
 
 ### Fútbol y baloncesto 2D
 
@@ -283,26 +197,7 @@ Los diseña otro chat (Jonay, 17-nov: «eso ya lo hace otro chat»); aquí solo 
   por encima con una animación de salto apoyando la mano. No hay ninguna en el esqueleto actual: sacarla de Mixamo
   («Jump Over», «Vault»; ver «Recursos externos») o hacerla a mano, y detectar la altura del obstáculo delante.
 
-### Cielo, luz y hora del día
-
-
-### HUD y minimapa
-
-
-- [~] ◐ v1.0.9 (sin sentidos únicos salvo en vías rápidas, como pidió Jonay; quedan la vuelta en el sitio, la rebaja de las autopistas y los giros) **La ruta del GPS da vueltas enormes** (Jonay, 3-nov: «las indicaciones de ruta hacen unas vueltas terribles, como
-  si no quisieran coger dirección prohibida… ¿cómo se decide la ruta?»). Cómo va hoy (`07_vehicles.js`, `GRAPH.routeFrom`):
-  en coche, A* por el grafo del tráfico respetando los sentidos únicos del OSM; empieza siempre hacia donde mira el coche
-  (nunca da la vuelta en la calle), y las autopistas cuentan como 0,7 veces su largo (para preferirlas). A pie
-  (`WALKG` en `11_hud.js`) no hay sentidos y se prefieren las calles peatonales. Arreglos posibles:
-  - dejar dar la vuelta en el sitio (o en el primer cruce) con una penalización (~60 m) en vez de prohibirla;
-  - quitar o suavizar la rebaja de las autopistas (0,7 → 0,9), que lleva a dar rodeos por ellas;
-  - una pequeña penalización por giro, para no hacer zigzag por las manzanas;
-  - revisar sentidos únicos mal puestos en el OSM o creados al separar sentidos (calles que salen de un solo sentido).
-
-
-
 ### Misiones, historia y economía
-
 
 
 - [~] ◐ v0.76.0 (rifle de agua, bolitas en las jugueterías, Tab entre puños/pistola/rifle; hechos los euros y los precios del rifle y las bolitas en la v1.4.22; falta la patada en 3D y repasar con una tabla las recompensas) **Economía y armas** (Jonay, 12-oct), junto con las jugueterías:
@@ -316,36 +211,8 @@ Los diseña otro chat (Jonay, 17-nov: «eso ya lo hace otro chat»); aquí solo 
         otras misiones, entre ellas apagar fuegos en una iglesia del Obispo. Dispara un **chorro en parábola** que avanza
         unos **10 m** en línea recta y cae; donde cae deja un **charquito unos segundos**: ahí apaga si hay fuego o golpea
         si hay una persona. Si el chorro choca con algo (o alguien) en la trayectoria antes de caer, golpea/apaga ahí.
-- [~] ◐ v0.56.0 **Historia: nueva tanda de misiones** (programadas las 12; **Jonay las prueba**: anotar aquí lo que no
-      guste). Alcalde: «Don Yovoy Gofiérrez», bigote y traje negro. Se pueden reintentar al fallar y, si se guarda a
-      mitad, al cargar empiezan de nuevo en su círculo (pruebas `prueba_misiones.py` y `prueba_misiones_guardado.py`).
-      Apuntes originales (7-oct):
-      - Aclarar en la historia que la **pistola es de bolas de plástico de aire comprimido** (sirve en la misión siguiente).
-      - **Atraco a una farmacia** (parodia): el primer ladrón se pelea contigo en la pelea 2D; el segundo huye y se sube a
-        un coche: persecución hasta donde vaya y al final darle con la pistola de bolas para detenerlo. No es delito:
-        recompensa y el alcalde nombra a la banda **defensora de la ciudad**.
-      - **Ceremonia en el Ayuntamiento**: toda la banda y el alcalde; os nombra grupo especial de la Policía Local que
-        se encarga de los problemas de la ciudad (a partir de aquí detener malhechores es legal).
-      - Después, varias misiones con los miembros de la banda (detener malhechores, peleas, carreras, persecuciones)
-        con las mecánicas que ya hay. Propuestas de Claude (para comentar):
-        1. **«El carterista del Cristo»** (fiestas del Cristo, Plaza del Cristo): un carterista entre la gente; seguirlo
-           a pie sin perderlo de vista y pelea 2D al acorralarlo. Con el miembro más rápido de la banda.
-        2. **«Rally de La Esperanza»**: unos pijos hacen carreras ilegales por la Vía de Ronda; ganarles en una carrera
-           por puntos de control y que se rindan. Al volante el «piloto» de la banda.
-        3. **«Las ruedas del tranvía»**: unos gamberros pintan el tranvía en Las Mantecas; llegar antes de que se
-           escapen (contrarreloj en coche) y atrapar a dos (persecución a pie + pistola de bolas).
-        4. **«Guagua secuestrada»** (broma): un bromista se lleva una guagua vacía por la autopista; seguirla, ponerse
-           delante y frenarla (con el freno de mano nuevo) sin destrozarla.
-        5. **«El gofio robado»**: desaparece la reserva del molino (parodia); buscar pistas por el casco (diálogos con
-           vecinos), pelea en un almacén del polígono y vuelta con la carga en furgoneta sin volcarla.
-        - **Alcalde** (Jonay): personaje propio del juego, no una caricatura de una persona real (Claude no hace
-          parodias reconocibles de personas reales). Propuesta: **Don Yerai Gofiérrez**, alcalde ficticio de traje
-          oscuro, barba recortada, banda y bastón de mando; encarga misiones para «mejorar la ciudad»:
-          a) baches de la Vía de Ronda: llevar al equipo de asfaltado contrarreloj; b) recuperar los bancos robados
-          de la Plaza del Adelantado; c) escoltar en coche la guagua del Romero; d) carrera solidaria por el casco.
-        6. **«Noche en el aeropuerto»**: contrabandistas de queso en Los Rodeos; colarse por la valla, perseguir una
-           furgoneta por las vías de servicio y detenerla. Cierre de la tanda: el alcalde os da el coche patrulla de la
-           banda (rotulado con el nombre que elegisteis).
+- [ ] ◐ **Probar las misiones del alcalde en partida**. La tanda se programó en v0.56.0. Queda recoger los fallos de las misiones que se juegan tras la ceremonia, con nombre y punto del recorrido.
+
 - [~] ● v0.72.0 (Casa Salazar entera por fuera; el patio solo se ve desde la puerta, no se entra) **El Obispo y el Obispado** (Jonay, 12-oct; v0.65.0: obispo y portada del Obispado hechos; falta recrear la casa entera y el resto del pack): nuevo personaje, el obispo de Tenerife, con **nombre parodia
       inventado** y aspecto propio. Su sede es la **Casa Salazar** (C. San Agustín; fotos en
       `docs/referencias/casa_salazar/`: fachada de cantería gris oscura, portada con columnas pareadas y frontón con
@@ -353,7 +220,7 @@ Los diseña otro chat (Jonay, 17-nov: «eso ya lo hace otro chat»); aquí solo 
       Pack de **misiones secundarias** que se desbloquea a la vez que las del alcalde; no hacen falta para acabar el juego
       («solo si eres religioso»), pero dan dinero: mejoras en las iglesias que ya hay (Catedral, La Concepción, Santo
       Domingo, El Cristo…), p. ej. apagar un incendio con la escopeta de agua.
-- [ ] ◐ **Misiones por zonas: decidir con Jonay si la historia sale del casco** (revisión de la v1.4.23, mapa en `shots/misiones_mapa.json`): hoy todas las misiones de la historia empiezan en el casco (casa de El Blanco, Ayuntamiento, La Concepción, Juan de Vera) y es en sus huidas y persecuciones donde se recorre la ciudad (desde la v1.4.17 acaban hacia la siguiente). Si se quiere que la historia avance de barrio en barrio, habría que mover a quien da cada misión (el alcalde, la banda) a otros sitios a partir de cierto punto. La Secreta sale siempre de Tostón, en la Av. de los Menceyes, a ~2 km del casco.
+- [ ] ◐ **Recorrido de capítulos posteriores al prólogo**. El prólogo ya avanza hacia La Trinidad (v1.4.27). Decidir si las siguientes líneas deben salir del casco y mantener la progresión de una misión a la siguiente.
 
 ### Tiendas y edificios del casco
 
@@ -428,9 +295,6 @@ Los diseña otro chat (Jonay, 17-nov: «eso ya lo hace otro chat»); aquí solo 
 ### Calles, túneles, puentes, enlaces y aeropuerto
 
 
-- [~] ◐ v1.1.3 (de nuevo ~11–12 s y 15–17 ms a 720p; la nota del código bajó de B a C: líneas largas) **Arranque y pintado más lentos desde la 1.0.4** (auditoría 1.0.8): arranque 11 → 14 s y pintar a 720p
-  13,6 → 24 ms (en la auditoría; la sonda con la tarjeta daba 14–18 ms en la 1.0.4). Medir qué pesa: los muros (cortes por
-  calzada, 0,75 m cada muestra), las tapias, los edificios del Catastro y el recorte de calles sobre rampas (`cutAware`).
 - [~] ◐ v1.1.1 (valla metálica al final de las calles sin salida a menos de 18 m de una vía rápida) **Calle que acaba en la Vía de Ronda sin valla** (Jonay, 3-nov, X 498, Y −493, captura: «por aquí no se debería
   poder acceder a la Vía de Ronda, debería haber vallado»): una calle sin salida termina en el talud junto a la Vía de
   Ronda y se baja con el coche. Poner valla o bionda al final de las calles sin salida que dan a una vía rápida (autopista,
@@ -470,11 +334,6 @@ Los diseña otro chat (Jonay, 17-nov: «eso ya lo hace otro chat»); aquí solo 
     abiertos del Ayuntamiento (zonas de aparcamiento regulado).
   - Jonay (9-nov, 2 capturas en vuelo libre, X −268 Y 535 y C. Doctor Zamenhoff X −84 Y 401): «con los aparcamientos y el cambio de ancho de las calles las marcas viales están mal en muchos casos, pegadas a los aparcamientos en lugar de en el medio». En las dos capturas son calles de un sentido: la discontinua junto a los coches es la raya de la banda de aparcamiento (2,2 m desde el bordillo, `laneMkPart2`), no la línea central, y se confunde con ella; y los coches aparcados la pisan (van a 1,1 m del borde de la calzada, `buildParked`, pero el bordillo que se ve está más adentro). Por mirar: que la raya de la banda se distinga de la central (más corta, más fina o continua), que el coche quede dentro de la banda y, en calles de doble sentido con aparcamiento, que la central quede en el medio de lo que queda entre bandas.
   - Jonay (9-nov, otra captura, X 122, Y 374, junto a la Plaza de San Cristóbal, `docs/referencias/calles_119/dos_carriles_un_sentido_X122_Y374.png`): ahí, con aparcamiento a los dos lados, las marcas están bien, «pero en otras no está centrado»; y **en una calle de dos carriles del mismo sentido tiene que haber flecha en los dos carriles** (hoy solo sale en uno). Buscar con una sonda las calles con aparcamiento cuya línea central (o de carriles) no queda en el medio de lo que queda entre bandas.
-- [~] ◐ v1.1.4 (los empedrados que se solapan, cada uno a unos mm; falta que Jonay lo mire) **Suelos que parpadean al correr (dos empedrados en el mismo sitio)** (Jonay, 3-nov, Plaza de La Concepción X −517,
-  Y −289, 4 capturas: «hay suelos que dependiendo del fotograma hacen cambios y eso produce flicks cuando corres»): dos capas
-  de suelo a la misma altura (la plaza, la calle peatonal y el bordillo de la acera que se solapan) se pelean por pintarse
-  (z-fighting) y cambia cuál se ve según el fotograma. Buscar dónde se pisan las áreas peatonales con calles y aceras y dejar
-  una sola, o separarlas unos centímetros con prioridad fija (`polygonOffset`).
 - [~] ◐ v1.1.8 (talud de tierra de ~1:1,6 delante del muro de los terraplenes, donde hay sitio; falta que Jonay lo mire y, si no basta, subir el terreno de verdad) **Escalón de terreno en Camino San Francisco / San Honorato** (Jonay, 3-nov, X −720, Y 301 y X −730, Y 335,
   capturas): un salto brusco del terreno junto a la calzada y la glorieta; en la realidad la bajada es mucho más suave.
   Suavizar el terreno y la rasante ahí (y buscar otros saltos parecidos con el revisor).
@@ -507,10 +366,6 @@ Los diseña otro chat (Jonay, 17-nov: «eso ya lo hace otro chat»); aquí solo 
   reanudar le mandó a otro sitio y, desde ahí, con el teletransporte y al cargar partida, solo se ve el cielo y el mar (la
   ciudad no se pinta; el minimapa en negro). Falta la consola (F12 / Ctrl+Mayús+J) con los errores en rojo para saber
   qué se rompe. La 1.0.3 protege el pintado para que un fallo de lo nuevo (`actorCull`) no deje la ciudad sin pintar.
-- [~] ◐ v1.1.8 (los solares que rellena `trinidadFill` en un lado de la avenida salían girados al revés y se pintaban del revés: paredes hacia dentro; falta que Jonay lo mire) **Edificio con patio sin paredes por fuera junto a la Av. de La Trinidad** (Jonay, 3-nov, X −191, Y 366): se ven solo las
-  fachadas de dentro y se choca con lo que no se ve. Sigue en la 1.0.3 con el recorte de la 0.99.8: viene de cómo se
-  rellenan los solares de la avenida (`trinidadFill`, 05u_trinidad.js) o del OSM. Mirar con `sonda_hueco.py -191 366 50`.
-
 - [~] ◐ v1.1.5 (bajo techo la cámara se acerca y se queda por debajo; falta que Jonay lo mire) **Cámara bajo tierra y en sitios cubiertos** (Jonay, 3-nov, Av. de La Trinidad X −199, Y 318, captura: «al entrar en el
   subsuelo de La Trinidad la cámara se pone medio loca; hace falta pulir eso en todas las zonas de subsuelo o debajo de
   otras, para que la cámara permita ver, y tenerlo en cuenta para dejar espacio»): la cámara se mete en el techo o en los
@@ -591,9 +446,6 @@ Los diseña otro chat (Jonay, 17-nov: «eso ya lo hace otro chat»); aquí solo 
     líneas, y no pintar las líneas de una vía por dentro de otra.
   - Jonay (3-nov, Vía de Ronda X 309, Y −40, captura: «otra superposición fatal de calles»): en el enlace la calzada de
     un ramal se monta sobre la principal con un escalón y las líneas se cruzan.
-- [~] ◐ v1.1.1 (sin plazas de los aparcamientos del OSM sobre la calzada) **Plazas de aparcamiento pintadas sobre los carriles** (Jonay, 3-nov, Calle el Juego X −259, Y 47, captura:
-  «confundes carriles con espacios de aparcamiento»): rayas transversales de aparcamiento dentro de la calzada por donde
-  circulan los coches. Que las plazas solo vayan en el carril de aparcamiento (junto al bordillo), nunca en los de paso.
 - [~] ● v0.99.6 (pasos inferiores cortos con la carretera de encima en terraplén, STOP solo en la incorporación, carriles de aceleración y deceleración, líneas en puentes, techo del intercambiador recortado) v0.99.5 (líneas por carriles, bionda en los bordes, sin aparcados en la autopista) **Marcas viales, arcenes y medianas de la autopista, la Vía de Ronda y sus enlaces** (Jonay, 27-oct: «las carreteras con cruces son un lío»; 15 capturas: X 386 Z −276, X 1534 Z 2739, X 1775 Z 3165, X −546 Z 470…):
   - Falta: mirar con Jonay las fotos nuevas de los 15 sitios (`tests/shots/v2_*.jpg`) y los cebreados pintados en las narices de las salidas.
 - [~] ◐ v0.78.0 (repasado con fotos de glorietas, enlaces y la Autopista del Norte: las rayas en las entradas de las glorietas son las de ceda el paso, están bien; no se ve nada cruzado) v0.73.0 (ramales de un sentido sin línea central) v0.70.0 (sin líneas donde una calle está dentro de otra: cruces, incorporaciones, glorietas; mirar las fotos `faciles_*`) **Marcas viales** (apunte de Jonay): con los puentes y cruces hay líneas que se cruzan por todas partes; también
@@ -615,6 +467,10 @@ Los diseña otro chat (Jonay, 17-nov: «eso ya lo hace otro chat»); aquí solo 
     tranvía», gasolinera DISO (nº 108), naves y el Lidl hacia el final.
 
 ### Coches y tráfico
+
+- [~] ◐ **Trazada y obstáculos de rivales** (Jonay, 18-nov): abrirse antes del vértice y esquivar aparcados y contenedores. El giro progresivo queda resuelto en 1.4.24. La prueba de evasión aún falla con un contenedor y bloquea una ruta real en X 32, Y 248.
+  - Jonay, 19-nov, «Atraco en la farmacia»: el fugitivo sigue lento, entra en curvas con giros que parecen de 90° y atraviesa aparcados. Reproducir el tramo en coche de esta misión: revisar la reducción de velocidad por distancia al jugador, la entrada a los cruces y el paso junto a aparcados.
+
 
 ### Casas, personaje y vida social
 
@@ -690,12 +546,6 @@ Los diseña otro chat (Jonay, 17-nov: «eso ya lo hace otro chat»); aquí solo 
   crucen solo en los pasos de peatones o en los cruces, y que no se generen ni anden por autopistas, autovías, enlaces
   ni la Vía de Ronda (sin acera). `09_peds.js` (rutas) y `WALKG` (`11_hud.js`, quitar de ahí las vías rápidas también
   para la gente).
-- [~] ⚡ v1.1.0 (también las vías rápidas por su nombre; falta comprobar dónde los vio Jonay) **Ni coches aparcados en la autopista** (Jonay, 3-nov, justo después de la captura de la Autopista del Norte en
-  X −2517, Y −230: «tampoco puede haber coches aparcados en la autopista»): la 0.99.5 los quitó de la autopista, pero
-  siguen saliendo (en esa zona, o en vías que no se llaman «motorway» en el OSM: `trunk`, enlaces, Carretera General del
-  Norte, Vía de Ronda). Quitar las plazas de aparcamiento de todas las vías rápidas (`07_vehicles.js`, `PARKED`) con la
-  misma lista que usa el GPS (`fastRoad`), y comprobarlo con una sonda que cuente aparcados por tipo de vía.
-
 - [ ] ● **Niños por la calle** (Jonay, 3-nov, con una tabla de población: menores de 10 años 8,5 %, mujeres de 10 o más
   46,7 %, hombres 44,8 %; alturas por franjas de 8 cm): las alturas de hombres y mujeres ya salen de su tabla (v1.0.0,
   `realHeight()` en `06a_humans.js`). Lo que falta son niños: el cuerpo base es de adulto y encogerlo no queda bien
@@ -731,6 +581,9 @@ Los diseña otro chat (Jonay, 17-nov: «eso ya lo hace otro chat»); aquí solo 
 
 ### Agente revisor (avisos de mapa)
 
+- [ ] ● **Contrastar avisos de estructuras sobre otras vías** (auditoría de mapa, v1.4.39). El barrido de vallas, muros de parcela, quitamiedos y pretiles de trinchera queda sin cruces detectados. El análisis de caras de puentes y túneles todavía marca 173 solapes candidatos. Revisar su altura y colisión real antes de modificar los tableros. Listado en `tests/shots/audit_obstaculos.json`.
+- [ ] ● **Encajar los andenes de La Trinidad y El Cardonal** (v1.4.39). La comprobación evita construir una plataforma sobre la calzada. La Trinidad y El Cardonal quedan con un solo andén hasta revisar la geometría de la mediana y el espacio disponible del otro lado.
+
 - [ ] ● **Edificios: recortar solo lo que pisa la calzada, sin romperlos** (v1.0.0–1.0.2, deshecho en la 1.0.3; Jonay, 3-nov: «te
   - v1.2.7: las calles ya se estrechan hasta las fachadas en todo el mapa (94 → 58 choques). Quedan 2 críticos y la punta de cinco calles de servicio que entran 2–4 m en el edificio #77 (X −640, Y 955; aparecieron al estrecharlas).
   has cargado demasiados edificios», «los recortes fueron mal, empeoraron mucho», manzanas del casco convertidas en plazas
@@ -741,10 +594,8 @@ Los diseña otro chat (Jonay, 17-nov: «eso ya lo hace otro chat»); aquí solo 
   paralela al bordillo, esquinas en bisel, recuperar los quitados), pero con un recorte de polígonos fiable (una librería de
   recorte probada, p. ej. el algoritmo de Martínez o Clipper portado) y una prueba con fotos de las manzanas del casco.
 
-- [ ] ◐ **Auditoría 1.0.1 (APTO CON AVISOS)**: con la muesca paralela a la calle se van 9 invasiones y salen 6 nuevas: junto al
-  Intercambiador (X −182, Y 793 y X −171, Y 788; 2,1–2,6 m), C. Orión (X 616, Y 1510; 1,7 m) y C. Plutón (X 668, Y 1535;
-  1,3 m). Y vuelve el «poste» de C. Juan de Vera (X −149, Y −235), que es el alcalde de la misión. Mirar con fotos
-  (`tests/herramientas/foto_invasiones.py`, con estos puntos).
+- [ ] ◐ **Revisar invasiones antiguas en el Intercambiador y las calles Orión y Plutón**. Confirmar si siguen los edificios en X −182, Y 793 · X −171, Y 788 · X 616, Y 1510 y X 668, Y 1535.
+
 - [ ] ◐ **Dos edificios de la auditoría 0.69 vuelven a invadir la calzada** (v1.0.0, `prueba_pendientes_faciles.py`; en la
   0.95 estaban a 0 m): X 73, Y 234 (edificio #865, junto a una secundaria del casco, 1,55 m) y X −909, Y −408 (#1357,
   Av. Lucas Vega / Callejón Montaraz, 1,41 m). Volvieron entre la 0.95 y la 0.99.8. La prueba los vigila con un margen
@@ -805,59 +656,30 @@ Los diseña otro chat (Jonay, 17-nov: «eso ya lo hace otro chat»); aquí solo 
         X 243 Z −352, X −291 Z 2699), un servicio del aeropuerto en una ladera de pendiente imposible (X −3247 Z −359).
 
 ### Rendimiento, auditorías y código
-- [ ] ⚡ **Auditoría 1.4.22 (APTO CON AVISOS)**: geometrías nuevas por cada tramo de valla de campos y canchas (`buildSportsEachPart3`, se hace una vez al cargar: compartir una caja de 1 m escalada) y por el banco de Boca Papa (`k3Bench`); `12f_story2.js` baja de A a B (la conducción nueva: partir `drivePlan`). Métricas sin cambios (pintar 17 ms, 333 llamadas).
-- [ ] ◐ **Coches propios y rendimiento** (11-nov; auditoría 1.4.4: APTO CON AVISOS, pintado 18,5 ms (el 22,6 de la 1.4.3 era ruido), memoria JS 285,7 → 309,1 MB (+8 %), el juego pesa 13,5 → 15,4 MB por los modelos en `data/kenney_cars.json`): cada modelo propio son ~11.000–12.800 triángulos (los de Kenney, ~1.000–2.000). Si sigue subiendo: versión lejana también para el tráfico, y guardar los modelos más comprimidos (los vértices van sin compartir entre caras de distinto material). Ojo: al poner a 0 los sedanes de Kenney, Carlota, Capítulo 3 y Tipo E salen ~400 aparcados cada uno (`modelForType('sedan')`).
-- [ ] ◐ **Pintado 15,3 → 18,1 ms entre la 1.4.0 y la 1.4.2** (auditorías 11-nov; programas 67 → 73): mirar si es el grano de enlucido/piedra (`plasterWorld`/`stoneWorld`, 02_textures.js) o ruido de la medida (en la 1.3.5–1.3.7 subió y volvió a bajar solo). Aviso menor: «futbol» 0,2 → 0,3 ms.
+
+- [ ] ⚡ **Confirmar los avisos de minijuegos de la v1.4.35**. El auditor midió +0,1 ms en baloncesto, fútbol y Bencomo. También marcó el lienzo del marco de la recreativa, que se reutiliza mientras sigan la misma máquina y el mismo tipo de control. En v1.4.36 los avisos variaron entre minijuegos en incrementos de 0,1 ms.
+
+- [ ] ⚡ **Confirmar los tiempos de Bencomo y Guanche Guarriors** (auditoría v1.4.29). En ambos el auditor midió 0,3 → 0,4 ms por fotograma. En v1.4.30 el aviso no se repitió en esos dos juegos y el fútbol dio 0,2 → 0,3 ms. En v1.4.31 el aviso cambió a baloncesto (0,2 → 0,3 ms). En v1.4.33 el aviso pasó a GUFO (naves, 0,2 → 0,3 ms). Repetir la medición de minijuegos.
+- [ ] ◐ **Medir el coste actual de las vallas deportivas**. Se agruparon en v1.4.24. Comparar las celdas y las llamadas de dibujo en recintos representativos si vuelven a destacar en el perfil.
+
+- [ ] ◐ **Revisar el coste de las geometrías del banco de Boca Papa**. Verificar `k3Bench`. El aviso de estilo de `drivePlan` queda en el historial.
+
 - [ ] ⚡ **`huella_mundo_cmp` no es del todo fija** (v1.2.4): salió distinta una vez (161 vértices) y bien las dos siguientes con el mismo código; algo de la carga (gente o coches) entra en la cuenta.
 
-- [x] v1.2.4 (la auditoría 1.2.4 ya no da avisos nuevos críticos o altos: cuentan como conocidos) **Auditoría 1.1.6: «180 avisos nuevos» del análisis estático** (crear geometría en `buildRoofProps`, `buildTerrain`, `buildLamps`…): no son nuevos, son los de siempre con otro número de línea tras pasar el formateador. Comprobar en la próxima auditoría que vuelven a contar como conocidos; `03_collide.js` bajó de A a B (más líneas por función).
-- [~] ◐ v1.1.7 (nota A: 88 en local, 86 en la auditoría, que ahora cuenta sentencias y deja fuera los datos; piezas comunes del píxel en 09e_pixkit, funciones largas de 251 a 147; quedan los «módulos» enteros —MISSIONS, BASKET2D, create() de los juegos de la recreativa— y los cuerpos de bucle muy largos como el de cada edificio en buildBuildings) v1.1.6 (todo `src/` con Prettier: nota de C 69 a B 84, sin líneas largas ni densas; quedan las funciones-módulo muy largas y el código repetido de 09ma/09eb/06b) v1.0.0 (`12m_mundialito.js`: la tabla de selecciones, una fila por equipo) **Partir funciones largas y ordenar
-  los archivos con nota D o C** (auditorías 0.75, 0.76, 0.90 y 0.99.8): quedan `09eb_pixbasket.js` y `09ma_pixguanche.js`
-  (el dibujante de la propuesta en una función de ~155 líneas), `12k_agua.js` (líneas muy largas y densas), `12j_campos.js`
-  (la Copa Laguna), `09ea_minijuegos.js` (el público) y `11_hud.js` (bajó de B a C por las líneas largas). Las «funciones de
-  más de 400 líneas» de la tabla (`BASKET2D()`, `MISSIONS()`…) son los módulos enteros, no funciones de verdad. Lo más
-  cómodo sería pasar un formateador (Prettier) a esos archivos; en la nube no se puede instalar, en el PC habría que
-  añadirlo al trabajador.
-- [ ] ⚡ **Arranque 2 s más lento en la 1.3.2** (auditoría 1.3.2, APTO): 18,9 → 20,9 s. Sospechosos: la comprobación de sitio de cada árbol (`treeFit`, `treeKerb`, 05_scenery.js) y el mapa de hierba con las franjas junto a calles y edificios (05z_hierba.js). Medir y, si es eso, usar una rejilla para las calles.
-- [ ] ◐ **Auditoría 1.4.14 (APTO CON AVISOS): pintar un fotograma 14,2 → 19,1 ms y memoria JS 359 → 377 MB** (16-nov): tras pasar a 40 coches propios (unos 11.000-13.500 triángulos cada uno). Siguiente paso previsto: usar la versión lejana también en el tráfico, no solo en los aparcados.
-- [~] ● v1.0.0 **Pintar a 1080p y 60 fps en «alta» con la RX 6600** (Jonay, 3-nov: «el objetivo es jugar a 1080 a 60 fps
-  en mi gráfica con los gráficos al máximo»; antes: «pintar ~30 ms desde la 0.89»). Sonda con la tarjeta de verdad:
-  `tests/herramientas/sonda_pintado_gpu.py`, en 5 sitios. La tarjeta va sobrada: a 480×270 tarda lo mismo que a 1080p ×1,5;
-  lo que pesa es mandar las llamadas de dibujo. v1.0.0: de 23–34 ms (2.200–3.100 llamadas, 6 M de triángulos) a ~16–18 ms
-  (1.500–1.700 llamadas, 1,5–2 M de triángulos):
-  - piezas con hijas (las ruedas con su llanta) y piezas transparentes también se juntan (`mergeStatics`);
-  - la gente no se pinta a más de 170 m, ni los coches a más de 360 m, ni los interiores desde lejos; sus piezas pequeñas
-    (ojos, cejas, reloj; luces y matrícula) solo hasta 40 y 70 m (`actorCull`, en cada pintado de la escena);
-  - aparcados en celdas de 400 m y hasta ~580 m; los detalles de la ciudad (menos de 2,5 m) hasta ~330 m.
-  - **Queda**, de lo que más a lo que menos ahorra según la sonda:
-    - lo lejano (500–1.150 m): 3–9 ms. Una versión simple de los trozos lejanos de la ciudad (un bloque por manzana) o
-      celdas más grandes lejos.
-    - unas 400–650 llamadas de piezas sueltas: ~3.600 piezas de los **grupos con nombre** (iglesias, aeropuerto,
-      estadio, «inicio»), que se podrían juntar dentro de su grupo; ~140 piezas que se crean después de juntar (misiones);
-      103 con `userData`.
-    - sombras: 1,5–2,5 ms (~160–230 llamadas en la pasada de sombras).
-    - el **terreno**: una sola malla de ~400.000 triángulos; partirla por trozos con menos detalle lejos.
-- [ ] ● **Arranque más rápido: precalcular la ciudad al compilar (P2.1) y el mapa en binario (P2.2)** (auditorías 0.46,
-  0.49, 0.55 y punto 17; Jonay eligió hacerlo, 3-nov). Arranque en el PC: ~10 s; lo que más tarda: calles y aceras
-  (2,7 s), sombreadores (2,5 s, ya en asíncrono), casas del casco (1,4 s), árboles (0,6 s). Portar la generación a
-  `build.py` o guardar la geometría ya hecha en binario: varias versiones. `data.json` (~3 MB) se podría cuantizar.
-  Los módulos ES (P2.5) no aportan nada al jugador; se deja salvo que Jonay quiera.
-- [~] ◐ v0.99.7 (el «poste» de Juan de Vera era el alcalde) **Auditoría v0.99.6 y v0.99.8 (APTO CON AVISOS)**: `09jz_sprx.js`
-  bajó de A a B y `11_hud.js` de B a C; `prueba_076.py` falla en la carga compartida y pasa sola.
+- [ ] ◐ **Revisar funciones largas al tocar sus módulos**. Los avisos antiguos de líneas densas y formato quedan en el historial. La auditoría de v1.4.28 mantiene la nota A.
 
-- [~] ◐ v1.1.8 (hechos los cuatro de minijuegos y el aviso al guardar; los «lienzos nuevos» y «JSON por fotograma» del análisis de código en la pelea, el baloncesto, las recreativas y sus fondos son de dibujos que se hacen una vez y se guardan, no de cada fotograma; queda el sombreador por el camino) **Auditoría 1.1.7 (APTO CON AVISOS, calidad A 86)**: avisos de minijuegos que salen con el auditor nuevo:
-  - el mundo 3D se sigue pintando detrás de bencomo, naves y guanche (la pantalla del minijuego lo tapa entero): no pintar la escena mientras haya un minijuego a pantalla completa (`13_main.js`, `loop()`).
-  - baloncesto (9 imágenes, 0,11 MB), bencomo (19, 0,33 MB) y guanche (46, 1,53 MB) empiezan a cargar sus imágenes al abrirse: precargarlas (`img.decode()`) durante la carga o al acercarse a la máquina.
-  - el fútbol crea lienzos y lee píxeles en cada fotograma (0,21 por fotograma): crearlos una vez y reutilizarlos.
-  - 1 sombreador de sombras (depth) se prepara por el camino: precompilarlo al arrancar.
-  - métricas iguales a la 1.1.6 (pintar 16,1 ms, lógica 0,96 ms); el arranque sube de 12,1 a 13,2 s (comprobar en la próxima si se repite).
+- [~] ● v1.4.28 (visibilidad estática por celdas y ajuste suave del horizonte) **Mantener 60 FPS a 1080p en alta con la RX 6600**.
+  - Medir tiempos de fotograma completos en el casco, La Trinidad y una persecución, con navegador y pantalla a 60 Hz. Registrar la media, los percentiles 95 y 99 y el porcentaje de fotogramas que supera 16,67 ms. Repetir con las mismas rutas y ajustes.
+  - Medir por separado el coste de redibujar sombras y el de los coches en movimiento. Según el resultado, probar la reutilización de sombras estáticas o el dibujo agrupado del tráfico. Medir las texturas de enlucido y piedra solo si el perfil señala sus materiales.
+  - El auditor dio 14,7 ms de pintado a 720p en media en v1.4.28, frente a 17,8 ms en v1.4.27. Sigue pendiente validar 1080p en alta.
 
-  - Auditoría 1.1.8 (APTO CON AVISOS, A 86): todo sale ~20 % más lento a la vez —pintar 16,1 → 19,8 ms, lógica 0,96 → 1,14 ms y hasta los minijuegos 2D—, con las mismas llamadas, triángulos y memoria: parece el PC más cargado durante la medición, no el código. Comprobar en la próxima auditoría.
-  - Auditoría 1.1.9 (APTO CON AVISOS, A 86): de nuevo todo más lento a la vez (pintar 20 → 23,2 ms, lógica 0,98 → 1,55 ms, arranque 15,2 → 17,2 s, cada paso de la carga un 20–60 % más y el fútbol 2D 0,5 → 1,6 ms) con las mismas llamadas y triángulos. Repetir la auditoría con el PC descansado para saber cuánto es del código (la 1.1.9 añade al arrancar la búsqueda de calles repetidas y la trinchera de la TF-5).
-  - El fútbol aún prepara sus jugadores en los primeros 3 s del partido (1 lienzo por fotograma, luego para): dibujarlos al abrir el juego.
+- [ ] ● **Acelerar el arranque precalculando la ciudad y el mapa**. Medir primero qué tarda ahora entre calles, aceras, edificios, árboles y preparación de sombreadores. Evaluar si conviene precalcular geometría en `build.py` o cargarla en binario.
+
+- [ ] ◐ **Preparar el sombreador de profundidad antes de que se use**. El auditor de v1.4.28 todavía registra un programa `depth` nuevo durante el recorrido. Medir cuánto cuesta ese primer uso y si se puede adelantar.
+
 ### Móvil
 
-- [ ] ◐ **Móvil: lo que queda del repaso de controles** (v1.4.22 hecho: pausa, diario, golpe/radio, enderezar y mando de los minijuegos): imagen en 16:9 con los botones en las franjas de los lados en móviles alargados (Jonay, 3-nov); tamaño y opacidad de los botones ajustables; en «CONTROLES» del menú de pausa, en el móvil, la explicación de los botones táctiles en vez de las teclas.
+- [ ] ◐ **Móvil: lo que queda del repaso de controles** (v1.4.22 hecho: pausa, diario, golpe/radio, enderezar y mando de los minijuegos): imagen en 16:9 con los botones en las franjas de los lados en móviles alargados (Jonay, 3-nov); tamaño y opacidad de los botones ajustables.
 
 ### Recursos externos (animaciones, modelos)
 
@@ -868,20 +690,21 @@ Los diseña otro chat (Jonay, 17-nov: «eso ya lo hace otro chat»); aquí solo 
     las de PixelHorse y el caballero de 18studio en sus páginas de itch.io.
   - Por ver en el juego: el tamaño de Bencomo (1 píxel del dibujo = 1 de la pantalla, algo más pequeño que el de
     antes) y el de los héroes de Guanche (×2).
-- [ ] ◐ **Assets de coches y motos** (consulta hecha, falta decidir): opciones CC0/CC-BY en
-      `docs/referencias/assets_vehiculos.md`.
+- [ ] ◐ **Valorar nuevos modelos para las motos**. Las motos siguen construidas por el juego. Opciones de referencia en `docs/referencias/assets_vehiculos.md`.
+
 - [ ] ● **Mixamo** como fuente de animaciones extra (gratis para juegos; no subir los FBX originales al repo; hay que
       retargetear a nuestro esqueleto; la descarga la hace Jonay con su cuenta de Adobe).
 
-- [~] ● v1.3.7 (v1.3.7 suelo: asfalto, acera, adoquín y césped; v1.3.9 terreno, caminos de tierra, tejados de teja y azoteas; v1.4.0 muros de basalto; v1.4.1 tapias encaladas, iglesias y cantería; todo con `tests/herramientas/suelo_polyhaven.py`; faltan la piedra de iglesias y casas canarias (cantería) y las fachadas —ya llevan detalle de enfoscado de Poly Haven desde antes—) **Texturas de Poly Haven (CC0) para todo el juego** (Jonay, 11-nov: «ahora que tenemos Blender con Poly, ¿no podrás usar esas texturas y mejorar todo en general?»): hoy casi todas las texturas se pintan a mano en el código (asfalto, aceras, adoquín, fachadas de colores, tejados, césped, piedra). Con el add-on de Blender se pueden bajar texturas CC0 de Poly Haven (asfalto, baldosa de acera, adoquín, enfoscado, teja, piedra basáltica, césped, tierra) y meterlas en el HTML a 512 px (≈1 MB más en total). Hacerlo por tandas: suelo (asfalto, acera, adoquín, césped) → fachadas y tejados → muros y piedra, con fotos antes/después y midiendo el pintado; créditos en `CREDITOS.md`.
+- [ ] ◐ **Revisar el acabado de las fachadas del casco**. Comparar pavimentos, pintura y piedra en fotos de los mismos sitios y medir el coste de los materiales si se cambia alguno.
+
 ### Extras para el final
 
 - [ ] ● **DLC Santa Cruz** (Jonay, 12-oct): se une por el sur a partir del final del mapa actual; carga aparte, con aviso,
       para no hacer una sola carga enorme (`descargar_zona.ps1` + `merge_zona.py` ya sirven para bajar la zona).
 - [ ] ● **DLC norte** (Jonay, 12-oct): la bajada por Tegueste hasta Tejina, Bajamar y Punta del Hidalgo; también carga
       aparte.
-- [ ] ● **Música «real»** para la radio (hip hop / rap de finales de los 90 y principios de los 2000). Jonay: «ni lo
-      consideres, es un extra final».
+- [ ] ◐ **Ampliar las listas de la radio**. Añadir los temas que Jonay vaya dejando en `Musica Original/R&B` (Gofio FM), `Reggaeton` (Radio Aguere) y `Trap` (Mojo Picón).
+- [ ] ● **Emisora de reggae**. Decidir más adelante si se incorpora.
 - [ ] ● **Multijugador con un amigo (P2P) y chat** (Jonay, 2-nov: «¿hay alguna forma de hacer esto multijugador usando p2p para que un amigo pueda recorrer la calle y hacer misiones y que nos veamos? y si tuviese un chat, increíble»).
   - Fase 1: verse andando y conduciendo + chat de texto. WebRTC (canal de datos) con PeerJS o similar: uno crea sala con código, el otro entra; se envían posición, giro, animación y coche ~15 veces por segundo, con suavizado. El mundo es el mismo en los dos (sale de los mismos datos); el tráfico y la gente, cada uno los suyos.
   - Fase 2: misiones en cooperativo (el anfitrión manda el estado de la misión).
@@ -900,9 +723,93 @@ Los diseña otro chat (Jonay, 17-nov: «eso ya lo hace otro chat»); aquí solo 
       mujer. Jonay cree que ya tenemos uno para Guanche Guarriors; mirar las hojas de las chicas de la v0.99.3.
     - **En red, cada jugador en su PC o su móvil** (Jonay, 3-nov). No en el mismo PC. Hay que compensar el retardo en
       fútbol, baloncesto y Gufo, y depende de los controles de móvil (apunte en «Móvil»).
-  - Por comprobar: si el Artifact deja abrir conexiones WebRTC y al servidor de emparejamiento (si no, se juega con el HTML descargado); servidor TURN para las redes que no conectan directo.
+  - Por comprobar: si la versión web de Cloudflare puede abrir conexiones WebRTC y acceder al servidor de emparejamiento; servidor TURN para las redes que no conectan directo.
 
 ## Hecho
+
+- [x] v1.4.40 **Límite de 60 FPS** en el mundo 3D y en los minijuegos, también en monitores de alta frecuencia; las simulaciones conservan sus pasos de tiempo.
+- [x] v1.4.41 **Golpe invisible en la Autopista del Norte** (X 1898, Y 3225: la baranda del tablero empujaba hacia su esquina, de frente), **menos giro a gran velocidad**, **peatones fuera de puentes y calles elevadas o hundidas**, **C. Tacoronte 67 con su garaje y el Linguini Gold Edition** (botón que abre el portón), **Niza Nano rehecho** y **créditos al día** (sin Kenney).
+
+- [x] v1.4.39 **Linguini Reventón híbrido** con el capó corregido, las ópticas a ras y las llantas aprobadas.
+
+- [x] v1.4.39 **Vallas, quitamiedos y pretiles respetan la calzada** a su altura; despejado el cruce de la avenida de los Menceyes; la auditoría busca barreras lineales también tras construir el mapa.
+
+- [x] v1.4.39 **Garajes subterráneos con coches del catálogo que se pueden conducir**; los aparcados conservan las llantas detalladas a media distancia.
+
+- [x] v1.4.39 **Peatones por arcenes y aceras**, cruzando deprisa y sin meterse en autopistas ni enlaces; avisos de zona peatonal solo en calles peatonales del casco, plazas y canchas.
+
+- [x] v1.4.39 **Diario: seguir una misión en curso o la siguiente de una línea**, con su ruta en su color en el mapa y el minimapa; reiniciar en las misiones completadas.
+
+- [x] v1.4.39 **Reacciones al chorro de agua**: frases distintas; la mitad de los peatones huye y la otra persigue al jugador y puede empezar la pelea 2D.
+
+- [x] v1.4.39 **Luces de freno más intensas** conservando el rojo de la óptica.
+
+- [x] v1.4.39 **Paradas del tranvía que siguen la curva y el desnivel**, rampas apoyadas en el suelo, cebreado de Pedro Zerolo por encima de la plataforma y plazas que invadirían las vías descartadas.
+
+- [x] v1.4.38 **Integrar las doce revisiones aprobadas** (Jonay, 21-nov). Troceen C33, JTM Capítulo 3, Yoos Cartabón, Pancho Teypan, Piki Crocante, Totuya Yaiza Cross, Guanchazen Helado, Totuya Carlota, Newton Style 3, Martini Hubli, Fierilla 440 y Seta Gomera. Cerca y lejos activos; paquetes y referencias de llantas en `Blender/coche/revision-llantas-aprobadas/` y `Blender/coche/revision-tanda-05/c33/`. La librería ofrece diez diseños de llanta con centros lisos.
+
+- [x] v1.4.37 **Faros delanteros visibles de noche y pasos más suaves** (Jonay, 20-nov). Faro emitido por su propia óptica y pisadas de muestra A con ganancia a la mitad.
+
+- [x] v1.4.36 **Ocultar el indicador de arma mientras conduces**. Se restaura al salir del vehículo en PC y móvil.
+
+- [x] v1.4.36 **Completar la leyenda del mapa**. Jugueterías e iconos de lugares y rutas identificados en todo momento. Los marcadores del mapa conservan sus condiciones de aparición.
+
+- [x] v1.4.35 **Salida de la carrera del Canarión en el sentido de La Trinidad**. El círculo queda por delante del coche prestado y ambos coches se orientan hacia el primer tramo.
+
+- [x] v1.4.35 **Revisión de controles de Xbox, móvil y minijuegos**. Radio con leyenda contextual, navegación con mando y ayuda según dispositivo.
+
+- [x] v1.4.31 **Canciones originales en las tres emisoras y rótulo de la radio**. La radio reproduce diez MP3 y el HUD muestra el nombre de la emisora, el tema y el atajo para cambiar.
+
+- [x] v1.4.30 **Pinos blancos en Camino Tornero** (Jonay, X −1338, Y −720). Corregidos los colores de corteza y copa en los datos del juego y en el exportador de Blender.
+
+- [x] v1.4.29 **Agrupación de piezas estáticas de los monumentos**. Se combinan piezas opacas compatibles dentro de los grupos marcados, con su orden de dibujo y sombras. Sigue pendiente medir el objetivo de 60 FPS en recorridos completos.
+
+- [x] v0.79.0–v0.85.0 **Máquinas recreativas, GOFIO-8, cartuchos y apertura del torneo**. El plan original está en el archivo de esta revisión.
+
+- [x] v0.56.0 **Programadas las 12 misiones de la tanda de historia**. El plan original queda archivado.
+
+- [x] v1.1.8 **Paredes exteriores del solar en La Trinidad, X −191, Y 366**. Se corrigió la orientación de los solares de ese lado. Revisar ese punto si reaparece el fallo.
+
+- [x] v1.1.4 **Empedrados superpuestos en la Plaza de La Concepción**. Se separaron sus alturas en el punto reportado (X −517, Y −289).
+
+- [x] v1.1.1 **Plazas de aparcamiento fuera de los carriles**. El generador excluye las plazas de los recintos cuando pisan la calzada. La v1.4.27 aplica la exclusión también al poblar aparcamientos; las marcas dudosas de calles concretas conservan su apunte.
+
+- [x] v1.1.0 **Excluir aparcados de la autopista**. La exclusión reconoce también vías rápidas por su nombre. El aviso antiguo carecía de un punto concreto para volver a comprobar.
+
+- [x] v0.99.7 **Supuesto poste de Juan de Vera de la auditoría**. Era el alcalde de la misión.
+
+- [x] v1.4.9 **Comprimir los modelos propios**. Las mejoras del dibujo de tráfico quedan en el objetivo de 60 FPS.
+
+- [x] v1.1.6–v1.1.7 **Formato de los módulos y extracción de piezas comunes del pixel art**.
+
+- [x] v1.1.8–v1.2.4 **Evitar dibujar el 3D detrás de los minijuegos a pantalla completa y precargar imágenes y dibujos 2D**.
+
+- [x] v1.3.7–v1.4.1 **Texturas de Poly Haven en suelos, tejados, terreno, muros, iglesias y cantería**.
+
+- [x] v1.2.4 **Avisos duplicados tras reformatear el código**. La auditoría volvió a reconocerlos tras el cambio en los números de línea.
+
+- [x] v1.4.28 **Recorte suave del horizonte y visibilidad por celdas** (Jonay, 19-nov). Menos comprobaciones de malla por malla y alcance de la ciudad 75 m menor en alta y 45 m menor en media con cielo despejado. Las vistas de prueba retienen el paisaje de fondo y el detalle cercano.
+
+- [x] v1.4.27 **Preparar los dibujos de la pelea al abrir**. La auditoría final ya no detecta trabajo extra al abrir ni al cerrar.
+
+- [x] v1.4.27 **Prólogo hacia La Trinidad y meta del Canarión cerca de Sastrón** (Jonay, 19-nov). Coco junto al café, Sastrón y la reunión junto a La Trinidad. La primera victoria cubre el pago al sastre.
+
+- [x] v1.4.27 **Clever OneTwo**. En tráfico y aparcado, célula plateada y paneles teñibles, guardabarros aprobados.
+- [x] v1.4.27 **Variedad de color en circulación y aparcado**. La misma paleta de 21 pinturas para calles y aparcamientos, con libreas fijas.
+- [x] v1.4.27 **Atraco en la farmacia cerca del Ayuntamiento**. Termina en Las Quinteras, con huida a pie por sus pasillos de servicio.
+- [x] v1.4.27 **Rodeos del GPS**. Salida en ambos sentidos cuando es posible, ruta directa en la misma calle, menos incentivo para ir por autopista y penalización leve por giro.
+- [x] v1.4.27 **Récords con iniciales antes de CONTINUE**. Récord guardado antes de continuar en GUFO, Bencomo y Guanche Guarriors.
+- [x] v1.4.27 **Pistola: apuntar antes de disparar**. En ratón y botones táctiles.
+
+- [x] v1.4.26 **Variedad de colores en el tráfico** (Jonay, 18-nov). 17 colores civiles, blanco al 9 % y libreas fijas.
+
+- [x] v1.4.25 **Seis estilos de velocímetro** (Jonay, 19-nov): básico, trabajo, urbano, todoterreno, lujo y deportivo.
+
+- [x] v1.4.24 **Aviso de 3 FPS descartado** (Jonay, 19-nov): al volver a la misma versión en Cloudflare funcionó bien.
+
+- [x] v1.4.24 Redondeo de curvas y giro progresivo de los coches de misión y competidores.
+
+- [x] v1.4.24 Velocímetro separado del arma y corrección de la pausa al entrar en los minijuegos 2D.
 
 - [x] v1.4.23 **Revisión de por dónde llevan las misiones; el Torneo y la Copa van hacia su final con saltos cortos** (Jonay, 17-nov).
 - [x] v1.4.22 **Obispo presentado al firmar la banda; rifle de agua (postura, chorro continuo hacia la mira, banco de Boca Papa, aviso de acierto); euros y precios del rifle y las bolitas; misiones de camino a la siguiente; noche más clara; sin franja de monte flotando; hierba solo en el campo y nunca flotando; peleas sin parón al empezar** (Jonay, 17-nov).
@@ -1567,3 +1474,223 @@ Los diseña otro chat (Jonay, 17-nov: «eso ya lo hace otro chat»); aquí solo 
 - [x] v0.38.0 — Coche en zonas con peralte, aceleración −15 % y dirección más suave, peleas 2D más fáciles,
       círculo de Boca Papa, coordenadas en el minimapa.
 - [x] v0.37.0 — Pasos sincronizados con la animación y sonido nuevo.
+
+## Archivo de planes y auditorías anteriores
+
+Apuntes originales conservados al revisar la lista para la v1.4.28. Los trabajos vigentes de estos planes figuran arriba en su categoría. Las métricas corresponden a las versiones indicadas.
+
+- ● **PAQUETE «RECREATIVAS Y MINIJUEGOS» (Jonay, 19-oct: «para acometer YA», plan v0.79 → v0.84)**:
+  Hecho en v0.80.0: el motor de recreativas y BENCOMO en casa de El Blanco (llamada tras «Defensores»).
+  Hecho en v0.81.0: **GUERRA DE NAVES** en cafeterías y tascas (primera versión, para pulir).
+  Hecho en v0.82.0: **GUANCHE GUARRIORS** en las jugueterías (primera versión, para pulir).
+  Hecho en v0.83.0: la inmobiliaria, los pisos y la consola GOFIO-8 con su menú de cartuchos.
+  Hecho en v0.84.0: el basket a 3 contra 3.
+  Hecho en v0.85.0: Pachanga 3x3 y Play Furbito (el mundialito de 8 selecciones), el «superfriki jugón» y la
+  apertura del torneo.
+  Falta: el tipo Metal Slug, y la lógica del torneo (comprobar los récords batidos) con su premio.
+  - Jonay, 20-oct: Pachanga 3x3 y Play Furbito también se compran en la juguetería como cartuchos. Están basados en lo
+    que ya tenemos: al empezar eliges país entre **8 selecciones** y se juega por eliminatorias hasta la final.
+  - **El torneo de videojuegos** (Jonay, 20-oct): se desbloquea cuando te has comprado **todos** los cartuchos, también
+    Pachanga 3x3 y Play Furbito.
+    - Consiste en superar los récords de todos los juegos.
+    - En Pachanga 3x3 y Play Furbito: ganar las eliminatorias del mundialito, es decir, ganar el juego. Esos tienen fin;
+      los demás van por puntos.
+    - Al batir un récord, el juego te deja poner tus iniciales. Las máquinas ya lo hacen; falta en los dos de deportes
+      y en la consola.
+    - Jonay: cuando lo compras todo, en la juguetería te dicen que eres un «superfriki jugón» y que puedes participar
+      en el torneo. Pendiente: el premio.
+  Jonay probará todas las máquinas y dirá impresiones.
+  - Jonay, 20-oct: los nombres son «Guerra de Naves» (el tipo R-Type) y «Guanche Guarriors» (el tipo Golden Axe:
+    beat'em up, no plataformas, con varias fases). En Guanche Guarriors se elige personaje al empezar:
+    - El Mencey: el bárbaro, con garrote canario.
+    - El Pastor: más ágil y menos fuerte.
+    - La Mirladora: una chica que hace magia; menos física, pero ágil.
+    Propuesta completa en `docs/11_recreativas.md`.
+  - Jonay, 20-oct: controles de siempre (Espacio, clic izquierdo y derecho). Guanche Guarriors: personajes al tamaño
+    del Bencomo grande descartado. Naves: pequeño, con mucha visión.
+  - Jonay, 20-oct:
+    - **Guanche Guarriors se juega en las jugueterías** (de pago).
+    - En la juguetería se pueden comprar **todos los juegos** y la **consola**, para jugarlos en casa.
+    - **Pisos**: el pisito de alquiler y, mejor aún, **varios pisos en venta**. Eliges el que te permita tu dinero, y
+      los pisos son caros.
+    - En la consola se juega a todos los minijuegos, también a los de las canchas:
+      - **«Pachanga 3x3»**: el basket, que hay que **pasar a 3 contra 3**.
+      - **«Play Furbito»**: el fútbol.
+      - Los dos son por fases: eliges un país al principio, te sale su equipo y hay eliminatorias hasta la final.
+      - Las equipaciones de los dos equipos no pueden coincidir en colores.
+  Hecho en v0.79.0: armas (rifle a dos manos), minimapa (puntos encima), fútbol (palomitas, saque de centro, fuerza
+  del tiro, regate) y basket (combos de la CPU, 4 mates animados, pases en arco). Falta lo de recreativas en adelante
+  (plan en `docs/11_recreativas.md`).
+  - **Armas**: el rifle de agua atraviesa el brazo, y al apuntar también se ve mal. La pistola está bien: orientar el
+    rifle igual y ponerlo bien en la mano (capturas en X 189 Z 7).
+  - **Minimapa**: los puntos de misión no pueden quedar bajo las letras (el punto azul tapado por los nombres de calles
+    y sitios). Pintarlos encima.
+  - **Fútbol**:
+    - El portero hace palomitas para parar algunos tiros.
+    - Tras un gol saca de centro con el pie el que lo recibió. El rival no puede quitarle la pelota hasta que la toca,
+      y debe guardar distancia hasta que la pasa o corre con ella (como en el saque de banda).
+    - Tiro: cerca de la portería, si mantienes mucho el botón, el balón se va por encima. Hay que buscar la fuerza
+      buena para cada distancia. Desde muy lejos (bastante fuera del área, casi en el medio campo) sí se puede tirar
+      a tope.
+    - Doble pulsación de Espacio = regate.
+  - **Basket**:
+    - El rival hace combos de mates, más cuanto mejor es. No se le ve el combo y también puede fallarlo.
+    - Cada mate de combo tiene su animación espectacular. Con puños: el **360** y el **windmill/tomahawk**. Con
+      patada: el **de espaldas abriendo las piernas y bajando el balón primero**, y el **entre las piernas de frente**
+      (pasa el balón entre las piernas en el salto).
+    - Los pases largos van en parábola (ahora van rectísimos).
+  - **Recreativas 2D estilo años 80**:
+    - Puntos mientras juegas, récord en la máquina con 3 iniciales y niveles cada vez más difíciles.
+    - **Se desbloquean cuando se desbloquea el alcalde**: te llama el Blanco y te explica todo.
+    - **Casa del Blanco**: **Bencomo, Acentejo's Revenge** (el del guanche), gratis. Cambio de orden de Jonay: el tipo
+      Metal Slug pasa a ser de pago. La primera vez te invita a su casa. Luego vas
+      cuando quieras (no es misión ni obligatorio) y le pides jugar. Él te cuenta lo de los bares y las jugueterías.
+    - **Bares y cafeterías** (donde se compra comida ahora; se podrá entrar): máquinas de pago con el de naves tipo
+      R-Type/Nemesis.
+    - **Jugueterías**: de pago, el shooter tipo Metal Slug.
+    - **El juego del guanche** (casa de El Blanco): plataformas tipo Mario/Sonic/Prehistorik.
+      - Título: **«Bencomo, Acentejo's Revenge»**. Bencomo es el mencey de Taoro, líder de la resistencia. Acentejo es
+        la Matanza de Acentejo (mayo de 1494), la emboscada guanche a las tropas de Alonso Fernández de Lugo en el
+        barranco. Es la «venganza» de los videojuegos clásicos.
+      - El guanche salta con la **vara del salto del pastor** y también golpea con ella.
+      - Ambientado en la conquista de Tenerife: la **Matanza de Acentejo**.
+      - Enemigos: conquistadores de varios tipos que van saliendo, y perros y cosas así de la época.
+      - Tono satírico y caricaturesco, con elementos reales de la cultura guanche:
+        - **Salto del pastor**: la vara (asta) que usaban para cruzar barrancos y riscos.
+        - Varazos con el **banot**: lanza de madera con la punta endurecida al fuego.
+        - Comida: el plátano llegó después, así que quizá **gofio en vez de plátanos** (también comían cabra y
+          cebada).
+    - Otro beat'em up tipo Golden Axe: **Guanche Guarriors**.
+  - **Inmobiliaria y pisito**:
+    - En la inmobiliaria se alquila tu pisito: una casita chula cerca del Pasaje Teide.
+    - En el piso, una consola comprada en la juguetería (vale una pasta). Los juegos se compran también en la
+      juguetería y en casa se juegan gratis. Al encenderla sale un menú con los juegos que tengas.
+
+- ◐ v0.56.0 **Historia: nueva tanda de misiones** (programadas las 12; **Jonay las prueba**: anotar aquí lo que no
+      guste). Alcalde: «Don Yovoy Gofiérrez», bigote y traje negro. Se pueden reintentar al fallar y, si se guarda a
+      mitad, al cargar empiezan de nuevo en su círculo (pruebas `prueba_misiones.py` y `prueba_misiones_guardado.py`).
+      Apuntes originales (7-oct):
+      - Aclarar en la historia que la **pistola es de bolas de plástico de aire comprimido** (sirve en la misión siguiente).
+      - **Atraco a una farmacia** (parodia): el primer ladrón se pelea contigo en la pelea 2D; el segundo huye y se sube a
+        un coche: persecución hasta donde vaya y al final darle con la pistola de bolas para detenerlo. No es delito:
+        recompensa y el alcalde nombra a la banda **defensora de la ciudad**.
+      - **Ceremonia en el Ayuntamiento**: toda la banda y el alcalde; os nombra grupo especial de la Policía Local que
+        se encarga de los problemas de la ciudad (a partir de aquí detener malhechores es legal).
+      - Después, varias misiones con los miembros de la banda (detener malhechores, peleas, carreras, persecuciones)
+        con las mecánicas que ya hay. Propuestas de Claude (para comentar):
+        1. **«El carterista del Cristo»** (fiestas del Cristo, Plaza del Cristo): un carterista entre la gente; seguirlo
+           a pie sin perderlo de vista y pelea 2D al acorralarlo. Con el miembro más rápido de la banda.
+        2. **«Rally de La Esperanza»**: unos pijos hacen carreras ilegales por la Vía de Ronda; ganarles en una carrera
+           por puntos de control y que se rindan. Al volante el «piloto» de la banda.
+        3. **«Las ruedas del tranvía»**: unos gamberros pintan el tranvía en Las Mantecas; llegar antes de que se
+           escapen (contrarreloj en coche) y atrapar a dos (persecución a pie + pistola de bolas).
+        4. **«Guagua secuestrada»** (broma): un bromista se lleva una guagua vacía por la autopista; seguirla, ponerse
+           delante y frenarla (con el freno de mano nuevo) sin destrozarla.
+        5. **«El gofio robado»**: desaparece la reserva del molino (parodia); buscar pistas por el casco (diálogos con
+           vecinos), pelea en un almacén del polígono y vuelta con la carga en furgoneta sin volcarla.
+        - **Alcalde** (Jonay): personaje propio del juego, no una caricatura de una persona real (Claude no hace
+          parodias reconocibles de personas reales). Propuesta: **Don Yerai Gofiérrez**, alcalde ficticio de traje
+          oscuro, barba recortada, banda y bastón de mando; encarga misiones para «mejorar la ciudad»:
+          a) baches de la Vía de Ronda: llevar al equipo de asfaltado contrarreloj; b) recuperar los bancos robados
+          de la Plaza del Adelantado; c) escoltar en coche la guagua del Romero; d) carrera solidaria por el casco.
+        6. **«Noche en el aeropuerto»**: contrabandistas de queso en Los Rodeos; colarse por la valla, perseguir una
+           furgoneta por las vías de servicio y detenerla. Cierre de la tanda: el alcalde os da el coche patrulla de la
+           banda (rotulado con el nombre que elegisteis).
+
+- ◐ **Misiones por zonas: decidir con Jonay si la historia sale del casco** (revisión de la v1.4.23, mapa en `shots/misiones_mapa.json`): hoy todas las misiones de la historia empiezan en el casco (casa de El Blanco, Ayuntamiento, La Concepción, Juan de Vera) y es en sus huidas y persecuciones donde se recorre la ciudad (desde la v1.4.17 acaban hacia la siguiente). Si se quiere que la historia avance de barrio en barrio, habría que mover a quien da cada misión (el alcalde, la banda) a otros sitios a partir de cierto punto. La Secreta sale siempre de Tostón, en la Av. de los Menceyes, a ~2 km del casco.
+
+- ◐ v1.1.8 (los solares que rellena `trinidadFill` en un lado de la avenida salían girados al revés y se pintaban del revés: paredes hacia dentro; falta que Jonay lo mire) **Edificio con patio sin paredes por fuera junto a la Av. de La Trinidad** (Jonay, 3-nov, X −191, Y 366): se ven solo las
+  fachadas de dentro y se choca con lo que no se ve. Sigue en la 1.0.3 con el recorte de la 0.99.8: viene de cómo se
+  rellenan los solares de la avenida (`trinidadFill`, 05u_trinidad.js) o del OSM. Mirar con `sonda_hueco.py -191 366 50`.
+
+- ◐ v1.1.4 (los empedrados que se solapan, cada uno a unos mm; falta que Jonay lo mire) **Suelos que parpadean al correr (dos empedrados en el mismo sitio)** (Jonay, 3-nov, Plaza de La Concepción X −517,
+  Y −289, 4 capturas: «hay suelos que dependiendo del fotograma hacen cambios y eso produce flicks cuando corres»): dos capas
+  de suelo a la misma altura (la plaza, la calle peatonal y el bordillo de la acera que se solapan) se pelean por pintarse
+  (z-fighting) y cambia cuál se ve según el fotograma. Buscar dónde se pisan las áreas peatonales con calles y aceras y dejar
+  una sola, o separarlas unos centímetros con prioridad fija (`polygonOffset`).
+
+- ◐ v1.1.1 (sin plazas de los aparcamientos del OSM sobre la calzada) **Plazas de aparcamiento pintadas sobre los carriles** (Jonay, 3-nov, Calle el Juego X −259, Y 47, captura:
+  «confundes carriles con espacios de aparcamiento»): rayas transversales de aparcamiento dentro de la calzada por donde
+  circulan los coches. Que las plazas solo vayan en el carril de aparcamiento (junto al bordillo), nunca en los de paso.
+
+- ⚡ v1.1.0 (también las vías rápidas por su nombre; falta comprobar dónde los vio Jonay) **Ni coches aparcados en la autopista** (Jonay, 3-nov, justo después de la captura de la Autopista del Norte en
+  X −2517, Y −230: «tampoco puede haber coches aparcados en la autopista»): la 0.99.5 los quitó de la autopista, pero
+  siguen saliendo (en esa zona, o en vías que no se llaman «motorway» en el OSM: `trunk`, enlaces, Carretera General del
+  Norte, Vía de Ronda). Quitar las plazas de aparcamiento de todas las vías rápidas (`07_vehicles.js`, `PARKED`) con la
+  misma lista que usa el GPS (`fastRoad`), y comprobarlo con una sonda que cuente aparcados por tipo de vía.
+
+- ◐ **Auditoría 1.0.1 (APTO CON AVISOS)**: con la muesca paralela a la calle se van 9 invasiones y salen 6 nuevas: junto al
+  Intercambiador (X −182, Y 793 y X −171, Y 788; 2,1–2,6 m), C. Orión (X 616, Y 1510; 1,7 m) y C. Plutón (X 668, Y 1535;
+  1,3 m). Y vuelve el «poste» de C. Juan de Vera (X −149, Y −235), que es el alcalde de la misión. Mirar con fotos
+  (`tests/herramientas/foto_invasiones.py`, con estos puntos).
+
+- ◐ **Auditoría 1.4.24 (APTO CON AVISOS)**: la geometría en RAM sube de 62,7 a 66,2 MB y el pintado de 16,6 a 17,5 ms. Las llamadas bajan de 333 a 330 y los triángulos de 1,07 a 1,03 millones. Comprobar el reparto por celdas de la malla de vallas y la asignación al construir los recintos. Pelea y Guanche suben 0,1 ms cada uno en esta medición.
+
+- ◐ **Repetir la medición de pintado de la 1.4.27** (auditoría local 19-nov). En la 1.4.26 dio 14,3 ms a 720p. En la primera pasada de 1.4.27 dio 19,4 ms y en la final 17,8 ms. Contrastar con varias pasadas antes de atribuirlo a un cambio.
+
+- ⚡ v1.4.24 **Auditoría 1.4.22 (APTO CON AVISOS)**: vallas deportivas optimizadas. Quedan las geometrías del banco de Boca Papa (`k3Bench`); `12f_story2.js` baja de A a B (la conducción nueva: partir `drivePlan`). Métricas sin cambios (pintar 17 ms, 333 llamadas).
+
+- ◐ **Coches propios y rendimiento** (11-nov; auditoría 1.4.4: APTO CON AVISOS, pintado 18,5 ms (el 22,6 de la 1.4.3 era ruido), memoria JS 285,7 → 309,1 MB (+8 %), el juego pesa 13,5 → 15,4 MB por los modelos en `data/kenney_cars.json`): cada modelo propio son ~11.000–12.800 triángulos (los de Kenney, ~1.000–2.000). Si sigue subiendo: versión lejana también para el tráfico, y guardar los modelos más comprimidos (los vértices van sin compartir entre caras de distinto material). Ojo: al poner a 0 los sedanes de Kenney, Carlota, Capítulo 3 y Tipo E salen ~400 aparcados cada uno (`modelForType('sedan')`).
+
+- ◐ **Pintado 15,3 → 18,1 ms entre la 1.4.0 y la 1.4.2** (auditorías 11-nov; programas 67 → 73): mirar si es el grano de enlucido/piedra (`plasterWorld`/`stoneWorld`, 02_textures.js) o ruido de la medida (en la 1.3.5–1.3.7 subió y volvió a bajar solo). Aviso menor: «futbol» 0,2 → 0,3 ms.
+
+- ◐ v1.1.3 (de nuevo ~11–12 s y 15–17 ms a 720p; la nota del código bajó de B a C: líneas largas) **Arranque y pintado más lentos desde la 1.0.4** (auditoría 1.0.8): arranque 11 → 14 s y pintar a 720p
+  13,6 → 24 ms (en la auditoría; la sonda con la tarjeta daba 14–18 ms en la 1.0.4). Medir qué pesa: los muros (cortes por
+  calzada, 0,75 m cada muestra), las tapias, los edificios del Catastro y el recorte de calles sobre rampas (`cutAware`).
+
+- ⚡ **Arranque 2 s más lento en la 1.3.2** (auditoría 1.3.2, APTO): 18,9 → 20,9 s. Sospechosos: la comprobación de sitio de cada árbol (`treeFit`, `treeKerb`, 05_scenery.js) y el mapa de hierba con las franjas junto a calles y edificios (05z_hierba.js). Medir y, si es eso, usar una rejilla para las calles.
+
+- ◐ **Auditoría 1.4.14 (APTO CON AVISOS): pintar un fotograma 14,2 → 19,1 ms y memoria JS 359 → 377 MB** (16-nov): tras pasar a 40 coches propios (unos 11.000-13.500 triángulos cada uno). Siguiente paso previsto: usar la versión lejana también en el tráfico, no solo en los aparcados.
+
+- ● v1.0.0 **Pintar a 1080p y 60 fps en «alta» con la RX 6600** (Jonay, 3-nov: «el objetivo es jugar a 1080 a 60 fps
+  en mi gráfica con los gráficos al máximo»; antes: «pintar ~30 ms desde la 0.89»). Sonda con la tarjeta de verdad:
+  `tests/herramientas/sonda_pintado_gpu.py`, en 5 sitios. La tarjeta va sobrada: a 480×270 tarda lo mismo que a 1080p ×1,5;
+  lo que pesa es mandar las llamadas de dibujo. v1.0.0: de 23–34 ms (2.200–3.100 llamadas, 6 M de triángulos) a ~16–18 ms
+  (1.500–1.700 llamadas, 1,5–2 M de triángulos):
+  - piezas con hijas (las ruedas con su llanta) y piezas transparentes también se juntan (`mergeStatics`);
+  - la gente no se pinta a más de 170 m, ni los coches a más de 360 m, ni los interiores desde lejos; sus piezas pequeñas
+    (ojos, cejas, reloj; luces y matrícula) solo hasta 40 y 70 m (`actorCull`, en cada pintado de la escena);
+  - aparcados en celdas de 400 m y hasta ~580 m; los detalles de la ciudad (menos de 2,5 m) hasta ~330 m.
+  - **Queda**, de lo que más a lo que menos ahorra según la sonda:
+    - lo lejano (500–1.150 m): 3–9 ms. Una versión simple de los trozos lejanos de la ciudad (un bloque por manzana) o
+      celdas más grandes lejos.
+    - unas 400–650 llamadas de piezas sueltas: ~3.600 piezas de los **grupos con nombre** (iglesias, aeropuerto,
+      estadio, «inicio»), que se podrían juntar dentro de su grupo; ~140 piezas que se crean después de juntar (misiones);
+      103 con `userData`.
+    - sombras: 1,5–2,5 ms (~160–230 llamadas en la pasada de sombras).
+    - el **terreno**: una sola malla de ~400.000 triángulos; partirla por trozos con menos detalle lejos.
+
+- ● **Arranque más rápido: precalcular la ciudad al compilar (P2.1) y el mapa en binario (P2.2)** (auditorías 0.46,
+  0.49, 0.55 y punto 17; Jonay eligió hacerlo, 3-nov). Arranque en el PC: ~10 s; lo que más tarda: calles y aceras
+  (2,7 s), sombreadores (2,5 s, ya en asíncrono), casas del casco (1,4 s), árboles (0,6 s). Portar la generación a
+  `build.py` o guardar la geometría ya hecha en binario: varias versiones. `data.json` (~3 MB) se podría cuantizar.
+  Los módulos ES (P2.5) no aportan nada al jugador; se deja salvo que Jonay quiera.
+
+- ◐ v0.99.7 (el «poste» de Juan de Vera era el alcalde) **Auditoría v0.99.6 y v0.99.8 (APTO CON AVISOS)**: `09jz_sprx.js`
+  bajó de A a B y `11_hud.js` de B a C; `prueba_076.py` falla en la carga compartida y pasa sola.
+
+- ◐ v1.1.7 (nota A: 88 en local, 86 en la auditoría, que ahora cuenta sentencias y deja fuera los datos; piezas comunes del píxel en 09e_pixkit, funciones largas de 251 a 147; quedan los «módulos» enteros —MISSIONS, BASKET2D, create() de los juegos de la recreativa— y los cuerpos de bucle muy largos como el de cada edificio en buildBuildings) v1.1.6 (todo `src/` con Prettier: nota de C 69 a B 84, sin líneas largas ni densas; quedan las funciones-módulo muy largas y el código repetido de 09ma/09eb/06b) v1.0.0 (`12m_mundialito.js`: la tabla de selecciones, una fila por equipo) **Partir funciones largas y ordenar
+  los archivos con nota D o C** (auditorías 0.75, 0.76, 0.90 y 0.99.8): quedan `09eb_pixbasket.js` y `09ma_pixguanche.js`
+  (el dibujante de la propuesta en una función de ~155 líneas), `12k_agua.js` (líneas muy largas y densas), `12j_campos.js`
+  (la Copa Laguna), `09ea_minijuegos.js` (el público) y `11_hud.js` (bajó de B a C por las líneas largas). Las «funciones de
+  más de 400 líneas» de la tabla (`BASKET2D()`, `MISSIONS()`…) son los módulos enteros, no funciones de verdad. Lo más
+  cómodo sería pasar un formateador (Prettier) a esos archivos; en la nube no se puede instalar, en el PC habría que
+  añadirlo al trabajador.
+
+- ◐ v1.1.8 (hechos los cuatro de minijuegos y el aviso al guardar; los «lienzos nuevos» y «JSON por fotograma» del análisis de código en la pelea, el baloncesto, las recreativas y sus fondos son de dibujos que se hacen una vez y se guardan, no de cada fotograma; queda el sombreador por el camino) **Auditoría 1.1.7 (APTO CON AVISOS, calidad A 86)**: avisos de minijuegos que salen con el auditor nuevo:
+  - el mundo 3D se sigue pintando detrás de bencomo, naves y guanche (la pantalla del minijuego lo tapa entero): no pintar la escena mientras haya un minijuego a pantalla completa (`13_main.js`, `loop()`).
+  - baloncesto (9 imágenes, 0,11 MB), bencomo (19, 0,33 MB) y guanche (46, 1,53 MB) empiezan a cargar sus imágenes al abrirse: precargarlas (`img.decode()`) durante la carga o al acercarse a la máquina.
+  - el fútbol crea lienzos y lee píxeles en cada fotograma (0,21 por fotograma): crearlos una vez y reutilizarlos.
+  - 1 sombreador de sombras (depth) se prepara por el camino: precompilarlo al arrancar.
+  - métricas iguales a la 1.1.6 (pintar 16,1 ms, lógica 0,96 ms); el arranque sube de 12,1 a 13,2 s (comprobar en la próxima si se repite).
+
+  - Auditoría 1.1.8 (APTO CON AVISOS, A 86): todo sale ~20 % más lento a la vez —pintar 16,1 → 19,8 ms, lógica 0,96 → 1,14 ms y hasta los minijuegos 2D—, con las mismas llamadas, triángulos y memoria: parece el PC más cargado durante la medición, no el código. Comprobar en la próxima auditoría.
+  - Auditoría 1.1.9 (APTO CON AVISOS, A 86): de nuevo todo más lento a la vez (pintar 20 → 23,2 ms, lógica 0,98 → 1,55 ms, arranque 15,2 → 17,2 s, cada paso de la carga un 20–60 % más y el fútbol 2D 0,5 → 1,6 ms) con las mismas llamadas y triángulos. Repetir la auditoría con el PC descansado para saber cuánto es del código (la 1.1.9 añade al arrancar la búsqueda de calles repetidas y la trinchera de la TF-5).
+  - El fútbol aún prepara sus jugadores en los primeros 3 s del partido (1 lienzo por fotograma, luego para): dibujarlos al abrir el juego.
+
+- ◐ **Assets de coches y motos** (consulta hecha, falta decidir): opciones CC0/CC-BY en
+      `docs/referencias/assets_vehiculos.md`.
+
+- ● v1.3.7 (v1.3.7 suelo: asfalto, acera, adoquín y césped; v1.3.9 terreno, caminos de tierra, tejados de teja y azoteas; v1.4.0 muros de basalto; v1.4.1 tapias encaladas, iglesias y cantería; todo con `tests/herramientas/suelo_polyhaven.py`; faltan la piedra de iglesias y casas canarias (cantería) y las fachadas —ya llevan detalle de enfoscado de Poly Haven desde antes—) **Texturas de Poly Haven (CC0) para todo el juego** (Jonay, 11-nov: «ahora que tenemos Blender con Poly, ¿no podrás usar esas texturas y mejorar todo en general?»): hoy casi todas las texturas se pintan a mano en el código (asfalto, aceras, adoquín, fachadas de colores, tejados, césped, piedra). Con el add-on de Blender se pueden bajar texturas CC0 de Poly Haven (asfalto, baldosa de acera, adoquín, enfoscado, teja, piedra basáltica, césped, tierra) y meterlas en el HTML a 512 px (≈1 MB más en total). Hacerlo por tandas: suelo (asfalto, acera, adoquín, césped) → fachadas y tejados → muros y piedra, con fotos antes/después y midiendo el pintado; créditos en `CREDITOS.md`.
+
+- v1.2.4 (la auditoría 1.2.4 ya no da avisos nuevos críticos o altos: cuentan como conocidos) **Auditoría 1.1.6: «180 avisos nuevos» del análisis estático** (crear geometría en `buildRoofProps`, `buildTerrain`, `buildLamps`…): no son nuevos, son los de siempre con otro número de línea tras pasar el formateador. Comprobar en la próxima auditoría que vuelven a contar como conocidos; `03_collide.js` bajó de A a B (más líneas por función).

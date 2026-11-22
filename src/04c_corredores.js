@@ -1571,10 +1571,10 @@ function corrBuildTramosZone(segs, Z) {
     // other edge of the hole has one, also where two pieces meet at an angle)
     const endCap = Math.abs(gx * n.s.tx + gz * n.s.tz) > 0.7 && gm - y < 1.2;
     if (n.s.cov || endCap || gm - y < (Z.open ? 1.2 : 0.15)) continue;
-    const flush = inOtherRoad(mx, mz, gm - 0.8, gm + 0.8, n.s.ri, 0.2, true);
-    // (Jonay, TF-5 pasado el puente de San Lázaro: «cosas raras en la mediana y en mitad de la autopista»): in an open
-    // zone, where the trench is still shallow or the edge falls on another carriageway at grade, no wall nor railing
-    if (Z.open && flush) continue;
+    const flush = roadAtBarrier(mx, mz, gm - 0.85, gm + 0.85, 0.18);
+    // Keep the retaining face below street level where a side street reaches the trench edge.
+    // Only the wall and railing above the surface need the opening.
+
     const top = (x, z) => Math.max(y + (flush ? 0.3 : 0.9), heightAt(x, z) + (flush ? -0.05 : 0.9));
     const ya = yAt(near(p[0], p[1])) - 0.3,
       yb = yAt(near(q[0], q[1])) - 0.3,

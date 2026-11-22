@@ -3,6 +3,8 @@
 > Nota: texturas, modelos y materiales descritos aquí son **provisionales** (ver `10_assets.md`); lo que es
 > definitivo es la lógica de construcción (geometría a partir del mapa, colocación, colisiones).
 
+Las vallas y los quitamiedos se recortan contra el ancho de la calzada a su altura efectiva, incluidos los carriles auxiliares. La mediana de San Antonio se dibuja como pintura y los cobertizos que aún invaden un carril de vía rápida se descartan antes de crear sus colisiones.
+
 ## Terreno (`buildTerrain`, `04_world.js`)
 
 - Malla regular a partir de `DATA.H` (16 m por celda). `heightAt(x, z)` usa **la misma triangulación** (diagonal de
@@ -230,9 +232,10 @@ altura sin enlace y estructuras metidas en carriles. Ver `docs/07_pruebas.md`.
   hay que marcarlo `noMerge` o ponerle nombre a su grupo.
 - `splitInstanced()`: las mallas instanciadas grandes del nivel superior (árboles, farolas, postes del tranvía, señales,
   mobiliario de plazas) se parten por celda de 250 m: antes eran una para toda la ciudad y se pintaban enteras.
-- `updateCityLOD()` (al moverse la cámara 12 m; también en `__snap`): lo que queda más allá de la niebla no se pinta; el
-  detalle (molduras `trim`, balcones, madera, rótulos de los trozos de ciudad y las piezas pequeñas) solo hasta
-  `min(niebla, 230 + niebla/4)`; las copas de laurel y de árbol genérico a más de 170 m usan una copa de 20 triángulos.
+- `updateCityLOD()` se actualiza al moverse la cámara 12 m o cambiar la niebla. Prueba juntas las mallas estáticas
+  de cada celda de 250 m y revisa una a una las que cruzan un límite de visibilidad. Se mantienen las distancias
+  del detalle y los 170 m de la copa ligera. Con cielo despejado, la niebla de la ciudad termina a 1.075 m en alta
+  y a 755 m en media. La escena de montañas y cielo conserva su propia niebla y distancia.
 - Coches aparcados: una `InstancedMesh` por modelo y celda de 800 m (`buildParked`), color de pintura por coche
   (atributo `aPaint` en el shader); al llevarte uno, su instancia se encoge a 0.
 - En las pruebas (`navigator.webdriver`) se guardan las piezas originales: `__dbg.unfuse(true)` las vuelve a poner para
@@ -277,3 +280,10 @@ altura sin enlace y estructuras metidas en carriles. Ver `docs/07_pruebas.md`.
 - Prueba: `prueba_078.py`. Recorre andando todo el pasaje, comprueba la cámara bajo el techo y baja por la escalera de
   la derecha hasta la salida de El Juego mirando la altura en cada paso. Saca fotos dentro, del patio desde el rellano y
   desde abajo, de la galería baja y de la salida.
+
+### Agrupación de edificios singulares (v1.4.29)
+
+Los constructores de los grupos estáticos compatibles marcan su raíz con `batchLandmark`. El optimizador combina las
+mallas opacas compatibles por padre, material, celda, orden de dibujo y propiedades de sombra. La geometría agrupada
+sigue dentro del mismo padre y conserva sus triángulos. Las colisiones, las piezas con lógica propia y las
+transparencias conservan su recorrido habitual. La resolución y el filtrado de las sombras mantienen sus valores.

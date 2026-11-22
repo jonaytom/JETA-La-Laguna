@@ -210,7 +210,8 @@ function updateSun() {
   for (const m of SIGN.mats) m.emissiveIntensity = night * 1.25;
   lampHeadMat.emissiveIntensity = night * 2.5 + overcast * 0.2 * (1 - night);
   lampPoolMat.opacity = night * 0.8;
-  headMat.emissiveIntensity = 0.2 + night * 3.6 + (w === 2 ? 1.5 : 0);
+  headlightLevel.value = night * 3.6 + (w === 2 ? 1.5 : 0);
+  headMat.emissiveIntensity = 0.2 + headlightLevel.value;
   tailMat.emissiveIntensity = 0.3 + night * 1.2;
 }
 /** (v1.1.7, code quality) part of updateSun: palette interpolation */
@@ -259,7 +260,7 @@ function updateSunPart1() {
   const fogCol = cHor.clone().lerp(cZen, 0.15);
   scene.fog.color.copy(fogCol);
   bgScene.fog.color.copy(fogCol);
-  scene.fog.far = w === 2 ? 230 : w === 1 ? Q.far * 0.8 : Q.far;
+  scene.fog.far = w === 2 ? 230 : w === 1 ? Q.far * 0.8 : cityFogFar();
   scene.fog.near = w === 2 ? 15 : 90;
   bgScene.fog.near = w === 2 ? 300 : w === 1 ? 1000 : 1400;
   bgScene.fog.far = w === 2 ? 900 : w === 1 ? 12000 : 22000;
@@ -316,7 +317,10 @@ $('sens').addEventListener('input', (e) => {
   SETTINGS.sens = +e.target.value;
   saveSettings();
 });
-$('vol').addEventListener('input', (e) => AUDIO.setVol(+e.target.value));
+$('vol').addEventListener('input', (e) => {
+  AUDIO.setVol(+e.target.value);
+  MUSIC.setVol();
+});
 $('mvol').value = SETTINGS.music ?? 1;
 $('mvol').addEventListener('input', (e) => {
   SETTINGS.music = +e.target.value;
@@ -438,10 +442,11 @@ window.__prof = PROF;
 const pm = (k, t0) => {
   PROF[k] = (PROF[k] || 0) * 0.9 + (performance.now() - t0) * 0.1;
 };
-function loop() {
+const cityFrameDue = makeFrameGate();
+function loop(now = performance.now()) {
   requestAnimationFrame(loop);
-  if (window.__manual) return;
-  const now = performance.now();
+  if (window.__manual || !cityFrameDue(now)) return;
+  updateMiniGamepad();
   let dt = Math.min(0.05, (now - last) / 1000);
   last = now;
   if (GAME.state === 'fight2d' || GAME.state === 'basket2d' || GAME.state === 'futbol2d' || GAME.state === 'arcade') return; // the 2D fight / basketball game draw themselves; v1.1.8 (auditor): the arcade and the console too (their screen covers everything)
@@ -525,17 +530,29 @@ function logic(dt, now) {
   const { T0 } = logicPart1();
   let tt;
   frame++;
+  const hadPad = !!INPUT.gp;
   readGamepad();
+  if (hadPad !== !!INPUT.gp) {
+    document.body.classList.toggle('gamepad', !!INPUT.gp);
+    updateWeaponHUD();
+  }
+  if (updatePadMenu()) {
+    PRESSED.clear();
+    return;
+  }
   if (GAME.state === 'play' || GAME.state === 'cutscene' || GAME.state === 'dialog') {
     if (GAME.state === 'play') {
-      if (pressed('KeyM') || (INPUT.gp && INPUT.gp.down(8))) BIGMAP.toggle();
+      if (pressed('KeyM') || (INPUT.gp && INPUT.gp.down(PAD_BUTTON.VIEW))) BIGMAP.toggle();
       if (pressed('KeyT') && BIGMAP.open) BIGMAP.teleport();
-      if (pressed('KeyP', 'Escape') || (INPUT.gp && INPUT.gp.down(9))) {
+      if (pressed('KeyP', 'Escape') || (INPUT.gp && INPUT.gp.down(PAD_BUTTON.MENU))) {
         if (BIGMAP.open) BIGMAP.toggle();
         else GAME.pause(true);
       }
     }
+    if (BIGMAP.open) BIGMAP.updatePad(INPUT.gp, dt);
     if (!BIGMAP.open) {
+      if (GAME.state === 'play' && !DLG.open && INPUT.gp?.down(PAD_BUTTON.UP)) tapControlKey('KeyJ');
+      if (GAME.state === 'play' && !PLAYER.car && INPUT.gp?.down(PAD_BUTTON.DOWN)) PRESSED.add('KeyG');
       GAME.tod = (GAME.tod + dt * dayRate(GAME.tod)) % 24;
       U.uTime.value += dt;
       tt = performance.now();
@@ -557,6 +574,11 @@ function logic(dt, now) {
         } catch (e) {
           console.error('casa', e);
         }
+        try {
+          GARAJE.update(dt);
+        } catch (e) {
+          console.error('garaje', e);
+        } // v1.4.41: C. Tacoronte 67
         try {
           updateBorder(dt);
         } catch (e) {
@@ -964,6 +986,15 @@ window.__dbg = {
   parkSides,
   MEDIANS,
   AUX,
+  TRAM_PLATFORMS,
+  parkedOverTracks,
+  wetChasePed,
+  updateParkedLOD,
+  roadAtBarrier,
+  pedestrianDrivingZone,
+  pedLeg,
+  pedOnRoad,
+  pedestrianFastRoad,
   SHORT_UP,
   SPRX,
   SPRX_DATA,
@@ -980,6 +1011,7 @@ window.__dbg = {
   CASA,
   MUNDIALITO,
   s2Path,
+  farmEscapePlan,
   s2DriveCar,
   drivePlan,
   DRIVE_PROF,
@@ -1079,6 +1111,8 @@ window.__dbg = {
   inCut,
   TCUTS,
   CONTROLS,
+  updateMiniGamepad,
+  miniKeyLabel,
   worldEdgeDist,
   inPlayArea,
   borderTarget,
@@ -1138,6 +1172,10 @@ window.__dbg = {
   FIGHT2D,
   startStreetFight,
   setWaypoint,
+  trafficModel,
+  isLivery,
+  pickColor,
+  modelGeometry,
   WEAPON,
   fireWeapon,
   giveWeapon,
@@ -1153,6 +1191,7 @@ window.__dbg = {
   depthOf,
   auditCrossings,
   auditObstacles,
+  auditRoadBarriers,
   crossingsOf,
   ROADY,
   DEP,
@@ -1170,11 +1209,17 @@ window.__dbg = {
   giveWeapon,
   WALKG,
   GPS,
+  gpsRouteColor,
   CONC_TOWER,
   PLASTER,
   CAM,
   TCUTS,
   DEP,
+  GARAJE, // v1.4.41
+  tac67,
+  PEDWAYS,
+  RI2PW,
+  pedPruneDecks,
   Car: typeof Car !== 'undefined' ? Car : null
 };
 window.__snap = () => {

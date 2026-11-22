@@ -23,7 +23,7 @@ function roadClipGrid() {
         L = Math.hypot(c[i + 2] - ax, c[i + 3] - az);
       if (L < 0.05) continue;
       const id =
-        raw.push({ ax, az, ux: (c[i + 2] - ax) / L, uz: (c[i + 3] - az) / L, L, k0, car: r[0] <= 12, first: i === 0, last: i + 4 >= c.length }) -
+        raw.push({ ax, az, ux: (c[i + 2] - ax) / L, uz: (c[i + 3] - az) / L, L, k0, roadType: r[0], car: r[0] <= 12, first: i === 0, last: i + 4 >= c.length }) -
         1; /* v1.0.2: car, and whether the piece ends the road (kerbClip) */
       for (let a = Math.floor((Math.min(ax, c[i + 2]) - k0) / CS); a <= Math.floor((Math.max(ax, c[i + 2]) + k0) / CS); a++)
         for (let b = Math.floor((Math.min(az, c[i + 3]) - k0) / CS); b <= Math.floor((Math.max(az, c[i + 3]) + k0) / CS); b++) {
@@ -607,6 +607,29 @@ function carDeep(Q, G) {
     }
   }
   return w;
+}
+// A small shed the conservative building trim could not save must clear the motorway or its slip road.
+function smallBuildingOnMainRoad(pts) {
+  if (Math.abs(polyArea(pts)) > 160) return false;
+  const G = roadClipGrid();
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i],
+      b = pts[(i + 1) % pts.length],
+      steps = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1])));
+    for (let j = 0; j < steps; j++) {
+      const x = lerp(a[0], b[0], j / steps),
+        z = lerp(a[1], b[1], j / steps);
+      const ids = G.m2.get(Math.floor(x / G.CS) * 100003 + Math.floor(z / G.CS)) || [];
+      for (const id of ids) {
+        const s = G.raw[id];
+        if (s.roadType > 1 || (s.roadType === 0 && inCorr(x, z))) continue;
+        const along = (x - s.ax) * s.ux + (z - s.az) * s.uz;
+        const lateral = (z - s.az) * s.ux - (x - s.ax) * s.uz;
+        if (along >= 0 && along <= s.L && Math.abs(lateral) < s.k0 - 0.95) return true;
+      }
+    }
+  }
+  return false;
 }
 function roadClip(pts) {
   return roadClipStraight(pts);

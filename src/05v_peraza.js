@@ -258,6 +258,7 @@ function buildPerazaPart1(P) {
   }
   const root = new THREE.Group();
   root.name = 'Estadio Francisco Peraza';
+  root.userData.batchLandmark = true;
   return { dPitch, seatM, roofM, postM, big, root };
 }
 // ============ Pabellón Juan Ríos Tejera (v0.76, Jonay: «parece una casa, no un pabellón») ============
@@ -355,6 +356,7 @@ function buildRiosHallPart1(pts) {
   wg.computeVertexNormals();
   const root = new THREE.Group();
   root.name = 'Pabellón Juan Ríos Tejera';
+  root.userData.batchLandmark = true;
   const walls = new THREE.Mesh(wg, new THREE.MeshStandardMaterial({ map: wt, roughness: 0.9, side: THREE.DoubleSide }));
   walls.castShadow = walls.receiveShadow = true;
   root.add(walls);

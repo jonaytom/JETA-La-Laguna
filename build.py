@@ -48,6 +48,18 @@ D['BW']=json.load(open('data/barreras_juego.json',encoding='utf-8')) if os.path.
 D['LN']=json.load(open('data/carriles.json',encoding='utf-8')) if os.path.exists('data/carriles.json') else {}
 # v1.1.4: Mapillary's no-parking / no-stopping signs on each street (tools/mapillary.py): {index of DATA.R: [[x, z, side], ...]} (side 1 left, -1 right)
 D['MP']={k:[[round(p[0],1),round(p[1],1),p[2]] for p in v.get('nop',[])] for k,v in (json.load(open('data/mapillary_aparca.json',encoding='utf-8')) if os.path.exists('data/mapillary_aparca.json') else {}).items() if v.get('nop')}
+D['RADIO']=json.load(open('data/radio.json',encoding='utf-8')) if os.path.exists('data/radio.json') else {}
+radio_files = {
+    track['file'] for tracks in D['RADIO'].values() for track in tracks
+}
+def copy_radio(destination):
+    for name in sorted(radio_files):
+        if not re.fullmatch(r'[a-z0-9-]+/[a-z0-9-]+\.mp3', name):
+            raise ValueError(f'Ruta de audio no válida: {name}')
+        output = os.path.join(destination, 'radio', name)
+        os.makedirs(os.path.dirname(output), exist_ok=True)
+        shutil.copyfile(os.path.join('assets', 'radio', name), output)
+
 D['HUM']=json.load(open('data/chars.json',encoding='utf-8'))
 # v1.3.0: the trees made in Blender (tools/blender/arboles_blender.py + exportar_arboles.py): trunk, crown and far crown per kind
 D['ARB']=json.load(open('data/arboles.json',encoding='utf-8')) if os.path.exists('data/arboles.json') else None
@@ -78,7 +90,7 @@ def make(three, artifact):
         s=s.replace('<!doctype html>\n','').replace('<html lang="es">\n','').replace('<head>\n','',1).replace('</head>\n<body>\n','').replace('</body>\n</html>\n','')
         s=s.replace('<meta charset="utf-8">\n','').replace('<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">\n','')
     return s
-os.makedirs('dist',exist_ok=True); shutil.copy('data/three.module.min.js','dist/three.module.min.js'); open('dist/test.html','w',encoding='utf-8').write(make('./three.module.min.js',False))
+os.makedirs('dist',exist_ok=True); copy_radio('dist'); shutil.copy('data/three.module.min.js','dist/three.module.min.js'); open('dist/test.html','w',encoding='utf-8').write(make('./three.module.min.js',False))
 open('dist/gta-la-laguna.html','w',encoding='utf-8').write(make('https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.min.js',True))
 # the copy for the PC carries Three.js inside (data: URL in the import map) so it runs without internet
 THREE_DATA='data:text/javascript;base64,'+base64.b64encode(open('data/three.module.min.js','rb').read()).decode()
@@ -115,6 +127,7 @@ def make_folder():
     open(os.path.join(G, 'js', 'juego.js'), 'w', encoding='utf-8').write(out + '\n//# sourceMappingURL=juego.js.map\n')
     open(os.path.join(G, 'js', 'juego.js.map'), 'w', encoding='utf-8').write(json.dumps(smap))
     shutil.copy('data/three.module.min.js', os.path.join(G, 'lib', 'three.module.min.js'))
+    copy_radio(G)
     for f in ('servidor.ps1', 'lanzar.bat', 'acceso_directo.ps1'):
         t = open(os.path.join('lanzador', f), encoding='utf-8').read().replace('\r\n', '\n')
         enc = 'utf-8-sig' if f.endswith('.ps1') else 'cp1252'   # PowerShell 5 reads UTF-8 only with BOM; cmd, the ANSI page

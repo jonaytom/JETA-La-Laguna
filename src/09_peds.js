@@ -2,12 +2,63 @@
 const PEDWAYS = [];
 const PEDKEY = new Map();
 const RI2PW = new Map();
+const pedestrianFastRoad = (rd) => rd[0] <= 2 || /V[ií]a de Ronda|Autopista|Autov[ií]a/i.test(DATA.S[rd[1]] || '');
+function pedOnRoad(x, z, filter) {
+  const y = heightAt(x, z);
+  return roadAtBarrier(x, z, y - 1.15, y + 1.15, -0.1, filter);
+}
+function pedLeg(x, z, tx, tz) {
+  const length = Math.hypot(tx - x, tz - z),
+    steps = Math.max(1, Math.ceil(length / 1.25)),
+    step = length / steps;
+  let stretch = 0,
+    longest = 0,
+    crossing = false;
+  for (let i = 0; i <= steps; i++) {
+    const a = lerp(x, tx, i / steps),
+      b = lerp(z, tz, i / steps);
+    if (pedOnRoad(a, b, pedestrianFastRoad)) return -1;
+    if (pedOnRoad(a, b)) {
+      stretch += step;
+      longest = Math.max(longest, stretch);
+      crossing = true;
+      if (i === steps || longest > 17) return -1;
+    } else stretch = 0;
+  }
+  return crossing ? 1 : 0;
+}
+// Follow a marked crossing when both of its entrances connect to the existing pavements.
+function pedCrossingRoute(x, z, tx, tz) {
+  const direct = Math.hypot(tx - x, tz - z);
+  let best = null,
+    limit = direct + 15;
+  for (const [cx, cz, dx, dz, width] of PED_CROSSINGS) {
+    if (Math.hypot(cx - x, cz - z) + Math.hypot(cx - tx, cz - tz) >= limit) continue;
+    const side = Math.sign((z - cz) * dx - (x - cx) * dz) || 1;
+    if (side * ((tz - cz) * dx - (tx - cx) * dz) >= 0) continue;
+    const off = side * (width / 2 + 1.2);
+    const a = [cx - dz * off, cz + dx * off],
+      b = [cx + dz * off, cz - dx * off];
+    const length = Math.hypot(x - a[0], z - a[1]) + Math.abs(off * 2) + Math.hypot(tx - b[0], tz - b[1]);
+    if (length >= limit || pedLeg(x, z, ...a) !== 0 || pedLeg(...a, ...b) !== 1 || pedLeg(...b, tx, tz) !== 0) continue;
+    best = [
+      [...a, 0],
+      [...b, 1],
+      [tx, tz, 0]
+    ];
+    limit = length;
+  }
+  return best;
+}
 (function buildPedNet() {
   const ok = ['pedestrian', 'footway', 'residential', 'living_street', 'tertiary', 'secondary', 'primary', 'unclassified', 'steps', 'tertiary_link'];
   DATA.R.forEach((rd, ri) => {
     const t = RTN[rd[0]];
     if (!ok.includes(t) || rd[3] & 4) return;
-    if (/V[ií]a de Ronda|Autopista|Autov[ií]a/i.test(rd[1] >= 0 ? DATA.S[rd[1]] || '' : '') || (t === 'primary' && rd[3] & 1)) return; // v1.1.0 (Jonay: «no debería haber NPC caminando por las autopistas»): no fast roads, nor one carriageway of a dual one (its side is the other carriageway)
+    // v1.4.41 (Jonay, 22-nov: «la gente camina por el aire en muchos puentes… no deberían ni intentar caminar por ahí»):
+    // no walking along bridges, raised roads or sunk ones (people were put at the height of the ground under them)
+    if (rd[3] & 2) return; // (the raised and sunk ones are known later: pedPruneDecks)
+    if (pedestrianFastRoad(rd) || (t === 'primary' && rd[3] & 1)) return; // v1.1.0 (Jonay: «no debería haber NPC caminando por las autopistas»): no fast roads, nor one carriageway of a dual one (its side is the other carriageway)
     const road = !['pedestrian', 'footway', 'steps'].includes(t);
     const id = PEDWAYS.length;
     RI2PW.set(ri, id);
@@ -43,8 +94,17 @@ const PEDLINES = [
   '¡Chacho, qué fuerte!',
   '¡Estás tolete o qué!'
 ];
+let pedDecksPruned = false;
+function pedPruneDecks() {
+  // v1.4.41: the raised and sunk roads are only known once the world is built: their pavements are not walked either
+  pedDecksPruned = true;
+  for (const [ri, id] of RI2PW)
+    if ((typeof RAISE !== 'undefined' && RAISE.has(ri)) || (typeof DEP !== 'undefined' && DEP.has(ri))) PEDWAYS[id].dead = true;
+}
 function spawnPed(x, z, near = false) {
   if (PEDS.length > Q.peds + 8) return null;
+  if (!pedDecksPruned) pedPruneDecks();
+  if (!near && !livePedRoads.size) for (const [ri, way] of RI2PW) if (!PEDWAYS[way].dead) livePedRoads.add(DATA.R[ri]);
   const long = Math.random() < 0.45;
   const can = Math.random() < 0.08;
   const H = can ? takeHuman('can', () => newPedHuman(true)) : takeHuman('ped', () => newPedHuman(false, long));
@@ -66,9 +126,7 @@ function spawnPed(x, z, near = false) {
     talk: 0
   };
   if (!near) {
-    const rd = ROADSEG.nearest(x, z, (r) =>
-      ['pedestrian', 'footway', 'residential', 'living_street', 'tertiary', 'secondary', 'primary', 'unclassified'].includes(RTN[r[0]])
-    );
+    const rd = ROADSEG.nearest(x, z, isLivePedWay);
     if (!rd) {
       releaseHuman(can ? 'can' : 'ped', H);
       return null;
@@ -91,12 +149,28 @@ function spawnPed(x, z, near = false) {
     const L = Math.hypot(rd.dx, rd.dz) || 1;
     p.x = rd.x - (rd.dz / L) * p.off;
     p.z = rd.z + (rd.dx / L) * p.off;
-    const r = COL.resolve(p.x, p.z, 0.3);
-    p.x = r.x;
-    p.z = r.z;
+    const safePoint = () => {
+      const r = COL.resolve(p.x, p.z, 0.3);
+      p.x = r.x;
+      p.z = r.z;
+      return !pedOnRoad(p.x, p.z) && !wallBuildingAt(p.x, p.z);
+    };
+    if (!safePoint()) {
+      p.off = -p.off;
+      p.x = rd.x - (rd.dz / L) * p.off;
+      p.z = rd.z + (rd.dx / L) * p.off;
+      if (!safePoint()) {
+        releaseHuman(can ? 'can' : 'ped', H);
+        return null;
+      }
+    }
   }
   PEDS.push(p);
   return p;
+}
+const livePedRoads = new Set();
+function isLivePedWay(road) {
+  return livePedRoads.has(road);
 }
 function pedTarget(p) {
   const W = PEDWAYS[p.way];
@@ -112,22 +186,15 @@ function pedTarget(p) {
   const L = Math.hypot(x2 - x1, z2 - z1) || 1;
   const dx = (x2 - x1) / L,
     dz = (z2 - z1) / L;
-  let off = p.off * p.dir; // keep same physical side
-  let tx = x2 - dz * off,
-    tz = z2 + dx * off;
-  if (W.road && !p.flipped && typeof onCarriagewayEarly === 'function' && onCarriagewayEarly(tx, tz, 0.2)) {
-    p.off = -p.off;
-    p.flipped = true;
-    off = -off;
-    tx = x2 - dz * off;
-    tz = z2 + dx * off;
-  } // v1.1.0: that side is another carriageway: the pavement of the other side
-  return [tx, tz];
+  const off = p.off * p.dir; // keep same physical side
+  return [x2 - dz * off, z2 + dx * off];
 }
 function advancePed(p) {
   const W = PEDWAYS[p.way];
   const n = W.c.length / 2;
-  p.seg += p.dir;
+  p.leg = null;
+  p.crossRoute = null;
+  p.seg = clamp(p.seg + p.dir, 0, n - 1);
   if (p.seg <= 0 || p.seg >= n - 1 || Math.random() < 0.12) {
     const k = W.c[p.seg * 2] + ',' + W.c[p.seg * 2 + 1];
     const opts = (PEDKEY.get(k) || []).filter((o) => (o[0] !== p.way || Math.random() < 0.1) && !PEDWAYS[o[0]].dead);
@@ -140,7 +207,6 @@ function advancePed(p) {
       p.dir = o[1] >= nn - 1 ? -1 : o[1] <= 0 ? 1 : Math.random() < 0.5 ? 1 : -1;
       const s = Math.sign(p.off) || 1;
       p.off = NW.road ? (NW.w / 2 + 1.1) * s : rnd(-NW.w / 3, NW.w / 3);
-      p.flipped = false;
     } else if (p.seg <= 0 || p.seg >= n - 1) {
       p.dir = -p.dir;
     }
@@ -190,8 +256,11 @@ function updatePedsEach(p, dt) {
     p.fleeFrom = [PLAYER.x, PLAYER.z];
   }
   let tx, tz, sp;
+  p.crossing = false;
   if (p.flee > 0) {
     p.flee -= dt;
+    p.leg = null;
+    p.crossRoute = null;
     const fx = p.x - p.fleeFrom[0],
       fz = p.z - p.fleeFrom[1],
       fl = Math.hypot(fx, fz) || 1;
@@ -204,10 +273,29 @@ function updatePedsEach(p, dt) {
       advancePed(p);
       return;
     }
-    tx = t[0];
-    tz = t[1];
-    sp = p.speed;
-    if (Math.hypot(tx - p.x, tz - p.z) < 1.2) advancePed(p);
+    if (!p.leg) {
+      const crossing = pedLeg(p.x, p.z, ...t);
+      p.crossRoute = crossing > 0 ? pedCrossingRoute(p.x, p.z, ...t) : null;
+      p.leg = p.crossRoute ? p.crossRoute.shift() : [...t, crossing];
+    }
+    [tx, tz] = p.leg;
+    const length = Math.hypot(tx - p.x, tz - p.z);
+    if (length < 0.45 && p.crossRoute?.length) {
+      p.leg = p.crossRoute.shift();
+      return;
+    }
+    if (p.leg[2] < 0 || length < 0.45) {
+      if (p.leg[2] < 0 && length > 3 && p.dir === p.lastBlockedDir) p.way = -1;
+      if (p.way >= 0) {
+        if (p.leg[2] < 0) p.lastBlockedDir = p.dir;
+        else p.lastBlockedDir = null;
+        advancePed(p);
+      }
+      return;
+    }
+    const onAsphalt = p.leg[2] > 0 && pedOnRoad(p.x, p.z);
+    p.crossing = onAsphalt;
+    sp = onAsphalt ? 3.5 : p.speed;
   } else {
     sp = 0;
     tx = p.x;
@@ -219,10 +307,11 @@ function updatePedsEach(p, dt) {
   let dx = tx - p.x,
     dz = tz - p.z;
   const L = Math.hypot(dx, dz);
-  if (p.talk > 0) {
+  if (p.crossing || p.flee > 0) p.talk = 0;
+  else if (p.talk > 0) {
     p.talk -= dt;
     sp = 0;
-  } else if (p.flee <= 0 && Math.random() < 0.0007) p.talk = rnd(2, 6);
+  } else if (Math.random() < 0.0007) p.talk = rnd(2, 6);
   let mv = 0;
   const ox = p.x,
     oz = p.z;
@@ -235,6 +324,15 @@ function updatePedsEach(p, dt) {
     p.z += dz * sp * dt;
   }
   updatePedsEachPart3(dp, p);
+  if (
+    (p.flee > 0 || p.crossing || Math.hypot(p.x - ox, p.z - oz) > mv * dt + 0.05) &&
+    pedOnRoad(p.x, p.z, pedestrianFastRoad) &&
+    !pedOnRoad(ox, oz, pedestrianFastRoad)
+  ) {
+    p.x = ox;
+    p.z = oz;
+    p.leg = null;
+  }
   // walking into a wall? (moving much less than intended) → step towards the middle of the way, then turn round, then give up
   if (mv > 0 && dt > 0) {
     const real = Math.hypot(p.x - ox, p.z - oz);
@@ -247,15 +345,12 @@ function updatePedsEach(p, dt) {
     if (p.flee > 0) {
       const a = Math.atan2(p.x - p.fleeFrom[0], p.z - p.fleeFrom[1]) + (Math.random() < 0.5 ? 1.3 : -1.3);
       p.fleeFrom = [p.x - Math.sin(a) * 5, p.z - Math.cos(a) * 5];
-    } else if (p.way >= 0 && Math.abs(p.off) > 0.5 && p.strikes < 3) p.off *= 0.35;
-    else if (p.way >= 0) {
-      const W = PEDWAYS[p.way],
-        j = p.seg + p.dir;
-      if (j >= 0 && j < W.c.length / 2) {
-        p.seg = j;
-        p.dir = -p.dir;
-      }
-      p.off = 0;
+    } else if (p.way >= 0) {
+      const W = PEDWAYS[p.way];
+      if (W.road && p.strikes < 3) p.off += Math.sign(p.off) * 0.35;
+      else p.dir = -p.dir;
+      p.leg = null;
+      p.crossRoute = null;
     }
     if (p.strikes >= 5) {
       if (dp > 35) {
@@ -291,14 +386,16 @@ function updatePedsEachPart3(dp, p) {
 /** (v1.1.7, code quality) part of updatePedsEach */
 function updatePedsEachPart2(p) {
   if (p.way < 0 && p.flee <= 0) {
-    const rd = ROADSEG.nearest(p.x, p.z);
-    if (rd) {
+    const rd = ROADSEG.nearest(p.x, p.z, isLivePedWay);
+    if (rd && rd.d < 12) {
       const w = RI2PW.has(rd.ri) ? RI2PW.get(rd.ri) : -1;
       if (w >= 0) {
         p.way = w;
         p.seg = rd.i / 2;
         p.dir = 1;
-        p.off = PEDWAYS[w].road ? PEDWAYS[w].w / 2 + 1.1 : 0;
+        const sign = Math.sign((p.z - rd.z) * rd.dx - (p.x - rd.x) * rd.dz) || 1;
+        p.off = PEDWAYS[w].road ? sign * (PEDWAYS[w].w / 2 + 1.1) : 0;
+        p.leg = null;
       }
     }
   }

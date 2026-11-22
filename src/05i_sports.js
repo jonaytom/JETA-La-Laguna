@@ -321,6 +321,7 @@ function buildSportsEach(a, sportsAreas, white, fenceMat, dark, orange) {
 // «haz vallas de campos y accesos a canchas»): the football pitches too (before only the small courts had a fence),
 // and the way in faces the street the pitch is reached from (before: always the same side, sometimes against a wall);
 // the big pitches get a second gate on the opposite side when there is room outside it.
+const SPORT_WALL_BOX = new THREE.BoxGeometry(1, 1, 1);
 let SPORT_WALL_MAT = null;
 function buildSportsEachPart3(area, F, fenceMat, cx, cz, sportsAreas) {
   if (sportsAreas.some((s2) => s2[1] >= 0 && /Francisco Peraza/.test(STR[s2[1]]) && pip(cx, cz, s2[2]))) return; // its own walls (05v_peraza.js)
@@ -379,6 +380,7 @@ function buildSportsEachPart3(area, F, fenceMat, cx, cz, sportsAreas) {
       break;
     }
   if (!gates.length) gates.push(order[0]);
+  const positions = [], uvs = [], indices = [];
   if (big && free((gates[0] + 2) % 4)) gates.push((gates[0] + 2) % 4);
   for (let i = 0; i < 4; i++) {
     const [ua, va] = cor[i],
@@ -401,7 +403,8 @@ function buildSportsEachPart3(area, F, fenceMat, cx, cz, sportsAreas) {
       for (let k = 0; k <= ns; k++) {
         const tt = a0 + ((a1 - a0) * k) / ns,
           q = F.W(ua + (ub - ua) * tt, va + (vb - va) * tt),
-          ok = !onCarriageway(q[0], q[1], 0.3);
+          y = heightAt(q[0], q[1]),
+          ok = !roadAtBarrier(q[0], q[1], y - 0.9, y + 3, 0.35);
         if (ok && r0 === null) r0 = tt;
         if ((!ok || tt >= a1) && r0 !== null) {
           if (tt - r0 > 0) segs.push([r0, ok ? tt : Math.max(r0, tt - (a1 - a0) / ns)]);
@@ -419,7 +422,8 @@ function buildSportsEachPart3(area, F, fenceMat, cx, cz, sportsAreas) {
         y0 = Math.min(heightAt(pa[0], pa[1]), heightAt(mx, mz), heightAt(pb[0], pb[1])),
         ry = Math.atan2(pb[0] - pa[0], pb[1] - pa[1]) + Math.PI / 2;
       // the low wall (a little into the ground, so it never floats on a slope)
-      const w = new THREE.Mesh(new THREE.BoxGeometry(L, wallH + 0.4, 0.22), SPORT_WALL_MAT);
+      const w = new THREE.Mesh(SPORT_WALL_BOX, SPORT_WALL_MAT);
+      w.scale.set(L, wallH + 0.4, 0.22);
       w.position.set(mx, y0 + (wallH - 0.4) / 2, mz);
       w.rotation.y = ry;
       w.castShadow = true;
@@ -427,27 +431,37 @@ function buildSportsEachPart3(area, F, fenceMat, cx, cz, sportsAreas) {
       scene.add(w);
       // the chain-link fence on it
       const fh = topH - wallH;
-      const fg = new THREE.PlaneGeometry(L, fh);
-      {
-        const uvA = fg.attributes.uv;
-        for (let q = 0; q < uvA.count; q++) uvA.setXY(q, (uvA.getX(q) * L) / 1.5, (uvA.getY(q) * fh) / 1.5);
+      const base = positions.length / 3;
+      const dx = Math.cos(ry) * L / 2, dz = -Math.sin(ry) * L / 2;
+      for (const y of [y0 + topH, y0 + wallH]) {
+        positions.push(mx - cx - dx, y, mz - cz - dz, mx - cx + dx, y, mz - cz + dz);
       }
-      const f = new THREE.Mesh(fg, fenceMat);
-      f.position.set(mx, y0 + wallH + fh / 2, mz);
-      f.rotation.y = ry;
-      scene.add(f);
-      COL.addSeg(pa[0], pa[1], pb[0], pb[1]);
+      uvs.push(0, fh / 1.5, L / 1.5, fh / 1.5, 0, 0, L / 1.5, 0);
+      indices.push(base, base + 2, base + 1, base + 2, base + 3, base + 1);
+      COL.addSeg(pa[0], pa[1], pb[0], pb[1], y0 - 0.5,
+                 Math.max(heightAt(pa[0],pa[1]),heightAt(pb[0],pb[1])) + 4, 'valla de cancha');
     }
     // the gate posts
     if (gates.includes(i))
       for (const t of [0.5 - g, 0.5 + g]) {
         const q = F.W(ua + (ub - ua) * t, va + (vb - va) * t);
         if (onCarriageway(q[0], q[1], 0.3)) continue;
-        const p = new THREE.Mesh(new THREE.BoxGeometry(0.3, topH + 0.3, 0.3), SPORT_WALL_MAT);
+        const p = new THREE.Mesh(SPORT_WALL_BOX, SPORT_WALL_MAT);
+        p.scale.set(0.3, topH + 0.3, 0.3);
         p.position.set(q[0], heightAt(q[0], q[1]) + topH / 2 - 0.1, q[1]);
         scene.add(p);
         COL.addCirc(q[0], q[1], 0.2);
       }
+  }
+  if (indices.length) {
+    const net = new THREE.BufferGeometry();
+    net.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    net.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    net.setIndex(indices);
+    net.computeVertexNormals();
+    const mesh = new THREE.Mesh(net, fenceMat);
+    mesh.position.set(cx, 0, cz);
+    scene.add(mesh);
   }
 }
 /** (v1.1.7, code quality) part of buildSportsEach: goals */

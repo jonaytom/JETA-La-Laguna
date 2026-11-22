@@ -26,14 +26,14 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.23</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.41</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
 <a href="#s3">3. Mundo 3D</a>
 <a href="#s4">4. Personajes, vehículos, tráfico y colisiones</a>
 <a href="#s5">5. Jugabilidad</a>
-<a href="#s6">6. Audio y radio procedural</a>
+<a href="#s6">6. Audio y radio</a>
 <a href="#s7">Pruebas</a>
 <a href="#s8">8. Versiones y publicación en GitHub</a>
 <a href="#s9">9. Licencias y créditos</a>
@@ -630,6 +630,7 @@ después <code>merge_zona.py lacuesta</code> y <code>merge_zona.py taco</code> (
 <p>Nota: texturas, modelos y materiales descritos aquí son <strong>provisionales</strong> (ver <code>10_assets.md</code>); lo que es
 definitivo es la lógica de construcción (geometría a partir del mapa, colocación, colisiones).</p>
 </blockquote>
+<p>Las vallas y los quitamiedos se recortan contra el ancho de la calzada a su altura efectiva, incluidos los carriles auxiliares. La mediana de San Antonio se dibuja como pintura y los cobertizos que aún invaden un carril de vía rápida se descartan antes de crear sus colisiones.</p>
 <h2>Terreno (<code>buildTerrain</code>, <code>04_world.js</code>)</h2>
 <ul>
 <li>Malla regular a partir de <code>DATA.H</code> (16 m por celda). <code>heightAt(x, z)</code> usa <strong>la misma triangulación</strong> (diagonal de
@@ -863,9 +864,10 @@ altura sin enlace y estructuras metidas en carriles. Ver <code>docs/07_pruebas.m
   hay que marcarlo <code>noMerge</code> o ponerle nombre a su grupo.</li>
 <li><code>splitInstanced()</code>: las mallas instanciadas grandes del nivel superior (árboles, farolas, postes del tranvía, señales,
   mobiliario de plazas) se parten por celda de 250 m: antes eran una para toda la ciudad y se pintaban enteras.</li>
-<li><code>updateCityLOD()</code> (al moverse la cámara 12 m; también en <code>__snap</code>): lo que queda más allá de la niebla no se pinta; el
-  detalle (molduras <code>trim</code>, balcones, madera, rótulos de los trozos de ciudad y las piezas pequeñas) solo hasta
-  <code>min(niebla, 230 + niebla/4)</code>; las copas de laurel y de árbol genérico a más de 170 m usan una copa de 20 triángulos.</li>
+<li><code>updateCityLOD()</code> se actualiza al moverse la cámara 12 m o cambiar la niebla. Prueba juntas las mallas estáticas
+  de cada celda de 250 m y revisa una a una las que cruzan un límite de visibilidad. Se mantienen las distancias
+  del detalle y los 170 m de la copa ligera. Con cielo despejado, la niebla de la ciudad termina a 1.075 m en alta
+  y a 755 m en media. La escena de montañas y cielo conserva su propia niebla y distancia.</li>
 <li>Coches aparcados: una <code>InstancedMesh</code> por modelo y celda de 800 m (<code>buildParked</code>), color de pintura por coche
   (atributo <code>aPaint</code> en el shader); al llevarte uno, su instancia se encoge a 0.</li>
 <li>En las pruebas (<code>navigator.webdriver</code>) se guardan las piezas originales: <code>__dbg.unfuse(true)</code> las vuelve a poner para
@@ -910,12 +912,18 @@ altura sin enlace y estructuras metidas en carriles. Ver <code>docs/07_pruebas.m
 <li>Prueba: <code>prueba_078.py</code>. Recorre andando todo el pasaje, comprueba la cámara bajo el techo y baja por la escalera de
   la derecha hasta la salida de El Juego mirando la altura en cada paso. Saca fotos dentro, del patio desde el rellano y
   desde abajo, de la galería baja y de la salida.</li>
-</ul></section>
+</ul>
+<h3>Agrupación de edificios singulares (v1.4.29)</h3>
+<p>Los constructores de los grupos estáticos compatibles marcan su raíz con <code>batchLandmark</code>. El optimizador combina las
+mallas opacas compatibles por padre, material, celda, orden de dibujo y propiedades de sombra. La geometría agrupada
+sigue dentro del mismo padre y conserva sus triángulos. Las colisiones, las piezas con lógica propia y las
+transparencias conservan su recorrido habitual. La resolución y el filtrado de las sombras mantienen sus valores.</p></section>
 <section id="s4"><div class="src">docs/04_personajes_y_vehiculos.md</div><h1>4. Personajes, vehículos, tráfico y colisiones</h1>
 <blockquote>
 <p>Nota: texturas, modelos y materiales descritos aquí son <strong>provisionales</strong> (ver <code>10_assets.md</code>); lo que es
 definitivo es la lógica de construcción (geometría a partir del mapa, colocación, colisiones).</p>
 </blockquote>
+<p>Los garajes subterráneos usan el mismo catálogo y acceso que los aparcamientos de superficie, con comprobación de altura. La malla intermedia de los coches aparcados combina la carrocería lejana con sus llantas detalladas. Los peatones evitan las vías rápidas y prefieren los pasos pintados cuando conectan las aceras.</p>
 <h2>Humanos (<code>06a_humans.js</code>)</h2>
 <ul>
 <li>Modelos: <strong>Quaternius Universal Base Characters</strong> (cuerpo masculino y femenino con esqueleto tipo Unreal:
@@ -969,10 +977,13 @@ definitivo es la lógica de construcción (geometría a partir del mapa, colocac
 </li>
 <li>Luces traseras, matrícula, franjas y rótulos (Policía Local, taxi, empresas) se colocan <strong>sobre la carrocería</strong>
   muestreando la geometría (<code>halfW</code>), no sobre un rectángulo teórico.</li>
-<li><code>Car</code>: física simple de coche con agarre, derrape, aceleración limitada por potencia y resistencia ajustada a
-  la velocidad máxima de cada categoría (<code>TOP_BY_CAT</code>, 100–200 km/h). Pasos fijos de 1/90 s.</li>
-<li>Aceleración global <code>CAR_ACCEL = 0,85</code> (la punta no cambia: la resistencia escala con la aceleración). Dirección:
-  giro máximo <code>0,56 / (1 + v/13)</code> rad, alcanzado con un suavizado de <code>dt·5,5</code>.</li>
+<li><code>Car</code>: agarre, derrape, aceleración limitada por potencia y resistencia. Punta nominal y aceleración de salida
+  se toman del modelo, la categoría o el tipo de chasis, en ese orden. El Linguini Reventon tiene 270 km/h nominales,
+  el MP YOU 187, el Seta 128 132 y el Antonias Basurón 82. La pendiente y la resistencia afectan a la velocidad real.</li>
+<li>Pasos fijos de 1/90 s. El giro máximo es de <code>0,56 / (1 + v/13)</code> rad y se alcanza con un suavizado de <code>dt·5,5</code>.</li>
+<li>Los 21 tonos civiles se aplican a la carrocería en ambas mallas, en movimiento y aparcados. El blanco pesa un 4,5 % y
+  los vehículos de servicio usan su librea fija. El MP YOU usa la malla aprobada de 13.887 triángulos y una de 1.721 de lejos.
+  El Clever OneTwo conserva su célula plateada y 14.845 triángulos de cerca, con 2.222 en la malla lejana.</li>
 <li><strong>Inclinación</strong>: altura del suelo en 4 puntos (delante, detrás, izquierda, derecha) → cabeceo y alabeo; así las 4
   ruedas apoyan en calles con mucha pendiente lateral (<code>tests/prueba_peralte.py</code>).</li>
 <li><strong>Freno de mano</strong> (v0.54, Espacio / botón FRENO MANO): bloquea las ruedas traseras: frena (~0,5 g, y sujeta el coche
@@ -983,6 +994,7 @@ definitivo es la lógica de construcción (geometría a partir del mapa, colocac
   Escalón máximo al subir a un tablero: ~0,35 m más lo que sube el propio tablero en el trozo que mira el coche
   (<code>deckAt(..., slack)</code>); así no se sube a una rampa vecina más alta que solo se solapa por el borde (v0.50).</li>
 <li>Coches aparcados: instanciados a baja resolución y convertidos en <code>Car</code> real al interactuar.</li>
+<li><strong>Modelos revisados (v1.4.38)</strong>. Doce carrocerías y sus llantas usan mallas de Blender para cerca y lejos. El techo negro del C33 es un acabado fijo y la chapa conserva el color que le asigna el juego.</li>
 <li><strong>Memoria (v0.52, auditoría P0.a)</strong>: las piezas de los vehículos se crean una vez y se comparten (<code>shGeo</code>, <code>shBox</code>,
   <code>shMat</code>, <code>sharedText</code>, geometría por modelo en <code>VGEO</code>; marcadas con <code>userData.shared</code>). Un coche que deja la escena
   vuelve a <code>CARPOOL</code> (hasta 6 por modelo); si está destrozado o el grupo está lleno, <code>disposeCarMesh</code> libera su pintura
@@ -994,6 +1006,8 @@ definitivo es la lógica de construcción (geometría a partir del mapa, colocac
   cuentan como más cortas).</li>
 <li>Los coches IA siguen aristas con un desplazamiento de carril (<code>laneOff</code>), frenan en curvas, en STOP / ceda el
   paso y detrás de otros coches.</li>
+<li>Los modelos activos conservan su orden de frecuencia con un margen más estrecho. Los pesos cero siguen reservados
+  para las mallas lejanas y las apariciones especiales. Los camiones y furgones pesados salen más en vías principales.</li>
 <li>Tranvía: recorre <code>DATA.T</code> con paradas (<code>05l_tramstops.js</code>).</li>
 </ul>
 <h2>Peatones (<code>09_peds.js</code>)</h2>
@@ -1020,7 +1034,9 @@ definitivo es la lógica de construcción (geometría a partir del mapa, colocac
   con árboles, farolas, pilas ni medianas que hay debajo. Los círculos sin rango usan por defecto
   [suelo − 1, suelo + 3,4] (troncos, postes).</li>
 <li><code>COL.resolve(x, z, r)</code> empuja un círculo fuera de los obstáculos; <code>COL.raycast</code> para líneas de visión.</li>
-</ul></section>
+</ul>
+<p>Los faros delanteros de los coches propios se encienden al oscurecer cuando el vehículo está ocupado. El material de
+la carrocería ilumina las caras de las ópticas originales. El haz del vehículo del jugador ilumina la calzada por separado.</p></section>
 <section id="s5"><div class="src">docs/05_jugabilidad.md</div><h1>5. Jugabilidad</h1>
 <h2>Misiones (<code>12_missions.js</code>)</h2>
 <h3>Estructura</h3>
@@ -1048,13 +1064,15 @@ definitivo es la lógica de construcción (geometría a partir del mapa, colocac
 <li>Diálogos: <code>talk([[quién, texto], …], alTerminar)</code> muestra subtítulos que <strong>solo avanzan con clic / toque /
   Espacio / Enter</strong>; <code>DLG.show(quién, título, texto, pregunta, opciones, cb)</code> abre un cuadro con opciones
   (teclas 1–9).</li>
-<li>Historia actual: Vuelta al barrio (El Blanco) → Boca Papa → Una botella para Coco → El Canarión (carrera) →
-  Sastrón (pagar 2500 $ + tutorial de pelea) → La firma de la banda (nombre) → Boca Papa te enseña a comer →
-  El campo de tiro de El Blanco (pistola) → <strong>Defensores de La Laguna</strong> (v0.56, <code>12f_story2.js</code>) → mundo libre.
-  Secundaria: Revancha con el Canarión.</li>
+<li>Prólogo: El Blanco → Boca Papa en La Concepción → Coco junto al Café Brasilito → Sastrón en la calle el Juego →
+  firma de la banda y tutorial de comida junto a La Trinidad. La carrera opcional del Canarión sale de la avenida,
+  termina cerca de Sastrón y paga 2.500 €. Después vienen el campo de tiro, el atraco y el resto de la historia.</li>
+<li>En cada cadena, situar los encuentros en orden geográfico cuando lo permita la historia. Elegir la meta de
+  carreras y huidas pensando en el inicio de la siguiente misión o en el lugar al que toca entregar algo. Probar
+  las rutas de reserva con el mismo criterio.</li>
 <li><strong>Defensores de La Laguna</strong> (<code>12f_story2.js</code>, se añaden con <code>MISSIONS.addStory()</code> usando las herramientas de
   <code>MISSIONS.kit</code>): la pistola es de <strong>bolas de plástico de aire comprimido</strong> (<code>WEAPON.lawful</code>: disparar no es delito
-  durante estas misiones). Atraco en la farmacia (pelea 2D; el segundo ladrón roba un coche negro aparcado junto a un Tollota Corola que coges tú; persecución hasta X −1548 Z −693, luego huye a pie por el camino de tierra hasta el Camino Tornero, X −1696 Z −883: dos tiros de bolas y se pone a llorar, lo agarras) →
+  durante estas misiones). Atraco en la farmacia (pelea 2D; el segundo ladrón roba un coche negro aparcado junto a un Tollota Corola que coges tú; persecución en coche hasta el aparcamiento abierto de Las Quinteras y huida a pie por los pasillos próximos al Ayuntamiento. Hace falta apuntar antes de disparar. Dos tiros de bolas y se rinde) →
   Defensores de La Laguna (ceremonia en el Ayuntamiento: el alcalde <strong>Don Yovoy Gofiérrez</strong>, bigote y traje negro,
   nombra a la banda grupo especial de la Policía Local; <code>GANG.defenders</code>) → El carterista del Cristo (Coco) →
   Baches en la Vía de Ronda (alcalde; camión, 5 puntos, 4 min) → El rally de La Esperanza (Canarión; carrera contra
@@ -1066,8 +1084,8 @@ definitivo es la lógica de construcción (geometría a partir del mapa, colocac
   (<code>s2Path</code>/<code>s2DriveCar</code>, cinemáticos como el del Canarión); los que huyen a pie, <code>s2Runner</code> con <code>s2RunPath</code> (sale de
   donde está, lejos del jugador, por <code>WALKG</code>; nunca se mueve más de 1,8 × su velocidad por paso). <code>s2Mark(o, s)</code>: flecha
   roja sobre el perseguido unos segundos y punto rojo en los mapas (<code>s2Blips</code>) mientras dura la persecución.</li>
-<li>NPCs de la banda (<code>NPC.blanco</code>, <code>boca</code>, <code>coco</code>, <code>sastron</code>, <code>canarion</code>): Coco y Sastrón aparecen en dos sitios
-  emblemáticos del casco elegidos al azar en cada partida.</li>
+<li>NPCs de la banda (<code>NPC.blanco</code>, <code>boca</code>, <code>coco</code>, <code>sastron</code>, <code>canarion</code>): los puntos del prólogo son fijos y
+  se ajustan a lugares accesibles junto a los objetivos.</li>
 </ul>
 <h2>GPS y mapa (<code>11_hud.js</code>)</h2>
 <ul>
@@ -1332,10 +1350,23 @@ Las partidas v1 (con el Canarión dentro de la historia) se convierten al cargar
   (la 5 pide el rifle: campo <code>requires()</code> de una misión) y pista <code>carreras</code> (cian <code>#00e5ff</code>, abre tras el rally).
   Ayudas: <code>k3Fires</code> (fuegos marcados en rojo en el mapa), <code>k3SoakTarget</code> (mojar a alguien N veces), <code>k3RaceStart</code> /
   <code>k3RaceUpdate</code> (carrera con rivales en <code>s2DriveCar</code>, controles y ruta adelantada).</li>
-</ul></section>
-<section id="s6"><div class="src">docs/06_audio.md</div><h1>6. Audio y radio procedural</h1>
-<p>Todo el sonido se <strong>sintetiza en tiempo real</strong> con Web Audio: no hay archivos de audio. Es una solución
-<strong>provisional</strong>: el proyecto de assets podrá aportar efectos, música y voces grabadas (ver <code>10_assets.md</code>).</p>
+</ul>
+<h2>Xbox y móvil</h2>
+<p>Con mando Xbox, el stick izquierdo mueve o gira y el derecho mira. A salta o aplica el freno de mano, X interactúa,
+Y entra o sale del coche y el botón Menú abre la pausa. A pie, LT apunta, RT dispara con el arma apuntada y RB golpea.
+Al volante, RT acelera, LT frena o da marcha atrás, LB toca el claxon, RB cambia de emisora y la cruceta izquierda y
+derecha seleccionan canciones. La cruceta abajo endereza el coche, y arriba abre el diario. Vista abre el GPS.
+El menú Controles enumera las asignaciones y la ayuda de cada minijuego se adapta al dispositivo conectado.</p>
+<p>En móvil, Usar abre puertas, tiendas y recreativas. Entrar y Salir quedan para el vehículo. Los botones de la radio
+cambian de emisora o canción. Tocar el indicador de arma cambia la que está equipada. Dentro del vehículo el indicador se oculta y se muestra la radio. El mando de minijuegos muestra
+acciones A, B y C, pausa y, donde está disponible, Atrás.</p>
+<h2>Leyenda del mapa</h2>
+<p>El mapa general agrupa la leyenda en rutas y avisos, lugares y líneas de misión abiertas. La clave de lugares
+incluye el oso de las jugueterías, las entradas que se ven al hacer zoom, la comida, Bencomo, los bares con GUFO,
+la inmobiliaria y las viviendas. Los iconos desbloqueables solo se dibujan en el mapa cuando están disponibles.
+En móvil, toca Leyenda para desplegarla.</p></section>
+<section id="s6"><div class="src">docs/06_audio.md</div><h1>6. Audio y radio</h1>
+<p>Los efectos se sintetizan con Web Audio. Las tres emisoras reproducen canciones en MP3 desde la v1.4.31.</p>
 <h2>Efectos (<code>10_audio.js</code>, objeto <code>AUDIO</code>)</h2>
 <ul>
 <li>Se inicializa con el primer clic (los navegadores no dejan sonar audio antes).</li>
@@ -1350,6 +1381,7 @@ Las partidas v1 (con el Canarión dentro de la historia) se convierten al cargar
 <h2>Pasos (<code>10c_steps.js</code>, objeto <code>STEPS</code> y función <code>footContacts</code>)</h2>
 <ul>
 <li><strong>Muestras pre-generadas</strong> al iniciar el audio (60 <code>AudioBuffer</code>): 5 suelos × 2 ritmos × 6 variantes.</li>
+<li>Asfalto y acera usan el perfil de zapatilla suave elegido en la v1.4.37. Las pisadas se reproducen con la mitad de ganancia.</li>
 <li>Cada paso son <strong>dos impactos</strong>: talón y, 75–105 ms después, la punta (al correr casi juntos y más fuertes).</li>
 <li>Cada impacto = <strong>modos resonantes amortiguados</strong> (suela + suelo), un <strong>clic</strong> de ruido filtrado y
     <strong>arenilla</strong> (micro-clics); además un <strong>roce</strong> de suela.</li>
@@ -1367,7 +1399,9 @@ Las partidas v1 (con el Canarión dentro de la historia) se convierten al cargar
   distancia recorrida (0,75 m andando, 1,15 m corriendo).</li>
 </ul>
 <h2>Radio (<code>10b_music.js</code>, objeto <code>MUSIC</code>)</h2>
-<p>Se enciende al subir a un coche. <code>Q</code> (o tocar el velocímetro) cambia de emisora:</p>
+<p>Se enciende al subir a un coche. <code>Q</code> o tocar el velocímetro cambia de emisora. Con el ratón capturado,
+el clic izquierdo vuelve al tema anterior y el derecho pasa al siguiente. El volumen se ajusta en Música (radio)
+en las opciones de pausa. La rueda sigue ajustando el zoom.</p>
 <table>
 <thead>
 <tr>
@@ -1380,21 +1414,21 @@ Las partidas v1 (con el Canarión dentro de la historia) se convierten al cargar
 <tbody>
 <tr>
 <td>Gofio FM 90.1</td>
-<td>boom bap de los 90 (piano, contrabajo, scratches)</td>
-<td>88</td>
-<td>0,16</td>
+<td>Hip hop de los 90 y 2000 en inglés, siete canciones</td>
+<td>—</td>
+<td>—</td>
 </tr>
 <tr>
 <td>Radio Aguere 96.6</td>
-<td>G-funk (silbido con portamento, bajo sintetizado, colchón)</td>
-<td>94</td>
-<td>0,10</td>
+<td>Reggaetón en español, siete canciones</td>
+<td>—</td>
+<td>—</td>
 </tr>
 <tr>
 <td>Mojo Picón 102.3</td>
-<td>rap duro (metales, caja seca)</td>
-<td>97</td>
-<td>0,06</td>
+<td>Trap, cuatro canciones</td>
+<td>—</td>
+<td>—</td>
 </tr>
 <tr>
 <td>Radio apagada</td>
@@ -1404,7 +1438,11 @@ Las partidas v1 (con el Canarión dentro de la historia) se convierten al cargar
 </tr>
 </tbody>
 </table>
-<h3>Cómo se genera una canción</h3>
+<p>El HUD encima del arma muestra la emisora y el tema. Las listas de las tres emisoras están en <code>data/radio.json</code>.
+Los originales se guardan en <code>Musica Original/R&amp;B</code> (Gofio FM), <code>Musica Original/Reggaeton</code> (Radio Aguere) y
+<code>Musica Original/Trap</code> (Mojo Picón). Las copias MP3 a 128 kbps en estéreo están en <code>assets/radio/</code>. El reproductor carga
+cada archivo cuando le toca. La salida web y el juego local incluyen la carpeta <code>radio/</code> junto al HTML.</p>
+<h3>Generador procedural anterior</h3>
 <ul>
 <li><code>makeSong(estilo)</code> con una semilla aleatoria: tónica (La2–Re#3), escala menor, progresión de 4 acordes según el
   estilo, patrones de 16 pasos de bombo/caja/charles, línea de bajo, ritmo de acordes y un motivo melódico.</li>
@@ -2120,6 +2158,122 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.4.41 — 2026-11-22 — Alpha 1.4.41: Linguini Gold Edition, autopista sin golpes invisibles y Niza Nano nuevo</h2>
+<ul>
+<li><strong>El golpe invisible de la Autopista del Norte</strong> (X 1898, Y 3225, a 300 km/h «estás muerto»): donde una rampa va pegada a la autopista, el morro del coche quedaba más cerca del tablero de la rampa y su baranda lo frenaba en seco (un golpe de 75 m/s). Ahora cada tablero solo sujeta al coche que va encima de él.</li>
+<li><strong>Menos giro a gran velocidad</strong>: el volante nunca gira más de lo que aguantan las ruedas (unos 15 m/s² de lado). En ciudad se nota poco; a 300 km/h la curva más cerrada tiene unos 460 m de radio. El freno de mano sigue dejando cruzar la cola.</li>
+<li><strong>Peatones fuera de los puentes</strong>: nadie camina ya por puentes, calles elevadas ni calles hundidas en trinchera (se les ponía a la altura del suelo de debajo y parecían andar por el aire).</li>
+<li><strong>C. Tacoronte 67 (Finca España)</strong>: la casa recreada con las fotos de Jonay. Tiene cuatro plantas color melocotón, balcones volados con balaustrada blanca, zócalo de granito, puerta blanca con el 67, ventana con reja de forja y jardinera, y un murete con balaustrada y pilares con bolas. Se abre un hueco en el bloque del OSM. Delante no aparcan coches ni crecen matas.</li>
+<li><strong>Linguini Gold Edition</strong>, el coche secreto: el Reventón en oro pulido y un 10 % más rápido (297 km/h). Espera en el garaje de la casa. El botón junto al portón lo abre y lo cierra (el portón seccional sube y se recoge bajo el techo). Si se deja lejos, vuelve solo a su garaje.</li>
+<li><strong>Niza Nano</strong> rehecho con la librería nueva (aprobado por Jonay): malla nueva de cerca y de lejos y medidas del Micra real.</li>
+<li><strong>Créditos</strong> de la pantalla inicial y <code>CREDITOS.md</code> al día: fuera Kenney (no queda ningún modelo suyo desde la v1.4.21). Se añaden el Catastro, Mapillary, el MDT05 del IGN, Poly Haven, three.js y las tipografías. La música es original de Jonay, hecha con Suno.</li>
+</ul>
+<h2>1.4.40 — 2026-11-21 — Alpha 1.4.40: límite de 60 FPS</h2>
+<ul>
+<li>El render del mundo 3D y de los minijuegos queda limitado a 60 FPS también en monitores de alta frecuencia. Las simulaciones mantienen sus pasos de tiempo.</li>
+</ul>
+<h2>1.4.39 — 2026-11-21 — Alpha 1.4.39: Reventón, calzadas y garajes</h2>
+<ul>
+<li>Linguini Reventón híbrido con el capó corregido, las ópticas a ras y las llantas aprobadas. La malla lejana conserva su perfil de juego.</li>
+<li>Las vallas, quitamiedos y pretiles de trinchera comprueban la calzada y los carriles auxiliares a la altura que corresponde. Se despeja el cruce de la avenida de los Menceyes y la auditoría busca barreras lineales también después de construir el mapa. San Antonio lleva una marca plana sin colisión y se descartan construcciones auxiliares pequeñas que aún entran en una vía rápida.</li>
+<li>Los coches aparcados en los garajes subterráneos se eligen del catálogo y se pueden conducir. El acceso distingue la planta del vehículo. Los aparcados conservan sus llantas detalladas a media distancia y se amplía la distancia de los detalles del escenario.</li>
+<li>Los peatones usan arcenes exteriores y aceras, cruzan deprisa y evitan autopistas y enlaces. Los avisos de zona peatonal se limitan a las calles peatonales del casco, plazas y canchas.</li>
+<li>El diario permite seguir una misión en curso o la siguiente de una línea y dibuja su ruta con su color en el mapa y minimapa. Reiniciar queda disponible en las misiones completadas.</li>
+<li>Los peatones que reciben un chorro de agua tienen frases distintas. La mitad huye y la otra mitad persigue al jugador y puede iniciar la pelea 2D si lo alcanza.</li>
+<li>Las luces de freno suben de intensidad conservando el rojo de la óptica.</li>
+<li>Las paradas siguen la curva y el desnivel de la vía, las rampas se apoyan en el suelo y el cebreado amarillo de Pedro Zerolo queda por encima de la plataforma. Se descartan plazas de aparcamiento cuyo vehículo invadiría las vías a nivel de calle. Los contenedores de Teobaldo Power se colocan en la acera con espacio para toda la caja.</li>
+</ul>
+<h2>1.4.38 — 2026-11-21 — Alpha 1.4.38: doce coches y sus llantas revisadas</h2>
+<ul>
+<li>Nuevas mallas activas de Troceen C33, JTM Capítulo 3, Yoos Cartabón, Pancho Teypan, Piki Crocante, Totuya Yaiza Cross, Guanchazen Helado, Totuya Carlota, Newton Style 3, Martini Hubli, Fierilla 440 y Seta Gomera.</li>
+<li>Las llantas de estos modelos llevan diseños propios y centros lisos. El aro y el neumático de cerca comparten la misma resolución circular. Sus ruedas mantienen las proporciones de Blender en tráfico, aparcadas y al conducir. Cada coche tiene una malla detallada y otra para la distancia.</li>
+<li>El C33 lleva techo negro fijo, barras, llantas de seis huecos y ópticas enrasadas.</li>
+</ul>
+<h2>1.4.37 — 2026-11-20 — Alpha 1.4.37: faros visibles y pisadas más suaves</h2>
+<ul>
+<li>Los faros delanteros de los coches de Blender emiten luz cuando oscurece. Se iluminan sus propias superficies con el material de la carrocería.</li>
+<li>Las pisadas de asfalto usan la muestra A elegida por Jonay. El resto de los suelos conserva su carácter con menos agudos. Las pisadas al caminar y correr se reproducen con la mitad de ganancia.</li>
+</ul>
+<h2>1.4.36 — 2026-11-20 — Alpha 1.4.36: leyenda del mapa y HUD al conducir</h2>
+<ul>
+<li>La leyenda del mapa identifica las jugueterías, entradas, casas y sitios con recreativas. Distingue las rutas del GPS, los objetivos, los controles y los fugitivos.</li>
+<li>La leyenda se puede plegar. En móvil abre plegada para dejar libre el mapa y la ayuda explica los gestos táctiles.</li>
+<li>El indicador de arma se oculta al subir a un vehículo y reaparece al salir. La radio queda libre de cruces.</li>
+</ul>
+<h2>1.4.35 — 2026-11-20 — Alpha 1.4.35: controles de Xbox, móvil y radio</h2>
+<ul>
+<li>Xbox usa los sticks para moverse y mirar, A para saltar o frenar de mano, X para usar y Y para entrar o salir. Los gatillos sirven para apuntar y disparar a pie, o frenar y acelerar en coche. Añade navegación en menús, diario y GPS.</li>
+<li>La radio muestra los clics anterior/siguiente y Q en PC, y los controles de cruceta y RB con mando. En móvil hay botones para ambas direcciones.</li>
+<li>
+<p>Móvil separa Usar de Entrar, añade acceso a la brújula y un botón Atrás en los minijuegos que permiten salir. Las guías de controles, deportes y recreativas muestran los botones del dispositivo.</p>
+</li>
+<li>
+<p>La salida del Canarión queda por delante de su coche en el sentido de La Trinidad. La cuenta atrás alinea a ambos coches con el trazado.</p>
+</li>
+</ul>
+<h2>1.4.34 — 2026-11-20 — Alpha 1.4.34: dos temas más en Mojo Picón</h2>
+<ul>
+<li>Mojo Picón suma Sin Piedad en el Radar y Llamada a Deshora. La emisora de trap tiene cuatro canciones.</li>
+</ul>
+<h2>1.4.33 — 2026-11-20 — Alpha 1.4.33: cambiar de canción al volante</h2>
+<ul>
+<li>Con el ratón capturado al conducir, el clic izquierdo vuelve al tema anterior y el derecho pasa al siguiente. Q cambia de emisora. La rueda mantiene el zoom y el volumen se ajusta en Opciones.</li>
+<li>Gofio FM añade Empty Seat y pasa a siete canciones.</li>
+</ul>
+<h2>1.4.32 — 2026-11-20 — Alpha 1.4.32: cinco temas más en Gofio FM</h2>
+<ul>
+<li>Gofio FM suma Broke &amp; Famous, Lowrider Breeze, No Brakes, No Favors y Still Running the Island. La emisora tiene seis canciones.</li>
+</ul>
+<h2>1.4.31 — 2026-11-20 — Alpha 1.4.31: canciones originales e indicador de la radio</h2>
+<ul>
+<li>Sobre el indicador del arma se muestran la emisora y el tema que suena. Los títulos largos se desplazan y el botón Cambiar muestra el atajo Q en PC.</li>
+<li>Las tres emisoras estrenan canciones originales: una de hip hop en Gofio FM, siete de reggaetón en Radio Aguere y dos de trap en Mojo Picón. Los MP3 se cargan al sintonizar la emisora y respetan los ajustes de volumen.</li>
+</ul>
+<h2>1.4.30 — 2026-11-20 — Alpha 1.4.30: pinos de Camino Tornero</h2>
+<ul>
+<li>Los pinos canarios recuperan la copa verde y la corteza marrón. La copa lejana lleva el mismo color.</li>
+<li>El exportador de Blender asigna estos colores al pino para conservarlos en futuras exportaciones.</li>
+</ul>
+<h2>1.4.29 — 2026-11-20 — Alpha 1.4.29: dibujo agrupado de monumentos</h2>
+<ul>
+<li>La Concepción, el barrio inicial, los edificios singulares y el aeropuerto pueden compartir una llamada de dibujo entre piezas estáticas opacas del mismo material y celda, dentro de su grupo original.</li>
+<li>Las piezas conservan sus triángulos, el orden de dibujo y las propiedades de sombra. Se mantienen la resolución y el filtrado de las sombras.</li>
+<li>En las vistas de prueba a 1080p, el estadio pasa de 509 a 501 llamadas de dibujo y el barrio inicial de 725 a 723. La Concepción y el aeropuerto ya agrupaban sus piezas compatibles.</li>
+</ul>
+<h2>1.4.28 — 2026-11-19 — Alpha 1.4.28: visibilidad de la ciudad por celdas</h2>
+<ul>
+<li>Se comprueba la distancia de grupos estáticos juntos y se vuelve a medir cada malla solo en los bordes o cuando cambia su visibilidad.</li>
+<li>La bruma de cielo despejado termina 75 m antes en alta y 45 m en media. El paisaje lejano, las sombras y los umbrales de detalle cercano conservan sus valores.</li>
+<li>El recorte de coches aparcados usa distancias al cuadrado y cambia la malla solo al cruzar el umbral existente.</li>
+</ul>
+<h2>1.4.27 — 2026-11-19 — Alpha 1.4.27: Clever OneTwo y huida por Las Quinteras</h2>
+<ul>
+<li>Clever OneTwo en calles y aparcamientos, con célula plateada y paneles repintables. 14.845 triángulos de cerca y 2.222 de lejos.</li>
+<li>Los coches civiles que circulan y los aparcados, también los de aparcamientos grandes, comparten 21 pinturas. El blanco baja a aproximadamente un 4,5 % de la paleta. Los servicios conservan su librea.</li>
+<li>Las presentaciones avanzan desde La Concepción hacia La Trinidad. Sastrón espera en la calle el Juego, allí se firma la banda y la carrera del Canarión acaba cerca con dinero suficiente para pagarle.</li>
+<li>El atraco en la farmacia termina en el aparcamiento abierto de Las Quinteras, a pocos minutos a pie del Ayuntamiento.</li>
+<li>El GPS permite dar la vuelta en calles normales si ahorra un rodeo, calcula las rutas directas en la misma calle y prefiere menos la autopista. Respeta el sentido en vías rápidas.</li>
+<li>GUFO, Bencomo y Guanche Guarriors guardan las iniciales antes de CONTINUE. La preparación de dibujos de peleas queda en el mundo y en la entrada; se pausa durante el combate.</li>
+<li>La pistola exige apuntar antes de disparar con el ratón o mediante los botones táctiles.</li>
+</ul>
+<h2>1.4.26 — 2026-11-19 — Alpha 1.4.26: MP YOU y variedad de vehículos</h2>
+<ul>
+<li>MP YOU de Blender, con 13.887 triángulos de cerca y 1.721 de lejos. Aparece aparcado y en circulación.</li>
+<li>17 colores para los vehículos civiles. El blanco baja al 9 % del sorteo de pintura y los servicios conservan su librea.</li>
+<li>Los pesos de aparición se acercan entre sí y hay más vehículos pesados en las vías principales.</li>
+<li>Velocidad punta y aceleración por categoría, con ajustes por modelo. El Linguini Reventon encabeza el catálogo y el Antonias Basurón es el automóvil más lento.</li>
+</ul>
+<h2>1.4.25 — 2026-11-19 — Alpha 1.4.25: seis cuadros de velocidad</h2>
+<ul>
+<li>Cada vehículo lleva un cuadro según su modelo: básico, de trabajo, urbano, todoterreno, de lujo o deportivo. Conservan el nombre, la lectura en km/h y el acceso a la radio.</li>
+</ul>
+<h2>1.4.24 — 2026-11-19 — Alpha 1.4.24: velocímetro, vallas deportivas y marcadores 2D</h2>
+<ul>
+<li>Persecuciones y carreras: los puntos intermedios en rectas ya no cierran las curvas. La carrocería y las ruedas del rival giran progresivamente al entrar en curva.</li>
+<li>A petición de Jonay, el velocímetro tiene esfera, aguja y lectura digital y nombre del vehículo junto al minimapa en PC. Se conserva el cambio de emisora al pulsarlo.</li>
+<li>Los muros y postes deportivos comparten una caja y la malla metálica se construye por recinto, conservando accesos y colisiones.</li>
+<li>GUFO reserva una fila para los créditos. Los minijuegos 2D arrancan al soltar el ratón y se pausan al salir de pantalla completa.</li>
+</ul>
 <h2>1.4.23 — 2026-11-17 — Alpha 1.4.23: el Torneo y la Copa recorren la ciudad hacia su final</h2>
 <ul>
 <li><strong>Revisión de por dónde llevan las misiones</strong> (Jonay, 17-nov): mapa de dónde empieza cada misión de cada línea

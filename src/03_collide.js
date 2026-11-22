@@ -20,13 +20,15 @@ const COL = (() => {
     a.push(id);
   }
   // optional vertical extent [y0, y1]: a query made at height Q.y (COL.qy) ignores obstacles it passes over or under
+  const segKind = new Map();
   const segY = [],
     circY = [];
   const Q = { y: null };
-  function addSeg(x1, z1, x2, z2, y0 = -1e9, y1 = 1e9) {
+  function addSeg(x1, z1, x2, z2, y0 = -1e9, y1 = 1e9, kind) {
     const id = segs.length / 4;
     segs.push(x1, z1, x2, z2);
     segY.push(y0, y1);
+    if (kind) segKind.set(id, kind);
     const i0 = Math.floor((Math.min(x1, x2) - gx0 - 1) / CS),
       i1 = Math.floor((Math.max(x1, x2) - gx0 + 1) / CS);
     const j0 = Math.floor((Math.min(z1, z2) - gz0 - 1) / CS),
@@ -198,6 +200,7 @@ const COL = (() => {
     circs,
     circY,
     segY,
+    segKind,
     set qy(v) {
       Q.y = v;
     },

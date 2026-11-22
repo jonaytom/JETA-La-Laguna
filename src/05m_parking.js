@@ -1,7 +1,7 @@
 // ============ underground car parks: Plaza del Cristo (under the big plaza, next to the market) and Avenida de La Trinidad ============
 // Each one: a hall (floor, ceiling, columns, bays, lights, parked cars) at about -4 m, vehicle ramps that you can drive
 // down from the street (open cutting + short covered mouth), and pedestrian stairwells with glass pavilions on the surface.
-const UGC = []; // underground obstacles [x, z, r] (columns, parked cars): only apply below ground
+const UGC = []; // Underground columns and other fixed obstacles [x, z, r, y].
 function ugcPush(x, z, r, y) {
   for (const c of UGC) {
     if (y !== undefined && c[3] !== undefined && Math.abs(y - c[3]) > 0.6) continue;
@@ -202,25 +202,14 @@ function buildHall(F, uc, L, yF, name, gaps, holes = [], o = {}) {
       if (u + bayW > uEnd + 0.01) continue;
       if (holes.some((h) => u + bayW > h[0] - 2 && u < h[1] + 2 && vc + 2.6 > h[2] && vc - 2.6 < h[3])) continue; // nobody parks under a stairwell
       if (Math.random() < dens) {
-        const m = makeCarMesh(pick(['compact', 'sedan', 'suv', 'compact']), pickColor());
-        const gg = m.g || m;
+        const model = parkedModel();
         const [x, z] = P(u + bayW / 2, vc);
-        const yy = yAt(u + bayW / 2);
-        gg.position.set(x, yy + 0.12, z);
-        gg.rotation.y = ang + (face > 0 ? Math.PI / 2 : -Math.PI / 2);
-        gg.userData.car = true;
-        gg.traverse((q) => {
-          if (q.isMesh) {
-            q.castShadow = false;
-            q.receiveShadow = false;
-          }
+        const floor = yAt(u + bayW / 2) + 0.12;
+        PARKED.slots.push({
+          x, z, floor, h: ang + (face > 0 ? Math.PI / 2 : -Math.PI / 2),
+          type: model ? model.id : 'compact', color: pickColor(model), alive: true
         });
-        g.add(gg);
         nCars++;
-        for (const k of [-1.3, 0, 1.3]) {
-          const [px, pz] = P(u + bayW / 2, vc + k);
-          UGC.push([px, pz, 0.95, yy, gg]);
-        }
       }
     }
   buildHallPart3(lines, M_, place, yAt, ang, hl, tilted);
@@ -257,7 +246,6 @@ function buildHallPart5(g, o, P, hl, yAt, W, hw, H) {
   const byMat = new Map();
   g.traverse((m) => {
     if (!m.isMesh || m.material.map) return;
-    for (let q = m.parent; q && q !== g; q = q.parent) if (q.userData.car) return;
     if (!byMat.has(m.material)) byMat.set(m.material, []);
     byMat.get(m.material).push(m);
   });
@@ -500,16 +488,10 @@ function buildStairwellPart2(x0, ux, z0, uz, x1, z1, ang, yF) {
       ex = x1 + ux * 4,
       ez = z1 + uz * 4,
       L2 = (ex - sx) ** 2 + (ez - sz) ** 2;
-    for (let i = UGC.length - 1; i >= 0; i--) {
-      const c = UGC[i];
-      if (c[3] === undefined || Math.abs(c[3] - yF) > 0.6 || !c[4]) continue;
-      const t = clamp(((c[0] - sx) * (ex - sx) + (c[1] - sz) * (ez - sz)) / L2, 0, 1);
-      if (Math.hypot(c[0] - sx - (ex - sx) * t, c[1] - sz - (ez - sz) * t) < 2.6) {
-        c[4].visible = false;
-        const m = c[4];
-        for (let j = UGC.length - 1; j >= 0; j--) if (UGC[j][4] === m) UGC.splice(j, 1);
-        i = Math.min(i, UGC.length);
-      }
+    for (const slot of PARKED.slots) {
+      if (slot.floor === undefined || Math.abs(slot.floor - yF) > 0.75) continue;
+      const t = clamp(((slot.x - sx) * (ex - sx) + (slot.z - sz) * (ez - sz)) / L2, 0, 1);
+      if (Math.hypot(slot.x - sx - (ex - sx) * t, slot.z - sz - (ez - sz) * t) < 4) slot.alive = false;
     }
   }
   TCUTS.push([x0 - ux * 0.3, z0 - uz * 0.3, x1 - ux * 2.5, z1 - uz * 2.5, 1.35, 9000 + TCUTS.length]);

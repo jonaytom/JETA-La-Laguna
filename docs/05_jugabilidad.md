@@ -28,13 +28,15 @@
 - Diálogos: `talk([[quién, texto], …], alTerminar)` muestra subtítulos que **solo avanzan con clic / toque /
   Espacio / Enter**; `DLG.show(quién, título, texto, pregunta, opciones, cb)` abre un cuadro con opciones
   (teclas 1–9).
-- Historia actual: Vuelta al barrio (El Blanco) → Boca Papa → Una botella para Coco → El Canarión (carrera) →
-  Sastrón (pagar 2500 $ + tutorial de pelea) → La firma de la banda (nombre) → Boca Papa te enseña a comer →
-  El campo de tiro de El Blanco (pistola) → **Defensores de La Laguna** (v0.56, `12f_story2.js`) → mundo libre.
-  Secundaria: Revancha con el Canarión.
+- Prólogo: El Blanco → Boca Papa en La Concepción → Coco junto al Café Brasilito → Sastrón en la calle el Juego →
+  firma de la banda y tutorial de comida junto a La Trinidad. La carrera opcional del Canarión sale de la avenida,
+  termina cerca de Sastrón y paga 2.500 €. Después vienen el campo de tiro, el atraco y el resto de la historia.
+- En cada cadena, situar los encuentros en orden geográfico cuando lo permita la historia. Elegir la meta de
+  carreras y huidas pensando en el inicio de la siguiente misión o en el lugar al que toca entregar algo. Probar
+  las rutas de reserva con el mismo criterio.
 - **Defensores de La Laguna** (`12f_story2.js`, se añaden con `MISSIONS.addStory()` usando las herramientas de
   `MISSIONS.kit`): la pistola es de **bolas de plástico de aire comprimido** (`WEAPON.lawful`: disparar no es delito
-  durante estas misiones). Atraco en la farmacia (pelea 2D; el segundo ladrón roba un coche negro aparcado junto a un Tollota Corola que coges tú; persecución hasta X −1548 Z −693, luego huye a pie por el camino de tierra hasta el Camino Tornero, X −1696 Z −883: dos tiros de bolas y se pone a llorar, lo agarras) →
+  durante estas misiones). Atraco en la farmacia (pelea 2D; el segundo ladrón roba un coche negro aparcado junto a un Tollota Corola que coges tú; persecución en coche hasta el aparcamiento abierto de Las Quinteras y huida a pie por los pasillos próximos al Ayuntamiento. Hace falta apuntar antes de disparar. Dos tiros de bolas y se rinde) →
   Defensores de La Laguna (ceremonia en el Ayuntamiento: el alcalde **Don Yovoy Gofiérrez**, bigote y traje negro,
   nombra a la banda grupo especial de la Policía Local; `GANG.defenders`) → El carterista del Cristo (Coco) →
   Baches en la Vía de Ronda (alcalde; camión, 5 puntos, 4 min) → El rally de La Esperanza (Canarión; carrera contra
@@ -46,8 +48,8 @@
   (`s2Path`/`s2DriveCar`, cinemáticos como el del Canarión); los que huyen a pie, `s2Runner` con `s2RunPath` (sale de
   donde está, lejos del jugador, por `WALKG`; nunca se mueve más de 1,8 × su velocidad por paso). `s2Mark(o, s)`: flecha
   roja sobre el perseguido unos segundos y punto rojo en los mapas (`s2Blips`) mientras dura la persecución.
-- NPCs de la banda (`NPC.blanco`, `boca`, `coco`, `sastron`, `canarion`): Coco y Sastrón aparecen en dos sitios
-  emblemáticos del casco elegidos al azar en cada partida.
+- NPCs de la banda (`NPC.blanco`, `boca`, `coco`, `sastron`, `canarion`): los puntos del prólogo son fijos y
+  se ajustan a lugares accesibles junto a los objetivos.
 
 ## GPS y mapa (`11_hud.js`)
 
@@ -314,3 +316,21 @@ Las partidas v1 (con el Canarión dentro de la historia) se convierten al cargar
   Ayudas: `k3Fires` (fuegos marcados en rojo en el mapa), `k3SoakTarget` (mojar a alguien N veces), `k3RaceStart` /
   `k3RaceUpdate` (carrera con rivales en `s2DriveCar`, controles y ruta adelantada).
 
+## Xbox y móvil
+
+Con mando Xbox, el stick izquierdo mueve o gira y el derecho mira. A salta o aplica el freno de mano, X interactúa,
+Y entra o sale del coche y el botón Menú abre la pausa. A pie, LT apunta, RT dispara con el arma apuntada y RB golpea.
+Al volante, RT acelera, LT frena o da marcha atrás, LB toca el claxon, RB cambia de emisora y la cruceta izquierda y
+derecha seleccionan canciones. La cruceta abajo endereza el coche, y arriba abre el diario. Vista abre el GPS.
+El menú Controles enumera las asignaciones y la ayuda de cada minijuego se adapta al dispositivo conectado.
+
+En móvil, Usar abre puertas, tiendas y recreativas. Entrar y Salir quedan para el vehículo. Los botones de la radio
+cambian de emisora o canción. Tocar el indicador de arma cambia la que está equipada. Dentro del vehículo el indicador se oculta y se muestra la radio. El mando de minijuegos muestra
+acciones A, B y C, pausa y, donde está disponible, Atrás.
+
+## Leyenda del mapa
+
+El mapa general agrupa la leyenda en rutas y avisos, lugares y líneas de misión abiertas. La clave de lugares
+incluye el oso de las jugueterías, las entradas que se ven al hacer zoom, la comida, Bencomo, los bares con GUFO,
+la inmobiliaria y las viviendas. Los iconos desbloqueables solo se dibujan en el mapa cuando están disponibles.
+En móvil, toca Leyenda para desplegarla.

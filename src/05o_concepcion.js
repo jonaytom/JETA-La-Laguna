@@ -884,6 +884,7 @@ function buildConcepcionPart2(ch, F, U) {
 /** (v1.1.7, code quality) part of buildConcepcion: outward normal convention (checked once) */
 function buildConcepcionPart1(root, ch) {
   root.name = 'La Concepción';
+  root.userData.batchLandmark = true;
   const pts = ch.pts;
   const n = pts.length;
   const F = axisFrame(pts, ch.cx, ch.cz);

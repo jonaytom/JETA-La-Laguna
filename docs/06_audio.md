@@ -1,7 +1,6 @@
-# 6. Audio y radio procedural
+# 6. Audio y radio
 
-Todo el sonido se **sintetiza en tiempo real** con Web Audio: no hay archivos de audio. Es una solución
-**provisional**: el proyecto de assets podrá aportar efectos, música y voces grabadas (ver `10_assets.md`).
+Los efectos se sintetizan con Web Audio. Las tres emisoras reproducen canciones en MP3 desde la v1.4.31.
 
 ## Efectos (`10_audio.js`, objeto `AUDIO`)
 
@@ -17,6 +16,7 @@ Todo el sonido se **sintetiza en tiempo real** con Web Audio: no hay archivos de
 ## Pasos (`10c_steps.js`, objeto `STEPS` y función `footContacts`)
 
 - **Muestras pre-generadas** al iniciar el audio (60 `AudioBuffer`): 5 suelos × 2 ritmos × 6 variantes.
+  - Asfalto y acera usan el perfil de zapatilla suave elegido en la v1.4.37. Las pisadas se reproducen con la mitad de ganancia.
   - Cada paso son **dos impactos**: talón y, 75–105 ms después, la punta (al correr casi juntos y más fuertes).
   - Cada impacto = **modos resonantes amortiguados** (suela + suelo), un **clic** de ruido filtrado y
     **arenilla** (micro-clics); además un **roce** de suela.
@@ -35,16 +35,23 @@ Todo el sonido se **sintetiza en tiempo real** con Web Audio: no hay archivos de
 
 ## Radio (`10b_music.js`, objeto `MUSIC`)
 
-Se enciende al subir a un coche. `Q` (o tocar el velocímetro) cambia de emisora:
+Se enciende al subir a un coche. `Q` o tocar el velocímetro cambia de emisora. Con el ratón capturado,
+el clic izquierdo vuelve al tema anterior y el derecho pasa al siguiente. El volumen se ajusta en Música (radio)
+en las opciones de pausa. La rueda sigue ajustando el zoom.
 
 | Emisora | Estilo | BPM | Swing |
 |---|---|---|---|
-| Gofio FM 90.1 | boom bap de los 90 (piano, contrabajo, scratches) | 88 | 0,16 |
-| Radio Aguere 96.6 | G-funk (silbido con portamento, bajo sintetizado, colchón) | 94 | 0,10 |
-| Mojo Picón 102.3 | rap duro (metales, caja seca) | 97 | 0,06 |
+| Gofio FM 90.1 | Hip hop de los 90 y 2000 en inglés, siete canciones | — | — |
+| Radio Aguere 96.6 | Reggaetón en español, siete canciones | — | — |
+| Mojo Picón 102.3 | Trap, cuatro canciones | — | — |
 | Radio apagada | — | | |
 
-### Cómo se genera una canción
+El HUD encima del arma muestra la emisora y el tema. Las listas de las tres emisoras están en `data/radio.json`.
+Los originales se guardan en `Musica Original/R&B` (Gofio FM), `Musica Original/Reggaeton` (Radio Aguere) y
+`Musica Original/Trap` (Mojo Picón). Las copias MP3 a 128 kbps en estéreo están en `assets/radio/`. El reproductor carga
+cada archivo cuando le toca. La salida web y el juego local incluyen la carpeta `radio/` junto al HTML.
+
+### Generador procedural anterior
 
 - `makeSong(estilo)` con una semilla aleatoria: tónica (La2–Re#3), escala menor, progresión de 4 acordes según el
   estilo, patrones de 16 pasos de bombo/caja/charles, línea de bajo, ritmo de acordes y un motivo melódico.

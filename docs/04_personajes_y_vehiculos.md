@@ -3,6 +3,8 @@
 > Nota: texturas, modelos y materiales descritos aquí son **provisionales** (ver `10_assets.md`); lo que es
 > definitivo es la lógica de construcción (geometría a partir del mapa, colocación, colisiones).
 
+Los garajes subterráneos usan el mismo catálogo y acceso que los aparcamientos de superficie, con comprobación de altura. La malla intermedia de los coches aparcados combina la carrocería lejana con sus llantas detalladas. Los peatones evitan las vías rápidas y prefieren los pasos pintados cuando conectan las aceras.
+
 ## Humanos (`06a_humans.js`)
 
 - Modelos: **Quaternius Universal Base Characters** (cuerpo masculino y femenino con esqueleto tipo Unreal:
@@ -53,10 +55,13 @@
   reales y se separa en carrocería pintable, cristal, resto y ruedas.
 - Luces traseras, matrícula, franjas y rótulos (Policía Local, taxi, empresas) se colocan **sobre la carrocería**
   muestreando la geometría (`halfW`), no sobre un rectángulo teórico.
-- `Car`: física simple de coche con agarre, derrape, aceleración limitada por potencia y resistencia ajustada a
-  la velocidad máxima de cada categoría (`TOP_BY_CAT`, 100–200 km/h). Pasos fijos de 1/90 s.
-- Aceleración global `CAR_ACCEL = 0,85` (la punta no cambia: la resistencia escala con la aceleración). Dirección:
-  giro máximo `0,56 / (1 + v/13)` rad, alcanzado con un suavizado de `dt·5,5`.
+- `Car`: agarre, derrape, aceleración limitada por potencia y resistencia. Punta nominal y aceleración de salida
+  se toman del modelo, la categoría o el tipo de chasis, en ese orden. El Linguini Reventon tiene 270 km/h nominales,
+  el MP YOU 187, el Seta 128 132 y el Antonias Basurón 82. La pendiente y la resistencia afectan a la velocidad real.
+- Pasos fijos de 1/90 s. El giro máximo es de `0,56 / (1 + v/13)` rad y se alcanza con un suavizado de `dt·5,5`.
+- Los 21 tonos civiles se aplican a la carrocería en ambas mallas, en movimiento y aparcados. El blanco pesa un 4,5 % y
+  los vehículos de servicio usan su librea fija. El MP YOU usa la malla aprobada de 13.887 triángulos y una de 1.721 de lejos.
+  El Clever OneTwo conserva su célula plateada y 14.845 triángulos de cerca, con 2.222 en la malla lejana.
 - **Inclinación**: altura del suelo en 4 puntos (delante, detrás, izquierda, derecha) → cabeceo y alabeo; así las 4
   ruedas apoyan en calles con mucha pendiente lateral (`tests/prueba_peralte.py`).
 - **Freno de mano** (v0.54, Espacio / botón FRENO MANO): bloquea las ruedas traseras: frena (~0,5 g, y sujeta el coche
@@ -67,6 +72,7 @@
   Escalón máximo al subir a un tablero: ~0,35 m más lo que sube el propio tablero en el trozo que mira el coche
   (`deckAt(..., slack)`); así no se sube a una rampa vecina más alta que solo se solapa por el borde (v0.50).
 - Coches aparcados: instanciados a baja resolución y convertidos en `Car` real al interactuar.
+- **Modelos revisados (v1.4.38)**. Doce carrocerías y sus llantas usan mallas de Blender para cerca y lejos. El techo negro del C33 es un acabado fijo y la chapa conserva el color que le asigna el juego.
 - **Memoria (v0.52, auditoría P0.a)**: las piezas de los vehículos se crean una vez y se comparten (`shGeo`, `shBox`,
   `shMat`, `sharedText`, geometría por modelo en `VGEO`; marcadas con `userData.shared`). Un coche que deja la escena
   vuelve a `CARPOOL` (hasta 6 por modelo); si está destrozado o el grupo está lleno, `disposeCarMesh` libera su pintura
@@ -78,6 +84,8 @@
   cuentan como más cortas).
 - Los coches IA siguen aristas con un desplazamiento de carril (`laneOff`), frenan en curvas, en STOP / ceda el
   paso y detrás de otros coches.
+- Los modelos activos conservan su orden de frecuencia con un margen más estrecho. Los pesos cero siguen reservados
+  para las mallas lejanas y las apariciones especiales. Los camiones y furgones pesados salen más en vías principales.
 - Tranvía: recorre `DATA.T` con paradas (`05l_tramstops.js`).
 
 ## Peatones (`09_peds.js`)
@@ -104,3 +112,6 @@
   con árboles, farolas, pilas ni medianas que hay debajo. Los círculos sin rango usan por defecto
   [suelo − 1, suelo + 3,4] (troncos, postes).
 - `COL.resolve(x, z, r)` empuja un círculo fuera de los obstáculos; `COL.raycast` para líneas de visión.
+
+Los faros delanteros de los coches propios se encienden al oscurecer cuando el vehículo está ocupado. El material de
+la carrocería ilumina las caras de las ópticas originales. El haz del vehículo del jugador ilumina la calzada por separado.

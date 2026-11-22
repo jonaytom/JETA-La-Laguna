@@ -192,90 +192,208 @@ const GRAPH = (() => {
       }
     return best;
   }
-  // driving route from where the car is, in the way it is heading: it starts on the car's own street (its next
-  // junction ahead, or behind only if that way is one-way against you), never on a parallel street or a bridge
-  // above, and ends on the target's street
+  function edgePoints(projection, dir, outward) {
+    const p = edges[projection.e].pts;
+    const points = [projection.x, projection.z];
+    if (dir > 0) for (let i = projection.k * 2; i < p.length; i += 2) points.push(p[i], p[i + 1]);
+    else for (let i = (projection.k - 1) * 2; i >= 0; i -= 2) points.push(p[i], p[i + 1]);
+    if (outward) return points;
+    const reversed = [];
+    for (let i = points.length - 2; i >= 0; i -= 2) reversed.push(points[i], points[i + 1]);
+    return reversed;
+  }
+  function gpsWeight(edge) {
+    return edge.type === 'motorway' ? 0.97 : 1;
+  }
+  function turnCost(dx, dz, nx, nz) {
+    const magnitude = Math.hypot(dx, dz) * Math.hypot(nx, nz);
+    return magnitude ? 6 * (1 - clamp((dx * nx + dz * nz) / magnitude, -1, 1)) : 0;
+  }
+  // Multi-source A*: test both directions from the car and both approaches to the destination.
   function routeFrom(x, z, h, tx, tz) {
-    const ne = nearestEdge(x, z, 25);
-    let pre = null,
-      from = -1;
-    if (ne) {
-      const E = edges[ne.e];
-      const fwd = Math.sin(h) * ne.dx + Math.cos(h) * ne.dz >= 0;
-      let dir = fwd ? 1 : -1;
-      if (dir < 0 && E.oneway && E.fast) dir = 1;
-      from = dir > 0 ? E.b : E.a;
-      pre = [x, z, ne.x, ne.z];
-      const p = E.pts,
-        n2 = p.length / 2;
-      if (dir > 0) for (let k = ne.k; k < n2; k++) pre.push(p[k * 2], p[k * 2 + 1]);
-      else for (let k = ne.k - 1; k >= 0; k--) pre.push(p[k * 2], p[k * 2 + 1]);
-    } else from = nearestNode(x, z);
-    const te = nearestEdge(tx, tz, 40);
-    let to = nearestNode(tx, tz),
-      post = [tx, tz];
-    if (te) {
-      const E = edges[te.e];
-      const cands = [E.a, E.b];
-      let bestL = 1e12,
-        best = null;
-      for (const c of cands) {
-        const r = route(from, c, true);
-        if (!r) continue;
-        let L = 0;
-        for (let i = 2; i < r.length; i += 2) L += Math.hypot(r[i] - r[i - 2], r[i + 1] - r[i - 1]);
-        L += c === E.a ? te.s : E.len - te.s;
-        if (L < bestL) {
-          bestL = L;
-          best = [c, r];
-        }
-      }
-      if (best) {
-        to = best[0];
-        const p = E.pts,
-          n2 = p.length / 2;
-        const tail = [];
-        if (to === E.a) for (let k = 1; k < te.k; k++) tail.push(p[k * 2], p[k * 2 + 1]);
-        else for (let k = n2 - 2; k >= te.k; k--) tail.push(p[k * 2], p[k * 2 + 1]);
-        return [...(pre || [x, z]), ...best[1], ...tail, te.x, te.z, tx, tz];
+    const ne = nearestEdge(x, z, 25),
+      te = nearestEdge(tx, tz, 40);
+    const legal = (edge, dir) => dir > 0 || !edge.oneway || !edge.fast;
+    const ahead = ne && Math.sin(h) * ne.dx + Math.cos(h) * ne.dz < 0 ? -1 : 1;
+    const lead = ne && edges[ne.e],
+      tail = te && edges[te.e];
+    const turnAround = (dir) => (dir === ahead ? 0 : 38);
+    const segment = (edge, dir, entering) => {
+      const p = edge.pts;
+      const i = dir > 0 === entering ? p.length - 4 : 0;
+      return [(p[i + 2] - p[i]) * dir, (p[i + 3] - p[i + 1]) * dir];
+    };
+    const entries = lead
+      ? [1, -1]
+          .filter((dir) => legal(lead, dir))
+          .map((dir) => ({
+            at: dir > 0 ? lead.b : lead.a,
+            cost: (dir > 0 ? lead.len - ne.s : ne.s) * gpsWeight(lead) + turnAround(dir),
+            dir,
+            edge: lead,
+            points: edgePoints(ne, dir, true)
+          }))
+      : [{ at: nearestNode(x, z), cost: 0, points: [] }];
+    const exits = tail
+      ? [1, -1]
+          .filter((dir) => legal(tail, dir))
+          .map((dir) => ({
+            at: dir > 0 ? tail.a : tail.b,
+            cost: (dir > 0 ? te.s : tail.len - te.s) * gpsWeight(tail),
+            vector: segment(tail, dir, false),
+            points: edgePoints(te, -dir, false)
+          }))
+      : [{ at: nearestNode(tx, tz), cost: 0, vector: [0, 0], points: [] }];
+    let best = null;
+    if (ne && te && ne.e === te.e) {
+      const dir = te.s >= ne.s ? 1 : -1;
+      if (legal(lead, dir)) {
+        const points = [ne.x, ne.z];
+        if (dir > 0) for (let k = ne.k; k < te.k; k++) points.push(lead.pts[2 * k], lead.pts[2 * k + 1]);
+        else for (let k = ne.k - 1; k >= te.k; k--) points.push(lead.pts[2 * k], lead.pts[2 * k + 1]);
+        points.push(te.x, te.z);
+        best = { cost: Math.abs(te.s - ne.s) * gpsWeight(lead) + turnAround(dir), direct: points };
       }
     }
-    const r = route(from, to, true);
-    return r ? [...(pre || [x, z]), ...r, ...post] : null;
+    const queue = [],
+      scores = new Map();
+    const estimate = (node) => 0.97 * Math.hypot(nodes[node].x - (te?.x ?? tx), nodes[node].z - (te?.z ?? tz));
+    const push = (state) => {
+      if (state.at < 0) return;
+      const key = state.edge ? 2 * state.edge.i + (state.dir > 0 ? 1 : 0) : -1;
+      if (state.cost >= (scores.get(key)?.cost ?? Infinity)) return;
+      state.key = key;
+      state.priority = state.cost + estimate(state.at);
+      scores.set(key, state);
+      let i = queue.length;
+      queue.push(state);
+      while (i > 0) {
+        const parent = (i - 1) >> 1;
+        if (queue[parent].priority <= state.priority) break;
+        queue[i] = queue[parent];
+        i = parent;
+      }
+      queue[i] = state;
+    };
+    function pop() {
+      const first = queue[0],
+        last = queue.pop();
+      if (!queue.length) return first;
+      let i = 0;
+      while (2 * i + 1 < queue.length) {
+        let child = 2 * i + 1;
+        if (child + 1 < queue.length && queue[child + 1].priority < queue[child].priority) child++;
+        if (queue[child].priority >= last.priority) break;
+        queue[i] = queue[child];
+        i = child;
+      }
+      queue[i] = last;
+      return first;
+    }
+    entries.forEach(push);
+    for (let i = 0; queue.length && i < 12000; i++) {
+      const state = pop();
+      if (state.priority >= (best?.cost ?? Infinity)) break;
+      if (scores.get(state.key) !== state) continue;
+      const [dx, dz] = state.edge ? segment(state.edge, state.dir, true) : [0, 0];
+      for (const end of exits) {
+        if (end.at !== state.at) continue;
+        const cost = state.cost + end.cost + turnCost(dx, dz, ...end.vector);
+        if (cost < (best?.cost ?? Infinity)) best = { cost, state, end };
+      }
+      for (const o of nodes[state.at].gout) {
+        const e = edges[o.e];
+        if (state.edge === e) continue;
+        const cost = state.cost + e.len * gpsWeight(e) + turnCost(dx, dz, ...segment(e, o.dir, false));
+        push({ at: o.dir > 0 ? e.b : e.a, edge: e, dir: o.dir, prior: state, cost });
+      }
+    }
+    if (!best) return null;
+    let points = best.direct;
+    if (!points) {
+      const legs = [];
+      let start = best.state;
+      while (start.prior) {
+        legs.push(start);
+        start = start.prior;
+      }
+      points = [...start.points];
+      for (const leg of legs.reverse()) {
+        const p = leg.edge.pts;
+        if (leg.dir > 0) points.push(...p);
+        else for (let k = p.length - 2; k >= 0; k -= 2) points.push(p[k], p[k + 1]);
+      }
+      points.push(...best.end.points);
+    }
+    const result = [x, z];
+    points.push(tx, tz);
+    for (let k = 0; k < points.length; k += 2) {
+      const l = result.length;
+      if (Math.hypot(points[k] - result[l - 2], points[k + 1] - result[l - 1]) > 0.02) result.push(points[k], points[k + 1]);
+    }
+    return result;
   }
   return { nodes, edges, nearestNode, nearestEdge, sample, route, routeFrom };
 })();
 
 // ---------- Car
-// top speeds (km/h): any car does 100+, the quickest ones about 200
-const CAR_ACCEL = 0.85; // global acceleration factor (15% softer than v0.37)
-const TOP_BY_CAT = {
-  Urbano: 155,
-  Utilitario: 175,
-  Compacto: 200,
-  Berlina: 190,
-  Crossover: 180,
-  SUV: 190,
-  Todoterreno: 170,
-  'Pick-up': 165,
-  Furgoneta: 160,
-  'Furgón': 145,
-  'Camión': 120,
-  'Grúa': 120,
-  'Camión de basura': 100,
-  Emergencias: 145,
-  'Agrícola': 40,
-  Taxi: 185,
-  Patrulla: 200,
-  Deportivo: 200,
-  Scooter: 100,
-  Maxiscooter: 150,
-  Naked: 200,
-  Ciclomotor: 60
+// Each profile sets top speed (km/h) and launch acceleration (m/s²).
+// Steering, mass and grip still come from the vehicle's existing chassis type.
+const PERFORMANCE_BY_TYPE = {
+  compact: [165, 7.3],
+  sedan: [192, 8.5],
+  suv: [177, 7.7],
+  van: [151, 5.8],
+  taxi: [182, 7.7],
+  police: [204, 10.2],
+  sport: [235, 12.4],
+  bus: [95, 3.4],
+  truck: [112, 4.2],
+  moto: [150, 9]
 };
-const TOP_BY_TYPE = { compact: 165, sedan: 190, suv: 180, van: 155, taxi: 185, police: 200, sport: 200, bus: 100, truck: 120, moto: 150 };
-function topSpeedKmh(model, type) {
-  return (model && TOP_BY_CAT[model.cat]) || TOP_BY_TYPE[model ? model.phys : type] || 160;
+const PERFORMANCE_BY_CATEGORY = {
+  Urbano: [147, 6.6],
+  Utilitario: [160, 7.2],
+  Compacto: [179, 8.0],
+  'Compacto deportivo': [215, 10.7],
+  'Compacto eléctrico': [187, 9.6],
+  Microcoche: [140, 6.5],
+  Familiar: [185, 7.9],
+  'Berlina eléctrica': [212, 11.0],
+  'SUV coupé': [201, 9.5],
+  'SUV coupé eléctrico': [181, 9.1],
+  Todoterreno: [156, 6.5],
+  'Pick-up': [157, 6.3],
+  Monovolumen: [150, 5.9],
+  'Furgón': [130, 4.9],
+  'Grúa': [105, 4.0],
+  Emergencias: [157, 6.7],
+  Scooter: [105, 6.9],
+  Maxiscooter: [146, 8.2],
+  Naked: [204, 12.3],
+  Ciclomotor: [60, 4.0]
+};
+const PERFORMANCE_BY_MODEL = {
+  reventon: [270, 14.4],
+  reventonGold: [297, 15.8], // v1.4.41: the Gold Edition, 10 % more than the Reventón
+  fierilla: [252, 13.4],
+  guancheGT: [232, 11.8],
+  teypan: [224, 12.0],
+  newton3: [204, 10.6],
+  hubli: [211, 9.7],
+  ltg: [214, 10.2],
+  chayan: [207, 9.8],
+  seta128: [132, 5.6],
+  xadv: [168, 9.4],
+  z900: [218, 13.2],
+  basura: [82, 2.9],
+  bomberos: [103, 3.9],
+  canter: [108, 4.0],
+  daily2: [125, 4.9],
+  sprinter: [136, 5.3]
+};
+function vehiclePerformance(model, type) {
+  return PERFORMANCE_BY_MODEL[model?.id] || PERFORMANCE_BY_CATEGORY[model?.cat] || PERFORMANCE_BY_TYPE[type];
 }
 const CARS = [];
 const CARPOOL = {};
@@ -307,10 +425,11 @@ class Car {
     }
     this.type = type;
     this.model = model || null;
-    this.color = color ?? pickColor();
+    this.color = isLivery(model) ? liveryColor(model) : (color ?? pickColor(model));
     this.T = model ? { ...VTYPES[model.phys], L: model.L, W: model.W, H: model.H, name: model.name } : { ...VTYPES[type] };
-    this.T.maxV = (topSpeedKmh(model, type) / 3.6) * rnd(0.96, 1.04);
-    this.T.acc *= CAR_ACCEL; // same top speed (drag scales with acc), slower pick-up
+    const [topSpeed, acceleration] = vehiclePerformance(model, type);
+    this.T.maxV = topSpeed / 3.6;
+    this.T.acc = acceleration;
     // pool (audit P0.2): traffic cars that leave are kept and reused instead of building a new model every time
     const pk = model ? model.id + (model.phys === 'moto' ? ':m' : '') : null;
     const pooled = pk && CARPOOL[pk] && CARPOOL[pk].length ? CARPOOL[pk].pop() : null;
@@ -344,6 +463,8 @@ class Car {
       this.rider.root.visible = false;
     }
     Object.assign(this, { mesh: m.g, body: m.body, wheels: m.wheels, hl: m.hl, tl: m.tl, bar: m.bar, paint: m.paint });
+    this.lightBody = m.lightBody ?? null;
+    if (this.lightBody) this.lightBody.material = restMat;
     this._m = m;
     scene.add(this.mesh);
     this.x = x;
@@ -433,9 +554,14 @@ class Car {
     }
     const grip = lerp(T.grip * (broken ? 0.6 : 1), 1.5, hbA);
     vr *= Math.exp(-grip * dt);
-    const maxSteer = 0.56 / (1 + Math.abs(vf) / 13);
-    this.steer = lerp(this.steer, c.steer * maxSteer, clamp(dt * 5.5, 0, 1)); // a bit smoother than before (8 / 0.6)
     const wb = T.L * 0.6;
+    // v1.4.41 (Jonay, 22-nov: «a grandes velocidades se vuelve incontrolable, debería tener un ángulo de giro menor a mayor
+    // velocidad»): besides the usual reduction, the wheel never turns more than the tyres can hold: a turn of at most
+    // ~15 m/s² sideways (at 300 km/h a bend of ~460 m, at 100 km/h of ~50 m; at 50 km/h barely noticed). The handbrake
+    // still lets the tail slide out
+    const v2 = vf * vf;
+    const maxSteer = Math.min(0.56 / (1 + Math.abs(vf) / 13), v2 > 1 ? Math.atan((wb * 15) / v2) : 1);
+    this.steer = lerp(this.steer, c.steer * maxSteer, clamp(dt * 5.5, 0, 1)); // a bit smoother than before (8 / 0.6)
     this.yawRate = ((vf * Math.tan(this.steer)) / wb) * (1 + 0.7 * hbA);
     if (hbA > 0.05 && Math.abs(vf) > 3) this.yawRate += Math.sign(vf) * c.steer * hbA * Math.min(0.75, Math.abs(vf) / 16); // the unloaded tail swings out
     this.h += this.yawRate * dt;
@@ -460,7 +586,12 @@ class Car {
     this.z += this.vz * dt;
     this.collideStatic(dt);
     // tunnels / cuttings: the walls keep you in the tube
-    if ((this.onDeck || this.wasDeck > 0) && !this.low) {
+    // v1.4.41 (Jonay, 22-nov: a 300 km/h por la Autopista del Norte, X 1898, Y 3225, «decía estás muerto… ¿hay algo
+    // invisible ahí?»): where a slip road's deck meets the motorway (half a metre above it) the car counted as being on that
+    // deck and its railing, which is off to one side, stopped it dead (a 75 m/s blow). The railing only holds a car whose
+    // centre is on that deck, and only that deck's railing
+    const sdc = (this.onDeck || this.wasDeck > 0) && !this.low ? deckSide(this.x, this.z, this.y - 0.17) : null;
+    if (sdc && sdc.d <= sdc.hw + 0.3 && !this.low) {
       // bridges: the railing keeps every corner of the car on the deck
       const fx2 = Math.sin(this.h),
         fz2 = Math.cos(this.h),
@@ -470,12 +601,15 @@ class Car {
         const cx = this.x + fx2 * k,
           cz = this.z + fz2 * k;
         const sd = deckSide(cx, cz, this.y - 0.17);
-        if (!sd || sd.y - heightAt(cx, cz) < 1.0) continue;
+        // v1.4.41: only the railing of the deck the car is on
+        if (!sd || sd.deck !== sdc.deck || sd.y - heightAt(cx, cz) < 1.0) continue;
         const lim = Math.max(0.3, sd.hw - r);
-        if (sd.d > lim && sd.d > 0.01) {
-          const nx = (cx - sd.px) / sd.d,
-            nz = (cz - sd.pz) / sd.d,
-            pen = sd.d - lim;
+        // the railing runs along the deck: the push is across the deck's line, never along it (past a joint where the deck
+        // turns away the nearest point was its corner, straight ahead of a fast car)
+        if (sd.ld > lim) {
+          const nx = sd.lnx,
+            nz = sd.lnz,
+            pen = sd.ld - lim;
           this.x -= nx * pen;
           this.z -= nz * pen;
           const vn = this.vx * nx + this.vz * nz;
@@ -699,6 +833,10 @@ class Car {
     for (const w of this.wheels) {
       w.w.rotation.x = w.front ? this.wheelRot : (this.rearRot ?? this.wheelRot);
       if (w.front) w.piv.rotation.y = this.steer;
+    }
+    if (this.lightBody) {
+      const material = this.driver ? litCarBodyMat : restMat;
+      if (this.lightBody.material !== material) this.lightBody.material = material;
     }
     const braking = this.ctl.brk > 0 && this.fwdV > 0.5;
     for (const t of this.tl) t.material = braking ? tailBrakeMat : tailMat;
@@ -1048,6 +1186,22 @@ function onBigRoad(x, z) {
   const rd = ROADSEG.nearest(x, z, (r) => (r[0] <= 4 || BIGNAMES.has(DATA.S[r[1]]) || (r[1] >= 0 && BIGRX.test(DATA.S[r[1]] || ''))) && !(r[3] & 6));
   return !!rd && rd.d < DATA.R[rd.ri][2] / 2 + 1.2;
 }
+function parkedOverTracks(slot) {
+  if (slot.floor !== undefined) return false;
+  const near = tramNearest(slot.x, slot.z);
+  const model = VMODELS[slot.type],
+    halfL = (model?.L ?? 4.6) / 2,
+    halfW = (model?.W ?? 2) / 2;
+  if (!near || near.d >= 3.75 + Math.hypot(halfL, halfW)) return false;
+  const dx = Math.sin(slot.h),
+    dz = Math.cos(slot.h);
+  for (const u of [-halfL, 0, halfL])
+    for (const v of [-halfW, 0, halfW]) {
+      const hit = tramNearest(slot.x + u * dx + v * dz, slot.z + u * dz - v * dx);
+      if (hit && hit.d < 3.75 && tramDepth(hit.s) < 1.25) return true;
+    }
+  return false;
+}
 function buildParked() {
   const { lt } = buildParkedPart1();
   const { cc, TPL, template } = buildParkedPart2();
@@ -1070,21 +1224,22 @@ function buildParkedPart3(template, cc) {
   };
   mat.customProgramCacheKey = () => 'parkedPaint';
   const GEO = {};
-  const geoOfModel = (id) => {
-    if (GEO[id]) return GEO[id];
-    const T = template(VMODELS[id]);
+  const geoOfModel = (id, wheels) => {
+    const key = id + (wheels ? ':' + wheels.id : '');
+    if (GEO[key]) return GEO[key];
+    const T = template(VMODELS[id], wheels, key);
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(T.P, 3));
     g.setAttribute('normal', new THREE.BufferAttribute(T.N, 3));
     g.setAttribute('color', new THREE.BufferAttribute(T.C, 3));
     g.setAttribute('aPaint', new THREE.BufferAttribute(new Float32Array(T.F), 1));
     g.computeBoundingSphere();
-    return (GEO[id] = g);
+    return (GEO[key] = g);
   };
   const cells = new Map();
   for (const s of PARKED.slots) {
-    const cs = VMODELS[s.type] && VMODELS[s.type].lod ? 120 : 400; // v1.4.3: our own models in 120 m cells, so their light version takes over sooner
-    const key = Math.floor(s.x / cs) + ',' + Math.floor(s.z / cs) + ',' + s.type;
+    const cs = VMODELS[s.type]?.lod ? 80 : 400; // Smaller groups avoid changing a whole row at once.
+    const key = Math.floor(s.x / cs) + ',' + Math.floor(s.z / cs) + ',' + s.type + ',' + (s.floor !== undefined);
     /* v1.0.0: 400 m cells (800 m ones were drawn whole for one car in sight: 110–140 draw calls a frame) */ let c = cells.get(key);
     if (!c) cells.set(key, (c = []));
     c.push(s);
@@ -1096,7 +1251,7 @@ function buildParkedPart3(template, cc) {
     let cx = 0,
       cz = 0;
     list.forEach((s, i) => {
-      o.position.set(s.x, heightAt(s.x, s.z) + 0.17, s.z);
+      o.position.set(s.x, s.y, s.z);
       o.rotation.set(0, s.h, 0);
       o.updateMatrix();
       m.setMatrixAt(i, s.alive === false ? HIDE : o.matrix);
@@ -1108,7 +1263,7 @@ function buildParkedPart3(template, cc) {
     });
     m.computeBoundingSphere();
     m.name = 'parked';
-    m.castShadow = true;
+    m.castShadow = list[0].floor === undefined;
     m.receiveShadow = true;
     m.matrixAutoUpdate = false;
     m.userData.noMerge = true;
@@ -1120,6 +1275,7 @@ function buildParkedPart3(template, cc) {
       z: cz / list.length,
       r: m.boundingSphere.radius,
       hi: lod ? m.geometry : null,
+      mid: lod ? geoOfModel(lod, VMODELS[list[0].type]) : null,
       lo: lod ? geoOfModel(lod) : null
     });
   }
@@ -1127,11 +1283,14 @@ function buildParkedPart3(template, cc) {
 /** (v1.1.7, code quality) part of buildParked: simplified per-model template: body (paint flagged) + 4 low-poly wheels */
 function buildParkedPart2() {
   {
-    const keep = PARKED.slots.filter((s) => !onFootpath(s.x, s.z));
+    const keep = PARKED.slots.filter(
+      (s) => s.alive && !tac67Blocks(s.x, s.z) && (s.floor !== undefined || (!onFootpath(s.x, s.z) && !parkedOverTracks(s)))
+    );
     PARKED.slots.length = 0;
     PARKED.slots.push(...keep);
   } // v0.99.6: also the car parks' rows (a footpath crosses them)
   PARKED.slots.forEach((s, i) => {
+    s.y = (s.floor ?? heightAt(s.x, s.z)) + 0.17;
     const k = Math.floor(s.x / 30) * 1000 + Math.floor(s.z / 30);
     let l = PARKED.grid.get(k);
     if (!l) PARKED.grid.set(k, (l = []));
@@ -1146,8 +1305,8 @@ function buildParkedPart2() {
     g.rotateZ(Math.PI / 2);
     return g.toNonIndexed();
   })();
-  const template = (model) => {
-    if (TPL[model.id]) return TPL[model.id];
+  const template = (model, wheelModel, key) => {
+    if (TPL[key]) return TPL[key];
     const G = modelGeometry(model);
     const P = [],
       N = [],
@@ -1173,7 +1332,7 @@ function buildParkedPart2() {
     if (G.beaconR) push(G.beaconR, 0);
     const wr = (G.wheels[0] && G.wheels[0].y) || 0.33;
     const tire = new THREE.Color(0x1a1a1a);
-    for (const w of G.wheels) {
+    for (const w of wheelModel ? modelGeometry(wheelModel).wheels : G.wheels) {
       if (model.tail) {
         // v1.4.15 (Jonay, 16-nov: «los coches aparcados siempre llevan cilindros en lugar de las ruedas del modelo»): our own
         // models (Blender) bring their own wheels (~580 triangles near, ~44 in the far version): use them as they are
@@ -1188,7 +1347,7 @@ function buildParkedPart2() {
       g.translate(w.x + (w.left ? 0.12 : -0.12), w.y, w.z);
       push(g, 0, tire);
     }
-    return (TPL[model.id] = { P: new Float32Array(P), N: new Float32Array(N), C: new Float32Array(C), F: new Uint8Array(F) });
+    return (TPL[key] = { P: new Float32Array(P), N: new Float32Array(N), C: new Float32Array(C), F: new Uint8Array(F) });
   };
   return { cc, TPL, template };
 }
@@ -1234,8 +1393,8 @@ function buildParkedPart1() {
             z = z1 + dz * s + dx * off * side;
           if (COL.nearSeg(x, z, 1.3) || onBigRoad(x, z) || onFootpath(x, z)) continue; // v0.99.5 (Jonay): never on the motorway, its slip roads or the Vía de Ronda
           const h = Math.atan2(dx, dz) + (side < 0 ? Math.PI : 0);
-          const mdl = KGEO ? pickModel((m) => m.phys !== 'truck' && m.phys !== 'moto' && m.phys !== 'taxi') : null;
-          PARKED.slots.push({ x, z, h, type: mdl ? mdl.id : pick(types), color: pickColor(), alive: true });
+          const mdl = KGEO ? parkedModel() : null;
+          PARKED.slots.push({ x, z, h, type: mdl ? mdl.id : pick(types), color: pickColor(mdl), alive: true });
         }
     }
   });
@@ -1252,13 +1411,24 @@ function buildParkedPart1() {
 function updateParkedLOD() {
   if (!PARKED.chunks) return;
   const far = Q.far * 0.45 + 60;
-  /* v1.0.0: ~580 m in «alta» (a parked car there is 3 pixels) */ for (const c of PARKED.chunks) {
-    const d = Math.hypot(c.x - camera.position.x, c.z - camera.position.z) - (c.r || 0);
-    c.mesh.visible = d < far;
-    if (c.lo) c.mesh.geometry = d > 40 ? c.lo : c.hi; // v1.4.3: our own models, light version beyond ~40 m from the edge of their 120 m cell
+  const { x, z } = camera.position;
+  for (const c of PARKED.chunks) {
+    const dx = c.x - x,
+      dz = c.z - z;
+    const d2 = dx * dx + dz * dz;
+    const r = c.r || 0;
+    const reach = far + r;
+    c.mesh.visible = d2 < reach * reach;
+    if (c.lo) {
+      const close = 55 + r;
+      // Keep the same rims while the body switches to the light mesh.
+      const wheelReach = 110 + r;
+      const geometry = d2 < close * close ? c.hi : d2 < wheelReach * wheelReach ? c.mid : c.lo;
+      if (c.mesh.geometry !== geometry) c.mesh.geometry = geometry;
+    }
   }
 }
-function parkedNear(x, z, r) {
+function parkedNear(x, z, r, y = heightAt(x, z)) {
   const res = [];
   const a0 = Math.floor((x - r) / 30),
     a1 = Math.floor((x + r) / 30),
@@ -1270,7 +1440,7 @@ function parkedNear(x, z, r) {
       if (l)
         for (const i of l) {
           const s = PARKED.slots[i];
-          if (s.alive && Math.hypot(s.x - x, s.z - z) < r) res.push(s);
+          if (s.alive && Math.hypot(s.x - x, s.z - z) < r && sameLevel(y, s.y)) res.push(s);
         }
     }
   return res;
@@ -1283,6 +1453,11 @@ function activateParked(s) {
     s.inst.instanceMatrix.needsUpdate = true;
   }
   /* v0.77: instanced */ const c = new Car(null, s.color, s.x, s.z, s.h, VMODELS[s.type]);
+  if (s.floor !== undefined) {
+    c.y = s.y;
+    c.low = lowAt(s.x, s.z, c.y);
+    c.sync();
+  }
   c.mode = 'physics';
   c.driver = null;
   c.fromParked = true;
@@ -1371,8 +1546,8 @@ function carCollisionsEach(active, i) {
 function carCollisionsEachPart1(A) {
   const ca = A.circles();
   // parked
-  if (A.mode === 'physics' && !underground(A.x, A.z, A.y))
-    for (const s of parkedNear(A.x, A.z, 8)) {
+  if (A.mode === 'physics')
+    for (const s of parkedNear(A.x, A.z, 8, A.y)) {
       for (const [x, z, r] of ca) {
         const d = Math.hypot(s.x - x, s.z - z);
         if (d < r + 1.2) {

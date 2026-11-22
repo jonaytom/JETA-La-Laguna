@@ -38,22 +38,27 @@ const pressed = (...c) => {
   return r;
 };
 function readGamepad() {
-  const gps = navigator.getGamepads ? navigator.getGamepads() : [];
-  const g = gps && [...gps].find((p) => p && p.connected);
+  const g = connectedPad();
   if (!g) {
     INPUT.gp = null;
     return;
   }
   const dz = (v) => (Math.abs(v) < 0.15 ? 0 : v);
-  const prev = INPUT.gp ? INPUT.gp.btn : [];
+  const previous = INPUT.gp?.index === g.index ? INPUT.gp : null;
+  const prev = previous?.btn ?? [];
+  const buttonValue = (button) => g.buttons[button]?.value ?? 0;
+  const lt = buttonValue(PAD_BUTTON.LT),
+    rt = buttonValue(PAD_BUTTON.RT);
   const btn = g.buttons.map((b) => b.pressed);
   INPUT.gp = {
-    lx: dz(g.axes[0]),
-    ly: dz(g.axes[1]),
-    rx: dz(g.axes[2] || 0),
-    ry: dz(g.axes[3] || 0),
-    rt: g.buttons[7]?.value || 0,
-    lt: g.buttons[6]?.value || 0,
+    index: g.index,
+    lx: dz(g.axes[PAD_STICK.LEFT_X] ?? 0),
+    ly: dz(g.axes[PAD_STICK.LEFT_Y] ?? 0),
+    rx: dz(g.axes[PAD_STICK.RIGHT_X] ?? 0),
+    ry: dz(g.axes[PAD_STICK.RIGHT_Y] ?? 0),
+    lt,
+    rt,
+    fireDown: rt >= 0.5 && (previous?.rt ?? 0) < 0.5,
     btn,
     down: (i) => btn[i] && !prev[i],
     hold: (i) => btn[i]
@@ -95,18 +100,27 @@ function initPlayer() {
 }
 const CAM = { yaw: Math.PI, pitch: 0.25, dist: 4.6, shake: 0, pos: new THREE.Vector3(), look: new THREE.Vector3(), fov: 62, mode: 0 };
 
+const PEDESTRIAN_AREAS = DATA.A.filter((a) => ['square', 'pitch'].includes(DATA.AT[a[0]])).map((a) => a[2]);
+PEDESTRIAN_AREAS.push(ADELANTADO_PLAZA);
+function pedestrianDrivingZone(x, z, y) {
+  if (heightAt(x, z) - y > 2.6 || roadAtBarrier(x, z, y - 1, y + 1, -0.15)) return false;
+  if (PEDESTRIAN_AREAS.some((poly) => pip(x, z, poly))) return true;
+  if (!inCore0(x, z)) return false;
+  const rd = ROADSEG.nearest(x, z, (r) => RTN[r[0]] === 'pedestrian' && !(r[3] & 6));
+  return !!rd && rd.d < DATA.R[rd.ri][2] / 2;
+}
 function nearestEnterable() {
   let best = null,
     bd = 4.2;
   for (const c of CARS) {
-    if (c.dead || c.driver === 'player') continue;
+    if (c.dead || c.driver === 'player' || !sameLevel(c.y, PLAYER.y)) continue;
     const d = Math.hypot(c.x - PLAYER.x, c.z - PLAYER.z) - c.T.W * 0.3;
     if (d < bd && (c.speed < 6 || c.mode === 'traffic')) {
       bd = d;
       best = c;
     }
   }
-  for (const s of parkedNear(PLAYER.x, PLAYER.z, 4.5)) {
+  for (const s of parkedNear(PLAYER.x, PLAYER.z, 4.5, PLAYER.y)) {
     const d = Math.hypot(s.x - PLAYER.x, s.z - PLAYER.z) - 0.6;
     if (d < bd) {
       bd = d;
@@ -152,7 +166,7 @@ function enterCar(t) {
     playerHuman.root.visible = true;
   }
   HUD.vehicle(
-    car.T.name,
+    car,
     (car.model && car.model.cat) ||
       {
         compact: 'Utilitario',
@@ -167,6 +181,7 @@ function enterCar(t) {
       'Vehículo'
   );
   CAM.yaw = car.h;
+  updateWeaponHUD();
   MISSIONS.onEvent('enter', car);
 }
 function exitCar() {
@@ -201,16 +216,18 @@ function exitCar() {
   playerHuman.root.visible = true;
   PLAYER.h = car.h;
   AUDIO.door();
+  updateWeaponHUD();
   MISSIONS.onEvent('exit', car);
 }
 
 function updatePlayer(dt) {
   const gp = INPUT.gp;
   if (PLAYER.dead) return;
-  if (pressed('KeyE') || (gp && gp.down(2))) {
+  if (pressed('KeyE') || (gp && gp.down(PAD_BUTTON.X))) {
     if (typeof AGUA !== 'undefined' && AGUA.use()) return;
     /* v0.76: toy shops, fountains */ if (typeof RECRE !== 'undefined' && RECRE.use()) return;
     /* v0.80: El Blanco's arcade */ if (typeof CASA !== 'undefined' && CASA.use()) return;
+    if (typeof GARAJE !== 'undefined' && GARAJE.use()) return; // v1.4.41: the garage button at C. Tacoronte 67
     /* v0.83: the estate agency, the TV and the bed */ const cg = typeof courtGateNear === 'function' ? courtGateNear() : null;
     if (cg) {
       useCourtGate(cg);
@@ -229,7 +246,7 @@ function updatePlayer(dt) {
       return;
     }
   }
-  if (pressed('KeyF', 'Enter') || (gp && gp.down(3))) {
+  if (pressed('KeyF', 'Enter') || (gp && gp.down(PAD_BUTTON.Y))) {
     if (PLAYER.car) exitCar();
     else {
       const t = nearestEnterable();
@@ -255,9 +272,9 @@ function updatePlayer(dt) {
     c.thr = thr;
     c.brk = brk;
     c.steer = st;
-    c.hb = key('Space') || (gp && gp.hold(0)) || INPUT.touch.hb ? 1 : 0;
-    if (pressed('KeyH') || (gp && gp.down(10))) AUDIO.horn(PLAYER.car);
-    if (pressed('KeyR')) {
+    c.hb = key('Space') || (gp && gp.hold(PAD_BUTTON.A)) || INPUT.touch.hb ? 1 : 0;
+    if (pressed('KeyH') || (gp && gp.down(PAD_BUTTON.LB))) AUDIO.horn(PLAYER.car);
+    if (pressed('KeyR') || gp?.down(PAD_BUTTON.DOWN)) {
       const car = PLAYER.car;
       if (car.speed < 3) {
         car.pitch = 0;
@@ -276,8 +293,7 @@ function updatePlayer(dt) {
     PLAYER.pzT = (PLAYER.pzT || 0) - dt;
     if (PLAYER.pzT <= 0) {
       PLAYER.pzT = 0.25;
-      const rd = ROADSEG.nearest(PLAYER.x, PLAYER.z, (r) => RTN[r[0]] !== 'footway' && RTN[r[0]] !== 'steps');
-      const inPed = rd && RTN[DATA.R[rd.ri][0]] === 'pedestrian' && rd.d < DATA.R[rd.ri][2] / 2 + 1.5 && PLAYER.car.type !== 'police';
+      const inPed = PLAYER.car.type !== 'police' && pedestrianDrivingZone(PLAYER.x, PLAYER.z, PLAYER.y);
       if (inPed) {
         if (!PLAYER.inPed) HUD.toast('¡ZONA PEATONAL! Sal o vendrá la policía', '#ffb03a', 2.5);
         PLAYER.inPed = true;
@@ -332,8 +348,8 @@ function updatePlayer(dt) {
       }
     }
   }
-  if (!pUnder)
-    for (const s of parkedNear(nx, nz, 4)) {
+  {
+    for (const s of parkedNear(nx, nz, 4, PLAYER.y)) {
       const fxx = Math.sin(s.h),
         fzz = Math.cos(s.h);
       for (const k of [-1.3, 0, 1.3]) {
@@ -347,6 +363,7 @@ function updatePlayer(dt) {
         }
       }
     }
+  }
   if (TRAM.circ && !pUnder)
     for (const [cx, cz, cr] of TRAM.circ) {
       const d = Math.hypot(nx - cx, nz - cz);
@@ -414,7 +431,7 @@ function updatePlayer(dt) {
 }
 /** (v1.1.7, code quality) part of updatePlayer: ground surface + acoustic space (used by footsteps and landing) */
 function updatePlayerPart2(gp, dt, gy) {
-  if ((pressed('Space') || (gp && gp.down(1)) || INPUT.touch.jump) && PLAYER.onGround) {
+  if ((pressed('Space') || (gp && gp.down(PAD_BUTTON.A)) || INPUT.touch.jump) && PLAYER.onGround) {
     PLAYER.vy = 5.3;
     PLAYER.onGround = false;
     INPUT.touch.jump = false;
@@ -489,7 +506,7 @@ function updatePlayerPart1(gp, dt) {
     fz = Math.cos(CAM.yaw),
     rx = -fz,
     rz = fx;
-  const sprint = key('ShiftLeft', 'ShiftRight') || (gp && gp.hold(0)) || INPUT.touch.sprint;
+  const sprint = key('ShiftLeft', 'ShiftRight') || (gp && gp.hold(PAD_BUTTON.LS)) || INPUT.touch.sprint;
   const walk = key('AltLeft', 'KeyC');
   const sp = walk ? 1.6 : sprint ? 7.4 : 4.3;
   const mx = (fx * iz + rx * ix) * sp,

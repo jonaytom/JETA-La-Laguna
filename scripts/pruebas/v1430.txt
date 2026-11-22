@@ -1,0 +1,3 @@
+prueba_1427_gpu.py
+prueba_monumentos_1429_gpu.py
+prueba_pinos_1430_gpu.py

@@ -72,17 +72,17 @@ const STEPS = (() => {
 
   // one impact (heel or toe) on a given surface
   const SURF = {
-    // asphalt / pavement: firm rubber sole, dull knock + short gritty click
+    // Asphalt / pavement: soft sneaker, from the approved sample.
     hard: {
       modes: [
-        [105, 0.013, 0.55],
-        [240, 0.009, 0.35],
-        [520, 0.006, 0.25],
-        [1350, 0.003, 0.18]
+        [89, 0.016, 0.68],
+        [177, 0.011, 0.23],
+        [330, 0.006, 0.08],
+        [680, 0.003, 0.035]
       ],
-      click: [0.55, 0.004, 1400, 7000],
-      grit: [14, 0.35, 2500, 9000],
-      scuff: [0.06, 0.05, 500, 3000]
+      click: [0.15, 0.006, 260, 1400],
+      grit: [5, 0.10, 520, 1900],
+      scuff: [0.13, 0.045, 225, 1350]
     },
     // basalt cobbles / flagstones of the historic centre: harder, ringing stone knock
     stone: {
@@ -133,6 +133,17 @@ const STEPS = (() => {
       scuff: [0.05, 0.05, 600, 3500]
     }
   };
+  // Keep the different surfaces recognisable without their sharp clicks and high ringing.
+  for (const kind of ['stone', 'tile', 'soft', 'metal']) {
+    const surface = SURF[kind];
+    surface.modes = surface.modes.map(([frequency, decay, volume]) => [frequency * 0.72, decay, volume * (frequency >= 700 ? 0.35 : 1)]);
+    const [click, clickDecay, clickLow, clickHigh] = surface.click;
+    const [grains, grainVolume, grainLow, grainHigh] = surface.grit;
+    const [scuff, scuffDecay, scuffLow, scuffHigh] = surface.scuff;
+    surface.click = [click * 0.35, clickDecay, clickLow * 0.35, clickHigh * 0.40];
+    surface.grit = [Math.round(grains * 0.55), grainVolume * 0.45, grainLow * 0.35, grainHigh * 0.40];
+    surface.scuff = [scuff * 0.75, scuffDecay, scuffLow * 0.65, scuffHigh * 0.60];
+  }
   function impact(d, sr, t0, amp, S) {
     addModes(d, sr, t0, amp, S.modes);
     const [ca, cd, chp, clp] = S.click;

@@ -65,18 +65,25 @@ function wetChasePed(p, dt) {
   }
   p.h += angDiff(p.h, Math.atan2(dx, dz)) * clamp(dt * 8, 0, 1);
   const mv = d > 1.1 ? 4.9 : 0;
-  p.x += (dx / d) * mv * dt;
-  p.z += (dz / d) * mv * dt;
+  if (mv > 0) {
+    const x = p.x + dx / d * mv * dt,
+      z = p.z + dz / d * mv * dt;
+    if (!pedOnRoad(x, z, pedestrianFastRoad)) {
+      p.x = x;
+      p.z = z;
+    }
+  }
   const r = COL.resolve(p.x, p.z, 0.3);
   p.x = r.x;
   p.z = r.z;
   animHuman(p.H, dt, mv);
   p.H.root.position.set(p.x, heightAt(p.x, p.z) + 0.17, p.z);
   p.H.root.rotation.y = p.h;
-  if (d < 1.25 && GAME.state === 'play' && PLAYER.down <= 0) {
+  if (Math.hypot(PLAYER.x - p.x, PLAYER.z - p.z) < 1.25 && GAME.state === 'play' && PLAYER.down <= 0 &&
+      sameLevel(PLAYER.y, heightAt(p.x, p.z)) && COL.raycast(p.x, p.z, PLAYER.x, PLAYER.z) >= 1 &&
+      startStreetFight(p)) {
     p.wetChase = 0;
-    if (typeof startStreetFight === 'function' && startStreetFight(p)) SUB.show('<b>Peatón empapado:</b> ¡Ahora vas a ver lo que es mojarse!', 2.5);
-    else startFight(p);
+    SUB.show('<b>Peatón empapado:</b> ¡Ahora vas a ver lo que es mojarse!', 2.5);
   }
   return true;
 }
@@ -321,35 +328,35 @@ const AGUA = (() => {
     if (f.onOut) f.onOut(f);
     if (RIFLE.onFireOut) RIFLE.onFireOut(f);
   }
-  // v0.76 (Jonay): whoever you soak comes after you, and if he catches you there is a fight (the 2D one)
+  const wetLines = {
+    flee: [
+      '¡Chacho, que acabo de salir de casa!',
+      '¡Guas, estos tenis eran nuevos!',
+      '¡Qué frío, mi niño! ¡Déjame en paz!',
+      '¡Ni que esto fuera el carnaval!',
+      '¡Mi camiseta! ¡Menuda gracia!'
+    ],
+    chase: [
+      "¡Ven p'acá, que nos vamos a reír los dos!",
+      '¡Mi pelo, recién peinado! ¡Corre si puedes!',
+      '¡Te crees muy gracioso con ese cacharro!',
+      '¡Ahora te va a tocar correr a ti, chacho!',
+      '¡Guas! ¡Cuando te pille vas a escurrir hasta los calcetines!'
+    ]
+  };
   function wetPed(p) {
     if (p.wetT > 0.6) {
       p.wetT = 2.5;
       return;
     }
     p.wetT = 2.5;
-    if (p.down > 0 || p.canarion) return;
-    if (MISSIONS.active) {
-      p.flee = 4;
-      p.fleeFrom = [PLAYER.x, PLAYER.z];
-      SUB.show('<b>Peatón:</b> ¡Eh! ¡Que me mojas!', 1.6);
-      return;
-    }
-    /* in a mission they just run off */ p.flee = 0;
+    if (p.down > 0 || p.canarion || p.wetChase > 0) return;
+    const chase = Math.random() < 0.5;
+    p.flee = chase ? 0 : 4;
+    p.fleeFrom = chase ? null : [PLAYER.x, PLAYER.z];
     p.fight = 0;
-    p.wetChase = 14;
-    SUB.show(
-      '<b>' +
-        pick(['Peatón', 'Un señor', 'Una chica', 'Un chaval']) +
-        ':</b> ' +
-        pick([
-          "¡Eh! ¡Que me mojas! ¡Ven p'acá!",
-          '¡Niño, que no estamos en carnavales! ¡Te vas a enterar!',
-          '¡Mi pelo! ¡Recién peinado! ¡Te pillo!',
-          '¡Fuchi! ¿Agua de la fuente? ¡Ahora verás!'
-        ]),
-      2.2
-    );
+    p.wetChase = chase ? 14 : 0;
+    SUB.show('<b>Peatón:</b> ' + pick(wetLines[chase ? 'chase' : 'flee']), chase ? 2.2 : 1.8);
   }
   // v1.4.22 (Jonay, 3-nov: «las gotas caen a la izquierda de donde apuntas»): aimed, the jet leaves the muzzle towards
   // the point under the crosshair (the first thing the camera ray meets, at most 14 m away) on the arc that lands there,
@@ -581,9 +588,12 @@ const AGUA = (() => {
       wl.scale.y = k;
       wl.position.y = 0.098 - (0.07 * (1 - k)) / 2;
     }
-    // spray
-    const spraying = use && (RIFLE.firing || RIFLE.touchT > 0) && RIFLE.water > 0;
-    if (use && (RIFLE.firing || RIFLE.touchT > 0) && RIFLE.water <= 0 && !RIFLE.emptyMsg) {
+    // Spray while both controller triggers are held or the existing mouse/touch control is active.
+    const pad = INPUT.gp;
+    const padSpray = GAME.state === 'play' && !BIGMAP.open && !DLG.open && pad?.lt >= 0.45 && pad.rt >= 0.5;
+    const firing = use && (RIFLE.firing || RIFLE.touchT > 0 || padSpray);
+    const spraying = firing && RIFLE.water > 0;
+    if (firing && RIFLE.water <= 0 && !RIFLE.emptyMsg) {
       RIFLE.emptyMsg = true;
       AUDIO.empty && AUDIO.empty();
       HUD.toast('Rifle de agua vacío: recárgalo en una fuente (' + CONTROLS.keyName('use').toUpperCase() + ')', '#7fd3ff', 2.5);
@@ -862,6 +872,7 @@ const AGUA = (() => {
     puddle,
     douseFire,
     _drops: D,
-    _pud: PUD
+    _pud: PUD,
+    _wetPed: wetPed
   };
 })();

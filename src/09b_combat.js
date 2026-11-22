@@ -220,7 +220,7 @@ function combatPed(p, dt) {
 function updateCombat(dt) {
   if (FIGHT.cd > 0) FIGHT.cd -= dt;
   const gp = INPUT.gp;
-  if (((FIGHT.want && !FIGHT.blockPunch) || pressed('KeyQ') || (gp && gp.down(5))) && GAME.state === 'play' && !WEAPON.aiming) playerPunch();
+  if (((FIGHT.want && !FIGHT.blockPunch) || pressed('KeyQ') || (gp && gp.down(PAD_BUTTON.RB))) && GAME.state === 'play' && !WEAPON.aiming) playerPunch();
   FIGHT.want = false;
   FIGHT.blockPunch = false;
   animPunch(playerHuman, dt);

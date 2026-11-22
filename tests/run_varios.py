@@ -20,6 +20,7 @@ async def main():
         b = await p.chromium.launch(args=(['--enable-gpu', '--use-angle=d3d11' if os.name == 'nt' else '--use-angle=default'] if gpu else ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader']) + ['--ignore-gpu-blocklist', '--mute-audio'])
         pg = await b.new_page(viewport={'width': 640, 'height': 360})
         await pg.add_init_script(MUDO)
+        if any(l.split()[0] == 'audit_obstaculos.py' for l in lines): await pg.add_init_script('window.__AUDIT = true')
         # v1.1.7: a list with a «huella_» tool (fingerprints of what is built) gets the same fixed-seed Math.random as the auditor, so two loads build the same city
         if any('huella_' in l.split()[0] for l in lines): await pg.add_init_script(SEMILLA)
         # v1.1.8: «sonda_origen» (what code draws a piece): every piece remembers the functions that added it to the scene

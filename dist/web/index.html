@@ -35,10 +35,72 @@ body.touchmode #coords{top:auto;bottom:-30px;font-size:11px}
 #loc{right:24px;bottom:24px;text-align:right;font-family:Oswald,sans-serif;text-shadow:0 2px 0 #000,0 0 10px rgba(0,0,0,.8);transition:opacity .8s}
 #locStreet{font-size:30px;font-weight:600;color:#fff}
 #locArea{font-size:20px;color:var(--acc)}
-#veh{right:24px;bottom:200px;text-align:right;font:700 46px Oswald;letter-spacing:1px;color:#fff;-webkit-text-stroke:1px #000;text-shadow:0 3px 0 #000,0 0 18px rgba(245,183,46,.45);transition:opacity .8s;opacity:0}
-#veh small{display:block;font:600 16px Barlow,sans-serif;letter-spacing:4px;text-transform:uppercase;color:var(--acc);-webkit-text-stroke:0}
-#speed{pointer-events:auto;right:24px;bottom:150px;font:700 22px Oswald;color:#fff;text-shadow:0 2px 0 #000;display:none}
-#speed b{font-size:44px}
+#veh{position:absolute;top:84%;left:50%;transform:translateX(-50%);border:1px solid var(--speed-rim);border-radius:4px;background:var(--speed-face);color:var(--speed-ink);font:600 clamp(10px,1.6vh,13px)/1.3 Barlow,sans-serif;padding:2px 6px;box-sizing:border-box;width:max-content;max-width:145%;text-align:center}
+#weap{position:fixed;right:24px;bottom:110px;font:700 22px Oswald,sans-serif;color:#fff;text-shadow:0 2px 0 #000;display:none}
+#radioHud{right:24px;bottom:154px;width:min(232px,calc(100vw - 36px));box-sizing:border-box;align-items:center;flex-wrap:wrap;gap:5px 9px;padding:6px 7px 6px 9px;border:1px solid #dbc18f66;border-radius:6px;background:#171a1fea;color:#fff4de;font:600 13px/1.2 Barlow,sans-serif}
+#radioHud:not([hidden]){display:flex}
+#radioDisplay{min-width:0;flex:1}
+#radioStation{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#ffd582;font-weight:700}
+#radioTrackFrame{display:block;overflow:hidden;white-space:nowrap}
+#radioTrack{display:inline-block}
+#radioTrack.is-scrolling{animation:radio-title var(--radio-duration) linear infinite alternate}
+@keyframes radio-title{0%,12%{transform:translateX(0)}88%,100%{transform:translateX(var(--radio-travel))}}
+@media(prefers-reduced-motion:reduce){#radioTrack.is-scrolling{display:block;animation:none;overflow:hidden;text-overflow:ellipsis}}
+#radioNext{flex:none;display:inline-flex;align-items:center;gap:4px;padding:4px 5px;border-radius:4px;border:1px solid #ffffff40;background:#ffffff12;color:inherit;font:600 11px/1.1 Barlow,sans-serif;pointer-events:auto;cursor:pointer}
+#radioNext kbd{background:#ffd582;color:#271e10;border-radius:3px;padding:2px 4px;font:700 11px/1 Barlow,sans-serif}
+#radioNext:focus-visible{outline:2px solid #ffd582;outline-offset:2px}
+#radioHints{flex-basis:100%;color:#e8dcc5;font-size:11px;white-space:nowrap}
+.radio-pad,#radioSeek{display:none}
+body.gamepad .radio-pad{display:inline}
+body.gamepad .radio-mouse{display:none}
+body.gamepad :focus-visible{outline:2px solid #ffd582;outline-offset:2px}
+body.achaman #radioHud{display:none}
+#speed{
+  --speed-face:#121a1e;--speed-rim:#7d898c;--speed-ink:#fff5db;--speed-accent:#ffb54d;
+  pointer-events:auto;left:272px;bottom:24px;width:104px;aspect-ratio:1;display:none;
+  color:var(--speed-ink);text-align:center;cursor:pointer
+}
+#speedDial{display:block;width:100%;height:100%}
+#speedDial .rim{fill:var(--speed-face);stroke:var(--speed-rim)}
+#speedDial .ticks{stroke:var(--speed-ink)}
+#speedNeedle{fill:var(--speed-accent);transform-origin:50px 50px;transform:rotate(-130deg)}
+#speedDial .pivot{fill:var(--speed-accent)}
+#speed .reading{position:absolute;inset:54% 0 auto;font:700 9px/1 Oswald,sans-serif;letter-spacing:1px}
+#speed .reading b{display:block;font:700 24px/1 Oswald,sans-serif;letter-spacing:0;font-variant-numeric:tabular-nums}
+#speed .bar{display:none}
+#speedBar{display:block;width:100%;height:100%;background:var(--speed-accent);transform:scaleX(0);transform-origin:left}
+
+#speed[data-face="basic"]{--speed-face:#202421;--speed-rim:#8b9081;--speed-accent:#e9c771}
+#speed[data-face="basic"] #speedDial .minor{display:none}
+#speed[data-face="basic"] .reading b{font-size:21px}
+
+#speed[data-face="work"]{--speed-face:#161c15;--speed-rim:#717965;--speed-ink:#d8eea6;--speed-accent:#abd974}
+#speed[data-face="work"]::before{content:"";position:absolute;inset:16% -2% 18%;border:2px solid var(--speed-rim);border-radius:9px;background:#242a23;box-shadow:inset 0 0 0 3px #111510}
+#speed[data-face="work"] .reading{inset:29% 7% auto;background:#101b0f;border:1px solid #49593c;padding:4% 0;font-family:monospace}
+#speed[data-face="work"] .reading b{font-family:monospace}
+
+#speed[data-face="street"]{--speed-rim:#8d9b9e;--speed-accent:#f9ab50}
+#speed[data-face="street"]::before{content:"";position:absolute;inset:6%;border-radius:50%;box-shadow:0 2px 7px #0009;pointer-events:none}
+
+#speed[data-face="trail"]{--speed-face:#262116;--speed-rim:#a79261;--speed-ink:#fff1cb;--speed-accent:#ffc65b}
+#speed[data-face="trail"]::before{content:"";position:absolute;inset:2%;border:2px solid #80704d;border-radius:22%;background:#26241c;box-shadow:inset 0 0 0 3px #11130f}
+#speed[data-face="trail"] #speedDial{position:relative;scale:.9}
+#speed[data-face="trail"] #speedDial .ticks{stroke-width:2.3}
+
+#speed[data-face="luxury"]{--speed-face:#0a1d28;--speed-rim:#47778a;--speed-ink:#e1fbff;--speed-accent:#61e4ee}
+#speed[data-face="luxury"]::before{content:"";position:absolute;inset:13% -9% 16%;border-radius:13px;border:1px solid var(--speed-rim);background:linear-gradient(150deg,#17384b,#091320 70%);box-shadow:0 3px 10px #03111abd}
+#speed[data-face="luxury"] .bar{display:block;position:absolute;inset:25% 4% auto;height:3%;border-radius:4px;overflow:hidden;background:#283d50}
+#speed[data-face="luxury"] .reading{inset:35% 0 auto}
+
+#speed[data-face="sport"]{--speed-face:#1c1115;--speed-rim:#b84a42;--speed-ink:#fff3e9;--speed-accent:#ff6344}
+#speed[data-face="sport"]::before{content:"";position:absolute;inset:11% -12% 14%;clip-path:polygon(9% 0,91% 0,100% 20%,95% 81%,81% 100%,19% 100%,5% 81%,0 20%);background:linear-gradient(155deg,#8a3c37,#231519 30%,#0d0d14 72%,#512728)}
+#speed[data-face="sport"] .bar{display:block;position:absolute;inset:24% 1% auto;height:12%;clip-path:polygon(0 100%,10% 0,100% 0,90% 100%);background:#472726}
+#speed[data-face="sport"] #speedBar{background:linear-gradient(90deg,#ffad58,#ff4c43 80%,#fff0d0)}
+#speed[data-face="sport"] .reading{inset:40% 0 auto}
+#speed[data-face="sport"] .reading b{font-size:32px}
+#speed:is([data-face="work"],[data-face="luxury"],[data-face="sport"]) #speedDial{visibility:hidden}
+body.touchmode #speed .reading b{font-size:min(4.8vh,22px)}
+body.touchmode #speed .reading{font-size:7px}
 #toast{top:90px;left:50%;transform:translateX(-50%);font:700 26px Oswald;text-shadow:0 2px 0 #000;opacity:0;transition:opacity .4s;text-align:center;white-space:nowrap}
 #sub{bottom:90px;left:50%;transform:translateX(-50%);font:600 21px Barlow,sans-serif;color:#fff;text-shadow:0 2px 3px #000,0 0 8px #000;text-align:center;max-width:70vw;opacity:0;transition:opacity .3s}
 #sub b{color:var(--acc)}
@@ -104,9 +166,28 @@ body.touchmode .achHelpPC{display:none}
 #rotate .ph{width:70px;height:120px;border:5px solid #f5b72e;border-radius:12px;animation:rot 1.8s ease-in-out infinite}
 @keyframes rot{0%,20%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
 @media (orientation:portrait){body.touchmode #rotate{display:flex}}
-#bmhelp{position:absolute;left:20px;top:16px;font:600 14px Barlow,sans-serif;background:rgba(0,0,0,.6);padding:10px 14px;border-radius:8px;line-height:1.6}
-#bmhelp h3{font:700 24px Oswald;color:var(--acc)}
-.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+#bmhelp{position:absolute;left:20px;top:16px;max-width:min(610px,calc(100vw - 180px));font:600 14px/1.4 Barlow,sans-serif;background:#11181aeb;color:#f6f2e8;padding:10px 14px;border-radius:8px;border:1px solid #ffffff24}
+#bmhelp h3{font:700 22px Oswald;color:var(--acc);margin:0 0 4px}
+#bmLegend{margin-top:7px}
+#bmLegend summary{width:max-content;cursor:pointer;color:#ffd582;font-weight:700}
+#bmLeg{display:grid;gap:7px;margin:6px 0;max-height:min(42vh,300px);overflow:auto;overscroll-behavior:contain;touch-action:pan-y}
+.map-key-group{display:flex;flex-wrap:wrap;gap:4px 13px}
+.map-key-group h4{width:100%;margin:0;font-size:12px;color:#d9c9a9}
+.map-key-item{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.map-key-mark{width:10px;height:10px;border-radius:50%;background:var(--key-color);flex:none;box-shadow:0 0 0 1px #0a0f10}
+.map-key-mark[data-shape="square"]{border-radius:1px}
+.map-key-mark[data-shape="ring"]{background:#e53935;border-radius:1px;box-shadow:0 0 0 1px #11181a,0 0 0 3px var(--key-color);margin:0 2px}
+.map-key-mark[data-shape="tri"],.map-key-mark[data-shape="player"]{height:13px;border-radius:0;box-shadow:none;clip-path:polygon(50% 0,100% 100%,0 100%)}
+.map-key-mark[data-shape="player"]{clip-path:polygon(50% 0,100% 100%,50% 74%,0 100%)}
+.map-key-mark[data-shape="line"],.map-key-mark[data-shape="dash"]{width:16px;height:3px;border-radius:1px;box-shadow:none}
+.map-key-mark[data-shape="dash"]{background:repeating-linear-gradient(to right,var(--key-color) 0 4px,transparent 4px 7px)}
+#bmLegendNote{margin:5px 0 0;font-size:11px;color:#d9c9a9}
+#bmTouchHelp{display:none}
+body.touchmode #bmKeyboardHelp{display:none}
+body.touchmode #bmTouchHelp{display:block}
+body.touchmode.gamepad #bmTouchHelp{display:none}
+body.touchmode #bmhelp{left:8px;top:8px;max-width:calc(100vw - 155px);padding:6px 8px;font-size:12px}
+body.touchmode #bmhelp h3{font-size:16px}
 /* touch */
 #touch{position:fixed;inset:0;z-index:6;display:none}
 #joy{position:absolute;left:24px;bottom:24px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.3)}
@@ -120,9 +201,9 @@ body.touchmode #toast{top:46px;font-size:16px;white-space:normal;max-width:56vw}
 body.touchmode #sub{bottom:60px;font-size:14px;max-width:52vw}
 body.touchmode #prompt{bottom:120px;font-size:13px;padding:5px 10px}
 body.touchmode #big div{font-size:34px;letter-spacing:2px;-webkit-text-stroke:2px #000}
-body.touchmode #veh{font-size:26px;bottom:150px}body.touchmode #veh small{font-size:11px;letter-spacing:2px}
+
 body.touchmode #locStreet{font-size:17px}body.touchmode #locArea{font-size:12px}
-body.touchmode #speed{font-size:15px;bottom:110px}body.touchmode #weap{font-size:15px;right:auto;left:20px;top:58%;bottom:auto}body.touchmode #speed b{font-size:28px}
+body.touchmode #speed{font-size:15px;bottom:110px}body.touchmode #weap{font-size:15px;right:auto;left:20px;top:58%;bottom:auto}
 body.touchmode #dlg{bottom:10px;padding:10px 14px;width:min(560px,calc(100vw - 260px));max-height:86vh;overflow:auto}
 body.touchmode #dlg h4{font-size:16px;margin-bottom:2px}body.touchmode #dlg .who{font-size:10px}
 body.touchmode #dlg .mumble{font-size:14px;margin:4px 0 6px}body.touchmode #dlg .q{font-size:12px;margin-bottom:4px}
@@ -149,9 +230,22 @@ body.touchmode #tbDi{left:10px;top:calc(10px + var(--mm) + 42px + var(--b)*0.8);
 body.touchmode #tbQ,body.touchmode #tbR{right:calc(var(--g)*2.5 + var(--b)*1.15);bottom:calc(var(--g)*2.5 + var(--b)*1.15)}
 body.touchmode #tbR{right:calc(var(--g)*3.5 + var(--b)*2.15);bottom:calc(var(--g)*1.5 + var(--b)*0.6);font-size:min(2.6vh,12px)}
 body.touchmode #tbM{left:10px;top:calc(10px + var(--mm) + 32px);width:calc(var(--b)*0.8);height:calc(var(--b)*0.8);font-size:min(3vh,13px)}
-body.touchmode #speed{right:calc(var(--g)*1.5);bottom:calc(var(--g)*3.5 + var(--b)*2.15);font-size:min(3.4vh,15px)}body.touchmode #speed b{font-size:min(7vh,30px)}
-body.touchmode #veh{right:calc(var(--g)*1.5);bottom:calc(var(--g)*3.5 + var(--b)*2.15 + min(9vh,40px));font-size:min(6vh,26px)}
+body.touchmode #speed{left:auto;right:calc(var(--g)*4.5 + var(--b)*3.15);bottom:calc(var(--g)*2);width:min(18vh,80px)}
+
 body.touchmode #weap{left:auto;right:10px;top:calc(6px + min(16vh,72px));bottom:auto;font-size:min(3.4vh,15px)}
+body.touchmode #radioHud{right:10px;top:calc(10px + min(16vh,72px));bottom:auto;width:min(206px,42vw);gap:5px;font-size:12px}
+body.touchmode #radioNext{min-height:28px}
+body.touchmode #radioNext kbd,body.touchmode #radioHints{display:none}
+body.touchmode #radioSeek{display:flex;gap:5px;flex-basis:100%;justify-content:flex-end}
+#radioSeek button{pointer-events:auto;min-width:38px;min-height:28px;border:1px solid #ffffff40;border-radius:5px;background:#ffffff12;color:inherit}
+body.touchmode #tbUse{left:calc(min(36vh,160px) + var(--g)*3);bottom:calc(var(--g)*2);width:calc(var(--b)*.8);height:calc(var(--b)*.8)}
+body.touchmode #tbG{left:calc(22px + var(--mm) + var(--b)*.7 + 8px);top:10px;width:calc(var(--b)*.7);height:calc(var(--b)*.7);font-size:min(2.5vh,12px)}
+#bmPadHelp,#bmPadCross{display:none}
+body.gamepad #bmPadHelp,body.gamepad #bmPadCross{display:block}
+body.gamepad #bmKeyboardHelp{display:none}
+#bmPadCross{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font:700 24px Barlow,sans-serif;color:#fff;text-shadow:0 0 5px #000;pointer-events:none}
+
+
 body.touchmode #loc{right:auto;left:50%;bottom:4px;transform:translateX(-50%);text-align:center;white-space:nowrap}
 body.touchmode #locStreet{font-size:min(4vh,17px)}body.touchmode #locArea{font-size:min(3vh,12px)}
 body.touchmode #sub{bottom:calc(min(4vh,17px) + min(3vh,12px) + 14px)}
@@ -168,6 +262,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 #menubtns>.achhint{flex-basis:auto;font:500 12px Barlow,sans-serif;opacity:.6;margin-top:-2px}
 .verlbl{position:fixed;right:16px;bottom:12px;font:600 13px Oswald,sans-serif;letter-spacing:1px;color:rgba(244,241,234,.55);pointer-events:none;z-index:2}
 @media (min-width:900px){ #menu .panel{width:75vw;max-width:1500px;padding:30px 48px} #menu .grid{grid-template-columns:repeat(4,1fr)} #menu .btn{padding:13px 30px} }
+#ctlScreen [hidden]{display:none}
 .ctlt{width:100%;border-collapse:collapse;font:500 15px Barlow,sans-serif;color:#eee}
 .ctlt th{text-align:left;color:#ffd45c;font:400 16px Audiowide,sans-serif;letter-spacing:2px;padding:14px 6px 6px}
 .ctlt td{padding:5px 6px;border-bottom:1px solid rgba(255,255,255,.08)} .ctlt td.ctln{opacity:.7;font-size:13px;border:0}
@@ -179,8 +274,12 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="hud" id="topright"><div id="clock">12:00</div><div id="money">$0</div><div id="stars"></div></div>
 <div class="hud" id="minimapwrap"><canvas id="minimap" width="460" height="460"></canvas><div id="coords"></div><div id="healthbar"><div id="hb"></div></div></div>
 <div class="hud" id="loc"><div id="locStreet"></div><div id="locArea"></div></div>
-<div class="hud" id="veh"></div>
-<div class="hud" id="speed"><b id="kmh">0</b> km/h</div>
+<div class="hud" id="speed" title="Velocidad · pulsa para cambiar de emisora">
+<svg id="speedDial" viewBox="0 0 100 100" aria-hidden="true"><circle class="rim" cx="50" cy="50" r="47" stroke-width="2"/><circle cx="50" cy="50" r="43" fill="none" stroke="#ffffff26"/>
+<path class="ticks" d="M25.49 70.57L19.36 75.71M21.00 36.48L13.75 33.10M50.00 18.00L50.00 10.00M79.00 36.48L86.25 33.10M74.51 70.57L80.64 75.71" fill="none" stroke-width="2"/><path class="ticks minor" d="M17.92 66.34L14.36 68.16M15.07 58.71L11.19 59.68M14.01 50.63L10.01 50.70M14.79 42.52L10.87 41.68M21.63 27.84L18.48 25.37M27.34 22.02L24.83 18.91M34.22 17.64L32.47 14.05M41.90 14.92L41.00 11.03M58.10 14.92L59.00 11.03M65.78 17.64L67.53 14.05M72.66 22.02L75.17 18.91M78.37 27.84L81.52 25.37M85.21 42.52L89.13 41.68M85.99 50.63L89.99 50.70M84.93 58.71L88.81 59.68M82.08 66.34L85.64 68.16" fill="none" stroke-width="1.25"/>
+<path id="speedNeedle" d="M48 49L50 12L52 49Z" fill="#ffb54d"/><circle class="pivot" cx="50" cy="50" r="3"/></svg>
+<span class="bar" aria-hidden="true"><span id="speedBar"></span></span>
+<span class="reading"><b id="kmh">0</b>km/h</span><span id="veh"></span></div>
 <div class="hud" id="toast"></div>
 <div class="hud" id="sub"></div>
 <div class="hud" id="objective"></div>
@@ -189,7 +288,13 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div id="fade"></div>
 <div id="dlg" role="dialog" aria-live="polite"><div class="who" id="dlgWho"></div><h4 id="dlgTitle"></h4><div class="mumble" id="dlgText"></div><div class="q" id="dlgQ"></div><div id="dlgOpts"></div></div>
 <div id="rotate"><div class="ph"></div>GIRA EL MÓVIL, GUAS<br><span style="font:500 15px Barlow,sans-serif;opacity:.75">JETA La Laguna se juega en horizontal</span></div>
-<div id="xhair" class="hud" style="position:fixed;left:50%;top:50%;width:26px;height:26px;margin:-13px;display:none;pointer-events:none;z-index:9"><svg viewBox="0 0 26 26" width="26" height="26"><circle cx="13" cy="13" r="2" fill="#fff"/><path d="M13 1v7M13 18v7M1 13h7M18 13h7" stroke="#fff" stroke-width="2"/><path d="M13 1v7M13 18v7M1 13h7M18 13h7" stroke="#000" stroke-width="0.6"/></svg></div><div id="weap" class="hud" style="position:fixed;right:24px;bottom:110px;font:700 22px Oswald,sans-serif;color:#fff;text-shadow:0 2px 0 #000;display:none"></div>
+<div id="xhair" class="hud" style="position:fixed;left:50%;top:50%;width:26px;height:26px;margin:-13px;display:none;pointer-events:none;z-index:9"><svg viewBox="0 0 26 26" width="26" height="26"><circle cx="13" cy="13" r="2" fill="#fff"/><path d="M13 1v7M13 18v7M1 13h7M18 13h7" stroke="#fff" stroke-width="2"/><path d="M13 1v7M13 18v7M1 13h7M18 13h7" stroke="#000" stroke-width="0.6"/></svg></div><div id="radioHud" class="hud" role="group" aria-label="Radio del coche" hidden>
+  <div id="radioDisplay" aria-live="polite"><strong id="radioStation"></strong><span id="radioTrackFrame"><span id="radioTrack"></span></span></div>
+  <button id="radioNext" type="button" aria-label="Cambiar de emisora" aria-keyshortcuts="Q"><kbd class="radio-mouse" aria-hidden="true">Q</kbd><kbd class="radio-pad" aria-hidden="true">RB</kbd> Cambiar</button>
+  <div id="radioHints"><span class="radio-mouse">Clic izq. anterior · Clic dcho. siguiente</span><span class="radio-pad">Cruceta ← anterior · → siguiente</span></div>
+  <div id="radioSeek"><button id="radioPrevTrack" type="button" aria-label="Tema anterior">⏮</button><button id="radioSkipTrack" type="button" aria-label="Tema siguiente">⏭</button></div>
+</div>
+<div id="weap" class="hud"></div>
 <canvas id="fight2d" width="320" height="180" style="position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;image-rendering:pixelated;background:#000;z-index:28;display:none"></canvas>
 <div id="fightPad" style="display:none;position:fixed;inset:0;z-index:29;pointer-events:none">
 <div class="fpb" id="fpL" style="left:18px;bottom:70px">◀</div><div class="fpb" id="fpR" style="left:138px;bottom:70px">▶</div><div class="fpb" id="fpU" style="left:78px;bottom:130px">▲</div><div class="fpb" id="fpD" style="left:78px;bottom:10px">▼</div>
@@ -202,9 +307,9 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
  <div style="position:absolute;right:16px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px;pointer-events:auto">
   <div class="achb" id="achUp">SUBIR</div><div class="achb" id="achDown">BAJAR</div><div class="achb" id="achFast">RÁPIDO</div><div class="achb" id="achView">VISTA</div><div class="achb" id="achMap">MAPA</div><div class="achb" id="achExit" style="border-color:#ff5252">BAJAR A TIERRA</div>
  </div></div>
-<div id="bigmap"><canvas id="bmc"></canvas><div id="bmClose">✕ CERRAR</div><div id="bmCoords">Mueve el ratón o toca el mapa para ver las coordenadas</div><div id="bmTp">⚡ TELETRANSPORTE</div><div id="bmZ"><div id="bmZi">+</div><div id="bmZo">−</div></div><div id="bmhelp"><h3>MAPA — SAN CRISTÓBAL DE LA LAGUNA</h3>Arrastra para mover · Rueda para zoom · Clic: marcar destino (GPS) · Clic derecho: quitar · <kbd>T</kbd> o botón: teletransporte al destino<br><span id="bmLeg"><span class="dot" style="background:#fff"></span>Tú <span class="dot" style="background:#f5b72e;margin-left:10px"></span>Misión <span class="dot" style="background:#e040fb;margin-left:10px"></span>Destino <span class="dot" style="background:#e53935;border-radius:2px;margin-left:10px"></span>Comida <span class="dot" style="background:#3d7bff;margin-left:10px"></span>Policía</span><br><kbd>M</kbd> cerrar</div></div>
+<div id="bigmap"><canvas id="bmc"></canvas><div id="bmPadCross" aria-hidden="true">+</div><div id="bmClose">✕ CERRAR</div><div id="bmCoords">Mueve el ratón o toca el mapa para ver las coordenadas</div><div id="bmTp">⚡ TELETRANSPORTE</div><div id="bmZ"><div id="bmZi">+</div><div id="bmZo">−</div></div><div id="bmhelp"><h3>MAPA — SAN CRISTÓBAL DE LA LAGUNA</h3><div id="bmKeyboardHelp">Arrastra para mover · rueda para zoom · clic para marcar destino · clic derecho para quitarlo · T para teletransportar · M para cerrar</div><div id="bmPadHelp">Stick izq. o cruceta: mover · LT/RT: zoom · A: marcar · X: quitar · Y: teletransportar · B o Vista: cerrar</div><div id="bmTouchHelp">Arrastra para mover · pellizca para hacer zoom · toca para marcar destino</div><details id="bmLegend" open><summary id="bmLegendToggle">Leyenda</summary><div id="bmLeg"></div><p id="bmLegendNote">Algunos iconos aparecen al avanzar en la historia o al acercar el mapa.</p></details></div></div>
 <div id="touch"><div id="joy"><div id="joyk"></div></div>
-<div class="tb" id="tbA" style="display:none">APUNTAR</div><div class="tb" id="tbD" style="display:none;border-color:#ff5252">DISPARAR</div><div class="tb" id="tbF">ENTRAR</div>
+<div class="tb" id="tbA" style="display:none">APUNTAR</div><div class="tb" id="tbD" style="display:none;border-color:#ff5252">DISPARAR</div><div class="tb" id="tbF">ENTRAR</div><div class="tb" id="tbUse">USAR</div><div class="tb" id="tbG" title="Mostrar u ocultar brújula">GUÍA</div>
 <div class="tb" id="tbJ">SALTO<br>FRENO</div>
 <div class="tb" id="tbS">CORRER</div>
 <div class="tb" id="tbM">MAPA</div>
@@ -213,9 +318,9 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div id="miniPad" style="display:none;position:fixed;inset:0;z-index:30;pointer-events:none">
 <div class="fpb mpd" id="mpL" style="left:18px;bottom:70px">◀</div><div class="fpb mpd" id="mpR" style="left:138px;bottom:70px">▶</div><div class="fpb mpd" id="mpU" style="left:78px;bottom:130px">▲</div><div class="fpb mpd" id="mpD" style="left:78px;bottom:10px">▼</div>
 <div class="fpb big mpd" id="mpA" style="right:110px;bottom:40px;border-color:#ffd400">A</div><div class="fpb big mpd" id="mpB" style="right:20px;bottom:90px;border-color:#ff5252">B</div><div class="fpb big mpd" id="mpC" style="right:110px;bottom:140px;border-color:#5ec8ff">C</div>
-<div class="fpb" id="mpP" style="left:50%;top:8px;margin-left:-28px;width:56px;height:44px;font-size:18px">❚❚</div></div>
+<div class="fpb" id="mpP" style="left:50%;top:8px;margin-left:-28px;width:56px;height:44px;font-size:18px">❚❚</div><div class="fpb mpd" id="mpExit" style="right:14px;top:8px;width:62px;height:38px;font-size:12px">ATRÁS</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">Alpha 1.4.23</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">Alpha 1.4.41</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -234,7 +339,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
   <div><span>Enderezar coche</span><span><kbd>R</kbd></span></div>
   <div><span>Pausa</span><span><kbd>Esc</kbd> / <kbd>P</kbd></span></div>
  </div>
- <p class="credits">Mando compatible (Xbox/PS). Parodia no oficial: todos los comercios tienen nombres inventados. Datos del mapa © colaboradores de OpenStreetMap (ODbL). Vehículos base: Kenney Car Kit (CC0, kenney.nl). Personajes y animaciones: Quaternius Universal Base Characters y Universal Animation Library (CC0, quaternius.com). Relieve: Copernicus DEM vía Open-Meteo.</p>
+ <p class="credits">Mando compatible (Xbox/PS). Parodia no oficial: comercios y marcas tienen nombres inventados. Vehículos: propios de JETA La Laguna. Música original de Jonay, creada con Suno. Mapa © colaboradores de OpenStreetMap (ODbL) · edificios: Dirección General del Catastro · señales: Mapillary (CC BY-SA). Relieve: MDT05 © Instituto Geográfico Nacional (CC BY 4.0) y Copernicus DEM vía Open-Meteo. Personajes y animaciones base: Quaternius (CC0). Pino canario: «Pine» de Quaternius (CC0). Texturas: Poly Haven (CC0). Motor 3D: three.js (MIT). Tipografías: Google Fonts (OFL).</p>
 </div></div>
 
 <div class="screen" id="pause" style="display:none"><div class="panel">

@@ -1182,15 +1182,15 @@ const BASKET2D = (() => {
     }
   }
   // ---------- tutorial (first game against the Obispo's seminarians)
-  const K_ = (id) => CONTROLS.keyName(id);
+  const K_ = miniKeyLabel;
   const TUT = [
     ['walk', () => `Muévete por la cancha: ${K_('left')} ${K_('right')} ${K_('fwd')} ${K_('back')}`, (e) => (e.walk || 0) > 1.2],
     ['turbo', () => `Corre: mantén ${K_('f_kick')} mientras te mueves (gasta la barra de turbo)`, (e) => (e.turbo || 0) > 0.8],
-    ['pass', () => `Pasa a tu compañero: clic derecho (o ${K_('b_pass')})`, (e) => e.pass],
-    ['catch', () => `Pídela de vuelta: clic derecho otra vez`, (e) => e.catch],
-    ['shot', () => `Tira: mantén clic izquierdo (o ${K_('f_punch')}) y suéltalo con la barra en VERDE`, (e) => e.green],
+    ['pass', () => `Pasa a tu compañero: ${miniActionLabel('b_pass', 'clic dcho.')}`, (e) => e.pass],
+    ['catch', () => `Pídela de vuelta: ${miniActionLabel('b_pass', 'clic dcho.')} otra vez`, (e) => e.catch],
+    ['shot', () => `Tira: mantén ${miniActionLabel('f_punch', 'clic izq.')} y suéltalo con la barra en VERDE`, (e) => e.green],
     ['combo', () => `Entrada en combo: corriendo (${K_('f_kick')}) tira desde media distancia y haz el especial`, (e) => e.combo],
-    ['steal', () => `Robo: pégate al rival del balón y clic derecho (corriendo, empujón)`, (e) => e.steal]
+    ['steal', () => `Robo: pégate al rival del balón y pulsa ${miniActionLabel('b_pass', 'clic dcho.')} (corriendo, empujón)`, (e) => e.steal]
   ];
   function tutorial(dt) {
     const t = st.tut;
@@ -1704,7 +1704,7 @@ const BASKET2D = (() => {
         txt(q.t, x0 + i * 60 + (i === 2 ? 10 : 0), 122, q.t.length > 1 ? 7 : 12, q.c);
         if (i < 2) txt(i === 1 ? '+' : ',', x0 + i * 60 + 30, 124, 8, '#aaa');
       });
-      txt(`puño = clic izq. / ${K_('f_punch')} · patada = ${K_('f_kick')} / clic dcho.`, W / 2, 146, 5, '#9fd7ff');
+      txt(`puño = ${miniActionLabel('f_punch', 'clic izq.')} · patada = ${K_('f_kick')}`, W / 2, 146, 5, '#9fd7ff');
       cx.fillStyle = '#333';
       cx.fillRect(90, 160, W - 180, 5);
       cx.fillStyle = C.t > 1.2 ? '#7fe08a' : '#ff6b6b';
@@ -1764,25 +1764,27 @@ const BASKET2D = (() => {
       txt(`JETA JAM · ${st.p.length >> 1} CONTRA ${st.p.length >> 1}`, W / 2, 58, 9, '#ffd400');
       const rows = [
         ['MOVERSE', `${K_('left')} ${K_('right')} ${K_('fwd')} ${K_('back')}`],
-        ['TIRAR (mantén, suelta en verde)', `clic izq. · ${K_('f_punch')}`],
-        ['PASAR / ROBAR / CAMBIAR', `clic dcho. · ${K_('b_pass')}`],
-        ['TAPÓN (defendiendo)', `clic izq. · ${K_('f_punch')}`],
+        ['TIRAR (mantén, suelta en verde)', miniActionLabel('f_punch', 'clic izq.')],
+        ['PASAR / ROBAR / CAMBIAR', miniActionLabel('b_pass', 'clic dcho.')],
+        ['TAPÓN (defendiendo)', miniActionLabel('f_punch', 'clic izq.')],
         ['CORRER (turbo)', K_('f_kick')],
         ['COMBO', 'corriendo + tiro a media distancia']
       ];
       MINI.rows(cx, W, rows, 78);
-      if (Math.floor(st.time0 * 2) % 2 === 0) txt(`CLIC IZQ. O ${K_('f_punch').toUpperCase()} PARA EMPEZAR`, W / 2, 162, 7, '#7fe08a');
+      if (Math.floor(st.time0 * 2) % 2 === 0) txt(`${miniActionLabel('f_punch', 'clic izq.').toUpperCase()} PARA EMPEZAR`, W / 2, 162, 7, '#7fe08a');
     }
   }
   // ---------- loop
+  const frameDue = makeFrameGate();
   function loop(now) {
     if (!running) return;
     raf = requestAnimationFrame(loop);
+    if (!frameDue(now)) return;
     if (PZ.on) {
       last = now;
       draw();
       cx.setTransform(R, 0, 0, R, 0, 0);
-      MINI.pauseOverlay(cx, W, H);
+      MINI.pauseOverlay(cx, W, H, PZ.quit);
       return;
     } // v0.89: P = pause
     let dt = Math.min(0.1, (now - last) / 1000);

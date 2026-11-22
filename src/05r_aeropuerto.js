@@ -11,6 +11,7 @@ function buildAirport() {
   const B = concBuckets();
   const root = new THREE.Group();
   root.name = 'aeropuerto';
+  root.userData.batchLandmark = true;
   const mat = (c, r = 0.85, m = 0) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m, side: THREE.DoubleSide });
   const concrete = mat(0xb9b6ae, 0.95),
     runwayM = mat(0x3d3f42, 0.95),
@@ -440,7 +441,7 @@ function airportExtras() {
           if ((rd && rd.d < DATA.R[rd.ri][2] / 2 + 1) || inAnyBuilding(xm, zm)) continue;
           const y0 = heightAt(x0, z0),
             y1 = heightAt(x1, z1);
-          if (onCarriagewayEarly(x0, z0, 0.6) || onCarriagewayEarly(x1, z1, 0.6)) continue; /* v0.73 (auditor): no post in a carriageway */
+          if (roadIntersectsBarrier(x0, z0, y0 + 0.6, x1, z1, y1 + 0.6, 0.6)) continue;
           B.quad(mesh, [x0, y0, z0], [x1, y1, z1], [x1, y1 + 2.4, z1], [x0, y0 + 2.4, z0], 2.4);
           if (j % 2 === 0) B.geo(new THREE.CylinderGeometry(0.05, 0.05, 2.6, 4), steel, cFrame(x0, y0, z0, 0)(0, 1.3, 0));
           n++;
@@ -612,6 +613,7 @@ function airportExtrasPart2(T, B, glass, white) {
 /** (v1.1.7, code quality) part of airportExtras: the domed rotunda on the airside middle of the terminal */
 function airportExtrasPart1(root, AW) {
   root.name = 'aeropuerto2';
+  root.userData.batchLandmark = true;
   const mat = (c, r = 0.85, m = 0) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m });
   const white = mat(0xf2f2ef, 0.6),
     steel = mat(0x9aa0a4, 0.5, 0.5),

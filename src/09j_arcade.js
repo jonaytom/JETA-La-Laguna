@@ -488,7 +488,9 @@ const ARCADE = (() => {
   // ---------- the cabinet
   function bezel() {
     // marquee with the game's title, the black bezel round the tube, the control panel (static: cached)
-    if (M.bz) return M.bz;
+    const medium = controlMedium();
+    if (M.bz && M.bzMedium === medium) return M.bz;
+    M.bzMedium = medium;
     const c = mkCanvas(CW * KR, CH * KR),
       x = c.getContext('2d');
     x.scale(KR, KR);
@@ -534,8 +536,8 @@ const ARCADE = (() => {
     x.font = '13px "Press Start 2P", monospace';
     x.fillStyle = '#c9c9c9';
     x.textAlign = 'center';
-    const K = (id) => CONTROLS.keyName(id).toUpperCase();
-    x.fillText(M.game.help ? M.game.help(K) : `A: ${K('f_punch')}   B: ${K('f_kick')}   MONEDA: ${K('b_pass')}   SALIR: ESC`, CW / 2, CH - 30);
+    const K = (id) => miniKeyLabel(id).toUpperCase();
+    x.fillText(M.game.help ? M.game.help(K) : `A: ${K('f_punch')}   B: ${K('f_kick')}   MONEDA: ${K('b_pass')}   SALIR: ${K('exit')}`, CW / 2, CH - 30);
     return (M.bz = c);
   }
   let scan = null;
@@ -607,14 +609,23 @@ const ARCADE = (() => {
     sfx('start');
     if (M.game.onStart) M.game.onStart(M);
   }
+  function showContinue() {
+    st.mode = 'cont';
+    st.contT = 9.99;
+  }
   function play(dt) {
     G.update(dt, pad);
-    if (G.over) {
-      st.mode = 'cont';
-      st.contT = 9.99;
-      stopMusic();
-      sfx('die');
-    }
+    if (!G.over) return;
+    stopMusic();
+    sfx('die');
+    const score = G.score;
+    if (score > 0 && qualifies(M.key, M.game, score)) {
+      st.mode = 'name';
+      st.scorePending = score;
+      st.name = ['A', 'A', 'A'];
+      st.ni = 0;
+      st.nT = 30;
+    } else showContinue();
   }
   function cont(dt) {
     st.contT -= dt * 0.9;
@@ -626,15 +637,13 @@ const ARCADE = (() => {
       sfx('start');
       return;
     }
-    if (hit('vS') || hit('vT')) st.contT -= 1; // pressing without a coin hurries the count, as on the real ones
+    if (hit('vS') || hit('vT')) st.contT -= 1;
     if (st.contT <= 0) {
-      const s = G.score;
-      if (s > 0 && qualifies(M.key, M.game, s)) {
-        st.mode = 'name';
-        st.name = ['A', 'A', 'A'];
-        st.ni = 0;
-        st.nT = 30;
-      } else toAttract();
+      toAttract();
+      if (st.hl) {
+        st.t = 20;
+        st.view = 'scores';
+      }
     }
   }
   const ABC = 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ.!♥ ';
@@ -654,18 +663,13 @@ const ARCADE = (() => {
     if (hit('vS') || hit('vT')) {
       st.ni++;
       sfx('coin');
-      if (st.ni >= 3) {
-        st.rank = addScore(M.key, M.game, st.name.join(''), G.score);
-        st.mode = 'attract';
-        st.t = 20;
-        st.view = 'scores';
-        st.hl = st.name.join('');
-        SAVE && SAVE.dirty && SAVE.dirty();
-      }
     }
-    if (st.nT <= 0) {
-      st.rank = addScore(M.key, M.game, st.name.join(''), G.score);
-      toAttract();
+    if (st.ni >= 3 || st.nT <= 0) {
+      st.hl = st.name.join('');
+      st.rank = addScore(M.key, M.game, st.hl, st.scorePending);
+      st.scorePending = 0;
+      SAVE && SAVE.dirty && SAVE.dirty();
+      showContinue();
     }
   }
   // ---------- v0.83: the GOFIO-8, the console at home (Jonay: «al iniciar, un menú para elegir el juego entre los que
@@ -676,7 +680,7 @@ const ARCADE = (() => {
     sub: 'LA CONSOLA DE TU CASA',
     marquee: ['#2a2a3a', '#0a0a12'],
     titleCol: '#7fe0ff',
-    help: (K) => `↑↓ ELEGIR  A JUGAR: ${K('f_punch')}  MENÚ: ${K('b_pass')}  ESC APAGAR`,
+    help: (K) => `↑↓ ELEGIR  A JUGAR: ${K('f_punch')}  MENÚ: ${K('b_pass')}  ${K('exit')} APAGAR`,
     music: {
       title: {
         bpm: 120,
@@ -785,7 +789,7 @@ const ARCADE = (() => {
       txt(g, gm ? gm.title : id, 142, y, on ? '#ffd400' : '#fff', 10);
       txt(g, gm && gm.sub ? gm.sub : '', 142, y + 14, '#9fd7ff', 6);
     });
-    txt(g, '↑↓ ELEGIR   A JUGAR   ESC APAGAR', W / 2, H - 22, '#fff', 8, 'center');
+    txt(g, `↑↓ ELEGIR   ${miniKeyLabel('f_punch').toUpperCase()} JUGAR   ${miniKeyLabel('exit').toUpperCase()} APAGAR`, W / 2, H - 22, '#fff', 8, 'center');
   }
   function toAttract() {
     st.mode = 'attract';
@@ -833,13 +837,13 @@ const ARCADE = (() => {
       g.fillRect(0, 0, W, H);
       txt(g, 'CONTINUE?', W / 2, 80, '#ffd400', 16, 'center');
       txt(g, String(Math.max(0, Math.ceil(st.contT - 0.01))), W / 2, 110, '#fff', 24, 'center');
-      txt(g, free() ? 'PULSA A' : st.credits > 0 ? 'PULSA A' : 'INSERT COIN', W / 2, 150, '#9fd7ff', 8, 'center');
+      txt(g, free() || st.credits > 0 ? `PULSA ${miniKeyLabel('f_punch').toUpperCase()}` : `${miniKeyLabel('b_pass').toUpperCase()}: MONEDA`, W / 2, 150, '#9fd7ff', 8, 'center');
     }
     if (st.mode === 'name') {
       g.fillStyle = '#000';
       g.fillRect(0, 0, W, H);
       txt(g, '¡NUEVO RÉCORD!', W / 2, 40, '#ffd400', 12, 'center');
-      txt(g, String(G.score).padStart(7, '0'), W / 2, 64, '#fff', 12, 'center');
+      txt(g, String(st.scorePending).padStart(7, '0'), W / 2, 64, '#fff', 12, 'center');
       txt(g, 'TUS INICIALES', W / 2, 96, '#9fd7ff', 8, 'center');
       for (let i = 0; i < 3; i++) {
         const on = i === st.ni && Math.floor(performance.now() / 250) % 2 === 0;
@@ -858,9 +862,9 @@ const ARCADE = (() => {
     }
   }
   function blinkMsg(g) {
-    if (M.console) txt(g, 'Q: VOLVER AL MENÚ DE LA GOFIO-8', 6, H - 10, '#9fd7ff', 6);
+    if (M.console) txt(g, `${miniKeyLabel('b_pass').toUpperCase()}: VOLVER AL MENÚ DE LA GOFIO-8`, 6, H - 10, '#9fd7ff', 6);
     if (Math.floor(performance.now() / 500) % 2) return;
-    const t = free() ? 'PULSA A PARA JUGAR' : st.credits > 0 ? 'PULSA A PARA JUGAR' : 'INSERT COIN  ($' + M.price + ')';
+    const t = free() || st.credits > 0 ? `PULSA ${miniKeyLabel('f_punch').toUpperCase()} PARA JUGAR` : `${miniKeyLabel('b_pass').toUpperCase()}: MONEDA  ($${M.price})`;
     txt(g, t, W / 2, H - 18, '#ffd400', 8, 'center');
   }
   function drawScores(g) {
@@ -878,9 +882,11 @@ const ARCADE = (() => {
   }
   // ---------- loop
   const PZ = MINI.pauser(() => running && !suspended); // v0.89: P = pause, in every machine and on the console
+  const frameDue = makeFrameGate();
   function loop(now) {
     if (!running) return;
     raf = requestAnimationFrame(loop);
+    if (!frameDue(now)) return;
     if (PZ.on) {
       last = now;
       render();
@@ -890,7 +896,7 @@ const ARCADE = (() => {
       cx.fillRect(SX * KR, SY * KR, W * RS, H * RS);
       cx.setTransform(KR, 0, 0, KR, 0, 0);
       txt(cx, 'PAUSA', SX + (W * SS) / 2, SY + (H * SS) / 2 - 30, '#ffd400', 36, 'center');
-      txt(cx, 'PULSA P PARA SEGUIR', SX + (W * SS) / 2, SY + (H * SS) / 2 + 20, '#fff', 14, 'center');
+      txt(cx, `${miniKeyLabel('pause').toUpperCase()}: CONTINUAR`, SX + (W * SS) / 2, SY + (H * SS) / 2 + 20, '#fff', 14, 'center');
       return;
     }
     const dt = Math.min(0.1, (now - last) / 1000);
@@ -1089,7 +1095,7 @@ const ARCADE = (() => {
 // a mission). He also tells you about the bars and the toy shops (their machines come later).
 const RECRE = (() => {
   let t = 0;
-  const COL_ = '#ffb347';
+  const COL_ = MAP_MARK.bencomo;
   const DOOR = [-772, -413]; // Jonay: the entrance of the Edificio Casa del Blanco (Teobaldo Power), right by the building
   const G_ = () => window.GANG || null;
   function invited() {

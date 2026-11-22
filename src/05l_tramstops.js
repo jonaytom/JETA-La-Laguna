@@ -16,22 +16,107 @@ function isTramStopBuilding(nameIdx, pts) {
 function tramNearest(x, z) {
   const T = DATA.T;
   let best = null,
-    bd = 1e9;
+    distance = Infinity,
+    s = 0;
   for (let i = 0; i < T.length - 2; i += 2) {
     const dx = T[i + 2] - T[i],
       dz = T[i + 3] - T[i + 1],
-      L2 = dx * dx + dz * dz || 1;
-    const t = clamp(((x - T[i]) * dx + (z - T[i + 1]) * dz) / L2, 0, 1);
+      len = Math.hypot(dx, dz);
+    if (len < 0.001) continue;
+    const t = clamp(((x - T[i]) * dx + (z - T[i + 1]) * dz) / (len * len), 0, 1);
     const px = T[i] + dx * t,
       pz = T[i + 1] + dz * t,
       d = Math.hypot(x - px, z - pz);
-    if (d < bd) {
-      const L = Math.sqrt(L2);
-      bd = d;
-      best = { x: px, z: pz, dx: dx / L, dz: dz / L, d };
+    if (d < distance) {
+      distance = d;
+      best = { x: px, z: pz, dx: dx / len, dz: dz / len, d, s: s + t * len };
     }
+    s += len;
   }
   return best;
+}
+const TRAM_PLATFORMS = [];
+function tramPlatformFrame(s, side, width, trackLength, inner) {
+  return (u, v) => {
+    const at = clamp(s - side * u, 0, trackLength),
+      p = polyAt(DATA.T, at),
+      a = polyAt(DATA.T, Math.max(0, at - 0.65)),
+      b = polyAt(DATA.T, Math.min(trackLength, at + 0.65)),
+      len = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1,
+      d = side * (inner + width / 2 + v);
+    return [p[0] - (b[1] - a[1]) * d / len, p[1] + (b[0] - a[0]) * d / len];
+  };
+}
+function tramPlatformFit(t, side, trackLength) {
+  for (const [inner, width, maxShift] of [[3.6, 1.84, 20], [3.6, 1.65, 20], [3.35, 1.4, 33]]) {
+    for (const shift of [0, -4, 4, -8, 8, -13, 13, -20, 20, -26, 26, -33, 33]) {
+      if (Math.abs(shift) > maxShift) continue;
+      const s = t.s + shift,
+        point = tramPlatformFrame(s, side, width, trackLength, inner);
+      for (const half of [12, 9.6, 7.2, 5.6]) {
+        const limit = half + 2.25;
+        if (s - limit < 0 || s + limit > trackLength) continue;
+        let clear = true;
+        const steps = Math.ceil(limit * 2 / 0.65);
+        for (let i = 0; i <= steps && clear; i++) {
+          const u = -limit + 2 * limit * i / steps;
+          for (const v of [-width / 2, 0, width / 2]) {
+            const [x, z] = point(u, v),
+              y = heightAt(x, z);
+            if (roadAtBarrier(x, z, y - 1, y + 0.75, 0.06)) {
+              clear = false;
+              break;
+            }
+          }
+        }
+        if (clear) return { point, half, width };
+      }
+    }
+  }
+  return null;
+}
+function buildTramPlatform({point, half, width}, material, warningMaterial) {
+  const limit = half + 2.25,
+    rows = [],
+    geometry = new THREE.BufferGeometry(),
+    surface = [],
+    warning = [];
+  const steps = Math.ceil(half * 2 / 0.55);
+  for (let k = 0; k < 4; k++) rows.push(lerp(-limit, -half, k / 4));
+  for (let k = 0; k <= steps; k++) rows.push(-half + 2 * half * k / steps);
+  for (let k = 1; k <= 4; k++) rows.push(lerp(half, limit, k / 4));
+  const vertex = (u, v, offset) => {
+    const [x, z] = point(u, v);
+    return [x, heightAt(x, z) + offset, z];
+  };
+  const quad = (array, a, b, c, d) => array.push(...a, ...b, ...c, ...a, ...c, ...d);
+  const edges = [];
+  for (let i = 0; i + 1 < rows.length; i++) {
+    const a = rows[i],
+      b = rows[i + 1],
+      ya = lerp(0.32, 0.035, Math.max(0, (Math.abs(a) - half) / 2.25)),
+      yb = lerp(0.32, 0.035, Math.max(0, (Math.abs(b) - half) / 2.25)),
+      al = vertex(a, -width / 2, ya),
+      ar = vertex(a, width / 2, ya),
+      bl = vertex(b, -width / 2, yb),
+      br = vertex(b, width / 2, yb);
+    quad(surface, al, bl, br, ar);
+    quad(surface, al, vertex(a, -width / 2, -0.08), vertex(b, -width / 2, -0.08), bl);
+    quad(surface, ar, br, vertex(b, width / 2, -0.08), vertex(a, width / 2, -0.08));
+    if (i >= 4 && i < rows.length - 5)
+      quad(warning, vertex(a, -width / 2 + 0.12, 0.329), vertex(b, -width / 2 + 0.12, 0.329),
+           vertex(b, -width / 2 + 0.46, 0.329), vertex(a, -width / 2 + 0.46, 0.329));
+    edges.push(al, ar);
+    if (i + 2 === rows.length) edges.push(bl, br);
+  }
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(surface.concat(warning), 3));
+  geometry.addGroup(0, surface.length / 3, 0);
+  geometry.addGroup(surface.length / 3, warning.length / 3, 1);
+  geometry.computeVertexNormals();
+  const mesh = new THREE.Mesh(geometry, [material, warningMaterial]);
+  mesh.receiveShadow = true;
+  scene.add(mesh);
+  return edges;
 }
 function stopSignTex(name) {
   const c = mkCanvas(256, 512),
@@ -85,12 +170,12 @@ function buildTramStops() {
     }
   const mPlat = M(0xb9b6ae, 0.85),
     mEdge = M(0xe3be1e, 0.7),
-    mKerb = M(0x8d8a84, 0.9),
     mSteel = M(0x5c6166, 0.45, 0.6),
     mRoof = M(0xf0f0ee, 0.6),
     mGreen = M(0x2f8a3c, 0.6),
     mWood = M(0x8a5a3a, 0.8);
   const { mGlass, box } = buildTramStopsPart1();
+  const trackLength = polyLen(DATA.T);
   let n = 0;
   for (const [nameIdx, list] of by) {
     const cx = list.reduce((s, p) => s + p[2], 0) / list.length,
@@ -99,45 +184,22 @@ function buildTramStops() {
     if (!t || t.d > 30) continue;
     const name = nameIdx >= 0 ? STR[nameIdx] : null;
     const sign = new THREE.MeshStandardMaterial({ map: stopSignTex(name), roughness: 0.5, emissive: 0xffffff, emissiveIntensity: 0.08 });
-    const h = Math.atan2(t.dx, t.dz);
     for (const sg of [-1, 1]) {
-      const K = 0.8;
-      /* platforms at 80 % of the real size so they fit between the tracks and the streets (Jonay) */ const off = 3.6 + (2.3 * K) / 2;
-      const px = t.x - t.dz * off * sg,
-        pz = t.z + t.dx * off * sg;
-      const g = new THREE.Group();
-      g.position.set(px, Math.max(heightAt(px, pz), heightAt(t.x, t.z)), pz);
-      g.rotation.y = h + (sg > 0 ? Math.PI : 0);
-      g.scale.set(K, 1, K);
-      // local frame: z along the track, -x towards the rails... (after the flip both sides face the track at -x)
-      const W = 2.3;
-      const ry = g.rotation.y,
-        cr = Math.cos(ry),
-        sr = Math.sin(ry);
-      // platform length: as long as it fits (30 m) without its ramps or its outer edge reaching a carriageway (agent: platform in Av. Menceyes)
-      const clear = (Lt) => {
-        for (let lz = -Lt / 2 - 2.8; lz <= Lt / 2 + 2.8; lz += 1.5)
-          for (const lx of [-W / 2, 0, W / 2]) {
-            const wx = px + (lx * cr + lz * sr) * K,
-              wz = pz + (-lx * sr + lz * cr) * K;
-            if (onCarriageway(wx, wz, -0.6)) return false;
-          }
-        return true;
-      };
-      const L = [30, 24, 18, 14].find(clear) || 30;
-      if (!clear(L)) console.log('tram stop platform still on a carriageway', Math.round(px), Math.round(pz));
-      else if (L < 30) console.log('tram stop platform shortened', L * K, Math.round(px), Math.round(pz)); // a platform whose centre is already on a road (the OSM road is drawn over the tram median) keeps its length
-      box(g, mPlat, W, 0.32, L, 0, 0.16, 0);
-      box(g, mKerb, 0.12, 0.34, L, -W / 2 + 0.06, 0.17, 0);
-      box(g, mEdge, 0.45, 0.012, L, -W / 2 + 0.38, 0.326, 0);
-      // ramps at both ends
-      for (const e of [-1, 1]) {
-        const r = new THREE.Mesh(new THREE.BoxGeometry(W, 0.06, 3), mPlat);
-        r.position.set(0, 0.14, e * (L / 2 + 1.4));
-        r.rotation.x = e * 0.1;
-        r.receiveShadow = true;
-        g.add(r);
+      const fit = tramPlatformFit(t, sg, trackLength);
+      if (!fit) {
+        console.log('tram platform has no clear verge', name, sg);
+        continue;
       }
+      TRAM_PLATFORMS.push({ name, side: sg, edges: buildTramPlatform(fit, mPlat, mEdge) });
+      const [px, pz] = fit.point(0, 0),
+        a = fit.point(-3.5, 0),
+        b = fit.point(3.5, 0),
+        h = Math.atan2(b[0] - a[0], b[1] - a[1]),
+        pitch = -Math.atan2(heightAt(...b) - heightAt(...a), Math.hypot(b[0] - a[0], b[1] - a[1]));
+      const g = new THREE.Group();
+      g.position.set(px, heightAt(px, pz), pz);
+      g.rotation.set(pitch, h, 0, 'YXZ');
+      g.scale.set(Math.min(0.8, fit.width / 2.3), 1, Math.min(0.8, (fit.half - 0.25) / 6.6));
       // shelter (outer half of the platform)
       const SL = 9,
         sx = 0.2;
@@ -182,9 +244,9 @@ function buildTramStops() {
         const v = new THREE.Vector3(lx, 0, lz).applyMatrix4(g.matrixWorld);
         return [v.x, v.z];
       };
-      const a = W2(sx + 0.72, -SL / 2),
-        b = W2(sx + 0.72, SL / 2);
-      COL.addSeg(a[0], a[1], b[0], b[1]);
+      const backA = W2(sx + 0.72, -SL / 2),
+        backB = W2(sx + 0.72, SL / 2);
+      COL.addSeg(backA[0], backA[1], backB[0], backB[1], g.position.y - 1, g.position.y + 3.5, 'marquesina');
       for (const [lx, lz, r, ms] of [
         [sx + 0.5, SL / 2 + 1.4, 0.4, mach],
         [sx + 0.3, -SL / 2 - 1.6, 0.3, totem]

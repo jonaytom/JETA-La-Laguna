@@ -287,18 +287,34 @@ const DIARIO = (() => {
   /** (v1.1.7, code quality) part of render */
   function renderPart2(m, det, t, convo) {
     const log = MISSIONS.log(m.title);
+    const done = m.state === 'hecha';
+    const following = GPS.follow?.key === t.key && GPS.follow.index === sel.i;
+    const destination = !done && MISSIONS.diaryDestination(t.key, sel.i);
     det.innerHTML = `<div style="font:400 22px Audiowide,Oswald,sans-serif;color:${t.css}">${esc(m.title)}</div>
       <div style="color:#bdb6c9;margin:2px 0 8px;font:400 14px Barlow,sans-serif">${esc(t.name)} · ${m.who ? 'Te la da ' + esc(m.who) + ' · ' : ''}<b style="color:${m.state === 'hecha' ? '#7fe08a' : m.state === 'activa' ? '#ffd400' : '#fff'}">${LABEL[m.state]}</b></div>
       ${m.hint ? `<div style="margin-bottom:8px;font:400 15px Barlow,sans-serif">➜ ${m.hint}</div>` : ''}
       ${convo(log, `<p style="color:#8f8a9a">${m.state === 'hecha' ? 'Esta misión se terminó en una partida de antes de que el diario guardara las conversaciones: si la repites («Reiniciar desde aquí») quedarán aquí.' : 'Todavía no has hablado de esta misión.'}</p>`)}
-      <div style="margin-top:10px"><button class="btn" id="diaReset" style="font-size:15px;padding:8px 16px">REINICIAR DESDE AQUÍ</button>
-      <span style="color:#8f8a9a;font:400 13px Barlow,sans-serif;margin-left:8px">vuelve a esta misión y todo lo que va detrás en «${esc(t.name)}»</span></div>`;
-    det.querySelector('#diaReset').onclick = () => {
-      if (!confirmReset(m.title)) return;
-      MISSIONS.resetFrom(sel.k, sel.i);
-      HUD.toast('Reiniciado desde «' + m.title + '»', t.css, 4);
-      render();
-    };
+      ${done ? `<div style="margin-top:10px"><button class="btn" id="diaReset" style="font-size:15px;padding:8px 16px">REINICIAR DESDE AQUÍ</button>
+      <span style="color:#8f8a9a;font:400 13px Barlow,sans-serif;margin-left:8px">vuelve a esta misión y todo lo que va detrás en «${esc(t.name)}»</span></div>`
+      : following || destination ? `<div style="margin-top:10px"><button class="btn" id="diaTrack" style="font-size:15px;padding:8px 16px">${following ? 'DEJAR DE SEGUIR' : 'PONER EN SEGUIMIENTO'}</button></div>`
+      : ''}`;
+    const reset = det.querySelector('#diaReset');
+    if (reset)
+      reset.onclick = () => {
+        if (!confirmReset(m.title)) return;
+        MISSIONS.resetFrom(sel.k, sel.i);
+        HUD.toast('Reiniciado desde «' + m.title + '»', t.css, 4);
+        render();
+      };
+    const track = det.querySelector('#diaTrack');
+    if (track)
+      track.onclick = () => {
+        followMission(following ? null : t.key, sel.i);
+        if (!following) {
+          HUD.toast('Siguiendo «' + m.title + '»', t.css, 4);
+          close();
+        } else render();
+      };
   }
   /** (v1.1.7, code quality) part of render: first entry: every conversation of the game, newest first (v0.75); then what you know; then the missions */
   function renderPart1() {
@@ -307,7 +323,7 @@ const DIARIO = (() => {
       .map((t) => ({ ...t, vis: t.list.map((m, i) => ({ m, i })).filter(({ m }) => m.state !== 'pendiente') }))
       .filter((t) => t.vis.length);
     const item = (k, i, txt, col, on) =>
-      `<div class="diaItem" data-k="${k}" data-i="${i}" style="cursor:pointer;padding:5px 8px;border-radius:6px;margin:1px 0;font:400 14px Barlow,sans-serif;color:${col};background:${on ? 'rgba(255,111,184,.28)' : 'transparent'}">${txt}</div>`;
+      `<button type="button" class="diaItem" data-k="${k}" data-i="${i}" style="width:100%;text-align:left;border:0;display:block;cursor:pointer;padding:5px 8px;border-radius:6px;margin:1px 0;font:400 14px Barlow,sans-serif;color:${col};background:${on ? 'rgba(255,111,184,.28)' : 'transparent'}">${txt}</button>`;
     const head = (txt, col) => `<div style="margin:6px 0 2px;font:400 15px Audiowide,Oswald,sans-serif;color:${col}">${esc(txt)}</div>`;
     const kn = known();
     // first entry: every conversation of the game, newest first (v0.75); then what you know; then the missions
@@ -344,13 +360,14 @@ const DIARIO = (() => {
               .join('')
         )
         .join('');
-    ui.querySelectorAll('.diaItem').forEach(
-      (el) =>
-        (el.onclick = () => {
-          sel = { k: el.dataset.k, i: +el.dataset.i };
-          render();
-        })
-    );
+    ui.querySelectorAll('.diaItem').forEach((el) => {
+      el.onclick = () => {
+        const { k, i } = el.dataset;
+        sel = { k, i: +i };
+        render();
+        ui.querySelector('.diaItem[data-k="' + k + '"][data-i="' + i + '"]')?.focus({ preventScroll: true });
+      };
+    });
     const det = ui.querySelector('#diaDet');
     return { tracks, det };
   }
@@ -373,7 +390,7 @@ const DIARIO = (() => {
     prev = GAME.state;
     GAME.state = 'diary';
     document.exitPointerLock?.();
-    sel = null;
+    sel = GPS.follow ? { k: GPS.follow.key, i: GPS.follow.index } : null;
     render();
     ui.style.display = 'flex';
   }

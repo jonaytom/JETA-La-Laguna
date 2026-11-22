@@ -5,9 +5,9 @@
 //    entera aunque no se viera); ahora una por celda, así el recorte por cámara y por distancia funciona.
 //  · updateCityLOD(): lo que queda detrás de la niebla no se pinta; los detalles pequeños (molduras, balcones, rótulos,
 //    bancos…) solo cerca; las copas de los árboles lejanos usan una versión de pocos triángulos.
-// Qué NO se junta: lo que esté oculto al cargar, lo que cuelga de un grupo con nombre (edificios singulares que el
-// código busca por nombre), lo transparente, lo que lleve userData (lo usa la lógica) y lo marcado con userData.noMerge.
-const LOD = { items: [], cx: 1e9, cz: 1e9, far: -1, cell: 125, stats: null, keep: !!window.__JETA_TEST, orig: [], off: false }; // keep: our test runners (not the auditor) can put the loose pieces back to compare photos
+// Qué NO se junta: lo que esté oculto al cargar, los grupos con nombre salvo los monumentos estáticos marcados,
+// las piezas transparentes de esos monumentos, lo que lleve userData (lo usa la lógica) y lo marcado con userData.noMerge.
+const LOD = { items: [], buckets: new Map(), det: -1, cx: 1e9, cz: 1e9, far: -1, cell: 125, stats: null, keep: !!window.__JETA_TEST, orig: [], landmarks: [], off: false }; // keep: our test runners (not the auditor) can put the loose pieces back to compare photos
 function lodAdd(m, detail, lo) {
   const g = m.geometry;
   if (!m.isInstancedMesh) {
@@ -16,27 +16,65 @@ function lodAdd(m, detail, lo) {
   const s = m.isInstancedMesh ? m.boundingSphere : g.boundingSphere;
   m.updateMatrixWorld(true);
   const c = s.center.clone().applyMatrix4(m.matrixWorld);
-  LOD.items.push({ m, x: c.x, z: c.z, r: s.radius, d: detail ? 1 : 0, hi: lo ? m.geometry : null, lo: lo || null });
+  const r = s.radius;
+  const item = { m, x: c.x, z: c.z, r, d: detail ? 1 : 0, hi: lo ? m.geometry : null, lo: lo || null };
+  LOD.items.push(item);
+  // Reuse the static coverage for all cameras, keeping large objects in their full bounds.
+  const key = Math.floor(c.x / 250) + ',' + Math.floor(c.z / 250) + ',' + item.d;
+  let bucket = LOD.buckets.get(key);
+  if (!bucket) {
+    bucket = { items: [], detail: item.d, lo: false, state: -1, x0: Infinity, x1: -Infinity, z0: Infinity, z1: -Infinity };
+    LOD.buckets.set(key, bucket);
+  }
+  bucket.items.push(item);
+  bucket.state = -1;
+  bucket.lo ||= !!lo;
+  bucket.x0 = Math.min(bucket.x0, c.x - r);
+  bucket.x1 = Math.max(bucket.x1, c.x + r);
+  bucket.z0 = Math.min(bucket.z0, c.z - r);
+  bucket.z1 = Math.max(bucket.z1, c.z + r);
+  LOD.cx = Infinity;
 }
-// distances follow the fog: what is past the fog's end is the fog's colour anyway
-function lodDist() {
-  const ff = scene.fog ? scene.fog.far : Q.far;
-  return { far: ff + 40, det: Math.min(ff, 160 + ff * 0.15), lo: 170 };
-} // v1.0.0: details (under 2.5 m) up to ~330 m in «alta» (was ~520 m: 6 pixels or less there)
 function updateCityLOD(force) {
   if (LOD.off) return;
-  const p = camera.position,
-    D = lodDist();
-  if (!force && Math.abs(p.x - LOD.cx) < 12 && Math.abs(p.z - LOD.cz) < 12 && D.far === LOD.far) return;
-  LOD.cx = p.x;
-  LOD.cz = p.z;
-  LOD.far = D.far;
-  for (const it of LOD.items) {
-    const d = Math.hypot(it.x - p.x, it.z - p.z) - it.r;
-    it.m.visible = d < (it.d ? D.det : D.far);
-    if (it.lo) {
-      const g = d > D.lo ? it.lo : it.hi;
-      if (it.m.geometry !== g) it.m.geometry = g;
+  const { x, z } = camera.position;
+  const fogFar = scene.fog?.far ?? Q.far;
+  const detailFar = fogFar === cityFogFar() ? Q.far : fogFar;
+  const far = fogFar + 40;
+  // Let signs, street furniture and facade details register before driving up to them.
+  const detail = Math.min(detailFar, 185 + detailFar * 0.21);
+  if (!force && Math.abs(x - LOD.cx) < 8 && Math.abs(z - LOD.cz) < 8 && far === LOD.far && detail === LOD.det) return;
+  LOD.cx = x;
+  LOD.cz = z;
+  LOD.far = far;
+  LOD.det = detail;
+  const farSq = far * far, detailSq = detail * detail;
+  for (const bucket of LOD.buckets.values()) {
+    const limit = bucket.detail ? detail : far;
+    const limitSq = bucket.detail ? detailSq : farSq;
+    const nx = Math.max(bucket.x0 - x, x - bucket.x1, 0), nz = Math.max(bucket.z0 - z, z - bucket.z1, 0);
+    const fx = Math.max(x - bucket.x0, bucket.x1 - x), fz = Math.max(z - bucket.z0, bucket.z1 - z);
+    const outside = nx * nx + nz * nz >= limitSq;
+    // If the farthest corner is in range, every part in the cell is too.
+    const inside = !outside && !bucket.lo && fx * fx + fz * fz < limitSq;
+    if (outside || inside) {
+      const state = outside ? 0 : 1;
+      if (force || bucket.state !== state) {
+        for (const { m } of bucket.items) m.visible = state === 1;
+      }
+      bucket.state = state;
+      continue;
+    }
+    bucket.state = -1;
+    for (const it of bucket.items) {
+      const dx = it.x - x, dz = it.z - z, d2 = dx * dx + dz * dz;
+      const reach = limit + it.r;
+      it.m.visible = d2 < reach * reach;
+      if (it.lo) {
+        const close = 210 + it.r;
+        const g = d2 > close * close ? it.lo : it.hi;
+        if (it.m.geometry !== g) it.m.geometry = g;
+      }
     }
   }
 }
@@ -47,6 +85,15 @@ function unfuse(on) {
   for (const [par, o] of LOD.orig) {
     if (on) par.add(o);
     else par.remove(o);
+  }
+  for (const { parent, pieces, mesh } of LOD.landmarks) {
+    if (on) {
+      parent.remove(mesh);
+      parent.add(...pieces);
+    } else {
+      parent.remove(...pieces);
+      parent.add(mesh);
+    }
   }
   for (const it of LOD.items) {
     it.m.visible = on ? !it.m.userData.fused : true;
@@ -60,7 +107,8 @@ function lodShowAll() {
     it.m.visible = true;
     if (it.hi) it.m.geometry = it.hi;
   }
-  LOD.cx = 1e9;
+  for (const bucket of LOD.buckets.values()) bucket.state = -1;
+  LOD.cx = Infinity;
 } // fotos de herramientas
 
 // v1.0.0 (sonda de pintado con GPU en «alta»: lo que pesa son las ~2.000 llamadas de las piezas sueltas, sobre todo gente
@@ -110,6 +158,24 @@ function actorCull(on, cam) {
 }
 const WHY_EX = {}; // v1.0.0 (tests): where the pieces left loose are, by reason
 const _MAPS = ['map', 'emissiveMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'alphaMap', 'aoMap', 'bumpMap', 'lightMap', 'displacementMap'];
+// Merge ordinary opaque leaves only. Keep the parent, render order, materials and both shadow flags.
+function landmarkBatchable(o, mat, g) {
+  return (
+    !o.children.length &&
+    !mat.transparent &&
+    mat.depthWrite &&
+    mat.onBeforeCompile === THREE.Material.prototype.onBeforeCompile &&
+    !o.customDepthMaterial &&
+    !o.customDistanceMaterial &&
+    o.onAfterRender === THREE.Mesh.prototype.onAfterRender &&
+    o.onBeforeShadow === THREE.Mesh.prototype.onBeforeShadow &&
+    o.onAfterShadow === THREE.Mesh.prototype.onAfterShadow &&
+    g.drawRange.start === 0 &&
+    g.drawRange.count === Infinity &&
+    Object.keys(g.attributes).every((key) => ['position', 'normal', 'uv', 'color'].includes(key)) &&
+    (!g.attributes.color || g.attributes.color.itemSize === 3)
+  );
+}
 function mergeStatics() {
   const t0 = performance.now();
   scene.updateMatrixWorld(true);
@@ -118,19 +184,19 @@ function mergeStatics() {
   const groups = new Map();
   let found = 0;
   const { why, no, baseBR } = mergeStaticsPart1();
-  const visit = (o, named) => {
+  const visit = (o, named, landmark) => {
     if (skip.has(o) || !o.visible || (o.userData && o.userData.noMerge)) return;
     const nm = named || (o !== scene && !!o.name);
-    for (const c of [...o.children]) visit(c, nm);
+    const scope = o.userData.batchLandmark || (o.name ? false : landmark);
+    for (const c of [...o.children]) visit(c, nm, scope);
     if (o === scene || !o.isMesh || o.isInstancedMesh || o.isSkinnedMesh) return;
-    if (nm)
-      return no(
-        'grupo con nombre'
-      ); /* v1.0.0 (sonda de pintado con GPU: ~1.600 piezas sin juntar, sobre todo ruedas de los coches de los aparcamientos, que llevan la llanta de hija): a piece with children is joined too; its children stay where they are (re-hung from its parent) */
+    const parent = landmark && !o.name ? o.parent : null;
+    if (nm && !parent) return no('grupo con nombre');
     const mat = o.material,
       g = o.geometry;
     if (Array.isArray(mat) || !mat || !g || !g.attributes.position || (g.morphAttributes && g.morphAttributes.position))
       return no('varios materiales', o); /* geometry groups (BoxGeometry has 6) only matter with several materials */
+    if (parent && !landmarkBatchable(o, mat, g)) return no('pieza singular', o);
     if (mat.transparent && !o.matrixWorld.elements.every(isFinite)) return no('transparente', o);
     /* v1.0.0 (sonda de lo que se pinta: 40–110 llamadas por fotograma eran láminas transparentes sueltas, sobre todo lejos): transparent pieces are joined too, by material and cell like the rest (they are flat decals and glass: the order inside one cell does not show) */ if (
       !o.frustumCulled ||
@@ -139,14 +205,15 @@ function mergeStatics() {
       return no('siempre visible', o);
     if (o.onBeforeRender !== baseBR) return no('onBeforeRender', o);
     if (Object.keys(o.userData).length) return no('userData', o);
-    const uv = !!g.attributes.uv && _MAPS.some((k) => mat[k]),
-      col = !!mat.vertexColors && !!g.attributes.color;
+    const uv = !!g.attributes.uv && (parent || _MAPS.some((k) => mat[k])),
+      col = !!g.attributes.color && (parent || mat.vertexColors);
     if (!g.boundingSphere) g.computeBoundingSphere();
     const c = g.boundingSphere.center.clone().applyMatrix4(o.matrixWorld),
       sc = o.matrixWorld.getMaxScaleOnAxis(),
       r = g.boundingSphere.radius * sc;
-    const detail = r < 2.5;
+    const detail = !parent && r < 2.5;
     const key = [
+      parent ? parent.id : '',
       mat.uuid,
       uv ? 1 : 0,
       col ? 1 : 0,
@@ -159,14 +226,16 @@ function mergeStatics() {
     ].join('|');
     if (window.__ORIGEN) origenNote(o, mat); // v1.1.8: sonda_origen.py
     let G = groups.get(key);
-    if (!G) groups.set(key, (G = { mat, uv, col, cs: o.castShadow, rs: o.receiveShadow, ro: o.renderOrder, detail, list: [] }));
+    if (!G) groups.set(key, (G = { mat, uv, col, cs: o.castShadow, rs: o.receiveShadow, ro: o.renderOrder, detail, parent, list: [] }));
     G.list.push(o);
     found++;
     if (o.children.length) no('con hijos (se juntan desde v1.0.0)', o);
   };
   visit(scene, false);
   const nm = new THREE.Matrix3(),
-    v = new THREE.Vector3();
+    v = new THREE.Vector3(),
+    local = new THREE.Matrix4(),
+    parentInverse = new THREE.Matrix4();
   let made = 0,
     merged = 0;
   for (const G of groups.values()) {
@@ -185,10 +254,11 @@ function mergeStatics() {
     const I = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni);
     let vo = 0,
       io = 0;
+    if (G.parent) parentInverse.copy(G.parent.matrixWorld).invert();
     for (const o of G.list) {
       const g = o.geometry,
         pa = g.attributes.position,
-        M = o.matrixWorld;
+        M = G.parent ? local.multiplyMatrices(parentInverse, o.matrixWorld) : o.matrixWorld;
       let na = g.attributes.normal;
       if (!na) {
         g.computeVertexNormals();
@@ -257,6 +327,14 @@ function mergeStatics() {
     m.renderOrder = G.ro;
     m.name = 'fusion';
     m.matrixAutoUpdate = false;
+    if (G.parent) {
+      G.parent.remove(...G.list);
+      G.parent.add(m);
+      if (LOD.keep) LOD.landmarks.push({ parent: G.parent, pieces: G.list, mesh: m });
+      made++;
+      merged += G.list.length;
+      continue;
+    }
     for (const o of G.list) {
       if (o.parent) {
         if (LOD.keep) LOD.orig.push([o.parent, o]);
