@@ -69,7 +69,7 @@ async def run(pg):
     g = r['gold']
     chk('GOLD_EXISTE', bool(g) and g['name'] == 'Linguini Gold Edition' and g['w'] == 0)
     chk('GOLD_DORADO', bool(g) and g['color'] == 0xd9a520)
-    chk('GOLD_10_POR_CIENTO', bool(g) and 1.08 < g['ratio'] < 1.12)
+    chk('GOLD_20_POR_CIENTO', bool(g) and 1.18 < g['ratio'] < 1.22)  # v1.4.46: 20 % (v1.4.41: 10 %)
     G = r['garage']
     chk('GARAJE_HECHO', G['ok'] and G.get('carved'))
     chk('GARAJE_COCHE_DENTRO', bool(G.get('car')) and G['car']['id'] == 'reventonGold' and G['car']['d'] < 1.5)

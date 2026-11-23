@@ -143,6 +143,33 @@ let pmrem = null,
   envT = 0,
   lastEnvKey = '';
 const ENVC = new Map();
+// v1.4.46 (car paint with a clear coat): the paint reflects its own environment, the sky over a dark ground with a clear
+// horizon line, as a real car body (the scene's environment is only the sky, the same above and below, and a glossy coat
+// on it barely shows). Only the materials in CAR_PAINTS (carPaintMat, 06_actors.js, and the parked cars) use it
+const CARENVC = new Map();
+let carEnvGround = null;
+function carEnvOf(k) {
+  let rt = CARENVC.get(k);
+  if (rt) return rt;
+  if (!carEnvGround) {
+    carEnvGround = new THREE.Mesh(new THREE.CircleGeometry(60000, 24), new THREE.MeshBasicMaterial({ color: 0x000000, fog: false }));
+    carEnvGround.rotation.x = -Math.PI / 2;
+    carEnvGround.position.y = -80;
+  }
+  // the ground: the horizon's colour, darkened (dark at night, grey-green by day)
+  const c = carEnvGround.material.color;
+  if (scene.fog) c.copy(scene.fog.color).multiplyScalar(0.12);
+  else c.setRGB(0.05, 0.05, 0.045);
+  bgScene.add(carEnvGround);
+  rt = pmrem.fromScene(bgScene, 0, 50, 90000);
+  bgScene.remove(carEnvGround);
+  CARENVC.set(k, rt);
+  return rt;
+}
+function setCarEnv(k) {
+  const t = (carEnvTex = scene.userData.carEnv = carEnvOf(k).texture);
+  for (const m of CAR_PAINTS) m.envMap = t;
+}
 // environment maps: one per 1.5 h of day (and weather), made once and reused instead of regenerating the PMREM in the
 // middle of play every time the hour changes (audit P1.6); precomputeEnv() fills the day while the game loads
 const envKey = (t) => SETTINGS.weather + '|' + (Math.round(t / 1.5) % 16);
@@ -155,17 +182,19 @@ function updateEnvironment(force) {
   lastEnvKey = k;
   // only the current weather's maps are kept (audit P1.8): changing the weather frees the other ones (at most 16)
   const w = SETTINGS.weather + '|';
-  for (const [kk, r] of ENVC)
-    if (!kk.startsWith(w)) {
-      r.dispose();
-      ENVC.delete(kk);
-    }
+  for (const C of [ENVC, CARENVC])
+    for (const [kk, r] of C)
+      if (!kk.startsWith(w)) {
+        r.dispose();
+        C.delete(kk);
+      }
   let rt = ENVC.get(k);
   if (!rt) {
     rt = pmrem.fromScene(bgScene, 0, 50, 90000);
     ENVC.set(k, rt);
   }
   scene.environment = rt.texture;
+  setCarEnv(k);
 }
 function precomputeEnv() {
   if (!pmrem) pmrem = new (USE_GPU ? THREE.GPU.PMREMGenerator : THREE.PMREMGenerator)(renderer);
@@ -175,6 +204,7 @@ function precomputeEnv() {
     updateSun();
     const k = envKey(GAME.tod);
     if (!ENVC.has(k)) ENVC.set(k, pmrem.fromScene(bgScene, 0, 50, 90000));
+    carEnvOf(k);
   }
   GAME.tod = t0;
   updateSun();
@@ -328,7 +358,9 @@ document.querySelectorAll('#segGpu button').forEach((b) =>
       localStorage.setItem('jeta_motor', b.dataset.g === '1' ? 'webgpu' : 'webgl');
     } catch (e) {}
     document.querySelectorAll('#segGpu button').forEach((x) => x.classList.toggle('on', x === b));
-    $('qnote').textContent = 'El motor gráfico cambia al pulsar «Aplicar y recargar».' + (b.dataset.g === '1' && !navigator.gpu ? ' Este navegador no tiene WebGPU: seguirá con WebGL.' : '');
+    $('qnote').textContent =
+      'El motor gráfico cambia al pulsar «Aplicar y recargar».' +
+      (b.dataset.g === '1' && !navigator.gpu ? ' Este navegador no tiene WebGPU: seguirá con WebGL.' : '');
   })
 );
 $('sens').addEventListener('input', (e) => {
@@ -526,14 +558,19 @@ function render() {
   pm('render', tt);
 }
 // v1.0.0: far people, cars and rooms are not drawn (05w_optimiza.js), in every render of the scene (also the photos and the auditor)
+// v1.4.46 (Jonay: «empecé otra y no sale el pj», con WebGPU): WebGPU also calls these for the shadow pass, with the sun's
+// camera ~320 m away: from there the player and the people near were «far», got hidden and (since v1.4.44 their matrices
+// stop while hidden) never came back. Only the renders with the game camera cull and restore.
 scene.onBeforeRender = (r, sc, cam) => {
+  if (cam && cam !== camera) return;
   try {
     actorCull(true, cam);
   } catch (e) {
     console.error('actorCull', e);
   }
 };
-scene.onAfterRender = () => {
+scene.onAfterRender = (r, sc, cam) => {
+  if (cam && cam !== camera) return;
   try {
     actorCull(false);
   } catch (e) {
@@ -1278,3 +1315,44 @@ window.__setYaw = (y) => {
   INPUT.lastMouse = performance.now();
 };
 window.__hit = (p) => hitPed(p);
+// v1.4.46 (Jonay, 23-nov, con WebGPU: «se quedó todo negro aquí de golpe… al teletransportarme sigue negro»): when the
+// graphics card is lost (WebGPU: device.lost; WebGL: webglcontextlost) the game cannot draw any more although it keeps
+// running. Now it saves the game (automatic slot), says so and reloads. If it happens again in the same session with
+// WebGPU, the next load uses WebGL (saved in Opciones as the engine) and it is said on screen.
+let gpuLostDone = false;
+function onGpuLost(why) {
+  if (gpuLostDone) return;
+  gpuLostDone = true;
+  console.error('Tarjeta gráfica perdida:', why);
+  let n = 0;
+  try {
+    n = +(sessionStorage.getItem('jeta_gpu_perdida') || 0) + 1;
+    sessionStorage.setItem('jeta_gpu_perdida', String(n));
+    sessionStorage.setItem('jeta_gpu_motivo', String(why).slice(0, 200));
+  } catch (e) {}
+  const toWebGL = USE_GPU && n >= 2;
+  if (toWebGL)
+    try {
+      localStorage.setItem('jeta_motor', 'webgl');
+    } catch (e) {}
+  try {
+    if (GAME.state === 'play' && typeof SAVE !== 'undefined') SAVE.auto('Antes de recargar (tarjeta gráfica)');
+  } catch (e) {}
+  const box = document.createElement('div');
+  box.style.cssText =
+    'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.85);color:#fff;font:600 22px Barlow,sans-serif;text-align:center;z-index:99;padding:30px';
+  box.textContent = toWebGL
+    ? 'La tarjeta gráfica se ha reiniciado otra vez con WebGPU. Partida guardada: se recarga con WebGL (puedes cambiarlo en Opciones).'
+    : 'La tarjeta gráfica se ha reiniciado. Partida guardada: recargando…';
+  document.body.appendChild(box);
+  setTimeout(() => location.reload(), 2500);
+}
+if (USE_GPU && renderer.backend && renderer.backend.device)
+  renderer.backend.device.lost.then((i) => {
+    if (i && i.reason === 'destroyed') return; // (our own dispose)
+    onGpuLost('WebGPU ' + ((i && i.reason) || '') + ': ' + ((i && i.message) || ''));
+  });
+renderer.domElement.addEventListener('webglcontextlost', (e) => {
+  e.preventDefault();
+  onGpuLost('WebGL: contexto perdido');
+});

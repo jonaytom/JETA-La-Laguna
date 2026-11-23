@@ -1,0 +1,1 @@
+herramientas/foto_pintura_gpu.py

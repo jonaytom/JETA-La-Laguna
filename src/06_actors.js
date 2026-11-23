@@ -186,6 +186,53 @@ const VTYPES = {
   bus: { name: 'Guagua Urbana', L: 11.5, W: 2.5, H: 3.1, maxV: 26, acc: 4, grip: 6, mass: 6, prof: 'bus' }
 };
 const CARCOL = [0xf2f2f2, 0x1b1b1b, 0x9aa0a6, 0xb3261e, 0x1f4e8c, 0x2d5a3d, 0xd8c7a3, 0x5b6770, 0x7a1f2b, 0xe7e7e7, 0x3c3c3c, 0x2a6f97, 0xc97b2a];
+// v1.4.46 (Jonay: «¿habría forma de que el color de los coches tenga una textura más metálica brillante? ahora es
+// demasiado liso… sin brillos como una carrocería real»): car paint with a clear coat, a sharp glossy layer that reflects
+// the sky and the sun over a softer metallic colour, as real car paint
+const CAR_PAINTS = new Set(); // (their reflections: setCarEnv, 13_main.js)
+let carEnvTex = null;
+const SIN_BARNIZ = /[?&]sinbarniz=1/.test(location.search); // (for measuring: the paint of before, v1.4.45)
+function carPaintMat(o) {
+  if (SIN_BARNIZ) return new THREE.MeshStandardMaterial(Object.assign({ roughness: 0.3, metalness: 0.5 }, o));
+  return addCarPaint(
+    new THREE.MeshPhysicalMaterial(Object.assign({ roughness: 0.3, metalness: 0.6, clearcoat: 1, clearcoatRoughness: 0.04, envMapIntensity: 1.6 }, o))
+  );
+}
+// v1.4.46: metallic flakes under the clear coat (WebGL; gpuCarFlake in 02b_gpu_nodos.js is the same for WebGPU). mask:
+// a GLSL float expression (parked cars: only the paint)
+function carFlakeGLSL(sh, mask) {
+  const NL = String.fromCharCode(10);
+  sh.vertexShader = [
+    'varying vec3 vFlakeP;',
+    sh.vertexShader.replace('#include <begin_vertex>', ['#include <begin_vertex>', 'vFlakeP = position;'].join(NL))
+  ].join(NL);
+  const rough = [
+    '#include <roughnessmap_fragment>',
+    'vec3 flQ = vFlakeP * 300.0;',
+    'float flK = fract(sin(dot(floor(flQ), vec3(12.9898, 78.233, 37.719))) * 43758.5453);',
+    'float flA = clamp(1.6 - length(fwidth(flQ)), 0.0, 1.0) * (' + (mask || '1.0') + ');',
+    'roughnessFactor = clamp(roughnessFactor + (flK - 0.5) * 0.12 * flA, 0.04, 1.0);'
+  ].join(NL);
+  const nrm = [
+    '#include <normal_fragment_maps>',
+    'normal = normalize(normal + (vec3(fract(flK * 13.1), fract(flK * 7.7), fract(flK * 3.3)) - 0.5) * 0.05 * flA);'
+  ].join(NL);
+  sh.fragmentShader = [
+    'varying vec3 vFlakeP;',
+    sh.fragmentShader.replace('#include <roughnessmap_fragment>', rough).replace('#include <normal_fragment_maps>', nrm)
+  ].join(NL);
+}
+function addCarPaint(m, mask) {
+  if (!m.onBeforeCompile || m.onBeforeCompile === THREE.Material.prototype.onBeforeCompile) {
+    m.onBeforeCompile = (sh) => carFlakeGLSL(sh);
+    m.customProgramCacheKey = () => 'carFlake';
+  }
+  if (USE_GPU) gpuLazy(m, (mm) => gpuCarFlake(mm, mask));
+  CAR_PAINTS.add(m);
+  m.addEventListener('dispose', () => CAR_PAINTS.delete(m));
+  if (carEnvTex) m.envMap = carEnvTex;
+  return m;
+}
 const glassMat = new THREE.MeshStandardMaterial({ color: 0x1a232b, roughness: 0.08, metalness: 0.9 });
 const tireMat = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.9 });
 const rimMat = new THREE.MeshStandardMaterial({ color: 0xb8bcc0, roughness: 0.3, metalness: 0.9 });
@@ -339,7 +386,7 @@ function makeCarMesh(type, color) {
   if (type === 'taxi') color = 0xf4f4f4;
   if (type === 'police') color = 0xf5f7fa;
   if (type === 'bus') color = 0x1f8a4c;
-  const paint = new THREE.MeshStandardMaterial({ color, roughness: 0.28, metalness: 0.55 });
+  const paint = carPaintMat({ color });
   const { P, roofPts, ry, wr, wheels, wg } = makeCarMeshPart1(T, type, paint, body);
   const { hl, tl, bumperM } = makeCarMeshPart2(wr, T, type, body, g, wg, wheels, P);
   let { bar } = makeCarMeshPart3(T, type, paint, bumperM, body, ry, roofPts);

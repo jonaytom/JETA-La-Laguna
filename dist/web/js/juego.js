@@ -720,22 +720,57 @@ function distK() {
 // v1.4.44 (Jonay, 23-nov: «sigamos con webgpu a ver si lo adaptamos y rinde mejor»): with ?gpu=webgpu the game runs on
 // three.js's WebGPURenderer (THREE.GPU, from the joint bundle of tools/juntar_three_gpu.py); without it, WebGL as always.
 // Under WebGPU the materials with onBeforeCompile are drawn without their extra (pending: port them to TSL)
-// v1.4.44: also chosen in Opciones (Motor gráfico, saved as 'jeta_motor'; ?gpu=webgl forces WebGL)
-const USE_GPU =
-  !/[?&]gpu=webgl/.test(location.search) &&
-  (/[?&]gpu=webgpu/.test(location.search) || (() => { try { return localStorage.getItem('jeta_motor') === 'webgpu'; } catch (e) { return false; } })()) &&
-  !!(THREE.GPU && navigator.gpu);
-const renderer = USE_GPU
-  ? new THREE.GPU.WebGPURenderer({ antialias: !IS_TOUCH, powerPreference: 'high-performance' })
-  : new THREE.WebGLRenderer({ antialias: !IS_TOUCH, powerPreference: 'high-performance' });
-if (USE_GPU) await renderer.init();
+// v1.4.44: also chosen in Opciones (Motor gráfico, saved as 'jeta_motor'; ?gpu=webgl / ?gpu=webgpu force one)
+// v1.4.46 (Jonay, 23-nov: «por defecto debería ir con WebGPU, si no se puede WebGL»): WebGPU unless the player chose WebGL,
+// and only if it really starts: the browser must give a graphics adapter AND three.js must end up on its WebGPU backend
+// (when the device cannot be created it falls back to a slower WebGL2 backend of its own: then the usual WebGLRenderer
+// is used instead). Automated browsers (our tests, the auditor: navigator.webdriver) keep WebGL by default, since their
+// measurements (GPU timer queries, programs) exist only there; the WebGPU probes ask for it with ?gpu=webgpu.
+const GPU_CHOICE = (() => {
+  if (/[?&]gpu=webgl/.test(location.search)) return 'webgl';
+  if (/[?&]gpu=webgpu/.test(location.search)) return 'webgpu';
+  try {
+    const s = localStorage.getItem('jeta_motor');
+    if (s === 'webgl' || s === 'webgpu') return s;
+  } catch (e) {}
+  return navigator.webdriver ? 'webgl' : 'webgpu';
+})();
+let USE_GPU = GPU_CHOICE === 'webgpu' && !!(THREE.GPU && navigator.gpu);
+// (powerPreference: Chrome and Edge on Windows ignore it for WebGPU and warn in the console; it is asked elsewhere, where it
+// picks the strong card of laptops with two)
+const GPU_PREF = /Windows/.test(navigator.userAgent) ? {} : { powerPreference: 'high-performance' };
+// ?trazastsl=1: where each TSL warning comes from (three.js keeps a stack trace per node)
+if (/[?&]trazastsl=1/.test(location.search) && THREE.GPU && THREE.GPU.Node) THREE.GPU.Node.captureStackTrace = true;
+if (USE_GPU) {
+  try {
+    USE_GPU = !!(await navigator.gpu.requestAdapter(GPU_PREF));
+  } catch (e) {
+    USE_GPU = false;
+  }
+}
+let renderer = null;
+if (USE_GPU) {
+  try {
+    renderer = new THREE.GPU.WebGPURenderer({ antialias: !IS_TOUCH, ...GPU_PREF });
+    await renderer.init();
+    if (!(renderer.backend && renderer.backend.isWebGPUBackend)) throw new Error('sin WebGPU (respaldo WebGL2 de three.js)');
+  } catch (e) {
+    console.warn('WebGPU no arranca, se usa WebGL:', e && e.message);
+    try {
+      renderer && renderer.dispose();
+    } catch (e2) {}
+    renderer = null;
+    USE_GPU = false;
+  }
+}
+if (!renderer) renderer = new THREE.WebGLRenderer({ antialias: !IS_TOUCH, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, Q.pr));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;
 renderer.shadowMap.enabled = Q.shadow > 0;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = THREE.PCFShadowMap; // v1.4.46: PCFSoftShadowMap no longer exists in three.js (r186+: it was already PCF, with a console warning)
 renderer.autoClear = false;
 $('game').appendChild(renderer.domElement);
 const MAXANI = USE_GPU ? renderer.getMaxAnisotropy() : renderer.capabilities.getMaxAnisotropy();
@@ -1972,7 +2007,10 @@ function stoneWorld(mat, darkOnly, amt = 0.9) {
   };
   mat.customProgramCacheKey = () => 'stoneWorld' + (darkOnly ? 1 : 0); // v1.4.2: amt as a uniform (one program, not one per strength)
   mat.needsUpdate = true;
-  if (USE_GPU) gpuLazy(mat, (m) => gpuStoneWorld(m, darkOnly, amt)); // v1.4.44: the same in TSL (02b_gpu_nodos.js)
+  if (USE_GPU) {
+    mat.jtAmt = amt; // v1.4.46: read when drawn (materialReference)
+    gpuLazy(mat, (m) => gpuStoneWorld(m, darkOnly, amt)); // v1.4.44: the same in TSL (02b_gpu_nodos.js)
+  }
 }
 const PLASTER = { on: { value: 0 }, det: null, n1: null, n2: null };
 const TEXW = { value: 1 }; // v1.4.1: 0 turns off the photo grain of stoneWorld/plasterWorld (before/after photos: foto_texturas.py)
@@ -2034,7 +2072,11 @@ function plasterWorld(mat, kind = 1, amt = 1.1, tag = 'enlucido', tile = 3.2) {
   };
   mat.customProgramCacheKey = () => 'plasterWorld'; // v1.4.2: kind, strength and tile as uniforms (one program)
   mat.needsUpdate = true;
-  if (USE_GPU) gpuLazy(mat, (m) => gpuPlasterWorld(m, kind, amt, tile)); // v1.4.44
+  if (USE_GPU) {
+    mat.jtPl = new THREE.Vector3(kind === 0 ? 1 : 0, kind === 1 ? 1 : 0, kind === 2 ? 1 : 0); // v1.4.46: read when drawn
+    mat.jtPlA = new THREE.Vector2(amt, 1 / tile);
+    gpuLazy(mat, (m) => gpuPlasterWorld(m, kind, amt, tile)); // v1.4.44
+  }
   return mat;
 }
 
@@ -2093,7 +2135,8 @@ function gpuWorldUV() {
 /** stoneWorld (02_textures.js) */
 function gpuStoneWorld(mat, darkOnly, amt) {
   const T = THREE.TSL;
-  const uAmt = T.uniform(amt),
+  // (per material: read from the material drawn, see gpuSkin; the materials share the cache key 'stoneWorld')
+  const uAmt = T.materialReference('jtAmt', 'float'), // (set on the original material: stoneWorld)
     uTexW = gpuShared('texW', 1, () => TEXW.value);
   gpuAfterDiffuse(mat, () => {
     const st = T.texture(TEX.basalt, gpuWorldUV().div(2.0)).rgb.div(0.13);
@@ -2105,18 +2148,42 @@ function gpuStoneWorld(mat, darkOnly, amt) {
 /** plasterWorld (02_textures.js) */
 function gpuPlasterWorld(mat, kind, amt, tile) {
   const T = THREE.TSL;
-  const uPl = T.vec3(kind === 0 ? 1 : 0, kind === 1 ? 1 : 0, kind === 2 ? 1 : 0),
+  // (kind, strength and tile per material, read from the material drawn: they all share the cache key 'plasterWorld')
+  const uPl = T.materialReference('jtPl', 'vec3'),
+    uPlA = T.materialReference('jtPlA', 'vec2'),
     plOn = gpuShared('plOn', 0, () => PLASTER.on.value),
     uTexW = gpuShared('texW', 1, () => TEXW.value);
   gpuAfterDiffuse(mat, () => {
-    const pd = T.dot(T.texture(PLASTER.det, gpuWorldUV().mul(1 / tile)).rgb, uPl);
-    T.diffuseColor.rgb.mulAssign(T.mix(T.float(1), pd.sub(0.5).mul(amt).add(1), plOn.mul(uTexW)));
+    const pd = T.dot(T.texture(PLASTER.det, gpuWorldUV().mul(uPlA.y)).rgb, uPl);
+    T.diffuseColor.rgb.mulAssign(T.mix(T.float(1), pd.sub(0.5).mul(uPlA.x).add(1), plOn.mul(uTexW)));
   });
 }
 /** the façade material with the atlas (04_world.js, makeMaterials) */
 function gpuFacade(fm) {
   const T = THREE.TSL;
-  const { float, vec2, vec3, vec4, uv, attribute, texture, fract, floor, select, mix, dot, sin, step, dFdx, dFdy, cross, normalize, max, sqrt, inverseSqrt } = T;
+  const {
+    float,
+    vec2,
+    vec3,
+    vec4,
+    uv,
+    attribute,
+    texture,
+    fract,
+    floor,
+    select,
+    mix,
+    dot,
+    sin,
+    step,
+    dFdx,
+    dFdy,
+    cross,
+    normalize,
+    max,
+    sqrt,
+    inverseSqrt
+  } = T;
   const uNight = gpuShared('night', 0, () => U.uNight.value),
     plOn = gpuShared('plOn', 0, () => PLASTER.on.value),
     uSty = T.uniformArray(
@@ -2138,7 +2205,10 @@ function gpuFacade(fm) {
     gy = dFdy(vF).mul(vec2(1 / 8, 0.25));
   const tc = texture(TEX.facade, auv).grad(gx, gy),
     mk = texture(TEX.facadeMask, auv).grad(gx, gy);
-  const puv = vF.mul(uSty.element(T.int(T.clamp(aid, 0.0, 15.0)))).div(3.2).add(vec2(vEx.y.mul(0.37), vEx.y.mul(0.61)));
+  const puv = vF
+    .mul(uSty.element(T.int(T.clamp(aid, 0.0, 15.0))))
+    .div(3.2)
+    .add(vec2(vEx.y.mul(0.37), vEx.y.mul(0.61)));
   const pk = hsh(vec2(vEx.y.mul(7.3), 2.1)),
     pw = select(pk.lessThan(0.45), vec3(1, 0, 0), select(pk.lessThan(0.86), vec3(0, 1, 0), vec3(0, 0, 1)));
   const pd = dot(texture(PLASTER.det, puv).rgb, pw),
@@ -2147,12 +2217,19 @@ function gpuFacade(fm) {
   fm.colorNode = vec4(mix(tc.rgb, tc.rgb.mul(vCol), mk.r).mul(mix(float(1), pd.sub(0.5).mul(1.3).add(1), pa)), tc.a);
   fm.roughnessNode = mix(T.materialRoughness, 0.12, mk.g);
   fm.metalnessNode = mix(T.materialMetalness, 0.6, mk.g.mul(0.6));
-  fm.emissiveNode = mk.g.mul(lit).mul(uNight).mul(vec3(1.0, 0.72, 0.42)).mul(2.1);
+  fm.emissiveNode = mk.g
+    .mul(lit)
+    .mul(uNight)
+    .mul(vec3(1.0, 0.72, 0.42))
+    .mul(2.1);
   // plaster normal maps, laid by derivatives (no tangents), like the GLSL
   {
     const pn1 = texture(PLASTER.n1, puv),
       pn2 = texture(PLASTER.n2, puv);
-    const nxy = vec2(dot(pw, vec3(pn1.r, pn1.b, pn2.g)), dot(pw, vec3(pn1.g, pn2.r, pn2.b))).mul(2.0).sub(1.0).mul(pa.mul(0.9));
+    const nxy = vec2(dot(pw, vec3(pn1.r, pn1.b, pn2.g)), dot(pw, vec3(pn1.g, pn2.r, pn2.b)))
+      .mul(2.0)
+      .sub(1.0)
+      .mul(pa.mul(0.9));
     const N = T.normalView,
       q0 = dFdx(T.positionView),
       q1 = dFdy(T.positionView),
@@ -2163,7 +2240,11 @@ function gpuFacade(fm) {
     const Tn = q1p.mul(st0.x).add(q0p.mul(st1.x)),
       Bn = q1p.mul(st0.y).add(q0p.mul(st1.y));
     const sc = inverseSqrt(max(max(dot(Tn, Tn), dot(Bn, Bn)), 1e-20));
-    fm.normalNode = normalize(Tn.mul(nxy.x.mul(sc)).add(Bn.mul(nxy.y.mul(sc))).add(N.mul(sqrt(max(0.0, float(1).sub(dot(nxy, nxy)))))));
+    fm.normalNode = normalize(
+      Tn.mul(nxy.x.mul(sc))
+        .add(Bn.mul(nxy.y.mul(sc)))
+        .add(N.mul(sqrt(max(0.0, float(1).sub(dot(nxy, nxy))))))
+    );
   }
 }
 /** the open cuttings and ramps (04_world.js): writes the loops into the shader being built (call it inside a setup
@@ -2179,8 +2260,7 @@ function gpuCutHole(p, y) {
     const inGrid = cgc.x.greaterThanEqual(0).and(cgc.y.greaterThanEqual(0)).and(cgc.x.lessThan(CG.nx)).and(cgc.y.lessThan(CG.nz));
     If(inGrid, () => {
       If(textureLoad(CG_TEX, cgc, int(0)).r.greaterThan(0.5), () => {
-        Loop({ start: int(0), end: int(NGRP), type: 'int', condition: '<', name: 'g' }, ({ g }) => {
-          If(g.greaterThanEqual(uGrpN), () => Break());
+        Loop({ start: int(0), end: uGrpN, type: 'int', condition: '<', name: 'g' }, ({ g }) => {
           const B = textureLoad(TCUT_TEX, ivec2(g, 2), int(0));
           If(p.x.lessThan(B.x).or(p.y.lessThan(B.y)).or(p.x.greaterThan(B.z)).or(p.y.greaterThan(B.w)), () => Continue());
           const rg = textureLoad(TCUT_TEX, ivec2(g, 3), int(0));
@@ -2235,17 +2315,32 @@ function gpuTerrain(m, mtex) {
     If(frontFacing.not(), () => T.diffuseColor.rgb.assign(vec3(0.16, 0.12, 0.09)));
   });
 }
+/** the values each person's clothes read when drawn (materialReference, gpuSkin), on the ORIGINAL material: WebGPU builds
+ *  the nodes on a copy but reads the references from the material being drawn */
+function gpuSkinProps(m) {
+  const u = m.userData.u;
+  for (let i = 1; i <= 5; i++) m['jtC' + i] = u.uCloth.value[i];
+  m.jtSleeve = u.uSleeve.value;
+  m.jtLong = u.uLong.value;
+  m.jtJacket = u.uJacket.value;
+  m.jtBelt = u.uBelt.value;
+  m.jtSole = u.uSole.value;
+}
 /** the people's clothes (06a_humans.js, skinMaterial) */
 function gpuSkin(m) {
   const T = THREE.TSL;
   const { float, int, vec2, vec3, uniform, uniformArray, attribute, uv, positionGeometry, floor, fract, sin, dot, abs, If, select, bool } = T;
-  const u = m.userData.u;
-  const uCloth = uniformArray(u.uCloth.value, 'color'),
-    uSleeve = uniform(u.uSleeve.value),
-    uLong = uniform(u.uLong.value),
-    uJacket = uniform(u.uJacket.value),
-    uBelt = uniform(u.uBelt.value),
-    uSole = uniform(u.uSole.value);
+  // v1.4.46 (Jonay, con WebGPU: «el muñeco va de blanco… de pronto se puso la ropa de otro color»): every person's material
+  // has the same cache key ('jetaSkin', one program for all in WebGL), and WebGPU reused the node graph of the first one built,
+  // with ITS colours, for everybody. Now the colours are read from the material being drawn (materialReference): one program,
+  // each person with their clothes. The values are the same objects as userData.u (later changes, like the jacket, count).
+  const R = T.materialReference; // (the values: gpuSkinProps, on the original material, which is the one read when drawing)
+  const uCloth = { element: (i) => R('jtC' + i, 'color') },
+    uSleeve = R('jtSleeve', 'float'),
+    uLong = R('jtLong', 'float'),
+    uJacket = R('jtJacket', 'vec4'),
+    uBelt = R('jtBelt', 'vec4'),
+    uSole = R('jtSole', 'color');
   gpuAfterDiffuse(m, () => {
     const rg = int(attribute('aReg', 'float').add(0.5)).toVar(),
       vB = positionGeometry;
@@ -2256,20 +2351,42 @@ function gpuSkin(m) {
       .or(uJacket.w.greaterThan(0.5).and(rg.equal(1).or(rg.equal(2))));
     If(cloth, () => {
       const cc = vec3(
-        select(rg.equal(1), uCloth.element(1), select(rg.equal(2), uCloth.element(2), select(rg.equal(3), uCloth.element(3), select(rg.equal(4), uCloth.element(4), uCloth.element(5)))))
+        select(
+          rg.equal(1),
+          uCloth.element(1),
+          select(rg.equal(2), uCloth.element(2), select(rg.equal(3), uCloth.element(3), select(rg.equal(4), uCloth.element(4), uCloth.element(5))))
+        )
       ).toVar();
       const grain = float(0.9)
         .add(fract(sin(dot(floor(uv().mul(256.0)), vec2(12.99, 78.23))).mul(43758.5)).mul(0.1))
         .toVar();
       If(uJacket.w.greaterThan(0.5).and(rg.equal(2).or(rg.equal(1).and(abs(vB.x).lessThan(0.075).and(vB.z.greaterThan(0.0)).not()))), () => {
         cc.assign(uJacket.xyz);
-        If(rg.equal(1).and(abs(abs(vB.x).sub(0.08)).lessThan(0.008)).and(vB.z.greaterThan(0.0)), () => cc.mulAssign(0.6));
+        If(
+          rg
+            .equal(1)
+            .and(abs(abs(vB.x).sub(0.08)).lessThan(0.008))
+            .and(vB.z.greaterThan(0.0)),
+          () => cc.mulAssign(0.6)
+        );
       });
-      If(rg.equal(3).and(uBelt.w.greaterThan(0.0)).and(abs(vB.y.sub(uBelt.w)).lessThan(0.028)), () => {
-        cc.assign(uBelt.xyz);
-        grain.assign(1.0);
-      });
-      If(rg.equal(3).or(rg.equal(4)), () => grain.mulAssign(sin(vB.x.mul(900.0).add(vB.y.mul(40.0))).mul(0.06).add(0.94)));
+      If(
+        rg
+          .equal(3)
+          .and(uBelt.w.greaterThan(0.0))
+          .and(abs(vB.y.sub(uBelt.w)).lessThan(0.028)),
+        () => {
+          cc.assign(uBelt.xyz);
+          grain.assign(1.0);
+        }
+      );
+      If(rg.equal(3).or(rg.equal(4)), () =>
+        grain.mulAssign(
+          sin(vB.x.mul(900.0).add(vB.y.mul(40.0)))
+            .mul(0.06)
+            .add(0.94)
+        )
+      );
       If(rg.equal(5).and(vB.y.lessThan(0.035)), () => cc.assign(uSole));
       T.diffuseColor.rgb.assign(cc.mul(grain));
     });
@@ -2290,6 +2407,24 @@ function gpuParkedPaint(mat) {
     const paint = T.mix(T.vec3(1), per, T.attribute('aPaint', 'float'));
     T.diffuseColor.assign(T.vec4(T.materialColor.rgb.mul(T.vertexColor().rgb).mul(paint), 1.0));
   };
+  mat.clearcoatNode = T.materialClearcoat.mul(T.attribute('aPaint', 'float')); // v1.4.46: the clear coat only on the paint
+}
+
+/** v1.4.46: metallic flakes in the car paint (carFlakeGLSL in 06_actors.js is the same for WebGL): tiny cells of ~3 mm in
+ * the car's own space, each one a little rougher or smoother and tilted, under a smooth clear coat; they fade out when
+ * a cell gets smaller than a pixel (far away), so they don't shimmer. mask: the name of a 0–1 attribute (parked cars: aPaint, only the paint) */
+function gpuCarFlake(mat, mask) {
+  const T = THREE.TSL;
+  const q = T.positionLocal.mul(300),
+    fk = T.fract(T.sin(T.dot(T.floor(q), T.vec3(12.9898, 78.233, 37.719))).mul(43758.5453)),
+    amp = T.clamp(T.float(1.6).sub(T.length(T.fwidth(q))), 0, 1).mul(mask ? T.attribute(mask, 'float') : T.float(1));
+  mat.roughnessNode = T.clamp(T.materialRoughness.add(fk.sub(0.5).mul(0.12).mul(amp)), 0.04, 1);
+  const tilt = T.vec3(T.fract(fk.mul(13.1)), T.fract(fk.mul(7.7)), T.fract(fk.mul(3.3)))
+    .sub(0.5)
+    .mul(0.05)
+    .mul(amp);
+  mat.normalNode = T.normalize(T.normalView.add(tilt));
+  mat.clearcoatNormalNode = T.normalView; // (the coat stays smooth over the flakes)
 }
 
 // ============ static collision grid ============
@@ -12946,7 +13081,7 @@ function buildTreesBlender(types, o, col) {
       cm.setMatrixAt(i, o.matrix);
       col.setScalar(0.88 + Math.random() * 0.24); // (each tree a little lighter or darker; the colours come from Blender)
       cm.setColorAt(i, col);
-      COL.addCirc(t[0], t[1], (ti === 3 ? 0.25 : drago ? [0.45, 0.65, 1.0][ti - 4] : ti === 1 ? 0.6 : 0.45) * t[3]);
+      COL.addCirc(t[0], t[1], (ti === 3 ? 0.3 : drago ? [0.45, 0.65, 1.0][ti - 4] : ti === 1 ? 0.6 : 0.45) * t[3]);
     });
     [tm, cm].forEach((m) => {
       m.castShadow = true;
@@ -13583,7 +13718,13 @@ function skyNodeMat(u) {
     let col = mix(hor, zen, pow(y, 0.55));
     const sd = max(dot(d, sunDir), 0);
     col = col.add(vec3(1.0, 0.75, 0.45).mul(pow(sd, 8.0)).mul(0.35).mul(day));
-    col = col.add(vec3(1.0, 0.95, 0.85).mul(smoothstep(0.9993, 0.9997, sd)).mul(6.0).mul(day).mul(step(-0.02, sunDir.y)));
+    col = col.add(
+      vec3(1.0, 0.95, 0.85)
+        .mul(smoothstep(0.9993, 0.9997, sd))
+        .mul(6.0)
+        .mul(day)
+        .mul(step(-0.02, sunDir.y))
+    );
     // stars
     // (a hash without sin for the stars: in WGSL sin() of the big numbers here loses precision and they come out as streaks)
     const sp = d.xz.div(d.y.add(0.3)).mul(180.0),
@@ -13592,7 +13733,10 @@ function skyNodeMat(u) {
       hs = fract(p3.x.add(p3.y).mul(p3.z));
     col = col.add(vec3(step(0.997, hs)).mul(uNight).mul(0.8).mul(y));
     // cloud deck (y, not d.y, below: under the horizon the weight is 0 anyway and the division stays finite)
-    const cp = d.xz.div(y.add(0.08)).mul(1.3).add(vec2(uTime.mul(0.004), uTime.mul(0.002)));
+    const cp = d.xz
+      .div(y.add(0.08))
+      .mul(1.3)
+      .add(vec2(uTime.mul(0.004), uTime.mul(0.002)));
     const c = smoothstep(float(1).sub(uCloud), float(1.35).sub(uCloud), fbm(cp));
     let cc = mix(vec3(0.95, 0.95, 0.97), vec3(0.55, 0.58, 0.62), fbm(cp.mul(2.0).add(3.0)).mul(0.8));
     cc = mix(cc, hor.mul(1.05), 0.25).mul(mix(1.0, 0.12, uNight));
@@ -14448,15 +14592,36 @@ function buildStreetPropsPart3(mk, wood, lists, iron, stoneL) {
   mk(bench, wood, lists.bench);
   mk(benchLegs, iron, lists.bench);
   lists.bench.forEach((p) => COL.addCirc(p[0], p[1], 0.5));
-  // planters: stone box with a bushy shrub
-  const pl = new THREE.BoxGeometry(1.1, 0.6, 1.1);
-  pl.translate(0, 0.3, 0);
-  mk(pl, stoneL, lists.planter);
-  const bush = jitterGeo(new THREE.IcosahedronGeometry(0.6, 1), 0.2, 33);
-  bush.translate(0, 0.95, 0);
-  mk(bush, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, flatShading: true }), lists.planter, null, () =>
-    pick([0x3d6b2c, 0x4f7a32, 0x6a8a3a, 0xa33a5a, 0xd9a13a])
-  );
+  // planters: stone box with a rim and dark soil, and a shrub made in Blender (v1.4.47: boxwood, bougainvillea or
+  // yellow flowers, tools/blender/arboles_calle_v2.py, DATA.ARB.seto; before, a one-colour ball)
+  const pl = new THREE.BoxGeometry(1.0, 0.52, 1.0);
+  pl.translate(0, 0.26, 0);
+  const rim = new THREE.BoxGeometry(1.14, 0.09, 1.14);
+  rim.translate(0, 0.555, 0);
+  mk(mergeGeos([pl, rim]), stoneL, lists.planter);
+  const soil = new THREE.PlaneGeometry(0.98, 0.98);
+  soil.rotateX(-Math.PI / 2);
+  soil.translate(0, 0.585, 0);
+  mk(soil, M(0x2e2219, 0.95), lists.planter);
+  const S = DATA.ARB && DATA.ARB.seto;
+  if (S) {
+    const leaf = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, flatShading: true });
+    const kinds = ['seto_boj', 'seto_bug', 'seto_flor'].filter((k) => S[k]),
+      by = kinds.map(() => []);
+    lists.planter.forEach((p) => by[Math.floor(Math.random() * kinds.length)].push(p));
+    kinds.forEach((k, i) => {
+      const g = arbGeo(S[k]);
+      g.translate(0, 0.56, 0);
+      g.userData.seto = k; // (tests/herramientas/foto_setos.py; the meshes are split by cells later, the geometry stays)
+      mk(g, leaf, by[i], null, () => new THREE.Color().setScalar(0.88 + Math.random() * 0.24));
+    });
+  } else {
+    const bush = jitterGeo(new THREE.IcosahedronGeometry(0.6, 1), 0.2, 33);
+    bush.translate(0, 0.95, 0);
+    mk(bush, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, flatShading: true }), lists.planter, null, () =>
+      pick([0x3d6b2c, 0x4f7a32, 0x6a8a3a])
+    );
+  }
   lists.planter.forEach((p) => COL.addCirc(p[0], p[1], 0.65));
   // bollards
   const bol = mergeGeos([
@@ -25600,11 +25765,14 @@ function buildBundles() {
     box = new THREE.Box3(),
     c = new THREE.Vector3();
   const lodSwap = new Set(LOD.items.filter((it) => it.lo).map((it) => it.m));
+  // v1.4.46 (a long drive with WebGPU: ~1.700 cells recorded again in 6 min, 31-54 FPS): the small details the LOD shows and
+  // hides with the distance (signs, street furniture, mouldings: d = 1) stay out of the bundles, drawn as usual; inside, only
+  // what changes at the fog's edge (buildings, streets), which hardly ever records a cell again
+  const detail = new Set(LOD.items.filter((it) => it.d === 1).map((it) => it.m));
   let n = 0;
   for (const o of [...scene.children]) {
-    // the trees' cells (their crown changes with the distance: the cell is recorded again then, see bundleStep) come in too
     const tree = lodSwap.has(o);
-    if (o.matrixWorldAutoUpdate || !(o.static || tree) || o.isLight || !(o.isMesh || o.isGroup)) continue;
+    if (detail.has(o) || o.matrixWorldAutoUpdate || !(o.static || tree) || o.isLight || !(o.isMesh || o.isGroup)) continue;
     let ok = true;
     o.traverse((q) => {
       const ms = q.material ? (Array.isArray(q.material) ? q.material : [q.material]) : [];
@@ -25675,11 +25843,39 @@ function precompileShadows() {
     sc = sun.shadow.camera,
     keep = { l: sc.left, r: sc.right, t: sc.top, b: sc.bottom, n: sc.near, f: sc.far, p: sun.position.clone(), tg: sun.target.position.clone() },
     hidden = [];
+  // (v1.4.46: one hidden piece per kind is enough to prepare its shaders: material + instanced/batched/skinned. Showing
+  // the whole map took ~3 s of the loading)
+  const kind = (o) => {
+    const m = Array.isArray(o.material) ? o.material[0] : o.material;
+    return (m ? m.uuid : '') + (o.isInstancedMesh ? 'I' : '') + (o.isBatchedMesh ? 'B' : '') + (o.isSkinnedMesh ? 'S' : '') + (o.layers.mask & 2 ? 'L' : '');
+  };
+  // (v1.4.46, Jonay: «empecé otra y no sale el pj», WebGPU: its compileAsync runs the scene's «before render» (actorCull
+  // hides the far actors) but not the «after»; the player was left hidden, this function «put back» that hidden state and
+  // nothing showed him again. Now: first everything actorCull hid is given back, and people and cars are not touched here)
+  actorCull(false);
+  const actors = new Set(ACTORS.keys()),
+    isActor = (o) => {
+      for (let p = o; p; p = p.parent) if (actors.has(p)) return true;
+      return false;
+    };
+  const seen = new Set(),
+    vis = (o) => {
+      for (let p = o; p; p = p.parent) if (!p.visible) return false;
+      return true;
+    };
   scene.traverse((o) => {
-    if (!o.visible && (o.isMesh || o.isGroup || o.isBundleGroup)) {
-      o.visible = true;
-      hidden.push(o);
-    }
+    if (o.isMesh && vis(o)) seen.add(kind(o));
+  });
+  scene.traverse((o) => {
+    if (!o.isMesh || (!o.castShadow && !(o.layers.mask & 2)) || vis(o) || isActor(o)) return;
+    const k = kind(o);
+    if (seen.has(k)) return;
+    seen.add(k);
+    for (let p = o; p && p !== scene; p = p.parent)
+      if (!p.visible) {
+        p.visible = true;
+        hidden.push(p);
+      }
   });
   const big = 6000;
   Object.assign(sc, { left: -big, right: big, top: big, bottom: -big, near: 1, far: 12000 });
@@ -25747,6 +25943,9 @@ function batchTrees(ims) {
       const c = new THREE.BufferGeometry();
       if (!g.attributes.normal) g.computeVertexNormals();
       for (const k of common) c.setAttribute(k, g.attributes[k]);
+      // the geometries that already have an index keep it (the trunks: without it they were drawn as loose triangles and
+      // vanished, Jonay 23-nov: «¿árboles sin tronco?»); only the loose ones get one (dedupIndex)
+      if (g.index) c.setIndex(g.index);
       const ci = dedupIndex(c);
       ci.computeBoundingSphere();
       prep.set(g, ci);
@@ -27474,7 +27673,7 @@ function hierbaRaster() {
     H = Math.round((W * SPLAT.h) / SPLAT.w),
     sx = W / SPLAT.w,
     c = mkCanvas(W, H),
-    x = c.getContext('2d');
+    x = c.getContext('2d', { willReadFrequently: true }); // v1.4.46: read back twice (getImageData)
   const P = (px, pz) => [(px - SPLAT.x0) * sx, (pz - SPLAT.z0) * sx];
   const poly = (coords, fill, stroke = 0) => {
     x.beginPath();
@@ -27851,6 +28050,53 @@ const VTYPES = {
   bus: { name: 'Guagua Urbana', L: 11.5, W: 2.5, H: 3.1, maxV: 26, acc: 4, grip: 6, mass: 6, prof: 'bus' }
 };
 const CARCOL = [0xf2f2f2, 0x1b1b1b, 0x9aa0a6, 0xb3261e, 0x1f4e8c, 0x2d5a3d, 0xd8c7a3, 0x5b6770, 0x7a1f2b, 0xe7e7e7, 0x3c3c3c, 0x2a6f97, 0xc97b2a];
+// v1.4.46 (Jonay: «¿habría forma de que el color de los coches tenga una textura más metálica brillante? ahora es
+// demasiado liso… sin brillos como una carrocería real»): car paint with a clear coat, a sharp glossy layer that reflects
+// the sky and the sun over a softer metallic colour, as real car paint
+const CAR_PAINTS = new Set(); // (their reflections: setCarEnv, 13_main.js)
+let carEnvTex = null;
+const SIN_BARNIZ = /[?&]sinbarniz=1/.test(location.search); // (for measuring: the paint of before, v1.4.45)
+function carPaintMat(o) {
+  if (SIN_BARNIZ) return new THREE.MeshStandardMaterial(Object.assign({ roughness: 0.3, metalness: 0.5 }, o));
+  return addCarPaint(
+    new THREE.MeshPhysicalMaterial(Object.assign({ roughness: 0.3, metalness: 0.6, clearcoat: 1, clearcoatRoughness: 0.04, envMapIntensity: 1.6 }, o))
+  );
+}
+// v1.4.46: metallic flakes under the clear coat (WebGL; gpuCarFlake in 02b_gpu_nodos.js is the same for WebGPU). mask:
+// a GLSL float expression (parked cars: only the paint)
+function carFlakeGLSL(sh, mask) {
+  const NL = String.fromCharCode(10);
+  sh.vertexShader = [
+    'varying vec3 vFlakeP;',
+    sh.vertexShader.replace('#include <begin_vertex>', ['#include <begin_vertex>', 'vFlakeP = position;'].join(NL))
+  ].join(NL);
+  const rough = [
+    '#include <roughnessmap_fragment>',
+    'vec3 flQ = vFlakeP * 300.0;',
+    'float flK = fract(sin(dot(floor(flQ), vec3(12.9898, 78.233, 37.719))) * 43758.5453);',
+    'float flA = clamp(1.6 - length(fwidth(flQ)), 0.0, 1.0) * (' + (mask || '1.0') + ');',
+    'roughnessFactor = clamp(roughnessFactor + (flK - 0.5) * 0.12 * flA, 0.04, 1.0);'
+  ].join(NL);
+  const nrm = [
+    '#include <normal_fragment_maps>',
+    'normal = normalize(normal + (vec3(fract(flK * 13.1), fract(flK * 7.7), fract(flK * 3.3)) - 0.5) * 0.05 * flA);'
+  ].join(NL);
+  sh.fragmentShader = [
+    'varying vec3 vFlakeP;',
+    sh.fragmentShader.replace('#include <roughnessmap_fragment>', rough).replace('#include <normal_fragment_maps>', nrm)
+  ].join(NL);
+}
+function addCarPaint(m, mask) {
+  if (!m.onBeforeCompile || m.onBeforeCompile === THREE.Material.prototype.onBeforeCompile) {
+    m.onBeforeCompile = (sh) => carFlakeGLSL(sh);
+    m.customProgramCacheKey = () => 'carFlake';
+  }
+  if (USE_GPU) gpuLazy(m, (mm) => gpuCarFlake(mm, mask));
+  CAR_PAINTS.add(m);
+  m.addEventListener('dispose', () => CAR_PAINTS.delete(m));
+  if (carEnvTex) m.envMap = carEnvTex;
+  return m;
+}
 const glassMat = new THREE.MeshStandardMaterial({ color: 0x1a232b, roughness: 0.08, metalness: 0.9 });
 const tireMat = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.9 });
 const rimMat = new THREE.MeshStandardMaterial({ color: 0xb8bcc0, roughness: 0.3, metalness: 0.9 });
@@ -28004,7 +28250,7 @@ function makeCarMesh(type, color) {
   if (type === 'taxi') color = 0xf4f4f4;
   if (type === 'police') color = 0xf5f7fa;
   if (type === 'bus') color = 0x1f8a4c;
-  const paint = new THREE.MeshStandardMaterial({ color, roughness: 0.28, metalness: 0.55 });
+  const paint = carPaintMat({ color });
   const { P, roofPts, ry, wr, wheels, wg } = makeCarMeshPart1(T, type, paint, body);
   const { hl, tl, bumperM } = makeCarMeshPart2(wr, T, type, body, g, wg, wheels, P);
   let { bar } = makeCarMeshPart3(T, type, paint, bumperM, body, ry, roofPts);
@@ -28421,7 +28667,10 @@ function skinMaterial(texKey, cloth, sleeve, longPants) {
       );
   };
   m.customProgramCacheKey = () => 'jetaSkin';
-  if (USE_GPU) gpuLazy(m, gpuSkin); // v1.4.44
+  if (USE_GPU) {
+    gpuSkinProps(m); // v1.4.46: the per-person values, read when drawn
+    gpuLazy(m, gpuSkin); // v1.4.44
+  }
   return m;
 }
 // v1.0.0: a height in metres drawn from the real spread (Jonay's table, % per 8 cm band from under 152 cm to 192 cm and up)
@@ -29372,12 +29621,12 @@ function inflateRaw(src, outLen) {
       for (let i = 0; i < hc; i++) cl[ord[i]] = bits(3);
       const ct = build(cl, 19);
       const L = new Uint8Array(hl + hd);
-      for (let i = 0; i < hl + hd; ) {
+      for (let i = 0; i < hl + hd;) {
         const s = decode(ct);
         if (s < 16) L[i++] = s;
         else if (s === 16) {
           const p = L[i - 1];
-          for (let r = bits(2) + 3; r--; ) L[i++] = p;
+          for (let r = bits(2) + 3; r--;) L[i++] = p;
         } else if (s === 17) i += bits(3) + 3;
         else i += bits(7) + 11;
       }
@@ -29715,7 +29964,7 @@ function makeOwnCarMesh(model, color) {
   const body = new THREE.Group();
   g.add(body);
   if (isLivery(model)) color = liveryColor(model);
-  const paint = new THREE.MeshStandardMaterial({ vertexColors: true, color, roughness: 0.3, metalness: 0.5 });
+  const paint = carPaintMat({ vertexColors: true, color });
   if (model.id === 'reventonGold') {
     // v1.4.41: polished gold
     paint.metalness = 0.95;
@@ -30048,7 +30297,7 @@ function makeMotoMeshPart2(L, wr, body) {
 function makeMotoMeshPart1(g, color, model) {
   const body = new THREE.Group();
   g.add(body);
-  const paint = new THREE.MeshStandardMaterial({ color, roughness: 0.3, metalness: 0.5 });
+  const paint = carPaintMat({ color });
   const L = model.L,
     kind = model.base;
   const wr = kind === 'naked' ? 0.31 : kind === 'maxi' ? 0.27 : kind === 'vespa' ? 0.2 : 0.24;
@@ -30489,7 +30738,7 @@ const PERFORMANCE_BY_CATEGORY = {
 };
 const PERFORMANCE_BY_MODEL = {
   reventon: [270, 14.4],
-  reventonGold: [297, 15.8], // v1.4.41: the Gold Edition, 10 % more than the Reventón
+  reventonGold: [324, 17.3], // v1.4.46 (Jonay: «métele aún más potencia y punta… un 25 % es demasiado, otro 10 % más»): 20 % more than the Reventón (v1.4.41: 10 %, [297, 15.8])
   fierilla: [252, 13.4],
   guancheGT: [232, 11.8],
   teypan: [224, 12.0],
@@ -30677,8 +30926,16 @@ class Car {
     // v1.4.43 (Jonay, 23-nov: «más que girar menos debería girar más lento… las curvas son intratables a tanta velocidad»):
     // the wheel now allows ~30 m/s² sideways (at 300 km/h a bend of ~230 m, the motorway's) and, the faster you go, the
     // slower it turns (at 300 km/h it takes ~0.8 s to reach full lock; in town, as before)
-    const maxSteer = Math.min(0.56 / (1 + Math.abs(vf) / 13), v2 > 1 ? Math.atan((wb * 30) / v2) : 1);
-    this.steer = lerp(this.steer, c.steer * maxSteer, clamp((dt * 5.5) / (1 + Math.abs(vf) / 25), 0, 1));
+    // v1.4.46 (Jonay: «el coche gira demasiado poco desde que hicimos lo de que reaccionara menos a alta velocidad… eso
+    // debería empezar a actuar si vas a más de 200 solo, y aun así que gire un poco más que ahora… o hazlo a partir de
+    // 150»): under 150 km/h (41.7 m/s) the wheel is as it was before v1.4.41 (no grip cap, no slow-down); from 150 km/h
+    // both come in gradually (fully at ~205 km/h), and the cap allows ~38 m/s² sideways (before, 30)
+    const av = Math.abs(vf),
+      hiK = clamp((av - 41.7) / 15, 0, 1),
+      baseSteer = 0.56 / (1 + av / 13),
+      gripSteer = v2 > 1 ? Math.atan((wb * 38) / v2) : 1;
+    const maxSteer = lerp(baseSteer, Math.min(baseSteer, gripSteer), hiK);
+    this.steer = lerp(this.steer, c.steer * maxSteer, clamp((dt * 5.5) / (1 + (hiK * Math.max(0, av - 41.7)) / 25), 0, 1));
     this.yawRate = ((vf * Math.tan(this.steer)) / wb) * (1 + 0.7 * hbA);
     if (hbA > 0.05 && Math.abs(vf) > 3) this.yawRate += Math.sign(vf) * c.steer * hbA * Math.min(0.75, Math.abs(vf) / 16); // the unloaded tail swings out
     this.h += this.yawRate * dt;
@@ -31330,19 +31587,36 @@ function buildParkedPart3(template, cc) {
   // v0.77 (auditorías: «coches aparcados instanciados»): one geometry per model, used by every parked car of that model in
   // an 800 m cell (InstancedMesh). Before, every car's triangles were copied into big merged meshes: ~2 s of the load and
   // hundreds of MB of vertices. The paint is the instance colour, applied only to the vertices flagged as paint (aPaint).
-  const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.4, metalness: 0.35 });
+  // v1.4.46: with the clear coat of the paint (carPaintMat, 06_actors.js) only on the painted vertices (aPaint)
+  const mat = SIN_BARNIZ
+    ? new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.4, metalness: 0.35 })
+    : addCarPaint(
+        new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.4, metalness: 0.35, clearcoat: 1, clearcoatRoughness: 0.08 }),
+        'aPaint'
+      );
   mat.onBeforeCompile = (sh) => {
+    sh.fragmentShader =
+      'varying float vPaintCC;\n' +
+      sh.fragmentShader.replace(
+        '#include <lights_physical_fragment>',
+        '#include <lights_physical_fragment>\n#ifdef USE_CLEARCOAT\nmaterial.clearcoat *= vPaintCC;\n#endif'
+      );
     sh.vertexShader =
-      'attribute float aPaint;\n' +
+      'attribute float aPaint;\nvarying float vPaintCC;\n' +
       sh.vertexShader.replace(
         '#include <color_vertex>',
-        // (three.js r160 wrote «.xyz», the r187 «.rgb»: v1.4.43)
-        THREE.ShaderChunk.color_vertex
-          .replace('vColor.xyz *= instanceColor.xyz;', 'vColor.xyz *= mix(vec3(1.0), instanceColor.xyz, aPaint);')
-          .replace('vColor.rgb *= instanceColor.rgb;', 'vColor.rgb *= mix(vec3(1.0), instanceColor.rgb, aPaint);')
-          // v1.4.44: the same with BatchedMesh (its colour per car)
-          .replace('vColor *= getBatchingColor( getIndirectIndex( gl_DrawID ) );', 'vColor *= mix(vec4(1.0), getBatchingColor( getIndirectIndex( gl_DrawID ) ), aPaint);')
+        'vPaintCC = aPaint;\n' +
+          // (three.js r160 wrote «.xyz», the r187 «.rgb»: v1.4.43)
+          THREE.ShaderChunk.color_vertex
+            .replace('vColor.xyz *= instanceColor.xyz;', 'vColor.xyz *= mix(vec3(1.0), instanceColor.xyz, aPaint);')
+            .replace('vColor.rgb *= instanceColor.rgb;', 'vColor.rgb *= mix(vec3(1.0), instanceColor.rgb, aPaint);')
+            // v1.4.44: the same with BatchedMesh (its colour per car)
+            .replace(
+              'vColor *= getBatchingColor( getIndirectIndex( gl_DrawID ) );',
+              'vColor *= mix(vec4(1.0), getBatchingColor( getIndirectIndex( gl_DrawID ) ), aPaint);'
+            )
       );
+    if (!SIN_BARNIZ) carFlakeGLSL(sh, 'vPaintCC'); // v1.4.46: the metallic flakes, only on the paint
   };
   mat.customProgramCacheKey = () => 'parkedPaint';
   if (USE_GPU) gpuLazy(mat, gpuParkedPaint); // v1.4.44
@@ -53868,6 +54142,9 @@ const AMBIENCE = (() => {
 //    it, for V8s and diesels), intake roar (filtered noise), the diesel clatter (noise beating at the firing frequency),
 //    a turbo whistle, a soft saturation that grows with the load, and pops when lifting off a sports car or a motorbike.
 //    The electric car only whistles with the speed.
+// (v1.4.46, Jonay: «el sonido de los coches debería ser más grave… bájalo un 10 %… más bajo todos en general, no el
+// deportivo»): every engine deeper: the firing frequency ×0.8 and then ×0.9 (×0.72; the revs and gears do not change)
+const ENG_PITCH = 0.72;
 const ENG_PROFILES = {
   // cyl: cylinders · idle / red: rpm · gears: ratios · fin: final drive · wheel: tyre radius (m) · kind: timbre
   compact: { cyl: 4, idle: 850, red: 6300, gears: [3.6, 2.1, 1.4, 1.05, 0.85], fin: 4.1, wheel: 0.3, kind: 'gas', turbo: 0, bright: 1.0 },
@@ -53882,11 +54159,31 @@ const ENG_PROFILES = {
 ENG_PROFILES.taxi = ENG_PROFILES.sedan;
 ENG_PROFILES.police = ENG_PROFILES.sedan;
 ENG_PROFILES.bus = ENG_PROFILES.truck;
+// v1.4.46 (Jonay: «todos los coches no tienen los mismos cambios, los hay de 5, 6 e incluso 7»): each model its own number
+// of gears, picked from its id (always the same for a model) among what its kind has: small cars 5 or 6, saloons and SUVs
+// 6 (some 7), vans 5 or 6, sports cars 6 or 7, lorries and buses 8, motorbikes 6; the ratios spread from the kind's first
+// to its last gear, evenly (geometric)
+const ENG_GEARS = { compact: [5, 5, 6], sedan: [6, 6, 7], taxi: [5, 6], police: [6], suv: [6, 6, 7], van: [5, 6], sport: [6, 7, 7], truck: [8], bus: [6, 8], moto: [6] };
+const _engByModel = new Map();
 function engProfileOf(car) {
   const m = car.model || {},
     nm = ((m.id || '') + ' ' + (m.name || '')).toLowerCase();
   if (/newton|electr|tesla/.test(nm)) return ENG_PROFILES.ev; // the Newton Style 3
-  return ENG_PROFILES[car.type] || ENG_PROFILES[m.phys] || ENG_PROFILES.compact;
+  const kind = ENG_PROFILES[car.type] ? car.type : ENG_PROFILES[m.phys] ? m.phys : 'compact';
+  const key = kind + '|' + (m.id || '');
+  if (_engByModel.has(key)) return _engByModel.get(key);
+  const P = ENG_PROFILES[kind],
+    opts = ENG_GEARS[kind] || [P.gears.length];
+  let h = 0;
+  for (const ch of m.id || kind) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const n = opts[h % opts.length],
+    g0 = P.gears[0],
+    g1 = P.gears[P.gears.length - 1],
+    gears = [];
+  for (let i = 0; i < n; i++) gears.push(+(g0 * Math.pow(g1 / g0, n > 1 ? i / (n - 1) : 0)).toFixed(3));
+  const Q = Object.assign({}, P, { gears });
+  _engByModel.set(key, Q);
+  return Q;
 }
 const ENGINE = (() => {
   let N = null; // audio nodes
@@ -54049,7 +54346,7 @@ const ENGINE = (() => {
       N.out.gain.setTargetAtTime(1, t, 0.1);
       return;
     }
-    const f = (S.rpm / 60) * (P.cyl / 2); // firing frequency
+    const f = (S.rpm / 60) * (P.cyl / 2) * ENG_PITCH; // firing frequency (×ENG_PITCH: deeper)
     N.o1.frequency.setTargetAtTime(f, t, tc);
     N.o2.frequency.setTargetAtTime(f * 0.5, t, tc);
     N.o3.frequency.setTargetAtTime(f * 2, t, tc);
@@ -54193,7 +54490,7 @@ const NEAR_ENGINES = (() => {
         v.lp.frequency.setTargetAtTime(900, t, 0.1);
         v.g.gain.setTargetAtTime(0.006 * near * fade * Math.min(1, sp / 4), t, 0.1);
       } else {
-        const f = (rpm / 60) * (P.cyl / 2) * dop;
+        const f = (rpm / 60) * (P.cyl / 2) * dop * ENG_PITCH;
         v.o1.frequency.setTargetAtTime(f, t, 0.05);
         v.o2.frequency.setTargetAtTime(f * 0.5, t, 0.05);
         v.lp.frequency.setTargetAtTime((220 + 900 * ((rpm - P.idle) / (P.red - P.idle)) + 500 * thr) * (P.kind === 'bigdiesel' ? 0.7 : 1), t, 0.08);
@@ -66214,6 +66511,33 @@ let pmrem = null,
   envT = 0,
   lastEnvKey = '';
 const ENVC = new Map();
+// v1.4.46 (car paint with a clear coat): the paint reflects its own environment, the sky over a dark ground with a clear
+// horizon line, as a real car body (the scene's environment is only the sky, the same above and below, and a glossy coat
+// on it barely shows). Only the materials in CAR_PAINTS (carPaintMat, 06_actors.js, and the parked cars) use it
+const CARENVC = new Map();
+let carEnvGround = null;
+function carEnvOf(k) {
+  let rt = CARENVC.get(k);
+  if (rt) return rt;
+  if (!carEnvGround) {
+    carEnvGround = new THREE.Mesh(new THREE.CircleGeometry(60000, 24), new THREE.MeshBasicMaterial({ color: 0x000000, fog: false }));
+    carEnvGround.rotation.x = -Math.PI / 2;
+    carEnvGround.position.y = -80;
+  }
+  // the ground: the horizon's colour, darkened (dark at night, grey-green by day)
+  const c = carEnvGround.material.color;
+  if (scene.fog) c.copy(scene.fog.color).multiplyScalar(0.12);
+  else c.setRGB(0.05, 0.05, 0.045);
+  bgScene.add(carEnvGround);
+  rt = pmrem.fromScene(bgScene, 0, 50, 90000);
+  bgScene.remove(carEnvGround);
+  CARENVC.set(k, rt);
+  return rt;
+}
+function setCarEnv(k) {
+  const t = (carEnvTex = scene.userData.carEnv = carEnvOf(k).texture);
+  for (const m of CAR_PAINTS) m.envMap = t;
+}
 // environment maps: one per 1.5 h of day (and weather), made once and reused instead of regenerating the PMREM in the
 // middle of play every time the hour changes (audit P1.6); precomputeEnv() fills the day while the game loads
 const envKey = (t) => SETTINGS.weather + '|' + (Math.round(t / 1.5) % 16);
@@ -66226,17 +66550,19 @@ function updateEnvironment(force) {
   lastEnvKey = k;
   // only the current weather's maps are kept (audit P1.8): changing the weather frees the other ones (at most 16)
   const w = SETTINGS.weather + '|';
-  for (const [kk, r] of ENVC)
-    if (!kk.startsWith(w)) {
-      r.dispose();
-      ENVC.delete(kk);
-    }
+  for (const C of [ENVC, CARENVC])
+    for (const [kk, r] of C)
+      if (!kk.startsWith(w)) {
+        r.dispose();
+        C.delete(kk);
+      }
   let rt = ENVC.get(k);
   if (!rt) {
     rt = pmrem.fromScene(bgScene, 0, 50, 90000);
     ENVC.set(k, rt);
   }
   scene.environment = rt.texture;
+  setCarEnv(k);
 }
 function precomputeEnv() {
   if (!pmrem) pmrem = new (USE_GPU ? THREE.GPU.PMREMGenerator : THREE.PMREMGenerator)(renderer);
@@ -66246,6 +66572,7 @@ function precomputeEnv() {
     updateSun();
     const k = envKey(GAME.tod);
     if (!ENVC.has(k)) ENVC.set(k, pmrem.fromScene(bgScene, 0, 50, 90000));
+    carEnvOf(k);
   }
   GAME.tod = t0;
   updateSun();
@@ -66399,7 +66726,9 @@ document.querySelectorAll('#segGpu button').forEach((b) =>
       localStorage.setItem('jeta_motor', b.dataset.g === '1' ? 'webgpu' : 'webgl');
     } catch (e) {}
     document.querySelectorAll('#segGpu button').forEach((x) => x.classList.toggle('on', x === b));
-    $('qnote').textContent = 'El motor gráfico cambia al pulsar «Aplicar y recargar».' + (b.dataset.g === '1' && !navigator.gpu ? ' Este navegador no tiene WebGPU: seguirá con WebGL.' : '');
+    $('qnote').textContent =
+      'El motor gráfico cambia al pulsar «Aplicar y recargar».' +
+      (b.dataset.g === '1' && !navigator.gpu ? ' Este navegador no tiene WebGPU: seguirá con WebGL.' : '');
   })
 );
 $('sens').addEventListener('input', (e) => {
@@ -66597,14 +66926,19 @@ function render() {
   pm('render', tt);
 }
 // v1.0.0: far people, cars and rooms are not drawn (05w_optimiza.js), in every render of the scene (also the photos and the auditor)
+// v1.4.46 (Jonay: «empecé otra y no sale el pj», con WebGPU): WebGPU also calls these for the shadow pass, with the sun's
+// camera ~320 m away: from there the player and the people near were «far», got hidden and (since v1.4.44 their matrices
+// stop while hidden) never came back. Only the renders with the game camera cull and restore.
 scene.onBeforeRender = (r, sc, cam) => {
+  if (cam && cam !== camera) return;
   try {
     actorCull(true, cam);
   } catch (e) {
     console.error('actorCull', e);
   }
 };
-scene.onAfterRender = () => {
+scene.onAfterRender = (r, sc, cam) => {
+  if (cam && cam !== camera) return;
   try {
     actorCull(false);
   } catch (e) {
@@ -67349,4 +67683,45 @@ window.__setYaw = (y) => {
   INPUT.lastMouse = performance.now();
 };
 window.__hit = (p) => hitPed(p);
+// v1.4.46 (Jonay, 23-nov, con WebGPU: «se quedó todo negro aquí de golpe… al teletransportarme sigue negro»): when the
+// graphics card is lost (WebGPU: device.lost; WebGL: webglcontextlost) the game cannot draw any more although it keeps
+// running. Now it saves the game (automatic slot), says so and reloads. If it happens again in the same session with
+// WebGPU, the next load uses WebGL (saved in Opciones as the engine) and it is said on screen.
+let gpuLostDone = false;
+function onGpuLost(why) {
+  if (gpuLostDone) return;
+  gpuLostDone = true;
+  console.error('Tarjeta gráfica perdida:', why);
+  let n = 0;
+  try {
+    n = +(sessionStorage.getItem('jeta_gpu_perdida') || 0) + 1;
+    sessionStorage.setItem('jeta_gpu_perdida', String(n));
+    sessionStorage.setItem('jeta_gpu_motivo', String(why).slice(0, 200));
+  } catch (e) {}
+  const toWebGL = USE_GPU && n >= 2;
+  if (toWebGL)
+    try {
+      localStorage.setItem('jeta_motor', 'webgl');
+    } catch (e) {}
+  try {
+    if (GAME.state === 'play' && typeof SAVE !== 'undefined') SAVE.auto('Antes de recargar (tarjeta gráfica)');
+  } catch (e) {}
+  const box = document.createElement('div');
+  box.style.cssText =
+    'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.85);color:#fff;font:600 22px Barlow,sans-serif;text-align:center;z-index:99;padding:30px';
+  box.textContent = toWebGL
+    ? 'La tarjeta gráfica se ha reiniciado otra vez con WebGPU. Partida guardada: se recarga con WebGL (puedes cambiarlo en Opciones).'
+    : 'La tarjeta gráfica se ha reiniciado. Partida guardada: recargando…';
+  document.body.appendChild(box);
+  setTimeout(() => location.reload(), 2500);
+}
+if (USE_GPU && renderer.backend && renderer.backend.device)
+  renderer.backend.device.lost.then((i) => {
+    if (i && i.reason === 'destroyed') return; // (our own dispose)
+    onGpuLost('WebGPU ' + ((i && i.reason) || '') + ': ' + ((i && i.message) || ''));
+  });
+renderer.domElement.addEventListener('webglcontextlost', (e) => {
+  e.preventDefault();
+  onGpuLost('WebGL: contexto perdido');
+});
 

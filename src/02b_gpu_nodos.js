@@ -53,7 +53,8 @@ function gpuWorldUV() {
 /** stoneWorld (02_textures.js) */
 function gpuStoneWorld(mat, darkOnly, amt) {
   const T = THREE.TSL;
-  const uAmt = T.uniform(amt),
+  // (per material: read from the material drawn, see gpuSkin; the materials share the cache key 'stoneWorld')
+  const uAmt = T.materialReference('jtAmt', 'float'), // (set on the original material: stoneWorld)
     uTexW = gpuShared('texW', 1, () => TEXW.value);
   gpuAfterDiffuse(mat, () => {
     const st = T.texture(TEX.basalt, gpuWorldUV().div(2.0)).rgb.div(0.13);
@@ -65,18 +66,42 @@ function gpuStoneWorld(mat, darkOnly, amt) {
 /** plasterWorld (02_textures.js) */
 function gpuPlasterWorld(mat, kind, amt, tile) {
   const T = THREE.TSL;
-  const uPl = T.vec3(kind === 0 ? 1 : 0, kind === 1 ? 1 : 0, kind === 2 ? 1 : 0),
+  // (kind, strength and tile per material, read from the material drawn: they all share the cache key 'plasterWorld')
+  const uPl = T.materialReference('jtPl', 'vec3'),
+    uPlA = T.materialReference('jtPlA', 'vec2'),
     plOn = gpuShared('plOn', 0, () => PLASTER.on.value),
     uTexW = gpuShared('texW', 1, () => TEXW.value);
   gpuAfterDiffuse(mat, () => {
-    const pd = T.dot(T.texture(PLASTER.det, gpuWorldUV().mul(1 / tile)).rgb, uPl);
-    T.diffuseColor.rgb.mulAssign(T.mix(T.float(1), pd.sub(0.5).mul(amt).add(1), plOn.mul(uTexW)));
+    const pd = T.dot(T.texture(PLASTER.det, gpuWorldUV().mul(uPlA.y)).rgb, uPl);
+    T.diffuseColor.rgb.mulAssign(T.mix(T.float(1), pd.sub(0.5).mul(uPlA.x).add(1), plOn.mul(uTexW)));
   });
 }
 /** the façade material with the atlas (04_world.js, makeMaterials) */
 function gpuFacade(fm) {
   const T = THREE.TSL;
-  const { float, vec2, vec3, vec4, uv, attribute, texture, fract, floor, select, mix, dot, sin, step, dFdx, dFdy, cross, normalize, max, sqrt, inverseSqrt } = T;
+  const {
+    float,
+    vec2,
+    vec3,
+    vec4,
+    uv,
+    attribute,
+    texture,
+    fract,
+    floor,
+    select,
+    mix,
+    dot,
+    sin,
+    step,
+    dFdx,
+    dFdy,
+    cross,
+    normalize,
+    max,
+    sqrt,
+    inverseSqrt
+  } = T;
   const uNight = gpuShared('night', 0, () => U.uNight.value),
     plOn = gpuShared('plOn', 0, () => PLASTER.on.value),
     uSty = T.uniformArray(
@@ -98,7 +123,10 @@ function gpuFacade(fm) {
     gy = dFdy(vF).mul(vec2(1 / 8, 0.25));
   const tc = texture(TEX.facade, auv).grad(gx, gy),
     mk = texture(TEX.facadeMask, auv).grad(gx, gy);
-  const puv = vF.mul(uSty.element(T.int(T.clamp(aid, 0.0, 15.0)))).div(3.2).add(vec2(vEx.y.mul(0.37), vEx.y.mul(0.61)));
+  const puv = vF
+    .mul(uSty.element(T.int(T.clamp(aid, 0.0, 15.0))))
+    .div(3.2)
+    .add(vec2(vEx.y.mul(0.37), vEx.y.mul(0.61)));
   const pk = hsh(vec2(vEx.y.mul(7.3), 2.1)),
     pw = select(pk.lessThan(0.45), vec3(1, 0, 0), select(pk.lessThan(0.86), vec3(0, 1, 0), vec3(0, 0, 1)));
   const pd = dot(texture(PLASTER.det, puv).rgb, pw),
@@ -107,12 +135,19 @@ function gpuFacade(fm) {
   fm.colorNode = vec4(mix(tc.rgb, tc.rgb.mul(vCol), mk.r).mul(mix(float(1), pd.sub(0.5).mul(1.3).add(1), pa)), tc.a);
   fm.roughnessNode = mix(T.materialRoughness, 0.12, mk.g);
   fm.metalnessNode = mix(T.materialMetalness, 0.6, mk.g.mul(0.6));
-  fm.emissiveNode = mk.g.mul(lit).mul(uNight).mul(vec3(1.0, 0.72, 0.42)).mul(2.1);
+  fm.emissiveNode = mk.g
+    .mul(lit)
+    .mul(uNight)
+    .mul(vec3(1.0, 0.72, 0.42))
+    .mul(2.1);
   // plaster normal maps, laid by derivatives (no tangents), like the GLSL
   {
     const pn1 = texture(PLASTER.n1, puv),
       pn2 = texture(PLASTER.n2, puv);
-    const nxy = vec2(dot(pw, vec3(pn1.r, pn1.b, pn2.g)), dot(pw, vec3(pn1.g, pn2.r, pn2.b))).mul(2.0).sub(1.0).mul(pa.mul(0.9));
+    const nxy = vec2(dot(pw, vec3(pn1.r, pn1.b, pn2.g)), dot(pw, vec3(pn1.g, pn2.r, pn2.b)))
+      .mul(2.0)
+      .sub(1.0)
+      .mul(pa.mul(0.9));
     const N = T.normalView,
       q0 = dFdx(T.positionView),
       q1 = dFdy(T.positionView),
@@ -123,7 +158,11 @@ function gpuFacade(fm) {
     const Tn = q1p.mul(st0.x).add(q0p.mul(st1.x)),
       Bn = q1p.mul(st0.y).add(q0p.mul(st1.y));
     const sc = inverseSqrt(max(max(dot(Tn, Tn), dot(Bn, Bn)), 1e-20));
-    fm.normalNode = normalize(Tn.mul(nxy.x.mul(sc)).add(Bn.mul(nxy.y.mul(sc))).add(N.mul(sqrt(max(0.0, float(1).sub(dot(nxy, nxy)))))));
+    fm.normalNode = normalize(
+      Tn.mul(nxy.x.mul(sc))
+        .add(Bn.mul(nxy.y.mul(sc)))
+        .add(N.mul(sqrt(max(0.0, float(1).sub(dot(nxy, nxy))))))
+    );
   }
 }
 /** the open cuttings and ramps (04_world.js): writes the loops into the shader being built (call it inside a setup
@@ -139,8 +178,7 @@ function gpuCutHole(p, y) {
     const inGrid = cgc.x.greaterThanEqual(0).and(cgc.y.greaterThanEqual(0)).and(cgc.x.lessThan(CG.nx)).and(cgc.y.lessThan(CG.nz));
     If(inGrid, () => {
       If(textureLoad(CG_TEX, cgc, int(0)).r.greaterThan(0.5), () => {
-        Loop({ start: int(0), end: int(NGRP), type: 'int', condition: '<', name: 'g' }, ({ g }) => {
-          If(g.greaterThanEqual(uGrpN), () => Break());
+        Loop({ start: int(0), end: uGrpN, type: 'int', condition: '<', name: 'g' }, ({ g }) => {
           const B = textureLoad(TCUT_TEX, ivec2(g, 2), int(0));
           If(p.x.lessThan(B.x).or(p.y.lessThan(B.y)).or(p.x.greaterThan(B.z)).or(p.y.greaterThan(B.w)), () => Continue());
           const rg = textureLoad(TCUT_TEX, ivec2(g, 3), int(0));
@@ -195,17 +233,32 @@ function gpuTerrain(m, mtex) {
     If(frontFacing.not(), () => T.diffuseColor.rgb.assign(vec3(0.16, 0.12, 0.09)));
   });
 }
+/** the values each person's clothes read when drawn (materialReference, gpuSkin), on the ORIGINAL material: WebGPU builds
+ *  the nodes on a copy but reads the references from the material being drawn */
+function gpuSkinProps(m) {
+  const u = m.userData.u;
+  for (let i = 1; i <= 5; i++) m['jtC' + i] = u.uCloth.value[i];
+  m.jtSleeve = u.uSleeve.value;
+  m.jtLong = u.uLong.value;
+  m.jtJacket = u.uJacket.value;
+  m.jtBelt = u.uBelt.value;
+  m.jtSole = u.uSole.value;
+}
 /** the people's clothes (06a_humans.js, skinMaterial) */
 function gpuSkin(m) {
   const T = THREE.TSL;
   const { float, int, vec2, vec3, uniform, uniformArray, attribute, uv, positionGeometry, floor, fract, sin, dot, abs, If, select, bool } = T;
-  const u = m.userData.u;
-  const uCloth = uniformArray(u.uCloth.value, 'color'),
-    uSleeve = uniform(u.uSleeve.value),
-    uLong = uniform(u.uLong.value),
-    uJacket = uniform(u.uJacket.value),
-    uBelt = uniform(u.uBelt.value),
-    uSole = uniform(u.uSole.value);
+  // v1.4.46 (Jonay, con WebGPU: «el muñeco va de blanco… de pronto se puso la ropa de otro color»): every person's material
+  // has the same cache key ('jetaSkin', one program for all in WebGL), and WebGPU reused the node graph of the first one built,
+  // with ITS colours, for everybody. Now the colours are read from the material being drawn (materialReference): one program,
+  // each person with their clothes. The values are the same objects as userData.u (later changes, like the jacket, count).
+  const R = T.materialReference; // (the values: gpuSkinProps, on the original material, which is the one read when drawing)
+  const uCloth = { element: (i) => R('jtC' + i, 'color') },
+    uSleeve = R('jtSleeve', 'float'),
+    uLong = R('jtLong', 'float'),
+    uJacket = R('jtJacket', 'vec4'),
+    uBelt = R('jtBelt', 'vec4'),
+    uSole = R('jtSole', 'color');
   gpuAfterDiffuse(m, () => {
     const rg = int(attribute('aReg', 'float').add(0.5)).toVar(),
       vB = positionGeometry;
@@ -216,20 +269,42 @@ function gpuSkin(m) {
       .or(uJacket.w.greaterThan(0.5).and(rg.equal(1).or(rg.equal(2))));
     If(cloth, () => {
       const cc = vec3(
-        select(rg.equal(1), uCloth.element(1), select(rg.equal(2), uCloth.element(2), select(rg.equal(3), uCloth.element(3), select(rg.equal(4), uCloth.element(4), uCloth.element(5)))))
+        select(
+          rg.equal(1),
+          uCloth.element(1),
+          select(rg.equal(2), uCloth.element(2), select(rg.equal(3), uCloth.element(3), select(rg.equal(4), uCloth.element(4), uCloth.element(5))))
+        )
       ).toVar();
       const grain = float(0.9)
         .add(fract(sin(dot(floor(uv().mul(256.0)), vec2(12.99, 78.23))).mul(43758.5)).mul(0.1))
         .toVar();
       If(uJacket.w.greaterThan(0.5).and(rg.equal(2).or(rg.equal(1).and(abs(vB.x).lessThan(0.075).and(vB.z.greaterThan(0.0)).not()))), () => {
         cc.assign(uJacket.xyz);
-        If(rg.equal(1).and(abs(abs(vB.x).sub(0.08)).lessThan(0.008)).and(vB.z.greaterThan(0.0)), () => cc.mulAssign(0.6));
+        If(
+          rg
+            .equal(1)
+            .and(abs(abs(vB.x).sub(0.08)).lessThan(0.008))
+            .and(vB.z.greaterThan(0.0)),
+          () => cc.mulAssign(0.6)
+        );
       });
-      If(rg.equal(3).and(uBelt.w.greaterThan(0.0)).and(abs(vB.y.sub(uBelt.w)).lessThan(0.028)), () => {
-        cc.assign(uBelt.xyz);
-        grain.assign(1.0);
-      });
-      If(rg.equal(3).or(rg.equal(4)), () => grain.mulAssign(sin(vB.x.mul(900.0).add(vB.y.mul(40.0))).mul(0.06).add(0.94)));
+      If(
+        rg
+          .equal(3)
+          .and(uBelt.w.greaterThan(0.0))
+          .and(abs(vB.y.sub(uBelt.w)).lessThan(0.028)),
+        () => {
+          cc.assign(uBelt.xyz);
+          grain.assign(1.0);
+        }
+      );
+      If(rg.equal(3).or(rg.equal(4)), () =>
+        grain.mulAssign(
+          sin(vB.x.mul(900.0).add(vB.y.mul(40.0)))
+            .mul(0.06)
+            .add(0.94)
+        )
+      );
       If(rg.equal(5).and(vB.y.lessThan(0.035)), () => cc.assign(uSole));
       T.diffuseColor.rgb.assign(cc.mul(grain));
     });
@@ -250,4 +325,22 @@ function gpuParkedPaint(mat) {
     const paint = T.mix(T.vec3(1), per, T.attribute('aPaint', 'float'));
     T.diffuseColor.assign(T.vec4(T.materialColor.rgb.mul(T.vertexColor().rgb).mul(paint), 1.0));
   };
+  mat.clearcoatNode = T.materialClearcoat.mul(T.attribute('aPaint', 'float')); // v1.4.46: the clear coat only on the paint
+}
+
+/** v1.4.46: metallic flakes in the car paint (carFlakeGLSL in 06_actors.js is the same for WebGL): tiny cells of ~3 mm in
+ * the car's own space, each one a little rougher or smoother and tilted, under a smooth clear coat; they fade out when
+ * a cell gets smaller than a pixel (far away), so they don't shimmer. mask: the name of a 0–1 attribute (parked cars: aPaint, only the paint) */
+function gpuCarFlake(mat, mask) {
+  const T = THREE.TSL;
+  const q = T.positionLocal.mul(300),
+    fk = T.fract(T.sin(T.dot(T.floor(q), T.vec3(12.9898, 78.233, 37.719))).mul(43758.5453)),
+    amp = T.clamp(T.float(1.6).sub(T.length(T.fwidth(q))), 0, 1).mul(mask ? T.attribute(mask, 'float') : T.float(1));
+  mat.roughnessNode = T.clamp(T.materialRoughness.add(fk.sub(0.5).mul(0.12).mul(amp)), 0.04, 1);
+  const tilt = T.vec3(T.fract(fk.mul(13.1)), T.fract(fk.mul(7.7)), T.fract(fk.mul(3.3)))
+    .sub(0.5)
+    .mul(0.05)
+    .mul(amp);
+  mat.normalNode = T.normalize(T.normalView.add(tilt));
+  mat.clearcoatNormalNode = T.normalView; // (the coat stays smooth over the flakes)
 }

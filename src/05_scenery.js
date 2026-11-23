@@ -506,7 +506,7 @@ function buildTreesBlender(types, o, col) {
       cm.setMatrixAt(i, o.matrix);
       col.setScalar(0.88 + Math.random() * 0.24); // (each tree a little lighter or darker; the colours come from Blender)
       cm.setColorAt(i, col);
-      COL.addCirc(t[0], t[1], (ti === 3 ? 0.25 : drago ? [0.45, 0.65, 1.0][ti - 4] : ti === 1 ? 0.6 : 0.45) * t[3]);
+      COL.addCirc(t[0], t[1], (ti === 3 ? 0.3 : drago ? [0.45, 0.65, 1.0][ti - 4] : ti === 1 ? 0.6 : 0.45) * t[3]);
     });
     [tm, cm].forEach((m) => {
       m.castShadow = true;
@@ -1143,7 +1143,13 @@ function skyNodeMat(u) {
     let col = mix(hor, zen, pow(y, 0.55));
     const sd = max(dot(d, sunDir), 0);
     col = col.add(vec3(1.0, 0.75, 0.45).mul(pow(sd, 8.0)).mul(0.35).mul(day));
-    col = col.add(vec3(1.0, 0.95, 0.85).mul(smoothstep(0.9993, 0.9997, sd)).mul(6.0).mul(day).mul(step(-0.02, sunDir.y)));
+    col = col.add(
+      vec3(1.0, 0.95, 0.85)
+        .mul(smoothstep(0.9993, 0.9997, sd))
+        .mul(6.0)
+        .mul(day)
+        .mul(step(-0.02, sunDir.y))
+    );
     // stars
     // (a hash without sin for the stars: in WGSL sin() of the big numbers here loses precision and they come out as streaks)
     const sp = d.xz.div(d.y.add(0.3)).mul(180.0),
@@ -1152,7 +1158,10 @@ function skyNodeMat(u) {
       hs = fract(p3.x.add(p3.y).mul(p3.z));
     col = col.add(vec3(step(0.997, hs)).mul(uNight).mul(0.8).mul(y));
     // cloud deck (y, not d.y, below: under the horizon the weight is 0 anyway and the division stays finite)
-    const cp = d.xz.div(y.add(0.08)).mul(1.3).add(vec2(uTime.mul(0.004), uTime.mul(0.002)));
+    const cp = d.xz
+      .div(y.add(0.08))
+      .mul(1.3)
+      .add(vec2(uTime.mul(0.004), uTime.mul(0.002)));
     const c = smoothstep(float(1).sub(uCloud), float(1.35).sub(uCloud), fbm(cp));
     let cc = mix(vec3(0.95, 0.95, 0.97), vec3(0.55, 0.58, 0.62), fbm(cp.mul(2.0).add(3.0)).mul(0.8));
     cc = mix(cc, hor.mul(1.05), 0.25).mul(mix(1.0, 0.12, uNight));

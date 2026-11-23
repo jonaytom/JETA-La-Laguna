@@ -206,7 +206,10 @@ function skinMaterial(texKey, cloth, sleeve, longPants) {
       );
   };
   m.customProgramCacheKey = () => 'jetaSkin';
-  if (USE_GPU) gpuLazy(m, gpuSkin); // v1.4.44
+  if (USE_GPU) {
+    gpuSkinProps(m); // v1.4.46: the per-person values, read when drawn
+    gpuLazy(m, gpuSkin); // v1.4.44
+  }
   return m;
 }
 // v1.0.0: a height in metres drawn from the real spread (Jonay's table, % per 8 cm band from under 152 cm to 192 cm and up)

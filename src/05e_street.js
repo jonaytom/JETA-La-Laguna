@@ -101,15 +101,36 @@ function buildStreetPropsPart3(mk, wood, lists, iron, stoneL) {
   mk(bench, wood, lists.bench);
   mk(benchLegs, iron, lists.bench);
   lists.bench.forEach((p) => COL.addCirc(p[0], p[1], 0.5));
-  // planters: stone box with a bushy shrub
-  const pl = new THREE.BoxGeometry(1.1, 0.6, 1.1);
-  pl.translate(0, 0.3, 0);
-  mk(pl, stoneL, lists.planter);
-  const bush = jitterGeo(new THREE.IcosahedronGeometry(0.6, 1), 0.2, 33);
-  bush.translate(0, 0.95, 0);
-  mk(bush, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, flatShading: true }), lists.planter, null, () =>
-    pick([0x3d6b2c, 0x4f7a32, 0x6a8a3a, 0xa33a5a, 0xd9a13a])
-  );
+  // planters: stone box with a rim and dark soil, and a shrub made in Blender (v1.4.47: boxwood, bougainvillea or
+  // yellow flowers, tools/blender/arboles_calle_v2.py, DATA.ARB.seto; before, a one-colour ball)
+  const pl = new THREE.BoxGeometry(1.0, 0.52, 1.0);
+  pl.translate(0, 0.26, 0);
+  const rim = new THREE.BoxGeometry(1.14, 0.09, 1.14);
+  rim.translate(0, 0.555, 0);
+  mk(mergeGeos([pl, rim]), stoneL, lists.planter);
+  const soil = new THREE.PlaneGeometry(0.98, 0.98);
+  soil.rotateX(-Math.PI / 2);
+  soil.translate(0, 0.585, 0);
+  mk(soil, M(0x2e2219, 0.95), lists.planter);
+  const S = DATA.ARB && DATA.ARB.seto;
+  if (S) {
+    const leaf = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, flatShading: true });
+    const kinds = ['seto_boj', 'seto_bug', 'seto_flor'].filter((k) => S[k]),
+      by = kinds.map(() => []);
+    lists.planter.forEach((p) => by[Math.floor(Math.random() * kinds.length)].push(p));
+    kinds.forEach((k, i) => {
+      const g = arbGeo(S[k]);
+      g.translate(0, 0.56, 0);
+      g.userData.seto = k; // (tests/herramientas/foto_setos.py; the meshes are split by cells later, the geometry stays)
+      mk(g, leaf, by[i], null, () => new THREE.Color().setScalar(0.88 + Math.random() * 0.24));
+    });
+  } else {
+    const bush = jitterGeo(new THREE.IcosahedronGeometry(0.6, 1), 0.2, 33);
+    bush.translate(0, 0.95, 0);
+    mk(bush, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, flatShading: true }), lists.planter, null, () =>
+      pick([0x3d6b2c, 0x4f7a32, 0x6a8a3a])
+    );
+  }
   lists.planter.forEach((p) => COL.addCirc(p[0], p[1], 0.65));
   // bollards
   const bol = mergeGeos([

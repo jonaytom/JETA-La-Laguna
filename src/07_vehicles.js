@@ -375,7 +375,7 @@ const PERFORMANCE_BY_CATEGORY = {
 };
 const PERFORMANCE_BY_MODEL = {
   reventon: [270, 14.4],
-  reventonGold: [297, 15.8], // v1.4.41: the Gold Edition, 10 % more than the Reventón
+  reventonGold: [324, 17.3], // v1.4.46 (Jonay: «métele aún más potencia y punta… un 25 % es demasiado, otro 10 % más»): 20 % more than the Reventón (v1.4.41: 10 %, [297, 15.8])
   fierilla: [252, 13.4],
   guancheGT: [232, 11.8],
   teypan: [224, 12.0],
@@ -563,8 +563,16 @@ class Car {
     // v1.4.43 (Jonay, 23-nov: «más que girar menos debería girar más lento… las curvas son intratables a tanta velocidad»):
     // the wheel now allows ~30 m/s² sideways (at 300 km/h a bend of ~230 m, the motorway's) and, the faster you go, the
     // slower it turns (at 300 km/h it takes ~0.8 s to reach full lock; in town, as before)
-    const maxSteer = Math.min(0.56 / (1 + Math.abs(vf) / 13), v2 > 1 ? Math.atan((wb * 30) / v2) : 1);
-    this.steer = lerp(this.steer, c.steer * maxSteer, clamp((dt * 5.5) / (1 + Math.abs(vf) / 25), 0, 1));
+    // v1.4.46 (Jonay: «el coche gira demasiado poco desde que hicimos lo de que reaccionara menos a alta velocidad… eso
+    // debería empezar a actuar si vas a más de 200 solo, y aun así que gire un poco más que ahora… o hazlo a partir de
+    // 150»): under 150 km/h (41.7 m/s) the wheel is as it was before v1.4.41 (no grip cap, no slow-down); from 150 km/h
+    // both come in gradually (fully at ~205 km/h), and the cap allows ~38 m/s² sideways (before, 30)
+    const av = Math.abs(vf),
+      hiK = clamp((av - 41.7) / 15, 0, 1),
+      baseSteer = 0.56 / (1 + av / 13),
+      gripSteer = v2 > 1 ? Math.atan((wb * 38) / v2) : 1;
+    const maxSteer = lerp(baseSteer, Math.min(baseSteer, gripSteer), hiK);
+    this.steer = lerp(this.steer, c.steer * maxSteer, clamp((dt * 5.5) / (1 + (hiK * Math.max(0, av - 41.7)) / 25), 0, 1));
     this.yawRate = ((vf * Math.tan(this.steer)) / wb) * (1 + 0.7 * hbA);
     if (hbA > 0.05 && Math.abs(vf) > 3) this.yawRate += Math.sign(vf) * c.steer * hbA * Math.min(0.75, Math.abs(vf) / 16); // the unloaded tail swings out
     this.h += this.yawRate * dt;
@@ -1216,19 +1224,36 @@ function buildParkedPart3(template, cc) {
   // v0.77 (auditorías: «coches aparcados instanciados»): one geometry per model, used by every parked car of that model in
   // an 800 m cell (InstancedMesh). Before, every car's triangles were copied into big merged meshes: ~2 s of the load and
   // hundreds of MB of vertices. The paint is the instance colour, applied only to the vertices flagged as paint (aPaint).
-  const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.4, metalness: 0.35 });
+  // v1.4.46: with the clear coat of the paint (carPaintMat, 06_actors.js) only on the painted vertices (aPaint)
+  const mat = SIN_BARNIZ
+    ? new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.4, metalness: 0.35 })
+    : addCarPaint(
+        new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.4, metalness: 0.35, clearcoat: 1, clearcoatRoughness: 0.08 }),
+        'aPaint'
+      );
   mat.onBeforeCompile = (sh) => {
+    sh.fragmentShader =
+      'varying float vPaintCC;\n' +
+      sh.fragmentShader.replace(
+        '#include <lights_physical_fragment>',
+        '#include <lights_physical_fragment>\n#ifdef USE_CLEARCOAT\nmaterial.clearcoat *= vPaintCC;\n#endif'
+      );
     sh.vertexShader =
-      'attribute float aPaint;\n' +
+      'attribute float aPaint;\nvarying float vPaintCC;\n' +
       sh.vertexShader.replace(
         '#include <color_vertex>',
-        // (three.js r160 wrote «.xyz», the r187 «.rgb»: v1.4.43)
-        THREE.ShaderChunk.color_vertex
-          .replace('vColor.xyz *= instanceColor.xyz;', 'vColor.xyz *= mix(vec3(1.0), instanceColor.xyz, aPaint);')
-          .replace('vColor.rgb *= instanceColor.rgb;', 'vColor.rgb *= mix(vec3(1.0), instanceColor.rgb, aPaint);')
-          // v1.4.44: the same with BatchedMesh (its colour per car)
-          .replace('vColor *= getBatchingColor( getIndirectIndex( gl_DrawID ) );', 'vColor *= mix(vec4(1.0), getBatchingColor( getIndirectIndex( gl_DrawID ) ), aPaint);')
+        'vPaintCC = aPaint;\n' +
+          // (three.js r160 wrote «.xyz», the r187 «.rgb»: v1.4.43)
+          THREE.ShaderChunk.color_vertex
+            .replace('vColor.xyz *= instanceColor.xyz;', 'vColor.xyz *= mix(vec3(1.0), instanceColor.xyz, aPaint);')
+            .replace('vColor.rgb *= instanceColor.rgb;', 'vColor.rgb *= mix(vec3(1.0), instanceColor.rgb, aPaint);')
+            // v1.4.44: the same with BatchedMesh (its colour per car)
+            .replace(
+              'vColor *= getBatchingColor( getIndirectIndex( gl_DrawID ) );',
+              'vColor *= mix(vec4(1.0), getBatchingColor( getIndirectIndex( gl_DrawID ) ), aPaint);'
+            )
       );
+    if (!SIN_BARNIZ) carFlakeGLSL(sh, 'vPaintCC'); // v1.4.46: the metallic flakes, only on the paint
   };
   mat.customProgramCacheKey = () => 'parkedPaint';
   if (USE_GPU) gpuLazy(mat, gpuParkedPaint); // v1.4.44

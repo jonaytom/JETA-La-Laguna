@@ -22,7 +22,7 @@ function hierbaRaster() {
     H = Math.round((W * SPLAT.h) / SPLAT.w),
     sx = W / SPLAT.w,
     c = mkCanvas(W, H),
-    x = c.getContext('2d');
+    x = c.getContext('2d', { willReadFrequently: true }); // v1.4.46: read back twice (getImageData)
   const P = (px, pz) => [(px - SPLAT.x0) * sx, (pz - SPLAT.z0) * sx];
   const poly = (coords, fill, stroke = 0) => {
     x.beginPath();

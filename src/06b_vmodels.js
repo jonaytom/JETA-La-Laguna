@@ -474,12 +474,12 @@ function inflateRaw(src, outLen) {
       for (let i = 0; i < hc; i++) cl[ord[i]] = bits(3);
       const ct = build(cl, 19);
       const L = new Uint8Array(hl + hd);
-      for (let i = 0; i < hl + hd; ) {
+      for (let i = 0; i < hl + hd;) {
         const s = decode(ct);
         if (s < 16) L[i++] = s;
         else if (s === 16) {
           const p = L[i - 1];
-          for (let r = bits(2) + 3; r--; ) L[i++] = p;
+          for (let r = bits(2) + 3; r--;) L[i++] = p;
         } else if (s === 17) i += bits(3) + 3;
         else i += bits(7) + 11;
       }
@@ -817,7 +817,7 @@ function makeOwnCarMesh(model, color) {
   const body = new THREE.Group();
   g.add(body);
   if (isLivery(model)) color = liveryColor(model);
-  const paint = new THREE.MeshStandardMaterial({ vertexColors: true, color, roughness: 0.3, metalness: 0.5 });
+  const paint = carPaintMat({ vertexColors: true, color });
   if (model.id === 'reventonGold') {
     // v1.4.41: polished gold
     paint.metalness = 0.95;
@@ -1150,7 +1150,7 @@ function makeMotoMeshPart2(L, wr, body) {
 function makeMotoMeshPart1(g, color, model) {
   const body = new THREE.Group();
   g.add(body);
-  const paint = new THREE.MeshStandardMaterial({ color, roughness: 0.3, metalness: 0.5 });
+  const paint = carPaintMat({ color });
   const L = model.L,
     kind = model.base;
   const wr = kind === 'naked' ? 0.31 : kind === 'maxi' ? 0.27 : kind === 'vespa' ? 0.2 : 0.24;

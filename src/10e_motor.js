@@ -10,6 +10,9 @@
 //    it, for V8s and diesels), intake roar (filtered noise), the diesel clatter (noise beating at the firing frequency),
 //    a turbo whistle, a soft saturation that grows with the load, and pops when lifting off a sports car or a motorbike.
 //    The electric car only whistles with the speed.
+// (v1.4.46, Jonay: «el sonido de los coches debería ser más grave… bájalo un 10 %… más bajo todos en general, no el
+// deportivo»): every engine deeper: the firing frequency ×0.8 and then ×0.9 (×0.72; the revs and gears do not change)
+const ENG_PITCH = 0.72;
 const ENG_PROFILES = {
   // cyl: cylinders · idle / red: rpm · gears: ratios · fin: final drive · wheel: tyre radius (m) · kind: timbre
   compact: { cyl: 4, idle: 850, red: 6300, gears: [3.6, 2.1, 1.4, 1.05, 0.85], fin: 4.1, wheel: 0.3, kind: 'gas', turbo: 0, bright: 1.0 },
@@ -24,11 +27,31 @@ const ENG_PROFILES = {
 ENG_PROFILES.taxi = ENG_PROFILES.sedan;
 ENG_PROFILES.police = ENG_PROFILES.sedan;
 ENG_PROFILES.bus = ENG_PROFILES.truck;
+// v1.4.46 (Jonay: «todos los coches no tienen los mismos cambios, los hay de 5, 6 e incluso 7»): each model its own number
+// of gears, picked from its id (always the same for a model) among what its kind has: small cars 5 or 6, saloons and SUVs
+// 6 (some 7), vans 5 or 6, sports cars 6 or 7, lorries and buses 8, motorbikes 6; the ratios spread from the kind's first
+// to its last gear, evenly (geometric)
+const ENG_GEARS = { compact: [5, 5, 6], sedan: [6, 6, 7], taxi: [5, 6], police: [6], suv: [6, 6, 7], van: [5, 6], sport: [6, 7, 7], truck: [8], bus: [6, 8], moto: [6] };
+const _engByModel = new Map();
 function engProfileOf(car) {
   const m = car.model || {},
     nm = ((m.id || '') + ' ' + (m.name || '')).toLowerCase();
   if (/newton|electr|tesla/.test(nm)) return ENG_PROFILES.ev; // the Newton Style 3
-  return ENG_PROFILES[car.type] || ENG_PROFILES[m.phys] || ENG_PROFILES.compact;
+  const kind = ENG_PROFILES[car.type] ? car.type : ENG_PROFILES[m.phys] ? m.phys : 'compact';
+  const key = kind + '|' + (m.id || '');
+  if (_engByModel.has(key)) return _engByModel.get(key);
+  const P = ENG_PROFILES[kind],
+    opts = ENG_GEARS[kind] || [P.gears.length];
+  let h = 0;
+  for (const ch of m.id || kind) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const n = opts[h % opts.length],
+    g0 = P.gears[0],
+    g1 = P.gears[P.gears.length - 1],
+    gears = [];
+  for (let i = 0; i < n; i++) gears.push(+(g0 * Math.pow(g1 / g0, n > 1 ? i / (n - 1) : 0)).toFixed(3));
+  const Q = Object.assign({}, P, { gears });
+  _engByModel.set(key, Q);
+  return Q;
 }
 const ENGINE = (() => {
   let N = null; // audio nodes
@@ -191,7 +214,7 @@ const ENGINE = (() => {
       N.out.gain.setTargetAtTime(1, t, 0.1);
       return;
     }
-    const f = (S.rpm / 60) * (P.cyl / 2); // firing frequency
+    const f = (S.rpm / 60) * (P.cyl / 2) * ENG_PITCH; // firing frequency (×ENG_PITCH: deeper)
     N.o1.frequency.setTargetAtTime(f, t, tc);
     N.o2.frequency.setTargetAtTime(f * 0.5, t, tc);
     N.o3.frequency.setTargetAtTime(f * 2, t, tc);
@@ -335,7 +358,7 @@ const NEAR_ENGINES = (() => {
         v.lp.frequency.setTargetAtTime(900, t, 0.1);
         v.g.gain.setTargetAtTime(0.006 * near * fade * Math.min(1, sp / 4), t, 0.1);
       } else {
-        const f = (rpm / 60) * (P.cyl / 2) * dop;
+        const f = (rpm / 60) * (P.cyl / 2) * dop * ENG_PITCH;
         v.o1.frequency.setTargetAtTime(f, t, 0.05);
         v.o2.frequency.setTargetAtTime(f * 0.5, t, 0.05);
         v.lp.frequency.setTargetAtTime((220 + 900 * ((rpm - P.idle) / (P.red - P.idle)) + 500 * thr) * (P.kind === 'bigdiesel' ? 0.7 : 1), t, 0.08);

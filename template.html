@@ -77,11 +77,17 @@ body.achaman #radioHud{display:none}
 #speed .reading b{display:block;font:700 24px/1 Oswald,sans-serif;letter-spacing:0;font-variant-numeric:tabular-nums}
 #speed .bar{display:none}
 /* v1.4.45: gear and revs (automatic gearbox, 10e_motor.js) */
-#gear{position:absolute;inset:27% 0 auto;text-align:center;font:700 13px/1 Oswald,sans-serif;color:var(--speed-accent);letter-spacing:.5px}
-#gear.red{color:#ff4d4d}
-#rpmBar{position:absolute;left:30%;right:30%;top:42%;height:3px;background:#ffffff26;border-radius:2px;overflow:hidden}
-#rpmFill{display:block;height:100%;width:100%;background:var(--speed-accent);transform:scaleX(0);transform-origin:left}
-#rpmBar.red #rpmFill{background:#ff4d4d}
+/* v1.4.46 (Jonay: «el cambio no se ve bien según en qué cuentakilómetros, el contraste es malo y además se superpone»):
+   outside the dial, on its right: a dark pill with the gear in white and the revs bar under it, the same on every face */
+#gear{position:absolute;left:100%;top:50%;margin:-21px 0 0 6px;min-width:30px;padding:3px 6px 7px;border-radius:7px;
+  background:rgba(8,10,12,.82);border:1px solid rgba(255,255,255,.28);box-shadow:0 1px 4px rgba(0,0,0,.5);
+  font:700 19px/1 Oswald,sans-serif;color:#fff;text-align:center;letter-spacing:.5px}
+#gear:empty{display:none}
+#gear.red{color:#ff5a5a;border-color:#ff5a5a}
+#rpmBar{position:absolute;left:100%;top:50%;margin:4px 0 0 12px;width:30px;height:3px;background:#ffffff33;border-radius:2px;overflow:hidden}
+#rpmFill{display:block;height:100%;width:100%;background:#7fe08a;transform:scaleX(0);transform-origin:left}
+#rpmBar.red #rpmFill{background:#ff5a5a}
+body.touchmode #gear{font-size:15px;min-width:24px;margin-top:-18px}
 #speedBar{display:block;width:100%;height:100%;background:var(--speed-accent);transform:scaleX(0);transform-origin:left}
 
 #speed[data-face="basic"]{--speed-face:#202421;--speed-rim:#8b9081;--speed-accent:#e9c771}
@@ -364,7 +370,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
  <div class="opt"><label>Música (radio)</label><input type="range" id="mvol" min="0" max="1" step="0.05" value="1"></div>
  <div class="opt"><label>Sensibilidad ratón</label><input type="range" id="sens" min="0.3" max="2.5" step="0.1" value="1"></div>
  <div class="opt"><label>Límite de FPS: <span id="fpsv">60</span></label><input type="range" id="fpscap" min="30" max="144" step="1" value="60"></div>
- <div class="opt"><label>Motor gráfico</label><div class="seg" id="segGpu"><button data-g="0" class="on">WebGL</button><button data-g="1">WebGPU (pruebas)</button></div></div>
+ <div class="opt"><label>Motor gráfico</label><div class="seg" id="segGpu"><button data-g="1" class="on">WebGPU</button><button data-g="0">WebGL</button></div></div>
  <div class="opt"><label>Invertir eje Y</label><div class="seg" id="segInv"><button data-v="0" class="on">No</button><button data-v="1">Sí</button></div></div>
  <div class="opt"><label>Tiempo</label><div class="seg" id="segW"><button data-w="0" class="on">Despejado</button><button data-w="1">Panza de burro</button><button data-w="2">Bruma lagunera</button></div></div>
  <div class="opt"><label>Hora</label><input type="range" id="tod" min="0" max="24" step="0.25" value="17"></div>

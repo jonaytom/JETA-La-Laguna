@@ -101,10 +101,12 @@ out['pine'] = {
     'crown': dump(pine, org, True, only_mat=li, ratio=0.45, colour=lc),
     'lo': dump(pine, org, True, only_mat=li, ratio=0.06, colour=lc),
 }
+# v1.4.47: planter shrubs (arboles_calle_v2.py), the planter top is their 0
+out['seto'] = {k: dump(bpy.data.objects[k], bpy.data.objects[k].matrix_world.translation.copy(), True) for k in ('seto_boj', 'seto_bug', 'seto_flor')}
 # grass and scrub (hierba_blender.py)
 if bpy.data.collections.get('JETA_Hierba'):
     out['hierba'] = {k: dump(bpy.data.objects[k], bpy.data.objects[k].matrix_world.translation.copy(), True) for k in ('hierba_verde', 'hierba_seca', 'matojo')}
-out['_creditos'] = ['Pino: «Pine» de Quaternius, https://poly.pizza/m/igSu0cPoBz (CC0)', 'Laurel, palmera, dragos y árbol de calle: hechos en Blender para el juego (tools/blender/arboles_blender.py)']
+out['_creditos'] = ['Pino: «Pine» de Quaternius, https://poly.pizza/m/igSu0cPoBz (CC0)', 'Laurel, palmera, dragos, árbol de calle y setos: hechos en Blender para el juego (tools/blender/arboles_blender.py, arboles_calle_v2.py)']
 json.dump(out, open(OUT, 'w', encoding='utf-8'), separators=(',', ':'))
 print({k: {p: v[p]['tris'] for p in v} for k, v in out.items() if not k.startswith('_')})
 import os

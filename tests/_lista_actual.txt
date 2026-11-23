@@ -12,3 +12,5 @@ prueba_prologo_1427.py
 prueba_congelados.py
 herramientas/sonda_aparcados.py
 herramientas/sonda_marchas.py
+herramientas/foto_setos.py
+herramientas/foto_pintura_gpu.py

@@ -632,11 +632,14 @@ function buildBundles() {
     box = new THREE.Box3(),
     c = new THREE.Vector3();
   const lodSwap = new Set(LOD.items.filter((it) => it.lo).map((it) => it.m));
+  // v1.4.46 (a long drive with WebGPU: ~1.700 cells recorded again in 6 min, 31-54 FPS): the small details the LOD shows and
+  // hides with the distance (signs, street furniture, mouldings: d = 1) stay out of the bundles, drawn as usual; inside, only
+  // what changes at the fog's edge (buildings, streets), which hardly ever records a cell again
+  const detail = new Set(LOD.items.filter((it) => it.d === 1).map((it) => it.m));
   let n = 0;
   for (const o of [...scene.children]) {
-    // the trees' cells (their crown changes with the distance: the cell is recorded again then, see bundleStep) come in too
     const tree = lodSwap.has(o);
-    if (o.matrixWorldAutoUpdate || !(o.static || tree) || o.isLight || !(o.isMesh || o.isGroup)) continue;
+    if (detail.has(o) || o.matrixWorldAutoUpdate || !(o.static || tree) || o.isLight || !(o.isMesh || o.isGroup)) continue;
     let ok = true;
     o.traverse((q) => {
       const ms = q.material ? (Array.isArray(q.material) ? q.material : [q.material]) : [];
@@ -707,11 +710,39 @@ function precompileShadows() {
     sc = sun.shadow.camera,
     keep = { l: sc.left, r: sc.right, t: sc.top, b: sc.bottom, n: sc.near, f: sc.far, p: sun.position.clone(), tg: sun.target.position.clone() },
     hidden = [];
+  // (v1.4.46: one hidden piece per kind is enough to prepare its shaders: material + instanced/batched/skinned. Showing
+  // the whole map took ~3 s of the loading)
+  const kind = (o) => {
+    const m = Array.isArray(o.material) ? o.material[0] : o.material;
+    return (m ? m.uuid : '') + (o.isInstancedMesh ? 'I' : '') + (o.isBatchedMesh ? 'B' : '') + (o.isSkinnedMesh ? 'S' : '') + (o.layers.mask & 2 ? 'L' : '');
+  };
+  // (v1.4.46, Jonay: «empecé otra y no sale el pj», WebGPU: its compileAsync runs the scene's «before render» (actorCull
+  // hides the far actors) but not the «after»; the player was left hidden, this function «put back» that hidden state and
+  // nothing showed him again. Now: first everything actorCull hid is given back, and people and cars are not touched here)
+  actorCull(false);
+  const actors = new Set(ACTORS.keys()),
+    isActor = (o) => {
+      for (let p = o; p; p = p.parent) if (actors.has(p)) return true;
+      return false;
+    };
+  const seen = new Set(),
+    vis = (o) => {
+      for (let p = o; p; p = p.parent) if (!p.visible) return false;
+      return true;
+    };
   scene.traverse((o) => {
-    if (!o.visible && (o.isMesh || o.isGroup || o.isBundleGroup)) {
-      o.visible = true;
-      hidden.push(o);
-    }
+    if (o.isMesh && vis(o)) seen.add(kind(o));
+  });
+  scene.traverse((o) => {
+    if (!o.isMesh || (!o.castShadow && !(o.layers.mask & 2)) || vis(o) || isActor(o)) return;
+    const k = kind(o);
+    if (seen.has(k)) return;
+    seen.add(k);
+    for (let p = o; p && p !== scene; p = p.parent)
+      if (!p.visible) {
+        p.visible = true;
+        hidden.push(p);
+      }
   });
   const big = 6000;
   Object.assign(sc, { left: -big, right: big, top: big, bottom: -big, near: 1, far: 12000 });
@@ -779,6 +810,9 @@ function batchTrees(ims) {
       const c = new THREE.BufferGeometry();
       if (!g.attributes.normal) g.computeVertexNormals();
       for (const k of common) c.setAttribute(k, g.attributes[k]);
+      // the geometries that already have an index keep it (the trunks: without it they were drawn as loose triangles and
+      // vanished, Jonay 23-nov: «¿árboles sin tronco?»); only the loose ones get one (dedupIndex)
+      if (g.index) c.setIndex(g.index);
       const ci = dedupIndex(c);
       ci.computeBoundingSphere();
       prep.set(g, ci);

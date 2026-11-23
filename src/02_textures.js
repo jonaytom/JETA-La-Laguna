@@ -838,7 +838,10 @@ function stoneWorld(mat, darkOnly, amt = 0.9) {
   };
   mat.customProgramCacheKey = () => 'stoneWorld' + (darkOnly ? 1 : 0); // v1.4.2: amt as a uniform (one program, not one per strength)
   mat.needsUpdate = true;
-  if (USE_GPU) gpuLazy(mat, (m) => gpuStoneWorld(m, darkOnly, amt)); // v1.4.44: the same in TSL (02b_gpu_nodos.js)
+  if (USE_GPU) {
+    mat.jtAmt = amt; // v1.4.46: read when drawn (materialReference)
+    gpuLazy(mat, (m) => gpuStoneWorld(m, darkOnly, amt)); // v1.4.44: the same in TSL (02b_gpu_nodos.js)
+  }
 }
 const PLASTER = { on: { value: 0 }, det: null, n1: null, n2: null };
 const TEXW = { value: 1 }; // v1.4.1: 0 turns off the photo grain of stoneWorld/plasterWorld (before/after photos: foto_texturas.py)
@@ -900,6 +903,10 @@ function plasterWorld(mat, kind = 1, amt = 1.1, tag = 'enlucido', tile = 3.2) {
   };
   mat.customProgramCacheKey = () => 'plasterWorld'; // v1.4.2: kind, strength and tile as uniforms (one program)
   mat.needsUpdate = true;
-  if (USE_GPU) gpuLazy(mat, (m) => gpuPlasterWorld(m, kind, amt, tile)); // v1.4.44
+  if (USE_GPU) {
+    mat.jtPl = new THREE.Vector3(kind === 0 ? 1 : 0, kind === 1 ? 1 : 0, kind === 2 ? 1 : 0); // v1.4.46: read when drawn
+    mat.jtPlA = new THREE.Vector2(amt, 1 / tile);
+    gpuLazy(mat, (m) => gpuPlasterWorld(m, kind, amt, tile)); // v1.4.44
+  }
   return mat;
 }

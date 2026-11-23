@@ -720,22 +720,57 @@ function distK() {
 // v1.4.44 (Jonay, 23-nov: «sigamos con webgpu a ver si lo adaptamos y rinde mejor»): with ?gpu=webgpu the game runs on
 // three.js's WebGPURenderer (THREE.GPU, from the joint bundle of tools/juntar_three_gpu.py); without it, WebGL as always.
 // Under WebGPU the materials with onBeforeCompile are drawn without their extra (pending: port them to TSL)
-// v1.4.44: also chosen in Opciones (Motor gráfico, saved as 'jeta_motor'; ?gpu=webgl forces WebGL)
-const USE_GPU =
-  !/[?&]gpu=webgl/.test(location.search) &&
-  (/[?&]gpu=webgpu/.test(location.search) || (() => { try { return localStorage.getItem('jeta_motor') === 'webgpu'; } catch (e) { return false; } })()) &&
-  !!(THREE.GPU && navigator.gpu);
-const renderer = USE_GPU
-  ? new THREE.GPU.WebGPURenderer({ antialias: !IS_TOUCH, powerPreference: 'high-performance' })
-  : new THREE.WebGLRenderer({ antialias: !IS_TOUCH, powerPreference: 'high-performance' });
-if (USE_GPU) await renderer.init();
+// v1.4.44: also chosen in Opciones (Motor gráfico, saved as 'jeta_motor'; ?gpu=webgl / ?gpu=webgpu force one)
+// v1.4.46 (Jonay, 23-nov: «por defecto debería ir con WebGPU, si no se puede WebGL»): WebGPU unless the player chose WebGL,
+// and only if it really starts: the browser must give a graphics adapter AND three.js must end up on its WebGPU backend
+// (when the device cannot be created it falls back to a slower WebGL2 backend of its own: then the usual WebGLRenderer
+// is used instead). Automated browsers (our tests, the auditor: navigator.webdriver) keep WebGL by default, since their
+// measurements (GPU timer queries, programs) exist only there; the WebGPU probes ask for it with ?gpu=webgpu.
+const GPU_CHOICE = (() => {
+  if (/[?&]gpu=webgl/.test(location.search)) return 'webgl';
+  if (/[?&]gpu=webgpu/.test(location.search)) return 'webgpu';
+  try {
+    const s = localStorage.getItem('jeta_motor');
+    if (s === 'webgl' || s === 'webgpu') return s;
+  } catch (e) {}
+  return navigator.webdriver ? 'webgl' : 'webgpu';
+})();
+let USE_GPU = GPU_CHOICE === 'webgpu' && !!(THREE.GPU && navigator.gpu);
+// (powerPreference: Chrome and Edge on Windows ignore it for WebGPU and warn in the console; it is asked elsewhere, where it
+// picks the strong card of laptops with two)
+const GPU_PREF = /Windows/.test(navigator.userAgent) ? {} : { powerPreference: 'high-performance' };
+// ?trazastsl=1: where each TSL warning comes from (three.js keeps a stack trace per node)
+if (/[?&]trazastsl=1/.test(location.search) && THREE.GPU && THREE.GPU.Node) THREE.GPU.Node.captureStackTrace = true;
+if (USE_GPU) {
+  try {
+    USE_GPU = !!(await navigator.gpu.requestAdapter(GPU_PREF));
+  } catch (e) {
+    USE_GPU = false;
+  }
+}
+let renderer = null;
+if (USE_GPU) {
+  try {
+    renderer = new THREE.GPU.WebGPURenderer({ antialias: !IS_TOUCH, ...GPU_PREF });
+    await renderer.init();
+    if (!(renderer.backend && renderer.backend.isWebGPUBackend)) throw new Error('sin WebGPU (respaldo WebGL2 de three.js)');
+  } catch (e) {
+    console.warn('WebGPU no arranca, se usa WebGL:', e && e.message);
+    try {
+      renderer && renderer.dispose();
+    } catch (e2) {}
+    renderer = null;
+    USE_GPU = false;
+  }
+}
+if (!renderer) renderer = new THREE.WebGLRenderer({ antialias: !IS_TOUCH, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, Q.pr));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;
 renderer.shadowMap.enabled = Q.shadow > 0;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = THREE.PCFShadowMap; // v1.4.46: PCFSoftShadowMap no longer exists in three.js (r186+: it was already PCF, with a console warning)
 renderer.autoClear = false;
 $('game').appendChild(renderer.domElement);
 const MAXANI = USE_GPU ? renderer.getMaxAnisotropy() : renderer.capabilities.getMaxAnisotropy();
