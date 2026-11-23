@@ -10,13 +10,18 @@
 - **Herramientas de prueba**: las que tengan algo de complejidad se guardan en `tests/` (pruebas) o
   `tests/herramientas/` (fotos, sondas; índice en `LEEME.md`) y se reutilizan; no rehacerlas en cada versión.
 - El objetivo principal del juego es recrear bien el mapa real de La Laguna (OpenStreetMap). Comercios: siempre parodias.
+- **Objetivo técnico (Jonay, 23-nov): llegar a WebGPU.** La three.js r187 (v1.4.43) ya trae `WebGPURenderer`; el plan
+  está en PENDIENTES («Pasar el juego a WebGPU»). Lo nuevo que se haga con sombreadores, mejor que no dependa de
+  `onBeforeCompile` ni de trozos de sombreador de WebGL.
 - **Coordenadas** (Jonay, 2-nov, v0.99.7): en pantalla, informes, PENDIENTES y mensajes se escriben **X, Y** para el plano y la
   **altura** aparte (m sobre el mar). Y es lo que el código llama `z` (y lo que los apuntes y capturas viejos llaman Z).
 
 - **Norma (Jonay, v0.64.1): todo lo que se ejecute (pruebas, fotos, sondas, herramientas de mapa, descargas…) se
-  ejecuta en el PC de Jonay**, no en la nube: así no gasta uso y el rendimiento es siempre el mismo equipo. Claude edita
-  código, compila para el Artifact y prepara la lista (`scripts/PRUEBAS_LISTA.txt`) o un `.bat`; Jonay lo lanza y Claude
-  lee los resultados (`reportes/pruebas/ULTIMO.md`, fotos en `tests/shots/`).
+  ejecuta en el PC de Jonay**, no en la nube: así no gasta uso y el rendimiento es siempre el mismo equipo.
+  **Desde la v1.4.43 (23-nov) Claude trabaja directamente en el PC** (Claude Code, app de escritorio, carpeta
+  `E:\Claude\GTA La Laguna\repo`): edita los archivos del repo en su sitio y lanza él mismo el build, las pruebas, la
+  auditoría y la subida (ver «Trabajador local»). Ya no hay copia en la nube ni herramientas `device_*`. Los resultados
+  siguen en `reportes/pruebas/ULTIMO.md`, `cola/hecho/` y las fotos en `tests/shots/`.
 
 - **Mensajes del auditor (Corrector de código)**: al empezar cada versión, leer
   `C:\Users\Jonay\RevisordeCodigo\PARA_EL_PROGRAMADOR.md` (lo más reciente arriba, con fecha y versión del auditor), hacer
@@ -25,12 +30,12 @@
   izquierdo, botón B = `Espacio`, arriba = `↑`/`W`, clic derecho (o `Q`), y moverse como al andar.
 
 - **Formato del código** (v1.1.6, Jonay pidió revisar la calidad): `src/` va formateado con Prettier (`.prettierrc.json`). Claude
-  pasa el formateador en la nube (`/opt/node-tools/node_modules/.bin/prettier --write`) a los archivos que toque antes de
-  subirlos al PC; los `*_data.js` y `09ecb_bk_anim.js` (datos) no se formatean.
+  pasa el formateador a los archivos que toque antes del build (`npx --yes prettier@3 --write src/<archivo>.js`, con el
+  Node del PC); los `*_data.js` y `09ecb_bk_anim.js` (datos) no se formatean.
 - **Reordenar código sin cambiar el juego** (v1.1.7): antes, `pruebas huella_base` y `pruebas huella_mundo_base` con el código
   viejo (guardan la huella de los sprites y de todo lo construido, con semilla fija); después, `pruebas huella_cmp` y
   `pruebas huella_mundo_cmp` (cada una en su propia carga) tienen que salir iguales. Partir funciones:
-  `tools/calidad/extraer_trozos.js` (en la nube).
+  `tools/calidad/extraer_trozos.js` (con `node`).
 
 ## Cómo se apuntan los pendientes (Jonay, 20-oct)
 
@@ -68,13 +73,17 @@ cerrada (`tools/trabajador.py`): `build`, `pruebas [listas…]` (sin nada = `cam
 Cloudflare Pages en `E:\Claude\GTA La Laguna\Cloudflare\` y su zip; Jonay la sube a mano. Ya no se hace el zip con `Jugar.bat`), `catastro` y `barreras` (v1.0.4: bajan los edificios del Catastro y los muros y vallas de OSM a `data/`) y `mover_old` (v1.0.1: mueve a `OLD-Borrar\` lo de `scripts/old_borrar.txt`; nunca borra). Si no está abierto, pedirle a Jonay que
 lo abra (o que lance el `.bat` que toque).
 
-**Esperar al trabajador (Jonay, 26-oct: «metes un sleep de 5 min y tardo segundos»)**: nada de esperas largas a
-ciegas. Tras dejar el encargo, mirar `cola\hecho\<id>.md` a los ~20–30 s (un build que falla se escribe al momento);
-si no está, mirar `cola\` (si el `.txt` ya no está, lo ha cogido) y volver a mirar cada ~30–60 s según lo que quede
-(pruebas ≈ 2 min). **Al reenviar un archivo**, copiarlo a una carpeta nueva de `outputs/` (p. ej. `v0890f/`):
-reenviar la misma ruta de antes puede dejar en el PC la copia vieja. En la nube solo queda lo estrictamente necesario: editar el código (las
-herramientas de edición de Claude trabajan aquí) y publicar el Artifact (se sube el `dist/gta-la-laguna.html` que
-compila el PC de Jonay).
+**Desde la v1.4.43 Claude no necesita la ventana del trabajador**: ejecuta las mismas órdenes él mismo, con el mismo
+informe, dejando el encargo en `cola\<id>.orden` (**no `.txt`**, para que no lo coja también la ventana si está abierta)
+y lanzándolo desde `repo\`:
+
+```
+python -c "import sys; sys.path.insert(0,'tools'); import trabajador as t; t.hacer(r'cola/<id>.orden')"
+```
+
+El resultado queda igual en `cola\hecho\<id>.md`. Las tandas largas (pruebas, auditoría, publicación) se lanzan en
+segundo plano y se lee el informe al terminar, sin esperas a ciegas. Para una prueba suelta:
+`python tools/pruebas_locales.py <lista>` (listas en `scripts/pruebas/<lista>.txt`).
 
 ## Nombre de las versiones (Jonay, 3-nov)
 
@@ -83,18 +92,19 @@ Más adelante habrá una **Beta 1.0** y luego la **Final 1.0** (lo decide Jonay)
 
 ## Rutina al publicar una versión nueva
 
-1. Editar `src/` (y lo que toque) en la copia de trabajo, subir `VERSION`, entrada en `CHANGELOG.md`, docs al día.
-   Antes de editar un archivo que Jonay pueda haber cambiado, traer su versión de `E:\…\repo\`.
-2. Copiar los archivos cambiados a `E:\Claude\GTA La Laguna\repo\` (`device_commit_files`), rellenar
-   `scripts/PRUEBAS_LISTA.txt` con las pruebas de esta versión y dejar el encargo en `cola\`:
+1. Editar `src/` (y lo que toque) directamente en `E:\Claude\GTA La Laguna\repo\`, pasar Prettier, subir `VERSION`,
+   entrada en `CHANGELOG.md`, `PENDIENTES.md` y docs al día.
+2. Rellenar `scripts/PRUEBAS_LISTA.txt` (o una lista `scripts/pruebas/<lista>.txt`) con las pruebas de esta versión y
+   lanzar el encargo (`cola\<id>.orden`, ver «Trabajador local»):
    `build` + `pruebas` (sin nada = `cambios version`: solo las pruebas de los archivos tocados desde la última tanda que pasó, según
    `scripts/pruebas/categorias.json` + `PRUEBAS_LISTA.txt`, con una sola carga del juego; `pruebas base` o `todas` cuando
    se toque algo general). Leer `cola\hecho\<id>.md` y `reportes\pruebas\ULTIMO.md` (y fotos de
    `tests\shots\` si hace falta). Si algo falla: arreglar y repetir.
-3. Todo OK → encargo `auditar` y, **después**, `copiar_html` + `publicar <versión>` + `subir_git` (sube a GitHub en el
-   momento; la tarea programada solo corre un par de veces al día). **Desde la v0.91.1 la auditoría va antes de publicar**:
-   el trabajador se para si sale NO APTO, así no se sube una versión rota (la 0.91.0 se subió y luego salió NO APTO); traer `dist\gta-la-laguna.html` (`device_stage_files`) y
-   publicar el Artifact (https://claude.ai/artifact/TwcMQexTqQsGJWLpUYvcXJ).
+3. Todo OK → encargo `auditar` y, **después**, `copiar_html` + `zip_testers` + `publicar <versión>` + `subir_git`
+   (sube a GitHub en el momento; la tarea programada solo corre un par de veces al día). **Desde la v0.91.1 la auditoría
+   va antes de publicar**: el trabajador se para si sale NO APTO, así no se sube una versión rota (la 0.91.0 se subió y
+   luego salió NO APTO). El Artifact de claude.ai ya no se publica (límite de 16 MB): los testers juegan en Cloudflare
+   Pages con el zip, que Jonay sube a mano.
 4. **Auditorías**: las pasa Jonay cuando quiere. Al empezar cada tanda, mirar en `C:\Users\Jonay\RevisordeCodigo\resultados_pc\` (antes `resultados\`)
    si hay carpetas nuevas, leer su `VEREDICTO.md`, contárselo y anotar lo nuevo en `PENDIENTES.md`. Las mejoras de los
    auditores NO se aplican hasta que Jonay lo diga. **Agente revisor**: solo cuando Jonay lo pida.

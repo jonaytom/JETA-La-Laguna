@@ -1,6 +1,7 @@
 # Traspaso para el programador que continúa JETA La Laguna
 
-Resumen de **cómo se trabaja en el proyecto y de lo aprendido hasta la Alpha 1.4.12** (12-nov-2026). Va
+Resumen de **cómo se trabaja en el proyecto y de lo aprendido hasta la Alpha 1.4.12** (12-nov-2026), con la forma de
+trabajar puesta al día en la **Alpha 1.4.43** (23-nov-2026: Claude ya trabaja directamente en el PC). Va
 **además** de `CLAUDE.md`, que tiene las normas de siempre, y de `PENDIENTES.md`, que es la lista de trabajo.
 
 Para el detalle de cada versión, mira `CHANGELOG.md`. Para los coches propios, `Blender\coche\RECETA_COCHES.md`
@@ -35,8 +36,10 @@ Para el detalle de cada versión, mira `CHANGELOG.md`. Para los coches propios, 
 ### Cómo se trabaja
 
 - **Todo lo que se ejecuta corre en su PC** (AMD RX 6600), nunca en la nube: builds, pruebas, fotos del juego,
-  sondas y auditorías. En la nube solo se edita código y se preparan archivos.
-- **Avisarle antes de lanzar trabajo en el trabajador**, por si tiene que reiniciarlo.
+  sondas y auditorías. **Desde el 23-nov Claude trabaja en el propio PC** (Claude Code, app de escritorio, carpeta
+  `E:\Claude\GTA La Laguna
+epo`): edita los archivos en su sitio y lanza él mismo las órdenes del trabajador.
+- **Objetivo técnico: WebGPU** (Jonay, 23-nov). La three.js r187 ya lo trae; plan en PENDIENTES.
 - **Feedback suelto**: si Jonay comenta fallos sueltos, no se arreglan al momento. Se apuntan en
   `PENDIENTES.md`, clasificados y con velocidad (⚡ ◐ ●; ver `CLAUDE.md`), y se hacen cuando él lo pida. Si pide
   algo expresamente, eso sí se hace al momento.
@@ -75,36 +78,30 @@ Para el detalle de cada versión, mira `CHANGELOG.md`. Para los coches propios, 
 | `C:\Users\Jonay\RevisordeCodigo\` | El auditor: `PARA_EL_PROGRAMADOR.md` se lee al empezar cada versión; los resultados van en `resultados_pc\`. |
 | `E:\Claude\GTA La Laguna\Blender\coche\` | Los coches propios (sección 6). |
 
-### En la nube
+### Ya no hay copia en la nube (desde el 23-nov)
 
-- Copia de trabajo del repo en `/home/claude/jeta-repo`. **Antes de editar, trae la versión del PC**: otros chats
-  y Jonay tocan los mismos archivos.
-- Prettier: `/opt/node-tools/node_modules/.bin/prettier --write` sobre los archivos de `src/` que toques. Los
+- Se trabaja sobre `E:\Claude\GTA La Laguna
+epo` directamente. Otros chats y Jonay pueden tocar los mismos
+  archivos: mira `git status` / `git diff` al empezar para ver lo que hay a medias.
+- Prettier: `npx --yes prettier@3 --write src/<archivo>.js` sobre los archivos de `src/` que toques (Node del PC). Los
   `*_data.js` y `09ecb_bk_anim.js` no se formatean.
 
 ---
 
 ## 3. Herramientas de la sesión: trucos
 
-- **No hay `device_bash`.** Se trabaja con:
-  - `device_stage_files`: trae archivos del PC a `/mnt/user-data/uploads/…`, como copia de ese momento. Tarda
-    un par de segundos en aparecer: haz `sleep 2` antes de leer.
-  - `device_commit_files`: escribe en el PC.
-  - `device_list_dir`.
-  - Blender `execute_blender_code`.
-- **Para escribir en el PC, usa siempre una carpeta nueva de `/mnt/user-data/outputs/<carpeta_nueva>/`.** Si
-  reenvías la misma ruta, el PC puede quedarse con la copia vieja (pasó con `c44.py`).
-  - Usa `force: true` cuando sobrescribas algo que has traído antes.
-- **La carpeta de subidas de la nube no se actualiza sola.** Para ver si el trabajador terminó, usa
-  `device_list_dir` sobre `cola\hecho\` o trae el `.md` con `device_stage_files`.
-- **Esperas**: un build tarda unos segundos; una publicación completa, de 6 a 10 minutos.
-  - Mira el resultado a los 20-30 s por si falló el build. Después, cada 1-2 minutos (Jonay se quejó de las
-    esperas largas a ciegas).
-  - El `.txt` desaparece de `cola\` cuando el trabajador lo coge.
-- **No uses Blender mientras el trabajador audita**: falsea los tiempos.
-- **Imágenes que pasa Jonay**: quedan en `/root/.claude/uploads/<sesión>/xxxx-image.png`. Guárdalas enseguida
-  en el PC con el nombre del modelo, porque en una sesión nueva se pierden. Las de coches van en
-  `Blender\coche\fotos\<marca_modelo>_<n>.png`.
+- **Órdenes del trabajador sin su ventana**: deja las órdenes (una por línea) en `cola\<id>.orden` (**no `.txt`**,
+  para que no lo coja también `TRABAJADOR.bat` si está abierto) y lánzalo desde `repo\`:
+  `python -c "import sys; sys.path.insert(0,'tools'); import trabajador as t; t.hacer(r'cola/<id>.orden')"`.
+  El informe queda en `cola\hecho\<id>.md`, como siempre.
+- **Una prueba suelta**: `python tools/pruebas_locales.py <lista>` (lista en `scripts/pruebas/<lista>.txt`). Si una
+  prueba falla en la tanda pero pasa sola, suele ser el estado que deja otra prueba (jugador en un coche, etc.):
+  arregla la prueba para que no dependa de eso.
+- **Esperas**: un build tarda unos segundos; pruebas y auditoría, de 5 a 20 minutos. Lánzalas en segundo plano y lee el
+  informe al terminar; nada de esperas a ciegas.
+- **No uses Blender mientras se audita**: falsea los tiempos.
+- **Imágenes que pasa Jonay**: guárdalas en el PC con el nombre del modelo, porque en una sesión nueva se pierden. Las
+  de coches van en `Blender\cocheotos\<marca_modelo>_<n>.png`.
 - **Contexto**: las sesiones largas se llenan, sobre todo con imágenes. Haz montajes pequeños, con varias fotos
   en una (PIL), en vez de leer muchas sueltas, y deja todo apuntado en `PENDIENTES.md` antes de cerrar.
 
@@ -117,18 +114,17 @@ Para el detalle de cada versión, mira `CHANGELOG.md`. Para los coches propios, 
    - sube `VERSION`;
    - escribe la entrada de `CHANGELOG.md` (fecha, «Alpha X.Y.Z: título», qué y por qué, citando a Jonay);
    - apunta en `PENDIENTES.md` lo hecho y lo nuevo.
-2. **Copiar** los archivos al `repo\` del PC.
-3. **Encargo** `cola\pubXXXX.txt`, con una orden por línea:
+2. **Encargo** `cola\pubXXXX.orden` (ver sección 3), con una orden por línea:
    `build`, `pruebas`, `pruebas <lista>`, `auditar`, `copiar_html`, `publicar X.Y.Z`, `subir_git`, `zip_testers`.
    - `pruebas` sin nada son las pruebas de los archivos tocados. Para coches, `pruebas propios144` saca la foto de
      todos los coches propios en fila.
    - La auditoría va **después** de las pruebas, en el mismo encargo y nunca a la vez.
-4. **Leer el veredicto** de `cola\hecho\pubXXXX.md`:
+3. **Leer el veredicto** de `cola\hecho\pubXXXX.md`:
    - **APTO** → bien.
    - **APTO CON AVISOS** → se publica igual y los avisos nuevos se apuntan en PENDIENTES. Los minijuegos que
      pasan de 0,2 a 0,4 ms suelen ser ruido de medición.
    - **NO APTO** → el trabajador se para solo; no se publica.
-5. Contarle a Jonay en una o dos frases qué entra y cómo salió la auditoría.
+4. Contarle a Jonay en una o dos frases qué entra y cómo salió la auditoría.
 
 ---
 
@@ -285,8 +281,8 @@ Grabado a fuego, de su propia boca:
 
 1. Guarda sus fotos en `Blender\coche\fotos\` con el nombre del modelo.
 2. Haz una rejilla sobre la foto lateral (recorte con líneas cada 10-20 px) y mide.
-3. Escribe la entrada en `auto/cochesN.py` y ejecuta el builder en la nube para sacar `nuevosN.py`.
-4. Copia al PC `generador.py` (si ha cambiado), `nuevosN.py` y el builder, en una carpeta nueva de outputs.
+3. Escribe la entrada en `auto/cochesN.py` y ejecuta el builder (en el PC, con `python`) para sacar `nuevosN.py`.
+4. Comprueba que `generador.py`, `nuevosN.py` y el builder están al día en `Blender\coche\` (ahí se trabaja directamente).
 5. En Blender: ejecuta `generador.py` con `exec`, carga `nuevosN.py` y llama a `GEN['build'](S, 'juego')` y a
    `GEN['finalize'](col, nombre)`.
    - Antes de construir, quita la exclusión a todas las colecciones (`lc.exclude = False`): con una excluida no se
