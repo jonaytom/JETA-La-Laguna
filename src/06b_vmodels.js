@@ -257,6 +257,10 @@ for (const [id, x, y] of [
 }
 // v1.4.19: the police and the ambulance keep their own colours and vinyls (white body, never the random paint)
 // v1.4.20: also the taxis (white), the fire engine (red) and the tow truck (yellow)
+let GOLD_PLATE = null;
+// (makeOwnCarMesh: where the plate goes when the model has its own place for it, and its size there: v1.4.47, Jonay: «la
+// matrícula de la forma exacta del hueco, mejor; así parece pegada encima». The Linguini's recess: 0.37 × 0.11 m)
+const PLATE_FIT = { reventon: { y: 0.576, w: 0.36, h: 0.104, off: 0.003 } };
 const LIVERY = { bomberos: 0xb3141c, grua: 0xf2b21a, guagua: 0x1f8a4c, reventonGold: 0xd9a520 }; // v1.4.41: the Gold Edition, gold // v1.4.21: the guagua in TITSA green, the rubbish lorry white
 const isLivery = (m) => !!m && /^(taxi\d*|policia\d*|ambulancia|bomberos|grua|basura|guagua|reventonGold)$/.test(m.id) && !!m.lod;
 const liveryColor = (m) => LIVERY[m.id] || 0xf6f6f4;
@@ -367,6 +371,9 @@ const STREET_TRUCKS = MODEL_WEIGHTS.filter(([m]) => m.phys === 'truck');
 function pickModel(filter) {
   return pickW(filter ? MODEL_WEIGHTS.filter(([m]) => filter(m)) : MODEL_WEIGHTS);
 }
+// v1.4.47 (Jonay: «lo de la moto no lo afrontes… vamos a desactivarlas del juego por ahora hasta que hagamos motos con
+// Blender»): no motorbikes in the traffic (they were 15 %), nor where a «moto» was asked for (a car instead)
+const MOTOS_ON = false;
 function parkedModel() {
   return pickW(STREET_CARS);
 }
@@ -376,13 +383,13 @@ function modelForType(type) {
   if (type === 'police') return pick([VMODELS.policia, VMODELS.policia2, VMODELS.policia3].filter(Boolean)) || VMODELS.policia; // v1.4.19: 3 models
   if (type === 'sport') return VMODELS.guancheGT;
   if (type === 'bus') return VMODELS.guagua || null; // v1.4.21: our own guagua (before: the boxes of makeCarMesh)
-  if (type === 'moto') return pickModel((m) => m.phys === 'moto');
+  if (type === 'moto') return MOTOS_ON ? pickModel((m) => m.phys === 'moto') : pickW(STREET_CARS);
   if (type === 'truck') return pickModel((m) => m.phys === 'truck' && m.id !== 'bomberos' && m.id !== 'ambulancia');
   return pickModel((m) => m.phys === type);
 }
 function trafficModel(edgeType) {
   const r = Math.random();
-  if (r < 0.15) return pickModel((m) => m.phys === 'moto');
+  if (MOTOS_ON && r < 0.15) return pickModel((m) => m.phys === 'moto');
   if (r < 0.2) return pickModel((m) => m.phys === 'taxi') || VMODELS.taxi;
   if (r < 0.32 && ['primary', 'secondary', 'tertiary', 'trunk', 'motorway', 'motorway_link'].includes(edgeType)) return pickW(STREET_TRUCKS);
   return pickW(STREET_CARS);
@@ -1012,8 +1019,32 @@ function makeOwnCarMeshPart2(model, G, halfW, W, body, tl) {
     pl.material.userData.shared = true;
     PLATES.push(pl);
   }
-  const plate = pick(PLATES).clone();
-  const ply = Math.min(0.7, model.H * 0.36);
+  // v1.4.47 (Jonay: «la matrícula del Linguini es más espectacular, debe poner GOLD»): black with gold letters
+  if (model.id === 'reventonGold' && !GOLD_PLATE) {
+    GOLD_PLATE = textPlane('GOLD', 0.52, 0.12, '#111111', '#e8b923', 'bold 46px Arial');
+    // (and a silver rim: Jonay, «con reborde plateado la matrícula del Gold»)
+    const t = GOLD_PLATE.material.map,
+      cv = t.image,
+      x = cv.getContext('2d');
+    const gr = x.createLinearGradient(0, 0, 0, cv.height);
+    gr.addColorStop(0, '#f4f6f8');
+    gr.addColorStop(0.5, '#9aa3ab');
+    gr.addColorStop(1, '#e2e6ea');
+    x.strokeStyle = gr;
+    x.lineWidth = 7;
+    x.strokeRect(3.5, 3.5, cv.width - 7, cv.height - 7);
+    t.needsUpdate = true;
+    GOLD_PLATE.material.metalness = 0.6;
+    GOLD_PLATE.material.roughness = 0.3;
+    GOLD_PLATE.geometry.userData.shared = true;
+    GOLD_PLATE.material.userData.shared = true;
+  }
+  const plate = (model.id === 'reventonGold' ? GOLD_PLATE : pick(PLATES)).clone();
+  // v1.4.47 (Jonay: «se ve a través del coche… ¿dónde estaba la matrícula?»): the Linguini has its own plate recess at
+  // 0.54–0.60 m with nothing behind it (only the inside of the far side, which is not drawn from there): the plate goes
+  // there and covers it (tests/herramientas/sonda_huecos_coches.py looks for such holes)
+  const fit = PLATE_FIT[model.base],
+    ply = fit ? fit.y : Math.min(0.7, model.H * 0.36);
   let pz = G.zmin;
   {
     const P = G.probe;
@@ -1021,7 +1052,8 @@ function makeOwnCarMeshPart2(model, G, halfW, W, body, tl) {
     for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 1] - ply) < 0.08 && Math.abs(P[i]) < 0.4) zz = Math.min(zz, P[i + 2]);
     if (zz < 1e8) pz = zz;
   }
-  plate.position.set(0, ply, pz - 0.012);
+  plate.position.set(0, ply, pz - (fit ? fit.off : 0.012));
+  if (fit) plate.scale.set(fit.w / 0.52, fit.h / 0.12, 1); // (the plates are 0.52 × 0.12 m)
   plate.rotation.y = Math.PI;
   body.add(plate);
 }

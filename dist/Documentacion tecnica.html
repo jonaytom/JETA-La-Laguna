@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.46</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.47</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2158,6 +2158,37 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.4.47 — 2026-11-23 — Alpha 1.4.47: tanda de pendientes rápidos</h2>
+<ul>
+<li><strong>Misiones del Obispo alternadas</strong> (Jonay: «me gustaría que la segunda misión del Obispo fuera el fútbol, no otra de basket»): ahora van basket (Catedral), fútbol (Seminario, con el tutorial), basket (Cristo) y fútbol (cofradías); los diálogos siguen el nuevo orden. Las partidas guardadas que ya habían hecho los dos basket pasan al fútbol del Seminario.</li>
+<li><strong>Los objetivos de los partidos nombran a todo el equipo</strong> (Jonay: «ahora es 3x3, así que debe nombrar a los 3»): en basket, «con Coco y El Blanco»; en fútbol, «con El Blanco, Boca Papa, Sastrón y Coco» (ya erais cinco contigo: no hacía falta el Canarión).</li>
+<li><strong>Flechas de la calzada más pequeñas</strong> (Jonay: «son demasiado grandes, desentonan»): al 75 % (5 m → 3,75 m).</li>
+<li><strong>Estrellas sin rayas</strong> cerca del horizonte (también con WebGL): las celdas son ahora de la dirección en 3D, no de su proyección en un plano, que las estiraba.</li>
+<li><strong>Franja verde sobre el horizonte</strong>: el monte lejano del fondo (Anaga, a ~4,5 km) salía casi sin neblina sobre una ciudad ya brumosa a 2 km; ahora tiene la neblina que le toca.</li>
+<li><strong>Sombras de borde más suave</strong> (radio 2 en vez de 1; con el PCF de three.js r186+ no cuesta nada). Foto: <code>tests/herramientas/foto_sombras_radio.py</code>.</li>
+<li><strong>Mapas de reflejos a 128 px</strong> (antes 256): son 32 desde que la pintura de coche tiene los suyos y ocupaban ~200 MB de la tarjeta gráfica; ahora ~55 MB.</li>
+<li><strong>Parterres de flores nuevos</strong> en plazas y parques (Jonay: «¿qué se supone que es eso de colores sobre una caja verde?»): bordillo de piedra, tierra y una o dos filas de los arbustos de Blender (buganvilla, flor amarilla o boj), en vez de una caja verde con una bola aplastada de un color.</li>
+<li><strong>El Linguini Gold Edition frena un 20 % más</strong> (Jonay: «además de correr un 20 % más, también debe frenar un 20 % más, o no hay quien lo frene»).</li>
+<li>La cortina de agua de la fuente de la Plaza del Adelantado ya no se congela con la ciudad (se anima; lo avisaba <code>prueba_congelados.py</code>).</li>
+<li><strong>Ya no se ve a través del Linguini por detrás</strong> (Jonay: «se ve a través del coche, ¿qué es eso?»): el modelo tiene un hueco para la matrícula sin nada detrás, y la nuestra iba más abajo; ahora va en su hueco y lo tapa. Y el <strong>Gold lleva matrícula «GOLD»</strong>, negra con letras doradas (Jonay: «la matrícula del Linguini es más espectacular, debe poner GOLD»). Nueva herramienta para buscar huecos así en todos los coches: <code>tests/herramientas/sonda_huecos_coches.py</code>.</li>
+<li><strong>Arreglado: una llamada podía dejarte bloqueado</strong> (Jonay: «me llamó el cura y no me deja seguir… al bajarme ya no funciona, se quedó el mensaje»): si el juego te rescataba (coche hundido, caída) o cargabas en mitad de una conversación, la cortaba pero dejaba su texto en pantalla para siempre, y la llamada del cura ya no volvía. Ahora se borra también el texto, y el cura vuelve a llamar.</li>
+<li><strong>Nadie te llama mientras conduces</strong> (Jonay: «no debería llamar mientras conduces… aplica a todas las llamadas»): sale un aviso «📱 Te llama…» y la llamada suena al bajarte del coche.</li>
+<li><strong>Estrellas</strong>: la cuarta parte, cada una con su brillo, y ya no se reflejan en la chapa de los coches (Jonay: «hay demasiadas estrellas… hacen que refleje demasiado en el coche»).</li>
+<li><strong>Matrícula del Linguini a la medida de su hueco</strong> (0,36 × 0,10 m, a ras de la carrocería: «así parece pegada encima») y la del Gold con <strong>reborde plateado</strong>.</li>
+<li><strong>Los bancos robados de la misión del alcalde son bancos de verdad</strong> (los del parque, uno en el suelo y dos boca abajo encima), no tres tablas flotando.</li>
+<li><strong>Arreglado: la pantalla negra con WebGPU</strong> (Jonay: «se volvió a poner negro, WebGPU… efectivamente cambiando la hora provocó el bug»): al amanecer y al anochecer se apagaba y encendía la sombra del sol, y apagarla destruía su mapa de sombras mientras los grupos de dibujo de WebGPU seguían usándolo: desde ese momento fallaba cada fotograma. Ahora la sombra nunca se apaga: de noche se hace invisible y no se recalcula (no cuesta nada). Si aun así WebGPU diera errores seguidos, se guarda la partida y se recarga con WebGL, <strong>solo hasta cerrar el navegador</strong> (antes, la vuelta a WebGL se quedaba para siempre). Prueba: <code>tests/herramientas/sonda_negro_webgpu.py</code>.</li>
+<li><strong>Tanda de fallos gráficos del mapa</strong> (Jonay: «vamos a ir a por una tanda de mejora de glitch gráficos, con las calles, tiendas, edificios y mapa en general»):</li>
+<li><strong>Coches que flotaban o se hundían</strong>: se apoyaban en «terreno + 17 cm», pero las vías con perfil propio se dibujan planas de lado a lado (y los terraplenes, por encima del terreno). Ahora se apoyan en el asfalto tal como se dibuja (rejilla de 2 m hecha al construir las calles, 6,7 MB): las ruedas quedan a 0–2 cm del asfalto en todos los modelos, y los aparcados ya no salen enterrados. Herramientas: <code>sonda_ruedas_suelo.py</code>, <code>sonda_alturas_suelo.py</code>.</li>
+<li><strong>Glorietas</strong>: los edificios que pisaban el anillo se recortan siguiendo el círculo (la fachada se curva con él); una caseta de 35 m² que estaba en la isleta de la Av. La Libertad se quita (Jonay: «no me quites edificios… a no ser que sea una caseta»).</li>
+<li><strong>Tejados volando sobre la calle</strong>: el tejado a cuatro aguas de un edificio estrecho o recortado podía salirse de la planta (Calle Juan de Vera); ahora, si no cabe, va más bajo, y si aún no cabe, plano (96 de ~1.960).</li>
+<li><strong>Talud de césped sobre la Carretera General del Norte</strong> (pasarela): ya no se pone encima de una calle que empalma con la rampa.</li>
+<li><strong>Barandilla en la boca de las rampas de los parkings</strong>: ya no se puede saltar al hueco desde la losa.</li>
+<li><strong>Luz de las farolas</strong>: era un cuadrado plano 30 cm sobre el suelo que hacía brillar pies, bordillos y ruedas («como niebla»); ahora va pegada al asfalto. Y las <strong>ventanas encendidas</strong> de noche ya no son rectángulos blancos: cada una con su tono cálido, más luz arriba y alguna cortina.</li>
+<li><strong>Casa del Linguini</strong>: los cristales y la rejilla del garaje ya no parpadean (estaban en el mismo plano que la fachada).</li>
+<li><strong>La gente ya no aparece de golpe delante</strong>: los peatones nuevos aparecen fuera de la vista o a más de 110 m, y se quitan a 170 m.</li>
+<li><strong>Motos quitadas del tráfico</strong> hasta que las hagamos en Blender (Jonay: «vamos a desactivarlas del juego por ahora»).</li>
+<li>Revisados los avisos del análisis estático de la auditoría 1.4.46 (<code>arbGeo</code>, jardineras, <code>carPaintMat</code>): son de la carga o de coches nuevos al aparecer (la reserva reutiliza su pintura), no de cada fotograma.</li>
+</ul>
 <h2>1.4.46 — 2026-11-23 — Alpha 1.4.46: WebGPU por defecto y arreglos (personaje, troncos, tarjeta perdida)</h2>
 <ul>
 <li><strong>WebGPU por defecto</strong> (Jonay: «por defecto debería ir con WebGPU, si no se puede WebGL… quita lo de pruebas, están funcionando los dos»): el juego arranca con WebGPU si el navegador lo arranca de verdad (que dé la tarjeta y que three.js quede en su motor WebGPU); si no, con el WebGL de siempre, sin avisos ni errores. En Opciones, «Motor gráfico» ya no dice «pruebas», y elegir WebGL se respeta. Los navegadores automatizados (nuestras pruebas y la auditoría) siguen con WebGL salvo que se pida WebGPU, porque sus mediciones solo existen ahí.</li>

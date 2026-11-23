@@ -172,7 +172,13 @@ const MAT = {};
       .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\nmetalnessFactor = mix(metalnessFactor, 0.6, mk.g * 0.6);')
       .replace(
         '#include <emissivemap_fragment>',
-        '#include <emissivemap_fragment>\ntotalEmissiveRadiance += mk.g * lit * uNight * vec3(1.0, 0.72, 0.42) * 2.1;'
+        // v1.4.47 (Jonay: las ventanas encendidas de noche eran rectángulos blancos planos): each window its own warm tone
+        // (and now and then the blue of a television), brighter at the top (the ceiling lamp), some with a curtain half
+        // drawn, and less strong (×2.1 burnt them white); gpuFacade does the same in TSL
+        '#include <emissivemap_fragment>\nvec2 wf = fract(vF); float wh = hsh(floor(vF) + vec2(3.7, vEx.y));\n' +
+          'vec3 wc = mix(vec3(1.0, 0.62, 0.3), vec3(1.0, 0.82, 0.55), wh); if (wh > 0.93) wc = vec3(0.55, 0.7, 1.0);\n' +
+          'float wi = (0.55 + 0.45 * wh) * mix(0.6, 1.0, wf.y) * ((wh < 0.3 && wf.x > 0.55) ? 0.35 : 1.0);\n' +
+          'totalEmissiveRadiance += mk.g * lit * uNight * wc * 1.35 * wi;'
       );
   };
   if (USE_GPU) gpuLazy(fm, gpuFacade); // v1.4.44: the same in TSL (02b_gpu_nodos.js)
@@ -899,6 +905,71 @@ function surfMark(x, z, y) {
     o = SURF.get(k);
   if (o === undefined || y > o) SURF.set(k, y);
 }
+// v1.4.47 (Jonay: «parece que el coche vuele… sigue flotando, hay que ver la altura del coche porque no se ajusta»; otras
+// veces se hunde, o se mete dentro de un terraplén): cars sat on «terrain + 17 cm», but a road with its own profile is
+// drawn flat across its width at the height of its centre line (and the raised ones above the terrain), so on a cross
+// slope a car floated on one side and sank on the other. Here the height of the asphalt as it is drawn, at the centre of
+// 2 m cells (tiles of 40 m, only where there is road), made while the roads are built; carSurfAt reads it (bilinear)
+const CSURF = new Map(),
+  CSURF_MK = new Set(['asphalt', 'asphaltLines', 'paving', 'auxLane']);
+window.__csurf = CSURF; // (tests: sonda_ruedas_suelo.py)
+function csurfTri(a, b, c) {
+  const x0 = Math.min(a[0], b[0], c[0]),
+    x1 = Math.max(a[0], b[0], c[0]),
+    z0 = Math.min(a[2], b[2], c[2]),
+    z1 = Math.max(a[2], b[2], c[2]);
+  const ex = b[0] - a[0],
+    ez = b[2] - a[2],
+    fx = c[0] - a[0],
+    fz = c[2] - a[2],
+    den = ex * fz - ez * fx;
+  if (Math.abs(den) < 1e-9) return;
+  for (let i = Math.ceil(x0 / 2 - 0.5); (i + 0.5) * 2 <= x1; i++)
+    for (let j = Math.ceil(z0 / 2 - 0.5); (j + 0.5) * 2 <= z1; j++) {
+      const px = (i + 0.5) * 2 - a[0],
+        pz = (j + 0.5) * 2 - a[2],
+        u = (px * fz - pz * fx) / den,
+        v = (ex * pz - ez * px) / den;
+      if (u < -1e-6 || v < -1e-6 || u + v > 1 + 1e-6) continue;
+      const y = a[1] + u * (b[1] - a[1]) + v * (c[1] - a[1]),
+        tk = Math.floor(i / 20) * 100003 + Math.floor(j / 20);
+      let T = CSURF.get(tk);
+      if (!T) CSURF.set(tk, (T = { b: y, a: new Int16Array(400).fill(-32768) })); // (cm over the tile's base: half the memory of floats)
+      const k = (i - Math.floor(i / 20) * 20) * 20 + (j - Math.floor(j / 20) * 20),
+        cm = Math.max(-32767, Math.min(32767, Math.round((y - T.b) * 100)));
+      if (T.a[k] === -32768 || cm > T.a[k]) T.a[k] = cm;
+    }
+}
+function csurfCell(i, j) {
+  const T = CSURF.get(Math.floor(i / 20) * 100003 + Math.floor(j / 20));
+  if (!T) return NaN;
+  const v = T.a[(i - Math.floor(i / 20) * 20) * 20 + (j - Math.floor(j / 20) * 20)];
+  return v === -32768 ? NaN : T.b + v / 100;
+}
+/** the drawn asphalt's height at (x, z), or null where there is no road (bilinear over the cells that have it) */
+function carSurfAt(x, z) {
+  const fx = x / 2 - 0.5,
+    fz = z / 2 - 0.5,
+    i = Math.floor(fx),
+    j = Math.floor(fz),
+    tx = fx - i,
+    tz = fz - j;
+  let s = 0,
+    w = 0;
+  for (const [di, dj, ww] of [
+    [0, 0, (1 - tx) * (1 - tz)],
+    [1, 0, tx * (1 - tz)],
+    [0, 1, (1 - tx) * tz],
+    [1, 1, tx * tz]
+  ]) {
+    const y = csurfCell(i + di, j + dj);
+    if (y === y && ww > 1e-4) {
+      s += y * ww;
+      w += ww;
+    }
+  }
+  return w > 0.25 ? s / w : null;
+}
 function surfAt(x, z) {
   const v = SURF.get(Math.floor(x / 3) * 100003 + Math.floor(z / 3));
   return v === undefined ? -1e9 : v;
@@ -989,8 +1060,14 @@ function ribbon(pts, w, mk, yoff, tileLen, uSpan = 1, hf = null, blend = false) 
     V.push(dist / tileLen);
   }
   const A = acc(P[0][0], P[0][1], mk);
-  for (let i = 0; i < P.length - 1; i++)
+  const cs = CSURF_MK.has(mk) || isLines(mk);
+  for (let i = 0; i < P.length - 1; i++) {
     A.quad(L[i], R[i], R[i + 1], L[i + 1], [0, V[i]], [uSpan, V[i]], [uSpan, V[i + 1]], [0, V[i + 1]], null, undefined, [0, 1, 0]);
+    if (cs) {
+      csurfTri(L[i], R[i], R[i + 1]);
+      csurfTri(L[i], R[i + 1], L[i + 1]);
+    }
+  }
 }
 // strip between two lateral offsets of a centre line, each edge on the terrain
 function ribbonBand(pts, o0, o1, mk, yoff, tileLen, own = -1) {
@@ -1599,13 +1676,16 @@ function bankSlope(ax, az, bx, bz, a, b, sg, T) {
     tb = b[2] - 0.6;
   const wa = clamp(1.6 * (ta - heightAt(ax, az)), 2, 9),
     wb = clamp(1.6 * (tb - heightAt(bx, bz)), 2, 9);
-  for (const t of [0, 0.5, 1])
-    for (const k of [0.35, 0.7, 1]) {
+  // v1.4.47 (Jonay: «hay algo que invade la calzada encima de ese árbol», a grass bank across the Carretera General del
+  // Norte by a footbridge, X −3719, Y −290): the roads joined to this one count too (strict: that road meets the ramp),
+  // and the bank is checked on a finer grid (it went diagonally over the carriageway between the old 9 points)
+  for (const t of [0, 0.2, 0.4, 0.6, 0.8, 1])
+    for (const k of [0.2, 0.4, 0.6, 0.8, 1]) {
       const w = (wa + (wb - wa) * t) * k,
         x = ax + (bx - ax) * t + nx * w,
         z = az + (bz - az) * t + nz * w,
         g = heightAt(x, z);
-      if (inOtherRoad(x, z, g - 3, Math.max(ta, tb) + 1, DRESS_RI, -2.5) || inAnyBuilding(x, z)) return;
+      if (inOtherRoad(x, z, g - 3, Math.max(ta, tb) + 1, DRESS_RI, -2.5, true) || inAnyBuilding(x, z)) return;
     }
   const pa = [ax + nx * wa, 0, az + nz * wa],
     pb = [bx + nx * wb, 0, bz + nz * wb];
@@ -4552,7 +4632,7 @@ function buildBuildingsEach(bi) {
   } // v0.75: the stands of the Estadio Francisco Peraza (05v_peraza.js)
   pts = insetPoly(pts, style === 4 ? 0.3 : 0.75);
   if (style !== 4) {
-    const t = roadClip(streetTrim(pts));
+    const t = rbClip(roadClip(streetTrim(pts))); // v1.4.47: and off the roundabouts (rbClip, 04b_recorte.js)
     if (!t || (style === 3 && lv === 1 && smallBuildingOnMainRoad(t))) {
       b[6] = [];
       return;
@@ -4562,7 +4642,7 @@ function buildBuildingsEach(bi) {
       n = pts.length;
       const o = [];
       for (let i = 0; i < c.length; i += 2) o.push([c[i], c[i + 1]]);
-      const t2 = roadClip(streetTrim(o));
+      const t2 = rbClip(roadClip(streetTrim(o)));
       if (t2 && t2 !== o) b[6] = t2.flat();
     }
   } // v0.68–0.69: off the carriageways (04b_recorte.js; the Av. de La Trinidad with its pavement); DATA.B too, for inAnyBuilding
@@ -4812,8 +4892,8 @@ function buildBuildingsEach(bi) {
   );
   const TP = AH ? pts.concat(AH.hole) : pts;
   if (AH) buildAtrio(AH.a, top, cx, cz);
-  if (hip) {
-    hipRoof(pts, cx, cz, top, area, tris);
+  if (hip && hipRoof(pts, cx, cz, top, area, tris)) {
+    // (a hip roof; false: it doesn't fit, flat instead)
   } else
     buildFlatRoof({
       cx,
@@ -5079,8 +5159,72 @@ function buildBuildingsPart1() {
     console.error('catastro', e);
   }
 }
+// v1.4.47 (Jonay: «¿y ese tejado qué fue?», a roof flap over the Calle Juan de Vera, X −101, Y −433): the inner ring of
+// a hip roof moves each corner inwards up to 8.5 m; on a narrow (or clipped) footprint some went past the opposite wall,
+// and the roof's triangles hung outside the building, over the street. The ring must stay inside the footprint and not
+// fold: if not, a lower roof (half the depth, twice), and if it still doesn't fit, false (the caller makes it flat)
+const HIPSTAT = { ok: 0, bajos: 0, planos: 0 }; // (tests: window.__hip)
+window.__hip = HIPSTAT;
+function hipInnerOk(pts, din) {
+  const n = pts.length,
+    Q = [];
+  for (let i = 0; i < n; i++) {
+    const p = pts[i],
+      a = pts[(i - 1 + n) % n],
+      b = pts[(i + 1) % n];
+    let e1x = p[0] - a[0],
+      e1z = p[1] - a[1],
+      e2x = b[0] - p[0],
+      e2z = b[1] - p[1];
+    const l1 = Math.hypot(e1x, e1z) || 1,
+      l2 = Math.hypot(e2x, e2z) || 1;
+    ((e1x /= l1), (e1z /= l1), (e2x /= l2), (e2z /= l2));
+    let bx = e1z + e2z,
+      bz = -e1x - e2x;
+    const bl = Math.hypot(bx, bz) || 1;
+    ((bx /= bl), (bz /= bl));
+    const m = Math.min(2.5, 1 / Math.max(0.4, bx * e1z - bz * e1x));
+    Q.push([p[0] - bx * din * m, p[1] - bz * din * m]);
+  }
+  const inP = (x, z) => {
+    let o = false;
+    for (let i = 0, j = n - 1; i < n; j = i++) {
+      const a = pts[i],
+        b = pts[j];
+      if (a[1] > z !== b[1] > z && x < ((b[0] - a[0]) * (z - a[1])) / (b[1] - a[1]) + a[0]) o = !o;
+    }
+    return o;
+  };
+  // (outside by more than half a metre: a corner a bit out, or the ring crossed inside the building, don't show)
+  const out = (x, z) => {
+    let m = 1e9;
+    for (let i = 0; i < n; i++) {
+      const a = pts[i],
+        b = pts[(i + 1) % n],
+        ex = b[0] - a[0],
+        ez = b[1] - a[1],
+        L2 = ex * ex + ez * ez || 1,
+        t = Math.max(0, Math.min(1, ((x - a[0]) * ex + (z - a[1]) * ez) / L2));
+      m = Math.min(m, Math.hypot(x - a[0] - ex * t, z - a[1] - ez * t));
+    }
+    return m;
+  };
+  for (const q of Q) if (!inP(q[0], q[1]) && out(q[0], q[1]) > 0.5) return false;
+  return true;
+}
 function hipRoof(pts, cx, cz, top, area, tris, maxDin = 3.4) {
-  const { n, R, outer, din } = hipRoofPart1(pts, cx, cz, area, maxDin, top);
+  let md = maxDin,
+    ok = false;
+  for (let k = 0; k < 3 && !ok; k++) {
+    const rin =
+      (Math.abs(area) * 2) / pts.reduce((s, p, i) => s + Math.hypot(pts[(i + 1) % pts.length][0] - p[0], pts[(i + 1) % pts.length][1] - p[1]), 0);
+    const d = clamp(rin * 0.85, 0.8, md);
+    ok = hipInnerOk(pts, d); // (the same inner ring as hipRoofPart2)
+    if (!ok) md = d * 0.5;
+  }
+  HIPSTAT[ok ? (md < maxDin ? 'bajos' : 'ok') : 'planos']++;
+  if (!ok) return false;
+  const { n, R, outer, din } = hipRoofPart1(pts, cx, cz, area, md, top);
   hipRoofPart2(pts, n, din, top, outer, R, tris);
   // eave underside (so it isn't see-through from below)
   const T = acc(cx, cz, 'trim');
@@ -5101,6 +5245,7 @@ function hipRoof(pts, cx, cz, top, area, tris, maxDin = 3.4) {
       [0, -1, 0]
     );
   }
+  return true;
 }
 /** (v1.1.7, code quality) part of hipRoof */
 function hipRoofPart2(pts, n, din, top, outer, R, tris) {

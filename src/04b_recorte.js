@@ -23,8 +23,18 @@ function roadClipGrid() {
         L = Math.hypot(c[i + 2] - ax, c[i + 3] - az);
       if (L < 0.05) continue;
       const id =
-        raw.push({ ax, az, ux: (c[i + 2] - ax) / L, uz: (c[i + 3] - az) / L, L, k0, roadType: r[0], car: r[0] <= 12, first: i === 0, last: i + 4 >= c.length }) -
-        1; /* v1.0.2: car, and whether the piece ends the road (kerbClip) */
+        raw.push({
+          ax,
+          az,
+          ux: (c[i + 2] - ax) / L,
+          uz: (c[i + 3] - az) / L,
+          L,
+          k0,
+          roadType: r[0],
+          car: r[0] <= 12,
+          first: i === 0,
+          last: i + 4 >= c.length
+        }) - 1; /* v1.0.2: car, and whether the piece ends the road (kerbClip) */
       for (let a = Math.floor((Math.min(ax, c[i + 2]) - k0) / CS); a <= Math.floor((Math.max(ax, c[i + 2]) + k0) / CS); a++)
         for (let b = Math.floor((Math.min(az, c[i + 3]) - k0) / CS); b <= Math.floor((Math.max(az, c[i + 3]) + k0) / CS); b++) {
           const key = a * 100003 + b;
@@ -843,4 +853,70 @@ function roadClipStraightPart1(pts) {
       if (l) for (const id of l) ids.add(id);
     }
   return { G, ids };
+}
+// v1.4.47 (Jonay: «aquí un edificio invade la rotonda, eso no puede pasar», X 1594, Y 3457): the straight cuts along each
+// street piece don't work on a roundabout (its ring is many short pieces, and its island is no street at all). Here each
+// footprint is checked against every round ring of DATA.RB: a building standing on the island (its middle inside the
+// ring) goes (it cannot be there: it is the OSM or our wider ring); one that only reaches into the ring loses the part
+// inside the ring's outer circle (a 32-gon around it), if that leaves at least 60 % of it and the outline stays clean.
+// The oval rings (rbOval) keep the old rules.
+function rbClip(P) {
+  if (!P || !P.length || typeof DATA === 'undefined' || !DATA.RB || !DATA.RB.length) return P;
+  let x0 = 1e9,
+    x1 = -1e9,
+    z0 = 1e9,
+    z1 = -1e9,
+    cx = 0,
+    cz = 0;
+  for (const p of P) {
+    x0 = Math.min(x0, p[0]);
+    x1 = Math.max(x1, p[0]);
+    z0 = Math.min(z0, p[1]);
+    z1 = Math.max(z1, p[1]);
+    cx += p[0];
+    cz += p[1];
+  }
+  cx /= P.length;
+  cz /= P.length;
+  for (const rb of DATA.RB) {
+    if (typeof rbOval === 'function' && rbOval(rb)) continue;
+    const Ro = rb[2] + (typeof ringWidth === 'function' ? ringWidth(rb) : 7) / 2 + 0.6;
+    if (rb[0] + Ro < x0 || rb[0] - Ro > x1 || rb[1] + Ro < z0 || rb[1] - Ro > z1) continue;
+    const A0 = Math.abs(polyArea(P));
+    if (Math.hypot(cx - rb[0], cz - rb[1]) < Ro) {
+      // on the island (or mostly on the ring): the building goes
+      if (RCLIP) {
+        RCLIP.gone = (RCLIP.gone || 0) + 1;
+        if (RCLIP.goneList && RCLIP.goneList.length < 2000) RCLIP.goneList.push([Math.round(cx), Math.round(cz), Math.round(A0), 'glorieta']);
+      }
+      clipWhy('glorieta: en la isleta, fuera');
+      return null;
+    }
+    let inside = false;
+    for (const p of P) if (Math.hypot(p[0] - rb[0], p[1] - rb[1]) < Ro) inside = true;
+    if (!inside)
+      for (let i = 0; i < P.length && !inside; i++) {
+        // an edge that crosses the circle without a corner inside
+        const a = P[i],
+          b = P[(i + 1) % P.length],
+          ex = b[0] - a[0],
+          ez = b[1] - a[1],
+          L2 = ex * ex + ez * ez || 1,
+          t = Math.max(0, Math.min(1, ((rb[0] - a[0]) * ex + (rb[1] - a[1]) * ez) / L2));
+        if (Math.hypot(a[0] + ex * t - rb[0], a[1] + ez * t - rb[1]) < Ro) inside = true;
+      }
+    if (!inside) continue;
+    const N = 32,
+      Rc = Ro / Math.cos(Math.PI / N),
+      C = [];
+    for (let k = 0; k < N; k++) C.push([rb[0] + Math.cos((k / N) * 6.2832) * Rc, rb[1] + Math.sin((k / N) * 6.2832) * Rc]);
+    const Q = subtractConvex(P, C, null);
+    if (!Q || Q.length < 3 || selfCross(Q) || Math.abs(polyArea(Q)) < A0 * 0.6) {
+      clipWhy('glorieta: el recorte quitaría demasiado');
+      continue;
+    }
+    if (RCLIP) RCLIP.cut++;
+    P = Q;
+  }
+  return P;
 }

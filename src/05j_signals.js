@@ -187,10 +187,14 @@ function buildTrafficSignsPart6(MK) {
   if (MK.length) {
     const pos = [],
       uv = [];
-    for (const [cell, x, z, dx, dz, len, wid0, y0] of MK) {
+    for (const [cell, x, z, dx, dz, len0, wid0, y0] of MK) {
+      // v1.4.47 (Jonay: «las flechas de dirección de la calzada son demasiado grandes, las haría un poco más pequeñas»): the
+      // arrows (cells 0, 4 and 5) at 75 % (5 m → 3.75 m long)
+      const ak = cell === 0 || cell === 4 || cell === 5 ? 0.75 : 1,
+        len = len0 * ak;
       const rx = -dz,
         rz = dx,
-        wid = Math.abs(wid0); // v1.3.6: a negative width draws the mark mirrored (the left-hand lane arrows)
+        wid = Math.abs(wid0) * ak; // v1.3.6: a negative width draws the mark mirrored (the left-hand lane arrows)
       let u0 = cell / MK_CELLS + 0.002,
         u1 = (cell + 1) / MK_CELLS - 0.002;
       if (wid0 < 0) [u0, u1] = [u1, u0];

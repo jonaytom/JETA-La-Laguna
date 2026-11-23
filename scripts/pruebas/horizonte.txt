@@ -1,0 +1,1 @@
+herramientas/foto_vista.py horizonte_despues -300 -600 60 700 400

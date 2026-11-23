@@ -597,7 +597,7 @@ const S_AMANO = {
         this.st.c = f;
         this.st.step = 1;
         K.goto(f.cx, f.cz, 10, 0xff5fa2);
-        K.setObjective('Ve con la banda a ' + b2(f.label) + ' para el partido');
+        K.setObjective('Ve con ' + TEAM_FUT_TXT + ' a ' + b2(f.label) + ' para el partido');
       }
     );
   },
@@ -678,7 +678,7 @@ const S_CANCHA = {
         this.st.c = c;
         this.st.step = 1;
         K.goto(c.cx, c.cz, 6, 0xff5fa2);
-        K.setObjective('Ve con Coco a ' + b2(c.label));
+        K.setObjective('Ve con Coco y El Blanco a ' + b2(c.label));
       }
     );
   },

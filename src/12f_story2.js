@@ -152,13 +152,17 @@ function drivePlan(pts, pf) {
   // the radius at 45% of a tiny segment even when the approach was a long straight.
   const clean = [];
   for (let j = 0; j < P.length; j += 2) {
-    const x = P[j], z = P[j + 1], n = clean.length;
+    const x = P[j],
+      z = P[j + 1],
+      n = clean.length;
     if (n >= 4) {
-      const ax = clean[n - 2] - clean[n - 4], az = clean[n - 1] - clean[n - 3];
-      const bx = x - clean[n - 2], bz = z - clean[n - 1];
+      const ax = clean[n - 2] - clean[n - 4],
+        az = clean[n - 1] - clean[n - 3];
+      const bx = x - clean[n - 2],
+        bz = z - clean[n - 1];
       const cross = Math.abs(ax * bz - az * bx);
-      if (ax * bx + az * bz > 0 && cross < 0.008 * Math.hypot(ax, az) * Math.hypot(bx, bz)
-          && cross < 0.08 * Math.hypot(ax + bx, az + bz)) clean.length -= 2;
+      if (ax * bx + az * bz > 0 && cross < 0.008 * Math.hypot(ax, az) * Math.hypot(bx, bz) && cross < 0.08 * Math.hypot(ax + bx, az + bz))
+        clean.length -= 2;
     }
     clean.push(x, z);
   }
@@ -199,8 +203,10 @@ function drivePlan(pts, pf) {
   }
   out.push(clean[n * 2 - 2], clean[n * 2 - 1]);
   // 3) resampled every metre: position, heading and signed curvature
-  const src = s2Path(out), N = Math.max(2, Math.ceil(src.tot) + 1);
-  const tot = src.tot, ds = tot / (N - 1) || 1;
+  const src = s2Path(out),
+    N = Math.max(2, Math.ceil(src.tot) + 1);
+  const tot = src.tot,
+    ds = tot / (N - 1) || 1;
   const X = new Float32Array(N),
     Z = new Float32Array(N),
     H = new Float32Array(N),
@@ -253,7 +259,7 @@ function drivePlan(pts, pf) {
 }
 // the plan of a route, made the first time it is driven (s2Path objects keep their s, v and tot meaning: they now run
 // along the drivable line)
-function measureDriveLine({N, X, Z, H, K, V, ds, pf}) {
+function measureDriveLine({ N, X, Z, H, K, V, ds, pf }) {
   for (let i = 0; i < N; i++) {
     const a = Math.max(0, i - 1),
       b = Math.min(N - 1, i + 1);
@@ -871,10 +877,18 @@ const M_FARMACIA = {
 // The open car park and its service aisles, on the Ayuntamiento side of the city.
 function farmEscapePlan(car) {
   const choices = [
-    { entry: [213, 132], stop: [238.5, 119], aisle: [220, 134, 233.5, 134, 237, 130.5],
-      foot: [235.5, 118.8, 224.5, 118, 222.5, 103, 220.5, 87.5, 219, 72.5, 217.5, 63, 221, 57.5] },
-    { entry: [216, 141], stop: [251, 135.5], aisle: [222, 138, 224, 137.5, 246.5, 137],
-      foot: [247, 134.8, 242, 134, 237, 130.5, 238.5, 119, 224.5, 118, 222.5, 103, 220.5, 87.5, 219, 72.5] }
+    {
+      entry: [213, 132],
+      stop: [238.5, 119],
+      aisle: [220, 134, 233.5, 134, 237, 130.5],
+      foot: [235.5, 118.8, 224.5, 118, 222.5, 103, 220.5, 87.5, 219, 72.5, 217.5, 63, 221, 57.5]
+    },
+    {
+      entry: [216, 141],
+      stop: [251, 135.5],
+      aisle: [222, 138, 224, 137.5, 246.5, 137],
+      foot: [247, 134.8, 242, 134, 237, 130.5, 238.5, 119, 224.5, 118, 222.5, 103, 220.5, 87.5, 219, 72.5]
+    }
   ];
   for (const place of choices) {
     const route = GRAPH.routeFrom(car.x, car.z, car.h, ...place.entry);
@@ -1229,11 +1243,22 @@ const M_BANCOS = {
       const [x, z] = S.p;
       S.a = s2Human(THIEF_LOOKS[2], x + 2, z + 2, [PLAYER.x, PLAYER.z]);
       S.b = s2Human(THIEF_LOOKS[0], x - 4, z + 3);
+      // v1.4.47 (Jonay: «los bancos robados ya podían ser bancos en la misión… salen como tablas flotando»): the three
+      // park benches of the square, one on the ground and two more stacked upside down on it (parkBenchGeos, 05n_plazas.js)
       const bench = new THREE.Group();
+      const [slG, siG] = parkBenchGeos(),
+        wood = M(0x8a5a32, 0.75),
+        iron = M(0x22262a, 0.45, 0.6);
       for (let i = 0; i < 3; i++) {
-        const s = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.08, 0.5), M(0x2c2c2c, 0.6, 0.5));
-        s.position.set(i * 0.3, 0.45 + i * 0.5, 0);
-        bench.add(s);
+        const b = new THREE.Group();
+        b.add(new THREE.Mesh(slG, wood), new THREE.Mesh(siG, iron));
+        if (i === 0) b.position.set(0, 0, 0);
+        else {
+          b.rotation.set(Math.PI, i === 1 ? 0.12 : -0.2, 0); // upside down, seat on seat
+          b.position.set(i === 1 ? 0.05 : -0.1, 0.94 + (i - 1) * 0.5, i === 1 ? 0.04 : 0.1);
+        }
+        b.traverse((m) => m.isMesh && (m.castShadow = true));
+        bench.add(b);
       }
       bench.position.set(x - 1, heightAt(x - 1, z), z - 2);
       scene.add(bench);

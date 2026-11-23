@@ -124,8 +124,7 @@ const SAVE = (() => {
     T(() => WANTED.reset());
     T(() => {
       if (DLG.open) DLG.hide();
-      if (window.__TALK) window.__TALK.cur = null;
-      $('sub').classList.remove('talking');
+      talkCancel(); // v1.4.47: the subtitle goes too (12_missions.js)
     });
     T(() => MISSIONS.setState(s.missions || {}));
     T(() => {

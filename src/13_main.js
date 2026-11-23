@@ -75,8 +75,7 @@ const GAME = {
         FIGHT.cd = 2;
       });
       T(() => {
-        if (window.__TALK) window.__TALK.cur = null;
-        $('sub').classList.remove('talking');
+        talkCancel(); // v1.4.47: the subtitle goes too (12_missions.js)
         if (DLG.open) DLG.hide();
       });
       T(() => MISSIONS.fail('Has perdido el encargo.'));
@@ -142,6 +141,18 @@ const PAL_SKY = [
 let pmrem = null,
   envT = 0,
   lastEnvKey = '';
+// v1.4.47 (notas de three.js r174): the maps at 128 px instead of 256 (a quarter of the memory: ~1.7 MB each instead of
+// ~6.7, and there are 32 since the car paint has its own); the reflections are soft and the difference does not show
+const ENV_OPT = { size: 128 };
+// v1.4.47 (Jonay: «en la chapa brillan las estrellas»): the maps are made without the stars (they would shine on the
+// car paint, and the windows and street lamps, which are not in them, don't)
+function envFromSky() {
+  const u = SKY.mat.uniforms;
+  if (u && u.uStars) u.uStars.value = 0.9; // (only the brightest ~15 % of the stars)
+  const rt = pmrem.fromScene(bgScene, 0, 50, 90000, ENV_OPT);
+  if (u && u.uStars) u.uStars.value = 0;
+  return rt;
+}
 const ENVC = new Map();
 // v1.4.46 (car paint with a clear coat): the paint reflects its own environment, the sky over a dark ground with a clear
 // horizon line, as a real car body (the scene's environment is only the sky, the same above and below, and a glossy coat
@@ -161,7 +172,7 @@ function carEnvOf(k) {
   if (scene.fog) c.copy(scene.fog.color).multiplyScalar(0.12);
   else c.setRGB(0.05, 0.05, 0.045);
   bgScene.add(carEnvGround);
-  rt = pmrem.fromScene(bgScene, 0, 50, 90000);
+  rt = envFromSky();
   bgScene.remove(carEnvGround);
   CARENVC.set(k, rt);
   return rt;
@@ -190,7 +201,7 @@ function updateEnvironment(force) {
       }
   let rt = ENVC.get(k);
   if (!rt) {
-    rt = pmrem.fromScene(bgScene, 0, 50, 90000);
+    rt = envFromSky();
     ENVC.set(k, rt);
   }
   scene.environment = rt.texture;
@@ -203,7 +214,7 @@ function precomputeEnv() {
     GAME.tod = b * 1.5;
     updateSun();
     const k = envKey(GAME.tod);
-    if (!ENVC.has(k)) ENVC.set(k, pmrem.fromScene(bgScene, 0, 50, 90000));
+    if (!ENVC.has(k)) ENVC.set(k, envFromSky());
     carEnvOf(k);
   }
   GAME.tod = t0;
@@ -233,7 +244,15 @@ function updateSun() {
   const snap = 2;
   sun.target.position.set(Math.round(px / snap) * snap, py, Math.round(pz / snap) * snap);
   sun.position.copy(sun.target.position).addScaledVector(ldir, 320);
-  sun.castShadow = Q.shadow > 0 && sun.intensity > 0.3;
+  // v1.4.47 (Jonay: «se volvió a poner negro, WebGPU», at 07:43; console: «Destroyed texture ShadowDepthTexture used in a
+  // submit» and «Cannot read properties of null (reading 'setSize') at renderShadow … _renderBundles»): switching the sun's
+  // shadow off at dawn and dusk destroyed its shadow map, while the WebGPU render bundles (05w_optimiza.js) still drew with
+  // it: every frame failed (black screen) from then on. The shadow is never switched off now: when the sun is low it is
+  // made invisible (intensity 0) and not redrawn (autoUpdate false), which costs nothing either
+  const shOn = sun.intensity > 0.3;
+  sun.castShadow = Q.shadow > 0;
+  sun.shadow.intensity = shOn ? 1 : 0;
+  sun.shadow.autoUpdate = shOn;
   // street lights & car lamps
   // v1.4.22 (Jonay, 3-nov: «la luz de las ventanas y todas las fuentes de luz en general, para que compense la
   // oscuridad»): brighter signs, lamp pools and car lights at night (windows: 04_world.js; pools: 05_scenery.js)
@@ -292,8 +311,10 @@ function updateSunPart1() {
   bgScene.fog.color.copy(fogCol);
   scene.fog.far = w === 2 ? 230 : w === 1 ? viewFar() * 0.8 : cityFogFar();
   scene.fog.near = w === 2 ? 15 : 90;
-  bgScene.fog.near = w === 2 ? 300 : w === 1 ? 1000 : 1400;
-  bgScene.fog.far = w === 2 ? 900 : w === 1 ? 12000 : 22000;
+  // v1.4.47 («franja verde inclinada sobre el horizonte», X −300, Y −600 looking NE): the far ring (Anaga, ~4.5 km) came out
+  // almost without haze (7 %) over a city already hazy at 2 km: a sharp bright green band. Now ~35 % at 4.5 km
+  bgScene.fog.near = w === 2 ? 300 : w === 1 ? 600 : 800;
+  bgScene.fog.far = w === 2 ? 900 : w === 1 ? 7000 : 11000;
   renderer.toneMappingExposure = 1.0 + night * 0.62;
   return { w, overcast, night, ldir };
 }
@@ -1330,10 +1351,10 @@ function onGpuLost(why) {
     sessionStorage.setItem('jeta_gpu_perdida', String(n));
     sessionStorage.setItem('jeta_gpu_motivo', String(why).slice(0, 200));
   } catch (e) {}
-  const toWebGL = USE_GPU && n >= 2;
+  const toWebGL = USE_GPU && (n >= 2 || /validación/.test(String(why)));
   if (toWebGL)
     try {
-      localStorage.setItem('jeta_motor', 'webgl');
+      sessionStorage.setItem('jeta_motor_sesion', 'webgl'); // v1.4.47: only this session (01_core.js)
     } catch (e) {}
   try {
     if (GAME.state === 'play' && typeof SAVE !== 'undefined') SAVE.auto('Antes de recargar (tarjeta gráfica)');
@@ -1342,7 +1363,7 @@ function onGpuLost(why) {
   box.style.cssText =
     'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.85);color:#fff;font:600 22px Barlow,sans-serif;text-align:center;z-index:99;padding:30px';
   box.textContent = toWebGL
-    ? 'La tarjeta gráfica se ha reiniciado otra vez con WebGPU. Partida guardada: se recarga con WebGL (puedes cambiarlo en Opciones).'
+    ? 'WebGPU ha dado un fallo al dibujar. Partida guardada: se recarga con WebGL hasta que cierres el navegador.'
     : 'La tarjeta gráfica se ha reiniciado. Partida guardada: recargando…';
   document.body.appendChild(box);
   setTimeout(() => location.reload(), 2500);
@@ -1352,6 +1373,28 @@ if (USE_GPU && renderer.backend && renderer.backend.device)
     if (i && i.reason === 'destroyed') return; // (our own dispose)
     onGpuLost('WebGPU ' + ((i && i.reason) || '') + ': ' + ((i && i.message) || ''));
   });
+// v1.4.47 (Jonay: «se volvió a poner negro, WebGPU», con el HUD vivo): the card is not lost, but a WebGPU validation
+// error makes every frame invalid (black) while whatever causes it is in view. The first errors are kept for the console
+// and the tests (sessionStorage 'jeta_gpu_errores'); many in a row (20 in 3 s) mean a black screen: save, and reload with
+// WebGL for this session
+if (USE_GPU && renderer.backend && renderer.backend.device) {
+  const ERR = [];
+  renderer.backend.device.addEventListener('uncapturederror', (ev) => {
+    const msg = String((ev.error && ev.error.message) || ev.error || '').slice(0, 300),
+      now = performance.now();
+    ERR.push(now);
+    while (ERR.length && now - ERR[0] > 3000) ERR.shift();
+    try {
+      const L = JSON.parse(sessionStorage.getItem('jeta_gpu_errores') || '[]');
+      if (L.length < 8) {
+        L.push(msg);
+        sessionStorage.setItem('jeta_gpu_errores', JSON.stringify(L));
+      }
+    } catch (e) {}
+    if (ERR.length <= 3) console.error('WebGPU (error de validación):', msg);
+    if (ERR.length >= 20) onGpuLost('WebGPU error de validación: ' + msg);
+  });
+}
 renderer.domElement.addEventListener('webglcontextlost', (e) => {
   e.preventDefault();
   onGpuLost('WebGL: contexto perdido');

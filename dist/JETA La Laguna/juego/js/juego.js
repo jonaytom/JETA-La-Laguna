@@ -1,7 +1,14 @@
 const MAP_MARK = {
-  food: '#e53935', entrance: '#3ddc97', police: '#3d7bff', destination: '#e040fb',
-  objective: '#f5b72e', checkpoints: '#ffd23f', chase: '#ff3b30', wanted: '#ff1744',
-  bencomo: '#ffb347', gufo: '#b388ff'
+  food: '#e53935',
+  entrance: '#3ddc97',
+  police: '#3d7bff',
+  destination: '#e040fb',
+  objective: '#f5b72e',
+  checkpoints: '#ffd23f',
+  chase: '#ff3b30',
+  wanted: '#ff1744',
+  bencomo: '#ffb347',
+  gufo: '#b388ff'
 };
 // ============ GTA La Laguna — core ============
 import * as THREE from 'three';
@@ -732,6 +739,9 @@ const GPU_CHOICE = (() => {
   try {
     const s = localStorage.getItem('jeta_motor');
     if (s === 'webgl' || s === 'webgpu') return s;
+    // v1.4.47 (Jonay: «¿por defecto está WebGPU? me salió WebGL»): the automatic fall-back after a WebGPU failure lasts
+    // only this browser session (before: saved for good as if chosen in Opciones); next time WebGPU is tried again
+    if (sessionStorage.getItem('jeta_motor_sesion') === 'webgl') return 'webgl';
   } catch (e) {}
   return navigator.webdriver ? 'webgl' : 'webgpu';
 })();
@@ -811,6 +821,7 @@ const SHADOW_LAYER = 1;
 sun.shadow.camera.layers.enable(SHADOW_LAYER);
 sun.shadow.bias = -0.0004;
 sun.shadow.normalBias = 0.6;
+sun.shadow.radius = 2; // v1.4.47: softer edges (r186+ PCF: 5 samples whatever the radius, so it costs nothing; 1 by default; tests/herramientas/foto_sombras_radio.py)
 scene.add(sun);
 scene.add(sun.target);
 const bgSun = new THREE.DirectionalLight(0xffffff, 2.0);
@@ -2217,11 +2228,16 @@ function gpuFacade(fm) {
   fm.colorNode = vec4(mix(tc.rgb, tc.rgb.mul(vCol), mk.r).mul(mix(float(1), pd.sub(0.5).mul(1.3).add(1), pa)), tc.a);
   fm.roughnessNode = mix(T.materialRoughness, 0.12, mk.g);
   fm.metalnessNode = mix(T.materialMetalness, 0.6, mk.g.mul(0.6));
-  fm.emissiveNode = mk.g
-    .mul(lit)
-    .mul(uNight)
-    .mul(vec3(1.0, 0.72, 0.42))
-    .mul(2.1);
+  // (v1.4.47: each window its own warm tone, brighter at the top, some curtains: as the GLSL in 04_world.js)
+  const wf = fract(vF),
+    wh = hsh(floor(vF).add(vec2(3.7, vEx.y))),
+    wc = select(wh.greaterThan(0.93), vec3(0.55, 0.7, 1.0), mix(vec3(1.0, 0.62, 0.3), vec3(1.0, 0.82, 0.55), wh)),
+    wi = wh
+      .mul(0.45)
+      .add(0.55)
+      .mul(mix(float(0.6), float(1.0), wf.y))
+      .mul(select(wh.lessThan(0.3).and(wf.x.greaterThan(0.55)), float(0.35), float(1.0)));
+  fm.emissiveNode = mk.g.mul(lit).mul(uNight).mul(wc).mul(1.35).mul(wi);
   // plaster normal maps, laid by derivatives (no tangents), like the GLSL
   {
     const pn1 = texture(PLASTER.n1, puv),
@@ -2813,7 +2829,13 @@ const MAT = {};
       .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\nmetalnessFactor = mix(metalnessFactor, 0.6, mk.g * 0.6);')
       .replace(
         '#include <emissivemap_fragment>',
-        '#include <emissivemap_fragment>\ntotalEmissiveRadiance += mk.g * lit * uNight * vec3(1.0, 0.72, 0.42) * 2.1;'
+        // v1.4.47 (Jonay: las ventanas encendidas de noche eran rectángulos blancos planos): each window its own warm tone
+        // (and now and then the blue of a television), brighter at the top (the ceiling lamp), some with a curtain half
+        // drawn, and less strong (×2.1 burnt them white); gpuFacade does the same in TSL
+        '#include <emissivemap_fragment>\nvec2 wf = fract(vF); float wh = hsh(floor(vF) + vec2(3.7, vEx.y));\n' +
+          'vec3 wc = mix(vec3(1.0, 0.62, 0.3), vec3(1.0, 0.82, 0.55), wh); if (wh > 0.93) wc = vec3(0.55, 0.7, 1.0);\n' +
+          'float wi = (0.55 + 0.45 * wh) * mix(0.6, 1.0, wf.y) * ((wh < 0.3 && wf.x > 0.55) ? 0.35 : 1.0);\n' +
+          'totalEmissiveRadiance += mk.g * lit * uNight * wc * 1.35 * wi;'
       );
   };
   if (USE_GPU) gpuLazy(fm, gpuFacade); // v1.4.44: the same in TSL (02b_gpu_nodos.js)
@@ -3540,6 +3562,71 @@ function surfMark(x, z, y) {
     o = SURF.get(k);
   if (o === undefined || y > o) SURF.set(k, y);
 }
+// v1.4.47 (Jonay: «parece que el coche vuele… sigue flotando, hay que ver la altura del coche porque no se ajusta»; otras
+// veces se hunde, o se mete dentro de un terraplén): cars sat on «terrain + 17 cm», but a road with its own profile is
+// drawn flat across its width at the height of its centre line (and the raised ones above the terrain), so on a cross
+// slope a car floated on one side and sank on the other. Here the height of the asphalt as it is drawn, at the centre of
+// 2 m cells (tiles of 40 m, only where there is road), made while the roads are built; carSurfAt reads it (bilinear)
+const CSURF = new Map(),
+  CSURF_MK = new Set(['asphalt', 'asphaltLines', 'paving', 'auxLane']);
+window.__csurf = CSURF; // (tests: sonda_ruedas_suelo.py)
+function csurfTri(a, b, c) {
+  const x0 = Math.min(a[0], b[0], c[0]),
+    x1 = Math.max(a[0], b[0], c[0]),
+    z0 = Math.min(a[2], b[2], c[2]),
+    z1 = Math.max(a[2], b[2], c[2]);
+  const ex = b[0] - a[0],
+    ez = b[2] - a[2],
+    fx = c[0] - a[0],
+    fz = c[2] - a[2],
+    den = ex * fz - ez * fx;
+  if (Math.abs(den) < 1e-9) return;
+  for (let i = Math.ceil(x0 / 2 - 0.5); (i + 0.5) * 2 <= x1; i++)
+    for (let j = Math.ceil(z0 / 2 - 0.5); (j + 0.5) * 2 <= z1; j++) {
+      const px = (i + 0.5) * 2 - a[0],
+        pz = (j + 0.5) * 2 - a[2],
+        u = (px * fz - pz * fx) / den,
+        v = (ex * pz - ez * px) / den;
+      if (u < -1e-6 || v < -1e-6 || u + v > 1 + 1e-6) continue;
+      const y = a[1] + u * (b[1] - a[1]) + v * (c[1] - a[1]),
+        tk = Math.floor(i / 20) * 100003 + Math.floor(j / 20);
+      let T = CSURF.get(tk);
+      if (!T) CSURF.set(tk, (T = { b: y, a: new Int16Array(400).fill(-32768) })); // (cm over the tile's base: half the memory of floats)
+      const k = (i - Math.floor(i / 20) * 20) * 20 + (j - Math.floor(j / 20) * 20),
+        cm = Math.max(-32767, Math.min(32767, Math.round((y - T.b) * 100)));
+      if (T.a[k] === -32768 || cm > T.a[k]) T.a[k] = cm;
+    }
+}
+function csurfCell(i, j) {
+  const T = CSURF.get(Math.floor(i / 20) * 100003 + Math.floor(j / 20));
+  if (!T) return NaN;
+  const v = T.a[(i - Math.floor(i / 20) * 20) * 20 + (j - Math.floor(j / 20) * 20)];
+  return v === -32768 ? NaN : T.b + v / 100;
+}
+/** the drawn asphalt's height at (x, z), or null where there is no road (bilinear over the cells that have it) */
+function carSurfAt(x, z) {
+  const fx = x / 2 - 0.5,
+    fz = z / 2 - 0.5,
+    i = Math.floor(fx),
+    j = Math.floor(fz),
+    tx = fx - i,
+    tz = fz - j;
+  let s = 0,
+    w = 0;
+  for (const [di, dj, ww] of [
+    [0, 0, (1 - tx) * (1 - tz)],
+    [1, 0, tx * (1 - tz)],
+    [0, 1, (1 - tx) * tz],
+    [1, 1, tx * tz]
+  ]) {
+    const y = csurfCell(i + di, j + dj);
+    if (y === y && ww > 1e-4) {
+      s += y * ww;
+      w += ww;
+    }
+  }
+  return w > 0.25 ? s / w : null;
+}
 function surfAt(x, z) {
   const v = SURF.get(Math.floor(x / 3) * 100003 + Math.floor(z / 3));
   return v === undefined ? -1e9 : v;
@@ -3630,8 +3717,14 @@ function ribbon(pts, w, mk, yoff, tileLen, uSpan = 1, hf = null, blend = false) 
     V.push(dist / tileLen);
   }
   const A = acc(P[0][0], P[0][1], mk);
-  for (let i = 0; i < P.length - 1; i++)
+  const cs = CSURF_MK.has(mk) || isLines(mk);
+  for (let i = 0; i < P.length - 1; i++) {
     A.quad(L[i], R[i], R[i + 1], L[i + 1], [0, V[i]], [uSpan, V[i]], [uSpan, V[i + 1]], [0, V[i + 1]], null, undefined, [0, 1, 0]);
+    if (cs) {
+      csurfTri(L[i], R[i], R[i + 1]);
+      csurfTri(L[i], R[i + 1], L[i + 1]);
+    }
+  }
 }
 // strip between two lateral offsets of a centre line, each edge on the terrain
 function ribbonBand(pts, o0, o1, mk, yoff, tileLen, own = -1) {
@@ -4240,13 +4333,16 @@ function bankSlope(ax, az, bx, bz, a, b, sg, T) {
     tb = b[2] - 0.6;
   const wa = clamp(1.6 * (ta - heightAt(ax, az)), 2, 9),
     wb = clamp(1.6 * (tb - heightAt(bx, bz)), 2, 9);
-  for (const t of [0, 0.5, 1])
-    for (const k of [0.35, 0.7, 1]) {
+  // v1.4.47 (Jonay: «hay algo que invade la calzada encima de ese árbol», a grass bank across the Carretera General del
+  // Norte by a footbridge, X −3719, Y −290): the roads joined to this one count too (strict: that road meets the ramp),
+  // and the bank is checked on a finer grid (it went diagonally over the carriageway between the old 9 points)
+  for (const t of [0, 0.2, 0.4, 0.6, 0.8, 1])
+    for (const k of [0.2, 0.4, 0.6, 0.8, 1]) {
       const w = (wa + (wb - wa) * t) * k,
         x = ax + (bx - ax) * t + nx * w,
         z = az + (bz - az) * t + nz * w,
         g = heightAt(x, z);
-      if (inOtherRoad(x, z, g - 3, Math.max(ta, tb) + 1, DRESS_RI, -2.5) || inAnyBuilding(x, z)) return;
+      if (inOtherRoad(x, z, g - 3, Math.max(ta, tb) + 1, DRESS_RI, -2.5, true) || inAnyBuilding(x, z)) return;
     }
   const pa = [ax + nx * wa, 0, az + nz * wa],
     pb = [bx + nx * wb, 0, bz + nz * wb];
@@ -7193,7 +7289,7 @@ function buildBuildingsEach(bi) {
   } // v0.75: the stands of the Estadio Francisco Peraza (05v_peraza.js)
   pts = insetPoly(pts, style === 4 ? 0.3 : 0.75);
   if (style !== 4) {
-    const t = roadClip(streetTrim(pts));
+    const t = rbClip(roadClip(streetTrim(pts))); // v1.4.47: and off the roundabouts (rbClip, 04b_recorte.js)
     if (!t || (style === 3 && lv === 1 && smallBuildingOnMainRoad(t))) {
       b[6] = [];
       return;
@@ -7203,7 +7299,7 @@ function buildBuildingsEach(bi) {
       n = pts.length;
       const o = [];
       for (let i = 0; i < c.length; i += 2) o.push([c[i], c[i + 1]]);
-      const t2 = roadClip(streetTrim(o));
+      const t2 = rbClip(roadClip(streetTrim(o)));
       if (t2 && t2 !== o) b[6] = t2.flat();
     }
   } // v0.68–0.69: off the carriageways (04b_recorte.js; the Av. de La Trinidad with its pavement); DATA.B too, for inAnyBuilding
@@ -7453,8 +7549,8 @@ function buildBuildingsEach(bi) {
   );
   const TP = AH ? pts.concat(AH.hole) : pts;
   if (AH) buildAtrio(AH.a, top, cx, cz);
-  if (hip) {
-    hipRoof(pts, cx, cz, top, area, tris);
+  if (hip && hipRoof(pts, cx, cz, top, area, tris)) {
+    // (a hip roof; false: it doesn't fit, flat instead)
   } else
     buildFlatRoof({
       cx,
@@ -7720,8 +7816,72 @@ function buildBuildingsPart1() {
     console.error('catastro', e);
   }
 }
+// v1.4.47 (Jonay: «¿y ese tejado qué fue?», a roof flap over the Calle Juan de Vera, X −101, Y −433): the inner ring of
+// a hip roof moves each corner inwards up to 8.5 m; on a narrow (or clipped) footprint some went past the opposite wall,
+// and the roof's triangles hung outside the building, over the street. The ring must stay inside the footprint and not
+// fold: if not, a lower roof (half the depth, twice), and if it still doesn't fit, false (the caller makes it flat)
+const HIPSTAT = { ok: 0, bajos: 0, planos: 0 }; // (tests: window.__hip)
+window.__hip = HIPSTAT;
+function hipInnerOk(pts, din) {
+  const n = pts.length,
+    Q = [];
+  for (let i = 0; i < n; i++) {
+    const p = pts[i],
+      a = pts[(i - 1 + n) % n],
+      b = pts[(i + 1) % n];
+    let e1x = p[0] - a[0],
+      e1z = p[1] - a[1],
+      e2x = b[0] - p[0],
+      e2z = b[1] - p[1];
+    const l1 = Math.hypot(e1x, e1z) || 1,
+      l2 = Math.hypot(e2x, e2z) || 1;
+    ((e1x /= l1), (e1z /= l1), (e2x /= l2), (e2z /= l2));
+    let bx = e1z + e2z,
+      bz = -e1x - e2x;
+    const bl = Math.hypot(bx, bz) || 1;
+    ((bx /= bl), (bz /= bl));
+    const m = Math.min(2.5, 1 / Math.max(0.4, bx * e1z - bz * e1x));
+    Q.push([p[0] - bx * din * m, p[1] - bz * din * m]);
+  }
+  const inP = (x, z) => {
+    let o = false;
+    for (let i = 0, j = n - 1; i < n; j = i++) {
+      const a = pts[i],
+        b = pts[j];
+      if (a[1] > z !== b[1] > z && x < ((b[0] - a[0]) * (z - a[1])) / (b[1] - a[1]) + a[0]) o = !o;
+    }
+    return o;
+  };
+  // (outside by more than half a metre: a corner a bit out, or the ring crossed inside the building, don't show)
+  const out = (x, z) => {
+    let m = 1e9;
+    for (let i = 0; i < n; i++) {
+      const a = pts[i],
+        b = pts[(i + 1) % n],
+        ex = b[0] - a[0],
+        ez = b[1] - a[1],
+        L2 = ex * ex + ez * ez || 1,
+        t = Math.max(0, Math.min(1, ((x - a[0]) * ex + (z - a[1]) * ez) / L2));
+      m = Math.min(m, Math.hypot(x - a[0] - ex * t, z - a[1] - ez * t));
+    }
+    return m;
+  };
+  for (const q of Q) if (!inP(q[0], q[1]) && out(q[0], q[1]) > 0.5) return false;
+  return true;
+}
 function hipRoof(pts, cx, cz, top, area, tris, maxDin = 3.4) {
-  const { n, R, outer, din } = hipRoofPart1(pts, cx, cz, area, maxDin, top);
+  let md = maxDin,
+    ok = false;
+  for (let k = 0; k < 3 && !ok; k++) {
+    const rin =
+      (Math.abs(area) * 2) / pts.reduce((s, p, i) => s + Math.hypot(pts[(i + 1) % pts.length][0] - p[0], pts[(i + 1) % pts.length][1] - p[1]), 0);
+    const d = clamp(rin * 0.85, 0.8, md);
+    ok = hipInnerOk(pts, d); // (the same inner ring as hipRoofPart2)
+    if (!ok) md = d * 0.5;
+  }
+  HIPSTAT[ok ? (md < maxDin ? 'bajos' : 'ok') : 'planos']++;
+  if (!ok) return false;
+  const { n, R, outer, din } = hipRoofPart1(pts, cx, cz, area, md, top);
   hipRoofPart2(pts, n, din, top, outer, R, tris);
   // eave underside (so it isn't see-through from below)
   const T = acc(cx, cz, 'trim');
@@ -7742,6 +7902,7 @@ function hipRoof(pts, cx, cz, top, area, tris, maxDin = 3.4) {
       [0, -1, 0]
     );
   }
+  return true;
 }
 /** (v1.1.7, code quality) part of hipRoof */
 function hipRoofPart2(pts, n, din, top, outer, R, tris) {
@@ -8803,8 +8964,18 @@ function roadClipGrid() {
         L = Math.hypot(c[i + 2] - ax, c[i + 3] - az);
       if (L < 0.05) continue;
       const id =
-        raw.push({ ax, az, ux: (c[i + 2] - ax) / L, uz: (c[i + 3] - az) / L, L, k0, roadType: r[0], car: r[0] <= 12, first: i === 0, last: i + 4 >= c.length }) -
-        1; /* v1.0.2: car, and whether the piece ends the road (kerbClip) */
+        raw.push({
+          ax,
+          az,
+          ux: (c[i + 2] - ax) / L,
+          uz: (c[i + 3] - az) / L,
+          L,
+          k0,
+          roadType: r[0],
+          car: r[0] <= 12,
+          first: i === 0,
+          last: i + 4 >= c.length
+        }) - 1; /* v1.0.2: car, and whether the piece ends the road (kerbClip) */
       for (let a = Math.floor((Math.min(ax, c[i + 2]) - k0) / CS); a <= Math.floor((Math.max(ax, c[i + 2]) + k0) / CS); a++)
         for (let b = Math.floor((Math.min(az, c[i + 3]) - k0) / CS); b <= Math.floor((Math.max(az, c[i + 3]) + k0) / CS); b++) {
           const key = a * 100003 + b;
@@ -9623,6 +9794,72 @@ function roadClipStraightPart1(pts) {
       if (l) for (const id of l) ids.add(id);
     }
   return { G, ids };
+}
+// v1.4.47 (Jonay: «aquí un edificio invade la rotonda, eso no puede pasar», X 1594, Y 3457): the straight cuts along each
+// street piece don't work on a roundabout (its ring is many short pieces, and its island is no street at all). Here each
+// footprint is checked against every round ring of DATA.RB: a building standing on the island (its middle inside the
+// ring) goes (it cannot be there: it is the OSM or our wider ring); one that only reaches into the ring loses the part
+// inside the ring's outer circle (a 32-gon around it), if that leaves at least 60 % of it and the outline stays clean.
+// The oval rings (rbOval) keep the old rules.
+function rbClip(P) {
+  if (!P || !P.length || typeof DATA === 'undefined' || !DATA.RB || !DATA.RB.length) return P;
+  let x0 = 1e9,
+    x1 = -1e9,
+    z0 = 1e9,
+    z1 = -1e9,
+    cx = 0,
+    cz = 0;
+  for (const p of P) {
+    x0 = Math.min(x0, p[0]);
+    x1 = Math.max(x1, p[0]);
+    z0 = Math.min(z0, p[1]);
+    z1 = Math.max(z1, p[1]);
+    cx += p[0];
+    cz += p[1];
+  }
+  cx /= P.length;
+  cz /= P.length;
+  for (const rb of DATA.RB) {
+    if (typeof rbOval === 'function' && rbOval(rb)) continue;
+    const Ro = rb[2] + (typeof ringWidth === 'function' ? ringWidth(rb) : 7) / 2 + 0.6;
+    if (rb[0] + Ro < x0 || rb[0] - Ro > x1 || rb[1] + Ro < z0 || rb[1] - Ro > z1) continue;
+    const A0 = Math.abs(polyArea(P));
+    if (Math.hypot(cx - rb[0], cz - rb[1]) < Ro) {
+      // on the island (or mostly on the ring): the building goes
+      if (RCLIP) {
+        RCLIP.gone = (RCLIP.gone || 0) + 1;
+        if (RCLIP.goneList && RCLIP.goneList.length < 2000) RCLIP.goneList.push([Math.round(cx), Math.round(cz), Math.round(A0), 'glorieta']);
+      }
+      clipWhy('glorieta: en la isleta, fuera');
+      return null;
+    }
+    let inside = false;
+    for (const p of P) if (Math.hypot(p[0] - rb[0], p[1] - rb[1]) < Ro) inside = true;
+    if (!inside)
+      for (let i = 0; i < P.length && !inside; i++) {
+        // an edge that crosses the circle without a corner inside
+        const a = P[i],
+          b = P[(i + 1) % P.length],
+          ex = b[0] - a[0],
+          ez = b[1] - a[1],
+          L2 = ex * ex + ez * ez || 1,
+          t = Math.max(0, Math.min(1, ((rb[0] - a[0]) * ex + (rb[1] - a[1]) * ez) / L2));
+        if (Math.hypot(a[0] + ex * t - rb[0], a[1] + ez * t - rb[1]) < Ro) inside = true;
+      }
+    if (!inside) continue;
+    const N = 32,
+      Rc = Ro / Math.cos(Math.PI / N),
+      C = [];
+    for (let k = 0; k < N; k++) C.push([rb[0] + Math.cos((k / N) * 6.2832) * Rc, rb[1] + Math.sin((k / N) * 6.2832) * Rc]);
+    const Q = subtractConvex(P, C, null);
+    if (!Q || Q.length < 3 || selfCross(Q) || Math.abs(polyArea(Q)) < A0 * 0.6) {
+      clipWhy('glorieta: el recorte quitaría demasiado');
+      continue;
+    }
+    if (RCLIP) RCLIP.cut++;
+    P = Q;
+  }
+  return P;
 }
 
 // ============ CORREDORES (v1.2.0, Jonay, 9-nov: «los cruces, rotondas, puentes, túneles, en general hay que revisarlos
@@ -13344,19 +13581,46 @@ function buildLamps() {
     polygonOffsetUnits: -8
   });
   // v1.4.22 (Jonay, 3-nov: «la iluminación de las farolas por la noche debería cubrir un poco más»): 16 m pools (before 11)
-  const pg = new THREE.PlaneGeometry(16, 16);
-  pg.rotateX(-Math.PI / 2);
-  const pools = new THREE.InstancedMesh(pg, lampPoolMat, LAMPS.length);
-  LAMPS.forEach((l, i) => {
+  // v1.4.47 (Jonay: «la luz de farolas está rara, se ven los pies ahí iluminados y como si fuera niebla»): the pool was a flat
+  // square 30 cm over the terrain (more on a slope), added on top of everything under it: feet, kerbs and the lower 30 cm
+  // of whatever stood there glowed. Now a 3 × 3 grid on the ground, just over the drawn asphalt (carSurfAt) or the
+  // pavement, so what stands on it is above it; one merged mesh per 250 m cell (the camera culls them)
+  const N = 3, // (4 × 4 points: 6 × 6 cost ~600.000 vertices for ~12.000 lamps, +17 % of the geometry in memory)
+    S = 16,
+    cells = new Map();
+  for (const l of LAMPS) {
     const fx = l[0] - Math.sin(l[2]) * (l[3] ? 0 : 1.5),
-      fz = l[1] - Math.cos(l[2]) * (l[3] ? 0 : 1.5);
-    o.position.set(fx, heightAt(fx, fz) + 0.3, fz);
-    o.rotation.set(0, 0, 0);
-    o.updateMatrix();
-    pools.setMatrixAt(i, o.matrix);
-  });
-  pools.renderOrder = 3;
-  scene.add(pools);
+      fz = l[1] - Math.cos(l[2]) * (l[3] ? 0 : 1.5),
+      k = Math.floor(fx / 250) + ',' + Math.floor(fz / 250);
+    let C = cells.get(k);
+    if (!C) cells.set(k, (C = { p: [], u: [], i: [] }));
+    const b = C.p.length / 3;
+    for (let a = 0; a <= N; a++)
+      for (let c = 0; c <= N; c++) {
+        const x = fx + (a / N - 0.5) * S,
+          z = fz + (c / N - 0.5) * S,
+          g = heightAt(x, z) + 0.13,
+          sf = typeof carSurfAt === 'function' ? carSurfAt(x, z) : null;
+        C.p.push(x, (sf !== null && sf > g - 0.6 && sf < g + 1.5 ? Math.max(sf, g) : g) + 0.015, z); // (just over the asphalt: the tyres stand on it — «la luz de farolas en el coche corta los neumáticos»)
+        C.u.push(a / N, c / N);
+      }
+    for (let a = 0; a < N; a++)
+      for (let c = 0; c < N; c++) {
+        const q = b + a * (N + 1) + c;
+        C.i.push(q, q + 1, q + N + 1, q + 1, q + N + 2, q + N + 1);
+      }
+  }
+  for (const C of cells.values()) {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(C.p, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(C.u, 2));
+    g.setIndex(C.i);
+    g.computeBoundingSphere();
+    const m = new THREE.Mesh(g, lampPoolMat);
+    m.renderOrder = 3;
+    m.userData.noMerge = true;
+    scene.add(m);
+  }
 }
 /** (v1.1.7, code quality) part of buildLamps: light pools (night) */
 function buildLampsPart2(modern, modernHead, poleMat, histMat, o) {
@@ -13700,7 +13964,8 @@ function skyNodeMat(u) {
     hor = uniform(u.hor.value),
     uNight = uniform(0).onRenderUpdate(() => u.uNight.value),
     uTime = uniform(0).onRenderUpdate(() => u.uTime.value),
-    uCloud = uniform(0.55).onRenderUpdate(() => u.uCloud.value);
+    uCloud = uniform(0.55).onRenderUpdate(() => u.uCloud.value),
+    uStars = uniform(0).onRenderUpdate(() => u.uStars.value);
   const h = (p) => fract(sin(dot(p, vec2(127.1, 311.7))).mul(43758.5453));
   const n = (p) => {
     const i = floor(p),
@@ -13727,11 +13992,21 @@ function skyNodeMat(u) {
     );
     // stars
     // (a hash without sin for the stars: in WGSL sin() of the big numbers here loses precision and they come out as streaks)
-    const sp = d.xz.div(d.y.add(0.3)).mul(180.0),
-      p3a = fract(vec3(floor(sp).x, floor(sp).y, floor(sp).x).mul(0.1031)),
+    // v1.4.47: cells of the direction itself (3D), not of its projection on a plane: near the horizon that projection
+    // stretched the cells into streaks that converged (Jonay saw them with WebGL too)
+    const p3a = fract(floor(d.mul(600.0)).mul(0.1031)),
       p3 = p3a.add(dot(p3a, p3a.yzx.add(33.33))),
       hs = fract(p3.x.add(p3.y).mul(p3.z));
-    col = col.add(vec3(step(0.997, hs)).mul(uNight).mul(0.8).mul(y));
+    // (v1.4.47, Jonay: «hay demasiadas estrellas… y se reflejan demasiado en el coche»: a quarter of them, each with its
+    // own brightness. uStars: the faintest star drawn, 0 on screen and 0.9 while the reflection maps are made (13_main.js):
+    // only the brightest shine on the car paint (Jonay: «que se refleje alguna no está mal, pero no todas»)
+    const sb = fract(hs.mul(317.0)).mul(0.65).add(0.35);
+    col = col.add(
+      vec3(step(0.9993, hs).mul(sb).mul(step(uStars, sb)))
+        .mul(uNight)
+        .mul(0.9)
+        .mul(y)
+    );
     // cloud deck (y, not d.y, below: under the horizon the weight is 0 anyway and the division stays finite)
     const cp = d.xz
       .div(y.add(0.08))
@@ -13763,11 +14038,12 @@ function buildSkyPart1() {
       uCloud: { value: 0.55 },
       zen: { value: new THREE.Color() },
       uNoise: { value: skyNoiseTex() }, // v1.4.44
+      uStars: { value: 0 }, // v1.4.47: the faintest star drawn (0.9 while the reflection maps are made: only the brightest on the car paint)
       hor: { value: new THREE.Color() }
     },
     vertexShader:
       'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); gl_Position.z = gl_Position.w; }',
-    fragmentShader: `varying vec3 vD; uniform vec3 sunDir; uniform float uNight; uniform float uTime; uniform float uCloud; uniform vec3 zen; uniform vec3 hor;
+    fragmentShader: `varying vec3 vD; uniform vec3 sunDir; uniform float uNight; uniform float uTime; uniform float uCloud; uniform vec3 zen; uniform vec3 hor; uniform float uStars;
       float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
       float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
       uniform sampler2D uNoise; float fbm(vec2 p){ return texture2D(uNoise, p / 32.0).r; } // v1.4.44: baked (skyNoiseTex)
@@ -13777,7 +14053,8 @@ function buildSkyPart1() {
         col += vec3(1.0,0.75,0.45) * pow(sd, 8.0) * 0.35 * (1.0-uNight);
         col += vec3(1.0,0.95,0.85) * smoothstep(0.9993,0.9997,sd) * 6.0 * (1.0-uNight) * step(-0.02, sunDir.y);
         // stars
-        if(uNight>0.01){ vec2 sp = d.xz/(d.y+0.3)*180.0; float s = step(0.997, h(floor(sp))); col += vec3(s)*uNight*0.8*y; }
+        // (v1.4.47: cells of the direction in 3D and a hash without sin, as skyNodeMat: the plane projection made streaks near the horizon)
+        if(uNight>0.01){ vec3 p3 = fract(floor(d*600.0)*0.1031); p3 += dot(p3, p3.yzx+33.33); float hs = fract((p3.x+p3.y)*p3.z); float sb = 0.35 + 0.65*fract(hs*317.0); float s = step(0.9993, hs) * sb * step(uStars, sb); col += vec3(s)*uNight*0.9*y; }
         // cloud deck (mar de nubes / panza de burro)
         if(d.y>0.0){ vec2 cp = d.xz/(d.y+0.08)*1.3 + vec2(uTime*0.004, uTime*0.002);
           float c = smoothstep(1.0-uCloud, 1.0-uCloud+0.35, fbm(cp));
@@ -17281,10 +17558,14 @@ function buildTrafficSignsPart6(MK) {
   if (MK.length) {
     const pos = [],
       uv = [];
-    for (const [cell, x, z, dx, dz, len, wid0, y0] of MK) {
+    for (const [cell, x, z, dx, dz, len0, wid0, y0] of MK) {
+      // v1.4.47 (Jonay: «las flechas de dirección de la calzada son demasiado grandes, las haría un poco más pequeñas»): the
+      // arrows (cells 0, 4 and 5) at 75 % (5 m → 3.75 m long)
+      const ak = cell === 0 || cell === 4 || cell === 5 ? 0.75 : 1,
+        len = len0 * ak;
       const rx = -dz,
         rz = dx,
-        wid = Math.abs(wid0); // v1.3.6: a negative width draws the mark mirrored (the left-hand lane arrows)
+        wid = Math.abs(wid0) * ak; // v1.3.6: a negative width draws the mark mirrored (the left-hand lane arrows)
       let u0 = cell / MK_CELLS + 0.002,
         u1 = (cell + 1) / MK_CELLS - 0.002;
       if (wid0 < 0) [u0, u1] = [u1, u0];
@@ -18473,8 +18754,13 @@ function buildHall(F, uc, L, yF, name, gaps, holes = [], o = {}) {
         const [x, z] = P(u + bayW / 2, vc);
         const floor = yAt(u + bayW / 2) + 0.12;
         PARKED.slots.push({
-          x, z, floor, h: ang + (face > 0 ? Math.PI / 2 : -Math.PI / 2),
-          type: model ? model.id : 'compact', color: pickColor(model), alive: true
+          x,
+          z,
+          floor,
+          h: ang + (face > 0 ? Math.PI / 2 : -Math.PI / 2),
+          type: model ? model.id : 'compact',
+          color: pickColor(model),
+          alive: true
         });
         nCars++;
       }
@@ -18646,11 +18932,54 @@ function buildRamp(x0, z0, x1, z1, yF, label, o = {}) {
   // o: w (width), wc (wall colour: the Indigo ones are blue)
   const Lr = Math.hypot(x1 - x0, z1 - z0);
   const c = [x0, z0, x1, z1];
-  tunnelRoad(c, o.w || 6.8, 'asphalt', 8, rampProfile(Lr, yF), { H: 3.9, cover: 4.3, wc: o.wc, cutStreets: true });
+  const prof = rampProfile(Lr, yF);
+  tunnelRoad(c, o.w || 6.8, 'asphalt', 8, prof, { H: 3.9, cover: 4.3, wc: o.wc, cutStreets: true });
   // entrance sign on a post at the top
   const M_ = pkMats();
   const dx = (x1 - x0) / Lr,
     dz = (z1 - z0) / Lr;
+  // v1.4.47 (Jonay: «a la entrada de los parking ponle una valla o algo, porque si corro por el medio como para tirarme
+  // me teleporta atrás a una esquina»): a steel railing on the edge of the slab over the tunnel mouth, where the ramp is
+  // 4.3 m under the ground (tunnelRoad's cover), from wall to wall, with its collision
+  {
+    let s0 = -1;
+    for (let s = 0; s <= Lr; s += 0.25) {
+      const px = x0 + dx * s,
+        pz = z0 + dz * s;
+      if (heightAt(px, pz) - prof(s, px, pz) > 4.3) {
+        s0 = s + 0.2;
+        break;
+      }
+    }
+    if (s0 > 0) {
+      const hw = (o.w || 6.8) / 2,
+        mx = x0 + dx * s0,
+        mz = z0 + dz * s0,
+        ax = mx - dz * hw,
+        az = mz + dx * hw,
+        bx = mx + dz * hw,
+        bz = mz - dx * hw,
+        g = heightAt(mx, mz),
+        rail = new THREE.Group(),
+        len = hw * 2;
+      for (const y of [0.55, 1.05]) {
+        const r = new THREE.Mesh(new THREE.BoxGeometry(len, 0.05, 0.05), M_.steel);
+        r.position.y = y;
+        rail.add(r);
+      }
+      const np = Math.max(2, Math.round(len / 1.3) + 1);
+      for (let k = 0; k < np; k++) {
+        const p = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.1, 0.06), M_.steel);
+        p.position.set(-hw + (len * k) / (np - 1), 0.55, 0);
+        rail.add(p);
+      }
+      rail.position.set(mx, g, mz);
+      rail.rotation.y = Math.atan2(-dx, -dz); // (its local x across the ramp: (−dz, dx))
+      rail.traverse((m) => m.isMesh && (m.castShadow = true));
+      scene.add(rail);
+      COL.addSeg(ax, az, bx, bz, g - 0.3, g + 1.2, 'barandilla de rampa');
+    }
+  }
   const so = (o.w || 6.8) / 2 + 0.8;
   let px = x0 - dz * so,
     pz = z0 + dx * so;
@@ -19431,6 +19760,40 @@ function buildPlazasParksPart1() {
   return { placed, paths, SGR, gSome, placedSome };
 }
 // ---- instanced furniture
+/** v1.4.47: the classic park bench (wooden slats, cast-iron sides; faces +z), made once: the parks use it, and the
+ *  mission of the stolen benches too (12f_story2.js: before, three floating boards) */
+let PARK_BENCH = null;
+function parkBenchGeos() {
+  if (PARK_BENCH) return PARK_BENCH;
+  const slats = [];
+  for (let k = 0; k < 4; k++) {
+    const g = new THREE.BoxGeometry(1.9, 0.04, 0.09);
+    g.translate(0, 0.45, 0.16 - k * 0.11);
+    slats.push(g);
+  }
+  for (let k = 0; k < 3; k++) {
+    const g = new THREE.BoxGeometry(1.9, 0.09, 0.035);
+    g.rotateX(-0.22);
+    g.translate(0, 0.62 + k * 0.12, -0.24 - k * 0.025);
+    slats.push(g);
+  }
+  const side = [];
+  for (const x of [-0.85, 0.85]) {
+    const a = new THREE.BoxGeometry(0.06, 0.45, 0.06);
+    a.translate(x, 0.22, 0.17);
+    const b = new THREE.BoxGeometry(0.06, 0.9, 0.06);
+    b.rotateX(-0.18);
+    b.translate(x, 0.45, -0.2);
+    const c = new THREE.BoxGeometry(0.06, 0.05, 0.5);
+    c.translate(x, 0.43, -0.02);
+    const d = new THREE.BoxGeometry(0.06, 0.05, 0.42);
+    d.translate(x, 0.66, 0.02);
+    side.push(a, b, c, d);
+  }
+  PARK_BENCH = [mergeGeos(slats), mergeGeos(side)];
+  PARK_BENCH.forEach((g) => (g.userData.shared = true));
+  return PARK_BENCH;
+}
 function buildParkProps(bench, bin, bed, playground, bust) {
   const { o, inst, hedge, flower } = buildParkPropsPart1(bench);
   buildParkPropsPart2(inst, bin, hedge, bed, flower, o);
@@ -19580,18 +19943,69 @@ function buildParkPropsPart2(inst, bin, hedge, bed, flower, o) {
     M(0x2f5d3a, 0.5, 0.3),
     bin
   );
-  // flower beds: low hedge border + flowers
+  // flower beds (v1.4.47, Jonay: «¿qué se supone que es eso de colores sobre una caja verde?»): a low stone kerb with dark
+  // soil and a row or two of the shrubs made in Blender (bougainvillea, yellow flowers or boxwood: DATA.ARB.seto, the
+  // same as the street planters), one kind per bed. Before, a green box with a flattened one-colour ball on top
+  const S = DATA.ARB && DATA.ARB.seto;
   inst(
     (() => {
-      const g = new THREE.BoxGeometry(1, 0.42, 1);
-      g.translate(0, 0.21, 0);
+      const g = new THREE.BoxGeometry(1, 0.32, 1);
+      g.translate(0, 0.16, 0);
       return g;
     })(),
-    hedge,
+    S ? M(0xcfc8bb, 0.85) : hedge,
     bed,
     (ob, p) => ob.scale.set(p[3], 1, p[4])
   );
-  if (bed.length) {
+  if (bed.length && S) {
+    inst(
+      (() => {
+        const g = new THREE.PlaneGeometry(1, 1);
+        g.rotateX(-Math.PI / 2);
+        g.translate(0, 0.325, 0);
+        return g;
+      })(),
+      M(0x2e2219, 0.95),
+      bed,
+      (ob, p) => ob.scale.set(p[3] - 0.14, 1, p[4] - 0.14)
+    );
+    const kinds = ['seto_bug', 'seto_flor', 'seto_boj'].filter((k) => S[k]),
+      by = kinds.map(() => []);
+    for (const p of bed) {
+      const k = Math.floor(Math.random() * kinds.length),
+        nx = Math.max(1, Math.round((p[3] - 0.2) / 0.72)),
+        nz = Math.max(1, Math.round((p[4] - 0.2) / 0.72)),
+        c = Math.cos(p[2]),
+        sn = Math.sin(p[2]);
+      for (let a = 0; a < nx; a++)
+        for (let b = 0; b < nz; b++) {
+          const u = ((a + 0.5) / nx - 0.5) * (p[3] - 0.3),
+            v = ((b + 0.5) / nz - 0.5) * (p[4] - 0.3);
+          by[k].push([p[0] + u * c + v * sn, p[1] - u * sn + v * c, Math.random() * 6.28, 0.5 + Math.random() * 0.12]);
+        }
+    }
+    const leaf = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, flatShading: true }),
+      col = new THREE.Color();
+    kinds.forEach((k, i) => {
+      const L = by[i];
+      if (!L.length) return;
+      const g = arbGeo(S[k]);
+      g.translate(0, 0.32 / 0.56, 0); // (on the soil once scaled ~0.56)
+      g.userData.seto = k; // (tests/herramientas/foto_setos.py)
+      const m = new THREE.InstancedMesh(g, leaf, L.length);
+      L.forEach((q, j) => {
+        o.position.set(q[0], heightAt(q[0], q[1]) + 0.1, q[1]);
+        o.rotation.set(0, q[2], 0);
+        o.scale.setScalar(q[3]);
+        o.updateMatrix();
+        m.setMatrixAt(j, o.matrix);
+        m.setColorAt(j, col.setScalar(0.88 + Math.random() * 0.24));
+      });
+      m.castShadow = true;
+      m.receiveShadow = true;
+      scene.add(m);
+    });
+  } else if (bed.length) {
     const m = new THREE.InstancedMesh(
       (() => {
         const g = jitterGeo(new THREE.IcosahedronGeometry(0.5, 1), 0.15, 7);
@@ -19639,33 +20053,9 @@ function buildParkPropsPart1(bench) {
     hedge = new THREE.MeshStandardMaterial({ color: 0x3c6a2a, roughness: 0.95, flatShading: true }),
     flower = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 });
   // classic park bench: wooden slats on cast-iron sides (faces +z)
-  const slats = [];
-  for (let k = 0; k < 4; k++) {
-    const g = new THREE.BoxGeometry(1.9, 0.04, 0.09);
-    g.translate(0, 0.45, 0.16 - k * 0.11);
-    slats.push(g);
-  }
-  for (let k = 0; k < 3; k++) {
-    const g = new THREE.BoxGeometry(1.9, 0.09, 0.035);
-    g.rotateX(-0.22);
-    g.translate(0, 0.62 + k * 0.12, -0.24 - k * 0.025);
-    slats.push(g);
-  }
-  inst(mergeGeos(slats), wood, bench);
-  const side = [];
-  for (const x of [-0.85, 0.85]) {
-    const a = new THREE.BoxGeometry(0.06, 0.45, 0.06);
-    a.translate(x, 0.22, 0.17);
-    const b = new THREE.BoxGeometry(0.06, 0.9, 0.06);
-    b.rotateX(-0.18);
-    b.translate(x, 0.45, -0.2);
-    const c = new THREE.BoxGeometry(0.06, 0.05, 0.5);
-    c.translate(x, 0.43, -0.02);
-    const d = new THREE.BoxGeometry(0.06, 0.05, 0.42);
-    d.translate(x, 0.66, 0.02);
-    side.push(a, b, c, d);
-  }
-  inst(mergeGeos(side), iron, bench);
+  const [slatsG, sideG] = parkBenchGeos();
+  inst(slatsG, wood, bench);
+  inst(sideG, iron, bench);
   bench.forEach((p) => COL.addCirc(p[0], p[1], 0.55));
   return { o, inst, hedge, flower };
 }
@@ -19769,6 +20159,7 @@ function marbleFountainPart2(mar, g, water, sheet, x, z) {
     g.add(w2);
     const fall = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.0, r * 1.12, y0 + 0.42 - 0.72, 24, 1, true), sheet);
     fall.position.y = (y0 + 0.42 + 0.72) / 2;
+    fall.userData.noMerge = true; // v1.4.47: it shimmers (scale animated below): not frozen with the city (prueba_congelados.py)
     g.add(fall);
     PK2.fountains.push([x, z]);
     return fall;
@@ -21264,7 +21655,7 @@ function buildTac67(root, B, M) {
   // granite plinth (not across the garage mouth), the white grille over the garage door
   box(-hW - 0.04, 1.05, yb, 0.6, 0, 0.08, granite);
   box(4.05, hW + 0.04, yb, 0.6, 0, 0.08, granite);
-  box(1.05, 4.05, 2.45, 2.95, -0.05, 0.0, mat(0x1a1d20, 0.8));
+  box(1.05, 4.05, 2.45, 2.95, -0.05, 0.008, mat(0x1a1d20, 0.8)); // (v1.4.47: out of the facade plane: it flickered)
   for (let x = 1.1; x < 4.05; x += 0.1) box(x, x + 0.035, 2.45, 2.95, 0, 0.04, white);
   box(1.0, 4.1, 2.42, 2.47, 0, 0.06, white);
   box(1.0, 4.1, 2.93, 2.98, 0, 0.06, white);
@@ -21276,7 +21667,7 @@ function buildTac67(root, B, M) {
   // ground-floor window with a white wrought-iron grille and a terracotta flower box
   {
     const xc = -3.0;
-    box(xc - 0.7, xc + 0.7, 1.0, 2.3, -0.06, 0.0, glass);
+    box(xc - 0.7, xc + 0.7, 1.0, 2.3, -0.06, 0.012, glass); // (v1.4.47: 1.2 cm proud of the facade, not in its plane: it flickered)
     box(xc - 0.78, xc + 0.78, 0.94, 1.0, 0, 0.12, white);
     for (let x = xc - 0.66; x <= xc + 0.67; x += 0.12) box(x, x + 0.03, 1.0, 2.35, 0.12, 0.15, white);
     for (const y of [1.05, 1.65, 2.3]) box(xc - 0.72, xc + 0.72, y, y + 0.035, 0.11, 0.16, white);
@@ -21301,10 +21692,10 @@ function buildTac67(root, B, M) {
       // glazed door and a window
       const dx = xc - 0.8,
         wx = xc + 0.9;
-      box(dx - 0.6, dx + 0.6, fb, fb + 2.2, -0.06, 0, glass);
+      box(dx - 0.6, dx + 0.6, fb, fb + 2.2, -0.06, 0.012, glass);
       box(dx - 0.68, dx + 0.68, fb + 2.2, fb + 2.28, 0, 0.06, white);
       for (const x of [dx - 0.64, dx, dx + 0.64]) box(x - 0.04, x + 0.04, fb, fb + 2.2, 0, 0.05, white);
-      box(wx - 0.55, wx + 0.55, fb + 0.9, fb + 2.1, -0.06, 0, glass);
+      box(wx - 0.55, wx + 0.55, fb + 0.9, fb + 2.1, -0.06, 0.012, glass);
       box(wx - 0.62, wx + 0.62, fb + 2.1, fb + 2.17, 0, 0.06, white);
       box(wx - 0.62, wx + 0.62, fb + 0.83, fb + 0.9, 0, 0.1, white);
       for (const x of [wx - 0.58, wx, wx + 0.58]) box(x - 0.035, x + 0.035, fb + 0.9, fb + 2.1, 0, 0.05, white);
@@ -29404,6 +29795,10 @@ for (const [id, x, y] of [
 }
 // v1.4.19: the police and the ambulance keep their own colours and vinyls (white body, never the random paint)
 // v1.4.20: also the taxis (white), the fire engine (red) and the tow truck (yellow)
+let GOLD_PLATE = null;
+// (makeOwnCarMesh: where the plate goes when the model has its own place for it, and its size there: v1.4.47, Jonay: «la
+// matrícula de la forma exacta del hueco, mejor; así parece pegada encima». The Linguini's recess: 0.37 × 0.11 m)
+const PLATE_FIT = { reventon: { y: 0.576, w: 0.36, h: 0.104, off: 0.003 } };
 const LIVERY = { bomberos: 0xb3141c, grua: 0xf2b21a, guagua: 0x1f8a4c, reventonGold: 0xd9a520 }; // v1.4.41: the Gold Edition, gold // v1.4.21: the guagua in TITSA green, the rubbish lorry white
 const isLivery = (m) => !!m && /^(taxi\d*|policia\d*|ambulancia|bomberos|grua|basura|guagua|reventonGold)$/.test(m.id) && !!m.lod;
 const liveryColor = (m) => LIVERY[m.id] || 0xf6f6f4;
@@ -29514,6 +29909,9 @@ const STREET_TRUCKS = MODEL_WEIGHTS.filter(([m]) => m.phys === 'truck');
 function pickModel(filter) {
   return pickW(filter ? MODEL_WEIGHTS.filter(([m]) => filter(m)) : MODEL_WEIGHTS);
 }
+// v1.4.47 (Jonay: «lo de la moto no lo afrontes… vamos a desactivarlas del juego por ahora hasta que hagamos motos con
+// Blender»): no motorbikes in the traffic (they were 15 %), nor where a «moto» was asked for (a car instead)
+const MOTOS_ON = false;
 function parkedModel() {
   return pickW(STREET_CARS);
 }
@@ -29523,13 +29921,13 @@ function modelForType(type) {
   if (type === 'police') return pick([VMODELS.policia, VMODELS.policia2, VMODELS.policia3].filter(Boolean)) || VMODELS.policia; // v1.4.19: 3 models
   if (type === 'sport') return VMODELS.guancheGT;
   if (type === 'bus') return VMODELS.guagua || null; // v1.4.21: our own guagua (before: the boxes of makeCarMesh)
-  if (type === 'moto') return pickModel((m) => m.phys === 'moto');
+  if (type === 'moto') return MOTOS_ON ? pickModel((m) => m.phys === 'moto') : pickW(STREET_CARS);
   if (type === 'truck') return pickModel((m) => m.phys === 'truck' && m.id !== 'bomberos' && m.id !== 'ambulancia');
   return pickModel((m) => m.phys === type);
 }
 function trafficModel(edgeType) {
   const r = Math.random();
-  if (r < 0.15) return pickModel((m) => m.phys === 'moto');
+  if (MOTOS_ON && r < 0.15) return pickModel((m) => m.phys === 'moto');
   if (r < 0.2) return pickModel((m) => m.phys === 'taxi') || VMODELS.taxi;
   if (r < 0.32 && ['primary', 'secondary', 'tertiary', 'trunk', 'motorway', 'motorway_link'].includes(edgeType)) return pickW(STREET_TRUCKS);
   return pickW(STREET_CARS);
@@ -30159,8 +30557,32 @@ function makeOwnCarMeshPart2(model, G, halfW, W, body, tl) {
     pl.material.userData.shared = true;
     PLATES.push(pl);
   }
-  const plate = pick(PLATES).clone();
-  const ply = Math.min(0.7, model.H * 0.36);
+  // v1.4.47 (Jonay: «la matrícula del Linguini es más espectacular, debe poner GOLD»): black with gold letters
+  if (model.id === 'reventonGold' && !GOLD_PLATE) {
+    GOLD_PLATE = textPlane('GOLD', 0.52, 0.12, '#111111', '#e8b923', 'bold 46px Arial');
+    // (and a silver rim: Jonay, «con reborde plateado la matrícula del Gold»)
+    const t = GOLD_PLATE.material.map,
+      cv = t.image,
+      x = cv.getContext('2d');
+    const gr = x.createLinearGradient(0, 0, 0, cv.height);
+    gr.addColorStop(0, '#f4f6f8');
+    gr.addColorStop(0.5, '#9aa3ab');
+    gr.addColorStop(1, '#e2e6ea');
+    x.strokeStyle = gr;
+    x.lineWidth = 7;
+    x.strokeRect(3.5, 3.5, cv.width - 7, cv.height - 7);
+    t.needsUpdate = true;
+    GOLD_PLATE.material.metalness = 0.6;
+    GOLD_PLATE.material.roughness = 0.3;
+    GOLD_PLATE.geometry.userData.shared = true;
+    GOLD_PLATE.material.userData.shared = true;
+  }
+  const plate = (model.id === 'reventonGold' ? GOLD_PLATE : pick(PLATES)).clone();
+  // v1.4.47 (Jonay: «se ve a través del coche… ¿dónde estaba la matrícula?»): the Linguini has its own plate recess at
+  // 0.54–0.60 m with nothing behind it (only the inside of the far side, which is not drawn from there): the plate goes
+  // there and covers it (tests/herramientas/sonda_huecos_coches.py looks for such holes)
+  const fit = PLATE_FIT[model.base],
+    ply = fit ? fit.y : Math.min(0.7, model.H * 0.36);
   let pz = G.zmin;
   {
     const P = G.probe;
@@ -30168,7 +30590,8 @@ function makeOwnCarMeshPart2(model, G, halfW, W, body, tl) {
     for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 1] - ply) < 0.08 && Math.abs(P[i]) < 0.4) zz = Math.min(zz, P[i + 2]);
     if (zz < 1e8) pz = zz;
   }
-  plate.position.set(0, ply, pz - 0.012);
+  plate.position.set(0, ply, pz - (fit ? fit.off : 0.012));
+  if (fit) plate.scale.set(fit.w / 0.52, fit.h / 0.12, 1); // (the plates are 0.52 × 0.12 m)
   plate.rotation.y = Math.PI;
   body.add(plate);
 }
@@ -30793,6 +31216,8 @@ class Car {
     const [topSpeed, acceleration] = vehiclePerformance(model, type);
     this.T.maxV = topSpeed / 3.6;
     this.T.acc = acceleration;
+    // v1.4.47 (Jonay: «el Gold Edition, además de correr un 20 % más, también debe frenar un 20 % más, o no hay quien lo frene»)
+    this.T.brkK = model && model.id === 'reventonGold' ? 1.2 : 1;
     // pool (audit P0.2): traffic cars that leave are kept and reused instead of building a new model every time
     const pk = model ? model.id + (model.phys === 'moto' ? ':m' : '') : null;
     const pooled = pk && CARPOOL[pk] && CARPOOL[pk].length ? CARPOOL[pk].pop() : null;
@@ -30890,7 +31315,7 @@ class Car {
       else vf += Math.min(T.acc, (T.acc * vk) / Math.max(vf, 0.1)) * thr * (1 - clamp(vf / T.maxV, 0, 1) ** 2) * dt;
     }
     if (brk > 0) {
-      if (vf > 0.5) vf -= 20 * brk * dt;
+      if (vf > 0.5) vf -= 20 * T.brkK * brk * dt;
       else if (!broken && this.driver) vf -= T.acc * 0.6 * brk * dt * (vf > -9 ? 1 : 0);
     } /* braking at a standstill means reverse, but only with someone at the wheel */
     if (thr === 0 && brk === 0) vf -= Math.sign(vf) * Math.min(Math.abs(vf), 2.2 * dt);
@@ -31164,6 +31589,11 @@ class Car {
             onDk = true;
             return d;
           }
+          // v1.4.47: on the asphalt as it is drawn (carSurfAt, 04_world.js), not on «terrain + 17 cm»: the car's y is this
+          // + 0.17 and the asphalt of an ordinary street is terrain + 0.15. Only within a step of where the car is (a
+          // road on a bridge above, or in a cutting below, is not this one)
+          const s = carSurfAt(x, z);
+          if (s !== null && s - 0.15 > g - 2.5 && s - 0.15 < py + 0.6) return s - 0.15;
           return g;
         };
     this.Gf = G;
@@ -31703,7 +32133,13 @@ function buildParkedPart2() {
     PARKED.slots.push(...keep);
   } // v0.99.6: also the car parks' rows (a footpath crosses them)
   PARKED.slots.forEach((s, i) => {
-    s.y = (s.floor ?? heightAt(s.x, s.z)) + 0.17;
+    // v1.4.47 (Jonay: «otro enterrado»): on the asphalt as it is drawn (carSurfAt, 04_world.js), as the cars that move
+    let g = heightAt(s.x, s.z);
+    if (s.floor === undefined && typeof carSurfAt === 'function') {
+      const sf = carSurfAt(s.x, s.z);
+      if (sf !== null && sf - 0.15 > g - 2.5 && sf - 0.15 < g + 2) g = sf - 0.15;
+    }
+    s.y = (s.floor ?? g) + 0.17;
     const k = Math.floor(s.x / 30) * 1000 + Math.floor(s.z / 30);
     let l = PARKED.grid.get(k);
     if (!l) PARKED.grid.set(k, (l = []));
@@ -33422,22 +33858,37 @@ function updatePedsEachPart1(p, dp) {
     if (p.down > 0) break;
   }
 }
+const _pedDir = new THREE.Vector3();
 /** (v1.1.7, code quality) part of updatePeds: spawn/despawn */
 function updatePedsPart1() {
   // spawn/despawn
   for (let i = PEDS.length - 1; i >= 0; i--) {
     const p = PEDS[i];
-    if (p.gone || Math.hypot(p.x - PLAYER.x, p.z - PLAYER.z) > 150) {
+    if (p.gone || Math.hypot(p.x - PLAYER.x, p.z - PLAYER.z) > 170) {
       releaseHuman(p.canarion ? 'can' : 'ped', p.H);
       PEDS.splice(i, 1);
     }
   }
+  // v1.4.47 (Jonay: «en calles largas así, con visibilidad, los NPC van apareciendo de golpe haciendo POP»): somebody new
+  // never appears in front of the camera closer than 110 m: up to 6 tries, behind or to the sides, or far; else next frame
   if (PEDS.length < Q.peds) {
-    const a = Math.random() * 6.28,
-      d = rnd(35, 120);
-    const x = PLAYER.x + Math.sin(a) * d,
-      z = PLAYER.z + Math.cos(a) * d;
-    spawnPed(x, z);
+    const fx = -Math.sin(CAM.yaw || 0),
+      fz = -Math.cos(CAM.yaw || 0);
+    let fwd = [fx, fz];
+    if (typeof camera !== 'undefined') {
+      const v = camera.getWorldDirection(_pedDir);
+      const l = Math.hypot(v.x, v.z) || 1;
+      fwd = [v.x / l, v.z / l];
+    }
+    for (let k = 0; k < 6; k++) {
+      const a = Math.random() * 6.28,
+        d = rnd(35, 140),
+        sx = Math.sin(a),
+        sz = Math.cos(a);
+      if (d < 110 && sx * fwd[0] + sz * fwd[1] > 0.45) continue; // (in view: about ±63°)
+      spawnPed(PLAYER.x + sx * d, PLAYER.z + sz * d);
+      break;
+    }
   }
 }
 
@@ -43384,7 +43835,11 @@ const ARCADE = (() => {
     x.fillStyle = '#c9c9c9';
     x.textAlign = 'center';
     const K = (id) => miniKeyLabel(id).toUpperCase();
-    x.fillText(M.game.help ? M.game.help(K) : `A: ${K('f_punch')}   B: ${K('f_kick')}   MONEDA: ${K('b_pass')}   SALIR: ${K('exit')}`, CW / 2, CH - 30);
+    x.fillText(
+      M.game.help ? M.game.help(K) : `A: ${K('f_punch')}   B: ${K('f_kick')}   MONEDA: ${K('b_pass')}   SALIR: ${K('exit')}`,
+      CW / 2,
+      CH - 30
+    );
     return (M.bz = c);
   }
   let scan = null;
@@ -43636,7 +44091,15 @@ const ARCADE = (() => {
       txt(g, gm ? gm.title : id, 142, y, on ? '#ffd400' : '#fff', 10);
       txt(g, gm && gm.sub ? gm.sub : '', 142, y + 14, '#9fd7ff', 6);
     });
-    txt(g, `↑↓ ELEGIR   ${miniKeyLabel('f_punch').toUpperCase()} JUGAR   ${miniKeyLabel('exit').toUpperCase()} APAGAR`, W / 2, H - 22, '#fff', 8, 'center');
+    txt(
+      g,
+      `↑↓ ELEGIR   ${miniKeyLabel('f_punch').toUpperCase()} JUGAR   ${miniKeyLabel('exit').toUpperCase()} APAGAR`,
+      W / 2,
+      H - 22,
+      '#fff',
+      8,
+      'center'
+    );
   }
   function toAttract() {
     st.mode = 'attract';
@@ -43684,7 +44147,15 @@ const ARCADE = (() => {
       g.fillRect(0, 0, W, H);
       txt(g, 'CONTINUE?', W / 2, 80, '#ffd400', 16, 'center');
       txt(g, String(Math.max(0, Math.ceil(st.contT - 0.01))), W / 2, 110, '#fff', 24, 'center');
-      txt(g, free() || st.credits > 0 ? `PULSA ${miniKeyLabel('f_punch').toUpperCase()}` : `${miniKeyLabel('b_pass').toUpperCase()}: MONEDA`, W / 2, 150, '#9fd7ff', 8, 'center');
+      txt(
+        g,
+        free() || st.credits > 0 ? `PULSA ${miniKeyLabel('f_punch').toUpperCase()}` : `${miniKeyLabel('b_pass').toUpperCase()}: MONEDA`,
+        W / 2,
+        150,
+        '#9fd7ff',
+        8,
+        'center'
+      );
     }
     if (st.mode === 'name') {
       g.fillStyle = '#000';
@@ -43711,7 +44182,10 @@ const ARCADE = (() => {
   function blinkMsg(g) {
     if (M.console) txt(g, `${miniKeyLabel('b_pass').toUpperCase()}: VOLVER AL MENÚ DE LA GOFIO-8`, 6, H - 10, '#9fd7ff', 6);
     if (Math.floor(performance.now() / 500) % 2) return;
-    const t = free() || st.credits > 0 ? `PULSA ${miniKeyLabel('f_punch').toUpperCase()} PARA JUGAR` : `${miniKeyLabel('b_pass').toUpperCase()}: MONEDA  ($${M.price})`;
+    const t =
+      free() || st.credits > 0
+        ? `PULSA ${miniKeyLabel('f_punch').toUpperCase()} PARA JUGAR`
+        : `${miniKeyLabel('b_pass').toUpperCase()}: MONEDA  ($${M.price})`;
     txt(g, t, W / 2, H - 18, '#ffd400', 8, 'center');
   }
   function drawScores(g) {
@@ -43963,7 +44437,17 @@ const RECRE = (() => {
   function update(dt) {
     beacon(dt);
     const g = G_();
-    if (!g || !g.defenders || invited() || GAME.state !== 'play' || MISSIONS.active || (DLG && DLG.open) || (window.__TALK && window.__TALK.cur)) {
+    // (v1.4.47: no phone calls while you drive, as the priest's)
+    if (
+      !g ||
+      !g.defenders ||
+      invited() ||
+      GAME.state !== 'play' ||
+      PLAYER.car ||
+      MISSIONS.active ||
+      (DLG && DLG.open) ||
+      (window.__TALK && window.__TALK.cur)
+    ) {
       t = 0;
       return;
     }
@@ -56728,9 +57212,18 @@ function fightTutorial() {
 /** (v1.1.7, code quality) part of fightTutorial: v0.64: the keys shown are the ones set in Opciones › Controles */
 function fightTutorialPart1() {
   const medium = controlMedium();
-  const T = medium === 'touch', pad = medium === 'pad';
+  const T = medium === 'touch',
+    pad = medium === 'pad';
   const steps = [
-    ['walk', pad ? 'Muévete con el stick izquierdo o la cruceta' : T ? 'Muévete con ◀ ▶' : `Muévete con ${CONTROLS.keyName('left')} y ${CONTROLS.keyName('right')}`, (e) => (e.walk || 0) > 50],
+    [
+      'walk',
+      pad
+        ? 'Muévete con el stick izquierdo o la cruceta'
+        : T
+          ? 'Muévete con ◀ ▶'
+          : `Muévete con ${CONTROLS.keyName('left')} y ${CONTROLS.keyName('right')}`,
+      (e) => (e.walk || 0) > 50
+    ],
     // v0.64: the keys shown are the ones set in Opciones › Controles
     ['jab', pad ? 'Puñetazo: X' : T ? 'Puñetazo: P' : `Puñetazo: ${CONTROLS.keyName('f_punch')} o clic izquierdo`, (e) => e.jab],
     ['kick', pad ? 'Patada: A' : T ? 'Patada: K' : `Patada: ${CONTROLS.keyName('f_kick')} o clic derecho`, (e) => e.kick],
@@ -56744,6 +57237,22 @@ function fightTutorialPart1() {
     ['pastor', T ? 'Salto del Pastor: ▼ ▲ + K' : 'Salto del Pastor: abajo, arriba + patada', (e) => e.pastor]
   ];
   return { steps };
+}
+// v1.4.47 (Jonay: «me llamó el cura y no me deja seguir… al bajarme ya no funciona, se quedó el mensaje»): cut the
+// conversation in progress (respawn, loading a game…) AND its subtitle; before, only the conversation was cut and its
+// line stayed on screen for good (nothing could move it on; a click in the car changed the song). Who started it may
+// ask to hear about it (onCancel: the priest's call comes again later)
+function talkCancel() {
+  const T = window.__TALK,
+    c = T && T.cur;
+  if (T) T.cur = null;
+  const s = document.getElementById('sub');
+  if (s) s.classList.remove('talking');
+  if (typeof HUD !== 'undefined' && HUD.sub) HUD.sub('', 0.01);
+  if (c && c.onCancel)
+    try {
+      c.onCancel();
+    } catch (e) {}
 }
 // advance spoken lines: click (PC, without punching), Enter, or tap on the subtitle
 function talkSkip() {
@@ -56839,6 +57348,19 @@ const MISSIONS = (() => {
   // v0.82.1: talk(lines, cb, title): a title files the lines under that entry of the diary (the phone calls that open
   // something: the maleantes, the arcades…) instead of the mission in course or «Charlas sueltas»
   const talk = (lines, cb, title) => {
+    // v1.4.47 (Jonay: «no debería llamar mientras conduces… lo de la llamada del cura aplica a todas las llamadas»): a
+    // phone call (someone «por el móvil») waits until you are on foot; meanwhile a notice says who is calling
+    const phone = lines.some((l) => / \(por el móvil\)$/.test(l[0] || ''));
+    if (phone && PLAYER.car) {
+      const who = (lines.find((l) => / \(por el móvil\)$/.test(l[0] || ''))[0] || '').replace(/ \(por el móvil\)$/, '');
+      HUD.toast('📱 Te llama ' + who + ': bájate del coche para contestar', '#ffd54a', 5);
+      const iv = setInterval(() => {
+        if (PLAYER.car || PLAYER.dead || TALK.cur || (DLG && DLG.open) || (GAME.state !== 'play' && GAME.state !== 'cutscene')) return;
+        clearInterval(iv);
+        talk(lines, cb, title);
+      }, 500);
+      return;
+    }
     const my = {};
     TALK.cur = my;
     let i = 0,
@@ -57701,9 +58223,14 @@ const MISSIONS = (() => {
       if (Math.hypot(stop.x - tx, stop.z - tz) > 95) continue;
       const direct = GRAPH.route(from, end);
       if (!nearby && direct?.length > 2) nearby = direct;
-      for (const [x, z] of [[-437.5, 70], [-569, 33.5], [-249.5, 481]]) {
+      for (const [x, z] of [
+        [-437.5, 70],
+        [-569, 33.5],
+        [-249.5, 481]
+      ]) {
         const node = GRAPH.nearestNode(x, z);
-        const out = GRAPH.route(from, node), back = GRAPH.route(node, end);
+        const out = GRAPH.route(from, node),
+          back = GRAPH.route(node, end);
         if (!out || !back || out.length < 4 || back.length < 4) continue;
         const seen = new Set();
         for (let i = 0; i < out.length; i += 2) seen.add(out[i] + ',' + out[i + 1]);
@@ -58073,7 +58600,8 @@ const MISSIONS = (() => {
     if (GANG.obispoIntro || active || !obispoOpen() || TRACKS.obispo.idx > 0 || !TRACKS.obispo.list.length) return;
     GANG.obispoIntro = true;
     setTimeout(() => {
-      if (active || GAME.state !== 'play') {
+      // (v1.4.47, Jonay: «no debería llamar mientras conduces»: it waits until you are on foot)
+      if (active || GAME.state !== 'play' || PLAYER.car || TALK.cur || (DLG && DLG.open)) {
         GANG.obispoIntro = false;
         return;
       }
@@ -58102,6 +58630,7 @@ const MISSIONS = (() => {
           }
         }
       );
+      if (TALK.cur) TALK.cur.onCancel = () => (GANG.obispoIntro = false); // (cut half-way: he calls again)
     }, 2500);
   }
   function placeStarts() {
@@ -58145,7 +58674,7 @@ const MISSIONS = (() => {
     if (!cafe) return { coco: safeSpot(-249, -248, 1), sastre };
     const { x, z, nx, nz } = cafe.door;
     const side = (sastre[0] - x) * nz - (sastre[1] - z) * nx > 0 ? 1 : -1;
-    return { coco: safeSpot(x + nx * 3 + nz * side * 16, z + nz * 3 - nx * side * 16, .9), sastre };
+    return { coco: safeSpot(x + nx * 3 + nz * side * 16, z + nz * 3 - nx * side * 16, 0.9), sastre };
   }
   // The signing and the food lesson take place near the tailor, towards the avenue.
   function bandMeeting() {
@@ -58547,10 +59076,10 @@ const MISSIONS = (() => {
       return active && data.goal ? data.goal : null;
     },
     diaryDestination(key, index) {
-      const tr = TRACKS[key], m = tr?.list[index];
+      const tr = TRACKS[key],
+        m = tr?.list[index];
       if (!m || index !== tr.idx || tr.done || (key === 'story' && STORY_SKIP.has(m.title))) return null;
-      const position = active === m && data.goal ? data.goal :
-        tr.beacon ? [tr.beacon.position.x, tr.beacon.position.z] : m.startPos?.();
+      const position = active === m && data.goal ? data.goal : tr.beacon ? [tr.beacon.position.x, tr.beacon.position.z] : m.startPos?.();
       return position && position.slice(0, 2).every(Number.isFinite) ? [position[0], position[1], tr.css] : null;
     },
     aheadPath() {
@@ -58643,7 +59172,8 @@ const MISSIONS = (() => {
     logLine,
     LOOSE,
     resetFrom(k, i) {
-      const tr = TRACKS[k], mission = tr?.list[i];
+      const tr = TRACKS[k],
+        mission = tr?.list[i];
       if (!mission || active === mission || !(i < tr.idx || (k === 'story' && (tr.done || STORY_SKIP.has(mission.title))))) return false;
       if (active) {
         try {
@@ -58658,7 +59188,7 @@ const MISSIONS = (() => {
       tr.idx = i;
       if (k === 'story') tr.done = false;
       if (k === 'obispo' && i === 0) GANG.basketTut = false;
-      if (k === 'obispo' && i <= 2) GANG.futbolTut = false;
+      if (k === 'obispo' && i <= 1) GANG.futbolTut = false; // (v1.4.47: the football tutorial is the 2nd)
       if (k === 'side' && i === 0) tr.open = false;
       setObjective(null);
       placeStarts();
@@ -58722,7 +59252,7 @@ const MISSIONS = (() => {
     // save / load: which missions are done, the gang, tutorial flags (a mission in progress restarts from its beginning)
     getState() {
       return {
-        v: 3,
+        v: 4, // v1.4.47: the bishop's missions in a new order (basket, football, basket, football)
         story: TRACKS.story.idx,
         skip: [...STORY_SKIP],
         storyDone: !!TRACKS.story.done,
@@ -58759,7 +59289,8 @@ const MISSIONS = (() => {
       }
       TRACKS.story.done = !!st.storyDone && TRACKS.story.idx >= STORY.length;
       /* older saves finished a shorter story: carry on with the new missions */ TRACKS.side.idx = !st.v && (st.story | 0) >= 3 ? 1 : st.side | 0;
-      TRACKS.obispo.idx = st.obispo | 0;
+      // (saves before v4 had basket, basket, football, football: who had done the two baskets plays the football tutorial now)
+      TRACKS.obispo.idx = (st.v | 0) < 4 && (st.obispo | 0) === 2 ? 1 : st.obispo | 0;
       TRACKS.torneo.idx = st.torneo | 0;
       TRACKS.copa.idx = st.copa | 0;
       TRACKS.secreta.idx = st.secreta | 0;
@@ -59342,8 +59873,7 @@ const SAVE = (() => {
     T(() => WANTED.reset());
     T(() => {
       if (DLG.open) DLG.hide();
-      if (window.__TALK) window.__TALK.cur = null;
-      $('sub').classList.remove('talking');
+      talkCancel(); // v1.4.47: the subtitle goes too (12_missions.js)
     });
     T(() => MISSIONS.setState(s.missions || {}));
     T(() => {
@@ -59729,13 +60259,17 @@ function drivePlan(pts, pf) {
   // the radius at 45% of a tiny segment even when the approach was a long straight.
   const clean = [];
   for (let j = 0; j < P.length; j += 2) {
-    const x = P[j], z = P[j + 1], n = clean.length;
+    const x = P[j],
+      z = P[j + 1],
+      n = clean.length;
     if (n >= 4) {
-      const ax = clean[n - 2] - clean[n - 4], az = clean[n - 1] - clean[n - 3];
-      const bx = x - clean[n - 2], bz = z - clean[n - 1];
+      const ax = clean[n - 2] - clean[n - 4],
+        az = clean[n - 1] - clean[n - 3];
+      const bx = x - clean[n - 2],
+        bz = z - clean[n - 1];
       const cross = Math.abs(ax * bz - az * bx);
-      if (ax * bx + az * bz > 0 && cross < 0.008 * Math.hypot(ax, az) * Math.hypot(bx, bz)
-          && cross < 0.08 * Math.hypot(ax + bx, az + bz)) clean.length -= 2;
+      if (ax * bx + az * bz > 0 && cross < 0.008 * Math.hypot(ax, az) * Math.hypot(bx, bz) && cross < 0.08 * Math.hypot(ax + bx, az + bz))
+        clean.length -= 2;
     }
     clean.push(x, z);
   }
@@ -59776,8 +60310,10 @@ function drivePlan(pts, pf) {
   }
   out.push(clean[n * 2 - 2], clean[n * 2 - 1]);
   // 3) resampled every metre: position, heading and signed curvature
-  const src = s2Path(out), N = Math.max(2, Math.ceil(src.tot) + 1);
-  const tot = src.tot, ds = tot / (N - 1) || 1;
+  const src = s2Path(out),
+    N = Math.max(2, Math.ceil(src.tot) + 1);
+  const tot = src.tot,
+    ds = tot / (N - 1) || 1;
   const X = new Float32Array(N),
     Z = new Float32Array(N),
     H = new Float32Array(N),
@@ -59830,7 +60366,7 @@ function drivePlan(pts, pf) {
 }
 // the plan of a route, made the first time it is driven (s2Path objects keep their s, v and tot meaning: they now run
 // along the drivable line)
-function measureDriveLine({N, X, Z, H, K, V, ds, pf}) {
+function measureDriveLine({ N, X, Z, H, K, V, ds, pf }) {
   for (let i = 0; i < N; i++) {
     const a = Math.max(0, i - 1),
       b = Math.min(N - 1, i + 1);
@@ -60448,10 +60984,18 @@ const M_FARMACIA = {
 // The open car park and its service aisles, on the Ayuntamiento side of the city.
 function farmEscapePlan(car) {
   const choices = [
-    { entry: [213, 132], stop: [238.5, 119], aisle: [220, 134, 233.5, 134, 237, 130.5],
-      foot: [235.5, 118.8, 224.5, 118, 222.5, 103, 220.5, 87.5, 219, 72.5, 217.5, 63, 221, 57.5] },
-    { entry: [216, 141], stop: [251, 135.5], aisle: [222, 138, 224, 137.5, 246.5, 137],
-      foot: [247, 134.8, 242, 134, 237, 130.5, 238.5, 119, 224.5, 118, 222.5, 103, 220.5, 87.5, 219, 72.5] }
+    {
+      entry: [213, 132],
+      stop: [238.5, 119],
+      aisle: [220, 134, 233.5, 134, 237, 130.5],
+      foot: [235.5, 118.8, 224.5, 118, 222.5, 103, 220.5, 87.5, 219, 72.5, 217.5, 63, 221, 57.5]
+    },
+    {
+      entry: [216, 141],
+      stop: [251, 135.5],
+      aisle: [222, 138, 224, 137.5, 246.5, 137],
+      foot: [247, 134.8, 242, 134, 237, 130.5, 238.5, 119, 224.5, 118, 222.5, 103, 220.5, 87.5, 219, 72.5]
+    }
   ];
   for (const place of choices) {
     const route = GRAPH.routeFrom(car.x, car.z, car.h, ...place.entry);
@@ -60806,11 +61350,22 @@ const M_BANCOS = {
       const [x, z] = S.p;
       S.a = s2Human(THIEF_LOOKS[2], x + 2, z + 2, [PLAYER.x, PLAYER.z]);
       S.b = s2Human(THIEF_LOOKS[0], x - 4, z + 3);
+      // v1.4.47 (Jonay: «los bancos robados ya podían ser bancos en la misión… salen como tablas flotando»): the three
+      // park benches of the square, one on the ground and two more stacked upside down on it (parkBenchGeos, 05n_plazas.js)
       const bench = new THREE.Group();
+      const [slG, siG] = parkBenchGeos(),
+        wood = M(0x8a5a32, 0.75),
+        iron = M(0x22262a, 0.45, 0.6);
       for (let i = 0; i < 3; i++) {
-        const s = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.08, 0.5), M(0x2c2c2c, 0.6, 0.5));
-        s.position.set(i * 0.3, 0.45 + i * 0.5, 0);
-        bench.add(s);
+        const b = new THREE.Group();
+        b.add(new THREE.Mesh(slG, wood), new THREE.Mesh(siG, iron));
+        if (i === 0) b.position.set(0, 0, 0);
+        else {
+          b.rotation.set(Math.PI, i === 1 ? 0.12 : -0.2, 0); // upside down, seat on seat
+          b.position.set(i === 1 ? 0.05 : -0.1, 0.94 + (i - 1) * 0.5, i === 1 ? 0.04 : 0.1);
+        }
+        b.traverse((m) => m.isMesh && (m.castShadow = true));
+        bench.add(b);
       }
       bench.position.set(x - 1, heightAt(x - 1, z), z - 2);
       scene.add(bench);
@@ -61891,6 +62446,8 @@ function obispoCourt(kind) {
   }
   return COURTS.filter((c) => c.gate === 'court' && !c.final && c.sport !== 'fut').sort((a, b) => a.dist - b.dist)[0] || null;
 }
+// the football team besides you (gangTeam(), 12j_campos.js): keeper, defenders, midfielder
+const TEAM_FUT_TXT = 'El Blanco, Boca Papa, Sastrón y Coco';
 const shortName = () => {
   const g = (MISSIONS.gang && MISSIONS.gang.name) || '';
   const s = g.replace(/^(Los|Las|La|El)\s+/i, '').toUpperCase();
@@ -61947,11 +62504,16 @@ function obispoGame(m, o) {
       if (m.st && m.st.step === 1) obispoStartGame(m, o, c);
     };
     K.goto(c.x, c.z, 2.2, 0xb388ff);
-    K.setObjective(`Ve con Coco al ${K.bold(c.label)} (${c.street || 'la calle'}) y entra con ${CONTROLS.kbd('use')}`);
+    K.setObjective(`Ve con Coco y El Blanco al ${K.bold(c.label)} (${c.street || 'la calle'}) y entra con ${CONTROLS.kbd('use')}`);
   } else {
     m.gate = null;
     K.goto(c.cx, c.cz, o.sport === 'fut' ? 10 : 6, 0xb388ff);
-    K.setObjective(o.sport === 'fut' ? `Ve con la banda a ${K.bold(c.label)} para el partido` : `Ve a ${K.bold(c.label)} con Coco para el partido`);
+    // v1.4.47 (Jonay: «ahora es 3x3, así que debe nombrar a los 3»): the whole team by name (gangTeam(), 12j_campos.js)
+    K.setObjective(
+      o.sport === 'fut'
+        ? `Ve con ${TEAM_FUT_TXT} a ${K.bold(c.label)} para el partido`
+        : `Ve a ${K.bold(c.label)} con Coco y El Blanco para el partido`
+    );
   }
 }
 function obispoGameUpdate(m) {
@@ -62052,7 +62614,7 @@ const M_OBISPO_2 = {
       [
         [
           OBISPO,
-          '¡Hijo mío! Con lo del otro día arreglamos tres tejas. Faltan cuatrocientas. Y una paloma que vive en el campanario y tiene más derechos que yo.'
+          '¡Hijo mío! El campanario ya no se inclina tanto. Ahora el tejado de la Catedral: llevamos tres tejas, faltan cuatrocientas. Y una paloma que vive arriba tiene más derechos que yo.'
         ],
         [
           OBISPO,
@@ -62143,10 +62705,7 @@ const M_OBISPO_4 = {
       c = obispoCampo();
     K.talk(
       [
-        [
-          OBISPO,
-          '¡El campanario ya está derecho! Bueno, menos torcido. Ahora el órgano de Santo Domingo, que suena como una guagua subiendo La Cuesta.'
-        ],
+        [OBISPO, '¡La Catedral ya tiene tejas! Bueno, casi todas. Ahora el órgano de Santo Domingo, que suena como una guagua subiendo La Cuesta.'],
         [
           OBISPO,
           'Los de las cofradías os retan en ' +
@@ -62162,7 +62721,9 @@ const M_OBISPO_4 = {
     obispoGameUpdate(this);
   }
 };
-MISSIONS.addObispo([M_OBISPO_1, M_OBISPO_2, M_OBISPO_3, M_OBISPO_4]);
+// v1.4.47 (Jonay: «me gustaría que la segunda misión del Obispo fuera el fútbol… basket y fútbol, no dos seguidas de
+// basket»): basket (Catedral), football (seminarians, with the tutorial), basket (Cristo), football (cofradías)
+MISSIONS.addObispo([M_OBISPO_1, M_OBISPO_3, M_OBISPO_2, M_OBISPO_4]);
 
 // ============ Diario de misiones (v0.66, tecla J) ============
 // Overlay like the ones of many mission games: on the left every thread (Historia, El Canarión, El Obispo, Torneo
@@ -64065,7 +64626,7 @@ const S_AMANO = {
         this.st.c = f;
         this.st.step = 1;
         K.goto(f.cx, f.cz, 10, 0xff5fa2);
-        K.setObjective('Ve con la banda a ' + b2(f.label) + ' para el partido');
+        K.setObjective('Ve con ' + TEAM_FUT_TXT + ' a ' + b2(f.label) + ' para el partido');
       }
     );
   },
@@ -64146,7 +64707,7 @@ const S_CANCHA = {
         this.st.c = c;
         this.st.step = 1;
         K.goto(c.cx, c.cz, 6, 0xff5fa2);
-        K.setObjective('Ve con Coco a ' + b2(c.label));
+        K.setObjective('Ve con Coco y El Blanco a ' + b2(c.label));
       }
     );
   },
@@ -66443,8 +67004,7 @@ const GAME = {
         FIGHT.cd = 2;
       });
       T(() => {
-        if (window.__TALK) window.__TALK.cur = null;
-        $('sub').classList.remove('talking');
+        talkCancel(); // v1.4.47: the subtitle goes too (12_missions.js)
         if (DLG.open) DLG.hide();
       });
       T(() => MISSIONS.fail('Has perdido el encargo.'));
@@ -66510,6 +67070,18 @@ const PAL_SKY = [
 let pmrem = null,
   envT = 0,
   lastEnvKey = '';
+// v1.4.47 (notas de three.js r174): the maps at 128 px instead of 256 (a quarter of the memory: ~1.7 MB each instead of
+// ~6.7, and there are 32 since the car paint has its own); the reflections are soft and the difference does not show
+const ENV_OPT = { size: 128 };
+// v1.4.47 (Jonay: «en la chapa brillan las estrellas»): the maps are made without the stars (they would shine on the
+// car paint, and the windows and street lamps, which are not in them, don't)
+function envFromSky() {
+  const u = SKY.mat.uniforms;
+  if (u && u.uStars) u.uStars.value = 0.9; // (only the brightest ~15 % of the stars)
+  const rt = pmrem.fromScene(bgScene, 0, 50, 90000, ENV_OPT);
+  if (u && u.uStars) u.uStars.value = 0;
+  return rt;
+}
 const ENVC = new Map();
 // v1.4.46 (car paint with a clear coat): the paint reflects its own environment, the sky over a dark ground with a clear
 // horizon line, as a real car body (the scene's environment is only the sky, the same above and below, and a glossy coat
@@ -66529,7 +67101,7 @@ function carEnvOf(k) {
   if (scene.fog) c.copy(scene.fog.color).multiplyScalar(0.12);
   else c.setRGB(0.05, 0.05, 0.045);
   bgScene.add(carEnvGround);
-  rt = pmrem.fromScene(bgScene, 0, 50, 90000);
+  rt = envFromSky();
   bgScene.remove(carEnvGround);
   CARENVC.set(k, rt);
   return rt;
@@ -66558,7 +67130,7 @@ function updateEnvironment(force) {
       }
   let rt = ENVC.get(k);
   if (!rt) {
-    rt = pmrem.fromScene(bgScene, 0, 50, 90000);
+    rt = envFromSky();
     ENVC.set(k, rt);
   }
   scene.environment = rt.texture;
@@ -66571,7 +67143,7 @@ function precomputeEnv() {
     GAME.tod = b * 1.5;
     updateSun();
     const k = envKey(GAME.tod);
-    if (!ENVC.has(k)) ENVC.set(k, pmrem.fromScene(bgScene, 0, 50, 90000));
+    if (!ENVC.has(k)) ENVC.set(k, envFromSky());
     carEnvOf(k);
   }
   GAME.tod = t0;
@@ -66601,7 +67173,15 @@ function updateSun() {
   const snap = 2;
   sun.target.position.set(Math.round(px / snap) * snap, py, Math.round(pz / snap) * snap);
   sun.position.copy(sun.target.position).addScaledVector(ldir, 320);
-  sun.castShadow = Q.shadow > 0 && sun.intensity > 0.3;
+  // v1.4.47 (Jonay: «se volvió a poner negro, WebGPU», at 07:43; console: «Destroyed texture ShadowDepthTexture used in a
+  // submit» and «Cannot read properties of null (reading 'setSize') at renderShadow … _renderBundles»): switching the sun's
+  // shadow off at dawn and dusk destroyed its shadow map, while the WebGPU render bundles (05w_optimiza.js) still drew with
+  // it: every frame failed (black screen) from then on. The shadow is never switched off now: when the sun is low it is
+  // made invisible (intensity 0) and not redrawn (autoUpdate false), which costs nothing either
+  const shOn = sun.intensity > 0.3;
+  sun.castShadow = Q.shadow > 0;
+  sun.shadow.intensity = shOn ? 1 : 0;
+  sun.shadow.autoUpdate = shOn;
   // street lights & car lamps
   // v1.4.22 (Jonay, 3-nov: «la luz de las ventanas y todas las fuentes de luz en general, para que compense la
   // oscuridad»): brighter signs, lamp pools and car lights at night (windows: 04_world.js; pools: 05_scenery.js)
@@ -66660,8 +67240,10 @@ function updateSunPart1() {
   bgScene.fog.color.copy(fogCol);
   scene.fog.far = w === 2 ? 230 : w === 1 ? viewFar() * 0.8 : cityFogFar();
   scene.fog.near = w === 2 ? 15 : 90;
-  bgScene.fog.near = w === 2 ? 300 : w === 1 ? 1000 : 1400;
-  bgScene.fog.far = w === 2 ? 900 : w === 1 ? 12000 : 22000;
+  // v1.4.47 («franja verde inclinada sobre el horizonte», X −300, Y −600 looking NE): the far ring (Anaga, ~4.5 km) came out
+  // almost without haze (7 %) over a city already hazy at 2 km: a sharp bright green band. Now ~35 % at 4.5 km
+  bgScene.fog.near = w === 2 ? 300 : w === 1 ? 600 : 800;
+  bgScene.fog.far = w === 2 ? 900 : w === 1 ? 7000 : 11000;
   renderer.toneMappingExposure = 1.0 + night * 0.62;
   return { w, overcast, night, ldir };
 }
@@ -67698,10 +68280,10 @@ function onGpuLost(why) {
     sessionStorage.setItem('jeta_gpu_perdida', String(n));
     sessionStorage.setItem('jeta_gpu_motivo', String(why).slice(0, 200));
   } catch (e) {}
-  const toWebGL = USE_GPU && n >= 2;
+  const toWebGL = USE_GPU && (n >= 2 || /validación/.test(String(why)));
   if (toWebGL)
     try {
-      localStorage.setItem('jeta_motor', 'webgl');
+      sessionStorage.setItem('jeta_motor_sesion', 'webgl'); // v1.4.47: only this session (01_core.js)
     } catch (e) {}
   try {
     if (GAME.state === 'play' && typeof SAVE !== 'undefined') SAVE.auto('Antes de recargar (tarjeta gráfica)');
@@ -67710,7 +68292,7 @@ function onGpuLost(why) {
   box.style.cssText =
     'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.85);color:#fff;font:600 22px Barlow,sans-serif;text-align:center;z-index:99;padding:30px';
   box.textContent = toWebGL
-    ? 'La tarjeta gráfica se ha reiniciado otra vez con WebGPU. Partida guardada: se recarga con WebGL (puedes cambiarlo en Opciones).'
+    ? 'WebGPU ha dado un fallo al dibujar. Partida guardada: se recarga con WebGL hasta que cierres el navegador.'
     : 'La tarjeta gráfica se ha reiniciado. Partida guardada: recargando…';
   document.body.appendChild(box);
   setTimeout(() => location.reload(), 2500);
@@ -67720,6 +68302,28 @@ if (USE_GPU && renderer.backend && renderer.backend.device)
     if (i && i.reason === 'destroyed') return; // (our own dispose)
     onGpuLost('WebGPU ' + ((i && i.reason) || '') + ': ' + ((i && i.message) || ''));
   });
+// v1.4.47 (Jonay: «se volvió a poner negro, WebGPU», con el HUD vivo): the card is not lost, but a WebGPU validation
+// error makes every frame invalid (black) while whatever causes it is in view. The first errors are kept for the console
+// and the tests (sessionStorage 'jeta_gpu_errores'); many in a row (20 in 3 s) mean a black screen: save, and reload with
+// WebGL for this session
+if (USE_GPU && renderer.backend && renderer.backend.device) {
+  const ERR = [];
+  renderer.backend.device.addEventListener('uncapturederror', (ev) => {
+    const msg = String((ev.error && ev.error.message) || ev.error || '').slice(0, 300),
+      now = performance.now();
+    ERR.push(now);
+    while (ERR.length && now - ERR[0] > 3000) ERR.shift();
+    try {
+      const L = JSON.parse(sessionStorage.getItem('jeta_gpu_errores') || '[]');
+      if (L.length < 8) {
+        L.push(msg);
+        sessionStorage.setItem('jeta_gpu_errores', JSON.stringify(L));
+      }
+    } catch (e) {}
+    if (ERR.length <= 3) console.error('WebGPU (error de validación):', msg);
+    if (ERR.length >= 20) onGpuLost('WebGPU error de validación: ' + msg);
+  });
+}
 renderer.domElement.addEventListener('webglcontextlost', (e) => {
   e.preventDefault();
   onGpuLost('WebGL: contexto perdido');

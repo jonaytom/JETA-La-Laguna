@@ -1,7 +1,14 @@
 const MAP_MARK = {
-  food: '#e53935', entrance: '#3ddc97', police: '#3d7bff', destination: '#e040fb',
-  objective: '#f5b72e', checkpoints: '#ffd23f', chase: '#ff3b30', wanted: '#ff1744',
-  bencomo: '#ffb347', gufo: '#b388ff'
+  food: '#e53935',
+  entrance: '#3ddc97',
+  police: '#3d7bff',
+  destination: '#e040fb',
+  objective: '#f5b72e',
+  checkpoints: '#ffd23f',
+  chase: '#ff3b30',
+  wanted: '#ff1744',
+  bencomo: '#ffb347',
+  gufo: '#b388ff'
 };
 // ============ GTA La Laguna — core ============
 import * as THREE from 'three';
@@ -732,6 +739,9 @@ const GPU_CHOICE = (() => {
   try {
     const s = localStorage.getItem('jeta_motor');
     if (s === 'webgl' || s === 'webgpu') return s;
+    // v1.4.47 (Jonay: «¿por defecto está WebGPU? me salió WebGL»): the automatic fall-back after a WebGPU failure lasts
+    // only this browser session (before: saved for good as if chosen in Opciones); next time WebGPU is tried again
+    if (sessionStorage.getItem('jeta_motor_sesion') === 'webgl') return 'webgl';
   } catch (e) {}
   return navigator.webdriver ? 'webgl' : 'webgpu';
 })();
@@ -811,6 +821,7 @@ const SHADOW_LAYER = 1;
 sun.shadow.camera.layers.enable(SHADOW_LAYER);
 sun.shadow.bias = -0.0004;
 sun.shadow.normalBias = 0.6;
+sun.shadow.radius = 2; // v1.4.47: softer edges (r186+ PCF: 5 samples whatever the radius, so it costs nothing; 1 by default; tests/herramientas/foto_sombras_radio.py)
 scene.add(sun);
 scene.add(sun.target);
 const bgSun = new THREE.DirectionalLight(0xffffff, 2.0);

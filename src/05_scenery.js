@@ -769,19 +769,46 @@ function buildLamps() {
     polygonOffsetUnits: -8
   });
   // v1.4.22 (Jonay, 3-nov: «la iluminación de las farolas por la noche debería cubrir un poco más»): 16 m pools (before 11)
-  const pg = new THREE.PlaneGeometry(16, 16);
-  pg.rotateX(-Math.PI / 2);
-  const pools = new THREE.InstancedMesh(pg, lampPoolMat, LAMPS.length);
-  LAMPS.forEach((l, i) => {
+  // v1.4.47 (Jonay: «la luz de farolas está rara, se ven los pies ahí iluminados y como si fuera niebla»): the pool was a flat
+  // square 30 cm over the terrain (more on a slope), added on top of everything under it: feet, kerbs and the lower 30 cm
+  // of whatever stood there glowed. Now a 3 × 3 grid on the ground, just over the drawn asphalt (carSurfAt) or the
+  // pavement, so what stands on it is above it; one merged mesh per 250 m cell (the camera culls them)
+  const N = 3, // (4 × 4 points: 6 × 6 cost ~600.000 vertices for ~12.000 lamps, +17 % of the geometry in memory)
+    S = 16,
+    cells = new Map();
+  for (const l of LAMPS) {
     const fx = l[0] - Math.sin(l[2]) * (l[3] ? 0 : 1.5),
-      fz = l[1] - Math.cos(l[2]) * (l[3] ? 0 : 1.5);
-    o.position.set(fx, heightAt(fx, fz) + 0.3, fz);
-    o.rotation.set(0, 0, 0);
-    o.updateMatrix();
-    pools.setMatrixAt(i, o.matrix);
-  });
-  pools.renderOrder = 3;
-  scene.add(pools);
+      fz = l[1] - Math.cos(l[2]) * (l[3] ? 0 : 1.5),
+      k = Math.floor(fx / 250) + ',' + Math.floor(fz / 250);
+    let C = cells.get(k);
+    if (!C) cells.set(k, (C = { p: [], u: [], i: [] }));
+    const b = C.p.length / 3;
+    for (let a = 0; a <= N; a++)
+      for (let c = 0; c <= N; c++) {
+        const x = fx + (a / N - 0.5) * S,
+          z = fz + (c / N - 0.5) * S,
+          g = heightAt(x, z) + 0.13,
+          sf = typeof carSurfAt === 'function' ? carSurfAt(x, z) : null;
+        C.p.push(x, (sf !== null && sf > g - 0.6 && sf < g + 1.5 ? Math.max(sf, g) : g) + 0.015, z); // (just over the asphalt: the tyres stand on it — «la luz de farolas en el coche corta los neumáticos»)
+        C.u.push(a / N, c / N);
+      }
+    for (let a = 0; a < N; a++)
+      for (let c = 0; c < N; c++) {
+        const q = b + a * (N + 1) + c;
+        C.i.push(q, q + 1, q + N + 1, q + 1, q + N + 2, q + N + 1);
+      }
+  }
+  for (const C of cells.values()) {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(C.p, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(C.u, 2));
+    g.setIndex(C.i);
+    g.computeBoundingSphere();
+    const m = new THREE.Mesh(g, lampPoolMat);
+    m.renderOrder = 3;
+    m.userData.noMerge = true;
+    scene.add(m);
+  }
 }
 /** (v1.1.7, code quality) part of buildLamps: light pools (night) */
 function buildLampsPart2(modern, modernHead, poleMat, histMat, o) {
@@ -1125,7 +1152,8 @@ function skyNodeMat(u) {
     hor = uniform(u.hor.value),
     uNight = uniform(0).onRenderUpdate(() => u.uNight.value),
     uTime = uniform(0).onRenderUpdate(() => u.uTime.value),
-    uCloud = uniform(0.55).onRenderUpdate(() => u.uCloud.value);
+    uCloud = uniform(0.55).onRenderUpdate(() => u.uCloud.value),
+    uStars = uniform(0).onRenderUpdate(() => u.uStars.value);
   const h = (p) => fract(sin(dot(p, vec2(127.1, 311.7))).mul(43758.5453));
   const n = (p) => {
     const i = floor(p),
@@ -1152,11 +1180,21 @@ function skyNodeMat(u) {
     );
     // stars
     // (a hash without sin for the stars: in WGSL sin() of the big numbers here loses precision and they come out as streaks)
-    const sp = d.xz.div(d.y.add(0.3)).mul(180.0),
-      p3a = fract(vec3(floor(sp).x, floor(sp).y, floor(sp).x).mul(0.1031)),
+    // v1.4.47: cells of the direction itself (3D), not of its projection on a plane: near the horizon that projection
+    // stretched the cells into streaks that converged (Jonay saw them with WebGL too)
+    const p3a = fract(floor(d.mul(600.0)).mul(0.1031)),
       p3 = p3a.add(dot(p3a, p3a.yzx.add(33.33))),
       hs = fract(p3.x.add(p3.y).mul(p3.z));
-    col = col.add(vec3(step(0.997, hs)).mul(uNight).mul(0.8).mul(y));
+    // (v1.4.47, Jonay: «hay demasiadas estrellas… y se reflejan demasiado en el coche»: a quarter of them, each with its
+    // own brightness. uStars: the faintest star drawn, 0 on screen and 0.9 while the reflection maps are made (13_main.js):
+    // only the brightest shine on the car paint (Jonay: «que se refleje alguna no está mal, pero no todas»)
+    const sb = fract(hs.mul(317.0)).mul(0.65).add(0.35);
+    col = col.add(
+      vec3(step(0.9993, hs).mul(sb).mul(step(uStars, sb)))
+        .mul(uNight)
+        .mul(0.9)
+        .mul(y)
+    );
     // cloud deck (y, not d.y, below: under the horizon the weight is 0 anyway and the division stays finite)
     const cp = d.xz
       .div(y.add(0.08))
@@ -1188,11 +1226,12 @@ function buildSkyPart1() {
       uCloud: { value: 0.55 },
       zen: { value: new THREE.Color() },
       uNoise: { value: skyNoiseTex() }, // v1.4.44
+      uStars: { value: 0 }, // v1.4.47: the faintest star drawn (0.9 while the reflection maps are made: only the brightest on the car paint)
       hor: { value: new THREE.Color() }
     },
     vertexShader:
       'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); gl_Position.z = gl_Position.w; }',
-    fragmentShader: `varying vec3 vD; uniform vec3 sunDir; uniform float uNight; uniform float uTime; uniform float uCloud; uniform vec3 zen; uniform vec3 hor;
+    fragmentShader: `varying vec3 vD; uniform vec3 sunDir; uniform float uNight; uniform float uTime; uniform float uCloud; uniform vec3 zen; uniform vec3 hor; uniform float uStars;
       float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
       float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
       uniform sampler2D uNoise; float fbm(vec2 p){ return texture2D(uNoise, p / 32.0).r; } // v1.4.44: baked (skyNoiseTex)
@@ -1202,7 +1241,8 @@ function buildSkyPart1() {
         col += vec3(1.0,0.75,0.45) * pow(sd, 8.0) * 0.35 * (1.0-uNight);
         col += vec3(1.0,0.95,0.85) * smoothstep(0.9993,0.9997,sd) * 6.0 * (1.0-uNight) * step(-0.02, sunDir.y);
         // stars
-        if(uNight>0.01){ vec2 sp = d.xz/(d.y+0.3)*180.0; float s = step(0.997, h(floor(sp))); col += vec3(s)*uNight*0.8*y; }
+        // (v1.4.47: cells of the direction in 3D and a hash without sin, as skyNodeMat: the plane projection made streaks near the horizon)
+        if(uNight>0.01){ vec3 p3 = fract(floor(d*600.0)*0.1031); p3 += dot(p3, p3.yzx+33.33); float hs = fract((p3.x+p3.y)*p3.z); float sb = 0.35 + 0.65*fract(hs*317.0); float s = step(0.9993, hs) * sb * step(uStars, sb); col += vec3(s)*uNight*0.9*y; }
         // cloud deck (mar de nubes / panza de burro)
         if(d.y>0.0){ vec2 cp = d.xz/(d.y+0.08)*1.3 + vec2(uTime*0.004, uTime*0.002);
           float c = smoothstep(1.0-uCloud, 1.0-uCloud+0.35, fbm(cp));

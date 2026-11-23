@@ -485,6 +485,40 @@ function buildPlazasParksPart1() {
   return { placed, paths, SGR, gSome, placedSome };
 }
 // ---- instanced furniture
+/** v1.4.47: the classic park bench (wooden slats, cast-iron sides; faces +z), made once: the parks use it, and the
+ *  mission of the stolen benches too (12f_story2.js: before, three floating boards) */
+let PARK_BENCH = null;
+function parkBenchGeos() {
+  if (PARK_BENCH) return PARK_BENCH;
+  const slats = [];
+  for (let k = 0; k < 4; k++) {
+    const g = new THREE.BoxGeometry(1.9, 0.04, 0.09);
+    g.translate(0, 0.45, 0.16 - k * 0.11);
+    slats.push(g);
+  }
+  for (let k = 0; k < 3; k++) {
+    const g = new THREE.BoxGeometry(1.9, 0.09, 0.035);
+    g.rotateX(-0.22);
+    g.translate(0, 0.62 + k * 0.12, -0.24 - k * 0.025);
+    slats.push(g);
+  }
+  const side = [];
+  for (const x of [-0.85, 0.85]) {
+    const a = new THREE.BoxGeometry(0.06, 0.45, 0.06);
+    a.translate(x, 0.22, 0.17);
+    const b = new THREE.BoxGeometry(0.06, 0.9, 0.06);
+    b.rotateX(-0.18);
+    b.translate(x, 0.45, -0.2);
+    const c = new THREE.BoxGeometry(0.06, 0.05, 0.5);
+    c.translate(x, 0.43, -0.02);
+    const d = new THREE.BoxGeometry(0.06, 0.05, 0.42);
+    d.translate(x, 0.66, 0.02);
+    side.push(a, b, c, d);
+  }
+  PARK_BENCH = [mergeGeos(slats), mergeGeos(side)];
+  PARK_BENCH.forEach((g) => (g.userData.shared = true));
+  return PARK_BENCH;
+}
 function buildParkProps(bench, bin, bed, playground, bust) {
   const { o, inst, hedge, flower } = buildParkPropsPart1(bench);
   buildParkPropsPart2(inst, bin, hedge, bed, flower, o);
@@ -634,18 +668,69 @@ function buildParkPropsPart2(inst, bin, hedge, bed, flower, o) {
     M(0x2f5d3a, 0.5, 0.3),
     bin
   );
-  // flower beds: low hedge border + flowers
+  // flower beds (v1.4.47, Jonay: «¿qué se supone que es eso de colores sobre una caja verde?»): a low stone kerb with dark
+  // soil and a row or two of the shrubs made in Blender (bougainvillea, yellow flowers or boxwood: DATA.ARB.seto, the
+  // same as the street planters), one kind per bed. Before, a green box with a flattened one-colour ball on top
+  const S = DATA.ARB && DATA.ARB.seto;
   inst(
     (() => {
-      const g = new THREE.BoxGeometry(1, 0.42, 1);
-      g.translate(0, 0.21, 0);
+      const g = new THREE.BoxGeometry(1, 0.32, 1);
+      g.translate(0, 0.16, 0);
       return g;
     })(),
-    hedge,
+    S ? M(0xcfc8bb, 0.85) : hedge,
     bed,
     (ob, p) => ob.scale.set(p[3], 1, p[4])
   );
-  if (bed.length) {
+  if (bed.length && S) {
+    inst(
+      (() => {
+        const g = new THREE.PlaneGeometry(1, 1);
+        g.rotateX(-Math.PI / 2);
+        g.translate(0, 0.325, 0);
+        return g;
+      })(),
+      M(0x2e2219, 0.95),
+      bed,
+      (ob, p) => ob.scale.set(p[3] - 0.14, 1, p[4] - 0.14)
+    );
+    const kinds = ['seto_bug', 'seto_flor', 'seto_boj'].filter((k) => S[k]),
+      by = kinds.map(() => []);
+    for (const p of bed) {
+      const k = Math.floor(Math.random() * kinds.length),
+        nx = Math.max(1, Math.round((p[3] - 0.2) / 0.72)),
+        nz = Math.max(1, Math.round((p[4] - 0.2) / 0.72)),
+        c = Math.cos(p[2]),
+        sn = Math.sin(p[2]);
+      for (let a = 0; a < nx; a++)
+        for (let b = 0; b < nz; b++) {
+          const u = ((a + 0.5) / nx - 0.5) * (p[3] - 0.3),
+            v = ((b + 0.5) / nz - 0.5) * (p[4] - 0.3);
+          by[k].push([p[0] + u * c + v * sn, p[1] - u * sn + v * c, Math.random() * 6.28, 0.5 + Math.random() * 0.12]);
+        }
+    }
+    const leaf = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, flatShading: true }),
+      col = new THREE.Color();
+    kinds.forEach((k, i) => {
+      const L = by[i];
+      if (!L.length) return;
+      const g = arbGeo(S[k]);
+      g.translate(0, 0.32 / 0.56, 0); // (on the soil once scaled ~0.56)
+      g.userData.seto = k; // (tests/herramientas/foto_setos.py)
+      const m = new THREE.InstancedMesh(g, leaf, L.length);
+      L.forEach((q, j) => {
+        o.position.set(q[0], heightAt(q[0], q[1]) + 0.1, q[1]);
+        o.rotation.set(0, q[2], 0);
+        o.scale.setScalar(q[3]);
+        o.updateMatrix();
+        m.setMatrixAt(j, o.matrix);
+        m.setColorAt(j, col.setScalar(0.88 + Math.random() * 0.24));
+      });
+      m.castShadow = true;
+      m.receiveShadow = true;
+      scene.add(m);
+    });
+  } else if (bed.length) {
     const m = new THREE.InstancedMesh(
       (() => {
         const g = jitterGeo(new THREE.IcosahedronGeometry(0.5, 1), 0.15, 7);
@@ -693,33 +778,9 @@ function buildParkPropsPart1(bench) {
     hedge = new THREE.MeshStandardMaterial({ color: 0x3c6a2a, roughness: 0.95, flatShading: true }),
     flower = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 });
   // classic park bench: wooden slats on cast-iron sides (faces +z)
-  const slats = [];
-  for (let k = 0; k < 4; k++) {
-    const g = new THREE.BoxGeometry(1.9, 0.04, 0.09);
-    g.translate(0, 0.45, 0.16 - k * 0.11);
-    slats.push(g);
-  }
-  for (let k = 0; k < 3; k++) {
-    const g = new THREE.BoxGeometry(1.9, 0.09, 0.035);
-    g.rotateX(-0.22);
-    g.translate(0, 0.62 + k * 0.12, -0.24 - k * 0.025);
-    slats.push(g);
-  }
-  inst(mergeGeos(slats), wood, bench);
-  const side = [];
-  for (const x of [-0.85, 0.85]) {
-    const a = new THREE.BoxGeometry(0.06, 0.45, 0.06);
-    a.translate(x, 0.22, 0.17);
-    const b = new THREE.BoxGeometry(0.06, 0.9, 0.06);
-    b.rotateX(-0.18);
-    b.translate(x, 0.45, -0.2);
-    const c = new THREE.BoxGeometry(0.06, 0.05, 0.5);
-    c.translate(x, 0.43, -0.02);
-    const d = new THREE.BoxGeometry(0.06, 0.05, 0.42);
-    d.translate(x, 0.66, 0.02);
-    side.push(a, b, c, d);
-  }
-  inst(mergeGeos(side), iron, bench);
+  const [slatsG, sideG] = parkBenchGeos();
+  inst(slatsG, wood, bench);
+  inst(sideG, iron, bench);
   bench.forEach((p) => COL.addCirc(p[0], p[1], 0.55));
   return { o, inst, hedge, flower };
 }
@@ -823,6 +884,7 @@ function marbleFountainPart2(mar, g, water, sheet, x, z) {
     g.add(w2);
     const fall = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.0, r * 1.12, y0 + 0.42 - 0.72, 24, 1, true), sheet);
     fall.position.y = (y0 + 0.42 + 0.72) / 2;
+    fall.userData.noMerge = true; // v1.4.47: it shimmers (scale animated below): not frozen with the city (prueba_congelados.py)
     g.add(fall);
     PK2.fountains.push([x, z]);
     return fall;

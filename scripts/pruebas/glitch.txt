@@ -1,0 +1,2 @@
+herramientas/sonda_tejados_hip.py
+herramientas/foto_glitch_mapa.py

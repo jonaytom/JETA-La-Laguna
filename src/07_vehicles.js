@@ -430,6 +430,8 @@ class Car {
     const [topSpeed, acceleration] = vehiclePerformance(model, type);
     this.T.maxV = topSpeed / 3.6;
     this.T.acc = acceleration;
+    // v1.4.47 (Jonay: «el Gold Edition, además de correr un 20 % más, también debe frenar un 20 % más, o no hay quien lo frene»)
+    this.T.brkK = model && model.id === 'reventonGold' ? 1.2 : 1;
     // pool (audit P0.2): traffic cars that leave are kept and reused instead of building a new model every time
     const pk = model ? model.id + (model.phys === 'moto' ? ':m' : '') : null;
     const pooled = pk && CARPOOL[pk] && CARPOOL[pk].length ? CARPOOL[pk].pop() : null;
@@ -527,7 +529,7 @@ class Car {
       else vf += Math.min(T.acc, (T.acc * vk) / Math.max(vf, 0.1)) * thr * (1 - clamp(vf / T.maxV, 0, 1) ** 2) * dt;
     }
     if (brk > 0) {
-      if (vf > 0.5) vf -= 20 * brk * dt;
+      if (vf > 0.5) vf -= 20 * T.brkK * brk * dt;
       else if (!broken && this.driver) vf -= T.acc * 0.6 * brk * dt * (vf > -9 ? 1 : 0);
     } /* braking at a standstill means reverse, but only with someone at the wheel */
     if (thr === 0 && brk === 0) vf -= Math.sign(vf) * Math.min(Math.abs(vf), 2.2 * dt);
@@ -801,6 +803,11 @@ class Car {
             onDk = true;
             return d;
           }
+          // v1.4.47: on the asphalt as it is drawn (carSurfAt, 04_world.js), not on «terrain + 17 cm»: the car's y is this
+          // + 0.17 and the asphalt of an ordinary street is terrain + 0.15. Only within a step of where the car is (a
+          // road on a bridge above, or in a cutting below, is not this one)
+          const s = carSurfAt(x, z);
+          if (s !== null && s - 0.15 > g - 2.5 && s - 0.15 < py + 0.6) return s - 0.15;
           return g;
         };
     this.Gf = G;
@@ -1340,7 +1347,13 @@ function buildParkedPart2() {
     PARKED.slots.push(...keep);
   } // v0.99.6: also the car parks' rows (a footpath crosses them)
   PARKED.slots.forEach((s, i) => {
-    s.y = (s.floor ?? heightAt(s.x, s.z)) + 0.17;
+    // v1.4.47 (Jonay: «otro enterrado»): on the asphalt as it is drawn (carSurfAt, 04_world.js), as the cars that move
+    let g = heightAt(s.x, s.z);
+    if (s.floor === undefined && typeof carSurfAt === 'function') {
+      const sf = carSurfAt(s.x, s.z);
+      if (sf !== null && sf - 0.15 > g - 2.5 && sf - 0.15 < g + 2) g = sf - 0.15;
+    }
+    s.y = (s.floor ?? g) + 0.17;
     const k = Math.floor(s.x / 30) * 1000 + Math.floor(s.z / 30);
     let l = PARKED.grid.get(k);
     if (!l) PARKED.grid.set(k, (l = []));

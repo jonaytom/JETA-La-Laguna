@@ -431,6 +431,8 @@ function obispoCourt(kind) {
   }
   return COURTS.filter((c) => c.gate === 'court' && !c.final && c.sport !== 'fut').sort((a, b) => a.dist - b.dist)[0] || null;
 }
+// the football team besides you (gangTeam(), 12j_campos.js): keeper, defenders, midfielder
+const TEAM_FUT_TXT = 'El Blanco, Boca Papa, Sastrón y Coco';
 const shortName = () => {
   const g = (MISSIONS.gang && MISSIONS.gang.name) || '';
   const s = g.replace(/^(Los|Las|La|El)\s+/i, '').toUpperCase();
@@ -487,11 +489,16 @@ function obispoGame(m, o) {
       if (m.st && m.st.step === 1) obispoStartGame(m, o, c);
     };
     K.goto(c.x, c.z, 2.2, 0xb388ff);
-    K.setObjective(`Ve con Coco al ${K.bold(c.label)} (${c.street || 'la calle'}) y entra con ${CONTROLS.kbd('use')}`);
+    K.setObjective(`Ve con Coco y El Blanco al ${K.bold(c.label)} (${c.street || 'la calle'}) y entra con ${CONTROLS.kbd('use')}`);
   } else {
     m.gate = null;
     K.goto(c.cx, c.cz, o.sport === 'fut' ? 10 : 6, 0xb388ff);
-    K.setObjective(o.sport === 'fut' ? `Ve con la banda a ${K.bold(c.label)} para el partido` : `Ve a ${K.bold(c.label)} con Coco para el partido`);
+    // v1.4.47 (Jonay: «ahora es 3x3, así que debe nombrar a los 3»): the whole team by name (gangTeam(), 12j_campos.js)
+    K.setObjective(
+      o.sport === 'fut'
+        ? `Ve con ${TEAM_FUT_TXT} a ${K.bold(c.label)} para el partido`
+        : `Ve a ${K.bold(c.label)} con Coco y El Blanco para el partido`
+    );
   }
 }
 function obispoGameUpdate(m) {
@@ -592,7 +599,7 @@ const M_OBISPO_2 = {
       [
         [
           OBISPO,
-          '¡Hijo mío! Con lo del otro día arreglamos tres tejas. Faltan cuatrocientas. Y una paloma que vive en el campanario y tiene más derechos que yo.'
+          '¡Hijo mío! El campanario ya no se inclina tanto. Ahora el tejado de la Catedral: llevamos tres tejas, faltan cuatrocientas. Y una paloma que vive arriba tiene más derechos que yo.'
         ],
         [
           OBISPO,
@@ -683,10 +690,7 @@ const M_OBISPO_4 = {
       c = obispoCampo();
     K.talk(
       [
-        [
-          OBISPO,
-          '¡El campanario ya está derecho! Bueno, menos torcido. Ahora el órgano de Santo Domingo, que suena como una guagua subiendo La Cuesta.'
-        ],
+        [OBISPO, '¡La Catedral ya tiene tejas! Bueno, casi todas. Ahora el órgano de Santo Domingo, que suena como una guagua subiendo La Cuesta.'],
         [
           OBISPO,
           'Los de las cofradías os retan en ' +
@@ -702,4 +706,6 @@ const M_OBISPO_4 = {
     obispoGameUpdate(this);
   }
 };
-MISSIONS.addObispo([M_OBISPO_1, M_OBISPO_2, M_OBISPO_3, M_OBISPO_4]);
+// v1.4.47 (Jonay: «me gustaría que la segunda misión del Obispo fuera el fútbol… basket y fútbol, no dos seguidas de
+// basket»): basket (Catedral), football (seminarians, with the tutorial), basket (Cristo), football (cofradías)
+MISSIONS.addObispo([M_OBISPO_1, M_OBISPO_3, M_OBISPO_2, M_OBISPO_4]);

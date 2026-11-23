@@ -10,7 +10,14 @@ prueba_misiones.py
 herramientas/foto_1441.py
 prueba_prologo_1427.py
 prueba_congelados.py
+prueba_misiones_guardado.py
+prueba_obispo.py
+prueba_diario.py
 herramientas/sonda_aparcados.py
 herramientas/sonda_marchas.py
 herramientas/foto_setos.py
-herramientas/foto_pintura_gpu.py
+herramientas/foto_1447.py
+herramientas/sonda_descongelados.py
+herramientas/foto_gold.py
+herramientas/sonda_tejados_hip.py
+herramientas/foto_glitch_mapa.py

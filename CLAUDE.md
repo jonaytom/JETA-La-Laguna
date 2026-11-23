@@ -13,6 +13,10 @@
 - **Objetivo técnico (Jonay, 23-nov): llegar a WebGPU.** La three.js r187 (v1.4.43) ya trae `WebGPURenderer`; el plan
   está en PENDIENTES («Pasar el juego a WebGPU»). Lo nuevo que se haga con sombreadores, mejor que no dependa de
   `onBeforeCompile` ni de trozos de sombreador de WebGL.
+- **Mapa: las calles mandan** (Jonay, 23-nov): los edificios se ajustan a las calles y no al revés: cada fachada en
+  paralelo al borde de la acera (o de la calzada si no hay acera); no se quitan edificios salvo casetas; los edificios
+  vecinos van pegados salvo donde el mapa tenga un hueco de verdad (si hay que separarlos, menos de lo que cabe el
+  personaje); los tramos rectos de calle, rectos (sin arrugas). Plan en PENDIENTES («Las calles mandan»).
 - **Coordenadas** (Jonay, 2-nov, v0.99.7): en pantalla, informes, PENDIENTES y mensajes se escriben **X, Y** para el plano y la
   **altura** aparte (m sobre el mar). Y es lo que el código llama `z` (y lo que los apuntes y capturas viejos llaman Z).
 

@@ -206,8 +206,13 @@ function buildHall(F, uc, L, yF, name, gaps, holes = [], o = {}) {
         const [x, z] = P(u + bayW / 2, vc);
         const floor = yAt(u + bayW / 2) + 0.12;
         PARKED.slots.push({
-          x, z, floor, h: ang + (face > 0 ? Math.PI / 2 : -Math.PI / 2),
-          type: model ? model.id : 'compact', color: pickColor(model), alive: true
+          x,
+          z,
+          floor,
+          h: ang + (face > 0 ? Math.PI / 2 : -Math.PI / 2),
+          type: model ? model.id : 'compact',
+          color: pickColor(model),
+          alive: true
         });
         nCars++;
       }
@@ -379,11 +384,54 @@ function buildRamp(x0, z0, x1, z1, yF, label, o = {}) {
   // o: w (width), wc (wall colour: the Indigo ones are blue)
   const Lr = Math.hypot(x1 - x0, z1 - z0);
   const c = [x0, z0, x1, z1];
-  tunnelRoad(c, o.w || 6.8, 'asphalt', 8, rampProfile(Lr, yF), { H: 3.9, cover: 4.3, wc: o.wc, cutStreets: true });
+  const prof = rampProfile(Lr, yF);
+  tunnelRoad(c, o.w || 6.8, 'asphalt', 8, prof, { H: 3.9, cover: 4.3, wc: o.wc, cutStreets: true });
   // entrance sign on a post at the top
   const M_ = pkMats();
   const dx = (x1 - x0) / Lr,
     dz = (z1 - z0) / Lr;
+  // v1.4.47 (Jonay: «a la entrada de los parking ponle una valla o algo, porque si corro por el medio como para tirarme
+  // me teleporta atrás a una esquina»): a steel railing on the edge of the slab over the tunnel mouth, where the ramp is
+  // 4.3 m under the ground (tunnelRoad's cover), from wall to wall, with its collision
+  {
+    let s0 = -1;
+    for (let s = 0; s <= Lr; s += 0.25) {
+      const px = x0 + dx * s,
+        pz = z0 + dz * s;
+      if (heightAt(px, pz) - prof(s, px, pz) > 4.3) {
+        s0 = s + 0.2;
+        break;
+      }
+    }
+    if (s0 > 0) {
+      const hw = (o.w || 6.8) / 2,
+        mx = x0 + dx * s0,
+        mz = z0 + dz * s0,
+        ax = mx - dz * hw,
+        az = mz + dx * hw,
+        bx = mx + dz * hw,
+        bz = mz - dx * hw,
+        g = heightAt(mx, mz),
+        rail = new THREE.Group(),
+        len = hw * 2;
+      for (const y of [0.55, 1.05]) {
+        const r = new THREE.Mesh(new THREE.BoxGeometry(len, 0.05, 0.05), M_.steel);
+        r.position.y = y;
+        rail.add(r);
+      }
+      const np = Math.max(2, Math.round(len / 1.3) + 1);
+      for (let k = 0; k < np; k++) {
+        const p = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.1, 0.06), M_.steel);
+        p.position.set(-hw + (len * k) / (np - 1), 0.55, 0);
+        rail.add(p);
+      }
+      rail.position.set(mx, g, mz);
+      rail.rotation.y = Math.atan2(-dx, -dz); // (its local x across the ramp: (−dz, dx))
+      rail.traverse((m) => m.isMesh && (m.castShadow = true));
+      scene.add(rail);
+      COL.addSeg(ax, az, bx, bz, g - 0.3, g + 1.2, 'barandilla de rampa');
+    }
+  }
   const so = (o.w || 6.8) / 2 + 0.8;
   let px = x0 - dz * so,
     pz = z0 + dx * so;

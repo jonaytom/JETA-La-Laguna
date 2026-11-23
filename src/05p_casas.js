@@ -381,7 +381,7 @@ function buildTac67(root, B, M) {
   // granite plinth (not across the garage mouth), the white grille over the garage door
   box(-hW - 0.04, 1.05, yb, 0.6, 0, 0.08, granite);
   box(4.05, hW + 0.04, yb, 0.6, 0, 0.08, granite);
-  box(1.05, 4.05, 2.45, 2.95, -0.05, 0.0, mat(0x1a1d20, 0.8));
+  box(1.05, 4.05, 2.45, 2.95, -0.05, 0.008, mat(0x1a1d20, 0.8)); // (v1.4.47: out of the facade plane: it flickered)
   for (let x = 1.1; x < 4.05; x += 0.1) box(x, x + 0.035, 2.45, 2.95, 0, 0.04, white);
   box(1.0, 4.1, 2.42, 2.47, 0, 0.06, white);
   box(1.0, 4.1, 2.93, 2.98, 0, 0.06, white);
@@ -393,7 +393,7 @@ function buildTac67(root, B, M) {
   // ground-floor window with a white wrought-iron grille and a terracotta flower box
   {
     const xc = -3.0;
-    box(xc - 0.7, xc + 0.7, 1.0, 2.3, -0.06, 0.0, glass);
+    box(xc - 0.7, xc + 0.7, 1.0, 2.3, -0.06, 0.012, glass); // (v1.4.47: 1.2 cm proud of the facade, not in its plane: it flickered)
     box(xc - 0.78, xc + 0.78, 0.94, 1.0, 0, 0.12, white);
     for (let x = xc - 0.66; x <= xc + 0.67; x += 0.12) box(x, x + 0.03, 1.0, 2.35, 0.12, 0.15, white);
     for (const y of [1.05, 1.65, 2.3]) box(xc - 0.72, xc + 0.72, y, y + 0.035, 0.11, 0.16, white);
@@ -418,10 +418,10 @@ function buildTac67(root, B, M) {
       // glazed door and a window
       const dx = xc - 0.8,
         wx = xc + 0.9;
-      box(dx - 0.6, dx + 0.6, fb, fb + 2.2, -0.06, 0, glass);
+      box(dx - 0.6, dx + 0.6, fb, fb + 2.2, -0.06, 0.012, glass);
       box(dx - 0.68, dx + 0.68, fb + 2.2, fb + 2.28, 0, 0.06, white);
       for (const x of [dx - 0.64, dx, dx + 0.64]) box(x - 0.04, x + 0.04, fb, fb + 2.2, 0, 0.05, white);
-      box(wx - 0.55, wx + 0.55, fb + 0.9, fb + 2.1, -0.06, 0, glass);
+      box(wx - 0.55, wx + 0.55, fb + 0.9, fb + 2.1, -0.06, 0.012, glass);
       box(wx - 0.62, wx + 0.62, fb + 2.1, fb + 2.17, 0, 0.06, white);
       box(wx - 0.62, wx + 0.62, fb + 0.83, fb + 0.9, 0, 0.1, white);
       for (const x of [wx - 0.58, wx, wx + 0.58]) box(x - 0.035, x + 0.035, fb + 0.9, fb + 2.1, 0, 0.05, white);

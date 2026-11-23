@@ -421,22 +421,37 @@ function updatePedsEachPart1(p, dp) {
     if (p.down > 0) break;
   }
 }
+const _pedDir = new THREE.Vector3();
 /** (v1.1.7, code quality) part of updatePeds: spawn/despawn */
 function updatePedsPart1() {
   // spawn/despawn
   for (let i = PEDS.length - 1; i >= 0; i--) {
     const p = PEDS[i];
-    if (p.gone || Math.hypot(p.x - PLAYER.x, p.z - PLAYER.z) > 150) {
+    if (p.gone || Math.hypot(p.x - PLAYER.x, p.z - PLAYER.z) > 170) {
       releaseHuman(p.canarion ? 'can' : 'ped', p.H);
       PEDS.splice(i, 1);
     }
   }
+  // v1.4.47 (Jonay: «en calles largas así, con visibilidad, los NPC van apareciendo de golpe haciendo POP»): somebody new
+  // never appears in front of the camera closer than 110 m: up to 6 tries, behind or to the sides, or far; else next frame
   if (PEDS.length < Q.peds) {
-    const a = Math.random() * 6.28,
-      d = rnd(35, 120);
-    const x = PLAYER.x + Math.sin(a) * d,
-      z = PLAYER.z + Math.cos(a) * d;
-    spawnPed(x, z);
+    const fx = -Math.sin(CAM.yaw || 0),
+      fz = -Math.cos(CAM.yaw || 0);
+    let fwd = [fx, fz];
+    if (typeof camera !== 'undefined') {
+      const v = camera.getWorldDirection(_pedDir);
+      const l = Math.hypot(v.x, v.z) || 1;
+      fwd = [v.x / l, v.z / l];
+    }
+    for (let k = 0; k < 6; k++) {
+      const a = Math.random() * 6.28,
+        d = rnd(35, 140),
+        sx = Math.sin(a),
+        sz = Math.cos(a);
+      if (d < 110 && sx * fwd[0] + sz * fwd[1] > 0.45) continue; // (in view: about ±63°)
+      spawnPed(PLAYER.x + sx * d, PLAYER.z + sz * d);
+      break;
+    }
   }
 }
 

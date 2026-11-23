@@ -381,9 +381,18 @@ function fightTutorial() {
 /** (v1.1.7, code quality) part of fightTutorial: v0.64: the keys shown are the ones set in Opciones › Controles */
 function fightTutorialPart1() {
   const medium = controlMedium();
-  const T = medium === 'touch', pad = medium === 'pad';
+  const T = medium === 'touch',
+    pad = medium === 'pad';
   const steps = [
-    ['walk', pad ? 'Muévete con el stick izquierdo o la cruceta' : T ? 'Muévete con ◀ ▶' : `Muévete con ${CONTROLS.keyName('left')} y ${CONTROLS.keyName('right')}`, (e) => (e.walk || 0) > 50],
+    [
+      'walk',
+      pad
+        ? 'Muévete con el stick izquierdo o la cruceta'
+        : T
+          ? 'Muévete con ◀ ▶'
+          : `Muévete con ${CONTROLS.keyName('left')} y ${CONTROLS.keyName('right')}`,
+      (e) => (e.walk || 0) > 50
+    ],
     // v0.64: the keys shown are the ones set in Opciones › Controles
     ['jab', pad ? 'Puñetazo: X' : T ? 'Puñetazo: P' : `Puñetazo: ${CONTROLS.keyName('f_punch')} o clic izquierdo`, (e) => e.jab],
     ['kick', pad ? 'Patada: A' : T ? 'Patada: K' : `Patada: ${CONTROLS.keyName('f_kick')} o clic derecho`, (e) => e.kick],
@@ -397,6 +406,22 @@ function fightTutorialPart1() {
     ['pastor', T ? 'Salto del Pastor: ▼ ▲ + K' : 'Salto del Pastor: abajo, arriba + patada', (e) => e.pastor]
   ];
   return { steps };
+}
+// v1.4.47 (Jonay: «me llamó el cura y no me deja seguir… al bajarme ya no funciona, se quedó el mensaje»): cut the
+// conversation in progress (respawn, loading a game…) AND its subtitle; before, only the conversation was cut and its
+// line stayed on screen for good (nothing could move it on; a click in the car changed the song). Who started it may
+// ask to hear about it (onCancel: the priest's call comes again later)
+function talkCancel() {
+  const T = window.__TALK,
+    c = T && T.cur;
+  if (T) T.cur = null;
+  const s = document.getElementById('sub');
+  if (s) s.classList.remove('talking');
+  if (typeof HUD !== 'undefined' && HUD.sub) HUD.sub('', 0.01);
+  if (c && c.onCancel)
+    try {
+      c.onCancel();
+    } catch (e) {}
 }
 // advance spoken lines: click (PC, without punching), Enter, or tap on the subtitle
 function talkSkip() {
@@ -492,6 +517,19 @@ const MISSIONS = (() => {
   // v0.82.1: talk(lines, cb, title): a title files the lines under that entry of the diary (the phone calls that open
   // something: the maleantes, the arcades…) instead of the mission in course or «Charlas sueltas»
   const talk = (lines, cb, title) => {
+    // v1.4.47 (Jonay: «no debería llamar mientras conduces… lo de la llamada del cura aplica a todas las llamadas»): a
+    // phone call (someone «por el móvil») waits until you are on foot; meanwhile a notice says who is calling
+    const phone = lines.some((l) => / \(por el móvil\)$/.test(l[0] || ''));
+    if (phone && PLAYER.car) {
+      const who = (lines.find((l) => / \(por el móvil\)$/.test(l[0] || ''))[0] || '').replace(/ \(por el móvil\)$/, '');
+      HUD.toast('📱 Te llama ' + who + ': bájate del coche para contestar', '#ffd54a', 5);
+      const iv = setInterval(() => {
+        if (PLAYER.car || PLAYER.dead || TALK.cur || (DLG && DLG.open) || (GAME.state !== 'play' && GAME.state !== 'cutscene')) return;
+        clearInterval(iv);
+        talk(lines, cb, title);
+      }, 500);
+      return;
+    }
     const my = {};
     TALK.cur = my;
     let i = 0,
@@ -1354,9 +1392,14 @@ const MISSIONS = (() => {
       if (Math.hypot(stop.x - tx, stop.z - tz) > 95) continue;
       const direct = GRAPH.route(from, end);
       if (!nearby && direct?.length > 2) nearby = direct;
-      for (const [x, z] of [[-437.5, 70], [-569, 33.5], [-249.5, 481]]) {
+      for (const [x, z] of [
+        [-437.5, 70],
+        [-569, 33.5],
+        [-249.5, 481]
+      ]) {
         const node = GRAPH.nearestNode(x, z);
-        const out = GRAPH.route(from, node), back = GRAPH.route(node, end);
+        const out = GRAPH.route(from, node),
+          back = GRAPH.route(node, end);
         if (!out || !back || out.length < 4 || back.length < 4) continue;
         const seen = new Set();
         for (let i = 0; i < out.length; i += 2) seen.add(out[i] + ',' + out[i + 1]);
@@ -1726,7 +1769,8 @@ const MISSIONS = (() => {
     if (GANG.obispoIntro || active || !obispoOpen() || TRACKS.obispo.idx > 0 || !TRACKS.obispo.list.length) return;
     GANG.obispoIntro = true;
     setTimeout(() => {
-      if (active || GAME.state !== 'play') {
+      // (v1.4.47, Jonay: «no debería llamar mientras conduces»: it waits until you are on foot)
+      if (active || GAME.state !== 'play' || PLAYER.car || TALK.cur || (DLG && DLG.open)) {
         GANG.obispoIntro = false;
         return;
       }
@@ -1755,6 +1799,7 @@ const MISSIONS = (() => {
           }
         }
       );
+      if (TALK.cur) TALK.cur.onCancel = () => (GANG.obispoIntro = false); // (cut half-way: he calls again)
     }, 2500);
   }
   function placeStarts() {
@@ -1798,7 +1843,7 @@ const MISSIONS = (() => {
     if (!cafe) return { coco: safeSpot(-249, -248, 1), sastre };
     const { x, z, nx, nz } = cafe.door;
     const side = (sastre[0] - x) * nz - (sastre[1] - z) * nx > 0 ? 1 : -1;
-    return { coco: safeSpot(x + nx * 3 + nz * side * 16, z + nz * 3 - nx * side * 16, .9), sastre };
+    return { coco: safeSpot(x + nx * 3 + nz * side * 16, z + nz * 3 - nx * side * 16, 0.9), sastre };
   }
   // The signing and the food lesson take place near the tailor, towards the avenue.
   function bandMeeting() {
@@ -2200,10 +2245,10 @@ const MISSIONS = (() => {
       return active && data.goal ? data.goal : null;
     },
     diaryDestination(key, index) {
-      const tr = TRACKS[key], m = tr?.list[index];
+      const tr = TRACKS[key],
+        m = tr?.list[index];
       if (!m || index !== tr.idx || tr.done || (key === 'story' && STORY_SKIP.has(m.title))) return null;
-      const position = active === m && data.goal ? data.goal :
-        tr.beacon ? [tr.beacon.position.x, tr.beacon.position.z] : m.startPos?.();
+      const position = active === m && data.goal ? data.goal : tr.beacon ? [tr.beacon.position.x, tr.beacon.position.z] : m.startPos?.();
       return position && position.slice(0, 2).every(Number.isFinite) ? [position[0], position[1], tr.css] : null;
     },
     aheadPath() {
@@ -2296,7 +2341,8 @@ const MISSIONS = (() => {
     logLine,
     LOOSE,
     resetFrom(k, i) {
-      const tr = TRACKS[k], mission = tr?.list[i];
+      const tr = TRACKS[k],
+        mission = tr?.list[i];
       if (!mission || active === mission || !(i < tr.idx || (k === 'story' && (tr.done || STORY_SKIP.has(mission.title))))) return false;
       if (active) {
         try {
@@ -2311,7 +2357,7 @@ const MISSIONS = (() => {
       tr.idx = i;
       if (k === 'story') tr.done = false;
       if (k === 'obispo' && i === 0) GANG.basketTut = false;
-      if (k === 'obispo' && i <= 2) GANG.futbolTut = false;
+      if (k === 'obispo' && i <= 1) GANG.futbolTut = false; // (v1.4.47: the football tutorial is the 2nd)
       if (k === 'side' && i === 0) tr.open = false;
       setObjective(null);
       placeStarts();
@@ -2375,7 +2421,7 @@ const MISSIONS = (() => {
     // save / load: which missions are done, the gang, tutorial flags (a mission in progress restarts from its beginning)
     getState() {
       return {
-        v: 3,
+        v: 4, // v1.4.47: the bishop's missions in a new order (basket, football, basket, football)
         story: TRACKS.story.idx,
         skip: [...STORY_SKIP],
         storyDone: !!TRACKS.story.done,
@@ -2412,7 +2458,8 @@ const MISSIONS = (() => {
       }
       TRACKS.story.done = !!st.storyDone && TRACKS.story.idx >= STORY.length;
       /* older saves finished a shorter story: carry on with the new missions */ TRACKS.side.idx = !st.v && (st.story | 0) >= 3 ? 1 : st.side | 0;
-      TRACKS.obispo.idx = st.obispo | 0;
+      // (saves before v4 had basket, basket, football, football: who had done the two baskets plays the football tutorial now)
+      TRACKS.obispo.idx = (st.v | 0) < 4 && (st.obispo | 0) === 2 ? 1 : st.obispo | 0;
       TRACKS.torneo.idx = st.torneo | 0;
       TRACKS.copa.idx = st.copa | 0;
       TRACKS.secreta.idx = st.secreta | 0;

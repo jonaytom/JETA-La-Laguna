@@ -135,11 +135,16 @@ function gpuFacade(fm) {
   fm.colorNode = vec4(mix(tc.rgb, tc.rgb.mul(vCol), mk.r).mul(mix(float(1), pd.sub(0.5).mul(1.3).add(1), pa)), tc.a);
   fm.roughnessNode = mix(T.materialRoughness, 0.12, mk.g);
   fm.metalnessNode = mix(T.materialMetalness, 0.6, mk.g.mul(0.6));
-  fm.emissiveNode = mk.g
-    .mul(lit)
-    .mul(uNight)
-    .mul(vec3(1.0, 0.72, 0.42))
-    .mul(2.1);
+  // (v1.4.47: each window its own warm tone, brighter at the top, some curtains: as the GLSL in 04_world.js)
+  const wf = fract(vF),
+    wh = hsh(floor(vF).add(vec2(3.7, vEx.y))),
+    wc = select(wh.greaterThan(0.93), vec3(0.55, 0.7, 1.0), mix(vec3(1.0, 0.62, 0.3), vec3(1.0, 0.82, 0.55), wh)),
+    wi = wh
+      .mul(0.45)
+      .add(0.55)
+      .mul(mix(float(0.6), float(1.0), wf.y))
+      .mul(select(wh.lessThan(0.3).and(wf.x.greaterThan(0.55)), float(0.35), float(1.0)));
+  fm.emissiveNode = mk.g.mul(lit).mul(uNight).mul(wc).mul(1.35).mul(wi);
   // plaster normal maps, laid by derivatives (no tangents), like the GLSL
   {
     const pn1 = texture(PLASTER.n1, puv),

@@ -537,7 +537,11 @@ const ARCADE = (() => {
     x.fillStyle = '#c9c9c9';
     x.textAlign = 'center';
     const K = (id) => miniKeyLabel(id).toUpperCase();
-    x.fillText(M.game.help ? M.game.help(K) : `A: ${K('f_punch')}   B: ${K('f_kick')}   MONEDA: ${K('b_pass')}   SALIR: ${K('exit')}`, CW / 2, CH - 30);
+    x.fillText(
+      M.game.help ? M.game.help(K) : `A: ${K('f_punch')}   B: ${K('f_kick')}   MONEDA: ${K('b_pass')}   SALIR: ${K('exit')}`,
+      CW / 2,
+      CH - 30
+    );
     return (M.bz = c);
   }
   let scan = null;
@@ -789,7 +793,15 @@ const ARCADE = (() => {
       txt(g, gm ? gm.title : id, 142, y, on ? '#ffd400' : '#fff', 10);
       txt(g, gm && gm.sub ? gm.sub : '', 142, y + 14, '#9fd7ff', 6);
     });
-    txt(g, `↑↓ ELEGIR   ${miniKeyLabel('f_punch').toUpperCase()} JUGAR   ${miniKeyLabel('exit').toUpperCase()} APAGAR`, W / 2, H - 22, '#fff', 8, 'center');
+    txt(
+      g,
+      `↑↓ ELEGIR   ${miniKeyLabel('f_punch').toUpperCase()} JUGAR   ${miniKeyLabel('exit').toUpperCase()} APAGAR`,
+      W / 2,
+      H - 22,
+      '#fff',
+      8,
+      'center'
+    );
   }
   function toAttract() {
     st.mode = 'attract';
@@ -837,7 +849,15 @@ const ARCADE = (() => {
       g.fillRect(0, 0, W, H);
       txt(g, 'CONTINUE?', W / 2, 80, '#ffd400', 16, 'center');
       txt(g, String(Math.max(0, Math.ceil(st.contT - 0.01))), W / 2, 110, '#fff', 24, 'center');
-      txt(g, free() || st.credits > 0 ? `PULSA ${miniKeyLabel('f_punch').toUpperCase()}` : `${miniKeyLabel('b_pass').toUpperCase()}: MONEDA`, W / 2, 150, '#9fd7ff', 8, 'center');
+      txt(
+        g,
+        free() || st.credits > 0 ? `PULSA ${miniKeyLabel('f_punch').toUpperCase()}` : `${miniKeyLabel('b_pass').toUpperCase()}: MONEDA`,
+        W / 2,
+        150,
+        '#9fd7ff',
+        8,
+        'center'
+      );
     }
     if (st.mode === 'name') {
       g.fillStyle = '#000';
@@ -864,7 +884,10 @@ const ARCADE = (() => {
   function blinkMsg(g) {
     if (M.console) txt(g, `${miniKeyLabel('b_pass').toUpperCase()}: VOLVER AL MENÚ DE LA GOFIO-8`, 6, H - 10, '#9fd7ff', 6);
     if (Math.floor(performance.now() / 500) % 2) return;
-    const t = free() || st.credits > 0 ? `PULSA ${miniKeyLabel('f_punch').toUpperCase()} PARA JUGAR` : `${miniKeyLabel('b_pass').toUpperCase()}: MONEDA  ($${M.price})`;
+    const t =
+      free() || st.credits > 0
+        ? `PULSA ${miniKeyLabel('f_punch').toUpperCase()} PARA JUGAR`
+        : `${miniKeyLabel('b_pass').toUpperCase()}: MONEDA  ($${M.price})`;
     txt(g, t, W / 2, H - 18, '#ffd400', 8, 'center');
   }
   function drawScores(g) {
@@ -1116,7 +1139,17 @@ const RECRE = (() => {
   function update(dt) {
     beacon(dt);
     const g = G_();
-    if (!g || !g.defenders || invited() || GAME.state !== 'play' || MISSIONS.active || (DLG && DLG.open) || (window.__TALK && window.__TALK.cur)) {
+    // (v1.4.47: no phone calls while you drive, as the priest's)
+    if (
+      !g ||
+      !g.defenders ||
+      invited() ||
+      GAME.state !== 'play' ||
+      PLAYER.car ||
+      MISSIONS.active ||
+      (DLG && DLG.open) ||
+      (window.__TALK && window.__TALK.cur)
+    ) {
       t = 0;
       return;
     }
