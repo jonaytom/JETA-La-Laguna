@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.44</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.45</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2158,6 +2158,14 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.4.45 — 2026-11-23 — Alpha 1.4.45: un motor para cada coche, cambios en el velocímetro y más distancia de visión</h2>
+<ul>
+<li><strong>Un sonido de motor para cada tipo</strong> (Jonay: «no puede ser que suene igual un deportivo que un utilitario pequeño o una guagua… el sonido debería ir acorde a la aceleración»): sintetizados, sin grabaciones, a partir de los cilindros de cada uno: utilitario de 4 cilindros, berlina, SUV y furgoneta diésel (con su traqueteo y turbo), deportivo V8 (retumbe del escape y petardeos al soltar), guagua y camión diésel grandes, moto y eléctrico (solo un silbido que sube con la velocidad). Suena más fuerte y áspero al pisar y más suave al soltar.</li>
+<li><strong>Los coches de alrededor también suenan</strong> (Jonay: «aplícalo también, pero el sonido de todos en general que no sea muy exagerado, que deje oír bien la música»): los tres más cercanos, cada uno con su motor y su marcha según la velocidad, bajitos (se apagan a partir de unos 12 m y callan a 70 m), a izquierda o derecha según dónde estén y con el efecto Doppler al pasar. Tu motor suena algo más bajo que en la primera versión (un 25 % menos y luego, a petición de Jonay, un 10 % más). El claxon ya era distinto por tipo.</li>
+<li><strong>Caja de cambios automática en el velocímetro</strong> (Jonay: «poner cambios que se vean en el cuentakilómetros aunque sea automático, así cambiaría el sonido al subir marchas»): la marcha (1ª, 2ª… R, N; D en el eléctrico) y una barrita de revoluciones que se pone roja cerca del corte. Cambia cerca del corte si vas a fondo y antes si vas suave; al cambiar, el motor corta un instante y baja de vueltas. Cada tipo tiene sus marchas: la guagua cambia muy pronto y el deportivo estira la 1ª hasta ~80 km/h. Solo afecta al sonido y al velocímetro, no a la conducción.</li>
+<li><strong>Más distancia de visión en calidad alta</strong> (Jonay: «sí, súbelas»): la ciudad se ve hasta 1.500 m (antes 1.150) antes de la niebla, la gente hasta 255 m (antes 170) y los coches en marcha hasta 540 m (antes 360). El tráfico sigue apareciendo a la misma distancia (si no, los mismos coches se repartirían en más terreno). Medido: WebGPU por encima de 60 FPS; a 1.800 m bajaba de 60.</li>
+<li>Herramientas: <code>sonda_marchas.py</code> (la caja automática de cada tipo), <code>audio_motores.py</code> (graba cada motor para escucharlo), <code>audio_trafico.py</code> (a pie viendo pasar coches y conduciendo con la radio, para el equilibrio con la música).</li>
+</ul>
 <h2>1.4.44 — 2026-11-23 — Alpha 1.4.44: 60 FPS en alta a 1080p, WebGPU más rápido que WebGL</h2>
 <ul>
 <li><strong>El cielo ya no frena el juego</strong>: las nubes se calculaban en cada píxel de la pantalla con 10 capas de ruido, también detrás de los edificios (unos 4 ms por fotograma a 1080p con una RX 6600). Ahora ese ruido se calcula una vez al cargar, en una textura, y el cielo la lee. Las nubes tienen el mismo aspecto. Con esto, en calidad alta a 1080p el juego va a 60 FPS (antes, 44-49).</li>

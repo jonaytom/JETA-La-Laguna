@@ -667,7 +667,7 @@ const QUALITY = {
   baja: { pr: 0.75, shadow: 0, far: 520, peds: 12, traffic: 10, trees: 0.5 },
   media: { pr: 1, shadow: 1024, far: 800, peds: 20, traffic: 17, trees: 0.8 },
   movil: { pr: 1, shadow: 0, far: 600, peds: 14, traffic: 11, trees: 0.6 },
-  alta: { pr: 1.5, shadow: 2048, far: 1150, peds: 30, traffic: 24, trees: 1, dist: 2 } // v1.4.44: dist ×2 (distK): measured, still over 60 FPS
+  alta: { pr: 1.5, shadow: 2048, far: 1150, peds: 30, traffic: 24, trees: 1, dist: 2, view: 1500, vis: 1.5 } // v1.4.44/45: detail ×2 (distK), view 1500 m (viewFar), people 255 m and cars 540 m (visK): measured, WebGPU over 60 FPS
 };
 const IS_TOUCH = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
 const QKEY = IS_TOUCH ? 'gtall_qm' : 'gtall_q';
@@ -692,6 +692,23 @@ try {
 // se nota en las llantas de los coches»): one knob for the detail distances (full parked cars and their rims, full tree
 // crowns, city details, small parts of cars and people, full bodies): distK() multiplies them. Per quality (Q.dist, 1 by
 // default); ?dist=X in the address forces it (to measure).
+// v1.4.44 (Jonay: «sí, súbelas»): the city's view distance (fog, city LOD, parked cars) is Q.view, apart from Q.far,
+// which also places the traffic (raising it would spread the same cars over more ground); ?far=N forces the view
+// distance. visK() multiplies how far people (170 m) and moving cars (360 m) are drawn; ?vis=X forces it.
+{
+  const m = /[?&]far=(\d+)/.exec(location.search);
+  if (m) Q.view = +m[1];
+}
+function viewFar() {
+  return Q.view || Q.far;
+}
+const VIS_URL = (() => {
+  const m = /[?&]vis=([\d.]+)/.exec(location.search);
+  return m ? +m[1] : null;
+})();
+function visK() {
+  return VIS_URL ?? (Q.vis || 1);
+}
 const DIST_URL = (() => {
   const m = /[?&]dist=([\d.]+)/.exec(location.search);
   return m ? +m[1] : null;
@@ -731,7 +748,7 @@ const camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerH
 const bgCamera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 50, 90000);
 // Leave the distant land and skyline in bgScene. Finish the foreground haze a little earlier.
 function cityFogFar() {
-  return Q.far - (Q === QUALITY.alta ? 75 : Q === QUALITY.media ? 45 : 0);
+  return viewFar() - (Q === QUALITY.alta ? 75 : Q === QUALITY.media ? 45 : 0);
 }
 scene.fog = new THREE.Fog(0xc9d6e0, 120, cityFogFar());
 bgScene.fog = new THREE.Fog(0xc9d6e0, 2500, 60000);

@@ -260,7 +260,7 @@ function updateSunPart1() {
   const fogCol = cHor.clone().lerp(cZen, 0.15);
   scene.fog.color.copy(fogCol);
   bgScene.fog.color.copy(fogCol);
-  scene.fog.far = w === 2 ? 230 : w === 1 ? Q.far * 0.8 : cityFogFar();
+  scene.fog.far = w === 2 ? 230 : w === 1 ? viewFar() * 0.8 : cityFogFar();
   scene.fog.near = w === 2 ? 15 : 90;
   bgScene.fog.near = w === 2 ? 300 : w === 1 ? 1000 : 1400;
   bgScene.fog.far = w === 2 ? 900 : w === 1 ? 12000 : 22000;
@@ -1155,6 +1155,7 @@ window.__dbg = {
     return playerHuman;
   },
   AUDIO,
+  ENGINE, // v1.4.45
   STEPS,
   footContacts,
   INTERIORS,

@@ -308,7 +308,10 @@ const AUDIO = (() => {
       if (master) master.gain.value = v;
     },
     update(dt) {
-      if (!ctx) return;
+      if (!ctx) {
+        ENGINE.update(dt, PLAYER.car, 0); // v1.4.45: the gearbox (speedometer) also before the sound starts
+        return;
+      }
       const t = ctx.currentTime;
       const car = PLAYER.car;
       if (car) {
@@ -321,10 +324,14 @@ const AUDIO = (() => {
         eng.frequency.setTargetAtTime(f, t, 0.05);
         eng2.frequency.setTargetAtTime(f * 0.5, t, 0.05);
         engF.frequency.setTargetAtTime(400 + car.ctl.thr * 900 + v * 10, t, 0.1);
-        engG.gain.setTargetAtTime(car.health > 0 ? 0.06 + car.ctl.thr * 0.05 : 0, t, 0.1);
+        engG.gain.setTargetAtTime(0, t, 0.1); // v1.4.45: the engine is now ENGINE (10e_motor.js); this old one stays silent
+        ENGINE.update(dt, car, t);
+        NEAR_ENGINES.update(dt, t);
         skidG.gain.setTargetAtTime(clamp((car.slip - 4) / 10, 0, 0.25) * (car.speed > 5 ? 1 : 0), t, 0.05);
       } else {
         engG.gain.setTargetAtTime(0, t, 0.1);
+        ENGINE.update(dt, null, t);
+        NEAR_ENGINES.update(dt, t); // v1.4.45: the cars around also on foot
         skidG.gain.setTargetAtTime(0, t, 0.05);
       }
       let sd = 1e9;

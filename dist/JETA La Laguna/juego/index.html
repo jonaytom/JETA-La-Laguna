@@ -75,6 +75,12 @@ body.achaman #radioHud{display:none}
 #speed .reading{position:absolute;inset:54% 0 auto;font:700 9px/1 Oswald,sans-serif;letter-spacing:1px}
 #speed .reading b{display:block;font:700 24px/1 Oswald,sans-serif;letter-spacing:0;font-variant-numeric:tabular-nums}
 #speed .bar{display:none}
+/* v1.4.45: gear and revs (automatic gearbox, 10e_motor.js) */
+#gear{position:absolute;inset:27% 0 auto;text-align:center;font:700 13px/1 Oswald,sans-serif;color:var(--speed-accent);letter-spacing:.5px}
+#gear.red{color:#ff4d4d}
+#rpmBar{position:absolute;left:30%;right:30%;top:42%;height:3px;background:#ffffff26;border-radius:2px;overflow:hidden}
+#rpmFill{display:block;height:100%;width:100%;background:var(--speed-accent);transform:scaleX(0);transform-origin:left}
+#rpmBar.red #rpmFill{background:#ff4d4d}
 #speedBar{display:block;width:100%;height:100%;background:var(--speed-accent);transform:scaleX(0);transform-origin:left}
 
 #speed[data-face="basic"]{--speed-face:#202421;--speed-rim:#8b9081;--speed-accent:#e9c771}
@@ -287,7 +293,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <path class="ticks" d="M25.49 70.57L19.36 75.71M21.00 36.48L13.75 33.10M50.00 18.00L50.00 10.00M79.00 36.48L86.25 33.10M74.51 70.57L80.64 75.71" fill="none" stroke-width="2"/><path class="ticks minor" d="M17.92 66.34L14.36 68.16M15.07 58.71L11.19 59.68M14.01 50.63L10.01 50.70M14.79 42.52L10.87 41.68M21.63 27.84L18.48 25.37M27.34 22.02L24.83 18.91M34.22 17.64L32.47 14.05M41.90 14.92L41.00 11.03M58.10 14.92L59.00 11.03M65.78 17.64L67.53 14.05M72.66 22.02L75.17 18.91M78.37 27.84L81.52 25.37M85.21 42.52L89.13 41.68M85.99 50.63L89.99 50.70M84.93 58.71L88.81 59.68M82.08 66.34L85.64 68.16" fill="none" stroke-width="1.25"/>
 <path id="speedNeedle" d="M48 49L50 12L52 49Z" fill="#ffb54d"/><circle class="pivot" cx="50" cy="50" r="3"/></svg>
 <span class="bar" aria-hidden="true"><span id="speedBar"></span></span>
-<span class="reading"><b id="kmh">0</b>km/h</span><span id="veh"></span></div>
+<span class="reading"><b id="kmh">0</b>km/h</span><span id="gear"></span><span id="rpmBar"><span id="rpmFill"></span></span><span id="veh"></span></div>
 <div class="hud" id="toast"></div>
 <div class="hud" id="sub"></div>
 <div class="hud" id="objective"></div>
@@ -328,7 +334,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="fpb big mpd" id="mpA" style="right:110px;bottom:40px;border-color:#ffd400">A</div><div class="fpb big mpd" id="mpB" style="right:20px;bottom:90px;border-color:#ff5252">B</div><div class="fpb big mpd" id="mpC" style="right:110px;bottom:140px;border-color:#5ec8ff">C</div>
 <div class="fpb" id="mpP" style="left:50%;top:8px;margin-left:-28px;width:56px;height:44px;font-size:18px">❚❚</div><div class="fpb mpd" id="mpExit" style="right:14px;top:8px;width:62px;height:38px;font-size:12px">ATRÁS</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">Alpha 1.4.44</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">Alpha 1.4.45</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>

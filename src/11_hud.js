@@ -401,7 +401,8 @@ const SPEED_BY_TYPE = {
 };
 const SPEED_RANGE = { basic: 160, work: 140, street: 200, trail: 200, luxury: 240, sport: 300 };
 let speedRange = SPEED_RANGE.street;
-let lastHp = -1, // v1.4.43
+let lastRpmRed = false, // v1.4.45
+  lastHp = -1, // v1.4.43
   lastStars = -1,
   lastFlash = null,
   lastPrompt = null;
@@ -834,6 +835,22 @@ const HUD = (() => {
         setT('kmh', String(kmh));
         const fraction = Math.min(kmh / speedRange, 1);
         setS('speedNeedle', 'transform', `rotate(${-130 + fraction * 260}deg)`);
+        {
+          // v1.4.45: gear and revs of the automatic gearbox (10e_motor.js)
+          const E = ENGINE.state,
+            P = E.P,
+            rn = P && P.red ? clamp(E.rpm / P.red, 0, 1) : 0;
+          setT('gear', E.label ? (/^\d$/.test(E.label) ? E.label + 'ª' : E.label) : '');
+          setS('rpmFill', 'transform', `scaleX(${rn.toFixed(3)})`);
+          const red = rn > 0.9 && P.kind !== 'ev';
+          if (red !== lastRpmRed) {
+            lastRpmRed = red;
+            const ge = document.getElementById('gear'),
+              rb = document.getElementById('rpmBar');
+            if (ge) ge.classList.toggle('red', red);
+            if (rb) rb.classList.toggle('red', red);
+          }
+        }
         setS('speedBar', 'transform', `scaleX(${fraction})`);
       } else setS('speed', 'display', 'none');
       // prompt (nearest car / door / food stall: linear searches, so not every frame — audit P1.4)

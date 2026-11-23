@@ -38,9 +38,9 @@ function lodAdd(m, detail, lo) {
 function updateCityLOD(force) {
   if (LOD.off) return;
   const { x, z } = camera.position;
-  const fogFar = scene.fog?.far ?? Q.far;
+  const fogFar = scene.fog?.far ?? viewFar();
   treeLOD(x, z, fogFar + 40, force); // v1.4.44: the batched trees
-  const detailFar = fogFar === cityFogFar() ? Q.far : fogFar;
+  const detailFar = fogFar === cityFogFar() ? viewFar() : fogFar;
   const far = fogFar + 40;
   // Let signs, street furniture and facade details register before driving up to them.
   const detail = Math.min(detailFar, (185 + detailFar * 0.21) * distK()); // v1.4.44: distK
@@ -155,7 +155,8 @@ function actorCull(on, cam) {
       dz = oz - pz,
       dy = oy - py,
       d2 = dx * dx + dz * dz + dy * dy;
-    if (d2 > A.r * A.r) {
+    const rk = A.r * visK(); // v1.4.44: how far people and cars are drawn (visK)
+    if (d2 > rk * rk) {
       o.visible = false;
       ACULL.push(o);
       if (main && o.parent === scene) o.matrixWorldAutoUpdate = false;

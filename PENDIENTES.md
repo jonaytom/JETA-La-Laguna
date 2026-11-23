@@ -469,6 +469,9 @@ Los coches nuevos se modelan con la biblioteca de Blender y se prueban con Jonay
   - Jonay, 19-nov, «Atraco en la farmacia»: el fugitivo sigue lento, entra en curvas con giros que parecen de 90° y atraviesa aparcados. Reproducir el tramo en coche de esta misión: revisar la reducción de velocidad por distancia al jugador, la entrada a los cruces y el paso junto a aparcados.
 
 
+### Sonido de los vehículos
+
+
 ### Casas, personaje y vida social
 
 - [ ] ◐ **El pisito alquilado, más grande y con habitaciones** (Jonay, 3-nov: «la casa alquilada debería ser un poquito más
@@ -672,8 +675,8 @@ Los coches nuevos se modelan con la biblioteca de Blender y se prueban con Jonay
   - El auditor dio 14,7 ms de pintado a 720p en media en v1.4.28, frente a 17,8 ms en v1.4.27. Sigue pendiente validar 1080p en alta.
 
 - [ ] ⚡ **Lo que el vigilante tiene que soltar** (v1.4.44, `prueba_congelados.py`): marcar con `userData.noMerge` donde se crean un cilindro en un grupo en X 143, Y 5 y un Object3D en X −188, Y 20, que se mueven después de construir la ciudad.
+- [ ] ⚡ **Franja verde inclinada sobre el horizonte** (23-nov, vista alta desde X −300, Y −600 hacia el noreste, `tests/shots/lejos_comparar.jpg`): una banda de terreno verde, plana e inclinada, asoma por encima de la ciudad a la derecha, como un trozo del paisaje del fondo (`bgScene`) mal colocado. Ya salía antes de la v1.4.44.
 - [ ] ⚡ **Estrellas en rayas** (23-nov, también con WebGL): cerca del horizonte las estrellas salen como rayas que convergen. Usar el «azar» sin seno que ya lleva la versión WebGPU (`skyNodeMat`).
-- [ ] ◐ **Más distancia de dibujado si sobran FPS** (Jonay, 23-nov: «si vamos sobrados de FPS podemos aumentar la distancia de dibujado, que ahora la veo un poco justa, especialmente se nota en las llantas de los coches… pero después de optimizar»): ampliar las distancias de detalle de coches (llantas detalladas de los aparcados y del tráfico: `updateParkedLOD`, `A.dr` de los coches) y de la ciudad (`Q.far`, `updateCityLOD`) en alta, con el margen que dejen las optimizaciones.
 - [~] ◐ v1.4.44 (los árboles proyectan la sombra con su versión simplificada, en una copia que solo ve la cámara de las sombras; la gente y los coches no proyectan sombra a más de 40 y 70 m; `tests/herramientas/foto_sombras.py` compara antes y ahora con el mismo mundo) **Sombras más baratas** (medido el 23-nov, `sonda_webgpu.py --variantes`): era lo que más costaba con los dos motores (apagarlas subía de ~50 a ~59 FPS a 1080p en alta). Falta: redibujar la sombra de lo estático solo cuando el sol se mueve o el jugador cambia de zona.
 - [ ] ⚡ **Sombras suaves como en la r160** (notas de three.js, 23-nov): desde la r186 ya no existe `PCFSoftShadowMap` (el juego lo pedía y three.js pasa a `PCFShadowMap`, avisándolo en la consola). El PCF nuevo hace 5 muestras en disco y su suavidad la da `sun.shadow.radius` (por defecto 1). Probar 2-3 con `foto_sombras.py` contra una foto de la v1.4.42 (r160) y quitar el `PCFSoftShadowMap` de `01_core.js`. Mismo coste.
 - [ ] ⚡ **Mapas de reflejos más pequeños al cargar** (notas de three.js r174): `PMREMGenerator.fromScene()` admite tamaño; `precomputeEnv()` hace 16 al arrancar. Medir el arranque con uno menor y comparar el brillo de coches y cristales.
@@ -742,6 +745,8 @@ Los coches nuevos se modelan con la biblioteca de Blender y se prueban con Jonay
 
 ## Hecho
 
+- [x] v1.4.45 **Un sonido de motor para cada tipo de vehículo** (motor sintetizado por tipo, caja automática en el velocímetro, coches de alrededor con Doppler; el claxon ya era por tipo: `HORNS`)
+- [x] v1.4.44-45 **Más distancia de dibujado** (detalle ×2, visión 1.500 m, gente 255 m, coches 540 m)
 - [x] v1.4.44 **Gente más ligera de lejos** (cuerpo simplificado a más de 35 y 70 m, `humanLoGeo`; ojos y cejas fuera a más de 40 m) y **sombras ligeras de aparcados** (versión lejana) y **de gente** (hasta 25 m). Llamadas de dibujo de ~1.060 a ~735 por fotograma; WebGPU 62-69 FPS, WebGL 52-63.
 - [x] v1.4.44 **Sombreadores de sombra preparados al cargar** (`precompileShadows`, `05w_optimiza.js`): un dibujo con la zona de sombras abarcando todo el mapa y todo visible; la auditoría ya no ve sombreadores `depth` preparados por el camino (antes 2 tirones).
 - [x] v1.4.44 **60 FPS en alta a 1080p**: nubes del cielo precalculadas en una textura (~4 ms menos), posiciones de la ciudad quieta fijadas y huesos de la gente lejana sin recalcular; **WebGPU en pruebas** con `?gpu=webgpu` (cielo y 7 materiales en TSL).

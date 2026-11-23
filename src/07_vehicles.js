@@ -1436,7 +1436,7 @@ function buildParkedPart1() {
 function updateParkedLOD() {
   if (PARKED.batch) return parkedBatchLOD();
   if (!PARKED.chunks) return;
-  const far = Q.far * 0.45 + 60;
+  const far = viewFar() * 0.45 + 60; // v1.4.44: the view distance
   const { x, z } = camera.position;
   for (const c of PARKED.chunks) {
     const dx = c.x - x,
@@ -1838,7 +1838,7 @@ function parkedBatchLOD() {
   if (Math.abs(x - PARKED.bcx) < 8 && Math.abs(z - PARKED.bcz) < 8) return;
   PARKED.bcx = x;
   PARKED.bcz = z;
-  const far = Q.far * 0.45 + 60;
+  const far = viewFar() * 0.45 + 60; // v1.4.44: the view distance
   for (const B of PARKED.batch) {
     const { A, S, slots, plan } = B;
     for (let i = 0; i < slots.length; i++) {
