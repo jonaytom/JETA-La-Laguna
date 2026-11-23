@@ -808,6 +808,7 @@ litCarBodyMat.onBeforeCompile = (shader) => {
       '#include <emissivemap_fragment>\ntotalEmissiveRadiance += vec3(1.0, 0.92, 0.80) * vLampMask * carHeadlightLevel;'
     );
 };
+if (USE_GPU) gpuLazy(litCarBodyMat, (m) => gpuCarLamp(m, headlightLevel)); // v1.4.44
 const kGlassMat = new THREE.MeshStandardMaterial({ color: 0x1e2830, roughness: 0.12, metalness: 0.35 });
 const wheelMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8, metalness: 0.1 });
 function makeOwnCarMesh(model, color) {

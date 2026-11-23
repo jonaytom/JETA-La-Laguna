@@ -1226,9 +1226,12 @@ function buildParkedPart3(template, cc) {
         THREE.ShaderChunk.color_vertex
           .replace('vColor.xyz *= instanceColor.xyz;', 'vColor.xyz *= mix(vec3(1.0), instanceColor.xyz, aPaint);')
           .replace('vColor.rgb *= instanceColor.rgb;', 'vColor.rgb *= mix(vec3(1.0), instanceColor.rgb, aPaint);')
+          // v1.4.44: the same with BatchedMesh (its colour per car)
+          .replace('vColor *= getBatchingColor( getIndirectIndex( gl_DrawID ) );', 'vColor *= mix(vec4(1.0), getBatchingColor( getIndirectIndex( gl_DrawID ) ), aPaint);')
       );
   };
   mat.customProgramCacheKey = () => 'parkedPaint';
+  if (USE_GPU) gpuLazy(mat, gpuParkedPaint); // v1.4.44
   const GEO = {};
   const geoOfModel = (id, wheels) => {
     const key = id + (wheels ? ':' + wheels.id : '');
@@ -1252,6 +1255,7 @@ function buildParkedPart3(template, cc) {
   }
   PARKED.chunks = [];
   const o = new THREE.Object3D();
+  if (!/[?&]sinbatch=1/.test(location.search)) return batchParked(cells, mat, geoOfModel, cc); // v1.4.44
   for (const list of cells.values()) {
     const m = new THREE.InstancedMesh(geoOfModel(list[0].type), mat, list.length);
     let cx = 0,
@@ -1275,6 +1279,21 @@ function buildParkedPart3(template, cc) {
     m.userData.noMerge = true;
     scene.add(m);
     const lod = VMODELS[list[0].type] && VMODELS[list[0].type].lod; // v1.4.3: light version far away (Troceen C33: 11.900 → 1.200 triangles)
+    // v1.4.44 (sombras más baratas): the shadow of the parked cars is cast by their light version (~1.150 triangles
+    // instead of ~12.000), in a copy only the shadow camera sees; it shares the instances (a car taken away hides in both)
+    if (m.castShadow && lod) {
+      const sh = new THREE.InstancedMesh(geoOfModel(lod), mat, list.length);
+      sh.instanceMatrix = m.instanceMatrix;
+      sh.count = m.count;
+      sh.castShadow = true;
+      sh.receiveShadow = false;
+      sh.layers.set(SHADOW_LAYER);
+      sh.computeBoundingSphere();
+      sh.name = 'parkedSombra';
+      sh.matrixAutoUpdate = false;
+      m.add(sh);
+      m.castShadow = false;
+    }
     PARKED.chunks.push({
       mesh: m,
       x: cx / list.length,
@@ -1415,6 +1434,7 @@ function buildParkedPart1() {
   return { lt };
 }
 function updateParkedLOD() {
+  if (PARKED.batch) return parkedBatchLOD();
   if (!PARKED.chunks) return;
   const far = Q.far * 0.45 + 60;
   const { x, z } = camera.position;
@@ -1426,9 +1446,9 @@ function updateParkedLOD() {
     const reach = far + r;
     c.mesh.visible = d2 < reach * reach;
     if (c.lo) {
-      const close = 55 + r;
+      const close = 55 * distK() + r;
       // Keep the same rims while the body switches to the light mesh.
-      const wheelReach = 110 + r;
+      const wheelReach = 110 * distK() + r;
       const geometry = d2 < close * close ? c.hi : d2 < wheelReach * wheelReach ? c.mid : c.lo;
       if (c.mesh.geometry !== geometry) c.mesh.geometry = geometry;
     }
@@ -1457,6 +1477,11 @@ function activateParked(s) {
   if (s.inst) {
     s.inst.setMatrixAt(s.idx, HIDE);
     s.inst.instanceMatrix.needsUpdate = true;
+  }
+  if (s.bm) {
+    // v1.4.44: batched (batchParked)
+    s.bm.setVisibleAt(s.bid, false);
+    if (s.sbm) s.sbm.setVisibleAt(s.sbid, false);
   }
   /* v0.77: instanced */ const c = new Car(null, s.color, s.x, s.z, s.h, VMODELS[s.type]);
   if (s.floor !== undefined) {
@@ -1720,5 +1745,126 @@ function updateTram(dt) {
     /* v0.72: the cutting at Padre Anchieta */ p.rotation.y = Math.atan2(a.x - b.x, a.z - b.z);
     for (let k = -1; k <= 1; k++) TRAM.circ.push([cx + ((a.x - b.x) / L) * k * L * 0.33, cz + ((a.z - b.z) / L) * k * L * 0.33, 1.35]);
     s -= (L + 0.6) * TRAM.dir;
+  }
+}
+
+// v1.4.44 (punto 2, BatchedMesh): the parked cars were one InstancedMesh per model and 80 m cell (~96 draw calls in view).
+// Now all of them are ONE BatchedMesh (the street and the underground car parks): three.js culls car by
+// car and draws them with one multi-draw call. Each car picks its geometry like before (full, light body with the detailed
+// rims past 55 m, light past 110 m) and hides past the same distance; recomputed when the camera moves 8 m. The shadow is
+// cast by a BatchedMesh of the light versions that only the shadow camera sees. The paint (aPaint) mixes the colour per car
+// (getBatchingColor; WebGPU: batchColor in gpuParkedPaint). ?sinbatch=1 for the old instanced cells.
+function batchParked(cells, mat, geoOfModel, cc) {
+  // one BatchedMesh for all (street and underground car parks: the shadow copies only for the street ones), with each
+  // model's geometry indexed (dedupIndex: the templates repeat every vertex per triangle) and copied once
+  const slots = [];
+  for (const list of cells.values()) for (const s of list) slots.push(s);
+  if (!slots.length) return;
+  const o = new THREE.Object3D();
+  PARKED.batch = [];
+  const geos = new Map();
+  const want = (k, mk) => {
+    if (!geos.has(k)) geos.set(k, dedupIndex(mk()));
+    return k;
+  };
+  const plan = slots.map((s) => {
+    const M = VMODELS[s.type],
+      lod = M && M.lod;
+    return {
+      hi: want(s.type, () => geoOfModel(s.type)),
+      mid: lod ? want(lod + '|' + s.type, () => geoOfModel(lod, M)) : null,
+      lo: lod ? want(lod, () => geoOfModel(lod)) : null
+    };
+  });
+  const make = (keys, n) => {
+    let v = 0,
+      ix = 0;
+    for (const k of keys) {
+      v += geos.get(k).attributes.position.count;
+      ix += geos.get(k).index.count;
+    }
+    const bm = new THREE.BatchedMesh(n, v, ix, mat),
+      ids = new Map();
+    for (const k of keys) ids.set(k, bm.addGeometry(geos.get(k)));
+    bm.frustumCulled = false;
+    bm.sortObjects = false;
+    bm.userData.noMerge = true;
+    bm.matrixAutoUpdate = false;
+    scene.add(bm);
+    return { bm, ids };
+  };
+  const A = make([...geos.keys()], slots.length);
+  A.bm.castShadow = false;
+  A.bm.receiveShadow = true;
+  A.bm.name = 'aparcados';
+  const street = slots.filter((s) => s.floor === undefined);
+  const shadowKeys = [...new Set(slots.map((s, i) => (s.floor === undefined ? plan[i].lo || plan[i].hi : null)).filter(Boolean))];
+  const S = shadowKeys.length ? make(shadowKeys, street.length) : null;
+  if (S) {
+    S.bm.castShadow = true;
+    S.bm.receiveShadow = false;
+    S.bm.layers.set(SHADOW_LAYER);
+    S.bm.name = 'aparcadosSombra';
+  }
+  const B = { A, S, slots, plan, lv: new Int8Array(slots.length).fill(-1), vis: new Uint8Array(slots.length).fill(1), r: [] };
+  slots.forEach((s, i) => {
+    o.position.set(s.x, s.y, s.z);
+    o.rotation.set(0, s.h, 0);
+    o.updateMatrix();
+    const p = plan[i];
+    s.bm = A.bm;
+    s.bid = A.bm.addInstance(A.ids.get(p.hi));
+    A.bm.setMatrixAt(s.bid, o.matrix);
+    A.bm.setColorAt(s.bid, cc.set(s.color));
+    if (S && s.floor === undefined) {
+      s.sbm = S.bm;
+      s.sbid = S.bm.addInstance(S.ids.get(p.lo || p.hi));
+      S.bm.setMatrixAt(s.sbid, o.matrix);
+      S.bm.setColorAt(s.sbid, cc);
+    }
+    if (s.alive === false) {
+      A.bm.setVisibleAt(s.bid, false);
+      if (s.sbm) s.sbm.setVisibleAt(s.sbid, false);
+    }
+    const g = geos.get(p.hi);
+    if (!g.boundingSphere) g.computeBoundingSphere();
+    B.r.push(g.boundingSphere.radius);
+  });
+  PARKED.batch.push(B);
+  PARKED.bcx = 1e9;
+}
+function parkedBatchLOD() {
+  const { x, z } = camera.position;
+  if (Math.abs(x - PARKED.bcx) < 8 && Math.abs(z - PARKED.bcz) < 8) return;
+  PARKED.bcx = x;
+  PARKED.bcz = z;
+  const far = Q.far * 0.45 + 60;
+  for (const B of PARKED.batch) {
+    const { A, S, slots, plan } = B;
+    for (let i = 0; i < slots.length; i++) {
+      const s = slots[i];
+      if (s.alive === false) continue;
+      const dx = s.x - x,
+        dz = s.z - z,
+        d2 = dx * dx + dz * dz,
+        r = B.r[i],
+        reach = far + r,
+        vis = d2 < reach * reach ? 1 : 0;
+      if (vis !== B.vis[i]) {
+        B.vis[i] = vis;
+        A.bm.setVisibleAt(s.bid, !!vis);
+        if (s.sbm) s.sbm.setVisibleAt(s.sbid, !!vis);
+      }
+      if (!vis) continue;
+      const p = plan[i];
+      if (!p.lo) continue;
+      const close = 55 * distK() + r,
+        wheel = 110 * distK() + r,
+        lv = d2 < close * close ? 0 : d2 < wheel * wheel ? 1 : 2;
+      if (lv !== B.lv[i]) {
+        B.lv[i] = lv;
+        A.bm.setGeometryIdAt(s.bid, A.ids.get(lv === 0 ? p.hi : lv === 1 ? p.mid : p.lo));
+      }
+    }
   }
 }

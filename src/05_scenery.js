@@ -1064,6 +1064,107 @@ function buildSkyPart2(nR, nA) {
   rg.computeVertexNormals();
   return { rg };
 }
+/** v1.4.44 (medido el 23-nov: el cielo costaba ~4 ms por fotograma a 1080p con la RX 6600): the clouds' fbm (5 octaves of
+ *  value noise, 10 evaluations per pixel of the whole screen) baked once into a tiling texture: 32 lattice units per
+ *  tile, the same hash and octaves (×2 instead of ×2.03, so that it tiles). The sky samples it twice per pixel. */
+function skyNoiseTex() {
+  if (SKY.noise) return SKY.noise;
+  const N = 512,
+    P = 32,
+    fr = (v) => v - Math.floor(v);
+  const h = (x, y) => fr(Math.sin(x * 127.1 + y * 311.7) * 43758.5453);
+  const noise = (x, y, per) => {
+    const ix = Math.floor(x),
+      iy = Math.floor(y);
+    let fx = x - ix,
+      fy = y - iy;
+    fx = fx * fx * (3 - 2 * fx);
+    fy = fy * fy * (3 - 2 * fy);
+    const m = (v) => ((v % per) + per) % per,
+      x0 = m(ix),
+      x1 = m(ix + 1),
+      y0 = m(iy),
+      y1 = m(iy + 1);
+    const a = h(x0, y0),
+      b = h(x1, y0),
+      c = h(x0, y1),
+      d = h(x1, y1);
+    return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
+  };
+  const data = new Uint8Array(N * N * 4);
+  for (let j = 0; j < N; j++)
+    for (let i = 0; i < N; i++) {
+      let v = 0,
+        a = 0.5,
+        f = 1;
+      for (let o = 0; o < 5; o++) {
+        v += a * noise(((i + 0.5) / N) * P * f, ((j + 0.5) / N) * P * f, P * f);
+        a *= 0.5;
+        f *= 2;
+      }
+      const k = (j * N + i) * 4;
+      data[k] = data[k + 1] = data[k + 2] = Math.round(v * 255);
+      data[k + 3] = 255;
+    }
+  const t = new THREE.DataTexture(data, N, N, THREE.RGBAFormat);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.magFilter = THREE.LinearFilter;
+  t.minFilter = THREE.LinearMipmapLinearFilter;
+  t.generateMipmaps = true;
+  t.colorSpace = THREE.NoColorSpace;
+  t.needsUpdate = true;
+  return (SKY.noise = t);
+}
+/** v1.4.44: the same sky in TSL for WebGPU (the GLSL above does not run there). Same uniforms object, so updateSun()
+ * keeps writing SKY.mat.uniforms.* */
+function skyNodeMat(u) {
+  const T = THREE.TSL;
+  const { Fn, uniform, vec2, vec3, float, positionLocal, normalize, max, dot, pow, mix, smoothstep, step, fract, sin, floor } = T;
+  const sunDir = uniform(u.sunDir.value),
+    zen = uniform(u.zen.value),
+    hor = uniform(u.hor.value),
+    uNight = uniform(0).onRenderUpdate(() => u.uNight.value),
+    uTime = uniform(0).onRenderUpdate(() => u.uTime.value),
+    uCloud = uniform(0.55).onRenderUpdate(() => u.uCloud.value);
+  const h = (p) => fract(sin(dot(p, vec2(127.1, 311.7))).mul(43758.5453));
+  const n = (p) => {
+    const i = floor(p),
+      f0 = fract(p),
+      f = f0.mul(f0).mul(float(3).sub(f0.mul(2)));
+    return mix(mix(h(i), h(i.add(vec2(1, 0))), f.x), mix(h(i.add(vec2(0, 1))), h(i.add(vec2(1, 1))), f.x), f.y);
+  };
+  const noiseT = skyNoiseTex(),
+    fbm = (p) => T.texture(noiseT, p.div(32.0)).r; // v1.4.44: baked (skyNoiseTex)
+  // (plain node expressions, no Fn: there is no control flow, and an inline Fn with return warns in three.js r187)
+  const color = (() => {
+    const d = normalize(positionLocal),
+      y = max(d.y, 0),
+      day = float(1).sub(uNight);
+    let col = mix(hor, zen, pow(y, 0.55));
+    const sd = max(dot(d, sunDir), 0);
+    col = col.add(vec3(1.0, 0.75, 0.45).mul(pow(sd, 8.0)).mul(0.35).mul(day));
+    col = col.add(vec3(1.0, 0.95, 0.85).mul(smoothstep(0.9993, 0.9997, sd)).mul(6.0).mul(day).mul(step(-0.02, sunDir.y)));
+    // stars
+    // (a hash without sin for the stars: in WGSL sin() of the big numbers here loses precision and they come out as streaks)
+    const sp = d.xz.div(d.y.add(0.3)).mul(180.0),
+      p3a = fract(vec3(floor(sp).x, floor(sp).y, floor(sp).x).mul(0.1031)),
+      p3 = p3a.add(dot(p3a, p3a.yzx.add(33.33))),
+      hs = fract(p3.x.add(p3.y).mul(p3.z));
+    col = col.add(vec3(step(0.997, hs)).mul(uNight).mul(0.8).mul(y));
+    // cloud deck (y, not d.y, below: under the horizon the weight is 0 anyway and the division stays finite)
+    const cp = d.xz.div(y.add(0.08)).mul(1.3).add(vec2(uTime.mul(0.004), uTime.mul(0.002)));
+    const c = smoothstep(float(1).sub(uCloud), float(1.35).sub(uCloud), fbm(cp));
+    let cc = mix(vec3(0.95, 0.95, 0.97), vec3(0.55, 0.58, 0.62), fbm(cp.mul(2.0).add(3.0)).mul(0.8));
+    cc = mix(cc, hor.mul(1.05), 0.25).mul(mix(1.0, 0.12, uNight));
+    cc = cc.add(vec3(1.0, 0.6, 0.3).mul(pow(sd, 4.0)).mul(0.35).mul(day));
+    col = mix(col, cc, c.mul(smoothstep(0.0, 0.18, d.y)));
+    return mix(hor, col, smoothstep(-0.05, 0.08, d.y));
+  })();
+  const m = new THREE.GPU.MeshBasicNodeMaterial({ side: THREE.BackSide, depthWrite: false, fog: false });
+  m.colorNode = color;
+  m.uniforms = u;
+  return m;
+}
 /** (v1.1.7, code quality) part of buildSky: stars */
 function buildSkyPart1() {
   const g = new THREE.SphereGeometry(80000, 48, 24);
@@ -1077,6 +1178,7 @@ function buildSkyPart1() {
       uTime: U.uTime,
       uCloud: { value: 0.55 },
       zen: { value: new THREE.Color() },
+      uNoise: { value: skyNoiseTex() }, // v1.4.44
       hor: { value: new THREE.Color() }
     },
     vertexShader:
@@ -1084,7 +1186,7 @@ function buildSkyPart1() {
     fragmentShader: `varying vec3 vD; uniform vec3 sunDir; uniform float uNight; uniform float uTime; uniform float uCloud; uniform vec3 zen; uniform vec3 hor;
       float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
       float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
-      float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*n(p);p*=2.03;a*=.5;}return v;}
+      uniform sampler2D uNoise; float fbm(vec2 p){ return texture2D(uNoise, p / 32.0).r; } // v1.4.44: baked (skyNoiseTex)
       void main(){ vec3 d=normalize(vD); float y=max(d.y,0.0);
         vec3 col = mix(hor, zen, pow(y,0.55));
         float sd = max(dot(d,sunDir),0.0);
@@ -1105,8 +1207,8 @@ function buildSkyPart1() {
         #include <colorspace_fragment>
       }`
   });
-  SKY.mat = m;
-  const sky = new THREE.Mesh(g, m);
+  SKY.mat = USE_GPU ? skyNodeMat(m.uniforms) : m;
+  const sky = new THREE.Mesh(g, SKY.mat);
   sky.frustumCulled = false;
   sky.renderOrder = -10;
   bgScene.add(sky);

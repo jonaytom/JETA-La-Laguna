@@ -118,6 +118,58 @@ const HCOL = {
   hair: [0x1a1410, 0x2e1f14, 0x4a3020, 0x6b4a2b, 0x9c7a4a, 0xc9a86a, 0x8c8c8c, 0xd9d4cc, 0x101010, 0x7a2e18]
 };
 const humanMats = {};
+// v1.4.44 (FPS: each body is ~12.600 triangles, drawn whole up to 170 m): a light version of each body geometry, made once
+// by joining the vertices closer than 3 cm (by clothing region: aReg, so the colours of the clothes keep their edges),
+// keeping the skeleton weights, the UVs and the body-type morphs. actorCull (05w_optimiza.js) uses it past 35 m, where
+// 3 cm are well under a pixel at 1080p, and a lighter one (6 cm) past 70 m.
+const HUM_LO = [new WeakMap(), new WeakMap()];
+function humanLoGeo(g, far = false) {
+  const cache = HUM_LO[far ? 1 : 0],
+    cell = far ? 0.06 : 0.03; // past 70 m, 6 cm (still under a pixel there)
+  let lo = cache.get(g);
+  if (lo) return lo;
+  const P = g.attributes.position,
+    R = g.attributes.aReg,
+    n = P.count,
+    map = new Int32Array(n),
+    reps = [],
+    keys = new Map();
+  for (let i = 0; i < n; i++) {
+    const k = Math.floor(P.getX(i) / cell) + ',' + Math.floor(P.getY(i) / cell) + ',' + Math.floor(P.getZ(i) / cell) + ',' + (R ? R.getX(i) : 0);
+    let r = keys.get(k);
+    if (r === undefined) {
+      r = reps.length;
+      reps.push(i);
+      keys.set(k, r);
+    }
+    map[i] = r;
+  }
+  const I = g.index ? g.index.array : null,
+    tri = [];
+  const nIdx = I ? I.length : n;
+  for (let t = 0; t + 2 < nIdx; t += 3) {
+    const a = map[I ? I[t] : t],
+      b = map[I ? I[t + 1] : t + 1],
+      c = map[I ? I[t + 2] : t + 2];
+    if (a !== b && b !== c && a !== c) tri.push(a, b, c);
+  }
+  const pick = (attr) => {
+    const sz = attr.itemSize,
+      src = attr.array,
+      dst = new src.constructor(reps.length * sz);
+    for (let j = 0; j < reps.length; j++) for (let q = 0; q < sz; q++) dst[j * sz + q] = src[reps[j] * sz + q];
+    return new THREE.BufferAttribute(dst, sz, attr.normalized);
+  };
+  lo = new THREE.BufferGeometry();
+  for (const k in g.attributes) lo.setAttribute(k, pick(g.attributes[k]));
+  for (const k in g.morphAttributes) lo.morphAttributes[k] = g.morphAttributes[k].map(pick);
+  lo.morphTargetsRelative = g.morphTargetsRelative;
+  lo.setIndex(reps.length < 65536 ? new THREE.Uint16BufferAttribute(tri, 1) : new THREE.Uint32BufferAttribute(tri, 1));
+  lo.boundingSphere = g.boundingSphere ? g.boundingSphere.clone() : null;
+  lo.userData.tris = tri.length / 3;
+  cache.set(g, lo);
+  return lo;
+}
 function skinMaterial(texKey, cloth, sleeve, longPants) {
   const m = new THREE.MeshStandardMaterial({ map: HUM.tex[texKey], roughness: 0.75, metalness: 0 });
   m.userData.u = {
@@ -154,6 +206,7 @@ function skinMaterial(texKey, cloth, sleeve, longPants) {
       );
   };
   m.customProgramCacheKey = () => 'jetaSkin';
+  if (USE_GPU) gpuLazy(m, gpuSkin); // v1.4.44
   return m;
 }
 // v1.0.0: a height in metres drawn from the real spread (Jonay's table, % per 8 cm band from under 152 cm to 192 cm and up)
@@ -201,7 +254,7 @@ function makeHumanSkinned(o = {}) {
     thin: o.thin,
     build: bt
   };
-  ACTORS.set(root, { r: 170, dr: 40, thr: 0.07 }); // v1.0.0: not drawn past 170 m (about 10 pixels tall at 1080p), small parts not past 40 m
+  ACTORS.set(root, { r: 170, dr: 40, thr: 0.07, sd: 25, body: bodyMesh, bodyHi: bodyMesh && bodyMesh.geometry }); // v1.0.0: not drawn past 170 m (about 10 pixels tall at 1080p), small parts not past 40 m; v1.4.44: no shadow past 25 m (sd)
   const H = {
     look,
     root,

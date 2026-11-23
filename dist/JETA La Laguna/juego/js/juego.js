@@ -631,11 +631,29 @@ function heightAt(x, z) {
   return (fx + fz <= 1 ? h00 + (h10 - h00) * fx + (h01 - h00) * fz : h11 + (h01 - h11) * (1 - fx) + (h10 - h11) * (1 - fz)) / 10;
 }
 
-// A phase-based 60 FPS ceiling for the independent 3D and 2D render loops.
-function makeFrameGate() {
-  const interval = 1000 / 60;
+// A phase-based FPS ceiling for the independent 3D and 2D render loops (60 by default).
+// v1.4.44 (Jonay, 23-nov: «para pruebas quita el cap a 60, eso es solo para el juego, y para móvil lo pondría a 30»):
+// fpsCap() is the ceiling: none in our tests (window.__JETA_TEST: the measurements see the real speed), 30 for the city
+// on phones and tablets (battery and heat), 60 on PC. ?fps=N in the address forces it (0 = none).
+// v1.4.44 (Jonay: «el limitador de FPS lo podemos poner como una opción del juego, por defecto a 60… con una barra que
+// puedas desplazar hasta 144»): the city follows SETTINGS.fps (Opciones, 30–144; 60 on PC and 30 on phones by default),
+// read on every frame, so the bar applies at once. The 2D minigames keep 60.
+function fpsCap(kind) {
+  // kind: 'city' (the 3D world: the Opciones bar) or anything else (2D minigames: 60)
+  const m = /[?&]fps=(\d+)/.exec(location.search);
+  if (m) return +m[1];
+  if (window.__JETA_TEST) return 0;
+  if (kind !== 'city') return 60;
+  if (typeof SETTINGS !== 'undefined' && SETTINGS.fps) return SETTINGS.fps;
+  return IS_TOUCH ? 30 : 60;
+}
+function makeFrameGate(fps = fpsCap('2d')) {
+  const get = typeof fps === 'function' ? fps : () => fps;
   let next = -Infinity;
   return (now) => {
+    const f = get();
+    if (!f) return true;
+    const interval = 1000 / f;
     if (now + 0.35 < next) return false;
     // Skip missed slots on slow frames or after switching tabs. Never catch them up with extra renders.
     if (now - next >= interval) next = now;
@@ -649,7 +667,7 @@ const QUALITY = {
   baja: { pr: 0.75, shadow: 0, far: 520, peds: 12, traffic: 10, trees: 0.5 },
   media: { pr: 1, shadow: 1024, far: 800, peds: 20, traffic: 17, trees: 0.8 },
   movil: { pr: 1, shadow: 0, far: 600, peds: 14, traffic: 11, trees: 0.6 },
-  alta: { pr: 1.5, shadow: 2048, far: 1150, peds: 30, traffic: 24, trees: 1 }
+  alta: { pr: 1.5, shadow: 2048, far: 1150, peds: 30, traffic: 24, trees: 1, dist: 2 } // v1.4.44: dist ×2 (distK): measured, still over 60 FPS
 };
 const IS_TOUCH = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
 const QKEY = IS_TOUCH ? 'gtall_qm' : 'gtall_q';
@@ -670,8 +688,30 @@ try {
   }
 }
 
+// v1.4.44 (Jonay, 23-nov: «si vamos sobrados de FPS aumentaremos la distancia de dibujado hasta que quede en los 60…
+// se nota en las llantas de los coches»): one knob for the detail distances (full parked cars and their rims, full tree
+// crowns, city details, small parts of cars and people, full bodies): distK() multiplies them. Per quality (Q.dist, 1 by
+// default); ?dist=X in the address forces it (to measure).
+const DIST_URL = (() => {
+  const m = /[?&]dist=([\d.]+)/.exec(location.search);
+  return m ? +m[1] : null;
+})();
+function distK() {
+  return DIST_URL ?? (Q.dist || 1);
+}
 // ---------- renderer
-const renderer = new THREE.WebGLRenderer({ antialias: !IS_TOUCH, powerPreference: 'high-performance' });
+// v1.4.44 (Jonay, 23-nov: «sigamos con webgpu a ver si lo adaptamos y rinde mejor»): with ?gpu=webgpu the game runs on
+// three.js's WebGPURenderer (THREE.GPU, from the joint bundle of tools/juntar_three_gpu.py); without it, WebGL as always.
+// Under WebGPU the materials with onBeforeCompile are drawn without their extra (pending: port them to TSL)
+// v1.4.44: also chosen in Opciones (Motor gráfico, saved as 'jeta_motor'; ?gpu=webgl forces WebGL)
+const USE_GPU =
+  !/[?&]gpu=webgl/.test(location.search) &&
+  (/[?&]gpu=webgpu/.test(location.search) || (() => { try { return localStorage.getItem('jeta_motor') === 'webgpu'; } catch (e) { return false; } })()) &&
+  !!(THREE.GPU && navigator.gpu);
+const renderer = USE_GPU
+  ? new THREE.GPU.WebGPURenderer({ antialias: !IS_TOUCH, powerPreference: 'high-performance' })
+  : new THREE.WebGLRenderer({ antialias: !IS_TOUCH, powerPreference: 'high-performance' });
+if (USE_GPU) await renderer.init();
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, Q.pr));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -681,7 +721,7 @@ renderer.shadowMap.enabled = Q.shadow > 0;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.autoClear = false;
 $('game').appendChild(renderer.domElement);
-const MAXANI = renderer.capabilities.getMaxAnisotropy();
+const MAXANI = USE_GPU ? renderer.getMaxAnisotropy() : renderer.capabilities.getMaxAnisotropy();
 
 const ACTORS = new Map();
 const ACULL = []; // v1.0.0: people, cars and rooms drawn only up to a distance (actorCull, 05w_optimiza.js)
@@ -714,6 +754,9 @@ if (Q.shadow) {
 }
 const SH = 95;
 Object.assign(sun.shadow.camera, { left: -SH, right: SH, top: SH, bottom: -SH, near: 10, far: 700 });
+// v1.4.44: objects only the shadow camera sees (the low versions of the trees that cast their shadow: 05w_optimiza.js)
+const SHADOW_LAYER = 1;
+sun.shadow.camera.layers.enable(SHADOW_LAYER);
 sun.shadow.bias = -0.0004;
 sun.shadow.normalBias = 0.6;
 scene.add(sun);
@@ -1912,6 +1955,7 @@ function stoneWorld(mat, darkOnly, amt = 0.9) {
   };
   mat.customProgramCacheKey = () => 'stoneWorld' + (darkOnly ? 1 : 0); // v1.4.2: amt as a uniform (one program, not one per strength)
   mat.needsUpdate = true;
+  if (USE_GPU) gpuLazy(mat, (m) => gpuStoneWorld(m, darkOnly, amt)); // v1.4.44: the same in TSL (02b_gpu_nodos.js)
 }
 const PLASTER = { on: { value: 0 }, det: null, n1: null, n2: null };
 const TEXW = { value: 1 }; // v1.4.1: 0 turns off the photo grain of stoneWorld/plasterWorld (before/after photos: foto_texturas.py)
@@ -1973,7 +2017,262 @@ function plasterWorld(mat, kind = 1, amt = 1.1, tag = 'enlucido', tile = 3.2) {
   };
   mat.customProgramCacheKey = () => 'plasterWorld'; // v1.4.2: kind, strength and tile as uniforms (one program)
   mat.needsUpdate = true;
+  if (USE_GPU) gpuLazy(mat, (m) => gpuPlasterWorld(m, kind, amt, tile)); // v1.4.44
   return mat;
+}
+
+// ---------- v1.4.44 (Jonay, 23-nov: «sigamos con webgpu»): the extras that the WebGL materials get with onBeforeCompile,
+// written again in TSL (three.js nodes) for the WebGPURenderer (?gpu=webgpu, 01_core.js). WebGPU turns every material
+// into its node version copying all its properties (NodeLibrary.fromMaterial), so these functions only add node
+// properties (colorNode, maskNode…) or a setupDiffuseColor of its own to the same material: WebGL ignores them and the
+// GLSL path stays exactly as it was. Each one mirrors the GLSL next to it (02_textures.js, 04_world.js, 06a_humans.js,
+// 06b_vmodels.js, 07_vehicles.js); when one changes, the other must change too.
+
+/** the values that change while playing (night, plaster loaded, texture switch, cuttings) as ONE shared uniform each, in
+ *  the render group: three.js refreshes those on every render, also for the objects recorded in a BundleGroup (05w_optimiza.js),
+ *  whose own per-object uniforms are not refreshed (the windows did not light up at night inside the bundles) */
+const GPU_SHARED = {};
+function gpuShared(name, init, get, type) {
+  if (!GPU_SHARED[name]) {
+    const T = THREE.TSL;
+    GPU_SHARED[name] = (type ? T.uniform(init, type) : T.uniform(init)).setGroup(T.renderGroup).onRenderUpdate(get);
+  }
+  return GPU_SHARED[name];
+}
+/** fn(nodeMaterial) runs when WebGPU builds the material (not at load: the textures and tables it reads may not exist
+ *  yet). Several per material add up (cutAware over stoneWorld). */
+function gpuLazy(mat, fn) {
+  mat.__gpuInits = (mat.__gpuInits || []).concat(fn);
+  mat.setup = function (builder) {
+    if (!this.__gpuDone) {
+      this.__gpuDone = true;
+      for (const f of this.__gpuInits) f(this);
+    }
+    return Object.getPrototypeOf(this).setup.call(this, builder);
+  };
+}
+/** the base setupDiffuseColor of the node material, then f() (like code after «#include <color_fragment>») */
+function gpuAfterDiffuse(mat, f) {
+  const prev = mat.setupDiffuseColor;
+  mat.setupDiffuseColor = function (builder) {
+    prev.call(this, builder);
+    f(builder);
+  };
+}
+/** f() first (the discards of the cuttings), then whatever setupDiffuseColor the material had */
+function gpuBeforeDiffuse(mat, f) {
+  const prev = mat.setupDiffuseColor;
+  mat.setupDiffuseColor = function (builder) {
+    f(builder);
+    prev.call(this, builder);
+  };
+}
+/** world position and normal by axis: the plane a wall «looks at» (stoneWorld, plasterWorld) */
+function gpuWorldUV() {
+  const { positionWorld, normalWorld, abs, select } = THREE.TSL;
+  const an = abs(normalWorld);
+  return select(an.y.greaterThan(0.7), positionWorld.xz, select(an.x.greaterThan(an.z), positionWorld.zy, positionWorld.xy));
+}
+/** stoneWorld (02_textures.js) */
+function gpuStoneWorld(mat, darkOnly, amt) {
+  const T = THREE.TSL;
+  const uAmt = T.uniform(amt),
+    uTexW = gpuShared('texW', 1, () => TEXW.value);
+  gpuAfterDiffuse(mat, () => {
+    const st = T.texture(TEX.basalt, gpuWorldUV().div(2.0)).rgb.div(0.13);
+    const base = T.diffuseColor.rgb.toVar();
+    const k = darkOnly ? T.smoothstep(0.42, 0.22, T.dot(base, T.vec3(0.333))) : T.float(1);
+    T.diffuseColor.rgb.assign(base.mul(T.mix(T.vec3(1), T.clamp(st, 0.0, 2.6), uAmt.mul(k).mul(uTexW))));
+  });
+}
+/** plasterWorld (02_textures.js) */
+function gpuPlasterWorld(mat, kind, amt, tile) {
+  const T = THREE.TSL;
+  const uPl = T.vec3(kind === 0 ? 1 : 0, kind === 1 ? 1 : 0, kind === 2 ? 1 : 0),
+    plOn = gpuShared('plOn', 0, () => PLASTER.on.value),
+    uTexW = gpuShared('texW', 1, () => TEXW.value);
+  gpuAfterDiffuse(mat, () => {
+    const pd = T.dot(T.texture(PLASTER.det, gpuWorldUV().mul(1 / tile)).rgb, uPl);
+    T.diffuseColor.rgb.mulAssign(T.mix(T.float(1), pd.sub(0.5).mul(amt).add(1), plOn.mul(uTexW)));
+  });
+}
+/** the façade material with the atlas (04_world.js, makeMaterials) */
+function gpuFacade(fm) {
+  const T = THREE.TSL;
+  const { float, vec2, vec3, vec4, uv, attribute, texture, fract, floor, select, mix, dot, sin, step, dFdx, dFdy, cross, normalize, max, sqrt, inverseSqrt } = T;
+  const uNight = gpuShared('night', 0, () => U.uNight.value),
+    plOn = gpuShared('plOn', 0, () => PLASTER.on.value),
+    uSty = T.uniformArray(
+      FSTY.map((d) => new THREE.Vector2(d[0], d[1])),
+      'vec2'
+    );
+  const hsh = (p) => fract(sin(dot(p, vec2(12.9898, 78.233))).mul(43758.5453));
+  const vF = uv(),
+    vCol = attribute('aCol', 'vec3'),
+    vEx = attribute('aEx', 'vec2');
+  const fl = floor(vF.y),
+    cl = fract(vF),
+    row = select(fl.lessThan(0.5), float(0), float(1)),
+    aid = vEx.x,
+    acol = select(aid.lessThan(7.5), aid, aid.sub(8.0)),
+    aband = select(aid.lessThan(7.5), float(2), float(0));
+  const auv = vec2(acol.add(cl.x).div(8.0), aband.add(row).add(cl.y).mul(0.25));
+  const gx = dFdx(vF).mul(vec2(1 / 8, 0.25)),
+    gy = dFdy(vF).mul(vec2(1 / 8, 0.25));
+  const tc = texture(TEX.facade, auv).grad(gx, gy),
+    mk = texture(TEX.facadeMask, auv).grad(gx, gy);
+  const puv = vF.mul(uSty.element(T.int(T.clamp(aid, 0.0, 15.0)))).div(3.2).add(vec2(vEx.y.mul(0.37), vEx.y.mul(0.61)));
+  const pk = hsh(vec2(vEx.y.mul(7.3), 2.1)),
+    pw = select(pk.lessThan(0.45), vec3(1, 0, 0), select(pk.lessThan(0.86), vec3(0, 1, 0), vec3(0, 0, 1)));
+  const pd = dot(texture(PLASTER.det, puv).rgb, pw),
+    pa = mk.r.mul(plOn);
+  const lit = step(0.55, hsh(floor(vF).add(vec2(vEx.y.mul(13.1), vEx.y))));
+  fm.colorNode = vec4(mix(tc.rgb, tc.rgb.mul(vCol), mk.r).mul(mix(float(1), pd.sub(0.5).mul(1.3).add(1), pa)), tc.a);
+  fm.roughnessNode = mix(T.materialRoughness, 0.12, mk.g);
+  fm.metalnessNode = mix(T.materialMetalness, 0.6, mk.g.mul(0.6));
+  fm.emissiveNode = mk.g.mul(lit).mul(uNight).mul(vec3(1.0, 0.72, 0.42)).mul(2.1);
+  // plaster normal maps, laid by derivatives (no tangents), like the GLSL
+  {
+    const pn1 = texture(PLASTER.n1, puv),
+      pn2 = texture(PLASTER.n2, puv);
+    const nxy = vec2(dot(pw, vec3(pn1.r, pn1.b, pn2.g)), dot(pw, vec3(pn1.g, pn2.r, pn2.b))).mul(2.0).sub(1.0).mul(pa.mul(0.9));
+    const N = T.normalView,
+      q0 = dFdx(T.positionView),
+      q1 = dFdy(T.positionView),
+      st0 = dFdx(puv),
+      st1 = dFdy(puv);
+    const q1p = cross(q1, N),
+      q0p = cross(N, q0);
+    const Tn = q1p.mul(st0.x).add(q0p.mul(st1.x)),
+      Bn = q1p.mul(st0.y).add(q0p.mul(st1.y));
+    const sc = inverseSqrt(max(max(dot(Tn, Tn), dot(Bn, Bn)), 1e-20));
+    fm.normalNode = normalize(Tn.mul(nxy.x.mul(sc)).add(Bn.mul(nxy.y.mul(sc))).add(N.mul(sqrt(max(0.0, float(1).sub(dot(nxy, nxy)))))));
+  }
+}
+/** the open cuttings and ramps (04_world.js): writes the loops into the shader being built (call it inside a setup
+ *  hook) and returns a bool var, true where the fragment must go. p: world xz; y: world height or null (the terrain: no
+ *  height test) */
+function gpuCutHole(p, y) {
+  const T = THREE.TSL;
+  const { int, ivec2, vec2, float, bool, If, Loop, Break, Continue, textureLoad, floor, clamp, dot, max, mix } = T;
+  const uGrpN = gpuShared('grpN', 0, () => TCUT_U.n.value, 'int');
+  {
+    const hole = bool(false).toVar();
+    const cgc = ivec2(floor(p.sub(vec2(CG.x0, CG.z0)).div(CG.s)));
+    const inGrid = cgc.x.greaterThanEqual(0).and(cgc.y.greaterThanEqual(0)).and(cgc.x.lessThan(CG.nx)).and(cgc.y.lessThan(CG.nz));
+    If(inGrid, () => {
+      If(textureLoad(CG_TEX, cgc, int(0)).r.greaterThan(0.5), () => {
+        Loop({ start: int(0), end: int(NGRP), type: 'int', condition: '<', name: 'g' }, ({ g }) => {
+          If(g.greaterThanEqual(uGrpN), () => Break());
+          const B = textureLoad(TCUT_TEX, ivec2(g, 2), int(0));
+          If(p.x.lessThan(B.x).or(p.y.lessThan(B.y)).or(p.x.greaterThan(B.z)).or(p.y.greaterThan(B.w)), () => Continue());
+          const rg = textureLoad(TCUT_TEX, ivec2(g, 3), int(0));
+          Loop({ start: int(rg.x), end: int(rg.y), type: 'int', condition: '<', name: 'k' }, ({ k }) => {
+            const c = textureLoad(TCUT_TEX, ivec2(k, 0), int(0)),
+              cw = textureLoad(TCUT_TEX, ivec2(k, 1), int(0));
+            if (y) If(cw.w.lessThan(-1e8), () => Continue());
+            const ab = c.zw.sub(c.xy),
+              t = clamp(dot(p.sub(c.xy), ab).div(max(dot(ab, ab), 1e-3)), 0.0, 1.0),
+              q = c.xy.add(ab.mul(t)).sub(p);
+            const r = y ? cw.x.sub(0.1) : cw.x;
+            let cond = dot(q, q).lessThan(r.mul(r));
+            if (y) cond = cond.and(y.greaterThan(mix(cw.y, cw.z, t).add(0.8))).and(y.lessThan(cw.w));
+            If(cond, () => {
+              hole.assign(true);
+              Break();
+            });
+          });
+          If(hole, () => Break());
+        });
+      });
+    });
+    return hole;
+  }
+}
+/** cutAware (04_world.js): streets, pavements and lines over an open cutting are not drawn */
+function gpuCutAware(mat) {
+  gpuBeforeDiffuse(mat, () => {
+    const { positionWorld, If, Discard } = THREE.TSL;
+    If(gpuCutHole(positionWorld.xz, positionWorld.y), () => Discard());
+  });
+}
+/** the terrain (04_world.js, buildTerrain): cuttings, photo grain, detail, the paved mask; earth colour seen from below */
+function gpuTerrain(m, mtex) {
+  const T = THREE.TSL;
+  const { vec3, float, texture, clamp, mix, dot, max, smoothstep, uv, If, frontFacing, positionGeometry } = T;
+  const vW = positionGeometry.xz;
+  gpuBeforeDiffuse(m, () => T.If(gpuCutHole(vW, null), () => T.Discard()));
+  gpuAfterDiffuse(m, () => {
+    const bc = T.diffuseColor.rgb.toVar();
+    const gr = clamp(bc.g.sub(max(bc.r, bc.b)).mul(9.0), 0.0, 1.0);
+    const tg = texture(TEX.grass, vW.div(4.0)).rgb.div(vec3(0.0966, 0.1814, 0.0409));
+    const td = texture(TEX.dirt, vW.div(4.0)).rgb.div(vec3(0.2304, 0.1488, 0.0828));
+    let ph = mix(td, tg, gr);
+    ph = mix(vec3(dot(ph, vec3(0.3333))), ph, 0.35);
+    const d1 = texture(TEX.detail, vW.div(7.0)).r,
+      d2 = texture(TEX.detail, vW.div(53.0)).g;
+    const c1 = bc.mul(mix(vec3(1), clamp(ph, 0.0, 2.5), 0.85)).mul(d1.mul(0.15).add(d2.mul(0.55)).add(0.62).mul(0.95));
+    const pm = texture(mtex, uv()).r;
+    const pv = texture(TEX.paving, vW.div(4.0)).rgb.mul(vec3(1.0, 0.98, 0.95));
+    T.diffuseColor.rgb.assign(mix(c1, pv.mul(mix(0.8, 1.0, pm)), smoothstep(0.3, 0.8, pm)));
+    If(frontFacing.not(), () => T.diffuseColor.rgb.assign(vec3(0.16, 0.12, 0.09)));
+  });
+}
+/** the people's clothes (06a_humans.js, skinMaterial) */
+function gpuSkin(m) {
+  const T = THREE.TSL;
+  const { float, int, vec2, vec3, uniform, uniformArray, attribute, uv, positionGeometry, floor, fract, sin, dot, abs, If, select, bool } = T;
+  const u = m.userData.u;
+  const uCloth = uniformArray(u.uCloth.value, 'color'),
+    uSleeve = uniform(u.uSleeve.value),
+    uLong = uniform(u.uLong.value),
+    uJacket = uniform(u.uJacket.value),
+    uBelt = uniform(u.uBelt.value),
+    uSole = uniform(u.uSole.value);
+  gpuAfterDiffuse(m, () => {
+    const rg = int(attribute('aReg', 'float').add(0.5)).toVar(),
+      vB = positionGeometry;
+    const cloth = rg
+      .greaterThan(0)
+      .and(rg.equal(2).and(uSleeve.lessThan(0.5)).not())
+      .and(rg.equal(4).and(uLong.lessThan(0.5)).not())
+      .or(uJacket.w.greaterThan(0.5).and(rg.equal(1).or(rg.equal(2))));
+    If(cloth, () => {
+      const cc = vec3(
+        select(rg.equal(1), uCloth.element(1), select(rg.equal(2), uCloth.element(2), select(rg.equal(3), uCloth.element(3), select(rg.equal(4), uCloth.element(4), uCloth.element(5)))))
+      ).toVar();
+      const grain = float(0.9)
+        .add(fract(sin(dot(floor(uv().mul(256.0)), vec2(12.99, 78.23))).mul(43758.5)).mul(0.1))
+        .toVar();
+      If(uJacket.w.greaterThan(0.5).and(rg.equal(2).or(rg.equal(1).and(abs(vB.x).lessThan(0.075).and(vB.z.greaterThan(0.0)).not()))), () => {
+        cc.assign(uJacket.xyz);
+        If(rg.equal(1).and(abs(abs(vB.x).sub(0.08)).lessThan(0.008)).and(vB.z.greaterThan(0.0)), () => cc.mulAssign(0.6));
+      });
+      If(rg.equal(3).and(uBelt.w.greaterThan(0.0)).and(abs(vB.y.sub(uBelt.w)).lessThan(0.028)), () => {
+        cc.assign(uBelt.xyz);
+        grain.assign(1.0);
+      });
+      If(rg.equal(3).or(rg.equal(4)), () => grain.mulAssign(sin(vB.x.mul(900.0).add(vB.y.mul(40.0))).mul(0.06).add(0.94)));
+      If(rg.equal(5).and(vB.y.lessThan(0.035)), () => cc.assign(uSole));
+      T.diffuseColor.rgb.assign(cc.mul(grain));
+    });
+  });
+}
+/** the headlights of the Blender cars glow at night (06b_vmodels.js, litCarBodyMat) */
+function gpuCarLamp(mat, level) {
+  const T = THREE.TSL;
+  const lv = gpuShared('headlights', 0, () => level.value);
+  mat.emissiveNode = T.materialEmissive.add(T.vec3(1.0, 0.92, 0.8).mul(T.attribute('lampMask', 'float')).mul(lv));
+}
+/** parked cars (07_vehicles.js): the instance colour paints only the vertices flagged as paint (aPaint) */
+function gpuParkedPaint(mat) {
+  const T = THREE.TSL;
+  mat.setupDiffuseColor = function (builder) {
+    // (v1.4.44: batched parked cars carry their colour in batchColor, the old instanced cells in instanceColor)
+    const per = builder.object && builder.object.isBatchedMesh ? T.batchColor.rgb : T.instanceColor;
+    const paint = T.mix(T.vec3(1), per, T.attribute('aPaint', 'float'));
+    T.diffuseColor.assign(T.vec4(T.materialColor.rgb.mul(T.vertexColor().rgb).mul(paint), 1.0));
+  };
 }
 
 // ============ static collision grid ============
@@ -2365,6 +2664,7 @@ const MAT = {};
         '#include <emissivemap_fragment>\ntotalEmissiveRadiance += mk.g * lit * uNight * vec3(1.0, 0.72, 0.42) * 2.1;'
       );
   };
+  if (USE_GPU) gpuLazy(fm, gpuFacade); // v1.4.44: the same in TSL (02b_gpu_nodos.js)
   MAT.facade = fm;
   MAT.roofTile = new THREE.MeshStandardMaterial({
     map: TEX.roofTile,
@@ -2708,6 +3008,7 @@ function cutAware(mat) {
   };
   mat.customProgramCacheKey = () => (prevKey ? prevKey() : '') + '|cut';
   mat.needsUpdate = true;
+  if (USE_GPU) gpuLazy(mat, gpuCutAware); // v1.4.44
 }
 function buildTerrain() {
   const { g, m, mtex } = buildTerrainPart1();
@@ -2763,6 +3064,7 @@ function buildTerrain() {
         diffuseColor.rgb = mix(diffuseColor.rgb, pv * mix(0.8, 1.0, pm), smoothstep(0.3, 0.8, pm));`
       );
   };
+  if (USE_GPU) gpuLazy(m, (mm) => gpuTerrain(mm, mtex)); // v1.4.44
   const mesh = new THREE.Mesh(g, m);
   mesh.receiveShadow = true;
   scene.add(mesh);
@@ -13185,6 +13487,107 @@ function buildSkyPart2(nR, nA) {
   rg.computeVertexNormals();
   return { rg };
 }
+/** v1.4.44 (medido el 23-nov: el cielo costaba ~4 ms por fotograma a 1080p con la RX 6600): the clouds' fbm (5 octaves of
+ *  value noise, 10 evaluations per pixel of the whole screen) baked once into a tiling texture: 32 lattice units per
+ *  tile, the same hash and octaves (×2 instead of ×2.03, so that it tiles). The sky samples it twice per pixel. */
+function skyNoiseTex() {
+  if (SKY.noise) return SKY.noise;
+  const N = 512,
+    P = 32,
+    fr = (v) => v - Math.floor(v);
+  const h = (x, y) => fr(Math.sin(x * 127.1 + y * 311.7) * 43758.5453);
+  const noise = (x, y, per) => {
+    const ix = Math.floor(x),
+      iy = Math.floor(y);
+    let fx = x - ix,
+      fy = y - iy;
+    fx = fx * fx * (3 - 2 * fx);
+    fy = fy * fy * (3 - 2 * fy);
+    const m = (v) => ((v % per) + per) % per,
+      x0 = m(ix),
+      x1 = m(ix + 1),
+      y0 = m(iy),
+      y1 = m(iy + 1);
+    const a = h(x0, y0),
+      b = h(x1, y0),
+      c = h(x0, y1),
+      d = h(x1, y1);
+    return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
+  };
+  const data = new Uint8Array(N * N * 4);
+  for (let j = 0; j < N; j++)
+    for (let i = 0; i < N; i++) {
+      let v = 0,
+        a = 0.5,
+        f = 1;
+      for (let o = 0; o < 5; o++) {
+        v += a * noise(((i + 0.5) / N) * P * f, ((j + 0.5) / N) * P * f, P * f);
+        a *= 0.5;
+        f *= 2;
+      }
+      const k = (j * N + i) * 4;
+      data[k] = data[k + 1] = data[k + 2] = Math.round(v * 255);
+      data[k + 3] = 255;
+    }
+  const t = new THREE.DataTexture(data, N, N, THREE.RGBAFormat);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.magFilter = THREE.LinearFilter;
+  t.minFilter = THREE.LinearMipmapLinearFilter;
+  t.generateMipmaps = true;
+  t.colorSpace = THREE.NoColorSpace;
+  t.needsUpdate = true;
+  return (SKY.noise = t);
+}
+/** v1.4.44: the same sky in TSL for WebGPU (the GLSL above does not run there). Same uniforms object, so updateSun()
+ * keeps writing SKY.mat.uniforms.* */
+function skyNodeMat(u) {
+  const T = THREE.TSL;
+  const { Fn, uniform, vec2, vec3, float, positionLocal, normalize, max, dot, pow, mix, smoothstep, step, fract, sin, floor } = T;
+  const sunDir = uniform(u.sunDir.value),
+    zen = uniform(u.zen.value),
+    hor = uniform(u.hor.value),
+    uNight = uniform(0).onRenderUpdate(() => u.uNight.value),
+    uTime = uniform(0).onRenderUpdate(() => u.uTime.value),
+    uCloud = uniform(0.55).onRenderUpdate(() => u.uCloud.value);
+  const h = (p) => fract(sin(dot(p, vec2(127.1, 311.7))).mul(43758.5453));
+  const n = (p) => {
+    const i = floor(p),
+      f0 = fract(p),
+      f = f0.mul(f0).mul(float(3).sub(f0.mul(2)));
+    return mix(mix(h(i), h(i.add(vec2(1, 0))), f.x), mix(h(i.add(vec2(0, 1))), h(i.add(vec2(1, 1))), f.x), f.y);
+  };
+  const noiseT = skyNoiseTex(),
+    fbm = (p) => T.texture(noiseT, p.div(32.0)).r; // v1.4.44: baked (skyNoiseTex)
+  // (plain node expressions, no Fn: there is no control flow, and an inline Fn with return warns in three.js r187)
+  const color = (() => {
+    const d = normalize(positionLocal),
+      y = max(d.y, 0),
+      day = float(1).sub(uNight);
+    let col = mix(hor, zen, pow(y, 0.55));
+    const sd = max(dot(d, sunDir), 0);
+    col = col.add(vec3(1.0, 0.75, 0.45).mul(pow(sd, 8.0)).mul(0.35).mul(day));
+    col = col.add(vec3(1.0, 0.95, 0.85).mul(smoothstep(0.9993, 0.9997, sd)).mul(6.0).mul(day).mul(step(-0.02, sunDir.y)));
+    // stars
+    // (a hash without sin for the stars: in WGSL sin() of the big numbers here loses precision and they come out as streaks)
+    const sp = d.xz.div(d.y.add(0.3)).mul(180.0),
+      p3a = fract(vec3(floor(sp).x, floor(sp).y, floor(sp).x).mul(0.1031)),
+      p3 = p3a.add(dot(p3a, p3a.yzx.add(33.33))),
+      hs = fract(p3.x.add(p3.y).mul(p3.z));
+    col = col.add(vec3(step(0.997, hs)).mul(uNight).mul(0.8).mul(y));
+    // cloud deck (y, not d.y, below: under the horizon the weight is 0 anyway and the division stays finite)
+    const cp = d.xz.div(y.add(0.08)).mul(1.3).add(vec2(uTime.mul(0.004), uTime.mul(0.002)));
+    const c = smoothstep(float(1).sub(uCloud), float(1.35).sub(uCloud), fbm(cp));
+    let cc = mix(vec3(0.95, 0.95, 0.97), vec3(0.55, 0.58, 0.62), fbm(cp.mul(2.0).add(3.0)).mul(0.8));
+    cc = mix(cc, hor.mul(1.05), 0.25).mul(mix(1.0, 0.12, uNight));
+    cc = cc.add(vec3(1.0, 0.6, 0.3).mul(pow(sd, 4.0)).mul(0.35).mul(day));
+    col = mix(col, cc, c.mul(smoothstep(0.0, 0.18, d.y)));
+    return mix(hor, col, smoothstep(-0.05, 0.08, d.y));
+  })();
+  const m = new THREE.GPU.MeshBasicNodeMaterial({ side: THREE.BackSide, depthWrite: false, fog: false });
+  m.colorNode = color;
+  m.uniforms = u;
+  return m;
+}
 /** (v1.1.7, code quality) part of buildSky: stars */
 function buildSkyPart1() {
   const g = new THREE.SphereGeometry(80000, 48, 24);
@@ -13198,6 +13601,7 @@ function buildSkyPart1() {
       uTime: U.uTime,
       uCloud: { value: 0.55 },
       zen: { value: new THREE.Color() },
+      uNoise: { value: skyNoiseTex() }, // v1.4.44
       hor: { value: new THREE.Color() }
     },
     vertexShader:
@@ -13205,7 +13609,7 @@ function buildSkyPart1() {
     fragmentShader: `varying vec3 vD; uniform vec3 sunDir; uniform float uNight; uniform float uTime; uniform float uCloud; uniform vec3 zen; uniform vec3 hor;
       float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
       float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
-      float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*n(p);p*=2.03;a*=.5;}return v;}
+      uniform sampler2D uNoise; float fbm(vec2 p){ return texture2D(uNoise, p / 32.0).r; } // v1.4.44: baked (skyNoiseTex)
       void main(){ vec3 d=normalize(vD); float y=max(d.y,0.0);
         vec3 col = mix(hor, zen, pow(y,0.55));
         float sd = max(dot(d,sunDir),0.0);
@@ -13226,8 +13630,8 @@ function buildSkyPart1() {
         #include <colorspace_fragment>
       }`
   });
-  SKY.mat = m;
-  const sky = new THREE.Mesh(g, m);
+  SKY.mat = USE_GPU ? skyNodeMat(m.uniforms) : m;
+  const sky = new THREE.Mesh(g, SKY.mat);
   sky.frustumCulled = false;
   sky.renderOrder = -10;
   bgScene.add(sky);
@@ -24586,10 +24990,11 @@ function updateCityLOD(force) {
   if (LOD.off) return;
   const { x, z } = camera.position;
   const fogFar = scene.fog?.far ?? Q.far;
+  treeLOD(x, z, fogFar + 40, force); // v1.4.44: the batched trees
   const detailFar = fogFar === cityFogFar() ? Q.far : fogFar;
   const far = fogFar + 40;
   // Let signs, street furniture and facade details register before driving up to them.
-  const detail = Math.min(detailFar, 185 + detailFar * 0.21);
+  const detail = Math.min(detailFar, (185 + detailFar * 0.21) * distK()); // v1.4.44: distK
   if (!force && Math.abs(x - LOD.cx) < 8 && Math.abs(z - LOD.cz) < 8 && far === LOD.far && detail === LOD.det) return;
   LOD.cx = x;
   LOD.cz = z;
@@ -24618,7 +25023,7 @@ function updateCityLOD(force) {
       const reach = limit + it.r;
       it.m.visible = d2 < reach * reach;
       if (it.lo) {
-        const close = 210 + it.r;
+        const close = 210 * distK() + it.r;
         const g = d2 > close * close ? it.lo : it.hi;
         if (it.m.geometry !== g) it.m.geometry = g;
       }
@@ -24661,10 +25066,13 @@ function lodShowAll() {
 // v1.0.0 (sonda de pintado con GPU en «alta»: lo que pesa son las ~2.000 llamadas de las piezas sueltas, sobre todo gente
 // y coches, que se pintaban también a 600–1.000 m, donde miden 2–3 píxeles): people, cars and the rooms of the interiors
 // are not drawn past a distance (only during the render: the game logic still sees them as they are). Map: root → metres.
+const SHCULL = []; // v1.4.44: actor meshes whose shadow was switched off for this render (far)
 function actorCull(on, cam) {
   if (!on) {
     for (const o of ACULL) o.visible = true;
     ACULL.length = 0;
+    for (const m of SHCULL) m.castShadow = true;
+    SHCULL.length = 0;
     return;
   }
   if (ACULL.length) actorCull(false);
@@ -24672,24 +25080,78 @@ function actorCull(on, cam) {
     px = p.x,
     pz = p.z,
     py = p.y;
+  // v1.4.44: a far or hidden actor keeps matrixWorldAutoUpdate = false from one frame to the next, so three.js does not walk
+  // its ~65 bones every frame (~9.000 bones of ~140 people were recomposed each frame); the distance is taken from its own
+  // position (its matrixWorld may be old), and when it comes near again its matrices are brought up to date here, before
+  // it is drawn. Only with the game camera (not the photos' or the shadows')
+  const main = !cam || cam === camera;
   for (const [o, A] of ACTORS) {
-    if (!o.visible || !o.parent) continue;
-    const e = o.matrixWorld.elements,
-      dx = e[12] - px,
-      dz = e[14] - pz,
-      dy = e[13] - py,
+    if (!o.parent) continue;
+    if (!o.visible) {
+      if (main) o.matrixWorldAutoUpdate = false;
+      continue;
+    }
+    let ox, oy, oz;
+    if (o.parent === scene) {
+      ox = o.position.x;
+      oy = o.position.y;
+      oz = o.position.z;
+    } else {
+      const e = o.matrixWorld.elements;
+      ox = e[12];
+      oy = e[13];
+      oz = e[14];
+    }
+    const dx = ox - px,
+      dz = oz - pz,
+      dy = oy - py,
       d2 = dx * dx + dz * dz + dy * dy;
     if (d2 > A.r * A.r) {
       o.visible = false;
       ACULL.push(o);
+      if (main && o.parent === scene) o.matrixWorldAutoUpdate = false;
       continue;
     }
+    if (!o.matrixWorldAutoUpdate) {
+      o.matrixWorldAutoUpdate = true;
+      o.updateMatrixWorld(true);
+    }
+    // v1.4.44: people past 35 m with their light body (06a_humans.js, humanLoGeo)
+    if (main && A.body && A.bodyHi) {
+      const dk = distK(),
+        lv = window.__nivelCuerpo ?? (d2 <= 35 * 35 * dk * dk ? 0 : d2 > 70 * 70 * dk * dk ? 2 : 1); // (tests: __nivelCuerpo forces 0, 1 or 2)
+      const g = lv === 0 ? A.bodyHi : humanLoGeo(A.bodyHi, lv === 2);
+      if (A.body.geometry !== g) A.body.geometry = g;
+    }
+    // v1.4.44 (sombras más baratas): people cast no shadow past 25 m and cars past 70 m (a few pixels of shadow there;
+    // each person is ~12.600 skinned triangles in the shadow pass). Only for the game camera; put back after the render like the rest
+    const sd = A.sd || A.dr; // shadow distance: people 25 m (sd), cars 70 m (their detail distance)
+    if (main && sd && d2 > sd * sd && !window.__sombrasCompletas) {
+      if (!A.sh) {
+        A.sh = [];
+        o.traverse((m) => {
+          if (m.castShadow) A.sh.push(m);
+        });
+      }
+      for (const m of A.sh)
+        if (m.castShadow) {
+          m.castShadow = false;
+          SHCULL.push(m);
+        }
+    }
     // small parts (eyes, brows, watch… of people; lights and plate of cars) only from close by: each one is a draw call
-    if (A.dr && d2 > A.dr * A.dr) {
+    const drk = A.dr * distK(); // v1.4.44
+    if (A.dr && d2 > drk * drk) {
       if (!A.det) {
         A.det = [];
         o.traverse((m) => {
-          if (m === o || !m.isMesh || m.isSkinnedMesh) return;
+          if (m === o || !m.isMesh) return;
+          // v1.4.44: the skinned eyes and brows of the people too (only their body casts a shadow): they were drawn up to
+          // 170 m, two draw calls per person, a pixel or less there
+          if (m.isSkinnedMesh) {
+            if (!m.castShadow) A.det.push(m);
+            return;
+          }
           const g = m.geometry;
           if (!g.boundingSphere) g.computeBoundingSphere();
           if (g.boundingSphere.radius * m.scale.x < A.thr) A.det.push(m);
@@ -24944,7 +25406,15 @@ function mergeStaticsPart1() {
 }
 // one InstancedMesh per 250 m cell (big ones only): the camera can then skip what it doesn't see
 function splitInstanced() {
-  const list = scene.children.filter((o) => o.isInstancedMesh && o.visible && o.frustumCulled && o.count >= 48 && !o.userData.noMerge);
+  let list = scene.children.filter((o) => o.isInstancedMesh && o.visible && o.frustumCulled && o.count >= 48 && !o.userData.noMerge);
+  // v1.4.44: the trees go into BatchedMesh (batchTrees, below) instead of one InstancedMesh per type and 250 m cell
+  if (!/[?&]sinbatch=1/.test(location.search)) {
+    const trees = list.filter((o) => o.userData.tree);
+    if (trees.length) {
+      batchTrees(trees);
+      list = list.filter((o) => !o.userData.tree);
+    }
+  }
   const mtx = new THREE.Matrix4(),
     cc = new THREE.Color();
   let made = 0;
@@ -24974,6 +25444,22 @@ function splitInstanced() {
       m.name = 'inst';
       m.matrixAutoUpdate = false;
       m.updateMatrix();
+      // v1.4.44 (sombras más baratas): the shadow of a tree is cast by its low version (the far crown/trunk, few
+      // triangles), in a copy only the shadow camera sees (layer SHADOW_LAYER); the tree you see keeps its detail. The
+      // copy shares the instances and hangs from the tree's cell, so it hides with it
+      if (im.castShadow && im.userData.lo) {
+        const sh = new THREE.InstancedMesh(im.userData.lo, im.material, l.length);
+        sh.instanceMatrix = m.instanceMatrix;
+        sh.count = m.count;
+        sh.castShadow = true;
+        sh.receiveShadow = false;
+        sh.layers.set(SHADOW_LAYER);
+        sh.computeBoundingSphere(); // culled by the shadow camera with its own bounds (the cell's trees)
+        sh.name = 'instSombra';
+        sh.matrixAutoUpdate = false;
+        m.add(sh);
+        m.castShadow = false;
+      }
       scene.add(m);
       lodAdd(m, small && !im.userData.tree, im.userData.lo);
       made++;
@@ -24987,9 +25473,423 @@ function optimizeCity() {
   const a = mergeStatics(),
     b = splitInstanced();
   updateCityLOD(true);
-  const r = Object.assign({}, a, b);
+  const r = Object.assign({}, a, b, freezeStatics(), buildBundles());
   console.log('optimiza', JSON.stringify(r));
   return r;
+}
+
+// v1.4.44 (medido el 23-nov: «matrices de lo que no se mueve»): every frame three.js walked ~31.600 objects and recomposed
+// the matrices of ~13.700 of them (~4 ms of the processor, with WebGL and WebGPU alike), although the city does not move.
+// When the city is built (end of optimizeCity: no cars, people or tram yet), everything in the scene gets its matrix fixed
+// (matrixAutoUpdate = false) and the subtrees with nothing moving inside are not walked any more (matrixWorldAutoUpdate =
+// false). Left alone: the lights, the doors (DOORMARKS), what is marked userData.noMerge (it moves) and skinned bodies.
+// Safety net (thawStep, each frame, a slice of the list): if something frozen is moved by code or gets a new child, it is
+// thawed for good and noted in FREEZE.thawed (the tests list them: they should be marked noMerge at their source).
+const FREEZE = { list: [], groups: [], i: 0, j: 0, thawed: [], n: 0, sub: 0 };
+function freezeStatics() {
+  const t0 = performance.now();
+  scene.updateMatrixWorld(true);
+  const doors = new Set(typeof DOORMARKS !== 'undefined' ? DOORMARKS.map((k) => k.m) : []);
+  const lodSwap = new Set(LOD.items.filter((it) => it.lo).map((it) => it.m));
+  const walk = (o) => {
+    if (o.isLight || o === sun.target || o.isCamera || o.isBone || o.isSkinnedMesh || doors.has(o) || (o.userData && o.userData.noMerge)) return false;
+    let all = true;
+    for (const c of o.children) if (!walk(c)) all = false;
+    o.updateMatrix();
+    o.matrixAutoUpdate = false;
+    // three.js r183+ (Object3D.static, WebGPURenderer only): a static object skips the per-frame state checks of its
+    // render objects. Not for the meshes whose geometry the LOD swaps (trees: near/far crowns)
+    if (!lodSwap.has(o)) o.static = true;
+    FREEZE.list.push(o);
+    if (all) {
+      o.matrixWorldAutoUpdate = false;
+      FREEZE.sub++;
+    }
+    if (o.children.length) FREEZE.groups.push([o, o.children.length]);
+    return all;
+  };
+  for (const c of scene.children) walk(c);
+  FREEZE.n = FREEZE.list.length;
+  return { congelados: FREEZE.n, sin_recorrer: FREEZE.sub, congelar_ms: Math.round(performance.now() - t0) };
+}
+const _fzM = new THREE.Matrix4();
+function thawObject(o, why) {
+  if (o.userData._thawed) return;
+  o.userData._thawed = true;
+  o.matrixAutoUpdate = true;
+  o.static = false;
+  for (let p = o.parent; p && p !== scene; p = p.parent) if (p.isBundleGroup) p.needsUpdate = true; // its draws are recorded: again
+  for (let p = o; p && p !== scene; p = p.parent) p.matrixWorldAutoUpdate = true;
+  if (FREEZE.thawed.length < 200) {
+    const w = o.getWorldPosition(new THREE.Vector3()),
+      g = o.geometry;
+    FREEZE.thawed.push(
+      (o.name || o.type) +
+        (o.parent && o.parent !== scene ? ' en ' + (o.parent.name || o.parent.type) : '') +
+        (g ? ' ' + g.type + (g.attributes.position ? '/' + g.attributes.position.count + 'v' : '') : '') +
+        ' X ' + Math.round(w.x) + ', Y ' + Math.round(w.z) + ' (' + why + ')'
+    );
+  }
+}
+/** a slice of the frozen objects per frame (the whole list in ~1 s at 60 FPS): moved ones are thawed */
+function thawStep() {
+  const L = FREEZE.list,
+    n = L.length;
+  if (!n) return;
+  const k = Math.min(n, Math.ceil(n / 60));
+  for (let c = 0; c < k; c++) {
+    if (FREEZE.i >= n) FREEZE.i = 0;
+    const o = L[FREEZE.i++];
+    if (o.matrixAutoUpdate) continue;
+    _fzM.compose(o.position, o.quaternion, o.scale);
+    const a = _fzM.elements,
+      b = o.matrix.elements;
+    for (let e = 0; e < 16; e++)
+      if (a[e] !== b[e]) {
+        thawObject(o, 'se mueve');
+        o.updateMatrix();
+        o.updateMatrixWorld(true);
+        break;
+      }
+  }
+  const G = FREEZE.groups,
+    m = G.length;
+  for (let c = 0, kg = Math.min(m, Math.ceil(m / 60)); c < kg; c++) {
+    if (FREEZE.j >= m) FREEZE.j = 0;
+    const g = G[FREEZE.j++];
+    if (g[0].children.length !== g[1]) {
+      g[1] = g[0].children.length;
+      for (let p = g[0]; p && p !== scene; p = p.parent) p.matrixWorldAutoUpdate = true;
+      if (FREEZE.thawed.length < 200) FREEZE.thawed.push((g[0].name || g[0].type) + ' (hijos nuevos)');
+    }
+  }
+}
+
+// v1.4.44 (Jonay, 23-nov: «sí, móntalo»; probado desde la sonda: WebGPU de 48 / 69 / 39 FPS a 56 / 66 / 58 en casco /
+// Menceyes / TF-5): with WebGPU (only: WebGL has no render bundles) the frozen, static city goes into one BundleGroup per
+// 250 m cell. three.js records its draws once (a GPU render bundle per camera) and replays them: almost no processor
+// per object. A bundle does not cull per object (it is recorded once), so its pieces are not culled and the whole cell
+// is switched off instead when neither the camera nor the shadow area sees it (bundleStep, every render). When what is
+// visible inside a cell changes (the city's LOD hides and shows pieces with the distance), that cell is recorded again.
+// Left out: the trees (their crowns change with the distance), what is transparent, the road marks (they need their
+// drawing order) and what moves. ?sinbundle=1 to measure
+// without them.
+const BUNDLES = { list: [], F: new THREE.Frustum(), FS: new THREE.Frustum(), M: new THREE.Matrix4(), regrab: 0 };
+function buildBundles() {
+  if (!USE_GPU || !THREE.GPU || !THREE.GPU.BundleGroup || /[?&]sinbundle=1/.test(location.search)) return {};
+  const t0 = performance.now(),
+    cells = new Map(),
+    box = new THREE.Box3(),
+    c = new THREE.Vector3();
+  const lodSwap = new Set(LOD.items.filter((it) => it.lo).map((it) => it.m));
+  let n = 0;
+  for (const o of [...scene.children]) {
+    // the trees' cells (their crown changes with the distance: the cell is recorded again then, see bundleStep) come in too
+    const tree = lodSwap.has(o);
+    if (o.matrixWorldAutoUpdate || !(o.static || tree) || o.isLight || !(o.isMesh || o.isGroup)) continue;
+    let ok = true;
+    o.traverse((q) => {
+      const ms = q.material ? (Array.isArray(q.material) ? q.material : [q.material]) : [];
+      // bundles are drawn before everything else: out stays what must be drawn after what lies under it (road marks:
+      // renderOrder, polygonOffset, no depth write; tried twice: with polygonOffset in, the marks vanished under their road
+      // in WebGPU), what is transparent or skinned
+      const order = q.renderOrder !== 0 || ms.some((m) => m.polygonOffset);
+      if ((lodSwap.has(q) && q !== o) || q.isSkinnedMesh || order || ms.some((m) => m.transparent || !m.depthWrite)) ok = false;
+    });
+    if (!ok) continue;
+    box.setFromObject(o);
+    if (box.isEmpty()) continue;
+    box.getCenter(c);
+    const k = Math.floor(c.x / 250) + ',' + Math.floor(c.z / 250);
+    let b = cells.get(k);
+    if (!b) {
+      b = new THREE.GPU.BundleGroup();
+      b.name = 'bundle ' + k;
+      b.matrixAutoUpdate = false;
+      b.matrixWorldAutoUpdate = false;
+      b.userData.box = new THREE.Box3();
+      b.userData.sig = -1;
+      cells.set(k, b);
+      scene.add(b);
+      BUNDLES.list.push(b);
+    }
+    b.add(o);
+    o.traverse((q) => (q.frustumCulled = false));
+    b.userData.box.union(box);
+    n++;
+  }
+  return { bundles: BUNDLES.list.length, en_bundles: n, bundles_ms: Math.round(performance.now() - t0) };
+}
+/** before each render of the city: cells seen by the camera or by the sun's shadow area on, the rest off; a cell whose
+ *  visible pieces changed is recorded again */
+function bundleStep(cam) {
+  const L = BUNDLES.list;
+  if (!L.length) return;
+  const { F, FS, M } = BUNDLES,
+    sc = sun.shadow.camera;
+  F.setFromProjectionMatrix(M.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse));
+  const sh = sun.castShadow && renderer.shadowMap.enabled;
+  if (sh) FS.setFromProjectionMatrix(M.multiplyMatrices(sc.projectionMatrix, sc.matrixWorldInverse));
+  for (const b of L) {
+    const bx = b.userData.box;
+    b.visible = F.intersectsBox(bx) || (sh && FS.intersectsBox(bx));
+    if (!b.visible) continue;
+    // which pieces are visible (and with which geometry): a cheap signature
+    const ch = b.children;
+    let sig = ch.length;
+    for (let i = 0; i < ch.length; i++) if (ch[i].visible) sig = (sig * 31 + i + 1 + (ch[i].geometry ? ch[i].geometry.id * 7 : 0)) % 1000000007;
+    if (sig !== b.userData.sig) {
+      if (b.userData.sig !== -1) BUNDLES.regrab++;
+      b.userData.sig = sig;
+      b.needsUpdate = true;
+    }
+  }
+}
+
+// v1.4.44 (punto 4, auditoría: «se preparan 2 shaders por el camino (depth): cada uno da un tirón la primera vez»): the
+// shadow (depth) shaders are prepared when a kind of shadow caster first enters the sun's shadow area while playing. At
+// the end of the loading, one render with the shadow area covering the whole map and everything shown (every cell of the
+// city and of the trees, their shadow copies, the warm-up people under the map, cars) prepares them all at once, behind
+// the loading screen. Everything is put back right after.
+function precompileShadows() {
+  if (!sun.castShadow || !renderer.shadowMap.enabled) return;
+  const t0 = performance.now(),
+    sc = sun.shadow.camera,
+    keep = { l: sc.left, r: sc.right, t: sc.top, b: sc.bottom, n: sc.near, f: sc.far, p: sun.position.clone(), tg: sun.target.position.clone() },
+    hidden = [];
+  scene.traverse((o) => {
+    if (!o.visible && (o.isMesh || o.isGroup || o.isBundleGroup)) {
+      o.visible = true;
+      hidden.push(o);
+    }
+  });
+  const big = 6000;
+  Object.assign(sc, { left: -big, right: big, top: big, bottom: -big, near: 1, far: 12000 });
+  sc.updateProjectionMatrix();
+  sun.target.position.set(0, 0, 0);
+  sun.position.copy(sun.target.position).addScaledVector(sun.position.clone().sub(keep.tg).normalize(), 5000);
+  sun.target.updateMatrixWorld();
+  sun.updateMatrixWorld();
+  LOD.off = true;
+  const was = renderer.shadowMap.autoUpdate;
+  renderer.shadowMap.autoUpdate = true;
+  renderer.shadowMap.needsUpdate = true;
+  try {
+    renderer.render(scene, camera);
+  } catch (e) {
+    console.error('precompileShadows', e);
+  }
+  renderer.shadowMap.autoUpdate = was;
+  LOD.off = false;
+  for (const o of hidden) o.visible = false;
+  Object.assign(sc, { left: keep.l, right: keep.r, top: keep.t, bottom: keep.b, near: keep.n, far: keep.f });
+  sc.updateProjectionMatrix();
+  sun.position.copy(keep.p);
+  sun.target.position.copy(keep.tg);
+  sun.target.updateMatrixWorld();
+  sun.updateMatrixWorld();
+  updateCityLOD(true);
+  console.log('sombras precompiladas', Math.round(performance.now() - t0), 'ms');
+}
+
+// v1.4.44 (punto 2, BatchedMesh; Jonay: «dale caña a todo»): the trees were one InstancedMesh per kind and per 250 m cell:
+// ~211 draw calls in view. Now all the trees of a material (bark, leaves…) are ONE BatchedMesh: three.js culls tree by tree
+// and draws them all with one multi-draw call. Each tree picks its geometry (near crown or the light far one, past 210 m)
+// and whether it is drawn (the same distance as the city, by the fog), recomputed when the camera moves 8 m (treeLOD). The
+// shadow is cast by another BatchedMesh with the light crowns that only the shadow camera sees. Out of the WebGPU bundles
+// (noMerge: it culls per tree every render). ?sinbatch=1 to measure without it.
+const TREEB = { sets: [], cx: 1e9, cz: 1e9, far: -1, n: 0 };
+function batchTrees(ims) {
+  const byMat = new Map();
+  for (const im of ims) {
+    if (!byMat.has(im.material)) byMat.set(im.material, []);
+    byMat.get(im.material).push(im);
+  }
+  const mtx = new THREE.Matrix4(),
+    col = new THREE.Color(),
+    sph = new THREE.Sphere();
+  for (const [mat, list] of byMat) {
+    // geometries (near and far) with the same attributes, indexed: what BatchedMesh needs
+    const gs = new Set();
+    for (const im of list) {
+      gs.add(im.geometry);
+      if (im.userData.lo) gs.add(im.userData.lo);
+    }
+    let common = null;
+    for (const g of gs) {
+      const k = Object.keys(g.attributes);
+      common = common ? common.filter((q) => k.includes(q)) : k;
+    }
+    if (!common.includes('normal')) common.push('normal');
+    const prep = new Map();
+    let V = 0,
+      I = 0,
+      N = 0;
+    for (const g of gs) {
+      const c = new THREE.BufferGeometry();
+      if (!g.attributes.normal) g.computeVertexNormals();
+      for (const k of common) c.setAttribute(k, g.attributes[k]);
+      const ci = dedupIndex(c);
+      ci.computeBoundingSphere();
+      prep.set(g, ci);
+      V += ci.attributes.position.count;
+      I += ci.index.count;
+    }
+    for (const im of list) N += im.count;
+    const shadow = list.some((im) => im.castShadow);
+    const make = (geos) => {
+      const bm = new THREE.BatchedMesh(N, V, I, mat);
+      const ids = new Map();
+      for (const g of geos) ids.set(g, bm.addGeometry(prep.get(g)));
+      bm.frustumCulled = false; // the whole city: culled tree by tree (perObjectFrustumCulled)
+      bm.sortObjects = false;
+      bm.userData.noMerge = true;
+      bm.matrixAutoUpdate = false;
+      return { bm, ids };
+    };
+    const A = make([...gs]);
+    A.bm.castShadow = false;
+    A.bm.receiveShadow = list[0].receiveShadow;
+    A.bm.name = 'arbolesBatch';
+    const S = shadow ? make([...new Set(list.map((im) => im.userData.lo || im.geometry))]) : null;
+    if (S) {
+      S.bm.castShadow = true;
+      S.bm.receiveShadow = false;
+      S.bm.layers.set(SHADOW_LAYER);
+      S.bm.name = 'arbolesBatchSombra';
+    }
+    const set = { A, S, id: [], sid: [], hi: [], lo: [], x: [], z: [], r: [], vis: [], far: [] };
+    for (const im of list) {
+      im.updateMatrixWorld(true);
+      const hi = A.ids.get(im.geometry),
+        lo = im.userData.lo ? A.ids.get(im.userData.lo) : hi;
+      const r0 = prep.get(im.geometry).boundingSphere.radius;
+      for (let i = 0; i < im.count; i++) {
+        im.getMatrixAt(i, mtx);
+        mtx.premultiply(im.matrixWorld);
+        const id = A.bm.addInstance(hi);
+        A.bm.setMatrixAt(id, mtx);
+        if (im.instanceColor) {
+          im.getColorAt(i, col);
+          A.bm.setColorAt(id, col);
+        }
+        let sid = -1;
+        if (S) {
+          sid = S.bm.addInstance(S.ids.get(im.userData.lo || im.geometry));
+          S.bm.setMatrixAt(sid, mtx);
+          if (im.instanceColor) S.bm.setColorAt(sid, col);
+        }
+        sph.center.set(0, 0, 0);
+        sph.radius = r0;
+        sph.applyMatrix4(mtx);
+        set.id.push(id);
+        set.sid.push(sid);
+        set.hi.push(hi);
+        set.lo.push(lo);
+        set.x.push(sph.center.x);
+        set.z.push(sph.center.z);
+        set.r.push(sph.radius);
+        set.vis.push(true);
+        set.far.push(false);
+        TREEB.n++;
+      }
+      scene.remove(im);
+      im.dispose();
+    }
+    scene.add(A.bm);
+    if (S) scene.add(S.bm);
+    TREEB.sets.push(set);
+  }
+  TREEB.cx = 1e9;
+}
+function treeLOD(x, z, far, force) {
+  if (!TREEB.sets.length) return;
+  if (!force && Math.abs(x - TREEB.cx) < 8 && Math.abs(z - TREEB.cz) < 8 && far === TREEB.far) return;
+  TREEB.cx = x;
+  TREEB.cz = z;
+  TREEB.far = far;
+  for (const t of TREEB.sets) {
+    const { A, S } = t;
+    for (let i = 0; i < t.id.length; i++) {
+      const dx = t.x[i] - x,
+        dz = t.z[i] - z,
+        d2 = dx * dx + dz * dz,
+        reach = far + t.r[i],
+        vis = d2 < reach * reach;
+      if (vis !== t.vis[i]) {
+        t.vis[i] = vis;
+        A.bm.setVisibleAt(t.id[i], vis);
+        if (S) S.bm.setVisibleAt(t.sid[i], vis);
+      }
+      if (!vis) continue;
+      const close = 210 * distK() + t.r[i],
+        isFar = d2 > close * close;
+      if (isFar !== t.far[i]) {
+        t.far[i] = isFar;
+        A.bm.setGeometryIdAt(t.id[i], isFar ? t.lo[i] : t.hi[i]);
+      }
+    }
+  }
+}
+
+/** v1.4.44 (auditoría: «geometría en RAM 65,7 → 252,7 MB» al copiar los modelos en BatchedMesh): a geometry without index
+ *  (every vertex repeated in each triangle) made indexed, joining the vertices whose attributes are all identical (bit by
+ *  bit). Usually 3-6 times fewer vertices. Returns a new geometry (the attributes of g are not touched). */
+function dedupIndex(g) {
+  if (g.index) return g;
+  const names = Object.keys(g.attributes),
+    A = names.map((k) => g.attributes[k]),
+    n = g.attributes.position.count;
+  const views = A.map((a) => new Int32Array(a.array.buffer, a.array.byteOffset, a.array.length));
+  const map = new Map(),
+    remap = new Uint32Array(n);
+  let m = 0;
+  const first = [];
+  for (let i = 0; i < n; i++) {
+    let h = 2166136261;
+    for (let q = 0; q < A.length; q++) {
+      const sz = A[q].itemSize,
+        v = views[q];
+      for (let c = 0; c < sz; c++) h = Math.imul(h ^ v[i * sz + c], 16777619);
+    }
+    let list = map.get(h),
+      found = -1;
+    if (list)
+      for (const j of list) {
+        let eq = true;
+        for (let q = 0; q < A.length && eq; q++) {
+          const sz = A[q].itemSize,
+            v = views[q];
+          for (let c = 0; c < sz; c++)
+            if (v[i * sz + c] !== v[first[j] * sz + c]) {
+              eq = false;
+              break;
+            }
+        }
+        if (eq) {
+          found = j;
+          break;
+        }
+      }
+    if (found < 0) {
+      found = m++;
+      first.push(i);
+      if (list) list.push(found);
+      else map.set(h, [found]);
+    }
+    remap[i] = found;
+  }
+  const out = new THREE.BufferGeometry();
+  A.forEach((a, q) => {
+    const sz = a.itemSize,
+      src = a.array,
+      dst = new src.constructor(m * sz);
+    for (let j = 0; j < m; j++) for (let c = 0; c < sz; c++) dst[j * sz + c] = src[first[j] * sz + c];
+    out.setAttribute(names[q], new THREE.BufferAttribute(dst, sz, a.normalized));
+  });
+  out.setIndex(m < 65536 ? new THREE.Uint16BufferAttribute(remap, 1) : new THREE.Uint32BufferAttribute(remap, 1));
+  out.boundingSphere = g.boundingSphere ? g.boundingSphere.clone() : null;
+  return out;
 }
 
 // v0.78: pasajes peatonales que atraviesan edificios por debajo (OSM tunnel=building_passage en caminos peatonales):
@@ -27415,6 +28315,58 @@ const HCOL = {
   hair: [0x1a1410, 0x2e1f14, 0x4a3020, 0x6b4a2b, 0x9c7a4a, 0xc9a86a, 0x8c8c8c, 0xd9d4cc, 0x101010, 0x7a2e18]
 };
 const humanMats = {};
+// v1.4.44 (FPS: each body is ~12.600 triangles, drawn whole up to 170 m): a light version of each body geometry, made once
+// by joining the vertices closer than 3 cm (by clothing region: aReg, so the colours of the clothes keep their edges),
+// keeping the skeleton weights, the UVs and the body-type morphs. actorCull (05w_optimiza.js) uses it past 35 m, where
+// 3 cm are well under a pixel at 1080p, and a lighter one (6 cm) past 70 m.
+const HUM_LO = [new WeakMap(), new WeakMap()];
+function humanLoGeo(g, far = false) {
+  const cache = HUM_LO[far ? 1 : 0],
+    cell = far ? 0.06 : 0.03; // past 70 m, 6 cm (still under a pixel there)
+  let lo = cache.get(g);
+  if (lo) return lo;
+  const P = g.attributes.position,
+    R = g.attributes.aReg,
+    n = P.count,
+    map = new Int32Array(n),
+    reps = [],
+    keys = new Map();
+  for (let i = 0; i < n; i++) {
+    const k = Math.floor(P.getX(i) / cell) + ',' + Math.floor(P.getY(i) / cell) + ',' + Math.floor(P.getZ(i) / cell) + ',' + (R ? R.getX(i) : 0);
+    let r = keys.get(k);
+    if (r === undefined) {
+      r = reps.length;
+      reps.push(i);
+      keys.set(k, r);
+    }
+    map[i] = r;
+  }
+  const I = g.index ? g.index.array : null,
+    tri = [];
+  const nIdx = I ? I.length : n;
+  for (let t = 0; t + 2 < nIdx; t += 3) {
+    const a = map[I ? I[t] : t],
+      b = map[I ? I[t + 1] : t + 1],
+      c = map[I ? I[t + 2] : t + 2];
+    if (a !== b && b !== c && a !== c) tri.push(a, b, c);
+  }
+  const pick = (attr) => {
+    const sz = attr.itemSize,
+      src = attr.array,
+      dst = new src.constructor(reps.length * sz);
+    for (let j = 0; j < reps.length; j++) for (let q = 0; q < sz; q++) dst[j * sz + q] = src[reps[j] * sz + q];
+    return new THREE.BufferAttribute(dst, sz, attr.normalized);
+  };
+  lo = new THREE.BufferGeometry();
+  for (const k in g.attributes) lo.setAttribute(k, pick(g.attributes[k]));
+  for (const k in g.morphAttributes) lo.morphAttributes[k] = g.morphAttributes[k].map(pick);
+  lo.morphTargetsRelative = g.morphTargetsRelative;
+  lo.setIndex(reps.length < 65536 ? new THREE.Uint16BufferAttribute(tri, 1) : new THREE.Uint32BufferAttribute(tri, 1));
+  lo.boundingSphere = g.boundingSphere ? g.boundingSphere.clone() : null;
+  lo.userData.tris = tri.length / 3;
+  cache.set(g, lo);
+  return lo;
+}
 function skinMaterial(texKey, cloth, sleeve, longPants) {
   const m = new THREE.MeshStandardMaterial({ map: HUM.tex[texKey], roughness: 0.75, metalness: 0 });
   m.userData.u = {
@@ -27451,6 +28403,7 @@ function skinMaterial(texKey, cloth, sleeve, longPants) {
       );
   };
   m.customProgramCacheKey = () => 'jetaSkin';
+  if (USE_GPU) gpuLazy(m, gpuSkin); // v1.4.44
   return m;
 }
 // v1.0.0: a height in metres drawn from the real spread (Jonay's table, % per 8 cm band from under 152 cm to 192 cm and up)
@@ -27498,7 +28451,7 @@ function makeHumanSkinned(o = {}) {
     thin: o.thin,
     build: bt
   };
-  ACTORS.set(root, { r: 170, dr: 40, thr: 0.07 }); // v1.0.0: not drawn past 170 m (about 10 pixels tall at 1080p), small parts not past 40 m
+  ACTORS.set(root, { r: 170, dr: 40, thr: 0.07, sd: 25, body: bodyMesh, bodyHi: bodyMesh && bodyMesh.geometry }); // v1.0.0: not drawn past 170 m (about 10 pixels tall at 1080p), small parts not past 40 m; v1.4.44: no shadow past 25 m (sd)
   const H = {
     look,
     root,
@@ -28735,6 +29688,7 @@ litCarBodyMat.onBeforeCompile = (shader) => {
       '#include <emissivemap_fragment>\ntotalEmissiveRadiance += vec3(1.0, 0.92, 0.80) * vLampMask * carHeadlightLevel;'
     );
 };
+if (USE_GPU) gpuLazy(litCarBodyMat, (m) => gpuCarLamp(m, headlightLevel)); // v1.4.44
 const kGlassMat = new THREE.MeshStandardMaterial({ color: 0x1e2830, roughness: 0.12, metalness: 0.35 });
 const wheelMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8, metalness: 0.1 });
 function makeOwnCarMesh(model, color) {
@@ -30368,9 +31322,12 @@ function buildParkedPart3(template, cc) {
         THREE.ShaderChunk.color_vertex
           .replace('vColor.xyz *= instanceColor.xyz;', 'vColor.xyz *= mix(vec3(1.0), instanceColor.xyz, aPaint);')
           .replace('vColor.rgb *= instanceColor.rgb;', 'vColor.rgb *= mix(vec3(1.0), instanceColor.rgb, aPaint);')
+          // v1.4.44: the same with BatchedMesh (its colour per car)
+          .replace('vColor *= getBatchingColor( getIndirectIndex( gl_DrawID ) );', 'vColor *= mix(vec4(1.0), getBatchingColor( getIndirectIndex( gl_DrawID ) ), aPaint);')
       );
   };
   mat.customProgramCacheKey = () => 'parkedPaint';
+  if (USE_GPU) gpuLazy(mat, gpuParkedPaint); // v1.4.44
   const GEO = {};
   const geoOfModel = (id, wheels) => {
     const key = id + (wheels ? ':' + wheels.id : '');
@@ -30394,6 +31351,7 @@ function buildParkedPart3(template, cc) {
   }
   PARKED.chunks = [];
   const o = new THREE.Object3D();
+  if (!/[?&]sinbatch=1/.test(location.search)) return batchParked(cells, mat, geoOfModel, cc); // v1.4.44
   for (const list of cells.values()) {
     const m = new THREE.InstancedMesh(geoOfModel(list[0].type), mat, list.length);
     let cx = 0,
@@ -30417,6 +31375,21 @@ function buildParkedPart3(template, cc) {
     m.userData.noMerge = true;
     scene.add(m);
     const lod = VMODELS[list[0].type] && VMODELS[list[0].type].lod; // v1.4.3: light version far away (Troceen C33: 11.900 → 1.200 triangles)
+    // v1.4.44 (sombras más baratas): the shadow of the parked cars is cast by their light version (~1.150 triangles
+    // instead of ~12.000), in a copy only the shadow camera sees; it shares the instances (a car taken away hides in both)
+    if (m.castShadow && lod) {
+      const sh = new THREE.InstancedMesh(geoOfModel(lod), mat, list.length);
+      sh.instanceMatrix = m.instanceMatrix;
+      sh.count = m.count;
+      sh.castShadow = true;
+      sh.receiveShadow = false;
+      sh.layers.set(SHADOW_LAYER);
+      sh.computeBoundingSphere();
+      sh.name = 'parkedSombra';
+      sh.matrixAutoUpdate = false;
+      m.add(sh);
+      m.castShadow = false;
+    }
     PARKED.chunks.push({
       mesh: m,
       x: cx / list.length,
@@ -30557,6 +31530,7 @@ function buildParkedPart1() {
   return { lt };
 }
 function updateParkedLOD() {
+  if (PARKED.batch) return parkedBatchLOD();
   if (!PARKED.chunks) return;
   const far = Q.far * 0.45 + 60;
   const { x, z } = camera.position;
@@ -30568,9 +31542,9 @@ function updateParkedLOD() {
     const reach = far + r;
     c.mesh.visible = d2 < reach * reach;
     if (c.lo) {
-      const close = 55 + r;
+      const close = 55 * distK() + r;
       // Keep the same rims while the body switches to the light mesh.
-      const wheelReach = 110 + r;
+      const wheelReach = 110 * distK() + r;
       const geometry = d2 < close * close ? c.hi : d2 < wheelReach * wheelReach ? c.mid : c.lo;
       if (c.mesh.geometry !== geometry) c.mesh.geometry = geometry;
     }
@@ -30599,6 +31573,11 @@ function activateParked(s) {
   if (s.inst) {
     s.inst.setMatrixAt(s.idx, HIDE);
     s.inst.instanceMatrix.needsUpdate = true;
+  }
+  if (s.bm) {
+    // v1.4.44: batched (batchParked)
+    s.bm.setVisibleAt(s.bid, false);
+    if (s.sbm) s.sbm.setVisibleAt(s.sbid, false);
   }
   /* v0.77: instanced */ const c = new Car(null, s.color, s.x, s.z, s.h, VMODELS[s.type]);
   if (s.floor !== undefined) {
@@ -30862,6 +31841,127 @@ function updateTram(dt) {
     /* v0.72: the cutting at Padre Anchieta */ p.rotation.y = Math.atan2(a.x - b.x, a.z - b.z);
     for (let k = -1; k <= 1; k++) TRAM.circ.push([cx + ((a.x - b.x) / L) * k * L * 0.33, cz + ((a.z - b.z) / L) * k * L * 0.33, 1.35]);
     s -= (L + 0.6) * TRAM.dir;
+  }
+}
+
+// v1.4.44 (punto 2, BatchedMesh): the parked cars were one InstancedMesh per model and 80 m cell (~96 draw calls in view).
+// Now all of them are ONE BatchedMesh (the street and the underground car parks): three.js culls car by
+// car and draws them with one multi-draw call. Each car picks its geometry like before (full, light body with the detailed
+// rims past 55 m, light past 110 m) and hides past the same distance; recomputed when the camera moves 8 m. The shadow is
+// cast by a BatchedMesh of the light versions that only the shadow camera sees. The paint (aPaint) mixes the colour per car
+// (getBatchingColor; WebGPU: batchColor in gpuParkedPaint). ?sinbatch=1 for the old instanced cells.
+function batchParked(cells, mat, geoOfModel, cc) {
+  // one BatchedMesh for all (street and underground car parks: the shadow copies only for the street ones), with each
+  // model's geometry indexed (dedupIndex: the templates repeat every vertex per triangle) and copied once
+  const slots = [];
+  for (const list of cells.values()) for (const s of list) slots.push(s);
+  if (!slots.length) return;
+  const o = new THREE.Object3D();
+  PARKED.batch = [];
+  const geos = new Map();
+  const want = (k, mk) => {
+    if (!geos.has(k)) geos.set(k, dedupIndex(mk()));
+    return k;
+  };
+  const plan = slots.map((s) => {
+    const M = VMODELS[s.type],
+      lod = M && M.lod;
+    return {
+      hi: want(s.type, () => geoOfModel(s.type)),
+      mid: lod ? want(lod + '|' + s.type, () => geoOfModel(lod, M)) : null,
+      lo: lod ? want(lod, () => geoOfModel(lod)) : null
+    };
+  });
+  const make = (keys, n) => {
+    let v = 0,
+      ix = 0;
+    for (const k of keys) {
+      v += geos.get(k).attributes.position.count;
+      ix += geos.get(k).index.count;
+    }
+    const bm = new THREE.BatchedMesh(n, v, ix, mat),
+      ids = new Map();
+    for (const k of keys) ids.set(k, bm.addGeometry(geos.get(k)));
+    bm.frustumCulled = false;
+    bm.sortObjects = false;
+    bm.userData.noMerge = true;
+    bm.matrixAutoUpdate = false;
+    scene.add(bm);
+    return { bm, ids };
+  };
+  const A = make([...geos.keys()], slots.length);
+  A.bm.castShadow = false;
+  A.bm.receiveShadow = true;
+  A.bm.name = 'aparcados';
+  const street = slots.filter((s) => s.floor === undefined);
+  const shadowKeys = [...new Set(slots.map((s, i) => (s.floor === undefined ? plan[i].lo || plan[i].hi : null)).filter(Boolean))];
+  const S = shadowKeys.length ? make(shadowKeys, street.length) : null;
+  if (S) {
+    S.bm.castShadow = true;
+    S.bm.receiveShadow = false;
+    S.bm.layers.set(SHADOW_LAYER);
+    S.bm.name = 'aparcadosSombra';
+  }
+  const B = { A, S, slots, plan, lv: new Int8Array(slots.length).fill(-1), vis: new Uint8Array(slots.length).fill(1), r: [] };
+  slots.forEach((s, i) => {
+    o.position.set(s.x, s.y, s.z);
+    o.rotation.set(0, s.h, 0);
+    o.updateMatrix();
+    const p = plan[i];
+    s.bm = A.bm;
+    s.bid = A.bm.addInstance(A.ids.get(p.hi));
+    A.bm.setMatrixAt(s.bid, o.matrix);
+    A.bm.setColorAt(s.bid, cc.set(s.color));
+    if (S && s.floor === undefined) {
+      s.sbm = S.bm;
+      s.sbid = S.bm.addInstance(S.ids.get(p.lo || p.hi));
+      S.bm.setMatrixAt(s.sbid, o.matrix);
+      S.bm.setColorAt(s.sbid, cc);
+    }
+    if (s.alive === false) {
+      A.bm.setVisibleAt(s.bid, false);
+      if (s.sbm) s.sbm.setVisibleAt(s.sbid, false);
+    }
+    const g = geos.get(p.hi);
+    if (!g.boundingSphere) g.computeBoundingSphere();
+    B.r.push(g.boundingSphere.radius);
+  });
+  PARKED.batch.push(B);
+  PARKED.bcx = 1e9;
+}
+function parkedBatchLOD() {
+  const { x, z } = camera.position;
+  if (Math.abs(x - PARKED.bcx) < 8 && Math.abs(z - PARKED.bcz) < 8) return;
+  PARKED.bcx = x;
+  PARKED.bcz = z;
+  const far = Q.far * 0.45 + 60;
+  for (const B of PARKED.batch) {
+    const { A, S, slots, plan } = B;
+    for (let i = 0; i < slots.length; i++) {
+      const s = slots[i];
+      if (s.alive === false) continue;
+      const dx = s.x - x,
+        dz = s.z - z,
+        d2 = dx * dx + dz * dz,
+        r = B.r[i],
+        reach = far + r,
+        vis = d2 < reach * reach ? 1 : 0;
+      if (vis !== B.vis[i]) {
+        B.vis[i] = vis;
+        A.bm.setVisibleAt(s.bid, !!vis);
+        if (s.sbm) s.sbm.setVisibleAt(s.sbid, !!vis);
+      }
+      if (!vis) continue;
+      const p = plan[i];
+      if (!p.lo) continue;
+      const close = 55 * distK() + r,
+        wheel = 110 * distK() + r,
+        lv = d2 < close * close ? 0 : d2 < wheel * wheel ? 1 : 2;
+      if (lv !== B.lv[i]) {
+        B.lv[i] = lv;
+        A.bm.setGeometryIdAt(s.bid, A.ids.get(lv === 0 ? p.hi : lv === 1 ? p.mid : p.lo));
+      }
+    }
   }
 }
 
@@ -64726,7 +65826,7 @@ const ENVC = new Map();
 const envKey = (t) => SETTINGS.weather + '|' + (Math.round(t / 1.5) % 16);
 function updateEnvironment(force) {
   if (!pmrem) {
-    pmrem = new THREE.PMREMGenerator(renderer);
+    pmrem = new (USE_GPU ? THREE.GPU.PMREMGenerator : THREE.PMREMGenerator)(renderer);
   }
   const k = envKey(GAME.tod);
   if (!force && k === lastEnvKey) return;
@@ -64746,7 +65846,7 @@ function updateEnvironment(force) {
   scene.environment = rt.texture;
 }
 function precomputeEnv() {
-  if (!pmrem) pmrem = new THREE.PMREMGenerator(renderer);
+  if (!pmrem) pmrem = new (USE_GPU ? THREE.GPU.PMREMGenerator : THREE.PMREMGenerator)(renderer);
   const t0 = GAME.tod;
   for (let b = 0; b < 16; b++) {
     GAME.tod = b * 1.5;
@@ -64858,6 +65958,9 @@ function syncPauseUI() {
   document.querySelectorAll('#segInv button').forEach((b) => b.classList.toggle('on', +b.dataset.v === (SETTINGS.invertY ? 1 : 0)));
   $('tod').value = GAME.tod;
   $('sens').value = SETTINGS.sens;
+  $('fpscap').value = fpsCap('city') || 144; // v1.4.44
+  $('fpsv').textContent = $('fpscap').value;
+  document.querySelectorAll('#segGpu button').forEach((b) => b.classList.toggle('on', +b.dataset.g === (USE_GPU ? 1 : 0)));
   $('vol').value = AUDIO.A.vol;
 }
 let pendingQ = qName;
@@ -64891,6 +65994,21 @@ $('tod').addEventListener('input', (e) => {
   updateSun();
   updateEnvironment(true);
 });
+// v1.4.44: FPS limit (applies at once) and graphics engine (applies on reload)
+$('fpscap').addEventListener('input', (e) => {
+  SETTINGS.fps = +e.target.value;
+  $('fpsv').textContent = SETTINGS.fps;
+  saveSettings();
+});
+document.querySelectorAll('#segGpu button').forEach((b) =>
+  b.addEventListener('click', () => {
+    try {
+      localStorage.setItem('jeta_motor', b.dataset.g === '1' ? 'webgpu' : 'webgl');
+    } catch (e) {}
+    document.querySelectorAll('#segGpu button').forEach((x) => x.classList.toggle('on', x === b));
+    $('qnote').textContent = 'El motor gráfico cambia al pulsar «Aplicar y recargar».' + (b.dataset.g === '1' && !navigator.gpu ? ' Este navegador no tiene WebGPU: seguirá con WebGL.' : '');
+  })
+);
 $('sens').addEventListener('input', (e) => {
   SETTINGS.sens = +e.target.value;
   saveSettings();
@@ -65020,7 +66138,7 @@ window.__prof = PROF;
 const pm = (k, t0) => {
   PROF[k] = (PROF[k] || 0) * 0.9 + (performance.now() - t0) * 0.1;
 };
-const cityFrameDue = makeFrameGate();
+const cityFrameDue = makeFrameGate(() => fpsCap('city')); // v1.4.44: the Opciones bar (SETTINGS.fps); 30 on phones by default
 function loop(now = performance.now()) {
   requestAnimationFrame(loop);
   if (window.__manual || !cityFrameDue(now)) return;
@@ -65077,6 +66195,8 @@ function render() {
   updateUnderground();
   updateCityLOD();
   updateHierba(); // v1.3.1: the grass around the camera (05z_hierba.js)
+  camera.updateMatrixWorld();
+  bundleStep(camera); // v1.4.44: WebGPU's recorded cells (05w_optimiza.js)
   renderer.clear();
   renderer.render(bgScene, bgCamera);
   renderer.clearDepth();
@@ -65105,6 +66225,7 @@ window.__step = (n, dt = 1 / 30, keys = []) => {
 };
 window.__press = (k) => PRESSED.add(k);
 function logic(dt, now) {
+  thawStep(); // v1.4.44: frozen city objects that something moved (05w_optimiza.js)
   const { T0 } = logicPart1();
   let tt;
   frame++;
@@ -65493,6 +66614,7 @@ async function boot() {
         if (renderer.compileAsync) await renderer.compileAsync(scene, camera);
         else renderer.compile(scene, camera);
         renderer.compile(bgScene, bgCamera);
+        precompileShadows(); // v1.4.44: the shadow shaders too (05w_optimiza.js)
         preloadDone();
       }
     ] /* async compile: the page doesn't freeze (audit P2.4) */
@@ -65602,6 +66724,10 @@ window.__dbg = {
   updateCityLOD,
   lodShowAll,
   optimizeCity,
+  FREEZE, // v1.4.44
+  BUNDLES,
+  bundleStep,
+  thawStep,
   unfuse,
   PARKED,
   activateParked,
@@ -65724,7 +66850,12 @@ window.__dbg = {
   GAME,
   scene,
   camera,
+  bgScene, // v1.4.44 (sonda_webgpu.py --js: switching things off to see what they cost)
+  sun,
+  SKY,
+  MAT,
   renderer,
+  USE_GPU, // v1.4.44
   WANTED,
   MISSIONS,
   enterCar,
@@ -65806,6 +66937,8 @@ window.__snap = () => {
   updateUnderground();
   updateCityLOD();
   updateHierba();
+  camera.updateMatrixWorld();
+  bundleStep(camera); // v1.4.44
   bgCamera.position.copy(camera.position);
   bgCamera.quaternion.copy(camera.quaternion);
   bgCamera.fov = camera.fov;

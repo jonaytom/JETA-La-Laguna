@@ -631,11 +631,29 @@ function heightAt(x, z) {
   return (fx + fz <= 1 ? h00 + (h10 - h00) * fx + (h01 - h00) * fz : h11 + (h01 - h11) * (1 - fx) + (h10 - h11) * (1 - fz)) / 10;
 }
 
-// A phase-based 60 FPS ceiling for the independent 3D and 2D render loops.
-function makeFrameGate() {
-  const interval = 1000 / 60;
+// A phase-based FPS ceiling for the independent 3D and 2D render loops (60 by default).
+// v1.4.44 (Jonay, 23-nov: «para pruebas quita el cap a 60, eso es solo para el juego, y para móvil lo pondría a 30»):
+// fpsCap() is the ceiling: none in our tests (window.__JETA_TEST: the measurements see the real speed), 30 for the city
+// on phones and tablets (battery and heat), 60 on PC. ?fps=N in the address forces it (0 = none).
+// v1.4.44 (Jonay: «el limitador de FPS lo podemos poner como una opción del juego, por defecto a 60… con una barra que
+// puedas desplazar hasta 144»): the city follows SETTINGS.fps (Opciones, 30–144; 60 on PC and 30 on phones by default),
+// read on every frame, so the bar applies at once. The 2D minigames keep 60.
+function fpsCap(kind) {
+  // kind: 'city' (the 3D world: the Opciones bar) or anything else (2D minigames: 60)
+  const m = /[?&]fps=(\d+)/.exec(location.search);
+  if (m) return +m[1];
+  if (window.__JETA_TEST) return 0;
+  if (kind !== 'city') return 60;
+  if (typeof SETTINGS !== 'undefined' && SETTINGS.fps) return SETTINGS.fps;
+  return IS_TOUCH ? 30 : 60;
+}
+function makeFrameGate(fps = fpsCap('2d')) {
+  const get = typeof fps === 'function' ? fps : () => fps;
   let next = -Infinity;
   return (now) => {
+    const f = get();
+    if (!f) return true;
+    const interval = 1000 / f;
     if (now + 0.35 < next) return false;
     // Skip missed slots on slow frames or after switching tabs. Never catch them up with extra renders.
     if (now - next >= interval) next = now;
@@ -649,7 +667,7 @@ const QUALITY = {
   baja: { pr: 0.75, shadow: 0, far: 520, peds: 12, traffic: 10, trees: 0.5 },
   media: { pr: 1, shadow: 1024, far: 800, peds: 20, traffic: 17, trees: 0.8 },
   movil: { pr: 1, shadow: 0, far: 600, peds: 14, traffic: 11, trees: 0.6 },
-  alta: { pr: 1.5, shadow: 2048, far: 1150, peds: 30, traffic: 24, trees: 1 }
+  alta: { pr: 1.5, shadow: 2048, far: 1150, peds: 30, traffic: 24, trees: 1, dist: 2 } // v1.4.44: dist ×2 (distK): measured, still over 60 FPS
 };
 const IS_TOUCH = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
 const QKEY = IS_TOUCH ? 'gtall_qm' : 'gtall_q';
@@ -670,8 +688,30 @@ try {
   }
 }
 
+// v1.4.44 (Jonay, 23-nov: «si vamos sobrados de FPS aumentaremos la distancia de dibujado hasta que quede en los 60…
+// se nota en las llantas de los coches»): one knob for the detail distances (full parked cars and their rims, full tree
+// crowns, city details, small parts of cars and people, full bodies): distK() multiplies them. Per quality (Q.dist, 1 by
+// default); ?dist=X in the address forces it (to measure).
+const DIST_URL = (() => {
+  const m = /[?&]dist=([\d.]+)/.exec(location.search);
+  return m ? +m[1] : null;
+})();
+function distK() {
+  return DIST_URL ?? (Q.dist || 1);
+}
 // ---------- renderer
-const renderer = new THREE.WebGLRenderer({ antialias: !IS_TOUCH, powerPreference: 'high-performance' });
+// v1.4.44 (Jonay, 23-nov: «sigamos con webgpu a ver si lo adaptamos y rinde mejor»): with ?gpu=webgpu the game runs on
+// three.js's WebGPURenderer (THREE.GPU, from the joint bundle of tools/juntar_three_gpu.py); without it, WebGL as always.
+// Under WebGPU the materials with onBeforeCompile are drawn without their extra (pending: port them to TSL)
+// v1.4.44: also chosen in Opciones (Motor gráfico, saved as 'jeta_motor'; ?gpu=webgl forces WebGL)
+const USE_GPU =
+  !/[?&]gpu=webgl/.test(location.search) &&
+  (/[?&]gpu=webgpu/.test(location.search) || (() => { try { return localStorage.getItem('jeta_motor') === 'webgpu'; } catch (e) { return false; } })()) &&
+  !!(THREE.GPU && navigator.gpu);
+const renderer = USE_GPU
+  ? new THREE.GPU.WebGPURenderer({ antialias: !IS_TOUCH, powerPreference: 'high-performance' })
+  : new THREE.WebGLRenderer({ antialias: !IS_TOUCH, powerPreference: 'high-performance' });
+if (USE_GPU) await renderer.init();
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, Q.pr));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -681,7 +721,7 @@ renderer.shadowMap.enabled = Q.shadow > 0;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.autoClear = false;
 $('game').appendChild(renderer.domElement);
-const MAXANI = renderer.capabilities.getMaxAnisotropy();
+const MAXANI = USE_GPU ? renderer.getMaxAnisotropy() : renderer.capabilities.getMaxAnisotropy();
 
 const ACTORS = new Map();
 const ACULL = []; // v1.0.0: people, cars and rooms drawn only up to a distance (actorCull, 05w_optimiza.js)
@@ -714,6 +754,9 @@ if (Q.shadow) {
 }
 const SH = 95;
 Object.assign(sun.shadow.camera, { left: -SH, right: SH, top: SH, bottom: -SH, near: 10, far: 700 });
+// v1.4.44: objects only the shadow camera sees (the low versions of the trees that cast their shadow: 05w_optimiza.js)
+const SHADOW_LAYER = 1;
+sun.shadow.camera.layers.enable(SHADOW_LAYER);
 sun.shadow.bias = -0.0004;
 sun.shadow.normalBias = 0.6;
 scene.add(sun);

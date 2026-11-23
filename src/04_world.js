@@ -175,6 +175,7 @@ const MAT = {};
         '#include <emissivemap_fragment>\ntotalEmissiveRadiance += mk.g * lit * uNight * vec3(1.0, 0.72, 0.42) * 2.1;'
       );
   };
+  if (USE_GPU) gpuLazy(fm, gpuFacade); // v1.4.44: the same in TSL (02b_gpu_nodos.js)
   MAT.facade = fm;
   MAT.roofTile = new THREE.MeshStandardMaterial({
     map: TEX.roofTile,
@@ -518,6 +519,7 @@ function cutAware(mat) {
   };
   mat.customProgramCacheKey = () => (prevKey ? prevKey() : '') + '|cut';
   mat.needsUpdate = true;
+  if (USE_GPU) gpuLazy(mat, gpuCutAware); // v1.4.44
 }
 function buildTerrain() {
   const { g, m, mtex } = buildTerrainPart1();
@@ -573,6 +575,7 @@ function buildTerrain() {
         diffuseColor.rgb = mix(diffuseColor.rgb, pv * mix(0.8, 1.0, pm), smoothstep(0.3, 0.8, pm));`
       );
   };
+  if (USE_GPU) gpuLazy(m, (mm) => gpuTerrain(mm, mtex)); // v1.4.44
   const mesh = new THREE.Mesh(g, m);
   mesh.receiveShadow = true;
   scene.add(mesh);

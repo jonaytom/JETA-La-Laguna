@@ -328,7 +328,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="fpb big mpd" id="mpA" style="right:110px;bottom:40px;border-color:#ffd400">A</div><div class="fpb big mpd" id="mpB" style="right:20px;bottom:90px;border-color:#ff5252">B</div><div class="fpb big mpd" id="mpC" style="right:110px;bottom:140px;border-color:#5ec8ff">C</div>
 <div class="fpb" id="mpP" style="left:50%;top:8px;margin-left:-28px;width:56px;height:44px;font-size:18px">❚❚</div><div class="fpb mpd" id="mpExit" style="right:14px;top:8px;width:62px;height:38px;font-size:12px">ATRÁS</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">Alpha 1.4.43</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">Alpha 1.4.44</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -356,6 +356,8 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
  <div class="opt"><label>Volumen</label><input type="range" id="vol" min="0" max="1" step="0.05" value="0.8"></div>
  <div class="opt"><label>Música (radio)</label><input type="range" id="mvol" min="0" max="1" step="0.05" value="1"></div>
  <div class="opt"><label>Sensibilidad ratón</label><input type="range" id="sens" min="0.3" max="2.5" step="0.1" value="1"></div>
+ <div class="opt"><label>Límite de FPS: <span id="fpsv">60</span></label><input type="range" id="fpscap" min="30" max="144" step="1" value="60"></div>
+ <div class="opt"><label>Motor gráfico</label><div class="seg" id="segGpu"><button data-g="0" class="on">WebGL</button><button data-g="1">WebGPU (pruebas)</button></div></div>
  <div class="opt"><label>Invertir eje Y</label><div class="seg" id="segInv"><button data-v="0" class="on">No</button><button data-v="1">Sí</button></div></div>
  <div class="opt"><label>Tiempo</label><div class="seg" id="segW"><button data-w="0" class="on">Despejado</button><button data-w="1">Panza de burro</button><button data-w="2">Bruma lagunera</button></div></div>
  <div class="opt"><label>Hora</label><input type="range" id="tod" min="0" max="24" step="0.25" value="17"></div>

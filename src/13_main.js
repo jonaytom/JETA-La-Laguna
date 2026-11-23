@@ -148,7 +148,7 @@ const ENVC = new Map();
 const envKey = (t) => SETTINGS.weather + '|' + (Math.round(t / 1.5) % 16);
 function updateEnvironment(force) {
   if (!pmrem) {
-    pmrem = new THREE.PMREMGenerator(renderer);
+    pmrem = new (USE_GPU ? THREE.GPU.PMREMGenerator : THREE.PMREMGenerator)(renderer);
   }
   const k = envKey(GAME.tod);
   if (!force && k === lastEnvKey) return;
@@ -168,7 +168,7 @@ function updateEnvironment(force) {
   scene.environment = rt.texture;
 }
 function precomputeEnv() {
-  if (!pmrem) pmrem = new THREE.PMREMGenerator(renderer);
+  if (!pmrem) pmrem = new (USE_GPU ? THREE.GPU.PMREMGenerator : THREE.PMREMGenerator)(renderer);
   const t0 = GAME.tod;
   for (let b = 0; b < 16; b++) {
     GAME.tod = b * 1.5;
@@ -280,6 +280,9 @@ function syncPauseUI() {
   document.querySelectorAll('#segInv button').forEach((b) => b.classList.toggle('on', +b.dataset.v === (SETTINGS.invertY ? 1 : 0)));
   $('tod').value = GAME.tod;
   $('sens').value = SETTINGS.sens;
+  $('fpscap').value = fpsCap('city') || 144; // v1.4.44
+  $('fpsv').textContent = $('fpscap').value;
+  document.querySelectorAll('#segGpu button').forEach((b) => b.classList.toggle('on', +b.dataset.g === (USE_GPU ? 1 : 0)));
   $('vol').value = AUDIO.A.vol;
 }
 let pendingQ = qName;
@@ -313,6 +316,21 @@ $('tod').addEventListener('input', (e) => {
   updateSun();
   updateEnvironment(true);
 });
+// v1.4.44: FPS limit (applies at once) and graphics engine (applies on reload)
+$('fpscap').addEventListener('input', (e) => {
+  SETTINGS.fps = +e.target.value;
+  $('fpsv').textContent = SETTINGS.fps;
+  saveSettings();
+});
+document.querySelectorAll('#segGpu button').forEach((b) =>
+  b.addEventListener('click', () => {
+    try {
+      localStorage.setItem('jeta_motor', b.dataset.g === '1' ? 'webgpu' : 'webgl');
+    } catch (e) {}
+    document.querySelectorAll('#segGpu button').forEach((x) => x.classList.toggle('on', x === b));
+    $('qnote').textContent = 'El motor gráfico cambia al pulsar «Aplicar y recargar».' + (b.dataset.g === '1' && !navigator.gpu ? ' Este navegador no tiene WebGPU: seguirá con WebGL.' : '');
+  })
+);
 $('sens').addEventListener('input', (e) => {
   SETTINGS.sens = +e.target.value;
   saveSettings();
@@ -442,7 +460,7 @@ window.__prof = PROF;
 const pm = (k, t0) => {
   PROF[k] = (PROF[k] || 0) * 0.9 + (performance.now() - t0) * 0.1;
 };
-const cityFrameDue = makeFrameGate();
+const cityFrameDue = makeFrameGate(() => fpsCap('city')); // v1.4.44: the Opciones bar (SETTINGS.fps); 30 on phones by default
 function loop(now = performance.now()) {
   requestAnimationFrame(loop);
   if (window.__manual || !cityFrameDue(now)) return;
@@ -499,6 +517,8 @@ function render() {
   updateUnderground();
   updateCityLOD();
   updateHierba(); // v1.3.1: the grass around the camera (05z_hierba.js)
+  camera.updateMatrixWorld();
+  bundleStep(camera); // v1.4.44: WebGPU's recorded cells (05w_optimiza.js)
   renderer.clear();
   renderer.render(bgScene, bgCamera);
   renderer.clearDepth();
@@ -527,6 +547,7 @@ window.__step = (n, dt = 1 / 30, keys = []) => {
 };
 window.__press = (k) => PRESSED.add(k);
 function logic(dt, now) {
+  thawStep(); // v1.4.44: frozen city objects that something moved (05w_optimiza.js)
   const { T0 } = logicPart1();
   let tt;
   frame++;
@@ -915,6 +936,7 @@ async function boot() {
         if (renderer.compileAsync) await renderer.compileAsync(scene, camera);
         else renderer.compile(scene, camera);
         renderer.compile(bgScene, bgCamera);
+        precompileShadows(); // v1.4.44: the shadow shaders too (05w_optimiza.js)
         preloadDone();
       }
     ] /* async compile: the page doesn't freeze (audit P2.4) */
@@ -1024,6 +1046,10 @@ window.__dbg = {
   updateCityLOD,
   lodShowAll,
   optimizeCity,
+  FREEZE, // v1.4.44
+  BUNDLES,
+  bundleStep,
+  thawStep,
   unfuse,
   PARKED,
   activateParked,
@@ -1146,7 +1172,12 @@ window.__dbg = {
   GAME,
   scene,
   camera,
+  bgScene, // v1.4.44 (sonda_webgpu.py --js: switching things off to see what they cost)
+  sun,
+  SKY,
+  MAT,
   renderer,
+  USE_GPU, // v1.4.44
   WANTED,
   MISSIONS,
   enterCar,
@@ -1228,6 +1259,8 @@ window.__snap = () => {
   updateUnderground();
   updateCityLOD();
   updateHierba();
+  camera.updateMatrixWorld();
+  bundleStep(camera); // v1.4.44
   bgCamera.position.copy(camera.position);
   bgCamera.quaternion.copy(camera.quaternion);
   bgCamera.fov = camera.fov;

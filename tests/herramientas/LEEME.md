@@ -49,3 +49,11 @@ Pruebas completas (en `tests/`): `prueba_misiones.py [desde] [hasta]` juega sola
 | `foto_troceen.py` | v1.4.3: el Troceen C33 (modelo propio de Blender) en el juego: cuántos aparcados, fotos de uno aparcado de cerca, por detrás y de lejos (dice si se ve la versión completa o la ligera) y de cuatro coches nuevos en colores (`shots/troceen_<n>.jpg`). |
 | `foto_propios.py` | v1.4.4: los coches propios de Blender en el juego: cada modelo en cuatro colores en la plataforma del aeropuerto (`shots/propios_conjunto.jpg`, `_lado.jpg`) y de cerca (`shots/propios_<modelo>.jpg`); triángulos de cada uno y cuántos hay aparcados. |
 | `sonda_maleante_gpu.py` | v1.2.4: **tirones con los maleantes**, con la tarjeta gráfica: ms por fotograma (lógica + pintado) al aparecer, huir y escaparse, y lo que cuesta empezar la pelea 2D (pintados 3D, lectura de píxeles, lienzos y geometrías subidas a la GPU) (`shots/sonda_maleante.txt`). |
+
+## v1.4.44: rendimiento y WebGPU (con el Chrome del PC y su GPU; se lanzan con `python tests/herramientas/<nombre>.py`)
+
+- `sonda_webgpu.py` — FPS de WebGL y WebGPU en casco, Menceyes y TF-5, sin vsync ni tope. `--solo webgl|webgpu`, `--pr 0.5` (resolución fija), `--js "código"` (apagar algo tras cargar), `--variantes` (lo que cuesta cada cosa: sombras, fachadas, terreno…), `--extra "&sinbatch=1"` (opciones en la dirección).
+- `foto_webgpu.py` — las mismas vistas con los dos motores, en parejas (`shots/gpu_<vista>.jpg`).
+- `foto_sombras.py` — sombras de antes y de ahora en la misma carga y con semilla fija; con `"&sinbatch=1"` como argumento, sin BatchedMesh (`shots/sombra_<vista>.jpg`).
+- `foto_gente_lejos.py` — una persona con el cuerpo completo, ligero y muy ligero (`shots/gente_lejos.jpg`).
+- `sonda_aparcados.py` — prueba ~400 coches aparcados: se ofrecen, se sube y acelera (lista `aparcados`).
