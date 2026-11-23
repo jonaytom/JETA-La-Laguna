@@ -64,7 +64,8 @@ async def run(pg):
     profiles = result['profiles']
     ok = (
         result['near'] > 0 and result['wheels'] == 4 and result['far'] and result['parked'] > 0
-        and .06 < result['white'] < .13 and result['colors'] >= 17 and result['paintedInstance']
+        and .02 < result['white'] < .075 and  # v1.4.42: white is 5 of 111 in CARCOL_W (~4.5 %)
+        result['colors'] >= 17 and result['paintedInstance']
         and result['represented'] >= 40 and result['reused'] and result['livery'] == 0xf6f6f4
         and profiles['reventon'][0] > profiles['fierilla'][0] > profiles['guancheGT'][0] > profiles['seta128'][0]
         and profiles['reventon'][1] > profiles['fierilla'][1] > profiles['guancheGT'][1] > profiles['seta128'][1]

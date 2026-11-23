@@ -1,4 +1,4 @@
-# Comprime los modelos de coche de data/kenney_cars.json (v1.4.9): por modelo, todos los datos binarios de sus
+# Comprime los modelos de coche de data/coches.json (v1.4.9): por modelo, todos los datos binarios de sus
 # piezas (posiciones, normales, colores, índices) van juntos en un DEFLATE en base64 ('z'); cada pieza guarda cuántos
 # bytes son suyos (np, nn, nc, ni) y 'zl' el total. El juego lo abre con inflateRaw() en src/06b_vmodels.js.
 # Los modelos ya comprimidos se dejan como están. Uso: python tools/comprimir_coches.py [ruta]
@@ -17,7 +17,7 @@ def comprimir(m):
     out.update(parts=parts, zl=len(blob), z=base64.b64encode(z).decode())
     return out
 if __name__ == '__main__':
-    ruta = sys.argv[1] if len(sys.argv) > 1 else 'data/kenney_cars.json'
+    ruta = sys.argv[1] if len(sys.argv) > 1 else 'data/coches.json'
     D = json.load(open(ruta, encoding='utf-8'))
     antes = len(json.dumps(D))
     D['m'] = {k: comprimir(v) for k, v in D['m'].items()}

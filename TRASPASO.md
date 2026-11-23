@@ -62,7 +62,7 @@ Para el detalle de cada versión, mira `CHANGELOG.md`. Para los coches propios, 
 |---|---|
 | `E:\Claude\GTA La Laguna\repo\` | El repositorio, con git. |
 | `repo\src\` | El código: módulos `NN_nombre.js` que `build.py` junta en orden. |
-| `repo\data\` | Datos: mapa, Catastro, MDT y modelos de coche (`kenney_cars.json`). |
+| `repo\data\` | Datos: mapa, Catastro, MDT y modelos de coche (`coches.json`). |
 | `repo\template.html` | La plantilla del HTML. |
 | `repo\dist\` | Lo compilado: `JETA La Laguna\` en carpetas, `gta-la-laguna.html` y el zip. |
 | `repo\tests\herramientas\` | Fotos y sondas del juego (índice en `LEEME.md`), con Playwright. |
@@ -150,7 +150,7 @@ Para el detalle de cada versión, mira `CHANGELOG.md`. Para los coches propios, 
 
 ### Coches en el juego
 
-- **Modelos**: `data/kenney_cars.json` → `D['m'][nombre]`, con `bb`, `rank` y `parts`.
+- **Modelos**: `data/coches.json` → `D['m'][nombre]`, con `bb`, `rank` y `parts`.
   - Cada pieza (`body`, `wheel-front-left`…) tiene posiciones int16 ×2000, normales int8, colores RGB565 e
     índices uint16.
   - **Desde la 1.4.9 van comprimidos**: un bloque DEFLATE por modelo (`z`, `zl`, y `np/nn/nc/ni` por pieza).
@@ -174,7 +174,7 @@ Para el detalle de cada versión, mira `CHANGELOG.md`. Para los coches propios, 
   juego las vuelve a escalar.
 - **Aparcados** (`07_vehicles.js`): `InstancedMesh` por celdas de 120 m si el modelo tiene `lod` y 400 m si no.
   `updateParkedLOD` cambia a la versión lejana a más de 40 m.
-- **Rendimiento**: cada coche propio son 11.000-13.700 triángulos; los de Kenney, 1.000-2.000.
+- **Rendimiento**: cada coche propio son 11.000-13.700 triángulos. (v1.4.42: ya no queda ningún modelo ajeno).
   - Con 21 propios: memoria JS de unos 320-340 MB y el juego pesaba unos 15 MB.
   - Si sube más, el siguiente paso es usar la versión lejana también en el tráfico.
 
@@ -212,7 +212,7 @@ Grabado a fuego, de su propia boca:
 | `fotos\` | **Todas las fotos de referencia**, con nombre de modelo (`troceen_c33_1.jpg`…). |
 | `coches_propios.blend` | Colecciones `<Nombre>_HD` y `<Nombre>_juego`, más la escena del estudio: cámara `Camara`, luces `Sol` y `Caja`, colección `Collection` con el suelo. |
 | `troceen_c33.blend` | El C33, hecho aparte y no con `otros.py`. Le faltan los arreglos de las ruedas. |
-| `propios_kvN.json` | Exportaciones listas para meter en `kenney_cars.json` comprimiéndolas. |
+| `propios_kvN.json` | Exportaciones listas para meter en `coches.json` comprimiéndolas. |
 
 ### Cómo funciona el generador
 
@@ -302,7 +302,7 @@ Grabado a fuego, de su propia boca:
    - ruedas de la versión lejana con la malla `RuedaLejos`;
    - `car_export`, poniendo `bb = [[-maxwB, 0, X0], [maxwB, maxzt+0,012+corona, X1]]`;
    - guárdalo en `propios_kvN.json`.
-9. **En el repo**: comprime y mételo en `kenney_cars.json`, añade las filas en `VMODELS_RAW` (más la `L`), pon
+9. **En el repo**: comprime y mételo en `coches.json`, añade las filas en `VMODELS_RAW` (más la `L`), pon
    su `tail` y el peso del coche antiguo a 0. Añade el id a `tests/herramientas/foto_propios.py` (`MODELOS`) y
    publica.
 

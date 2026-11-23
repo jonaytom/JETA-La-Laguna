@@ -55,7 +55,8 @@ async def run(pg):
     hs = json.loads(await pg.evaluate("""(()=>{ const A=%s, g=A._game(); g.score=987650; g._lives(0); const p=g._p; p.inv=0; p.dead=0; g._god=false; for (let i=0;i<60*10 && A._st().mode==='play';i++) { if (i%%30===0 && !p.dead) { p.inv=0; g._bul.push({ x:p.x, y:p.y, vx:0, vy:0, r:3 }); } A._step(1); } const m1=A._st().mode; /* v0.95: until the game ends (it took longer than 4 s now and then) */ for (let i=0;i<60*12;i++) A._step(1); const m2=A._st().mode;
       const P=(v)=>{ A._press(v,true); A._step(1); A._press(v,false); A._step(1); }; P('vU'); P('vS'); P('vU'); P('vU'); P('vS'); P('vS'); return JSON.stringify({ m1, m2, modo: A._st().mode }); })()""" % A)); print('fin de partida', hs)
     await foto(pg, 'v081_records_nuevo')
-    ok4 = hs['m1'] == 'cont' and hs['m2'] == 'name'; print('RECORDS', 'OK' if ok4 else 'FALLA'); ok = ok and ok4
+    ok4 = hs['m1'] == 'name' and hs['m2'] == 'name';  # v1.4.42: the initials come first, then the continue
+    print('RECORDS', 'OK' if ok4 else 'FALLA'); ok = ok and ok4
     await pg.evaluate("%s.close()" % A)
     print('errores', errs[:3]); ok = ok and not errs
     print('PRUEBA 081', 'OK' if ok else 'FALLA')

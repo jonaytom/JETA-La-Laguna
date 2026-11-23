@@ -1,6 +1,6 @@
 # v1.4.19 (Jonay, 17-nov): la policía (3 modelos propios) y la ambulancia propia no se tiñen (chapa blanca, sus vinilos
 # intactos) y sus luces del techo son las del modelo (se encienden con la sirena); un coche propio normal sí se tiñe;
-# los pick-ups y la Fita Triplon sustituyen a los de Kenney.
+# los pick-ups y la Fita Triplon sustituyen a los viejos (v1.4.42: sus ids viejos siguen respondiendo, pero no cuentan al elegir coche).
 import json
 async def run(pg):
     errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
@@ -11,7 +11,8 @@ async def run(pg):
           tl: c.tl.length };
         c.siren = true; c.update && 0; c.remove(); }
       const w = (id) => d.VMODELS[id] ? d.VMODELS[id].w : null;
-      out.pesos = { hilux: w('hilux'), navara: w('navara'), doblo: w('doblo'), hilos: w('hilos'), navarra: w('navarra'), triplon: w('triplon') };
+      out.pesos = { hilos: w('hilos'), navarra: w('navarra'), triplon: w('triplon') };
+      out.viejosEnLista = ['hilux', 'navara', 'doblo'].filter((id) => Object.keys(d.VMODELS).includes(id));
       const seen = new Set(); for (let i = 0; i < 40; i++) { const c = new d.Car('police', 0xf5f7fa, 0, 0, 0); seen.add(c.model && c.model.id); c.remove(); }
       out.patrullas = [...seen];
       return JSON.stringify(out); }"""))
@@ -22,8 +23,8 @@ async def run(pg):
         print(k, 'OK' if good else 'FALLA'); ok = ok and good
     good = r['clip']['paint'] == 0xff2200 and r['hilos']['paint'] == 0xff2200 and not r['clip']['bar']
     print('COCHES_NORMALES_SE_TINEN', 'OK' if good else 'FALLA'); ok = ok and good
-    p = r['pesos']; good = p['hilux'] == 0 and p['navara'] == 0 and p['doblo'] == 0 and p['hilos'] > 0 and p['navarra'] > 0 and p['triplon'] > 0
-    print('KENNEY_SUSTITUIDOS', 'OK' if good else 'FALLA'); ok = ok and good
+    p = r['pesos']; good = r['viejosEnLista'] == [] and p['hilos'] > 0 and p['navarra'] > 0 and p['triplon'] > 0
+    print('VIEJOS_SUSTITUIDOS', 'OK' if good else 'FALLA'); ok = ok and good
     good = len(set(r['patrullas']) & {'policia', 'policia2', 'policia3'}) >= 2
     print('VARIAS_PATRULLAS', 'OK' if good else 'FALLA'); ok = ok and good
     print('errores', errs[:3]); ok = ok and not errs

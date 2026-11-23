@@ -20,7 +20,8 @@ async def run(pg):
         B2, F2 = ('KeyA', 'KeyD') if side > 0 else ('KeyD', 'KeyA'); keys = [B2 if k == B else F2 if k == F else k for k in keys]
         for k in keys: await pg.keyboard.down(k); await asyncio.sleep(0.06); await pg.keyboard.up(k); await asyncio.sleep(0.03)
         await asyncio.sleep(0.15); ev = await pg.evaluate("JSON.stringify(__dbg.FIGHT2D._st().ev)")
-        if ('"%s":true' % lab) not in ev:  # the headless browser sometimes drops a key under load: one more try
+        for _try in range(3):  # the headless browser sometimes drops a key under load: up to three more tries (v1.4.42)
+            if ('"%s":true' % lab) in ev: break
             await asyncio.sleep(1.0); side = await pg.evaluate("__dbg.FIGHT2D._st().a.dir"); B3, F3 = ('KeyA', 'KeyD') if side > 0 else ('KeyD', 'KeyA')
             keys2 = [B3 if k in ('KeyA', 'KeyD') and i == 0 else F3 if k in ('KeyA', 'KeyD') else k for i, k in enumerate(keys)] if keys[0] in ('KeyA', 'KeyD') else keys
             for k in keys2: await pg.keyboard.down(k); await asyncio.sleep(0.06); await pg.keyboard.up(k); await asyncio.sleep(0.03)

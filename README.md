@@ -7,7 +7,7 @@ se abre con doble clic en `dist/JETA La Laguna.html`.
 Protagonista: Ayoze «El Chopa», recién salido de la cárcel, que reúne a su banda (Boca Papa, El Blanco, Sastrón y Coco).
 Los comercios son siempre **parodias** (nunca marcas reales) y la interfaz está en español con habla canaria.
 
-> **Assets provisionales.** Los modelos (coches Kenney, personajes Quaternius), las texturas (procedurales y de
+> **Assets provisionales.** Los modelos (coches propios hechos en Blender, personajes Quaternius), las texturas (procedurales y de
 > Poly Haven), el logotipo y los sonidos sintetizados son **temporales**: sirven para tener el juego completo y
 > jugable. Está previsto un **proyecto aparte de creación de assets** que los sustituirá. Ver
 > [docs/10_assets.md](docs/10_assets.md) para saber dónde se carga cada uno y cómo cambiarlos sin tocar el resto.
@@ -48,7 +48,7 @@ template.html       HTML/CSS de la interfaz (HUD, menús, controles táctiles) c
 src/                código del juego (módulos numerados, se concatenan por orden alfabético)
 data/               datos ya procesados: mapa, personajes, coches, comercios, Three.js para pruebas
 assets/             texturas y logotipo que se incrustan en el HTML
-tools/              convertidores de modelos 3D (Kenney car kit, Quaternius) a JSON compacto
+tools/              convertidores de modelos 3D (coches propios, Quaternius) a JSON compacto
 tests/              pruebas automáticas con Playwright (navegador sin ventana) y auditorías del mapa
 docs/               documentación técnica
 scripts/            publicación automática a GitHub
@@ -71,5 +71,5 @@ dist/               resultado de la construcción
 ## Licencias
 
 El código es del autor del proyecto. Datos de mapa © colaboradores de OpenStreetMap (ODbL). Modelos de coches
-Kenney (CC0), personajes y animaciones Quaternius (CC0), texturas Poly Haven (CC0), Three.js (MIT).
+Coches propios (Blender), personajes y animaciones Quaternius (CC0), texturas Poly Haven (CC0), Three.js (MIT).
 Detalle en [docs/09_licencias.md](docs/09_licencias.md).

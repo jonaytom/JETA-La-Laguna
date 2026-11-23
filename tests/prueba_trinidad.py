@@ -22,11 +22,11 @@ async def run(pg):
     r = json.loads(await pg.evaluate("""JSON.stringify((()=>{const d=__dbg, P=d.PLAYER; const out=[];
       for (const cp of d.CARPARKS.filter(c=>/Trinidad/.test(c.name))) {
         const ramps=d.TUNNEL_DECKS.filter(D=>D.road && !D.hall && D.ceil && Math.hypot(D.pts[D.pts.length-1][0]-cp.x,D.pts[D.pts.length-1][1]-cp.z)<45);
-        const car=d.CARS.find(c=>c.type!=='bus'&&c.type!=='moto'&&c.type!=='truck'); if(!P.car) d.enterCar(car); const c=P.car;
+        if (P.car) d.exitCar(); /* v1.4.42: an earlier test (parking del Cristo) leaves the player underground: back up to the street */ P.low=null; P.interior=null; P.dead=false; d.GAME.state='play'; P.x=-80; P.z=20; P.y=d.heightAt(P.x,P.z)+0.1; P.vy=0; __step(3); const car=new d.Car(null, 0x3366cc, P.x, P.z, 0, d.VMODELS.clip); /* v1.4.42: a car of its own (the first of the list could be a mission's or the garage's) */ d.enterCar(car); const c=P.car; const hits=[]; c.onImpact=(v)=>hits.push([Math.round(c.x),Math.round(c.z),Math.round(v),new Error().stack.split(String.fromCharCode(10))[2].trim().slice(0,60)]);
         for (const D of ramps) { const a=D.pts[0], b=D.pts[D.pts.length-1]; c.x=a[0]-(b[0]-a[0])*0.05; c.z=a[1]-(b[1]-a[1])*0.05; c.h=Math.atan2(b[0]-a[0],b[1]-a[1]); c.vx=c.vz=0; c.fwdV=0; c.y=d.heightAt(c.x,c.z)+0.2; c.low=null; c.sync(1/30);
           let maxDepth=0; for(let i=0;i<300;i++){ const tx=b[0]+(b[0]-a[0])*0.4, tz=b[1]+(b[1]-a[1])*0.4; c.h=Math.atan2(tx-c.x,tz-c.z); __step(1,1/30, Math.abs(c.fwdV)<6?['KeyW']:[]); maxDepth=Math.max(maxDepth,d.heightAt(c.x,c.z)-c.y); }
-          const lw=d.lowAt(c.x,c.z,c.y); out.push({aparcamiento:cp.name, rampa:[Math.round(a[0]),Math.round(a[1])], profundidad:+maxDepth.toFixed(1), en_sala: !!(lw&&lw.cap), fin:[Math.round(c.x),Math.round(c.z)]}); } }
-      if (P.car) d.exitCar(); return out; })())"""))
+          const lw=d.lowAt(c.x,c.z,c.y); out.push({aparcamiento:cp.name, rampa:[Math.round(a[0]),Math.round(a[1])], profundidad:+maxDepth.toFixed(1), en_sala: !!(lw&&lw.cap), fin:[Math.round(c.x),Math.round(c.z)], golpes:hits.splice(0).slice(0,4)}); } }
+      if (P.car) { const k=P.car; d.exitCar(); k.remove(); } return out; })())"""))
     for o in r: print('coche', o)
     ok = ok and len(r) >= 2 and all(o['profundidad'] > 3 for o in r)
     # photos: each ramp from 12 m before its top, looking down it; the Pedro Zerolo junction from above

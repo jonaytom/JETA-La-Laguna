@@ -72,7 +72,8 @@ async def run(pg):
     # 5) game over → continue → initials
     hs = json.loads(await pg.evaluate("""(()=>{ const A=%s, g=A._game(); g._load(0); g.score=987650; g._lives(0); const p=g._p; p.inv=0; p.hp=0; p.st='idle'; for (let i=0;i<60*5;i++) A._step(1); const m1=A._st().mode; for (let i=0;i<60*12;i++) A._step(1); const m2=A._st().mode; return JSON.stringify({ m1, m2 }); })()""" % A)); print('fin de partida', hs)
     await foto(pg, 'v082_records_nuevo')
-    ok4 = hs['m1'] == 'cont' and hs['m2'] == 'name'; print('RECORDS', 'OK' if ok4 else 'FALLA'); ok = ok and ok4
+    ok4 = hs['m1'] == 'name' and hs['m2'] == 'name';  # v1.4.42: the initials come first, then the continue
+    print('RECORDS', 'OK' if ok4 else 'FALLA'); ok = ok and ok4
     await pg.evaluate("%s.close()" % A)
     print('errores', errs[:3]); ok = ok and not errs
     print('PRUEBA 082', 'OK' if ok else 'FALLA')

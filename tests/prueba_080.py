@@ -54,7 +54,8 @@ async def run(pg):
     hs = json.loads(await pg.evaluate("""(()=>{ const A=%s, g=A._game(); g.score=987650; g._lives(0); const p=g._p; p.inv=0; p.power=0; p.y=900; for (let i=0;i<60*4;i++) A._step(1); const m1=A._st().mode; for (let i=0;i<60*12;i++) A._step(1); const m2=A._st().mode;
       const P=(v)=>{ A._press(v,true); A._step(1); A._press(v,false); A._step(1); }; P('vU'); P('vS'); P('vU'); P('vU'); P('vS'); P('vS'); const t=A.table('prueba', A.GAMES.bencomo); return JSON.stringify({ m1, m2, top: t[0], modo: A._st().mode }); })()""" % A)); print('fin de partida', hs)
     await foto(pg, 'v080_records_nuevo')
-    ok5 = hs['m1'] == 'cont' and hs['m2'] == 'name' and hs['top'][1] == 987650 and hs['top'][0] == 'BCA'; print('RECORDS', 'OK' if ok5 else 'FALLA'); ok = ok and ok5
+    ok5 = hs['m1'] == 'name' and hs['m2'] == 'name'  # v1.4.42: the initials come first, then the continue
+    ok5 = ok5 and hs['top'][1] == 987650 and hs['top'][0] == 'BCA'; print('RECORDS', 'OK' if ok5 else 'FALLA'); ok = ok and ok5
     await pg.evaluate("%s.close()" % A)
     # 6) El Blanco's call and his house
     bl = json.loads(await pg.evaluate("""(async()=>{ const d=__dbg; const G=d.MISSIONS.getState().gang; return JSON.stringify({ hay_blanco: !!(d.NPC && d.NPC.blanco) }); })()"""))

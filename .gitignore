@@ -7,7 +7,6 @@ shots/
 __pycache__/
 *.pyc
 # raw 3D asset packs (hundreds of MB): only the converted JSON in data/ is versioned
-assets/kenney/
 assets/ual/
 assets/ubc/
 node_modules/

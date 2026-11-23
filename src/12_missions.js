@@ -2105,6 +2105,7 @@ const MISSIONS = (() => {
         const cx = rx - uz * (w / 2 - 1.2) * sd + ux * 5,
           cz = rz + ux * (w / 2 - 1.2) * sd + uz * 5;
         NPC.canarion.parkHeading = Math.atan2(ux, uz);
+        NPC.canarion.parkAt = [cx, cz]; // v1.4.42: where his car is parked (prueba_prologo_1427)
         const car = new Car(m ? null : 'sport', 0xffd200, cx, cz, NPC.canarion.parkHeading, m || undefined);
         car.driver = null;
         car.mode = 'physics';

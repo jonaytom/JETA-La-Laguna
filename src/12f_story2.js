@@ -316,7 +316,7 @@ function driveOnPlan(c, D, st, dt, vt, off) {
   const rate = clamp(angDiff(c.h, target) * 5 + st.v * k, -maxRate, maxRate);
   c.yawRate += clamp(rate - c.yawRate, -3.2 * dt, 3.2 * dt);
   const heading = c.h + c.yawRate * dt;
-  c.ctl.brk = st.v < previousV ? 1 : 0;
+  if (c.ctl) c.ctl.brk = st.v < previousV ? 1 : 0; // v1.4.42: plans are also driven on bare points (prueba_0851)
   c.x = x;
   c.z = z;
   c.h = heading;

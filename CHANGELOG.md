@@ -3,8 +3,14 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.42 — 2026-11-23 — Alpha 1.4.42: sin rastro de Kenney y pruebas al día
+- **Sin rastro de Kenney**: el archivo de los coches pasa a llamarse `data/coches.json` y en el código ya no queda su nombre. El primer build borra el archivo viejo y el convertidor de sus modelos. Solo quedan los coches propios hechos en Blender.
+- **Rifle de agua**: al apuntar, la mano izquierda vuelve a agarrar el guardamanos. Desde que el rifle se separó del cuerpo (v1.4.22), la mano quedaba colgando a 15 cm.
+- **Persecuciones**: el plan de conducción ya no falla con un coche sin mandos.
+- **Pruebas revisadas**: 13 pruebas viejas fallaban porque el juego había cambiado. Se ponen al día los récords de las recreativas (primero las iniciales y luego el continuar), la leyenda («Tu vivienda»), el blanco de los coches (5 de cada 111), las distancias de detalle de la ciudad, los peatones mojados (la mitad huye) y los modelos viejos. A la pelea se le dan más intentos cuando el navegador pierde una tecla.
+
 ## 1.4.41 — 2026-11-22 — Alpha 1.4.41: Linguini Gold Edition, autopista sin golpes invisibles y Niza Nano nuevo
-- **El golpe invisible de la Autopista del Norte** (X 1898, Y 3225, a 300 km/h «estás muerto»): donde una rampa va pegada a la autopista, el morro del coche quedaba más cerca del tablero de la rampa y su baranda lo frenaba en seco (un golpe de 75 m/s). Ahora cada tablero solo sujeta al coche que va encima de él.
+- **El golpe invisible de la Autopista del Norte** (X 1898, Y 3225, a 300 km/h «estás muerto»): ahí la autopista va sobre un tablero que gira y se separa del trazado. La baranda empujaba el coche hacia la esquina del tablero, de frente, y lo frenaba en seco (un golpe de 75 m/s). Ahora la baranda solo empuja de lado, y cada tablero solo sujeta al coche que va encima de él.
 - **Menos giro a gran velocidad**: el volante nunca gira más de lo que aguantan las ruedas (unos 15 m/s² de lado). En ciudad se nota poco; a 300 km/h la curva más cerrada tiene unos 460 m de radio. El freno de mano sigue dejando cruzar la cola.
 - **Peatones fuera de los puentes**: nadie camina ya por puentes, calles elevadas ni calles hundidas en trinchera (se les ponía a la altura del suelo de debajo y parecían andar por el aire).
 - **C. Tacoronte 67 (Finca España)**: la casa recreada con las fotos de Jonay. Tiene cuatro plantas color melocotón, balcones volados con balaustrada blanca, zócalo de granito, puerta blanca con el 67, ventana con reja de forja y jardinera, y un murete con balaustrada y pilares con bolas. Se abre un hueco en el bloque del OSM. Delante no aparcan coches ni crecen matas.

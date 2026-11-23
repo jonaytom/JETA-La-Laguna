@@ -20,7 +20,7 @@ async def run(pg):
     ok = True
     # ---------- 1) rifle
     GEO = """(()=>{ const d=__dbg, H=d.playerHuman, sk=H.skeleton, m=d.RIFLE.mesh; const V=()=>new d.THREE.Vector3(); const w=(n)=>{ const b=sk.getBoneByName(n); b.updateWorldMatrix(true,false); return b.getWorldPosition(V()); };
-      m.updateMatrixWorld(true); const grip=V().set(0,-0.06,0).applyMatrix4(m.matrixWorld), hg=V().set(0,-0.045,d.WEAPON.aiming?0.18:0.32).applyMatrix4(m.matrixWorld), fwd=V().set(0,0,1).transformDirection(m.matrixWorld);
+      m.updateMatrixWorld(true); const grip=V().set(0,-0.06,0).applyMatrix4(m.matrixWorld), hg=V().set(0,-0.045,d.WEAPON.aiming?0.1:0.32).applyMatrix4(m.matrixWorld), fwd=V().set(0,0,1).transformDirection(m.matrixWorld);
       const hr=w('hand_r'), hl=w('hand_l'), lr=w('lowerarm_r'); const fa=V().subVectors(hr, lr).normalize(); const ang=Math.acos(Math.min(1, Math.abs(fa.dot(fwd))))*180/Math.PI;
       return JSON.stringify({ mano_dcha: +hr.distanceTo(grip).toFixed(3), mano_izq: +hl.distanceTo(hg).toFixed(3), angulo_antebrazo: +ang.toFixed(0) }); })()"""
     await pg.evaluate("(()=>{ const d=__dbg, P=d.PLAYER; if (P.car) d.exitCar(); P.x=189; P.z=7; d.giveRifle(true); d.WEAPON.aiming=false; d.CAM.yaw=P.h+Math.PI*0.8; d.CAM.pitch=0.15; d.CAM.dist=3.2; for (let k=0;k<20;k++) __step(1,1/30,[]); })()")
@@ -29,7 +29,7 @@ async def run(pg):
     g2 = json.loads(await pg.evaluate(GEO)); print('rifle apuntando', g2); await snap(pg, 'v079_rifle_apuntar')
     await pg.evaluate("(()=>{ const d=__dbg; d.CAM.yaw=d.PLAYER.h+1.4; d.CAM.dist=2.6; for (let k=0;k<6;k++) __step(1,1/30,[]); d.WEAPON.aiming=true; })()"); await snap(pg, 'v079_rifle_apuntar_lado')
     await pg.evaluate("(()=>{ const d=__dbg; d.WEAPON.aiming=false; d.AGUA.setRifleOut(false, true); __step(2); })()")
-    okr = all(g['mano_dcha'] < 0.12 and g['mano_izq'] < 0.14 and g['angulo_antebrazo'] > 25 for g in (g1, g2)); print('RIFLE', 'OK' if okr else 'FALLA'); ok = ok and okr
+    okr = all(g['mano_dcha'] < 0.12 and g['mano_izq'] < 0.12 and g['angulo_antebrazo'] > 25 for g in (g1, g2)); print('RIFLE', 'OK' if okr else 'FALLA'); ok = ok and okr
     # ---------- 2) football
     F = "__dbg.FUTBOL2D"
     await pg.evaluate("() => { %s.start({ team: %s, rival: %s, time: 90, lv: 0.9, mateLv: 0.9 }); %s._st().phase='play'; }" % (F, TEAM, RIV, F))

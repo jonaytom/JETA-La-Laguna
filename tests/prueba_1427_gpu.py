@@ -59,6 +59,8 @@ async def run(pg):
       const slots = d.PARKED.slots;
       out.parked = {models:new Set(slots.map(s=>s.type)).size, shades:new Set(slots.map(s=>s.color)).size,
         white:slots.filter(s=>s.color===0xf2f2f2).length/slots.length};
+      // v1.4.42: in the shared load the player may be anywhere: back to the centre and let the traffic come out
+      if (d.PLAYER.car) d.exitCar(); d.PLAYER.x = 0; d.PLAYER.z = 0; __step(240);
       const live = d.CARS.filter(c=>c.mode==='traffic' && c.model && !d.isLivery(c.model));
       out.liveTraffic = {cars:live.length, shades:new Set(live.map(c=>c.paint.color.getHex())).size,
         white:live.filter(c=>c.paint.color.getHex()===0xf2f2f2).length};

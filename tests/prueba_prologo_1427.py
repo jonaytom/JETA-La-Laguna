@@ -11,6 +11,8 @@ async def run(pg):
       const steps = [n.blanco,n.boca,n.coco,n.sastron].map(o=>Math.round(dist(point(o),trinidad)));
       const cafe = d.INTERIORS.find(i=>i.id==='cafe');
       p.money=300;
+      // v1.4.42: in the shared load an earlier test may have raced the Canarión's car: back to where it is parked
+      const cc=n.canarionCar; if (cc && n.canarion.parkAt) { cc.x=n.canarion.parkAt[0]; cc.z=n.canarion.parkAt[1]; cc.h=n.canarion.parkHeading; cc.vx=cc.vz=cc.fwdV=0; cc.mode='physics'; cc.driver=null; cc.mission=false; }
       const initial=m.getState();
       m.setState({...initial,story:2,side:0,sideOpen:true});
       const side=m.beaconPos('side');
@@ -31,6 +33,7 @@ async def run(pg):
         length:Math.round(race.cum.at(-1)), checkpoints:race.cps.length,
         sign:Math.round(dist(m.startsMap().story[3].s,home)), cafe:Math.round(dist(point(n.coco),[cafe.door.x,cafe.door.z])) };
       result.legalGrid = legalGrid;
+      result.grid = { same: startEdge.e === parkedEdge.e, oneway: !!d.GRAPH.edges[startEdge.e].oneway, ahead: Math.round(startEdge.s - parkedEdge.s), fwd: dx*startEdge.dx + dz*startEdge.dz > 0, dot: Math.round(dot(parked.h)*100)/100, se: startEdge.e, pe: parkedEdge.e };
       const own = new d.Car('compact',0x167a79,start[0]-3,start[1]-2,Math.atan2(dx,dz)+Math.PI);
       d.enterCar(own);
       const skip = () => { if (window.__TALK?.cur) window.__TALK.cur.next(); };

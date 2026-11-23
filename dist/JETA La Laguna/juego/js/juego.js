@@ -27944,8 +27944,8 @@ function animHuman(H, dt, speed, state = 'ground') {
 }
 
 // ============ parque móvil canario (v1.1.6, Jonay: «que se alejen más» de las marcas reales; Pijó se queda): modelos parodia basados en los más vendidos en Canarias (2010-2025) ============
-// Base 3D: Kenney Car Kit (CC0, www.kenney.nl), reescalado a las medidas reales de cada modelo y recoloreado.
-// [id, nombre parodia, categoría, base Kenney, física, largo, ancho, alto, peso de aparición]
+// Modelos 3D propios (Blender, librería fable_coches), a las medidas reales de cada coche; la chapa se tiñe (v1.4.42: ya ningún modelo ajeno).
+// [id, nombre parodia, categoría, modelo 3D, física, largo, ancho, alto, peso de aparición]
 const VMODELS_RAW = `
 # utilitarios / urbanos
 # v1.4.3: modelos propios hechos en Blender (Jonay: «iremos sustituyendo poco a poco a los actuales con los nuestros»); el Troceen C33 sustituye al Limonero Ce-Tres
@@ -28004,7 +28004,7 @@ newton3L|Newton Style 3|Berlina eléctrica|style3-lejos|sedan|4.694|1.849|1.443|
 # v1.4.13: Raul Cactus (modelo de Fable) sustituye al Guagüen Te-Roque y sale igual que él
 cactus|Raul Cactus|Crossover|raul-cactus|suv|4.249|1.9|1.603|4
 cactusL|Raul Cactus|Crossover|raul-cactus-lejos|suv|4.249|1.9|1.603|0
-# v1.4.14 (Jonay, 16-nov: «debemos ir quitando los de kenney»): 13 coches propios más; cada uno sustituye a uno de Kenney y sale igual que él
+# v1.4.14 (Jonay, 16-nov): 13 coches propios más; cada uno sustituye a un modelo viejo y sale igual que él
 clip|Raul Clip|Utilitario|clip|compact|4.05|1.798|1.44|9
 clipL|Raul Clip|Utilitario|clip-lejos|compact|4.05|1.798|1.44|0
 # v1.4.41 (Jonay, 22-nov): Niza Nano rehecho con la librería nueva (Nissan Micra; 11 691 / 828 triángulos)
@@ -28037,7 +28037,7 @@ reventonL|Linguini Reventon|Superdeportivo|reventon-lejos|sport|4.78|2.03|1.136|
 # v1.4.41 (Jonay, 22-nov): el coche secreto, el Reventón en dorado y un 10 % más rápido; solo en el garaje de la C. Tacoronte 67
 reventonGold|Linguini Gold Edition|Superdeportivo|reventon|sport|4.78|2.03|1.136|0
 reventonGoldL|Linguini Gold Edition|Superdeportivo|reventon-lejos|sport|4.78|2.03|1.136|0
-# v1.4.16 (Jonay, 17-nov: «incorpora los 5 nuevos vehículos sustituyendo de kenney viejotes»): cada uno sale igual que el de Kenney al que sustituye; el Seta 128 no tiene uno parecido (ya no quedan turismos de Kenney): poco, como el Reventon
+# v1.4.16 (Jonay, 17-nov: «incorpora los 5 nuevos vehículos sustituyendo los viejotes»): cada uno sale igual que el viejo al que sustituye; el Seta 128 no tiene uno parecido (ya no quedan turismos viejos): poco, como el Reventon
 koala|Raul Koala|Monovolumen|koala|van|4.486|1.919|1.838|5
 koalaL|Raul Koala|Monovolumen|koala-lejos|van|4.486|1.919|1.838|0
 compi|Piyo Compi|Monovolumen|compi|van|4.38|1.81|1.803|4
@@ -28050,14 +28050,14 @@ clever|Clever OneTwo|Microcoche|clever|compact|2.695|1.663|1.555|5
 cleverL|Clever OneTwo|Microcoche|clever-lejos|compact|2.695|1.663|1.555|0
 seta128|Seta 128|Urbano clásico|seta128|compact|3.595|1.527|1.37|2
 seta128L|Seta 128|Urbano clásico|seta128-lejos|compact|3.595|1.527|1.37|0
-# v1.4.19 (Jonay, 17-nov): Fita Triplon, Totuya Hilos y Niza Navarra en lugar de los de Kenney (mismo peso); la policía (3 modelos: Seta Pantera, Niza Queguay y Ole Corsario) y la ambulancia (Farm Traficc), propios: no se tiñen, traen sus vinilos
+# v1.4.19 (Jonay, 17-nov): Fita Triplon, Totuya Hilos y Niza Navarra en lugar de los viejos (mismo peso); la policía (3 modelos: Seta Pantera, Niza Queguay y Ole Corsario) y la ambulancia (Farm Traficc), propios: no se tiñen, traen sus vinilos
 triplon|Fita Triplon|Furgoneta|triplon|van|4.756|1.832|1.845|3
 triplonL|Fita Triplon|Furgoneta|triplon-lejos|van|4.756|1.832|1.845|0
 hilos|Totuya Hilos|Pick-up|hilos|suv|5.33|1.855|1.815|5
 hilosL|Totuya Hilos|Pick-up|hilos-lejos|suv|5.33|1.855|1.815|0
 navarra|Niza Navarra|Pick-up|navarra|suv|5.33|1.85|1.805|3
 navarraL|Niza Navarra|Pick-up|navarra-lejos|suv|5.33|1.85|1.805|0
-# v1.4.20 (Jonay, 17-nov: «ya hay todos los coches listos para quitar lo viejo»): camiones, furgones, grúa, bomberos y los 3 taxis propios; fuera todos los de Kenney salvo el camión de la basura (no hay modelo propio todavía) y el tractor (no se usa)
+# v1.4.20 (Jonay, 17-nov: «ya hay todos los coches listos para quitar lo viejo»): camiones, furgones, grúa, bomberos y los 3 taxis propios; fuera todos los viejos salvo el camión de la basura (no hay modelo propio todavía) y el tractor (no se usa)
 daily|Ivizco Nightly|Camión|nightly|truck|5.6|2.052|2.75|3
 dailyL|Ivizco Nightly|Camión|nightly-lejos|truck|5.6|2.052|2.75|0
 daily2|Ivizco Evening|Furgón|evening|truck|5.67|2.052|2.68|3
@@ -28112,7 +28112,7 @@ mt07|Llamarada EmeTe-Siete|Naked|naked|moto|2.08|0.78|1.1|2
   .trim()
   .split('\n')
   .filter((l) => l && !l.startsWith('#'))
-  .map((l) => l.split('|').map((v, k) => (k >= 5 ? +v : v))); // (v1.1.7: one line per model, «id|name|category|Kenney base|physics|length|width|height|weight»; # = a heading)
+  .map((l) => l.split('|').map((v, k) => (k >= 5 ? +v : v))); // (v1.1.7: one line per model, «id|name|category|3D model|physics|length|width|height|weight»; # = a heading)
 const VMODELS = {};
 // v1.2.7 (Jonay: «reducimos el tamaño de los coches por ahora un 5 %… en todas sus dimensiones»): every vehicle is drawn
 // and driven 5 % smaller in length, width and height (the table keeps the real sizes)
@@ -28205,7 +28205,7 @@ for (const [id, x, y] of [
 const LIVERY = { bomberos: 0xb3141c, grua: 0xf2b21a, guagua: 0x1f8a4c, reventonGold: 0xd9a520 }; // v1.4.41: the Gold Edition, gold // v1.4.21: the guagua in TITSA green, the rubbish lorry white
 const isLivery = (m) => !!m && /^(taxi\d*|policia\d*|ambulancia|bomberos|grua|basura|guagua|reventonGold)$/.test(m.id) && !!m.lod;
 const liveryColor = (m) => LIVERY[m.id] || 0xf6f6f4;
-// v1.4.20: the ids of the old Kenney models still answer (saved games, story cars: s2Car('clio'), 'transit', 'vito'…), with
+// v1.4.20: the ids of the old models still answer (saved games, story cars: s2Car('clio'), 'transit', 'vito'…), with
 // the own model closest to them; not enumerable, so they never count twice when picking at random
 for (const [a, b] of Object.entries({
   'polo': 'helado',
@@ -28447,9 +28447,9 @@ function inflateRaw(src, outLen) {
   return out;
 }
 
-// ---------- Kenney geometry decoding (positions ×2000 int16, normals int8, colours RGB565)
-const KGEO = (() => {
-  const d = DATA.KV;
+// ---------- car geometry decoding (data/coches.json) (positions ×2000 int16, normals int8, colours RGB565)
+const CAR_GEO = (() => {
+  const d = DATA.CM; // v1.4.42: the models of data/coches.json
   if (!d) return null;
   const b64 = (s) => {
     const bin = atob(s);
@@ -28506,7 +28506,7 @@ const PAINTREF = {};
 const OWN_PAINT = 10973;
 function paintRef(base) {
   if (PAINTREF[base] !== undefined) return PAINTREF[base];
-  const K = KGEO[base];
+  const K = CAR_GEO[base];
   let ref = null;
   if (OWN_BASES.has(base)) ref = { k: OWN_PAINT, l: lum(rgb565(OWN_PAINT)), own: true };
   else if (base === 'police')
@@ -28532,7 +28532,7 @@ function classify0(base, k) {
   const c = rgb565(k),
     h = hsv(c),
     ref = base === 'wheel' ? null : paintRef(base);
-  // glass: light, cool, low saturation (Kenney windows are pale blue)
+  // glass: light, cool, low saturation (the windows are pale blue)
   if ((c[2] > 0.9 && c[1] > 0.85 && c[0] > 0.75 && c[0] < 0.88) || (lum(c) > 0.78 && c[2] - c[0] > 0.035 && h[1] < 0.16)) return ['glass', c];
   if (ref && ref.own) {
     if (k === ref.k) return ['paint', [lum(c) / ref.l, lum(c) / ref.l, lum(c) / ref.l]];
@@ -28586,7 +28586,7 @@ function sharedText(txt, w, h, bg, fg, font) {
 const VGEO = {};
 function modelGeometry(model) {
   if (VGEO[model.id]) return VGEO[model.id];
-  const K = KGEO[model.base];
+  const K = CAR_GEO[model.base];
   const bb = K.bb;
   const kW = bb[1][0] - bb[0][0],
     kH = bb[1][1] - bb[0][1],
@@ -28703,7 +28703,7 @@ function modelGeometryPart1(sy, sx, K, wheels, zc, sz, model, groups) {
       cols[i] = c;
       // v1.4.16 (Jonay, 16-nov: «¿no es posible iluminar esos pilotos traseros sin añadir el rectángulo?»): our own models
       // (the ones with 'tail') bring their tail lights in saturated red: those faces go to their own group (kept at the rear
-      // below), which lights up when braking instead of the two boxes Kenney's cars get
+      // below), which lights up when braking instead of the two boxes the old cars got
       if (model.tail && k === 'rest') {
         // v1.4.19: the tail-light red of our models is exactly 47234 (an ambulance's red vinyl is not a light)
         const hv = hsv(rgb565(p.C[i]));
@@ -28755,7 +28755,7 @@ litCarBodyMat.onBeforeCompile = (shader) => {
 };
 const kGlassMat = new THREE.MeshStandardMaterial({ color: 0x1e2830, roughness: 0.12, metalness: 0.35 });
 const wheelMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8, metalness: 0.1 });
-function makeKenneyMesh(model, color) {
+function makeOwnCarMesh(model, color) {
   const G = modelGeometry(model);
   const g = new THREE.Group();
   const body = new THREE.Group();
@@ -28767,10 +28767,10 @@ function makeKenneyMesh(model, color) {
     paint.metalness = 0.95;
     paint.roughness = 0.18;
   }
-  const { wheels, hl, tl, W, L, halfW, lightBody } = makeKenneyMeshPart1(G, body, paint, model, g);
-  makeKenneyMeshPart2(model, G, halfW, W, body, tl);
-  let { bar } = makeKenneyMeshPart3(model, G, body, L, halfW);
-  makeKenneyMeshPart4(model, G, body, L, halfW, W);
+  const { wheels, hl, tl, W, L, halfW, lightBody } = makeOwnCarMeshPart1(G, body, paint, model, g);
+  makeOwnCarMeshPart2(model, G, halfW, W, body, tl);
+  let { bar } = makeOwnCarMeshPart3(model, G, body, L, halfW);
+  makeOwnCarMeshPart4(model, G, body, L, halfW, W);
   body.traverse((m) => {
     if (m.isMesh) {
       m.castShadow = true;
@@ -28779,8 +28779,8 @@ function makeKenneyMesh(model, color) {
   });
   return { g, body, wheels, hl, tl, bar, paint, lightBody };
 }
-/** (v1.1.7, code quality) part of makeKenneyMesh: company / service lettering on the box sides */
-function makeKenneyMeshPart4(model, G, body, L, halfW, W) {
+/** (v1.1.7, code quality) part of makeOwnCarMesh: company / service lettering on the box sides */
+function makeOwnCarMeshPart4(model, G, body, L, halfW, W) {
   if (model.id === 'taxi' && !model.lod) {
     {
       const y = model.H * 0.48;
@@ -28835,8 +28835,8 @@ function makeKenneyMeshPart4(model, G, body, L, halfW, W) {
     }
   }
 }
-/** (v1.1.7, code quality) part of makeKenneyMesh: livery stripes as ribbons that follow the side of the body */
-function makeKenneyMeshPart3(model, G, body, L, halfW) {
+/** (v1.1.7, code quality) part of makeOwnCarMesh: livery stripes as ribbons that follow the side of the body */
+function makeOwnCarMeshPart3(model, G, body, L, halfW) {
   let bar = null;
   if (G.beaconL || G.beaconR) {
     // v1.4.19: our own police cars and ambulance bring their vinyls and roof lights: their lights flash, nothing is added
@@ -28900,8 +28900,8 @@ function makeKenneyMeshPart3(model, G, body, L, halfW) {
   }
   return { bar };
 }
-/** (v1.1.7, code quality) part of makeKenneyMesh: rear: the lights go on the rear face, at the upper part of it, near its outer edge */
-function makeKenneyMeshPart2(model, G, halfW, W, body, tl) {
+/** (v1.1.7, code quality) part of makeOwnCarMesh: rear: the lights go on the rear face, at the upper part of it, near its outer edge */
+function makeOwnCarMeshPart2(model, G, halfW, W, body, tl) {
   // rear: the lights go on the rear face, at the upper part of it, near its outer edge
   let ry0 = 1e9,
     ry1 = -1e9;
@@ -28969,8 +28969,8 @@ function makeKenneyMeshPart2(model, G, halfW, W, body, tl) {
   plate.rotation.y = Math.PI;
   body.add(plate);
 }
-/** (v1.1.7, code quality) part of makeKenneyMesh: lights (brake lights must light up), plate */
-function makeKenneyMeshPart1(G, body, paint, model, g) {
+/** (v1.1.7, code quality) part of makeOwnCarMesh: lights (brake lights must light up), plate */
+function makeOwnCarMeshPart1(G, body, paint, model, g) {
   if (G.paint) body.add(new THREE.Mesh(G.paint, paint));
   if (G.glass) body.add(new THREE.Mesh(G.glass, kGlassMat));
   const rest = G.rest ? new THREE.Mesh(G.rest, restMat) : null;
@@ -29579,7 +29579,7 @@ const tmpS = { x: 0, z: 0, dx: 0, dz: 0 };
 class Car {
   static seq = 0;
   constructor(type, color, x, z, h, model) {
-    if (model === undefined && KGEO) model = modelForType(type);
+    if (model === undefined && CAR_GEO) model = modelForType(type);
     if (model) {
       type = model.phys;
     }
@@ -29600,7 +29600,7 @@ class Car {
         ? makeCarMesh(type, this.color)
         : model.phys === 'moto'
           ? makeMotoMesh(model, this.color)
-          : makeKenneyMesh(model, this.color);
+          : makeOwnCarMesh(model, this.color);
     m.g.userData.noMerge = true;
     ACTORS.set(m.g, { r: 360, dr: 70, thr: 0.3 }); // v0.77: a car you can drive is never fused (05w_optimiza.js); v1.0.0: not drawn past 360 m
     if (pooled) {
@@ -30458,7 +30458,7 @@ function buildParkedPart2() {
   });
   const glassC = new THREE.Color(0x26313a);
   const cc = new THREE.Color();
-  // simplified per-model template: body (paint flagged) + 4 wheels (low-poly cylinders for Kenney's; our own models' own)
+  // simplified per-model template: body (paint flagged) + 4 wheels (each model's own)
   const TPL = {};
   const lowWheel = (() => {
     const g = new THREE.CylinderGeometry(1, 1, 1, 10);
@@ -30553,14 +30553,14 @@ function buildParkedPart1() {
             z = z1 + dz * s + dx * off * side;
           if (COL.nearSeg(x, z, 1.3) || onBigRoad(x, z) || onFootpath(x, z)) continue; // v0.99.5 (Jonay): never on the motorway, its slip roads or the Vía de Ronda
           const h = Math.atan2(dx, dz) + (side < 0 ? Math.PI : 0);
-          const mdl = KGEO ? parkedModel() : null;
+          const mdl = CAR_GEO ? parkedModel() : null;
           PARKED.slots.push({ x, z, h, type: mdl ? mdl.id : pick(types), color: pickColor(mdl), alive: true });
         }
     }
   });
   lt('huecos ' + PARKED.slots.length);
   // parked cars: one InstancedMesh per model and 800 m cell (v0.77), culled by distance; paint colour per instance
-  if (KGEO)
+  if (CAR_GEO)
     for (const s of PARKED.slots)
       if (!VMODELS[s.type]) {
         const m = modelForType(s.type);
@@ -40748,8 +40748,9 @@ function holdRiflePart1(H, aim, dir, fx, fz, m) {
   else fist.multiplyScalar(1 / nf);
   m.position.copy(fist).sub(HR.grip.set(0, -0.06, 0).multiplyScalar(m.scale.x).applyQuaternion(m.quaternion));
   m.updateMatrixWorld(true);
-  // left hand under the handguard
-  HR.hg.set(0, -0.045, aim ? 0.18 : 0.32).applyMatrix4(m.matrixWorld);
+  // left hand under the handguard (v1.4.42: aiming, 10 cm ahead of the grip: since the rifle sits further out (v1.4.22) the
+  // left arm no longer reached 18 cm and the hand hung 15 cm away from it)
+  HR.hg.set(0, -0.045, aim ? 0.1 : 0.32).applyMatrix4(m.matrixWorld);
   armIK(
     H,
     'l',
@@ -56662,6 +56663,7 @@ const MISSIONS = (() => {
         const cx = rx - uz * (w / 2 - 1.2) * sd + ux * 5,
           cz = rz + ux * (w / 2 - 1.2) * sd + uz * 5;
         NPC.canarion.parkHeading = Math.atan2(ux, uz);
+        NPC.canarion.parkAt = [cx, cz]; // v1.4.42: where his car is parked (prueba_prologo_1427)
         const car = new Car(m ? null : 'sport', 0xffd200, cx, cz, NPC.canarion.parkHeading, m || undefined);
         car.driver = null;
         car.mode = 'physics';
@@ -58072,7 +58074,7 @@ function driveOnPlan(c, D, st, dt, vt, off) {
   const rate = clamp(angDiff(c.h, target) * 5 + st.v * k, -maxRate, maxRate);
   c.yawRate += clamp(rate - c.yawRate, -3.2 * dt, 3.2 * dt);
   const heading = c.h + c.yawRate * dt;
-  c.ctl.brk = st.v < previousV ? 1 : 0;
+  if (c.ctl) c.ctl.brk = st.v < previousV ? 1 : 0; // v1.4.42: plans are also driven on bare points (prueba_0851)
   c.x = x;
   c.z = z;
   c.h = heading;

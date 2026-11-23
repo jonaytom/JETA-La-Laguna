@@ -419,7 +419,7 @@ const tmpS = { x: 0, z: 0, dx: 0, dz: 0 };
 class Car {
   static seq = 0;
   constructor(type, color, x, z, h, model) {
-    if (model === undefined && KGEO) model = modelForType(type);
+    if (model === undefined && CAR_GEO) model = modelForType(type);
     if (model) {
       type = model.phys;
     }
@@ -440,7 +440,7 @@ class Car {
         ? makeCarMesh(type, this.color)
         : model.phys === 'moto'
           ? makeMotoMesh(model, this.color)
-          : makeKenneyMesh(model, this.color);
+          : makeOwnCarMesh(model, this.color);
     m.g.userData.noMerge = true;
     ACTORS.set(m.g, { r: 360, dr: 70, thr: 0.3 }); // v0.77: a car you can drive is never fused (05w_optimiza.js); v1.0.0: not drawn past 360 m
     if (pooled) {
@@ -1298,7 +1298,7 @@ function buildParkedPart2() {
   });
   const glassC = new THREE.Color(0x26313a);
   const cc = new THREE.Color();
-  // simplified per-model template: body (paint flagged) + 4 wheels (low-poly cylinders for Kenney's; our own models' own)
+  // simplified per-model template: body (paint flagged) + 4 wheels (each model's own)
   const TPL = {};
   const lowWheel = (() => {
     const g = new THREE.CylinderGeometry(1, 1, 1, 10);
@@ -1393,14 +1393,14 @@ function buildParkedPart1() {
             z = z1 + dz * s + dx * off * side;
           if (COL.nearSeg(x, z, 1.3) || onBigRoad(x, z) || onFootpath(x, z)) continue; // v0.99.5 (Jonay): never on the motorway, its slip roads or the Vía de Ronda
           const h = Math.atan2(dx, dz) + (side < 0 ? Math.PI : 0);
-          const mdl = KGEO ? parkedModel() : null;
+          const mdl = CAR_GEO ? parkedModel() : null;
           PARKED.slots.push({ x, z, h, type: mdl ? mdl.id : pick(types), color: pickColor(mdl), alive: true });
         }
     }
   });
   lt('huecos ' + PARKED.slots.length);
   // parked cars: one InstancedMesh per model and 800 m cell (v0.77), culled by distance; paint colour per instance
-  if (KGEO)
+  if (CAR_GEO)
     for (const s of PARKED.slots)
       if (!VMODELS[s.type]) {
         const m = modelForType(s.type);

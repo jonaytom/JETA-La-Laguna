@@ -71,7 +71,7 @@ async def run2(pg):
       const kept={ casa: d.CASA.has('herradores'), consola: d.ARCADE.data().console, invitado: d.ARCADE.data().invited, cartuchos: d.ARCADE.data().bought.length };
       d.GAME.state='play'; d.BIGMAP.toggle(); const ley=document.getElementById('bmLeg').textContent; d.BIGMAP.toggle(); return JSON.stringify({ fuera, consola_en_tienda: opts.some(o=>o.includes('GOFIO-8')), kept, ley }); })()"""))
     print('tienda, guardar y leyenda', f)
-    ok5 = f['fuera'] and f['consola_en_tienda'] and f['kept']['casa'] and f['kept']['consola'] and f['kept']['invitado'] and f['kept']['cartuchos'] == 2 and all(w in f['ley'] for w in ['Juguetería', 'Pisos Chachi', 'Tu casa'])
+    ok5 = f['fuera'] and f['consola_en_tienda'] and f['kept']['casa'] and f['kept']['consola'] and f['kept']['invitado'] and f['kept']['cartuchos'] == 2 and all(w in f['ley'] for w in ['Juguetería', 'Pisos Chachi', 'Tu vivienda'])
     print('TIENDA/GUARDAR/LEYENDA', 'OK' if ok5 else 'FALLA'); ok = ok and ok5
     print('errores', errs[:3]); ok = ok and not errs
     print('PRUEBA 083', 'OK' if ok else 'FALLA')

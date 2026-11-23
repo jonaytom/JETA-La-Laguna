@@ -40,7 +40,11 @@ for e in SH:
     seen.add(k); SH2.append(e)
 D['SH']=SH2
 D['BRAND']=BRAND
-D['KV']=json.load(open('data/kenney_cars.json',encoding='utf-8'))['m']
+# v1.4.42: the car models (all our own, Blender): data/coches.json (renamed; the first build after the rename removes
+# the old file and the old converter: these two lines go in the next version)
+for _old in ('data/kenney_cars.json', 'tools/kenney2json.py'):
+    if os.path.exists(_old) and os.path.exists('data/coches.json'): os.remove(_old)
+D['CM']=json.load(open('data/coches.json',encoding='utf-8'))['m']
 # v1.0.4: buildings of the Catastro missing in the OSM, and the walls and fences of the OSM (tools/catastro_add.py)
 D['CB']=json.load(open('data/catastro_add.json',encoding='utf-8')) if os.path.exists('data/catastro_add.json') else []
 D['BW']=json.load(open('data/barreras_juego.json',encoding='utf-8')) if os.path.exists('data/barreras_juego.json') else []

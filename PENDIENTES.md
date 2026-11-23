@@ -10,7 +10,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Pendientes por categoría
 
-Revisado con el historial de cambios y las pruebas hasta la v1.4.41 (22-nov: añadidos a «Hecho» la v1.4.39 y la v1.4.40, que se hicieron fuera de Claude, y la v1.4.41). Los avisos de mapa con un punto concreto siguen abiertos si necesitan comprobarse en partida.
+Revisado con el historial de cambios y las pruebas hasta la v1.4.42 (23-nov: añadidos a «Hecho» la v1.4.39 y la v1.4.40, que se hicieron fuera de Claude, y la v1.4.41). Los avisos de mapa con un punto concreto siguen abiertos si necesitan comprobarse en partida.
 
 ### Avisos nuevos de Jonay (11-nov, sin clasificar del todo)
 
@@ -22,11 +22,9 @@ Revisado con el historial de cambios y las pruebas hasta la v1.4.41 (22-nov: añ
 - [ ] ◐ **Pasarela del tranvía: la subida va por el otro lado** (Jonay, 11-nov, captura en X −259, Y 547: «la subida a la pasarela es por el lado contrario… pasa justo encima de lo que ahora es una acera»): la rampa de subida a la pasarela está del lado equivocado; en la realidad sube por donde hoy hay una acera.
 - [ ] ◐ **Trinchera del tranvía en la Glorieta del Brasil: el jugador camina por encima** (Jonay, 11-nov, captura en X −281, Y 719, Campus Central ULL: «por aquí te deberías de caer»): el tranvía va en una trinchera con muros, pero el jugador anda a la altura de la calle sobre ella, como si hubiera suelo invisible. Debería caer a la trinchera (o no poder entrar).
 
-### Pruebas antiguas que fallan (22-nov)
-
-- [ ] ◐ **Revisar 13 pruebas que fallan en la batería completa** (al publicar la 1.4.40 el 22-nov, 65 de 78 OK). Varias son de antes de los cambios hechos fuera de Claude y probablemente están desfasadas: prueba_0851, 076, pelea_especiales (pastor), 079 (rifle), 080/081/082 (récords), 083 (tienda, guardar, leyenda), 1419 (KENNEY_SUSTITUIDOS), 1426_gpu (MP YOU), 1427_gpu, horizonte_1428_gpu y prologo_1427 (legalGrid). Mientras, se publica con listas de pruebas escogidas.
-
 ### Coches propios (Blender)
+
+- [ ] ⚡ **Quitar de `build.py` las líneas que borran el archivo de coches viejo** (v1.4.42): solo hacen falta en el primer build tras el cambio de nombre; en la siguiente versión se quitan y no queda ni ese rastro del nombre.
 
 Los coches nuevos se modelan con la biblioteca de Blender y se prueban con Jonay antes de integrar los paquetes de `Blender/coche/para_programador/`.
 
@@ -729,6 +727,7 @@ Los coches nuevos se modelan con la biblioteca de Blender y se prueban con Jonay
 
 - [x] v1.4.40 **Límite de 60 FPS** en el mundo 3D y en los minijuegos, también en monitores de alta frecuencia; las simulaciones conservan sus pasos de tiempo.
 - [x] v1.4.41 **Golpe invisible en la Autopista del Norte** (X 1898, Y 3225: la baranda del tablero empujaba hacia su esquina, de frente), **menos giro a gran velocidad**, **peatones fuera de puentes y calles elevadas o hundidas**, **C. Tacoronte 67 con su garaje y el Linguini Gold Edition** (botón que abre el portón), **Niza Nano rehecho** y **créditos al día** (sin Kenney).
+- [x] v1.4.42 **Fuera el nombre de Kenney** (`data/coches.json`, código y herramientas), **mano izquierda en el rifle al apuntar** y **las 13 pruebas viejas que fallaban, al día** (la batería completa vuelve a pasar).
 
 - [x] v1.4.39 **Linguini Reventón híbrido** con el capó corregido, las ópticas a ras y las llantas aprobadas.
 

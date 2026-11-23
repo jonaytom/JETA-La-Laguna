@@ -14,9 +14,10 @@ async def run(pg):
         let bad=0, trees=0;
         for(const it of lod.items){
           const dist=Math.hypot(it.x-camera.position.x,it.z-camera.position.z)-it.r;
-          const visible=dist<(it.d?detail:fog.far+40);
+          // v1.4.42: the distances the city uses since v1.4.39 (LOD.det, LOD.far; trees switch at 210 m)
+          const visible=dist<(it.d?lod.det:lod.far);
           if(it.m.visible!==visible) bad++;
-          if(visible&&it.lo&&it.m.geometry!==(dist>170?it.lo:it.hi)) trees++;
+          if(visible&&it.lo&&it.m.geometry!==(dist>210?it.lo:it.hi)) trees++;
         }
         return [bad,trees];
       };

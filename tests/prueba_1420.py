@@ -1,4 +1,4 @@
-# v1.4.20 (Jonay, 17-nov): fuera los de Kenney (salvo la basura); camiones, furgones, grúa, bomberos y 3 taxis propios;
+# v1.4.20 (Jonay, 17-nov): fuera los modelos viejos (salvo la basura); camiones, furgones, grúa, bomberos y 3 taxis propios;
 # taxis/bomberos/grúa con su librea fija; los ids viejos siguen respondiendo; pesos para ver todos los modelos circulando.
 import json
 async def run(pg):
@@ -8,7 +8,7 @@ async def run(pg):
         const c = new d.Car(null, 0xff2200, 0, 0, 0, V[id]);
         out.col[id] = { paint: c.paint ? c.paint.color.getHex() : null, bar: c.bar ? c.bar.children.length : 0 }; c.remove(); }
       out.alias = ['clio', 'transit', 'vito', 'corolla', 'polo', 'hilux'].map((k) => V[k] ? V[k].id : null);
-      out.kenney = Object.values(V).filter((m) => m.phys !== 'moto' && !m.lod && !/L$/.test(m.id)).map((m) => m.id);
+      out.viejos = Object.values(V).filter((m) => m.phys !== 'moto' && !m.lod && !/L$/.test(m.id)).map((m) => m.id);
       const tm = typeof trafficModel === 'function' ? trafficModel : d.trafficModel;
       if (tm) { const n = {}; for (let i = 0; i < 6000; i++) { const m = tm('primary'); if (m) n[m.id] = (n[m.id] || 0) + 1; }
         out.nunca = Object.values(V).filter((m) => m.w > 0 && !n[m.id]).map((m) => m.id); out.vistos = Object.keys(n).length; }
@@ -25,7 +25,7 @@ async def run(pg):
     chk('GRUA_AMARILLA', c['grua']['paint'] == 0xf2b21a)
     chk('CAMIONES_SE_TINEN', all(c[k]['paint'] == 0xff2200 for k in ('daily', 'daily2', 'canter', 'sprinter', 'clip')))
     chk('IDS_VIEJOS', r['alias'] == ['clip', 'traficc', 'vivita', 'carlota', 'helado', 'hilos'])
-    chk('SOLO_BASURA_DE_KENNEY', r['kenney'] in (['basura'], []))  # v1.4.21: ni la basura
+    chk('SOLO_BASURA_VIEJA', r['viejos'] in (['basura'], []))  # v1.4.21: ni la basura
     chk('VARIOS_TAXIS', len(set(r['taxis']) & {'taxi', 'taxi2', 'taxi3'}) >= 2)
     if 'nunca' in r: chk('TODOS_SE_VEN_CIRCULANDO', not r['nunca'])
     else: print('(trafficModel no accesible: no se comprueba que salgan todos)')

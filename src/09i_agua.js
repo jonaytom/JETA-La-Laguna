@@ -161,8 +161,9 @@ function holdRiflePart1(H, aim, dir, fx, fz, m) {
   else fist.multiplyScalar(1 / nf);
   m.position.copy(fist).sub(HR.grip.set(0, -0.06, 0).multiplyScalar(m.scale.x).applyQuaternion(m.quaternion));
   m.updateMatrixWorld(true);
-  // left hand under the handguard
-  HR.hg.set(0, -0.045, aim ? 0.18 : 0.32).applyMatrix4(m.matrixWorld);
+  // left hand under the handguard (v1.4.42: aiming, 10 cm ahead of the grip: since the rifle sits further out (v1.4.22) the
+  // left arm no longer reached 18 cm and the hand hung 15 cm away from it)
+  HR.hg.set(0, -0.045, aim ? 0.1 : 0.32).applyMatrix4(m.matrixWorld);
   armIK(
     H,
     'l',
