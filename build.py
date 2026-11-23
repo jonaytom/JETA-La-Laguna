@@ -40,10 +40,7 @@ for e in SH:
     seen.add(k); SH2.append(e)
 D['SH']=SH2
 D['BRAND']=BRAND
-# v1.4.42: the car models (all our own, Blender): data/coches.json (renamed; the first build after the rename removes
-# the old file and the old converter: these two lines go in the next version)
-for _old in ('data/kenney_cars.json', 'tools/kenney2json.py'):
-    if os.path.exists(_old) and os.path.exists('data/coches.json'): os.remove(_old)
+# v1.4.42: the car models (all our own, Blender): data/coches.json
 D['CM']=json.load(open('data/coches.json',encoding='utf-8'))['m']
 # v1.0.4: buildings of the Catastro missing in the OSM, and the walls and fences of the OSM (tools/catastro_add.py)
 D['CB']=json.load(open('data/catastro_add.json',encoding='utf-8')) if os.path.exists('data/catastro_add.json') else []
@@ -94,8 +91,12 @@ def make(three, artifact):
         s=s.replace('<!doctype html>\n','').replace('<html lang="es">\n','').replace('<head>\n','',1).replace('</head>\n<body>\n','').replace('</body>\n</html>\n','')
         s=s.replace('<meta charset="utf-8">\n','').replace('<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">\n','')
     return s
+import re as _re
+_h=open('data/three.module.min.js',encoding='utf-8').read()
+THREE_REV=(_re.search(r'REVISION\s*=\s*"(\d+)"',_h) or _re.search(r'const t="(\d+)"',_h[:2000])).group(1)  # v1.4.43: r160 / r187
+print('three.js r'+THREE_REV)
 os.makedirs('dist',exist_ok=True); copy_radio('dist'); shutil.copy('data/three.module.min.js','dist/three.module.min.js'); open('dist/test.html','w',encoding='utf-8').write(make('./three.module.min.js',False))
-open('dist/gta-la-laguna.html','w',encoding='utf-8').write(make('https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.min.js',True))
+open('dist/gta-la-laguna.html','w',encoding='utf-8').write(make('https://cdn.jsdelivr.net/npm/three@0.%s.0/build/three.module.min.js'%THREE_REV,True))  # v1.4.43: the same version as data/three.module.min.js
 # the copy for the PC carries Three.js inside (data: URL in the import map) so it runs without internet
 THREE_DATA='data:text/javascript;base64,'+base64.b64encode(open('data/three.module.min.js','rb').read()).decode()
 open('dist/JETA La Laguna.html','w',encoding='utf-8').write(make(THREE_DATA,False))

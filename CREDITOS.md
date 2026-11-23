@@ -19,4 +19,4 @@ nombrar al autor.
 | three.js r160 | three.js authors | MIT | Motor 3D (`data/three.module.min.js`) |
 | Audiowide, Barlow, Oswald, Press Start 2P, Russo One, Yellowtail | Google Fonts | SIL OFL 1.1 | Tipografías del HUD y menús (`data/fonts.json`) |
 
-Los coches (librería `fable_coches.py`, Blender) y el resto de modelos son propios del juego. La música de la radio es original de Jonay, creada con Suno. Los modelos de coche están en `data/coches.json`.
+Los coches (librería `fable_coches.py`, Blender) y el resto de modelos son propios del juego. La música de la radio es de creación propia. Los modelos de coche están en `data/coches.json`.

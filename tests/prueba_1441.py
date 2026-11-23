@@ -42,7 +42,7 @@ async def run(pg):
       if (S) {
         const T = d.tac67(), [ix, iz] = T.toW(2.55, -3.7);
         out.garage.carved = !d.inAnyBuilding(ix, iz);
-        d.PLAYER.x = S.button[0]; d.PLAYER.z = S.button[1]; if (d.PLAYER.car) d.exitCar(); __step(4);
+        if (d.PLAYER.car) d.exitCar(); d.PLAYER.x = S.button[0]; d.PLAYER.z = S.button[1]; __step(4);  // v1.4.43: out of the car first (exitCar moves the player)
         const gc = d.GARAJE.car; out.garage.car = gc ? { id: gc.model.id, d: Math.hypot(gc.x - ix, gc.z - iz) } : null;
         out.garage.prompt = d.GARAJE.prompt();
         const [mx, mz] = T.toW(2.55, -0.1);

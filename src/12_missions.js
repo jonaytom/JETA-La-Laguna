@@ -242,6 +242,21 @@ function reachNear(x, z, rs = [4, 5, 3.5, 6, 7, 8, 3], ring = 1.2) {
 // misiones»): a road route from (x,z) of minL-maxL m ending as near (tx,tz) as it can: through a point on the way when
 // the target is in range (it ends at it), a loop through a point around when it is nearer than minL, and as far towards
 // it as allowed when it is too far. No U-turns at the joint. ok(r): extra condition (e.g. far from the edge of the map).
+/** v1.4.43: metres of a route that run along a street it has already used (either way): checkpoint courses must not come
+ * back along the street they went out on («la ruta de vuelta pasa por encima de la de ida») */
+function routeRetrace(r) {
+  const seen = new Set(),
+    k = (i) => Math.round(r[i] * 2) + ',' + Math.round(r[i + 1] * 2);
+  let m = 0;
+  for (let i = 2; i < r.length; i += 2) {
+    const a = k(i - 2),
+      b = k(i),
+      key = a < b ? a + '|' + b : b + '|' + a;
+    if (seen.has(key)) m += Math.hypot(r[i] - r[i - 2], r[i + 1] - r[i - 1]);
+    else seen.add(key);
+  }
+  return m;
+}
 function routeToward(x, z, tx, tz, minL, maxL, ok) {
   const from = GRAPH.nearestNode(x, z);
   // a few end nodes within ~40 m of the target (the nearest one may be the exit of a one-way street: nothing can end on it)
@@ -265,8 +280,11 @@ function routeToward(x, z, tx, tz, minL, maxL, ok) {
     if (!r || r.length < 4 || (ok && !ok(r))) return;
     const L = len(r);
     if (L < minL || L > maxL) return;
-    const e = Math.hypot(r[r.length - 2] - tx, r[r.length - 1] - tz);
-    if (!best || e < best.e) best = { r, e };
+    const e = Math.hypot(r[r.length - 2] - tx, r[r.length - 1] - tz),
+      rt = routeRetrace(r),
+      clean = rt <= 25,
+      score = e + 3 * Math.max(0, rt - 25); // v1.4.43: running back along its own street costs much more than ending a bit off
+    if (!best || score < best.score) best = { r, e, rt, clean, score };
   };
   const join = (r1, r2) => {
     if (!r1 || !r2 || r1.length < 4 || r2.length < 4) return null;
@@ -279,7 +297,7 @@ function routeToward(x, z, tx, tz, minL, maxL, ok) {
     return [...r1, ...r2.slice(2)];
   };
   const D = Math.hypot(tx - x, tz - z);
-  for (let k = 0; k < 40 && !(best && best.e < 40); k++) {
+  for (let k = 0; k < 80 && !(best && best.e < 40 && best.clean); k++) {
     const a = Math.random() * 6.283,
       to = tos[k % tos.length];
     if (D > maxL * 0.75) {

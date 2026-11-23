@@ -234,7 +234,8 @@ function tac67() {
     c = Math.cos(ang),
     s = Math.sin(ang),
     ox = 1994.06,
-    oz = 1263.0;
+    oz = 1263.0,
+    M = -1; // v1.4.43: mirrored (the garage on the downhill side, to the west, as in the real house)
   return {
     ang,
     ox,
@@ -243,8 +244,9 @@ function tac67() {
     D: 13.6,
     hw: 4.3, // the hole in the OSM block: ±4.3 m, back at −13 m
     back: -13,
-    toW: (lx, lz) => [ox + lx * c + lz * s, oz - lx * s + lz * c],
-    toL: (x, z) => [(x - ox) * c - (z - oz) * s, (x - ox) * s + (z - oz) * c]
+    M,
+    toW: (lx, lz) => [ox + M * lx * c + lz * s, oz - M * lx * s + lz * c],
+    toL: (x, z) => [M * ((x - ox) * c - (z - oz) * s), (x - ox) * s + (z - oz) * c]
   };
 }
 /** the street side of the garden (driveway, gate, pavement): no parked cars there */
@@ -344,7 +346,8 @@ function buildTac67(root, B, M) {
   ])
     hmin = Math.min(hmin, gAt(lx, lz));
   const yb = hmin - g - 0.6;
-  const fr = cFrame(T.ox, g, T.oz, T.ang);
+  const fr0 = cFrame(T.ox, g, T.oz, T.ang),
+    fr = (x, y, z) => fr0(T.M * x, y, z);
   const box = (x0, x1, y0, y1, z0, z1, m, s = 2.4) => B.geo(cBox(x1 - x0, y1 - y0, z1 - z0, s), m, fr((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2));
   // ground floor around the garage (x 0.6–4.5, 7 m deep, door 1.05–4.05 × 2.42 m) and the floors above
   box(-hW, 0.6, yb, 3, -D, 0, peach, 3);
@@ -382,32 +385,11 @@ function buildTac67(root, B, M) {
   for (let x = 1.1; x < 4.05; x += 0.1) box(x, x + 0.035, 2.45, 2.95, 0, 0.04, white);
   box(1.0, 4.1, 2.42, 2.47, 0, 0.06, white);
   box(1.0, 4.1, 2.93, 2.98, 0, 0.06, white);
-  // entrance door (white) with its frame and the step
+  // entrance door (white) with its frame and the step (v1.4.43: without the number)
   box(-1.12, -0.08, 0.12, 2.38, 0.0, 0.06, white);
   for (let y = 0.4; y < 2.3; y += 0.55) box(-1.0, -0.2, y, y + 0.03, 0.06, 0.08, mat(0xdedbd4, 0.6));
   box(-1.25, 0.05, 2.38, 2.48, 0, 0.1, white);
   box(-1.3, 0.1, yb, 0.12, 0, 0.45, granite);
-  {
-    const cv = mkCanvas(128, 80),
-      x = cv.getContext('2d');
-    x.fillStyle = '#f7f5f0';
-    x.fillRect(0, 0, 128, 80);
-    x.strokeStyle = '#3a3a3a';
-    x.lineWidth = 4;
-    x.strokeRect(4, 4, 120, 72);
-    x.fillStyle = '#1e1e1e';
-    x.font = 'bold 58px Georgia, serif';
-    x.textAlign = 'center';
-    x.textBaseline = 'middle';
-    x.fillText('67', 64, 44);
-    const tx = new THREE.CanvasTexture(cv);
-    tx.colorSpace = THREE.SRGBColorSpace;
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(0.32, 0.2), new THREE.MeshStandardMaterial({ map: tx, roughness: 0.6 }));
-    const [wx, wz] = T.toW(0.35, 0.02);
-    m.position.set(wx, g + 1.7, wz);
-    m.rotation.y = T.ang;
-    root.add(m);
-  }
   // ground-floor window with a white wrought-iron grille and a terracotta flower box
   {
     const xc = -3.0;

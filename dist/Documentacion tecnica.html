@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.42</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.43</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2158,6 +2158,17 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.4.43 — 2026-11-23 — Alpha 1.4.43: curvas a gran velocidad, golpes más justos y three.js r187</h2>
+<ul>
+<li><strong>Curvas a gran velocidad</strong> (Jonay: «más que girar menos debería girar más lento… las curvas son intratables a tanta velocidad»): el volante deja girar el doble que en la v1.4.41 (unos 30 m/s² de lado: a 300 km/h, curvas de unos 230 m, las de la autopista), pero cuanto más rápido vas, más despacio llega al tope (a 300 km/h tarda casi un segundo). En ciudad se conduce igual.</li>
+<li><strong>Golpes más justos</strong> (Jonay: «al salir del garaje con el Linguini me maté apenas choqué un poco con la valla de enfrente»): por debajo de unos 36 km/h el coche no hace daño, cada km/h de más quita algo menos y un roce largo contra la misma valla cuenta como un solo golpe. Un choque de frente contra un muro a 300 km/h sigue matando.</li>
+<li><strong>Barra de salud con el %</strong>: más alta, con el número encima, y a partir del 15 % se pone roja y parpadea.</li>
+<li><strong>Carreras de controles sin volver por la misma calle</strong>: la ruta evita repetir la calle de la ida (antes la vuelta pasaba por encima de la ida).</li>
+<li><strong>C. Tacoronte 67</strong>: la casa va en espejo, con el garaje cuesta abajo, al oeste, como la real. Se quita el número 67 de la puerta.</li>
+<li><strong>three.js r187</strong> (antes r160): el motor 3D al día. Los coches aparcados conservan sus colores con el cambio del motor y el <code>build.py</code> toma la versión del propio archivo.</li>
+<li><strong>Créditos</strong>: vehículos y música, «creación propia».</li>
+<li><code>build.py</code> ya no borra el archivo de coches viejo (bastaba con el primer build de la v1.4.42).</li>
+</ul>
 <h2>1.4.42 — 2026-11-23 — Alpha 1.4.42: sin rastro de Kenney y pruebas al día</h2>
 <ul>
 <li><strong>Sin rastro de Kenney</strong>: el archivo de los coches pasa a llamarse <code>data/coches.json</code> y en el código ya no queda su nombre. El primer build borra el archivo viejo y el convertidor de sus modelos. Solo quedan los coches propios hechos en Blender.</li>

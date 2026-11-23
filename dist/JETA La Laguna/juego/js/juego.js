@@ -20531,7 +20531,8 @@ function tac67() {
     c = Math.cos(ang),
     s = Math.sin(ang),
     ox = 1994.06,
-    oz = 1263.0;
+    oz = 1263.0,
+    M = -1; // v1.4.43: mirrored (the garage on the downhill side, to the west, as in the real house)
   return {
     ang,
     ox,
@@ -20540,8 +20541,9 @@ function tac67() {
     D: 13.6,
     hw: 4.3, // the hole in the OSM block: ±4.3 m, back at −13 m
     back: -13,
-    toW: (lx, lz) => [ox + lx * c + lz * s, oz - lx * s + lz * c],
-    toL: (x, z) => [(x - ox) * c - (z - oz) * s, (x - ox) * s + (z - oz) * c]
+    M,
+    toW: (lx, lz) => [ox + M * lx * c + lz * s, oz - M * lx * s + lz * c],
+    toL: (x, z) => [M * ((x - ox) * c - (z - oz) * s), (x - ox) * s + (z - oz) * c]
   };
 }
 /** the street side of the garden (driveway, gate, pavement): no parked cars there */
@@ -20641,7 +20643,8 @@ function buildTac67(root, B, M) {
   ])
     hmin = Math.min(hmin, gAt(lx, lz));
   const yb = hmin - g - 0.6;
-  const fr = cFrame(T.ox, g, T.oz, T.ang);
+  const fr0 = cFrame(T.ox, g, T.oz, T.ang),
+    fr = (x, y, z) => fr0(T.M * x, y, z);
   const box = (x0, x1, y0, y1, z0, z1, m, s = 2.4) => B.geo(cBox(x1 - x0, y1 - y0, z1 - z0, s), m, fr((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2));
   // ground floor around the garage (x 0.6–4.5, 7 m deep, door 1.05–4.05 × 2.42 m) and the floors above
   box(-hW, 0.6, yb, 3, -D, 0, peach, 3);
@@ -20679,32 +20682,11 @@ function buildTac67(root, B, M) {
   for (let x = 1.1; x < 4.05; x += 0.1) box(x, x + 0.035, 2.45, 2.95, 0, 0.04, white);
   box(1.0, 4.1, 2.42, 2.47, 0, 0.06, white);
   box(1.0, 4.1, 2.93, 2.98, 0, 0.06, white);
-  // entrance door (white) with its frame and the step
+  // entrance door (white) with its frame and the step (v1.4.43: without the number)
   box(-1.12, -0.08, 0.12, 2.38, 0.0, 0.06, white);
   for (let y = 0.4; y < 2.3; y += 0.55) box(-1.0, -0.2, y, y + 0.03, 0.06, 0.08, mat(0xdedbd4, 0.6));
   box(-1.25, 0.05, 2.38, 2.48, 0, 0.1, white);
   box(-1.3, 0.1, yb, 0.12, 0, 0.45, granite);
-  {
-    const cv = mkCanvas(128, 80),
-      x = cv.getContext('2d');
-    x.fillStyle = '#f7f5f0';
-    x.fillRect(0, 0, 128, 80);
-    x.strokeStyle = '#3a3a3a';
-    x.lineWidth = 4;
-    x.strokeRect(4, 4, 120, 72);
-    x.fillStyle = '#1e1e1e';
-    x.font = 'bold 58px Georgia, serif';
-    x.textAlign = 'center';
-    x.textBaseline = 'middle';
-    x.fillText('67', 64, 44);
-    const tx = new THREE.CanvasTexture(cv);
-    tx.colorSpace = THREE.SRGBColorSpace;
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(0.32, 0.2), new THREE.MeshStandardMaterial({ map: tx, roughness: 0.6 }));
-    const [wx, wz] = T.toW(0.35, 0.02);
-    m.position.set(wx, g + 1.7, wz);
-    m.rotation.y = T.ang;
-    root.add(m);
-  }
   // ground-floor window with a white wrought-iron grille and a terracotta flower box
   {
     const xc = -3.0;
@@ -29720,8 +29702,11 @@ class Car {
     // ~15 m/s² sideways (at 300 km/h a bend of ~460 m, at 100 km/h of ~50 m; at 50 km/h barely noticed). The handbrake
     // still lets the tail slide out
     const v2 = vf * vf;
-    const maxSteer = Math.min(0.56 / (1 + Math.abs(vf) / 13), v2 > 1 ? Math.atan((wb * 15) / v2) : 1);
-    this.steer = lerp(this.steer, c.steer * maxSteer, clamp(dt * 5.5, 0, 1)); // a bit smoother than before (8 / 0.6)
+    // v1.4.43 (Jonay, 23-nov: «más que girar menos debería girar más lento… las curvas son intratables a tanta velocidad»):
+    // the wheel now allows ~30 m/s² sideways (at 300 km/h a bend of ~230 m, the motorway's) and, the faster you go, the
+    // slower it turns (at 300 km/h it takes ~0.8 s to reach full lock; in town, as before)
+    const maxSteer = Math.min(0.56 / (1 + Math.abs(vf) / 13), v2 > 1 ? Math.atan((wb * 30) / v2) : 1);
+    this.steer = lerp(this.steer, c.steer * maxSteer, clamp((dt * 5.5) / (1 + Math.abs(vf) / 25), 0, 1));
     this.yawRate = ((vf * Math.tan(this.steer)) / wb) * (1 + 0.7 * hbA);
     if (hbA > 0.05 && Math.abs(vf) > 3) this.yawRate += Math.sign(vf) * c.steer * hbA * Math.min(0.75, Math.abs(vf) / 16); // the unloaded tail swings out
     this.h += this.yawRate * dt;
@@ -30379,7 +30364,10 @@ function buildParkedPart3(template, cc) {
       'attribute float aPaint;\n' +
       sh.vertexShader.replace(
         '#include <color_vertex>',
-        THREE.ShaderChunk.color_vertex.replace('vColor.xyz *= instanceColor.xyz;', 'vColor.xyz *= mix(vec3(1.0), instanceColor.xyz, aPaint);')
+        // (three.js r160 wrote «.xyz», the r187 «.rgb»: v1.4.43)
+        THREE.ShaderChunk.color_vertex
+          .replace('vColor.xyz *= instanceColor.xyz;', 'vColor.xyz *= mix(vec3(1.0), instanceColor.xyz, aPaint);')
+          .replace('vColor.rgb *= instanceColor.rgb;', 'vColor.rgb *= mix(vec3(1.0), instanceColor.rgb, aPaint);')
       );
   };
   mat.customProgramCacheKey = () => 'parkedPaint';
@@ -53146,7 +53134,8 @@ const SPEED_BY_TYPE = {
 };
 const SPEED_RANGE = { basic: 160, work: 140, street: 200, trail: 200, luxury: 240, sport: 300 };
 let speedRange = SPEED_RANGE.street;
-let lastStars = -1,
+let lastHp = -1, // v1.4.43
+  lastStars = -1,
   lastFlash = null,
   lastPrompt = null;
 const HUD = (() => {
@@ -53532,7 +53521,17 @@ const HUD = (() => {
         lastFlash = fl;
         starsEl.classList.toggle('flash', fl);
       }
-      setS('hb', 'width', clamp(Math.round(PLAYER.health), 0, 100) + '%');
+      {
+        // v1.4.43: the % left on the bar; at 15 % or less it blinks red
+        const hp = clamp(Math.round(PLAYER.health), 0, 100);
+        if (hp !== lastHp) {
+          lastHp = hp;
+          setS('hb', 'width', hp + '%');
+          setT('hbt', hp + ' %');
+          const hbEl = document.getElementById('healthbar');
+          if (hbEl) hbEl.classList.toggle('low', hp <= 15);
+        }
+      }
       if (tick % 20 === 0) {
         let [s, a] = locationName();
         if (!s && locLast) s = locLast.split('|')[0];
@@ -54800,6 +54799,21 @@ function reachNear(x, z, rs = [4, 5, 3.5, 6, 7, 8, 3], ring = 1.2) {
 // misiones»): a road route from (x,z) of minL-maxL m ending as near (tx,tz) as it can: through a point on the way when
 // the target is in range (it ends at it), a loop through a point around when it is nearer than minL, and as far towards
 // it as allowed when it is too far. No U-turns at the joint. ok(r): extra condition (e.g. far from the edge of the map).
+/** v1.4.43: metres of a route that run along a street it has already used (either way): checkpoint courses must not come
+ * back along the street they went out on («la ruta de vuelta pasa por encima de la de ida») */
+function routeRetrace(r) {
+  const seen = new Set(),
+    k = (i) => Math.round(r[i] * 2) + ',' + Math.round(r[i + 1] * 2);
+  let m = 0;
+  for (let i = 2; i < r.length; i += 2) {
+    const a = k(i - 2),
+      b = k(i),
+      key = a < b ? a + '|' + b : b + '|' + a;
+    if (seen.has(key)) m += Math.hypot(r[i] - r[i - 2], r[i + 1] - r[i - 1]);
+    else seen.add(key);
+  }
+  return m;
+}
 function routeToward(x, z, tx, tz, minL, maxL, ok) {
   const from = GRAPH.nearestNode(x, z);
   // a few end nodes within ~40 m of the target (the nearest one may be the exit of a one-way street: nothing can end on it)
@@ -54823,8 +54837,11 @@ function routeToward(x, z, tx, tz, minL, maxL, ok) {
     if (!r || r.length < 4 || (ok && !ok(r))) return;
     const L = len(r);
     if (L < minL || L > maxL) return;
-    const e = Math.hypot(r[r.length - 2] - tx, r[r.length - 1] - tz);
-    if (!best || e < best.e) best = { r, e };
+    const e = Math.hypot(r[r.length - 2] - tx, r[r.length - 1] - tz),
+      rt = routeRetrace(r),
+      clean = rt <= 25,
+      score = e + 3 * Math.max(0, rt - 25); // v1.4.43: running back along its own street costs much more than ending a bit off
+    if (!best || score < best.score) best = { r, e, rt, clean, score };
   };
   const join = (r1, r2) => {
     if (!r1 || !r2 || r1.length < 4 || r2.length < 4) return null;
@@ -54837,7 +54854,7 @@ function routeToward(x, z, tx, tz, minL, maxL, ok) {
     return [...r1, ...r2.slice(2)];
   };
   const D = Math.hypot(tx - x, tz - z);
-  for (let k = 0; k < 40 && !(best && best.e < 40); k++) {
+  for (let k = 0; k < 80 && !(best && best.e < 40 && best.clean); k++) {
     const a = Math.random() * 6.283,
       to = tos[k % tos.length];
     if (D > maxL * 0.75) {
@@ -57172,9 +57189,21 @@ const FOOD = (() => {
   };
 })();
 // health lost in traffic accidents (driver) and from police batons
+// v1.4.43 (Jonay, 23-nov: «al salir del garaje con el Linguini me maté apenas choqué un poco con la valla de enfrente… la
+// muerte por choque es demasiado estricta»): no harm under ~36 km/h (10 m/s), less per km/h above it, and a scrape that
+// goes on (several knocks in half a second against the same fence) only counts what each knock adds to the hardest one.
+// Head-on into a wall at 300 km/h still kills from full health.
+let crashT = -1e9,
+  crashV = 0;
 function playerCrashDamage(v) {
-  if (v < 7) return;
-  const dmg = (v - 6) * 1.6;
+  const now = performance.now();
+  const base = now - crashT < 500 ? Math.max(10, crashV) : 10;
+  if (now - crashT >= 500 || v > crashV) {
+    crashT = now;
+    crashV = v;
+  }
+  if (v <= base) return;
+  const dmg = (v - base) * 1.4;
   PLAYER.health -= dmg;
   if (PLAYER.health <= 0) GAME.wasted();
   else if (dmg > 12) HUD.toast('¡Ay! Te has dado un buen golpe (-' + Math.round(dmg) + ' salud)', '#ffb3b3', 2);
@@ -65686,6 +65715,8 @@ window.__dbg = {
   DECKS,
   ROADSEG,
   GRAPH,
+  routeToward, // v1.4.43
+  routeRetrace,
   heightAt,
   THREE,
   PLAYER,

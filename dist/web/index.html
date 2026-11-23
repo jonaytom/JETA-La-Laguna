@@ -29,8 +29,15 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
 #coords{position:absolute;left:50%;top:-26px;transform:translateX(-50%);white-space:pre;padding:2px 10px;background:rgba(0,0,0,.6);border-radius:6px;color:#fff;font:600 13px Barlow,sans-serif;letter-spacing:.5px;pointer-events:none}
 #bmCoords{position:absolute;bottom:14px;left:14px;z-index:2;white-space:pre;padding:10px 14px;background:rgba(0,0,0,.75);border:2px solid #5ec8ff;border-radius:10px;color:#fff;font:600 16px Barlow,sans-serif;pointer-events:none}
 body.touchmode #coords{top:auto;bottom:-30px;font-size:11px}
-#healthbar{position:absolute;left:18px;right:18px;bottom:-12px;height:7px;background:rgba(0,0,0,.6);border-radius:4px;overflow:hidden}
-#healthbar div{height:100%;width:100%;background:linear-gradient(90deg,#3fb46a,#7fe08a)}
+#healthbar{position:absolute;left:14px;right:14px;bottom:-19px;height:14px;background:rgba(0,0,0,.65);border-radius:5px;overflow:hidden}
+#healthbar #hb{height:100%;width:100%;background:linear-gradient(90deg,#3fb46a,#7fe08a);transition:width .25s}
+/* v1.4.43: the % left, and at 15 % or less it turns red and blinks */
+#hbt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 11px/1 Barlow,sans-serif;color:#fff;text-shadow:0 1px 2px #000,0 0 3px #000;letter-spacing:.5px}
+#healthbar.low #hb{background:linear-gradient(90deg,#c62828,#ff5252)}
+#healthbar.low{animation:hblow .7s steps(2,start) infinite;box-shadow:0 0 8px #ff3b3b}
+@keyframes hblow{50%{background:rgba(160,0,0,.75)}}
+#healthbar.low #hbt{animation:hbtxt .7s steps(2,start) infinite}
+@keyframes hbtxt{50%{opacity:.25}}
 #northN{position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px;font:700 12px Oswald;color:#fff;text-align:center;line-height:18px;background:#111;border-radius:50%;border:1px solid #fff}
 #loc{right:24px;bottom:24px;text-align:right;font-family:Oswald,sans-serif;text-shadow:0 2px 0 #000,0 0 10px rgba(0,0,0,.8);transition:opacity .8s}
 #locStreet{font-size:30px;font-weight:600;color:#fff}
@@ -208,7 +215,7 @@ body.touchmode #dlg{bottom:10px;padding:10px 14px;width:min(560px,calc(100vw - 2
 body.touchmode #dlg h4{font-size:16px;margin-bottom:2px}body.touchmode #dlg .who{font-size:10px}
 body.touchmode #dlg .mumble{font-size:14px;margin:4px 0 6px}body.touchmode #dlg .q{font-size:12px;margin-bottom:4px}
 body.touchmode #dlg button{font-size:13px;padding:7px 10px;margin:4px 0}
-/* ---- mobile layout (landscape phone): sizes follow the screen height; nothing overlaps (Jonay: the minimap covered the
+/* ---- mobile layout (landscape phone): sizes follow the screen height; nothing overlaps (the minimap covered the
    stars and the buttons). Left: minimap + MAP, joystick. Right: clock/money/stars on top, thumb buttons at the bottom. */
 body.touchmode{--b:min(17vh,74px);--g:min(2.6vh,12px);--mm:min(30vh,140px)}
 body.touchmode #topright{top:6px;right:10px}
@@ -216,7 +223,8 @@ body.touchmode #clock{font-size:min(4.2vh,20px)}body.touchmode #money{font-size:
 body.touchmode #minimapwrap{left:10px;top:10px;right:auto;bottom:auto;width:var(--mm);height:var(--mm);pointer-events:auto;z-index:7}
 body.touchmode #minimap{width:var(--mm);height:var(--mm);border-width:2px}
 body.touchmode #coords{top:auto;bottom:-24px;font-size:min(2.8vh,12px);padding:1px 7px}
-body.touchmode #healthbar{bottom:-8px;height:5px}
+body.touchmode #healthbar{bottom:-14px;height:11px}
+body.touchmode #hbt{font-size:9px}
 body.touchmode #joy{left:calc(var(--g)*2);bottom:calc(var(--g)*2);width:min(36vh,160px);height:min(36vh,160px)}
 body.touchmode #joyk{width:min(14vh,60px);height:min(14vh,60px);margin:calc(min(14vh,60px)/-2)}
 body.touchmode .tb{width:var(--b);height:var(--b);font-size:min(3.4vh,15px);line-height:1.05;text-align:center}
@@ -272,7 +280,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <body>
 <div id="game"></div>
 <div class="hud" id="topright"><div id="clock">12:00</div><div id="money">$0</div><div id="stars"></div></div>
-<div class="hud" id="minimapwrap"><canvas id="minimap" width="460" height="460"></canvas><div id="coords"></div><div id="healthbar"><div id="hb"></div></div></div>
+<div class="hud" id="minimapwrap"><canvas id="minimap" width="460" height="460"></canvas><div id="coords"></div><div id="healthbar"><div id="hb"></div><span id="hbt">100 %</span></div></div>
 <div class="hud" id="loc"><div id="locStreet"></div><div id="locArea"></div></div>
 <div class="hud" id="speed" title="Velocidad · pulsa para cambiar de emisora">
 <svg id="speedDial" viewBox="0 0 100 100" aria-hidden="true"><circle class="rim" cx="50" cy="50" r="47" stroke-width="2"/><circle cx="50" cy="50" r="43" fill="none" stroke="#ffffff26"/>
@@ -320,7 +328,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="fpb big mpd" id="mpA" style="right:110px;bottom:40px;border-color:#ffd400">A</div><div class="fpb big mpd" id="mpB" style="right:20px;bottom:90px;border-color:#ff5252">B</div><div class="fpb big mpd" id="mpC" style="right:110px;bottom:140px;border-color:#5ec8ff">C</div>
 <div class="fpb" id="mpP" style="left:50%;top:8px;margin-left:-28px;width:56px;height:44px;font-size:18px">❚❚</div><div class="fpb mpd" id="mpExit" style="right:14px;top:8px;width:62px;height:38px;font-size:12px">ATRÁS</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">Alpha 1.4.42</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">Alpha 1.4.43</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -339,7 +347,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
   <div><span>Enderezar coche</span><span><kbd>R</kbd></span></div>
   <div><span>Pausa</span><span><kbd>Esc</kbd> / <kbd>P</kbd></span></div>
  </div>
- <p class="credits">Mando compatible (Xbox/PS). Parodia no oficial: comercios y marcas tienen nombres inventados. Vehículos: propios de JETA La Laguna. Música original de Jonay, creada con Suno. Mapa © colaboradores de OpenStreetMap (ODbL) · edificios: Dirección General del Catastro · señales: Mapillary (CC BY-SA). Relieve: MDT05 © Instituto Geográfico Nacional (CC BY 4.0) y Copernicus DEM vía Open-Meteo. Personajes y animaciones base: Quaternius (CC0). Pino canario: «Pine» de Quaternius (CC0). Texturas: Poly Haven (CC0). Motor 3D: three.js (MIT). Tipografías: Google Fonts (OFL).</p>
+ <p class="credits">Mando compatible (Xbox/PS). Parodia no oficial: comercios y marcas tienen nombres inventados. Vehículos y música: creación propia. Mapa © colaboradores de OpenStreetMap (ODbL) · edificios: Dirección General del Catastro · señales: Mapillary (CC BY-SA). Relieve: MDT05 © Instituto Geográfico Nacional (CC BY 4.0) y Copernicus DEM vía Open-Meteo. Personajes y animaciones base: Quaternius (CC0). Pino canario: «Pine» de Quaternius (CC0). Texturas: Poly Haven (CC0). Motor 3D: three.js (MIT). Tipografías: Google Fonts (OFL).</p>
 </div></div>
 
 <div class="screen" id="pause" style="display:none"><div class="panel">

@@ -1137,6 +1137,8 @@ window.__dbg = {
   DECKS,
   ROADSEG,
   GRAPH,
+  routeToward, // v1.4.43
+  routeRetrace,
   heightAt,
   THREE,
   PLAYER,

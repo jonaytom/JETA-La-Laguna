@@ -3,6 +3,16 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.43 — 2026-11-23 — Alpha 1.4.43: curvas a gran velocidad, golpes más justos y three.js r187
+- **Curvas a gran velocidad** (Jonay: «más que girar menos debería girar más lento… las curvas son intratables a tanta velocidad»): el volante deja girar el doble que en la v1.4.41 (unos 30 m/s² de lado: a 300 km/h, curvas de unos 230 m, las de la autopista), pero cuanto más rápido vas, más despacio llega al tope (a 300 km/h tarda casi un segundo). En ciudad se conduce igual.
+- **Golpes más justos** (Jonay: «al salir del garaje con el Linguini me maté apenas choqué un poco con la valla de enfrente»): por debajo de unos 36 km/h el coche no hace daño, cada km/h de más quita algo menos y un roce largo contra la misma valla cuenta como un solo golpe. Un choque de frente contra un muro a 300 km/h sigue matando.
+- **Barra de salud con el %**: más alta, con el número encima, y a partir del 15 % se pone roja y parpadea.
+- **Carreras de controles sin volver por la misma calle**: la ruta evita repetir la calle de la ida (antes la vuelta pasaba por encima de la ida).
+- **C. Tacoronte 67**: la casa va en espejo, con el garaje cuesta abajo, al oeste, como la real. Se quita el número 67 de la puerta.
+- **three.js r187** (antes r160): el motor 3D al día. Los coches aparcados conservan sus colores con el cambio del motor y el `build.py` toma la versión del propio archivo.
+- **Créditos**: vehículos y música, «creación propia».
+- `build.py` ya no borra el archivo de coches viejo (bastaba con el primer build de la v1.4.42).
+
 ## 1.4.42 — 2026-11-23 — Alpha 1.4.42: sin rastro de Kenney y pruebas al día
 - **Sin rastro de Kenney**: el archivo de los coches pasa a llamarse `data/coches.json` y en el código ya no queda su nombre. El primer build borra el archivo viejo y el convertidor de sus modelos. Solo quedan los coches propios hechos en Blender.
 - **Rifle de agua**: al apuntar, la mano izquierda vuelve a agarrar el guardamanos. Desde que el rifle se separó del cuerpo (v1.4.22), la mano quedaba colgando a 15 cm.

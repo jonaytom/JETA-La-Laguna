@@ -401,7 +401,8 @@ const SPEED_BY_TYPE = {
 };
 const SPEED_RANGE = { basic: 160, work: 140, street: 200, trail: 200, luxury: 240, sport: 300 };
 let speedRange = SPEED_RANGE.street;
-let lastStars = -1,
+let lastHp = -1, // v1.4.43
+  lastStars = -1,
   lastFlash = null,
   lastPrompt = null;
 const HUD = (() => {
@@ -787,7 +788,17 @@ const HUD = (() => {
         lastFlash = fl;
         starsEl.classList.toggle('flash', fl);
       }
-      setS('hb', 'width', clamp(Math.round(PLAYER.health), 0, 100) + '%');
+      {
+        // v1.4.43: the % left on the bar; at 15 % or less it blinks red
+        const hp = clamp(Math.round(PLAYER.health), 0, 100);
+        if (hp !== lastHp) {
+          lastHp = hp;
+          setS('hb', 'width', hp + '%');
+          setT('hbt', hp + ' %');
+          const hbEl = document.getElementById('healthbar');
+          if (hbEl) hbEl.classList.toggle('low', hp <= 15);
+        }
+      }
       if (tick % 20 === 0) {
         let [s, a] = locationName();
         if (!s && locLast) s = locLast.split('|')[0];

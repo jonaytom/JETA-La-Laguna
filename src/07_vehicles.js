@@ -560,8 +560,11 @@ class Car {
     // ~15 m/s² sideways (at 300 km/h a bend of ~460 m, at 100 km/h of ~50 m; at 50 km/h barely noticed). The handbrake
     // still lets the tail slide out
     const v2 = vf * vf;
-    const maxSteer = Math.min(0.56 / (1 + Math.abs(vf) / 13), v2 > 1 ? Math.atan((wb * 15) / v2) : 1);
-    this.steer = lerp(this.steer, c.steer * maxSteer, clamp(dt * 5.5, 0, 1)); // a bit smoother than before (8 / 0.6)
+    // v1.4.43 (Jonay, 23-nov: «más que girar menos debería girar más lento… las curvas son intratables a tanta velocidad»):
+    // the wheel now allows ~30 m/s² sideways (at 300 km/h a bend of ~230 m, the motorway's) and, the faster you go, the
+    // slower it turns (at 300 km/h it takes ~0.8 s to reach full lock; in town, as before)
+    const maxSteer = Math.min(0.56 / (1 + Math.abs(vf) / 13), v2 > 1 ? Math.atan((wb * 30) / v2) : 1);
+    this.steer = lerp(this.steer, c.steer * maxSteer, clamp((dt * 5.5) / (1 + Math.abs(vf) / 25), 0, 1));
     this.yawRate = ((vf * Math.tan(this.steer)) / wb) * (1 + 0.7 * hbA);
     if (hbA > 0.05 && Math.abs(vf) > 3) this.yawRate += Math.sign(vf) * c.steer * hbA * Math.min(0.75, Math.abs(vf) / 16); // the unloaded tail swings out
     this.h += this.yawRate * dt;
@@ -1219,7 +1222,10 @@ function buildParkedPart3(template, cc) {
       'attribute float aPaint;\n' +
       sh.vertexShader.replace(
         '#include <color_vertex>',
-        THREE.ShaderChunk.color_vertex.replace('vColor.xyz *= instanceColor.xyz;', 'vColor.xyz *= mix(vec3(1.0), instanceColor.xyz, aPaint);')
+        // (three.js r160 wrote «.xyz», the r187 «.rgb»: v1.4.43)
+        THREE.ShaderChunk.color_vertex
+          .replace('vColor.xyz *= instanceColor.xyz;', 'vColor.xyz *= mix(vec3(1.0), instanceColor.xyz, aPaint);')
+          .replace('vColor.rgb *= instanceColor.rgb;', 'vColor.rgb *= mix(vec3(1.0), instanceColor.rgb, aPaint);')
       );
   };
   mat.customProgramCacheKey = () => 'parkedPaint';

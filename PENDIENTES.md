@@ -10,7 +10,7 @@ largo: ⚡ rápido (una tanda corta) · ◐ medio (una versión) · ● largo (v
 
 ## Pendientes por categoría
 
-Revisado con el historial de cambios y las pruebas hasta la v1.4.42 (23-nov: añadidos a «Hecho» la v1.4.39 y la v1.4.40, que se hicieron fuera de Claude, y la v1.4.41). Los avisos de mapa con un punto concreto siguen abiertos si necesitan comprobarse en partida.
+Revisado con el historial de cambios y las pruebas hasta la v1.4.43 (23-nov: añadidos a «Hecho» la v1.4.39 y la v1.4.40, que se hicieron fuera de Claude, y la v1.4.41). Los avisos de mapa con un punto concreto siguen abiertos si necesitan comprobarse en partida.
 
 ### Avisos nuevos de Jonay (11-nov, sin clasificar del todo)
 
@@ -23,8 +23,6 @@ Revisado con el historial de cambios y las pruebas hasta la v1.4.42 (23-nov: añ
 - [ ] ◐ **Trinchera del tranvía en la Glorieta del Brasil: el jugador camina por encima** (Jonay, 11-nov, captura en X −281, Y 719, Campus Central ULL: «por aquí te deberías de caer»): el tranvía va en una trinchera con muros, pero el jugador anda a la altura de la calle sobre ella, como si hubiera suelo invisible. Debería caer a la trinchera (o no poder entrar).
 
 ### Coches propios (Blender)
-
-- [ ] ⚡ **Quitar de `build.py` las líneas que borran el archivo de coches viejo** (v1.4.42): solo hacen falta en el primer build tras el cambio de nombre; en la siguiente versión se quitan y no queda ni ese rastro del nombre.
 
 Los coches nuevos se modelan con la biblioteca de Blender y se prueban con Jonay antes de integrar los paquetes de `Blender/coche/para_programador/`.
 
@@ -671,6 +669,11 @@ Los coches nuevos se modelan con la biblioteca de Blender y se prueban con Jonay
   - Medir por separado el coste de redibujar sombras y el de los coches en movimiento. Según el resultado, probar la reutilización de sombras estáticas o el dibujo agrupado del tráfico. Medir las texturas de enlucido y piedra solo si el perfil señala sus materiales.
   - El auditor dio 14,7 ms de pintado a 720p en media en v1.4.28, frente a 17,8 ms en v1.4.27. Sigue pendiente validar 1080p en alta.
 
+- [ ] ● **Pasar el juego a WebGPU** (Jonay, 23-nov, en `CLAUDE.md`: «WebGPU es el objetivo al que queremos llegar»). La v1.4.43 ya trae three.js r187, que incluye `WebGPURenderer` (con respaldo WebGL2). Falta medirlo en la RX 6600. Lo que hay que cambiar:
+  - los `onBeforeCompile` y los trozos de sombreador retocados a mano, que habría que pasar a materiales de nodos (TSL): coches aparcados (`aPaint`), `stoneWorld`/`plasterWorld` y otros;
+  - los `ShaderMaterial` propios.
+  - Ir por partes: primero arrancar con `WebGPURenderer` y ver qué se rompe, y dejar WebGL2 como respaldo.
+
 - [ ] ● **Acelerar el arranque precalculando la ciudad y el mapa**. Medir primero qué tarda ahora entre calles, aceras, edificios, árboles y preparación de sombreadores. Evaluar si conviene precalcular geometría en `build.py` o cargarla en binario.
 
 - [ ] ◐ **Preparar el sombreador de profundidad antes de que se use**. El auditor de v1.4.28 todavía registra un programa `depth` nuevo durante el recorrido. Medir cuánto cuesta ese primer uso y si se puede adelantar.
@@ -725,6 +728,7 @@ Los coches nuevos se modelan con la biblioteca de Blender y se prueban con Jonay
 
 ## Hecho
 
+- [x] v1.4.43 **Curvas a gran velocidad** (gira más pero más despacio), **golpes más justos** (sin daño por debajo de ~36 km/h; un roce cuenta como un golpe), **barra de salud con el %** (roja y parpadeando al 15 %), **carreras de controles sin volver por la misma calle**, **C. Tacoronte 67 en espejo y sin número**, **three.js r187** y `build.py` sin el borrado del archivo de coches viejo.
 - [x] v1.4.40 **Límite de 60 FPS** en el mundo 3D y en los minijuegos, también en monitores de alta frecuencia; las simulaciones conservan sus pasos de tiempo.
 - [x] v1.4.41 **Golpe invisible en la Autopista del Norte** (X 1898, Y 3225: la baranda del tablero empujaba hacia su esquina, de frente), **menos giro a gran velocidad**, **peatones fuera de puentes y calles elevadas o hundidas**, **C. Tacoronte 67 con su garaje y el Linguini Gold Edition** (botón que abre el portón), **Niza Nano rehecho** y **créditos al día** (sin Kenney).
 - [x] v1.4.42 **Fuera el nombre de Kenney** (`data/coches.json`, código y herramientas), **mano izquierda en el rifle al apuntar** y **las 13 pruebas viejas que fallaban, al día** (la batería completa vuelve a pasar).

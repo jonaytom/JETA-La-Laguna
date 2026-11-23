@@ -170,9 +170,21 @@ const FOOD = (() => {
   };
 })();
 // health lost in traffic accidents (driver) and from police batons
+// v1.4.43 (Jonay, 23-nov: «al salir del garaje con el Linguini me maté apenas choqué un poco con la valla de enfrente… la
+// muerte por choque es demasiado estricta»): no harm under ~36 km/h (10 m/s), less per km/h above it, and a scrape that
+// goes on (several knocks in half a second against the same fence) only counts what each knock adds to the hardest one.
+// Head-on into a wall at 300 km/h still kills from full health.
+let crashT = -1e9,
+  crashV = 0;
 function playerCrashDamage(v) {
-  if (v < 7) return;
-  const dmg = (v - 6) * 1.6;
+  const now = performance.now();
+  const base = now - crashT < 500 ? Math.max(10, crashV) : 10;
+  if (now - crashT >= 500 || v > crashV) {
+    crashT = now;
+    crashV = v;
+  }
+  if (v <= base) return;
+  const dmg = (v - base) * 1.4;
   PLAYER.health -= dmg;
   if (PLAYER.health <= 0) GAME.wasted();
   else if (dmg > 12) HUD.toast('¡Ay! Te has dado un buen golpe (-' + Math.round(dmg) + ' salud)', '#ffb3b3', 2);
