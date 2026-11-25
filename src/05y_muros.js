@@ -138,6 +138,25 @@ function inicioTapias() {
 // eso para las zonas del casco; para zonas de afueras de campo no»): in the old town, a stretch of a street's front with
 // no building, between buildings of the same block (a plot), is closed with a 2.5 m wall along the facade line; not where
 // another street or a path goes in (a passage), not on a square, park, car park or garden, not over 60 m
+// (v1.4.51: «the old town» is not only the rough polygon of isHistoric —the C. San Antonio of Jonay's example was outside
+// it—: any dense part of the town, 14 or more buildings within 60 m; the open country stays without walls)
+let DENSE = null;
+function denseTown(x, z) {
+  if (!DENSE) {
+    DENSE = new Map();
+    for (const b of DATA.B) {
+      const c = b[6];
+      if (!c || c.length < 6) continue;
+      const k = Math.floor(c[0] / 30) * 100003 + Math.floor(c[1] / 30);
+      DENSE.set(k, (DENSE.get(k) || 0) + 1);
+    }
+  }
+  const a = Math.floor(x / 30),
+    b = Math.floor(z / 30);
+  let n = 0;
+  for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) n += DENSE.get((a + i) * 100003 + b + j) || 0;
+  return n >= 14 || isHistoric(x, z);
+}
 function cascoSolares() {
   const out = [],
     open = new Set(['park', 'garden', 'grass', 'pitch', 'playground', 'parking', 'square', 'sports', 'cemetery']),
@@ -152,10 +171,14 @@ function cascoSolares() {
       }
     return false;
   };
+  // (v1.4.51, Jonay: «el muro en X −326 sobra, y el de X −391 lo mismo… esa tiene edificios que ya la cierran»; «la foto de
+  // la Trinidad no debería tener muros»): only along streets with cars and their ordinary pavement (not pedestrian
+  // streets or squares, wider than their line in the map: the wall stood in the middle of them; not the Av. de La
+  // Trinidad, whose ground floors are arcades: under them it looked like an empty plot), and never on a paved area
   DATA.R.forEach((rd, ri) => {
-    if (rd[0] < 3 || rd[0] > 13 || rd[3] & 6) return;
+    if (rd[0] < 3 || rd[0] > 12 || rd[3] & 6 || (typeof hasSidewalk === 'function' && !hasSidewalk(ri))) return;
     const c = rd[4];
-    if (!c.some((_, i) => i % 2 === 0 && isHistoric(c[i], c[i + 1]))) return;
+    if (!c.some((_, i) => i % 2 === 0 && denseTown(c[i], c[i + 1]))) return;
     const d = rd[2] / 2 + SIDEWALK_W + 0.35;
     for (const sd of [1, -1]) {
       let run = [];
@@ -166,7 +189,7 @@ function cascoSolares() {
           // (between buildings: the run touches a building at both ends)
           const a = run[0],
             b = run[run.length - 1];
-          if (L >= 3 && L <= 60 && a.b && b.b) out.push(['tapia', 2.5, '', run.flatMap((p) => [p[0], p[1]])]);
+          if (L >= 3 && L <= 120 && a.b && b.b) out.push(['tapia', 2.5, '', run.flatMap((p) => [p[0], p[1]])]);
         }
         run = [];
       };
@@ -180,7 +203,7 @@ function cascoSolares() {
         for (let t = 0; t < L; t += 1.5) {
           const x = c[i] + ux * t + nx * d,
             z = c[i + 1] + uz * t + nz * d;
-          if (!isHistoric(x, z)) {
+          if (!denseTown(x, z)) {
             flush();
             continue;
           }
@@ -196,7 +219,12 @@ function cascoSolares() {
             run = [p];
             continue;
           }
-          if (onCarriagewayEarly(x, z, 0.2) || inOpen(x + nx * 2, z + nz * 2) || nearOther(x + nx * 1.5, z + nz * 1.5, ri)) {
+          if (
+            onCarriagewayEarly(x, z, 0.2) ||
+            onAnyPaved(x + nx * 1.5, z + nz * 1.5, 0.3) ||
+            inOpen(x + nx * 2, z + nz * 2) ||
+            nearOther(x + nx * 1.5, z + nz * 1.5, ri)
+          ) {
             run = [];
             continue;
           }

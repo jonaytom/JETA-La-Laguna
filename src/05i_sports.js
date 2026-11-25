@@ -263,71 +263,83 @@ function fitPitches() {
   }
   window.__camposEncogidos = shrunk; // (tests)
 }
-// v1.4.50 (Jonay, X 1969, Y 1281: «hiciste el campo de fútbol irregular, en bajada… en realidad hay una caída de terreno
-// recta bastantes metros y luego se hace una terraza donde está el campo… eso no puede pasar en un campo de fútbol, ni en
-// este ni en ninguno»): every pitch and court is flat, on a terrace at the height of the highest point of its rectangle
-// (with its fence): the ground under it comes up to it, a straight retaining wall goes down where the ground is lower,
-// and you walk on it (a flat deck). PITCH_Y: the terrace of the pitch being built (pitchGround)
+// v1.4.50/51 (Jonay, X 1969, Y 1281: «hiciste el campo de fútbol irregular, en bajada… eso no puede pasar en un campo de
+// fútbol, ni en este ni en ninguno»; 1.4.51, C. Tacoronte y X 892, Y 2496: «subiste la carretera… en realidad lo que va es
+// por debajo, el campo de fútbol tras un muro a unos metros por debajo de la carretera»; «los campos así, en una subida,
+// deben excavar el terreno, no flotar sobre él… desde el punto más bajo hay que recortar la tierra para que no siga
+// subiendo, de modo que quede un muro por la parte más alta con un desnivel para que se vea el campo debajo»): every pitch
+// and court is flat at the height of the LOWEST point of its ground (with its fence strip). Where the ground is higher,
+// it is dug out: the terrain is cut there (the same cuts as the trenches: the relief is not moved, its 16 m squares
+// would drag the streets beside), heightAt gives the floor inside (SUNK), and a straight retaining wall goes up to the
+// ground outside, with the fence on top. PITCH_Y: the floor of the pitch being built
 let PITCH_Y = null;
-const pitchGround = (x, z) => (PITCH_Y === null ? heightAt(x, z) : Math.max(heightAt(x, z), PITCH_Y));
+const pitchGround = (x, z) => heightAt(x, z); // (the fence, gates and lights stand on the ground: outside, it is the higher one)
+const pitchFloor = (x, z) => (PITCH_Y === null ? heightAt(x, z) : PITCH_Y);
+let SUNK_GID = 7000;
 function pitchTerrace(P) {
   const F = P.F,
     e = P.area >= 1700 ? 2.7 : 1.5,
     u0 = F.u0 - e,
     u1 = F.u1 + e,
     v0 = F.v0 - e,
-    v1 = F.v1 + e;
-  let h = -1e9;
+    v1 = F.v1 + e,
+    W = (u, v) => [P.cx + F.ux * u + F.vx * v, P.cz + F.uz * u + F.vz * v];
+  let h = 1e9,
+    top = -1e9;
   for (let u = u0; u <= u1 + 0.01; u += 2)
     for (let v = v0; v <= v1 + 0.01; v += 2) {
-      const [x, z] = F.W(Math.min(u, u1), Math.min(v, v1));
-      h = Math.max(h, heightAt(x, z));
+      const [x, z] = W(Math.min(u, u1), Math.min(v, v1)),
+        g = heightAt(x, z);
+      h = Math.min(h, g);
+      top = Math.max(top, g);
     }
-  // the ground's corners inside the terrace come up to it (heightAt follows)
-  const inT = (x, z) => {
-    const u = (x - P.cx) * F.ux + (z - P.cz) * F.uz,
-      v = (x - P.cx) * F.vx + (z - P.cz) * F.vz;
-    return u > u0 + 0.5 && u < u1 - 0.5 && v > v0 + 0.5 && v < v1 - 0.5;
-  };
-  const pos = TERRAIN_MESH ? TERRAIN_MESH.geometry.attributes.position : null,
-    r = Math.hypot(u1 - u0, v1 - v0) / 2,
-    want = Math.round(h * 10) - 1;
-  let ch = 0;
-  for (let gz = Math.floor((P.cz - r - HM.z0) / HM.dx); gz <= Math.ceil((P.cz + r - HM.z0) / HM.dx); gz++)
-    for (let gx = Math.floor((P.cx - r - HM.x0) / HM.dx); gx <= Math.ceil((P.cx + r - HM.x0) / HM.dx); gx++) {
-      if (gx < 0 || gz < 0 || gx >= HM.nx || gz >= HM.nz) continue;
-      const k = gz * HM.nx + gx;
-      if (!inT(HM.x0 + gx * HM.dx, HM.z0 + gz * HM.dx) || HM.a[k] >= want) continue;
-      HM.a[k] = want;
-      if (pos) pos.setY(k, want / 10);
-      ch++;
-    }
-  if (ch && pos) {
-    pos.needsUpdate = true;
-    TERRAIN_MESH.geometry.computeVertexNormals();
+  if (top - h < 0.2) return h; // (flat enough: nothing to dig)
+  // the cut: capsules along the length and two across the ends (all in one group, consecutive)
+  const r = Math.min(5, (v1 - v0) / 2, (u1 - u0) / 2),
+    gid = SUNK_GID++,
+    caps = [];
+  for (let v = v0 + r; v <= v1 - r + 0.01; v += Math.min(1.8 * r, Math.max(0.01, v1 - v0 - 2 * r))) {
+    const [ax, az] = W(u0 + r, Math.min(v, v1 - r)),
+      [bx, bz] = W(u1 - r, Math.min(v, v1 - r));
+    caps.push([ax, az, bx, bz, r, gid]);
+    if (v1 - v0 - 2 * r < 0.02) break;
   }
-  // the retaining wall: along the edge of the terrace, where the ground outside is lower
+  for (const u of [u0 + r * 0.95, u1 - r * 0.95]) {
+    const [ax, az] = W(u, v0 + r),
+      [bx, bz] = W(u, v1 - r);
+    caps.push([ax, az, bx, bz, r, gid]);
+  }
+  if (TCUTS.length + caps.length > NCUT - 8) {
+    console.warn('campo hundido sin sitio para el recorte', Math.round(P.cx), Math.round(P.cz));
+    return h;
+  }
+  TCUTS.push(...caps);
+  SUNK.push({ cx: P.cx, cz: P.cz, ux: F.ux, uz: F.uz, vx: F.vx, vz: F.vz, u0, u1, v0, v1, y: h, r: Math.hypot(u1 - u0, v1 - v0) / 2 });
+  // the retaining wall: up from the floor to the ground outside, where it is higher
   const wp = [],
     wi = [],
     sides = [
-      [u0, v0, u1, v0],
-      [u1, v0, u1, v1],
-      [u1, v1, u0, v1],
-      [u0, v1, u0, v0]
+      [u0, v0, u1, v0, 0, -1],
+      [u1, v0, u1, v1, 1, 0],
+      [u1, v1, u0, v1, 0, 1],
+      [u0, v1, u0, v0, -1, 0]
     ];
-  for (const [ua, va, ub, vb] of sides) {
+  for (const [ua, va, ub, vb, nu, nv] of sides) {
     const L = Math.hypot(ub - ua, vb - va),
       n = Math.max(1, Math.ceil(L / 2));
     for (let i = 0; i < n; i++) {
-      const [ax, az] = F.W(ua + ((ub - ua) * i) / n, va + ((vb - va) * i) / n),
-        [bx, bz] = F.W(ua + ((ub - ua) * (i + 1)) / n, va + ((vb - va) * (i + 1)) / n);
-      const ga = heightAt(ax + (ax - P.cx) * 0.01, az + (az - P.cz) * 0.01),
-        gb = heightAt(bx + (bx - P.cx) * 0.01, bz + (bz - P.cz) * 0.01);
-      if (Math.max(h - ga, h - gb) < 0.25) continue;
+      const [ax, az] = W(ua + ((ub - ua) * i) / n, va + ((vb - va) * i) / n),
+        [bx, bz] = W(ua + ((ub - ua) * (i + 1)) / n, va + ((vb - va) * (i + 1)) / n),
+        [ox, oz] = W(nu * 0.6, nv * 0.6),
+        dx = ox - P.cx,
+        dz = oz - P.cz;
+      const ga = SUNK_RAW(ax + dx, az + dz),
+        gb = SUNK_RAW(bx + dx, bz + dz);
+      if (Math.max(ga, gb) - h < 0.2) continue;
       const b0 = wp.length / 3;
-      wp.push(ax, Math.min(ga, h) - 0.4, az, bx, Math.min(gb, h) - 0.4, bz, bx, h + 0.17, bz, ax, h + 0.17, az);
+      wp.push(ax, h - 0.3, az, bx, h - 0.3, bz, bx, gb + 0.05, bz, ax, ga + 0.05, az);
       wi.push(b0, b0 + 1, b0 + 2, b0, b0 + 2, b0 + 3);
-      if (Math.max(h - ga, h - gb) > 0.9) COL.addSeg(ax, az, bx, bz, Math.min(ga, gb) - 0.5, h - 0.4, 'muro de campo');
+      if (Math.min(ga, gb) - h > 0.6) COL.addSeg(ax, az, bx, bz, h - 0.5, Math.min(ga, gb) - 0.3, 'muro de campo');
     }
   }
   if (wi.length) {
@@ -339,21 +351,14 @@ function pitchTerrace(P) {
     m.receiveShadow = m.castShadow = true;
     scene.add(m);
   }
-  // you walk on the terrace (a flat deck: 05f_anchieta.js)
-  const [ax, az] = F.W(u0, (v0 + v1) / 2),
-    [bx, bz] = F.W(u1, (v0 + v1) / 2),
-    w = v1 - v0;
-  DECKS.push({
-    type: 'path',
-    pts: [
-      [ax, az, h + 0.16],
-      [bx, bz, h + 0.16]
-    ],
-    w,
-    bb: [Math.min(ax, bx) - w, Math.max(ax, bx) + w, Math.min(az, bz) - w, Math.max(az, bz) + w],
-    pitch: true
-  });
-  (window.__terrazas || (window.__terrazas = [])).push([Math.round(P.cx), Math.round(P.cz), +h.toFixed(1), ch, wi.length / 6]);
+  (window.__terrazas || (window.__terrazas = [])).push([
+    Math.round(P.cx),
+    Math.round(P.cz),
+    +h.toFixed(1),
+    +(top - h).toFixed(1),
+    caps.length,
+    wi.length / 6
+  ]);
   return h;
 }
 // inside a pitch or court (plus margin m, metres)? Used to keep trees, lamps and benches off them
@@ -384,9 +389,9 @@ function buildSports() {
     console.error('rios tejera', e);
   } // v0.76
   try {
-    fitTerrainToRoads(); // v1.4.50: the terraces raised the ground: under the roads beside them it goes down again
+    finalizeCuts(); // v1.4.51: the cuts of the dug-out pitches, to the terrain's shader
   } catch (e) {
-    console.error('fitTerrainToRoads', e);
+    console.error('finalizeCuts campos', e);
   }
 }
 /** (v1.1.7, code quality) the body of a loop of buildSports, split out of it */
@@ -415,7 +420,7 @@ function buildSportsEach(a, sportsAreas, white, fenceMat, dark, orange) {
     area = len * wid;
   PITCH_Y = null;
   try {
-    PITCH_Y = pitchTerrace(pr); // v1.4.50: flat, on its terrace
+    PITCH_Y = pitchTerrace(pr); // v1.4.51: flat, at its lowest point, dug out
   } catch (e) {
     console.error('terraza del campo', e);
   }
@@ -680,7 +685,7 @@ function buildSportsEachPart1(pr, len, wid, F) {
     const u = F.u0 + (len * i) / N,
       v = F.v0 + (wid * j) / Mv;
     const [px, pz] = F.W(u, v);
-    return [px, pitchGround(px, pz) + 0.16, pz];
+    return [px, pitchFloor(px, pz) + 0.16, pz];
   };
   for (let i = 0; i < N; i++)
     for (let j = 0; j < Mv; j++) {
@@ -702,7 +707,7 @@ function buildSportsEachPart1(pr, len, wid, F) {
   scene.add(mesh);
   const at = (u, v, y = 0) => {
     const [px, pz] = F.W(u, v);
-    return [px, pitchGround(px, pz) + 0.16 + y, pz];
+    return [px, pitchFloor(px, pz) + 0.16 + y, pz];
   };
   const add = (geo, m, u, v, y, rot = 0) => {
     const o = new THREE.Mesh(geo, m);

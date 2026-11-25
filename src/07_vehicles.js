@@ -528,8 +528,13 @@ class Car {
       if (vf < -0.5) vf += 18 * thr * dt;
       else vf += Math.min(T.acc, (T.acc * vk) / Math.max(vf, 0.1)) * thr * (1 - clamp(vf / T.maxV, 0, 1) ** 2) * dt;
     }
+    // v1.4.51 (Jonay: «el coche al frenar, si dejas apretado el freno, debería clavar como hace un coche, y si vas muy rápido
+    // incluso patinar, y si al patinar suelta humillo ya sería brutal»): held down, the brake bites harder (up to +70 % in
+    // 0.6 s); over ~70 km/h a full stop locks the wheels: the tyres squeal and smoke (brakeSmoke)
+    this.brkT = brk > 0.5 && vf > 0.5 ? (this.brkT || 0) + dt : 0;
+    this.locked = this.brkT > 0.25 && vf > 19;
     if (brk > 0) {
-      if (vf > 0.5) vf -= 20 * T.brkK * brk * dt;
+      if (vf > 0.5) vf -= 20 * T.brkK * brk * (1 + 0.7 * Math.min(1, this.brkT / 0.6)) * dt;
       else if (!broken && this.driver) vf -= T.acc * 0.6 * brk * dt * (vf > -9 ? 1 : 0);
     } /* braking at a standstill means reverse, but only with someone at the wheel */
     if (thr === 0 && brk === 0) vf -= Math.sign(vf) * Math.min(Math.abs(vf), 2.2 * dt);
@@ -594,7 +599,8 @@ class Car {
       vr = this.vx * nrx + this.vz * nrz;
     }
     /* momentum keeps the old direction: sideways slip */ this.fwdV = vf;
-    this.slip = Math.abs(vr);
+    this.slip = Math.abs(vr) + (this.locked ? 8 : 0); // (v1.4.51: locked wheels squeal: the skid sound, 10_audio.js)
+    if (this.locked && this === PLAYER.car && typeof brakeSmoke === 'function') brakeSmoke(this, dt);
     this.x += this.vx * dt;
     this.z += this.vz * dt;
     this.collideStatic(dt);
@@ -1904,5 +1910,57 @@ function parkedBatchLOD() {
         A.bm.setGeometryIdAt(s.bid, A.ids.get(lv === 0 ? p.hi : lv === 1 ? p.mid : p.lo));
       }
     }
+  }
+}
+
+// v1.4.51: tyre smoke when the wheels lock under braking (Jonay: «si al patinar suelta humillo ya sería brutal»): a pool
+// of 40 soft grey puffs, two per rear wheel every ~50 ms, that rise, grow and fade in 1.2 s
+const SMOKE = { pool: null, i: 0, t: 0 };
+function brakeSmoke(car, dt) {
+  if (!SMOKE.pool) {
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = 64;
+    const g = cv.getContext('2d'),
+      gr = g.createRadialGradient(32, 32, 2, 32, 32, 30);
+    gr.addColorStop(0, 'rgba(235,235,235,0.9)');
+    gr.addColorStop(1, 'rgba(235,235,235,0)');
+    g.fillStyle = gr;
+    g.fillRect(0, 0, 64, 64);
+    const tex = new THREE.CanvasTexture(cv);
+    SMOKE.pool = [];
+    for (let k = 0; k < 40; k++) {
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0 }));
+      sp.visible = false;
+      sp.userData.t = 9;
+      scene.add(sp);
+      SMOKE.pool.push(sp);
+    }
+  }
+  SMOKE.t += dt;
+  if (SMOKE.t < 0.05) return;
+  SMOKE.t = 0;
+  const fx = Math.sin(car.h),
+    fz = Math.cos(car.h),
+    L = car.T.L * 0.32,
+    W = car.T.W * 0.4;
+  for (const sd of [-1, 1]) {
+    const sp = SMOKE.pool[SMOKE.i++ % SMOKE.pool.length];
+    sp.position.set(car.x - fx * L + fz * W * sd, car.y + 0.25, car.z - fz * L - fx * W * sd);
+    sp.userData.t = 0;
+    sp.visible = true;
+  }
+}
+function brakeSmokeTick(dt) {
+  if (!SMOKE.pool) return;
+  for (const sp of SMOKE.pool) {
+    if (sp.userData.t > 1.2) {
+      sp.visible = false;
+      continue;
+    }
+    sp.userData.t += dt;
+    const k = sp.userData.t / 1.2;
+    sp.position.y += dt * 0.6;
+    sp.scale.setScalar(0.8 + k * 2.6);
+    sp.material.opacity = 0.55 * (1 - k);
   }
 }

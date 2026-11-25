@@ -438,7 +438,7 @@ function buildSplatPart1() {
 let SPLATCANVAS;
 // tunnel cuttings: kept in a small float texture (mobile GPUs have few fragment uniforms)
 // rows: 0 = segment (x1,z1,x2,z2), 1 = (width,0,0,0), 2 = group bbox, 3 = group range (start,end)
-const NCUT = 1024,
+const NCUT = 2048, // (v1.4.51: the dug-out pitches)
   NGRP = 256; // v1.2.0: room for the tramos (the TF-5 at San Lázaro)
 const TCUT_DATA = new Float32Array(NCUT * 4 * 4);
 const TCUT_TEX = new THREE.DataTexture(TCUT_DATA, NCUT, 4, THREE.RGBAFormat, THREE.FloatType);
@@ -745,7 +745,7 @@ function parkSides(rd) {
   const fast = rd[0] <= 4 || /V[ií]a de Ronda|Autopista|Autov[ií]a/i.test(rd[1] >= 0 ? STR[rd[1]] || '' : '');
   // v1.2.0 (Jonay, boca sur de San Honorato: las rayas de la bajada no casaban con las del túnel): no parking lane in a
   // tunnel, on a bridge or down a cutting (its band line looked like a third lane)
-  let sunk = !!(rd[3] & 6);
+  let sunk = !!(rd[3] & 6) || !!(rd[3] & 32); // (v1.4.51: no parking round a roundabout's ring either: Jonay, «¿pusiste aparcamiento alrededor de la rotonda? Eso está mal»)
   try {
     sunk = sunk || DEP.has(RD_INDEX.get(rd));
   } catch (e) {
@@ -963,7 +963,9 @@ function laneMkPart1(rd) {
   const n = ow
     ? clamp(
         mot
-          ? Math.max(ps.lanes > 0 ? ps.lanes : 0, Math.round((wl - 2.2) / 3.5)) // (v1.4.50, Jonay: «se perdieron las marcas de carriles en la pista»: a 13.4 m motorway the map gives as one lane drew no lines; its lanes fill its width)
+          ? ps.lanes >= 2
+            ? ps.lanes // (v1.4.51, Jonay: «la conexión Norte-Sur solo tiene 2 carriles»: the map's lanes; filling the width only where it says none or one)
+            : Math.round((wl - 2.2) / 3.5) // (v1.4.50, Jonay: «se perdieron las marcas de carriles en la pista»: a 13.4 m motorway the map gives as one lane drew no lines; its lanes fill its width)
           : ps.lanes > 0
             ? ps.lanes
             : Math.min(2, Math.floor((wl - 0.4) / 2.8)), // (at most two in town unless the map says more: Jonay, 3-nov, «hay muchas zonas de 2 carriles que lo que tienen en realidad es 2 carriles y una fila de aparcamientos»)

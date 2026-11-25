@@ -32,6 +32,7 @@ const DATA = window.__MAPDATA || JSON.parse(document.getElementById('mapdata').t
 const STR = DATA.S;
 // ---------- play area: bounding box minus the zones that are not needed (Jonay's map, docs/referencias/mapa/zonas_a_quitar.png)
 const WORLD = { x0: -4750, x1: 3450, z0: -1250, z1: 4430 }; // west part only as a band for the airport; east and south only the La Cuesta and Taco zones (see WORLD_EXCL)
+const SUNK = []; // v1.4.51: the dug-out pitches (05i_sports.js, pitchTerrace): inside, heightAt gives the pitch's floor
 const WORLD_EXCL = [
   // v0.59: the map grows only around the health centres of La Cuesta (X 3223 Z 1956) and Taco (X 1633 Z 4292), ≥100 m
   // around each and joined to the old edge (x 2400 / z 3980); data from scripts/descargar_zonas.bat + tools/merge_zona.py
@@ -65,6 +66,63 @@ function worldEdgeDist(x, z) {
   return d;
 }
 const inPlayArea = (x, z, m = 0) => worldEdgeDist(x, z) >= m;
+// v1.4.51: the OSM's lanes and parking (DATA.LN, tools/carriles.py) are keyed by the index of each way in the data; the
+// ways dropped below shift every index after them, and since v1.1.1 most streets read another street's lanes (Jonay: «se
+// pasa de 2 a un carril y luego a 2 otra vez»). Each way keeps its own here, and DATA.LN is rebuilt after the pruning
+if (DATA.LN) DATA.R.forEach((r, ri) => (r.ln = DATA.LN[ri] || null));
+function relinkLanes() {
+  if (!DATA.LN) return;
+  DATA.LN = {};
+  DATA.R.forEach((r, ri) => {
+    if (r.ln) DATA.LN[ri] = r.ln;
+  });
+}
+// v1.4.51: lanes Jonay gave (each carriageway): over the OSM's
+const ROAD_LANES = {
+  'Avenida de las Palmeras': [1, -1, 1] // («es de un carril por sentido y justamente hay palmeras en medio en una plaza; tiene aparcamientos a la derecha de cada carril»)
+};
+// v1.4.51 (Jonay, Autovía Interconexión Norte-Sur: «solo tiene 2 carriles»; 14 of its 16 ways carry no lanes in the OSM):
+// a way with no lanes takes them from the next way of the same street and the same kind (one-way or not), through the
+// shared end points, as far as it goes
+function propagateLanes() {
+  if (!DATA.LN) return;
+  for (const r of DATA.R) {
+    const q = r[1] >= 0 && ROAD_LANES[DATA.S[r[1]]];
+    if (q) r.ln = q.slice();
+  }
+  const K = (x, z) => Math.round(x * 2) + ',' + Math.round(z * 2),
+    ends = new Map();
+  DATA.R.forEach((r, ri) => {
+    if (r[0] > 11 || r[1] < 0) return;
+    const c = r[4];
+    for (const k of [K(c[0], c[1]), K(c[c.length - 2], c[c.length - 1])]) {
+      let l = ends.get(k);
+      if (!l) ends.set(k, (l = []));
+      l.push(ri);
+    }
+  });
+  let n = 0,
+    changed = true;
+  for (let pass = 0; pass < 40 && changed; pass++) {
+    changed = false;
+    DATA.R.forEach((r, ri) => {
+      if (r[0] > 11 || r[1] < 0 || (r.ln && r.ln[0] > 0)) return;
+      const c = r[4];
+      for (const k of [K(c[0], c[1]), K(c[c.length - 2], c[c.length - 1])])
+        for (const rj of ends.get(k) || []) {
+          const o = DATA.R[rj];
+          if (rj === ri || o[1] !== r[1] || (o[3] & 1) !== (r[3] & 1) || o[0] !== r[0] || !o.ln || !(o.ln[0] > 0)) continue;
+          r.ln = [o.ln[0], -1, -1];
+          r.lnFrom = true;
+          n++;
+          changed = true;
+          return;
+        }
+    });
+  }
+  relinkLanes();
+  window.__carrilesHeredados = n; // (tests)
+}
 // drop everything outside the play area (not rendered, no traffic)
 (function pruneWorld() {
   const M = 40;
@@ -183,6 +241,8 @@ const inPlayArea = (x, z, m = 0) => worldEdgeDist(x, z) >= m;
       }
     });
     if (drop.size) DATA.R = R.filter((r, ri) => !drop.has(ri));
+    relinkLanes();
+    propagateLanes();
     console.log('play area: repeated roads left out', drop.size);
   }
   const N = DATA.G.n;
@@ -268,12 +328,37 @@ for (const rd of DATA.R) {
     rd[2] = Math.max(rd[2], 6);
   }
 }
+// v1.4.51 (Jonay, rotonda de Finca España: «¿pusiste aparcamiento alrededor de la rotonda?»): pieces of a roundabout's
+// ring that the map does not tag as such (named «Rotonda», no junction tag): every point on the circle of a roundabout
+// of the map's list (DATA.RB: centre and radius), within 3 m, is a ring piece
+(function ringPieces() {
+  const RB = (DATA.RB || []).filter((b) => b[2] >= 6 && b[2] <= 70);
+  let n = 0;
+  for (const r of DATA.R) {
+    if (r[3] & 32 || r[0] > 12 || r[4].length < 4) continue;
+    const c = r[4];
+    for (const b of RB) {
+      let ok = true;
+      for (let i = 0; i < c.length && ok; i += 2) if (Math.abs(Math.hypot(c[i] - b[0], c[i + 1] - b[1]) - b[2]) > 3) ok = false;
+      if (ok) {
+        r[3] |= 32 | 1;
+        n++;
+        break;
+      }
+    }
+  }
+  window.__anillosMarcados = n; // (tests)
+})();
 DATA.R.forEach((rd, ri) => {
   if (rd[0] <= 12) {
     const c = rd[4],
       m = (c.length >> 2) << 1;
     rd.wMax = WIDEN_OLD(rd[0], rd[2], rd[3] & 1, c[m], c[m + 1]);
     rd[2] = rd[3] & 6 ? rd.wMax : WIDEN2(rd[0], rd[2], rd[3] & 1, c[m], c[m + 1]);
+    // (v1.4.51, Jonay: «la rotonda es demasiado pequeña»; «no sé por qué es tan grande la rotonda y luego las carreteras que
+    // llegan a ella se cortan»: a roundabout's ring took the one-way norm, 3.2 m: a thin ring and a big island over the
+    // arms. A ring is 7–9 m)
+    if (rd[3] & 32 && rd[0] <= 12) rd[2] = Math.min(9, Math.max(7, rd.wMax || 7));
     // (the lanes the map gives, at 3.5 m: a one-way half of a dual road is not a one-lane slip road)
     const ln = DATA.LN && DATA.LN[ri] ? DATA.LN[ri][0] : 0;
     if (!(rd[3] & 6) && ln > 1 && rd[0] <= 8) rd[2] = Math.max(rd[2], Math.min(rd.wMax, ln * 3.5));
@@ -456,6 +541,10 @@ const TWINS = new Set();
     }
   }
   for (const ri of [...TWINS]) {
+    if (DATA.R[ri].ln && DATA.R[ri].ln[0] === 1) {
+      TWINS.delete(ri); // (the map says one lane: v1.4.51)
+      continue;
+    }
     const r = DATA.R[ri],
       ds = (r.tw || []).sort((a, b) => a - b),
       sep = ds.length ? ds[Math.floor(ds.length * 0.1)] : 0; // (the distance to the other carriageway, at its tightest)
@@ -882,6 +971,18 @@ const HM = (() => {
 })();
 hmSmoothZones(); // v1.2.1: the stepped relief of the 16 m heightmap, softened where it showed (04c_corredores.js)
 function heightAt(x, z) {
+  if (SUNK.length)
+    for (const S of SUNK) {
+      const dx = x - S.cx,
+        dz = z - S.cz;
+      if (Math.abs(dx) > S.r || Math.abs(dz) > S.r) continue;
+      const u = dx * S.ux + dz * S.uz,
+        v = dx * S.vx + dz * S.vz;
+      if (u > S.u0 && u < S.u1 && v > S.v0 && v < S.v1) return S.y;
+    }
+  return SUNK_RAW(x, z);
+}
+function SUNK_RAW(x, z) {
   let gx = (x - HM.x0) / HM.dx,
     gz = (z - HM.z0) / HM.dx;
   gx = clamp(gx, 0, HM.nx - 1.001);

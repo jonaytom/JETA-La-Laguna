@@ -550,6 +550,7 @@ const MISSIONS = (() => {
     if (phone && PLAYER.car) {
       const who = (lines.find((l) => / \(por el móvil\)$/.test(l[0] || ''))[0] || '').replace(/ \(por el móvil\)$/, '');
       HUD.toast('📱 Te llama ' + who + ': bájate del coche para contestar', '#ffd54a', 5);
+      AUDIO.ringtone(1); // v1.4.51: the phone rings
       const iv = setInterval(() => {
         if (PLAYER.car || PLAYER.dead || TALK.cur || (DLG && DLG.open) || (GAME.state !== 'play' && GAME.state !== 'cutscene')) return;
         clearInterval(iv);
@@ -561,9 +562,15 @@ const MISSIONS = (() => {
     TALK.cur = my;
     let i = 0,
       tm = 0;
+    // v1.4.51: a phone call rings until you answer (the first click / Space)
+    let ringStop = phone ? AUDIO.ringtone(2) : null;
     const next = () => {
       if (TALK.cur !== my) return;
       clearTimeout(tm);
+      if (ringStop && i > 0) {
+        ringStop();
+        ringStop = null;
+      }
       if (i >= lines.length) {
         TALK.cur = null;
         $('sub').classList.remove('talking');

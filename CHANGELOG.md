@@ -3,6 +3,17 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.51 — 2026-11-25 — Alpha 1.4.51: carriles del mapa, campos hundidos y frenada
+
+- **Los carriles del mapa vuelven a leerse bien**: desde la 1.1.1 casi todas las calles leían los carriles de otra calle (el OSM los da por número de calle, y al quitar las calles de fuera del mapa los números se corrían). Ahora cada calle lleva los suyos; un tramo sin dato toma los del siguiente de la misma calle (la Autovía Interconexión Norte-Sur: 2 carriles, como dijo Jonay). Se han vuelto a bajar del OSM. La Av. de las Palmeras, de un carril por sentido con aparcamiento a la derecha (Jonay).
+- **Autopistas y autovías con los carriles que dice el mapa** (antes llenaban su ancho con 3).
+- **Glorietas**: el anillo mide de 7 a 9 m (salía de 3,2 m, con una isleta enorme encima de las calles que llegan), también los anillos que el mapa no marca como glorieta, y sin aparcamiento alrededor (Jonay: «la rotonda es demasiado pequeña… ¿y pusiste aparcamiento alrededor?»).
+- **Campos hundidos, no subidos** (Jonay: «subiste la carretera… el campo va por debajo tras un muro»; «en una subida deben excavar el terreno, no flotar sobre él»): cada campo, plano a la altura de su punto más bajo; donde el terreno es más alto se excava, con un muro de contención recto hasta el suelo de fuera y la valla arriba. Las calles de alrededor ya no se tocan.
+- **Muros de solares**: solo junto a calles con coches y su acera, nunca en una calle peatonal, una plaza o la Av. de La Trinidad (Jonay: «el muro en X −326 sobra, y el de X −391 lo mismo»; «la Trinidad no debería tener muros»).
+- **Frenada** (Jonay: «si dejas apretado el freno debería clavar… y si vas muy rápido incluso patinar, y si suelta humillo ya sería brutal»): el freno aprieta más cuanto más lo mantienes (hasta un 70 %); a más de ~70 km/h las ruedas se bloquean, chirrían y sueltan humo.
+- **El móvil suena** (Jonay: «cuando te llamen al móvil me gustaría que sonara una melodía de las clásicas de tonos, como la de Nokia… algo que no tenga copy pero reconocible»): un tono original al estilo de los móviles antiguos (pitido cuadrado, rápido, dos compases); suena hasta que contestas, y una vez si te llaman conduciendo.
+- **Solares cerrados con muro también fuera del polígono del casco**: en cualquier zona de ciudad densa, y en tramos de hasta 120 m (Jonay: la manzana del Camino de las Peras detrás de la plaza del Cristo; la C. San Antonio).
+
 ## 1.4.50 — 2026-11-25 — Alpha 1.4.50: carriles, casas propias y campos planos
 
 - **La casa de la C. Tacoronte 67 vuelve, con su garaje y el Linguini Gold** (Jonay: «ya no hay garaje en la casa de calle Tacoronte ni botón ni nada»): un edificio del Catastro (de los que cambiaron a las manzanas gruesas en la 1.4.48) se ponía encima. Regla para **todo lo hecho a mano** (Jonay: «que no pase más, que hay muchas más hechas a mano»): los edificios del Catastro no entran en las casas propias (Tacoronte 67, casa del hermano), en las casas del barrio de inicio, en los edificios vestidos por su sitio (centros de salud, Casa Museo Los Sabandeños, Fundación Cristino de Vera, Santa Catalina, pabellón Santiago Martín…) ni en el estadio Francisco Peraza y el pabellón Juan Ríos Tejera; y no se quita la manzana del mapa que uno de ellos viste.

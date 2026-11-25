@@ -652,6 +652,7 @@ window.__step = (n, dt = 1 / 30, keys = []) => {
 };
 window.__press = (k) => PRESSED.add(k);
 function logic(dt, now) {
+  if (typeof brakeSmokeTick === 'function') brakeSmokeTick(dt); // v1.4.51 (07_vehicles.js)
   thawStep(); // v1.4.44: frozen city objects that something moved (05w_optimiza.js)
   const { T0 } = logicPart1();
   let tt;

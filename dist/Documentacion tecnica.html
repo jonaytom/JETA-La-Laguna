@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.50</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.51</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2158,6 +2158,17 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.4.51 — 2026-11-25 — Alpha 1.4.51: carriles del mapa, campos hundidos y frenada</h2>
+<ul>
+<li><strong>Los carriles del mapa vuelven a leerse bien</strong>: desde la 1.1.1 casi todas las calles leían los carriles de otra calle (el OSM los da por número de calle, y al quitar las calles de fuera del mapa los números se corrían). Ahora cada calle lleva los suyos; un tramo sin dato toma los del siguiente de la misma calle (la Autovía Interconexión Norte-Sur: 2 carriles, como dijo Jonay). Se han vuelto a bajar del OSM. La Av. de las Palmeras, de un carril por sentido con aparcamiento a la derecha (Jonay).</li>
+<li><strong>Autopistas y autovías con los carriles que dice el mapa</strong> (antes llenaban su ancho con 3).</li>
+<li><strong>Glorietas</strong>: el anillo mide de 7 a 9 m (salía de 3,2 m, con una isleta enorme encima de las calles que llegan), también los anillos que el mapa no marca como glorieta, y sin aparcamiento alrededor (Jonay: «la rotonda es demasiado pequeña… ¿y pusiste aparcamiento alrededor?»).</li>
+<li><strong>Campos hundidos, no subidos</strong> (Jonay: «subiste la carretera… el campo va por debajo tras un muro»; «en una subida deben excavar el terreno, no flotar sobre él»): cada campo, plano a la altura de su punto más bajo; donde el terreno es más alto se excava, con un muro de contención recto hasta el suelo de fuera y la valla arriba. Las calles de alrededor ya no se tocan.</li>
+<li><strong>Muros de solares</strong>: solo junto a calles con coches y su acera, nunca en una calle peatonal, una plaza o la Av. de La Trinidad (Jonay: «el muro en X −326 sobra, y el de X −391 lo mismo»; «la Trinidad no debería tener muros»).</li>
+<li><strong>Frenada</strong> (Jonay: «si dejas apretado el freno debería clavar… y si vas muy rápido incluso patinar, y si suelta humillo ya sería brutal»): el freno aprieta más cuanto más lo mantienes (hasta un 70 %); a más de ~70 km/h las ruedas se bloquean, chirrían y sueltan humo.</li>
+<li><strong>El móvil suena</strong> (Jonay: «cuando te llamen al móvil me gustaría que sonara una melodía de las clásicas de tonos, como la de Nokia… algo que no tenga copy pero reconocible»): un tono original al estilo de los móviles antiguos (pitido cuadrado, rápido, dos compases); suena hasta que contestas, y una vez si te llaman conduciendo.</li>
+<li><strong>Solares cerrados con muro también fuera del polígono del casco</strong>: en cualquier zona de ciudad densa, y en tramos de hasta 120 m (Jonay: la manzana del Camino de las Peras detrás de la plaza del Cristo; la C. San Antonio).</li>
+</ul>
 <h2>1.4.50 — 2026-11-25 — Alpha 1.4.50: carriles, casas propias y campos planos</h2>
 <ul>
 <li><strong>La casa de la C. Tacoronte 67 vuelve, con su garaje y el Linguini Gold</strong> (Jonay: «ya no hay garaje en la casa de calle Tacoronte ni botón ni nada»): un edificio del Catastro (de los que cambiaron a las manzanas gruesas en la 1.4.48) se ponía encima. Regla para <strong>todo lo hecho a mano</strong> (Jonay: «que no pase más, que hay muchas más hechas a mano»): los edificios del Catastro no entran en las casas propias (Tacoronte 67, casa del hermano), en las casas del barrio de inicio, en los edificios vestidos por su sitio (centros de salud, Casa Museo Los Sabandeños, Fundación Cristino de Vera, Santa Catalina, pabellón Santiago Martín…) ni en el estadio Francisco Peraza y el pabellón Juan Ríos Tejera; y no se quita la manzana del mapa que uno de ellos viste.</li>
@@ -2174,6 +2185,9 @@ el título de la entrada más reciente como mensaje del commit.</p>
 <li><strong>Isletas pintadas</strong> (Jonay: «esto se atraviesa… deberíamos hacer esto como islas de marcas viales en todo el juego»): las de los ramales de las glorietas y las medianas de las calles urbanas son marcas en el suelo; ya no se atraviesan ni hay que saltarlas.</li>
 <li><strong>Ni farolas ni árboles atraviesan los puentes</strong> (Jonay: «no puede haber farolas que atraviesen puentes desde abajo»): lo que llegaría al tablero de un puente que tiene encima no se pone.</li>
 <li><strong>Los contenedores de la C. Teobaldo Power, fuera de la calzada</strong> (Jonay: «estoy harto de verlos en medio de la carretera»): en la acera de enfrente o en el terreno de detrás; nunca en la calzada.</li>
+<li><strong>Capas de carretera apiladas</strong>: la altura del asfalto guarda dos capas por punto (la de arriba y la de debajo, si están a más de 1,5 m), y los coches se apoyan en la que tienen bajo las ruedas: una calle por encima de la boca de un túnel o un puente sobre otra calle ya no los sube.</li>
+<li>Las isletas urbanas no se pintan junto a una calle hundida, un túnel o un puente.</li>
+<li>Conocido: en la prueba de túneles y puentes, el coche no baja al túnel de San Benito junto a la Calle Espinero y no termina a tiempo un tramo de 1 km de la Autopista del Norte; se miran en el repaso de puentes y túneles.</li>
 <li>La búsqueda «¿hay un edificio aquí?» con rejilla, los arreglos de la 1.4.49 y la herramienta <code>foto_camara.py</code> (fotos con la cámara en cualquier punto).</li>
 <li><strong>Contador de FPS</strong> (Jonay: «un contador de FPS y frametime activable en opciones, en una esquina superior derecha, me valdrá para hacer mis test»): Pausa → «Contador de FPS: Sí». Arriba a la derecha: fotogramas por segundo, el tiempo medio entre fotogramas y el peor de cada medio segundo, y el tiempo de CPU del fotograma (la lógica y el envío del dibujo; el trabajo de la tarjeta no entra). Se guarda con las opciones.</li>
 <li>La auditoría de obstáculos ya no le carga a la última calle construida los muros de los corredores (salían 346 en vez de 80 desde la 1.4.49).</li>

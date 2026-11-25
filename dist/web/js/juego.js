@@ -32,6 +32,7 @@ const DATA = window.__MAPDATA || JSON.parse(document.getElementById('mapdata').t
 const STR = DATA.S;
 // ---------- play area: bounding box minus the zones that are not needed (Jonay's map, docs/referencias/mapa/zonas_a_quitar.png)
 const WORLD = { x0: -4750, x1: 3450, z0: -1250, z1: 4430 }; // west part only as a band for the airport; east and south only the La Cuesta and Taco zones (see WORLD_EXCL)
+const SUNK = []; // v1.4.51: the dug-out pitches (05i_sports.js, pitchTerrace): inside, heightAt gives the pitch's floor
 const WORLD_EXCL = [
   // v0.59: the map grows only around the health centres of La Cuesta (X 3223 Z 1956) and Taco (X 1633 Z 4292), ≥100 m
   // around each and joined to the old edge (x 2400 / z 3980); data from scripts/descargar_zonas.bat + tools/merge_zona.py
@@ -65,6 +66,63 @@ function worldEdgeDist(x, z) {
   return d;
 }
 const inPlayArea = (x, z, m = 0) => worldEdgeDist(x, z) >= m;
+// v1.4.51: the OSM's lanes and parking (DATA.LN, tools/carriles.py) are keyed by the index of each way in the data; the
+// ways dropped below shift every index after them, and since v1.1.1 most streets read another street's lanes (Jonay: «se
+// pasa de 2 a un carril y luego a 2 otra vez»). Each way keeps its own here, and DATA.LN is rebuilt after the pruning
+if (DATA.LN) DATA.R.forEach((r, ri) => (r.ln = DATA.LN[ri] || null));
+function relinkLanes() {
+  if (!DATA.LN) return;
+  DATA.LN = {};
+  DATA.R.forEach((r, ri) => {
+    if (r.ln) DATA.LN[ri] = r.ln;
+  });
+}
+// v1.4.51: lanes Jonay gave (each carriageway): over the OSM's
+const ROAD_LANES = {
+  'Avenida de las Palmeras': [1, -1, 1] // («es de un carril por sentido y justamente hay palmeras en medio en una plaza; tiene aparcamientos a la derecha de cada carril»)
+};
+// v1.4.51 (Jonay, Autovía Interconexión Norte-Sur: «solo tiene 2 carriles»; 14 of its 16 ways carry no lanes in the OSM):
+// a way with no lanes takes them from the next way of the same street and the same kind (one-way or not), through the
+// shared end points, as far as it goes
+function propagateLanes() {
+  if (!DATA.LN) return;
+  for (const r of DATA.R) {
+    const q = r[1] >= 0 && ROAD_LANES[DATA.S[r[1]]];
+    if (q) r.ln = q.slice();
+  }
+  const K = (x, z) => Math.round(x * 2) + ',' + Math.round(z * 2),
+    ends = new Map();
+  DATA.R.forEach((r, ri) => {
+    if (r[0] > 11 || r[1] < 0) return;
+    const c = r[4];
+    for (const k of [K(c[0], c[1]), K(c[c.length - 2], c[c.length - 1])]) {
+      let l = ends.get(k);
+      if (!l) ends.set(k, (l = []));
+      l.push(ri);
+    }
+  });
+  let n = 0,
+    changed = true;
+  for (let pass = 0; pass < 40 && changed; pass++) {
+    changed = false;
+    DATA.R.forEach((r, ri) => {
+      if (r[0] > 11 || r[1] < 0 || (r.ln && r.ln[0] > 0)) return;
+      const c = r[4];
+      for (const k of [K(c[0], c[1]), K(c[c.length - 2], c[c.length - 1])])
+        for (const rj of ends.get(k) || []) {
+          const o = DATA.R[rj];
+          if (rj === ri || o[1] !== r[1] || (o[3] & 1) !== (r[3] & 1) || o[0] !== r[0] || !o.ln || !(o.ln[0] > 0)) continue;
+          r.ln = [o.ln[0], -1, -1];
+          r.lnFrom = true;
+          n++;
+          changed = true;
+          return;
+        }
+    });
+  }
+  relinkLanes();
+  window.__carrilesHeredados = n; // (tests)
+}
 // drop everything outside the play area (not rendered, no traffic)
 (function pruneWorld() {
   const M = 40;
@@ -183,6 +241,8 @@ const inPlayArea = (x, z, m = 0) => worldEdgeDist(x, z) >= m;
       }
     });
     if (drop.size) DATA.R = R.filter((r, ri) => !drop.has(ri));
+    relinkLanes();
+    propagateLanes();
     console.log('play area: repeated roads left out', drop.size);
   }
   const N = DATA.G.n;
@@ -268,12 +328,37 @@ for (const rd of DATA.R) {
     rd[2] = Math.max(rd[2], 6);
   }
 }
+// v1.4.51 (Jonay, rotonda de Finca España: «¿pusiste aparcamiento alrededor de la rotonda?»): pieces of a roundabout's
+// ring that the map does not tag as such (named «Rotonda», no junction tag): every point on the circle of a roundabout
+// of the map's list (DATA.RB: centre and radius), within 3 m, is a ring piece
+(function ringPieces() {
+  const RB = (DATA.RB || []).filter((b) => b[2] >= 6 && b[2] <= 70);
+  let n = 0;
+  for (const r of DATA.R) {
+    if (r[3] & 32 || r[0] > 12 || r[4].length < 4) continue;
+    const c = r[4];
+    for (const b of RB) {
+      let ok = true;
+      for (let i = 0; i < c.length && ok; i += 2) if (Math.abs(Math.hypot(c[i] - b[0], c[i + 1] - b[1]) - b[2]) > 3) ok = false;
+      if (ok) {
+        r[3] |= 32 | 1;
+        n++;
+        break;
+      }
+    }
+  }
+  window.__anillosMarcados = n; // (tests)
+})();
 DATA.R.forEach((rd, ri) => {
   if (rd[0] <= 12) {
     const c = rd[4],
       m = (c.length >> 2) << 1;
     rd.wMax = WIDEN_OLD(rd[0], rd[2], rd[3] & 1, c[m], c[m + 1]);
     rd[2] = rd[3] & 6 ? rd.wMax : WIDEN2(rd[0], rd[2], rd[3] & 1, c[m], c[m + 1]);
+    // (v1.4.51, Jonay: «la rotonda es demasiado pequeña»; «no sé por qué es tan grande la rotonda y luego las carreteras que
+    // llegan a ella se cortan»: a roundabout's ring took the one-way norm, 3.2 m: a thin ring and a big island over the
+    // arms. A ring is 7–9 m)
+    if (rd[3] & 32 && rd[0] <= 12) rd[2] = Math.min(9, Math.max(7, rd.wMax || 7));
     // (the lanes the map gives, at 3.5 m: a one-way half of a dual road is not a one-lane slip road)
     const ln = DATA.LN && DATA.LN[ri] ? DATA.LN[ri][0] : 0;
     if (!(rd[3] & 6) && ln > 1 && rd[0] <= 8) rd[2] = Math.max(rd[2], Math.min(rd.wMax, ln * 3.5));
@@ -456,6 +541,10 @@ const TWINS = new Set();
     }
   }
   for (const ri of [...TWINS]) {
+    if (DATA.R[ri].ln && DATA.R[ri].ln[0] === 1) {
+      TWINS.delete(ri); // (the map says one lane: v1.4.51)
+      continue;
+    }
     const r = DATA.R[ri],
       ds = (r.tw || []).sort((a, b) => a - b),
       sep = ds.length ? ds[Math.floor(ds.length * 0.1)] : 0; // (the distance to the other carriageway, at its tightest)
@@ -882,6 +971,18 @@ const HM = (() => {
 })();
 hmSmoothZones(); // v1.2.1: the stepped relief of the 16 m heightmap, softened where it showed (04c_corredores.js)
 function heightAt(x, z) {
+  if (SUNK.length)
+    for (const S of SUNK) {
+      const dx = x - S.cx,
+        dz = z - S.cz;
+      if (Math.abs(dx) > S.r || Math.abs(dz) > S.r) continue;
+      const u = dx * S.ux + dz * S.uz,
+        v = dx * S.vx + dz * S.vz;
+      if (u > S.u0 && u < S.u1 && v > S.v0 && v < S.v1) return S.y;
+    }
+  return SUNK_RAW(x, z);
+}
+function SUNK_RAW(x, z) {
   let gx = (x - HM.x0) / HM.dx,
     gz = (z - HM.z0) / HM.dx;
   gx = clamp(gx, 0, HM.nx - 1.001);
@@ -3357,7 +3458,7 @@ function buildSplatPart1() {
 let SPLATCANVAS;
 // tunnel cuttings: kept in a small float texture (mobile GPUs have few fragment uniforms)
 // rows: 0 = segment (x1,z1,x2,z2), 1 = (width,0,0,0), 2 = group bbox, 3 = group range (start,end)
-const NCUT = 1024,
+const NCUT = 2048, // (v1.4.51: the dug-out pitches)
   NGRP = 256; // v1.2.0: room for the tramos (the TF-5 at San Lázaro)
 const TCUT_DATA = new Float32Array(NCUT * 4 * 4);
 const TCUT_TEX = new THREE.DataTexture(TCUT_DATA, NCUT, 4, THREE.RGBAFormat, THREE.FloatType);
@@ -3664,7 +3765,7 @@ function parkSides(rd) {
   const fast = rd[0] <= 4 || /V[ií]a de Ronda|Autopista|Autov[ií]a/i.test(rd[1] >= 0 ? STR[rd[1]] || '' : '');
   // v1.2.0 (Jonay, boca sur de San Honorato: las rayas de la bajada no casaban con las del túnel): no parking lane in a
   // tunnel, on a bridge or down a cutting (its band line looked like a third lane)
-  let sunk = !!(rd[3] & 6);
+  let sunk = !!(rd[3] & 6) || !!(rd[3] & 32); // (v1.4.51: no parking round a roundabout's ring either: Jonay, «¿pusiste aparcamiento alrededor de la rotonda? Eso está mal»)
   try {
     sunk = sunk || DEP.has(RD_INDEX.get(rd));
   } catch (e) {
@@ -3882,7 +3983,9 @@ function laneMkPart1(rd) {
   const n = ow
     ? clamp(
         mot
-          ? Math.max(ps.lanes > 0 ? ps.lanes : 0, Math.round((wl - 2.2) / 3.5)) // (v1.4.50, Jonay: «se perdieron las marcas de carriles en la pista»: a 13.4 m motorway the map gives as one lane drew no lines; its lanes fill its width)
+          ? ps.lanes >= 2
+            ? ps.lanes // (v1.4.51, Jonay: «la conexión Norte-Sur solo tiene 2 carriles»: the map's lanes; filling the width only where it says none or one)
+            : Math.round((wl - 2.2) / 3.5) // (v1.4.50, Jonay: «se perdieron las marcas de carriles en la pista»: a 13.4 m motorway the map gives as one lane drew no lines; its lanes fill its width)
           : ps.lanes > 0
             ? ps.lanes
             : Math.min(2, Math.floor((wl - 0.4) / 2.8)), // (at most two in town unless the map says more: Jonay, 3-nov, «hay muchas zonas de 2 carriles que lo que tienen en realidad es 2 carriles y una fila de aparcamientos»)
@@ -17802,71 +17905,83 @@ function fitPitches() {
   }
   window.__camposEncogidos = shrunk; // (tests)
 }
-// v1.4.50 (Jonay, X 1969, Y 1281: «hiciste el campo de fútbol irregular, en bajada… en realidad hay una caída de terreno
-// recta bastantes metros y luego se hace una terraza donde está el campo… eso no puede pasar en un campo de fútbol, ni en
-// este ni en ninguno»): every pitch and court is flat, on a terrace at the height of the highest point of its rectangle
-// (with its fence): the ground under it comes up to it, a straight retaining wall goes down where the ground is lower,
-// and you walk on it (a flat deck). PITCH_Y: the terrace of the pitch being built (pitchGround)
+// v1.4.50/51 (Jonay, X 1969, Y 1281: «hiciste el campo de fútbol irregular, en bajada… eso no puede pasar en un campo de
+// fútbol, ni en este ni en ninguno»; 1.4.51, C. Tacoronte y X 892, Y 2496: «subiste la carretera… en realidad lo que va es
+// por debajo, el campo de fútbol tras un muro a unos metros por debajo de la carretera»; «los campos así, en una subida,
+// deben excavar el terreno, no flotar sobre él… desde el punto más bajo hay que recortar la tierra para que no siga
+// subiendo, de modo que quede un muro por la parte más alta con un desnivel para que se vea el campo debajo»): every pitch
+// and court is flat at the height of the LOWEST point of its ground (with its fence strip). Where the ground is higher,
+// it is dug out: the terrain is cut there (the same cuts as the trenches: the relief is not moved, its 16 m squares
+// would drag the streets beside), heightAt gives the floor inside (SUNK), and a straight retaining wall goes up to the
+// ground outside, with the fence on top. PITCH_Y: the floor of the pitch being built
 let PITCH_Y = null;
-const pitchGround = (x, z) => (PITCH_Y === null ? heightAt(x, z) : Math.max(heightAt(x, z), PITCH_Y));
+const pitchGround = (x, z) => heightAt(x, z); // (the fence, gates and lights stand on the ground: outside, it is the higher one)
+const pitchFloor = (x, z) => (PITCH_Y === null ? heightAt(x, z) : PITCH_Y);
+let SUNK_GID = 7000;
 function pitchTerrace(P) {
   const F = P.F,
     e = P.area >= 1700 ? 2.7 : 1.5,
     u0 = F.u0 - e,
     u1 = F.u1 + e,
     v0 = F.v0 - e,
-    v1 = F.v1 + e;
-  let h = -1e9;
+    v1 = F.v1 + e,
+    W = (u, v) => [P.cx + F.ux * u + F.vx * v, P.cz + F.uz * u + F.vz * v];
+  let h = 1e9,
+    top = -1e9;
   for (let u = u0; u <= u1 + 0.01; u += 2)
     for (let v = v0; v <= v1 + 0.01; v += 2) {
-      const [x, z] = F.W(Math.min(u, u1), Math.min(v, v1));
-      h = Math.max(h, heightAt(x, z));
+      const [x, z] = W(Math.min(u, u1), Math.min(v, v1)),
+        g = heightAt(x, z);
+      h = Math.min(h, g);
+      top = Math.max(top, g);
     }
-  // the ground's corners inside the terrace come up to it (heightAt follows)
-  const inT = (x, z) => {
-    const u = (x - P.cx) * F.ux + (z - P.cz) * F.uz,
-      v = (x - P.cx) * F.vx + (z - P.cz) * F.vz;
-    return u > u0 + 0.5 && u < u1 - 0.5 && v > v0 + 0.5 && v < v1 - 0.5;
-  };
-  const pos = TERRAIN_MESH ? TERRAIN_MESH.geometry.attributes.position : null,
-    r = Math.hypot(u1 - u0, v1 - v0) / 2,
-    want = Math.round(h * 10) - 1;
-  let ch = 0;
-  for (let gz = Math.floor((P.cz - r - HM.z0) / HM.dx); gz <= Math.ceil((P.cz + r - HM.z0) / HM.dx); gz++)
-    for (let gx = Math.floor((P.cx - r - HM.x0) / HM.dx); gx <= Math.ceil((P.cx + r - HM.x0) / HM.dx); gx++) {
-      if (gx < 0 || gz < 0 || gx >= HM.nx || gz >= HM.nz) continue;
-      const k = gz * HM.nx + gx;
-      if (!inT(HM.x0 + gx * HM.dx, HM.z0 + gz * HM.dx) || HM.a[k] >= want) continue;
-      HM.a[k] = want;
-      if (pos) pos.setY(k, want / 10);
-      ch++;
-    }
-  if (ch && pos) {
-    pos.needsUpdate = true;
-    TERRAIN_MESH.geometry.computeVertexNormals();
+  if (top - h < 0.2) return h; // (flat enough: nothing to dig)
+  // the cut: capsules along the length and two across the ends (all in one group, consecutive)
+  const r = Math.min(5, (v1 - v0) / 2, (u1 - u0) / 2),
+    gid = SUNK_GID++,
+    caps = [];
+  for (let v = v0 + r; v <= v1 - r + 0.01; v += Math.min(1.8 * r, Math.max(0.01, v1 - v0 - 2 * r))) {
+    const [ax, az] = W(u0 + r, Math.min(v, v1 - r)),
+      [bx, bz] = W(u1 - r, Math.min(v, v1 - r));
+    caps.push([ax, az, bx, bz, r, gid]);
+    if (v1 - v0 - 2 * r < 0.02) break;
   }
-  // the retaining wall: along the edge of the terrace, where the ground outside is lower
+  for (const u of [u0 + r * 0.95, u1 - r * 0.95]) {
+    const [ax, az] = W(u, v0 + r),
+      [bx, bz] = W(u, v1 - r);
+    caps.push([ax, az, bx, bz, r, gid]);
+  }
+  if (TCUTS.length + caps.length > NCUT - 8) {
+    console.warn('campo hundido sin sitio para el recorte', Math.round(P.cx), Math.round(P.cz));
+    return h;
+  }
+  TCUTS.push(...caps);
+  SUNK.push({ cx: P.cx, cz: P.cz, ux: F.ux, uz: F.uz, vx: F.vx, vz: F.vz, u0, u1, v0, v1, y: h, r: Math.hypot(u1 - u0, v1 - v0) / 2 });
+  // the retaining wall: up from the floor to the ground outside, where it is higher
   const wp = [],
     wi = [],
     sides = [
-      [u0, v0, u1, v0],
-      [u1, v0, u1, v1],
-      [u1, v1, u0, v1],
-      [u0, v1, u0, v0]
+      [u0, v0, u1, v0, 0, -1],
+      [u1, v0, u1, v1, 1, 0],
+      [u1, v1, u0, v1, 0, 1],
+      [u0, v1, u0, v0, -1, 0]
     ];
-  for (const [ua, va, ub, vb] of sides) {
+  for (const [ua, va, ub, vb, nu, nv] of sides) {
     const L = Math.hypot(ub - ua, vb - va),
       n = Math.max(1, Math.ceil(L / 2));
     for (let i = 0; i < n; i++) {
-      const [ax, az] = F.W(ua + ((ub - ua) * i) / n, va + ((vb - va) * i) / n),
-        [bx, bz] = F.W(ua + ((ub - ua) * (i + 1)) / n, va + ((vb - va) * (i + 1)) / n);
-      const ga = heightAt(ax + (ax - P.cx) * 0.01, az + (az - P.cz) * 0.01),
-        gb = heightAt(bx + (bx - P.cx) * 0.01, bz + (bz - P.cz) * 0.01);
-      if (Math.max(h - ga, h - gb) < 0.25) continue;
+      const [ax, az] = W(ua + ((ub - ua) * i) / n, va + ((vb - va) * i) / n),
+        [bx, bz] = W(ua + ((ub - ua) * (i + 1)) / n, va + ((vb - va) * (i + 1)) / n),
+        [ox, oz] = W(nu * 0.6, nv * 0.6),
+        dx = ox - P.cx,
+        dz = oz - P.cz;
+      const ga = SUNK_RAW(ax + dx, az + dz),
+        gb = SUNK_RAW(bx + dx, bz + dz);
+      if (Math.max(ga, gb) - h < 0.2) continue;
       const b0 = wp.length / 3;
-      wp.push(ax, Math.min(ga, h) - 0.4, az, bx, Math.min(gb, h) - 0.4, bz, bx, h + 0.17, bz, ax, h + 0.17, az);
+      wp.push(ax, h - 0.3, az, bx, h - 0.3, bz, bx, gb + 0.05, bz, ax, ga + 0.05, az);
       wi.push(b0, b0 + 1, b0 + 2, b0, b0 + 2, b0 + 3);
-      if (Math.max(h - ga, h - gb) > 0.9) COL.addSeg(ax, az, bx, bz, Math.min(ga, gb) - 0.5, h - 0.4, 'muro de campo');
+      if (Math.min(ga, gb) - h > 0.6) COL.addSeg(ax, az, bx, bz, h - 0.5, Math.min(ga, gb) - 0.3, 'muro de campo');
     }
   }
   if (wi.length) {
@@ -17878,21 +17993,14 @@ function pitchTerrace(P) {
     m.receiveShadow = m.castShadow = true;
     scene.add(m);
   }
-  // you walk on the terrace (a flat deck: 05f_anchieta.js)
-  const [ax, az] = F.W(u0, (v0 + v1) / 2),
-    [bx, bz] = F.W(u1, (v0 + v1) / 2),
-    w = v1 - v0;
-  DECKS.push({
-    type: 'path',
-    pts: [
-      [ax, az, h + 0.16],
-      [bx, bz, h + 0.16]
-    ],
-    w,
-    bb: [Math.min(ax, bx) - w, Math.max(ax, bx) + w, Math.min(az, bz) - w, Math.max(az, bz) + w],
-    pitch: true
-  });
-  (window.__terrazas || (window.__terrazas = [])).push([Math.round(P.cx), Math.round(P.cz), +h.toFixed(1), ch, wi.length / 6]);
+  (window.__terrazas || (window.__terrazas = [])).push([
+    Math.round(P.cx),
+    Math.round(P.cz),
+    +h.toFixed(1),
+    +(top - h).toFixed(1),
+    caps.length,
+    wi.length / 6
+  ]);
   return h;
 }
 // inside a pitch or court (plus margin m, metres)? Used to keep trees, lamps and benches off them
@@ -17923,9 +18031,9 @@ function buildSports() {
     console.error('rios tejera', e);
   } // v0.76
   try {
-    fitTerrainToRoads(); // v1.4.50: the terraces raised the ground: under the roads beside them it goes down again
+    finalizeCuts(); // v1.4.51: the cuts of the dug-out pitches, to the terrain's shader
   } catch (e) {
-    console.error('fitTerrainToRoads', e);
+    console.error('finalizeCuts campos', e);
   }
 }
 /** (v1.1.7, code quality) the body of a loop of buildSports, split out of it */
@@ -17954,7 +18062,7 @@ function buildSportsEach(a, sportsAreas, white, fenceMat, dark, orange) {
     area = len * wid;
   PITCH_Y = null;
   try {
-    PITCH_Y = pitchTerrace(pr); // v1.4.50: flat, on its terrace
+    PITCH_Y = pitchTerrace(pr); // v1.4.51: flat, at its lowest point, dug out
   } catch (e) {
     console.error('terraza del campo', e);
   }
@@ -18219,7 +18327,7 @@ function buildSportsEachPart1(pr, len, wid, F) {
     const u = F.u0 + (len * i) / N,
       v = F.v0 + (wid * j) / Mv;
     const [px, pz] = F.W(u, v);
-    return [px, pitchGround(px, pz) + 0.16, pz];
+    return [px, pitchFloor(px, pz) + 0.16, pz];
   };
   for (let i = 0; i < N; i++)
     for (let j = 0; j < Mv; j++) {
@@ -18241,7 +18349,7 @@ function buildSportsEachPart1(pr, len, wid, F) {
   scene.add(mesh);
   const at = (u, v, y = 0) => {
     const [px, pz] = F.W(u, v);
-    return [px, pitchGround(px, pz) + 0.16 + y, pz];
+    return [px, pitchFloor(px, pz) + 0.16 + y, pz];
   };
   const add = (geo, m, u, v, y, rot = 0) => {
     const o = new THREE.Mesh(geo, m);
@@ -28918,6 +29026,25 @@ function inicioTapias() {
 // eso para las zonas del casco; para zonas de afueras de campo no»): in the old town, a stretch of a street's front with
 // no building, between buildings of the same block (a plot), is closed with a 2.5 m wall along the facade line; not where
 // another street or a path goes in (a passage), not on a square, park, car park or garden, not over 60 m
+// (v1.4.51: «the old town» is not only the rough polygon of isHistoric —the C. San Antonio of Jonay's example was outside
+// it—: any dense part of the town, 14 or more buildings within 60 m; the open country stays without walls)
+let DENSE = null;
+function denseTown(x, z) {
+  if (!DENSE) {
+    DENSE = new Map();
+    for (const b of DATA.B) {
+      const c = b[6];
+      if (!c || c.length < 6) continue;
+      const k = Math.floor(c[0] / 30) * 100003 + Math.floor(c[1] / 30);
+      DENSE.set(k, (DENSE.get(k) || 0) + 1);
+    }
+  }
+  const a = Math.floor(x / 30),
+    b = Math.floor(z / 30);
+  let n = 0;
+  for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) n += DENSE.get((a + i) * 100003 + b + j) || 0;
+  return n >= 14 || isHistoric(x, z);
+}
 function cascoSolares() {
   const out = [],
     open = new Set(['park', 'garden', 'grass', 'pitch', 'playground', 'parking', 'square', 'sports', 'cemetery']),
@@ -28932,10 +29059,14 @@ function cascoSolares() {
       }
     return false;
   };
+  // (v1.4.51, Jonay: «el muro en X −326 sobra, y el de X −391 lo mismo… esa tiene edificios que ya la cierran»; «la foto de
+  // la Trinidad no debería tener muros»): only along streets with cars and their ordinary pavement (not pedestrian
+  // streets or squares, wider than their line in the map: the wall stood in the middle of them; not the Av. de La
+  // Trinidad, whose ground floors are arcades: under them it looked like an empty plot), and never on a paved area
   DATA.R.forEach((rd, ri) => {
-    if (rd[0] < 3 || rd[0] > 13 || rd[3] & 6) return;
+    if (rd[0] < 3 || rd[0] > 12 || rd[3] & 6 || (typeof hasSidewalk === 'function' && !hasSidewalk(ri))) return;
     const c = rd[4];
-    if (!c.some((_, i) => i % 2 === 0 && isHistoric(c[i], c[i + 1]))) return;
+    if (!c.some((_, i) => i % 2 === 0 && denseTown(c[i], c[i + 1]))) return;
     const d = rd[2] / 2 + SIDEWALK_W + 0.35;
     for (const sd of [1, -1]) {
       let run = [];
@@ -28946,7 +29077,7 @@ function cascoSolares() {
           // (between buildings: the run touches a building at both ends)
           const a = run[0],
             b = run[run.length - 1];
-          if (L >= 3 && L <= 60 && a.b && b.b) out.push(['tapia', 2.5, '', run.flatMap((p) => [p[0], p[1]])]);
+          if (L >= 3 && L <= 120 && a.b && b.b) out.push(['tapia', 2.5, '', run.flatMap((p) => [p[0], p[1]])]);
         }
         run = [];
       };
@@ -28960,7 +29091,7 @@ function cascoSolares() {
         for (let t = 0; t < L; t += 1.5) {
           const x = c[i] + ux * t + nx * d,
             z = c[i + 1] + uz * t + nz * d;
-          if (!isHistoric(x, z)) {
+          if (!denseTown(x, z)) {
             flush();
             continue;
           }
@@ -28976,7 +29107,12 @@ function cascoSolares() {
             run = [p];
             continue;
           }
-          if (onCarriagewayEarly(x, z, 0.2) || inOpen(x + nx * 2, z + nz * 2) || nearOther(x + nx * 1.5, z + nz * 1.5, ri)) {
+          if (
+            onCarriagewayEarly(x, z, 0.2) ||
+            onAnyPaved(x + nx * 1.5, z + nz * 1.5, 0.3) ||
+            inOpen(x + nx * 2, z + nz * 2) ||
+            nearOther(x + nx * 1.5, z + nz * 1.5, ri)
+          ) {
             run = [];
             continue;
           }
@@ -32629,8 +32765,13 @@ class Car {
       if (vf < -0.5) vf += 18 * thr * dt;
       else vf += Math.min(T.acc, (T.acc * vk) / Math.max(vf, 0.1)) * thr * (1 - clamp(vf / T.maxV, 0, 1) ** 2) * dt;
     }
+    // v1.4.51 (Jonay: «el coche al frenar, si dejas apretado el freno, debería clavar como hace un coche, y si vas muy rápido
+    // incluso patinar, y si al patinar suelta humillo ya sería brutal»): held down, the brake bites harder (up to +70 % in
+    // 0.6 s); over ~70 km/h a full stop locks the wheels: the tyres squeal and smoke (brakeSmoke)
+    this.brkT = brk > 0.5 && vf > 0.5 ? (this.brkT || 0) + dt : 0;
+    this.locked = this.brkT > 0.25 && vf > 19;
     if (brk > 0) {
-      if (vf > 0.5) vf -= 20 * T.brkK * brk * dt;
+      if (vf > 0.5) vf -= 20 * T.brkK * brk * (1 + 0.7 * Math.min(1, this.brkT / 0.6)) * dt;
       else if (!broken && this.driver) vf -= T.acc * 0.6 * brk * dt * (vf > -9 ? 1 : 0);
     } /* braking at a standstill means reverse, but only with someone at the wheel */
     if (thr === 0 && brk === 0) vf -= Math.sign(vf) * Math.min(Math.abs(vf), 2.2 * dt);
@@ -32695,7 +32836,8 @@ class Car {
       vr = this.vx * nrx + this.vz * nrz;
     }
     /* momentum keeps the old direction: sideways slip */ this.fwdV = vf;
-    this.slip = Math.abs(vr);
+    this.slip = Math.abs(vr) + (this.locked ? 8 : 0); // (v1.4.51: locked wheels squeal: the skid sound, 10_audio.js)
+    if (this.locked && this === PLAYER.car && typeof brakeSmoke === 'function') brakeSmoke(this, dt);
     this.x += this.vx * dt;
     this.z += this.vz * dt;
     this.collideStatic(dt);
@@ -34005,6 +34147,58 @@ function parkedBatchLOD() {
         A.bm.setGeometryIdAt(s.bid, A.ids.get(lv === 0 ? p.hi : lv === 1 ? p.mid : p.lo));
       }
     }
+  }
+}
+
+// v1.4.51: tyre smoke when the wheels lock under braking (Jonay: «si al patinar suelta humillo ya sería brutal»): a pool
+// of 40 soft grey puffs, two per rear wheel every ~50 ms, that rise, grow and fade in 1.2 s
+const SMOKE = { pool: null, i: 0, t: 0 };
+function brakeSmoke(car, dt) {
+  if (!SMOKE.pool) {
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = 64;
+    const g = cv.getContext('2d'),
+      gr = g.createRadialGradient(32, 32, 2, 32, 32, 30);
+    gr.addColorStop(0, 'rgba(235,235,235,0.9)');
+    gr.addColorStop(1, 'rgba(235,235,235,0)');
+    g.fillStyle = gr;
+    g.fillRect(0, 0, 64, 64);
+    const tex = new THREE.CanvasTexture(cv);
+    SMOKE.pool = [];
+    for (let k = 0; k < 40; k++) {
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0 }));
+      sp.visible = false;
+      sp.userData.t = 9;
+      scene.add(sp);
+      SMOKE.pool.push(sp);
+    }
+  }
+  SMOKE.t += dt;
+  if (SMOKE.t < 0.05) return;
+  SMOKE.t = 0;
+  const fx = Math.sin(car.h),
+    fz = Math.cos(car.h),
+    L = car.T.L * 0.32,
+    W = car.T.W * 0.4;
+  for (const sd of [-1, 1]) {
+    const sp = SMOKE.pool[SMOKE.i++ % SMOKE.pool.length];
+    sp.position.set(car.x - fx * L + fz * W * sd, car.y + 0.25, car.z - fz * L - fx * W * sd);
+    sp.userData.t = 0;
+    sp.visible = true;
+  }
+}
+function brakeSmokeTick(dt) {
+  if (!SMOKE.pool) return;
+  for (const sp of SMOKE.pool) {
+    if (sp.userData.t > 1.2) {
+      sp.visible = false;
+      continue;
+    }
+    sp.userData.t += dt;
+    const k = sp.userData.t / 1.2;
+    sp.position.y += dt * 0.6;
+    sp.scale.setScalar(0.8 + k * 2.6);
+    sp.material.opacity = 0.55 * (1 - k);
   }
 }
 
@@ -54111,9 +54305,81 @@ const AUDIO = (() => {
     STEPS.play(sf, 'run', 0.9 * k, -0.15);
     setTimeout(() => STEPS.play(sf, 'walk', 0.6 * k, 0.15), 35);
   }
+  // v1.4.51 (Jonay: «cuando te llamen al móvil me gustaría que sonara una melodía de las clásicas de tonos, como la de Nokia…
+  // algo que no tenga copy pero reconocible»): an original tune in the style of the old monophonic phones (square wave,
+  // fast, two bars), played twice; ringtone() starts it, the returned stop() cuts it (when you answer)
+  const RING = [
+    [76, 1],
+    [74, 1],
+    [71, 1],
+    [74, 1],
+    [76, 2],
+    [79, 2],
+    [78, 1],
+    [76, 1],
+    [74, 1],
+    [71, 1],
+    [69, 2],
+    [71, 2],
+    [74, 1],
+    [76, 1],
+    [78, 1],
+    [76, 1],
+    [74, 2],
+    [71, 2],
+    [69, 1],
+    [71, 1],
+    [74, 1],
+    [69, 1],
+    [71, 4]
+  ]; // (MIDI note, length in sixteenths)
+  function ringtone(times = 2) {
+    if (!ctx) return () => {};
+    const g = ctx.createGain(),
+      f = ctx.createBiquadFilter();
+    f.type = 'lowpass';
+    f.frequency.value = 3200; // (the little speaker)
+    g.gain.value = 0.11;
+    g.connect(f);
+    f.connect(master);
+    const st = 0.085,
+      oscs = [];
+    let t = ctx.currentTime + 0.05;
+    for (let r = 0; r < times; r++) {
+      for (const [n, len] of RING) {
+        const o = ctx.createOscillator(),
+          e = ctx.createGain(),
+          d = len * st;
+        o.type = 'square';
+        o.frequency.value = 440 * Math.pow(2, (n - 69) / 12);
+        e.gain.setValueAtTime(0, t);
+        e.gain.linearRampToValueAtTime(1, t + 0.006);
+        e.gain.setValueAtTime(1, t + d * 0.82);
+        e.gain.linearRampToValueAtTime(0, t + d * 0.92);
+        o.connect(e);
+        e.connect(g);
+        o.start(t);
+        o.stop(t + d);
+        oscs.push(o);
+        t += d;
+      }
+      t += 0.6; // (a pause between the two rings)
+    }
+    let done = false;
+    return () => {
+      if (done) return;
+      done = true;
+      g.gain.setTargetAtTime(0, ctx.currentTime, 0.02);
+      for (const o of oscs)
+        try {
+          o.stop(ctx.currentTime + 0.1);
+        } catch (e) {}
+    };
+  }
   return {
     init,
     A,
+    ringtone,
     footstep,
     jump: jumpSfx,
     land: landSfx,
@@ -58703,6 +58969,7 @@ const MISSIONS = (() => {
     if (phone && PLAYER.car) {
       const who = (lines.find((l) => / \(por el móvil\)$/.test(l[0] || ''))[0] || '').replace(/ \(por el móvil\)$/, '');
       HUD.toast('📱 Te llama ' + who + ': bájate del coche para contestar', '#ffd54a', 5);
+      AUDIO.ringtone(1); // v1.4.51: the phone rings
       const iv = setInterval(() => {
         if (PLAYER.car || PLAYER.dead || TALK.cur || (DLG && DLG.open) || (GAME.state !== 'play' && GAME.state !== 'cutscene')) return;
         clearInterval(iv);
@@ -58714,9 +58981,15 @@ const MISSIONS = (() => {
     TALK.cur = my;
     let i = 0,
       tm = 0;
+    // v1.4.51: a phone call rings until you answer (the first click / Space)
+    let ringStop = phone ? AUDIO.ringtone(2) : null;
     const next = () => {
       if (TALK.cur !== my) return;
       clearTimeout(tm);
+      if (ringStop && i > 0) {
+        ringStop();
+        ringStop = null;
+      }
       if (i >= lines.length) {
         TALK.cur = null;
         $('sub').classList.remove('talking');
@@ -68933,6 +69206,7 @@ window.__step = (n, dt = 1 / 30, keys = []) => {
 };
 window.__press = (k) => PRESSED.add(k);
 function logic(dt, now) {
+  if (typeof brakeSmokeTick === 'function') brakeSmokeTick(dt); // v1.4.51 (07_vehicles.js)
   thawStep(); // v1.4.44: frozen city objects that something moved (05w_optimiza.js)
   const { T0 } = logicPart1();
   let tt;

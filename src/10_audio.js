@@ -288,9 +288,81 @@ const AUDIO = (() => {
     STEPS.play(sf, 'run', 0.9 * k, -0.15);
     setTimeout(() => STEPS.play(sf, 'walk', 0.6 * k, 0.15), 35);
   }
+  // v1.4.51 (Jonay: «cuando te llamen al móvil me gustaría que sonara una melodía de las clásicas de tonos, como la de Nokia…
+  // algo que no tenga copy pero reconocible»): an original tune in the style of the old monophonic phones (square wave,
+  // fast, two bars), played twice; ringtone() starts it, the returned stop() cuts it (when you answer)
+  const RING = [
+    [76, 1],
+    [74, 1],
+    [71, 1],
+    [74, 1],
+    [76, 2],
+    [79, 2],
+    [78, 1],
+    [76, 1],
+    [74, 1],
+    [71, 1],
+    [69, 2],
+    [71, 2],
+    [74, 1],
+    [76, 1],
+    [78, 1],
+    [76, 1],
+    [74, 2],
+    [71, 2],
+    [69, 1],
+    [71, 1],
+    [74, 1],
+    [69, 1],
+    [71, 4]
+  ]; // (MIDI note, length in sixteenths)
+  function ringtone(times = 2) {
+    if (!ctx) return () => {};
+    const g = ctx.createGain(),
+      f = ctx.createBiquadFilter();
+    f.type = 'lowpass';
+    f.frequency.value = 3200; // (the little speaker)
+    g.gain.value = 0.11;
+    g.connect(f);
+    f.connect(master);
+    const st = 0.085,
+      oscs = [];
+    let t = ctx.currentTime + 0.05;
+    for (let r = 0; r < times; r++) {
+      for (const [n, len] of RING) {
+        const o = ctx.createOscillator(),
+          e = ctx.createGain(),
+          d = len * st;
+        o.type = 'square';
+        o.frequency.value = 440 * Math.pow(2, (n - 69) / 12);
+        e.gain.setValueAtTime(0, t);
+        e.gain.linearRampToValueAtTime(1, t + 0.006);
+        e.gain.setValueAtTime(1, t + d * 0.82);
+        e.gain.linearRampToValueAtTime(0, t + d * 0.92);
+        o.connect(e);
+        e.connect(g);
+        o.start(t);
+        o.stop(t + d);
+        oscs.push(o);
+        t += d;
+      }
+      t += 0.6; // (a pause between the two rings)
+    }
+    let done = false;
+    return () => {
+      if (done) return;
+      done = true;
+      g.gain.setTargetAtTime(0, ctx.currentTime, 0.02);
+      for (const o of oscs)
+        try {
+          o.stop(ctx.currentTime + 0.1);
+        } catch (e) {}
+    };
+  }
   return {
     init,
     A,
+    ringtone,
     footstep,
     jump: jumpSfx,
     land: landSfx,
