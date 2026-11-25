@@ -44,6 +44,11 @@ D['BRAND']=BRAND
 D['CM']=json.load(open('data/coches.json',encoding='utf-8'))['m']
 # v1.0.4: buildings of the Catastro missing in the OSM, and the walls and fences of the OSM (tools/catastro_add.py)
 D['CB']=json.load(open('data/catastro_add.json',encoding='utf-8')) if os.path.exists('data/catastro_add.json') else []
+# v1.4.48: the buildings of the Catastro the game still lacked (tools/catastro_vs_juego.py, against the final footprints)
+if os.path.exists('data/catastro_add2.json'): D['CB']+=json.load(open('data/catastro_add2.json',encoding='utf-8'))
+# v1.4.48: the coarse blocks of the OSM (one footprint for a whole block) swapped for the Catastro's buildings (tools/osm_gruesos.py)
+if os.path.exists('data/catastro_add3.json'): D['CB']+=json.load(open('data/catastro_add3.json',encoding='utf-8'))
+D['OG']=json.load(open('data/osm_gruesos.json',encoding='utf-8')) if os.path.exists('data/osm_gruesos.json') else []
 D['BW']=json.load(open('data/barreras_juego.json',encoding='utf-8')) if os.path.exists('data/barreras_juego.json') else []
 # v1.1.1: lanes and parking lanes of each street from the OSM (tools/carriles.py): {index of DATA.R: [lanes, left, right]}
 D['LN']=json.load(open('data/carriles.json',encoding='utf-8')) if os.path.exists('data/carriles.json') else {}

@@ -403,6 +403,14 @@ function buildRamp(x0, z0, x1, z1, yF, label, o = {}) {
         break;
       }
     }
+    // (never across a street at ground level: auditRoadBarriers, prueba 1439)
+    if (s0 > 0 && typeof roadBarrierHit === 'function') {
+      const hw0 = (o.w || 6.8) / 2,
+        mx0 = x0 + dx * s0,
+        mz0 = z0 + dz * s0,
+        g0 = heightAt(mx0, mz0);
+      if (roadBarrierHit(mx0 - dz * hw0, mz0 + dx * hw0, mx0 + dz * hw0, mz0 - dx * hw0, g0 - 0.65, g0 + 1.0, -0.5)) s0 = -1;
+    }
     if (s0 > 0) {
       const hw = (o.w || 6.8) / 2,
         mx = x0 + dx * s0,

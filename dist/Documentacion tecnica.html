@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.47</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.48</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2158,6 +2158,20 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.4.48 — 2026-11-25 — Alpha 1.4.48: las calles mandan</h2>
+<ul>
+<li><strong>Las calles mandan</strong> (Jonay: «a partir de ahora las calles mandan, los edificios se ajustan a las calles y no al revés»): se acabó el ensanche inicial de las calles, que era lo que las metía dentro de los edificios. Anchos con norma: calle urbana de doble sentido 5,8 m, de un sentido 3,2 m, carreteras 7 m (carriles de 3,5 m), vías de servicio 4 m; si sobra sitio hasta las fachadas, la calle llega a ellas, y si falta, la acera (1 m) baja hasta la mitad solo donde la calle ya está en su mínimo. Puentes y túneles conservan su ancho.</li>
+<li>Cada fachada se recorta en paralelo al borde de la acera; nunca se quitan edificios salvo casetas de menos de 30 m², y los vecinos siguen pegados (sin escalones ni huecos).</li>
+<li>Tramos rectos sin arrugas (los puntos que zigzagueaban menos de medio metro se enderezan).</li>
+<li><strong>Av. de La Trinidad</strong> medida por Jonay: carriles de 3 m (6 m por sentido), tranvía en medio; los soportales ya no tienen muros en los extremos.</li>
+<li>Las vías de servicio que pasaban por dentro de edificios se dejan como peatonales.</li>
+<li><strong>Edificios del Catastro</strong> (Jonay: «haz una revisión con los datos reales del Catastro… sí, añádelos»): los ~3.100 edificios que faltaban quedan en ~840 y los «perdidos por el camino» de 43 a 13; las manzanas gruesas del OpenStreetMap (una sola planta para toda la manzana, como en la Calle Barcelona) se cambian por los edificios del Catastro uno a uno, con sus plantas. En total ~18.200 edificios (antes 9.400). Las plantas se simplifican (0,4 m) para no cargar la tarjeta: vértices 13,7 M → 11,9 M.</li>
+<li><strong>La carga, de 31 a 18 s</strong>: «¿hay un edificio aquí?» recorría todos los edificios en cada pregunta (y con el doble de edificios, las plazas tardaban 2,2 s); ahora usa una rejilla.</li>
+<li>Arreglado: el rifle de agua podía salir disparado desde el centro del mapa tras teletransportarse (el jugador se congelaba como un actor lejano).</li>
+<li>Arreglado: un pretil en mitad de la Vía de Ronda; una barandilla de rampa de parking contaba como obstáculo en la calzada; los contenedores de la Calle Teobaldo Power, que no cabían en la acera nueva, van en la franja de aparcamiento.</li>
+<li>Arreglado: si una misión se cancelaba con su conversación en pantalla (la presentación de «Vuelta al barrio», por ejemplo), la conversación se quedaba abierta y no se podía empezar otra misión.</li>
+<li>Pruebas antiguas (076, 077, 079, fútbol, reventón con WebGPU) al día.</li>
+</ul>
 <h2>1.4.47 — 2026-11-23 — Alpha 1.4.47: tanda de pendientes rápidos</h2>
 <ul>
 <li><strong>Misiones del Obispo alternadas</strong> (Jonay: «me gustaría que la segunda misión del Obispo fuera el fútbol, no otra de basket»): ahora van basket (Catedral), fútbol (Seminario, con el tutorial), basket (Cristo) y fútbol (cofradías); los diálogos siguen el nuevo orden. Las partidas guardadas que ya habían hecho los dos basket pasan al fútbol del Seminario.</li>

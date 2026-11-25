@@ -577,8 +577,7 @@ function buildInicioDetails() {
       const x = -763.5 - k * 1.6 * 0.25,
         z = -364 - k * 1.6,
         y = heightAt(x, z);
-      if (!roadAtBarrier(x, z, y - 0.7, y + 0.9, 0.15))
-        B.geo(bol.clone(), rail, new THREE.Matrix4().makeTranslation(x, y + 0.45, z));
+      if (!roadAtBarrier(x, z, y - 0.7, y + 0.9, 0.15)) B.geo(bol.clone(), rail, new THREE.Matrix4().makeTranslation(x, y + 0.45, z));
     }
     for (const [x, z, col] of [
       [-769.3, -383, 0x9a9fa5],
@@ -592,16 +591,20 @@ function buildInicioDetails() {
         dx = rn.dx / length,
         dz = rn.dz / length,
         side = Math.sign((z - rn.z) * dx - (x - rn.x) * dz) || 1;
-      for (const distance of [0.78, 1.05, 1.32]) {
+      // (v1.4.48: with 1 m pavements and the facades in line there may be no room on the pavement: then on the edge of the
+      // carriageway, in the parking strip, as the real ones)
+      for (const distance of [0.78, 1.05, 1.32, -1.1]) {
         const px = rn.x - dz * side * (half + distance),
           pz = rn.z + dx * side * (half + distance),
           base = heightAt(px, pz);
         if (COL.nearSeg(px, pz, 0.65)) continue;
-        const clear = [-0.95, 0, 0.95].every((u) => [-0.6, 0, 0.6].every((v) => {
-          const wx = px + dx * u - dz * v,
-            wz = pz + dz * u + dx * v;
-          return !roadAtBarrier(wx, wz, base - 0.8, base + 1.4, 0.12) && !wallBuildingAt(wx, wz);
-        }));
+        const clear = [-0.95, 0, 0.95].every((u) =>
+          [-0.6, 0, 0.6].every((v) => {
+            const wx = px + dx * u - dz * v,
+              wz = pz + dz * u + dx * v;
+            return (distance < 0 || !roadAtBarrier(wx, wz, base - 0.8, base + 1.4, 0.12)) && !wallBuildingAt(wx, wz);
+          })
+        );
         if (!clear) continue;
         const m = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.5, 1.2), new THREE.MeshStandardMaterial({ color: col, roughness: 0.7 }));
         m.name = 'contenedor_teobaldo_power';

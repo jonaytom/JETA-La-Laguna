@@ -57,3 +57,4 @@ Pruebas completas (en `tests/`): `prueba_misiones.py [desde] [hasta]` juega sola
 - `foto_sombras.py` — sombras de antes y de ahora en la misma carga y con semilla fija; con `"&sinbatch=1"` como argumento, sin BatchedMesh (`shots/sombra_<vista>.jpg`).
 - `foto_gente_lejos.py` — una persona con el cuerpo completo, ligero y muy ligero (`shots/gente_lejos.jpg`).
 - `sonda_aparcados.py` — prueba ~400 coches aparcados: se ofrecen, se sube y acelera (lista `aparcados`).
+- `sonda_inicio_mision.py [título o número]` (v1.4.48): pide una misión de la historia con `_setIdx` y dice qué misión queda activa, sus marcas, si hay un diálogo abierto (y su texto) y si `inAnyBuilding` coincide con recorrer todos los edificios.

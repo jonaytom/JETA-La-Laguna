@@ -149,12 +149,39 @@ const DLG = (() => {
 })();
 const NPC = {};
 // never leave a character or a goal inside a (non-visitable) building: move it to the nearest open street/park spot
+// v1.4.48: a 50 m grid of the buildings (with the Catastro ones there are ~18,000 and the parks ask this thousands of
+// times while loading: the whole-list loop made buildPlazasParks 0.7 s slower); rebuilt if DATA.B changes size. It keeps
+// the buildings, not their outlines: the cuts (buildBuildings) only shrink them and b[6] is read when asked
+let _bldGrid = null,
+  _bldGridN = -1;
 function inAnyBuilding(x, z) {
-  for (const b of DATA.B) {
-    const c = b[6];
-    if (Math.abs(c[0] - x) > 150 || Math.abs(c[1] - z) > 150) continue;
-    if (pip(x, z, c)) return true;
+  const C = 50;
+  if (!_bldGrid || _bldGridN !== DATA.B.length) {
+    _bldGrid = new Map();
+    _bldGridN = DATA.B.length;
+    for (const b of DATA.B) {
+      const c = b[6];
+      let x0 = Infinity,
+        z0 = Infinity,
+        x1 = -Infinity,
+        z1 = -Infinity;
+      for (let i = 0; i < c.length; i += 2) {
+        x0 = Math.min(x0, c[i]);
+        x1 = Math.max(x1, c[i]);
+        z0 = Math.min(z0, c[i + 1]);
+        z1 = Math.max(z1, c[i + 1]);
+      }
+      for (let a = Math.floor(x0 / C); a <= Math.floor(x1 / C); a++)
+        for (let k = Math.floor(z0 / C); k <= Math.floor(z1 / C); k++) {
+          const key = a * 100003 + k;
+          let l = _bldGrid.get(key);
+          if (!l) _bldGrid.set(key, (l = []));
+          l.push(b);
+        }
+    }
   }
+  const l = _bldGrid.get(Math.floor(x / C) * 100003 + Math.floor(z / C));
+  if (l) for (const b of l) if (b[6].length >= 6 && pip(x, z, b[6])) return true;
   return false;
 }
 // a clearly reachable spot 1.8-4 m from an NPC (for mission start rings): outside buildings, walls, trees and the
@@ -665,6 +692,9 @@ const MISSIONS = (() => {
     const m = active,
       k = activeTrack;
     finish();
+    // v1.4.48: a talk of the mission left on screen (e.g. the intro of «Vuelta al barrio» when the mission is called off
+    // from the diary) kept the game in 'dialog' and no other mission could start
+    if (DLG.open) DLG.hide();
     AUDIO.fail();
     HUD.big('MISIÓN FALLIDA', '#e04848', 3.5);
     HUD.toast(reason, '#ffb3b3', 4);

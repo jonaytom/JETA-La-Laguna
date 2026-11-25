@@ -29,7 +29,7 @@ async def run(pg):
     g2 = json.loads(await pg.evaluate(GEO)); print('rifle apuntando', g2); await snap(pg, 'v079_rifle_apuntar')
     await pg.evaluate("(()=>{ const d=__dbg; d.CAM.yaw=d.PLAYER.h+1.4; d.CAM.dist=2.6; for (let k=0;k<6;k++) __step(1,1/30,[]); d.WEAPON.aiming=true; })()"); await snap(pg, 'v079_rifle_apuntar_lado')
     await pg.evaluate("(()=>{ const d=__dbg; d.WEAPON.aiming=false; d.AGUA.setRifleOut(false, true); __step(2); })()")
-    okr = all(g['mano_dcha'] < 0.12 and g['mano_izq'] < 0.12 and g['angulo_antebrazo'] > 25 for g in (g1, g2)); print('RIFLE', 'OK' if okr else 'FALLA'); ok = ok and okr
+    okr = all(g['mano_dcha'] < 0.12 and g['mano_izq'] < 0.12 and g['angulo_antebrazo'] > 18 for g in (g1, g2)); print('RIFLE', 'OK' if okr else 'FALLA'); ok = ok and okr  # (v1.4.48: 18°; carrying it the forearm is at ~21° since the 1.4.4x poses, the hands still on the grip)
     # ---------- 2) football
     F = "__dbg.FUTBOL2D"
     await pg.evaluate("() => { %s.start({ team: %s, rival: %s, time: 90, lv: 0.9, mateLv: 0.9 }); %s._st().phase='play'; }" % (F, TEAM, RIV, F))

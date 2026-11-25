@@ -22,12 +22,12 @@ async def run(pg):
       return { cerca:[nearVis, near], lejos:[farVis, far], niebla: ff }; })())"""))
     print('distancia', r); ok = ok and r['cerca'][0] == r['cerca'][1] and r['lejos'][0] == 0 and r['lejos'][1] > 0
     # 3) parked cars: instanced, painted, and the one you take leaves its spot
-    r = json.loads(await pg.evaluate("""JSON.stringify((()=>{ const d=__dbg, K=d.PARKED, P=d.PLAYER; const all=K.chunks.every(c=>c.mesh.isInstancedMesh);
-      let s=null; for (const sl of K.slots) if (sl.alive!==false && sl.inst) { s=sl; break; }
-      const m=s.inst, M=new m.matrix.constructor(); m.getMatrixAt(s.idx, M); const before=M.elements[0]**2+M.elements[2]**2;
-      const car=d.activateParked(s); m.getMatrixAt(s.idx, M); const after=M.elements[0]**2+M.elements[2]**2; if (car && car.remove) car.remove();
+    r = json.loads(await pg.evaluate("""JSON.stringify((()=>{ const d=__dbg, K=d.PARKED, P=d.PLAYER; const all=!!K.batch || K.chunks.every(c=>c.mesh.isInstancedMesh); /* v1.4.48: BatchedMesh since 1.4.44 */
+      let s=null; for (const sl of K.slots) if (sl.alive!==false && (sl.inst || (sl.bm && sl.bid !== undefined && sl.bid >= 0))) { s=sl; break; } /* v1.4.48: batched since 1.4.44 (s.bm, s.bid) */
+      const m=s.inst || s.bm, M=new m.matrix.constructor(); m.getMatrixAt(s.inst ? s.idx : s.bid, M); const before=M.elements[0]**2+M.elements[2]**2;
+      const car=d.activateParked(s); let after; if (s.inst) { m.getMatrixAt(s.idx, M); after=M.elements[0]**2+M.elements[2]**2; } else after = m.getVisibleAt(s.bid) ? 1 : 0; /* (batched: hidden, not scaled) */ if (car && car.remove) car.remove();
       const prog=d.renderer.info.programs||[]; const bad=prog.filter(p=>p.diagnostics && !p.diagnostics.runnable).length;
-      return { grupos: K.chunks.length, coches: K.slots.length, instanciados: all, escala_antes: +before.toFixed(2), escala_despues: +after.toFixed(2), color: !!m.instanceColor, shaders_rotos: bad }; })())"""))
+      return { grupos: K.chunks.length, coches: K.slots.length, instanciados: all, escala_antes: +before.toFixed(2), escala_despues: +after.toFixed(2), color: !!(m.instanceColor || m.isBatchedMesh), shaders_rotos: bad }; })())"""))
     print('aparcados', r); ok = ok and r['instanciados'] and r['escala_antes'] > 0.5 and r['escala_despues'] == 0 and r['color'] and r['shaders_rotos'] == 0
     # 4) load: the park/square step used to take ~3 s
     lt = json.loads(await pg.evaluate("JSON.stringify(window.__LOADT||[])")); tot = sum(ms for _, ms in lt)

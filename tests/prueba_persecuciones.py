@@ -18,7 +18,9 @@ async def run(pg):
             a = await pg.evaluate(AUTO)
             if a in ('fight', 'dlg', 'countdown'): await asyncio.sleep(0.4)
             else: await pg.evaluate("__step(4, 1/30)")
-        if not found: print(f'[{i}] {titles[i]}: SIN FLECHA'); ok_all = False; continue
+        if not found:  # (v1.4.48) where it got stuck
+            st = await pg.evaluate("JSON.stringify((()=>{ const d=__dbg, M=d.MISSIONS, A=M.active; return { activa: A && A.title, paso: A && A.st && A.st.step, obj: (document.getElementById('obj')||{}).innerText, jugador: [Math.round(d.PLAYER.x), Math.round(d.PLAYER.z)], coche: !!d.PLAYER.car, charla: !!(window.__TALK && window.__TALK.cur) }; })())")
+            print(f'[{i}] {titles[i]}: SIN FLECHA', st); ok_all = False; continue
         prev = json.loads(await pg.evaluate(SAMPLE)); first = prev; jump = 0
         for _ in range(90):  # 3 s, the player stands still
             await pg.evaluate("__step(1, 1/30)"); cur = json.loads(await pg.evaluate(SAMPLE))

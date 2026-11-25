@@ -1,0 +1,1 @@
+herramientas/sonda_quitados.py 20 235 50

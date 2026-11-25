@@ -1300,7 +1300,7 @@ function buildRoadsEachPart3(t, cls, c, w, ri) {
     ) &&
     cls !== 'paving'
   )
-    for (const sd of [1, -1]) ribbonBand(c, sd * (w / 2 - 0.3), sd * (w / 2 + 2.1), 'sidewalk', YOFF.sidewalk, 2.4, ri); // two kerb-side strips (a full-width slab under the road poked through it on curved slopes)
+    for (const sd of [1, -1]) ribbonBand(c, sd * (w / 2 - 0.3), sd * (w / 2 + SIDEWALK_W), 'sidewalk', YOFF.sidewalk, 2.4, ri); // (v1.4.48: 1 m, as the real ones; it was 2.1) // two kerb-side strips (a full-width slab under the road poked through it on curved slopes)
   // junction discs
   if (cls === 'asphalt' || isLines(cls) || cls === 'paving')
     for (let i = 0; i < c.length; i += 2) {
@@ -1398,6 +1398,13 @@ function buildRoadsPart1() {
   indexRoads();
   computeDepressions();
   computeRaises();
+  // v1.4.48 (Jonay: «ten mucho cuidado al cambiar el ancho en túneles y puentes»; prueba 1439: walls back in the lanes by
+  // the underpass of the Vía de Ronda): the sunk and raised roads (trenches, underpasses, embankments) keep their width of
+  // before too, as tunnels and bridges (01_core.js): their walls, cuts and slopes are made from it
+  for (const ri of [...DEP.keys(), ...RAISE.keys()]) {
+    const r = DATA.R[ri];
+    if (r && r.wMax && r[2] < r.wMax) r[2] = r.wMax;
+  }
   for (let ri = 0; ri < DATA.R.length; ri++) ROADY[ri] = roadYFn(ri);
   for (let ri = 0; ri < DATA.R.length; ri++) {
     const m = mergeY(ri);
@@ -2878,7 +2885,11 @@ function trenchSlabs() {
             o = [nx * sd, 0, nz * sd],
             a = P(u0, v - 0.12 * sd, 0),
             b = P(u1, v - 0.12 * sd, 0),
-            blocked = roadBarrierHit(a[0], a[2], b[0], b[2], Math.min(a[1], b[1]) - 0.65, Math.max(a[1], b[1]) + 0.9, -0.12),
+            // (v1.4.48: also when its middle is well inside another carriageway: the height check missed the Vía de Ronda
+            // under the Menceyes, X 691–700, Y 1321–1329, once the Menceyes went to its real width)
+            blocked =
+              roadBarrierHit(a[0], a[2], b[0], b[2], Math.min(a[1], b[1]) - 0.65, Math.max(a[1], b[1]) + 0.9, -0.12) ||
+              onCarriagewayEarly((a[0] + b[0]) / 2, (a[2] + b[2]) / 2, -0.6),
             top = blocked ? -0.06 : 0.95;
           T.quad(P(u0, v, -0.75), P(u1, v, -0.75), P(u1, v, top), P(u0, v, top), [0, 0], [0, 0], [0, 0], [0, 0], col, undefined, o);
           if (blocked) continue;
@@ -4630,10 +4641,22 @@ function buildBuildingsEach(bi) {
     }
     if (perazaStand(style, insetPoly(pts, 0.4), qx / n, qz / n) || riosHall(insetPoly(pts, 0.6), qx / n, qz / n)) return;
   } // v0.75: the stands of the Estadio Francisco Peraza (05v_peraza.js)
-  pts = insetPoly(pts, style === 4 ? 0.3 : 0.75);
+  pts = insetParty(pts, style === 4 ? 0.3 : 0.75, bi - 1); // v1.4.48: the party walls stay put (insetParty)
   if (style !== 4) {
-    const t = rbClip(roadClip(streetTrim(pts))); // v1.4.47: and off the roundabouts (rbClip, 04b_recorte.js)
+    const t = streetsRule(rbClip(roadClip(streetTrim(pts)))); // v1.4.47: and off the roundabouts (rbClip); v1.4.48: the streets rule (streetsRule, 04b_recorte.js)
     if (!t || (style === 3 && lv === 1 && smallBuildingOnMainRoad(t))) {
+      // (v1.4.48, tests: which buildings go and why: sonda_quitados.py)
+      if (window.__JETA_TEST) {
+        let qx = 0,
+          qz = 0;
+        for (const p of pts) ((qx += p[0] / pts.length), (qz += p[1] / pts.length));
+        (window.__quitados = window.__quitados || []).push([
+          Math.round(qx),
+          Math.round(qz),
+          Math.round(Math.abs(polyArea(pts))),
+          !t ? 'recorte' : 'pequeño en vía principal'
+        ]);
+      }
       b[6] = [];
       return;
     }
@@ -4642,7 +4665,7 @@ function buildBuildingsEach(bi) {
       n = pts.length;
       const o = [];
       for (let i = 0; i < c.length; i += 2) o.push([c[i], c[i + 1]]);
-      const t2 = rbClip(roadClip(streetTrim(o)));
+      const t2 = streetsRule(rbClip(roadClip(streetTrim(o))));
       if (t2 && t2 !== o) b[6] = t2.flat();
     }
   } // v0.68–0.69: off the carriageways (04b_recorte.js; the Av. de La Trinidad with its pavement); DATA.B too, for inAnyBuilding
@@ -4684,7 +4707,20 @@ function buildBuildingsEach(bi) {
     const cu = PS ? pasajeCuts(p, q, PS) : null;
     if (cu) pasajeCol(p, q, cu);
     else if (ARC && ARC.has(i)) trinidadArcadeCol(p, q);
-    else COL.addSeg(p[0], p[1], q[0], q[1]);
+    else if (ARC && arcadeSide(pts, i, ARC, 0, 3, 99)) {
+      // (v1.4.48: no collision on the stretch under the arcade)
+      const sd = arcadeSide(pts, i, ARC, 0, 3, 99),
+        len = Math.hypot(q[0] - p[0], q[1] - p[1]);
+      if (sd.open[1] - sd.open[0] < len - 0.05) {
+        const [a0, a1] = sd.open[0] > 0.01 ? [0, sd.open[0]] : [sd.open[1], len];
+        COL.addSeg(
+          p[0] + ((q[0] - p[0]) * a0) / len,
+          p[1] + ((q[1] - p[1]) * a0) / len,
+          p[0] + ((q[0] - p[0]) * a1) / len,
+          p[1] + ((q[1] - p[1]) * a1) / len
+        );
+      }
+    } else COL.addSeg(p[0], p[1], q[0], q[1]);
   }
   if (CONC_CARVE.pts === pts) {
     CHURCHES.push({
@@ -4986,6 +5022,28 @@ function buildGreenhouse(pts, n, cx, cz, H) {
   }
 }
 /** (v1.2.4, code quality) part of buildBuildingsEach: the walls, floor by floor, with their windows */
+/** v1.4.48: edge i of a footprint that touches an arcade edge (the one before or after it): the stretch of it under the
+ *  arcade, as distances along the edge [from, to], and the arcade's ceiling height (null if it touches none) */
+function arcadeSide(pts, i, ARC, y0, fh, wallTop) {
+  const n = pts.length,
+    p = pts[i],
+    q = pts[(i + 1) % n],
+    len = Math.hypot(q[0] - p[0], q[1] - p[1]);
+  if (len < 0.05) return null;
+  const D = TRI_ARC.D;
+  const nx = (i + 1) % n,
+    pv = (i - 1 + n) % n;
+  if (ARC.has(nx)) {
+    // this edge ends where the arcade edge starts: its last D metres
+    const k = nx;
+    return { open: [Math.max(0, len - D), len], top: Math.min(trinidadArcadeTop(pts[k], pts[(k + 1) % n], y0, fh), wallTop - 0.5) };
+  }
+  if (ARC.has(pv)) {
+    const k = pv;
+    return { open: [0, Math.min(len, D)], top: Math.min(trinidadArcadeTop(pts[k], pts[(k + 1) % n], y0, fh), wallTop - 0.5) };
+  }
+  return null;
+}
 function buildBuildingWalls({ n, pts, bay, bot, bmin, fh, wallTop, ARC, PS, LM, store, style, seed, atlas, A, T0, y0, col, bi, cx, cz, bmax }) {
   for (let i = 0; i < n; i++) {
     const p = pts[i],
@@ -4998,6 +5056,20 @@ function buildBuildingWalls({ n, pts, bay, bot, bmin, fh, wallTop, ARC, PS, LM, 
       v1 = (wallTop - bmin) / fh;
     if (ARC && ARC.has(i)) {
       trinidadArcadeEdge(A, T0, p, q, nb, fh, y0, bot, wallTop, col, [atlas, bi % 97], out, cx, cz);
+      continue;
+    }
+    // v1.4.48: a side wall next to an arcade edge: the stretch under the arcade starts at its ceiling (arcadeSide)
+    const sd = ARC ? arcadeSide(pts, i, ARC, y0, fh, wallTop) : null;
+    if (sd) {
+      if (sd.open[1] - sd.open[0] < len - 0.05) {
+        const [a0, a1] = sd.open[0] > 0.01 ? [0, sd.open[0]] : [sd.open[1], len];
+        const pa = [p[0] + ((q[0] - p[0]) * a0) / len, p[1] + ((q[1] - p[1]) * a0) / len],
+          pb = [p[0] + ((q[0] - p[0]) * a1) / len, p[1] + ((q[1] - p[1]) * a1) / len];
+        facadeWall(A, T0, pa, pb, Math.max(1, Math.round((a1 - a0) / bay)), fh, y0, bot, wallTop, col, [atlas, bi % 97], out);
+      }
+      const pa = [p[0] + ((q[0] - p[0]) * sd.open[0]) / len, p[1] + ((q[1] - p[1]) * sd.open[0]) / len],
+        pb = [p[0] + ((q[0] - p[0]) * sd.open[1]) / len, p[1] + ((q[1] - p[1]) * sd.open[1]) / len];
+      facadeWall(A, T0, pa, pb, Math.max(1, Math.round((sd.open[1] - sd.open[0]) / bay)), fh, y0, sd.top, wallTop, col, [atlas, bi % 97], out);
       continue;
     }
     // long street fronts of terraced houses / blocks: split into parcels with their own colour (and facade for houses)
@@ -5363,6 +5435,121 @@ function insetPoly(pts, d0) {
   });
   return polyArea(out) > 0 ? out : pts;
 }
+// v1.4.48 («las calles mandan», Jonay: «hay huecos entre edificios entre los que te puedes colar… los edificios van pegados
+// unos a otros salvo donde haya un hueco claro en el mapa»): every footprint was shrunk 0.75 m on all sides (insetPoly),
+// so two houses that touch in the map ended up 1.5 m apart (3,800 such gaps, sonda_calles_mandan.py). Now only the walls
+// that face the outside move in; a party wall (another footprint touching it, nearly parallel, within 1.2 m) stays put
+let PARTYG = null;
+function partyGrid() {
+  if (PARTYG) return PARTYG;
+  PARTYG = new Map();
+  DATA.B.forEach((b, bi) => {
+    const c = b[6];
+    if (!c || c.length < 6) return;
+    const n = c.length / 2;
+    for (let i = 0; i < n; i++) {
+      const ax = c[2 * i],
+        az = c[2 * i + 1],
+        bx = c[(2 * i + 2) % c.length],
+        bz = c[(2 * i + 3) % c.length];
+      for (let a = Math.floor(Math.min(ax, bx) / 20); a <= Math.floor(Math.max(ax, bx) / 20); a++)
+        for (let k = Math.floor(Math.min(az, bz) / 20); k <= Math.floor(Math.max(az, bz) / 20); k++) {
+          const key = a * 100003 + k;
+          let l = PARTYG.get(key);
+          if (!l) PARTYG.set(key, (l = []));
+          l.push([bi, ax, az, bx, bz]);
+        }
+    }
+  });
+  return PARTYG;
+}
+function isPartyEdge(ax, az, bx, bz, own) {
+  const G = partyGrid(),
+    L = Math.hypot(bx - ax, bz - az);
+  if (L < 0.5) return false;
+  const ux = (bx - ax) / L,
+    uz = (bz - az) / L;
+  let hits = 0;
+  for (const t of [0.2, 0.5, 0.8]) {
+    const x = ax + (bx - ax) * t,
+      z = az + (bz - az) * t,
+      l = G.get(Math.floor(x / 20) * 100003 + Math.floor(z / 20));
+    if (!l) continue;
+    for (const e of l) {
+      if (e[0] === own) continue;
+      const ex = e[3] - e[1],
+        ez = e[4] - e[2],
+        el = Math.hypot(ex, ez) || 1;
+      if (Math.abs(ux * (ez / el) - uz * (ex / el)) > 0.26) continue; // (not parallel: more than 15°)
+      const s = Math.max(0, Math.min(1, ((x - e[1]) * ex + (z - e[2]) * ez) / (el * el)));
+      if (Math.hypot(x - e[1] - ex * s, z - e[2] - ez * s) < 1.2) {
+        hits++;
+        break;
+      }
+    }
+  }
+  return hits >= 2;
+}
+/** insetPoly with the party walls left where they are: each edge moves in by its own distance (0 for a party wall) */
+function insetParty(pts, d0, own) {
+  const n = pts.length;
+  if (n < 3) return pts;
+  const A = Math.abs(polyArea(pts));
+  let per = 0;
+  for (let i = 0; i < n; i++) per += Math.hypot(pts[(i + 1) % n][0] - pts[i][0], pts[(i + 1) % n][1] - pts[i][1]);
+  const d = Math.min(d0, ((2 * A) / per) * 0.3);
+  if (d < 0.1) return pts;
+  const de = [];
+  let party = 0;
+  for (let i = 0; i < n; i++) {
+    const a = pts[i],
+      b = pts[(i + 1) % n],
+      pw = isPartyEdge(a[0], a[1], b[0], b[1], own);
+    if (pw) party++;
+    de.push(pw ? 0.02 : d);
+  }
+  if (!party) return insetPoly(pts, d0);
+  PARTYSTAT.walls += party;
+  PARTYSTAT.buildings++;
+  // each vertex: where the two neighbouring edges, each moved in by its own distance, meet
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const a = pts[(i - 1 + n) % n],
+      p = pts[i],
+      b = pts[(i + 1) % n];
+    const e1x = p[0] - a[0],
+      e1z = p[1] - a[1],
+      e2x = b[0] - p[0],
+      e2z = b[1] - p[1],
+      l1 = Math.hypot(e1x, e1z) || 1,
+      l2 = Math.hypot(e2x, e2z) || 1;
+    // inward normals (as insetPoly: subtracting (ez, −ex))
+    const n1x = -e1z / l1,
+      n1z = e1x / l1,
+      n2x = -e2z / l2,
+      n2z = e2x / l2,
+      d1 = de[(i - 1 + n) % n],
+      d2 = de[i];
+    // point on line 1: p + n1·d1, direction e1; on line 2: p + n2·d2, direction e2
+    const p1x = p[0] + n1x * d1,
+      p1z = p[1] + n1z * d1,
+      p2x = p[0] + n2x * d2,
+      p2z = p[1] + n2z * d2,
+      den = (e1x / l1) * (e2z / l2) - (e1z / l1) * (e2x / l2);
+    if (Math.abs(den) < 0.05) {
+      out.push([(p1x + p2x) / 2, (p1z + p2z) / 2]); // (nearly straight: halfway)
+      continue;
+    }
+    const t = ((p2x - p1x) * (e2z / l2) - (p2z - p1z) * (e2x / l2)) / den,
+      q = [p1x + (e1x / l1) * t, p1z + (e1z / l1) * t];
+    // never further than 2·d from the corner (a sharp corner would shoot it far)
+    const dd = Math.hypot(q[0] - p[0], q[1] - p[1]);
+    out.push(dd > 2 * d + 0.05 ? [p[0] + ((q[0] - p[0]) / dd) * 2 * d, p[1] + ((q[1] - p[1]) / dd) * 2 * d] : q);
+  }
+  return polyArea(out) > 0 && !selfCross(out) ? out : insetPoly(pts, d0);
+}
+const PARTYSTAT = { walls: 0, buildings: 0 };
+window.__party = PARTYSTAT;
 const ROOFPROPS = [];
 function addQuoins(pts, bot, top, w, col = null) {
   const n = pts.length;

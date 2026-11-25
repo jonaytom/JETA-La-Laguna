@@ -891,7 +891,7 @@ async function boot() {
         buildTerrain();
       }
     ],
-    ['Levantando casas del casco histórico…', [buildBuildings, pasajeCovers]],
+    ['Levantando casas del casco histórico…', [buildBuildings, pasajeCovers, serviceUnderBuildings]], // v1.4.48: serviceUnderBuildings (04b_recorte.js)
     ['Asfaltando calles y empedrando peatonales…', [buildRoads, buildMedians, buildCarParks, finalizeCuts]],
     ['Colocando la Catedral y la torre de La Concepción…', [buildLandmarks, buildExtraSalud]],
     [
@@ -1098,6 +1098,7 @@ window.__dbg = {
   pitchRects,
   rectsOverlap,
   STR,
+  isHistoric, // (v1.4.48: sonda_calles_mandan.py)
   pasajeCeilAt,
   inAguereLow,
   LOD,
@@ -1157,6 +1158,9 @@ window.__dbg = {
   roadClip,
   insetPoly,
   streetTrim,
+  insetParty, // (v1.4.48: sonda_recorte_pasos.py)
+  rbClip,
+  streetsRule,
   polyArea,
   BASKET2D,
   FUTBOL2D,

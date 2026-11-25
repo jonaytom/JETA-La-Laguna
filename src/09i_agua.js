@@ -66,8 +66,8 @@ function wetChasePed(p, dt) {
   p.h += angDiff(p.h, Math.atan2(dx, dz)) * clamp(dt * 8, 0, 1);
   const mv = d > 1.1 ? 4.9 : 0;
   if (mv > 0) {
-    const x = p.x + dx / d * mv * dt,
-      z = p.z + dz / d * mv * dt;
+    const x = p.x + (dx / d) * mv * dt,
+      z = p.z + (dz / d) * mv * dt;
     if (!pedOnRoad(x, z, pedestrianFastRoad)) {
       p.x = x;
       p.z = z;
@@ -79,9 +79,14 @@ function wetChasePed(p, dt) {
   animHuman(p.H, dt, mv);
   p.H.root.position.set(p.x, heightAt(p.x, p.z) + 0.17, p.z);
   p.H.root.rotation.y = p.h;
-  if (Math.hypot(PLAYER.x - p.x, PLAYER.z - p.z) < 1.25 && GAME.state === 'play' && PLAYER.down <= 0 &&
-      sameLevel(PLAYER.y, heightAt(p.x, p.z)) && COL.raycast(p.x, p.z, PLAYER.x, PLAYER.z) >= 1 &&
-      startStreetFight(p)) {
+  if (
+    Math.hypot(PLAYER.x - p.x, PLAYER.z - p.z) < 1.25 &&
+    GAME.state === 'play' &&
+    PLAYER.down <= 0 &&
+    sameLevel(PLAYER.y, heightAt(p.x, p.z)) &&
+    COL.raycast(p.x, p.z, PLAYER.x, PLAYER.z) >= 1 &&
+    startStreetFight(p)
+  ) {
     p.wetChase = 0;
     SUB.show('<b>Peatón empapado:</b> ¡Ahora vas a ver lo que es mojarse!', 2.5);
   }
@@ -163,6 +168,7 @@ function holdRiflePart1(H, aim, dir, fx, fz, m) {
   m.updateMatrixWorld(true);
   // left hand under the handguard (v1.4.42: aiming, 10 cm ahead of the grip: since the rifle sits further out (v1.4.22) the
   // left arm no longer reached 18 cm and the hand hung 15 cm away from it)
+  m.updateWorldMatrix(true, false);
   HR.hg.set(0, -0.045, aim ? 0.1 : 0.32).applyMatrix4(m.matrixWorld);
   armIK(
     H,
@@ -392,6 +398,7 @@ const AGUA = (() => {
     const d = D.find((q) => !q[6]);
     if (!d) return;
     const sp = 13 + Math.random() * 0.8; // ~10–11 m when aimed straight (v0.76: 11.5 m/s only reached ~5 m)
+    m.updateWorldMatrix(true, false); // v1.4.48: since 1.4.44 the world matrices are not always fresh here (prueba_076: drops from the map's origin)
     tmpV.set(0, 0.012, 0.55).applyMatrix4(m.matrixWorld);
     const dir = aimV;
     let done = false;

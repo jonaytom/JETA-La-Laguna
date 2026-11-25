@@ -197,10 +197,18 @@ const inPlayArea = (x, z, m = 0) => worldEdgeDist(x, z) >= m;
 })();
 // widen drivable streets a bit so cars fit through the old town
 // widen drivable streets (real-life feel: OSM default widths read too narrow at game scale)
+// v1.4.48 (Jonay: «aquí debe haber un problema de concepto inicial… las calles no las ensanches, lo importante es que
+// tengan un mínimo de calzada transitable»): the old widening (12–30 % more, at least 8–9 m two-way) was the origin of
+// the buildings in the streets. The map's widths are only defaults by type (6.5 m every residential, 8 tertiary,
+// 9 secondary…): now the carriageway follows the norms Jonay gave (3.1-IC and urban design): conventional roads two-way
+// 7 m (3.5 m lanes), slip roads and service roads 4 m, urban streets two-way 5.8 m and one-way 3.2 m. A width the map
+// really gives (not its type's default) is kept, never under those minimums. Motorways and trunk roads as they are.
+const WDEF = { 0: 12, 1: 7, 2: 0, 3: 10, 4: 7, 5: 9, 6: 7, 7: 8, 8: 6, 9: 6.5, 10: 6.5, 11: 5, 12: 4.5 };
 const WIDEN = (t, w, one) => {
-  const f = t <= 2 ? 1.12 : t <= 8 ? 1.3 : t <= 10 ? 1.22 : 1.15;
-  const mn = t === 12 ? 5 : t === 11 ? 5.5 : one ? 6 : t <= 8 ? 9 : 8;
-  return Math.round(Math.max(w * f, mn) * 10) / 10;
+  if (t === 0 || t === 2) return w;
+  const norm = t === 1 || t === 4 || t === 6 || t === 8 ? 4 : t <= 7 ? (one ? 4 : 7) : t === 12 ? 4 : one ? 3.2 : 5.8,
+    real = Math.abs(w - (WDEF[t] || 0)) > 0.05; // (the map gave its own width)
+  return Math.round((real ? Math.max(w, norm) : norm) * 10) / 10;
 };
 const CORE0 = [
   [-680, -420],
@@ -222,7 +230,16 @@ const inCore0 = (x, z) => {
   }
   return ins;
 };
-const WIDEN2 = (t, w, one, x, z) => (inCore0(x, z) && t >= 9 ? Math.round(Math.max(w * 1.15, t === 12 ? 5 : 7.2) * 10) / 10 : WIDEN(t, w, one));
+const WIDEN2 = (t, w, one, x, z) => WIDEN(t, w, one); // (v1.4.48: the old town too, at the map's width)
+// the widths of before (1.4.47): tunnels and bridges keep them (their walls, decks and mouths are made from them: Jonay,
+// «ten mucho cuidado al cambiar el ancho en túneles y puentes»), and a street never widens past them (narrowToGap)
+const WIDEN_OLD = (t, w, one, x, z) => {
+  if (inCore0(x, z) && t >= 9) return Math.round(Math.max(w * 1.15, t === 12 ? 5 : 7.2) * 10) / 10;
+  const f = t <= 2 ? 1.12 : t <= 8 ? 1.3 : t <= 10 ? 1.22 : 1.15,
+    mn = t === 12 ? 5 : t === 11 ? 5.5 : one ? 6 : t <= 8 ? 9 : 8;
+  return Math.round(Math.max(w * f, mn) * 10) / 10;
+};
+const SIDEWALK_W = 1.0; // v1.4.48 (Jonay: «aquí las aceras apenas tienen un ancho de un metro»): the pavement beyond the kerb
 // v0.72 (official street map, docs/referencias/callejero/): streets of the old town that OSM gives as pedestrian but
 // that cars do use (smooth paving, not cobbles, on the town hall's map): drawn and driven as normal streets
 const CALLEJERO_TRAFICO = /^Calle (Bencomo|Juan de Vera|Rodriguez Moure|Ascanio y Nieves)$/;
@@ -233,17 +250,101 @@ for (const rd of DATA.R) {
     rd[2] = Math.max(rd[2], 6);
   }
 }
-for (const rd of DATA.R) {
+DATA.R.forEach((rd, ri) => {
   if (rd[0] <= 12) {
     const c = rd[4],
       m = (c.length >> 2) << 1;
-    rd[2] = WIDEN2(rd[0], rd[2], rd[3] & 1, c[m], c[m + 1]);
+    rd.wMax = WIDEN_OLD(rd[0], rd[2], rd[3] & 1, c[m], c[m + 1]);
+    rd[2] = rd[3] & 6 ? rd.wMax : WIDEN2(rd[0], rd[2], rd[3] & 1, c[m], c[m + 1]);
+    // (the lanes the map gives, at 3.5 m: a one-way half of a dual road is not a one-lane slip road)
+    const ln = DATA.LN && DATA.LN[ri] ? DATA.LN[ri][0] : 0;
+    if (!(rd[3] & 6) && ln > 1 && rd[0] <= 8) rd[2] = Math.max(rd[2], Math.min(rd.wMax, ln * 3.5));
+    rd.wMin = rd[2]; // (v1.4.48: its minimum: frontLines lets the pavement go down to half only where the street is at it)
   }
-}
+});
 for (const e of DATA.G.e) {
   const a = e[0] * 2;
   e[4] = WIDEN2(e[2], e[4], e[3], DATA.G.n[a], DATA.G.n[a + 1]);
 }
+// v1.4.48 («las calles mandan», Jonay: «los trazados de la carretera en sitios como La Trinidad, que son muy rectos, no
+// deberían tener esas arrugas»): the map's points along a nearly straight street wobble a little (a metre or less), and
+// the street, its kerbs and its marks drew those wobbles. Each point inside a street (not shared with another street:
+// junctions stay put) that is less than 1 m off the line between its neighbours, where both pieces are 6 m or longer
+// and it turns less than 8°, goes onto that line; the traffic graph's points that were the same move with it
+(function straightenWobbles() {
+  // (v1.4.48: the Av. de La Trinidad has a point every 4 m rounded to half a metre: a ±0.2–0.5 m zigzag. Each street,
+  // between the points it shares with other streets, is simplified (Douglas-Peucker, 0.5 m) and every point in between
+  // goes onto the simplified line; the roundabout rings stay as they are)
+  const TOL = 0.5,
+    key = (x, z) => x + ',' + z,
+    uses = new Map();
+  for (const rd of DATA.R) {
+    const c = rd[4];
+    for (let i = 0; i < c.length; i += 2) uses.set(key(c[i], c[i + 1]), (uses.get(key(c[i], c[i + 1])) || 0) + 1);
+  }
+  const N = DATA.G.n;
+  for (let i = 0; i < N.length; i += 2) uses.set(key(N[i], N[i + 1]), (uses.get(key(N[i], N[i + 1])) || 0) + 2);
+  const moved = new Map();
+  let n = 0;
+  const dp = (c, a, b, keep) => {
+    // marks in keep the points of c (indices a..b, in points) that the simplified line passes through
+    const ax = c[2 * a],
+      az = c[2 * a + 1],
+      bx = c[2 * b],
+      bz = c[2 * b + 1],
+      L = Math.hypot(bx - ax, bz - az) || 1e-9;
+    let w = -1,
+      wd = TOL;
+    for (let i = a + 1; i < b; i++) {
+      const d = Math.abs((c[2 * i] - ax) * (bz - az) - (c[2 * i + 1] - az) * (bx - ax)) / L;
+      if (d > wd) ((wd = d), (w = i));
+    }
+    if (w < 0) return;
+    keep[w] = true;
+    dp(c, a, w, keep);
+    dp(c, w, b, keep);
+  };
+  for (const rd of DATA.R) {
+    if (rd[0] > 12 || rd[3] & 32) continue;
+    const c = rd[4],
+      np = c.length / 2;
+    if (np < 3) continue;
+    const keep = new Array(np).fill(false);
+    keep[0] = keep[np - 1] = true;
+    for (let i = 1; i < np - 1; i++) if ((uses.get(key(c[2 * i], c[2 * i + 1])) || 0) > 1) keep[i] = true;
+    let a = 0;
+    for (let b = 1; b < np; b++) if (keep[b]) (dp(c, a, b, keep), (a = b));
+    const o = c.slice();
+    let k0 = 0;
+    for (let i = 1; i < np; i++) {
+      if (!keep[i]) continue;
+      const ax = c[2 * k0],
+        az = c[2 * k0 + 1],
+        bx = c[2 * i],
+        bz = c[2 * i + 1],
+        L2 = (bx - ax) ** 2 + (bz - az) ** 2 || 1;
+      for (let j = k0 + 1; j < i; j++) {
+        const t = ((c[2 * j] - ax) * (bx - ax) + (c[2 * j + 1] - az) * (bz - az)) / L2,
+          qx = Math.round((ax + (bx - ax) * t) * 100) / 100,
+          qz = Math.round((az + (bz - az) * t) * 100) / 100;
+        if (Math.hypot(qx - c[2 * j], qz - c[2 * j + 1]) < 0.02) continue;
+        moved.set(key(c[2 * j], c[2 * j + 1]), [qx, qz]);
+        o[2 * j] = qx;
+        o[2 * j + 1] = qz;
+        n++;
+      }
+      k0 = i;
+    }
+    rd[4] = o;
+  }
+  for (const e of DATA.G.e)
+    if (e[6])
+      for (let i = 0; i < e[6].length; i += 2) {
+        const m = moved.get(key(e[6][i], e[6][i + 1]));
+        if (m) ((e[6][i] = m[0]), (e[6][i + 1] = m[1]));
+      }
+  window.__enderezados = n;
+})();
 narrowToGap(); // v1.0.0: residential and service streets meet the buildings halfway (04b_recorte.js)
 corrFitTwins(); // v1.2.0: the two halves of a dual road at the width of their lanes (04c_corredores.js), in the zones done so far
 trinidadWidths(); // v0.68: Av. de La Trinidad, one lane + parking per carriageway (05u_trinidad.js); after the widening
@@ -3957,7 +4058,7 @@ function buildRoadsEachPart3(t, cls, c, w, ri) {
     ) &&
     cls !== 'paving'
   )
-    for (const sd of [1, -1]) ribbonBand(c, sd * (w / 2 - 0.3), sd * (w / 2 + 2.1), 'sidewalk', YOFF.sidewalk, 2.4, ri); // two kerb-side strips (a full-width slab under the road poked through it on curved slopes)
+    for (const sd of [1, -1]) ribbonBand(c, sd * (w / 2 - 0.3), sd * (w / 2 + SIDEWALK_W), 'sidewalk', YOFF.sidewalk, 2.4, ri); // (v1.4.48: 1 m, as the real ones; it was 2.1) // two kerb-side strips (a full-width slab under the road poked through it on curved slopes)
   // junction discs
   if (cls === 'asphalt' || isLines(cls) || cls === 'paving')
     for (let i = 0; i < c.length; i += 2) {
@@ -4055,6 +4156,13 @@ function buildRoadsPart1() {
   indexRoads();
   computeDepressions();
   computeRaises();
+  // v1.4.48 (Jonay: «ten mucho cuidado al cambiar el ancho en túneles y puentes»; prueba 1439: walls back in the lanes by
+  // the underpass of the Vía de Ronda): the sunk and raised roads (trenches, underpasses, embankments) keep their width of
+  // before too, as tunnels and bridges (01_core.js): their walls, cuts and slopes are made from it
+  for (const ri of [...DEP.keys(), ...RAISE.keys()]) {
+    const r = DATA.R[ri];
+    if (r && r.wMax && r[2] < r.wMax) r[2] = r.wMax;
+  }
   for (let ri = 0; ri < DATA.R.length; ri++) ROADY[ri] = roadYFn(ri);
   for (let ri = 0; ri < DATA.R.length; ri++) {
     const m = mergeY(ri);
@@ -5535,7 +5643,11 @@ function trenchSlabs() {
             o = [nx * sd, 0, nz * sd],
             a = P(u0, v - 0.12 * sd, 0),
             b = P(u1, v - 0.12 * sd, 0),
-            blocked = roadBarrierHit(a[0], a[2], b[0], b[2], Math.min(a[1], b[1]) - 0.65, Math.max(a[1], b[1]) + 0.9, -0.12),
+            // (v1.4.48: also when its middle is well inside another carriageway: the height check missed the Vía de Ronda
+            // under the Menceyes, X 691–700, Y 1321–1329, once the Menceyes went to its real width)
+            blocked =
+              roadBarrierHit(a[0], a[2], b[0], b[2], Math.min(a[1], b[1]) - 0.65, Math.max(a[1], b[1]) + 0.9, -0.12) ||
+              onCarriagewayEarly((a[0] + b[0]) / 2, (a[2] + b[2]) / 2, -0.6),
             top = blocked ? -0.06 : 0.95;
           T.quad(P(u0, v, -0.75), P(u1, v, -0.75), P(u1, v, top), P(u0, v, top), [0, 0], [0, 0], [0, 0], [0, 0], col, undefined, o);
           if (blocked) continue;
@@ -7287,10 +7399,22 @@ function buildBuildingsEach(bi) {
     }
     if (perazaStand(style, insetPoly(pts, 0.4), qx / n, qz / n) || riosHall(insetPoly(pts, 0.6), qx / n, qz / n)) return;
   } // v0.75: the stands of the Estadio Francisco Peraza (05v_peraza.js)
-  pts = insetPoly(pts, style === 4 ? 0.3 : 0.75);
+  pts = insetParty(pts, style === 4 ? 0.3 : 0.75, bi - 1); // v1.4.48: the party walls stay put (insetParty)
   if (style !== 4) {
-    const t = rbClip(roadClip(streetTrim(pts))); // v1.4.47: and off the roundabouts (rbClip, 04b_recorte.js)
+    const t = streetsRule(rbClip(roadClip(streetTrim(pts)))); // v1.4.47: and off the roundabouts (rbClip); v1.4.48: the streets rule (streetsRule, 04b_recorte.js)
     if (!t || (style === 3 && lv === 1 && smallBuildingOnMainRoad(t))) {
+      // (v1.4.48, tests: which buildings go and why: sonda_quitados.py)
+      if (window.__JETA_TEST) {
+        let qx = 0,
+          qz = 0;
+        for (const p of pts) ((qx += p[0] / pts.length), (qz += p[1] / pts.length));
+        (window.__quitados = window.__quitados || []).push([
+          Math.round(qx),
+          Math.round(qz),
+          Math.round(Math.abs(polyArea(pts))),
+          !t ? 'recorte' : 'pequeño en vía principal'
+        ]);
+      }
       b[6] = [];
       return;
     }
@@ -7299,7 +7423,7 @@ function buildBuildingsEach(bi) {
       n = pts.length;
       const o = [];
       for (let i = 0; i < c.length; i += 2) o.push([c[i], c[i + 1]]);
-      const t2 = rbClip(roadClip(streetTrim(o)));
+      const t2 = streetsRule(rbClip(roadClip(streetTrim(o))));
       if (t2 && t2 !== o) b[6] = t2.flat();
     }
   } // v0.68–0.69: off the carriageways (04b_recorte.js; the Av. de La Trinidad with its pavement); DATA.B too, for inAnyBuilding
@@ -7341,7 +7465,20 @@ function buildBuildingsEach(bi) {
     const cu = PS ? pasajeCuts(p, q, PS) : null;
     if (cu) pasajeCol(p, q, cu);
     else if (ARC && ARC.has(i)) trinidadArcadeCol(p, q);
-    else COL.addSeg(p[0], p[1], q[0], q[1]);
+    else if (ARC && arcadeSide(pts, i, ARC, 0, 3, 99)) {
+      // (v1.4.48: no collision on the stretch under the arcade)
+      const sd = arcadeSide(pts, i, ARC, 0, 3, 99),
+        len = Math.hypot(q[0] - p[0], q[1] - p[1]);
+      if (sd.open[1] - sd.open[0] < len - 0.05) {
+        const [a0, a1] = sd.open[0] > 0.01 ? [0, sd.open[0]] : [sd.open[1], len];
+        COL.addSeg(
+          p[0] + ((q[0] - p[0]) * a0) / len,
+          p[1] + ((q[1] - p[1]) * a0) / len,
+          p[0] + ((q[0] - p[0]) * a1) / len,
+          p[1] + ((q[1] - p[1]) * a1) / len
+        );
+      }
+    } else COL.addSeg(p[0], p[1], q[0], q[1]);
   }
   if (CONC_CARVE.pts === pts) {
     CHURCHES.push({
@@ -7643,6 +7780,28 @@ function buildGreenhouse(pts, n, cx, cz, H) {
   }
 }
 /** (v1.2.4, code quality) part of buildBuildingsEach: the walls, floor by floor, with their windows */
+/** v1.4.48: edge i of a footprint that touches an arcade edge (the one before or after it): the stretch of it under the
+ *  arcade, as distances along the edge [from, to], and the arcade's ceiling height (null if it touches none) */
+function arcadeSide(pts, i, ARC, y0, fh, wallTop) {
+  const n = pts.length,
+    p = pts[i],
+    q = pts[(i + 1) % n],
+    len = Math.hypot(q[0] - p[0], q[1] - p[1]);
+  if (len < 0.05) return null;
+  const D = TRI_ARC.D;
+  const nx = (i + 1) % n,
+    pv = (i - 1 + n) % n;
+  if (ARC.has(nx)) {
+    // this edge ends where the arcade edge starts: its last D metres
+    const k = nx;
+    return { open: [Math.max(0, len - D), len], top: Math.min(trinidadArcadeTop(pts[k], pts[(k + 1) % n], y0, fh), wallTop - 0.5) };
+  }
+  if (ARC.has(pv)) {
+    const k = pv;
+    return { open: [0, Math.min(len, D)], top: Math.min(trinidadArcadeTop(pts[k], pts[(k + 1) % n], y0, fh), wallTop - 0.5) };
+  }
+  return null;
+}
 function buildBuildingWalls({ n, pts, bay, bot, bmin, fh, wallTop, ARC, PS, LM, store, style, seed, atlas, A, T0, y0, col, bi, cx, cz, bmax }) {
   for (let i = 0; i < n; i++) {
     const p = pts[i],
@@ -7655,6 +7814,20 @@ function buildBuildingWalls({ n, pts, bay, bot, bmin, fh, wallTop, ARC, PS, LM, 
       v1 = (wallTop - bmin) / fh;
     if (ARC && ARC.has(i)) {
       trinidadArcadeEdge(A, T0, p, q, nb, fh, y0, bot, wallTop, col, [atlas, bi % 97], out, cx, cz);
+      continue;
+    }
+    // v1.4.48: a side wall next to an arcade edge: the stretch under the arcade starts at its ceiling (arcadeSide)
+    const sd = ARC ? arcadeSide(pts, i, ARC, y0, fh, wallTop) : null;
+    if (sd) {
+      if (sd.open[1] - sd.open[0] < len - 0.05) {
+        const [a0, a1] = sd.open[0] > 0.01 ? [0, sd.open[0]] : [sd.open[1], len];
+        const pa = [p[0] + ((q[0] - p[0]) * a0) / len, p[1] + ((q[1] - p[1]) * a0) / len],
+          pb = [p[0] + ((q[0] - p[0]) * a1) / len, p[1] + ((q[1] - p[1]) * a1) / len];
+        facadeWall(A, T0, pa, pb, Math.max(1, Math.round((a1 - a0) / bay)), fh, y0, bot, wallTop, col, [atlas, bi % 97], out);
+      }
+      const pa = [p[0] + ((q[0] - p[0]) * sd.open[0]) / len, p[1] + ((q[1] - p[1]) * sd.open[0]) / len],
+        pb = [p[0] + ((q[0] - p[0]) * sd.open[1]) / len, p[1] + ((q[1] - p[1]) * sd.open[1]) / len];
+      facadeWall(A, T0, pa, pb, Math.max(1, Math.round((sd.open[1] - sd.open[0]) / bay)), fh, y0, sd.top, wallTop, col, [atlas, bi % 97], out);
       continue;
     }
     // long street fronts of terraced houses / blocks: split into parcels with their own colour (and facade for houses)
@@ -8020,6 +8193,121 @@ function insetPoly(pts, d0) {
   });
   return polyArea(out) > 0 ? out : pts;
 }
+// v1.4.48 («las calles mandan», Jonay: «hay huecos entre edificios entre los que te puedes colar… los edificios van pegados
+// unos a otros salvo donde haya un hueco claro en el mapa»): every footprint was shrunk 0.75 m on all sides (insetPoly),
+// so two houses that touch in the map ended up 1.5 m apart (3,800 such gaps, sonda_calles_mandan.py). Now only the walls
+// that face the outside move in; a party wall (another footprint touching it, nearly parallel, within 1.2 m) stays put
+let PARTYG = null;
+function partyGrid() {
+  if (PARTYG) return PARTYG;
+  PARTYG = new Map();
+  DATA.B.forEach((b, bi) => {
+    const c = b[6];
+    if (!c || c.length < 6) return;
+    const n = c.length / 2;
+    for (let i = 0; i < n; i++) {
+      const ax = c[2 * i],
+        az = c[2 * i + 1],
+        bx = c[(2 * i + 2) % c.length],
+        bz = c[(2 * i + 3) % c.length];
+      for (let a = Math.floor(Math.min(ax, bx) / 20); a <= Math.floor(Math.max(ax, bx) / 20); a++)
+        for (let k = Math.floor(Math.min(az, bz) / 20); k <= Math.floor(Math.max(az, bz) / 20); k++) {
+          const key = a * 100003 + k;
+          let l = PARTYG.get(key);
+          if (!l) PARTYG.set(key, (l = []));
+          l.push([bi, ax, az, bx, bz]);
+        }
+    }
+  });
+  return PARTYG;
+}
+function isPartyEdge(ax, az, bx, bz, own) {
+  const G = partyGrid(),
+    L = Math.hypot(bx - ax, bz - az);
+  if (L < 0.5) return false;
+  const ux = (bx - ax) / L,
+    uz = (bz - az) / L;
+  let hits = 0;
+  for (const t of [0.2, 0.5, 0.8]) {
+    const x = ax + (bx - ax) * t,
+      z = az + (bz - az) * t,
+      l = G.get(Math.floor(x / 20) * 100003 + Math.floor(z / 20));
+    if (!l) continue;
+    for (const e of l) {
+      if (e[0] === own) continue;
+      const ex = e[3] - e[1],
+        ez = e[4] - e[2],
+        el = Math.hypot(ex, ez) || 1;
+      if (Math.abs(ux * (ez / el) - uz * (ex / el)) > 0.26) continue; // (not parallel: more than 15°)
+      const s = Math.max(0, Math.min(1, ((x - e[1]) * ex + (z - e[2]) * ez) / (el * el)));
+      if (Math.hypot(x - e[1] - ex * s, z - e[2] - ez * s) < 1.2) {
+        hits++;
+        break;
+      }
+    }
+  }
+  return hits >= 2;
+}
+/** insetPoly with the party walls left where they are: each edge moves in by its own distance (0 for a party wall) */
+function insetParty(pts, d0, own) {
+  const n = pts.length;
+  if (n < 3) return pts;
+  const A = Math.abs(polyArea(pts));
+  let per = 0;
+  for (let i = 0; i < n; i++) per += Math.hypot(pts[(i + 1) % n][0] - pts[i][0], pts[(i + 1) % n][1] - pts[i][1]);
+  const d = Math.min(d0, ((2 * A) / per) * 0.3);
+  if (d < 0.1) return pts;
+  const de = [];
+  let party = 0;
+  for (let i = 0; i < n; i++) {
+    const a = pts[i],
+      b = pts[(i + 1) % n],
+      pw = isPartyEdge(a[0], a[1], b[0], b[1], own);
+    if (pw) party++;
+    de.push(pw ? 0.02 : d);
+  }
+  if (!party) return insetPoly(pts, d0);
+  PARTYSTAT.walls += party;
+  PARTYSTAT.buildings++;
+  // each vertex: where the two neighbouring edges, each moved in by its own distance, meet
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const a = pts[(i - 1 + n) % n],
+      p = pts[i],
+      b = pts[(i + 1) % n];
+    const e1x = p[0] - a[0],
+      e1z = p[1] - a[1],
+      e2x = b[0] - p[0],
+      e2z = b[1] - p[1],
+      l1 = Math.hypot(e1x, e1z) || 1,
+      l2 = Math.hypot(e2x, e2z) || 1;
+    // inward normals (as insetPoly: subtracting (ez, −ex))
+    const n1x = -e1z / l1,
+      n1z = e1x / l1,
+      n2x = -e2z / l2,
+      n2z = e2x / l2,
+      d1 = de[(i - 1 + n) % n],
+      d2 = de[i];
+    // point on line 1: p + n1·d1, direction e1; on line 2: p + n2·d2, direction e2
+    const p1x = p[0] + n1x * d1,
+      p1z = p[1] + n1z * d1,
+      p2x = p[0] + n2x * d2,
+      p2z = p[1] + n2z * d2,
+      den = (e1x / l1) * (e2z / l2) - (e1z / l1) * (e2x / l2);
+    if (Math.abs(den) < 0.05) {
+      out.push([(p1x + p2x) / 2, (p1z + p2z) / 2]); // (nearly straight: halfway)
+      continue;
+    }
+    const t = ((p2x - p1x) * (e2z / l2) - (p2z - p1z) * (e2x / l2)) / den,
+      q = [p1x + (e1x / l1) * t, p1z + (e1z / l1) * t];
+    // never further than 2·d from the corner (a sharp corner would shoot it far)
+    const dd = Math.hypot(q[0] - p[0], q[1] - p[1]);
+    out.push(dd > 2 * d + 0.05 ? [p[0] + ((q[0] - p[0]) / dd) * 2 * d, p[1] + ((q[1] - p[1]) / dd) * 2 * d] : q);
+  }
+  return polyArea(out) > 0 && !selfCross(out) ? out : insetPoly(pts, d0);
+}
+const PARTYSTAT = { walls: 0, buildings: 0 };
+window.__party = PARTYSTAT;
 const ROOFPROPS = [];
 function addQuoins(pts, bot, top, w, col = null) {
   const n = pts.length;
@@ -8954,7 +9242,7 @@ function roadClipGrid() {
   // the streets as they are drawn (every piece, no straight runs): to measure how deep a point sits in a carriageway
   const raw = [],
     m2 = new Map();
-  DATA.R.forEach((r) => {
+  DATA.R.forEach((r, ri) => {
     if ((r[0] > 12 && r[0] !== 13) || r[3] & 6) return;
     /* v0.74: pedestrian streets too (a corner pushed out of one street into a pedestrian one blocked Calle Heraclio Sánchez) */ const c = r[4],
       k0 = r[2] / 2 + 0.3;
@@ -8972,6 +9260,7 @@ function roadClipGrid() {
           L,
           k0,
           roadType: r[0],
+          ri, // (v1.4.48: frontLines)
           car: r[0] <= 12,
           first: i === 0,
           last: i + 4 >= c.length
@@ -8985,7 +9274,7 @@ function roadClipGrid() {
         }
     }
   });
-  RCLIP = { CS, m, segs, raw, m2, cut: 0, gone: 0, goneList: [], keptList: [] };
+  RCLIP = { CS, m, segs, raw, m2, cut: 0, gone: 0, goneList: [], keptList: [], mandanKept: [] };
   return RCLIP;
 }
 /** (v1.1.7, code quality) part of roadClipGrid: each road as straight runs (pieces that turn less than 12°), so a long building beside a road drawn with many short */
@@ -9129,7 +9418,14 @@ function narrowToGap() {
       one = r[3] & 1,
       half = W / 2;
     for (let i = 0; i < c.length; i += 2) if (nearBT(c[i], c[i + 1])) return;
-    const room = [];
+    // v1.4.48 («las calles mandan», Jonay: «si sobra espacio se puede ensanchar la calle, pero nunca si la calle más las
+    // aceras tocan ya el edificio; lo ideal es que la calle y su acera acaben justo donde empieza el edificio»): at each
+    // sample, the carriageway that fits between the facades leaving the pavement (1 m) on each side; the street takes
+    // the tight spots' value (10 %), never under its minimum (the norms: WIDEN) nor over its width of before (wMax)
+    const swT = new Set([3, 4, 5, 6, 7, 8, 9, 10, 11]).has(t) ? SIDEWALK_W : 0.3,
+      wMax = r.wMax || W,
+      far = wMax / 2 + swT + 1.5,
+      room = [];
     let samples = 0;
     for (let i = 0; i + 3 < c.length; i += 2) {
       const ax = c[i],
@@ -9142,23 +9438,21 @@ function narrowToGap() {
         const x = ax + ux * s,
           z = az + uz * s;
         samples++;
-        // v1.2.7: the axis itself inside a footprint (C. Barcelona): the street goes to its narrowest, and the building is
-        // cut back for the rest (roadClip)
         if (insideB(x, z)) {
           room.push(0);
           continue;
         }
-        const d = Math.min(ray(x, z, -uz, ux, half + 1), ray(x, z, uz, -ux, half + 1)) + 0.75;
-        if (d < half) room.push(2 * d);
+        const d = Math.min(ray(x, z, -uz, ux, far), ray(x, z, uz, -ux, far)) + 0.75; // (+0.75: the facade moves in that much)
+        room.push(2 * (d - swT));
       }
     }
-    if (room.length < 2 || room.length < samples * 0.1) return; // one garage on a corner does not narrow the whole street (it gets cut)
+    if (room.length < 2) return;
     room.sort((a, b) => a - b);
-    const gap = room[Math.floor(room.length * 0.1)]; // v1.2.7: the tight spots (it was the 30 %)
+    const gap = room[Math.floor(room.length * 0.1)];
     const ln = DATA.LN && DATA.LN[ri] ? DATA.LN[ri][0] : 0,
-      minW = Math.max(MINW(t, one), ln > 0 ? ln * 3 + 0.4 : t <= 8 ? (one ? 4 : 6) : 0);
-    const w = Math.round(Math.max(minW, Math.min(W, gap)) * 10) / 10;
-    if (w < W - 0.2) {
+      minW = Math.max(W, ln > 0 ? ln * 3 + 0.4 : 0);
+    const w = Math.round(Math.max(minW, Math.min(wMax, gap)) * 10) / 10;
+    if (Math.abs(w - W) > 0.2) {
       r[2] = w;
       narrowed.set(ri, w);
       n++;
@@ -9860,6 +10154,247 @@ function rbClip(P) {
     P = Q;
   }
   return P;
+}
+// v1.4.48 («las calles mandan», Jonay 23-nov/24-nov: «los edificios se ajustan a las calles y no al revés… el edificio
+// va en paralelo a la acera»; «si hay que ganar espacio para la calle y hay acera, reduce la acera… hasta un 50 %»;
+// «cuando recortes un edificio, que los contiguos se acoplen para que no haya escalones en toda la calle»):
+// one facade line for each side of each street. frontLines (before the buildings are made) measures where the walls that
+// face each side stand (beyond the kerb, the median weighted by length) and keeps it between the whole pavement (2.1 m)
+// and half of it (1.05 m); streetsRule then cuts what is in front of that line and brings forward what is up to 1.5 m
+// behind it. Streets without pavement: the kerb + 0.3 m, as before. Never a whole building, only a caseta.
+const SIDEWALK_TYPES = new Set([
+  'primary',
+  'secondary',
+  'tertiary',
+  'residential',
+  'unclassified',
+  'primary_link',
+  'secondary_link',
+  'tertiary_link',
+  'living_street'
+]);
+const FRONT = { lines: null, sw: 1.0 }; // (the pavement: 1 m, SIDEWALK_W in 04_world.js)
+// (the Av. de La Trinidad keeps its own pavement and arcade rule: streetTrim, 05u_trinidad.js)
+const hasSidewalk = (ri) => SIDEWALK_TYPES.has(RTN[DATA.R[ri][0]]) && !(DATA.R[ri][1] >= 0 && STR[DATA.R[ri][1]] === 'Avenida de La Trinidad');
+function frontLines() {
+  if (FRONT.lines) return FRONT.lines;
+  const G = roadClipGrid(),
+    B = new Map();
+  for (const b of DATA.B) {
+    const c = b[6];
+    if (!c || c.length < 6 || b[1] === 4) continue;
+    const n = c.length / 2;
+    for (let i = 0; i < n; i++) {
+      const ax = c[2 * i],
+        az = c[2 * i + 1],
+        bx = c[(2 * i + 2) % c.length],
+        bz = c[(2 * i + 3) % c.length],
+        L = Math.hypot(bx - ax, bz - az);
+      if (L < 3) continue;
+      const mx = (ax + bx) / 2,
+        mz = (az + bz) / 2,
+        ex = (bx - ax) / L,
+        ez = (bz - az) / L;
+      for (const id of G.m2.get(Math.floor(mx / G.CS) * 100003 + Math.floor(mz / G.CS)) || []) {
+        const s = G.raw[id];
+        if (!s.car || !hasSidewalk(s.ri)) continue;
+        if (Math.abs(ex * s.uz - ez * s.ux) > 0.26) continue;
+        const u = (mx - s.ax) * s.ux + (mz - s.az) * s.uz;
+        if (u < 0 || u > s.L) continue;
+        const sd = (mx - s.ax) * -s.uz + (mz - s.az) * s.ux,
+          half = s.k0 - 0.3,
+          f = Math.abs(sd) - 0.75 - half; // (beyond the kerb, as the building will stand: 0.75 m in)
+        if (f < -3 || f > FRONT.sw + 2.5) continue;
+        const k = s.ri + (sd > 0 ? '+' : '-');
+        let l = B.get(k);
+        if (!l) B.set(k, (l = []));
+        l.push([f, L]);
+      }
+    }
+  }
+  FRONT.lines = new Map();
+  for (const [k, l] of B) {
+    l.sort((a, b) => a[0] - b[0]);
+    let tot = 0;
+    for (const e of l) tot += e[1];
+    let acc = 0,
+      med = l[0][0];
+    for (const e of l) {
+      acc += e[1];
+      if (acc >= tot / 2) {
+        med = e[0];
+        break;
+      }
+    }
+    // (Jonay: «¿me estás diciendo que la acera de la derecha mide un metro?»: the whole pavement, always; half of it only
+    // where the street is already at its minimum width and the buildings still leave no room)
+    const r = DATA.R[parseInt(k, 10)],
+      atMin = r && r.wMin !== undefined && r[2] <= r.wMin + 0.05;
+    FRONT.lines.set(k, atMin ? Math.max(FRONT.sw * 0.5, Math.min(FRONT.sw, med)) : FRONT.sw);
+  }
+  return FRONT.lines;
+}
+// the distance from a street piece's axis to its facade line on the side where (x, z) is
+function frontK(s, x, z) {
+  const half = s.k0 - 0.3,
+    sd = (x - s.ax) * -s.uz + (z - s.az) * s.ux;
+  if (!s.car || !hasSidewalk(s.ri)) return { k: s.k0, side: Math.sign(sd) || 1 };
+  const o = frontLines().get(s.ri + (sd > 0 ? '+' : '-'));
+  return { k: half + (o === undefined ? FRONT.sw : o), side: Math.sign(sd) || 1 };
+}
+function streetsRule(P) {
+  if (!P || P.length < 3) return P;
+  const G = roadClipGrid();
+  let x0 = 1e9,
+    x1 = -1e9,
+    z0 = 1e9,
+    z1 = -1e9,
+    cx = 0,
+    cz = 0;
+  for (const p of P) {
+    x0 = Math.min(x0, p[0]);
+    x1 = Math.max(x1, p[0]);
+    z0 = Math.min(z0, p[1]);
+    z1 = Math.max(z1, p[1]);
+    cx += p[0] / P.length;
+    cz += p[1] / P.length;
+  }
+  const ids = new Set();
+  for (let a = Math.floor((x0 - 14) / G.CS); a <= Math.floor((x1 + 14) / G.CS); a++)
+    for (let b = Math.floor((z0 - 14) / G.CS); b <= Math.floor((z1 + 14) / G.CS); b++) for (const id of G.m2.get(a * 100003 + b) || []) ids.add(id);
+  if (!ids.size) return P;
+  const A0 = Math.abs(polyArea(P));
+  let Q = P,
+    did = 0;
+  for (const id of ids) {
+    const s = G.raw[id];
+    if (!s.car || s.roadType === 12) continue; // (pedestrian streets: the old rules; service ways never cut a building: serviceUnderBuildings)
+    const nx = -s.uz,
+      nz = s.ux,
+      { k } = frontK(s, cx, cz);
+    // how deep the outline gets in front of the facade line of this piece
+    let deep = 0;
+    for (let i = 0; i < Q.length; i++) {
+      const p = Q[i],
+        q = Q[(i + 1) % Q.length];
+      for (const t of [0, 0.5]) {
+        const x = p[0] + (q[0] - p[0]) * t,
+          z = p[1] + (q[1] - p[1]) * t,
+          u = (x - s.ax) * s.ux + (z - s.az) * s.uz;
+        if (u < 0 || u > s.L) continue;
+        deep = Math.max(deep, k - Math.abs((x - s.ax) * nx + (z - s.az) * nz));
+      }
+    }
+    if (deep < 0.25) continue;
+    const e0 = s.first ? 0 : 0.6,
+      e1 = s.last ? 0 : 0.6,
+      ax = s.ax - s.ux * e0,
+      az = s.az - s.uz * e0,
+      bx = s.ax + s.ux * (s.L + e1),
+      bz = s.az + s.uz * (s.L + e1);
+    const R = [
+      [ax + nx * k, az + nz * k],
+      [bx + nx * k, bz + nz * k],
+      [bx - nx * k, bz - nz * k],
+      [ax - nx * k, az - nz * k]
+    ];
+    const S = subtractConvex(Q, R, null);
+    if (!S || S.length < 3 || selfCross(S)) continue;
+    // (a cut never adds area: across the mouth of a U-shaped block the walk can close the notch with the strip's border)
+    if (Math.abs(polyArea(S)) > Math.abs(polyArea(Q)) * 1.001) continue;
+    Q = S;
+    did++;
+  }
+  // bring forward the walls a little behind the line (up to 1.5 m), so the whole side of the street is in line
+  let fwd = 0;
+  for (const id of ids) {
+    const s = G.raw[id];
+    if (!s.car || !hasSidewalk(s.ri)) continue;
+    const { k, side } = frontK(s, cx, cz),
+      nx = -s.uz * side,
+      nz = s.ux * side;
+    for (let i = 0; i < Q.length; i++) {
+      const p = Q[i],
+        q = Q[(i + 1) % Q.length],
+        L = Math.hypot(q[0] - p[0], q[1] - p[1]);
+      if (L < 2) continue;
+      if (Math.abs(((q[0] - p[0]) * s.uz - (q[1] - p[1]) * s.ux) / L) > 0.26) continue;
+      const mx = (p[0] + q[0]) / 2,
+        mz = (p[1] + q[1]) / 2,
+        u = (mx - s.ax) * s.ux + (mz - s.az) * s.uz;
+      if (u < 0 || u > s.L) continue;
+      const d = (mx - s.ax) * nx + (mz - s.az) * nz; // (distance on this side)
+      if (d <= k + 0.1 || d > k + 1.5) continue;
+      // the edge must face the street: the building's middle is further from it
+      if ((cx - s.ax) * nx + (cz - s.az) * nz < d) continue;
+      if (Q === P) Q = P.map((v) => v.slice());
+      const dd = d - k;
+      Q[i] = [p[0] - nx * dd, p[1] - nz * dd];
+      Q[(i + 1) % Q.length] = [q[0] - nx * dd, q[1] - nz * dd];
+      fwd++;
+    }
+  }
+  if (!did && !fwd) return P;
+  if (selfCross(Q)) return P;
+  const A1 = Math.abs(polyArea(Q));
+  if (A1 < 12 || A1 < A0 * 0.4) {
+    if (A0 < 30) {
+      clipWhy('calles mandan: caseta en la calle, fuera');
+      return null;
+    }
+    if (G.mandanKept && G.mandanKept.length < 400) G.mandanKept.push([Math.round(cx), Math.round(cz), Math.round(A0), Math.round(A1)]);
+    return P;
+  }
+  if (did) G.mandan = (G.mandan || 0) + 1;
+  if (fwd) G.adelantados = (G.adelantados || 0) + 1;
+  return Q;
+}
+
+// v1.4.48 (auditoría 1.4.48: most of the new buildings «in the lanes» are the Catastro's buildings over OSM service ways:
+// garage entrances and paths through yards that the OSM draws across the buildings): after the buildings, a service way
+// that runs more than 30 % of its length inside buildings is no carriageway: it becomes a footpath (not drawn as asphalt
+// inside a house, no traffic on it)
+function serviceUnderBuildings() {
+  let n = 0;
+  // (a grid of the footprints: inAnyBuilding looks at every building)
+  const BG = new Map();
+  DATA.B.forEach((b, i) => {
+    const c = b[6];
+    if (!c || c.length < 6) return;
+    let x0 = 1e9,
+      x1 = -1e9,
+      z0 = 1e9,
+      z1 = -1e9;
+    for (let k = 0; k < c.length; k += 2)
+      ((x0 = Math.min(x0, c[k])), (x1 = Math.max(x1, c[k])), (z0 = Math.min(z0, c[k + 1])), (z1 = Math.max(z1, c[k + 1])));
+    for (let a = Math.floor(x0 / 30); a <= Math.floor(x1 / 30); a++)
+      for (let k = Math.floor(z0 / 30); k <= Math.floor(z1 / 30); k++) {
+        const key = a * 100003 + k;
+        let l = BG.get(key);
+        if (!l) BG.set(key, (l = []));
+        l.push(i);
+      }
+  });
+  const inB = (x, z) => (BG.get(Math.floor(x / 30) * 100003 + Math.floor(z / 30)) || []).some((i) => pip(x, z, DATA.B[i][6]));
+  DATA.R.forEach((r) => {
+    if (r[0] !== 12) return;
+    const c = r[4];
+    let tot = 0,
+      inn = 0;
+    for (let i = 0; i + 3 < c.length; i += 2) {
+      const L = Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]);
+      for (let s = 1.5; s < L; s += 3) {
+        tot++;
+        if (inB(c[i] + ((c[i + 2] - c[i]) * s) / L, c[i + 1] + ((c[i + 3] - c[i + 1]) * s) / L)) inn++;
+      }
+    }
+    if (tot && inn / tot > 0.3) {
+      r[0] = 14; // footway
+      n++;
+    }
+  });
+  console.log('vías de servicio bajo edificios → camino', n);
+  return n;
 }
 
 // ============ CORREDORES (v1.2.0, Jonay, 9-nov: «los cruces, rotondas, puentes, túneles, en general hay que revisarlos
@@ -18951,6 +19486,14 @@ function buildRamp(x0, z0, x1, z1, yF, label, o = {}) {
         break;
       }
     }
+    // (never across a street at ground level: auditRoadBarriers, prueba 1439)
+    if (s0 > 0 && typeof roadBarrierHit === 'function') {
+      const hw0 = (o.w || 6.8) / 2,
+        mx0 = x0 + dx * s0,
+        mz0 = z0 + dz * s0,
+        g0 = heightAt(mx0, mz0);
+      if (roadBarrierHit(mx0 - dz * hw0, mz0 + dx * hw0, mx0 + dz * hw0, mz0 - dx * hw0, g0 - 0.65, g0 + 1.0, -0.5)) s0 = -1;
+    }
     if (s0 > 0) {
       const hw = (o.w || 6.8) / 2,
         mx = x0 + dx * s0,
@@ -22462,8 +23005,7 @@ function buildInicioDetails() {
       const x = -763.5 - k * 1.6 * 0.25,
         z = -364 - k * 1.6,
         y = heightAt(x, z);
-      if (!roadAtBarrier(x, z, y - 0.7, y + 0.9, 0.15))
-        B.geo(bol.clone(), rail, new THREE.Matrix4().makeTranslation(x, y + 0.45, z));
+      if (!roadAtBarrier(x, z, y - 0.7, y + 0.9, 0.15)) B.geo(bol.clone(), rail, new THREE.Matrix4().makeTranslation(x, y + 0.45, z));
     }
     for (const [x, z, col] of [
       [-769.3, -383, 0x9a9fa5],
@@ -22477,16 +23019,20 @@ function buildInicioDetails() {
         dx = rn.dx / length,
         dz = rn.dz / length,
         side = Math.sign((z - rn.z) * dx - (x - rn.x) * dz) || 1;
-      for (const distance of [0.78, 1.05, 1.32]) {
+      // (v1.4.48: with 1 m pavements and the facades in line there may be no room on the pavement: then on the edge of the
+      // carriageway, in the parking strip, as the real ones)
+      for (const distance of [0.78, 1.05, 1.32, -1.1]) {
         const px = rn.x - dz * side * (half + distance),
           pz = rn.z + dx * side * (half + distance),
           base = heightAt(px, pz);
         if (COL.nearSeg(px, pz, 0.65)) continue;
-        const clear = [-0.95, 0, 0.95].every((u) => [-0.6, 0, 0.6].every((v) => {
-          const wx = px + dx * u - dz * v,
-            wz = pz + dz * u + dx * v;
-          return !roadAtBarrier(wx, wz, base - 0.8, base + 1.4, 0.12) && !wallBuildingAt(wx, wz);
-        }));
+        const clear = [-0.95, 0, 0.95].every((u) =>
+          [-0.6, 0, 0.6].every((v) => {
+            const wx = px + dx * u - dz * v,
+              wz = pz + dz * u + dx * v;
+            return (distance < 0 || !roadAtBarrier(wx, wz, base - 0.8, base + 1.4, 0.12)) && !wallBuildingAt(wx, wz);
+          })
+        );
         if (!clear) continue;
         const m = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.5, 1.2), new THREE.MeshStandardMaterial({ color: col, roughness: 0.7 }));
         m.name = 'contenedor_teobaldo_power';
@@ -24460,7 +25006,7 @@ function trinidadGeoPart1(rs) {
 }
 // in 01_core-time terms this runs before the roads are indexed: one lane + parking per carriageway, like the real one
 function trinidadWidths() {
-  for (const r of DATA.R) if (r[1] >= 0 && STR[r[1]] === 'Avenida de La Trinidad' && r[0] <= 12 && r[2] > 6.6) r[2] = 6.6;
+  for (const r of DATA.R) if (r[1] >= 0 && STR[r[1]] === 'Avenida de La Trinidad' && r[0] <= 12) r[2] = 6.0; // (v1.4.48, Jonay measured it: two 3 m lanes per carriageway, 6 m; tram 6.5 m; 18.5 m in all without the pavements)
 } // called from 01_core (the consts of this file don't exist yet then)
 // clearance from the carriageway centre line: half the road + pavement (+ the ramp beside the pavement at n.º 59)
 function trinidadClear(c, s) {
@@ -24987,7 +25533,11 @@ function trinidadArcades() {
 // un lado como una especie de paso bajo los edificios para los peatones»): the odd side of the avenue (carriageway B, the
 // Dialprix side) has arcades along every block: the ground floor goes ARC.D m back with the shops at the back, the floors
 // above stand on pillars at the pavement line. buildBuildingsEach asks which edges of a building are arcade edges.
-const TRI_ARC = { D: 2.8, edges: 0 };
+// v1.4.48 (Jonay, 24-nov: «los voladizos son el doble de profundos… y están separados por cada casa en el juego haciendo
+// cubículos separados, y no es así: la avenida se puede recorrer de punta a punta bajo los voladizos»): 5.6 m deep (2.8
+// before), no walls at the ends of each house, and the side walls of the houses start at the arcade's ceiling for the
+// stretch under it (buildBuildingWalls, arcadeSide), so the arcade runs through from one end of the row to the other
+const TRI_ARC = { D: 5.6, edges: 0 };
 /** the edges of a building footprint that face the odd pavement of the avenue (null if none) */
 function trinidadArcadeEdges(pts, cx, cz) {
   const T = trinidadGeo();
@@ -25014,6 +25564,13 @@ function trinidadArcadeEdges(pts, cx, cz) {
       oz = -(q[0] - p[0]) / L; // outward normal of a counter-clockwise footprint
     if (ox * (r.px - mx) + oz * (r.pz - mz) <= 0) continue; // it must face the avenue
     if (![0.15, 0.5, 0.85].every((t) => !onCarriagewayEarly(p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t, 0.3))) continue;
+    // v1.4.48: only where the building is deep enough for the 5.6 m arcade and 2 m of shop behind it
+    let deep = 0;
+    for (const v of pts) deep = Math.max(deep, -(ox * (v[0] - p[0]) + oz * (v[1] - p[1])));
+    if (deep < TRI_ARC.D + 2) {
+      TRI_ARC.shallow = (TRI_ARC.shallow || 0) + 1;
+      continue;
+    }
     (set || (set = new Set())).add(i);
   }
   return set;
@@ -25031,9 +25588,7 @@ function trinidadArcadeCol(p, q) {
   // inward = minus the outward normal (uz, −ux) of a counter-clockwise footprint
   const a = [p[0] - uz * TRI_ARC.D, p[1] + ux * TRI_ARC.D],
     b = [q[0] - uz * TRI_ARC.D, q[1] + ux * TRI_ARC.D];
-  COL.addSeg(a[0], a[1], b[0], b[1]);
-  COL.addSeg(p[0], p[1], a[0], a[1]);
-  COL.addSeg(q[0], q[1], b[0], b[1]);
+  COL.addSeg(a[0], a[1], b[0], b[1]); // (the shop fronts; v1.4.48: no walls at the two ends)
   for (const t of trinidadArcadePillars(L)) COL.addCirc(p[0] + ux * t - uz * 0.3, p[1] + uz * t + ux * 0.3, 0.32);
 }
 const trinidadArcadePillars = (L) => {
@@ -25096,11 +25651,8 @@ function trinidadArcadeEdge(A, T0, p, q, nb, fh, y0, bot, wallTop, col, tl, out,
     pc,
     out
   );
-  // the two ends
-  for (const [e, f] of [
-    [p, a],
-    [q, b]
-  ])
+  // the two ends (v1.4.48: none: the arcade goes on under the next house)
+  for (const [e, f] of [])
     two(
       [e[0], heightAt(e[0], e[1]) - 0.6, e[1]],
       [f[0], heightAt(f[0], f[1]) - 0.6, f[1]],
@@ -25531,7 +26083,20 @@ function buildRiosHallPart1(pts) {
 //    bancos…) solo cerca; las copas de los árboles lejanos usan una versión de pocos triángulos.
 // Qué NO se junta: lo que esté oculto al cargar, los grupos con nombre salvo los monumentos estáticos marcados,
 // las piezas transparentes de esos monumentos, lo que lleve userData (lo usa la lógica) y lo marcado con userData.noMerge.
-const LOD = { items: [], buckets: new Map(), det: -1, cx: 1e9, cz: 1e9, far: -1, cell: 125, stats: null, keep: !!window.__JETA_TEST, orig: [], landmarks: [], off: false }; // keep: our test runners (not the auditor) can put the loose pieces back to compare photos
+const LOD = {
+  items: [],
+  buckets: new Map(),
+  det: -1,
+  cx: 1e9,
+  cz: 1e9,
+  far: -1,
+  cell: 125,
+  stats: null,
+  keep: !!window.__JETA_TEST,
+  orig: [],
+  landmarks: [],
+  off: false
+}; // keep: our test runners (not the auditor) can put the loose pieces back to compare photos
 function lodAdd(m, detail, lo) {
   const g = m.geometry;
   if (!m.isInstancedMesh) {
@@ -25573,12 +26138,15 @@ function updateCityLOD(force) {
   LOD.cz = z;
   LOD.far = far;
   LOD.det = detail;
-  const farSq = far * far, detailSq = detail * detail;
+  const farSq = far * far,
+    detailSq = detail * detail;
   for (const bucket of LOD.buckets.values()) {
     const limit = bucket.detail ? detail : far;
     const limitSq = bucket.detail ? detailSq : farSq;
-    const nx = Math.max(bucket.x0 - x, x - bucket.x1, 0), nz = Math.max(bucket.z0 - z, z - bucket.z1, 0);
-    const fx = Math.max(x - bucket.x0, bucket.x1 - x), fz = Math.max(z - bucket.z0, bucket.z1 - z);
+    const nx = Math.max(bucket.x0 - x, x - bucket.x1, 0),
+      nz = Math.max(bucket.z0 - z, z - bucket.z1, 0);
+    const fx = Math.max(x - bucket.x0, bucket.x1 - x),
+      fz = Math.max(z - bucket.z0, bucket.z1 - z);
     const outside = nx * nx + nz * nz >= limitSq;
     // If the farthest corner is in range, every part in the cell is too.
     const inside = !outside && !bucket.lo && fx * fx + fz * fz < limitSq;
@@ -25592,7 +26160,9 @@ function updateCityLOD(force) {
     }
     bucket.state = -1;
     for (const it of bucket.items) {
-      const dx = it.x - x, dz = it.z - z, d2 = dx * dx + dz * dz;
+      const dx = it.x - x,
+        dz = it.z - z,
+        d2 = dx * dx + dz * dz;
       const reach = limit + it.r;
       it.m.visible = d2 < reach * reach;
       if (it.lo) {
@@ -25660,6 +26230,12 @@ function actorCull(on, cam) {
   const main = !cam || cam === camera;
   for (const [o, A] of ACTORS) {
     if (!o.parent) continue;
+    // v1.4.48 (prueba_076: the water rifle's drops came out of the map's origin): the player is never frozen; after a
+    // teleport without a frame drawn in between, his old matrices (far from the camera) kept him «far» and stale
+    if (typeof playerHuman !== 'undefined' && o === playerHuman.root) {
+      if (!o.matrixWorldAutoUpdate) ((o.matrixWorldAutoUpdate = true), o.updateMatrixWorld(true));
+      continue;
+    }
     if (!o.visible) {
       if (main) o.matrixWorldAutoUpdate = false;
       continue;
@@ -26066,7 +26642,8 @@ function freezeStatics() {
   const doors = new Set(typeof DOORMARKS !== 'undefined' ? DOORMARKS.map((k) => k.m) : []);
   const lodSwap = new Set(LOD.items.filter((it) => it.lo).map((it) => it.m));
   const walk = (o) => {
-    if (o.isLight || o === sun.target || o.isCamera || o.isBone || o.isSkinnedMesh || doors.has(o) || (o.userData && o.userData.noMerge)) return false;
+    if (o.isLight || o === sun.target || o.isCamera || o.isBone || o.isSkinnedMesh || doors.has(o) || (o.userData && o.userData.noMerge))
+      return false;
     let all = true;
     for (const c of o.children) if (!walk(c)) all = false;
     o.updateMatrix();
@@ -26101,7 +26678,13 @@ function thawObject(o, why) {
       (o.name || o.type) +
         (o.parent && o.parent !== scene ? ' en ' + (o.parent.name || o.parent.type) : '') +
         (g ? ' ' + g.type + (g.attributes.position ? '/' + g.attributes.position.count + 'v' : '') : '') +
-        ' X ' + Math.round(w.x) + ', Y ' + Math.round(w.z) + ' (' + why + ')'
+        ' X ' +
+        Math.round(w.x) +
+        ', Y ' +
+        Math.round(w.z) +
+        ' (' +
+        why +
+        ')'
     );
   }
 }
@@ -26238,7 +26821,13 @@ function precompileShadows() {
   // the whole map took ~3 s of the loading)
   const kind = (o) => {
     const m = Array.isArray(o.material) ? o.material[0] : o.material;
-    return (m ? m.uuid : '') + (o.isInstancedMesh ? 'I' : '') + (o.isBatchedMesh ? 'B' : '') + (o.isSkinnedMesh ? 'S' : '') + (o.layers.mask & 2 ? 'L' : '');
+    return (
+      (m ? m.uuid : '') +
+      (o.isInstancedMesh ? 'I' : '') +
+      (o.isBatchedMesh ? 'B' : '') +
+      (o.isSkinnedMesh ? 'S' : '') +
+      (o.layers.mask & 2 ? 'L' : '')
+    );
   };
   // (v1.4.46, Jonay: «empecé otra y no sale el pj», WebGPU: its compileAsync runs the scene's «before render» (actorCull
   // hides the far actors) but not the «after»; the player was left hidden, this function «put back» that hidden state and
@@ -27618,6 +28207,27 @@ function buildAtrioPart1(a, F, r, top, PI, th) {
 function addCatastro() {
   const CB = DATA.CB || [];
   let n = 0;
+  // v1.4.48 (Jonay, with a real view of the Calle Barcelona: a whole block of separate buildings): the OSM footprints that
+  // cover a whole block where the Catastro has each building (tools/osm_gruesos.py, DATA.OG: their centres) go; the
+  // Catastro's buildings come in their place (in DATA.CB)
+  if (DATA.OG && DATA.OG.length) {
+    const og = DATA.OG;
+    let q = 0;
+    for (let i = DATA.B.length - 1; i >= 0; i--) {
+      const c = DATA.B[i][6];
+      if (!c || c.length < 6) continue;
+      let cx = 0,
+        cz = 0;
+      for (let k = 0; k < c.length; k += 2) ((cx += c[k]), (cz += c[k + 1]));
+      cx /= c.length / 2;
+      cz /= c.length / 2;
+      if (og.some(([x, z]) => Math.abs(x - cx) < 1.5 && Math.abs(z - cz) < 1.5)) {
+        DATA.B.splice(i, 1);
+        q++;
+      }
+    }
+    console.log('catastro: bloques gruesos del OSM cambiados', q);
+  }
   for (const [fl, c] of CB) {
     let cx = 0,
       cz = 0;
@@ -42484,8 +43094,8 @@ function wetChasePed(p, dt) {
   p.h += angDiff(p.h, Math.atan2(dx, dz)) * clamp(dt * 8, 0, 1);
   const mv = d > 1.1 ? 4.9 : 0;
   if (mv > 0) {
-    const x = p.x + dx / d * mv * dt,
-      z = p.z + dz / d * mv * dt;
+    const x = p.x + (dx / d) * mv * dt,
+      z = p.z + (dz / d) * mv * dt;
     if (!pedOnRoad(x, z, pedestrianFastRoad)) {
       p.x = x;
       p.z = z;
@@ -42497,9 +43107,14 @@ function wetChasePed(p, dt) {
   animHuman(p.H, dt, mv);
   p.H.root.position.set(p.x, heightAt(p.x, p.z) + 0.17, p.z);
   p.H.root.rotation.y = p.h;
-  if (Math.hypot(PLAYER.x - p.x, PLAYER.z - p.z) < 1.25 && GAME.state === 'play' && PLAYER.down <= 0 &&
-      sameLevel(PLAYER.y, heightAt(p.x, p.z)) && COL.raycast(p.x, p.z, PLAYER.x, PLAYER.z) >= 1 &&
-      startStreetFight(p)) {
+  if (
+    Math.hypot(PLAYER.x - p.x, PLAYER.z - p.z) < 1.25 &&
+    GAME.state === 'play' &&
+    PLAYER.down <= 0 &&
+    sameLevel(PLAYER.y, heightAt(p.x, p.z)) &&
+    COL.raycast(p.x, p.z, PLAYER.x, PLAYER.z) >= 1 &&
+    startStreetFight(p)
+  ) {
     p.wetChase = 0;
     SUB.show('<b>Peatón empapado:</b> ¡Ahora vas a ver lo que es mojarse!', 2.5);
   }
@@ -42581,6 +43196,7 @@ function holdRiflePart1(H, aim, dir, fx, fz, m) {
   m.updateMatrixWorld(true);
   // left hand under the handguard (v1.4.42: aiming, 10 cm ahead of the grip: since the rifle sits further out (v1.4.22) the
   // left arm no longer reached 18 cm and the hand hung 15 cm away from it)
+  m.updateWorldMatrix(true, false);
   HR.hg.set(0, -0.045, aim ? 0.1 : 0.32).applyMatrix4(m.matrixWorld);
   armIK(
     H,
@@ -42810,6 +43426,7 @@ const AGUA = (() => {
     const d = D.find((q) => !q[6]);
     if (!d) return;
     const sp = 13 + Math.random() * 0.8; // ~10–11 m when aimed straight (v0.76: 11.5 m/s only reached ~5 m)
+    m.updateWorldMatrix(true, false); // v1.4.48: since 1.4.44 the world matrices are not always fresh here (prueba_076: drops from the map's origin)
     tmpV.set(0, 0.012, 0.55).applyMatrix4(m.matrixWorld);
     const dir = aimV;
     let done = false;
@@ -56980,12 +57597,39 @@ const DLG = (() => {
 })();
 const NPC = {};
 // never leave a character or a goal inside a (non-visitable) building: move it to the nearest open street/park spot
+// v1.4.48: a 50 m grid of the buildings (with the Catastro ones there are ~18,000 and the parks ask this thousands of
+// times while loading: the whole-list loop made buildPlazasParks 0.7 s slower); rebuilt if DATA.B changes size. It keeps
+// the buildings, not their outlines: the cuts (buildBuildings) only shrink them and b[6] is read when asked
+let _bldGrid = null,
+  _bldGridN = -1;
 function inAnyBuilding(x, z) {
-  for (const b of DATA.B) {
-    const c = b[6];
-    if (Math.abs(c[0] - x) > 150 || Math.abs(c[1] - z) > 150) continue;
-    if (pip(x, z, c)) return true;
+  const C = 50;
+  if (!_bldGrid || _bldGridN !== DATA.B.length) {
+    _bldGrid = new Map();
+    _bldGridN = DATA.B.length;
+    for (const b of DATA.B) {
+      const c = b[6];
+      let x0 = Infinity,
+        z0 = Infinity,
+        x1 = -Infinity,
+        z1 = -Infinity;
+      for (let i = 0; i < c.length; i += 2) {
+        x0 = Math.min(x0, c[i]);
+        x1 = Math.max(x1, c[i]);
+        z0 = Math.min(z0, c[i + 1]);
+        z1 = Math.max(z1, c[i + 1]);
+      }
+      for (let a = Math.floor(x0 / C); a <= Math.floor(x1 / C); a++)
+        for (let k = Math.floor(z0 / C); k <= Math.floor(z1 / C); k++) {
+          const key = a * 100003 + k;
+          let l = _bldGrid.get(key);
+          if (!l) _bldGrid.set(key, (l = []));
+          l.push(b);
+        }
+    }
   }
+  const l = _bldGrid.get(Math.floor(x / C) * 100003 + Math.floor(z / C));
+  if (l) for (const b of l) if (b[6].length >= 6 && pip(x, z, b[6])) return true;
   return false;
 }
 // a clearly reachable spot 1.8-4 m from an NPC (for mission start rings): outside buildings, walls, trees and the
@@ -57496,6 +58140,9 @@ const MISSIONS = (() => {
     const m = active,
       k = activeTrack;
     finish();
+    // v1.4.48: a talk of the mission left on screen (e.g. the intro of «Vuelta al barrio» when the mission is called off
+    // from the diary) kept the game in 'dialog' and no other mission could start
+    if (DLG.open) DLG.hide();
     AUDIO.fail();
     HUD.big('MISIÓN FALLIDA', '#e04848', 3.5);
     HUD.toast(reason, '#ffb3b3', 4);
@@ -67820,7 +68467,7 @@ async function boot() {
         buildTerrain();
       }
     ],
-    ['Levantando casas del casco histórico…', [buildBuildings, pasajeCovers]],
+    ['Levantando casas del casco histórico…', [buildBuildings, pasajeCovers, serviceUnderBuildings]], // v1.4.48: serviceUnderBuildings (04b_recorte.js)
     ['Asfaltando calles y empedrando peatonales…', [buildRoads, buildMedians, buildCarParks, finalizeCuts]],
     ['Colocando la Catedral y la torre de La Concepción…', [buildLandmarks, buildExtraSalud]],
     [
@@ -68027,6 +68674,7 @@ window.__dbg = {
   pitchRects,
   rectsOverlap,
   STR,
+  isHistoric, // (v1.4.48: sonda_calles_mandan.py)
   pasajeCeilAt,
   inAguereLow,
   LOD,
@@ -68086,6 +68734,9 @@ window.__dbg = {
   roadClip,
   insetPoly,
   streetTrim,
+  insetParty, // (v1.4.48: sonda_recorte_pasos.py)
+  rbClip,
+  streetsRule,
   polyArea,
   BASKET2D,
   FUTBOL2D,

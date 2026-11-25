@@ -1,0 +1,2 @@
+herramientas/sonda_calles_mandan.py
+herramientas/foto_calles_mandan.py acera1

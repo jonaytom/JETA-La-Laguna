@@ -15,7 +15,7 @@ async def talk_all(pg, n=12):
 async def run(pg):
     errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
     await pg.evaluate("HTMLCanvasElement.prototype.requestPointerLock = function(){}")
-    await pg.evaluate("(()=>{document.getElementById('menu').style.display='none'; window.__manual=true; __dbg.GAME.state='play'; __dbg.GAME.lock=()=>{}; __dbg.GAME.tod=12; __step(3);})()")
+    await pg.evaluate("(()=>{document.getElementById('menu').style.display='none'; window.__manual=true; __dbg.GAME.state='play'; __dbg.GAME.lock=()=>{}; __dbg.GAME.tod=12; __step(3); if (__dbg.MISSIONS.active) __dbg.MISSIONS.fail('x', true); /* v1.4.48: «Vuelta al barrio» starts at load (you appear in its circle): on to the next one, so it does not start again */ __dbg.MISSIONS._setIdx(1); __step(3);})()")
     ok = True
     # 1) the rifle: spray at a fire 7.5 m ahead (not aiming), puddles, water goes down
     r = json.loads(await pg.evaluate("""JSON.stringify((()=>{ const d=__dbg, P=d.PLAYER, R=d.RIFLE; d.giveRifle(true); const x=P.x, z=P.z; P.h=0; d.CAM.yaw=0;
@@ -46,7 +46,7 @@ async def run(pg):
     await talk_all(pg); m['visto'] = await pg.evaluate("!!__dbg.MISSIONS.gang.maleIntro"); print('maleantes', m); ok = ok and m['habla'] and 'Sastr' in m['linea'] and m['visto']
     # 5) El Blanco's mission, start to end
     s = await pg.evaluate("__dbg.MISSIONS._story.findIndex(q=>q.title==='El rifle de agua')"); print('misión del rifle en la historia', s)
-    await pg.evaluate("(i)=>{ const d=__dbg, M=d.MISSIONS; d.RIFLE.has=false; d.RIFLE.out=false; M._setIdx(i); const p=M._story[i].startPos(); d.PLAYER.x=p[0]; d.PLAYER.z=p[1]; __step(20); }", s)
+    await pg.evaluate("(i)=>{ const d=__dbg, M=d.MISSIONS; if (M.active) M.fail('x', true); /* v1.4.48: «Vuelta al barrio» starts at load */ d.RIFLE.has=false; d.RIFLE.out=false; M._setIdx(i); const p=M._story[i].startPos(); d.PLAYER.x=p[0]; d.PLAYER.z=p[1]; __step(20); }", s)
     await talk_all(pg)
     b = json.loads(await pg.evaluate("JSON.stringify({act: __dbg.MISSIONS.active && __dbg.MISSIONS.active.title, jug: !!__dbg.MISSIONS.gang.jugueterias, goal: __dbg.MISSIONS.kit.data.goal})")); print('blanco 1', b)
     await pg.evaluate("(()=>{ const d=__dbg; d.giveRifle(true); d.MISSIONS.onEvent('bought','rifle'); const g=d.MISSIONS.kit.data.goal; d.PLAYER.x=g[0]; d.PLAYER.z=g[1]; __step(10); })()")

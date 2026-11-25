@@ -13,7 +13,7 @@ function roadClipGrid() {
   // the streets as they are drawn (every piece, no straight runs): to measure how deep a point sits in a carriageway
   const raw = [],
     m2 = new Map();
-  DATA.R.forEach((r) => {
+  DATA.R.forEach((r, ri) => {
     if ((r[0] > 12 && r[0] !== 13) || r[3] & 6) return;
     /* v0.74: pedestrian streets too (a corner pushed out of one street into a pedestrian one blocked Calle Heraclio Sánchez) */ const c = r[4],
       k0 = r[2] / 2 + 0.3;
@@ -31,6 +31,7 @@ function roadClipGrid() {
           L,
           k0,
           roadType: r[0],
+          ri, // (v1.4.48: frontLines)
           car: r[0] <= 12,
           first: i === 0,
           last: i + 4 >= c.length
@@ -44,7 +45,7 @@ function roadClipGrid() {
         }
     }
   });
-  RCLIP = { CS, m, segs, raw, m2, cut: 0, gone: 0, goneList: [], keptList: [] };
+  RCLIP = { CS, m, segs, raw, m2, cut: 0, gone: 0, goneList: [], keptList: [], mandanKept: [] };
   return RCLIP;
 }
 /** (v1.1.7, code quality) part of roadClipGrid: each road as straight runs (pieces that turn less than 12°), so a long building beside a road drawn with many short */
@@ -188,7 +189,14 @@ function narrowToGap() {
       one = r[3] & 1,
       half = W / 2;
     for (let i = 0; i < c.length; i += 2) if (nearBT(c[i], c[i + 1])) return;
-    const room = [];
+    // v1.4.48 («las calles mandan», Jonay: «si sobra espacio se puede ensanchar la calle, pero nunca si la calle más las
+    // aceras tocan ya el edificio; lo ideal es que la calle y su acera acaben justo donde empieza el edificio»): at each
+    // sample, the carriageway that fits between the facades leaving the pavement (1 m) on each side; the street takes
+    // the tight spots' value (10 %), never under its minimum (the norms: WIDEN) nor over its width of before (wMax)
+    const swT = new Set([3, 4, 5, 6, 7, 8, 9, 10, 11]).has(t) ? SIDEWALK_W : 0.3,
+      wMax = r.wMax || W,
+      far = wMax / 2 + swT + 1.5,
+      room = [];
     let samples = 0;
     for (let i = 0; i + 3 < c.length; i += 2) {
       const ax = c[i],
@@ -201,23 +209,21 @@ function narrowToGap() {
         const x = ax + ux * s,
           z = az + uz * s;
         samples++;
-        // v1.2.7: the axis itself inside a footprint (C. Barcelona): the street goes to its narrowest, and the building is
-        // cut back for the rest (roadClip)
         if (insideB(x, z)) {
           room.push(0);
           continue;
         }
-        const d = Math.min(ray(x, z, -uz, ux, half + 1), ray(x, z, uz, -ux, half + 1)) + 0.75;
-        if (d < half) room.push(2 * d);
+        const d = Math.min(ray(x, z, -uz, ux, far), ray(x, z, uz, -ux, far)) + 0.75; // (+0.75: the facade moves in that much)
+        room.push(2 * (d - swT));
       }
     }
-    if (room.length < 2 || room.length < samples * 0.1) return; // one garage on a corner does not narrow the whole street (it gets cut)
+    if (room.length < 2) return;
     room.sort((a, b) => a - b);
-    const gap = room[Math.floor(room.length * 0.1)]; // v1.2.7: the tight spots (it was the 30 %)
+    const gap = room[Math.floor(room.length * 0.1)];
     const ln = DATA.LN && DATA.LN[ri] ? DATA.LN[ri][0] : 0,
-      minW = Math.max(MINW(t, one), ln > 0 ? ln * 3 + 0.4 : t <= 8 ? (one ? 4 : 6) : 0);
-    const w = Math.round(Math.max(minW, Math.min(W, gap)) * 10) / 10;
-    if (w < W - 0.2) {
+      minW = Math.max(W, ln > 0 ? ln * 3 + 0.4 : 0);
+    const w = Math.round(Math.max(minW, Math.min(wMax, gap)) * 10) / 10;
+    if (Math.abs(w - W) > 0.2) {
       r[2] = w;
       narrowed.set(ri, w);
       n++;
@@ -919,4 +925,245 @@ function rbClip(P) {
     P = Q;
   }
   return P;
+}
+// v1.4.48 («las calles mandan», Jonay 23-nov/24-nov: «los edificios se ajustan a las calles y no al revés… el edificio
+// va en paralelo a la acera»; «si hay que ganar espacio para la calle y hay acera, reduce la acera… hasta un 50 %»;
+// «cuando recortes un edificio, que los contiguos se acoplen para que no haya escalones en toda la calle»):
+// one facade line for each side of each street. frontLines (before the buildings are made) measures where the walls that
+// face each side stand (beyond the kerb, the median weighted by length) and keeps it between the whole pavement (2.1 m)
+// and half of it (1.05 m); streetsRule then cuts what is in front of that line and brings forward what is up to 1.5 m
+// behind it. Streets without pavement: the kerb + 0.3 m, as before. Never a whole building, only a caseta.
+const SIDEWALK_TYPES = new Set([
+  'primary',
+  'secondary',
+  'tertiary',
+  'residential',
+  'unclassified',
+  'primary_link',
+  'secondary_link',
+  'tertiary_link',
+  'living_street'
+]);
+const FRONT = { lines: null, sw: 1.0 }; // (the pavement: 1 m, SIDEWALK_W in 04_world.js)
+// (the Av. de La Trinidad keeps its own pavement and arcade rule: streetTrim, 05u_trinidad.js)
+const hasSidewalk = (ri) => SIDEWALK_TYPES.has(RTN[DATA.R[ri][0]]) && !(DATA.R[ri][1] >= 0 && STR[DATA.R[ri][1]] === 'Avenida de La Trinidad');
+function frontLines() {
+  if (FRONT.lines) return FRONT.lines;
+  const G = roadClipGrid(),
+    B = new Map();
+  for (const b of DATA.B) {
+    const c = b[6];
+    if (!c || c.length < 6 || b[1] === 4) continue;
+    const n = c.length / 2;
+    for (let i = 0; i < n; i++) {
+      const ax = c[2 * i],
+        az = c[2 * i + 1],
+        bx = c[(2 * i + 2) % c.length],
+        bz = c[(2 * i + 3) % c.length],
+        L = Math.hypot(bx - ax, bz - az);
+      if (L < 3) continue;
+      const mx = (ax + bx) / 2,
+        mz = (az + bz) / 2,
+        ex = (bx - ax) / L,
+        ez = (bz - az) / L;
+      for (const id of G.m2.get(Math.floor(mx / G.CS) * 100003 + Math.floor(mz / G.CS)) || []) {
+        const s = G.raw[id];
+        if (!s.car || !hasSidewalk(s.ri)) continue;
+        if (Math.abs(ex * s.uz - ez * s.ux) > 0.26) continue;
+        const u = (mx - s.ax) * s.ux + (mz - s.az) * s.uz;
+        if (u < 0 || u > s.L) continue;
+        const sd = (mx - s.ax) * -s.uz + (mz - s.az) * s.ux,
+          half = s.k0 - 0.3,
+          f = Math.abs(sd) - 0.75 - half; // (beyond the kerb, as the building will stand: 0.75 m in)
+        if (f < -3 || f > FRONT.sw + 2.5) continue;
+        const k = s.ri + (sd > 0 ? '+' : '-');
+        let l = B.get(k);
+        if (!l) B.set(k, (l = []));
+        l.push([f, L]);
+      }
+    }
+  }
+  FRONT.lines = new Map();
+  for (const [k, l] of B) {
+    l.sort((a, b) => a[0] - b[0]);
+    let tot = 0;
+    for (const e of l) tot += e[1];
+    let acc = 0,
+      med = l[0][0];
+    for (const e of l) {
+      acc += e[1];
+      if (acc >= tot / 2) {
+        med = e[0];
+        break;
+      }
+    }
+    // (Jonay: «¿me estás diciendo que la acera de la derecha mide un metro?»: the whole pavement, always; half of it only
+    // where the street is already at its minimum width and the buildings still leave no room)
+    const r = DATA.R[parseInt(k, 10)],
+      atMin = r && r.wMin !== undefined && r[2] <= r.wMin + 0.05;
+    FRONT.lines.set(k, atMin ? Math.max(FRONT.sw * 0.5, Math.min(FRONT.sw, med)) : FRONT.sw);
+  }
+  return FRONT.lines;
+}
+// the distance from a street piece's axis to its facade line on the side where (x, z) is
+function frontK(s, x, z) {
+  const half = s.k0 - 0.3,
+    sd = (x - s.ax) * -s.uz + (z - s.az) * s.ux;
+  if (!s.car || !hasSidewalk(s.ri)) return { k: s.k0, side: Math.sign(sd) || 1 };
+  const o = frontLines().get(s.ri + (sd > 0 ? '+' : '-'));
+  return { k: half + (o === undefined ? FRONT.sw : o), side: Math.sign(sd) || 1 };
+}
+function streetsRule(P) {
+  if (!P || P.length < 3) return P;
+  const G = roadClipGrid();
+  let x0 = 1e9,
+    x1 = -1e9,
+    z0 = 1e9,
+    z1 = -1e9,
+    cx = 0,
+    cz = 0;
+  for (const p of P) {
+    x0 = Math.min(x0, p[0]);
+    x1 = Math.max(x1, p[0]);
+    z0 = Math.min(z0, p[1]);
+    z1 = Math.max(z1, p[1]);
+    cx += p[0] / P.length;
+    cz += p[1] / P.length;
+  }
+  const ids = new Set();
+  for (let a = Math.floor((x0 - 14) / G.CS); a <= Math.floor((x1 + 14) / G.CS); a++)
+    for (let b = Math.floor((z0 - 14) / G.CS); b <= Math.floor((z1 + 14) / G.CS); b++) for (const id of G.m2.get(a * 100003 + b) || []) ids.add(id);
+  if (!ids.size) return P;
+  const A0 = Math.abs(polyArea(P));
+  let Q = P,
+    did = 0;
+  for (const id of ids) {
+    const s = G.raw[id];
+    if (!s.car || s.roadType === 12) continue; // (pedestrian streets: the old rules; service ways never cut a building: serviceUnderBuildings)
+    const nx = -s.uz,
+      nz = s.ux,
+      { k } = frontK(s, cx, cz);
+    // how deep the outline gets in front of the facade line of this piece
+    let deep = 0;
+    for (let i = 0; i < Q.length; i++) {
+      const p = Q[i],
+        q = Q[(i + 1) % Q.length];
+      for (const t of [0, 0.5]) {
+        const x = p[0] + (q[0] - p[0]) * t,
+          z = p[1] + (q[1] - p[1]) * t,
+          u = (x - s.ax) * s.ux + (z - s.az) * s.uz;
+        if (u < 0 || u > s.L) continue;
+        deep = Math.max(deep, k - Math.abs((x - s.ax) * nx + (z - s.az) * nz));
+      }
+    }
+    if (deep < 0.25) continue;
+    const e0 = s.first ? 0 : 0.6,
+      e1 = s.last ? 0 : 0.6,
+      ax = s.ax - s.ux * e0,
+      az = s.az - s.uz * e0,
+      bx = s.ax + s.ux * (s.L + e1),
+      bz = s.az + s.uz * (s.L + e1);
+    const R = [
+      [ax + nx * k, az + nz * k],
+      [bx + nx * k, bz + nz * k],
+      [bx - nx * k, bz - nz * k],
+      [ax - nx * k, az - nz * k]
+    ];
+    const S = subtractConvex(Q, R, null);
+    if (!S || S.length < 3 || selfCross(S)) continue;
+    // (a cut never adds area: across the mouth of a U-shaped block the walk can close the notch with the strip's border)
+    if (Math.abs(polyArea(S)) > Math.abs(polyArea(Q)) * 1.001) continue;
+    Q = S;
+    did++;
+  }
+  // bring forward the walls a little behind the line (up to 1.5 m), so the whole side of the street is in line
+  let fwd = 0;
+  for (const id of ids) {
+    const s = G.raw[id];
+    if (!s.car || !hasSidewalk(s.ri)) continue;
+    const { k, side } = frontK(s, cx, cz),
+      nx = -s.uz * side,
+      nz = s.ux * side;
+    for (let i = 0; i < Q.length; i++) {
+      const p = Q[i],
+        q = Q[(i + 1) % Q.length],
+        L = Math.hypot(q[0] - p[0], q[1] - p[1]);
+      if (L < 2) continue;
+      if (Math.abs(((q[0] - p[0]) * s.uz - (q[1] - p[1]) * s.ux) / L) > 0.26) continue;
+      const mx = (p[0] + q[0]) / 2,
+        mz = (p[1] + q[1]) / 2,
+        u = (mx - s.ax) * s.ux + (mz - s.az) * s.uz;
+      if (u < 0 || u > s.L) continue;
+      const d = (mx - s.ax) * nx + (mz - s.az) * nz; // (distance on this side)
+      if (d <= k + 0.1 || d > k + 1.5) continue;
+      // the edge must face the street: the building's middle is further from it
+      if ((cx - s.ax) * nx + (cz - s.az) * nz < d) continue;
+      if (Q === P) Q = P.map((v) => v.slice());
+      const dd = d - k;
+      Q[i] = [p[0] - nx * dd, p[1] - nz * dd];
+      Q[(i + 1) % Q.length] = [q[0] - nx * dd, q[1] - nz * dd];
+      fwd++;
+    }
+  }
+  if (!did && !fwd) return P;
+  if (selfCross(Q)) return P;
+  const A1 = Math.abs(polyArea(Q));
+  if (A1 < 12 || A1 < A0 * 0.4) {
+    if (A0 < 30) {
+      clipWhy('calles mandan: caseta en la calle, fuera');
+      return null;
+    }
+    if (G.mandanKept && G.mandanKept.length < 400) G.mandanKept.push([Math.round(cx), Math.round(cz), Math.round(A0), Math.round(A1)]);
+    return P;
+  }
+  if (did) G.mandan = (G.mandan || 0) + 1;
+  if (fwd) G.adelantados = (G.adelantados || 0) + 1;
+  return Q;
+}
+
+// v1.4.48 (auditoría 1.4.48: most of the new buildings «in the lanes» are the Catastro's buildings over OSM service ways:
+// garage entrances and paths through yards that the OSM draws across the buildings): after the buildings, a service way
+// that runs more than 30 % of its length inside buildings is no carriageway: it becomes a footpath (not drawn as asphalt
+// inside a house, no traffic on it)
+function serviceUnderBuildings() {
+  let n = 0;
+  // (a grid of the footprints: inAnyBuilding looks at every building)
+  const BG = new Map();
+  DATA.B.forEach((b, i) => {
+    const c = b[6];
+    if (!c || c.length < 6) return;
+    let x0 = 1e9,
+      x1 = -1e9,
+      z0 = 1e9,
+      z1 = -1e9;
+    for (let k = 0; k < c.length; k += 2)
+      ((x0 = Math.min(x0, c[k])), (x1 = Math.max(x1, c[k])), (z0 = Math.min(z0, c[k + 1])), (z1 = Math.max(z1, c[k + 1])));
+    for (let a = Math.floor(x0 / 30); a <= Math.floor(x1 / 30); a++)
+      for (let k = Math.floor(z0 / 30); k <= Math.floor(z1 / 30); k++) {
+        const key = a * 100003 + k;
+        let l = BG.get(key);
+        if (!l) BG.set(key, (l = []));
+        l.push(i);
+      }
+  });
+  const inB = (x, z) => (BG.get(Math.floor(x / 30) * 100003 + Math.floor(z / 30)) || []).some((i) => pip(x, z, DATA.B[i][6]));
+  DATA.R.forEach((r) => {
+    if (r[0] !== 12) return;
+    const c = r[4];
+    let tot = 0,
+      inn = 0;
+    for (let i = 0; i + 3 < c.length; i += 2) {
+      const L = Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]);
+      for (let s = 1.5; s < L; s += 3) {
+        tot++;
+        if (inB(c[i] + ((c[i + 2] - c[i]) * s) / L, c[i + 1] + ((c[i + 3] - c[i + 1]) * s) / L)) inn++;
+      }
+    }
+    if (tot && inn / tot > 0.3) {
+      r[0] = 14; // footway
+      n++;
+    }
+  });
+  console.log('vías de servicio bajo edificios → camino', n);
+  return n;
 }

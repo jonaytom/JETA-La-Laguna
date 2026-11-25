@@ -1,0 +1,2 @@
+herramientas/sonda_edificio_en.py 695 1324 15
+herramientas/sonda_que_es.py 690 1315 2 695 1324 0.5

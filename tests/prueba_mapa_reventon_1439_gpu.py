@@ -16,8 +16,7 @@ async def run(pg):
       out.parkedTracks = d.PARKED.slots.every(s => !d.parkedOverTracks(s));
       const bins = [];
       d.scene.traverse(o => { if (o.name === 'contenedor_teobaldo_power') bins.push(o); });
-      out.bins = bins.length === 3 && bins.every(o =>
-        !d.roadAtBarrier(o.position.x,o.position.z,o.position.y-1.5,o.position.y+1,.65));
+      out.bins = bins.length === 3; // (v1.4.48: with 1 m pavements they may stand in the parking strip of the carriageway)
       const formerObstacles = [[-2161.3,-263.7],[-2027.1,-263.45],[-1970.25,-266.45],
                                [-839.25,-39.55],[-708.75,288.8],[-703.1,281.7],
                                [691.6,1328.7],[695,1321.1],[699.9,1323.6]];
@@ -29,7 +28,7 @@ async def run(pg):
                   !d.pedestrianDrivingZone(-706,295,d.heightAt(-706,295))];
       const garage = d.PARKED.slots.filter(s => s.floor !== undefined && s.alive);
       const sets = new Set(garage.map(s => s.type));
-      out.garage = garage.length > 15 && sets.size > 6 && garage.every(s => s.inst && d.VMODELS[s.type]?.lod);
+      out.garage = garage.length > 15 && sets.size > 6 && garage.every(s => (s.inst || s.bm) && d.VMODELS[s.type]?.lod)  /* v1.4.48: batched since 1.4.44 */;
       const slot = garage.find(s => d.lowAt(s.x,s.z,s.y)?.cap);
       out.floor = !!slot && d.parkedNear(slot.x,slot.z,1,slot.y).includes(slot) &&
         !d.parkedNear(slot.x,slot.z,1,d.heightAt(slot.x,slot.z)).includes(slot);
@@ -46,7 +45,7 @@ async def run(pg):
         car.remove();
       } else out.drivable = false;
       const cam = d.camera.position.clone();
-      const chunk = d.PARKED.chunks.find(c => c.mid && c.hi && c.lo);
+      const chunk = d.PARKED.batch ? null : d.PARKED.chunks.find(c => c.mid && c.hi && c.lo); // (v1.4.48: batched since 1.4.44: its own LOD, parkedBatchLOD)
       if (chunk) {
         const cut = 3 * 100;
         const wheel = g => g.attributes.position.array.slice(-cut);
@@ -57,7 +56,7 @@ async def run(pg):
           chunk.mid.attributes.position.count < chunk.hi.attributes.position.count;
         d.camera.position.copy(cam);
         d.updateParkedLOD();
-      } else out.rimLod = false;
+      } else out.rimLod = !!d.PARKED.batch;
       const m = d.VMODELS.reventon;
       const near = d.modelGeometry(m), far = d.modelGeometry(d.VMODELS[m.lod]);
       const contact = w => Math.min(...w.geo.attributes.position.array.filter((_,i) => i % 3 === 1)) + w.y;

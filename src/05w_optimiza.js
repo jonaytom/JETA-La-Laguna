@@ -7,7 +7,20 @@
 //    bancos…) solo cerca; las copas de los árboles lejanos usan una versión de pocos triángulos.
 // Qué NO se junta: lo que esté oculto al cargar, los grupos con nombre salvo los monumentos estáticos marcados,
 // las piezas transparentes de esos monumentos, lo que lleve userData (lo usa la lógica) y lo marcado con userData.noMerge.
-const LOD = { items: [], buckets: new Map(), det: -1, cx: 1e9, cz: 1e9, far: -1, cell: 125, stats: null, keep: !!window.__JETA_TEST, orig: [], landmarks: [], off: false }; // keep: our test runners (not the auditor) can put the loose pieces back to compare photos
+const LOD = {
+  items: [],
+  buckets: new Map(),
+  det: -1,
+  cx: 1e9,
+  cz: 1e9,
+  far: -1,
+  cell: 125,
+  stats: null,
+  keep: !!window.__JETA_TEST,
+  orig: [],
+  landmarks: [],
+  off: false
+}; // keep: our test runners (not the auditor) can put the loose pieces back to compare photos
 function lodAdd(m, detail, lo) {
   const g = m.geometry;
   if (!m.isInstancedMesh) {
@@ -49,12 +62,15 @@ function updateCityLOD(force) {
   LOD.cz = z;
   LOD.far = far;
   LOD.det = detail;
-  const farSq = far * far, detailSq = detail * detail;
+  const farSq = far * far,
+    detailSq = detail * detail;
   for (const bucket of LOD.buckets.values()) {
     const limit = bucket.detail ? detail : far;
     const limitSq = bucket.detail ? detailSq : farSq;
-    const nx = Math.max(bucket.x0 - x, x - bucket.x1, 0), nz = Math.max(bucket.z0 - z, z - bucket.z1, 0);
-    const fx = Math.max(x - bucket.x0, bucket.x1 - x), fz = Math.max(z - bucket.z0, bucket.z1 - z);
+    const nx = Math.max(bucket.x0 - x, x - bucket.x1, 0),
+      nz = Math.max(bucket.z0 - z, z - bucket.z1, 0);
+    const fx = Math.max(x - bucket.x0, bucket.x1 - x),
+      fz = Math.max(z - bucket.z0, bucket.z1 - z);
     const outside = nx * nx + nz * nz >= limitSq;
     // If the farthest corner is in range, every part in the cell is too.
     const inside = !outside && !bucket.lo && fx * fx + fz * fz < limitSq;
@@ -68,7 +84,9 @@ function updateCityLOD(force) {
     }
     bucket.state = -1;
     for (const it of bucket.items) {
-      const dx = it.x - x, dz = it.z - z, d2 = dx * dx + dz * dz;
+      const dx = it.x - x,
+        dz = it.z - z,
+        d2 = dx * dx + dz * dz;
       const reach = limit + it.r;
       it.m.visible = d2 < reach * reach;
       if (it.lo) {
@@ -136,6 +154,12 @@ function actorCull(on, cam) {
   const main = !cam || cam === camera;
   for (const [o, A] of ACTORS) {
     if (!o.parent) continue;
+    // v1.4.48 (prueba_076: the water rifle's drops came out of the map's origin): the player is never frozen; after a
+    // teleport without a frame drawn in between, his old matrices (far from the camera) kept him «far» and stale
+    if (typeof playerHuman !== 'undefined' && o === playerHuman.root) {
+      if (!o.matrixWorldAutoUpdate) ((o.matrixWorldAutoUpdate = true), o.updateMatrixWorld(true));
+      continue;
+    }
     if (!o.visible) {
       if (main) o.matrixWorldAutoUpdate = false;
       continue;
@@ -542,7 +566,8 @@ function freezeStatics() {
   const doors = new Set(typeof DOORMARKS !== 'undefined' ? DOORMARKS.map((k) => k.m) : []);
   const lodSwap = new Set(LOD.items.filter((it) => it.lo).map((it) => it.m));
   const walk = (o) => {
-    if (o.isLight || o === sun.target || o.isCamera || o.isBone || o.isSkinnedMesh || doors.has(o) || (o.userData && o.userData.noMerge)) return false;
+    if (o.isLight || o === sun.target || o.isCamera || o.isBone || o.isSkinnedMesh || doors.has(o) || (o.userData && o.userData.noMerge))
+      return false;
     let all = true;
     for (const c of o.children) if (!walk(c)) all = false;
     o.updateMatrix();
@@ -577,7 +602,13 @@ function thawObject(o, why) {
       (o.name || o.type) +
         (o.parent && o.parent !== scene ? ' en ' + (o.parent.name || o.parent.type) : '') +
         (g ? ' ' + g.type + (g.attributes.position ? '/' + g.attributes.position.count + 'v' : '') : '') +
-        ' X ' + Math.round(w.x) + ', Y ' + Math.round(w.z) + ' (' + why + ')'
+        ' X ' +
+        Math.round(w.x) +
+        ', Y ' +
+        Math.round(w.z) +
+        ' (' +
+        why +
+        ')'
     );
   }
 }
@@ -714,7 +745,13 @@ function precompileShadows() {
   // the whole map took ~3 s of the loading)
   const kind = (o) => {
     const m = Array.isArray(o.material) ? o.material[0] : o.material;
-    return (m ? m.uuid : '') + (o.isInstancedMesh ? 'I' : '') + (o.isBatchedMesh ? 'B' : '') + (o.isSkinnedMesh ? 'S' : '') + (o.layers.mask & 2 ? 'L' : '');
+    return (
+      (m ? m.uuid : '') +
+      (o.isInstancedMesh ? 'I' : '') +
+      (o.isBatchedMesh ? 'B' : '') +
+      (o.isSkinnedMesh ? 'S' : '') +
+      (o.layers.mask & 2 ? 'L' : '')
+    );
   };
   // (v1.4.46, Jonay: «empecé otra y no sale el pj», WebGPU: its compileAsync runs the scene's «before render» (actorCull
   // hides the far actors) but not the «after»; the player was left hidden, this function «put back» that hidden state and

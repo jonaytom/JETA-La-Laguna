@@ -7,6 +7,27 @@
 function addCatastro() {
   const CB = DATA.CB || [];
   let n = 0;
+  // v1.4.48 (Jonay, with a real view of the Calle Barcelona: a whole block of separate buildings): the OSM footprints that
+  // cover a whole block where the Catastro has each building (tools/osm_gruesos.py, DATA.OG: their centres) go; the
+  // Catastro's buildings come in their place (in DATA.CB)
+  if (DATA.OG && DATA.OG.length) {
+    const og = DATA.OG;
+    let q = 0;
+    for (let i = DATA.B.length - 1; i >= 0; i--) {
+      const c = DATA.B[i][6];
+      if (!c || c.length < 6) continue;
+      let cx = 0,
+        cz = 0;
+      for (let k = 0; k < c.length; k += 2) ((cx += c[k]), (cz += c[k + 1]));
+      cx /= c.length / 2;
+      cz /= c.length / 2;
+      if (og.some(([x, z]) => Math.abs(x - cx) < 1.5 && Math.abs(z - cz) < 1.5)) {
+        DATA.B.splice(i, 1);
+        q++;
+      }
+    }
+    console.log('catastro: bloques gruesos del OSM cambiados', q);
+  }
   for (const [fl, c] of CB) {
     let cx = 0,
       cz = 0;

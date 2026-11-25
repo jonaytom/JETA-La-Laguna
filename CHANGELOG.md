@@ -3,6 +3,20 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.48 — 2026-11-25 — Alpha 1.4.48: las calles mandan
+
+- **Las calles mandan** (Jonay: «a partir de ahora las calles mandan, los edificios se ajustan a las calles y no al revés»): se acabó el ensanche inicial de las calles, que era lo que las metía dentro de los edificios. Anchos con norma: calle urbana de doble sentido 5,8 m, de un sentido 3,2 m, carreteras 7 m (carriles de 3,5 m), vías de servicio 4 m; si sobra sitio hasta las fachadas, la calle llega a ellas, y si falta, la acera (1 m) baja hasta la mitad solo donde la calle ya está en su mínimo. Puentes y túneles conservan su ancho.
+  - Cada fachada se recorta en paralelo al borde de la acera; nunca se quitan edificios salvo casetas de menos de 30 m², y los vecinos siguen pegados (sin escalones ni huecos).
+  - Tramos rectos sin arrugas (los puntos que zigzagueaban menos de medio metro se enderezan).
+  - **Av. de La Trinidad** medida por Jonay: carriles de 3 m (6 m por sentido), tranvía en medio; los soportales ya no tienen muros en los extremos.
+  - Las vías de servicio que pasaban por dentro de edificios se dejan como peatonales.
+- **Edificios del Catastro** (Jonay: «haz una revisión con los datos reales del Catastro… sí, añádelos»): los ~3.100 edificios que faltaban quedan en ~840 y los «perdidos por el camino» de 43 a 13; las manzanas gruesas del OpenStreetMap (una sola planta para toda la manzana, como en la Calle Barcelona) se cambian por los edificios del Catastro uno a uno, con sus plantas. En total ~18.200 edificios (antes 9.400). Las plantas se simplifican (0,4 m) para no cargar la tarjeta: vértices 13,7 M → 11,9 M.
+- **La carga, de 31 a 18 s**: «¿hay un edificio aquí?» recorría todos los edificios en cada pregunta (y con el doble de edificios, las plazas tardaban 2,2 s); ahora usa una rejilla.
+- Arreglado: el rifle de agua podía salir disparado desde el centro del mapa tras teletransportarse (el jugador se congelaba como un actor lejano).
+- Arreglado: un pretil en mitad de la Vía de Ronda; una barandilla de rampa de parking contaba como obstáculo en la calzada; los contenedores de la Calle Teobaldo Power, que no cabían en la acera nueva, van en la franja de aparcamiento.
+- Arreglado: si una misión se cancelaba con su conversación en pantalla (la presentación de «Vuelta al barrio», por ejemplo), la conversación se quedaba abierta y no se podía empezar otra misión.
+- Pruebas antiguas (076, 077, 079, fútbol, reventón con WebGPU) al día.
+
 ## 1.4.47 — 2026-11-23 — Alpha 1.4.47: tanda de pendientes rápidos
 
 - **Misiones del Obispo alternadas** (Jonay: «me gustaría que la segunda misión del Obispo fuera el fútbol, no otra de basket»): ahora van basket (Catedral), fútbol (Seminario, con el tutorial), basket (Cristo) y fútbol (cofradías); los diálogos siguen el nuevo orden. Las partidas guardadas que ya habían hecho los dos basket pasan al fútbol del Seminario.

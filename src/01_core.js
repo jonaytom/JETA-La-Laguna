@@ -197,10 +197,18 @@ const inPlayArea = (x, z, m = 0) => worldEdgeDist(x, z) >= m;
 })();
 // widen drivable streets a bit so cars fit through the old town
 // widen drivable streets (real-life feel: OSM default widths read too narrow at game scale)
+// v1.4.48 (Jonay: «aquí debe haber un problema de concepto inicial… las calles no las ensanches, lo importante es que
+// tengan un mínimo de calzada transitable»): the old widening (12–30 % more, at least 8–9 m two-way) was the origin of
+// the buildings in the streets. The map's widths are only defaults by type (6.5 m every residential, 8 tertiary,
+// 9 secondary…): now the carriageway follows the norms Jonay gave (3.1-IC and urban design): conventional roads two-way
+// 7 m (3.5 m lanes), slip roads and service roads 4 m, urban streets two-way 5.8 m and one-way 3.2 m. A width the map
+// really gives (not its type's default) is kept, never under those minimums. Motorways and trunk roads as they are.
+const WDEF = { 0: 12, 1: 7, 2: 0, 3: 10, 4: 7, 5: 9, 6: 7, 7: 8, 8: 6, 9: 6.5, 10: 6.5, 11: 5, 12: 4.5 };
 const WIDEN = (t, w, one) => {
-  const f = t <= 2 ? 1.12 : t <= 8 ? 1.3 : t <= 10 ? 1.22 : 1.15;
-  const mn = t === 12 ? 5 : t === 11 ? 5.5 : one ? 6 : t <= 8 ? 9 : 8;
-  return Math.round(Math.max(w * f, mn) * 10) / 10;
+  if (t === 0 || t === 2) return w;
+  const norm = t === 1 || t === 4 || t === 6 || t === 8 ? 4 : t <= 7 ? (one ? 4 : 7) : t === 12 ? 4 : one ? 3.2 : 5.8,
+    real = Math.abs(w - (WDEF[t] || 0)) > 0.05; // (the map gave its own width)
+  return Math.round((real ? Math.max(w, norm) : norm) * 10) / 10;
 };
 const CORE0 = [
   [-680, -420],
@@ -222,7 +230,16 @@ const inCore0 = (x, z) => {
   }
   return ins;
 };
-const WIDEN2 = (t, w, one, x, z) => (inCore0(x, z) && t >= 9 ? Math.round(Math.max(w * 1.15, t === 12 ? 5 : 7.2) * 10) / 10 : WIDEN(t, w, one));
+const WIDEN2 = (t, w, one, x, z) => WIDEN(t, w, one); // (v1.4.48: the old town too, at the map's width)
+// the widths of before (1.4.47): tunnels and bridges keep them (their walls, decks and mouths are made from them: Jonay,
+// «ten mucho cuidado al cambiar el ancho en túneles y puentes»), and a street never widens past them (narrowToGap)
+const WIDEN_OLD = (t, w, one, x, z) => {
+  if (inCore0(x, z) && t >= 9) return Math.round(Math.max(w * 1.15, t === 12 ? 5 : 7.2) * 10) / 10;
+  const f = t <= 2 ? 1.12 : t <= 8 ? 1.3 : t <= 10 ? 1.22 : 1.15,
+    mn = t === 12 ? 5 : t === 11 ? 5.5 : one ? 6 : t <= 8 ? 9 : 8;
+  return Math.round(Math.max(w * f, mn) * 10) / 10;
+};
+const SIDEWALK_W = 1.0; // v1.4.48 (Jonay: «aquí las aceras apenas tienen un ancho de un metro»): the pavement beyond the kerb
 // v0.72 (official street map, docs/referencias/callejero/): streets of the old town that OSM gives as pedestrian but
 // that cars do use (smooth paving, not cobbles, on the town hall's map): drawn and driven as normal streets
 const CALLEJERO_TRAFICO = /^Calle (Bencomo|Juan de Vera|Rodriguez Moure|Ascanio y Nieves)$/;
@@ -233,17 +250,101 @@ for (const rd of DATA.R) {
     rd[2] = Math.max(rd[2], 6);
   }
 }
-for (const rd of DATA.R) {
+DATA.R.forEach((rd, ri) => {
   if (rd[0] <= 12) {
     const c = rd[4],
       m = (c.length >> 2) << 1;
-    rd[2] = WIDEN2(rd[0], rd[2], rd[3] & 1, c[m], c[m + 1]);
+    rd.wMax = WIDEN_OLD(rd[0], rd[2], rd[3] & 1, c[m], c[m + 1]);
+    rd[2] = rd[3] & 6 ? rd.wMax : WIDEN2(rd[0], rd[2], rd[3] & 1, c[m], c[m + 1]);
+    // (the lanes the map gives, at 3.5 m: a one-way half of a dual road is not a one-lane slip road)
+    const ln = DATA.LN && DATA.LN[ri] ? DATA.LN[ri][0] : 0;
+    if (!(rd[3] & 6) && ln > 1 && rd[0] <= 8) rd[2] = Math.max(rd[2], Math.min(rd.wMax, ln * 3.5));
+    rd.wMin = rd[2]; // (v1.4.48: its minimum: frontLines lets the pavement go down to half only where the street is at it)
   }
-}
+});
 for (const e of DATA.G.e) {
   const a = e[0] * 2;
   e[4] = WIDEN2(e[2], e[4], e[3], DATA.G.n[a], DATA.G.n[a + 1]);
 }
+// v1.4.48 («las calles mandan», Jonay: «los trazados de la carretera en sitios como La Trinidad, que son muy rectos, no
+// deberían tener esas arrugas»): the map's points along a nearly straight street wobble a little (a metre or less), and
+// the street, its kerbs and its marks drew those wobbles. Each point inside a street (not shared with another street:
+// junctions stay put) that is less than 1 m off the line between its neighbours, where both pieces are 6 m or longer
+// and it turns less than 8°, goes onto that line; the traffic graph's points that were the same move with it
+(function straightenWobbles() {
+  // (v1.4.48: the Av. de La Trinidad has a point every 4 m rounded to half a metre: a ±0.2–0.5 m zigzag. Each street,
+  // between the points it shares with other streets, is simplified (Douglas-Peucker, 0.5 m) and every point in between
+  // goes onto the simplified line; the roundabout rings stay as they are)
+  const TOL = 0.5,
+    key = (x, z) => x + ',' + z,
+    uses = new Map();
+  for (const rd of DATA.R) {
+    const c = rd[4];
+    for (let i = 0; i < c.length; i += 2) uses.set(key(c[i], c[i + 1]), (uses.get(key(c[i], c[i + 1])) || 0) + 1);
+  }
+  const N = DATA.G.n;
+  for (let i = 0; i < N.length; i += 2) uses.set(key(N[i], N[i + 1]), (uses.get(key(N[i], N[i + 1])) || 0) + 2);
+  const moved = new Map();
+  let n = 0;
+  const dp = (c, a, b, keep) => {
+    // marks in keep the points of c (indices a..b, in points) that the simplified line passes through
+    const ax = c[2 * a],
+      az = c[2 * a + 1],
+      bx = c[2 * b],
+      bz = c[2 * b + 1],
+      L = Math.hypot(bx - ax, bz - az) || 1e-9;
+    let w = -1,
+      wd = TOL;
+    for (let i = a + 1; i < b; i++) {
+      const d = Math.abs((c[2 * i] - ax) * (bz - az) - (c[2 * i + 1] - az) * (bx - ax)) / L;
+      if (d > wd) ((wd = d), (w = i));
+    }
+    if (w < 0) return;
+    keep[w] = true;
+    dp(c, a, w, keep);
+    dp(c, w, b, keep);
+  };
+  for (const rd of DATA.R) {
+    if (rd[0] > 12 || rd[3] & 32) continue;
+    const c = rd[4],
+      np = c.length / 2;
+    if (np < 3) continue;
+    const keep = new Array(np).fill(false);
+    keep[0] = keep[np - 1] = true;
+    for (let i = 1; i < np - 1; i++) if ((uses.get(key(c[2 * i], c[2 * i + 1])) || 0) > 1) keep[i] = true;
+    let a = 0;
+    for (let b = 1; b < np; b++) if (keep[b]) (dp(c, a, b, keep), (a = b));
+    const o = c.slice();
+    let k0 = 0;
+    for (let i = 1; i < np; i++) {
+      if (!keep[i]) continue;
+      const ax = c[2 * k0],
+        az = c[2 * k0 + 1],
+        bx = c[2 * i],
+        bz = c[2 * i + 1],
+        L2 = (bx - ax) ** 2 + (bz - az) ** 2 || 1;
+      for (let j = k0 + 1; j < i; j++) {
+        const t = ((c[2 * j] - ax) * (bx - ax) + (c[2 * j + 1] - az) * (bz - az)) / L2,
+          qx = Math.round((ax + (bx - ax) * t) * 100) / 100,
+          qz = Math.round((az + (bz - az) * t) * 100) / 100;
+        if (Math.hypot(qx - c[2 * j], qz - c[2 * j + 1]) < 0.02) continue;
+        moved.set(key(c[2 * j], c[2 * j + 1]), [qx, qz]);
+        o[2 * j] = qx;
+        o[2 * j + 1] = qz;
+        n++;
+      }
+      k0 = i;
+    }
+    rd[4] = o;
+  }
+  for (const e of DATA.G.e)
+    if (e[6])
+      for (let i = 0; i < e[6].length; i += 2) {
+        const m = moved.get(key(e[6][i], e[6][i + 1]));
+        if (m) ((e[6][i] = m[0]), (e[6][i + 1] = m[1]));
+      }
+  window.__enderezados = n;
+})();
 narrowToGap(); // v1.0.0: residential and service streets meet the buildings halfway (04b_recorte.js)
 corrFitTwins(); // v1.2.0: the two halves of a dual road at the width of their lanes (04c_corredores.js), in the zones done so far
 trinidadWidths(); // v0.68: Av. de La Trinidad, one lane + parking per carriageway (05u_trinidad.js); after the widening

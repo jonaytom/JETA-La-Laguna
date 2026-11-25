@@ -157,7 +157,7 @@ function trinidadGeoPart1(rs) {
 }
 // in 01_core-time terms this runs before the roads are indexed: one lane + parking per carriageway, like the real one
 function trinidadWidths() {
-  for (const r of DATA.R) if (r[1] >= 0 && STR[r[1]] === 'Avenida de La Trinidad' && r[0] <= 12 && r[2] > 6.6) r[2] = 6.6;
+  for (const r of DATA.R) if (r[1] >= 0 && STR[r[1]] === 'Avenida de La Trinidad' && r[0] <= 12) r[2] = 6.0; // (v1.4.48, Jonay measured it: two 3 m lanes per carriageway, 6 m; tram 6.5 m; 18.5 m in all without the pavements)
 } // called from 01_core (the consts of this file don't exist yet then)
 // clearance from the carriageway centre line: half the road + pavement (+ the ramp beside the pavement at n.º 59)
 function trinidadClear(c, s) {
@@ -684,7 +684,11 @@ function trinidadArcades() {
 // un lado como una especie de paso bajo los edificios para los peatones»): the odd side of the avenue (carriageway B, the
 // Dialprix side) has arcades along every block: the ground floor goes ARC.D m back with the shops at the back, the floors
 // above stand on pillars at the pavement line. buildBuildingsEach asks which edges of a building are arcade edges.
-const TRI_ARC = { D: 2.8, edges: 0 };
+// v1.4.48 (Jonay, 24-nov: «los voladizos son el doble de profundos… y están separados por cada casa en el juego haciendo
+// cubículos separados, y no es así: la avenida se puede recorrer de punta a punta bajo los voladizos»): 5.6 m deep (2.8
+// before), no walls at the ends of each house, and the side walls of the houses start at the arcade's ceiling for the
+// stretch under it (buildBuildingWalls, arcadeSide), so the arcade runs through from one end of the row to the other
+const TRI_ARC = { D: 5.6, edges: 0 };
 /** the edges of a building footprint that face the odd pavement of the avenue (null if none) */
 function trinidadArcadeEdges(pts, cx, cz) {
   const T = trinidadGeo();
@@ -711,6 +715,13 @@ function trinidadArcadeEdges(pts, cx, cz) {
       oz = -(q[0] - p[0]) / L; // outward normal of a counter-clockwise footprint
     if (ox * (r.px - mx) + oz * (r.pz - mz) <= 0) continue; // it must face the avenue
     if (![0.15, 0.5, 0.85].every((t) => !onCarriagewayEarly(p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t, 0.3))) continue;
+    // v1.4.48: only where the building is deep enough for the 5.6 m arcade and 2 m of shop behind it
+    let deep = 0;
+    for (const v of pts) deep = Math.max(deep, -(ox * (v[0] - p[0]) + oz * (v[1] - p[1])));
+    if (deep < TRI_ARC.D + 2) {
+      TRI_ARC.shallow = (TRI_ARC.shallow || 0) + 1;
+      continue;
+    }
     (set || (set = new Set())).add(i);
   }
   return set;
@@ -728,9 +739,7 @@ function trinidadArcadeCol(p, q) {
   // inward = minus the outward normal (uz, −ux) of a counter-clockwise footprint
   const a = [p[0] - uz * TRI_ARC.D, p[1] + ux * TRI_ARC.D],
     b = [q[0] - uz * TRI_ARC.D, q[1] + ux * TRI_ARC.D];
-  COL.addSeg(a[0], a[1], b[0], b[1]);
-  COL.addSeg(p[0], p[1], a[0], a[1]);
-  COL.addSeg(q[0], q[1], b[0], b[1]);
+  COL.addSeg(a[0], a[1], b[0], b[1]); // (the shop fronts; v1.4.48: no walls at the two ends)
   for (const t of trinidadArcadePillars(L)) COL.addCirc(p[0] + ux * t - uz * 0.3, p[1] + uz * t + ux * 0.3, 0.32);
 }
 const trinidadArcadePillars = (L) => {
@@ -793,11 +802,8 @@ function trinidadArcadeEdge(A, T0, p, q, nb, fh, y0, bot, wallTop, col, tl, out,
     pc,
     out
   );
-  // the two ends
-  for (const [e, f] of [
-    [p, a],
-    [q, b]
-  ])
+  // the two ends (v1.4.48: none: the arcade goes on under the next house)
+  for (const [e, f] of [])
     two(
       [e[0], heightAt(e[0], e[1]) - 0.6, e[1]],
       [f[0], heightAt(f[0], f[1]) - 0.6, f[1]],
