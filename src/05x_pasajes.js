@@ -77,10 +77,11 @@ function pasajeSegsPart1() {
     if (rd[0] <= 12 || !(rd[3] & 4)) return;
     const c = rd[4];
     const name = rd[1] >= 0 ? STR[rd[1]] : '';
-    const hw = PASAJE_TIENDAS[name] ? 1.9 : Math.max(1.3, rd[2] / 2); /* the casco galleries are ~4 m wide (OSM gives 6) */
+    // (v1.4.52, Jonay: «el Pasaje Aguere es el doble de ancho, y el Pasaje Teide también»: 7.6 m)
+    const hw = PASAJE_TIENDAS[name] ? 3.8 : Math.max(1.3, rd[2] / 2); /* the casco galleries are ~4 m wide (OSM gives 6) */
     for (let i = 0; i < c.length - 2; i += 2) {
       const L = Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]);
-      if (L > 0.3) out.push({ ri, ax: c[i], az: c[i + 1], bx: c[i + 2], bz: c[i + 3], L, hw, name });
+      if (L > 0.3) out.push({ ri, ax: c[i], az: c[i + 1], bx: c[i + 2], bz: c[i + 3], L, hw, name, tagged: true });
     }
   });
   // v0.99.6 (Jonay: «hacer pasadizo»; agent: 23 «un edificio tapa el camino»): a footpath that runs through a building
@@ -119,6 +120,32 @@ function pasajeSegsPart1() {
       }
     return false;
   };
+  // v1.4.52 (Jonay: «los portales de entrada del Pasaje Teide y Aguere, y si hay más, los demás, deben ir a ras con las otras
+  // fachadas; sobresalen e invaden la calzada»): the map's passages run on to the middle of the street; each piece is cut
+  // to where it is inside a building (its mouth at the facade)
+  for (const sg of out) {
+    if (!sg.tagged) continue;
+    const ux = (sg.bx - sg.ax) / sg.L,
+      uz = (sg.bz - sg.az) / sg.L,
+      n = Math.max(2, Math.ceil(sg.L / 0.5));
+    let t0 = -1,
+      t1 = -1;
+    for (let k = 0; k <= n; k++) {
+      const t = (k / n) * sg.L;
+      if (inB(sg.ax + ux * t, sg.az + uz * t)) {
+        if (t0 < 0) t0 = t;
+        t1 = t;
+      }
+    }
+    if (t0 < 0 || t1 - t0 < 0.5) continue;
+    const a = t0 > 0.01 ? Math.max(0, t0 - 0.25) : 0,
+      b = t1 < sg.L - 0.01 ? Math.min(sg.L, t1 + 0.25) : sg.L;
+    sg.bx = sg.ax + ux * b;
+    sg.bz = sg.az + uz * b;
+    sg.ax += ux * a;
+    sg.az += uz * a;
+    sg.L = b - a;
+  }
   return { out, inB };
 }
 // v0.78.1: inside a passage under a building or in the lower gallery of Aguere (no street lamps there)

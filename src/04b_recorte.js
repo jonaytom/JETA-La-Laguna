@@ -199,7 +199,7 @@ function narrowToGap() {
     // the tight spots' value (10 %), never under its minimum (the norms: WIDEN) nor over its width of before (wMax)
     const swT = new Set([3, 4, 5, 6, 7, 8, 9, 10, 11]).has(t) ? SIDEWALK_W : 0.3,
       wMax = r.wMax || W,
-      far = wMax / 2 + swT + 1.5,
+      far = Math.max(wMax, W + 2.2) / 2 + swT + 1.5,
       room = [];
     let samples = 0;
     for (let i = 0; i + 3 < c.length; i += 2) {
@@ -226,7 +226,11 @@ function narrowToGap() {
     const gap = room[Math.floor(room.length * 0.1)];
     const ln = DATA.LN && DATA.LN[ri] ? DATA.LN[ri][0] : 0,
       minW = Math.max(W, ln > 0 ? ln * 3 + 0.4 : 0);
-    const w = Math.round(Math.max(minW, Math.min(wMax, gap)) * 10) / 10;
+    // (v1.4.52, Jonay, C. Arzobispo Elías Yanes: «las estás haciendo más estrechas de lo necesario; si sobra espacio puedes
+    // darle un poco más, siempre dentro de las normas… y además tiene aparcamientos a la derecha»): with room to spare, a
+    // street may grow past its old width up to the norm plus a parking lane (2.2 m)
+    const wCap = Math.max(wMax, W + 2.2);
+    const w = Math.round(Math.max(minW, Math.min(wCap, gap)) * 10) / 10;
     if (Math.abs(w - W) > 0.2) {
       r[2] = w;
       narrowed.set(ri, w);

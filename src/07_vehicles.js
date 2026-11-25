@@ -1064,7 +1064,7 @@ function updateTraffic(car, dt) {
       } else if (sg.kind === 'ceda' && rem < 1.2) tr.stopE = tr.e;
     }
   }
-  tr.v = lerp(tr.v, target, clamp(dt * (target < tr.v ? 3 : 0.8), 0, 1));
+  tr.v = lerp(tr.v, target, clamp(dt * (target < tr.v ? 5 : 0.8), 0, 1)); // (v1.4.52, Jonay: «los coches deben frenar más»: 3 → 5)
   if (ahead < 1) tr.v = 0;
   tr.stuck = tr.v < 0.4 && ahead < 4 ? (tr.stuck || 0) + dt : 0;
   car.honk = ahead < 3 && !PLAYER.car ? 0 : car.honk;

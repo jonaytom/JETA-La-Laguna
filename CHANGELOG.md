@@ -3,6 +3,13 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.52 — 2026-11-25 — Alpha 1.4.52: calles con aparcamiento y tráfico que frena
+
+- **Calles algo más anchas donde sobra sitio** (Jonay: «las estás haciendo más estrechas de lo necesario; si sobra espacio puedes darle un poco más, siempre dentro de las normas… tiene aparcamientos a la derecha»): una calle con sitio hasta las fachadas crece hasta su norma más una banda de aparcamiento (2,2 m).
+- **Pasajes Teide y Aguere el doble de anchos (7,6 m) y con los portales a ras de fachada** (Jonay): los tramos del mapa llegaban hasta el centro de la calle; ahora cada pasaje se recorta donde entra en el edificio, en todos los pasajes.
+- **Recintos deportivos cerrados con muro salvo su entrada** (Jonay: «el Ríos Tejera tiene muros salvo en su entrada»): muro de 2,2 m por el borde de cada recinto deportivo del mapa, abierto donde entra una calle o un camino (o una puerta de 5 m hacia la calle más cercana si no entra ninguno).
+- **El tráfico frena más** (Jonay: «los coches deben frenar más»).
+
 ## 1.4.51 — 2026-11-25 — Alpha 1.4.51: carriles del mapa, campos hundidos y frenada
 
 - **Los carriles del mapa vuelven a leerse bien**: desde la 1.1.1 casi todas las calles leían los carriles de otra calle (el OSM los da por número de calle, y al quitar las calles de fuera del mapa los números se corrían). Ahora cada calle lleva los suyos; un tramo sin dato toma los del siguiente de la misma calle (la Autovía Interconexión Norte-Sur: 2 carriles, como dijo Jonay). Se han vuelto a bajar del OSM. La Av. de las Palmeras, de un carril por sentido con aparcamiento a la derecha (Jonay).

@@ -31,6 +31,11 @@ const CARPARK_SRC = {};
 const CARPARKS = [];
 // before the terrain splat is painted: the car park polygon of the Plaza del Cristo is really a big paved square on top
 function prepUndergroundAreas() {
+  try {
+    milagrosaPrep(); // v1.4.53 (05mm_milagrosa.js)
+  } catch (e) {
+    console.error('milagrosa prep', e);
+  }
   const sq = DATA.AT.indexOf('square');
   for (const a of DATA.A)
     if (a[1] >= 0 && /Parking del Cristo/.test(STR[a[1]])) {
@@ -682,6 +687,12 @@ function buildCarParks() {
       acc0 += Ls;
     }
     PLAZA_PROPS.push(['kiosk', ...F2.W(uc, 0)]);
+  }
+  // ---- v1.4.53: Plaza de la Milagrosa and its car park (05mm_milagrosa.js)
+  try {
+    buildMilagrosa();
+  } catch (e) {
+    console.error('milagrosa', e);
   }
   // ---- Avenida de La Trinidad: two Indigo car parks (v0.68, 05u_trinidad.js)
   try {

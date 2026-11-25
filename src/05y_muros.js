@@ -157,6 +157,73 @@ function denseTown(x, z) {
   for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) n += DENSE.get((a + i) * 100003 + b + j) || 0;
   return n >= 14 || isHistoric(x, z);
 }
+// v1.4.52 (Jonay: «el Ríos Tejera tiene muros salvo en su entrada; por debajo hay institutos, que es lo mismo: tiene su
+// entrada pero el resto rodeado por muros»): the sports grounds of the map (areas «sports»: pavilions, complexes, sports
+// cities) are closed by a 2.2 m wall along their edge, open where a path or a street goes in (the entrance) and where a
+// building stands on the edge; if nothing goes in, a 5 m gate at the point of the edge nearest a street. (The schools
+// are not areas in the map's data yet: PENDIENTES)
+function recintosMuros() {
+  const out = [];
+  for (const a of DATA.A) {
+    if (DATA.AT[a[0]] !== 'sports' || a[2].length < 8) continue;
+    if (a[1] >= 0 && /Francisco Peraza/.test(STR[a[1]])) continue; // (its own walls: 05v_peraza.js)
+    const c = a[2],
+      n = c.length / 2;
+    let per = 0;
+    for (let i = 0; i < n; i++) per += Math.hypot(c[(2 * i + 2) % c.length] - c[2 * i], c[(2 * i + 3) % c.length] - c[2 * i + 1]);
+    if (per < 40 || per > 1600) continue;
+    // the points of the edge every metre, inset 0.6 m (the wall stands inside the ground, off the pavement)
+    let cx = 0,
+      cz = 0;
+    for (let i = 0; i < c.length; i += 2) ((cx += c[i] / n), (cz += c[i + 1] / n));
+    const P = [];
+    for (let i = 0; i < n; i++) {
+      const ax = c[2 * i],
+        az = c[2 * i + 1],
+        bx = c[(2 * i + 2) % c.length],
+        bz = c[(2 * i + 3) % c.length],
+        L = Math.hypot(bx - ax, bz - az),
+        m = Math.max(1, Math.round(L));
+      for (let k = 0; k < m; k++) {
+        let x = ax + ((bx - ax) * k) / m,
+          z = az + ((bz - az) * k) / m;
+        const d = Math.hypot(cx - x, cz - z) || 1;
+        x += ((cx - x) / d) * 0.6;
+        z += ((cz - z) / d) * 0.6;
+        P.push([x, z]);
+      }
+    }
+    // open: where a path or a street crosses the edge (within 2.5 m of its line), on a carriageway, inside a building
+    const open = P.map(([x, z]) => {
+      const rn = ROADSEG.nearest(x, z, (r) => r[0] <= 14);
+      return (rn && rn.d < DATA.R[rn.ri][2] / 2 + 1.2) || onCarriagewayEarly(x, z, 0.3) || inAnyBuilding(x, z);
+    });
+    if (!open.some((o) => o)) {
+      // no way in: a 5 m gate at the point nearest a street
+      let best = -1,
+        bd = 1e9;
+      P.forEach(([x, z], i) => {
+        const rn = ROADSEG.nearest(x, z, (r) => r[0] <= 12);
+        if (rn && rn.d < bd) ((bd = rn.d), (best = i));
+      });
+      if (best >= 0) for (let k = -2; k <= 2; k++) open[(best + k + P.length) % P.length] = true;
+    }
+    // the runs of closed points (round the end of the list back to its start)
+    const start = open.indexOf(true);
+    if (start < 0) continue;
+    let run = [];
+    for (let k = 1; k <= P.length; k++) {
+      const i = (start + k) % P.length;
+      if (open[i]) {
+        if (run.length >= 3) out.push(['wall', 2.2, '', run.flat()]);
+        run = [];
+      } else run.push(P[i]);
+    }
+    if (run.length >= 3) out.push(['wall', 2.2, '', run.flat()]);
+  }
+  window.__recintos = out.length; // (tests)
+  return out;
+}
 function cascoSolares() {
   const out = [],
     open = new Set(['park', 'garden', 'grass', 'pitch', 'playground', 'parking', 'square', 'sports', 'cemetery']),
@@ -552,6 +619,11 @@ function buildWallsPart1() {
     for (const w of cascoSolares()) list.push(w); // v1.4.50
   } catch (e) {
     console.error('solares', e);
+  }
+  try {
+    for (const w of recintosMuros()) list.push(w); // v1.4.52
+  } catch (e) {
+    console.error('recintos', e);
   }
   // height (m above the ground), thickness, material
   const KIND = {
