@@ -454,6 +454,11 @@ const CG_TEX = new THREE.DataTexture(CG_DATA, CG.nx, CG.nz, THREE.RedFormat, THR
 CG_TEX.magFilter = CG_TEX.minFilter = THREE.NearestFilter;
 CG_TEX.needsUpdate = true;
 function finalizeCuts() {
+  try {
+    fitTerrainToRoads(); // v1.4.50
+  } catch (e) {
+    console.error('fitTerrainToRoads', e);
+  }
   TCUTS_READY = true;
   const n = Math.min(NCUT, TCUTS.length);
   let g = -1,
@@ -585,7 +590,65 @@ function buildTerrain() {
   const mesh = new THREE.Mesh(g, m);
   mesh.receiveShadow = true;
   scene.add(mesh);
+  TERRAIN_MESH = mesh; // (v1.4.50: fitTerrainToRoads)
   return mesh;
+}
+let TERRAIN_MESH = null;
+/** v1.4.50 (Jonay, Autopista del Norte en Cercado Mesa, X −24, Y 1083: «vuelve a aparecer textura rara que se superpone a la
+ *  pista; lo raro es que encoge si me alejo y ocupa más al acercarse»): it was the ground (16 m squares following the
+ *  relief) a few cm over the asphalt where a road runs across a slope or two carriageways part (the road is drawn flat
+ *  across its width); the depth offset of the roads hid it from far, not from near. Nothing lowered the ground under the
+ *  roads: now, after the roads are built, every corner of the ground's squares under a piece of asphalt (CSURF, 2 m
+ *  cells) that stands above that asphalt goes 15 cm under it (not under a building, not in a cutting or tunnel, never
+ *  more than 3 m); heightAt follows (HM) */
+function fitTerrainToRoads() {
+  if (!TERRAIN_MESH) return;
+  const pos = TERRAIN_MESH.geometry.attributes.position,
+    nx = HM.nx,
+    nz = HM.nz,
+    changed = new Map();
+  for (const [tk, T] of CSURF) {
+    const ti = Math.round(tk / 100003),
+      tj = tk - ti * 100003;
+    for (let a = 0; a < 20; a++)
+      for (let b = 0; b < 20; b++) {
+        const v = T.a[a * 20 + b];
+        if (v === -32768) continue;
+        const y = T.b + v / 100,
+          x = (ti * 20 + a + 0.5) * 2,
+          z = (tj * 20 + b + 0.5) * 2;
+        if (heightAt(x, z) <= y - 0.08) continue;
+        if (inCut(x, z, 0.5)) continue;
+        // (not by a tunnel or a bridge: their mouths and abutments have their own ground; a tunnel's floor is under it)
+        const rn = ROADSEG.nearest(x, z, (r) => r[0] <= 12 && (r[3] & 6) !== 0);
+        if (rn && rn.d < DATA.R[rn.ri][2] / 2 + 4) continue;
+        const gx = Math.floor((x - HM.x0) / HM.dx),
+          gz = Math.floor((z - HM.z0) / HM.dx);
+        if (gx < 0 || gz < 0 || gx >= nx - 1 || gz >= nz - 1) continue;
+        const want = Math.round((y - 0.15) * 10);
+        for (const [di, dj] of [
+          [0, 0],
+          [1, 0],
+          [0, 1],
+          [1, 1]
+        ]) {
+          const k = (gz + dj) * nx + gx + di,
+            cur = changed.has(k) ? changed.get(k) : HM.a[k];
+          if (want >= cur || HM.a[k] - want > 30) continue;
+          if (inAnyBuilding(HM.x0 + (gx + di) * HM.dx, HM.z0 + (gz + dj) * HM.dx)) continue;
+          changed.set(k, want);
+        }
+      }
+  }
+  for (const [k, v] of changed) {
+    HM.a[k] = v;
+    pos.setY(k, v / 10);
+  }
+  if (changed.size) {
+    pos.needsUpdate = true;
+    TERRAIN_MESH.geometry.computeVertexNormals();
+  }
+  window.__terrFit = changed.size; // (tests)
 }
 /** (v1.1.7, code quality) part of buildTerrain */
 function buildTerrainPart1() {
@@ -707,14 +770,17 @@ function parkSides(rd) {
     } // v1.1.2: a street-side car park of the OSM along it
     else {
       ps.src = 'ancho';
-      const lanesW = (ps.lanes > 0 ? ps.lanes : ow ? 1 : 2) * 3.1,
+      const lanesW = (ps.lanes > 0 ? ps.lanes : ow ? (TWINS.has(RD_INDEX.get(rd)) ? 2 : 1) : 2) * 3.1, // (v1.4.50: half of a dual avenue: two lanes first)
         free = w - lanesW - 0.6; // what is left beside the lanes
       if (ps.lanes > 0) {
         if (free >= 4.3) ps.sides = [1, -1];
         else if (free >= 2.1) ps.sides = [((c[0] * 13 + c[1] * 7) | 0) % 2 ? 1 : -1];
       } else if (ow) {
-        if (w >= 9) ps.sides = [1, -1];
-        else if (w >= 6.6) ps.sides = [(w * 7) % 2 < 1 ? 1 : -1];
+        // (v1.4.50, Jonay: «en los Menceyes, por ejemplo, hay dos carriles y aparcamientos al lado derecho en zonas donde
+        // caben los coches»): a one-way street parks on its right (side 1); half of a dual avenue only beyond its two lanes
+        const lanes = TWINS.has(RD_INDEX.get(rd)) ? 5.6 : 2.8;
+        if (w - 4.4 >= lanes + 1.8) ps.sides = [1, -1];
+        else if (w - 2.2 >= lanes + 0.6) ps.sides = [1];
       } else {
         const lane = clamp(w / 4, 1.3, w >= 13 ? 2.4 : 1.7),
           gap = w / 2 - 1.9 - (lane + 1.0);
@@ -722,6 +788,10 @@ function parkSides(rd) {
       }
     }
   }
+  // v1.4.50 (Jonay, La Trinidad y Av. Leonardo Torriani: «solo hay un carril»): half of a dual avenue keeps two lanes; a
+  // parking lane that leaves no room for them (2 × 2.8 m) goes
+  if (ow && ps.sides.length && ps.lanes <= 0 && TWINS.has(RD_INDEX.get(rd)))
+    while (ps.sides.length && w - ps.sides.length * 2.2 < 5.6) ps.sides.pop();
   PARKSIDE.set(rd, ps);
   return ps;
 }
@@ -888,8 +958,18 @@ function laneMkPart1(rd) {
   const p0 = ps.sides.includes(1) ? PB : 0,
     p1 = ps.sides.includes(-1) ? PB : 0,
     wl = w - p0 - p1; // the carriageway between the parking bands
+  // (v1.4.50, Jonay: «ahora solo hay un carril»: a one-way street counted its lanes as a motorway's, 3.5 m and 1.2 m of
+  // shoulders: a 6 m carriageway (La Trinidad, measured: two lanes of 3 m) gave one. In town, lanes of 2.8 m or more)
   const n = ow
-    ? clamp(ps.lanes > 0 ? ps.lanes : Math.round((wl - (mot ? 2.2 : 1.2)) / 3.5), 1, 5)
+    ? clamp(
+        mot
+          ? Math.max(ps.lanes > 0 ? ps.lanes : 0, Math.round((wl - 2.2) / 3.5)) // (v1.4.50, Jonay: «se perdieron las marcas de carriles en la pista»: a 13.4 m motorway the map gives as one lane drew no lines; its lanes fill its width)
+          : ps.lanes > 0
+            ? ps.lanes
+            : Math.min(2, Math.floor((wl - 0.4) / 2.8)), // (at most two in town unless the map says more: Jonay, 3-nov, «hay muchas zonas de 2 carriles que lo que tienen en realidad es 2 carriles y una fila de aparcamientos»)
+        1,
+        5
+      )
     : ps.lanes >= 4 || (ps.lanes < 0 && wl >= 12.5)
       ? 4
       : 2;
@@ -934,20 +1014,37 @@ function csurfTri(a, b, c) {
       const y = a[1] + u * (b[1] - a[1]) + v * (c[1] - a[1]),
         tk = Math.floor(i / 20) * 100003 + Math.floor(j / 20);
       let T = CSURF.get(tk);
-      if (!T) CSURF.set(tk, (T = { b: y, a: new Int16Array(400).fill(-32768) })); // (cm over the tile's base: half the memory of floats)
+      if (!T) CSURF.set(tk, (T = { b: y, a: new Int16Array(400).fill(-32768), l: new Int16Array(400).fill(-32768) })); // (cm over the tile's base: half the memory of floats)
       const k = (i - Math.floor(i / 20) * 20) * 20 + (j - Math.floor(j / 20) * 20),
         cm = Math.max(-32767, Math.min(32767, Math.round((y - T.b) * 100)));
-      if (T.a[k] === -32768 || cm > T.a[k]) T.a[k] = cm;
+      // v1.4.50 (Jonay: «mirar las capas de carreteras apiladas unas encima de otras… de manera que nunca te caigas estando
+      // sobre una carretera al subsuelo»): two layers per cell: the top one (a) and, more than 1.5 m under it, the one
+      // below (l: a street over the mouth of a tunnel, a bridge over a road); the car stands on the one under its wheels
+      const top = T.a[k];
+      if (top === -32768) T.a[k] = cm;
+      else if (cm > top + 150) {
+        T.l[k] = top;
+        T.a[k] = cm;
+      } else if (cm < top - 150) {
+        if (T.l[k] === -32768 || cm > T.l[k]) T.l[k] = cm;
+      } else if (cm > top) T.a[k] = cm;
     }
 }
-function csurfCell(i, j) {
+function csurfCell(i, j, py) {
   const T = CSURF.get(Math.floor(i / 20) * 100003 + Math.floor(j / 20));
   if (!T) return NaN;
-  const v = T.a[(i - Math.floor(i / 20) * 20) * 20 + (j - Math.floor(j / 20) * 20)];
-  return v === -32768 ? NaN : T.b + v / 100;
+  const k = (i - Math.floor(i / 20) * 20) * 20 + (j - Math.floor(j / 20) * 20),
+    v = T.a[k];
+  if (v === -32768) return NaN;
+  const y = T.b + v / 100;
+  if (py === undefined || y < py + 0.75) return y;
+  // (v1.4.50: the top layer is over the wheels: the one below, if there is one)
+  const l = T.l[k];
+  return l === -32768 ? NaN : T.b + l / 100;
 }
-/** the drawn asphalt's height at (x, z), or null where there is no road (bilinear over the cells that have it) */
-function carSurfAt(x, z) {
+/** the drawn asphalt's height at (x, z), or null where there is no road (bilinear over the cells that have it); py: the
+ *  height of whoever stands there (v1.4.50: the layer under it, where streets are stacked) */
+function carSurfAt(x, z, py) {
   const fx = x / 2 - 0.5,
     fz = z / 2 - 0.5,
     i = Math.floor(fx),
@@ -962,7 +1059,7 @@ function carSurfAt(x, z) {
     [0, 1, (1 - tx) * tz],
     [1, 1, tx * tz]
   ]) {
-    const y = csurfCell(i + di, j + dj);
+    const y = csurfCell(i + di, j + dj, py);
     if (y === y && ww > 1e-4) {
       s += y * ww;
       w += ww;
@@ -1229,6 +1326,7 @@ function buildRoads() {
   for (let ri = 0; ri < DATA.R.length; ri++) {
     buildRoadsEach(ri);
   }
+  OBST_RI = -1; // (v1.4.50: if the last street was sunk or raised —since 1.4.49 a piece of Geneto— the audit charged it with the corridors' cuttings)
   corrBuildTramos(); // v1.2.0: the cuttings of the corridor zones as one piece (04c_corredores.js)
   buildRoadsPart2();
 }
@@ -1400,7 +1498,8 @@ function buildRoadsPart1() {
   computeRaises();
   // v1.4.48 (Jonay: «ten mucho cuidado al cambiar el ancho en túneles y puentes»; prueba 1439: walls back in the lanes by
   // the underpass of the Vía de Ronda): the sunk and raised roads (trenches, underpasses, embankments) keep their width of
-  // before too, as tunnels and bridges (01_core.js): their walls, cuts and slopes are made from it
+  // before too, as tunnels and bridges (01_core.js): their walls, cuts and slopes are made from it. (v1.4.50: without it
+  // there are no new walls in lanes, but a step where a bridge —still wide— meets its narrower approach: PENDIENTES)
   for (const ri of [...DEP.keys(), ...RAISE.keys()]) {
     const r = DATA.R[ri];
     if (r && r.wMax && r[2] < r.wMax && r.swMin === undefined) r[2] = r.wMax; // (not a street Jonay measured: ROAD_REAL, 01_core.js)
@@ -5230,6 +5329,11 @@ function buildBuildingsPart1() {
   } catch (e) {
     console.error('catastro', e);
   }
+  try {
+    reservedPlotsClear(); // v1.4.50: the hand-made houses keep their plot (05p_casas.js)
+  } catch (e) {
+    console.error('casas propias', e);
+  }
 }
 // v1.4.47 (Jonay: «¿y ese tejado qué fue?», a roof flap over the Calle Juan de Vera, X −101, Y −433): the inner ring of
 // a hip roof moves each corner inwards up to 8.5 m; on a narrow (or clipped) footprint some went past the opposite wall,
@@ -6023,6 +6127,9 @@ function buildMedians() {
           if (best.dot > 0 && rd[3] & 1 && R[best.rj][3] & 1 && Math.min(rd[0], R[best.rj][0]) === 0 && Math.max(rd[0], R[best.rj][0]) === 1)
             continue;
           const kind = big(rd[0]) && big(R[best.rj][0]) ? 2 : big(rd[0]) || big(R[best.rj][0]) ? 3 : 1;
+          // (v1.4.50: no urban island beside a sunk way, a tunnel or a bridge: painted at street level over the mouth of
+          // the tunnel of San Benito, X −1228, Y −12, cars driving down into it stayed up on it)
+          if (kind === 1 && (DEP.has(ri) || DEP.has(best.rj) || (R[best.rj][3] & 6) !== 0)) continue;
           const ya = ROADY[ri](s0 + t, x, z),
             yb = ROADY[best.rj](best.s2, best.px, best.pz);
           if (!Number.isFinite(ya) || !Number.isFinite(yb) || Math.abs(ya - yb) > (kind === 1 ? 0.6 : 2.5)) continue; // (v0.91.1: a height that comes out NaN must not slip through: the audit saw NaN positions) // v0.91: a barrier or a guardrail also on a slope (the two carriageways at different heights)
@@ -6042,7 +6149,7 @@ function buildMedians() {
           if (tramTrenchAt(mx, mz, 7)) continue; // v0.72: no island over the tram cutting
           // v0.91: the kind: New Jersey between two big roads (the two directions of the TF-5), a steel guardrail between a
           // big road and a smaller one beside it (the TF-5 and the road that runs along it), a kerb island between small ones
-          const painted = kind === 1 && DATA.S[rd[1]] === 'Calle San Antonio' && DATA.S[R[best.rj][1]] === 'Calle San Antonio';
+          const painted = kind === 1; // (v1.4.50, Jonay: the urban kerb islands are painted everywhere: people walked through them or tripped on them)
           const key = ri + ':' + best.rj;
           let run = runs.get(key);
           if (!run) runs.set(key, (run = []));

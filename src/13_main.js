@@ -329,6 +329,7 @@ function syncPauseUI() {
   document.querySelectorAll('#segQ button').forEach((b) => b.classList.toggle('on', b.dataset.q === qName));
   document.querySelectorAll('#segW button').forEach((b) => b.classList.toggle('on', +b.dataset.w === SETTINGS.weather));
   document.querySelectorAll('#segInv button').forEach((b) => b.classList.toggle('on', +b.dataset.v === (SETTINGS.invertY ? 1 : 0)));
+  document.querySelectorAll('#segFpsM button').forEach((b) => b.classList.toggle('on', +b.dataset.v === (SETTINGS.fpsMeter ? 1 : 0)));
   $('tod').value = GAME.tod;
   $('sens').value = SETTINGS.sens;
   $('fpscap').value = fpsCap('city') || 144; // v1.4.44
@@ -360,6 +361,15 @@ document.querySelectorAll('#segInv button').forEach((b) =>
     SETTINGS.invertY = b.dataset.v === '1';
     saveSettings();
     syncPauseUI();
+  })
+);
+// v1.4.50 (Jonay: «un contador de FPS y frametime activable en opciones, en la esquina superior derecha, para hacer mis test»)
+document.querySelectorAll('#segFpsM button').forEach((b) =>
+  b.addEventListener('click', () => {
+    SETTINGS.fpsMeter = b.dataset.v === '1';
+    saveSettings();
+    syncPauseUI();
+    FPSM.show();
   })
 );
 $('tod').addEventListener('input', (e) => {
@@ -513,6 +523,42 @@ window.__prof = PROF;
 const pm = (k, t0) => {
   PROF[k] = (PROF[k] || 0) * 0.9 + (performance.now() - t0) * 0.1;
 };
+// v1.4.50: the FPS meter (Opciones → Contador de FPS): frames a second, the time between frames (average and the worst
+// one of each half second) and the CPU time of the frame (logic + sending the drawing; the GPU's own work is not in it)
+const FPSM = (() => {
+  const el = $('fpsMeter');
+  let n = 0,
+    t0 = performance.now(),
+    prev = 0,
+    sum = 0,
+    worst = 0,
+    cpu = 0;
+  return {
+    show() {
+      el.style.display = SETTINGS.fpsMeter ? 'block' : 'none';
+    },
+    frame(now, work) {
+      if (!SETTINGS.fpsMeter) return;
+      if (prev) {
+        const ft = now - prev;
+        if (ft < 5000) {
+          n++;
+          sum += ft;
+          worst = Math.max(worst, ft);
+          cpu += work;
+        }
+      }
+      prev = now;
+      if (now - t0 >= 500) {
+        if (n)
+          el.textContent = `${Math.round((n * 1000) / (now - t0))} FPS · ${(sum / n).toFixed(1)} ms (máx ${worst.toFixed(1)}) · CPU ${(cpu / n).toFixed(1)} ms`;
+        n = sum = worst = cpu = 0;
+        t0 = now;
+      }
+    }
+  };
+})();
+FPSM.show();
 const cityFrameDue = makeFrameGate(() => fpsCap('city')); // v1.4.44: the Opciones bar (SETTINGS.fps); 30 on phones by default
 function loop(now = performance.now()) {
   requestAnimationFrame(loop);
@@ -520,10 +566,11 @@ function loop(now = performance.now()) {
   updateMiniGamepad();
   let dt = Math.min(0.05, (now - last) / 1000);
   last = now;
-  if (GAME.state === 'fight2d' || GAME.state === 'basket2d' || GAME.state === 'futbol2d' || GAME.state === 'arcade') return; // the 2D fight / basketball game draw themselves; v1.1.8 (auditor): the arcade and the console too (their screen covers everything)
+  if (GAME.state === 'fight2d' || GAME.state === 'basket2d' || GAME.state === 'futbol2d' || GAME.state === 'arcade') return FPSM.frame(now, 0); // the 2D fight / basketball game draw themselves; v1.1.8 (auditor): the arcade and the console too (their screen covers everything)
   logic(dt, now);
   render();
   adaptRes(now);
+  FPSM.frame(now, performance.now() - now);
 }
 // dynamic resolution: keep the frame rate playable (mainly on phones)
 const DYN = { pr: renderer.getPixelRatio(), max: renderer.getPixelRatio(), ms: 16, t: 0, min: IS_TOUCH ? 0.5 : 0.75 };
@@ -1169,6 +1216,11 @@ window.__dbg = {
   OBISPADO,
   SPORTS,
   inAnyBuilding,
+  laneMkPart1, // v1.4.50 (sonda_carriles_en.py)
+  laneCentres,
+  ROADCLASS,
+  CSURF,
+  TWINS,
   COURTS,
   courtGateNear,
   useCourtGate,
@@ -1224,6 +1276,7 @@ window.__dbg = {
   nearestDoor,
   useDoor,
   DECKS,
+  carSurfAt, // v1.4.50 (sonda_suelo_en.py)
   ROADSEG,
   GRAPH,
   routeToward, // v1.4.43
@@ -1262,6 +1315,7 @@ window.__dbg = {
   TUNNEL_DECKS,
   lowAt,
   deckAt,
+  LAMPS, // v1.4.50 (sonda_bajo_puente.py)
   deckSide,
   CARPARKS,
   UGC,

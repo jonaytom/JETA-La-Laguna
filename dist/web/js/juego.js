@@ -90,10 +90,28 @@ const inPlayArea = (x, z, m = 0) => worldEdgeDist(x, z) >= m;
     const c = r[4];
     let i0 = 0,
       i1 = c.length - 2;
-    while (i0 < i1 && !inPlayArea(c[i0], c[i0 + 1], -M)) i0 += 2;
+    // v1.4.50 (Jonay, Calle Joaquín Turina: «esto es una carretera… ¿por qué es un descampado?»): a way whose end is out of
+    // the play area lost its points out there; one of only two points (a long straight way) lost the whole street. Now
+    // the way is cut where it crosses the edge
+    const edge = (ax, az, bx, bz) => {
+      let lo = 0,
+        hi = 1; // (a in, b out)
+      for (let k = 0; k < 20; k++) {
+        const m = (lo + hi) / 2;
+        if (inPlayArea(ax + (bx - ax) * m, az + (bz - az) * m, 8))
+          lo = m; // (8 m inside the edge: a car must be able to reach the end)
+        else hi = m;
+      }
+      return [ax + (bx - ax) * lo, az + (bz - az) * lo];
+    };
+    while (i0 <= i1 && !inPlayArea(c[i0], c[i0 + 1], -M)) i0 += 2;
+    if (i0 > i1) return false;
     while (i1 > i0 && !inPlayArea(c[i1], c[i1 + 1], -M)) i1 -= 2;
-    if (i1 - i0 < 2) return false;
-    r[4] = c.slice(i0, i1 + 2);
+    const o = c.slice(i0, i1 + 2);
+    if (i0 > 0) o.unshift(...edge(c[i0], c[i0 + 1], c[i0 - 2], c[i0 - 1]));
+    if (i1 < c.length - 2) o.push(...edge(c[i1], c[i1 + 1], c[i1 + 2], c[i1 + 3]));
+    if (o.length < 4 || Math.hypot(o[o.length - 2] - o[0], o[o.length - 1] - o[1]) < 2) return false;
+    r[4] = o;
     return true;
   });
   // v1.1.9: the same street twice (two downloads of a zone joined by merge_zona keep both copies; at the TF-5 one copy sank
@@ -378,10 +396,120 @@ for (const e of DATA.G.e) {
       }
   window.__enderezados = n;
 })();
+// v1.4.50 (Jonay, Av. Leonardo Torriani: «teniendo tanto espacio como dejas, 1 carril solo»; Av. de los Menceyes, La
+// Trinidad): each carriageway of a dual avenue is a one-way way in the map, and the norm gave it 3.2 m (one lane), as a
+// narrow one-way street of the old town. A one-way way with a twin (same name, the other way, side by side at 4–40 m for
+// most of its length) is half an avenue: two lanes (2 × 3.2 m urban; 2 × 3.5 m from tertiary up)
+const TWINS = new Set();
+(function findTwins() {
+  const byName = new Map();
+  DATA.R.forEach((r, ri) => {
+    if (!(r[3] & 1) || r[3] & 6 || r[0] < 3 || r[0] > 11 || r[1] < 0) return;
+    let l = byName.get(r[1]);
+    if (!l) byName.set(r[1], (l = []));
+    l.push(ri);
+  });
+  const near = (x, z, c) => {
+    let bd = 1e9,
+      dx = 0,
+      dz = 0;
+    for (let i = 0; i + 3 < c.length; i += 2) {
+      const ax = c[i],
+        az = c[i + 1],
+        ex = c[i + 2] - ax,
+        ez = c[i + 3] - az,
+        L2 = ex * ex + ez * ez || 1,
+        t = Math.max(0, Math.min(1, ((x - ax) * ex + (z - az) * ez) / L2)),
+        d = Math.hypot(x - ax - ex * t, z - az - ez * t);
+      if (d < bd) ((bd = d), (dx = ex), (dz = ez));
+    }
+    return [bd, dx, dz];
+  };
+  for (const l of byName.values()) {
+    if (l.length < 2) continue;
+    for (const ri of l) {
+      const c = DATA.R[ri][4];
+      let n = 0,
+        hit = 0;
+      for (let i = 0; i + 3 < c.length; i += 2) {
+        const L = Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]);
+        if (L < 0.5) continue;
+        const ux = (c[i + 2] - c[i]) / L,
+          uz = (c[i + 3] - c[i + 1]) / L;
+        for (let s = (L / 2) % 8; s < L; s += 8) {
+          const x = c[i] + ux * s,
+            z = c[i + 1] + uz * s;
+          n++;
+          for (const rj of l) {
+            if (rj === ri) continue;
+            const [d, dx, dz] = near(x, z, DATA.R[rj][4]),
+              dl = Math.hypot(dx, dz) || 1;
+            if (d >= 4 && d <= 40 && (ux * dx + uz * dz) / dl < -0.85) {
+              hit++;
+              (DATA.R[ri].tw || (DATA.R[ri].tw = [])).push(d);
+              break;
+            }
+          }
+        }
+      }
+      if (n && hit / n >= 0.5) TWINS.add(ri);
+    }
+  }
+  for (const ri of [...TWINS]) {
+    const r = DATA.R[ri],
+      ds = (r.tw || []).sort((a, b) => a - b),
+      sep = ds.length ? ds[Math.floor(ds.length * 0.1)] : 0; // (the distance to the other carriageway, at its tightest)
+    // (v1.4.50: the two halves must not overlap: Calle San Antonio, 6.4 m between axes, kept its painted median)
+    const w2 = Math.min(r[0] <= 7 ? 7 : 6.4, sep - 0.6);
+    delete r.tw;
+    if (w2 < 5.6) {
+      TWINS.delete(ri);
+      continue;
+    }
+    if (r[2] < w2) r[2] = Math.min(Math.max(r.wMax || w2, w2), w2);
+    r.wMin = Math.max(r.wMin || 0, r[2]);
+  }
+  window.__twins = TWINS.size; // (tests)
+})();
 narrowToGap(); // v1.0.0: residential and service streets meet the buildings halfway (04b_recorte.js)
+// v1.4.50 (Jonay, Av. de los Menceyes: «se pasa de 2 a un carril y luego a 2 otra vez… eso está mal»): a street is a row of
+// ways of the map and each one got its width apart (the norm, the lanes the map gives some of them, narrowToGap with
+// the buildings of its own stretch); a way narrower than the ways on both sides of it of the same street, the same way,
+// takes the narrower of theirs (the buildings move back: streetsRule)
+(function laneContinuity() {
+  const K = (x, z) => Math.round(x * 2) + ',' + Math.round(z * 2),
+    ends = new Map();
+  DATA.R.forEach((r, ri) => {
+    if (r[0] < 2 || r[0] > 11 || r[3] & 6 || r[1] < 0) return;
+    const c = r[4];
+    for (const k of [K(c[0], c[1]), K(c[c.length - 2], c[c.length - 1])]) {
+      let l = ends.get(k);
+      if (!l) ends.set(k, (l = []));
+      l.push(ri);
+    }
+  });
+  let n = 0;
+  for (let pass = 0; pass < 2; pass++)
+    DATA.R.forEach((r, ri) => {
+      if (r[0] < 2 || r[0] > 11 || r[3] & 6 || r[1] < 0 || r.swMin !== undefined) return;
+      const c = r[4],
+        nb = (k) =>
+          (ends.get(k) || []).filter((rj) => rj !== ri && DATA.R[rj][1] === r[1] && (DATA.R[rj][3] & 1) === (r[3] & 1)).map((rj) => DATA.R[rj][2]);
+      const a = nb(K(c[0], c[1])),
+        b = nb(K(c[c.length - 2], c[c.length - 1]));
+      if (!a.length || !b.length) return;
+      const w = Math.min(Math.max(...a), Math.max(...b));
+      if (w > r[2] + 0.5) {
+        r[2] = w;
+        n++;
+      }
+    });
+  window.__continuidad = n; // (tests)
+})();
 corrFitTwins(); // v1.2.0: the two halves of a dual road at the width of their lanes (04c_corredores.js), in the zones done so far
 trinidadWidths(); // v0.68: Av. de La Trinidad, one lane + parking per carriageway (05u_trinidad.js); after the widening
 verdelladaWidths(); // v1.3.2: the Vía de Ronda, its service roads and the roundabout of La Verdellada at their real widths (04d_verdellada.js)
+syncGraphWidths(); // v1.4.50: the traffic's lanes = the painted ones (04b_recorte.js)
 // v0.91 (Jonay, with a Street View of the TF-5: «separando los sentidos»): OSM gives the motorway as two one-way ways
 // that are often only 7–10 m apart, so the two carriageways (13 m each here) overlapped into one slab with the lines
 // mixed and no room for the barrier. Where they run side by side the points are pushed apart until there are MED
@@ -3245,6 +3373,11 @@ const CG_TEX = new THREE.DataTexture(CG_DATA, CG.nx, CG.nz, THREE.RedFormat, THR
 CG_TEX.magFilter = CG_TEX.minFilter = THREE.NearestFilter;
 CG_TEX.needsUpdate = true;
 function finalizeCuts() {
+  try {
+    fitTerrainToRoads(); // v1.4.50
+  } catch (e) {
+    console.error('fitTerrainToRoads', e);
+  }
   TCUTS_READY = true;
   const n = Math.min(NCUT, TCUTS.length);
   let g = -1,
@@ -3376,7 +3509,65 @@ function buildTerrain() {
   const mesh = new THREE.Mesh(g, m);
   mesh.receiveShadow = true;
   scene.add(mesh);
+  TERRAIN_MESH = mesh; // (v1.4.50: fitTerrainToRoads)
   return mesh;
+}
+let TERRAIN_MESH = null;
+/** v1.4.50 (Jonay, Autopista del Norte en Cercado Mesa, X −24, Y 1083: «vuelve a aparecer textura rara que se superpone a la
+ *  pista; lo raro es que encoge si me alejo y ocupa más al acercarse»): it was the ground (16 m squares following the
+ *  relief) a few cm over the asphalt where a road runs across a slope or two carriageways part (the road is drawn flat
+ *  across its width); the depth offset of the roads hid it from far, not from near. Nothing lowered the ground under the
+ *  roads: now, after the roads are built, every corner of the ground's squares under a piece of asphalt (CSURF, 2 m
+ *  cells) that stands above that asphalt goes 15 cm under it (not under a building, not in a cutting or tunnel, never
+ *  more than 3 m); heightAt follows (HM) */
+function fitTerrainToRoads() {
+  if (!TERRAIN_MESH) return;
+  const pos = TERRAIN_MESH.geometry.attributes.position,
+    nx = HM.nx,
+    nz = HM.nz,
+    changed = new Map();
+  for (const [tk, T] of CSURF) {
+    const ti = Math.round(tk / 100003),
+      tj = tk - ti * 100003;
+    for (let a = 0; a < 20; a++)
+      for (let b = 0; b < 20; b++) {
+        const v = T.a[a * 20 + b];
+        if (v === -32768) continue;
+        const y = T.b + v / 100,
+          x = (ti * 20 + a + 0.5) * 2,
+          z = (tj * 20 + b + 0.5) * 2;
+        if (heightAt(x, z) <= y - 0.08) continue;
+        if (inCut(x, z, 0.5)) continue;
+        // (not by a tunnel or a bridge: their mouths and abutments have their own ground; a tunnel's floor is under it)
+        const rn = ROADSEG.nearest(x, z, (r) => r[0] <= 12 && (r[3] & 6) !== 0);
+        if (rn && rn.d < DATA.R[rn.ri][2] / 2 + 4) continue;
+        const gx = Math.floor((x - HM.x0) / HM.dx),
+          gz = Math.floor((z - HM.z0) / HM.dx);
+        if (gx < 0 || gz < 0 || gx >= nx - 1 || gz >= nz - 1) continue;
+        const want = Math.round((y - 0.15) * 10);
+        for (const [di, dj] of [
+          [0, 0],
+          [1, 0],
+          [0, 1],
+          [1, 1]
+        ]) {
+          const k = (gz + dj) * nx + gx + di,
+            cur = changed.has(k) ? changed.get(k) : HM.a[k];
+          if (want >= cur || HM.a[k] - want > 30) continue;
+          if (inAnyBuilding(HM.x0 + (gx + di) * HM.dx, HM.z0 + (gz + dj) * HM.dx)) continue;
+          changed.set(k, want);
+        }
+      }
+  }
+  for (const [k, v] of changed) {
+    HM.a[k] = v;
+    pos.setY(k, v / 10);
+  }
+  if (changed.size) {
+    pos.needsUpdate = true;
+    TERRAIN_MESH.geometry.computeVertexNormals();
+  }
+  window.__terrFit = changed.size; // (tests)
 }
 /** (v1.1.7, code quality) part of buildTerrain */
 function buildTerrainPart1() {
@@ -3498,14 +3689,17 @@ function parkSides(rd) {
     } // v1.1.2: a street-side car park of the OSM along it
     else {
       ps.src = 'ancho';
-      const lanesW = (ps.lanes > 0 ? ps.lanes : ow ? 1 : 2) * 3.1,
+      const lanesW = (ps.lanes > 0 ? ps.lanes : ow ? (TWINS.has(RD_INDEX.get(rd)) ? 2 : 1) : 2) * 3.1, // (v1.4.50: half of a dual avenue: two lanes first)
         free = w - lanesW - 0.6; // what is left beside the lanes
       if (ps.lanes > 0) {
         if (free >= 4.3) ps.sides = [1, -1];
         else if (free >= 2.1) ps.sides = [((c[0] * 13 + c[1] * 7) | 0) % 2 ? 1 : -1];
       } else if (ow) {
-        if (w >= 9) ps.sides = [1, -1];
-        else if (w >= 6.6) ps.sides = [(w * 7) % 2 < 1 ? 1 : -1];
+        // (v1.4.50, Jonay: «en los Menceyes, por ejemplo, hay dos carriles y aparcamientos al lado derecho en zonas donde
+        // caben los coches»): a one-way street parks on its right (side 1); half of a dual avenue only beyond its two lanes
+        const lanes = TWINS.has(RD_INDEX.get(rd)) ? 5.6 : 2.8;
+        if (w - 4.4 >= lanes + 1.8) ps.sides = [1, -1];
+        else if (w - 2.2 >= lanes + 0.6) ps.sides = [1];
       } else {
         const lane = clamp(w / 4, 1.3, w >= 13 ? 2.4 : 1.7),
           gap = w / 2 - 1.9 - (lane + 1.0);
@@ -3513,6 +3707,10 @@ function parkSides(rd) {
       }
     }
   }
+  // v1.4.50 (Jonay, La Trinidad y Av. Leonardo Torriani: «solo hay un carril»): half of a dual avenue keeps two lanes; a
+  // parking lane that leaves no room for them (2 × 2.8 m) goes
+  if (ow && ps.sides.length && ps.lanes <= 0 && TWINS.has(RD_INDEX.get(rd)))
+    while (ps.sides.length && w - ps.sides.length * 2.2 < 5.6) ps.sides.pop();
   PARKSIDE.set(rd, ps);
   return ps;
 }
@@ -3679,8 +3877,18 @@ function laneMkPart1(rd) {
   const p0 = ps.sides.includes(1) ? PB : 0,
     p1 = ps.sides.includes(-1) ? PB : 0,
     wl = w - p0 - p1; // the carriageway between the parking bands
+  // (v1.4.50, Jonay: «ahora solo hay un carril»: a one-way street counted its lanes as a motorway's, 3.5 m and 1.2 m of
+  // shoulders: a 6 m carriageway (La Trinidad, measured: two lanes of 3 m) gave one. In town, lanes of 2.8 m or more)
   const n = ow
-    ? clamp(ps.lanes > 0 ? ps.lanes : Math.round((wl - (mot ? 2.2 : 1.2)) / 3.5), 1, 5)
+    ? clamp(
+        mot
+          ? Math.max(ps.lanes > 0 ? ps.lanes : 0, Math.round((wl - 2.2) / 3.5)) // (v1.4.50, Jonay: «se perdieron las marcas de carriles en la pista»: a 13.4 m motorway the map gives as one lane drew no lines; its lanes fill its width)
+          : ps.lanes > 0
+            ? ps.lanes
+            : Math.min(2, Math.floor((wl - 0.4) / 2.8)), // (at most two in town unless the map says more: Jonay, 3-nov, «hay muchas zonas de 2 carriles que lo que tienen en realidad es 2 carriles y una fila de aparcamientos»)
+        1,
+        5
+      )
     : ps.lanes >= 4 || (ps.lanes < 0 && wl >= 12.5)
       ? 4
       : 2;
@@ -3725,20 +3933,37 @@ function csurfTri(a, b, c) {
       const y = a[1] + u * (b[1] - a[1]) + v * (c[1] - a[1]),
         tk = Math.floor(i / 20) * 100003 + Math.floor(j / 20);
       let T = CSURF.get(tk);
-      if (!T) CSURF.set(tk, (T = { b: y, a: new Int16Array(400).fill(-32768) })); // (cm over the tile's base: half the memory of floats)
+      if (!T) CSURF.set(tk, (T = { b: y, a: new Int16Array(400).fill(-32768), l: new Int16Array(400).fill(-32768) })); // (cm over the tile's base: half the memory of floats)
       const k = (i - Math.floor(i / 20) * 20) * 20 + (j - Math.floor(j / 20) * 20),
         cm = Math.max(-32767, Math.min(32767, Math.round((y - T.b) * 100)));
-      if (T.a[k] === -32768 || cm > T.a[k]) T.a[k] = cm;
+      // v1.4.50 (Jonay: «mirar las capas de carreteras apiladas unas encima de otras… de manera que nunca te caigas estando
+      // sobre una carretera al subsuelo»): two layers per cell: the top one (a) and, more than 1.5 m under it, the one
+      // below (l: a street over the mouth of a tunnel, a bridge over a road); the car stands on the one under its wheels
+      const top = T.a[k];
+      if (top === -32768) T.a[k] = cm;
+      else if (cm > top + 150) {
+        T.l[k] = top;
+        T.a[k] = cm;
+      } else if (cm < top - 150) {
+        if (T.l[k] === -32768 || cm > T.l[k]) T.l[k] = cm;
+      } else if (cm > top) T.a[k] = cm;
     }
 }
-function csurfCell(i, j) {
+function csurfCell(i, j, py) {
   const T = CSURF.get(Math.floor(i / 20) * 100003 + Math.floor(j / 20));
   if (!T) return NaN;
-  const v = T.a[(i - Math.floor(i / 20) * 20) * 20 + (j - Math.floor(j / 20) * 20)];
-  return v === -32768 ? NaN : T.b + v / 100;
+  const k = (i - Math.floor(i / 20) * 20) * 20 + (j - Math.floor(j / 20) * 20),
+    v = T.a[k];
+  if (v === -32768) return NaN;
+  const y = T.b + v / 100;
+  if (py === undefined || y < py + 0.75) return y;
+  // (v1.4.50: the top layer is over the wheels: the one below, if there is one)
+  const l = T.l[k];
+  return l === -32768 ? NaN : T.b + l / 100;
 }
-/** the drawn asphalt's height at (x, z), or null where there is no road (bilinear over the cells that have it) */
-function carSurfAt(x, z) {
+/** the drawn asphalt's height at (x, z), or null where there is no road (bilinear over the cells that have it); py: the
+ *  height of whoever stands there (v1.4.50: the layer under it, where streets are stacked) */
+function carSurfAt(x, z, py) {
   const fx = x / 2 - 0.5,
     fz = z / 2 - 0.5,
     i = Math.floor(fx),
@@ -3753,7 +3978,7 @@ function carSurfAt(x, z) {
     [0, 1, (1 - tx) * tz],
     [1, 1, tx * tz]
   ]) {
-    const y = csurfCell(i + di, j + dj);
+    const y = csurfCell(i + di, j + dj, py);
     if (y === y && ww > 1e-4) {
       s += y * ww;
       w += ww;
@@ -4020,6 +4245,7 @@ function buildRoads() {
   for (let ri = 0; ri < DATA.R.length; ri++) {
     buildRoadsEach(ri);
   }
+  OBST_RI = -1; // (v1.4.50: if the last street was sunk or raised —since 1.4.49 a piece of Geneto— the audit charged it with the corridors' cuttings)
   corrBuildTramos(); // v1.2.0: the cuttings of the corridor zones as one piece (04c_corredores.js)
   buildRoadsPart2();
 }
@@ -4191,7 +4417,8 @@ function buildRoadsPart1() {
   computeRaises();
   // v1.4.48 (Jonay: «ten mucho cuidado al cambiar el ancho en túneles y puentes»; prueba 1439: walls back in the lanes by
   // the underpass of the Vía de Ronda): the sunk and raised roads (trenches, underpasses, embankments) keep their width of
-  // before too, as tunnels and bridges (01_core.js): their walls, cuts and slopes are made from it
+  // before too, as tunnels and bridges (01_core.js): their walls, cuts and slopes are made from it. (v1.4.50: without it
+  // there are no new walls in lanes, but a step where a bridge —still wide— meets its narrower approach: PENDIENTES)
   for (const ri of [...DEP.keys(), ...RAISE.keys()]) {
     const r = DATA.R[ri];
     if (r && r.wMax && r[2] < r.wMax && r.swMin === undefined) r[2] = r.wMax; // (not a street Jonay measured: ROAD_REAL, 01_core.js)
@@ -8021,6 +8248,11 @@ function buildBuildingsPart1() {
   } catch (e) {
     console.error('catastro', e);
   }
+  try {
+    reservedPlotsClear(); // v1.4.50: the hand-made houses keep their plot (05p_casas.js)
+  } catch (e) {
+    console.error('casas propias', e);
+  }
 }
 // v1.4.47 (Jonay: «¿y ese tejado qué fue?», a roof flap over the Calle Juan de Vera, X −101, Y −433): the inner ring of
 // a hip roof moves each corner inwards up to 8.5 m; on a narrow (or clipped) footprint some went past the opposite wall,
@@ -8814,6 +9046,9 @@ function buildMedians() {
           if (best.dot > 0 && rd[3] & 1 && R[best.rj][3] & 1 && Math.min(rd[0], R[best.rj][0]) === 0 && Math.max(rd[0], R[best.rj][0]) === 1)
             continue;
           const kind = big(rd[0]) && big(R[best.rj][0]) ? 2 : big(rd[0]) || big(R[best.rj][0]) ? 3 : 1;
+          // (v1.4.50: no urban island beside a sunk way, a tunnel or a bridge: painted at street level over the mouth of
+          // the tunnel of San Benito, X −1228, Y −12, cars driving down into it stayed up on it)
+          if (kind === 1 && (DEP.has(ri) || DEP.has(best.rj) || (R[best.rj][3] & 6) !== 0)) continue;
           const ya = ROADY[ri](s0 + t, x, z),
             yb = ROADY[best.rj](best.s2, best.px, best.pz);
           if (!Number.isFinite(ya) || !Number.isFinite(yb) || Math.abs(ya - yb) > (kind === 1 ? 0.6 : 2.5)) continue; // (v0.91.1: a height that comes out NaN must not slip through: the audit saw NaN positions) // v0.91: a barrier or a guardrail also on a slope (the two carriageways at different heights)
@@ -8833,7 +9068,7 @@ function buildMedians() {
           if (tramTrenchAt(mx, mz, 7)) continue; // v0.72: no island over the tram cutting
           // v0.91: the kind: New Jersey between two big roads (the two directions of the TF-5), a steel guardrail between a
           // big road and a smaller one beside it (the TF-5 and the road that runs along it), a kerb island between small ones
-          const painted = kind === 1 && DATA.S[rd[1]] === 'Calle San Antonio' && DATA.S[R[best.rj][1]] === 'Calle San Antonio';
+          const painted = kind === 1; // (v1.4.50, Jonay: the urban kerb islands are painted everywhere: people walked through them or tripped on them)
           const key = ri + ':' + best.rj;
           let run = runs.get(key);
           if (!run) runs.set(key, (run = []));
@@ -9538,6 +9773,55 @@ function narrowToGapPart3(narrowed) {
     }
   }
   DATA.NARROWED = narrowed;
+}
+/** v1.4.50 (Jonay: «en zonas con un solo carril pones dos flechas como si fuera doble carril»): the traffic graph's edges
+ *  had their own width (the type's norm, narrowed only with narrowToGap): every edge takes the width of the street it
+ *  runs along, after all the width steps (twins, continuity, Trinidad, Verdellada): the lanes the cars use and the
+ *  arrows (laneCentres, 07_vehicles.js) are the ones painted (laneMkPart1, 04_world.js) */
+function syncGraphWidths() {
+  const all = new Map();
+  DATA.R.forEach((r, ri) => {
+    if (r[0] >= 3 && r[0] <= 12) all.set(ri, r[2]);
+  });
+  const N = DATA.G.n,
+    RG = new Map();
+  for (const [ri] of all) {
+    const c = DATA.R[ri][4];
+    for (let i = 0; i + 3 < c.length; i += 2) {
+      const k = Math.floor((c[i] + c[i + 2]) / 2 / 20) * 100003 + Math.floor((c[i + 1] + c[i + 3]) / 2 / 20);
+      let l = RG.get(k);
+      if (!l) RG.set(k, (l = []));
+      l.push([ri, c[i], c[i + 1], c[i + 2], c[i + 3]]);
+    }
+  }
+  let n = 0;
+  for (const e of DATA.G.e) {
+    if (e[2] < 3 || e[2] > 12) continue;
+    const P = [N[e[0] * 2], N[e[0] * 2 + 1], ...(e[6] || []), N[e[1] * 2], N[e[1] * 2 + 1]],
+      h = (P.length >> 2) << 1;
+    const x = (P[h] + P[h - 2]) / 2,
+      z = (P[h + 1] + P[h - 1]) / 2;
+    let best = null,
+      bd = 2;
+    for (let a = -1; a <= 1; a++)
+      for (let q = -1; q <= 1; q++)
+        for (const sg of RG.get((Math.floor(x / 20) + a) * 100003 + Math.floor(z / 20) + q) || []) {
+          const ex = sg[3] - sg[1],
+            ez = sg[4] - sg[2],
+            L2 = ex * ex + ez * ez || 1,
+            tt = Math.max(0, Math.min(1, ((x - sg[1]) * ex + (z - sg[2]) * ez) / L2)),
+            dd = Math.hypot(x - sg[1] - ex * tt, z - sg[2] - ez * tt);
+          if (dd < bd) {
+            bd = dd;
+            best = sg[0];
+          }
+        }
+    if (best !== null && Math.abs(e[4] - all.get(best)) > 0.05) {
+      e[4] = all.get(best);
+      n++;
+    }
+  }
+  window.__grafoAnchos = n; // (tests)
 }
 /** (v1.1.7, code quality) part of narrowToGap: v1.0.0 (Jonay: «me da miedo que se rompan las intersecciones con puentes y túneles»): a street that comes within */
 function narrowToGapPart2(cell, G, stamp, E) {
@@ -12978,7 +13262,9 @@ function cebArea(P, wp, Q, wq, u0, maxU, maxGap = 7, raised = false) {
   };
   // v1.3.6 (Jonay: «que tengan bordillo»): a splitter island is raised with its kerb where it is 1.4 m wide or more; the
   // narrow nose before it stays painted
-  const up = (i) => raised && E[i][2] >= 1.4 && E[i + 1] && E[i + 1][2] >= 1.4;
+  // v1.4.50 (Jonay: «esto se atraviesa… deberíamos hacer esto como islas de marcas viales en todo el juego… en otros el
+  // personaje se tropieza y hay que saltar aun siendo muy bajitos»): the splitter islands are painted, never raised
+  const up = () => false; // (before: raised where 1.4 m wide or more)
   if (raised) {
     let i = 0;
     while (i + 1 < E.length) {
@@ -13737,6 +14023,7 @@ function nearTram(x, z, r) {
   return false;
 }
 function buildTrees() {
+  dropUnderDecks(TREES, (t) => 11 * (t[3] || 1), 'arboles');
   const { types, barkMat, leafMat, o, col } = buildTreesPart1();
   if (DATA.ARB) return buildTreesBlender(types, o, col); // v1.3.0: the trees made in Blender
   const defs = [
@@ -14137,8 +14424,36 @@ function buildTreesPart1() {
 // ---------- street lamps + light pools
 const LAMPS = [];
 let lampHeadMat, lampPoolMat;
+/** v1.4.50 (Jonay, X 109, Y 1266: «no puede haber farolas que atraviesen puentes desde abajo»): what stands on the
+ *  ground (lamps, trees) and would reach the deck of a bridge or raised road above it goes (signs already: 05j_signals).
+ *  arr: [[x, z, …]], h(item): its height */
+function dropUnderDecks(arr, h, label) {
+  let n = 0;
+  for (let i = arr.length - 1; i >= 0; i--) {
+    const [x, z] = arr[i],
+      g = heightAt(x, z);
+    // (the walkable decks, and the asphalt as it is drawn: every bridge's deck is in it, not every one is a deck)
+    let d = deckAt(x, z, g + h(arr[i]) + 1);
+    for (const [ox, oz] of [
+      [0, 0],
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1]
+    ]) {
+      const y = csurfCell(Math.floor((x + ox) / 2), Math.floor((z + oz) / 2));
+      if (y === y && y > d) d = y;
+    }
+    if (d > g + 0.6 && d < g + h(arr[i]) + 1) {
+      arr.splice(i, 1);
+      n++;
+    }
+  }
+  (window.__bajoPuentes || (window.__bajoPuentes = {}))[label] = n; // (tests)
+}
 function buildLamps() {
   const { o, poleMat, histMat, modern, modernHead } = buildLampsPart1();
+  dropUnderDecks(LAMPS, () => 9, 'farolas'); // (after Part1: it places the street lamps)
   const { c, x, g } = buildLampsPart2(modern, modernHead, poleMat, histMat, o);
   x.fillStyle = g;
   x.fillRect(0, 0, 64, 64);
@@ -17436,6 +17751,150 @@ function pitchRects() {
   PITCH_RECTS = keep;
   return PITCH_RECTS;
 }
+// v1.4.50 (Jonay, X 208, Y 1113: «aquí se sale el campo de fútbol… si no cabe, reduce sus proporciones»): a pitch or court
+// whose rectangle (with its fence) runs onto a carriageway shrinks about its centre, keeping its proportions, until it
+// does not (down to 60 %)
+function fitPitches() {
+  let shrunk = 0;
+  for (const P of pitchRects()) {
+    const F = P.F,
+      cu = (F.u0 + F.u1) / 2,
+      cv = (F.v0 + F.v1) / 2,
+      e = P.area >= 1700 ? 2.4 : 1.2;
+    const hits = (k) => {
+      const u0 = cu - (cu - F.u0) * k - e,
+        u1 = cu + (F.u1 - cu) * k + e,
+        v0 = cv - (cv - F.v0) * k - e,
+        v1 = cv + (F.v1 - cv) * k + e;
+      const nu = Math.max(4, Math.ceil((u1 - u0) / 3)),
+        nv = Math.max(4, Math.ceil((v1 - v0) / 3));
+      for (let i = 0; i <= nu; i++)
+        for (const v of [v0, v1]) {
+          const [x, z] = F.W(u0 + ((u1 - u0) * i) / nu, v);
+          if (onCarriagewayEarly(x, z, 0.2)) return true;
+        }
+      for (let i = 0; i <= nv; i++)
+        for (const u of [u0, u1]) {
+          const [x, z] = F.W(u, v0 + ((v1 - v0) * i) / nv);
+          if (onCarriagewayEarly(x, z, 0.2)) return true;
+        }
+      return false;
+    };
+    let k = 1;
+    try {
+      while (k > 0.6 && hits(k)) k -= 0.05;
+    } catch (err) {
+      k = 1; // (the roads not ready yet)
+    }
+    if (k < 0.999) {
+      P.F = Object.assign({}, F, {
+        u0: cu - (cu - F.u0) * k,
+        u1: cu + (F.u1 - cu) * k,
+        v0: cv - (cv - F.v0) * k,
+        v1: cv + (F.v1 - cv) * k
+      });
+      P.len *= k;
+      P.wid *= k;
+      P.area *= k * k;
+      P.shrink = k;
+      shrunk++;
+    }
+  }
+  window.__camposEncogidos = shrunk; // (tests)
+}
+// v1.4.50 (Jonay, X 1969, Y 1281: «hiciste el campo de fútbol irregular, en bajada… en realidad hay una caída de terreno
+// recta bastantes metros y luego se hace una terraza donde está el campo… eso no puede pasar en un campo de fútbol, ni en
+// este ni en ninguno»): every pitch and court is flat, on a terrace at the height of the highest point of its rectangle
+// (with its fence): the ground under it comes up to it, a straight retaining wall goes down where the ground is lower,
+// and you walk on it (a flat deck). PITCH_Y: the terrace of the pitch being built (pitchGround)
+let PITCH_Y = null;
+const pitchGround = (x, z) => (PITCH_Y === null ? heightAt(x, z) : Math.max(heightAt(x, z), PITCH_Y));
+function pitchTerrace(P) {
+  const F = P.F,
+    e = P.area >= 1700 ? 2.7 : 1.5,
+    u0 = F.u0 - e,
+    u1 = F.u1 + e,
+    v0 = F.v0 - e,
+    v1 = F.v1 + e;
+  let h = -1e9;
+  for (let u = u0; u <= u1 + 0.01; u += 2)
+    for (let v = v0; v <= v1 + 0.01; v += 2) {
+      const [x, z] = F.W(Math.min(u, u1), Math.min(v, v1));
+      h = Math.max(h, heightAt(x, z));
+    }
+  // the ground's corners inside the terrace come up to it (heightAt follows)
+  const inT = (x, z) => {
+    const u = (x - P.cx) * F.ux + (z - P.cz) * F.uz,
+      v = (x - P.cx) * F.vx + (z - P.cz) * F.vz;
+    return u > u0 + 0.5 && u < u1 - 0.5 && v > v0 + 0.5 && v < v1 - 0.5;
+  };
+  const pos = TERRAIN_MESH ? TERRAIN_MESH.geometry.attributes.position : null,
+    r = Math.hypot(u1 - u0, v1 - v0) / 2,
+    want = Math.round(h * 10) - 1;
+  let ch = 0;
+  for (let gz = Math.floor((P.cz - r - HM.z0) / HM.dx); gz <= Math.ceil((P.cz + r - HM.z0) / HM.dx); gz++)
+    for (let gx = Math.floor((P.cx - r - HM.x0) / HM.dx); gx <= Math.ceil((P.cx + r - HM.x0) / HM.dx); gx++) {
+      if (gx < 0 || gz < 0 || gx >= HM.nx || gz >= HM.nz) continue;
+      const k = gz * HM.nx + gx;
+      if (!inT(HM.x0 + gx * HM.dx, HM.z0 + gz * HM.dx) || HM.a[k] >= want) continue;
+      HM.a[k] = want;
+      if (pos) pos.setY(k, want / 10);
+      ch++;
+    }
+  if (ch && pos) {
+    pos.needsUpdate = true;
+    TERRAIN_MESH.geometry.computeVertexNormals();
+  }
+  // the retaining wall: along the edge of the terrace, where the ground outside is lower
+  const wp = [],
+    wi = [],
+    sides = [
+      [u0, v0, u1, v0],
+      [u1, v0, u1, v1],
+      [u1, v1, u0, v1],
+      [u0, v1, u0, v0]
+    ];
+  for (const [ua, va, ub, vb] of sides) {
+    const L = Math.hypot(ub - ua, vb - va),
+      n = Math.max(1, Math.ceil(L / 2));
+    for (let i = 0; i < n; i++) {
+      const [ax, az] = F.W(ua + ((ub - ua) * i) / n, va + ((vb - va) * i) / n),
+        [bx, bz] = F.W(ua + ((ub - ua) * (i + 1)) / n, va + ((vb - va) * (i + 1)) / n);
+      const ga = heightAt(ax + (ax - P.cx) * 0.01, az + (az - P.cz) * 0.01),
+        gb = heightAt(bx + (bx - P.cx) * 0.01, bz + (bz - P.cz) * 0.01);
+      if (Math.max(h - ga, h - gb) < 0.25) continue;
+      const b0 = wp.length / 3;
+      wp.push(ax, Math.min(ga, h) - 0.4, az, bx, Math.min(gb, h) - 0.4, bz, bx, h + 0.17, bz, ax, h + 0.17, az);
+      wi.push(b0, b0 + 1, b0 + 2, b0, b0 + 2, b0 + 3);
+      if (Math.max(h - ga, h - gb) > 0.9) COL.addSeg(ax, az, bx, bz, Math.min(ga, gb) - 0.5, h - 0.4, 'muro de campo');
+    }
+  }
+  if (wi.length) {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(wp, 3));
+    g.setIndex(wi);
+    g.computeVertexNormals();
+    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: 0xb9b4aa, roughness: 0.9, side: THREE.DoubleSide }));
+    m.receiveShadow = m.castShadow = true;
+    scene.add(m);
+  }
+  // you walk on the terrace (a flat deck: 05f_anchieta.js)
+  const [ax, az] = F.W(u0, (v0 + v1) / 2),
+    [bx, bz] = F.W(u1, (v0 + v1) / 2),
+    w = v1 - v0;
+  DECKS.push({
+    type: 'path',
+    pts: [
+      [ax, az, h + 0.16],
+      [bx, bz, h + 0.16]
+    ],
+    w,
+    bb: [Math.min(ax, bx) - w, Math.max(ax, bx) + w, Math.min(az, bz) - w, Math.max(az, bz) + w],
+    pitch: true
+  });
+  (window.__terrazas || (window.__terrazas = [])).push([Math.round(P.cx), Math.round(P.cz), +h.toFixed(1), ch, wi.length / 6]);
+  return h;
+}
 // inside a pitch or court (plus margin m, metres)? Used to keep trees, lamps and benches off them
 function inPitch(x, z, m = 1) {
   for (const P of pitchRects()) {
@@ -17449,6 +17908,7 @@ function inPitch(x, z, m = 1) {
 }
 function buildSports() {
   const { white, dark, orange, fenceMat, sportsAreas } = buildSportsPart1();
+  fitPitches(); // v1.4.50
   for (const a of DATA.A) {
     buildSportsEach(a, sportsAreas, white, fenceMat, dark, orange);
   }
@@ -17462,6 +17922,11 @@ function buildSports() {
   } catch (e) {
     console.error('rios tejera', e);
   } // v0.76
+  try {
+    fitTerrainToRoads(); // v1.4.50: the terraces raised the ground: under the roads beside them it goes down again
+  } catch (e) {
+    console.error('fitTerrainToRoads', e);
+  }
 }
 /** (v1.1.7, code quality) the body of a loop of buildSports, split out of it */
 function buildSportsEach(a, sportsAreas, white, fenceMat, dark, orange) {
@@ -17479,13 +17944,20 @@ function buildSportsEach(a, sportsAreas, white, fenceMat, dark, orange) {
   cx /= pts.length;
   cz /= pts.length;
   if (cx < WORLD.x0 || cx > WORLD.x1 || cz < WORLD.z0 || cz > WORLD.z1) return;
-  const F = axisFrame(pts, cx, cz);
-  const len = F.u1 - F.u0,
-    wid = F.v1 - F.v0;
-  const area = len * wid;
-  if (len < 12 || wid < 8) return;
+  const F0 = axisFrame(pts, cx, cz);
+  if (F0.u1 - F0.u0 < 12 || F0.v1 - F0.v0 < 8) return;
   const pr = pitchRects().find((q) => Math.abs(q.cx - cx) < 0.01 && Math.abs(q.cz - cz) < 0.01);
   if (!pr) return;
+  const F = pr.F, // (v1.4.50: shrunk if it did not fit: pitchRects)
+    len = F.u1 - F.u0,
+    wid = F.v1 - F.v0,
+    area = len * wid;
+  PITCH_Y = null;
+  try {
+    PITCH_Y = pitchTerrace(pr); // v1.4.50: flat, on its terrace
+  } catch (e) {
+    console.error('terraza del campo', e);
+  }
   const { kind, at, add } = buildSportsEachPart1(pr, len, wid, F);
   buildSportsEachPart2(kind, F, add, white, fenceMat, at, dark, orange);
   buildSportsEachPart3(area, F, fenceMat, cx, cz, sportsAreas);
@@ -17501,12 +17973,12 @@ function buildSportsEach(a, sportsAreas, white, fenceMat, dark, orange) {
       if (onCarriageway(px, pz, 0.5) || COL.nearSeg(px, pz, 1)) continue;
       const h = kind === 'f11' ? 20 : 14;
       const p = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.3, h, 8), M(0x6a6f73, 0.5, 0.6));
-      p.position.set(px, heightAt(px, pz) + h / 2, pz);
+      p.position.set(px, pitchGround(px, pz) + h / 2, pz);
       p.castShadow = true;
       scene.add(p);
       const hd = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.2, 0.4), lampHeadMat);
-      hd.position.set(px, heightAt(px, pz) + h, pz);
-      hd.lookAt(cx, heightAt(cx, cz), cz);
+      hd.position.set(px, pitchGround(px, pz) + h, pz);
+      hd.lookAt(cx, pitchGround(cx, cz), cz);
       scene.add(hd);
       COL.addCirc(px, pz, 0.3);
     }
@@ -17538,7 +18010,8 @@ function buildSportsEach(a, sportsAreas, white, fenceMat, dark, orange) {
     }
     LABELS.push([STR[inStadium[1]], cx, cz, 1]);
   }
-  SPORTS.pitches.push({ cx, cz, kind, F, len, wid });
+  SPORTS.pitches.push({ cx, cz, kind, F, len, wid, y: PITCH_Y });
+  PITCH_Y = null;
 }
 /** (v1.1.7, code quality) part of buildSportsEach: the fence: a low wall with a high chain-link fence on it */
 // v1.4.22 (Jonay, 19-oct: «deben tener muro y valla alta alrededor con uno o dos accesos. Ahora están abiertos»; 17-nov:
@@ -17604,7 +18077,9 @@ function buildSportsEachPart3(area, F, fenceMat, cx, cz, sportsAreas) {
       break;
     }
   if (!gates.length) gates.push(order[0]);
-  const positions = [], uvs = [], indices = [];
+  const positions = [],
+    uvs = [],
+    indices = [];
   if (big && free((gates[0] + 2) % 4)) gates.push((gates[0] + 2) % 4);
   for (let i = 0; i < 4; i++) {
     const [ua, va] = cor[i],
@@ -17627,7 +18102,7 @@ function buildSportsEachPart3(area, F, fenceMat, cx, cz, sportsAreas) {
       for (let k = 0; k <= ns; k++) {
         const tt = a0 + ((a1 - a0) * k) / ns,
           q = F.W(ua + (ub - ua) * tt, va + (vb - va) * tt),
-          y = heightAt(q[0], q[1]),
+          y = pitchGround(q[0], q[1]),
           ok = !roadAtBarrier(q[0], q[1], y - 0.9, y + 3, 0.35);
         if (ok && r0 === null) r0 = tt;
         if ((!ok || tt >= a1) && r0 !== null) {
@@ -17643,7 +18118,7 @@ function buildSportsEachPart3(area, F, fenceMat, cx, cz, sportsAreas) {
       if (L < 0.5) continue;
       const mx = (pa[0] + pb[0]) / 2,
         mz = (pa[1] + pb[1]) / 2,
-        y0 = Math.min(heightAt(pa[0], pa[1]), heightAt(mx, mz), heightAt(pb[0], pb[1])),
+        y0 = Math.min(pitchGround(pa[0], pa[1]), pitchGround(mx, mz), pitchGround(pb[0], pb[1])),
         ry = Math.atan2(pb[0] - pa[0], pb[1] - pa[1]) + Math.PI / 2;
       // the low wall (a little into the ground, so it never floats on a slope)
       const w = new THREE.Mesh(SPORT_WALL_BOX, SPORT_WALL_MAT);
@@ -17656,14 +18131,14 @@ function buildSportsEachPart3(area, F, fenceMat, cx, cz, sportsAreas) {
       // the chain-link fence on it
       const fh = topH - wallH;
       const base = positions.length / 3;
-      const dx = Math.cos(ry) * L / 2, dz = -Math.sin(ry) * L / 2;
+      const dx = (Math.cos(ry) * L) / 2,
+        dz = (-Math.sin(ry) * L) / 2;
       for (const y of [y0 + topH, y0 + wallH]) {
         positions.push(mx - cx - dx, y, mz - cz - dz, mx - cx + dx, y, mz - cz + dz);
       }
       uvs.push(0, fh / 1.5, L / 1.5, fh / 1.5, 0, 0, L / 1.5, 0);
       indices.push(base, base + 2, base + 1, base + 2, base + 3, base + 1);
-      COL.addSeg(pa[0], pa[1], pb[0], pb[1], y0 - 0.5,
-                 Math.max(heightAt(pa[0],pa[1]),heightAt(pb[0],pb[1])) + 4, 'valla de cancha');
+      COL.addSeg(pa[0], pa[1], pb[0], pb[1], y0 - 0.5, Math.max(pitchGround(pa[0], pa[1]), pitchGround(pb[0], pb[1])) + 4, 'valla de cancha');
     }
     // the gate posts
     if (gates.includes(i))
@@ -17672,7 +18147,7 @@ function buildSportsEachPart3(area, F, fenceMat, cx, cz, sportsAreas) {
         if (onCarriageway(q[0], q[1], 0.3)) continue;
         const p = new THREE.Mesh(SPORT_WALL_BOX, SPORT_WALL_MAT);
         p.scale.set(0.3, topH + 0.3, 0.3);
-        p.position.set(q[0], heightAt(q[0], q[1]) + topH / 2 - 0.1, q[1]);
+        p.position.set(q[0], pitchGround(q[0], q[1]) + topH / 2 - 0.1, q[1]);
         scene.add(p);
         COL.addCirc(q[0], q[1], 0.2);
       }
@@ -17744,7 +18219,7 @@ function buildSportsEachPart1(pr, len, wid, F) {
     const u = F.u0 + (len * i) / N,
       v = F.v0 + (wid * j) / Mv;
     const [px, pz] = F.W(u, v);
-    return [px, heightAt(px, pz) + 0.16, pz];
+    return [px, pitchGround(px, pz) + 0.16, pz];
   };
   for (let i = 0; i < N; i++)
     for (let j = 0; j < Mv; j++) {
@@ -17766,7 +18241,7 @@ function buildSportsEachPart1(pr, len, wid, F) {
   scene.add(mesh);
   const at = (u, v, y = 0) => {
     const [px, pz] = F.W(u, v);
-    return [px, heightAt(px, pz) + 0.16 + y, pz];
+    return [px, pitchGround(px, pz) + 0.16 + y, pz];
   };
   const add = (geo, m, u, v, y, rot = 0) => {
     const o = new THREE.Mesh(geo, m);
@@ -22115,6 +22590,62 @@ function tac67Yard(x, z) {
   const [lx, lz] = tac67().toL(x, z);
   return Math.abs(lx) < 5.2 && lz > -14 && lz < 3.8;
 }
+/** v1.4.50 (Jonay: «ya no hay garaje en la casa de calle Tacoronte ni botón ni nada»): the hand-made houses keep their
+ *  plot. The hole for C. Tacoronte 67 was carved in the OSM block before the Catastro's buildings came in (addCatastro,
+ *  05y_muros.js); in v1.4.48 that block was one of the coarse ones changed for the Catastro's, and one of them (4 floors)
+ *  stood on the house and hid it. After the Catastro: every building with its centre in a reserved plot, or with a
+ *  plot's centre inside it, goes (reservedPlotsClear). [centre x, z, test (x, z) → inside the plot] */
+function reservedPlots() {
+  const T = tac67(),
+    out = [
+      [
+        ...T.toW(0, -6),
+        (x, z) => {
+          const [lx, lz] = T.toL(x, z);
+          return Math.abs(lx) < T.hw + 0.3 && lz > T.back - 0.5 && lz < 1;
+        }
+      ]
+    ];
+  for (const h of CUSTOM_HOUSES) {
+    const c = Math.cos(h.ang),
+      s = Math.sin(h.ang);
+    out.push([
+      h.x,
+      h.z,
+      (x, z) => {
+        const dx = x - h.x,
+          dz = z - h.z;
+        return Math.abs(dx * c + dz * s) < h.w / 2 + 0.3 && Math.abs(-dx * s + dz * c) < h.d / 2 + 0.3;
+      }
+    ]);
+  }
+  return out;
+}
+function reservedPlotsClear() {
+  const P = reservedPlots(),
+    gone = [];
+  const pip = (x, z, c) => {
+    let o = false;
+    for (let i = 0, j = c.length - 2; i < c.length; j = i, i += 2)
+      if (c[i + 1] > z !== c[j + 1] > z && x < ((c[j] - c[i]) * (z - c[i + 1])) / (c[j + 1] - c[i + 1]) + c[i]) o = !o;
+    return o;
+  };
+  for (let i = DATA.B.length - 1; i >= 0; i--) {
+    const c = DATA.B[i][6];
+    if (!c || c.length < 6) continue;
+    let cx = 0,
+      cz = 0;
+    for (let k = 0; k < c.length; k += 2) ((cx += c[k]), (cz += c[k + 1]));
+    cx /= c.length / 2;
+    cz /= c.length / 2;
+    if (P.some(([px, pz, inP]) => Math.hypot(px - cx, pz - cz) < 60 && (inP(cx, cz) || pip(px, pz, c)))) {
+      gone.push([Math.round(cx), Math.round(cz)]);
+      DATA.B.splice(i, 1);
+    }
+  }
+  window.__reservados = gone; // (tests)
+  console.log('casas propias: edificios quitados de su parcela', gone.length);
+}
 function carveTac67() {
   const T = tac67(),
     [hx, hz] = T.toW(0, -6);
@@ -23055,10 +23586,22 @@ function buildInicioDetails() {
         length = Math.hypot(rn.dx, rn.dz) || 1,
         dx = rn.dx / length,
         dz = rn.dz / length,
-        side = Math.sign((z - rn.z) * dx - (x - rn.x) * dz) || 1;
-      // (v1.4.48: with 1 m pavements and the facades in line there may be no room on the pavement: then on the edge of the
-      // carriageway, in the parking strip, as the real ones)
-      for (const distance of [0.78, 1.05, 1.32, -1.1]) {
+        side0 = Math.sign((z - rn.z) * dx - (x - rn.x) * dz) || 1;
+      // (v1.4.50, Jonay: «estoy harto de verlos en medio de la carretera… pégalos a la izquierda, en la acera o incluso en
+      // el trozo que queda más allá de la acera, que no hay nada»): never on the carriageway; first the other side of the
+      // street (its pavement, then the empty ground behind it), then this side's pavement
+      let placed = false;
+      for (const [side, distance] of [
+        [-side0, 0.78],
+        [-side0, 1.05],
+        [-side0, 1.7],
+        [-side0, 2.4],
+        [-side0, 3.1],
+        [side0, 0.78],
+        [side0, 1.05],
+        [side0, 1.32]
+      ]) {
+        if (placed) break;
         const px = rn.x - dz * side * (half + distance),
           pz = rn.z + dx * side * (half + distance),
           base = heightAt(px, pz);
@@ -23067,7 +23610,7 @@ function buildInicioDetails() {
           [-0.6, 0, 0.6].every((v) => {
             const wx = px + dx * u - dz * v,
               wz = pz + dz * u + dx * v;
-            return (distance < 0 || !roadAtBarrier(wx, wz, base - 0.8, base + 1.4, 0.12)) && !wallBuildingAt(wx, wz);
+            return !roadAtBarrier(wx, wz, base - 0.8, base + 1.4, 0.12) && !wallBuildingAt(wx, wz) && !onCarriagewayEarly(wx, wz, 0);
           })
         );
         if (!clear) continue;
@@ -23077,7 +23620,7 @@ function buildInicioDetails() {
         m.rotation.y = Math.atan2(-dz, dx);
         root.add(m);
         COL.addCirc(px, pz, 0.67);
-        break;
+        placed = true;
       }
     }
   }
@@ -28241,9 +28784,42 @@ function buildAtrioPart1(a, F, r, top, PI, th) {
 // zonas como la universidad». DATA.CB and DATA.BW come from tools/catastro_add.py (build.py puts them in the data).
 
 // the parts of buildings of the Catastro that no building of the map covers: into DATA.B like any other building
+// v1.4.50 (Jonay: «eso de casas hechas a mano sustituidas por Catastro, malo… que no pase más, que hay muchas más hechas a
+// mano»): the places made by hand keep theirs. They find «their» building of the map by its position or kind (LANDMARK_AT
+// and the old-town houses of 05q_inicio, the stands of the Francisco Peraza and the Juan Ríos Tejera hall, 05v_peraza)
+// or carve their plot in it (C. Tacoronte 67, the hand-placed houses: reservedPlots, 05p_casas): the Catastro's
+// buildings must not come in there, nor take away the map's block they dress
+function handMade() {
+  const pip = (x, z, c) => {
+    let o = false;
+    for (let i = 0, j = c.length - 2; i < c.length; j = i, i += 2)
+      if (c[i + 1] > z !== c[j + 1] > z && x < ((c[j] - c[i]) * (z - c[i + 1])) / (c[j + 1] - c[i + 1]) + c[i]) o = !o;
+    return o;
+  };
+  const circles = LANDMARK_AT.map((L) => [L.x, L.z, L.r + 2]),
+    polys = [];
+  for (const P of INICIO.blocks || []) polys.push(P.flat ? P.flat() : P);
+  for (const a of DATA.A) if (a[1] >= 0 && /Estadio Municipal Francisco Peraza|Juan R[ií]os Tejera/.test(STR[a[1]])) polys.push(a[2]);
+  const plots = typeof reservedPlots === 'function' ? reservedPlots() : [];
+  return {
+    pip,
+    // (x, z) the centre of a building, c its outline
+    hit(x, z, c) {
+      if (circles.some(([px, pz, r]) => Math.hypot(px - x, pz - z) < r)) return true;
+      if (polys.some((P) => pip(x, z, P))) return true;
+      return plots.some(([px, pz, inP]) => Math.hypot(px - x, pz - z) < 60 && (inP(x, z) || (c && pip(px, pz, c))));
+    },
+    dressed(x, z) {
+      return circles.some(([px, pz, r]) => Math.hypot(px - x, pz - z) < r);
+    }
+  };
+}
 function addCatastro() {
   const CB = DATA.CB || [];
-  let n = 0;
+  const HM0 = handMade(),
+    kept = [];
+  let n = 0,
+    skip = 0;
   // v1.4.48 (Jonay, with a real view of the Calle Barcelona: a whole block of separate buildings): the OSM footprints that
   // cover a whole block where the Catastro has each building (tools/osm_gruesos.py, DATA.OG: their centres) go; the
   // Catastro's buildings come in their place (in DATA.CB)
@@ -28259,6 +28835,10 @@ function addCatastro() {
       cx /= c.length / 2;
       cz /= c.length / 2;
       if (og.some(([x, z]) => Math.abs(x - cx) < 1.5 && Math.abs(z - cz) < 1.5)) {
+        if (HM0.dressed(cx, cz)) {
+          kept.push(c); // (v1.4.50: dressed by hand: it stays, and no Catastro building inside it)
+          continue;
+        }
         DATA.B.splice(i, 1);
         q++;
       }
@@ -28275,6 +28855,10 @@ function addCatastro() {
     }
     cx /= k;
     cz /= k;
+    if (HM0.hit(cx, cz, c) || kept.some((P) => HM0.pip(cx, cz, P))) {
+      skip++;
+      continue;
+    }
     const R = mulberry((Math.round(cx * 7.3) * 92821 + Math.round(cz * 13.1)) | 0),
       r = R();
     const lv = Math.max(1, Math.min(14, fl)),
@@ -28284,7 +28868,8 @@ function addCatastro() {
     DATA.B.push([Math.round((lv * (style === 0 ? 3.6 : 3.1) + 0.6) * 10), style, lv, roofT, -1, Math.floor(R() * 1e6), c]);
     n++;
   }
-  console.log('catastro: edificios añadidos', n);
+  console.log('catastro: edificios añadidos', n, 'no añadidos por estar en un sitio hecho a mano', skip);
+  window.__catHecho = skip; // (tests)
   return n;
 }
 
@@ -28325,6 +28910,84 @@ function inicioTapias() {
     }
     flush();
   }
+  return out;
+}
+
+// v1.4.50 (Jonay, con una vista de la C. San Antonio y otra de la C. Hermanos Marrero: «son terrenos que tienen muros…
+// en las manzanas que queden con trozos así se completan con muros, salvo si hay un pasaje, muros de unos 2,50 de alto…
+// eso para las zonas del casco; para zonas de afueras de campo no»): in the old town, a stretch of a street's front with
+// no building, between buildings of the same block (a plot), is closed with a 2.5 m wall along the facade line; not where
+// another street or a path goes in (a passage), not on a square, park, car park or garden, not over 60 m
+function cascoSolares() {
+  const out = [],
+    open = new Set(['park', 'garden', 'grass', 'pitch', 'playground', 'parking', 'square', 'sports', 'cemetery']),
+    opens = DATA.A.filter((a) => open.has(DATA.AT[a[0]]) && a[2].length >= 6);
+  const inOpen = (x, z) => opens.some((a) => pip(x, z, a[2]));
+  const nearOther = (x, z, ri0) => {
+    for (const r of [0.8, 2.5])
+      for (let k = 0; k < 8; k++) {
+        const a = (k / 8) * Math.PI * 2,
+          rn = ROADSEG.nearest(x + Math.cos(a) * r, z + Math.sin(a) * r, (q) => q[0] <= 15 && q !== DATA.R[ri0]);
+        if (rn && rn.d < DATA.R[rn.ri][2] / 2 + 0.3) return true;
+      }
+    return false;
+  };
+  DATA.R.forEach((rd, ri) => {
+    if (rd[0] < 3 || rd[0] > 13 || rd[3] & 6) return;
+    const c = rd[4];
+    if (!c.some((_, i) => i % 2 === 0 && isHistoric(c[i], c[i + 1]))) return;
+    const d = rd[2] / 2 + SIDEWALK_W + 0.35;
+    for (const sd of [1, -1]) {
+      let run = [];
+      const flush = () => {
+        if (run.length >= 3) {
+          let L = 0;
+          for (let i = 1; i < run.length; i++) L += Math.hypot(run[i][0] - run[i - 1][0], run[i][1] - run[i - 1][1]);
+          // (between buildings: the run touches a building at both ends)
+          const a = run[0],
+            b = run[run.length - 1];
+          if (L >= 3 && L <= 60 && a.b && b.b) out.push(['tapia', 2.5, '', run.flatMap((p) => [p[0], p[1]])]);
+        }
+        run = [];
+      };
+      for (let i = 0; i + 3 < c.length; i += 2) {
+        const L = Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]);
+        if (L < 0.5) continue;
+        const ux = (c[i + 2] - c[i]) / L,
+          uz = (c[i + 3] - c[i + 1]) / L,
+          nx = -uz * sd,
+          nz = ux * sd;
+        for (let t = 0; t < L; t += 1.5) {
+          const x = c[i] + ux * t + nx * d,
+            z = c[i + 1] + uz * t + nz * d;
+          if (!isHistoric(x, z)) {
+            flush();
+            continue;
+          }
+          const bld = inAnyBuilding(x, z) || inAnyBuilding(x + nx * 1.2, z + nz * 1.2);
+          if (bld) {
+            if (run.length) {
+              run.push([x, z]);
+              run[run.length - 1].b = true;
+              flush();
+            }
+            const p = [x, z];
+            p.b = true;
+            run = [p];
+            continue;
+          }
+          if (onCarriagewayEarly(x, z, 0.2) || inOpen(x + nx * 2, z + nz * 2) || nearOther(x + nx * 1.5, z + nz * 1.5, ri)) {
+            run = [];
+            continue;
+          }
+          if (run.length && run[0].b) run.push([x, z]);
+        }
+        // (a run goes on round to the next piece of the way only through its shared point)
+      }
+      run = [];
+    }
+  });
+  window.__solares = out.length; // (tests)
   return out;
 }
 
@@ -28636,6 +29299,11 @@ function buildWallsPart1() {
     for (const w of t) list.push(w);
   } catch (e) {
     console.error('tapias', e);
+  }
+  try {
+    for (const w of cascoSolares()) list.push(w); // v1.4.50
+  } catch (e) {
+    console.error('solares', e);
   }
   // height (m above the ground), thickness, material
   const KIND = {
@@ -32239,8 +32907,8 @@ class Car {
           // v1.4.47: on the asphalt as it is drawn (carSurfAt, 04_world.js), not on «terrain + 17 cm»: the car's y is this
           // + 0.17 and the asphalt of an ordinary street is terrain + 0.15. Only within a step of where the car is (a
           // road on a bridge above, or in a cutting below, is not this one)
-          const s = carSurfAt(x, z);
-          if (s !== null && s - 0.15 > g - 2.5 && s - 0.15 < py + 0.6) return s - 0.15;
+          const s = carSurfAt(x, z, py);
+          if (s !== null && s - 0.15 < py + 0.6 && (s - 0.15 > g - 2.5 || inCut(x, z, 0))) return s - 0.15; // (v1.4.50: in a cutting the asphalt is well under the ground: that one)
           return g;
         };
     this.Gf = G;
@@ -32348,7 +33016,7 @@ function edgePark(E) {
 function laneCentres(E, dir = 1) {
   const { sh, we } = edgePark(E);
   if (E.nl === undefined) {
-    E.nl = E.oneway ? (we >= 6.4 ? 2 : 1) : we >= 12.5 ? 4 : 2;
+    E.nl = E.oneway ? Math.max(1, Math.min(2, Math.floor((we - 0.4) / 2.8))) : we >= 12.5 ? 4 : 2; // (v1.4.50: as laneMkPart1)
     try {
       const P = E.pts,
         h = (P.length >> 2) << 1,
@@ -67942,6 +68610,7 @@ function syncPauseUI() {
   document.querySelectorAll('#segQ button').forEach((b) => b.classList.toggle('on', b.dataset.q === qName));
   document.querySelectorAll('#segW button').forEach((b) => b.classList.toggle('on', +b.dataset.w === SETTINGS.weather));
   document.querySelectorAll('#segInv button').forEach((b) => b.classList.toggle('on', +b.dataset.v === (SETTINGS.invertY ? 1 : 0)));
+  document.querySelectorAll('#segFpsM button').forEach((b) => b.classList.toggle('on', +b.dataset.v === (SETTINGS.fpsMeter ? 1 : 0)));
   $('tod').value = GAME.tod;
   $('sens').value = SETTINGS.sens;
   $('fpscap').value = fpsCap('city') || 144; // v1.4.44
@@ -67973,6 +68642,15 @@ document.querySelectorAll('#segInv button').forEach((b) =>
     SETTINGS.invertY = b.dataset.v === '1';
     saveSettings();
     syncPauseUI();
+  })
+);
+// v1.4.50 (Jonay: «un contador de FPS y frametime activable en opciones, en la esquina superior derecha, para hacer mis test»)
+document.querySelectorAll('#segFpsM button').forEach((b) =>
+  b.addEventListener('click', () => {
+    SETTINGS.fpsMeter = b.dataset.v === '1';
+    saveSettings();
+    syncPauseUI();
+    FPSM.show();
   })
 );
 $('tod').addEventListener('input', (e) => {
@@ -68126,6 +68804,42 @@ window.__prof = PROF;
 const pm = (k, t0) => {
   PROF[k] = (PROF[k] || 0) * 0.9 + (performance.now() - t0) * 0.1;
 };
+// v1.4.50: the FPS meter (Opciones → Contador de FPS): frames a second, the time between frames (average and the worst
+// one of each half second) and the CPU time of the frame (logic + sending the drawing; the GPU's own work is not in it)
+const FPSM = (() => {
+  const el = $('fpsMeter');
+  let n = 0,
+    t0 = performance.now(),
+    prev = 0,
+    sum = 0,
+    worst = 0,
+    cpu = 0;
+  return {
+    show() {
+      el.style.display = SETTINGS.fpsMeter ? 'block' : 'none';
+    },
+    frame(now, work) {
+      if (!SETTINGS.fpsMeter) return;
+      if (prev) {
+        const ft = now - prev;
+        if (ft < 5000) {
+          n++;
+          sum += ft;
+          worst = Math.max(worst, ft);
+          cpu += work;
+        }
+      }
+      prev = now;
+      if (now - t0 >= 500) {
+        if (n)
+          el.textContent = `${Math.round((n * 1000) / (now - t0))} FPS · ${(sum / n).toFixed(1)} ms (máx ${worst.toFixed(1)}) · CPU ${(cpu / n).toFixed(1)} ms`;
+        n = sum = worst = cpu = 0;
+        t0 = now;
+      }
+    }
+  };
+})();
+FPSM.show();
 const cityFrameDue = makeFrameGate(() => fpsCap('city')); // v1.4.44: the Opciones bar (SETTINGS.fps); 30 on phones by default
 function loop(now = performance.now()) {
   requestAnimationFrame(loop);
@@ -68133,10 +68847,11 @@ function loop(now = performance.now()) {
   updateMiniGamepad();
   let dt = Math.min(0.05, (now - last) / 1000);
   last = now;
-  if (GAME.state === 'fight2d' || GAME.state === 'basket2d' || GAME.state === 'futbol2d' || GAME.state === 'arcade') return; // the 2D fight / basketball game draw themselves; v1.1.8 (auditor): the arcade and the console too (their screen covers everything)
+  if (GAME.state === 'fight2d' || GAME.state === 'basket2d' || GAME.state === 'futbol2d' || GAME.state === 'arcade') return FPSM.frame(now, 0); // the 2D fight / basketball game draw themselves; v1.1.8 (auditor): the arcade and the console too (their screen covers everything)
   logic(dt, now);
   render();
   adaptRes(now);
+  FPSM.frame(now, performance.now() - now);
 }
 // dynamic resolution: keep the frame rate playable (mainly on phones)
 const DYN = { pr: renderer.getPixelRatio(), max: renderer.getPixelRatio(), ms: 16, t: 0, min: IS_TOUCH ? 0.5 : 0.75 };
@@ -68782,6 +69497,11 @@ window.__dbg = {
   OBISPADO,
   SPORTS,
   inAnyBuilding,
+  laneMkPart1, // v1.4.50 (sonda_carriles_en.py)
+  laneCentres,
+  ROADCLASS,
+  CSURF,
+  TWINS,
   COURTS,
   courtGateNear,
   useCourtGate,
@@ -68837,6 +69557,7 @@ window.__dbg = {
   nearestDoor,
   useDoor,
   DECKS,
+  carSurfAt, // v1.4.50 (sonda_suelo_en.py)
   ROADSEG,
   GRAPH,
   routeToward, // v1.4.43
@@ -68875,6 +69596,7 @@ window.__dbg = {
   TUNNEL_DECKS,
   lowAt,
   deckAt,
+  LAMPS, // v1.4.50 (sonda_bajo_puente.py)
   deckSide,
   CARPARKS,
   UGC,

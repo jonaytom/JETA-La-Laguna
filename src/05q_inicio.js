@@ -590,10 +590,22 @@ function buildInicioDetails() {
         length = Math.hypot(rn.dx, rn.dz) || 1,
         dx = rn.dx / length,
         dz = rn.dz / length,
-        side = Math.sign((z - rn.z) * dx - (x - rn.x) * dz) || 1;
-      // (v1.4.48: with 1 m pavements and the facades in line there may be no room on the pavement: then on the edge of the
-      // carriageway, in the parking strip, as the real ones)
-      for (const distance of [0.78, 1.05, 1.32, -1.1]) {
+        side0 = Math.sign((z - rn.z) * dx - (x - rn.x) * dz) || 1;
+      // (v1.4.50, Jonay: «estoy harto de verlos en medio de la carretera… pégalos a la izquierda, en la acera o incluso en
+      // el trozo que queda más allá de la acera, que no hay nada»): never on the carriageway; first the other side of the
+      // street (its pavement, then the empty ground behind it), then this side's pavement
+      let placed = false;
+      for (const [side, distance] of [
+        [-side0, 0.78],
+        [-side0, 1.05],
+        [-side0, 1.7],
+        [-side0, 2.4],
+        [-side0, 3.1],
+        [side0, 0.78],
+        [side0, 1.05],
+        [side0, 1.32]
+      ]) {
+        if (placed) break;
         const px = rn.x - dz * side * (half + distance),
           pz = rn.z + dx * side * (half + distance),
           base = heightAt(px, pz);
@@ -602,7 +614,7 @@ function buildInicioDetails() {
           [-0.6, 0, 0.6].every((v) => {
             const wx = px + dx * u - dz * v,
               wz = pz + dz * u + dx * v;
-            return (distance < 0 || !roadAtBarrier(wx, wz, base - 0.8, base + 1.4, 0.12)) && !wallBuildingAt(wx, wz);
+            return !roadAtBarrier(wx, wz, base - 0.8, base + 1.4, 0.12) && !wallBuildingAt(wx, wz) && !onCarriagewayEarly(wx, wz, 0);
           })
         );
         if (!clear) continue;
@@ -612,7 +624,7 @@ function buildInicioDetails() {
         m.rotation.y = Math.atan2(-dz, dx);
         root.add(m);
         COL.addCirc(px, pz, 0.67);
-        break;
+        placed = true;
       }
     }
   }

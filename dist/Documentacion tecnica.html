@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.49</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.50</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2158,9 +2158,30 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.4.50 — 2026-11-25 — Alpha 1.4.50: carriles, casas propias y campos planos</h2>
+<ul>
+<li><strong>La casa de la C. Tacoronte 67 vuelve, con su garaje y el Linguini Gold</strong> (Jonay: «ya no hay garaje en la casa de calle Tacoronte ni botón ni nada»): un edificio del Catastro (de los que cambiaron a las manzanas gruesas en la 1.4.48) se ponía encima. Regla para <strong>todo lo hecho a mano</strong> (Jonay: «que no pase más, que hay muchas más hechas a mano»): los edificios del Catastro no entran en las casas propias (Tacoronte 67, casa del hermano), en las casas del barrio de inicio, en los edificios vestidos por su sitio (centros de salud, Casa Museo Los Sabandeños, Fundación Cristino de Vera, Santa Catalina, pabellón Santiago Martín…) ni en el estadio Francisco Peraza y el pabellón Juan Ríos Tejera; y no se quita la manzana del mapa que uno de ellos viste.</li>
+<li><strong>Carriles</strong> (Jonay: «ahora solo hay un carril», «se pasa de 2 a un carril y luego a 2 otra vez», «teniendo tanto espacio dejas un carril solo», «pones dos flechas como si fuera doble carril»):</li>
+<li>Una calle de un sentido contaba sus carriles como una autopista (3,5 m y arcenes): la Trinidad, con 6 m medidos, salía con uno. En ciudad, carriles de 2,8 m o más.</li>
+<li>Cada calzada de una avenida doble (dos tramos de un sentido con el mismo nombre, en paralelo) lleva dos carriles; si el aparcamiento no deja sitio para los dos, se quita el aparcamiento (275 tramos).</li>
+<li>Un tramo no puede ser más estrecho que los dos de al lado de la misma calle y sentido.</li>
+<li>El tráfico usa el ancho de su calle: las flechas, las rayas y los carriles por los que van los coches salen del mismo número.</li>
+<li>En la autopista, los carriles llenan su ancho aunque el mapa diga menos (se perdían las líneas en San Benito).</li>
+<li><strong>Calles que desaparecían</strong> (Jonay, C. Joaquín Turina: «esto es una carretera… ¿por qué es un descampado?»): una calle con un extremo fuera de la zona de juego perdía sus puntos de fuera; si solo tenía dos, desaparecía entera. Ahora se corta en el borde.</li>
+<li><strong>El terreno ya no asoma por encima del asfalto</strong> (Jonay: «textura rara que se superpone a la pista… encoge si me alejo»): donde una calle va en ladera o se separan las calzadas de la autopista, el terreno quedaba unos centímetros por encima; ahora se rebaja bajo todo el asfalto.</li>
+<li><strong>Campos de fútbol y canchas planos, en terraza</strong> (Jonay: «eso no puede pasar en un campo de fútbol, ni en este ni en ninguno»): a la altura de su punto más alto, con un muro de contención recto donde el terreno baja, la valla y las porterías a su altura; y si no caben, se encogen manteniendo las proporciones (Jonay: «si no cabe, reduce sus proporciones»).</li>
+<li><strong>Solares del casco cerrados con muro</strong> (Jonay: «son terrenos que tienen muros… se completan con muros, salvo si hay un pasaje, de unos 2,50 de alto… para las zonas del casco»).</li>
+<li><strong>Isletas pintadas</strong> (Jonay: «esto se atraviesa… deberíamos hacer esto como islas de marcas viales en todo el juego»): las de los ramales de las glorietas y las medianas de las calles urbanas son marcas en el suelo; ya no se atraviesan ni hay que saltarlas.</li>
+<li><strong>Ni farolas ni árboles atraviesan los puentes</strong> (Jonay: «no puede haber farolas que atraviesen puentes desde abajo»): lo que llegaría al tablero de un puente que tiene encima no se pone.</li>
+<li><strong>Los contenedores de la C. Teobaldo Power, fuera de la calzada</strong> (Jonay: «estoy harto de verlos en medio de la carretera»): en la acera de enfrente o en el terreno de detrás; nunca en la calzada.</li>
+<li>La búsqueda «¿hay un edificio aquí?» con rejilla, los arreglos de la 1.4.49 y la herramienta <code>foto_camara.py</code> (fotos con la cámara en cualquier punto).</li>
+<li><strong>Contador de FPS</strong> (Jonay: «un contador de FPS y frametime activable en opciones, en una esquina superior derecha, me valdrá para hacer mis test»): Pausa → «Contador de FPS: Sí». Arriba a la derecha: fotogramas por segundo, el tiempo medio entre fotogramas y el peor de cada medio segundo, y el tiempo de CPU del fotograma (la lógica y el envío del dibujo; el trabajo de la tarjeta no entra). Se guarda con las opciones.</li>
+<li>La auditoría de obstáculos ya no le carga a la última calle construida los muros de los corredores (salían 346 en vez de 80 desde la 1.4.49).</li>
+</ul>
 <h2>1.4.49 — 2026-11-25 — Alpha 1.4.49: la Carretera de Geneto a su medida</h2>
 <ul>
-<li><strong>Carretera de San Miguel de Geneto a su medida</strong> (Jonay: «los carriles miden 3,25 m, en total la calzada 6,50 m; eso es una vía que ya no es urbana, hay zonas sin acera»): calzada de 6,5 m, y de 10 m desde la rotonda del Padre Anchieta hasta la Calle Las Mejoranas («cuando llega a la rotonda del Padre Anchieta… llega hasta 10 m»; antes toda a 11,7 m: por un tramo en terraplén conservaba entero su ancho viejo) y, donde los edificios no dejan sitio, sin acera. El tráfico usa el mismo ancho. Las calles medidas por Jonay van en <code>ROAD_REAL</code> (<code>01_core.js</code>).</li>
+<li><strong>Carretera de San Miguel de Geneto a su medida</strong> (Jonay: «los carriles miden 3,25 m, en total la calzada 6,50 m; eso es una vía que ya no es urbana, hay zonas sin acera»): calzada de 6,5 m, y de 10 m desde la rotonda del Padre Anchieta hasta la Calle Las Mejoranas («cuando llega a la rotonda del Padre Anchieta… llega hasta 10 m»; antes toda a 11,7 m: por un tramo en terraplén conservaba entero su ancho viejo) y, donde los edificios no dejan sitio, sin acera. El tráfico usa el mismo ancho. Las calles medidas por Jonay van en <code>ROAD_REAL</code> (<code>01_core.js</code>). La auditoría ya no ve edificios invadiendo la carretera.</li>
+<li>El build ya no se para al copiar las canciones de la radio que ya estaban (Windows las tenía abiertas un momento).</li>
 </ul>
 <h2>1.4.48 — 2026-11-25 — Alpha 1.4.48: las calles mandan</h2>
 <ul>

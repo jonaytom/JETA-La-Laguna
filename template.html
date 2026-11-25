@@ -17,6 +17,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
 #game{position:fixed;inset:0}
 #game canvas{display:block}
 .hud{position:fixed;pointer-events:none;z-index:5}
+#fpsMeter{position:fixed;top:2px;right:6px;z-index:60;pointer-events:none;font:600 12px/1.2 Consolas,'Courier New',monospace;color:#9f9;background:rgba(0,0,0,.55);padding:1px 6px;border-radius:4px;white-space:pre;display:none}
 #topright{top:18px;right:22px;text-align:right;font-family:Oswald,Impact,sans-serif;text-shadow:0 2px 0 #000,0 0 8px rgba(0,0,0,.6)}
 #clock{font-size:26px;letter-spacing:1px;color:#fff}
 #money{font-size:34px;color:#7fe08a;font-weight:700;letter-spacing:1px;-webkit-text-stroke:1px #0b2a10}
@@ -363,6 +364,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
  <p class="credits">Mando compatible (Xbox/PS). Parodia no oficial: comercios y marcas tienen nombres inventados. Vehículos y música: creación propia. Mapa © colaboradores de OpenStreetMap (ODbL) · edificios: Dirección General del Catastro · señales: Mapillary (CC BY-SA). Relieve: MDT05 © Instituto Geográfico Nacional (CC BY 4.0) y Copernicus DEM vía Open-Meteo. Personajes y animaciones base: Quaternius (CC0). Pino canario: «Pine» de Quaternius (CC0). Texturas: Poly Haven (CC0). Motor 3D: three.js (MIT). Tipografías: Google Fonts (OFL).</p>
 </div></div>
 
+<div id="fpsMeter"></div>
 <div class="screen" id="pause" style="display:none"><div class="panel">
  <div class="logo" style="font-size:54px"><span class="g">PAUSA</span></div>
  <div class="opt"><label>Calidad gráfica</label><div class="seg" id="segQ"><button data-q="baja">Baja</button><button data-q="movil">Móvil</button><button data-q="media">Media</button><button data-q="alta">Alta</button></div></div>
@@ -370,6 +372,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
  <div class="opt"><label>Música (radio)</label><input type="range" id="mvol" min="0" max="1" step="0.05" value="1"></div>
  <div class="opt"><label>Sensibilidad ratón</label><input type="range" id="sens" min="0.3" max="2.5" step="0.1" value="1"></div>
  <div class="opt"><label>Límite de FPS: <span id="fpsv">60</span></label><input type="range" id="fpscap" min="30" max="144" step="1" value="60"></div>
+ <div class="opt"><label>Contador de FPS</label><div class="seg" id="segFpsM"><button data-v="0" class="on">No</button><button data-v="1">Sí</button></div></div>
  <div class="opt"><label>Motor gráfico</label><div class="seg" id="segGpu"><button data-g="1" class="on">WebGPU</button><button data-g="0">WebGL</button></div></div>
  <div class="opt"><label>Invertir eje Y</label><div class="seg" id="segInv"><button data-v="0" class="on">No</button><button data-v="1">Sí</button></div></div>
  <div class="opt"><label>Tiempo</label><div class="seg" id="segW"><button data-w="0" class="on">Despejado</button><button data-w="1">Panza de burro</button><button data-w="2">Bruma lagunera</button></div></div>

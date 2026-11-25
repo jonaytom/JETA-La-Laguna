@@ -353,6 +353,7 @@ function nearTram(x, z, r) {
   return false;
 }
 function buildTrees() {
+  dropUnderDecks(TREES, (t) => 11 * (t[3] || 1), 'arboles');
   const { types, barkMat, leafMat, o, col } = buildTreesPart1();
   if (DATA.ARB) return buildTreesBlender(types, o, col); // v1.3.0: the trees made in Blender
   const defs = [
@@ -753,8 +754,36 @@ function buildTreesPart1() {
 // ---------- street lamps + light pools
 const LAMPS = [];
 let lampHeadMat, lampPoolMat;
+/** v1.4.50 (Jonay, X 109, Y 1266: «no puede haber farolas que atraviesen puentes desde abajo»): what stands on the
+ *  ground (lamps, trees) and would reach the deck of a bridge or raised road above it goes (signs already: 05j_signals).
+ *  arr: [[x, z, …]], h(item): its height */
+function dropUnderDecks(arr, h, label) {
+  let n = 0;
+  for (let i = arr.length - 1; i >= 0; i--) {
+    const [x, z] = arr[i],
+      g = heightAt(x, z);
+    // (the walkable decks, and the asphalt as it is drawn: every bridge's deck is in it, not every one is a deck)
+    let d = deckAt(x, z, g + h(arr[i]) + 1);
+    for (const [ox, oz] of [
+      [0, 0],
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1]
+    ]) {
+      const y = csurfCell(Math.floor((x + ox) / 2), Math.floor((z + oz) / 2));
+      if (y === y && y > d) d = y;
+    }
+    if (d > g + 0.6 && d < g + h(arr[i]) + 1) {
+      arr.splice(i, 1);
+      n++;
+    }
+  }
+  (window.__bajoPuentes || (window.__bajoPuentes = {}))[label] = n; // (tests)
+}
 function buildLamps() {
   const { o, poleMat, histMat, modern, modernHead } = buildLampsPart1();
+  dropUnderDecks(LAMPS, () => 9, 'farolas'); // (after Part1: it places the street lamps)
   const { c, x, g } = buildLampsPart2(modern, modernHead, poleMat, histMat, o);
   x.fillStyle = g;
   x.fillRect(0, 0, 64, 64);

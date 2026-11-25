@@ -212,6 +212,150 @@ function pitchRects() {
   PITCH_RECTS = keep;
   return PITCH_RECTS;
 }
+// v1.4.50 (Jonay, X 208, Y 1113: «aquí se sale el campo de fútbol… si no cabe, reduce sus proporciones»): a pitch or court
+// whose rectangle (with its fence) runs onto a carriageway shrinks about its centre, keeping its proportions, until it
+// does not (down to 60 %)
+function fitPitches() {
+  let shrunk = 0;
+  for (const P of pitchRects()) {
+    const F = P.F,
+      cu = (F.u0 + F.u1) / 2,
+      cv = (F.v0 + F.v1) / 2,
+      e = P.area >= 1700 ? 2.4 : 1.2;
+    const hits = (k) => {
+      const u0 = cu - (cu - F.u0) * k - e,
+        u1 = cu + (F.u1 - cu) * k + e,
+        v0 = cv - (cv - F.v0) * k - e,
+        v1 = cv + (F.v1 - cv) * k + e;
+      const nu = Math.max(4, Math.ceil((u1 - u0) / 3)),
+        nv = Math.max(4, Math.ceil((v1 - v0) / 3));
+      for (let i = 0; i <= nu; i++)
+        for (const v of [v0, v1]) {
+          const [x, z] = F.W(u0 + ((u1 - u0) * i) / nu, v);
+          if (onCarriagewayEarly(x, z, 0.2)) return true;
+        }
+      for (let i = 0; i <= nv; i++)
+        for (const u of [u0, u1]) {
+          const [x, z] = F.W(u, v0 + ((v1 - v0) * i) / nv);
+          if (onCarriagewayEarly(x, z, 0.2)) return true;
+        }
+      return false;
+    };
+    let k = 1;
+    try {
+      while (k > 0.6 && hits(k)) k -= 0.05;
+    } catch (err) {
+      k = 1; // (the roads not ready yet)
+    }
+    if (k < 0.999) {
+      P.F = Object.assign({}, F, {
+        u0: cu - (cu - F.u0) * k,
+        u1: cu + (F.u1 - cu) * k,
+        v0: cv - (cv - F.v0) * k,
+        v1: cv + (F.v1 - cv) * k
+      });
+      P.len *= k;
+      P.wid *= k;
+      P.area *= k * k;
+      P.shrink = k;
+      shrunk++;
+    }
+  }
+  window.__camposEncogidos = shrunk; // (tests)
+}
+// v1.4.50 (Jonay, X 1969, Y 1281: «hiciste el campo de fútbol irregular, en bajada… en realidad hay una caída de terreno
+// recta bastantes metros y luego se hace una terraza donde está el campo… eso no puede pasar en un campo de fútbol, ni en
+// este ni en ninguno»): every pitch and court is flat, on a terrace at the height of the highest point of its rectangle
+// (with its fence): the ground under it comes up to it, a straight retaining wall goes down where the ground is lower,
+// and you walk on it (a flat deck). PITCH_Y: the terrace of the pitch being built (pitchGround)
+let PITCH_Y = null;
+const pitchGround = (x, z) => (PITCH_Y === null ? heightAt(x, z) : Math.max(heightAt(x, z), PITCH_Y));
+function pitchTerrace(P) {
+  const F = P.F,
+    e = P.area >= 1700 ? 2.7 : 1.5,
+    u0 = F.u0 - e,
+    u1 = F.u1 + e,
+    v0 = F.v0 - e,
+    v1 = F.v1 + e;
+  let h = -1e9;
+  for (let u = u0; u <= u1 + 0.01; u += 2)
+    for (let v = v0; v <= v1 + 0.01; v += 2) {
+      const [x, z] = F.W(Math.min(u, u1), Math.min(v, v1));
+      h = Math.max(h, heightAt(x, z));
+    }
+  // the ground's corners inside the terrace come up to it (heightAt follows)
+  const inT = (x, z) => {
+    const u = (x - P.cx) * F.ux + (z - P.cz) * F.uz,
+      v = (x - P.cx) * F.vx + (z - P.cz) * F.vz;
+    return u > u0 + 0.5 && u < u1 - 0.5 && v > v0 + 0.5 && v < v1 - 0.5;
+  };
+  const pos = TERRAIN_MESH ? TERRAIN_MESH.geometry.attributes.position : null,
+    r = Math.hypot(u1 - u0, v1 - v0) / 2,
+    want = Math.round(h * 10) - 1;
+  let ch = 0;
+  for (let gz = Math.floor((P.cz - r - HM.z0) / HM.dx); gz <= Math.ceil((P.cz + r - HM.z0) / HM.dx); gz++)
+    for (let gx = Math.floor((P.cx - r - HM.x0) / HM.dx); gx <= Math.ceil((P.cx + r - HM.x0) / HM.dx); gx++) {
+      if (gx < 0 || gz < 0 || gx >= HM.nx || gz >= HM.nz) continue;
+      const k = gz * HM.nx + gx;
+      if (!inT(HM.x0 + gx * HM.dx, HM.z0 + gz * HM.dx) || HM.a[k] >= want) continue;
+      HM.a[k] = want;
+      if (pos) pos.setY(k, want / 10);
+      ch++;
+    }
+  if (ch && pos) {
+    pos.needsUpdate = true;
+    TERRAIN_MESH.geometry.computeVertexNormals();
+  }
+  // the retaining wall: along the edge of the terrace, where the ground outside is lower
+  const wp = [],
+    wi = [],
+    sides = [
+      [u0, v0, u1, v0],
+      [u1, v0, u1, v1],
+      [u1, v1, u0, v1],
+      [u0, v1, u0, v0]
+    ];
+  for (const [ua, va, ub, vb] of sides) {
+    const L = Math.hypot(ub - ua, vb - va),
+      n = Math.max(1, Math.ceil(L / 2));
+    for (let i = 0; i < n; i++) {
+      const [ax, az] = F.W(ua + ((ub - ua) * i) / n, va + ((vb - va) * i) / n),
+        [bx, bz] = F.W(ua + ((ub - ua) * (i + 1)) / n, va + ((vb - va) * (i + 1)) / n);
+      const ga = heightAt(ax + (ax - P.cx) * 0.01, az + (az - P.cz) * 0.01),
+        gb = heightAt(bx + (bx - P.cx) * 0.01, bz + (bz - P.cz) * 0.01);
+      if (Math.max(h - ga, h - gb) < 0.25) continue;
+      const b0 = wp.length / 3;
+      wp.push(ax, Math.min(ga, h) - 0.4, az, bx, Math.min(gb, h) - 0.4, bz, bx, h + 0.17, bz, ax, h + 0.17, az);
+      wi.push(b0, b0 + 1, b0 + 2, b0, b0 + 2, b0 + 3);
+      if (Math.max(h - ga, h - gb) > 0.9) COL.addSeg(ax, az, bx, bz, Math.min(ga, gb) - 0.5, h - 0.4, 'muro de campo');
+    }
+  }
+  if (wi.length) {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(wp, 3));
+    g.setIndex(wi);
+    g.computeVertexNormals();
+    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: 0xb9b4aa, roughness: 0.9, side: THREE.DoubleSide }));
+    m.receiveShadow = m.castShadow = true;
+    scene.add(m);
+  }
+  // you walk on the terrace (a flat deck: 05f_anchieta.js)
+  const [ax, az] = F.W(u0, (v0 + v1) / 2),
+    [bx, bz] = F.W(u1, (v0 + v1) / 2),
+    w = v1 - v0;
+  DECKS.push({
+    type: 'path',
+    pts: [
+      [ax, az, h + 0.16],
+      [bx, bz, h + 0.16]
+    ],
+    w,
+    bb: [Math.min(ax, bx) - w, Math.max(ax, bx) + w, Math.min(az, bz) - w, Math.max(az, bz) + w],
+    pitch: true
+  });
+  (window.__terrazas || (window.__terrazas = [])).push([Math.round(P.cx), Math.round(P.cz), +h.toFixed(1), ch, wi.length / 6]);
+  return h;
+}
 // inside a pitch or court (plus margin m, metres)? Used to keep trees, lamps and benches off them
 function inPitch(x, z, m = 1) {
   for (const P of pitchRects()) {
@@ -225,6 +369,7 @@ function inPitch(x, z, m = 1) {
 }
 function buildSports() {
   const { white, dark, orange, fenceMat, sportsAreas } = buildSportsPart1();
+  fitPitches(); // v1.4.50
   for (const a of DATA.A) {
     buildSportsEach(a, sportsAreas, white, fenceMat, dark, orange);
   }
@@ -238,6 +383,11 @@ function buildSports() {
   } catch (e) {
     console.error('rios tejera', e);
   } // v0.76
+  try {
+    fitTerrainToRoads(); // v1.4.50: the terraces raised the ground: under the roads beside them it goes down again
+  } catch (e) {
+    console.error('fitTerrainToRoads', e);
+  }
 }
 /** (v1.1.7, code quality) the body of a loop of buildSports, split out of it */
 function buildSportsEach(a, sportsAreas, white, fenceMat, dark, orange) {
@@ -255,13 +405,20 @@ function buildSportsEach(a, sportsAreas, white, fenceMat, dark, orange) {
   cx /= pts.length;
   cz /= pts.length;
   if (cx < WORLD.x0 || cx > WORLD.x1 || cz < WORLD.z0 || cz > WORLD.z1) return;
-  const F = axisFrame(pts, cx, cz);
-  const len = F.u1 - F.u0,
-    wid = F.v1 - F.v0;
-  const area = len * wid;
-  if (len < 12 || wid < 8) return;
+  const F0 = axisFrame(pts, cx, cz);
+  if (F0.u1 - F0.u0 < 12 || F0.v1 - F0.v0 < 8) return;
   const pr = pitchRects().find((q) => Math.abs(q.cx - cx) < 0.01 && Math.abs(q.cz - cz) < 0.01);
   if (!pr) return;
+  const F = pr.F, // (v1.4.50: shrunk if it did not fit: pitchRects)
+    len = F.u1 - F.u0,
+    wid = F.v1 - F.v0,
+    area = len * wid;
+  PITCH_Y = null;
+  try {
+    PITCH_Y = pitchTerrace(pr); // v1.4.50: flat, on its terrace
+  } catch (e) {
+    console.error('terraza del campo', e);
+  }
   const { kind, at, add } = buildSportsEachPart1(pr, len, wid, F);
   buildSportsEachPart2(kind, F, add, white, fenceMat, at, dark, orange);
   buildSportsEachPart3(area, F, fenceMat, cx, cz, sportsAreas);
@@ -277,12 +434,12 @@ function buildSportsEach(a, sportsAreas, white, fenceMat, dark, orange) {
       if (onCarriageway(px, pz, 0.5) || COL.nearSeg(px, pz, 1)) continue;
       const h = kind === 'f11' ? 20 : 14;
       const p = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.3, h, 8), M(0x6a6f73, 0.5, 0.6));
-      p.position.set(px, heightAt(px, pz) + h / 2, pz);
+      p.position.set(px, pitchGround(px, pz) + h / 2, pz);
       p.castShadow = true;
       scene.add(p);
       const hd = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.2, 0.4), lampHeadMat);
-      hd.position.set(px, heightAt(px, pz) + h, pz);
-      hd.lookAt(cx, heightAt(cx, cz), cz);
+      hd.position.set(px, pitchGround(px, pz) + h, pz);
+      hd.lookAt(cx, pitchGround(cx, cz), cz);
       scene.add(hd);
       COL.addCirc(px, pz, 0.3);
     }
@@ -314,7 +471,8 @@ function buildSportsEach(a, sportsAreas, white, fenceMat, dark, orange) {
     }
     LABELS.push([STR[inStadium[1]], cx, cz, 1]);
   }
-  SPORTS.pitches.push({ cx, cz, kind, F, len, wid });
+  SPORTS.pitches.push({ cx, cz, kind, F, len, wid, y: PITCH_Y });
+  PITCH_Y = null;
 }
 /** (v1.1.7, code quality) part of buildSportsEach: the fence: a low wall with a high chain-link fence on it */
 // v1.4.22 (Jonay, 19-oct: «deben tener muro y valla alta alrededor con uno o dos accesos. Ahora están abiertos»; 17-nov:
@@ -380,7 +538,9 @@ function buildSportsEachPart3(area, F, fenceMat, cx, cz, sportsAreas) {
       break;
     }
   if (!gates.length) gates.push(order[0]);
-  const positions = [], uvs = [], indices = [];
+  const positions = [],
+    uvs = [],
+    indices = [];
   if (big && free((gates[0] + 2) % 4)) gates.push((gates[0] + 2) % 4);
   for (let i = 0; i < 4; i++) {
     const [ua, va] = cor[i],
@@ -403,7 +563,7 @@ function buildSportsEachPart3(area, F, fenceMat, cx, cz, sportsAreas) {
       for (let k = 0; k <= ns; k++) {
         const tt = a0 + ((a1 - a0) * k) / ns,
           q = F.W(ua + (ub - ua) * tt, va + (vb - va) * tt),
-          y = heightAt(q[0], q[1]),
+          y = pitchGround(q[0], q[1]),
           ok = !roadAtBarrier(q[0], q[1], y - 0.9, y + 3, 0.35);
         if (ok && r0 === null) r0 = tt;
         if ((!ok || tt >= a1) && r0 !== null) {
@@ -419,7 +579,7 @@ function buildSportsEachPart3(area, F, fenceMat, cx, cz, sportsAreas) {
       if (L < 0.5) continue;
       const mx = (pa[0] + pb[0]) / 2,
         mz = (pa[1] + pb[1]) / 2,
-        y0 = Math.min(heightAt(pa[0], pa[1]), heightAt(mx, mz), heightAt(pb[0], pb[1])),
+        y0 = Math.min(pitchGround(pa[0], pa[1]), pitchGround(mx, mz), pitchGround(pb[0], pb[1])),
         ry = Math.atan2(pb[0] - pa[0], pb[1] - pa[1]) + Math.PI / 2;
       // the low wall (a little into the ground, so it never floats on a slope)
       const w = new THREE.Mesh(SPORT_WALL_BOX, SPORT_WALL_MAT);
@@ -432,14 +592,14 @@ function buildSportsEachPart3(area, F, fenceMat, cx, cz, sportsAreas) {
       // the chain-link fence on it
       const fh = topH - wallH;
       const base = positions.length / 3;
-      const dx = Math.cos(ry) * L / 2, dz = -Math.sin(ry) * L / 2;
+      const dx = (Math.cos(ry) * L) / 2,
+        dz = (-Math.sin(ry) * L) / 2;
       for (const y of [y0 + topH, y0 + wallH]) {
         positions.push(mx - cx - dx, y, mz - cz - dz, mx - cx + dx, y, mz - cz + dz);
       }
       uvs.push(0, fh / 1.5, L / 1.5, fh / 1.5, 0, 0, L / 1.5, 0);
       indices.push(base, base + 2, base + 1, base + 2, base + 3, base + 1);
-      COL.addSeg(pa[0], pa[1], pb[0], pb[1], y0 - 0.5,
-                 Math.max(heightAt(pa[0],pa[1]),heightAt(pb[0],pb[1])) + 4, 'valla de cancha');
+      COL.addSeg(pa[0], pa[1], pb[0], pb[1], y0 - 0.5, Math.max(pitchGround(pa[0], pa[1]), pitchGround(pb[0], pb[1])) + 4, 'valla de cancha');
     }
     // the gate posts
     if (gates.includes(i))
@@ -448,7 +608,7 @@ function buildSportsEachPart3(area, F, fenceMat, cx, cz, sportsAreas) {
         if (onCarriageway(q[0], q[1], 0.3)) continue;
         const p = new THREE.Mesh(SPORT_WALL_BOX, SPORT_WALL_MAT);
         p.scale.set(0.3, topH + 0.3, 0.3);
-        p.position.set(q[0], heightAt(q[0], q[1]) + topH / 2 - 0.1, q[1]);
+        p.position.set(q[0], pitchGround(q[0], q[1]) + topH / 2 - 0.1, q[1]);
         scene.add(p);
         COL.addCirc(q[0], q[1], 0.2);
       }
@@ -520,7 +680,7 @@ function buildSportsEachPart1(pr, len, wid, F) {
     const u = F.u0 + (len * i) / N,
       v = F.v0 + (wid * j) / Mv;
     const [px, pz] = F.W(u, v);
-    return [px, heightAt(px, pz) + 0.16, pz];
+    return [px, pitchGround(px, pz) + 0.16, pz];
   };
   for (let i = 0; i < N; i++)
     for (let j = 0; j < Mv; j++) {
@@ -542,7 +702,7 @@ function buildSportsEachPart1(pr, len, wid, F) {
   scene.add(mesh);
   const at = (u, v, y = 0) => {
     const [px, pz] = F.W(u, v);
-    return [px, heightAt(px, pz) + 0.16 + y, pz];
+    return [px, pitchGround(px, pz) + 0.16 + y, pz];
   };
   const add = (geo, m, u, v, y, rot = 0) => {
     const o = new THREE.Mesh(geo, m);

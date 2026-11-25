@@ -261,6 +261,62 @@ function tac67Yard(x, z) {
   const [lx, lz] = tac67().toL(x, z);
   return Math.abs(lx) < 5.2 && lz > -14 && lz < 3.8;
 }
+/** v1.4.50 (Jonay: «ya no hay garaje en la casa de calle Tacoronte ni botón ni nada»): the hand-made houses keep their
+ *  plot. The hole for C. Tacoronte 67 was carved in the OSM block before the Catastro's buildings came in (addCatastro,
+ *  05y_muros.js); in v1.4.48 that block was one of the coarse ones changed for the Catastro's, and one of them (4 floors)
+ *  stood on the house and hid it. After the Catastro: every building with its centre in a reserved plot, or with a
+ *  plot's centre inside it, goes (reservedPlotsClear). [centre x, z, test (x, z) → inside the plot] */
+function reservedPlots() {
+  const T = tac67(),
+    out = [
+      [
+        ...T.toW(0, -6),
+        (x, z) => {
+          const [lx, lz] = T.toL(x, z);
+          return Math.abs(lx) < T.hw + 0.3 && lz > T.back - 0.5 && lz < 1;
+        }
+      ]
+    ];
+  for (const h of CUSTOM_HOUSES) {
+    const c = Math.cos(h.ang),
+      s = Math.sin(h.ang);
+    out.push([
+      h.x,
+      h.z,
+      (x, z) => {
+        const dx = x - h.x,
+          dz = z - h.z;
+        return Math.abs(dx * c + dz * s) < h.w / 2 + 0.3 && Math.abs(-dx * s + dz * c) < h.d / 2 + 0.3;
+      }
+    ]);
+  }
+  return out;
+}
+function reservedPlotsClear() {
+  const P = reservedPlots(),
+    gone = [];
+  const pip = (x, z, c) => {
+    let o = false;
+    for (let i = 0, j = c.length - 2; i < c.length; j = i, i += 2)
+      if (c[i + 1] > z !== c[j + 1] > z && x < ((c[j] - c[i]) * (z - c[i + 1])) / (c[j + 1] - c[i + 1]) + c[i]) o = !o;
+    return o;
+  };
+  for (let i = DATA.B.length - 1; i >= 0; i--) {
+    const c = DATA.B[i][6];
+    if (!c || c.length < 6) continue;
+    let cx = 0,
+      cz = 0;
+    for (let k = 0; k < c.length; k += 2) ((cx += c[k]), (cz += c[k + 1]));
+    cx /= c.length / 2;
+    cz /= c.length / 2;
+    if (P.some(([px, pz, inP]) => Math.hypot(px - cx, pz - cz) < 60 && (inP(cx, cz) || pip(px, pz, c)))) {
+      gone.push([Math.round(cx), Math.round(cz)]);
+      DATA.B.splice(i, 1);
+    }
+  }
+  window.__reservados = gone; // (tests)
+  console.log('casas propias: edificios quitados de su parcela', gone.length);
+}
 function carveTac67() {
   const T = tac67(),
     [hx, hz] = T.toW(0, -6);

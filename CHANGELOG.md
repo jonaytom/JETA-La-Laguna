@@ -3,6 +3,29 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.50 — 2026-11-25 — Alpha 1.4.50: carriles, casas propias y campos planos
+
+- **La casa de la C. Tacoronte 67 vuelve, con su garaje y el Linguini Gold** (Jonay: «ya no hay garaje en la casa de calle Tacoronte ni botón ni nada»): un edificio del Catastro (de los que cambiaron a las manzanas gruesas en la 1.4.48) se ponía encima. Regla para **todo lo hecho a mano** (Jonay: «que no pase más, que hay muchas más hechas a mano»): los edificios del Catastro no entran en las casas propias (Tacoronte 67, casa del hermano), en las casas del barrio de inicio, en los edificios vestidos por su sitio (centros de salud, Casa Museo Los Sabandeños, Fundación Cristino de Vera, Santa Catalina, pabellón Santiago Martín…) ni en el estadio Francisco Peraza y el pabellón Juan Ríos Tejera; y no se quita la manzana del mapa que uno de ellos viste.
+- **Carriles** (Jonay: «ahora solo hay un carril», «se pasa de 2 a un carril y luego a 2 otra vez», «teniendo tanto espacio dejas un carril solo», «pones dos flechas como si fuera doble carril»):
+  - Una calle de un sentido contaba sus carriles como una autopista (3,5 m y arcenes): la Trinidad, con 6 m medidos, salía con uno. En ciudad, carriles de 2,8 m o más.
+  - Cada calzada de una avenida doble (dos tramos de un sentido con el mismo nombre, en paralelo) lleva dos carriles; si el aparcamiento no deja sitio para los dos, se quita el aparcamiento (275 tramos).
+  - Un tramo no puede ser más estrecho que los dos de al lado de la misma calle y sentido.
+  - El tráfico usa el ancho de su calle: las flechas, las rayas y los carriles por los que van los coches salen del mismo número.
+  - En la autopista, los carriles llenan su ancho aunque el mapa diga menos (se perdían las líneas en San Benito).
+- **Calles que desaparecían** (Jonay, C. Joaquín Turina: «esto es una carretera… ¿por qué es un descampado?»): una calle con un extremo fuera de la zona de juego perdía sus puntos de fuera; si solo tenía dos, desaparecía entera. Ahora se corta en el borde.
+- **El terreno ya no asoma por encima del asfalto** (Jonay: «textura rara que se superpone a la pista… encoge si me alejo»): donde una calle va en ladera o se separan las calzadas de la autopista, el terreno quedaba unos centímetros por encima; ahora se rebaja bajo todo el asfalto.
+- **Campos de fútbol y canchas planos, en terraza** (Jonay: «eso no puede pasar en un campo de fútbol, ni en este ni en ninguno»): a la altura de su punto más alto, con un muro de contención recto donde el terreno baja, la valla y las porterías a su altura; y si no caben, se encogen manteniendo las proporciones (Jonay: «si no cabe, reduce sus proporciones»).
+- **Solares del casco cerrados con muro** (Jonay: «son terrenos que tienen muros… se completan con muros, salvo si hay un pasaje, de unos 2,50 de alto… para las zonas del casco»).
+- **Isletas pintadas** (Jonay: «esto se atraviesa… deberíamos hacer esto como islas de marcas viales en todo el juego»): las de los ramales de las glorietas y las medianas de las calles urbanas son marcas en el suelo; ya no se atraviesan ni hay que saltarlas.
+- **Ni farolas ni árboles atraviesan los puentes** (Jonay: «no puede haber farolas que atraviesen puentes desde abajo»): lo que llegaría al tablero de un puente que tiene encima no se pone.
+- **Los contenedores de la C. Teobaldo Power, fuera de la calzada** (Jonay: «estoy harto de verlos en medio de la carretera»): en la acera de enfrente o en el terreno de detrás; nunca en la calzada.
+- **Capas de carretera apiladas**: la altura del asfalto guarda dos capas por punto (la de arriba y la de debajo, si están a más de 1,5 m), y los coches se apoyan en la que tienen bajo las ruedas: una calle por encima de la boca de un túnel o un puente sobre otra calle ya no los sube.
+- Las isletas urbanas no se pintan junto a una calle hundida, un túnel o un puente.
+- Conocido: en la prueba de túneles y puentes, el coche no baja al túnel de San Benito junto a la Calle Espinero y no termina a tiempo un tramo de 1 km de la Autopista del Norte; se miran en el repaso de puentes y túneles.
+- La búsqueda «¿hay un edificio aquí?» con rejilla, los arreglos de la 1.4.49 y la herramienta `foto_camara.py` (fotos con la cámara en cualquier punto).
+- **Contador de FPS** (Jonay: «un contador de FPS y frametime activable en opciones, en una esquina superior derecha, me valdrá para hacer mis test»): Pausa → «Contador de FPS: Sí». Arriba a la derecha: fotogramas por segundo, el tiempo medio entre fotogramas y el peor de cada medio segundo, y el tiempo de CPU del fotograma (la lógica y el envío del dibujo; el trabajo de la tarjeta no entra). Se guarda con las opciones.
+- La auditoría de obstáculos ya no le carga a la última calle construida los muros de los corredores (salían 346 en vez de 80 desde la 1.4.49).
+
 ## 1.4.49 — 2026-11-25 — Alpha 1.4.49: la Carretera de Geneto a su medida
 
 - **Carretera de San Miguel de Geneto a su medida** (Jonay: «los carriles miden 3,25 m, en total la calzada 6,50 m; eso es una vía que ya no es urbana, hay zonas sin acera»): calzada de 6,5 m, y de 10 m desde la rotonda del Padre Anchieta hasta la Calle Las Mejoranas («cuando llega a la rotonda del Padre Anchieta… llega hasta 10 m»; antes toda a 11,7 m: por un tramo en terraplén conservaba entero su ancho viejo) y, donde los edificios no dejan sitio, sin acera. El tráfico usa el mismo ancho. Las calles medidas por Jonay van en `ROAD_REAL` (`01_core.js`). La auditoría ya no ve edificios invadiendo la carretera.

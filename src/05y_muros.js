@@ -4,9 +4,42 @@
 // zonas como la universidad». DATA.CB and DATA.BW come from tools/catastro_add.py (build.py puts them in the data).
 
 // the parts of buildings of the Catastro that no building of the map covers: into DATA.B like any other building
+// v1.4.50 (Jonay: «eso de casas hechas a mano sustituidas por Catastro, malo… que no pase más, que hay muchas más hechas a
+// mano»): the places made by hand keep theirs. They find «their» building of the map by its position or kind (LANDMARK_AT
+// and the old-town houses of 05q_inicio, the stands of the Francisco Peraza and the Juan Ríos Tejera hall, 05v_peraza)
+// or carve their plot in it (C. Tacoronte 67, the hand-placed houses: reservedPlots, 05p_casas): the Catastro's
+// buildings must not come in there, nor take away the map's block they dress
+function handMade() {
+  const pip = (x, z, c) => {
+    let o = false;
+    for (let i = 0, j = c.length - 2; i < c.length; j = i, i += 2)
+      if (c[i + 1] > z !== c[j + 1] > z && x < ((c[j] - c[i]) * (z - c[i + 1])) / (c[j + 1] - c[i + 1]) + c[i]) o = !o;
+    return o;
+  };
+  const circles = LANDMARK_AT.map((L) => [L.x, L.z, L.r + 2]),
+    polys = [];
+  for (const P of INICIO.blocks || []) polys.push(P.flat ? P.flat() : P);
+  for (const a of DATA.A) if (a[1] >= 0 && /Estadio Municipal Francisco Peraza|Juan R[ií]os Tejera/.test(STR[a[1]])) polys.push(a[2]);
+  const plots = typeof reservedPlots === 'function' ? reservedPlots() : [];
+  return {
+    pip,
+    // (x, z) the centre of a building, c its outline
+    hit(x, z, c) {
+      if (circles.some(([px, pz, r]) => Math.hypot(px - x, pz - z) < r)) return true;
+      if (polys.some((P) => pip(x, z, P))) return true;
+      return plots.some(([px, pz, inP]) => Math.hypot(px - x, pz - z) < 60 && (inP(x, z) || (c && pip(px, pz, c))));
+    },
+    dressed(x, z) {
+      return circles.some(([px, pz, r]) => Math.hypot(px - x, pz - z) < r);
+    }
+  };
+}
 function addCatastro() {
   const CB = DATA.CB || [];
-  let n = 0;
+  const HM0 = handMade(),
+    kept = [];
+  let n = 0,
+    skip = 0;
   // v1.4.48 (Jonay, with a real view of the Calle Barcelona: a whole block of separate buildings): the OSM footprints that
   // cover a whole block where the Catastro has each building (tools/osm_gruesos.py, DATA.OG: their centres) go; the
   // Catastro's buildings come in their place (in DATA.CB)
@@ -22,6 +55,10 @@ function addCatastro() {
       cx /= c.length / 2;
       cz /= c.length / 2;
       if (og.some(([x, z]) => Math.abs(x - cx) < 1.5 && Math.abs(z - cz) < 1.5)) {
+        if (HM0.dressed(cx, cz)) {
+          kept.push(c); // (v1.4.50: dressed by hand: it stays, and no Catastro building inside it)
+          continue;
+        }
         DATA.B.splice(i, 1);
         q++;
       }
@@ -38,6 +75,10 @@ function addCatastro() {
     }
     cx /= k;
     cz /= k;
+    if (HM0.hit(cx, cz, c) || kept.some((P) => HM0.pip(cx, cz, P))) {
+      skip++;
+      continue;
+    }
     const R = mulberry((Math.round(cx * 7.3) * 92821 + Math.round(cz * 13.1)) | 0),
       r = R();
     const lv = Math.max(1, Math.min(14, fl)),
@@ -47,7 +88,8 @@ function addCatastro() {
     DATA.B.push([Math.round((lv * (style === 0 ? 3.6 : 3.1) + 0.6) * 10), style, lv, roofT, -1, Math.floor(R() * 1e6), c]);
     n++;
   }
-  console.log('catastro: edificios añadidos', n);
+  console.log('catastro: edificios añadidos', n, 'no añadidos por estar en un sitio hecho a mano', skip);
+  window.__catHecho = skip; // (tests)
   return n;
 }
 
@@ -88,6 +130,84 @@ function inicioTapias() {
     }
     flush();
   }
+  return out;
+}
+
+// v1.4.50 (Jonay, con una vista de la C. San Antonio y otra de la C. Hermanos Marrero: «son terrenos que tienen muros…
+// en las manzanas que queden con trozos así se completan con muros, salvo si hay un pasaje, muros de unos 2,50 de alto…
+// eso para las zonas del casco; para zonas de afueras de campo no»): in the old town, a stretch of a street's front with
+// no building, between buildings of the same block (a plot), is closed with a 2.5 m wall along the facade line; not where
+// another street or a path goes in (a passage), not on a square, park, car park or garden, not over 60 m
+function cascoSolares() {
+  const out = [],
+    open = new Set(['park', 'garden', 'grass', 'pitch', 'playground', 'parking', 'square', 'sports', 'cemetery']),
+    opens = DATA.A.filter((a) => open.has(DATA.AT[a[0]]) && a[2].length >= 6);
+  const inOpen = (x, z) => opens.some((a) => pip(x, z, a[2]));
+  const nearOther = (x, z, ri0) => {
+    for (const r of [0.8, 2.5])
+      for (let k = 0; k < 8; k++) {
+        const a = (k / 8) * Math.PI * 2,
+          rn = ROADSEG.nearest(x + Math.cos(a) * r, z + Math.sin(a) * r, (q) => q[0] <= 15 && q !== DATA.R[ri0]);
+        if (rn && rn.d < DATA.R[rn.ri][2] / 2 + 0.3) return true;
+      }
+    return false;
+  };
+  DATA.R.forEach((rd, ri) => {
+    if (rd[0] < 3 || rd[0] > 13 || rd[3] & 6) return;
+    const c = rd[4];
+    if (!c.some((_, i) => i % 2 === 0 && isHistoric(c[i], c[i + 1]))) return;
+    const d = rd[2] / 2 + SIDEWALK_W + 0.35;
+    for (const sd of [1, -1]) {
+      let run = [];
+      const flush = () => {
+        if (run.length >= 3) {
+          let L = 0;
+          for (let i = 1; i < run.length; i++) L += Math.hypot(run[i][0] - run[i - 1][0], run[i][1] - run[i - 1][1]);
+          // (between buildings: the run touches a building at both ends)
+          const a = run[0],
+            b = run[run.length - 1];
+          if (L >= 3 && L <= 60 && a.b && b.b) out.push(['tapia', 2.5, '', run.flatMap((p) => [p[0], p[1]])]);
+        }
+        run = [];
+      };
+      for (let i = 0; i + 3 < c.length; i += 2) {
+        const L = Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]);
+        if (L < 0.5) continue;
+        const ux = (c[i + 2] - c[i]) / L,
+          uz = (c[i + 3] - c[i + 1]) / L,
+          nx = -uz * sd,
+          nz = ux * sd;
+        for (let t = 0; t < L; t += 1.5) {
+          const x = c[i] + ux * t + nx * d,
+            z = c[i + 1] + uz * t + nz * d;
+          if (!isHistoric(x, z)) {
+            flush();
+            continue;
+          }
+          const bld = inAnyBuilding(x, z) || inAnyBuilding(x + nx * 1.2, z + nz * 1.2);
+          if (bld) {
+            if (run.length) {
+              run.push([x, z]);
+              run[run.length - 1].b = true;
+              flush();
+            }
+            const p = [x, z];
+            p.b = true;
+            run = [p];
+            continue;
+          }
+          if (onCarriagewayEarly(x, z, 0.2) || inOpen(x + nx * 2, z + nz * 2) || nearOther(x + nx * 1.5, z + nz * 1.5, ri)) {
+            run = [];
+            continue;
+          }
+          if (run.length && run[0].b) run.push([x, z]);
+        }
+        // (a run goes on round to the next piece of the way only through its shared point)
+      }
+      run = [];
+    }
+  });
+  window.__solares = out.length; // (tests)
   return out;
 }
 
@@ -399,6 +519,11 @@ function buildWallsPart1() {
     for (const w of t) list.push(w);
   } catch (e) {
     console.error('tapias', e);
+  }
+  try {
+    for (const w of cascoSolares()) list.push(w); // v1.4.50
+  } catch (e) {
+    console.error('solares', e);
   }
   // height (m above the ground), thickness, material
   const KIND = {

@@ -806,8 +806,8 @@ class Car {
           // v1.4.47: on the asphalt as it is drawn (carSurfAt, 04_world.js), not on «terrain + 17 cm»: the car's y is this
           // + 0.17 and the asphalt of an ordinary street is terrain + 0.15. Only within a step of where the car is (a
           // road on a bridge above, or in a cutting below, is not this one)
-          const s = carSurfAt(x, z);
-          if (s !== null && s - 0.15 > g - 2.5 && s - 0.15 < py + 0.6) return s - 0.15;
+          const s = carSurfAt(x, z, py);
+          if (s !== null && s - 0.15 < py + 0.6 && (s - 0.15 > g - 2.5 || inCut(x, z, 0))) return s - 0.15; // (v1.4.50: in a cutting the asphalt is well under the ground: that one)
           return g;
         };
     this.Gf = G;
@@ -915,7 +915,7 @@ function edgePark(E) {
 function laneCentres(E, dir = 1) {
   const { sh, we } = edgePark(E);
   if (E.nl === undefined) {
-    E.nl = E.oneway ? (we >= 6.4 ? 2 : 1) : we >= 12.5 ? 4 : 2;
+    E.nl = E.oneway ? Math.max(1, Math.min(2, Math.floor((we - 0.4) / 2.8))) : we >= 12.5 ? 4 : 2; // (v1.4.50: as laneMkPart1)
     try {
       const P = E.pts,
         h = (P.length >> 2) << 1,

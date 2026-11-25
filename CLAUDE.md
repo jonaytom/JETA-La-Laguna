@@ -17,6 +17,11 @@
   paralelo al borde de la acera (o de la calzada si no hay acera); no se quitan edificios salvo casetas; los edificios
   vecinos van pegados salvo donde el mapa tenga un hueco de verdad (si hay que separarlos, menos de lo que cabe el
   personaje); los tramos rectos de calle, rectos (sin arrugas). Plan en PENDIENTES («Las calles mandan»).
+- **Cada fallo que avisa Jonay, con su regla general** (Jonay, 25-nov: «para las cosas que te voy diciendo hay que buscar
+  reglas generales para ver por qué pasan y evitarlo en otras zonas… esto es importante, toma nota. No se trata de
+  arreglar la zona puntual»): ante un fallo en un sitio, buscar la causa (qué regla del código lo produce), arreglar la
+  regla y buscar con una sonda en todo el mapa los demás sitios donde pasa lo mismo. Arreglar solo el punto, nunca;
+  si hace falta una excepción para un sitio concreto, que sea porque Jonay lo midió o lo pidió.
 - **Coordenadas** (Jonay, 2-nov, v0.99.7): en pantalla, informes, PENDIENTES y mensajes se escriben **X, Y** para el plano y la
   **altura** aparte (m sobre el mar). Y es lo que el código llama `z` (y lo que los apuntes y capturas viejos llaman Z).
 

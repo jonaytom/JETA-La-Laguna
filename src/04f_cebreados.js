@@ -188,7 +188,9 @@ function cebArea(P, wp, Q, wq, u0, maxU, maxGap = 7, raised = false) {
   };
   // v1.3.6 (Jonay: «que tengan bordillo»): a splitter island is raised with its kerb where it is 1.4 m wide or more; the
   // narrow nose before it stays painted
-  const up = (i) => raised && E[i][2] >= 1.4 && E[i + 1] && E[i + 1][2] >= 1.4;
+  // v1.4.50 (Jonay: «esto se atraviesa… deberíamos hacer esto como islas de marcas viales en todo el juego… en otros el
+  // personaje se tropieza y hay que saltar aun siendo muy bajitos»): the splitter islands are painted, never raised
+  const up = () => false; // (before: raised where 1.4 m wide or more)
   if (raised) {
     let i = 0;
     while (i + 1 < E.length) {

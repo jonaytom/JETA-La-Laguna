@@ -90,10 +90,28 @@ const inPlayArea = (x, z, m = 0) => worldEdgeDist(x, z) >= m;
     const c = r[4];
     let i0 = 0,
       i1 = c.length - 2;
-    while (i0 < i1 && !inPlayArea(c[i0], c[i0 + 1], -M)) i0 += 2;
+    // v1.4.50 (Jonay, Calle Joaquín Turina: «esto es una carretera… ¿por qué es un descampado?»): a way whose end is out of
+    // the play area lost its points out there; one of only two points (a long straight way) lost the whole street. Now
+    // the way is cut where it crosses the edge
+    const edge = (ax, az, bx, bz) => {
+      let lo = 0,
+        hi = 1; // (a in, b out)
+      for (let k = 0; k < 20; k++) {
+        const m = (lo + hi) / 2;
+        if (inPlayArea(ax + (bx - ax) * m, az + (bz - az) * m, 8))
+          lo = m; // (8 m inside the edge: a car must be able to reach the end)
+        else hi = m;
+      }
+      return [ax + (bx - ax) * lo, az + (bz - az) * lo];
+    };
+    while (i0 <= i1 && !inPlayArea(c[i0], c[i0 + 1], -M)) i0 += 2;
+    if (i0 > i1) return false;
     while (i1 > i0 && !inPlayArea(c[i1], c[i1 + 1], -M)) i1 -= 2;
-    if (i1 - i0 < 2) return false;
-    r[4] = c.slice(i0, i1 + 2);
+    const o = c.slice(i0, i1 + 2);
+    if (i0 > 0) o.unshift(...edge(c[i0], c[i0 + 1], c[i0 - 2], c[i0 - 1]));
+    if (i1 < c.length - 2) o.push(...edge(c[i1], c[i1 + 1], c[i1 + 2], c[i1 + 3]));
+    if (o.length < 4 || Math.hypot(o[o.length - 2] - o[0], o[o.length - 1] - o[1]) < 2) return false;
+    r[4] = o;
     return true;
   });
   // v1.1.9: the same street twice (two downloads of a zone joined by merge_zona keep both copies; at the TF-5 one copy sank
@@ -378,10 +396,120 @@ for (const e of DATA.G.e) {
       }
   window.__enderezados = n;
 })();
+// v1.4.50 (Jonay, Av. Leonardo Torriani: «teniendo tanto espacio como dejas, 1 carril solo»; Av. de los Menceyes, La
+// Trinidad): each carriageway of a dual avenue is a one-way way in the map, and the norm gave it 3.2 m (one lane), as a
+// narrow one-way street of the old town. A one-way way with a twin (same name, the other way, side by side at 4–40 m for
+// most of its length) is half an avenue: two lanes (2 × 3.2 m urban; 2 × 3.5 m from tertiary up)
+const TWINS = new Set();
+(function findTwins() {
+  const byName = new Map();
+  DATA.R.forEach((r, ri) => {
+    if (!(r[3] & 1) || r[3] & 6 || r[0] < 3 || r[0] > 11 || r[1] < 0) return;
+    let l = byName.get(r[1]);
+    if (!l) byName.set(r[1], (l = []));
+    l.push(ri);
+  });
+  const near = (x, z, c) => {
+    let bd = 1e9,
+      dx = 0,
+      dz = 0;
+    for (let i = 0; i + 3 < c.length; i += 2) {
+      const ax = c[i],
+        az = c[i + 1],
+        ex = c[i + 2] - ax,
+        ez = c[i + 3] - az,
+        L2 = ex * ex + ez * ez || 1,
+        t = Math.max(0, Math.min(1, ((x - ax) * ex + (z - az) * ez) / L2)),
+        d = Math.hypot(x - ax - ex * t, z - az - ez * t);
+      if (d < bd) ((bd = d), (dx = ex), (dz = ez));
+    }
+    return [bd, dx, dz];
+  };
+  for (const l of byName.values()) {
+    if (l.length < 2) continue;
+    for (const ri of l) {
+      const c = DATA.R[ri][4];
+      let n = 0,
+        hit = 0;
+      for (let i = 0; i + 3 < c.length; i += 2) {
+        const L = Math.hypot(c[i + 2] - c[i], c[i + 3] - c[i + 1]);
+        if (L < 0.5) continue;
+        const ux = (c[i + 2] - c[i]) / L,
+          uz = (c[i + 3] - c[i + 1]) / L;
+        for (let s = (L / 2) % 8; s < L; s += 8) {
+          const x = c[i] + ux * s,
+            z = c[i + 1] + uz * s;
+          n++;
+          for (const rj of l) {
+            if (rj === ri) continue;
+            const [d, dx, dz] = near(x, z, DATA.R[rj][4]),
+              dl = Math.hypot(dx, dz) || 1;
+            if (d >= 4 && d <= 40 && (ux * dx + uz * dz) / dl < -0.85) {
+              hit++;
+              (DATA.R[ri].tw || (DATA.R[ri].tw = [])).push(d);
+              break;
+            }
+          }
+        }
+      }
+      if (n && hit / n >= 0.5) TWINS.add(ri);
+    }
+  }
+  for (const ri of [...TWINS]) {
+    const r = DATA.R[ri],
+      ds = (r.tw || []).sort((a, b) => a - b),
+      sep = ds.length ? ds[Math.floor(ds.length * 0.1)] : 0; // (the distance to the other carriageway, at its tightest)
+    // (v1.4.50: the two halves must not overlap: Calle San Antonio, 6.4 m between axes, kept its painted median)
+    const w2 = Math.min(r[0] <= 7 ? 7 : 6.4, sep - 0.6);
+    delete r.tw;
+    if (w2 < 5.6) {
+      TWINS.delete(ri);
+      continue;
+    }
+    if (r[2] < w2) r[2] = Math.min(Math.max(r.wMax || w2, w2), w2);
+    r.wMin = Math.max(r.wMin || 0, r[2]);
+  }
+  window.__twins = TWINS.size; // (tests)
+})();
 narrowToGap(); // v1.0.0: residential and service streets meet the buildings halfway (04b_recorte.js)
+// v1.4.50 (Jonay, Av. de los Menceyes: «se pasa de 2 a un carril y luego a 2 otra vez… eso está mal»): a street is a row of
+// ways of the map and each one got its width apart (the norm, the lanes the map gives some of them, narrowToGap with
+// the buildings of its own stretch); a way narrower than the ways on both sides of it of the same street, the same way,
+// takes the narrower of theirs (the buildings move back: streetsRule)
+(function laneContinuity() {
+  const K = (x, z) => Math.round(x * 2) + ',' + Math.round(z * 2),
+    ends = new Map();
+  DATA.R.forEach((r, ri) => {
+    if (r[0] < 2 || r[0] > 11 || r[3] & 6 || r[1] < 0) return;
+    const c = r[4];
+    for (const k of [K(c[0], c[1]), K(c[c.length - 2], c[c.length - 1])]) {
+      let l = ends.get(k);
+      if (!l) ends.set(k, (l = []));
+      l.push(ri);
+    }
+  });
+  let n = 0;
+  for (let pass = 0; pass < 2; pass++)
+    DATA.R.forEach((r, ri) => {
+      if (r[0] < 2 || r[0] > 11 || r[3] & 6 || r[1] < 0 || r.swMin !== undefined) return;
+      const c = r[4],
+        nb = (k) =>
+          (ends.get(k) || []).filter((rj) => rj !== ri && DATA.R[rj][1] === r[1] && (DATA.R[rj][3] & 1) === (r[3] & 1)).map((rj) => DATA.R[rj][2]);
+      const a = nb(K(c[0], c[1])),
+        b = nb(K(c[c.length - 2], c[c.length - 1]));
+      if (!a.length || !b.length) return;
+      const w = Math.min(Math.max(...a), Math.max(...b));
+      if (w > r[2] + 0.5) {
+        r[2] = w;
+        n++;
+      }
+    });
+  window.__continuidad = n; // (tests)
+})();
 corrFitTwins(); // v1.2.0: the two halves of a dual road at the width of their lanes (04c_corredores.js), in the zones done so far
 trinidadWidths(); // v0.68: Av. de La Trinidad, one lane + parking per carriageway (05u_trinidad.js); after the widening
 verdelladaWidths(); // v1.3.2: the Vía de Ronda, its service roads and the roundabout of La Verdellada at their real widths (04d_verdellada.js)
+syncGraphWidths(); // v1.4.50: the traffic's lanes = the painted ones (04b_recorte.js)
 // v0.91 (Jonay, with a Street View of the TF-5: «separando los sentidos»): OSM gives the motorway as two one-way ways
 // that are often only 7–10 m apart, so the two carriageways (13 m each here) overlapped into one slab with the lines
 // mixed and no room for the barrier. Where they run side by side the points are pushed apart until there are MED

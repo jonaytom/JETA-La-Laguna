@@ -277,6 +277,55 @@ function narrowToGapPart3(narrowed) {
   }
   DATA.NARROWED = narrowed;
 }
+/** v1.4.50 (Jonay: «en zonas con un solo carril pones dos flechas como si fuera doble carril»): the traffic graph's edges
+ *  had their own width (the type's norm, narrowed only with narrowToGap): every edge takes the width of the street it
+ *  runs along, after all the width steps (twins, continuity, Trinidad, Verdellada): the lanes the cars use and the
+ *  arrows (laneCentres, 07_vehicles.js) are the ones painted (laneMkPart1, 04_world.js) */
+function syncGraphWidths() {
+  const all = new Map();
+  DATA.R.forEach((r, ri) => {
+    if (r[0] >= 3 && r[0] <= 12) all.set(ri, r[2]);
+  });
+  const N = DATA.G.n,
+    RG = new Map();
+  for (const [ri] of all) {
+    const c = DATA.R[ri][4];
+    for (let i = 0; i + 3 < c.length; i += 2) {
+      const k = Math.floor((c[i] + c[i + 2]) / 2 / 20) * 100003 + Math.floor((c[i + 1] + c[i + 3]) / 2 / 20);
+      let l = RG.get(k);
+      if (!l) RG.set(k, (l = []));
+      l.push([ri, c[i], c[i + 1], c[i + 2], c[i + 3]]);
+    }
+  }
+  let n = 0;
+  for (const e of DATA.G.e) {
+    if (e[2] < 3 || e[2] > 12) continue;
+    const P = [N[e[0] * 2], N[e[0] * 2 + 1], ...(e[6] || []), N[e[1] * 2], N[e[1] * 2 + 1]],
+      h = (P.length >> 2) << 1;
+    const x = (P[h] + P[h - 2]) / 2,
+      z = (P[h + 1] + P[h - 1]) / 2;
+    let best = null,
+      bd = 2;
+    for (let a = -1; a <= 1; a++)
+      for (let q = -1; q <= 1; q++)
+        for (const sg of RG.get((Math.floor(x / 20) + a) * 100003 + Math.floor(z / 20) + q) || []) {
+          const ex = sg[3] - sg[1],
+            ez = sg[4] - sg[2],
+            L2 = ex * ex + ez * ez || 1,
+            tt = Math.max(0, Math.min(1, ((x - sg[1]) * ex + (z - sg[2]) * ez) / L2)),
+            dd = Math.hypot(x - sg[1] - ex * tt, z - sg[2] - ez * tt);
+          if (dd < bd) {
+            bd = dd;
+            best = sg[0];
+          }
+        }
+    if (best !== null && Math.abs(e[4] - all.get(best)) > 0.05) {
+      e[4] = all.get(best);
+      n++;
+    }
+  }
+  window.__grafoAnchos = n; // (tests)
+}
 /** (v1.1.7, code quality) part of narrowToGap: v1.0.0 (Jonay: «me da miedo que se rompan las intersecciones con puentes y túneles»): a street that comes within */
 function narrowToGapPart2(cell, G, stamp, E) {
   let st = 0;
