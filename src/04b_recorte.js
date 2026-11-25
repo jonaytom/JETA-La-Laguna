@@ -184,6 +184,10 @@ function narrowToGap() {
     // the old town, and right to the gap between the façades
     if (t < 3 || t > 12 || r[3] & 6 || r[3] & 32) return;
     if (r[1] >= 0 && DATA.S[r[1]] === 'Avenida de La Trinidad') return; // its own widths and pavements (05u_trinidad.js)
+    if (r.swMin !== undefined) {
+      narrowed.set(ri, r[2]); // (v1.4.49: a street Jonay measured, ROAD_REAL in 01_core.js: its width, and the traffic's)
+      return;
+    }
     const c = r[4],
       W = r[2],
       one = r[3] & 1,
@@ -1001,7 +1005,7 @@ function frontLines() {
     // where the street is already at its minimum width and the buildings still leave no room)
     const r = DATA.R[parseInt(k, 10)],
       atMin = r && r.wMin !== undefined && r[2] <= r.wMin + 0.05;
-    FRONT.lines.set(k, atMin ? Math.max(FRONT.sw * 0.5, Math.min(FRONT.sw, med)) : FRONT.sw);
+    FRONT.lines.set(k, atMin ? Math.max(FRONT.sw * (r.swMin ?? 0.5), Math.min(FRONT.sw, med)) : FRONT.sw); // (swMin: ROAD_REAL, 01_core.js)
   }
   return FRONT.lines;
 }

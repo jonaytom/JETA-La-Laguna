@@ -262,6 +262,39 @@ DATA.R.forEach((rd, ri) => {
     rd.wMin = rd[2]; // (v1.4.48: its minimum: frontLines lets the pavement go down to half only where the street is at it)
   }
 });
+// v1.4.49: streets Jonay measured (w: carriageway, two-way pieces; swMin: how much of the pavement can be left where the
+// buildings leave no room, 0.5 = half, 0 = none)
+const ROAD_REAL = {
+  // («los carriles miden 3,25 m, en total la calzada 6,50 m; eso es una vía que ya no es urbana, hay zonas sin acera»;
+  // «hay una parte donde ensancha… cuando llega a la rotonda del Padre Anchieta… llega hasta 10 m»: from the roundabout
+  // to the Calle Las Mejoranas, ~220 m)
+  'Carretera de San Miguel de Geneto': { w: 6.5, swMin: 0, tramos: [[-321.5, 1012, 10]] }
+};
+// (tramos: [x, z, w]: the street is cut at its point nearest (x, z), within 3 m; the piece from its start to there takes w)
+DATA.R.forEach((rd, ri) => {
+  const q = rd[1] >= 0 && ROAD_REAL[DATA.S[rd[1]]];
+  if (!q || rd[3] & 7) return;
+  rd[2] = rd.wMin = q.w;
+  rd.swMin = q.swMin;
+  for (const [x, z, w] of q.tramos || []) {
+    const c = rd[4];
+    let k = -1,
+      bd = 3;
+    for (let i = 2; i + 2 < c.length; i += 2) {
+      const d = Math.hypot(c[i] - x, c[i + 1] - z);
+      if (d < bd) ((bd = d), (k = i));
+    }
+    if (k < 0) continue;
+    const head = rd.slice(0, 4);
+    head[4] = c.slice(0, k + 2);
+    head[2] = head.wMin = w;
+    head.wMax = rd.wMax;
+    head.swMin = q.swMin;
+    rd[4] = c.slice(k);
+    if (DATA.LN && DATA.LN[ri]) DATA.LN[DATA.R.length] = DATA.LN[ri];
+    DATA.R.push(head);
+  }
+});
 for (const e of DATA.G.e) {
   const a = e[0] * 2;
   e[4] = WIDEN2(e[2], e[4], e[3], DATA.G.n[a], DATA.G.n[a + 1]);

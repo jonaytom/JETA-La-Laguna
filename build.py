@@ -64,7 +64,12 @@ def copy_radio(destination):
             raise ValueError(f'Ruta de audio no válida: {name}')
         output = os.path.join(destination, 'radio', name)
         os.makedirs(os.path.dirname(output), exist_ok=True)
-        shutil.copyfile(os.path.join('assets', 'radio', name), output)
+        src = os.path.join('assets', 'radio', name)
+        # (v1.4.49: a song already there, same size and not older, is left alone: rewriting it failed now and then with
+        # Errno 22 while Windows still had it open, the antivirus scanning it)
+        if os.path.exists(output) and os.path.getsize(output) == os.path.getsize(src) and os.path.getmtime(output) >= os.path.getmtime(src):
+            continue
+        shutil.copyfile(src, output)
 
 D['HUM']=json.load(open('data/chars.json',encoding='utf-8'))
 # v1.3.0: the trees made in Blender (tools/blender/arboles_blender.py + exportar_arboles.py): trunk, crown and far crown per kind

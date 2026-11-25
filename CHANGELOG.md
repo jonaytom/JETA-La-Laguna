@@ -3,6 +3,11 @@
 El formato es: `## versión — fecha — título`, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.
 
+## 1.4.49 — 2026-11-25 — Alpha 1.4.49: la Carretera de Geneto a su medida
+
+- **Carretera de San Miguel de Geneto a su medida** (Jonay: «los carriles miden 3,25 m, en total la calzada 6,50 m; eso es una vía que ya no es urbana, hay zonas sin acera»): calzada de 6,5 m, y de 10 m desde la rotonda del Padre Anchieta hasta la Calle Las Mejoranas («cuando llega a la rotonda del Padre Anchieta… llega hasta 10 m»; antes toda a 11,7 m: por un tramo en terraplén conservaba entero su ancho viejo) y, donde los edificios no dejan sitio, sin acera. El tráfico usa el mismo ancho. Las calles medidas por Jonay van en `ROAD_REAL` (`01_core.js`). La auditoría ya no ve edificios invadiendo la carretera.
+- El build ya no se para al copiar las canciones de la radio que ya estaban (Windows las tenía abiertas un momento).
+
 ## 1.4.48 — 2026-11-25 — Alpha 1.4.48: las calles mandan
 
 - **Las calles mandan** (Jonay: «a partir de ahora las calles mandan, los edificios se ajustan a las calles y no al revés»): se acabó el ensanche inicial de las calles, que era lo que las metía dentro de los edificios. Anchos con norma: calle urbana de doble sentido 5,8 m, de un sentido 3,2 m, carreteras 7 m (carriles de 3,5 m), vías de servicio 4 m; si sobra sitio hasta las fachadas, la calle llega a ellas, y si falta, la acera (1 m) baja hasta la mitad solo donde la calle ya está en su mínimo. Puentes y túneles conservan su ancho.

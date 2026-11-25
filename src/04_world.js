@@ -1403,7 +1403,7 @@ function buildRoadsPart1() {
   // before too, as tunnels and bridges (01_core.js): their walls, cuts and slopes are made from it
   for (const ri of [...DEP.keys(), ...RAISE.keys()]) {
     const r = DATA.R[ri];
-    if (r && r.wMax && r[2] < r.wMax) r[2] = r.wMax;
+    if (r && r.wMax && r[2] < r.wMax && r.swMin === undefined) r[2] = r.wMax; // (not a street Jonay measured: ROAD_REAL, 01_core.js)
   }
   for (let ri = 0; ri < DATA.R.length; ri++) ROADY[ri] = roadYFn(ri);
   for (let ri = 0; ri < DATA.R.length; ri++) {

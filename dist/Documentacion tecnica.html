@@ -26,7 +26,7 @@ main{margin:0;padding:56px 16px 60px}#menu{display:block;position:fixed;top:10px
 background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:15px}}
 </style></head><body>
 <button id="menu">☰ Índice</button>
-<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.48</div>
+<nav id="nav"><h1>JETA La Laguna</h1><div class="v">Documentación técnica · v1.4.49</div>
 <a href="#s0">JETA La Laguna</a>
 <a href="#s1">1. Arquitectura y construcción</a>
 <a href="#s2">2. Datos del mapa (OpenStreetMap → data.json)</a>
@@ -2158,6 +2158,10 @@ quitarles los zurrones.</li>
 <section id="s12"><div class="src">CHANGELOG.md</div><h1>Historial de versiones</h1>
 <p>El formato es: <code>## versión — fecha — título</code>, seguido de los cambios. El script de publicación usa
 el título de la entrada más reciente como mensaje del commit.</p>
+<h2>1.4.49 — 2026-11-25 — Alpha 1.4.49: la Carretera de Geneto a su medida</h2>
+<ul>
+<li><strong>Carretera de San Miguel de Geneto a su medida</strong> (Jonay: «los carriles miden 3,25 m, en total la calzada 6,50 m; eso es una vía que ya no es urbana, hay zonas sin acera»): calzada de 6,5 m, y de 10 m desde la rotonda del Padre Anchieta hasta la Calle Las Mejoranas («cuando llega a la rotonda del Padre Anchieta… llega hasta 10 m»; antes toda a 11,7 m: por un tramo en terraplén conservaba entero su ancho viejo) y, donde los edificios no dejan sitio, sin acera. El tráfico usa el mismo ancho. Las calles medidas por Jonay van en <code>ROAD_REAL</code> (<code>01_core.js</code>).</li>
+</ul>
 <h2>1.4.48 — 2026-11-25 — Alpha 1.4.48: las calles mandan</h2>
 <ul>
 <li><strong>Las calles mandan</strong> (Jonay: «a partir de ahora las calles mandan, los edificios se ajustan a las calles y no al revés»): se acabó el ensanche inicial de las calles, que era lo que las metía dentro de los edificios. Anchos con norma: calle urbana de doble sentido 5,8 m, de un sentido 3,2 m, carreteras 7 m (carriles de 3,5 m), vías de servicio 4 m; si sobra sitio hasta las fachadas, la calle llega a ellas, y si falta, la acera (1 m) baja hasta la mitad solo donde la calle ya está en su mínimo. Puentes y túneles conservan su ancho.</li>

@@ -58,3 +58,5 @@ Pruebas completas (en `tests/`): `prueba_misiones.py [desde] [hasta]` juega sola
 - `foto_gente_lejos.py` — una persona con el cuerpo completo, ligero y muy ligero (`shots/gente_lejos.jpg`).
 - `sonda_aparcados.py` — prueba ~400 coches aparcados: se ofrecen, se sube y acelera (lista `aparcados`).
 - `sonda_inicio_mision.py [título o número]` (v1.4.48): pide una misión de la historia con `_setIdx` y dice qué misión queda activa, sus marcas, si hay un diálogo abierto (y su texto) y si `inAnyBuilding` coincide con recorrer todos los edificios.
+- `sonda_calles_en.py x z [radio]` (v1.4.49): las calles que pasan cerca de un punto, con su ancho de ahora, `wMax`, `wMin`, `swMin` y su distancia.
+- `sonda_dep_raise.py` (v1.4.49): las calles hundidas o elevadas (DEP/RAISE) y cuántas conservan el ancho viejo.

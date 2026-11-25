@@ -340,7 +340,7 @@ body.touchmode #objective{max-width:min(48vw,calc(100vw - var(--mm) - 220px))}
 <div class="fpb big mpd" id="mpA" style="right:110px;bottom:40px;border-color:#ffd400">A</div><div class="fpb big mpd" id="mpB" style="right:20px;bottom:90px;border-color:#ff5252">B</div><div class="fpb big mpd" id="mpC" style="right:110px;bottom:140px;border-color:#5ec8ff">C</div>
 <div class="fpb" id="mpP" style="left:50%;top:8px;margin-left:-28px;width:56px;height:44px;font-size:18px">❚❚</div><div class="fpb mpd" id="mpExit" style="right:14px;top:8px;width:62px;height:38px;font-size:12px">ATRÁS</div></div>
 
-<div class="screen" id="menu"><div class="verlbl">Alpha 1.4.48</div><div class="panel">
+<div class="screen" id="menu"><div class="verlbl">Alpha 1.4.49</div><div class="panel">
  <div class="retro" aria-label="JETA, San Cristóbal de La Laguna, Tenerife"><span class="sun"></span><span class="sc">San Cristóbal de</span><span class="jeta">JETA</span><span class="ll">LA LAGUNA · TENERIFE</span></div>
  <p class="tag" style="text-align:center">Mundo abierto de acción y humor canario en San Cristóbal de La Laguna, recreada calle a calle sobre el mapa real: conduce, pelea, forma tu banda y cumple misiones por el casco histórico Patrimonio de la Humanidad, Aguere, el Campus, Los Rodeos y la ruta del tranvía, a cualquier hora del día.</p>
  <div id="loadblock"><div id="loadbarw"><div id="loadbar"></div></div><div id="loadtxt">Cargando…</div></div>
@@ -642,6 +642,39 @@ DATA.R.forEach((rd, ri) => {
     const ln = DATA.LN && DATA.LN[ri] ? DATA.LN[ri][0] : 0;
     if (!(rd[3] & 6) && ln > 1 && rd[0] <= 8) rd[2] = Math.max(rd[2], Math.min(rd.wMax, ln * 3.5));
     rd.wMin = rd[2]; // (v1.4.48: its minimum: frontLines lets the pavement go down to half only where the street is at it)
+  }
+});
+// v1.4.49: streets Jonay measured (w: carriageway, two-way pieces; swMin: how much of the pavement can be left where the
+// buildings leave no room, 0.5 = half, 0 = none)
+const ROAD_REAL = {
+  // («los carriles miden 3,25 m, en total la calzada 6,50 m; eso es una vía que ya no es urbana, hay zonas sin acera»;
+  // «hay una parte donde ensancha… cuando llega a la rotonda del Padre Anchieta… llega hasta 10 m»: from the roundabout
+  // to the Calle Las Mejoranas, ~220 m)
+  'Carretera de San Miguel de Geneto': { w: 6.5, swMin: 0, tramos: [[-321.5, 1012, 10]] }
+};
+// (tramos: [x, z, w]: the street is cut at its point nearest (x, z), within 3 m; the piece from its start to there takes w)
+DATA.R.forEach((rd, ri) => {
+  const q = rd[1] >= 0 && ROAD_REAL[DATA.S[rd[1]]];
+  if (!q || rd[3] & 7) return;
+  rd[2] = rd.wMin = q.w;
+  rd.swMin = q.swMin;
+  for (const [x, z, w] of q.tramos || []) {
+    const c = rd[4];
+    let k = -1,
+      bd = 3;
+    for (let i = 2; i + 2 < c.length; i += 2) {
+      const d = Math.hypot(c[i] - x, c[i + 1] - z);
+      if (d < bd) ((bd = d), (k = i));
+    }
+    if (k < 0) continue;
+    const head = rd.slice(0, 4);
+    head[4] = c.slice(0, k + 2);
+    head[2] = head.wMin = w;
+    head.wMax = rd.wMax;
+    head.swMin = q.swMin;
+    rd[4] = c.slice(k);
+    if (DATA.LN && DATA.LN[ri]) DATA.LN[DATA.R.length] = DATA.LN[ri];
+    DATA.R.push(head);
   }
 });
 for (const e of DATA.G.e) {
@@ -4543,7 +4576,7 @@ function buildRoadsPart1() {
   // before too, as tunnels and bridges (01_core.js): their walls, cuts and slopes are made from it
   for (const ri of [...DEP.keys(), ...RAISE.keys()]) {
     const r = DATA.R[ri];
-    if (r && r.wMax && r[2] < r.wMax) r[2] = r.wMax;
+    if (r && r.wMax && r[2] < r.wMax && r.swMin === undefined) r[2] = r.wMax; // (not a street Jonay measured: ROAD_REAL, 01_core.js)
   }
   for (let ri = 0; ri < DATA.R.length; ri++) ROADY[ri] = roadYFn(ri);
   for (let ri = 0; ri < DATA.R.length; ri++) {
@@ -9795,6 +9828,10 @@ function narrowToGap() {
     // the old town, and right to the gap between the façades
     if (t < 3 || t > 12 || r[3] & 6 || r[3] & 32) return;
     if (r[1] >= 0 && DATA.S[r[1]] === 'Avenida de La Trinidad') return; // its own widths and pavements (05u_trinidad.js)
+    if (r.swMin !== undefined) {
+      narrowed.set(ri, r[2]); // (v1.4.49: a street Jonay measured, ROAD_REAL in 01_core.js: its width, and the traffic's)
+      return;
+    }
     const c = r[4],
       W = r[2],
       one = r[3] & 1,
@@ -10612,7 +10649,7 @@ function frontLines() {
     // where the street is already at its minimum width and the buildings still leave no room)
     const r = DATA.R[parseInt(k, 10)],
       atMin = r && r.wMin !== undefined && r[2] <= r.wMin + 0.05;
-    FRONT.lines.set(k, atMin ? Math.max(FRONT.sw * 0.5, Math.min(FRONT.sw, med)) : FRONT.sw);
+    FRONT.lines.set(k, atMin ? Math.max(FRONT.sw * (r.swMin ?? 0.5), Math.min(FRONT.sw, med)) : FRONT.sw); // (swMin: ROAD_REAL, 01_core.js)
   }
   return FRONT.lines;
 }
